@@ -1271,16 +1271,16 @@ cdef void precompute_absolute_errors(
 
 
 cdef inline void compute_ranks(
-    float64_t* y,
+    float64_t* sorted_y,
     intp_t* sorted_indices,
     intp_t* ranks,
     intp_t n
 ) noexcept nogil:
-    """Sort `y` inplace and fill `ranks` accordingly"""
+    """Sort `sorted_y` inplace and fill `ranks` accordingly"""
     cdef intp_t i
     for i in range(n):
         sorted_indices[i] = i
-    sort(y, sorted_indices, n)
+    sort(sorted_y, sorted_indices, n)
     for i in range(n):
         ranks[sorted_indices[i]] = i
 
