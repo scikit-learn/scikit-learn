@@ -17,7 +17,7 @@ from sklearn import __version__
 from sklearn._config import config_context, get_config
 from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.utils._metadata_requests import _MetadataRequester, _routing_enabled
-from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import validate_parameter_constraints
 from sklearn.utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
 from sklearn.utils._repr_html.estimator import estimator_html_repr
@@ -304,6 +304,10 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
                 init_default_params[param_name]
             ):
                 return True
+            if is_pandas_na(param_value) and not is_pandas_na(
+                init_default_params[param_name]
+            ):
+                return True
             if not np.array_equal(
                 param_value, init_default_params[param_name]
             ) and not (
@@ -526,9 +530,6 @@ class ClassifierMixin:
     0.66...
     """
 
-    # TODO(1.8): Remove this attribute
-    _estimator_type = "classifier"
-
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.estimator_type = "classifier"
@@ -598,9 +599,6 @@ class RegressorMixin:
     >>> estimator.score(X, y)
     0.0
     """
-
-    # TODO(1.8): Remove this attribute
-    _estimator_type = "regressor"
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -674,9 +672,6 @@ class ClusterMixin:
     >>> MyClusterer().fit_predict(X)
     array([1, 1, 1])
     """
-
-    # TODO(1.8): Remove this attribute
-    _estimator_type = "clusterer"
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -1029,9 +1024,6 @@ class DensityMixin:
     True
     """
 
-    # TODO(1.8): Remove this attribute
-    _estimator_type = "DensityEstimator"
-
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.estimator_type = "density_estimator"
@@ -1078,9 +1070,6 @@ class OutlierMixin:
     >>> estimator.fit_predict(X)
     array([1., 1., 1.])
     """
-
-    # TODO(1.8): Remove this attribute
-    _estimator_type = "outlier_detector"
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -1196,7 +1185,7 @@ def is_classifier(estimator):
 
     Parameters
     ----------
-    estimator : object
+    estimator : estimator instance
         Estimator object to test.
 
     Returns
@@ -1219,15 +1208,6 @@ def is_classifier(estimator):
     >>> is_classifier(kmeans)
     False
     """
-    # TODO(1.8): Remove this check
-    if isinstance(estimator, type):
-        warnings.warn(
-            f"passing a class to {print(inspect.stack()[0][3])} is deprecated and "
-            "will be removed in 1.8. Use an instance of the class instead.",
-            FutureWarning,
-        )
-        return getattr(estimator, "_estimator_type", None) == "classifier"
-
     return get_tags(estimator).estimator_type == "classifier"
 
 
@@ -1259,15 +1239,6 @@ def is_regressor(estimator):
     >>> is_regressor(kmeans)
     False
     """
-    # TODO(1.8): Remove this check
-    if isinstance(estimator, type):
-        warnings.warn(
-            f"passing a class to {print(inspect.stack()[0][3])} is deprecated and "
-            "will be removed in 1.8. Use an instance of the class instead.",
-            FutureWarning,
-        )
-        return getattr(estimator, "_estimator_type", None) == "regressor"
-
     return get_tags(estimator).estimator_type == "regressor"
 
 
@@ -1278,7 +1249,7 @@ def is_clusterer(estimator):
 
     Parameters
     ----------
-    estimator : object
+    estimator : estimator instance
         Estimator object to test.
 
     Returns
@@ -1301,15 +1272,6 @@ def is_clusterer(estimator):
     >>> is_clusterer(kmeans)
     True
     """
-    # TODO(1.8): Remove this check
-    if isinstance(estimator, type):
-        warnings.warn(
-            f"passing a class to {print(inspect.stack()[0][3])} is deprecated and "
-            "will be removed in 1.8. Use an instance of the class instead.",
-            FutureWarning,
-        )
-        return getattr(estimator, "_estimator_type", None) == "clusterer"
-
     return get_tags(estimator).estimator_type == "clusterer"
 
 
@@ -1326,15 +1288,6 @@ def is_outlier_detector(estimator):
     out : bool
         True if estimator is an outlier detector and False otherwise.
     """
-    # TODO(1.8): Remove this check
-    if isinstance(estimator, type):
-        warnings.warn(
-            f"passing a class to {print(inspect.stack()[0][3])} is deprecated and "
-            "will be removed in 1.8. Use an instance of the class instead.",
-            FutureWarning,
-        )
-        return getattr(estimator, "_estimator_type", None) == "outlier_detector"
-
     return get_tags(estimator).estimator_type == "outlier_detector"
 
 

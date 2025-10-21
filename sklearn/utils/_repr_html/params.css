@@ -1,7 +1,14 @@
+.estimator-table {
+    font-family: monospace;
+}
+
 .estimator-table summary {
     padding: .5rem;
-    font-family: monospace;
     cursor: pointer;
+}
+
+.estimator-table summary::marker {
+    font-size: 0.7rem;
 }
 
 .estimator-table details[open] {
@@ -13,6 +20,7 @@
 .estimator-table .parameters-table {
     margin-left: auto !important;
     margin-right: auto !important;
+    margin-top: 0;
 }
 
 .estimator-table .parameters-table tr:nth-child(odd) {
@@ -37,6 +45,7 @@
 */
 .estimator-table table td.param {
     text-align: left;
+    position: relative;
     padding: 0;
 }
 
@@ -69,11 +78,16 @@ a.param-doc-link:link,
 a.param-doc-link:visited {
     text-decoration: underline dashed;
     text-underline-offset: .3em;
-    position: relative;
     color: inherit;
     display: block;
     padding: .5em;
-    box-sizing: border-box;
+}
+
+/* "hack" to make the entire area of the cell containing the link clickable */
+a.param-doc-link::before {
+    position: absolute;
+    content: "";
+    inset: 0;
 }
 
 .param-doc-description {
