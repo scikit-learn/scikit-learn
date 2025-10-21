@@ -313,15 +313,6 @@ compiler with OpenMP_ support to build scikit-learn `cython <https://cython.org>
 The platform-specific instructions below describe how to set up a suitable compiler and install
 the required packages.
 
-.. note::
-
-      If OpenMP is not supported by the compiler, the build will be done with
-      OpenMP functionalities disabled. This is not recommended since it will force
-      some estimators to run in sequential mode instead of leveraging thread-based
-      parallelism. Setting the ``SKLEARN_FAIL_NO_OPENMP`` environment variable
-      (before cythonization) will force the build to fail if OpenMP is not
-      supported.
-
 .. raw:: html
 
   <style>
@@ -401,8 +392,7 @@ the required packages.
               python numpy scipy cython meson-python ninja \
               pytest pytest-cov ruff==0.11.2 mypy numpydoc
 
-          It is not always necessary but it is safer to open a new prompt before
-          activating the newly created conda environment:
+          Activate the newly created conda environment:
 
           .. prompt:: powershell
 
@@ -473,47 +463,11 @@ the required packages.
               pytest pytest-cov ruff==0.11.2 mypy numpydoc \
               joblib threadpoolctl compilers llvm-openmp
 
-          It is not always necessary but it is safer to open a new prompt before
-          activating the newly created conda environment:
+          Activate the newly created conda environment:
 
           .. prompt:: bash $
 
             conda activate sklearn-dev
-
-          .. note::
-
-            If you get any conflicting dependency error message, try commenting out
-            any custom conda configuration in the ``$HOME/.condarc`` file. In
-            particular the ``channel_priority: strict`` directive is known to cause
-            problems for this setup.
-
-            You can check that the custom compilers are properly installed from conda
-            forge using the following command:
-
-            .. prompt:: bash $
-
-                conda list
-
-            which should include ``compilers`` and ``llvm-openmp``.
-
-            The compilers meta-package will automatically set custom environment
-            variables:
-
-            .. prompt:: bash $
-
-                echo $CC
-                echo $CXX
-                echo $CFLAGS
-                echo $CXXFLAGS
-                echo $LDFLAGS
-
-            They point to files and folders from your ``sklearn-dev`` conda environment
-            (in particular in the bin/, include/ and lib/ subfolders). For instance
-            ``-L/path/to/conda/envs/sklearn-dev/lib`` should appear in ``LDFLAGS``.
-
-            When installing scikit-learn in the next step, you should see the
-            compiled extension being built with the clang and clang++ compilers installed by
-            conda with the ``-fopenmp`` command line flag in the log.
 
     .. tab-item:: Linux
       :class-label: tab-4
@@ -610,8 +564,7 @@ the required packages.
               pytest pytest-cov ruff==0.11.2 mypy numpydoc \
               joblib threadpoolctl compilers
 
-          It is not always necessary but it is safer to open a new prompt before
-          activating the newly created conda environment:
+          Activate the newly created environment:
 
           .. prompt:: bash $
 
@@ -671,7 +624,7 @@ and :ref:`pytest_tips`.
 .. _SciPy: https://www.scipy.org
 .. _Homebrew: https://brew.sh
 .. _venv: https://docs.python.org/3/tutorial/venv.html
-.. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
+.. _conda_environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
 .. _conda-forge: https://conda-forge.org/download/
 
 .. END Set up your development environment - TODO: move to separate file and link to it

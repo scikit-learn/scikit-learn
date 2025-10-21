@@ -2,8 +2,77 @@
 .. _advanced-installation:
 
 ==================================================
-Installing the development version of scikit-learn
+More advanced installation / Troubleshooting
 ==================================================
+
+.. _openMP_notes:
+
+Notes on OpenMP
+===============
+
+.. note::
+
+  If OpenMP is not supported by the compiler, the build will be done with
+  OpenMP functionalities disabled. This is not recommended since it will force
+  some estimators to run in sequential mode instead of leveraging thread-based
+  parallelism. Setting the ``SKLEARN_FAIL_NO_OPENMP`` environment variable
+  (before cythonization) will force the build to fail if OpenMP is not
+  supported.
+
+To check if `scikit-learn` has been built correctly with OpenMP, run
+
+.. prompt:: bash $
+
+  python -c "import sklearn; sklearn.show_versions()"
+
+and check if it contains `Built with OpenMP: True`.
+
+When using conda on Mac, you can also check that the custom compilers
+are properly installed from conda-forge using the following command:
+
+.. prompt:: bash $
+
+    conda list
+
+which should include ``compilers`` and ``llvm-openmp``.
+
+The compilers meta-package will automatically set custom environment
+variables:
+
+.. prompt:: bash $
+
+    echo $CC
+    echo $CXX
+    echo $CFLAGS
+    echo $CXXFLAGS
+    echo $LDFLAGS
+
+They point to files and folders from your ``sklearn-dev`` conda environment
+(in particular in the bin/, include/ and lib/ subfolders). For instance
+``-L/path/to/conda/envs/sklearn-dev/lib`` should appear in ``LDFLAGS``.
+
+Notes on Conda
+==============
+
+Sometimes it can be necessary to open a new prompt before activating a newly
+created conda environment.
+
+If you get any conflicting dependency error messages on Mac or Linux, try commenting out
+any custom conda configuration in the ``$HOME/.condarc`` file. In
+particular the ``channel_priority: strict`` directive is known to cause
+problems for this setup.
+
+Notes on Meson
+==============
+
+When :ref:`building scikit-learn from source <install_from_source>`, existing
+scikit-learn installations and meson builds can lead to conflicts.
+You can use the `Makefile` provided in the `scikit-learn repository <https://github.com/scikit-learn/scikit-learn/>`__
+to remove conflicting builds by calling:
+
+.. prompt:: bash $
+
+    make clean
 
 .. _install_nightly_builds:
 
