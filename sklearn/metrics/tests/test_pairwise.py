@@ -1825,7 +1825,10 @@ def test_sparse_manhattan_readonly_dataset(csr_container):
 @pytest.mark.parametrize(
     "pairwise_fn", [pairwise_distances_argmin, pairwise_distances_argmin_min]
 )
-def test_pairwise_argmin_correct_warnings_for_bool_and_nonbool(metric, pairwise_fn):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_pairwise_argmin_correct_warnings_for_bool_and_nonbool(
+    metric, pairwise_fn, csr_container
+):
     """Check for unnecessary DataConversionWarning with boolean metrics.
     A warning should be raised only for non-boolean data and not for boolean data.
     """
@@ -1845,3 +1848,10 @@ def test_pairwise_argmin_correct_warnings_for_bool_and_nonbool(metric, pairwise_
 
     with pytest.warns(DataConversionWarning):
         pairwise_fn(X_arr.astype(np.float32), Y_arr, metric=metric)
+
+    X_sparse = csr_container(X_arr)
+    Y_sparse = csr_container(Y_arr)
+    with pytest.raises(
+        TypeError, match="scipy distance metrics do not support sparse matrices."
+    ):
+        pairwise_fn(X_sparse, Y_sparse, metric=metric)
