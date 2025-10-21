@@ -1,0 +1,69 @@
+ .features {
+    font-family: monospace;
+    cursor: pointer;
+    background-color: var(--sklearn-color-fitted-level-0);
+    border: 1px dotted var(--sklearn-color-border-box);
+    border-radius: .20em;
+    margin-bottom: 0.5em;
+
+    display: flex;
+    align-items: first baseline;
+}
+
+.features summary {
+  position: sticky;
+  top: 0;
+  padding: .25em .5em;
+  border: none;
+  border-radius: .20em 0 0 .20em;
+}
+
+.features summary::marker {
+  font-size: 0.8em;
+  color: var(--sklearn-color-icon);
+}
+
+.features summary:hover,
+details[open] > summary {
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-fitted-level-2);
+  border-radius: .20em 0 0 0;
+}
+
+.features .features-container {
+    max-width: 15em;
+    max-height: 10em;
+    overflow: auto;
+    scrollbar-width: thin;
+    padding: .5em;
+    background-color: var(--sklearn-color-fitted-level-0);
+    border-radius: 0 0 .5em .5em;
+}
+
+.features .copy-paste-icon {
+   background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0NDggNTEyIj48IS0tIUZvbnQgQXdlc29tZSBGcmVlIDYuNy4yIGJ5IEBmb250YXdlc29tZSAtIGh0dHBzOi8vZm9udGF3ZXNvbWUuY29tIExpY2Vuc2UgLSBodHRwczovL2ZvbnRhd2Vzb21lLmNvbS9saWNlbnNlL2ZyZWUgQ29weXJpZ2h0IDIwMjUgRm9udGljb25zLCBJbmMuLS0+PHBhdGggZD0iTTIwOCAwTDMzMi4xIDBjMTIuNyAwIDI0LjkgNS4xIDMzLjkgMTQuMWw2Ny45IDY3LjljOSA5IDE0LjEgMjEuMiAxNC4xIDMzLjlMNDQ4IDMzNmMwIDI2LjUtMjEuNSA0OC00OCA0OGwtMTkyIDBjLTI2LjUgMC00OC0yMS41LTQ4LTQ4bDAtMjg4YzAtMjYuNSAyMS41LTQ4IDQ4LTQ4ek00OCAxMjhsODAgMCAwIDY0LTY0IDAgMCAyNTYgMTkyIDAgMC0zMiA2NCAwIDAgNDhjMCAyNi41LTIxLjUgNDgtNDggNDhMNDggNTEyYy0yNi41IDAtNDgtMjEuNS00OC00OEwwIDE3NmMwLTI2LjUgMjEuNS00OCA0OC00OHoiLz48L3N2Zz4=);
+    background-repeat: no-repeat;
+    background-size: 14px 14px;
+    background-position: 0;
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+
+   background-size: 10px 10px;
+   width: 10px;
+   height: 10px;
+}
+
+.features .features-container table {
+    width: 95%;
+    margin: 0;
+}
+
+.features .features-container table td {
+  text-align: left;
+  padding: 0;
+  white-space: nowrap;
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-fitted-level-0);
+}

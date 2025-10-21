@@ -27,11 +27,13 @@ class _IDCounter:
 def _get_css_style():
     estimator_css_file = Path(__file__).parent / "estimator.css"
     params_css_file = Path(__file__).parent / "params.css"
+    features_css_file = Path(__file__).parent / "features.css"
 
     estimator_css = estimator_css_file.read_text(encoding="utf-8")
     params_css = params_css_file.read_text(encoding="utf-8")
+    features_css = features_css_file.read_text(encoding="utf-8")
 
-    return f"{estimator_css}\n{params_css}"
+    return f"{estimator_css}\n{params_css}\n{features_css}"
 
 
 _CONTAINER_ID_COUNTER = _IDCounter("sk-container-id")
