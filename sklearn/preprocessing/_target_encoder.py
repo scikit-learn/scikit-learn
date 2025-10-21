@@ -218,6 +218,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     def fit(self, X, y):
         """Fit the :class:`TargetEncoder` to X and y.
 
+        It is discouraged to use this method on training data, because it can introduce
+        data leakage and it is unnecessary to use on test data.
+
         .. note::
             `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
             :term:`cross fitting` scheme is used in `fit_transform` for encoding.
@@ -322,6 +325,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     def transform(self, X):
         """Transform X with the target encoding.
+
+        This method internally uses the `encodings_` attribute learnt during
+        :meth:`TargetEncoder.fit_transform` to transform test data.
 
         .. note::
             `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a

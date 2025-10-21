@@ -936,18 +936,18 @@ cardinality categories are location based such as zip code or region.
   where :math:`L_i` is the set of observations with category :math:`i` and
   :math:`n_i` is the number of observations with category :math:`i`.
 
+Note that for :class:`TargetEncoder`, `fit(X, y).transform(X)` does not equal
+`fit_transform(X, y)`.
 
 :meth:`~TargetEncoder.fit_transform` internally relies on a :term:`cross fitting`
 scheme to prevent target information from leaking into the train-time
 representation, especially for non-informative high-cardinality categorical
-variables (features with many unique categories where each category appears 
+variables (features with many unique categories where each category appears
 only a few times), and help prevent the downstream model from overfitting spurious
-correlations. Note that as a result, `fit(X, y).transform(X)` does not equal
-`fit_transform(X, y)`. In :meth:`~TargetEncoder.fit_transform`, the training
-data is split into *k* folds (determined by the `cv` parameter) and each fold is
-encoded using the encodings learnt using the *other k-1* folds. For this reason,
-training data should always be trained and transformed with
-`fit_transform(X_train, y_train)`.
+correlations. In :meth:`~TargetEncoder.fit_transform`, the training data is split into
+*k* folds (determined by the `cv` parameter) and each fold is encoded using the
+encodings learnt using the *other k-1* folds. For this reason, training data should
+always be trained and transformed with `fit_transform(X_train, y_train)`.
 
 This diagram shows the :term:`cross fitting` scheme in
 :meth:`~TargetEncoder.fit_transform` with the default `cv=5`:
