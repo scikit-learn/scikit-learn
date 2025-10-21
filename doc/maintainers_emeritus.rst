@@ -18,7 +18,7 @@
 - Arnaud Joly
 - Thouis (Ray) Jones
 - Kyle Kastner
-- Manoj Kumar
+- Manoj kumar
 - Robert Layton
 - Wei Li
 - Paolo Losi
