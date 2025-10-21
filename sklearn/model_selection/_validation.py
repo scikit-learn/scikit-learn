@@ -59,35 +59,6 @@ __all__ = [
 ]
 
 
-def _check_params_groups_deprecation(fit_params, params, groups, version):
-    """A helper function to check deprecations on `groups` and `fit_params`.
-
-    # TODO(SLEP6): To be removed when set_config(enable_metadata_routing=False) is not
-    # possible.
-    """
-    if params is not None and fit_params is not None:
-        raise ValueError(
-            "`params` and `fit_params` cannot both be provided. Pass parameters "
-            "via `params`. `fit_params` is deprecated and will be removed in "
-            f"version {version}."
-        )
-    elif fit_params is not None:
-        warnings.warn(
-            (
-                "`fit_params` is deprecated and will be removed in version {version}. "
-                "Pass parameters via `params` instead."
-            ),
-            FutureWarning,
-        )
-        params = fit_params
-
-    params = {} if params is None else params
-
-    _check_groups_routing_disabled(groups)
-
-    return params
-
-
 # TODO(SLEP6): To be removed when set_config(enable_metadata_routing=False) is not
 # possible.
 def _check_groups_routing_disabled(groups):
@@ -1462,7 +1433,6 @@ def _check_is_permutation(indices, n_samples):
         "random_state": ["random_state"],
         "verbose": ["verbose"],
         "scoring": [StrOptions(set(get_scorer_names())), callable, None],
-        "fit_params": [dict, None],
         "params": [dict, None],
     },
     prefer_skip_nested_validation=False,  # estimator is not validated yet
@@ -1479,7 +1449,6 @@ def permutation_test_score(
     random_state=0,
     verbose=0,
     scoring=None,
-    fit_params=None,
     params=None,
 ):
     """Evaluate the significance of a cross-validated score with permutations.
@@ -1574,13 +1543,6 @@ def permutation_test_score(
         - `None`: the `estimator`'s
           :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
-    fit_params : dict, default=None
-        Parameters to pass to the fit method of the estimator.
-
-        .. deprecated:: 1.6
-            This parameter is deprecated and will be removed in version 1.6. Use
-            ``params`` instead.
-
     params : dict, default=None
         Parameters to pass to the `fit` method of the estimator, the scorer
         and the cv splitter.
@@ -1640,7 +1602,8 @@ def permutation_test_score(
     >>> print(f"P-value: {pvalue:.3f}")
     P-value: 0.010
     """
-    params = _check_params_groups_deprecation(fit_params, params, groups, "1.8")
+    _check_groups_routing_disabled(groups)
+    params = {} if params is None else params
 
     X, y, groups = indexable(X, y, groups)
 
@@ -1766,7 +1729,6 @@ def _shuffle(y, groups, random_state):
         "random_state": ["random_state"],
         "error_score": [StrOptions({"raise"}), Real],
         "return_times": ["boolean"],
-        "fit_params": [dict, None],
         "params": [dict, None],
     },
     prefer_skip_nested_validation=False,  # estimator is not validated yet
@@ -1788,7 +1750,6 @@ def learning_curve(
     random_state=None,
     error_score=np.nan,
     return_times=False,
-    fit_params=None,
     params=None,
 ):
     """Learning curve.
@@ -1908,13 +1869,6 @@ def learning_curve(
     return_times : bool, default=False
         Whether to return the fit and score times.
 
-    fit_params : dict, default=None
-        Parameters to pass to the fit method of the estimator.
-
-        .. deprecated:: 1.6
-            This parameter is deprecated and will be removed in version 1.8. Use
-            ``params`` instead.
-
     params : dict, default=None
         Parameters to pass to the `fit` method of the estimator and to the scorer.
 
@@ -1984,8 +1938,8 @@ def learning_curve(
             "An estimator must support the partial_fit interface "
             "to exploit incremental learning"
         )
-
-    params = _check_params_groups_deprecation(fit_params, params, groups, "1.8")
+    _check_groups_routing_disabled(groups)
+    params = {} if params is None else params
 
     X, y, groups = indexable(X, y, groups)
 
@@ -2270,7 +2224,6 @@ def _incremental_fit_estimator(
         "pre_dispatch": [Integral, str],
         "verbose": ["verbose"],
         "error_score": [StrOptions({"raise"}), Real],
-        "fit_params": [dict, None],
         "params": [dict, None],
     },
     prefer_skip_nested_validation=False,  # estimator is not validated yet
@@ -2289,7 +2242,6 @@ def validation_curve(
     pre_dispatch="all",
     verbose=0,
     error_score=np.nan,
-    fit_params=None,
     params=None,
 ):
     """Validation curve.
@@ -2388,13 +2340,6 @@ def validation_curve(
 
         .. versionadded:: 0.20
 
-    fit_params : dict, default=None
-        Parameters to pass to the fit method of the estimator.
-
-        .. deprecated:: 1.6
-            This parameter is deprecated and will be removed in version 1.8. Use
-            ``params`` instead.
-
     params : dict, default=None
         Parameters to pass to the estimator, scorer and cross-validation object.
 
@@ -2441,7 +2386,9 @@ def validation_curve(
     >>> print(f"The average test accuracy is {test_scores.mean():.2f}")
     The average test accuracy is 0.81
     """
-    params = _check_params_groups_deprecation(fit_params, params, groups, "1.8")
+    _check_groups_routing_disabled(groups)
+    params = {} if params is None else params
+
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
