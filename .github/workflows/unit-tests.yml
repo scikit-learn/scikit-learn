@@ -24,8 +24,8 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+        uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
           cache: 'pip'
@@ -41,11 +41,35 @@ jobs:
           pip install ninja meson scipy
           python build_tools/check-meson-openmp-dependencies.py
 
+  retrieve-commit-message:
+    name: Retrieve the latest commit message
+    runs-on: ubuntu-latest
+    if: github.repository == 'scikit-learn/scikit-learn'
+    outputs:
+      message: ${{ steps.git-log.outputs.message }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - id: git-log
+        name: Set commit message job output
+        shell: bash
+        run: |
+          set -eu
+
+          message=$(git log --format=%B -n 1)
+
+          {
+            echo 'message<<EOF'
+            echo "${message}"
+            echo EOF
+          } >> "${GITHUB_OUTPUT}"
+
   unit-tests:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     if: github.repository == 'scikit-learn/scikit-learn'
-    needs: [lint]
+    needs: [lint, retrieve-commit-message]
     strategy:
       # Ensures that all builds run to completion even if one of them fails
       fail-fast: false
@@ -67,7 +91,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Create cache for ccache
         uses: actions/cache@v4
@@ -88,6 +112,8 @@ jobs:
 
       - name: Run tests
         run: bash -l build_tools/azure/test_script.sh
+        env:
+          COMMIT_MESSAGE: ${{ needs.retrieve-commit-message.outputs.message }}
 
       - name: Combine coverage reports from parallel test runners
         run: bash -l build_tools/azure/combine_coverage_reports.sh
