@@ -851,9 +851,7 @@ class MinCovDet(EmpiricalCovariance):
                 "The covariance matrix of the support data "
                 "is equal to 0, try to increase support_fraction"
             )
-        consistency_factor = _consistency_factor(
-            n_features, n_support / n_samples
-        )
+        consistency_factor = _consistency_factor(n_features, n_support / n_samples)
         covariance_corrected = self.raw_covariance_ * consistency_factor
         self.dist_ /= consistency_factor
         return covariance_corrected
@@ -913,7 +911,7 @@ class MinCovDet(EmpiricalCovariance):
         support_reweighted[mask] = True
         # Parameter alpha as in [Croux1999] Eq. 4.2
         consistency_factor = _consistency_factor(
-          n_features=n_features, alpha=1 - quantile_threshold
+            n_features=n_features, alpha=1 - quantile_threshold
         )
         self._set_covariance(covariance_reweighted * consistency_factor)
         self.location_ = location_reweighted

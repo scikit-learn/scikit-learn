@@ -181,16 +181,16 @@ def test_mincovdet_bias_on_normal(n_samples, n_features, global_random_seed):
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/23162
     """
-    threshold = 0.985 # threshold for variance underesitmation
+    threshold = 0.985  # threshold for variance underesitmation
     x = np.random.randn(n_features, n_samples)
     # Use centered data and assume centered, to reduce test complexity
     x = x - x.mean(axis=1, keepdims=True)
     var_emp = np.var(x, axis=1, ddof=0)
-    cov_mcd = MinCovDet(
-      support_fraction=1.0,
-      store_precision=False,
-      assume_centered=True
-    ).fit(x.T).covariance_
+    cov_mcd = (
+        MinCovDet(support_fraction=1.0, store_precision=False, assume_centered=True)
+        .fit(x.T)
+        .covariance_
+    )
     var_mcd = np.diag(cov_mcd)
 
     # compute mean ratio of variances
