@@ -258,13 +258,13 @@ Set up a local clone of your fork
 Clone your fork of the scikit-learn repo from your GitHub account to your
 local disk:
 
-.. prompt:: bash
+.. prompt::
 
   git clone https://github.com/YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
 
 and change into that directory:
 
-.. prompt:: bash
+.. prompt::
 
   cd scikit-learn
 
@@ -274,14 +274,14 @@ Next, add the ``upstream`` remote. This saves a reference to the main
 scikit-learn repository, which you can use to keep your repository
 synchronized with the latest changes (you'll need this later in the :ref:`development_workflow`):
 
-.. prompt:: bash
+.. prompt::
 
   git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
 Check that the `upstream` and `origin` remote aliases are configured correctly
 by running:
 
-.. prompt:: bash
+.. prompt::
 
   git remote -v
 
@@ -360,12 +360,19 @@ the required packages.
 
           Now create a virtual environment (venv_) and install the required python packages:
 
-          .. prompt:: powershell
+          .. prompt::
 
             python -m venv sklearn-dev
+
+          .. prompt::
+
             sklearn-dev\Scripts\activate  # activate
-            pip install wheel numpy scipy cython meson-python ninja \
-              pytest pytest-cov ruff==0.11.2 mypy numpydoc
+
+          .. prompt::
+
+            pip install wheel numpy scipy cython meson-python ninja ^
+              pytest pytest-cov ruff==0.11.2 mypy numpydoc ^
+              joblib threadpoolctl
 
         .. tab-item:: conda
           :class-label: tab-6
@@ -380,20 +387,22 @@ the required packages.
           .. image::
             ../images/visual-studio-build-tools-selection.png
 
-          Next, install a recent version of Python (|PythonMinVersion| or later) for instance
-          using conda-forge_. Conda-forge provides a conda-based distribution of
+          Next, Download and install `the conda-forge installer`_ (Miniforge)
+          for your system. Conda-forge provides a conda-based distribution of
           Python and the most popular scientific libraries.
-          Create a new conda environment with the required python packages:
+          Open the downloaded "Miniforge Prompt" and create a new conda environment with
+          the required python packages:
 
-          .. prompt:: powershell
+          .. prompt::
 
-            conda create -n sklearn-dev -c conda-forge \
-              python numpy scipy cython meson-python ninja \
-              pytest pytest-cov ruff==0.11.2 mypy numpydoc
+            conda create -n sklearn-dev -c conda-forge ^
+              python numpy scipy cython meson-python ninja ^
+              pytest pytest-cov ruff==0.11.2 mypy numpydoc ^
+              joblib threadpoolctl
 
           Activate the newly created conda environment:
 
-          .. prompt:: powershell
+          .. prompt::
 
             conda activate sklearn-dev
 
@@ -407,21 +416,20 @@ the required packages.
           :class-label: tab-6
           :sync: package-manager-pip
 
-          The default C compiler on macOS, Apple clang (confusingly aliased as
-          `/usr/bin/gcc`), does not directly support OpenMP, so you first need
+          The default C compiler on macOS does not directly support OpenMP, so you first need
           to enable OpenMP support.
 
           Install the macOS command line tools:
 
-          .. prompt:: bash $
+          .. prompt::
 
-              xcode-select --install
+            xcode-select --install
 
           Next, install the LLVM OpenMP library with Homebrew_:
 
-          .. prompt:: bash $
+          .. prompt::
 
-              brew install libomp
+            brew install libomp
 
           Install a recent version of Python (|PythonMinVersion| or later) using Homebrew_
           (`brew install python`) or by manually installing the package from the
@@ -429,42 +437,48 @@ the required packages.
 
           Now create a virtual environment (venv_) and install the required python packages:
 
-          .. prompt:: bash
+          .. prompt::
 
             python -m venv sklearn-dev
+
+          .. prompt::
+
             source sklearn-dev/bin/activate  # activate
+
+          .. prompt::
+
             pip install wheel numpy scipy cython meson-python ninja \
-              pytest pytest-cov ruff==0.11.2 mypy numpydoc
+              pytest pytest-cov ruff==0.11.2 mypy numpydoc \
+              joblib threadpoolctl
 
         .. tab-item:: conda
           :class-label: tab-6
           :sync: package-manager-conda
 
-          The default C compiler on macOS, Apple clang (confusingly aliased as
-          `/usr/bin/gcc`), does not directly support OpenMP. To enable the
+          The default C compiler on macOS does not directly support OpenMP. To enable the
           installation of the ``compilers`` meta-package from the conda-forge channel,
           which provides OpenMP-enabled C/C++ compilers based on the LLVM toolchain,
           you first need to install the macOS command line tools:
 
-          .. prompt:: bash $
+          .. prompt::
 
-              xcode-select --install
+            xcode-select --install
 
-          Install a recent version of Python (|PythonMinVersion| or later) for instance
-          using conda-forge_. Conda-forge provides a conda-based distribution of
+          Next, download and install `the conda-forge installer`_ (Miniforge) for your system.
+          Conda-forge provides a conda-based distribution of
           Python and the most popular scientific libraries.
           Create a new conda environment with the required python packages:
 
-          .. prompt:: bash $
+          .. prompt::
 
             conda create -n sklearn-dev -c conda-forge python \
               numpy scipy cython meson-python ninja \
               pytest pytest-cov ruff==0.11.2 mypy numpydoc \
               joblib threadpoolctl compilers llvm-openmp
 
-          Activate the newly created conda environment:
+          and activate the newly created conda environment:
 
-          .. prompt:: bash $
+          .. prompt::
 
             conda activate sklearn-dev
 
@@ -480,7 +494,7 @@ the required packages.
 
           To check your installed Python version, run:
 
-          .. prompt:: bash
+          .. prompt::
 
             python3 --version
 
@@ -490,58 +504,59 @@ the required packages.
           Next, you need to have a working C/C++ compiler with OpenMP support.
           Install the build dependencies for **Debian-based operating systems, e.g. Ubuntu**:
 
-          .. prompt:: bash $
+          .. prompt::
 
-              sudo apt-get install build-essential python3-dev
+            sudo apt-get install build-essential python3-dev
 
           Now create a virtual environment (venv_) and install the required python packages:
 
-          .. prompt:: bash
+          .. prompt::
 
             python -m venv sklearn-dev
+
+          .. prompt::
+
             source sklearn-dev/bin/activate  # activate
+
+          .. prompt::
+
             pip install wheel numpy scipy cython meson-python ninja \
-              pytest pytest-cov ruff==0.11.2 mypy numpydoc
+              pytest pytest-cov ruff==0.11.2 mypy numpydoc \
+              joblib threadpoolctl
 
           When precompiled wheels of the runtime dependencies are not available for your
           architecture (e.g. **ARM**), you can install the system versions:
 
-          .. prompt:: bash $
+          .. prompt::
 
-              sudo apt-get install cython3 python3-numpy python3-scipy
+            sudo apt-get install cython3 python3-numpy python3-scipy
 
           On **Red Hat and clones (e.g. CentOS)**, install the dependencies using:
 
-          .. prompt:: bash $
+          .. prompt::
 
-              sudo yum -y install gcc gcc-c++ python3-devel numpy scipy
+            sudo yum -y install gcc gcc-c++ python3-devel numpy scipy
 
         .. tab-item:: conda
           :class-label: tab-6
           :sync: package-manager-conda
 
-          To check your installed Python version, run:
-
-          .. prompt:: bash
-
-            python3 --version
-
-          If you don't have Python |PythonMinVersion| or later, please install a
-          recent version for instance using conda-forge_. Conda-forge provides a
-          conda-based distribution of Python and the most popular scientific libraries.
+          Download and install `the conda-forge installer`_ (Miniforge) for your system.
+          Conda-forge provides a conda-based distribution of Python and the most
+          popular scientific libraries.
           Create a new conda environment with the required python packages
           (including `compilers` for a working C/C++ compiler with OpenMP support):
 
-          .. prompt:: bash $
+          .. prompt::
 
             conda create -n sklearn-dev -c conda-forge python \
               numpy scipy cython meson-python ninja \
               pytest pytest-cov ruff==0.11.2 mypy numpydoc \
               joblib threadpoolctl compilers
 
-          Activate the newly created environment:
+          and activate the newly created environment:
 
-          .. prompt:: bash $
+          .. prompt::
 
             conda activate sklearn-dev
 
@@ -549,13 +564,13 @@ the required packages.
 
 Install editable version of scikit-learn
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Within your venv or conda `sklearn-dev` environment, build the project with pip:
+Make sure you are in the `scikit-learn` directory
+and your venv or conda `sklearn-dev` environment is activated.
+You can now install an editable version of scikit-learn with `pip`:
 
-.. prompt:: bash $
+.. prompt::
 
-  pip install --editable . \
-    --verbose --no-build-isolation \
-    --config-settings editable-verbose=true
+  pip install --editable . --verbose --no-build-isolation --config-settings editable-verbose=true
 
 .. dropdown:: Note on `--config-settings`
 
@@ -574,7 +589,7 @@ Within your venv or conda `sklearn-dev` environment, build the project with pip:
 To check your installation, make sure that the installed scikit-learn has a
 version number ending with `.dev0`:
 
-.. prompt:: bash $
+.. prompt::
 
   python -c "import sklearn; sklearn.show_versions()"
 
@@ -585,7 +600,7 @@ It can be useful to run the tests now (even though it will take some time)
 to verify your installation and to be aware of warnings and errors that are not
 related to you contribution:
 
-.. prompt:: bash $
+.. prompt::
 
   pytest
 
@@ -600,7 +615,7 @@ and :ref:`pytest_tips`.
 .. _Homebrew: https://brew.sh
 .. _venv: https://docs.python.org/3/tutorial/venv.html
 .. _conda: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
-.. _conda-forge: https://conda-forge.org/download/
+.. _the conda-forge installer: https://conda-forge.org/download/
 
 .. END Set up your development environment - TODO: move to separate file and link to it
 
