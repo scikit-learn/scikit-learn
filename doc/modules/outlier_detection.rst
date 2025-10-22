@@ -280,8 +280,8 @@ lengths for particular samples, they are highly likely to be anomalies.
 The implementation of :class:`ensemble.IsolationForest` is based on an ensemble
 of :class:`tree.ExtraTreeRegressor`. Following Isolation Forest original paper,
 the maximum depth of each tree is set to :math:`\lceil \log_2(n) \rceil` where
-:math:`n` is the number of samples used to build the tree (see (Liu et al.,
-2008) for more details).
+:math:`n` is the number of samples used to build the tree (see [1]_
+for more details).
 
 This algorithm is illustrated below.
 
@@ -317,8 +317,10 @@ allows you to add more trees to an already fitted model::
 
 .. rubric:: References
 
-* Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
-  Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
+.. [1] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua.
+       :doi:`"Isolation forest." <10.1109/ICDM.2008.17>`
+       2008 Eighth IEEE International Conference on Data Mining (ICDM),
+       2008, pp. 413-422.
 
 .. _local_outlier_factor:
 
