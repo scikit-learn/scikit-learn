@@ -273,6 +273,25 @@ admissible seeds on your local machine:
 
     SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all" pytest -v -k test_your_test_name
 
+For example, to write a test that uses the ``global_random_seed`` fixture:
+
+.. code-block:: python
+
+    def test_random_behavior(global_random_seed):
+        import numpy as np
+        rng = np.random.RandomState(global_random_seed)
+        value = rng.rand()
+        assert 0 <= value < 1
+
+Run this test locally across all admissible random seeds with:
+
+.. prompt:: bash $
+
+    SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all" pytest -v -k test_random_behavior
+
+This ensures the test is deterministic for all seed values from 0 to 99.
+
+
 `SKLEARN_SKIP_NETWORK_TESTS`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
