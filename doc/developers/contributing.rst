@@ -557,7 +557,7 @@ Within your venv or conda `sklearn-dev` environment, build the project with pip:
     --verbose --no-build-isolation \
     --config-settings editable-verbose=true
 
-.. note::
+.. dropdown:: Note on `--config-settings`
 
   `--config-settings editable-verbose=true` is optional but recommended
   to avoid surprises when you import `sklearn`. `meson-python` implements
