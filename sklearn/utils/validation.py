@@ -32,6 +32,7 @@ from sklearn.utils._array_api import (
     get_namespace_and_device,
 )
 from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
+from sklearn.utils._missing import is_pandas_na, is_pandas_nat, is_scalar_nan
 from sklearn.utils._tags import get_tags
 from sklearn.utils.deprecation import _deprecate_force_all_finite
 from sklearn.utils.fixes import (
@@ -3036,51 +3037,24 @@ def validate_data(
     return out
 
 
-def _looks_like_pandas_na(x) -> bool:
-    """Return True if x is the pandas scalar NA"""
-    t = type(x)
-    return (
-        getattr(t, "__name__", "") == "NAType"
-        and getattr(t, "__module__", "") == "pandas._libs.missing"
-    )
-
-
-def _looks_like_pandas_nat(x) -> bool:
-    """Return True if x is the pandas scalar NaT"""
-    t = type(x)
-    return (
-        getattr(t, "__name__", "") in {"NaTType", "NaT"}
-        and getattr(t, "__module__", "") == "pandas._libs.tslibs.nattype"
-    )
-
-
 @unique
 class _NAKey(Enum):
-    """Internal sentinel keys used to normalize various NA/NAT spellings."""
-
-    NONE = 0  # exactly None
-    NAN = 1  # float NaN
-    PD_NA = 2  # pandas.NA
-    PD_NAT = 3  # pandas.NaT
-    NAT = 4  # numpy datetime/timedelta NaT
+    NONE = 0
+    NAN = 1
+    PD_NA = 2
+    PD_NAT = 3
+    NAT = 4
 
 
 def _normalize_na_key(x):
-    """Map different NA/NAT spellings to stable enum keys for dict lookups.
-
-    Returns an _NAKey member for recognized missing values; otherwise returns x.
-    """
     if x is None:
         return _NAKey.NONE
-    # plain Python/NumPy float NaN
-    if isinstance(x, (float, np.floating)) and np.isnan(x):
+    if is_scalar_nan(x):
         return _NAKey.NAN
-    # pandas extension sentinels (duck-typed; no pandas import required)
-    if _looks_like_pandas_na(x):
+    if is_pandas_na(x):
         return _NAKey.PD_NA
-    if _looks_like_pandas_nat(x):
+    if is_pandas_nat(x):  # new helper, same style as is_pandas_na
         return _NAKey.PD_NAT
-    # NumPy datetime/timedelta NaT
     if isinstance(x, (np.datetime64, np.timedelta64)) and np.isnat(x):
         return _NAKey.NAT
     return x
