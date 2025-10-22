@@ -74,7 +74,11 @@ if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
     fi
 fi
 
+# In GitHub Action (especially in `.github/workflows/unit-tests.yml` which
+# calls this script), the environment variable `SELECTED_TESTS` is already set.
 if [[ -z "${SELECTED_TESTS+x}" ]]; then
+    # If 'SELECTED_TEST' is unset we are in Azure, and we retrieve the selected tests
+    # via the dedicated script.
     SELECTED_TESTS=$(python build_tools/azure/get_selected_tests.py)
 fi
 
