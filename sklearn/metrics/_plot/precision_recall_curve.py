@@ -37,16 +37,14 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     ----------
     precision : ndarray or list of ndarrays
         Precision values. Each ndarray should contain values for a single curve.
-        If plotting multiple curves, list should be of same length as
-        and `recall`.
+        If plotting multiple curves, list should be of same length as `recall`.
 
         .. versionchanged:: 1.8
             Now accepts a list for plotting multiple curves.
 
     recall : ndarray or list of ndarrays
         Recall values. Each ndarray should contain values for a single curve.
-        If plotting multiple curves, list should be of same length as
-        and `precision`.
+        If plotting multiple curves, list should be of same length as `precision`.
 
         .. versionchanged:: 1.8
             Now accepts a list for plotting multiple curves.

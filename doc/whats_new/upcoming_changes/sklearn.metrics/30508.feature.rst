@@ -1,4 +1,4 @@
 - Add class method `from_cv_results` to :class:`metrics.PrecisionRecallDisplay`,
   which allows easy plotting of multiple precision-recall curves from
   :func:`model_selection.cross_validate` results.
-  By :user:`Lucy Liu <lucyleeow>`
+  By :user:`Lucy Liu <lucyleeow>`.
