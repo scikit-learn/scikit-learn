@@ -39,12 +39,18 @@ details[open] > summary {
     border-radius: 0 0 .5em .5em;
 }
 
+.features .image-container {
+  background-color: var(--sklearn-color-fitted-level-2);
+  margin: 0;
+  padding: 0;
+  padding: .25em
+}
+
 .features .copy-paste-icon {
    background-size: 10px 10px;
    width: 10px;
    height: 10px;
-   /*padding: 1%;*/
-   /*background-color: var(--sklearn-color-fitted-level-1);*/
+   background-color: var(--sklearn-color-fitted-level-2);
    margin-left: 1.5em;
    margin-right:  1em;
 }

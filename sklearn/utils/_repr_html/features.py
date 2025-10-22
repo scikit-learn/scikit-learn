@@ -19,6 +19,7 @@ def _features_html(features):
               </table>
             </div>
           </details>
+          <div class="image-container">
           <i class="copy-paste-icon"
               onclick="
                 var detailsElem = this.closest('.features').querySelector('details');
@@ -31,6 +32,7 @@ def _features_html(features):
               "
               title="Copy all output features">
           </i>
+          </div>
         </div>
     """
 
