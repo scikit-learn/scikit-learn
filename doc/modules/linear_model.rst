@@ -150,6 +150,7 @@ the corresponding solver is chosen.
 * :ref:`sphx_glr_auto_examples_linear_model_plot_ols_ridge.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
 * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`
 
 Classification
 --------------
@@ -270,6 +271,7 @@ computes the coefficients along the full path of possible values.
 * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
 * :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`
 * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py`
 
 
 .. note:: **Feature selection with Lasso**
@@ -296,7 +298,7 @@ computes the coefficients along the full path of possible values.
 Coordinate Descent with Gap Safe Screening Rules
 ------------------------------------------------
 
-Coordinate descent (CD) is a strategy so solve a minimization problem that considers a
+Coordinate descent (CD) is a strategy to solve a minimization problem that considers a
 single feature :math:`j` at a time. This way, the optimization problem is reduced to a
 1-dimensional problem which is easier to solve:
 
