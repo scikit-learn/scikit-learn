@@ -5,10 +5,16 @@
 More advanced installation / Troubleshooting
 ==================================================
 
+Here, you find some more advanced notes and troubleshooting tips related to
+:ref:`install_bleeding_edge`.
+
 .. _openMP_notes:
 
 Notes on OpenMP
 ===============
+
+Even though the default C compiler on macOS (Apple clang) is confusingly aliased
+as `/usr/bin/gcc`, it does not directly support OpenMP.
 
 .. note::
 
