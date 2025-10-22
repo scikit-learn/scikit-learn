@@ -1,21 +1,28 @@
 import argparse
+import logging
 import os
 import subprocess
-import warnings
+
+logger = logging.getLogger(__name__)
 
 
 def get_commit_message():
     """Retrieve the commit message."""
-    build_source_version_message = os.environ.get("BUILD_SOURCEVERSIONMESSAGE")
-    if build_source_version_message is None:
-        # We are not on Azure: behaviour based on commit-message is not
-        # supported for now.
-        # TODO: this should be implemented at one point for GHA.
-        warnings.warn(
-            "get_commit_message not supported outside Azure for now, "
-            "returning empty commit message"
+
+    if "COMMIT_MESSAGE" in os.environ or os.environ.get("GITHUB_ACTIONS", False):
+        raise RuntimeError(
+            f"It seems that the `COMMIT_MESSAGE` environment variable is set or you are"
+            f"in a GitHub Actions context "
+            f"(GITHUB_ACTIONS={os.environ.get('GITHUB_ACTIONS', False)})."
+            f"Instead, please use directly `COMMIT_MESSAGE`."
         )
-        return ""
+
+    logger.debug("`commit_message` coming from Azure")
+
+    # If 'COMMIT_MESSAGE' is unset we are in Azure, and we retrieve the commit
+    # message using Azure-specific variables.
+
+    build_source_version_message = os.environ["BUILD_SOURCEVERSIONMESSAGE"]
 
     if os.environ["BUILD_REASON"] == "PullRequest":
         # By default pull requests use refs/pull/PULL_ID/merge as the source branch

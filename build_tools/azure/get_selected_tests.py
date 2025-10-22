@@ -1,4 +1,9 @@
+import logging
+import os
+
 from get_commit_message import get_commit_message
+
+logger = logging.getLogger(__name__)
 
 
 def get_selected_tests():
@@ -12,6 +17,16 @@ def get_selected_tests():
         <test_name_2>
         ...
     """
+    if "SELECTED_TESTS" in os.environ or os.environ.get("GITHUB_ACTIONS", False):
+        raise RuntimeError(
+            f"It seems that the `SELECTED_TESTS` environment variable is set or you are"
+            f"in a GitHub Actions context "
+            f"(GITHUB_ACTIONS={os.environ.get('GITHUB_ACTIONS', False)})."
+            f"Instead, please use directly `SELECTED_TESTS`."
+        )
+
+    logger.debug("`selected_tests` coming from Azure")
+
     commit_message = get_commit_message()
 
     if "[all random seeds]" in commit_message:
@@ -24,11 +39,8 @@ def get_selected_tests():
 
 
 if __name__ == "__main__":
-    # set the environment variable to be propagated to other steps
     selected_tests = get_selected_tests()
 
-    if selected_tests:
-        print(f"##vso[task.setvariable variable=SELECTED_TESTS]'{selected_tests}'")
-        print(f"selected tests: {selected_tests}")  # helps debugging
-    else:
-        print("no selected tests")
+    # set the environment variable to be propagated to other steps
+    print(f"##vso[task.setvariable variable=SELECTED_TESTS]'{selected_tests}'")
+    print(f"selected tests: {selected_tests}")  # helps debugging
