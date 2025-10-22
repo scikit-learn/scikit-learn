@@ -13,7 +13,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy import linalg
-from scipy.stats import chi2, gamma
+from scipy.stats import chi2
 
 from sklearn.base import _fit_context
 from sklearn.covariance._empirical_covariance import (
@@ -214,8 +214,8 @@ def _c_step(
 
 
 def _consistency_factor(n_features, alpha):
-    """Multiplicative factor to make covariance estimate
-    consistent at the normal distribution, as described in [Croux1999]_.
+    """Multiplicative factor to make covariance estimate consistent
+    at the normal distribution, as described in [Pison2002]_.
 
     Parameters
     ----------
@@ -223,7 +223,7 @@ def _consistency_factor(n_features, alpha):
         Number of features.
 
     alpha : float
-        Parameter related to the support fraction.
+        Parameter related to the proportion of discarded points.
         This parameter must be in the range (0, 1).
 
     Returns
@@ -233,13 +233,17 @@ def _consistency_factor(n_features, alpha):
 
     References
     ----------
-    .. [Croux1999] Influence Function and Efficiency of the Minimum
-        Covariance Determinant Scatter Matrix Estimator, 1999, Journal of
-        Multivariate Analysis, Volume 71, Issue 2, Pages 161-190
+    .. [Croux1999] Croux, C., Haesbroeck, G. "Influence Function and
+        Efficiency of the Minimum Covariance Determinant Scatter Matrix
+        Estimator" Journal of Multivariate Analysis 71(2) (1999) 161-190
+
+    .. [Pison2002] Pison, G., Van Aelst, S., Willems, G., "Small sample
+        corrections for LTS and MCD" Metrika 55(1) (2002) 111-123
     """
+    # Formulas as in Sec 3 of Pison 2002, derived from Eq 4.2 in Croux 1999
     q_alpha = chi2.ppf(alpha, df=n_features)
-    c_alpha = gamma.cdf(q_alpha / 2, n_features / 2 + 1) / alpha
-    return 1.0 / c_alpha
+    c_alpha = alpha / chi2.cdf(q_alpha, n_features + 2)
+    return c_alpha
 
 
 def select_candidates(
