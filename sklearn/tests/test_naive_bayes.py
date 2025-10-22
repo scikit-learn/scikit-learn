@@ -207,18 +207,23 @@ def test_gnb_check_update_with_no_data():
     assert tvar == var
 
 
-def test_gnb_partial_fit():
-    clf = GaussianNB().fit(X, y)
-    clf_pf = GaussianNB().partial_fit(X, y, np.unique(y))
-    assert_array_almost_equal(clf.theta_, clf_pf.theta_)
-    assert_array_almost_equal(clf.var_, clf_pf.var_)
-    assert_array_almost_equal(clf.class_prior_, clf_pf.class_prior_)
+def test_gnb_partial_fit(global_dtype):
+    X_ = X.astype(global_dtype)
+    clf = GaussianNB().fit(X_, y)
+    clf_pf = GaussianNB().partial_fit(X_, y, np.unique(y))
+    for fitted_attr in ("class_prior_", "theta_", "var_"):
+        clf_attr = getattr(clf, fitted_attr)
+        clf_pf_attr = getattr(clf_pf, fitted_attr)
+        assert clf_attr.dtype == clf_pf_attr.dtype == X_.dtype
+        assert_array_almost_equal(clf_attr, clf_pf_attr)
 
-    clf_pf2 = GaussianNB().partial_fit(X[0::2, :], y[0::2], np.unique(y))
-    clf_pf2.partial_fit(X[1::2], y[1::2])
-    assert_array_almost_equal(clf.theta_, clf_pf2.theta_)
-    assert_array_almost_equal(clf.var_, clf_pf2.var_)
-    assert_array_almost_equal(clf.class_prior_, clf_pf2.class_prior_)
+    clf_pf2 = GaussianNB().partial_fit(X_[0::2, :], y[0::2], np.unique(y))
+    clf_pf2.partial_fit(X_[1::2], y[1::2])
+    for fitted_attr in ("class_prior_", "theta_", "var_"):
+        clf_attr = getattr(clf, fitted_attr)
+        clf_pf2_attr = getattr(clf_pf2, fitted_attr)
+        assert clf_attr.dtype == clf_pf2_attr.dtype == X_.dtype
+        assert_array_almost_equal(clf_attr, clf_pf2_attr)
 
 
 def test_gnb_naive_bayes_scale_invariance():
@@ -1019,8 +1024,12 @@ def test_gnb_array_api_compliance(
     y_pred_log_proba_np = clf_np.predict_log_proba(X_np)
     with config_context(array_api_dispatch=True):
         clf_xp = GaussianNB().fit(X_xp, y_xp_or_np, sample_weight=sample_weight)
-        assert_allclose(_convert_to_numpy(clf_xp.var_, xp=xp), clf_np.var_)
-        assert_allclose(_convert_to_numpy(clf_xp.theta_, xp=xp), clf_np.theta_)
+        for fitted_attr in ("class_count_", "class_prior_", "theta_", "var_"):
+            xp_attr = getattr(clf_xp, fitted_attr)
+            np_attr = getattr(clf_np, fitted_attr)
+            assert xp_attr.dtype == X_xp.dtype
+            assert device(xp_attr) == device(X_xp)
+            assert_allclose(_convert_to_numpy(xp_attr, xp=xp), np_attr)
 
         y_pred_xp = clf_xp.predict(X_xp)
         if not use_str_y:
