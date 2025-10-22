@@ -845,13 +845,14 @@ class MinCovDet(EmpiricalCovariance):
         # Otherwise self.dist_ = 0 and thus correction = 0.
         n_samples = len(self.dist_)
         n_support = np.sum(self.support_)
+        n_features = self.raw_covariance_.shape[0]
         if n_support < n_samples and np.allclose(self.raw_covariance_, 0):
             raise ValueError(
                 "The covariance matrix of the support data "
                 "is equal to 0, try to increase support_fraction"
             )
         consistency_factor = _consistency_factor(
-            self.raw_covariance_.shape[0], n_support / n_samples
+            n_features, n_support / n_samples
         )
         covariance_corrected = self.raw_covariance_ * consistency_factor
         self.dist_ /= consistency_factor
@@ -893,12 +894,14 @@ class MinCovDet(EmpiricalCovariance):
         .. [RVDriessen] A Fast Algorithm for the Minimum Covariance
             Determinant Estimator, 1999, American Statistical Association
             and the American Society for Quality, TECHNOMETRICS
+
         .. [Croux1999] Influence Function and Efficiency of the Minimum
             Covariance Determinant Scatter Matrix Estimator, 1999, Journal of
             Multivariate Analysis, Volume 71, Issue 2, Pages 161-190
         """
         n_samples, n_features = data.shape
-        mask = self.dist_ < chi2(n_features).isf(0.025)
+        quantile_threshold = 0.025
+        mask = self.dist_ < chi2(n_features).isf(quantile_threshold)
         if self.assume_centered:
             location_reweighted = np.zeros(n_features)
         else:
@@ -908,7 +911,10 @@ class MinCovDet(EmpiricalCovariance):
         )
         support_reweighted = np.zeros(n_samples, dtype=bool)
         support_reweighted[mask] = True
-        consistency_factor = _consistency_factor(n_features, 0.975)
+        # Parameter alpha as in [Croux1999] Eq. 4.2
+        consistency_factor = _consistency_factor(
+          n_features=n_features, alpha=1 - quantile_threshold
+        )
         self._set_covariance(covariance_reweighted * consistency_factor)
         self.location_ = location_reweighted
         self.support_ = support_reweighted
