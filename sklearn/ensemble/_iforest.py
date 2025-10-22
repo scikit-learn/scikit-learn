@@ -201,15 +201,18 @@ class IsolationForest(OutlierMixin, BaseBagging):
     The implementation is based on an ensemble of ExtraTreeRegressor. The
     maximum depth of each tree is set to ``ceil(log_2(n))`` where
     :math:`n` is the number of samples used to build the tree
-    (see (Liu et al., 2008) for more details).
+    (see [1]_ for more details).
 
     References
     ----------
-    .. [1] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
-           Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
-    .. [2] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation-based
-           anomaly detection." ACM Transactions on Knowledge Discovery from
-           Data (TKDD) 6.1 (2012): 3.
+    .. [1] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua.
+           :doi:`"Isolation forest." <10.1109/ICDM.2008.17>`
+           2008 Eighth IEEE International Conference on Data Mining (ICDM),
+           2008, pp. 413-422.
+    .. [2] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua.
+           :doi:`"Isolation-based anomaly detection."
+           <10.1145/2133360.2133363>` ACM Transactions on
+           Knowledge Discovery from Data (TKDD) 6.1 (2012): 1-39.
 
     Examples
     --------
