@@ -80,11 +80,13 @@ def _find_floating_dtype_allow_sparse(X, Y, xp=None):
     return X, Y, dtype_float
 
 
-def _get_dtype_for_array_check_allow_sparse(X, Y, metric):
-    """Find the necessary dtype to pass to `check_pairwise_arrays` for casting
+def _find_dtype_for_check_pairwise_arrays(X, Y, metric):
+    """Find the necessary dtype to pass to `check_pairwise_arrays`
 
-    Metric-aware: returns ``bool`` for boolean metrics, and ``"infer_float"``
-    for non-boolean metrics.
+    `check_pairwise_arrays` may need to cast the inputs to a common dtype: ``bool`` for
+    boolean metrics, and ``float32|float64`` otherwise (inferred by passing it
+    ``"infer_float"``). This helper is metric-aware and returns the required dtype so
+    said cast is performed only if needed, and warns if a cast to bool will be done.
     """
 
     if metric in PAIRWISE_BOOLEAN_FUNCTIONS:
@@ -822,7 +824,7 @@ def pairwise_distances_argmin_min(
     >>> distances
     array([1., 1.])
     """
-    X, Y, dtype = _get_dtype_for_array_check_allow_sparse(X, Y, metric)
+    X, Y, dtype = _find_dtype_for_check_pairwise_arrays(X, Y, metric)
     ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
     X, Y = check_pairwise_arrays(X, Y, dtype=dtype, ensure_all_finite=ensure_all_finite)
 
@@ -964,7 +966,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     >>> pairwise_distances_argmin(X, Y)
     array([0, 1])
     """
-    X, Y, dtype = _get_dtype_for_array_check_allow_sparse(X, Y, metric)
+    X, Y, dtype = _find_dtype_for_check_pairwise_arrays(X, Y, metric)
     ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
     X, Y = check_pairwise_arrays(X, Y, dtype=dtype, ensure_all_finite=ensure_all_finite)
 
@@ -2458,7 +2460,7 @@ def pairwise_distances(
         if issparse(X) or issparse(Y):
             raise TypeError("scipy distance metrics do not support sparse matrices.")
 
-        X, Y, dtype = _get_dtype_for_array_check_allow_sparse(X, Y, metric)
+        X, Y, dtype = _find_dtype_for_check_pairwise_arrays(X, Y, metric)
         X, Y = check_pairwise_arrays(
             X, Y, dtype=dtype, ensure_all_finite=ensure_all_finite
         )
