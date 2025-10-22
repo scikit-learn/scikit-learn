@@ -6,8 +6,8 @@ import pytest
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.calibration import CalibrationDisplay
 from sklearn.compose import make_column_transformer
-from sklearn.datasets import load_breast_cancer, load_iris
-from sklearn.exceptions import NotFittedError
+from sklearn.datasets import load_breast_cancer, load_iris, make_classification
+from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     ConfusionMatrixDisplay,
@@ -139,7 +139,9 @@ def test_display_curve_error_no_response(
 @pytest.mark.parametrize(
     "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
 )
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions", "from_cv_results"]
+)
 def test_display_curve_estimator_name_multiple_calls(
     pyplot,
     data_binary,
@@ -152,14 +154,20 @@ def test_display_curve_estimator_name_multiple_calls(
     clf_name = "my hand-crafted name"
     clf = LogisticRegression().fit(X, y)
     y_pred = clf.predict_proba(X)[:, 1]
-
-    # safe guard for the binary if/else construction
-    assert constructor_name in ("from_estimator", "from_predictions")
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
 
     if constructor_name == "from_estimator":
         disp = Display.from_estimator(clf, X, y, name=clf_name)
-    else:
+    elif constructor_name == "from_predictions":
         disp = Display.from_predictions(y, y_pred, name=clf_name)
+    else:
+        if Display in (RocCurveDisplay, PrecisionRecallDisplay):
+            disp = Display.from_cv_results(cv_results, X, y, name=clf_name)
+        else:
+            pytest.skip(f"`from_cv_results` not implemented in {Display}")
+
     # TODO: Clean-up once `estimator_name` deprecated in all displays
     if Display in (PrecisionRecallDisplay, RocCurveDisplay):
         assert disp.name == clf_name
@@ -167,11 +175,17 @@ def test_display_curve_estimator_name_multiple_calls(
         assert disp.estimator_name == clf_name
     pyplot.close("all")
     disp.plot()
-    assert clf_name in disp.line_.get_label()
+    if constructor_name == "from_cv_results":
+        assert clf_name in disp.line_[0].get_label()
+    else:
+        assert clf_name in disp.line_.get_label()
     pyplot.close("all")
     clf_name = "another_name"
     disp.plot(name=clf_name)
-    assert clf_name in disp.line_.get_label()
+    if constructor_name == "from_cv_results":
+        assert clf_name in disp.line_[0].get_label()
+    else:
+        assert clf_name in disp.line_.get_label()
 
 
 @pytest.mark.parametrize(
@@ -277,7 +291,7 @@ def test_display_curve_error_pos_label(pyplot, data_binary, Display):
 )
 @pytest.mark.parametrize(
     "constructor",
-    ["from_predictions", "from_estimator"],
+    ["from_predictions", "from_estimator", "from_cv_results"],
 )
 def test_classifier_display_curve_named_constructor_return_type(
     pyplot, data_binary, Display, constructor
@@ -294,25 +308,57 @@ def test_classifier_display_curve_named_constructor_return_type(
     y_pred = y
 
     classifier = LogisticRegression().fit(X, y)
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
 
     class SubclassOfDisplay(Display):
         pass
 
     if constructor == "from_predictions":
         curve = SubclassOfDisplay.from_predictions(y, y_pred)
-    else:  # constructor == "from_estimator"
+    elif constructor == "from_estimator":
         curve = SubclassOfDisplay.from_estimator(classifier, X, y)
+    else:  # `from_cv_results`
+        if Display in (RocCurveDisplay, PrecisionRecallDisplay):
+            curve = SubclassOfDisplay.from_cv_results(cv_results, X, y)
+        else:
+            pytest.skip(f"`from_cv_results` not implemented in {Display}")
 
     assert isinstance(curve, SubclassOfDisplay)
 
 
-def _check_validate_plot_params(display_class, display_args):
-    """Helper to check `_validate_plot_params` returns the correct variables.
+@pytest.mark.parametrize(
+    "Display, display_args",
+    [
+        (
+            PrecisionRecallDisplay,
+            {
+                "precision": np.array([1, 0.5, 0]),
+                "recall": [np.array([0, 0.5, 1])],
+                "average_precision": None,
+                "name": "test_curve",
+                "prevalence_pos_label": 0.5,
+            },
+        ),
+        (
+            RocCurveDisplay,
+            {
+                "fpr": np.array([0, 0.5, 1]),
+                "tpr": [np.array([0, 0.5, 1])],
+                "roc_auc": None,
+                "name": "test_curve",
+            },
+        ),
+    ],
+)
+def test_display_validate_plot_params(pyplot, Display, display_args):
+    """Check `_validate_plot_params` returns the correct variables.
 
     `display_args` should be given in the same order as output by
     `_validate_plot_params`. All `display_args` should be for a single curve.
     """
-    display = display_class(**display_args)
+    display = Display(**display_args)
     results = display._validate_plot_params(ax=None, name=None)
 
     # Check if the number of parameters match
@@ -328,102 +374,77 @@ def _check_validate_plot_params(display_class, display_args):
             assert len(results[idx]) == 1
 
 
-def _check_from_cv_results_param_validation(data, display_class):
-    """Check parameter validation is correct."""
-    X, y = data
+auc_metrics = [[1.0, 1.0, 1.0], None]
 
-    # `cv_results` missing key
-    cv_results_no_est = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=False
-    )
-    cv_results_no_indices = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=False
-    )
-    for cv_results in (cv_results_no_est, cv_results_no_indices):
-        with pytest.raises(
-            ValueError,
-            match="`cv_results` does not contain one of the following required",
-        ):
-            display_class.from_cv_results(cv_results, X, y)
 
-    cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
-    )
-
-    # `X` wrong length
-    with pytest.raises(ValueError, match="`X` does not contain the correct"):
-        display_class.from_cv_results(cv_results, X[:10, :], y)
-
-    # `y` not binary
-    y_multi = y.copy()
-    y_multi[0] = 2
-    with pytest.raises(ValueError, match="The target `y` is not binary."):
-        display_class.from_cv_results(cv_results, X, y_multi)
-
-    # input inconsistent length
-    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
-        display_class.from_cv_results(cv_results, X, y[:10])
-    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
-        display_class.from_cv_results(cv_results, X, y, sample_weight=[1, 2])
-
-    # `name` is list while `curve_kwargs` is None or dict
-    for curve_kwargs in (None, {"alpha": 0.2}):
-        with pytest.raises(ValueError, match="To avoid labeling individual curves"):
-            display_class.from_cv_results(
-                cv_results,
-                X,
-                y,
-                name=["one", "two", "three"],
-                curve_kwargs=curve_kwargs,
-            )
-
-    # `curve_kwargs` incorrect length
-    with pytest.raises(ValueError, match="`curve_kwargs` must be None, a dictionary"):
-        display_class.from_cv_results(cv_results, X, y, curve_kwargs=[{"alpha": 1}])
-
-    # `curve_kwargs` both alias provided
-    with pytest.raises(TypeError, match="Got both c and"):
-        display_class.from_cv_results(
-            cv_results, X, y, curve_kwargs={"c": "blue", "color": "red"}
+@pytest.mark.parametrize(
+    "Display, auc_metric_name, display_args",
+    [
+        pytest.param(
+            PrecisionRecallDisplay,
+            "AP",
+            {
+                "precision": [
+                    np.array([1, 0.5, 0]),
+                    np.array([1, 0.5, 0]),
+                    np.array([1, 0.5, 0]),
+                ],
+                "recall": [
+                    np.array([0, 0.5, 1]),
+                    np.array([0, 0.5, 1]),
+                    np.array([0, 0.5, 1]),
+                ],
+                "average_precision": auc_metric,
+            },
         )
-
-
-def _check_plot_legend_label(
-    display_class, display_args, name, curve_kwargs, auc_metric, auc_metric_name
+        for auc_metric in auc_metrics
+    ]
+    + [
+        pytest.param(
+            RocCurveDisplay,
+            "AUC",
+            {
+                "fpr": [
+                    np.array([0, 0.5, 1]),
+                    np.array([0, 0.5, 1]),
+                    np.array([0, 0.5, 1]),
+                ],
+                "tpr": [
+                    np.array([0, 0.5, 1]),
+                    np.array([0, 0.5, 1]),
+                    np.array([0, 0.5, 1]),
+                ],
+                "roc_auc": auc_metric,
+            },
+        )
+        for auc_metric in auc_metrics
+    ],
+)
+@pytest.mark.parametrize(
+    "curve_kwargs",
+    [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
+)
+@pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
+def test_display_plot_legend_label(
+    pyplot, Display, auc_metric_name, display_args, name, curve_kwargs
 ):
     """Check legend label correct with all `curve_kwargs`, `name` combinations.
 
     Checks `from_estimator` and `from_predictions` methods, when plotting multiple
     curves.
-
-    Parameters
-    ----------
-    display_class : class
-        The display class to test (e.g., RocCurveDisplay, PrecisionRecallDisplay).
-
-    display_args : dict
-        Dictionary of arguments to instantiate the display class.
-
-    name : str, list of str, or None
-        The name parameter to pass to the plot method.
-
-    curve_kwargs : dict, list of dict, or None
-        The curve_kwargs parameter to pass to the plot method.
-
-    auc_metric : list of float or None
-        The area under curve metric value (e.g., ROC AUC, average precision) to be
-        displayed in the legend. When a list, should be all 1.0.
-
-    auc_metric_name : str
-        The name of the metric to display in the legend (e.g., "AUC", "AP").
     """
     if not isinstance(curve_kwargs, list) and isinstance(name, list):
         with pytest.raises(ValueError, match="To avoid labeling individual curves"):
-            display_class(**display_args).plot(name=name, curve_kwargs=curve_kwargs)
+            Display(**display_args).plot(name=name, curve_kwargs=curve_kwargs)
         return
 
-    display = display_class(**display_args).plot(name=name, curve_kwargs=curve_kwargs)
+    display = Display(**display_args).plot(name=name, curve_kwargs=curve_kwargs)
     legend = display.ax_.get_legend()
+    if Display == PrecisionRecallDisplay:
+        auc_metric = display_args["average_precision"]
+    elif Display == RocCurveDisplay:
+        auc_metric = display_args["roc_auc"]
+
     if legend is None:
         # No legend is created, exit test early
         assert name is None
@@ -468,51 +489,42 @@ def _check_plot_legend_label(
                 else "single"
             )
             assert legend_labels[0] == expected_label
+    # Close plots, prevents "more than 20 figures" opened warning
+    pyplot.close("all")
 
 
-def _check_from_cv_results_legend_label(
-    display_class, cv_results, X, y, name, curve_kwargs, auc_metrics, auc_metric_name
+@pytest.mark.parametrize(
+    "Display, auc_metrics, auc_metric_name",
+    [
+        (PrecisionRecallDisplay, [0.97, 1.00, 1.00], "AP"),
+        (RocCurveDisplay, [0.96, 1.00, 1.00], "AUC"),
+    ],
+)
+@pytest.mark.parametrize(
+    "curve_kwargs",
+    [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
+)
+@pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
+def test_display_from_cv_results_legend_label(
+    pyplot, Display, auc_metrics, auc_metric_name, name, curve_kwargs
 ):
     """Check legend label correct with all `curve_kwargs`, `name` combinations.
 
     This function verifies that the legend labels in a Display object created from
     cross-validation results are correctly formatted based on the provided parameters.
-
-    Parameters
-    ----------
-    display_class : class
-        The display class to test (e.g., RocCurveDisplay, PrecisionRecallDisplay).
-
-    cv_results : dict
-        The cross-validation results dictionary containing the estimators and indices.
-        Should have 3 cv folds.
-
-    X : array-like of shape (n_samples, n_features)
-        The input samples.
-
-    y : array-like of shape (n_samples,)
-        The target values (binary).
-
-    name : str, list of str, or None
-        The `name` parameter to pass to `from_cv_results`.
-
-    curve_kwargs : dict, list of dict, or None
-        The `curve_kwargs` parameter to pass to `from_cv_results`.
-
-    auc_metrics : list of float
-        The area under curve metric values (e.g., ROC AUC, average precision) to be
-        displayed in the legend.
-
-    auc_metric_name : str
-        The name of the metric to display in the legend (e.g., "AUC", "AP").
     """
+    X, y = X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+
     if not isinstance(curve_kwargs, list) and isinstance(name, list):
         with pytest.raises(ValueError, match="To avoid labeling individual curves"):
-            display_class.from_cv_results(
+            Display.from_cv_results(
                 cv_results, X, y, name=name, curve_kwargs=curve_kwargs
             )
     else:
-        display = display_class.from_cv_results(
+        display = Display.from_cv_results(
             cv_results, X, y, name=name, curve_kwargs=curve_kwargs
         )
 
@@ -548,58 +560,8 @@ def _check_from_cv_results_legend_label(
                     f"single ({auc_metric_name} = {np.mean(auc_metrics):.2f} +/- "
                     f"{np.std(auc_metrics):.2f})"
                 )
-
-
-def _check_from_cv_results_curve_kwargs(display_class, cv_results, X, y, curve_kwargs):
-    """Check `curve_kwargs` correctly passed in `from_cv_results`.
-
-    `curve_kwargs` should only set "alpha" kwarg.
-    """
-    display = display_class.from_cv_results(
-        cv_results,
-        X,
-        y,
-        curve_kwargs=curve_kwargs,
-    )
-    if curve_kwargs is None:
-        # Default `alpha` used
-        assert all(line.get_alpha() == 0.5 for line in display.line_)
-    elif isinstance(curve_kwargs, Mapping):
-        # `alpha` from dict used for all curves
-        assert all(line.get_alpha() == curve_kwargs["alpha"] for line in display.line_)
-    else:
-        # Different `alpha` used for each curve
-        assert all(
-            line.get_alpha() == curve_kwargs[i]["alpha"]
-            for i, line in enumerate(display.line_)
-        )
-
-
-def _check_display_kwargs_deprecation(
-    display_class, constructor_name, clf, X, y, display_args
-):
-    """Check **kwargs deprecated correctly in favour of `curve_kwargs`."""
-    # Error when both `curve_kwargs` and `**kwargs` provided
-    with pytest.raises(ValueError, match="Cannot provide both `curve_kwargs`"):
-        if constructor_name == "from_estimator":
-            display_class.from_estimator(
-                clf, X, y, curve_kwargs={"alpha": 1}, label="test"
-            )
-        elif constructor_name == "from_predictions":
-            display_class.from_predictions(
-                y, y, curve_kwargs={"alpha": 1}, label="test"
-            )
-        else:
-            display_class(**display_args).plot(curve_kwargs={"alpha": 1}, label="test")
-
-    # Warning when `**kwargs`` provided
-    with pytest.warns(FutureWarning, match=r"`\*\*kwargs` is deprecated and will be"):
-        if constructor_name == "from_estimator":
-            display_class.from_estimator(clf, X, y, label="test")
-        elif constructor_name == "from_predictions":
-            display_class.from_predictions(y, y, label="test")
-        else:
-            display_class(**display_args).plot(label="test")
+    # Close plots, prevents "more than 20 figures" opened warning
+    pyplot.close("all")
 
 
 def _check_pos_label_statistics(
@@ -696,6 +658,172 @@ def _check_pos_label_statistics(
     check_metric(display, constructor_name, pos_label)
 
 
+@pytest.mark.parametrize("Display", [PrecisionRecallDisplay, RocCurveDisplay])
+def test_display_from_cv_results_param_validation(pyplot, data_binary, Display):
+    """Check parameter validation is correct."""
+    X, y = data_binary
+
+    # `cv_results` missing key
+    cv_results_no_est = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=False
+    )
+    cv_results_no_indices = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=False
+    )
+    for cv_results in (cv_results_no_est, cv_results_no_indices):
+        with pytest.raises(
+            ValueError,
+            match="`cv_results` does not contain one of the following required",
+        ):
+            Display.from_cv_results(cv_results, X, y)
+
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+
+    # `X` wrong length
+    with pytest.raises(ValueError, match="`X` does not contain the correct"):
+        Display.from_cv_results(cv_results, X[:10, :], y)
+
+    # `y` not binary
+    y_multi = y.copy()
+    y_multi[0] = 2
+    with pytest.raises(ValueError, match="The target `y` is not binary."):
+        Display.from_cv_results(cv_results, X, y_multi)
+
+    # input inconsistent length
+    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
+        Display.from_cv_results(cv_results, X, y[:10])
+    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
+        Display.from_cv_results(cv_results, X, y, sample_weight=[1, 2])
+
+    # `pos_label` inconsistency
+    y_multi[y_multi == 1] = 2
+    if Display == RocCurveDisplay:
+        with pytest.warns(
+            UndefinedMetricWarning, match="No positive samples in y_true"
+        ):
+            Display.from_cv_results(cv_results, X, y_multi)
+    elif Display == PrecisionRecallDisplay:
+        # in `average_precision` default `pos_label=1`, thus following error is raised
+        with pytest.raises(ValueError, match="pos_label=1 is not a valid label"):
+            # `precision_recall_curve` also raises a warning
+            with pytest.warns(UserWarning, match="No positive class found in y_true"):
+                Display.from_cv_results(cv_results, X, y_multi)
+
+    # `name` is list while `curve_kwargs` is None or dict
+    for curve_kwargs in (None, {"alpha": 0.2}):
+        with pytest.raises(ValueError, match="To avoid labeling individual curves"):
+            Display.from_cv_results(
+                cv_results,
+                X,
+                y,
+                name=["one", "two", "three"],
+                curve_kwargs=curve_kwargs,
+            )
+
+    # `curve_kwargs` incorrect length
+    with pytest.raises(ValueError, match="`curve_kwargs` must be None, a dictionary"):
+        Display.from_cv_results(cv_results, X, y, curve_kwargs=[{"alpha": 1}])
+
+    # `curve_kwargs` both alias provided
+    with pytest.raises(TypeError, match="Got both c and"):
+        Display.from_cv_results(
+            cv_results, X, y, curve_kwargs={"c": "blue", "color": "red"}
+        )
+
+
+@pytest.mark.parametrize("Display", [PrecisionRecallDisplay, RocCurveDisplay])
+@pytest.mark.parametrize(
+    "constructor_name, expected_clf_name",
+    [
+        ("from_estimator", "LogisticRegression"),
+        ("from_predictions", "Classifier"),
+    ],
+)
+def test_display_default_name(
+    pyplot,
+    data_binary,
+    constructor_name,
+    expected_clf_name,
+    Display,
+):
+    # Check the default name display in the figure when `name` is not provided
+    X, y = data_binary
+
+    lr = LogisticRegression().fit(X, y)
+    y_score = lr.predict_proba(X)[:, 1]
+
+    if constructor_name == "from_estimator":
+        disp = Display.from_estimator(lr, X, y)
+    else:
+        disp = Display.from_predictions(y, y_score)
+
+    assert expected_clf_name in disp.name
+    assert expected_clf_name in disp.line_.get_label()
+
+
+@pytest.mark.parametrize("Display", [PrecisionRecallDisplay, RocCurveDisplay])
+@pytest.mark.parametrize(
+    "curve_kwargs",
+    [None, {"alpha": 0.2}, [{"alpha": 0.2}, {"alpha": 0.3}, {"alpha": 0.4}]],
+)
+def test_display_from_cv_results_curve_kwargs(
+    pyplot, data_binary, curve_kwargs, Display
+):
+    """Check `curve_kwargs` correctly passed."""
+    X, y = data_binary
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+    display = Display.from_cv_results(
+        cv_results,
+        X,
+        y,
+        curve_kwargs=curve_kwargs,
+    )
+    if curve_kwargs is None:
+        # Default `alpha` used
+        assert all(line.get_alpha() == 0.5 for line in display.line_)
+    elif isinstance(curve_kwargs, Mapping):
+        # `alpha` from dict used for all curves
+        assert all(line.get_alpha() == 0.2 for line in display.line_)
+    else:
+        # Different `alpha` used for each curve
+        assert all(
+            line.get_alpha() == curve_kwargs[i]["alpha"]
+            for i, line in enumerate(display.line_)
+        )
+
+
+@pytest.mark.parametrize("Display", [PrecisionRecallDisplay, RocCurveDisplay])
+@pytest.mark.parametrize(
+    "curve_kwargs",
+    [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
+)
+def test_display_from_cv_results_curve_kwargs_default_kwargs(
+    pyplot, data_binary, curve_kwargs, Display
+):
+    """Check `curve_kwargs` and default color handled correctly in `from_cv_results`."""
+
+    X, y = data_binary
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+    display = Display.from_cv_results(cv_results, X, y, curve_kwargs=curve_kwargs)
+
+    for idx, line in enumerate(display.line_):
+        color = line.get_color()
+        if curve_kwargs is None:
+            # Default color
+            assert color == "blue"
+        elif isinstance(curve_kwargs, Mapping):
+            # All curves "red"
+            assert color == "red"
+        else:
+            assert color == curve_kwargs[idx]["c"]
+
+
 @pytest.mark.parametrize(
     "Display, display_kwargs",
     [
@@ -712,3 +840,45 @@ def test_display_estimator_name_deprecation(pyplot, Display, display_kwargs):
     """Check deprecation of `estimator_name`."""
     with pytest.warns(FutureWarning, match="`estimator_name` is deprecated in"):
         Display(**display_kwargs, estimator_name="test")
+
+
+@pytest.mark.parametrize(
+    "Display, display_kwargs",
+    [
+        # TODO(1.10): Remove
+        (
+            PrecisionRecallDisplay,
+            {"precision": np.array([1, 0.5, 0]), "recall": np.array([0, 0.5, 1])},
+        ),
+        # TODO(1.9): Remove
+        (RocCurveDisplay, {"fpr": np.array([0, 0.5, 1]), "tpr": np.array([0, 0.5, 1])}),
+    ],
+)
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions", "plot"]
+)
+def test_display_kwargs_deprecation(
+    pyplot, data_binary, constructor_name, Display, display_kwargs
+):
+    """Check **kwargs deprecated correctly in favour of `curve_kwargs`."""
+    X, y = data_binary
+    lr = LogisticRegression()
+    lr.fit(X, y)
+
+    # Error when both `curve_kwargs` and `**kwargs` provided
+    with pytest.raises(ValueError, match="Cannot provide both `curve_kwargs`"):
+        if constructor_name == "from_estimator":
+            Display.from_estimator(lr, X, y, curve_kwargs={"alpha": 1}, label="test")
+        elif constructor_name == "from_predictions":
+            Display.from_predictions(y, y, curve_kwargs={"alpha": 1}, label="test")
+        else:
+            Display(**display_kwargs).plot(curve_kwargs={"alpha": 1}, label="test")
+
+    # Warning when `**kwargs`` provided
+    with pytest.warns(FutureWarning, match=r"`\*\*kwargs` is deprecated and will be"):
+        if constructor_name == "from_estimator":
+            Display.from_estimator(lr, X, y, label="test")
+        elif constructor_name == "from_predictions":
+            Display.from_predictions(y, y, label="test")
+        else:
+            Display(**display_kwargs).plot(label="test")

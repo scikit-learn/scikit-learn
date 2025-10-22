@@ -10,13 +10,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import RocCurveDisplay, auc, roc_curve
 from sklearn.metrics._plot.tests.test_common_curve_display import (
-    _check_display_kwargs_deprecation,
-    _check_from_cv_results_curve_kwargs,
-    _check_from_cv_results_legend_label,
-    _check_from_cv_results_param_validation,
-    _check_plot_legend_label,
     _check_pos_label_statistics,
-    _check_validate_plot_params,
 )
 from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
@@ -204,54 +198,6 @@ def test_roc_curve_plot_parameter_length_validation(pyplot, params, err_msg):
         display.plot()
 
 
-def test_validate_plot_params(pyplot):
-    """Check `_validate_plot_params` returns the correct variables."""
-    display_args = {
-        "fpr": np.array([0, 0.5, 1]),
-        "tpr": [np.array([0, 0.5, 1])],
-        "roc_auc": None,
-        "name": "test_curve",
-    }
-    _check_validate_plot_params(RocCurveDisplay, display_args)
-
-
-def test_roc_curve_from_cv_results_param_validation(pyplot, data_binary):
-    """Check parameter validation is correct."""
-    _check_from_cv_results_param_validation(data_binary, RocCurveDisplay)
-
-
-@pytest.mark.parametrize(
-    "curve_kwargs",
-    [None, {"alpha": 0.2}, [{"alpha": 0.2}, {"alpha": 0.3}, {"alpha": 0.4}]],
-)
-def test_roc_curve_display_from_cv_results_curve_kwargs(
-    pyplot, data_binary, curve_kwargs
-):
-    """Check `curve_kwargs` correctly passed in `from_cv_results`."""
-    X, y = data_binary
-    n_cv = 3
-    cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=n_cv, return_estimator=True, return_indices=True
-    )
-    _check_from_cv_results_curve_kwargs(RocCurveDisplay, cv_results, X, y, curve_kwargs)
-
-
-# TODO(1.9): Remove in 1.9
-@pytest.mark.parametrize(
-    "constructor_name", ["from_estimator", "from_predictions", "plot"]
-)
-def test_roc_curve_display_kwargs_deprecation(pyplot, data_binary, constructor_name):
-    """Check **kwargs deprecated correctly in favour of `curve_kwargs`."""
-    X, y = data_binary
-    lr = LogisticRegression()
-    lr.fit(X, y)
-    fpr = np.array([0, 0.5, 1])
-    tpr = np.array([0, 0.5, 1])
-    _check_display_kwargs_deprecation(
-        RocCurveDisplay, constructor_name, lr, X, y, {"fpr": fpr, "tpr": tpr}
-    )
-
-
 @pytest.mark.parametrize(
     "curve_kwargs",
     [
@@ -346,46 +292,6 @@ def test_roc_curve_display_plotting_from_cv_results(
         else:
             # Single aggregate label
             assert line.get_label() == aggregate_expected_labels[idx]
-
-
-@pytest.mark.parametrize("roc_auc", [[1.0, 1.0, 1.0], None])
-@pytest.mark.parametrize(
-    "curve_kwargs",
-    [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
-)
-@pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
-def test_roc_curve_plot_legend_label(pyplot, name, curve_kwargs, roc_auc):
-    """Check legend label correct with all `curve_kwargs`, `name` combinations."""
-    fpr = [np.array([0, 0.5, 1]), np.array([0, 0.5, 1]), np.array([0, 0.5, 1])]
-    tpr = [np.array([0, 0.5, 1]), np.array([0, 0.5, 1]), np.array([0, 0.5, 1])]
-
-    _check_plot_legend_label(
-        RocCurveDisplay,
-        {"fpr": fpr, "tpr": tpr, "roc_auc": roc_auc},
-        name,
-        curve_kwargs,
-        roc_auc,
-        "AUC",
-    )
-
-
-@pytest.mark.parametrize(
-    "curve_kwargs",
-    [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
-)
-@pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
-def test_roc_curve_from_cv_results_legend_label(
-    pyplot, data_binary, name, curve_kwargs
-):
-    """Check legend label correct with all `curve_kwargs`, `name` combinations."""
-    X, y = data_binary
-    n_cv = 3
-    cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=n_cv, return_estimator=True, return_indices=True
-    )
-    _check_from_cv_results_legend_label(
-        RocCurveDisplay, cv_results, X, y, name, curve_kwargs, [0.62, 0.66, 0.55], "AUC"
-    )
 
 
 def _check_chance_level(plot_chance_level, chance_level_kw, display):

@@ -903,12 +903,12 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             precision=precision_folds,
             recall=recall_folds,
             average_precision=ap_folds,
+            name=name,
             pos_label=pos_label_,
             prevalence_pos_label=prevalence_pos_label_folds,
         )
         return viz.plot(
             ax=ax,
-            name=name,
             curve_kwargs=curve_kwargs,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kwargs,

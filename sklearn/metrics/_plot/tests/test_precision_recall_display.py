@@ -14,13 +14,7 @@ from sklearn.metrics import (
     precision_recall_curve,
 )
 from sklearn.metrics._plot.tests.test_common_curve_display import (
-    _check_display_kwargs_deprecation,
-    _check_from_cv_results_curve_kwargs,
-    _check_from_cv_results_legend_label,
-    _check_from_cv_results_param_validation,
-    _check_plot_legend_label,
     _check_pos_label_statistics,
-    _check_validate_plot_params,
 )
 from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
@@ -276,71 +270,6 @@ def test_precison_recall_plot_parameter_length_validation(pyplot, params, err_ms
         display.plot()
 
 
-def test_precision_recall_validate_plot_params(pyplot):
-    """Check `_validate_plot_params` returns the correct variables."""
-    display_args = {
-        "precision": np.array([1, 0.5, 0]),
-        "recall": [np.array([0, 0.5, 1])],
-        "average_precision": None,
-        "name": "test_curve",
-        "prevalence_pos_label": 0.5,
-    }
-
-    _check_validate_plot_params(PrecisionRecallDisplay, display_args)
-
-
-def test_precision_recall_from_cv_results_param_validation(pyplot):
-    """Check parameter validation is correct."""
-    data = make_classification(n_classes=2, n_samples=50, random_state=0)
-    _check_from_cv_results_param_validation(data, PrecisionRecallDisplay)
-
-
-@pytest.mark.parametrize(
-    "curve_kwargs",
-    [None, {"alpha": 0.2}, [{"alpha": 0.2}, {"alpha": 0.3}, {"alpha": 0.4}]],
-)
-def test_precision_recall_display_from_cv_results_curve_kwargs(pyplot, curve_kwargs):
-    """Check `curve_kwargs` correctly passed in `from_cv_results`."""
-    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
-    cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
-    )
-    _check_from_cv_results_curve_kwargs(
-        PrecisionRecallDisplay, cv_results, X, y, curve_kwargs
-    )
-
-
-# TODO(1.10): Remove
-def test_precision_recall_display_estimator_name_deprecation(pyplot):
-    """Check deprecation of `estimator_name`."""
-    precision = np.array([1, 0.5, 0])
-    recall = np.array([0, 0.5, 1])
-    with pytest.warns(FutureWarning, match="`estimator_name` is deprecated in"):
-        PrecisionRecallDisplay(
-            precision=precision, recall=recall, estimator_name="test"
-        )
-
-
-# TODO(1.10): Remove
-@pytest.mark.parametrize(
-    "constructor_name", ["from_estimator", "from_predictions", "plot"]
-)
-def test_precision_recall_display_kwargs_deprecation(pyplot, constructor_name):
-    """Check **kwargs deprecated correctly in favour of `curve_kwargs`."""
-    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
-    lr = LogisticRegression().fit(X, y)
-    precision = np.array([1, 0.5, 0])
-    recall = np.array([0, 0.5, 1])
-    _check_display_kwargs_deprecation(
-        PrecisionRecallDisplay,
-        constructor_name,
-        lr,
-        X,
-        y,
-        {"precision": precision, "recall": recall},
-    )
-
-
 @pytest.mark.parametrize("plot_chance_level", [True, False])
 @pytest.mark.parametrize("chance_level_kw", [None, {"color": "r"}, {"c": "r"}])
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
@@ -515,57 +444,6 @@ def test_precision_recall_display_name(pyplot, constructor_name, default_label):
             display.line_.get_label()
             == f"MySpecialEstimator (AP = {average_precision:.2f})"
         )
-
-
-@pytest.mark.parametrize("average_precision", [[1.0, 1.0, 1.0], None])
-@pytest.mark.parametrize(
-    "curve_kwargs",
-    [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
-)
-@pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
-def test_precision_recall_plot_legend_label(
-    pyplot, name, curve_kwargs, average_precision
-):
-    """Check legend label correct with all `curve_kwargs`, `name` combinations."""
-    precision = [np.array([1, 0.5, 0]), np.array([1, 0.5, 0]), np.array([1, 0.5, 0])]
-    recall = [np.array([0, 0.5, 1]), np.array([0, 0.5, 1]), np.array([0, 0.5, 1])]
-
-    _check_plot_legend_label(
-        PrecisionRecallDisplay,
-        {
-            "precision": precision,
-            "recall": recall,
-            "average_precision": average_precision,
-        },
-        name,
-        curve_kwargs,
-        average_precision,
-        "AP",
-    )
-
-
-@pytest.mark.parametrize(
-    "curve_kwargs",
-    [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
-)
-@pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
-def test_precision_recall_from_cv_results_legend_label(pyplot, name, curve_kwargs):
-    """Check legend label correct with all `curve_kwargs`, `name` combinations."""
-    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
-    cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
-    )
-
-    _check_from_cv_results_legend_label(
-        PrecisionRecallDisplay,
-        cv_results,
-        X,
-        y,
-        name,
-        curve_kwargs,
-        [0.97, 1.00, 1.00],
-        "AP",
-    )
 
 
 @pytest.mark.parametrize(
