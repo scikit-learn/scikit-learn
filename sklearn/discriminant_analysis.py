@@ -1030,20 +1030,19 @@ class QuadraticDiscriminantAnalysis(
             sklearn.covariance. If None the shrinkage parameter drives the estimate.
         """
         n_samples, n_features = X.shape
-        n_classes = len(self.classes_)
 
         means = []
         cov = []
         scalings = []
         rotations = []
-        for ind in range(n_classes):
-            Xg = X[y == ind, :]
+        for idx, group in enumerate(self.classes_):
+            Xg = X[y == group, :]
             meang = Xg.mean(0)
             means.append(meang)
             if len(Xg) == 1:
                 raise ValueError(
                     "y has only 1 sample in class %s, covariance is ill defined."
-                    % str(self.classes_[ind])
+                    % str(self.classes_[idx])
                 )
             cov.append(_cov(Xg, shrinkage, covariance_estimator))
             S2, V = linalg.eigh(cov[-1])
@@ -1053,7 +1052,7 @@ class QuadraticDiscriminantAnalysis(
             rank = np.sum(S2 > self.tol)
             if rank < n_features:
                 warnings.warn(
-                    f"The covariance matrix of class {ind} is not full rank. "
+                    f"The covariance matrix of class {group} is not full rank. "
                     "Increasing the value of parameter `shrinkage` might help"
                     " reducing the collinearity.",
                     linalg.LinAlgWarning,
@@ -1078,7 +1077,6 @@ class QuadraticDiscriminantAnalysis(
             Target values.
         """
         n_samples, n_features = X.shape
-        n_classes = len(self.classes_)
 
         cov = None
 
@@ -1087,14 +1085,14 @@ class QuadraticDiscriminantAnalysis(
         means = []
         scalings = []
         rotations = []
-        for ind in range(n_classes):
-            Xg = X[y == ind, :]
+        for idx, group in enumerate(self.classes_):
+            Xg = X[y == group, :]
             meang = Xg.mean(0)
             means.append(meang)
             if len(Xg) == 1:
                 raise ValueError(
                     "y has only 1 sample in class %s, covariance is ill defined."
-                    % str(self.classes_[ind])
+                    % str(self.classes_[idx])
                 )
             Xgc = Xg - meang
             # Xgc = U * S * V.T
@@ -1104,7 +1102,7 @@ class QuadraticDiscriminantAnalysis(
             rank = np.sum(S2 > self.tol)
             if rank < n_features:
                 warnings.warn(
-                    f"The covariance matrix of class {ind} is not full rank. "
+                    f"The covariance matrix of class {group} is not full rank. "
                     "Increasing the value of parameter `reg_param` might help"
                     " reducing the collinearity.",
                     linalg.LinAlgWarning,
@@ -1147,7 +1145,7 @@ class QuadraticDiscriminantAnalysis(
         """
         X, y = validate_data(self, X, y)
         check_classification_targets(y)
-        self.classes_, y = np.unique(y, return_inverse=True)
+        self.classes_ = np.unique(y)
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
         if n_classes < 2:
@@ -1156,7 +1154,8 @@ class QuadraticDiscriminantAnalysis(
                 f"{n_classes} class."
             )
         if self.priors is None:
-            self.priors_ = np.bincount(y) / float(n_samples)
+            _, cnts = np.unique_counts(y)  # non-negative ints
+            self.priors_ = cnts / float(n_samples)
         else:
             self.priors_ = np.array(self.priors)
 
