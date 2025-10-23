@@ -266,7 +266,8 @@ the required packages.
           distribution's package manager.
 
           Next, you need to have a working C/C++ compiler with OpenMP support.
-          Install the build dependencies for **Debian-based operating systems, e.g. Ubuntu**:
+          Install the build dependencies for your system, for instance if you are 
+          using a debian-based operating system (e.g. Ubuntu), use:
 
           .. prompt::
 
