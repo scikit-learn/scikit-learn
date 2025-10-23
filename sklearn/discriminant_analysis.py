@@ -1060,7 +1060,8 @@ class QuadraticDiscriminantAnalysis(
                 )
             scalings.append(S2)
             rotations.append(Vt.T)
-        self.covariance_ = cov
+        if self.store_covariance:
+            self.covariance_ = cov
         self.means_ = np.asarray(means)
         self.scalings_ = scalings
         self.rotations_ = rotations
