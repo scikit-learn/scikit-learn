@@ -115,6 +115,9 @@ Estimators
 - :class:`decomposition.PCA` (with `svd_solver="full"`, `svd_solver="covariance_eigh"`, or
   `svd_solver="randomized"` (`svd_solver="randomized"` only if `power_iteration_normalizer="QR"`))
 - :class:`linear_model.Ridge` (with `solver="svd"`)
+- :class:`linear_model.RidgeCV` (with `solver="svd"`, see :ref:`device_support_for_float64`)
+- :class:`linear_model.RidgeClassifier` (with `solver="svd"`)
+- :class:`linear_model.RidgeClassifierCV` (with `solver="svd"`, see :ref:`device_support_for_float64`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
 - :class:`preprocessing.Binarizer`
 - :class:`preprocessing.KernelCenterer`
@@ -142,13 +145,17 @@ Metrics
 -------
 
 - :func:`sklearn.metrics.accuracy_score`
+- :func:`sklearn.metrics.brier_score_loss`
 - :func:`sklearn.metrics.confusion_matrix`
+- :func:`sklearn.metrics.d2_brier_score`
+- :func:`sklearn.metrics.d2_log_loss_score`
 - :func:`sklearn.metrics.d2_tweedie_score`
 - :func:`sklearn.metrics.explained_variance_score`
 - :func:`sklearn.metrics.f1_score`
 - :func:`sklearn.metrics.fbeta_score`
 - :func:`sklearn.metrics.hamming_loss`
 - :func:`sklearn.metrics.jaccard_score`
+- :func:`sklearn.metrics.log_loss`
 - :func:`sklearn.metrics.max_error`
 - :func:`sklearn.metrics.mean_absolute_error`
 - :func:`sklearn.metrics.mean_absolute_percentage_error`
@@ -174,6 +181,7 @@ Metrics
 - :func:`sklearn.metrics.pairwise.rbf_kernel` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.pairwise.sigmoid_kernel`
 - :func:`sklearn.metrics.precision_score`
+- :func:`sklearn.metrics.precision_recall_curve`
 - :func:`sklearn.metrics.precision_recall_fscore_support`
 - :func:`sklearn.metrics.r2_score`
 - :func:`sklearn.metrics.recall_score`
