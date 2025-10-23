@@ -218,6 +218,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     def fit(self, X, y):
         """Fit the :class:`TargetEncoder` to X and y.
 
+        It is discouraged to use this method because it can introduce data leakage.
+        Use `fit_transform` on training data instead.
+
+        .. note::
+            `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
+            :term:`cross fitting` scheme is used in `fit_transform` for encoding.
+            See the :ref:`User Guide <target_encoder>` for details.
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -236,12 +244,16 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y):
-        """Fit :class:`TargetEncoder` and transform X with the target encoding.
+        """Fit :class:`TargetEncoder` and transform `X` with the target encoding.
+
+        This method uses a :term:`cross fitting` scheme to prevent target leakage
+        and overfitting in downstream predictors. It is the recommended method for
+        encoding training data.
 
         .. note::
             `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
             :term:`cross fitting` scheme is used in `fit_transform` for encoding.
-            See the :ref:`User Guide <target_encoder>`. for details.
+            See the :ref:`User Guide <target_encoder>` for details.
 
         Parameters
         ----------
@@ -314,10 +326,13 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     def transform(self, X):
         """Transform X with the target encoding.
 
+        This method internally uses the `encodings_` attribute learnt during
+        :meth:`TargetEncoder.fit_transform` to transform test data.
+
         .. note::
             `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
             :term:`cross fitting` scheme is used in `fit_transform` for encoding.
-            See the :ref:`User Guide <target_encoder>`. for details.
+            See the :ref:`User Guide <target_encoder>` for details.
 
         Parameters
         ----------

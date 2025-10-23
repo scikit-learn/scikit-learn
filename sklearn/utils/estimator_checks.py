@@ -691,7 +691,6 @@ def parametrize_with_checks(
 
 @validate_params(
     {
-        "generate_only": ["boolean"],
         "legacy": ["boolean"],
         "expected_failed_checks": [dict, None],
         "on_skip": [StrOptions({"warn"}), None],
@@ -702,7 +701,6 @@ def parametrize_with_checks(
 )
 def check_estimator(
     estimator=None,
-    generate_only=False,
     *,
     legacy: bool = True,
     expected_failed_checks: dict[str, str] | None = None,
@@ -734,18 +732,6 @@ def check_estimator(
     ----------
     estimator : estimator object
         Estimator instance to check.
-
-    generate_only : bool, default=False
-        When `False`, checks are evaluated when `check_estimator` is called.
-        When `True`, `check_estimator` returns a generator that yields
-        (estimator, check) tuples. The check is run by calling
-        `check(estimator)`.
-
-        .. versionadded:: 0.22
-
-        .. deprecated:: 1.6
-            `generate_only` will be removed in 1.8. Use
-            :func:`~sklearn.utils.estimator_checks.estimator_checks_generator` instead.
 
     legacy : bool, default=True
         Whether to include legacy checks. Over time we remove checks from this category
@@ -823,17 +809,6 @@ def check_estimator(
                 "expected_to_fail_reason": expected_to_fail_reason,
             }
 
-    estimator_checks_generator : generator
-        Generator that yields (estimator, check) tuples. Returned when
-        `generate_only=True`.
-
-        ..
-            TODO(1.8): remove return value
-
-        .. deprecated:: 1.6
-            ``generate_only`` will be removed in 1.8. Use
-            :func:`~sklearn.utils.estimator_checks.estimator_checks_generator` instead.
-
     Raises
     ------
     Exception
@@ -869,18 +844,6 @@ def check_estimator(
         raise ValueError("callback cannot be provided together with on_fail='raise'")
 
     name = type(estimator).__name__
-
-    # TODO(1.8): remove generate_only
-    if generate_only:
-        warnings.warn(
-            "`generate_only` is deprecated in 1.6 and will be removed in 1.8. "
-            "Use :func:`~sklearn.utils.estimator_checks.estimator_checks_generator` "
-            "instead.",
-            FutureWarning,
-        )
-        return estimator_checks_generator(
-            estimator, legacy=legacy, expected_failed_checks=None, mark="skip"
-        )
 
     test_results = []
 
