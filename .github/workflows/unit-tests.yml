@@ -60,7 +60,7 @@ jobs:
 
           {
             echo 'message<<EOF'
-            echo "'${message}'"
+            echo "${message}"
             echo EOF
           } >> "${GITHUB_OUTPUT}"
 
@@ -94,6 +94,7 @@ jobs:
           if "[all random seeds]" in commit_message:
               selected_tests = commit_message.split("[all random seeds]")[1].strip()
               selected_tests = selected_tests.replace("\n", " or ")
+              selected_tests = f"\"{selected_tests}\""
           else:
               selected_tests = ""
 
