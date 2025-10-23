@@ -1,12 +1,12 @@
- .features {
-    font-family: monospace;
-    cursor: pointer;
-    background-color: var(--sklearn-color-unfitted-level-0);
-    border: 1px dotted var(--sklearn-color-border-box);
-    border-radius: .20em;
-    margin-bottom: 0.5em;
-    display: flex;
-    align-items: first baseline;
+.features {
+  font-family: monospace;
+  cursor: pointer;
+  background-color: var(--sklearn-color-unfitted-level-0);
+  border: 1px dotted var(--sklearn-color-border-box);
+  border-radius: .20em;
+  margin-bottom: 0.5em;
+  display: flex;
+  align-items: first baseline;
 }
 
 .features.fitted {
@@ -36,18 +36,27 @@
 
 details[open] > summary {
   color: var(--sklearn-color-text);
-  background-color: var(--sklearn-color-fitted-level-2);
+  background-color: var(--sklearn-color-unfitted-level-2);
   border-radius: .20em;
 }
 
+.features.fitted details[open] > summary {
+background-color: var(--sklearn-color-fitted-level-2);
+}
+
+
 .features .features-container {
-    max-width: 15em;
-    max-height: 10em;
-    overflow: auto;
-    scrollbar-width: thin;
-    padding: .5em;
-    background-color: var(--sklearn-color-fitted-level-0);
-    border-radius: 0 0 .5em .5em;
+  max-width: 15em;
+  max-height: 10em;
+  overflow: auto;
+  scrollbar-width: thin;
+  padding: .5em;
+  background-color: var(--sklearn-color-unfitted-level-0);
+  border-radius: 0 0 .5em .5em;
+}
+
+.features.fitted .features-container {
+  background-color: var(--sklearn-color-fitted-level-0);
 }
 
 .features .image-container {
@@ -55,12 +64,12 @@ details[open] > summary {
 }
 
 .features .copy-paste-icon {
-   background-size: 10px 10px;
-   width: 10px;
-   height: 10px;
-   margin-left: 1px;
-   margin-right:  2px;
-   filter: grayscale(100%) opacity(60%);
+  background-size: 10px 10px;
+  width: 10px;
+  height: 10px;
+  margin-left: 1px;
+  margin-right:  2px;
+  filter: grayscale(100%) opacity(60%);
 }
 
 .features .features-container table {
@@ -73,5 +82,4 @@ details[open] > summary {
   padding: 0;
   white-space: nowrap;
   color: var(--sklearn-color-text);
-  background-color: var(--sklearn-color-fitted-level-0);
 }
