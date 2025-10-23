@@ -1101,4 +1101,6 @@ def _half_multinomial_loss(y, pred, sample_weight=None, xp=None):
     y = xp.asarray(y, dtype=xp.int64, device=device_)
     class_margins = xp.arange(y.shape[0], device=device_) * pred.shape[1]
     label_predictions = xp.take(_ravel(pred), y + class_margins)
-    return float(_average(log_sum_exp - label_predictions, weights=sample_weight))
+    return float(
+        _average(log_sum_exp - label_predictions, weights=sample_weight, xp=xp)
+    )
