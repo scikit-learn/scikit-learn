@@ -957,9 +957,9 @@ This diagram shows the :term:`cross fitting` scheme in
    :align: center
 
 The :meth:`~TargetEncoder.fit` method does **not** use any :term:`cross fitting` schemes
-and learns one encoding on the entire training set, which is used to encode categories
-in :meth:`~TargetEncoder.transform`. It is unsafe to use on training data and unusual to
-use on test data.
+and learns one encoding on the entire training set. It is discouraged to use this
+method because it can introduce data leakage as mentioned above. Use
+:meth:`~TargetEncoder.fit_transform` instead.
 
 For transforming test data based on the encodings learnt from the train data, use
 `encoder.transform(X_test)`. It uses 'full data' encodings also learned during
