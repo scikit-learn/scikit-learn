@@ -79,7 +79,7 @@ fi
 if [[ -z "${SELECTED_TESTS+x}" ]]; then
     # If 'SELECTED_TEST' is unset we are in Azure, and we retrieve the selected tests
     # via the dedicated script.
-    SELECTED_TESTS=$(python build_tools/azure/get_selected_tests.py)
+    SELECTED_TESTS=$(python build_tools/azure/get_selected_tests.py --only-show-selected-tests)
 fi
 
 if [[ -n "${SELECTED_TESTS}" ]]; then

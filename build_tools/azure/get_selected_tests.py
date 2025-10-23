@@ -1,3 +1,4 @@
+import argparse
 import os
 
 from get_commit_message import get_commit_message
@@ -33,9 +34,27 @@ def get_selected_tests():
     return selected_tests
 
 
+def parsed_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--only-show-selected-tests",
+        action="store_true",
+        default=False,
+        help=(
+            "Only print selected tests. Useful for direct use in scripts rather than"
+            " setting output variable of the Azure job"
+        ),
+    )
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
+    args = parsed_args()
     selected_tests = get_selected_tests()
 
-    # set the environment variable to be propagated to other steps
-    print(f"##vso[task.setvariable variable=SELECTED_TESTS]'{selected_tests}'")
-    print(f"selected tests: {selected_tests}")  # helps debugging
+    if args.only_show_selected_tests:
+        print(selected_tests)
+    else:
+        # set the environment variable to be propagated to other steps
+        print(f"##vso[task.setvariable variable=SELECTED_TESTS]'{selected_tests}'")
+        print(f"selected tests: {selected_tests}")  # helps debugging
