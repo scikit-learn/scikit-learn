@@ -71,6 +71,10 @@ def _most_frequent(array, extra_value, n_repeat):
                     if count == most_frequent_count
                 ]
             )
+        elif array.dtype == bool:
+            mode = _mode(array.astype(int))
+            most_frequent_value = bool(mode[0][0])
+            most_frequent_count = mode[1][0]
         else:
             mode = _mode(array)
             most_frequent_value = mode[0][0]
@@ -337,10 +341,19 @@ class SimpleImputer(_BaseImputer):
                 isinstance(elem, str) for row in X for elem in row
             ):
                 dtype = object
+            elif (hasattr(X, "dtype") and X.dtype.kind == "b") or (
+                hasattr(X, "dtypes") and all(type == bool for type in X.dtypes)
+            ):
+                dtype = bool
             else:
                 dtype = None
         else:
-            dtype = FLOAT_DTYPES
+            if (hasattr(X, "dtype") and X.dtype.kind == "b") or (
+                hasattr(X, "dtypes") and all(type == bool for type in X.dtypes)
+            ):
+                dtype = bool
+            else:
+                dtype = FLOAT_DTYPES
 
         if not in_fit and self._fit_dtype.kind == "O":
             # Use object dtype if fitted on object dtypes
@@ -378,7 +391,7 @@ class SimpleImputer(_BaseImputer):
             self._fit_dtype = X.dtype
 
         _check_inputs_dtype(X, self.missing_values)
-        if X.dtype.kind not in ("i", "u", "f", "O"):
+        if X.dtype.kind not in ("i", "u", "f", "O", "b"):
             raise ValueError(
                 "SimpleImputer does not support data with dtype "
                 "{0}. Please provide either a numeric array (with"
