@@ -83,7 +83,7 @@ if [[ -z "${SELECTED_TESTS+x}" ]]; then
 fi
 
 if [[ -n "${SELECTED_TESTS}" ]]; then
-    TEST_CMD="${TEST_CMD} -k '${SELECTED_TESTS}'"
+    TEST_CMD="${TEST_CMD} -k \"${SELECTED_TESTS}\""
 
     # Override to make selected tests run on all random seeds
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
