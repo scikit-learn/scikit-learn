@@ -1054,7 +1054,7 @@ class QuadraticDiscriminantAnalysis(
             if rank < n_features:
                 warnings.warn(
                     f"The covariance matrix of class {ind} is not full rank. "
-                    "Increasing the value of parameter `reg_param` might help"
+                    "Increasing the value of parameter `shrinkage` might help"
                     " reducing the collinearity.",
                     linalg.LinAlgWarning,
                 )
