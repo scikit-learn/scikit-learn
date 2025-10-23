@@ -78,7 +78,7 @@ jobs:
     #     ...
     name: Retrieve the selected tests
     runs-on: ubuntu-latest
-    if: github.repository == 'scikit-learn/scikit-learn'
+    if: ${{ github.repository == 'scikit-learn/scikit-learn' && github.event_name == 'pull_request' }}
     outputs:
       tests: ${{ steps.selected-tests.outputs.tests }}
     needs: [retrieve-commit-message]
