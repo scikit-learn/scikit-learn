@@ -1154,8 +1154,8 @@ class QuadraticDiscriminantAnalysis(
         n_classes = len(self.classes_)
         if n_classes < 2:
             raise ValueError(
-                "The number of classes has to be greater than one; got %d class"
-                % (n_classes)
+                "The number of classes has to be greater than one. Got " 
+                f"{n_classes} class."
             )
         if self.priors is None:
             self.priors_ = np.bincount(y) / float(n_samples)
