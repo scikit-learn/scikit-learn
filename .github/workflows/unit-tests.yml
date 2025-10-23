@@ -97,12 +97,14 @@ jobs:
           if "[all random seeds]" in commit_message:
               selected_tests = commit_message.split("[all random seeds]")[1].strip()
               selected_tests = selected_tests.replace("\n", " or ")
+              # quote 'selected_tests' to cover the case of multiple selected tests
+              selected_tests = f"{selected_tests!r}"
           else:
               selected_tests = ""
 
           # Write selected tests to `GITHUB_OUTPUT`
           with open(os.environ["GITHUB_OUTPUT"], "a") as file:
-              file.write(f"tests={selected_tests!r}\n")
+              file.write(f"tests={selected_tests}\n")
 
   unit-tests:
     name: ${{ matrix.name }}
