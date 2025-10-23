@@ -562,7 +562,7 @@ def test_qda_covariance_estimator():
     # test bad solver with covariance_estimator
     clf = QuadraticDiscriminantAnalysis(solver="svd", covariance_estimator=LedoitWolf())
     with pytest.raises(
-        ValueError, match="covariance estimator is not supported with svd"
+        ValueError, match="covariance_estimator is not supported with solver='svd'"
     ):
         clf.fit(X, y)
 
