@@ -936,7 +936,7 @@ cardinality categories are location based such as zip code or region.
   where :math:`L_i` is the set of observations with category :math:`i` and
   :math:`n_i` is the number of observations with category :math:`i`.
 
-..note::
+.. note::
   In :class:`TargetEncoder`, `fit(X, y).transform(X)` does not equal `fit_transform(X, y)`.
 
 :meth:`~TargetEncoder.fit_transform` internally relies on a :term:`cross fitting`
