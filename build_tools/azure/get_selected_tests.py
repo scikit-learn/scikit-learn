@@ -15,12 +15,10 @@ def get_selected_tests():
         <test_name_2>
         ...
     """
-    if "SELECTED_TESTS" in os.environ or os.environ.get("GITHUB_ACTIONS", False):
+    if "SELECTED_TESTS" in os.environ:
         raise RuntimeError(
-            f"It seems that the `SELECTED_TESTS` environment variable is set or you are"
-            f"in a GitHub Actions context "
-            f"(GITHUB_ACTIONS={os.environ.get('GITHUB_ACTIONS', False)})."
-            f"Instead, please use directly `SELECTED_TESTS`."
+            "This legacy script should only be used on Azure. "
+            "On GitHub actions, use the 'SELECTED_TESTS' environment variable"
         )
 
     commit_message = get_commit_message()

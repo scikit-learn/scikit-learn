@@ -6,16 +6,11 @@ import subprocess
 def get_commit_message():
     """Retrieve the commit message."""
 
-    if "COMMIT_MESSAGE" in os.environ or os.environ.get("GITHUB_ACTIONS", False):
+    if "COMMIT_MESSAGE" in os.environ or "BUILD_SOURCEVERSIONMESSAGE" not in os.environ:
         raise RuntimeError(
-            f"It seems that the `COMMIT_MESSAGE` environment variable is set or you are"
-            f"in a GitHub Actions context "
-            f"(GITHUB_ACTIONS={os.environ.get('GITHUB_ACTIONS', False)})."
-            f"Instead, please use directly `COMMIT_MESSAGE`."
+            "This legacy script should only be used on Azure. "
+            "On GitHub actions, use the 'COMMIT_MESSAGE' environment variable"
         )
-
-    # If 'COMMIT_MESSAGE' is unset we are in Azure, and we retrieve the commit
-    # message using Azure-specific variables.
 
     build_source_version_message = os.environ["BUILD_SOURCEVERSIONMESSAGE"]
 
