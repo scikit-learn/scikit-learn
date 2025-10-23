@@ -1167,9 +1167,8 @@ class QuadraticDiscriminantAnalysis(
                 raise NotImplementedError("shrinkage not supported with 'svd' solver.")
             if self.covariance_estimator is not None:
                 raise ValueError(
-                    "covariance estimator "
-                    "is not supported "
-                    "with svd solver. Try another solver"
+                    "covariance_estimator is not supported with solver='svd'. "
+                    "Try solver='eigen' instead."
                 )
             self._solve_svd(X, y)
         elif self.solver == "eigen":
