@@ -1862,7 +1862,7 @@ See concept :term:`sample property`.
         rescaling of the weights by a constant positive factor but there are
         exceptions.
 
-        `sample_weight` can be both an argument of the estimator's `fit` method
+        `sample_weight` can be both an argument of the estimator's :term:`fit` method
         for model training or a parameter of a :term:`scorer` for model
         evaluation. These callables are said to *consume* the sample weights
         while other components of scikit-learn can *route*  the weights to the
