@@ -266,7 +266,7 @@ the required packages.
           distribution's package manager.
 
           Next, you need to have a working C/C++ compiler with OpenMP support.
-          Install the build dependencies for your system, for instance if you are 
+          Install the build dependencies for your system, for instance if you are
           using a debian-based operating system (e.g. Ubuntu), use:
 
           .. prompt::
@@ -289,18 +289,20 @@ the required packages.
               pytest pytest-cov ruff==0.11.2 mypy numpydoc \
               joblib threadpoolctl
 
-          When precompiled wheels of the runtime dependencies are not available for your
-          architecture (e.g. **ARM**), you can install the system versions:
+          .. dropdown:: Note on other Linux distributions
 
-          .. prompt::
+            When precompiled wheels of the runtime dependencies are not available for your
+            architecture (e.g. **ARM**), you can install the system versions:
 
-            sudo apt-get install cython3 python3-numpy python3-scipy
+            .. prompt::
 
-          On **Red Hat and clones (e.g. CentOS)**, install the dependencies using:
+              sudo apt-get install cython3 python3-numpy python3-scipy
 
-          .. prompt::
+            On **Red Hat and clones (e.g. CentOS)**, install the dependencies using:
 
-            sudo yum -y install gcc gcc-c++ python3-devel numpy scipy
+            .. prompt::
+
+              sudo yum -y install gcc gcc-c++ python3-devel numpy scipy
 
         .. tab-item:: conda
           :class-label: tab-6
