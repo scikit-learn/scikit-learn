@@ -154,15 +154,16 @@ jobs:
         env:
           COMMIT_MESSAGE: ${{ needs.retrieve-commit-message.outputs.message }}
           SELECTED_TESTS: ${{ needs.retrieve-selected-tests.outputs.tests }}
+          COVERAGE: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
         run: bash -l build_tools/azure/test_script.sh
 
       - name: Combine coverage reports from parallel test runners
         run: bash -l build_tools/azure/combine_coverage_reports.sh
-        if: ${{ env.COVERAGE == 'true' }}
+        if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
 
       - name: Upload coverage report to Codecov
         uses: codecov/codecov-action@v5
-        if: ${{ env.COVERAGE == 'true' }}
+        if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
         with:
           files: ./coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
