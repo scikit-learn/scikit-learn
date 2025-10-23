@@ -27,6 +27,10 @@
 }
 
 .features:hover {
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+.features.fitted:hover {
   background-color: var(--sklearn-color-fitted-level-2);
 }
 
