@@ -726,6 +726,7 @@ def test_qda_regularization(solver):
     elif solver == "eigen":
         clf = QuadraticDiscriminantAnalysis(solver=solver, shrinkage=0.3)
 
+
 def test_covariance():
     x, y = make_blobs(n_samples=100, n_features=5, centers=1, random_state=42)
 
@@ -749,6 +750,18 @@ def test_raises_value_error_on_same_number_of_classes_and_samples(solver):
     y = np.array(["a", "b"])
     clf = LinearDiscriminantAnalysis(solver=solver)
     with pytest.raises(ValueError, match="The number of samples must be more"):
+        clf.fit(X, y)
+
+
+@pytest.mark.parametrize("solver", ["svd", "eigen"])
+def test_raises_value_error_on_one_sample_per_class(solver):
+    """
+    Tests that if a class has one sample, a ValueError is raised.
+    """
+    X = np.array([[0.5, 0.6], [0.6, 0.5], [0.4, 0.4], [0.6, 0.5]])
+    y = np.array(["a", "a", "a", "b"])
+    clf = QuadraticDiscriminantAnalysis(solver=solver)
+    with pytest.raises(ValueError, match="y has only 1 sample in class"):
         clf.fit(X, y)
 
 
