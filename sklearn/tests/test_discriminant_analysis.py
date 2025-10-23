@@ -553,7 +553,7 @@ def test_qda_covariance_estimator():
     with pytest.raises(
         ValueError,
         match=(
-            "covariance_estimator and shrinkage parameters are not None. "           
+            "covariance_estimator and shrinkage parameters are not None. "
             "Only one of the two can be set."
         ),
     ):
