@@ -4,9 +4,9 @@
 import html
 
 
-def _features_html(features):
+def _features_html(features, is_fitted_css_class=""):
     FEATURES_TABLE_TEMPLATE = """
-        <div class="features">
+        <div class="features {is_fitted_css_class}">
           <details>
             <summary>
             {total_features} features
@@ -51,5 +51,7 @@ def _features_html(features):
         rows.append(FEATURES_ROW_TEMPLATE.format(feature=escaped_feature))
 
     return FEATURES_TABLE_TEMPLATE.format(
-        total_features=total_features, rows="".join(rows)
+        total_features=total_features,
+        is_fitted_css_class=is_fitted_css_class,
+        rows="".join(rows),
     )

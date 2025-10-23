@@ -230,7 +230,7 @@ def _write_label_html(
         if len(features) == 0:
             features_div = ""
         else:
-            features_div = _features_html(features)
+            features_div = _features_html(features, is_fitted_css_class)
 
         fmt_str = "".join(
             [

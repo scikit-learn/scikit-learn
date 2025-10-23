@@ -1,12 +1,16 @@
  .features {
     font-family: monospace;
     cursor: pointer;
-    background-color: var(--sklearn-color-fitted-level-0);
+    background-color: var(--sklearn-color-unfitted-level-0);
     border: 1px dotted var(--sklearn-color-border-box);
     border-radius: .20em;
     margin-bottom: 0.5em;
     display: flex;
     align-items: first baseline;
+}
+
+.features.fitted {
+  background-color: var(--sklearn-color-fitted-level-0);
 }
 
 .features summary {
