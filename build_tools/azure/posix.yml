@@ -33,6 +33,9 @@ jobs:
         addToPath: false
       name: pyTools
       displayName: Select python version to run CI python scripts
+    - bash: $(pyTools.pythonLocation)/bin/python build_tools/azure/get_selected_tests.py
+      displayName: Check selected tests for all random seeds
+      condition: eq(variables['Build.Reason'], 'PullRequest')
     - bash: build_tools/azure/install_setup_conda.sh
       displayName: Install conda if necessary and set it up
       condition: startsWith(variables['DISTRIB'], 'conda')
@@ -53,14 +56,17 @@ jobs:
     - script: |
         build_tools/azure/test_docs.sh
       displayName: 'Test Docs'
-      condition: succeeded()
+      condition: and(succeeded(), eq(variables['SELECTED_TESTS'], ''))
     - script: |
         build_tools/azure/test_pytest_soft_dependency.sh
       displayName: 'Test Soft Dependency'
-      condition: and(succeeded(), eq(variables['CHECK_PYTEST_SOFT_DEPENDENCY'], 'true'))
+      condition: and(succeeded(),
+                     eq(variables['CHECK_PYTEST_SOFT_DEPENDENCY'], 'true'),
+                     eq(variables['SELECTED_TESTS'], ''))
     - script: |
         build_tools/azure/combine_coverage_reports.sh
-      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'))
+      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
+                     eq(variables['SELECTED_TESTS'], ''))
       displayName: 'Combine coverage'
     - task: PublishTestResults@2
       inputs:
@@ -94,7 +100,8 @@ jobs:
                      eq(variables['Build.Reason'], 'Schedule'))
     - script: |
         build_tools/azure/upload_codecov.sh
-      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'))
+      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
+                     eq(variables['SELECTED_TESTS'], ''))
       displayName: 'Upload To Codecov'
       retryCountOnTaskFailure: 5
       env:
