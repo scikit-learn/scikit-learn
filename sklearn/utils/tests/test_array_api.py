@@ -152,7 +152,7 @@ def test_move_to_sparse():
     assert result2 is None
 
     # sparse to non-Numpy
-    msg = "Array inputs cannot contain both sparse arrays and non-NumPy arrays"
+    msg = "Sparse arrays are only supported when all dense arrays are Numpy arrays"
     with pytest.raises(TypeError, match=msg):
         move_to(
             sparse1, numpy_array, xp_reference=xp_torch, device_reference=device_cpu
