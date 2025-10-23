@@ -59,8 +59,9 @@ function copyRowsToClipboard(text, element) {
     const originalStyle = element.style;
     const copyMark = document.createElement('span');
     copyMark.innerHTML = '✔';
+    copyMark.style.margin = window.getComputedStyle(element).margin;
     copyMark.style.color = 'green';
-    copyMark.style.marginLeft = '5px';
+
 
     navigator.clipboard.writeText(formattedText)
         .then(() => {

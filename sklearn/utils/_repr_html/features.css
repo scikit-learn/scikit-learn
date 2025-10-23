@@ -22,11 +22,14 @@
   color: var(--sklearn-color-icon);
 }
 
-.features summary:hover,
+.features:hover {
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
 details[open] > summary {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-fitted-level-2);
-  border-radius: .20em 0 0 0;
+  border-radius: .20em;
 }
 
 .features .features-container {
@@ -40,19 +43,16 @@ details[open] > summary {
 }
 
 .features .image-container {
-  background-color: var(--sklearn-color-fitted-level-2);
   margin: 0;
-  padding: 0;
-  padding: .25em
 }
 
 .features .copy-paste-icon {
    background-size: 10px 10px;
    width: 10px;
    height: 10px;
-   background-color: var(--sklearn-color-fitted-level-2);
-   margin-left: 1.5em;
-   margin-right:  1em;
+   margin-left: 1px;
+   margin-right:  2px;
+   filter: grayscale(100%) opacity(60%);
 }
 
 .features .features-container table {

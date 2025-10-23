@@ -19,7 +19,9 @@ def _features_html(features):
               </table>
             </div>
           </details>
-          <div class="image-container">
+          <div class="image-container"
+          title="Copy all output features"
+          >
           <i class="copy-paste-icon"
               onclick="
                 var detailsElem = this.closest('.features').querySelector('details');
@@ -30,7 +32,7 @@ def _features_html(features):
                 if (!wasOpen) detailsElem.open = false;
                 copyRowsToClipboard(content, this);
               "
-              title="Copy all output features">
+              >
           </i>
           </div>
         </div>
