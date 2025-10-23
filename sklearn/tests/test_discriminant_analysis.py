@@ -575,7 +575,7 @@ def test_qda_covariance_estimator():
         clf.fit(X, y)
 
 
-def test_qda_ledoitwolf():
+def test_qda_ledoitwolf(global_random_seed):
     # When shrinkage="auto" current implementation uses ledoitwolf estimation
     # of covariance after standardizing the data. This checks that it is indeed
     # the case
@@ -588,7 +588,7 @@ def test_qda_ledoitwolf():
             s = sc.scale_[:, np.newaxis] * s * sc.scale_[np.newaxis, :]
             self.covariance_ = s
 
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.rand(100, 10)
     y = rng.randint(3, size=(100,))
     c1 = QuadraticDiscriminantAnalysis(
@@ -605,13 +605,16 @@ def test_qda_ledoitwolf():
     assert_allclose(c1.covariance_, c2.covariance_)
 
 
-def test_qda_coefs():
+def test_qda_coefs(global_random_seed):
     # Test if the coefficients of the solvers are approximately the same.
     n_features = 2
     n_classes = 2
     n_samples = 1000
     X, y = make_blobs(
-        n_samples=n_samples, n_features=n_features, centers=n_classes, random_state=11
+        n_samples=n_samples,
+        n_features=n_features,
+        centers=n_classes,
+        random_state=global_random_seed,
     )
 
     clf_svd = QuadraticDiscriminantAnalysis(solver="svd")
