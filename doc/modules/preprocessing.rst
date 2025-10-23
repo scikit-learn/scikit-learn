@@ -961,13 +961,12 @@ and learns one encoding on the entire training set. It is discouraged to use thi
 method because it can introduce data leakage as mentioned above. Use
 :meth:`~TargetEncoder.fit_transform` instead.
 
-For transforming test data based on the encodings learnt from the train data, use
-`encoder.transform(X_test)`. It uses 'full data' encodings also learned during
-:meth:`~TargetEncoder.fit_transform` and saved to the attribute `encodings_`. The
-learned encodings are never used in :meth:`~TargetEncoder.fit_transform` but are saved
-for use on test data when :meth:`~TargetEncoder.transform` is called. Note that the
-encodings learned for each fold during the :term:`cross fitting` scheme are not saved to
-an attribute.
+During :meth:`~TargetEncoder.fit_transform`, the encoder learns category
+encodings from the full training data and stores them in the
+:attr:`~TargetEncoder.encodings_` attribute. The intermediate encodings learned
+for each fold during the :term:`cross fitting` process are temporary and not
+saved. The stored encodings can then be used to transform test data with
+`encoder.transform(X_test)`.
 
 .. note::
   :class:`TargetEncoder` considers missing values, such as `np.nan` or `None`,
