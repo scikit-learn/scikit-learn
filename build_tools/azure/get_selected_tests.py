@@ -1,9 +1,6 @@
-import logging
 import os
 
 from get_commit_message import get_commit_message
-
-logger = logging.getLogger(__name__)
 
 
 def get_selected_tests():
@@ -24,8 +21,6 @@ def get_selected_tests():
             f"(GITHUB_ACTIONS={os.environ.get('GITHUB_ACTIONS', False)})."
             f"Instead, please use directly `SELECTED_TESTS`."
         )
-
-    logger.debug("`selected_tests` coming from Azure")
 
     commit_message = get_commit_message()
 

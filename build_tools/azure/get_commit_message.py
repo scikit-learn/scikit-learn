@@ -1,9 +1,6 @@
 import argparse
-import logging
 import os
 import subprocess
-
-logger = logging.getLogger(__name__)
 
 
 def get_commit_message():
@@ -16,8 +13,6 @@ def get_commit_message():
             f"(GITHUB_ACTIONS={os.environ.get('GITHUB_ACTIONS', False)})."
             f"Instead, please use directly `COMMIT_MESSAGE`."
         )
-
-    logger.debug("`commit_message` coming from Azure")
 
     # If 'COMMIT_MESSAGE' is unset we are in Azure, and we retrieve the commit
     # message using Azure-specific variables.
