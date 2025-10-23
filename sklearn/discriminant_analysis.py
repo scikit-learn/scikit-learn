@@ -899,12 +899,12 @@ class QuadraticDiscriminantAnalysis(
         .. versionadded:: 0.17
 
     covariance_estimator : covariance estimator, default=None
-        If not None, `covariance_estimator` is used to estimate
-        the covariance matrices instead of relying on the empirical
-        covariance estimator (with potential shrinkage).
-        The object should have a fit method and a ``covariance_`` attribute
-        like the estimators in :mod:`sklearn.covariance`.
-        if None the shrinkage parameter drives the estimate.
+        If not None, `covariance_estimator` is used to estimate the covariance
+        matrices instead of relying on the empirical covariance estimator
+        (with potential shrinkage).  The object should have a fit method and
+        a ``covariance_`` attribute like the estimators in
+        :mod:`sklearn.covariance`. If None the shrinkage parameter drives the
+        estimate.
 
         This should be left to None if `shrinkage` is used.
         Note that `covariance_estimator` works only with the 'eigen' solver.
@@ -1002,10 +1002,9 @@ class QuadraticDiscriminantAnalysis(
     def _solve_eigen(self, X, y, shrinkage, covariance_estimator):
         """Eigenvalue solver.
 
-        The eigenvalue solver uses the eigen decomposition of the
-        class covariances to compute the rotation and scaling
-        matrices used for scoring new samples. This solver supports
-        use of any covariance estimator.
+        The eigenvalue solver uses the eigen decomposition of the class
+        covariances to compute the rotation and scaling matrices used for scoring
+        new samples. This solver supports use of any covariance estimator.
 
         Parameters
         ----------
@@ -1021,16 +1020,14 @@ class QuadraticDiscriminantAnalysis(
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage constant.
 
-            Shrinkage parameter is ignored if  `covariance_estimator` is
-            not None
+            Shrinkage parameter is ignored if  `covariance_estimator` is not None
 
         covariance_estimator : estimator, default=None
-            If not None, `covariance_estimator` is used to estimate
-            the covariance matrices instead of relying the empirical
-            covariance estimator (with potential shrinkage).
-            The object should have a fit method and a ``covariance_`` attribute
-            like the estimators in sklearn.covariance.
-            if None the shrinkage parameter drives the estimate.
+            If not None, `covariance_estimator` is used to estimate the
+            covariance matrices instead of relying the empirical covariance
+            estimator (with potential shrinkage). The object should have a fit
+            method and a ``covariance_`` attribute like the estimators in
+            sklearn.covariance. If None the shrinkage parameter drives the estimate.
         """
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
@@ -1154,7 +1151,7 @@ class QuadraticDiscriminantAnalysis(
         n_classes = len(self.classes_)
         if n_classes < 2:
             raise ValueError(
-                "The number of classes has to be greater than one. Got " 
+                "The number of classes has to be greater than one. Got "
                 f"{n_classes} class."
             )
         if self.priors is None:
