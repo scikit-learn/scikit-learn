@@ -218,8 +218,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     def fit(self, X, y):
         """Fit the :class:`TargetEncoder` to X and y.
 
-        It is discouraged to use this method on training data, because it can introduce
-        data leakage and it is unnecessary to use on test data.
+        It is discouraged to use this method because it can introduce data leakage.
+        Use `fit_transform` on training data instead.
 
         .. note::
             `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
