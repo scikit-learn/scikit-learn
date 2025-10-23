@@ -60,7 +60,7 @@ jobs:
 
           {
             echo 'message<<EOF'
-            echo "${message}"
+            echo "'${message}'"
             echo EOF
           } >> "${GITHUB_OUTPUT}"
 
