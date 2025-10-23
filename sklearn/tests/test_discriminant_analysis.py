@@ -699,7 +699,10 @@ def test_qda_regularization(solver):
     assert np.any(y_pred != y6)
 
     # Adding a little regularization fixes the fit time error.
-    clf = QuadraticDiscriminantAnalysis(reg_param=0.01)
+    if solver == "svd":
+        clf = QuadraticDiscriminantAnalysis(reg_param=0.01)
+    elif solver == "eigen":
+        clf = QuadraticDiscriminantAnalysis(shrinkage=0.01)
     with warnings.catch_warnings():
         warnings.simplefilter("error")
     clf.fit(X2, y6)
@@ -712,11 +715,16 @@ def test_qda_regularization(solver):
     with pytest.warns(linalg.LinAlgWarning, match=msg):
         clf.fit(X5, y5)
 
-    # The error will persist even with regularization
-    clf = QuadraticDiscriminantAnalysis(reg_param=0.3)
-    with pytest.warns(linalg.LinAlgWarning, match=msg):
-        clf.fit(X5, y5)
-
+    # The warning will persist even with regularization for SVD
+    # because the number of singular values is limited by n_samples_in_a_class.
+    if solver == "svd":
+        clf = QuadraticDiscriminantAnalysis(reg_param=0.3, solver=solver)
+        with pytest.warns(linalg.LinAlgWarning, match=msg):
+            clf.fit(X5, y5)
+    # The warning will be gone for Eigen with regularization, because
+    # the covariance matrix will be full-rank.
+    elif solver == "eigen":
+        clf = QuadraticDiscriminantAnalysis(shrinkage=0.3, solver=solver)
 
 def test_covariance():
     x, y = make_blobs(n_samples=100, n_features=5, centers=1, random_state=42)
