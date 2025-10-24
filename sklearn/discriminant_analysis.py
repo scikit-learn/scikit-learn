@@ -1029,7 +1029,7 @@ class QuadraticDiscriminantAnalysis(
         n_samples, n_features = X.shape
 
         cov = _cov(X, shrinkage, covariance_estimator)
-        scaling, rotation = linalg.eigh(cov) # scalings are eigenvalues
+        scaling, rotation = linalg.eigh(cov)  # scalings are eigenvalues
         rotation = rotation[:, np.argsort(scaling)[::-1]]  # sort eigenvectors
         scaling = scaling[np.argsort(scaling)[::-1]]  # sort eigenvalues
         return scaling, rotation, cov
@@ -1048,7 +1048,7 @@ class QuadraticDiscriminantAnalysis(
         Xc = X - mean
         # Xc = U * S * V.T
         _, S, Vt = np.linalg.svd(Xc, full_matrices=False)
-        scaling = (S**2) / (n_samples - 1) # scalings are squared singular values
+        scaling = (S**2) / (n_samples - 1)  # scalings are squared singular values
         scaling = ((1 - self.reg_param) * scaling) + self.reg_param
         rotation = Vt.T
 
