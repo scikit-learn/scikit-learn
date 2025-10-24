@@ -514,7 +514,7 @@ class LinearDiscriminantAnalysis(
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage constant.
 
-            Shrinkage parameter is ignored if  `covariance_estimator` i
+            Shrinkage parameter is ignored if  `covariance_estimator` is
             not None
 
         covariance_estimator : estimator, default=None
@@ -857,6 +857,23 @@ class QuadraticDiscriminantAnalysis(
 
     Parameters
     ----------
+    solver : {'svd', 'eigen'}, default='svd'
+        Solver to use, possible values:
+          - 'svd': Singular value decomposition (default).
+            Does not compute the covariance matrix, therefore this solver is
+            recommended for data with a large number of features.
+          - 'eigen': Eigenvalue decomposition.
+            Can be combined with shrinkage or custom covariance estimator.
+
+    shrinkage : 'auto' or float, default=None
+        Shrinkage parameter, possible values:
+          - None: no shrinkage (default).
+          - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
+          - float between 0 and 1: fixed shrinkage parameter.
+
+        This should be left to None if `covariance_estimator` is used.
+        Note that shrinkage works only with 'eigen' solver.
+
     priors : array-like of shape (n_classes,), default=None
         Class priors. By default, the class proportions are inferred from the
         training data.
@@ -880,6 +897,17 @@ class QuadraticDiscriminantAnalysis(
         is raised if the covariance matrix is not full rank.
 
         .. versionadded:: 0.17
+
+    covariance_estimator : covariance estimator, default=None
+        If not None, `covariance_estimator` is used to estimate the covariance
+        matrices instead of relying on the empirical covariance estimator
+        (with potential shrinkage).  The object should have a fit method and
+        a ``covariance_`` attribute like the estimators in
+        :mod:`sklearn.covariance`. If None the shrinkage parameter drives the
+        estimate.
+
+        This should be left to None if `shrinkage` is used.
+        Note that `covariance_estimator` works only with the 'eigen' solver.
 
     Attributes
     ----------
@@ -943,19 +971,93 @@ class QuadraticDiscriminantAnalysis(
     """
 
     _parameter_constraints: dict = {
+        "solver": [StrOptions({"svd", "eigen"})],
+        "shrinkage": [StrOptions({"auto"}), Interval(Real, 0, 1, closed="both"), None],
         "priors": ["array-like", None],
         "reg_param": [Interval(Real, 0, 1, closed="both")],
         "store_covariance": ["boolean"],
         "tol": [Interval(Real, 0, None, closed="left")],
+        "covariance_estimator": [HasMethods("fit"), None],
     }
 
     def __init__(
-        self, *, priors=None, reg_param=0.0, store_covariance=False, tol=1.0e-4
+        self,
+        *,
+        solver="svd",
+        shrinkage=None,
+        priors=None,
+        reg_param=0.0,
+        store_covariance=False,
+        tol=1.0e-4,
+        covariance_estimator=None,
     ):
+        self.solver = solver
+        self.shrinkage = shrinkage
         self.priors = priors
         self.reg_param = reg_param
         self.store_covariance = store_covariance
         self.tol = tol
+        self.covariance_estimator = covariance_estimator
+
+    def _solve_eigen(self, X, shrinkage, covariance_estimator):
+        """Eigenvalue solver.
+
+        The eigenvalue solver uses the eigen decomposition of the data
+        to compute the rotation and scaling matrices used for scoring
+        new samples. This solver supports use of any covariance estimator.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data.
+
+        shrinkage : 'auto', float or None
+            Shrinkage parameter, possible values:
+              - None: no shrinkage.
+              - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
+              - float between 0 and 1: fixed shrinkage constant.
+
+            Shrinkage parameter is ignored if  `covariance_estimator` is not None
+
+        covariance_estimator : estimator, default=None
+            If not None, `covariance_estimator` is used to estimate the
+            covariance matrices instead of relying the empirical covariance
+            estimator (with potential shrinkage). The object should have a fit
+            method and a ``covariance_`` attribute like the estimators in
+            sklearn.covariance. If None the shrinkage parameter drives the estimate.
+        """
+        n_samples, n_features = X.shape
+
+        cov = _cov(X, shrinkage, covariance_estimator)
+        scaling, rotation = linalg.eigh(cov)  # scalings are eigenvalues
+        rotation = rotation[:, np.argsort(scaling)[::-1]]  # sort eigenvectors
+        scaling = scaling[np.argsort(scaling)[::-1]]  # sort eigenvalues
+        return scaling, rotation, cov
+
+    def _solve_svd(self, X):
+        """SVD solver for Quadratic Discriminant Analysis.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data.
+        """
+        n_samples, n_features = X.shape
+
+        mean = X.mean(0)
+        Xc = X - mean
+        # Xc = U * S * V.T
+        _, S, Vt = np.linalg.svd(Xc, full_matrices=False)
+        scaling = (S**2) / (n_samples - 1)  # scalings are squared singular values
+        scaling = ((1 - self.reg_param) * scaling) + self.reg_param
+        rotation = Vt.T
+
+        cov = None
+        if self.store_covariance:
+            # cov = V * (S^2 / (n-1)) * V.T
+            cov = np.dot(scaling * Vt.T, Vt)
+
+        return scaling, rotation, cov
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
@@ -984,53 +1086,67 @@ class QuadraticDiscriminantAnalysis(
         """
         X, y = validate_data(self, X, y)
         check_classification_targets(y)
-        self.classes_, y = np.unique(y, return_inverse=True)
+        self.classes_ = np.unique(y)
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
         if n_classes < 2:
             raise ValueError(
-                "The number of classes has to be greater than one; got %d class"
-                % (n_classes)
+                "The number of classes has to be greater than one. Got "
+                f"{n_classes} class."
             )
         if self.priors is None:
-            self.priors_ = np.bincount(y) / float(n_samples)
+            _, cnts = np.unique(y, return_counts=True)
+            self.priors_ = cnts / float(n_samples)
         else:
             self.priors_ = np.array(self.priors)
 
-        cov = None
+        if self.solver == "svd":
+            if self.shrinkage is not None:
+                raise NotImplementedError("shrinkage not supported with 'svd' solver.")
+            if self.covariance_estimator is not None:
+                raise ValueError(
+                    "covariance_estimator is not supported with solver='svd'. "
+                    "Try solver='eigen' instead."
+                )
 
-        if self.store_covariance:
-            cov = []
         means = []
+        cov = []
         scalings = []
         rotations = []
-        for ind in range(n_classes):
-            Xg = X[y == ind, :]
-            meang = Xg.mean(0)
-            means.append(meang)
-            if len(Xg) == 1:
+        for idx, group in enumerate(self.classes_):
+            X_class = X[y == group, :]
+            if len(X_class) == 1:
                 raise ValueError(
                     "y has only 1 sample in class %s, covariance is ill defined."
-                    % str(self.classes_[ind])
+                    % str(self.classes_[idx])
                 )
-            Xgc = Xg - meang
-            # Xgc = U * S * V.T
-            _, S, Vt = np.linalg.svd(Xgc, full_matrices=False)
-            S2 = (S**2) / (len(Xg) - 1)
-            S2 = ((1 - self.reg_param) * S2) + self.reg_param
-            rank = np.sum(S2 > self.tol)
+
+            mean_class = X_class.mean(0)
+            means.append(mean_class)
+
+            if self.solver == "svd":
+                scaling_class, rotation_class, cov_class = self._solve_svd(X_class)
+            elif self.solver == "eigen":
+                scaling_class, rotation_class, cov_class = self._solve_eigen(
+                    X_class,
+                    shrinkage=self.shrinkage,
+                    covariance_estimator=self.covariance_estimator,
+                )
+
+            rank = np.sum(scaling_class > self.tol)
             if rank < n_features:
+                msg_param = "shrinkage" if self.solver == "eigen" else "reg_param"
                 warnings.warn(
-                    f"The covariance matrix of class {ind} is not full rank. "
-                    "Increasing the value of parameter `reg_param` might help"
+                    f"The covariance matrix of class {group} is not full rank. "
+                    "Increasing the value of parameter `{msg_param}` might help"
                     " reducing the collinearity.",
                     linalg.LinAlgWarning,
                 )
-            if self.store_covariance:
-                # cov = V * (S^2 / (n-1)) * V.T
-                cov.append(np.dot(S2 * Vt.T, Vt))
-            scalings.append(S2)
-            rotations.append(Vt.T)
+
+            cov.append(cov_class)
+            scalings.append(scaling_class)
+            rotations.append(rotation_class)
+
         if self.store_covariance:
             self.covariance_ = cov
         self.means_ = np.asarray(means)
