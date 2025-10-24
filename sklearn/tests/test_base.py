@@ -774,7 +774,7 @@ def test_feature_names_in():
     with pytest.warns(UserWarning, match=msg):
         trans.transform(df)
 
-    # fit on dataframe with all integer feature names works without warning
+    # fit on dataframe with all integer feature names should now raise a UserWarning
     df_int_names = pd.DataFrame(X_np)
     trans = NoOpTransformer()
     with pytest.warns(UserWarning, match="integer column names"):
