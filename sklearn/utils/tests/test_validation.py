@@ -1960,7 +1960,7 @@ def test_get_feature_names_pandas_with_ints_warns(names):
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
 
-    with pytest.warns(FutureWarning, match="integer column names"):
+    with pytest.warns(UserWarning, match="integer column names"):
         names = _get_feature_names(X)
     assert names is None
 
