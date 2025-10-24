@@ -2814,7 +2814,7 @@ def test_integer_column_names_raise_error():
 
     ct = ColumnTransformer(transformers=[("num", SimpleImputer(), [0, 1])])
 
-    with pytest.warns(FutureWarning, match="integer column names"):
+    with pytest.warns(UserWarning, match="integer column names"):
         ct.fit(df)
 
 

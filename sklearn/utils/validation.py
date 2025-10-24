@@ -2414,12 +2414,12 @@ def _get_feature_names(X):
 
     if len(types) == 1 and types[0] in ("int", "int64", "int32"):
         warnings.warn(
-            "DataFrame has integer column names, which are ambiguous. "
-            "Scikit-learn interprets integers as column positions. "
-            "Please cast column names to string "
-            "(e.g. `df.columns = df.columns.astype(str)`). "
-            "In a future release, this will raise an error.",
-            FutureWarning,
+            "DataFrame has integer column names, which are ambiguous."
+            "Scikit-learn interprets integers as column positions."
+            "The feature names are ignored, and columns will be selected by position."
+            "Please cast column names to string"
+            "(e.g. `df.columns = df.columns.astype(str)`).",
+            UserWarning,
         )
         return None
 
