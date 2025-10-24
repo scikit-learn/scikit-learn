@@ -665,7 +665,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         pos_label : int, float, bool or str, default=None
             The class considered as the positive class when computing the ROC AUC
-            metrics. By default, `estimator.classes_[-1]` (using `estimator` from
+            metrics. By default, `estimator.classes_[1]` (using `estimator` from
             `cv_results`) is considered as the positive class.
 
         ax : matplotlib axes, default=None

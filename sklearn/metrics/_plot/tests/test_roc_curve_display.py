@@ -588,6 +588,18 @@ def test_roc_curve_from_cv_results_curve_kwargs(pyplot, data_binary, curve_kwarg
             assert color == curve_kwargs[idx]["c"]
 
 
+def test_roc_curve_from_cv_results_pos_label_inferred(pyplot, data_binary):
+    """Check `pos_label` inferred correctly by `from_cv_results(pos_label=None)`."""
+    X, y = data_binary
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+
+    disp = RocCurveDisplay.from_cv_results(cv_results, X, y, pos_label=None)
+    # Should be `estimator.classes_[1]`
+    assert disp.pos_label == 1
+
+
 def _check_chance_level(plot_chance_level, chance_level_kw, display):
     """Check chance level line and line styles correct."""
     import matplotlib as mpl
