@@ -6,6 +6,7 @@
   border-radius: .20em;
   margin-bottom: 0.5em;
   display: flex;
+
   align-items: first baseline;
   justify-content: center;
 }
@@ -17,7 +18,7 @@
 .features summary {
   position: sticky;
   top: 0;
-  padding: .1em;
+  padding: .25em .5em;
   border: none;
   border-radius: .20em 0 0 .20em;
 }
@@ -29,6 +30,7 @@
 
 .features details:hover ~ .image-container {
   margin: 0;
+  padding: .25em .5em;
   background-color: var(--sklearn-color-unfitted-level-2);
 }
 
@@ -68,7 +70,7 @@
   max-height: 10em;
   overflow: auto;
   scrollbar-width: thin;
-  padding: .5em;
+  padding: .25em .5em;
   background-color: var(--sklearn-color-unfitted-level-0);
   border-radius: 0 0 .5em .5em;
 }
@@ -79,7 +81,7 @@
 
 .features .image-container {
   margin: 0;
-  padding: .1em;
+  padding: .25em .5em;
 }
 
 .features .copy-paste-icon {
