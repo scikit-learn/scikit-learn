@@ -334,6 +334,15 @@ def test_is_clusterer(estimator, expected_result):
     assert is_clusterer(estimator) == expected_result
 
 
+@pytest.mark.parametrize(
+    "is_func, estimator",
+    [(is_regressor, SVR), (is_classifier, SVC), (is_clusterer, KMeans)],
+)
+def test_is_classifier_class_vs_instance_error(is_func, estimator):
+    with pytest.raises(TypeError, match="It seems that you passed an estimator class"):
+        is_func(estimator)
+
+
 def test_set_params():
     # test nested estimator parameter setting
     clf = Pipeline([("svc", SVC())])
