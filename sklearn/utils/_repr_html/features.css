@@ -5,7 +5,6 @@
   border: 1px dotted var(--sklearn-color-border-box);
   border-radius: .20em;
   margin-bottom: 0.5em;
-  padding: .1em;
   display: flex;
   align-items: first baseline;
   justify-content: center;
@@ -18,7 +17,7 @@
 .features summary {
   position: sticky;
   top: 0;
-  padding: .25em .5em;
+  padding: .1em;
   border: none;
   border-radius: .20em 0 0 .20em;
 }
@@ -28,13 +27,31 @@
   color: var(--sklearn-color-icon);
 }
 
-.features:hover {
+.features details:hover ~ .image-container {
+  margin: 0;
   background-color: var(--sklearn-color-unfitted-level-2);
 }
 
-.features.fitted:hover {
+.features.fitted details:hover ~ .image-container {
+  margin: 0;
   background-color: var(--sklearn-color-fitted-level-2);
 }
+
+.features details:hover > summary {
+  margin: 0;
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+.features.fitted details:hover ~ .image-container {
+  margin: 0;
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
+.features.fitted details:hover > summary {
+  margin: 0;
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
 
 .features details[open] > summary {
   color: var(--sklearn-color-text);
@@ -43,9 +60,8 @@
 }
 
 .features.fitted details[open] > summary {
-background-color: var(--sklearn-color-fitted-level-2);
+  background-color: var(--sklearn-color-fitted-level-2);
 }
-
 
 .features .features-container {
   max-width: 15em;
@@ -63,6 +79,7 @@ background-color: var(--sklearn-color-fitted-level-2);
 
 .features .image-container {
   margin: 0;
+  padding: .1em;
 }
 
 .features .copy-paste-icon {
@@ -82,4 +99,20 @@ background-color: var(--sklearn-color-fitted-level-2);
   padding: 0;
   white-space: nowrap;
   color: var(--sklearn-color-text);
+}
+
+.features .image-container:hover {
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+.features.fitted .image-container:hover {
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
+.features:has(.image-container:hover) summary {
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+.features.fitted:has(.image-container:hover) summary {
+  background-color: var(--sklearn-color-fitted-level-2);
 }
