@@ -584,7 +584,7 @@ Commit Message Marker  Action Taken by CI
 [pyodide]              Build & test with Pyodide
 [azure parallel]       Run Azure CI jobs in parallel
 [float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
-[all random seeds]     Run tests with the `global_random_seed` fixture using all supported random seeds . See `issue #28959 <https://github.com/scikit-learn/scikit-learn/issues/28959>`_ for details.
+[all random seeds]     Run tests with the `global_random_seed` fixture using all supported random seeds. See `issue #28959 <https://github.com/scikit-learn/scikit-learn/issues/28959>`_ for details.
 [doc skip]             Docs are not built
 [doc quick]            Docs built, but excludes example gallery plots
 [doc build]            Docs built including example gallery plots (very long)
