@@ -1154,7 +1154,7 @@ class QuadraticDiscriminantAnalysis(
                 f"{n_classes} class."
             )
         if self.priors is None:
-            _, cnts = np.unique_counts(y)  # non-negative ints
+            _, cnts = np.unique(y, return_counts=True)  # non-negative ints
             self.priors_ = cnts / float(n_samples)
         else:
             self.priors_ = np.array(self.priors)
