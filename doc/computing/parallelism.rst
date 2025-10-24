@@ -289,7 +289,8 @@ Run this test locally across all admissible random seeds with:
 
     SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all" pytest -v -k test_random_behavior
 
-This ensures the test is deterministic for all seed values from 0 to 99.
+This ensures the test is deterministic and passes for any seed values
+from 0 to 99.
 
 
 `SKLEARN_SKIP_NETWORK_TESTS`
