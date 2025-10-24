@@ -68,6 +68,7 @@ docs = [
     "pydata-sphinx-theme>=0.15.3",
     "sphinx-remove-toctrees>=1.0.0.post1",
     "towncrier>=24.8.0",
+    "sphinx-marimo",
 ]
 examples = [
     "matplotlib>=3.6.1",

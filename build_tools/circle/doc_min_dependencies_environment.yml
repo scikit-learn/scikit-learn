@@ -26,6 +26,7 @@ dependencies:
   - compilers
   - sphinx=7.3.7  # min
   - sphinx-gallery=0.17.1  # min
+  - sphinx-marimo
   - sphinx-copybutton=0.5.2  # min
   - numpydoc=1.2.0  # min
   - sphinx-prompt=1.4.0  # min
