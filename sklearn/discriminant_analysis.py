@@ -999,20 +999,17 @@ class QuadraticDiscriminantAnalysis(
         self.tol = tol
         self.covariance_estimator = covariance_estimator
 
-    def _solve_eigen(self, X, y, shrinkage, covariance_estimator):
+    def _solve_eigen(self, X, shrinkage, covariance_estimator):
         """Eigenvalue solver.
 
-        The eigenvalue solver uses the eigen decomposition of the class
-        covariances to compute the rotation and scaling matrices used for scoring
+        The eigenvalue solver uses the eigen decomposition of the data
+        to compute the rotation and scaling matrices used for scoring
         new samples. This solver supports use of any covariance estimator.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
             Training data.
-
-        y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target values.
 
         shrinkage : 'auto', float or None
             Shrinkage parameter, possible values:
@@ -1031,92 +1028,36 @@ class QuadraticDiscriminantAnalysis(
         """
         n_samples, n_features = X.shape
 
-        means = []
-        cov = []
-        scalings = []
-        rotations = []
-        for idx, group in enumerate(self.classes_):
-            Xg = X[y == group, :]
-            meang = Xg.mean(0)
-            means.append(meang)
-            if len(Xg) == 1:
-                raise ValueError(
-                    "y has only 1 sample in class %s, covariance is ill defined."
-                    % str(self.classes_[idx])
-                )
-            cov.append(_cov(Xg, shrinkage, covariance_estimator))
-            S2, V = linalg.eigh(cov[-1])
-            V = V[:, np.argsort(S2)[::-1]]  # sort eigenvectors
-            S2 = S2[np.argsort(S2)[::-1]]  # sort eigenvalues
-            Vt = V.T
-            rank = np.sum(S2 > self.tol)
-            if rank < n_features:
-                warnings.warn(
-                    f"The covariance matrix of class {group} is not full rank. "
-                    "Increasing the value of parameter `shrinkage` might help"
-                    " reducing the collinearity.",
-                    linalg.LinAlgWarning,
-                )
-            scalings.append(S2)
-            rotations.append(Vt.T)
-        if self.store_covariance:
-            self.covariance_ = cov
-        self.means_ = np.asarray(means)
-        self.scalings_ = scalings
-        self.rotations_ = rotations
+        cov = _cov(X, shrinkage, covariance_estimator)
+        scaling, rotation = linalg.eigh(cov) # scalings are eigenvalues
+        rotation = rotation[:, np.argsort(scaling)[::-1]]  # sort eigenvectors
+        scaling = scaling[np.argsort(scaling)[::-1]]  # sort eigenvalues
+        return scaling, rotation, cov
 
-    def _solve_svd(self, X, y):
+    def _solve_svd(self, X):
         """SVD solver for Quadratic Discriminant Analysis.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
             Training data.
-
-        y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target values.
         """
         n_samples, n_features = X.shape
 
-        cov = None
+        mean = X.mean(0)
+        Xc = X - mean
+        # Xc = U * S * V.T
+        _, S, Vt = np.linalg.svd(Xc, full_matrices=False)
+        scaling = (S**2) / (n_samples - 1) # scalings are squared singular values
+        scaling = ((1 - self.reg_param) * scaling) + self.reg_param
+        rotation = Vt.T
 
+        cov = None
         if self.store_covariance:
-            cov = []
-        means = []
-        scalings = []
-        rotations = []
-        for idx, group in enumerate(self.classes_):
-            Xg = X[y == group, :]
-            meang = Xg.mean(0)
-            means.append(meang)
-            if len(Xg) == 1:
-                raise ValueError(
-                    "y has only 1 sample in class %s, covariance is ill defined."
-                    % str(self.classes_[idx])
-                )
-            Xgc = Xg - meang
-            # Xgc = U * S * V.T
-            _, S, Vt = np.linalg.svd(Xgc, full_matrices=False)
-            S2 = (S**2) / (len(Xg) - 1)
-            S2 = ((1 - self.reg_param) * S2) + self.reg_param
-            rank = np.sum(S2 > self.tol)
-            if rank < n_features:
-                warnings.warn(
-                    f"The covariance matrix of class {group} is not full rank. "
-                    "Increasing the value of parameter `reg_param` might help"
-                    " reducing the collinearity.",
-                    linalg.LinAlgWarning,
-                )
-            if self.store_covariance:
-                # cov = V * (S^2 / (n-1)) * V.T
-                cov.append(np.dot(S2 * Vt.T, Vt))
-            scalings.append(S2)
-            rotations.append(Vt.T)
-        if self.store_covariance:
-            self.covariance_ = cov
-        self.means_ = np.asarray(means)
-        self.scalings_ = scalings
-        self.rotations_ = rotations
+            # cov = V * (S^2 / (n-1)) * V.T
+            cov = np.dot(scaling * Vt.T, Vt)
+
+        return scaling, rotation, cov
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
@@ -1154,7 +1095,7 @@ class QuadraticDiscriminantAnalysis(
                 f"{n_classes} class."
             )
         if self.priors is None:
-            _, cnts = np.unique(y, return_counts=True)  # non-negative ints
+            _, cnts = np.unique(y, return_counts=True)
             self.priors_ = cnts / float(n_samples)
         else:
             self.priors_ = np.array(self.priors)
@@ -1167,14 +1108,50 @@ class QuadraticDiscriminantAnalysis(
                     "covariance_estimator is not supported with solver='svd'. "
                     "Try solver='eigen' instead."
                 )
-            self._solve_svd(X, y)
-        elif self.solver == "eigen":
-            self._solve_eigen(
-                X,
-                y,
-                shrinkage=self.shrinkage,
-                covariance_estimator=self.covariance_estimator,
-            )
+
+        means = []
+        cov = []
+        scalings = []
+        rotations = []
+        for idx, group in enumerate(self.classes_):
+            Xg = X[y == group, :]
+            if len(Xg) == 1:
+                raise ValueError(
+                    "y has only 1 sample in class %s, covariance is ill defined."
+                    % str(self.classes_[idx])
+                )
+
+            mean_class = Xg.mean(0)
+            means.append(mean_class)
+
+            if self.solver == "svd":
+                scaling_class, rotation_class, cov_class = self._solve_svd(Xg)
+            elif self.solver == "eigen":
+                scaling_class, rotation_class, cov_class = self._solve_eigen(
+                    Xg,
+                    shrinkage=self.shrinkage,
+                    covariance_estimator=self.covariance_estimator,
+                )
+
+            rank = np.sum(scaling_class > self.tol)
+            if rank < n_features:
+                msg_param = "shrinkage" if self.solver == "eigen" else "reg_param"
+                warnings.warn(
+                    f"The covariance matrix of class {group} is not full rank. "
+                    "Increasing the value of parameter `{msg_param}` might help"
+                    " reducing the collinearity.",
+                    linalg.LinAlgWarning,
+                )
+
+            cov.append(cov_class)
+            scalings.append(scaling_class)
+            rotations.append(rotation_class)
+
+        if self.store_covariance:
+            self.covariance_ = cov
+        self.means_ = np.asarray(means)
+        self.scalings_ = scalings
+        self.rotations_ = rotations
         return self
 
     def _decision_function(self, X):
