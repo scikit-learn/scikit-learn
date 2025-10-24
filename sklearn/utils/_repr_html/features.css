@@ -30,18 +30,27 @@
 .features details[open] > summary {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-unfitted-level-2);
-  border-radius: .20em;
+  border-radius: .20em 0 0 0;
 }
 
 .features.fitted details[open] > summary {
   background-color: var(--sklearn-color-fitted-level-2);
+  border-radius: .20em 0 0 0;
 }
 
+.features details[open] ~ .image-container {
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
 .features.fitted details[open] ~ .image-container {
   background-color: var(--sklearn-color-fitted-level-2);
 }
 
 .features details:hover > summary {
+  margin: 0;
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+.features details:hover ~ .image-container {
   margin: 0;
   background-color: var(--sklearn-color-unfitted-level-2);
 }
@@ -97,8 +106,6 @@
 .features.fitted:has(.image-container:hover) summary {
   background-color: var(--sklearn-color-fitted-level-2);
 }
-
-
 
 .features .features-container table {
     width: 95%;
