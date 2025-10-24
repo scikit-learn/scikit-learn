@@ -777,17 +777,20 @@ def test_feature_names_in():
     # fit on dataframe with all integer feature names works without warning
     df_int_names = pd.DataFrame(X_np)
     trans = NoOpTransformer()
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
+    with pytest.warns(UserWarning, match="integer column names"):
         trans.fit(df_int_names)
 
     # fit on dataframe with no feature names or all integer feature names
     # -> do not warn on transform
     Xs = [X_np, df_int_names]
     for X in Xs:
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", UserWarning)
-            trans.transform(X)
+        if isinstance(X, pd.DataFrame):
+            with pytest.warns(UserWarning, match="integer column names"):
+                trans.transform(X)
+        else:
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", UserWarning)
+                trans.transform(X)
 
     # fit on dataframe with feature names that are mixed raises an error:
     df_mixed = pd.DataFrame(X_np, columns=["a", "b", 1, 2])
