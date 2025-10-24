@@ -536,16 +536,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         The results are then stored in `self._transformer_to_input_indices`.
         """
-        if hasattr(X, "columns") and any(
-            isinstance(c, (int, np.integer)) for c in X.columns
-        ):
-            raise ValueError(
-                "DataFrame has integer column names, which are ambiguous. "
-                "Scikit-learn interprets integers as column positions. "
-                "Please cast column names to string "
-                "(e.g. `df.columns = df.columns.astype(str)`)."
-            )
-
         all_columns = []
         transformer_to_input_indices = {}
         for name, _, columns in self.transformers:
