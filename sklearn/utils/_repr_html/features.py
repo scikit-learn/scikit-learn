@@ -20,20 +20,19 @@ def _features_html(features, is_fitted_css_class=""):
             </div>
           </details>
           <div class="image-container"
-          title="Copy all output features"
-          >
-          <i class="copy-paste-icon"
-              onclick="
-                var detailsElem = this.closest('.features').querySelector('details');
-                var wasOpen = detailsElem.open;
-                detailsElem.open = true;
-                var content = this.closest('.features')
-                  .querySelector('tbody').innerText.trim();
-                if (!wasOpen) detailsElem.open = false;
-                copyRowsToClipboard(content, this);
-              "
-              >
-          </i>
+          title="Copy all output features">
+            <i class="copy-paste-icon"
+                onclick="
+                  var detailsElem = this.closest('.features').querySelector('details');
+                  var wasOpen = detailsElem.open;
+                  detailsElem.open = true;
+                  var content = this.closest('.features')
+                    .querySelector('tbody').innerText.trim();
+                  if (!wasOpen) detailsElem.open = false;
+                  copyRowsToClipboard(content, this);
+                "
+                >
+            </i>
           </div>
         </div>
     """

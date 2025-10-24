@@ -5,8 +5,10 @@
   border: 1px dotted var(--sklearn-color-border-box);
   border-radius: .20em;
   margin-bottom: 0.5em;
+  padding: .1em;
   display: flex;
   align-items: first baseline;
+  justify-content: center;
 }
 
 .features.fitted {
@@ -34,7 +36,7 @@
   background-color: var(--sklearn-color-fitted-level-2);
 }
 
-details[open] > summary {
+.features details[open] > summary {
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-unfitted-level-2);
   border-radius: .20em;
@@ -67,8 +69,6 @@ background-color: var(--sklearn-color-fitted-level-2);
   background-size: 10px 10px;
   width: 10px;
   height: 10px;
-  margin-left: 1px;
-  margin-right:  2px;
   filter: grayscale(100%) opacity(60%);
 }
 
