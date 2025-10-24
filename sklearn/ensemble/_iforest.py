@@ -209,7 +209,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
            :doi:`"Isolation forest." <10.1109/ICDM.2008.17>`
            2008 Eighth IEEE International Conference on Data Mining (ICDM),
            2008, pp. 413-422.
-    .. [2] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua.
+    .. [2] F. T. Liu, K. M. Ting and Z. -H. Zhou.
            :doi:`"Isolation-based anomaly detection."
            <10.1145/2133360.2133363>` ACM Transactions on
            Knowledge Discovery from Data (TKDD) 6.1 (2012): 1-39.
