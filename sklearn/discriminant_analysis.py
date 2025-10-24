@@ -1114,21 +1114,21 @@ class QuadraticDiscriminantAnalysis(
         scalings = []
         rotations = []
         for idx, group in enumerate(self.classes_):
-            Xg = X[y == group, :]
-            if len(Xg) == 1:
+            X_class = X[y == group, :]
+            if len(X_class) == 1:
                 raise ValueError(
                     "y has only 1 sample in class %s, covariance is ill defined."
                     % str(self.classes_[idx])
                 )
 
-            mean_class = Xg.mean(0)
+            mean_class = X_class.mean(0)
             means.append(mean_class)
 
             if self.solver == "svd":
-                scaling_class, rotation_class, cov_class = self._solve_svd(Xg)
+                scaling_class, rotation_class, cov_class = self._solve_svd(X_class)
             elif self.solver == "eigen":
                 scaling_class, rotation_class, cov_class = self._solve_eigen(
-                    Xg,
+                    X_class,
                     shrinkage=self.shrinkage,
                     covariance_estimator=self.covariance_estimator,
                 )
