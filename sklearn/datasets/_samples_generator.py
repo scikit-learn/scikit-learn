@@ -284,26 +284,26 @@ def make_classification(
         scale_val = scale
 
     # =========================================================================
-    # FIX: Precompute ALL distribution-defining random elements 
+    # FIX: Precompute ALL distribution-defining random elements
     # BEFORE any sample-dependent operations
     # =========================================================================
-    
+
     # 1. Random transformation matrices
     A = 2 * generator.uniform(size=(n_informative, n_informative)) - 1
-    
+
     if n_redundant > 0:
         B = 2 * generator.uniform(size=(n_informative, n_redundant)) - 1
-    
+
     # 2. Repeated feature indices
     n = n_informative + n_redundant
     if n_repeated > 0:
         repeated_indices = ((n - 1) * generator.uniform(size=n_repeated) + 0.5).astype(np.intp)
-    
+
     # 3. Flip probabilities (precompute more than we need)
     flip_probs = None
     if flip_y >= 0.0:
         flip_probs = generator.uniform(size=1000)
-    
+
     # 4. Shuffle indices (precompute more than we need)
     max_shuffle_size = 1000
     precomputed_shuffle = generator.permutation(max_shuffle_size)
@@ -311,7 +311,7 @@ def make_classification(
     # =========================================================================
     # Generate sample data using precomputed parameters
     # =========================================================================
-    
+
     # Generate ALL random data in a large contiguous block
     max_samples = 1000  # Generate more than we need for any call
     total_random_features = n_informative + n_random
@@ -324,31 +324,31 @@ def make_classification(
     # =========================================================================
     # CRITICAL FIX: Consistent cluster interleaving regardless of n_samples
     # =========================================================================
-    
+
     # Precompute a deterministic interleaving pattern
     # This ensures the same samples get the same clusters regardless of n_samples
-    
+
     # Calculate the intended cluster sizes for a reference dataset
     reference_size = 1000  # Large enough to see the pattern
     reference_samples_per_cluster = [
         int(reference_size * weights_[k % n_classes] / n_clusters_per_class)
         for k in range(n_clusters)
     ]
-    
+
     # Distribute any remaining samples
     for i in range(reference_size - sum(reference_samples_per_cluster)):
         reference_samples_per_cluster[i % n_clusters] += 1
-    
+
     # Create an interleaved assignment pattern
     assignment_pattern = []
     max_cluster_size = max(reference_samples_per_cluster)
-    
+
     # Interleave samples from different clusters
     for position in range(max_cluster_size):
         for cluster in range(n_clusters):
             if position < reference_samples_per_cluster[cluster]:
                 assignment_pattern.append(cluster)
-    
+
     # Now assign clusters using the precomputed pattern
     for i in range(n_samples):
         if i < len(assignment_pattern):
@@ -356,17 +356,17 @@ def make_classification(
         else:
             # Cycle through the pattern if we need more samples
             cluster = assignment_pattern[i % len(assignment_pattern)]
-        
+
         y[i] = cluster % n_classes
-        
+
         # Get the sample view
         X_sample = X[i:i+1, :n_informative]
-        
+
         # Use pre-generated random data from the same position
         X_sample[...] = all_random_data[i:i+1, :n_informative]
         X_sample[...] = np.dot(X_sample, A)
         X_sample += centroids[cluster]
-        
+
     # Create redundant features using precomputed B
     if n_redundant > 0:
         X[:, n_informative : n_informative + n_redundant] = np.dot(
