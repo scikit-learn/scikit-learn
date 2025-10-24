@@ -3580,34 +3580,41 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     def _yeo_johnson_optimize(self, x):
         """Find and return optimal lambda parameter of the Yeo-Johnson
         transform by MLE, for observed data x.
-
+    
         Like for Box-Cox, MLE is done via the brent optimizer.
         """
-        x_tiny = np.finfo(np.float64).tiny
+        if np.all(np.isnan(x)):
+            raise ValueError("Input to _yeo_johnson_optimize contains only NaN values, transformation cannot proceed.")
 
+        # ... existing code continues here ...
+        x_tiny = np.finfo(np.float64).tiny
+        
         def _neg_log_likelihood(lmbda):
-            """Return the negative log likelihood of the observed data x as a
-            function of lambda."""
+            """Return the negative log likelihood of the observed data x as a function of lambda."""
             x_trans = self._yeo_johnson_transform(x, lmbda)
             n_samples = x.shape[0]
             x_trans_var = x_trans.var()
-
+            
             # Reject transformed data that would raise a RuntimeWarning in np.log
             if x_trans_var < x_tiny:
                 return np.inf
-
+                
             log_var = np.log(x_trans_var)
             loglike = -n_samples / 2 * log_var
             loglike += (lmbda - 1) * (np.sign(x) * np.log1p(np.abs(x))).sum()
-
+            
             return -loglike
 
-        # the computation of lambda is influenced by NaNs so we need to
-        # get rid of them
+        # the computation of lambda is influenced by NaNs so we need to get rid of them
         x = x[~np.isnan(x)]
 
         return _yeojohnson_lambda(_neg_log_likelihood, x)
 
+
+
+
+
+    
     def _check_input(self, X, in_fit, check_positive=False, check_shape=False):
         """Validate the input before fit and transform.
 
