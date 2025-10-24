@@ -500,8 +500,8 @@ def move_to(*arrays, xp_reference, device_reference):
 
     `array` may contain `None` entries, these are left unchanged.
 
-    Sparse arrays are supported if the reference namespace is numpy.
-    Otherwise a `TypeError` is raised.
+    Sparse arrays are accepted if the reference namespace is Numpy, in which
+    case they are returned unchanged. Otherwise a `TypeError` is raised.
 
     Parameters
     ----------

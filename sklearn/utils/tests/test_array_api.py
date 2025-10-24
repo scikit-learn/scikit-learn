@@ -122,7 +122,7 @@ def test_move_to_array_api_conversions():
     array_np = numpy.asarray([1, 2, 3], device=None)
 
     array_1_out, array_2_out = move_to(
-        array_cupy, array_np, xp_reference=xp_torch, device_referenceerence=device_torch
+        array_cupy, array_np, xp_reference=xp_torch, device_reference=device_torch
     )
     for array in (array_1_out, array_2_out):
         assert get_namespace(array) == xp_torch
@@ -135,8 +135,8 @@ def test_move_to_sparse():
     xp_torch = _array_api_for_tests("torch", "cpu")
     device_cpu = xp_torch.asarray([1]).device
 
-    sparse1 = sp.csr_matrix([0, 1, 2, 3])
-    sparse2 = sp.csr_matrix([0, 1, 0, 1])
+    sparse1 = sp.csr_array([0, 1, 2, 3])
+    sparse2 = sp.csr_array([0, 1, 0, 1])
     numpy_array = numpy.array([1, 2, 3])
 
     # sparse to numpy
