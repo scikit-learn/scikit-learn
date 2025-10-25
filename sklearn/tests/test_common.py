@@ -112,7 +112,9 @@ def test_get_check_estimator_ids(val, expected):
 
 
 @parametrize_with_checks(
-    list(_tested_estimators()), expected_failed_checks=_get_expected_failed_checks
+    list(_tested_estimators()),
+    expected_failed_checks=_get_expected_failed_checks,
+    xfail_strict=True,
 )
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
