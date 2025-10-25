@@ -39,7 +39,7 @@ neighbors_extension_metadata = {
   '_partition_nodes':
       {'sources': [cython_gen_cpp.process('_partition_nodes.pyx')],
        'dependencies': [np_dep]},
-  '_quad_tree': {'sources': ['_quad_tree.pyx'], 'dependencies': [np_dep]},
+  '_quad_tree': {'sources': [cython_gen.process('_quad_tree.pyx')], 'dependencies': [np_dep]},
 }
 
 foreach ext_name, ext_dict : neighbors_extension_metadata

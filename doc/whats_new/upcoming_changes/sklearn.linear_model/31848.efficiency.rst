@@ -1,0 +1,3 @@
+- :class:`linear_model.ElasticNet` and :class:`linear_model.Lasso` avoid
+  double input checking and are therefore a bit faster.
+  By :user:`Christian Lorentzen <lorentzenchr>`.

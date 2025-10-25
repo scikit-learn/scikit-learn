@@ -9,15 +9,15 @@ from numbers import Integral
 import numpy as np
 from scipy.sparse import issparse
 
-from ...preprocessing import LabelEncoder
-from ...utils import _safe_indexing, check_random_state, check_X_y
-from ...utils._array_api import _atol_for_type
-from ...utils._param_validation import (
-    Interval,
-    StrOptions,
-    validate_params,
+from sklearn.metrics.pairwise import (
+    _VALID_METRICS,
+    pairwise_distances,
+    pairwise_distances_chunked,
 )
-from ..pairwise import _VALID_METRICS, pairwise_distances, pairwise_distances_chunked
+from sklearn.preprocessing import LabelEncoder
+from sklearn.utils import _safe_indexing, check_random_state, check_X_y
+from sklearn.utils._array_api import xpx
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 
 
 def check_number_of_labels(n_labels, n_samples):
@@ -282,7 +282,7 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
             "elements on the diagonal. Use np.fill_diagonal(X, 0)."
         )
         if X.dtype.kind == "f":
-            atol = _atol_for_type(X.dtype)
+            atol = np.finfo(X.dtype).eps * 100
 
             if np.any(np.abs(X.diagonal()) > atol):
                 raise error_msg
@@ -312,7 +312,7 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
     with np.errstate(divide="ignore", invalid="ignore"):
         sil_samples /= np.maximum(intra_clust_dists, inter_clust_dists)
     # nan values are for clusters of size 1, and should be 0
-    return np.nan_to_num(sil_samples)
+    return xpx.nan_to_num(sil_samples)
 
 
 @validate_params(

@@ -21,8 +21,8 @@ try:
 except ImportError:
     pd = None
 
-from ..externals._packaging.version import parse as parse_version
-from .parallel import _get_threadpool_controller
+from sklearn.externals._packaging.version import parse as parse_version
+from sklearn.utils.parallel import _get_threadpool_controller
 
 _IS_32BIT = 8 * struct.calcsize("P") == 32
 _IS_WASM = platform.machine() in ["wasm32", "wasm64"]
@@ -68,7 +68,7 @@ def _mode(a, axis=0):
     return scipy.stats.mode(a, axis=axis)
 
 
-# TODO: Remove when Scipy 1.12 is the minimum supported version
+# TODO: Remove when SciPy 1.12 is the minimum supported version
 if sp_base_version >= parse_version("1.12.0"):
     _sparse_linalg_cg = scipy.sparse.linalg.cg
 else:
@@ -81,7 +81,7 @@ else:
         return scipy.sparse.linalg.cg(A, b, **kwargs)
 
 
-# TODO : remove this when required minimum version of scipy >= 1.9.0
+# TODO : remove this when required minimum version of SciPy >= 1.9.0
 def _yeojohnson_lambda(_neg_log_likelihood, x):
     """Estimate the optimal Yeo-Johnson transformation parameter (lambda).
 
@@ -114,7 +114,7 @@ def _yeojohnson_lambda(_neg_log_likelihood, x):
 
 
 # TODO: Fuse the modern implementations of _sparse_min_max and _sparse_nan_min_max
-# into the public min_max_axis function when Scipy 1.11 is the minimum supported
+# into the public min_max_axis function when SciPy 1.11 is the minimum supported
 # version and delete the backport in the else branch below.
 if sp_base_version >= parse_version("1.11.0"):
 
@@ -230,7 +230,10 @@ def pd_fillna(pd, frame):
         infer_objects_kwargs = (
             {} if parse_version(pd_version) >= parse_version("3") else {"copy": False}
         )
-        with pd.option_context("future.no_silent_downcasting", True):
+        if parse_version(pd_version) < parse_version("3.0"):
+            with pd.option_context("future.no_silent_downcasting", True):
+                frame = frame.fillna(value=np.nan).infer_objects(**infer_objects_kwargs)
+        else:
             frame = frame.fillna(value=np.nan).infer_objects(**infer_objects_kwargs)
     return frame
 
@@ -288,7 +291,7 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
     type that can hold the data in the arrays.
 
     This function returns `np.int64` if it either required by `maxval` or based on the
-    largest precision of the dtype of the arrays passed as argument, or by the their
+    largest precision of the dtype of the arrays passed as argument, or by their
     contents (when `check_contents is True`). If none of the condition requires
     `np.int64` then this function returns `np.int32`.
 
@@ -352,13 +355,24 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
     return np.int32
 
 
-# TODO: Remove when Scipy 1.12 is the minimum supported version
+# TODO: Remove when SciPy 1.12 is the minimum supported version
 if sp_version < parse_version("1.12"):
-    from ..externals._scipy.sparse.csgraph import laplacian
+    from sklearn.externals._scipy.sparse.csgraph import laplacian
 else:
     from scipy.sparse.csgraph import (
         laplacian,  # noqa: F401  # pragma: no cover
     )
+
+
+# TODO: Remove when Python min version >= 3.12.
+def tarfile_extractall(tarfile, path):
+    try:
+        # Use filter="data" to prevent the most dangerous security issues.
+        # For more details, see
+        # https://docs.python.org/3/library/tarfile.html#tarfile.TarFile.extractall
+        tarfile.extractall(path, filter="data")
+    except TypeError:
+        tarfile.extractall(path)
 
 
 def _in_unstable_openblas_configuration():
@@ -392,3 +406,25 @@ def _in_unstable_openblas_configuration():
             # See discussions in https://github.com/numpy/numpy/issues/19411
             return True  # pragma: no cover
     return False
+
+
+# TODO: Remove when Scipy 1.15 is the minimum supported version. In scipy 1.15,
+# the internal info details (via 'iprint' and 'disp' options) were dropped,
+# following the LBFGS rewrite from Fortran to C, see
+# https://github.com/scipy/scipy/issues/23186#issuecomment-2987801035. For
+# scipy 1.15, 'iprint' and 'disp' have no effect and for scipy >= 1.16 a
+# DeprecationWarning is emitted.
+def _get_additional_lbfgs_options_dict(key, value):
+    return {} if sp_version >= parse_version("1.15") else {key: value}
+
+
+# TODO(pyarrow): Remove when minimum pyarrow version is 17.0.0
+PYARROW_VERSION_BELOW_17 = False
+try:
+    import pyarrow
+
+    pyarrow_version = parse_version(pyarrow.__version__)
+    if pyarrow_version < parse_version("17.0.0"):
+        PYARROW_VERSION_BELOW_17 = True
+except ModuleNotFoundError:  # pragma: no cover
+    pass

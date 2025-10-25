@@ -25,7 +25,6 @@ from sklearn.linear_model import (
     LinearRegression,
     LogisticRegression,
     OrthogonalMatchingPursuit,
-    PassiveAggressiveClassifier,
     Ridge,
     SGDClassifier,
     SGDRegressor,
@@ -196,6 +195,9 @@ n_classes = len(np.unique(y1))
 classes = list(map(np.unique, (y1, y2, y3)))
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_multi_output_classification_partial_fit_parallelism():
     sgd_linear_clf = SGDClassifier(loss="log_loss", random_state=1, max_iter=5)
     mor = MultiOutputClassifier(sgd_linear_clf, n_jobs=4)
@@ -423,14 +425,14 @@ def test_multi_output_classification_partial_fit_sample_weights():
     Xw = [[1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
     yw = [[3, 2], [2, 3], [3, 2]]
     w = np.asarray([2.0, 1.0, 1.0])
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20)
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20, tol=None)
     clf_w = MultiOutputClassifier(sgd_linear_clf)
     clf_w.fit(Xw, yw, w)
 
     # unweighted, but with repeated samples
     X = [[1, 2, 3], [1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
     y = [[3, 2], [3, 2], [2, 3], [3, 2]]
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20)
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20, tol=None)
     clf = MultiOutputClassifier(sgd_linear_clf)
     clf.fit(X, y)
     X_test = [[1.5, 2.5, 3.5]]
@@ -677,7 +679,7 @@ def test_base_chain_crossval_fit_and_predict(chain_type, chain_method):
 def test_multi_output_classes_(estimator):
     # Tests classes_ attribute of multioutput classifiers
     # RandomForestClassifier supports multioutput out-of-the-box
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)
     assert isinstance(estimator.classes_, list)
     assert len(estimator.classes_) == n_outputs
     for estimator_classes, expected_classes in zip(classes, estimator.classes_):
@@ -710,6 +712,7 @@ class DummyClassifierWithFitParams(DummyClassifier):
     ],
 )
 def test_multioutput_estimator_with_fit_params(estimator, dataset):
+    estimator = clone(estimator)  # Avoid side effects from shared instances
     X, y = dataset
     some_param = np.zeros_like(X)
     estimator.fit(X, y, some_param=some_param)
@@ -849,7 +852,7 @@ def test_fit_params_no_routing(Cls, method):
     underlying classifier.
     """
     X, y = make_classification(n_samples=50)
-    clf = Cls(PassiveAggressiveClassifier())
+    clf = Cls(SGDClassifier())
 
     with pytest.raises(ValueError, match="is only supported if"):
         getattr(clf, method)(X, y, test=1)

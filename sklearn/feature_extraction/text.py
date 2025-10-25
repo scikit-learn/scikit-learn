@@ -16,16 +16,25 @@ from operator import itemgetter
 import numpy as np
 import scipy.sparse as sp
 
+from sklearn.base import (
+    BaseEstimator,
+    OneToOneFeatureMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from sklearn.exceptions import NotFittedError
+from sklearn.feature_extraction._hash import FeatureHasher
+from sklearn.feature_extraction._stop_words import ENGLISH_STOP_WORDS
+from sklearn.preprocessing import normalize
 from sklearn.utils import metadata_routing
-
-from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_context
-from ..exceptions import NotFittedError
-from ..preprocessing import normalize
-from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
-from ..utils.fixes import _IS_32BIT
-from ..utils.validation import FLOAT_DTYPES, check_array, check_is_fitted, validate_data
-from ._hash import FeatureHasher
-from ._stop_words import ENGLISH_STOP_WORDS
+from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
+from sklearn.utils.fixes import _IS_32BIT
+from sklearn.utils.validation import (
+    FLOAT_DTYPES,
+    check_array,
+    check_is_fitted,
+    validate_data,
+)
 
 __all__ = [
     "ENGLISH_STOP_WORDS",
@@ -914,6 +923,7 @@ class HashingVectorizer(
         tags = super().__sklearn_tags__()
         tags.input_tags.string = True
         tags.input_tags.two_d_array = False
+        tags.requires_fit = False
         return tags
 
 
@@ -1737,17 +1747,7 @@ class TfidfVectorizer(CountVectorizer):
     Equivalent to :class:`CountVectorizer` followed by
     :class:`TfidfTransformer`.
 
-    For an example of usage, see
-    :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`.
-
-    For an efficiency comparison of the different feature extractors, see
-    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
-
-    For an example of document clustering and comparison with
-    :class:`~sklearn.feature_extraction.text.HashingVectorizer`, see
-    :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
-
-    Read more in the :ref:`User Guide <text_feature_extraction>`.
+    Read more in the :ref:`User Guide <tfidf>`.
 
     Parameters
     ----------

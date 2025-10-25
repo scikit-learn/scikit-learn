@@ -10,10 +10,10 @@ from itertools import chain
 import numpy as np
 from scipy.sparse import issparse
 
-from ..utils._array_api import get_namespace
-from ..utils.fixes import VisibleDeprecationWarning
-from ._unique import attach_unique, cached_unique
-from .validation import _assert_all_finite, check_array
+from sklearn.utils._array_api import get_namespace
+from sklearn.utils._unique import attach_unique, cached_unique
+from sklearn.utils.fixes import VisibleDeprecationWarning
+from sklearn.utils.validation import _assert_all_finite, check_array
 
 
 def _unique_multiclass(y, xp=None):
@@ -406,7 +406,11 @@ def type_of_target(y, input_name="", raise_unknown=False):
     if xp.isdtype(y.dtype, "real floating"):
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
         data = y.data if issparse(y) else y
-        if xp.any(data != xp.astype(data, int)):
+        integral_data = xp.astype(data, xp.int64)
+        # conversion back to the original float dtype of y is required to
+        # satisfy array-api-strict which does not allow a comparison between
+        # arrays having different dtypes.
+        if xp.any(data != xp.astype(integral_data, y.dtype)):
             _assert_all_finite(data, input_name=input_name)
             return "continuous" + suffix
 
@@ -414,11 +418,12 @@ def type_of_target(y, input_name="", raise_unknown=False):
     if issparse(first_row_or_val):
         first_row_or_val = first_row_or_val.data
     classes = cached_unique(y)
-    if y.shape[0] > 20 and classes.shape[0] > round(0.5 * y.shape[0]):
+    if y.shape[0] > 20 and y.shape[0] > classes.shape[0] > round(0.5 * y.shape[0]):
         # Only raise the warning when we have at least 20 samples.
         warnings.warn(
             "The number of unique classes is greater than 50% of the number "
-            "of samples.",
+            "of samples. `y` could represent a regression problem, not a "
+            "classification problem.",
             UserWarning,
             stacklevel=2,
         )
