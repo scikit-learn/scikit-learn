@@ -1024,7 +1024,6 @@ class QuadraticDiscriminantAnalysis(
                     f"The covariance matrix for class {self.classes_[ind]} is not positive definite. "
                     f"This is often caused by constant features or highly correlated "
                     f"features. Try removing constant features or using reg_param > 0."
-
                 )
             if self.store_covariance:
                 # cov = V * (S^2 / (n-1)) * V.T
