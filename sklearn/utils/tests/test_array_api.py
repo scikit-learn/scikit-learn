@@ -125,12 +125,12 @@ def test_move_to_array_api_conversions_with_cuda():
         array_cupy, array_np, xp_reference=xp_torch, device_reference=device_torch
     )
     for array in (array_1_out, array_2_out):
-        assert get_namespace(array) == xp_torch
+        assert get_namespace(array)[0] == xp_torch
         assert device(array) == device_torch
 
 
 def test_move_to_array_api_conversions_with_torch():
-    """Check conversion of torch mps to Numpy."""
+    """Check conversion of Numpy to torch mps."""
     xp_torch = _array_api_for_tests("torch", "mps")
     device_torch = xp_torch.asarray([1], device="mps").device
 
@@ -138,12 +138,12 @@ def test_move_to_array_api_conversions_with_torch():
 
     array_out = move_to(array_np, xp_reference=xp_torch, device_reference=device_torch)
 
-    assert get_namespace(array_out) == xp_torch
+    assert get_namespace(array_out)[0] == xp_torch
     assert device(array_out) == device_torch
 
 
 def test_move_to_array_api_conversions_with_strict():
-    """Check conversion of array-api-strict to Numpy."""
+    """Check conversion of array-api-strict, with different devices, to Numpy."""
     try:
         import array_api_strict
 
