@@ -17,7 +17,11 @@ from scipy import linalg
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.utils import Bunch, check_array, check_random_state
 from sklearn.utils import shuffle as util_shuffle
-from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils._param_validation import (
+    Interval,
+    StrOptions,
+    validate_params,
+)
 from sklearn.utils.random import sample_without_replacement
 
 
@@ -50,8 +54,16 @@ def _generate_hypercube(samples, dimensions, rng):
         "flip_y": [Interval(Real, 0, 1, closed="both")],
         "class_sep": [Interval(Real, 0, None, closed="neither")],
         "hypercube": ["boolean"],
-        "shift": [Interval(Real, None, None, closed="neither"), "array-like", None],
-        "scale": [Interval(Real, 0, None, closed="neither"), "array-like", None],
+        "shift": [
+            Interval(Real, None, None, closed="neither"),
+            "array-like",
+            None,
+        ],
+        "scale": [
+            Interval(Real, 0, None, closed="neither"),
+            "array-like",
+            None,
+        ],
         "shuffle": ["boolean"],
         "random_state": ["random_state"],
         "return_X_y": ["boolean"],
@@ -237,7 +249,12 @@ def make_classification(
         msg = "n_classes({}) * n_clusters_per_class({}) must be"
         msg += " smaller or equal 2**n_informative({})={}"
         raise ValueError(
-            msg.format(n_classes, n_clusters_per_class, n_informative, 2**n_informative)
+            msg.format(
+                n_classes,
+                n_clusters_per_class,
+                n_informative,
+                2**n_informative,
+            )
         )
 
     if weights is not None:
@@ -284,26 +301,28 @@ def make_classification(
         scale_val = scale
 
     # =========================================================================
-    # FIX: Precompute ALL distribution-defining random elements 
+    # FIX: Precompute ALL distribution-defining random elements
     # BEFORE any sample-dependent operations
     # =========================================================================
-    
+
     # 1. Random transformation matrices
     A = 2 * generator.uniform(size=(n_informative, n_informative)) - 1
-    
+
     if n_redundant > 0:
         B = 2 * generator.uniform(size=(n_informative, n_redundant)) - 1
-    
+
     # 2. Repeated feature indices
     n = n_informative + n_redundant
     if n_repeated > 0:
-        repeated_indices = ((n - 1) * generator.uniform(size=n_repeated) + 0.5).astype(np.intp)
-    
+        repeated_indices = ((n - 1) * generator.uniform(size=n_repeated) + 0.5).astype(
+            np.intp
+        )
+
     # 3. Flip probabilities (precompute more than we need)
     flip_probs = None
     if flip_y >= 0.0:
         flip_probs = generator.uniform(size=1000)
-    
+
     # 4. Shuffle indices (precompute more than we need)
     max_shuffle_size = 1000
     precomputed_shuffle = generator.permutation(max_shuffle_size)
@@ -311,11 +330,13 @@ def make_classification(
     # =========================================================================
     # Generate sample data using precomputed parameters
     # =========================================================================
-    
+
     # Generate ALL random data in a large contiguous block
     max_samples = 1000  # Generate more than we need for any call
     total_random_features = n_informative + n_random
-    all_random_data = generator.standard_normal(size=(max_samples, total_random_features))
+    all_random_data = generator.standard_normal(
+        size=(max_samples, total_random_features)
+    )
 
     # Initialize X and y
     X = np.zeros((n_samples, n_features))
@@ -324,31 +345,31 @@ def make_classification(
     # =========================================================================
     # CRITICAL FIX: Consistent cluster interleaving regardless of n_samples
     # =========================================================================
-    
+
     # Precompute a deterministic interleaving pattern
     # This ensures the same samples get the same clusters regardless of n_samples
-    
+
     # Calculate the intended cluster sizes for a reference dataset
     reference_size = 1000  # Large enough to see the pattern
     reference_samples_per_cluster = [
         int(reference_size * weights_[k % n_classes] / n_clusters_per_class)
         for k in range(n_clusters)
     ]
-    
+
     # Distribute any remaining samples
     for i in range(reference_size - sum(reference_samples_per_cluster)):
         reference_samples_per_cluster[i % n_clusters] += 1
-    
+
     # Create an interleaved assignment pattern
     assignment_pattern = []
     max_cluster_size = max(reference_samples_per_cluster)
-    
+
     # Interleave samples from different clusters
     for position in range(max_cluster_size):
         for cluster in range(n_clusters):
             if position < reference_samples_per_cluster[cluster]:
                 assignment_pattern.append(cluster)
-    
+
     # Now assign clusters using the precomputed pattern
     for i in range(n_samples):
         if i < len(assignment_pattern):
@@ -356,17 +377,17 @@ def make_classification(
         else:
             # Cycle through the pattern if we need more samples
             cluster = assignment_pattern[i % len(assignment_pattern)]
-        
+
         y[i] = cluster % n_classes
-        
+
         # Get the sample view
-        X_sample = X[i:i+1, :n_informative]
-        
+        X_sample = X[i : i + 1, :n_informative]
+
         # Use pre-generated random data from the same position
-        X_sample[...] = all_random_data[i:i+1, :n_informative]
+        X_sample[...] = all_random_data[i : i + 1, :n_informative]
         X_sample[...] = np.dot(X_sample, A)
         X_sample += centroids[cluster]
-        
+
     # Create redundant features using precomputed B
     if n_redundant > 0:
         X[:, n_informative : n_informative + n_redundant] = np.dot(
@@ -379,7 +400,9 @@ def make_classification(
 
     # Fill useless features using precomputed data
     if n_random > 0:
-        X[:, -n_random:] = all_random_data[:n_samples, n_informative:n_informative + n_random]
+        X[:, -n_random:] = all_random_data[
+            :n_samples, n_informative : n_informative + n_random
+        ]
 
     # Apply flip y using precomputed probabilities
     if flip_y >= 0.0 and flip_probs is not None:
@@ -448,6 +471,7 @@ def make_classification(
     )
 
     return bunch
+
 
 @validate_params(
     {
@@ -945,10 +969,16 @@ def make_circles(
     inner_circ_y = np.sin(linspace_in) * factor
 
     X = np.vstack(
-        [np.append(outer_circ_x, inner_circ_x), np.append(outer_circ_y, inner_circ_y)]
+        [
+            np.append(outer_circ_x, inner_circ_x),
+            np.append(outer_circ_y, inner_circ_y),
+        ]
     ).T
     y = np.hstack(
-        [np.zeros(n_samples_out, dtype=np.intp), np.ones(n_samples_in, dtype=np.intp)]
+        [
+            np.zeros(n_samples_out, dtype=np.intp),
+            np.ones(n_samples_in, dtype=np.intp),
+        ]
     )
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
@@ -1031,10 +1061,16 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
     inner_circ_y = 1 - np.sin(np.linspace(0, np.pi, n_samples_in)) - 0.5
 
     X = np.vstack(
-        [np.append(outer_circ_x, inner_circ_x), np.append(outer_circ_y, inner_circ_y)]
+        [
+            np.append(outer_circ_x, inner_circ_x),
+            np.append(outer_circ_y, inner_circ_y),
+        ]
     ).T
     y = np.hstack(
-        [np.zeros(n_samples_out, dtype=np.intp), np.ones(n_samples_in, dtype=np.intp)]
+        [
+            np.zeros(n_samples_out, dtype=np.intp),
+            np.ones(n_samples_in, dtype=np.intp),
+        ]
     )
 
     if shuffle:
@@ -1048,9 +1084,16 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
 
 @validate_params(
     {
-        "n_samples": [Interval(Integral, 1, None, closed="left"), "array-like"],
+        "n_samples": [
+            Interval(Integral, 1, None, closed="left"),
+            "array-like",
+        ],
         "n_features": [Interval(Integral, 1, None, closed="left")],
-        "centers": [Interval(Integral, 1, None, closed="left"), "array-like", None],
+        "centers": [
+            Interval(Integral, 1, None, closed="left"),
+            "array-like",
+            None,
+        ],
         "cluster_std": [Interval(Real, 0, None, closed="left"), "array-like"],
         "center_box": [tuple],
         "shuffle": ["boolean"],
@@ -2312,7 +2355,10 @@ def make_biclusters(
 @validate_params(
     {
         "shape": [tuple],
-        "n_clusters": [Interval(Integral, 1, None, closed="left"), "array-like"],
+        "n_clusters": [
+            Interval(Integral, 1, None, closed="left"),
+            "array-like",
+        ],
         "noise": [Interval(Real, 0, None, closed="left")],
         "minval": [Interval(Real, None, None, closed="neither")],
         "maxval": [Interval(Real, None, None, closed="neither")],
