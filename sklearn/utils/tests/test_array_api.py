@@ -111,8 +111,8 @@ def test_get_namespace_array_api(monkeypatch):
             get_namespace(X_xp)
 
 
-def test_move_to_array_api_conversions():
-    """Check conversion of cupy and numpy to torch."""
+def test_move_to_array_api_conversions_with_cuda():
+    """Check conversion of cupy and Numpy to torch."""
     xp_torch = _array_api_for_tests("torch", "cuda")
     device_torch = xp_torch.asarray([1], device="cuda").device
 
@@ -127,6 +127,49 @@ def test_move_to_array_api_conversions():
     for array in (array_1_out, array_2_out):
         assert get_namespace(array) == xp_torch
         assert device(array) == device_torch
+
+
+def test_move_to_array_api_conversions_with_torch():
+    """Check conversion of torch mps to Numpy."""
+    xp_torch = _array_api_for_tests("torch", "mps")
+    device_torch = xp_torch.asarray([1], device="mps").device
+
+    array_np = numpy.asarray([1, 2, 3], device=None)
+
+    array_out = move_to(array_np, xp_reference=xp_torch, device_reference=device_torch)
+
+    assert get_namespace(array_out) == xp_torch
+    assert device(array_out) == device_torch
+
+
+def test_move_to_array_api_conversions_with_strict():
+    """Check conversion of array-api-strict to Numpy."""
+    try:
+        import array_api_strict
+
+        array_api_strict_available = True
+    except ImportError:
+        array_api_strict_available = False
+
+    if not array_api_strict_available:
+        pytest.mark.skip(reason="array-api-strict not available")
+
+    xp_strict = _array_api_for_tests("array_api_strict", None)
+    array_xp_cpu = xp_strict.asarray(
+        [1, 2, 3], device=array_api_strict.Device("CPU_DEVICE")
+    )
+    array_xp_device1 = xp_strict.asarray(
+        [1, 2, 3], device=array_api_strict.Device("device1")
+    )
+
+    xp_np = _array_api_for_tests("numpy", None)
+    array_1_out, array_2_out = move_to(
+        array_xp_cpu, array_xp_device1, xp_reference=xp_np, device_reference=None
+    )
+
+    for array in (array_1_out, array_2_out):
+        assert get_namespace(array)[0] == xp_np
+        assert device(array) is None
 
 
 def test_move_to_sparse():
