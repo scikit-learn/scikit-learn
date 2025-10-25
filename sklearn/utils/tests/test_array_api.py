@@ -124,9 +124,10 @@ def test_move_to_array_api_conversions_with_cuda():
     array_1_out, array_2_out = move_to(
         array_cupy, array_np, xp_reference=xp_torch, device_reference=device_torch
     )
-    for array in (array_1_out, array_2_out):
-        assert get_namespace(array)[0] == xp_torch
-        assert device(array) == device_torch
+    with config_context(array_api_dispatch=True):
+        for array in (array_1_out, array_2_out):
+            assert get_namespace(array)[0] == xp_torch
+            assert device(array) == device_torch
 
 
 def test_move_to_array_api_conversions_with_torch():
@@ -136,10 +137,13 @@ def test_move_to_array_api_conversions_with_torch():
 
     array_np = numpy.asarray([1, 2, 3], device=None)
 
-    array_out = move_to(array_np, xp_reference=xp_torch, device_reference=device_torch)
+    (array_out,) = move_to(
+        array_np, xp_reference=xp_torch, device_reference=device_torch
+    )
 
-    assert get_namespace(array_out)[0] == xp_torch
-    assert device(array_out) == device_torch
+    with config_context(array_api_dispatch=True):
+        assert get_namespace(array_out)[0] == xp_torch
+        assert device(array_out) == device_torch
 
 
 def test_move_to_array_api_conversions_with_strict():
@@ -167,9 +171,10 @@ def test_move_to_array_api_conversions_with_strict():
         array_xp_cpu, array_xp_device1, xp_reference=xp_np, device_reference=None
     )
 
-    for array in (array_1_out, array_2_out):
-        assert get_namespace(array)[0] == xp_np
-        assert device(array) is None
+    with config_context(array_api_dispatch=True):
+        for array in (array_1_out, array_2_out):
+            assert get_namespace(array)[0] == xp_np
+            assert device(array) is None
 
 
 def test_move_to_sparse():
