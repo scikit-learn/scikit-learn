@@ -273,6 +273,19 @@ admissible seeds on your local machine:
 
     SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all" pytest -v -k test_your_test_name
 
+For example, here is how to use the fixture in a test to ensure it passes for
+all admissible seeds:
+
+.. code-block:: python
+
+    import numpy as np
+
+    def test_my_randomized_logic(global_random_seed):
+        rng = np.random.RandomState(global_random_seed)
+        X = rng.randn(100, 3)
+        # exercise code under test, ensuring it works for any seed in [0, 99]
+        assert X.shape == (100, 3)
+
 `SKLEARN_SKIP_NETWORK_TESTS`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
