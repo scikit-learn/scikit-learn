@@ -4,6 +4,7 @@ from functools import partial
 import numpy
 import pytest
 import scipy
+import scipy.sparse as sp
 from numpy.testing import assert_allclose
 
 from sklearn._config import config_context
@@ -34,6 +35,7 @@ from sklearn.utils._array_api import (
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
+    move_to,
     np_compat,
     supported_float_dtypes,
     yield_namespace_device_dtype_combinations,
@@ -107,6 +109,106 @@ def test_get_namespace_array_api(monkeypatch):
             match="scipy's own support is not enabled.",
         ):
             get_namespace(X_xp)
+
+
+def test_move_to_array_api_conversions_with_cuda():
+    """Check conversion of cupy and Numpy to torch."""
+    xp_torch = _array_api_for_tests("torch", "cuda")
+    device_torch = xp_torch.asarray([1], device="cuda").device
+
+    xp_cupy = _array_api_for_tests("cupy", None)
+    array_cupy = xp_cupy.asarray([1, 2, 3], device=None)
+
+    array_np = numpy.asarray([1, 2, 3], device=None)
+
+    array_1_out, array_2_out = move_to(
+        array_cupy, array_np, xp_reference=xp_torch, device_reference=device_torch
+    )
+    with config_context(array_api_dispatch=True):
+        for array in (array_1_out, array_2_out):
+            assert get_namespace(array)[0] == xp_torch
+            assert device(array) == device_torch
+
+
+def test_move_to_array_api_conversions_with_torch():
+    """Check conversion of Numpy to torch mps."""
+    xp_torch = _array_api_for_tests("torch", "mps")
+    device_torch = xp_torch.asarray([1], device="mps").device
+
+    array_np = numpy.asarray([1, 2, 3], device=None)
+
+    (array_out,) = move_to(
+        array_np, xp_reference=xp_torch, device_reference=device_torch
+    )
+
+    with config_context(array_api_dispatch=True):
+        assert get_namespace(array_out)[0] == xp_torch
+        assert device(array_out) == device_torch
+
+
+def test_move_to_array_api_conversions_with_strict():
+    """Check conversion of array-api-strict, with different devices, to Numpy."""
+    try:
+        import array_api_strict
+
+        array_api_strict_available = True
+    except ImportError:
+        array_api_strict_available = False
+
+    if not array_api_strict_available:
+        pytest.mark.skip(reason="array-api-strict not available")
+
+    xp_strict = _array_api_for_tests("array_api_strict", None)
+    array_xp_cpu = xp_strict.asarray(
+        [1, 2, 3], device=array_api_strict.Device("CPU_DEVICE")
+    )
+    array_xp_device1 = xp_strict.asarray(
+        [1, 2, 3], device=array_api_strict.Device("device1")
+    )
+
+    xp_np = _array_api_for_tests("numpy", None)
+    array_1_out, array_2_out = move_to(
+        array_xp_cpu, array_xp_device1, xp_reference=xp_np, device_reference=None
+    )
+
+    with config_context(array_api_dispatch=True):
+        for array in (array_1_out, array_2_out):
+            assert get_namespace(array)[0] == xp_np
+            assert device(array) is None
+
+
+def test_move_to_sparse():
+    """Check sparse inputs are handled correctly."""
+    xp_numpy = _array_api_for_tests("numpy", None)
+    xp_torch = _array_api_for_tests("torch", "cpu")
+    device_cpu = xp_torch.asarray([1]).device
+
+    sparse1 = sp.csr_array([0, 1, 2, 3])
+    sparse2 = sp.csr_array([0, 1, 0, 1])
+    numpy_array = numpy.array([1, 2, 3])
+
+    # sparse to numpy
+    result1, result2 = move_to(
+        sparse1, sparse2, xp_reference=xp_numpy, device_reference=None
+    )
+    assert result1 is sparse1
+    assert result2 is sparse2
+
+    # sparse and None to numpy
+    result1, result2 = move_to(
+        sparse1, None, xp_reference=xp_numpy, device_reference=None
+    )
+    assert result1 is sparse1
+    assert result2 is None
+
+    # sparse to non-Numpy
+    msg = "Sparse arrays are only supported when all dense arrays are Numpy arrays"
+    with pytest.raises(TypeError, match=msg):
+        move_to(
+            sparse1, numpy_array, xp_reference=xp_torch, device_reference=device_cpu
+        )
+    with pytest.raises(TypeError, match=msg):
+        move_to(sparse1, None, xp_reference=xp_torch, device_reference=device_cpu)
 
 
 @pytest.mark.parametrize("array_api", ["numpy", "array_api_strict"])
