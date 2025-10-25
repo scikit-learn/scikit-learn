@@ -3,8 +3,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import array
-from cpython cimport array
 cimport cython
 from libc.string cimport strchr
 
@@ -15,9 +13,99 @@ cdef bytes COMMA = u','.encode('ascii')
 cdef bytes COLON = u':'.encode('ascii')
 
 
+# Small dynamic array helpers backed by NumPy arrays. These provide
+# an append() method with amortized O(1) behaviour and expose the
+# underlying ndarray slice via get_array(). They use typed memoryviews
+# internally for fast access.
+
+
+cdef class _DynDouble:
+    cdef double[:] view
+    cdef object arr
+    cdef Py_ssize_t size, capacity
+
+    def __cinit__(self, Py_ssize_t init=16):
+        if init <= 0:
+            init = 16
+        self.capacity = init
+        self.arr = np.empty(self.capacity, dtype=np.float64)
+        self.view = self.arr
+        self.size = 0
+
+    cpdef append(self, double val):
+        if self.size >= self.capacity:
+            newcap = self.capacity * 2
+            newarr = np.empty(newcap, dtype=np.float64)
+            newarr[:self.size] = self.arr[:self.size]
+            self.arr = newarr
+            self.view = self.arr
+            self.capacity = newcap
+        self.view[self.size] = val
+        self.size += 1
+
+    cpdef object get_array(self):
+        return self.arr[:self.size]
+
+
+cdef class _DynFloat:
+    cdef float[:] view
+    cdef object arr
+    cdef Py_ssize_t size, capacity
+
+    def __cinit__(self, Py_ssize_t init=16):
+        if init <= 0:
+            init = 16
+        self.capacity = init
+        self.arr = np.empty(self.capacity, dtype=np.float32)
+        self.view = self.arr
+        self.size = 0
+
+    cpdef append(self, float val):
+        if self.size >= self.capacity:
+            newcap = self.capacity * 2
+            newarr = np.empty(newcap, dtype=np.float32)
+            newarr[:self.size] = self.arr[:self.size]
+            self.arr = newarr
+            self.view = self.arr
+            self.capacity = newcap
+        self.view[self.size] = val
+        self.size += 1
+
+    cpdef object get_array(self):
+        return self.arr[:self.size]
+
+
+cdef class _DynLongLong:
+    cdef long long[:] view
+    cdef object arr
+    cdef Py_ssize_t size, capacity
+
+    def __cinit__(self, Py_ssize_t init=16):
+        if init <= 0:
+            init = 16
+        self.capacity = init
+        self.arr = np.empty(self.capacity, dtype=np.int64)
+        self.view = self.arr
+        self.size = 0
+
+    cpdef append(self, long long val):
+        if self.size >= self.capacity:
+            newcap = self.capacity * 2
+            newarr = np.empty(newcap, dtype=np.int64)
+            newarr[:self.size] = self.arr[:self.size]
+            self.arr = newarr
+            self.view = self.arr
+            self.capacity = newcap
+        self.view[self.size] = val
+        self.size += 1
+
+    cpdef object get_array(self):
+        return self.arr[:self.size]
+
+
 def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
                         bint query_id, long long offset, long long length):
-    cdef array.array data, indices, indptr
+    cdef object data, indices, indptr
     cdef bytes line
     cdef char *hash_ptr
     cdef char *line_cstr
@@ -27,22 +115,26 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
     cdef Py_ssize_t n_features
     cdef long long offset_max = offset + length if length > 0 else -1
 
-    # Special-case float32 but use float64 for everything else;
-    # the Python code will do further conversions.
+    # Special-case float32 but use float64 for everything else; the Python
+    # code will do further conversions. Use small dynamic arrays backed by
+    # NumPy arrays for performance and limited-API compatibility.
     if dtype == np.float32:
-        data = array.array("f")
+        data_dyn = _DynFloat()
+        dtype = np.float32
     else:
+        data_dyn = _DynDouble()
         dtype = np.float64
-        data = array.array("d")
 
-    indices = array.array("q")
-    indptr = array.array("q", [0])
+    indices_dyn = _DynLongLong()
+    indptr_dyn = _DynLongLong()
+    # start indptr with 0
+    indptr_dyn.append(0)
     query = np.arange(0, dtype=np.int64)
 
     if multilabel:
         labels = []
     else:
-        labels = array.array("d")
+        labels = _DynDouble()
 
     if offset > 0:
         f.seek(offset)
@@ -70,8 +162,8 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
             target.sort()
             labels.append(tuple(target))
         else:
-            array.resize_smart(labels, len(labels) + 1)
-            labels[len(labels) - 1] = float(target)
+            # Use a dynamic array for labels for performance.
+            labels.append(float(target))
 
         prev_idx = -1
         n_features = len(features)
@@ -92,21 +184,31 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
                 raise ValueError("Feature indices in SVMlight/LibSVM data "
                                  "file should be sorted and unique.")
 
-            array.resize_smart(indices, len(indices) + 1)
-            indices[len(indices) - 1] = idx
+            # append into the dynamic int array
+            indices_dyn.append(idx)
 
-            array.resize_smart(data, len(data) + 1)
-            data[len(data) - 1] = float(value)
+            # append into the dynamic float array
+            data_dyn.append(float(value))
 
             prev_idx = idx
 
         # increment index pointer array size
-        array.resize_smart(indptr, len(indptr) + 1)
-        indptr[len(indptr) - 1] = len(data)
+        # data_dyn.size is a cdef attribute not visible to Python-level
+        # code paths; obtain the current length via the NumPy view.
+        indptr_dyn.append(data_dyn.get_array().shape[0])
 
         if offset_max != -1 and f.tell() > offset_max:
             # Stop here and let another call deal with the following.
             break
+
+    # Convert dynamic arrays to NumPy arrays for the return value. The
+    # calling Python code expects array-like sequences; NumPy arrays are
+    # efficient and consistent with the rest of scikit-learn's code.
+    data = data_dyn.get_array()
+    indices = indices_dyn.get_array()
+    indptr = indptr_dyn.get_array()
+    if not multilabel:
+        labels = labels.get_array()
 
     return (dtype, data, indices, indptr, labels, query)
 
