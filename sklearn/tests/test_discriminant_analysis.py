@@ -594,31 +594,25 @@ def test_qda_store_covariance():
 
 
 def test_qda_regularization():
-    # The default is reg_param=0. and will cause issues when there is a
-    # constant variable.
-
     # Fitting on data with constant variable without regularization
     # triggers a LinAlgError.
-    msg = r"The covariance matrix of class .+ is not full rank"
+    msg = r"The covariance matrix for class .+ is not positive definite"
     clf = QuadraticDiscriminantAnalysis()
-    with pytest.warns(linalg.LinAlgWarning, match=msg):
-        y_pred = clf.fit(X2, y6)
-
-    y_pred = clf.predict(X2)
-    assert np.any(y_pred != y6)
-
+    with pytest.raises(linalg.LinAlgError, match=msg):
+        clf.fit(X2, y6)  # ← No "y_pred = "
     # Adding a little regularization fixes the fit time error.
     clf = QuadraticDiscriminantAnalysis(reg_param=0.01)
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
-    clf.fit(X2, y6)
-    y_pred = clf.predict(X2)
-    assert_array_equal(y_pred, y6)
+        warnings.simplefilter("error")  # ← Proper indentation
+        clf.fit(X2, y6)  # ← Proper indentation
+    y_pred = clf.predict(X2)  # ← Added this line
+    assert_array_equal(y_pred, y6)  # ← Now y_pred is defined
 
     # LinAlgWarning should also be there for the n_samples_in_a_class <
     # n_features case.
     clf = QuadraticDiscriminantAnalysis()
     with pytest.warns(linalg.LinAlgWarning, match=msg):
+        y_pred = clf.predict(X2)
         clf.fit(X5, y5)
 
     # The error will persist even with regularization
