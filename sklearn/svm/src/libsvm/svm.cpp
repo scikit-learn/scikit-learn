@@ -2112,12 +2112,12 @@ static void svm_binary_svc_probability(
 	int nr_fold = 5;
 	int *perm = Malloc(int,prob->l);
 	double *dec_values = Malloc(double,prob->l);
-
+	std::mt19937 mt_rand(param->random_seed);
 	// random shuffle
 	for(i=0;i<prob->l;i++) perm[i]=i;
 	for(i=0;i<prob->l;i++)
 	{
-		int j = i+bounded_rand_int(prob->l-i);
+		int j = i+bounded_rand_int_local(prob->l-i, mt_rand);
 		swap(perm[i],perm[j]);
 	}
 	for(i=0;i<nr_fold;i++)
@@ -2656,10 +2656,7 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 	int l = prob->l;
 	int *perm = Malloc(int,l);
 	int nr_class;
-    if(param->random_seed >= 0)
-    {
-        set_seed(param->random_seed);
-    }
+    std::mt19937 mt_rand(param->random_seed);
 
 	// stratified cv may not give leave-one-out rate
 	// Each class to l folds -> some folds may have zero elements
@@ -2680,7 +2677,7 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 		for (c=0; c<nr_class; c++)
 			for(i=0;i<count[c];i++)
 			{
-				int j = i+bounded_rand_int(count[c]-i);
+				int j = i+bounded_rand_int_local(count[c]-i, mt_rand);
 				swap(index[start[c]+j],index[start[c]+i]);
 			}
 		for(i=0;i<nr_fold;i++)
@@ -2717,7 +2714,7 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 		for(i=0;i<l;i++) perm[i]=i;
 		for(i=0;i<l;i++)
 		{
-			int j = i+bounded_rand_int(l-i);
+			int j = i+bounded_rand_int_local(l-i, mt_rand);
 			swap(perm[i],perm[j]);
 		}
 		for(i=0;i<=nr_fold;i++)
