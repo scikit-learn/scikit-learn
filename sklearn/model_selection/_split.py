@@ -1052,7 +1052,12 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
         groups_per_fold = defaultdict(set)
 
         if self.shuffle:
-            rng.shuffle(y_counts_per_group)
+            perm = np.arange(len(groups_cnt))
+            rng.shuffle(perm)
+            y_counts_per_group = y_counts_per_group[perm]
+            inv_perm = np.empty_like(perm)
+            inv_perm[perm] = np.arange(perm.size)
+            groups_inv = inv_perm[groups_inv]
 
         # Stable sort to keep shuffled order for groups with the same
         # class distribution variance
