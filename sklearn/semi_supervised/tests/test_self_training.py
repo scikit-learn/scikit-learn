@@ -5,6 +5,7 @@ import pytest
 from numpy.testing import assert_array_equal
 
 from sklearn.base import clone
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import load_iris, make_blobs
 from sklearn.ensemble import StackingClassifier
 from sklearn.exceptions import NotFittedError
@@ -116,7 +117,7 @@ def test_k_best():
 
 
 def test_sanity_classification():
-    estimator = SVC(gamma="scale", probability=True)
+    estimator = CalibratedClassifierCV(SVC(gamma="scale"), ensemble=False)
     estimator.fit(X_train[n_labeled_samples:], y_train[n_labeled_samples:])
 
     st = SelfTrainingClassifier(estimator)
@@ -142,7 +143,10 @@ def test_none_iter():
 
 @pytest.mark.parametrize(
     "estimator",
-    [KNeighborsClassifier(), SVC(gamma="scale", probability=True, random_state=0)],
+    [
+        KNeighborsClassifier(),
+        CalibratedClassifierCV(SVC(gamma="scale", random_state=0), ensemble=False),
+    ],
 )
 @pytest.mark.parametrize("y", [y_train_missing_labels, y_train_missing_strings])
 def test_zero_iterations(estimator, y):
@@ -204,6 +208,7 @@ def test_no_unlabeled():
     assert st.termination_condition_ == "all_labeled"
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_early_stopping():
     svc = SVC(gamma="scale", probability=True)
     st = SelfTrainingClassifier(svc)
@@ -285,6 +290,7 @@ def test_k_best_selects_best():
         assert row in added_by_st
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_estimator_meta_estimator():
     # Check that a meta-estimator relying on an estimator implementing
     # `predict_proba` will work even if it does not expose this method before being
@@ -321,6 +327,7 @@ def test_estimator_meta_estimator():
         clf.fit(X_train, y_train_missing_labels)
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_self_training_estimator_attribute_error():
     """Check that we raise the proper AttributeErrors when the `estimator`
     does not implement the `predict_proba` method, which is called from within
