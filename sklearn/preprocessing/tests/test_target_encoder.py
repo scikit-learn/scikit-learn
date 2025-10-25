@@ -166,7 +166,9 @@ def test_encoding(
         random_state=global_random_seed,
     )
 
-    X_fit_transform = target_encoder.fit_transform(X_train, y_train, sample_weight)
+    X_fit_transform = target_encoder.fit_transform(
+        X_train, y_train, sample_weight=sample_weight
+    )
 
     assert target_encoder.target_type_ == target_type
     assert_allclose(X_fit_transform, expected_X_fit_transform)
