@@ -770,4 +770,3 @@ def test_make_classification_consistent_distribution():
     assert_array_equal(
         y_100, y_500[:100], err_msg="First 100 labels should be identical"
     )
-

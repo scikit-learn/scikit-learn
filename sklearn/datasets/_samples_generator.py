@@ -453,6 +453,7 @@ def make_classification(
     )
 
     return bunch
+
 # Add a blank line before this line:
 @validate_params(
     {
