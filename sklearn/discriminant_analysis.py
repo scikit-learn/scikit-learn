@@ -1020,11 +1020,11 @@ class QuadraticDiscriminantAnalysis(
             S2 = ((1 - self.reg_param) * S2) + self.reg_param
             rank = np.sum(S2 > self.tol)
             if rank < n_features:
-                raise linalg.LinAlgError(
-                    f"The covariance matrix for class {self.classes_[ind]} is not positive definite. "
-                    f"This is often caused by constant features or highly correlated "
-                    f"features. Try removing constant features or using reg_param > 0."
-
+                warnings.warn(
+                    f"The covariance matrix of class {ind} is not full rank. "
+                    "Increasing the value of parameter `reg_param` might help"
+                    " reducing the collinearity.",
+                    linalg.LinAlgWarning,
                 )
             if self.store_covariance:
                 # cov = V * (S^2 / (n-1)) * V.T

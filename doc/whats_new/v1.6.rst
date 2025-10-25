@@ -783,4 +783,3 @@ Tialo, Tim Head, Tuhin Sharma, Tushar Parimi, Umberto Fasci, UV, vedpawar2254,
 Velislav Babatchev, Victoria Shevchenko, viktor765, Vince Carey, Virgil Chan,
 Wang Jiayi, Xiao Yuan, Xuefeng Xu, Yao Xiao, yareyaredesuyo, Zachary Vealey,
 Ziad Amerr
- - Fixed :func: to produce consistent distributions across different sample sizes when using the same random state.
