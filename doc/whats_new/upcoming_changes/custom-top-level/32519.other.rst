@@ -1,0 +1,6 @@
+- scikit-learn 1.8 provides enhanced support for free-threaded CPython (Python 3.13+ without GIL).
+  All native extensions have been marked as free-threading compatible, preventing the interpreter 
+  from re-enabling the GIL when importing scikit-learn. Additionally, dedicated continuous integration 
+  now stress-tests components with concurrent threads to ensure thread safety. For the best 
+  free-threading experience, Python 3.14 is recommended when it becomes available.
+  By :user:`Loïc Estève <lesteve>`
