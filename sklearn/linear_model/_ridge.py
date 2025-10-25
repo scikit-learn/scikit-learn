@@ -2112,8 +2112,9 @@ class _RidgeGCV(LinearModel):
             # by centering, the other columns are orthogonal to that one
             intercept_column = sqrt_sw[:, None]
             X = xp.concat((X, intercept_column), axis=1)
-        U, singvals, _ = xp.linalg.svd(X, full_matrices=False)
-        singvals_sq = singvals**2
+        U, singvals, _ = xp.linalg.svd(X, full_matrices=True)
+        singvals_sq = xp.zeros(U.shape[0], dtype=X.dtype, device=device_)
+        singvals_sq[: singvals.shape[0]] = singvals**2
         UT_y = U.T @ y
         return X_mean, singvals_sq, U, UT_y
 
@@ -2124,15 +2125,15 @@ class _RidgeGCV(LinearModel):
         (n_samples > n_features and X is dense).
         """
         xp, is_array_api = get_namespace(U)
-        w = ((singvals_sq + alpha) ** -1) - (alpha**-1)
+        w = 1 / (singvals_sq + alpha)
         if self.fit_intercept:
             # detect intercept column
             normalized_sw = sqrt_sw / xp.linalg.vector_norm(sqrt_sw)
             intercept_dim = int(_find_smallest_angle(normalized_sw, U))
             # cancel the regularization for the intercept
-            w[intercept_dim] = -(alpha**-1)
-        c = U @ self._diag_dot(w, UT_y) + (alpha**-1) * y
-        G_inverse_diag = self._decomp_diag(w, U) + (alpha**-1)
+            w[intercept_dim] = 0.0
+        c = U @ self._diag_dot(w, UT_y)
+        G_inverse_diag = self._decomp_diag(w, U)
         if len(y.shape) != 1:
             # handle case where y is 2-d
             G_inverse_diag = G_inverse_diag[:, None]
