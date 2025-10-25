@@ -2831,10 +2831,17 @@ def recall_score(
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
         "adjusted": ["boolean"],
+        "zero_division": [
+            Options(Real, {0.0, 1.0}),
+            "nan",
+            StrOptions({"warn"}),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
-def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=False):
+def balanced_accuracy_score(
+    y_true, y_pred, *, sample_weight=None, adjusted=False, zero_division="warn"
+):
     """Compute the balanced accuracy.
 
     The balanced accuracy in binary and multiclass classification problems to
@@ -2862,6 +2869,20 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
         When true, the result is adjusted for chance, so that random
         performance would score 0, while keeping perfect performance at a score
         of 1.
+
+    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
+        Sets the value to return when there is a zero division. Since the balanced
+        accuracy is the average of the recall of each class, zero division can
+        occur when computing the recall of a class that is not present in
+        `y_true`.
+
+        Notes:
+
+        - If set to "warn", this acts like 0, but a warning is also raised.
+        - If set to `np.nan`, such values will be excluded from the average when
+          computing the balanced accuracy as the average of the recalls.
+
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -2907,9 +2928,18 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     with np.errstate(divide="ignore", invalid="ignore"):
         per_class = np.diag(C) / C.sum(axis=1)
     if np.any(np.isnan(per_class)):
-        warnings.warn("y_pred contains classes not in y_true")
-        per_class = per_class[~np.isnan(per_class)]
-    score = np.mean(per_class)
+        nan_replacement_value = zero_division if zero_division != "warn" else 0.0
+        per_class = np.nan_to_num(per_class, nan=nan_replacement_value)
+        if zero_division == "warn":
+            warnings.warn(
+                "balanced_accuracy ill-defined because `y_pred` contains classes not "
+                "in `y_true`. The score is being set to 0.0. Use `zero_division` "
+                "parameter to control this behaviour.",
+                stacklevel=2,
+                category=UndefinedMetricWarning,
+            )
+
+    score = np.nanmean(per_class)
     if adjusted:
         n_classes = len(per_class)
         chance = 1 / n_classes
