@@ -401,7 +401,7 @@ def make_classification(
 
     # Apply shuffle using precomputed indices
     if shuffle:
-        shuffle_indices = precomputed_shuffle[:n_samples]
+        shuffle_indices = precomputed_shuffle[:n_samples] % n_samples
         X = X[shuffle_indices]
         y = y[shuffle_indices]
 
