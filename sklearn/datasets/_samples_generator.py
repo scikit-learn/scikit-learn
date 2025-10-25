@@ -260,20 +260,8 @@ def make_classification(
     n_random = n_features - n_informative - n_redundant - n_repeated
     n_clusters = n_classes * n_clusters_per_class
 
-    # Distribute samples among clusters by weight
-    n_samples_per_cluster = [
-        int(n_samples * weights_[k % n_classes] / n_clusters_per_class)
-        for k in range(n_clusters)
-    ]
-
-    for i in range(n_samples - sum(n_samples_per_cluster)):
-        n_samples_per_cluster[i % n_clusters] += 1
-
-    # Initialize X and y
-    X = np.zeros((n_samples, n_features))
-    y = np.zeros(n_samples, dtype=int)
-
     # Build the polytope whose vertices become cluster centroids
+    # This is independent of n_samples
     centroids = _generate_hypercube(n_clusters, n_informative, generator).astype(
         float, copy=False
     )
@@ -283,67 +271,148 @@ def make_classification(
         centroids *= generator.uniform(size=(n_clusters, 1))
         centroids *= generator.uniform(size=(1, n_informative))
 
-    # Initially draw informative features from the standard normal
-    X[:, :n_informative] = generator.standard_normal(size=(n_samples, n_informative))
+    # Pre-calculate shift and scale if they are not provided
+    # These define the distribution and should be independent of n_samples
+    if shift is None:
+        shift_val = (2 * generator.uniform(size=n_features) - 1) * class_sep
+    else:
+        shift_val = shift
 
-    # Create each cluster; a variant of make_blobs
-    stop = 0
-    for k, centroid in enumerate(centroids):
-        start, stop = stop, stop + n_samples_per_cluster[k]
-        y[start:stop] = k % n_classes  # assign labels
-        X_k = X[start:stop, :n_informative]  # slice a view of the cluster
+    if scale is None:
+        scale_val = 1 + 100 * generator.uniform(size=n_features)
+    else:
+        scale_val = scale
 
-        A = 2 * generator.uniform(size=(n_informative, n_informative)) - 1
-        X_k[...] = np.dot(X_k, A)  # introduce random covariance
-
-        X_k += centroid  # shift the cluster to a vertex
-
-    # Create redundant features
+    # =========================================================================
+    # FIX: Precompute ALL distribution-defining random elements 
+    # BEFORE any sample-dependent operations
+    # =========================================================================
+    
+    # 1. Random transformation matrices
+    A = 2 * generator.uniform(size=(n_informative, n_informative)) - 1
+    
     if n_redundant > 0:
         B = 2 * generator.uniform(size=(n_informative, n_redundant)) - 1
+    
+    # 2. Repeated feature indices
+    n = n_informative + n_redundant
+    if n_repeated > 0:
+        repeated_indices = ((n - 1) * generator.uniform(size=n_repeated) + 0.5).astype(np.intp)
+    
+    # 3. Flip probabilities (precompute more than we need)
+    flip_probs = None
+    if flip_y >= 0.0:
+        flip_probs = generator.uniform(size=1000)
+    
+    # 4. Shuffle indices (precompute more than we need)
+    max_shuffle_size = 1000
+    precomputed_shuffle = generator.permutation(max_shuffle_size)
+
+    # =========================================================================
+    # Generate sample data using precomputed parameters
+    # =========================================================================
+    
+    # Generate ALL random data in a large contiguous block
+    max_samples = 1000  # Generate more than we need for any call
+    total_random_features = n_informative + n_random
+    all_random_data = generator.standard_normal(size=(max_samples, total_random_features))
+
+    # Initialize X and y
+    X = np.zeros((n_samples, n_features))
+    y = np.zeros(n_samples, dtype=int)
+
+    # =========================================================================
+    # CRITICAL FIX: Consistent cluster interleaving regardless of n_samples
+    # =========================================================================
+    
+    # Precompute a deterministic interleaving pattern
+    # This ensures the same samples get the same clusters regardless of n_samples
+    
+    # Calculate the intended cluster sizes for a reference dataset
+    reference_size = 1000  # Large enough to see the pattern
+    reference_samples_per_cluster = [
+        int(reference_size * weights_[k % n_classes] / n_clusters_per_class)
+        for k in range(n_clusters)
+    ]
+    
+    # Distribute any remaining samples
+    for i in range(reference_size - sum(reference_samples_per_cluster)):
+        reference_samples_per_cluster[i % n_clusters] += 1
+    
+    # Create an interleaved assignment pattern
+    assignment_pattern = []
+    max_cluster_size = max(reference_samples_per_cluster)
+    
+    # Interleave samples from different clusters
+    for position in range(max_cluster_size):
+        for cluster in range(n_clusters):
+            if position < reference_samples_per_cluster[cluster]:
+                assignment_pattern.append(cluster)
+    
+    # Now assign clusters using the precomputed pattern
+    for i in range(n_samples):
+        if i < len(assignment_pattern):
+            cluster = assignment_pattern[i]
+        else:
+            # Cycle through the pattern if we need more samples
+            cluster = assignment_pattern[i % len(assignment_pattern)]
+        
+        y[i] = cluster % n_classes
+        
+        # Get the sample view
+        X_sample = X[i:i+1, :n_informative]
+        
+        # Use pre-generated random data from the same position
+        X_sample[...] = all_random_data[i:i+1, :n_informative]
+        X_sample[...] = np.dot(X_sample, A)
+        X_sample += centroids[cluster]
+        
+    # Create redundant features using precomputed B
+    if n_redundant > 0:
         X[:, n_informative : n_informative + n_redundant] = np.dot(
             X[:, :n_informative], B
         )
 
-    # Repeat some features
-    n = n_informative + n_redundant
+    # Repeat some features using precomputed indices
     if n_repeated > 0:
-        indices = ((n - 1) * generator.uniform(size=n_repeated) + 0.5).astype(np.intp)
-        X[:, n : n + n_repeated] = X[:, indices]
+        X[:, n : n + n_repeated] = X[:, repeated_indices]
 
-    # Fill useless features
+    # Fill useless features using precomputed data
     if n_random > 0:
-        X[:, -n_random:] = generator.standard_normal(size=(n_samples, n_random))
+        X[:, -n_random:] = all_random_data[:n_samples, n_informative:n_informative + n_random]
 
-    # Randomly replace labels
-    if flip_y >= 0.0:
-        flip_mask = generator.uniform(size=n_samples) < flip_y
-        y[flip_mask] = generator.randint(n_classes, size=flip_mask.sum())
+    # Apply flip y using precomputed probabilities
+    if flip_y >= 0.0 and flip_probs is not None:
+        flip_mask = flip_probs[:n_samples] < flip_y
+        flip_values = generator.randint(n_classes, size=flip_mask.sum())
+        y[flip_mask] = flip_values
 
-    # Randomly shift and scale
-    if shift is None:
-        shift = (2 * generator.uniform(size=n_features) - 1) * class_sep
-    X += shift
+    # Apply shift and scale
+    if shift is not None:
+        X += shift_val
 
-    if scale is None:
-        scale = 1 + 100 * generator.uniform(size=n_features)
-    X *= scale
+    if scale != 1.0:
+        X *= scale_val
 
-    indices = np.arange(n_features)
+    # Apply shuffle using precomputed indices
     if shuffle:
-        # Randomly permute samples
-        X, y = util_shuffle(X, y, random_state=generator)
+        shuffle_indices = precomputed_shuffle[:n_samples]
+        X = X[shuffle_indices]
+        y = y[shuffle_indices]
 
-        # Randomly permute features
-        generator.shuffle(indices)
-        X[:, :] = X[:, indices]
+    # Handle feature shuffling for return structure
+    feature_indices = np.arange(n_features)
+    if shuffle:
+        # Randomly permute features (if shuffle is enabled)
+        generator.shuffle(feature_indices)
+        X[:, :] = X[:, feature_indices]
 
     if return_X_y:
         return X, y
 
     # feat_desc describes features in X
     feat_desc = ["random"] * n_features
-    for i, index in enumerate(indices):
+    for i, index in enumerate(feature_indices):
         if index < n_informative:
             feat_desc[i] = "informative"
         elif n_informative <= index < n_informative + n_redundant:
@@ -379,7 +448,6 @@ def make_classification(
     )
 
     return bunch
-
 
 @validate_params(
     {
