@@ -1855,13 +1855,19 @@ See concept :term:`sample property`.
         See :ref:`group_cv`.
 
     ``sample_weight``
-        A relative weight for each sample.  Intuitively, if all weights are
+        A relative weight for each sample used to assign different levels of 
+        importance during model training. Intuitively, if all weights are
         integers, a weighted model or score should be equivalent to that
         calculated when repeating the sample the number of times specified in
         the weight.  Weights may be specified as floats, so that sample weights
         are usually equivalent up to a constant positive scaling factor.
 
-        .. FIXME: Is this interpretation always the case in practice? We have no common tests.
+        Common applications include:
+
+        * **Exposure weighting**: Accounting for different observation periods or sizes
+        * **Frequency weights**: Representing aggregated or duplicated data  
+        * **Importance weighting**: Domain adaptation and transfer learning
+        * **Variance weighting**: Inverse variance weighting for heteroscedastic data
 
         Some estimators, such as decision trees, support negative weights.
 
@@ -1874,6 +1880,8 @@ See concept :term:`sample property`.
 
         In classification, sample weights can also be specified as a function
         of class with the :term:`class_weight` estimator :term:`parameter`.
+
+        See :ref:`sample_weights` for detailed examples and usage guidelines.
 
     ``X``
         Denotes data that is observed at training and prediction time, used as
