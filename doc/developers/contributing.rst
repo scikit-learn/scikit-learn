@@ -584,6 +584,8 @@ Commit Message Marker  Action Taken by CI
 [pyodide]              Build & test with Pyodide
 [azure parallel]       Run Azure CI jobs in parallel
 [float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
+[all random seeds]     Run only the tests listed after this marker in the commit message and execute them for all
+                       seeds by setting `SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"` (useful to reproduce flaky tests).
 [doc skip]             Docs are not built
 [doc quick]            Docs built, but excludes example gallery plots
 [doc build]            Docs built including example gallery plots (very long)
