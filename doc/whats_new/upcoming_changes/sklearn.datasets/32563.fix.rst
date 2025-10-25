@@ -1,0 +1,6 @@
+:mod:`sklearn.datasets`
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+- |Fix| Fixed :func:`sklearn.datasets.make_classification` to produce consistent distributions
+  across different sample sizes when using the same random state.
+  :pr:`32563` by :user:`TL-Chandrasena`.
