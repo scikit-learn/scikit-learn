@@ -297,7 +297,9 @@ def make_classification(
     # 2. Repeated feature indices
     n = n_informative + n_redundant
     if n_repeated > 0:
-        repeated_indices = ((n - 1) * generator.uniform(size=n_repeated) + 0.5).astype(np.intp)
+        repeated_indices = ((n - 1) * generator.uniform(size=n_repeated) + 0.5).astype(
+            np.intp
+        )
 
     # 3. Flip probabilities (precompute more than we need)
     flip_probs = None
@@ -315,7 +317,9 @@ def make_classification(
     # Generate ALL random data in a large contiguous block
     max_samples = 1000  # Generate more than we need for any call
     total_random_features = n_informative + n_random
-    all_random_data = generator.standard_normal(size=(max_samples, total_random_features))
+    all_random_data = generator.standard_normal(
+        size=(max_samples, total_random_features)
+    )
 
     # Initialize X and y
     X = np.zeros((n_samples, n_features))
@@ -360,10 +364,9 @@ def make_classification(
         y[i] = cluster % n_classes
 
         # Get the sample view
-        X_sample = X[i:i+1, :n_informative]
-
+        X_sample = X[i : i + 1, :n_informative]
         # Use pre-generated random data from the same position
-        X_sample[...] = all_random_data[i:i+1, :n_informative]
+        X_sample[...] = all_random_data[i : i + 1, :n_informative]
         X_sample[...] = np.dot(X_sample, A)
         X_sample += centroids[cluster]
 
@@ -379,7 +382,9 @@ def make_classification(
 
     # Fill useless features using precomputed data
     if n_random > 0:
-        X[:, -n_random:] = all_random_data[:n_samples, n_informative:n_informative + n_random]
+        X[:, -n_random:] = all_random_data[
+            :n_samples, n_informative : n_informative + n_random
+        ]
 
     # Apply flip y using precomputed probabilities
     if flip_y >= 0.0 and flip_probs is not None:
@@ -448,7 +453,7 @@ def make_classification(
     )
 
     return bunch
-
+# Add a blank line before this line:
 @validate_params(
     {
         "n_samples": [Interval(Integral, 1, None, closed="left")],

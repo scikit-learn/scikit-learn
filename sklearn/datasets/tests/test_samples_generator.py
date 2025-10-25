@@ -742,6 +742,8 @@ def test_make_circles_unbalanced():
         match="When a tuple, n_samples must have exactly two elements.",
     ):
         make_circles(n_samples=(10,))
+
+
 def test_make_classification_consistent_distribution():
     """Test that make_classification produces consistent distributions
     across different n_samples with the same random_state.
@@ -762,7 +764,10 @@ def test_make_classification_consistent_distribution():
     X_500, y_500 = make_classification(n_samples=500, **common_params)
 
     # The first 100 samples should be identical
-    assert_allclose(X_100, X_500[:100], atol=1e-10,
-                   err_msg="First 100 samples should be identical")
-    assert_array_equal(y_100, y_500[:100],
-                   err_msg="First 100 labels should be identical")
+    assert_allclose(
+        X_100, X_500[:100], atol=1e-10, err_msg="First 100 samples should be identical"
+    )
+    assert_array_equal(
+        y_100, y_500[:100], err_msg="First 100 labels should be identical"
+    )
+
