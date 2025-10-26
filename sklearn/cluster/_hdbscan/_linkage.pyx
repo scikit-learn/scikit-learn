@@ -33,11 +33,11 @@ cimport numpy as cnp
 from libc.float cimport DBL_MAX
 
 import numpy as np
-from ...metrics._dist_metrics cimport DistanceMetric64
-from ...cluster._hierarchical_fast cimport UnionFind
-from ...cluster._hdbscan._tree cimport HIERARCHY_t
-from ...cluster._hdbscan._tree import HIERARCHY_dtype
-from ...utils._typedefs cimport intp_t, float64_t, int64_t, uint8_t
+from sklearn.metrics._dist_metrics cimport DistanceMetric64
+from sklearn.cluster._hierarchical_fast cimport UnionFind
+from sklearn.cluster._hdbscan._tree cimport HIERARCHY_t
+from sklearn.cluster._hdbscan._tree import HIERARCHY_dtype
+from sklearn.utils._typedefs cimport intp_t, float64_t, int64_t, uint8_t
 
 cnp.import_array()
 

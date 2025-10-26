@@ -137,21 +137,21 @@ build_metadata_list = [
         },
     },
     {
-        "name": "pylatest_conda_forge_mkl_osx-64",
+        "name": "pylatest_conda_forge_osx-arm64",
         "type": "conda",
         "tag": "main-ci",
         "folder": "build_tools/azure",
-        "platform": "osx-64",
+        "platform": "osx-arm64",
         "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies
         + [
             "ccache",
             "compilers",
             "llvm-openmp",
+            "pytorch",
+            "pytorch-cpu",
+            "array-api-strict",
         ],
-        "package_constraints": {
-            "blas": "[build=mkl]",
-        },
     },
     {
         "name": "pylatest_conda_forge_mkl_no_openmp",
@@ -172,9 +172,13 @@ build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channels": ["conda-forge"],
-        "conda_dependencies": common_dependencies + ["ccache", "polars", "pyarrow"],
+        "conda_dependencies": remove_from(common_dependencies, ["pandas"])
+        + ["ccache", "polars", "pyarrow"],
+        # TODO: move pandas to conda_dependencies when pandas 1.5.1 is the minimum
+        # supported version
+        "pip_dependencies": ["pandas"],
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
             "blas": "[build=openblas]",
             "numpy": "min",
             "scipy": "min",
@@ -202,7 +206,7 @@ build_metadata_list = [
             + ["ccache"]
         ),
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
             "blas": "[build=openblas]",
         },
     },
@@ -214,6 +218,11 @@ build_metadata_list = [
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": ["python", "ccache"],
+        "package_constraints": {
+            # TODO: remove this constraint once scikit-image and pyamg provide binary
+            # wheels for Python 3.14 (or later) on PyPI.
+            "python": "3.13",
+        },
         "pip_dependencies": (
             remove_from(common_dependencies, ["python", "blas", "pip"])
             + docstring_test_dependencies
@@ -265,7 +274,7 @@ build_metadata_list = [
         "tag": "free-threaded",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channels": ["conda-forge", "conda-forge/label/python_rc"],
+        "channels": ["conda-forge"],
         "conda_dependencies": [
             "python-freethreading",
             "meson-python",
@@ -293,7 +302,7 @@ build_metadata_list = [
             "pip",
         ],
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
             "blas": "[build=openblas]",
         },
     },
@@ -398,7 +407,10 @@ build_metadata_list = [
         "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
         + ["pip", "ccache"],
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
+            # The following is needed to avoid getting libnvpl build for blas for some
+            # reason.
+            "blas": "[build=openblas]",
         },
     },
     {
