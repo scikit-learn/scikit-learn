@@ -115,6 +115,9 @@ Estimators
 - :class:`decomposition.PCA` (with `svd_solver="full"`, `svd_solver="covariance_eigh"`, or
   `svd_solver="randomized"` (`svd_solver="randomized"` only if `power_iteration_normalizer="QR"`))
 - :class:`linear_model.Ridge` (with `solver="svd"`)
+- :class:`linear_model.RidgeCV` (with `solver="svd"`, see :ref:`device_support_for_float64`)
+- :class:`linear_model.RidgeClassifier` (with `solver="svd"`)
+- :class:`linear_model.RidgeClassifierCV` (with `solver="svd"`, see :ref:`device_support_for_float64`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
 - :class:`preprocessing.Binarizer`
 - :class:`preprocessing.KernelCenterer`
@@ -133,6 +136,7 @@ Meta-estimators
 Meta-estimators that accept Array API inputs conditioned on the fact that the
 base estimator also does:
 
+- :class:`calibration.CalibratedClassifierCV` (with `method="temperature"`)
 - :class:`model_selection.GridSearchCV`
 - :class:`model_selection.RandomizedSearchCV`
 - :class:`model_selection.HalvingGridSearchCV`
