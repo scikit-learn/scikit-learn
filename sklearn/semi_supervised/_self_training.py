@@ -142,8 +142,8 @@ class SelfTrainingClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     >>> iris = datasets.load_iris()
     >>> random_unlabeled_points = rng.rand(iris.target.shape[0]) < 0.3
     >>> iris.target[random_unlabeled_points] = -1
-    >>> svc = LogisticRegression()
-    >>> self_training_model = SelfTrainingClassifier(svc)
+    >>> clf = LogisticRegression()
+    >>> self_training_model = SelfTrainingClassifier(clf)
     >>> self_training_model.fit(iris.data, iris.target)
     SelfTrainingClassifier(...)
     """
