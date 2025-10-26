@@ -2856,11 +2856,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             else:
                 self.quantiles_.append(np.nanpercentile(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
-        # due to floating-point precision error in `np.nanpercentile`,
-        # make sure the quantiles are monotonically increasing
-        # Upstream issue in numpy:
-        # https://github.com/numpy/numpy/issues/14685
-        self.quantiles_ = np.maximum.accumulate(self.quantiles_)
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
