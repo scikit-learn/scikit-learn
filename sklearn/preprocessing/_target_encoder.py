@@ -13,6 +13,7 @@ from sklearn.preprocessing._target_encoder_fast import (
     _fit_encoding_fast_auto_smooth,
 )
 from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.metadata_routing import MetadataRouter, MethodMapping
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import (
     _check_feature_names_in,
@@ -266,6 +267,24 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.cv = cv
         self.shuffle = shuffle
         self.random_state = random_state
+
+    def get_metadata_routing(self):
+        """Define how metadata such as `groups` is routed to CV splitters.
+
+        Returns
+        -------
+        router : MetadataRouter
+            The router defining how metadata like `groups` is passed from
+            the encoder to its internal CV splitter.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__)
+        router.add(
+            self.cv,
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="split")
+            .add(caller="fit_transform", callee="split"),
+        )
+        return router
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, groups=None):
