@@ -176,9 +176,9 @@ def test_move_to_array_api_conversions_with_strict():
     )
 
     with config_context(array_api_dispatch=True):
-        for array in (array_1_out,):
-            assert get_namespace(array)[0] == xp_torch
-            assert device(array) == device_torch
+        # for array in (array_1_out,):
+        assert get_namespace(array_1_out)[0] == xp_torch
+        assert device(array_1_out) == device_torch
 
 
 def test_move_to_sparse():
