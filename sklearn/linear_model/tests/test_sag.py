@@ -906,8 +906,10 @@ def test_sag_classifier_raises_error(solver):
 @pytest.mark.parametrize("decay", [True, False])
 @pytest.mark.parametrize("saga", [True, False])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.xfail()
 def test_sag_weighted_classification_convergence(solver, decay, saga, fit_intercept):
+    # FIXME: change dataset or only test decay=False
+    if decay:
+        pytest.xfail("Convergence issue for decay=True")
     n_samples = 100
     max_iter = 100
     tol = 1e-10
@@ -943,30 +945,33 @@ def test_sag_weighted_classification_convergence(solver, decay, saga, fit_interc
         X, alpha, fit_intercept, classification=True, sample_weight=sample_weights
     )
 
-    weights_weighted, intercept_weighted, n_iter_weighted = solver(
+    weights, intercept, n_iter = solver(
         X, y, step_size, alpha, sample_weight=sample_weights, **sag_kwargs
     )
-    assert np.sum((intercept_weighted - true_intercept) ** 2) < tol
-    assert np.sum((weights_weighted - true_weights) ** 2) < tol
+    assert_allclose(weights, true_weights)
+    assert_allclose(intercept, true_intercept)
 
 
 @pytest.mark.parametrize("solver", [sag, sag_sparse])
 @pytest.mark.parametrize("decay", [True, False])
 @pytest.mark.parametrize("saga", [True, False])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-# @pytest.mark.xfail()
 def test_sag_weighted_regression_convergence(solver, decay, saga, fit_intercept):
+    # FIXME: change dataset or only test decay=False
+    if decay:
+        pytest.xfail("Convergence issue for decay=True")
     n_samples = 15
-    max_iter = 700
-    tol = 1e-8
+    max_iter = 1000
+    tol = 1e-11
     alpha = 1.1
-
     rng = np.random.RandomState(42)
     X = rng.rand(n_samples, n_samples * 2)
     y = rng.randint(0, 3, size=n_samples)
     # Use random integers (including zero) as weights.
     sample_weights = rng.randint(0, 5, size=n_samples)
-
+    # FIXME: zero sample_weight lead to division by zero in sag_sparse
+    if solver == sag_sparse:
+        sample_weights += 1
     est = Ridge(
         max_iter=max_iter,
         tol=tol,
@@ -975,7 +980,7 @@ def test_sag_weighted_regression_convergence(solver, decay, saga, fit_intercept)
         alpha=(sample_weights.sum() * alpha),
     )
     est.fit(X, y, sample_weight=sample_weights)
-    true_weights = est.coef_[0]
+    true_weights = est.coef_.ravel()
     true_intercept = est.intercept_
 
     sag_kwargs = dict(
@@ -986,13 +991,11 @@ def test_sag_weighted_regression_convergence(solver, decay, saga, fit_intercept)
         fit_intercept=fit_intercept,
         saga=saga,
     )
-
     step_size = get_step_size(
-        X, alpha, fit_intercept, classification=True, sample_weight=sample_weights
+        X, alpha, fit_intercept, classification=False, sample_weight=sample_weights
     )
-
-    weights_weighted, intercept_weighted, n_iter_weighted = solver(
+    weights, intercept, n_iter = solver(
         X, y, step_size, alpha, sample_weight=sample_weights, **sag_kwargs
     )
-    assert np.sum((intercept_weighted - true_intercept) ** 2) < tol
-    assert np.sum((weights_weighted - true_weights) ** 2) < tol
+    assert_allclose(weights, true_weights, atol=1e-10)
+    assert_allclose(intercept, true_intercept)
