@@ -2811,11 +2811,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             )
 
         self.quantiles_ = np.nanpercentile(X, references, axis=0)
-        # Due to floating-point precision error in `np.nanpercentile`,
-        # make sure that quantiles are monotonically increasing.
-        # Upstream issue in numpy:
-        # https://github.com/numpy/numpy/issues/14685
-        self.quantiles_ = np.maximum.accumulate(self.quantiles_)
 
     def _sparse_fit(self, X, random_state):
         """Compute percentiles for sparse matrices.
