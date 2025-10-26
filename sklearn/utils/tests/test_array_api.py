@@ -168,7 +168,7 @@ def test_move_to_array_api_conversions_with_strict():
 
     xp_torch = _array_api_for_tests("torch", "mps")
     device_torch = xp_torch.asarray([1], device="mps").device
-    array_1_out = move_to(
+    (array_1_out,) = move_to(
         array_strict_cpu,
         # array_strict_device1,
         xp_reference=xp_torch,
