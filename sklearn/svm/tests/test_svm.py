@@ -379,6 +379,7 @@ def test_tweak_params():
 # XXX: this test is thread-unsafe because it uses probability=True:
 # https://github.com/scikit-learn/scikit-learn/issues/31885
 @pytest.mark.thread_unsafe
+# TODO(1.10): remove this test entirely.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_probability(global_random_seed):
     # Predict probabilities using SVC
@@ -1138,6 +1139,7 @@ def test_unfitted():
 # https://github.com/scikit-learn/scikit-learn/issues/31885
 @pytest.mark.thread_unsafe
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
+# TODO(1.10): remove test entirely.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_consistent_proba(global_random_seed):
     a = svm.SVC(probability=True, max_iter=1, random_state=global_random_seed)
@@ -1194,6 +1196,7 @@ def test_lsvc_intercept_scaling_zero():
     assert lsvc.intercept_ == 0.0
 
 
+# TODO(1.10): remove test entirely.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_hasattr_predict_proba(global_random_seed):
     iris = get_iris_dataset(global_random_seed)
@@ -1221,7 +1224,6 @@ def test_hasattr_predict_proba(global_random_seed):
         G.predict_proba(iris.data)
 
 
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_decision_function_shape_two_class(global_random_seed):
     for n_classes in [2, 3]:
         X, y = make_blobs(centers=n_classes, random_state=global_random_seed)
