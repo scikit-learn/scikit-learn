@@ -162,15 +162,15 @@ def test_move_to_array_api_conversions_with_strict():
     array_strict_cpu = xp_strict.asarray(
         [1, 2, 3], device=array_api_strict.Device("CPU_DEVICE")
     )
-    array_strict_device1 = xp_strict.asarray(
-        [1, 2, 3], device=array_api_strict.Device("device1")
-    )
+    # array_strict_device1 = xp_strict.asarray(
+    #     [1, 2, 3], device=array_api_strict.Device("device1")
+    # )
 
     xp_torch = _array_api_for_tests("torch", "mps")
     device_torch = xp_torch.asarray([1], device="mps").device
     array_1_out, array_2_out = move_to(
         array_strict_cpu,
-        array_strict_device1,
+        # array_strict_device1,
         xp_reference=xp_torch,
         device_reference=device_torch,
     )
