@@ -2810,34 +2810,40 @@ def test_unused_transformer_request_present():
 def test_make_column_selector_cardinality():
     pd = pytest.importorskip("pandas")
 
-    # Test data with different cardinality 
-    X_df = pd.DataFrame({
-        'low_card1': ['A', 'B', 'A', 'C'],  # 3 unique values
-        'low_card2': [1, 2, 1, 2],          # 2 unique values
-        'high_card': ['X', 'Y', 'Z', 'W'],  # 4 unique values
-        'numeric': [1, 2, 3, 4]            # 4 unique values
-    })
-    
+    # Test data with different cardinality
+    X_df = pd.DataFrame(
+        {
+            "low_card1": ["A", "B", "A", "C"],  # 3 unique values
+            "low_card2": [1, 2, 1, 2],  # 2 unique values
+            "high_card": ["X", "Y", "Z", "W"],  # 4 unique values
+            "numeric": [1, 2, 3, 4],  # 4 unique values
+        }
+    )
+
     # Test selecting low cardinality columns (threshold = 3)
-    selector_low = make_column_selector(cardinality='low', cardinality_threshold=3)
+    selector_low = make_column_selector(cardinality="low", cardinality_threshold=3)
     selected_low = selector_low(X_df)
-    expected_low = ['low_card1', 'low_card2']
+    expected_low = ["low_card1", "low_card2"]
     assert set(selected_low) == set(expected_low)
 
     # Test selecting high cardinality columns (threshold = 3)
-    selector_high = make_column_selector(cardinality='high', cardinality_threshold=3)
+    selector_high = make_column_selector(cardinality="high", cardinality_threshold=3)
     selected_high = selector_high(X_df)
-    expected_high = ['high_card', 'numeric']
+    expected_high = ["high_card", "numeric"]
     assert set(selected_high) == set(expected_high)
 
     # Test with threshold = 2
-    selector_low_thresh2 = make_column_selector(cardinality='low', cardinality_threshold=2)
+    selector_low_thresh2 = make_column_selector(
+        cardinality="low", cardinality_threshold=2
+    )
     selected_low_thresh2 = selector_low_thresh2(X_df)
-    expected_low_thresh2 = ['low_card2']
+    expected_low_thresh2 = ["low_card2"]
     assert set(selected_low_thresh2) == set(expected_low_thresh2)
-    
+
     # Test with threshold = 4
-    selector_high_thresh4 = make_column_selector(cardinality='high', cardinality_threshold=4)
+    selector_high_thresh4 = make_column_selector(
+        cardinality="high", cardinality_threshold=4
+    )
     selected_high_thresh4 = selector_high_thresh4(X_df)
     expected_high_thresh4 = []
     assert set(selected_high_thresh4) == set(expected_high_thresh4)
@@ -2846,60 +2852,63 @@ def test_make_column_selector_cardinality():
 def test_make_column_selector_cardinality_validation():
     # Test invalid cardinality values
     with pytest.raises(ValueError, match="cardinality must be 'high' or 'low'"):
-        make_column_selector(cardinality='medium')
+        make_column_selector(cardinality="medium")
 
     with pytest.raises(ValueError, match="cardinality must be 'high' or 'low'"):
-        make_column_selector(cardinality='invalid')
+        make_column_selector(cardinality="invalid")
 
     # Test invalid cardinality_threshold values
-    with pytest.raises(ValueError, match="cardinality_threshold must be a non-negative integer"):
-        make_column_selector(cardinality='high', cardinality_threshold='three')
+    with pytest.raises(
+        ValueError, match="cardinality_threshold must be a non-negative integer"
+    ):
+        make_column_selector(cardinality="high", cardinality_threshold="three")
 
-    with pytest.raises(ValueError, match="cardinality_threshold must be a non-negative integer"):
-        make_column_selector(cardinality='high', cardinality_threshold=3.5)
+    with pytest.raises(
+        ValueError, match="cardinality_threshold must be a non-negative integer"
+    ):
+        make_column_selector(cardinality="high", cardinality_threshold=3.5)
 
-    with pytest.raises(ValueError, match="cardinality_threshold must be a non-negative integer"):
-        make_column_selector(cardinality='high', cardinality_threshold=-1)
+    with pytest.raises(
+        ValueError, match="cardinality_threshold must be a non-negative integer"
+    ):
+        make_column_selector(cardinality="high", cardinality_threshold=-1)
 
 
 def test_make_column_selector_cardinality_with_other_params():
     pd = pytest.importorskip("pandas")
-    
-    X_df = pd.DataFrame({
-        'low_card_str1': ['A', 'B', 'A', 'A'],  # 2 unique, str
-        'low_card_str2': ['X', 'Y', 'X', 'Y'],  # 2 unique, str  
-        'high_card_str': ['A', 'B', 'C', 'D'],  # 4 unique, str
-        'low_card_num': [1, 2, 1, 2],  # 2 unique, num
-        'high_card_num': [1, 2, 3, 4]  # 4 unique, num
-    })
-    
+
+    X_df = pd.DataFrame(
+        {
+            "low_card_str1": ["A", "B", "A", "A"],  # 2 unique, str
+            "low_card_str2": ["X", "Y", "X", "Y"],  # 2 unique, str
+            "high_card_str": ["A", "B", "C", "D"],  # 4 unique, str
+            "low_card_num": [1, 2, 1, 2],  # 2 unique, num
+            "high_card_num": [1, 2, 3, 4],  # 4 unique, num
+        }
+    )
+
     # Test combining cardinality with dtype selection
     selector = make_column_selector(
-        cardinality='low', 
-        cardinality_threshold=2,
-        dtype_include=object
+        cardinality="low", cardinality_threshold=2, dtype_include=object
     )
     selected = selector(X_df)
-    expected = ['low_card_str1', 'low_card_str2']  # Only low cardinality str columns
+    expected = ["low_card_str1", "low_card_str2"]  # Only low cardinality str columns
     assert set(selected) == set(expected)
-    
+
     # Test combining cardinality with pattern
     selector = make_column_selector(
-        cardinality='high',
+        cardinality="high",
         cardinality_threshold=2,
-        pattern='num$',  # Only columns ending with 'num'
+        pattern="num$",  # Only columns ending with 'num'
     )
     selected = selector(X_df)
-    expected = ['high_card_num']  # Only high cardinality num column
+    expected = ["high_card_num"]  # Only high cardinality num column
     assert set(selected) == set(expected)
-    
+
     # Test combining all three: dtype, pattern and cardinality
     selector = make_column_selector(
-        cardinality='low',
-        cardinality_threshold=2,
-        dtype_include=object,
-        pattern='str1'
+        cardinality="low", cardinality_threshold=2, dtype_include=object, pattern="str1"
     )
     selected = selector(X_df)
-    expected = ['low_card_str1']  # Only low cardinality str column with name matching pattern
+    expected = ["low_card_str1"]  # Only low cardinality str column with name matching
     assert set(selected) == set(expected)

@@ -1547,8 +1547,10 @@ class make_column_selector:
 
     cardinality_threshold : int, default=7
         The threshold for determining high/low cardinality.
-        - For 'high': Select columns with more than `cardinality_threshold` unique values
-        - For 'low': Select columns with at most `cardinality_threshold` unique values
+        - For 'high': Select columns with more than
+          `cardinality_threshold` unique values
+        - For 'low': Select columns with at most
+          `cardinality_threshold` unique values
 
     Returns
     -------
@@ -1581,33 +1583,40 @@ class make_column_selector:
            [-1.50755672,  1.        ,  0.        ,  0.        ],
            [-0.30151134,  0.        ,  1.        ,  0.        ],
            [ 0.90453403,  0.        ,  0.        ,  1.        ]])
-           
+
     Selecting columns based on cardinality:
     >>> X = pd.DataFrame({
     ...     'low_card': ['A', 'B', 'A', 'C'],  # 3 unique values
     ...     'high_card': ['X', 'Y', 'Z', 'W'],  # 4 unique values
     ...     'numeric': [1, 2, 3, 4]  # 4 unique values
     ... })
-    >>> selector_low = make_column_selector(cardinality='low', cardinality_threshold=3)
-    >>> selector_high = make_column_selector(cardinality='high', cardinality_threshold=3)
+    >>> selector_low = make_column_selector(
+    ...     cardinality='low', cardinality_threshold=3)
+    >>> selector_high = make_column_selector(
+    ...     cardinality='high', cardinality_threshold=3)
     >>> low_card_cols = selector_low(X)  # ['low_card']
     >>> high_card_cols = selector_high(X)  # ['high_card', 'numeric']
     """
 
-    def __init__(self, pattern=None, *, dtype_include=None, dtype_exclude=None,
-                 cardinality=None, cardinality_threshold=7):
+    def __init__(
+        self,
+        pattern=None,
+        *,
+        dtype_include=None,
+        dtype_exclude=None,
+        cardinality=None,
+        cardinality_threshold=7,
+    ):
         self.pattern = pattern
         self.dtype_include = dtype_include
         self.dtype_exclude = dtype_exclude
-        
+
         # Validate cardinality parameter
-        if cardinality is not None and cardinality not in ['high', 'low']:
+        if cardinality is not None and cardinality not in ["high", "low"]:
             raise ValueError(
-                "cardinality must be 'high' or 'low', got {}".format(
-                    cardinality
-                )
+                "cardinality must be 'high' or 'low', got {}".format(cardinality)
             )
-        
+
         # Validate cardinality_threshold parameter
         if not isinstance(cardinality_threshold, int) or cardinality_threshold < 0:
             raise ValueError(
@@ -1615,7 +1624,7 @@ class make_column_selector:
                     cardinality_threshold
                 )
             )
-        
+
         self.cardinality = cardinality
         self.cardinality_threshold = cardinality_threshold
 
@@ -1640,21 +1649,21 @@ class make_column_selector:
         cols = df_row.columns
         if self.pattern is not None:
             cols = cols[cols.str.contains(self.pattern, regex=True)]
-        
+
         # Apply cardinality selection
         if self.cardinality is not None:
             # Calculate unique value counts for selected columns
             unique_counts = df[cols].nunique()
-            
-            if self.cardinality == 'high':
+
+            if self.cardinality == "high":
                 # Select columns with more than threshold unique values
                 selected_cols_mask = unique_counts > self.cardinality_threshold
             else:  # self.cardinality == 'low'
                 # Select columns with at most threshold unique values
                 selected_cols_mask = unique_counts <= self.cardinality_threshold
-            
+
             cols = cols[selected_cols_mask]
-        
+
         return cols.tolist()
 
 
