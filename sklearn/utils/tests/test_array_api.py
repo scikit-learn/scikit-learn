@@ -147,7 +147,7 @@ def test_move_to_array_api_conversions_with_torch():
 
 
 def test_move_to_array_api_conversions_with_strict():
-    """Check conversion of array-api-strict, with different devices, to Numpy."""
+    """Check conversion of array-api-strict, with different devices, to torch."""
     try:
         import array_api_strict
 
@@ -166,15 +166,19 @@ def test_move_to_array_api_conversions_with_strict():
         [1, 2, 3], device=array_api_strict.Device("device1")
     )
 
-    xp_np = _array_api_for_tests("numpy", None)
+    xp_torch = _array_api_for_tests("torch", "mps")
+    device_torch = xp_torch.asarray([1], device="mps").device
     array_1_out, array_2_out = move_to(
-        array_xp_cpu, array_xp_device1, xp_reference=xp_np, device_reference=None
+        array_xp_cpu,
+        array_xp_device1,
+        xp_reference=xp_torch,
+        device_reference=device_torch,
     )
 
     with config_context(array_api_dispatch=True):
         for array in (array_1_out, array_2_out):
-            assert get_namespace(array)[0] == xp_np
-            assert device(array) is None
+            assert get_namespace(array)[0] == xp_torch
+            assert device(array) == device_torch
 
 
 def test_move_to_sparse():
