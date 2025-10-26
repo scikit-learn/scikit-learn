@@ -208,9 +208,8 @@ def test_no_unlabeled():
     assert st.termination_condition_ == "all_labeled"
 
 
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_early_stopping():
-    svc = SVC(gamma="scale", probability=True)
+    svc = LogisticRegression()
     st = SelfTrainingClassifier(svc)
     X_train_easy = [[1], [0], [1], [0.5]]
     y_train_easy = [1, 0, -1, -1]
@@ -290,7 +289,6 @@ def test_k_best_selects_best():
         assert row in added_by_st
 
 
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_estimator_meta_estimator():
     # Check that a meta-estimator relying on an estimator implementing
     # `predict_proba` will work even if it does not expose this method before being
@@ -300,10 +298,10 @@ def test_estimator_meta_estimator():
 
     estimator = StackingClassifier(
         estimators=[
-            ("svc_1", SVC(probability=True)),
-            ("svc_2", SVC(probability=True)),
+            ("clf_1", LogisticRegression()),
+            ("clf_2", LogisticRegression()),
         ],
-        final_estimator=SVC(probability=True),
+        final_estimator=LogisticRegression(),
         cv=2,
     )
 
@@ -314,10 +312,10 @@ def test_estimator_meta_estimator():
 
     estimator = StackingClassifier(
         estimators=[
-            ("svc_1", SVC(probability=False)),
-            ("svc_2", SVC(probability=False)),
+            ("svc_1", SVC()),
+            ("svc_2", SVC()),
         ],
-        final_estimator=SVC(probability=False),
+        final_estimator=SVC(),
         cv=2,
     )
 
@@ -355,6 +353,25 @@ def test_self_training_estimator_attribute_error():
         self_training.fit(X_train, y_train_missing_labels).decision_function(X_train)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
+
+
+# TODO(1.8): remove in 1.8
+def test_deprecation_warning_base_estimator():
+    warn_msg = "`base_estimator` has been deprecated in 1.6 and will be removed"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        SelfTrainingClassifier(base_estimator=DecisionTreeClassifier()).fit(
+            X_train, y_train_missing_labels
+        )
+
+    error_msg = "You must pass an estimator to SelfTrainingClassifier"
+    with pytest.raises(ValueError, match=error_msg):
+        SelfTrainingClassifier().fit(X_train, y_train_missing_labels)
+
+    error_msg = "You must pass only one estimator to SelfTrainingClassifier."
+    with pytest.raises(ValueError, match=error_msg):
+        SelfTrainingClassifier(
+            base_estimator=DecisionTreeClassifier(), estimator=DecisionTreeClassifier()
+        ).fit(X_train, y_train_missing_labels)
 
 
 # Metadata routing tests

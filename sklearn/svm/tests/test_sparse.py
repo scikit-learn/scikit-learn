@@ -484,11 +484,8 @@ def test_sparse_svc_clone_with_callable_kernel(lil_container):
 
 
 @pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_timeout(lil_container):
-    sp = svm.SVC(
-        C=1, kernel=lambda x, y: x @ y.T, probability=True, random_state=0, max_iter=1
-    )
+    sp = svm.SVC(C=1, kernel=lambda x, y: x @ y.T, random_state=0, max_iter=1)
     warning_msg = (
         r"Solver terminated early \(max_iter=1\).  Consider pre-processing "
         r"your data with StandardScaler or MinMaxScaler."

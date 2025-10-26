@@ -766,19 +766,6 @@ def test_svc_nonfinite_params(global_random_seed):
         clf.fit(X, y)
 
 
-@pytest.mark.filterwarnings("ignore::FutureWarning")
-def test_unicode_kernel(global_random_seed):
-    # Test that a unicode kernel name does not cause a TypeError
-    iris = get_iris_dataset(global_random_seed)
-
-    clf = svm.SVC(kernel="linear", probability=True)
-    clf.fit(X, Y)
-    clf.predict_proba(T)
-    _libsvm.cross_validation(
-        iris.data, iris.target.astype(np.float64), 5, kernel="linear", random_seed=0
-    )
-
-
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_sparse_precomputed(csr_container):
     clf = svm.SVC(kernel="precomputed")
