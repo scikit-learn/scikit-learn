@@ -700,6 +700,7 @@ def test_display_from_cv_results_param_validation(pyplot, data_binary, Display):
     # `pos_label` inconsistency
     y_multi[y_multi == 1] = 2
     if Display == RocCurveDisplay:
+        # This warning is raised by `roc_curve`
         with pytest.warns(
             UndefinedMetricWarning, match="No positive samples in y_true"
         ):
@@ -731,6 +732,19 @@ def test_display_from_cv_results_param_validation(pyplot, data_binary, Display):
         Display.from_cv_results(
             cv_results, X, y, curve_kwargs={"c": "blue", "color": "red"}
         )
+
+
+@pytest.mark.parametrize("Display", [PrecisionRecallDisplay, RocCurveDisplay])
+def test_display_from_cv_results_pos_label_inferred(pyplot, data_binary, Display):
+    """Check `pos_label` inferred correctly by `from_cv_results(pos_label=None)`."""
+    X, y = data_binary
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+
+    disp = Display.from_cv_results(cv_results, X, y, pos_label=None)
+    # Should be `estimator.classes_[1]`
+    assert disp.pos_label == 1
 
 
 @pytest.mark.parametrize("Display", [PrecisionRecallDisplay, RocCurveDisplay])
