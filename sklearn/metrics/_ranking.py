@@ -380,9 +380,9 @@ def det_curve(
 
     # add a threshold at inf where the clf always predicts the negative class
     # i.e. tps = fps = 0
-    tps = xp.concatenate((xp.asarray([0], device=device), tps))
-    fps = xp.concatenate((xp.asarray([0], device=device), fps))
-    thresholds = xp.concatenate((xp.asarray([np.inf], device=device), thresholds))
+    tps = xp.concat((xp.asarray([0], device=device), tps))
+    fps = xp.concat((xp.asarray([0], device=device), fps))
+    thresholds = xp.concat((xp.asarray([np.inf], device=device), thresholds))
 
     if drop_intermediate and len(fps) > 2:
         # Drop thresholds where true positives (tp) do not change from the
@@ -392,7 +392,7 @@ def det_curve(
         # in the transformed (normal deviate) scale. These intermediate points
         # can be dropped to create lighter DET curve plots.
         optimal_idxs = xp.where(
-            xp.concatenate(
+            xp.concat(
                 [
                     xp.asarray([True], device=device),
                     xp.logical_or(xp.diff(tps[:-1]), xp.diff(tps[1:])),
