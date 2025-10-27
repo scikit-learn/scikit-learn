@@ -106,38 +106,6 @@ the required packages.
       .. tab-set::
         :class: tabs-package-manager
 
-        .. tab-item:: pip
-          :class-label: tab-6
-          :sync: package-manager-pip
-
-          First, you need to install a compiler with OpenMP_ support.
-          Download the `Build Tools for Visual Studio installer <https://aka.ms/vs/17/release/vs_buildtools.exe>`_
-          and run the downloaded `vs_buildtools.exe` file. During the installation you will
-          need to make sure you select "Desktop development with C++", similarly to this
-          screenshot:
-
-          .. image::
-            ../images/visual-studio-build-tools-selection.png
-
-          Next, install the 64-bit version of Python (|PythonMinVersion| or later), for instance from the
-          `official website <https://www.python.org/downloads/windows/>`__.
-
-          Now create a virtual environment (venv_) and install the required python packages:
-
-          .. prompt::
-
-            python -m venv sklearn-dev
-
-          .. prompt::
-
-            sklearn-dev\Scripts\activate  # activate
-
-          .. prompt::
-
-            pip install wheel numpy scipy cython meson-python ninja ^
-              pytest pytest-cov ruff==0.11.2 mypy numpydoc ^
-              joblib threadpoolctl
-
         .. tab-item:: conda
           :class-label: tab-6
           :sync: package-manager-conda
@@ -170,11 +138,75 @@ the required packages.
 
             conda activate sklearn-dev
 
+        .. tab-item:: pip
+          :class-label: tab-6
+          :sync: package-manager-pip
+
+          First, you need to install a compiler with OpenMP_ support.
+          Download the `Build Tools for Visual Studio installer <https://aka.ms/vs/17/release/vs_buildtools.exe>`_
+          and run the downloaded `vs_buildtools.exe` file. During the installation you will
+          need to make sure you select "Desktop development with C++", similarly to this
+          screenshot:
+
+          .. image::
+            ../images/visual-studio-build-tools-selection.png
+
+          Next, install the 64-bit version of Python (|PythonMinVersion| or later), for instance from the
+          `official website <https://www.python.org/downloads/windows/>`__.
+
+          Now create a virtual environment (venv_) and install the required python packages:
+
+          .. prompt::
+
+            python -m venv sklearn-dev
+
+          .. prompt::
+
+            sklearn-dev\Scripts\activate  # activate
+
+          .. prompt::
+
+            pip install wheel numpy scipy cython meson-python ninja ^
+              pytest pytest-cov ruff==0.11.2 mypy numpydoc ^
+              joblib threadpoolctl
+
+
     .. tab-item:: MacOS
       :class-label: tab-4
 
       .. tab-set::
         :class: tabs-package-manager
+
+        .. tab-item:: conda
+          :class-label: tab-6
+          :sync: package-manager-conda
+
+          The default C compiler on macOS does not directly support OpenMP. To enable the
+          installation of the ``compilers`` meta-package from the conda-forge channel,
+          which provides OpenMP-enabled C/C++ compilers based on the LLVM toolchain,
+          you first need to install the macOS command line tools:
+
+          .. prompt::
+
+            xcode-select --install
+
+          Next, download and install `the conda-forge installer`_ (Miniforge) for your system.
+          Conda-forge provides a conda-based distribution of
+          Python and the most popular scientific libraries.
+          Create a new conda environment with the required python packages:
+
+          .. prompt::
+
+            conda create -n sklearn-dev -c conda-forge python \
+              numpy scipy cython meson-python ninja \
+              pytest pytest-cov ruff==0.11.2 mypy numpydoc \
+              joblib threadpoolctl compilers llvm-openmp
+
+          and activate the newly created conda environment:
+
+          .. prompt::
+
+            conda activate sklearn-dev
 
         .. tab-item:: pip
           :class-label: tab-6
@@ -215,42 +247,34 @@ the required packages.
               pytest pytest-cov ruff==0.11.2 mypy numpydoc \
               joblib threadpoolctl
 
+    .. tab-item:: Linux
+      :class-label: tab-4
+
+      .. tab-set::
+        :class: tabs-package-manager
+
         .. tab-item:: conda
           :class-label: tab-6
           :sync: package-manager-conda
 
-          The default C compiler on macOS does not directly support OpenMP. To enable the
-          installation of the ``compilers`` meta-package from the conda-forge channel,
-          which provides OpenMP-enabled C/C++ compilers based on the LLVM toolchain,
-          you first need to install the macOS command line tools:
-
-          .. prompt::
-
-            xcode-select --install
-
-          Next, download and install `the conda-forge installer`_ (Miniforge) for your system.
-          Conda-forge provides a conda-based distribution of
-          Python and the most popular scientific libraries.
-          Create a new conda environment with the required python packages:
+          Download and install `the conda-forge installer`_ (Miniforge) for your system.
+          Conda-forge provides a conda-based distribution of Python and the most
+          popular scientific libraries.
+          Create a new conda environment with the required python packages
+          (including `compilers` for a working C/C++ compiler with OpenMP support):
 
           .. prompt::
 
             conda create -n sklearn-dev -c conda-forge python \
               numpy scipy cython meson-python ninja \
               pytest pytest-cov ruff==0.11.2 mypy numpydoc \
-              joblib threadpoolctl compilers llvm-openmp
+              joblib threadpoolctl compilers
 
-          and activate the newly created conda environment:
+          and activate the newly created environment:
 
           .. prompt::
 
             conda activate sklearn-dev
-
-    .. tab-item:: Linux
-      :class-label: tab-4
-
-      .. tab-set::
-        :class: tabs-package-manager
 
         .. tab-item:: pip
           :class-label: tab-6
@@ -305,29 +329,6 @@ the required packages.
             pip install wheel numpy scipy cython meson-python ninja \
               pytest pytest-cov ruff==0.11.2 mypy numpydoc \
               joblib threadpoolctl
-
-        .. tab-item:: conda
-          :class-label: tab-6
-          :sync: package-manager-conda
-
-          Download and install `the conda-forge installer`_ (Miniforge) for your system.
-          Conda-forge provides a conda-based distribution of Python and the most
-          popular scientific libraries.
-          Create a new conda environment with the required python packages
-          (including `compilers` for a working C/C++ compiler with OpenMP support):
-
-          .. prompt::
-
-            conda create -n sklearn-dev -c conda-forge python \
-              numpy scipy cython meson-python ninja \
-              pytest pytest-cov ruff==0.11.2 mypy numpydoc \
-              joblib threadpoolctl compilers
-
-          and activate the newly created environment:
-
-          .. prompt::
-
-            conda activate sklearn-dev
 
 .. _install_from_source:
 
