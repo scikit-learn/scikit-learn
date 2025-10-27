@@ -1857,10 +1857,12 @@ See concept :term:`sample property`.
     ``sample_weight``
         A weight for each data point. Intuitively, if all weights are integers,
         using them in an estimator or a :term:`scorer` is like duplicating each
-        data point as many times as the weight value. Weights may also be
-        specified as floats: many estimators and scorers are invariant to a
-        rescaling of the weights by a constant positive factor but there are
-        exceptions.
+        data point as many times as the weight value. Weights can also be
+        specified as floats, and can have the same effect as above, as many
+        estimators and scorers are scale invariant. For example, weights ``[1,
+        2, 3]`` would be equivalent to weights ``[0.1, 0.2, 0.3]`` as they
+        differ by a constant factor of 10. Note however that several estimators
+        are not invariant to the scale of weights.
 
         `sample_weight` can be both an argument of the estimator's :term:`fit` method
         for model training or a parameter of a :term:`scorer` for model
