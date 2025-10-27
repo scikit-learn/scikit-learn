@@ -256,52 +256,52 @@ The next steps describe the process of modifying code and submitting a PR:
 
    .. prompt:: bash
 
-        git checkout main
-        git fetch upstream
-        git merge upstream/main
+      git checkout main
+      git fetch upstream
+      git merge upstream/main
 
 #. Create a feature branch to hold your development changes:
 
    .. prompt:: bash
 
-        git checkout -b my_feature
+      git checkout -b my_feature
 
    and start making changes. Always use a feature branch. It's good
    practice to never work on the ``main`` branch!
 
 #. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
-    run code style checks before each commit:
+   run code style checks before each commit:
 
-    .. prompt:: bash
+   .. prompt:: bash
 
-          pip install pre-commit
-          pre-commit install
+      pip install pre-commit
+      pre-commit install
 
     pre-commit checks can be disabled for a particular commit with
     `git commit -n`.
 
 #. Develop the feature on your feature branch on your computer, using Git to
-    do the version control. When you're done editing, add changed files using
-    ``git add`` and then ``git commit``:
+   do the version control. When you're done editing, add changed files using
+   ``git add`` and then ``git commit``:
 
     .. prompt:: bash
 
-        git add modified_files
-        git commit
+      git add modified_files
+      git commit
 
-    to record your changes in Git, then push the changes to your GitHub
-    account with:
+   to record your changes in Git, then push the changes to your GitHub
+   account with:
 
-    .. prompt:: bash
+   .. prompt:: bash
 
-       git push -u origin my_feature
+      git push -u origin my_feature
 
 #. Follow `these <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
-    instructions to create a pull request from your fork. This will send a
-    notification to potential reviewers. You may want to consider sending a message to
-    the `discord <https://discord.com/invite/h9qyrK8Jc8>`_ in the development
-    channel for more visibility if your pull request does not receive attention after
-    a couple of days (instant replies are not guaranteed though).
+   instructions to create a pull request from your fork. This will send a
+   notification to potential reviewers. You may want to consider sending a message to
+   the `discord <https://discord.com/invite/h9qyrK8Jc8>`_ in the development
+   channel for more visibility if your pull request does not receive attention after
+   a couple of days (instant replies are not guaranteed though).
 
 It is often helpful to keep your local feature branch synchronized with the
 latest changes of the main scikit-learn repository:
