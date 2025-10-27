@@ -1110,6 +1110,13 @@ class QuadraticDiscriminantAnalysis(
                     "covariance_estimator is not supported with solver='svd'. "
                     "Try solver='eigen' instead."
                 )
+            specific_solver = self._solve_svd
+        elif self.solver == "eigen":
+          specific_solver = lambda X: self._solve_eigen(
+              X,
+              shrinkage=self.shrinkage,
+              covariance_estimator=self.covariance_estimator,
+          )
 
         means = []
         cov = []
@@ -1126,14 +1133,7 @@ class QuadraticDiscriminantAnalysis(
             mean_class = X_class.mean(0)
             means.append(mean_class)
 
-            if self.solver == "svd":
-                scaling_class, rotation_class, cov_class = self._solve_svd(X_class)
-            elif self.solver == "eigen":
-                scaling_class, rotation_class, cov_class = self._solve_eigen(
-                    X_class,
-                    shrinkage=self.shrinkage,
-                    covariance_estimator=self.covariance_estimator,
-                )
+            scaling_class, rotation_class, cov_class = specific_solver(X_class)
 
             rank = np.sum(scaling_class > self.tol)
             if rank < n_features:
