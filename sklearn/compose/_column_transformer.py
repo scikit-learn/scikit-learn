@@ -1514,89 +1514,89 @@ def make_column_transformer(
 
 class make_column_selector:
     """Create a callable to select columns to be used with
-    :class:`ColumnTransformer`.
-
-    :func:`make_column_selector` can select columns based on datatype or the
-    columns name with a regex. When using multiple selection criteria, **all**
-    criteria must match for a column to be selected.
-
-    For an example of how to use :func:`make_column_selector` within a
-    :class:`ColumnTransformer` to select columns based on data type (i.e.
-    `dtype`), refer to
-    :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
-
-    Parameters
-    ----------
-    pattern : str, default=None
-        Name of columns containing this regex pattern will be included. If
-        None, column selection will not be selected based on pattern.
-
-    dtype_include : column dtype or list of column dtypes, default=None
-        A selection of dtypes to include. For more details, see
-        :meth:`pandas.DataFrame.select_dtypes`.
-
-    dtype_exclude : column dtype or list of column dtypes, default=None
-        A selection of dtypes to exclude. For more details, see
-        :meth:`pandas.DataFrame.select_dtypes`.
-
-    cardinality : {'high', 'low'}, default=None
-        Select columns based on their cardinality:
-        - 'high': Select columns with high cardinality (many unique values)
-        - 'low': Select columns with low cardinality (few unique values)
-        - None: Do not select based on cardinality
-
-    cardinality_threshold : int, default=7
-        The threshold for determining high/low cardinality.
-        - For 'high': Select columns with more than
-          `cardinality_threshold` unique values
-        - For 'low': Select columns with at most
-          `cardinality_threshold` unique values
-
-    Returns
-    -------
-    selector : callable
-        Callable for column selection to be used by a
         :class:`ColumnTransformer`.
 
-    See Also
-    --------
-    ColumnTransformer : Class that allows combining the
-        outputs of multiple transformer objects used on column subsets
-        of the data into a single feature space.
+        :func:`make_column_selector` can select columns based on datatype or the
+        columns name with a regex. When using multiple selection criteria, **all**
+        criteria must match for a column to be selected.
 
-    Examples
-    --------
-    >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
-    >>> from sklearn.compose import make_column_transformer
-    >>> from sklearn.compose import make_column_selector
-    >>> import numpy as np
-    >>> import pandas as pd  # doctest: +SKIP
-    >>> X = pd.DataFrame({'city': ['London', 'London', 'Paris', 'Sallisaw'],
-    ...                   'rating': [5, 3, 4, 5]})  # doctest: +SKIP
-    >>> ct = make_column_transformer(
-    ...       (StandardScaler(),
-    ...        make_column_selector(dtype_include=np.number)),  # rating
-    ...       (OneHotEncoder(),
-    ...        make_column_selector(dtype_include=[object, "string"])))  # city
-    >>> ct.fit_transform(X)  # doctest: +SKIP
-    array([[ 0.90453403,  1.        ,  0.        ,  0.        ],
-           [-1.50755672,  1.        ,  0.        ,  0.        ],
-           [-0.30151134,  0.        ,  1.        ,  0.        ],
-           [ 0.90453403,  0.        ,  0.        ,  1.        ]])
+        For an example of how to use :func:`make_column_selector` within a
+        :class:`ColumnTransformer` to select columns based on data type (i.e.
+        `dtype`), refer to
+        :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
 
-Selecting columns based on cardinality:
+        Parameters
+        ----------
+        pattern : str, default=None
+            Name of columns containing this regex pattern will be included. If
+            None, column selection will not be selected based on pattern.
 
-    >>> X = pd.DataFrame({
-    ...     'low_card': ['A', 'B', 'A', 'C'],  # 3 unique values
-    ...     'high_card': ['X', 'Y', 'Z', 'W'],  # 4 unique values
-    ...     'numeric': [1, 2, 3, 4]  # 4 unique values
-    ... })
-    >>> selector_low = make_column_selector(
-    ...     cardinality='low', cardinality_threshold=3)
-    >>> selector_high = make_column_selector(
-    ...     cardinality='high', cardinality_threshold=3)
-    >>> low_card_cols = selector_low(X)  # ['low_card']
-    >>> high_card_cols = selector_high(X)  # ['high_card', 'numeric']
+        dtype_include : column dtype or list of column dtypes, default=None
+            A selection of dtypes to include. For more details, see
+            :meth:`pandas.DataFrame.select_dtypes`.
+
+        dtype_exclude : column dtype or list of column dtypes, default=None
+            A selection of dtypes to exclude. For more details, see
+            :meth:`pandas.DataFrame.select_dtypes`.
+
+        cardinality : {'high', 'low'}, default=None
+            Select columns based on their cardinality:
+            - 'high': Select columns with high cardinality (many unique values)
+            - 'low': Select columns with low cardinality (few unique values)
+            - None: Do not select based on cardinality
+
+        cardinality_threshold : int, default=7
+            The threshold for determining high/low cardinality.
+            - For 'high': Select columns with more than
+              `cardinality_threshold` unique values
+            - For 'low': Select columns with at most
+              `cardinality_threshold` unique values
+
+        Returns
+        -------
+        selector : callable
+            Callable for column selection to be used by a
+            :class:`ColumnTransformer`.
+
+        See Also
+        --------
+        ColumnTransformer : Class that allows combining the
+            outputs of multiple transformer objects used on column subsets
+            of the data into a single feature space.
+
+        Examples
+        --------
+        >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
+        >>> from sklearn.compose import make_column_transformer
+        >>> from sklearn.compose import make_column_selector
+        >>> import numpy as np
+        >>> import pandas as pd  # doctest: +SKIP
+        >>> X = pd.DataFrame({'city': ['London', 'London', 'Paris', 'Sallisaw'],
+        ...                   'rating': [5, 3, 4, 5]})  # doctest: +SKIP
+        >>> ct = make_column_transformer(
+        ...       (StandardScaler(),
+        ...        make_column_selector(dtype_include=np.number)),  # rating
+        ...       (OneHotEncoder(),
+        ...        make_column_selector(dtype_include=[object, "string"])))  # city
+        >>> ct.fit_transform(X)  # doctest: +SKIP
+        array([[ 0.90453403,  1.        ,  0.        ,  0.        ],
+               [-1.50755672,  1.        ,  0.        ,  0.        ],
+               [-0.30151134,  0.        ,  1.        ,  0.        ],
+               [ 0.90453403,  0.        ,  0.        ,  1.        ]])
+
+    Selecting columns based on cardinality:
+
+        >>> X = pd.DataFrame({
+        ...     'low_card': ['A', 'B', 'A', 'C'],  # 3 unique values
+        ...     'high_card': ['X', 'Y', 'Z', 'W'],  # 4 unique values
+        ...     'numeric': [1, 2, 3, 4]  # 4 unique values
+        ... })
+        >>> selector_low = make_column_selector(
+        ...     cardinality='low', cardinality_threshold=3)
+        >>> selector_high = make_column_selector(
+        ...     cardinality='high', cardinality_threshold=3)
+        >>> low_card_cols = selector_low(X)  # ['low_card']
+        >>> high_card_cols = selector_high(X)  # ['high_card', 'numeric']
     """
 
     def __init__(
