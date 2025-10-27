@@ -613,3 +613,12 @@ As an alternative, the HTML can be written to a file using
 
 * :ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`
 * :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`
+
+.. _column_transformer_passthrough:
+
+ColumnTransformer with ``remainder='passthrough'`` and Pandas
+-------------------------------------------------------------
+
+.. literalinclude:: ../examples/compose/plot_column_transformer_passthrough.py
+   :language: python
+   :lines: 12-
