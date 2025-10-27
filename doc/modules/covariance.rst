@@ -290,11 +290,11 @@ Minimum Covariance Determinant
 ------------------------------
 
 The Minimum Covariance Determinant estimator is a robust estimator of
-a data set's covariance introduced by P.J. Rousseeuw in [3]_.  The idea
+a data set's covariance introduced by P.J. Rousseeuw in [3]_. The idea
 is to find a given proportion (h) of "good" observations which are not
-outliers and compute their empirical covariance matrix.  This
+outliers and compute their empirical covariance matrix. This
 empirical covariance matrix is then rescaled to compensate the
-performed selection of observations ("consistency step").  Having
+performed selection of observations ("consistency step"). Having
 computed the Minimum Covariance Determinant estimator, one can give
 weights to observations according to their Mahalanobis distance,
 leading to a reweighted estimate of the covariance matrix of the data
