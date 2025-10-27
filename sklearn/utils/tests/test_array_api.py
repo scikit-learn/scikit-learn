@@ -188,13 +188,14 @@ def test_move_to_sparse():
     """Check sparse inputs are handled correctly."""
     xp_numpy = _array_api_for_tests("numpy", None)
     xp_torch = _array_api_for_tests("torch", "cpu")
-    device_cpu = xp_torch.asarray([1]).device
 
     sparse1 = sp.csr_array([0, 1, 2, 3])
     sparse2 = sp.csr_array([0, 1, 0, 1])
     numpy_array = numpy.array([1, 2, 3])
 
     with config_context(array_api_dispatch=True):
+        device_cpu = xp_torch.asarray([1]).device
+
         # sparse to numpy
         result1, result2 = move_to(sparse1, sparse2, xp=xp_numpy, device=None)
         assert result1 is sparse1
@@ -206,7 +207,7 @@ def test_move_to_sparse():
         assert result2 is None
 
         # sparse to non-Numpy
-        msg = "Sparse arrays are only supported when all dense arrays are Numpy arrays"
+        msg = "Sparse arrays are only accepted (and passed through)"
         with pytest.raises(TypeError, match=msg):
             move_to(sparse1, numpy_array, xp=xp_torch, device=device_cpu)
         with pytest.raises(TypeError, match=msg):

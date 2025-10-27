@@ -500,8 +500,9 @@ def move_to(*arrays, xp, device):
 
     `array` may contain `None` entries, these are left unchanged.
 
-    Sparse arrays are accepted if the reference namespace is Numpy, in which
-    case they are returned unchanged. Otherwise a `TypeError` is raised.
+    Sparse arrays are accepted (as pass through) if the reference namespace is
+    Numpy, in which case they are returned unchanged. Otherwise a `TypeError`
+    is raised.
 
     Parameters
     ----------
@@ -523,7 +524,8 @@ def move_to(*arrays, xp, device):
     none_mask = [array is None for array in arrays]
     if any(sparse_mask) and not _is_numpy_namespace(xp):
         raise TypeError(
-            "Sparse arrays are only supported when all dense arrays are Numpy arrays."
+            "Sparse arrays are only accepted (and passed through) when the target "
+            "namespace is Numpy"
         )
     # Early return if all `arrays` are sparse or None (to numpy)
     if all(
