@@ -207,7 +207,7 @@ def test_move_to_sparse():
         assert result2 is None
 
         # sparse to non-Numpy
-        msg = "Sparse arrays are only accepted (and passed through)"
+        msg = r"Sparse arrays are only accepted \(and passed through\)"
         with pytest.raises(TypeError, match=msg):
             move_to(sparse1, numpy_array, xp=xp_torch, device=device_cpu)
         with pytest.raises(TypeError, match=msg):
