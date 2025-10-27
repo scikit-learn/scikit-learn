@@ -380,8 +380,8 @@ def det_curve(
 
     # add a threshold at inf where the clf always predicts the negative class
     # i.e. tps = fps = 0
-    tps = xp.concat((xp.asarray([0], device=device), tps))
-    fps = xp.concat((xp.asarray([0], device=device), fps))
+    tps = xp.concat((xp.asarray([0.0], device=device), tps))
+    fps = xp.concat((xp.asarray([0.0], device=device), fps))
     thresholds = xp.concat((xp.asarray([np.inf], device=device), thresholds))
 
     if drop_intermediate and len(fps) > 2:
