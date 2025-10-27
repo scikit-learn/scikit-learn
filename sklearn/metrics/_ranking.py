@@ -404,7 +404,7 @@ def det_curve(
         tps = tps[optimal_idxs]
         thresholds = thresholds[optimal_idxs]
 
-    if len(xp.unique(y_true)) != 2:
+    if len(xp.unique_values(y_true)) != 2:
         raise ValueError(
             "Only one class is present in y_true. Detection error "
             "tradeoff curve is not defined in that case."
