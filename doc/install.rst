@@ -16,10 +16,10 @@ There are different ways to install scikit-learn:
   distributions that distribute scikit-learn.
   It might not provide the latest release version.
 
-* :ref:`Install a nightly build <install_nightly_builds>`. This is the quickest way to:
-  - try a new feature that will be shipped in the next release (that is, a
-    feature from a pull-request that was recently merged to the main branch);
-  - check whether a bug you encountered has been fixed since the last release.
+* :ref:`Install a nightly build <install_nightly_builds>`. This is the quickest way to
+  try a new feature that will be shipped in the next release (that is, a
+  feature from a pull-request that was recently merged to the main branch); or to check
+  whether a bug you encountered has been fixed since the last release.
 
 * :ref:`Building the package from source <install_bleeding_edge>`.
   This is mainly needed by users who wish to contribute to the project, as this allows
