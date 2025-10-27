@@ -294,7 +294,7 @@ the required packages.
           the most widely used distributions:
 
           * On debian-based distributions (e.g., Ubuntu), the compiler is included in
-          the `build-essential` package, and you also need the Python header files:
+            the `build-essential` package, and you also need the Python header files:
 
             .. prompt::
 
