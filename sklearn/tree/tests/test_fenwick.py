@@ -39,7 +39,7 @@ def test_cython_weighted_fenwick_tree(global_random_seed):
         else:
             assert cw == target
 
-        # check that if we add the next weight, we are above the target:
+        # check that if we add the next non-null weight, we are above the target:
         next_weights = w_sorted[t_idx:][w_sorted[t_idx:] > 0]
         if next_weights.size > 0:
             assert cw + next_weights[0] > target
