@@ -1,0 +1,6 @@
+- :func:`compose.make_column_selector` now supports selecting columns based on
+  their cardinality (number of unique values) with the ``cardinality`` and
+  ``cardinality_threshold`` parameters. This enables users to differentiate treatment
+  of categorical columns based on their cardinality, such as one-hot encoding
+  low cardinality columns and target-encoding high cardinality columns.
+  By :user:`Zero <zero>`
