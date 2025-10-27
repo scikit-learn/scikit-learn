@@ -15,6 +15,8 @@ from sklearn.utils import column_or_1d
 from sklearn.utils._array_api import (
     _convert_to_numpy,
     _is_numpy_namespace,
+    _max_precision_float_dtype,
+    _max_precision_integer_dtype,
     device,
     get_namespace,
     get_namespace_and_device,
@@ -741,6 +743,8 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold, xp=None):
         )
 
     xp, _, device_ = get_namespace_and_device(y, xp=xp)
+    float_dtype_ = _max_precision_float_dtype(xp, device_)
+    int_dtype_ = _max_precision_integer_dtype(xp, device_)
 
     classes = xp.asarray(classes, device=device_)
 
@@ -750,8 +754,8 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold, xp=None):
             if y.format not in ("csr", "csc"):
                 y = y.tocsr()
             y.data = xp.asarray(
-                xp.asarray(y.data, dtype=xp.float64, device=device_) > threshold,
-                dtype=xp.int64,
+                xp.asarray(y.data, dtype=float_dtype_, device=device_) > threshold,
+                dtype=int_dtype_,
                 device=device_,
             )
             y.eliminate_zeros()
@@ -759,8 +763,8 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold, xp=None):
             y = xp.asarray(y.toarray() > threshold, dtype=xp.int64, device=device_)
     else:
         y = xp.asarray(
-            xp.asarray(y, dtype=xp.float64, device=device_) > threshold,
-            dtype=xp.int64,
+            xp.asarray(y, dtype=float_dtype_, device=device_) > threshold,
+            dtype=int_dtype_,
             device=device_,
         )
 

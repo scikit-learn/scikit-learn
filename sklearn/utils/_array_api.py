@@ -595,6 +595,17 @@ def _max_precision_float_dtype(xp, device):
     return xp.float64
 
 
+def _max_precision_integer_dtype(xp, device):
+    """Return the integer dtype with the highest precision supported by the device."""
+    # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
+    # when/if that becomes more widespread.
+    if _is_xp_namespace(xp, "torch") and str(device).startswith(
+        "mps"
+    ):  # pragma: no cover
+        return xp.int32
+    return xp.int64
+
+
 def _find_matching_floating_dtype(*arrays, xp):
     """Find a suitable floating point dtype when computing with arrays.
 
