@@ -1,0 +1,4 @@
+- :func:`sklearn.metrics.det_curve` now supports Array API namespaces when
+  ``array_api_dispatch=True`` is enabled, avoiding NumPy conversions and
+  preserving dtype/device across backends (e.g., PyTorch, CuPy).
+  :pr:`32586` by :user:`Josef Affourtit <jaffourt>`.
