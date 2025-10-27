@@ -42,3 +42,4 @@ dependencies:
   - pip
   - pip:
     - sphinxcontrib-sass
+    - sphinx-marimo
