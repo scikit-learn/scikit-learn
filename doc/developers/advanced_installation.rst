@@ -54,7 +54,7 @@ variables:
     echo $LDFLAGS
 
 They point to files and folders from your ``sklearn-dev`` conda environment
-(in particular in the bin/, include/ and lib/ subfolders). For instance
+(in particular in the `bin/`, `include/` and `lib/` subfolders). For instance
 ``-L/path/to/conda/envs/sklearn-dev/lib`` should appear in ``LDFLAGS``.
 
 Notes on Conda
