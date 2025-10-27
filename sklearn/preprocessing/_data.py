@@ -2829,11 +2829,12 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         for feature_idx in range(n_features):
             column_nnz_data = X.data[X.indptr[feature_idx] : X.indptr[feature_idx + 1]]
             if self.subsample is not None and len(column_nnz_data) > self.subsample:
-                column_subsample = self.subsample * len(column_nnz_data) // n_samples
-                if self.ignore_implicit_zeros:
-                    column_data = np.zeros(shape=column_subsample, dtype=X.dtype)
-                else:
-                    column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
+                column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
+                column_subsample = (
+                    self.subsample
+                    if self.ignore_implicit_zeros
+                    else self.subsample * len(column_nnz_data) // n_samples
+                )
                 column_data[:column_subsample] = random_state.choice(
                     column_nnz_data, size=column_subsample, replace=False
                 )

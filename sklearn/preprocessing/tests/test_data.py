@@ -1667,6 +1667,12 @@ def test_quantile_transformer_sparse_subsampling():
     # you would expect similar quantiles:
     assert np.allclose(quantiles[0], quantiles[1], rtol=0.1)
 
+    # if we don't ignore implicit zeros, most quantiles are zeros:
+    params = {**qt.get_params(), "ignore_implicit_zeros": False}
+    qt = QuantileTransformer(**params)
+    quantiles = qt.fit(X).quantiles_
+    assert (quantiles == 0).mean() > 0.9
+
 
 def test_robust_scaler_invalid_range():
     for range_ in [
