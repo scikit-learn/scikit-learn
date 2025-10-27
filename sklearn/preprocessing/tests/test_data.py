@@ -1629,6 +1629,45 @@ def test_quantile_transformer_sorted_quantiles(array_type):
     assert all(np.diff(quantiles) >= 0)
 
 
+def test_quantile_transformer_sparse_subsampling():
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/32585
+
+    subsample = 500
+    qt = QuantileTransformer(
+        ignore_implicit_zeros=True,
+        subsample=subsample,
+        n_quantiles=50,
+        random_state=0,
+    )
+
+    # create a very sparse X matrix with two very similar columns:
+    # (`n` bigger than `subsample ** 2`)
+    n, d = 2 * subsample**2, 2
+    # one column has size `subsample - 1`, the other one has size `subsample + 1`
+    col = np.repeat([0, 1], [subsample - 1, subsample + 1])
+    # choose some row indices (doesn't matter in this example):
+    row = np.arange(subsample * 2)
+    # uniform data:
+    data = np.concat(
+        (
+            np.linspace(1, 2, num=subsample - 1),
+            np.linspace(1, 2, num=subsample + 1),
+        )
+    )
+
+    X = sparse.csc_matrix((data, (row, col)), shape=(n, d))
+
+    qt.fit(X)
+    quantiles = qt.quantiles_.T
+    # we ignore zeros, and values are strictly positive so:
+    assert (qt.quantiles_ > 0).all()
+
+    # given that X[:, 0] and X[:, 1] are very similar,
+    # you would expect similar quantiles:
+    assert np.allclose(quantiles[0], quantiles[1], rtol=0.1)
+
+
 def test_robust_scaler_invalid_range():
     for range_ in [
         (-1, 90),
