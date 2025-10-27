@@ -318,18 +318,42 @@ the lower half of those faces.
 Complexity
 ==========
 
-In general, the run time cost to construct a balanced binary tree is
-:math:`O(n_{samples}n_{features}\log(n_{samples}))` and query time
-:math:`O(\log(n_{samples}))`.  Although the tree construction algorithm attempts
-to generate balanced trees, they will not always be balanced.  Assuming that the
-subtrees remain approximately balanced, the cost at each node consists of
-searching through :math:`O(n_{features})` to find the feature that offers the
-largest reduction in the impurity criterion, e.g. log loss (which is equivalent to an
-information gain). This has a cost of
-:math:`O(n_{features}n_{samples}\log(n_{samples}))` at each node, leading to a
-total cost over the entire trees (by summing the cost at each node) of
-:math:`O(n_{features}n_{samples}^{2}\log(n_{samples}))`.
+The following table shows the worst-case complexity estimates for a balanced
+binary tree:
 
++----------+----------------------------------------------------------------------+----------------------------------------+
+| Splitter | Total training cost                                                  | Total inference cost                   |
++==========+======================================================================+========================================+
+| "best"   | :math:`\mathcal{O}(n_{features} \, n^2_{samples} \log(n_{samples}))` | :math:`\mathcal{O}(\log(n_{samples}))` |
++----------+----------------------------------------------------------------------+----------------------------------------+
+| "random" | :math:`\mathcal{O}(n_{features} \, n^2_{samples})`                   | :math:`\mathcal{O}(\log(n_{samples}))` |
++----------+----------------------------------------------------------------------+----------------------------------------+
+
+In general, the training cost to construct a balanced binary tree **at each
+node** is
+
+.. math::
+
+    \mathcal{O}(n_{features}n_{samples}\log (n_{samples})) + \mathcal{O}(n_{features}n_{samples})
+
+The first term is the cost of sorting :math:`n_{samples}` repeated for
+:math:`n_{features}`. The second term is the linear scan over candidate split
+points to find the feature that offers the largest reduction in the impurity
+criterion. The latter is sub-leading for the greedy splitter strategy "best",
+and is therefore typically discarded.
+
+Regardless of the splitting strategy, after summing the cost over **all internal
+nodes**, the total complexity scales linearly with
+:math:`n_{nodes}=n_{leaves}-1`, which is :math:`\mathcal{O}(n_{samples})` in the
+worst-case complexity, that is, when the tree is grown until each sample ends up
+in its own leaf.
+
+Inference cost is independent of the splitter strategy. It depends only on the
+tree depth, :math:`\mathcal{O}(\text{depth})`. In an approximately balanced
+binary tree, each split halves the data, and then the number of such halvings
+grows with the depth as powers of two. If this process continues until each
+sample is isolated in its own leaf, the resulting depth is
+:math:`\mathcal{O}(\log(n_{samples}))`.
 
 Tips on practical use
 =====================
