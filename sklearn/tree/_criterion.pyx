@@ -1192,12 +1192,13 @@ cdef void precompute_absolute_errors(
     Fill `abs_errors` and `medians`.
 
     If start < end:
-        Computes the "prefix" AEs/medians, i.e the AEs for each set of indices
-        sample_indices[start:start + i] with i in {1, ..., n}
-        where n = end - start
+        Forward pass: Computes the "prefix" AEs/medians
+        i.e the AEs for each set of indices sample_indices[start:start + i]
+        with i in {1, ..., n}, where n = end - start.
     Else:
-        Computes the "suffix" AEs/medians, i.e the AEs for each set of indices
-        sample_indices[i:] with i in {0, ..., n-1}
+        Backward pass: Computes the "suffix" AEs/medians
+        i.e the AEs for each set of indices sample_indices[start - i:start]
+        with i in {1, ..., n}, where n = start - end.
 
     Parameters
     ----------
@@ -1225,7 +1226,7 @@ cdef void precompute_absolute_errors(
     Complexity: O(n log n)
     """
     cdef:
-        intp_t p, i, step, n, r, median_idx, median_prev_idx
+        intp_t p, i, step, n, rank, median_rank, median_prev_rank
         float64_t w = 1.
         float64_t half_weight, median
         float64_t w_right, w_left, wy_left, wy_right
@@ -1240,29 +1241,44 @@ cdef void precompute_absolute_errors(
     tree.reset(n)
 
     p = start
+    # We iterate exactly `n` samples starting at absolute index `start` and
+    # move by `step` (+1 for the forward pass, -1 for the backward pass).
     for _ in range(n):
         i = sample_indices[p]
         if sample_weight is not None:
             w = sample_weight[i]
-        # Activate sample i at its y-rank
-        r = ranks[p]
-        tree.add(r, sorted_y[r], w)
+        # Activate sample i at its rank:
+        rank = ranks[p]
+        tree.add(rank, sorted_y[rank], w)
 
-        # Weighted alpha-quantile by cumulative weight
+        # Weighted median by cumulative weight: the median is where the
+        # cumulative weight crosses half of the total weight.
         half_weight = 0.5 * tree.total_w
-        median_idx = tree.search(half_weight, &w_left, &wy_left, &median_prev_idx)
+        # find the smallest activated rank with cumulative weight > half_weight
+        # while returning the prefix sums (`w_left` and `wy_left`)
+        # up to (and excluding) that index:
+        median_rank = tree.search(half_weight, &w_left, &wy_left, &median_prev_rank)
 
-        if median_idx != median_prev_idx:
-            # Exact match for half_weight in the tree, take the middle point:
-            median = (sorted_y[median_prev_idx] + sorted_y[median_idx]) / 2
+        if median_rank != median_prev_rank:
+            # Exact match for half_weight fell between two consecutive ranks:
+            # cumulative weight up to `median_rank` excluded is exactly half_weight.
+            # In that case, `median_prev_rank` is the activated rank such that
+            # the cumulative weight up to it included is exactly half_weight.
+            # In this case we take the mid-point:
+            median = (sorted_y[median_prev_rank] + sorted_y[median_rank]) / 2
         else:
-            median = sorted_y[median_idx]
+            # if there are no exact match for half_weight in the cumulative weights
+            # `median_rank == median_prev_rank` and the median is:
+            median = sorted_y[median_rank]
 
+        # Convert left prefix sums into right-hand complements.
         w_right = tree.total_w - w_left
         wy_right = tree.total_wy - wy_left
 
-        # O(1) pinball loss formula
         medians[p] = median
+        # Pinball-loss identity for absolute error at the current set:
+        #   sum_{y_i >= m} w_i (y_i - m) = wy_right - m * w_right
+        #   sum_{y_i <  m} w_i (m - y_i) = m * w_left  - wy_left
         abs_errors[p] += (
             (wy_right - median * w_right)
             + (median * w_left - wy_left)
@@ -1326,12 +1342,63 @@ cdef class MAE(Criterion):
     It has almost nothing in common with other regression criterions
     so it doesn't inherit from RegressionCriterion.
 
-    MAE = (1 / n)*(\sum_i |y_i - f_i|), where y_i is the true
-    value and f_i is the predicted value.
-    In decision trees, all samples within a node share the same f_i value,
-    which corresponds to the weighted median of the target values y_i.
-    For detailed explanations of the mathematics and algorithmic aspects of
-    this implementation, refer to
+    MAE = (1 / n)*(\sum_i |y_i - p_i|), where y_i is the true
+    value and p_i is the predicted value.
+    In a decision tree, that prediction is the (weighted) median
+    of the targets in the node.
+
+    How this implementation works
+    -----------------------------
+    This class precomputes in `reset`, for the current node,
+    the absolute-error values and corresponding medians for all
+    potential split positions: every p in [start, end).
+
+    For that:
+    - We first compute the rank of each samples node-local sorted order of target values.
+      `self.ranks[p]` gives the rank of sample p.
+    - While iterating the segment of indices (p in [start, end)), we
+        * "activate" one sample at a time at its rank within a prefix sum tree,
+          the `WeightedFenwickTree`: `tree.add(rank, y, weight)`
+          The tree maintains cumulative sums of weights and of `weight * y`
+        * search for the half total weight in the tree:
+          `tree.search(current_total_weight / 2)`.
+          This alloww us to retrieve/compute:
+            * the current weighted median value
+            * the absolute-error contribution via the standard pinball-loss identity:
+              AE = (wy_right - median * w_right) + (median * w_left - wy_left)
+    - We perform two such passes:
+        * one forward from `start` to `end - 1` to fill `left_abs_errors[p]` and
+          `left_medians[p]` for left children.
+        * one backward from `end - 1` down to `start` to fill
+          `right_abs_errors[p]` and `right_medians[p]` for right children.
+
+    Complexity: time complexity is O(n log n), indeed:
+    - computing ranks is based on sorting: O(n log n)
+    - add and search operations in the Fenwick tree are O(log n).
+      => the forward and backward passes are O(n log n).
+
+    How the other methods use the precomputations
+    --------------------------------------------
+    - `reset` performs the precomputation described above.
+      It also stores the node weighted median per output in
+      `node_medians` (prediction value of the node).
+
+    - `update(new_pos)` only updates `weighted_n_left` and `weighted_n_right`;
+      no recomputation of errors is needed.
+
+    - `children_impurity` reads the precomputed absolute errors at
+      `left_abs_errors[pos - 1]` and `right_abs_errors[pos]` and scales
+      them by the corresponding child weights and `n_outputs` to report the
+      impurity of each child.
+
+    - `middle_value` and `check_monotonicity` use the precomputed
+      `left_medians[pos - 1]` and `right_medians[pos]` to derive the
+      mid-point value and to validate monotonic constraints when enabled.
+
+    - Missing values are not supported for MAE: `init_missing` raises.
+
+    For a complementary, in-depth discussion of the mathematics and design
+    choices, see the external report:
     https://github.com/cakedev0/fast-mae-split/blob/main/report.ipynb
     """
     cdef float64_t[::1] node_medians
@@ -1342,7 +1409,7 @@ cdef class MAE(Criterion):
     cdef float64_t[::1] sorted_y
     cdef intp_t [::1] sorted_indices
     cdef intp_t[::1] ranks
-    cdef WeightedFenwickTree tree
+    cdef WeightedFenwickTree prefix_sum_tree
 
     def __cinit__(self, intp_t n_outputs, intp_t n_samples):
         """Initialize parameters for this criterion.
@@ -1375,11 +1442,22 @@ cdef class MAE(Criterion):
         self.right_abs_errors = np.empty(n_samples, dtype=np.float64)
         self.left_medians = np.empty(n_samples, dtype=np.float64)
         self.right_medians = np.empty(n_samples, dtype=np.float64)
-        self.tree = WeightedFenwickTree(n_samples)  # 2 float64 arrays of size n_samples + 1
+        self.ranks = np.empty(n_samples, dtype=np.intp)
+        # Important: The arrays declared above are indexed with
+        # the absolute position `p` in `sample_indices` (not with a 0-based offset).
+        # The forward and backward passes in `reset` method ensure that
+        # for any current split position `pos` we can read:
+        # - left child precomputed values at `p = pos - 1`, and
+        # - right child precomputed values at `p = pos`.
 
+        self.prefix_sum_tree = WeightedFenwickTree(n_samples)
+        # used memory: 2 float64 arrays of size n_samples + 1
+        # we reuse a single `WeightedFenwickTree` instance to build prefix
+        # and suffix aggregates over the node samples.
+
+        # Work buffer arrays, used with 0-based offset:
         self.sorted_y = np.empty(n_samples, dtype=np.float64)
         self.sorted_indices = np.empty(n_samples, dtype=np.intp)
-        self.ranks = np.empty(n_samples, dtype=np.intp)
 
     cdef int init(
         self,
@@ -1450,17 +1528,24 @@ cdef class MAE(Criterion):
         memset(&self.left_abs_errors[self.start],  0, n_bytes)
         memset(&self.right_abs_errors[self.start], 0, n_bytes)
 
+        # Multi-output handling:
+        # absolute errors are accumulated across outputs by
+        # incrementing `left_abs_errors` and `right_abs_errors` on each pass.
+        # The per-output medians arrays are overwritten at each output iteration
+        # as they are only used for monotonicity checks when `n_outputs == 1`.
+
         for k in range(self.n_outputs):
 
+            # 1) Node-local ordering:
+            # for each output k, the values `y[sample_indices[p], k]` for p
+            # in [start, end) are copied into self.sorted_y[0:n_node_samples]`
+            # and ranked with `compute_ranks`.
+            # The resulting `self.ranks[p]` gives the rank of sample p in the
+            # node-local sorted order.
             for p in range(self.start, self.end):
                 i = self.sample_indices[p]
                 self.sorted_y[p - self.start] = self.y[i, k]
 
-            # Compute the ranks of the node-local values in sorted order.
-            # - self.sorted_y[0:n_node_samples] is sorted in-place (with indices).
-            # - self.sorted_indices is a buffer used internally by compute_ranks
-            # - self.ranks[p] receives the rank of self.y[self.samples_indices[p], k]
-            #   in the sorted array, for p in [start, end)
             compute_ranks(
                 &self.sorted_y[0],
                 &self.sorted_indices[0],
@@ -1468,23 +1553,25 @@ cdef class MAE(Criterion):
                 self.n_node_samples,
             )
 
-            # Note that at each iteration of this loop, we overwrite `self.left_medians`
-            # and `self.right_medians`. They are used to check for monoticity constraints,
-            # which are allowed only with n_outputs=1.
+            # 2) Forward pass
+            # from `start` to `end - 1` to fill `left_abs_errors[p]` and
+            # `left_medians[p]` for left children.
             precompute_absolute_errors(
                 self.sorted_y, self.ranks, self.sample_weight, self.sample_indices,
-                self.tree, self.start, self.end,
+                self.prefix_sum_tree, self.start, self.end,
                 # left_abs_errors is incremented, left_medians is overwritten
                 self.left_abs_errors, self.left_medians
             )
-            # For the right child, we consider samples from end-1 to start-1
-            # i.e., reversed, and abs error & median are filled in reverse order to.
+            # 3) Backward pass
+            # from `end - 1` down to `start` to fill `right_abs_errors[p]`
+            # and `right_medians[p]` for right children.
             precompute_absolute_errors(
                 self.sorted_y, self.ranks, self.sample_weight, self.sample_indices,
-                self.tree, self.end - 1, self.start - 1,
+                self.prefix_sum_tree, self.end - 1, self.start - 1,
                 # right_abs_errors is incremented, right_medians is overwritten
                 self.right_abs_errors, self.right_medians
             )
+
             # Store the median for the current node
             self.node_medians[k] = self.right_medians[self.start]
 
