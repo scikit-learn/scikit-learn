@@ -492,8 +492,8 @@ def get_namespace_and_device(
         return xp, False, arrays_device
 
 
-def move_to(*arrays, xp_reference, device_reference):
-    """Move all arrays to `xp_reference` and `device_reference`.
+def move_to(*arrays, xp, device):
+    """Move all arrays to `xp` and `device`.
 
     Each array will be moved to the reference namespace and device if
     it is not already using it. Otherwise the array is left unchanged.
@@ -508,10 +508,10 @@ def move_to(*arrays, xp_reference, device_reference):
     *arrays : iterable of arrays
         Arrays to (potentially) move.
 
-    xp_reference : namespace
+    xp : namespace
         Array API namespace to move arrays to.
 
-    device_reference : device
+    device : device
         Array API device to move arrays to.
 
     Returns
@@ -521,14 +521,14 @@ def move_to(*arrays, xp_reference, device_reference):
     """
     sparse_mask = [sp.issparse(array) for array in arrays]
     none_mask = [array is None for array in arrays]
-    if any(sparse_mask) and not _is_numpy_namespace(xp_reference):
+    if any(sparse_mask) and not _is_numpy_namespace(xp):
         raise TypeError(
             "Sparse arrays are only supported when all dense arrays are Numpy arrays."
         )
     # Early return if all `arrays` are sparse or None (to numpy)
     if all(
         sparse_mask[i] or none_mask[i] for i in range(len(arrays))
-    ) and _is_numpy_namespace(xp_reference):
+    ) and _is_numpy_namespace(xp):
         return arrays
 
     converted_arrays = []
@@ -540,7 +540,7 @@ def move_to(*arrays, xp_reference, device_reference):
             converted_arrays.append(array)
         else:
             xp_array, _, device_array = get_namespace_and_device(array)
-            if xp_reference == xp_array and device_reference == device_array:
+            if xp == xp_array and device == device_array:
                 converted_arrays.append(array)
             else:
                 try:
@@ -550,30 +550,24 @@ def move_to(*arrays, xp_reference, device_reference):
                     # only used as fallback in case of failure.
                     # Note: copy=None is the default since 2023.12. Namespace libraries
                     # should only trigger a copy automatically if needed.
-                    array_converted = xp_reference.from_dlpack(
-                        array, device=device_reference
-                    )
+                    array_converted = xp.from_dlpack(array, device=device)
                     # `TypeError` and `NotImplementedError` for packages that do not
                     # yet support dlpack 1.0
                     # (i.e. the `device`/`copy` kwargs, e.g., torch <= 2.8.0)
                 except (AttributeError, TypeError, NotImplementedError):
                     # Converting to numpy is tricky, handle this via dedicated function
-                    if _is_numpy_namespace(xp_reference):
+                    if _is_numpy_namespace(xp):
                         array_converted = _convert_to_numpy(array, xp_array)
                     # Convert from numpy, all array libraries can do this
                     elif _is_numpy_namespace(xp_array):
-                        array_converted = xp_reference.asarray(
-                            array, device=device_reference
-                        )
+                        array_converted = xp.asarray(array, device=device)
                     else:
                         # There is no generic way to convert from namespace A to B
                         # So we first convert from A to numpy and then from numpy to B
                         # The way to avoid this round trip is to lobby for DLpack
                         # support in libraries A and B
                         array_np = _convert_to_numpy(array, xp_array)
-                        array_converted = xp_reference.asarray(
-                            array_np, device=device_reference
-                        )
+                        array_converted = xp.asarray(array_np, device=device)
                 converted_arrays.append(array_converted)
 
     return tuple(converted_arrays)
