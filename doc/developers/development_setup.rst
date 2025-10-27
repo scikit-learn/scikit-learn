@@ -262,16 +262,33 @@ the required packages.
 
             python3 --version
 
-          If you don't have Python |PythonMinVersion| or later, please install `python3` from your
-          distribution's package manager.
+          If you don't have Python |PythonMinVersion| or later, please install `python3`
+          from your distribution's package manager.
 
-          Next, you need to have a working C/C++ compiler with OpenMP support.
-          Install the build dependencies for your system, for instance if you are
-          using a debian-based operating system (e.g. Ubuntu), use:
+          Next, you need to install the build dependencies, specifically a C/C++
+          compiler with OpenMP support for your system. Here you find the commands for
+          the most widely used distributions:
 
-          .. prompt::
+          * On debian-based distributions (e.g., Ubuntu), the compiler is included in
+          the `build-essential` package, and you also need the Python header files:
 
-            sudo apt-get install build-essential python3-dev
+            .. prompt::
+
+              sudo apt-get install build-essential python3-dev
+
+          * On redhat-based distributions (e.g. CentOS), install `gcc`` for C and C++,
+            as well as the Python header files:
+
+            .. prompt::
+
+              sudo yum -y install gcc gcc-c++ python3-devel
+
+          * On Arche Linux, the Python header files are already included in the python
+            installation, and `gcc`` includes the required compilers for C and C++:
+
+            .. prompt::
+
+              sudo pacman -S gcc
 
           Now create a virtual environment (venv_) and install the required python packages:
 
@@ -288,21 +305,6 @@ the required packages.
             pip install wheel numpy scipy cython meson-python ninja \
               pytest pytest-cov ruff==0.11.2 mypy numpydoc \
               joblib threadpoolctl
-
-          .. dropdown:: Note on other Linux distributions
-
-            When precompiled wheels of the runtime dependencies are not available for your
-            architecture (e.g. **ARM**), you can install the system versions:
-
-            .. prompt::
-
-              sudo apt-get install cython3 python3-numpy python3-scipy
-
-            On **Red Hat and clones (e.g. CentOS)**, install the dependencies using:
-
-            .. prompt::
-
-              sudo yum -y install gcc gcc-c++ python3-devel numpy scipy
 
         .. tab-item:: conda
           :class-label: tab-6

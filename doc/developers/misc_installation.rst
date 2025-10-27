@@ -68,6 +68,17 @@ any custom conda configuration in the ``$HOME/.condarc`` file. In
 particular the ``channel_priority: strict`` directive is known to cause
 problems for this setup.
 
+Note on dependencies for other Linux distributions
+==================================================
+
+When precompiled wheels of the runtime dependencies are not available for your
+architecture (e.g. **ARM**), you can install the system versions:
+
+.. prompt::
+
+  sudo apt-get install cython3 python3-numpy python3-scipy
+
+
 Notes on Meson
 ==============
 
