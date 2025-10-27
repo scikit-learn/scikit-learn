@@ -1,0 +1,3 @@
+:class:`preprocessing.LabelBinarizer` and :func:`preprocessing.label_binarize` now
+supports numeric array API compatible input with `sparse_output=False`.
+By :user:`Virgil Chan <virchan>`
