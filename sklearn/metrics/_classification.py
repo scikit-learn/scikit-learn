@@ -412,9 +412,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     0.5
     """
     xp, _, device = get_namespace_and_device(y_pred)
-    y_true, sample_weight = move_to(
-        y_true, sample_weight, xp_reference=xp, device_reference=device
-    )
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
     # Compute accuracy for each possible representation
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred, sample_weight = _check_targets(
