@@ -14,7 +14,7 @@ Developer's Guide
    utilities
    performance
    cython
-   advanced_installation
+   misc_installation
    bug_triaging
    maintainer
    plotting

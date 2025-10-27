@@ -1,8 +1,8 @@
 
-.. _advanced-installation:
+.. _misc-installation:
 
 ==================================================
-More advanced installation / Troubleshooting
+Miscellaneous installation / Troubleshooting
 ==================================================
 
 Here, you find some more advanced notes and troubleshooting tips related to
