@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from scipy import stats
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.datasets import make_multilabel_classification
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.linear_model import LogisticRegression
@@ -28,7 +28,12 @@ from sklearn.metrics._ranking import _dcg_sample_scores, _ndcg_sample_scores
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import label_binarize
 from sklearn.random_projection import _sparse_random_matrix
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     _convert_container,
     assert_allclose,
     assert_almost_equal,
@@ -1390,6 +1395,33 @@ def test_det_curve_pos_label():
     # check for the symmetry of the fpr and fnr
     assert_allclose(fpr_pos_cancer, fnr_pos_not_cancer[::-1])
     assert_allclose(fnr_pos_cancer, fpr_pos_not_cancer[::-1])
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_det_curve_array_api(array_namespace, device_, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device_)
+
+    y_true_np = np.array([0, 1, 0], dtype=dtype_name)
+    y_score_np = np.array([0, 0.5, 1], dtype=dtype_name)
+
+    # baseline numpy results
+    fpr_np, fnr_np, thresholds_np = det_curve(y_true_np, y_score_np)
+
+    y_true_xp = xp.asarray(y_true_np, device=device_)
+    y_score_xp = xp.asarray(y_score_np, device=device_)
+
+    with config_context(array_api_dispatch=True):
+        fpr_xp, fnr_xp, thresholds_xp = det_curve(y_true_xp, y_score_xp)
+
+    fpr_from_xp = _convert_to_numpy(fpr_xp, xp=xp)
+    fnr_from_xp = _convert_to_numpy(fnr_xp, xp=xp)
+    thresholds_from_xp = _convert_to_numpy(thresholds_xp, xp=xp)
+
+    assert_allclose(fpr_np, fpr_from_xp)
+    assert_allclose(fnr_np, fnr_from_xp)
+    assert_allclose(thresholds_np, thresholds_from_xp)
 
 
 def check_lrap_toy(lrap_score):
