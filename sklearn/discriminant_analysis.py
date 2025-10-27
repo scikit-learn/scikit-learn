@@ -1112,11 +1112,11 @@ class QuadraticDiscriminantAnalysis(
                 )
             specific_solver = self._solve_svd
         elif self.solver == "eigen":
-          specific_solver = lambda X: self._solve_eigen(
-              X,
-              shrinkage=self.shrinkage,
-              covariance_estimator=self.covariance_estimator,
-          )
+            specific_solver = lambda X: self._solve_eigen(
+                X,
+                shrinkage=self.shrinkage,
+                covariance_estimator=self.covariance_estimator,
+            )
 
         means = []
         cov = []
