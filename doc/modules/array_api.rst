@@ -118,6 +118,7 @@ Estimators
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
 - :class:`preprocessing.Binarizer`
 - :class:`preprocessing.KernelCenterer`
+- :class:`preprocessing.LabelBinarizer` (with `sparse_output=False`)
 - :class:`preprocessing.LabelEncoder`
 - :class:`preprocessing.MaxAbsScaler`
 - :class:`preprocessing.MinMaxScaler`
@@ -190,6 +191,7 @@ Metrics
 Tools
 -----
 
+- :func:`preprocessing.label_binarize` (with `sparse_output=False`)
 - :func:`model_selection.cross_val_predict`
 - :func:`model_selection.train_test_split`
 - :func:`utils.check_consistent_length`

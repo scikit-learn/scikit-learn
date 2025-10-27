@@ -12,7 +12,14 @@ import scipy.sparse as sp
 
 from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
 from sklearn.utils import column_or_1d
-from sklearn.utils._array_api import device, get_namespace, xpx
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _is_numpy_namespace,
+    device,
+    get_namespace,
+    get_namespace_and_device,
+    xpx,
+)
 from sklearn.utils._encode import _encode, _unique
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.multiclass import type_of_target, unique_labels
@@ -299,6 +306,13 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
                 f"pos_label={self.pos_label} and neg_label={self.neg_label}"
             )
 
+        if self.sparse_output and not _is_numpy_namespace(get_namespace(y)[0]):
+            raise ValueError(
+                "`sparse_output=True` is not supported for Array API "
+                "namespace {xp.__name__}. "
+                "Use `sparse_output=False` to return a dense array instead."
+            )
+
         self.y_type_ = type_of_target(y, input_name="y")
 
         if "multioutput" in self.y_type_:
@@ -356,6 +370,13 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
         """
         check_is_fitted(self)
 
+        if self.sparse_output and not _is_numpy_namespace(get_namespace(y)[0]):
+            raise ValueError(
+                "`sparse_output=True` is not supported for Array API "
+                "namespace {xp.__name__}. "
+                "Use `sparse_output=False` to return a dense array instead."
+            )
+
         y_is_multilabel = type_of_target(y).startswith("multilabel")
         if y_is_multilabel and not self.y_type_.startswith("multilabel"):
             raise ValueError("The object was not fitted with multilabel input.")
@@ -402,14 +423,22 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
         """
         check_is_fitted(self)
 
+        xp, _ = get_namespace(Y)
+
+        if self.sparse_input_ and not _is_numpy_namespace(xp):
+            raise ValueError(
+                f"`LabelBinarizer` was fitted on a sparse matrix, and therefore cannot "
+                f"inverse transform a {xp.__name__} array back to a sparse matrix."
+            )
+
         if threshold is None:
             threshold = (self.pos_label + self.neg_label) / 2.0
 
         if self.y_type_ == "multiclass":
-            y_inv = _inverse_binarize_multiclass(Y, self.classes_)
+            y_inv = _inverse_binarize_multiclass(Y, self.classes_, xp=xp)
         else:
             y_inv = _inverse_binarize_thresholding(
-                Y, self.y_type_, self.classes_, threshold
+                Y, self.y_type_, self.classes_, threshold, xp=xp
             )
 
         if self.sparse_input_:
@@ -533,22 +562,40 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
     if y_type == "unknown":
         raise ValueError("The type of target data is not known")
 
-    n_samples = y.shape[0] if sp.issparse(y) else len(y)
-    n_classes = len(classes)
-    classes = np.asarray(classes)
+    xp, _, device_ = get_namespace_and_device(y)
+
+    try:
+        classes = xp.asarray(classes, device=device_)
+
+    # e.g., torch.tensor(["yes", "no"])
+    # or cupy.asarray(["yes", "no"])
+    except (ValueError, TypeError) as e:
+        y = _convert_to_numpy(y, xp=xp)
+        xp, _, device_ = get_namespace_and_device(y)
+        classes = xp.asarray(classes)
+
+    if sparse_output and not _is_numpy_namespace(xp):
+        raise ValueError(
+            "`sparse_output=True` is not supported for Array API "
+            "namespace {xp.__name__}. "
+            "Use `sparse_output=False` to return a dense array instead."
+        )
+
+    n_samples = y.shape[0] if hasattr(y, "shape") else len(y)
+    n_classes = classes.shape[0] if hasattr(classes, "shape") else len(classes)
 
     if y_type == "binary":
         if n_classes == 1:
             if sparse_output:
                 return sp.csr_matrix((n_samples, 1), dtype=int)
             else:
-                Y = np.zeros((len(y), 1), dtype=int)
+                Y = xp.zeros((n_samples, 1), dtype=xp.int64)
                 Y += neg_label
                 return Y
-        elif len(classes) >= 3:
+        elif n_classes >= 3:
             y_type = "multiclass"
 
-    sorted_class = np.sort(classes)
+    sorted_class = xp.sort(classes)
     if y_type == "multilabel-indicator":
         y_n_classes = y.shape[1] if hasattr(y, "shape") else len(y[0])
         if classes.size != y_n_classes:
@@ -562,29 +609,54 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         y = column_or_1d(y)
 
         # pick out the known labels from y
-        y_in_classes = np.isin(y, classes)
+        y_in_classes = xp.asarray(
+            xp.any(y[:, None] == classes[None, :], axis=1), dtype=xp.bool
+        )
+        y_in_classes_int = xp.asarray(
+            xp.any(y[:, None] == classes[None, :], axis=1), dtype=xp.int64
+        )
         y_seen = y[y_in_classes]
-        indices = np.searchsorted(sorted_class, y_seen)
-        indptr = np.hstack((0, np.cumsum(y_in_classes)))
+        indices = xp.searchsorted(sorted_class, y_seen)
+        indptr = xp.concat(
+            (
+                xp.asarray([0], device=device_),
+                xp.cumulative_sum(y_in_classes_int, axis=0),
+            )
+        )
+        data = xp.full_like(indices, pos_label)
 
-        data = np.empty_like(indices)
-        data.fill(pos_label)
-        Y = sp.csr_matrix((data, indices, indptr), shape=(n_samples, n_classes))
+        if sparse_output:
+            Y = sp.csr_matrix((data, indices, indptr), shape=(n_samples, n_classes))
+        else:
+            Y = xp.zeros((n_samples, n_classes), dtype=data.dtype, device=device_)
+
+            for i in range(n_samples):
+                start = int(indptr[i])
+                end = int(indptr[i + 1])
+                for j in range(start, end):
+                    Y[i, int(indices[j])] = data[j]
+
     elif y_type == "multilabel-indicator":
-        Y = sp.csr_matrix(y)
-        if pos_label != 1:
-            data = np.empty_like(Y.data)
-            data.fill(pos_label)
-            Y.data = data
+        if sparse_output:
+            Y = sp.csr_matrix(y)
+            if pos_label != 1:
+                data = xp.full_like(Y.data, pos_label)
+                Y.data = data
+
+        else:
+            if sp.issparse(y):
+                y = y.toarray()
+
+            Y = y.copy()
+            if pos_label != 1:
+                Y[Y != 0] = pos_label
+
     else:
         raise ValueError(
             "%s target data is not supported with label binarization" % y_type
         )
 
     if not sparse_output:
-        Y = Y.toarray()
-        Y = Y.astype(int, copy=False)
-
         if neg_label != 0:
             Y[Y == 0] = neg_label
 
@@ -594,63 +666,70 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         Y.data = Y.data.astype(int, copy=False)
 
     # preserve label ordering
-    if np.any(classes != sorted_class):
-        indices = np.searchsorted(sorted_class, classes)
+    if xp.any(classes != sorted_class):
+        indices = xp.searchsorted(sorted_class, classes)
         Y = Y[:, indices]
 
     if y_type == "binary":
         if sparse_output:
             Y = Y[:, [-1]]
         else:
-            Y = Y[:, -1].reshape((-1, 1))
+            Y = xp.reshape(Y[:, -1], (-1, 1))
 
     return Y
 
 
-def _inverse_binarize_multiclass(y, classes):
+def _inverse_binarize_multiclass(y, classes, xp=None):
     """Inverse label binarization transformation for multiclass.
 
     Multiclass uses the maximal score instead of a threshold.
     """
-    classes = np.asarray(classes)
+    xp, _, device_ = get_namespace_and_device(y, xp=xp)
+
+    classes = xp.asarray(classes, device=device_)
 
     if sp.issparse(y):
         # Find the argmax for each row in y where y is a CSR matrix
 
         y = y.tocsr()
         n_samples, n_outputs = y.shape
-        outputs = np.arange(n_outputs)
+        outputs = xp.arange(n_outputs)
         row_max = min_max_axis(y, 1)[1]
-        row_nnz = np.diff(y.indptr)
+        row_nnz = xp.diff(y.indptr)
 
-        y_data_repeated_max = np.repeat(row_max, row_nnz)
+        y_data_repeated_max = xp.repeat(row_max, row_nnz)
         # picks out all indices obtaining the maximum per row
-        y_i_all_argmax = np.flatnonzero(y_data_repeated_max == y.data)
+        y_i_all_argmax = xp.flatnonzero(y_data_repeated_max == y.data)
 
         # For corner case where last row has a max of 0
         if row_max[-1] == 0:
-            y_i_all_argmax = np.append(y_i_all_argmax, [len(y.data)])
+            y_i_all_argmax = xp.append(y_i_all_argmax, [len(y.data)])
 
         # Gets the index of the first argmax in each row from y_i_all_argmax
-        index_first_argmax = np.searchsorted(y_i_all_argmax, y.indptr[:-1])
+        index_first_argmax = xp.searchsorted(y_i_all_argmax, y.indptr[:-1])
         # first argmax of each row
-        y_ind_ext = np.append(y.indices, [0])
+        y_ind_ext = xp.append(y.indices, [0])
         y_i_argmax = y_ind_ext[y_i_all_argmax[index_first_argmax]]
         # Handle rows of all 0
-        y_i_argmax[np.where(row_nnz == 0)[0]] = 0
+        y_i_argmax[xp.where(row_nnz == 0)[0]] = 0
 
         # Handles rows with max of 0 that contain negative numbers
-        samples = np.arange(n_samples)[(row_nnz > 0) & (row_max.ravel() == 0)]
+        samples = xp.arange(n_samples)[
+            (row_nnz > 0) & (xp.reshape(row_max, (-1,)) == 0)
+        ]
         for i in samples:
             ind = y.indices[y.indptr[i] : y.indptr[i + 1]]
             y_i_argmax[i] = classes[np.setdiff1d(outputs, ind)][0]
 
         return classes[y_i_argmax]
     else:
-        return classes.take(y.argmax(axis=1), mode="clip")
+        indices = xp.argmax(y, axis=1)
+        indices = xp.clip(indices, 0, classes.shape[0] - 1)
+
+        return classes[indices]
 
 
-def _inverse_binarize_thresholding(y, output_type, classes, threshold):
+def _inverse_binarize_thresholding(y, output_type, classes, threshold, xp=None):
     """Inverse label binarization transformation using thresholding."""
 
     if output_type == "binary" and y.ndim == 2 and y.shape[1] > 2:
@@ -661,19 +740,29 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold):
             "The number of class is not equal to the number of dimension of y."
         )
 
-    classes = np.asarray(classes)
+    xp, _, device_ = get_namespace_and_device(y, xp=xp)
+
+    classes = xp.asarray(classes, device=device_)
 
     # Perform thresholding
     if sp.issparse(y):
         if threshold > 0:
             if y.format not in ("csr", "csc"):
                 y = y.tocsr()
-            y.data = np.array(y.data > threshold, dtype=int)
+            y.data = xp.asarray(
+                xp.asarray(y.data, dtype=xp.float64, device=device_) > threshold,
+                dtype=xp.int64,
+                device=device_,
+            )
             y.eliminate_zeros()
         else:
-            y = np.array(y.toarray() > threshold, dtype=int)
+            y = xp.asarray(y.toarray() > threshold, dtype=xp.int64, device=device_)
     else:
-        y = np.array(y > threshold, dtype=int)
+        y = xp.asarray(
+            xp.asarray(y, dtype=xp.float64, device=device_) > threshold,
+            dtype=xp.int64,
+            device=device_,
+        )
 
     # Inverse transform data
     if output_type == "binary":
@@ -682,10 +771,10 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold):
         if y.ndim == 2 and y.shape[1] == 2:
             return classes[y[:, 1]]
         else:
-            if len(classes) == 1:
-                return np.repeat(classes[0], len(y))
+            if classes.shape[0] == 1:
+                return xp.repeat(classes[0], len(y))
             else:
-                return classes[y.ravel()]
+                return classes[xp.reshape(y, (-1,))]
 
     elif output_type == "multilabel-indicator":
         return y
