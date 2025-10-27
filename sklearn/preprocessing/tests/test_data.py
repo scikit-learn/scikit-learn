@@ -1649,7 +1649,7 @@ def test_quantile_transformer_sparse_subsampling():
     # choose some row indices (doesn't matter in this example):
     row = np.arange(subsample * 2)
     # uniform data:
-    data = np.concat(
+    data = np.concatenate(
         (
             np.linspace(1, 2, num=subsample - 1),
             np.linspace(1, 2, num=subsample + 1),
