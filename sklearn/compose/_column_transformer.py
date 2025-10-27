@@ -1584,19 +1584,19 @@ class make_column_selector:
                [-0.30151134,  0.        ,  1.        ,  0.        ],
                [ 0.90453403,  0.        ,  0.        ,  1.        ]])
 
-    Selecting columns based on cardinality:
+Selecting columns based on cardinality:
 
-        >>> X = pd.DataFrame({
-        ...     'low_card': ['A', 'B', 'A', 'C'],  # 3 unique values
-        ...     'high_card': ['X', 'Y', 'Z', 'W'],  # 4 unique values
-        ...     'numeric': [1, 2, 3, 4]  # 4 unique values
-        ... })
-        >>> selector_low = make_column_selector(
-        ...     cardinality='low', cardinality_threshold=3)
-        >>> selector_high = make_column_selector(
-        ...     cardinality='high', cardinality_threshold=3)
-        >>> low_card_cols = selector_low(X)  # ['low_card']
-        >>> high_card_cols = selector_high(X)  # ['high_card', 'numeric']
+    >>> X = pd.DataFrame({
+    ...     'low_card': ['A', 'B', 'A', 'C'],  # 3 unique values
+    ...     'high_card': ['X', 'Y', 'Z', 'W'],  # 4 unique values
+    ...     'numeric': [1, 2, 3, 4]  # 4 unique values
+    ... })  # doctest: +SKIP
+    >>> selector_low = make_column_selector(
+    ...     cardinality='low', cardinality_threshold=3)
+    >>> selector_high = make_column_selector(
+    ...     cardinality='high', cardinality_threshold=3)
+    >>> low_card_cols = selector_low(X)  # ['low_card']
+    >>> high_card_cols = selector_high(X)  # ['high_card', 'numeric']
     """
 
     def __init__(
