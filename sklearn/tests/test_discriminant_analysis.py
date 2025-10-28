@@ -12,6 +12,7 @@ from sklearn.discriminant_analysis import (
     QuadraticDiscriminantAnalysis,
     _cov,
 )
+from sklearn.model_selection import ShuffleSplit, cross_val_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import (
@@ -631,7 +632,8 @@ def test_qda_coefs(global_random_seed):
             err_msg=f"SVD and Eigen rotations differ for class {class_idx}",
         )
         assert_allclose(
-            clf_svd.scalings_[class_idx], clf_eigen.scalings_[class_idx],
+            clf_svd.scalings_[class_idx],
+            clf_eigen.scalings_[class_idx],
             rtol=1e-3,
             err_msg=f"SVD and Eigen scalings differ for class {class_idx}",
         )
@@ -788,3 +790,46 @@ def test_get_feature_names_out():
         dtype=object,
     )
     assert_array_equal(names_out, expected_names_out)
+
+
+@pytest.mark.parametrize("n_features", [25])
+@pytest.mark.parametrize("train_size", [100])
+def test_qda_shrinkage_performance(global_random_seed, n_features, train_size):
+    # Test that QDA with shrinkage performs better than without
+    # shrinkage on a case where there's a small number of samples
+    # per class.
+    n_samples = 1000
+    n_features = n_features
+
+    rng = np.random.default_rng(global_random_seed)
+    zero_mean = np.zeros(shape=n_features)
+
+    vars1 = rng.uniform(0.2, 3.0, size=n_features)
+    vars2 = rng.uniform(0.2, 3.0, size=n_features)
+
+    X = np.concatenate(
+        [
+            np.random.randn(n_samples // 2, n_features) * np.sqrt(vars1),
+            np.random.randn(n_samples // 2, n_features) * np.sqrt(vars2),
+        ],
+        axis=0,
+    )
+    y = np.array([0] * (n_samples // 2) + [1] * (n_samples // 2))
+
+    # Use small training sets to illustrate the regularization effect of
+    # covariance shrinkage.
+    cv = ShuffleSplit(n_splits=5, train_size=train_size, random_state=0)
+    qda_shrinkage = QuadraticDiscriminantAnalysis(solver="eigen", shrinkage="auto")
+
+    qda_no_shrinkage = QuadraticDiscriminantAnalysis(solver="svd")
+    scores_no_shrinkage = cross_val_score(
+        qda_no_shrinkage, X, y, cv=cv, scoring="d2_brier_score"
+    )
+    scores_shrinkage = cross_val_score(
+        qda_shrinkage, X, y, cv=cv, scoring="d2_brier_score"
+    )
+
+    assert scores_shrinkage.mean() > scores_no_shrinkage.mean(), (
+        "QDA with shrinkage should perform better than without shrinkage "
+        "in small sample size settings."
+    )
