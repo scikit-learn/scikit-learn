@@ -2894,8 +2894,8 @@ def test_splitting_with_missing_values():
     # The important thing here is that we try several trees, where each one tries
     # one of the two features first. The resulting tree should be the same in all
     # cases. The way to control which feature is tried first is `random_state`.
-    # Ten trees is a good guess for how many we need to try to make sure we get
+    # Twenty trees is a good guess for how many we need to try to make sure we get
     # both orders of features at least once.
-    for i in range(10):
+    for i in range(20):
         tree = DecisionTreeRegressor(max_depth=1, random_state=i).fit(X, y)
         assert_array_equal(tree.tree_.impurity, np.array([0.25, 0.0, 0.0]))
