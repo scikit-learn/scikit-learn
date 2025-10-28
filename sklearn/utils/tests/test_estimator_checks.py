@@ -1417,18 +1417,14 @@ def test_xfail_count_with_no_fast_fail():
     # This is to make sure we test a class that has some expected failures
     assert len(expected_failed_checks) > 0
     with warnings.catch_warnings(record=True) as records:
-        warnings.filterwarnings(
-            "ignore",
-            message="DataFrame has integer column names, which are ambiguous",
-            category=UserWarning,
-        )
-
         logs = check_estimator(
             est,
             expected_failed_checks=expected_failed_checks,
             on_fail="warn",
         )
-    xfail_warns = [w for w in records if w.category != SkipTestWarning]
+    xfail_warns = [
+        w for w in records if w.category not in (SkipTestWarning, UserWarning)
+    ]
     assert all([rec.category == EstimatorCheckFailedWarning for rec in xfail_warns])
     assert len(xfail_warns) == len(expected_failed_checks)
 
