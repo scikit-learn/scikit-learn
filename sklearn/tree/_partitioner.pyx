@@ -15,7 +15,7 @@ from libc.math cimport isnan, log2
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
 
-from ._utils cimport swap_array_slices
+from sklearn.tree._utils cimport swap_array_slices
 
 import numpy as np
 from scipy.sparse import issparse
