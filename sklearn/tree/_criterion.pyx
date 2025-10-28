@@ -1362,7 +1362,7 @@ cdef class MAE(Criterion):
           The tree maintains cumulative sums of weights and of `weight * y`
         * search for the half total weight in the tree:
           `tree.search(current_total_weight / 2)`.
-          This alloww us to retrieve/compute:
+          This allows us to retrieve/compute:
             * the current weighted median value
             * the absolute-error contribution via the standard pinball-loss identity:
               AE = (wy_right - median * w_right) + (median * w_left - wy_left)
@@ -1572,7 +1572,9 @@ cdef class MAE(Criterion):
                 self.right_abs_errors, self.right_medians
             )
 
-            # Store the median for the current node
+            # Store the median for the current node: when p == self.start all the
+            # node's data points are sent to the right child, so the current node
+            # median value and the right child median value would be equal.
             self.node_medians[k] = self.right_medians[self.start]
 
         return 0
