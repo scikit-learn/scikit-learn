@@ -74,6 +74,8 @@ that increasing the number of workers is always a good thing. In some cases
 it can be highly detrimental to performance to run multiple copies of some
 estimators or functions in parallel (see :ref:`oversubscription<oversubscription>` below).
 
+.. _lower-level-parallelism-with-openmp:
+
 Lower-level parallelism with OpenMP
 ...................................
 
