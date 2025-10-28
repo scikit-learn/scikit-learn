@@ -77,6 +77,8 @@ def _graphical_lasso(
     tol=1e-4,
     enet_tol=1e-4,
     max_iter=100,
+    enet_min_iter=20,
+    enet_max_iter=100,
     verbose=False,
     eps=np.finfo(np.float64).eps,
 ):
@@ -149,7 +151,7 @@ def _graphical_lasso(
                             # the inner solver (CD). Ideally, CD has its own parameter
                             # enet_max_iter (like enet_tol). A minimum of 20 is rather
                             # arbitrary, but not unreasonable.
-                            max_iter=max(20, max_iter),
+                            max_iter=max(enet_min_iter, enet_max_iter),
                             tol=enet_tol,
                             rng=check_random_state(None),
                             random=False,
@@ -243,6 +245,8 @@ def graphical_lasso(
     tol=1e-4,
     enet_tol=1e-4,
     max_iter=100,
+    enet_min_iter=20,
+    enet_max_iter=100,
     verbose=False,
     return_costs=False,
     eps=np.finfo(np.float64).eps,
@@ -282,6 +286,14 @@ def graphical_lasso(
 
     max_iter : int, default=100
         The maximum number of iterations.
+
+    enet_min_iter : int, default=20
+        The minimum number of iterations for the the inner solver.
+        This parameter should be a strictly positive integer.
+
+    enet_max_iter : int, default=100
+        The maximum number of iterations for the the inner solver.
+        This parameter should be a strictly positive integer.
 
     verbose : bool, default=False
         If verbose is True, the objective function and dual gap are
@@ -352,6 +364,8 @@ def graphical_lasso(
         tol=tol,
         enet_tol=enet_tol,
         max_iter=max_iter,
+        enet_min_iter=enet_min_iter,
+        enet_max_iter=enet_max_iter,
         verbose=verbose,
         eps=eps,
         assume_centered=True,
@@ -371,6 +385,8 @@ class BaseGraphicalLasso(EmpiricalCovariance):
         "tol": [Interval(Real, 0, None, closed="right")],
         "enet_tol": [Interval(Real, 0, None, closed="right")],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "enet_min_iter": [Interval(Integral, 0, None, closed="left")],
+        "enet_max_iter": [Interval(Integral, 0, None, closed="left")],
         "mode": [StrOptions({"cd", "lars"})],
         "verbose": ["verbose"],
         "eps": [Interval(Real, 0, None, closed="both")],
@@ -382,6 +398,8 @@ class BaseGraphicalLasso(EmpiricalCovariance):
         tol=1e-4,
         enet_tol=1e-4,
         max_iter=100,
+        enet_min_iter=20,
+        enet_max_iter=100,
         mode="cd",
         verbose=False,
         eps=np.finfo(np.float64).eps,
@@ -390,6 +408,8 @@ class BaseGraphicalLasso(EmpiricalCovariance):
         super().__init__(assume_centered=assume_centered)
         self.tol = tol
         self.enet_tol = enet_tol
+        self.enet_min_iter = enet_min_iter
+        self.enet_max_iter = enet_max_iter
         self.max_iter = max_iter
         self.mode = mode
         self.verbose = verbose
@@ -438,6 +458,14 @@ class GraphicalLasso(BaseGraphicalLasso):
 
     max_iter : int, default=100
         The maximum number of iterations.
+
+    enet_min_iter : int, default=20
+        The minimum number of iterations for the the inner solver.
+        This parameter should be a strictly positive integer.
+
+    enet_max_iter : int, default=100
+        The maximum number of iterations for the the inner solver.
+        This parameter should be a strictly positive integer.
 
     verbose : bool, default=False
         If verbose is True, the objective function and dual gap are
@@ -530,6 +558,8 @@ class GraphicalLasso(BaseGraphicalLasso):
         tol=1e-4,
         enet_tol=1e-4,
         max_iter=100,
+        enet_min_iter=20,
+        enet_max_iter=100,
         verbose=False,
         eps=np.finfo(np.float64).eps,
         assume_centered=False,
@@ -538,6 +568,8 @@ class GraphicalLasso(BaseGraphicalLasso):
             tol=tol,
             enet_tol=enet_tol,
             max_iter=max_iter,
+            enet_min_iter=enet_min_iter,
+            enet_max_iter=enet_max_iter,
             mode=mode,
             verbose=verbose,
             eps=eps,
@@ -584,6 +616,8 @@ class GraphicalLasso(BaseGraphicalLasso):
             tol=self.tol,
             enet_tol=self.enet_tol,
             max_iter=self.max_iter,
+            enet_min_iter=self.enet_min_iter,
+            enet_max_iter=self.enet_max_iter,
             verbose=self.verbose,
             eps=self.eps,
         )
@@ -599,6 +633,8 @@ def graphical_lasso_path(
     mode="cd",
     tol=1e-4,
     enet_tol=1e-4,
+    enet_min_iter=20,
+    enet_max_iter=100,
     max_iter=100,
     verbose=False,
     eps=np.finfo(np.float64).eps,
@@ -640,6 +676,14 @@ def graphical_lasso_path(
     max_iter : int, default=100
         The maximum number of iterations. This parameter should be a strictly
         positive integer.
+
+    enet_min_iter : int, default=20
+        The minimum number of iterations for the the inner solver.
+        This parameter should be a strictly positive integer.
+
+    enet_max_iter : int, default=100
+        The maximum number of iterations for the the inner solver.
+        This parameter should be a strictly positive integer.
 
     verbose : int or bool, default=False
         The higher the verbosity flag, the more information is printed
@@ -689,6 +733,8 @@ def graphical_lasso_path(
                 tol=tol,
                 enet_tol=enet_tol,
                 max_iter=max_iter,
+                enet_min_iter=enet_min_iter,
+                enet_max_iter=enet_max_iter,
                 verbose=inner_verbose,
                 eps=eps,
             )
@@ -771,6 +817,14 @@ class GraphicalLassoCV(BaseGraphicalLasso):
 
     max_iter : int, default=100
         Maximum number of iterations.
+
+    enet_min_iter : int, default=20
+        The minimum number of iterations for the the inner solver.
+        This parameter should be a strictly positive integer.
+
+    enet_max_iter : int, default=100
+        The maximum number of iterations for the the inner solver.
+        This parameter should be a strictly positive integer.
 
     mode : {'cd', 'lars'}, default='cd'
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
@@ -924,6 +978,8 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         tol=1e-4,
         enet_tol=1e-4,
         max_iter=100,
+        enet_min_iter=20,
+        enet_max_iter=100,
         mode="cd",
         n_jobs=None,
         verbose=False,
@@ -934,6 +990,8 @@ class GraphicalLassoCV(BaseGraphicalLasso):
             tol=tol,
             enet_tol=enet_tol,
             max_iter=max_iter,
+            enet_min_iter=enet_min_iter,
+            enet_max_iter=enet_max_iter,
             mode=mode,
             verbose=verbose,
             eps=eps,
@@ -1032,6 +1090,8 @@ class GraphicalLassoCV(BaseGraphicalLasso):
                         mode=self.mode,
                         tol=self.tol,
                         enet_tol=self.enet_tol,
+                        enet_min_iter=self.enet_min_iter,
+                        enet_max_iter=self.enet_max_iter,
                         max_iter=int(0.1 * self.max_iter),
                         verbose=inner_verbose,
                         eps=self.eps,
@@ -1126,6 +1186,8 @@ class GraphicalLassoCV(BaseGraphicalLasso):
             tol=self.tol,
             enet_tol=self.enet_tol,
             max_iter=self.max_iter,
+            enet_min_iter=self.enet_min_iter,
+            enet_max_iter=self.enet_max_iter,
             verbose=inner_verbose,
             eps=self.eps,
         )
