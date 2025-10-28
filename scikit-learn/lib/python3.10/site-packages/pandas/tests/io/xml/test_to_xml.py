@@ -33,7 +33,7 @@ from pandas.io.xml import read_xml
 # [X] - KeyError: "...is not included in namespaces"
 # [X] - KeyError: "no valid column"
 # [X] - ValueError: "To use stylesheet, you need lxml installed..."
-# []  - OSError: (NEED PERMISSOIN ISSUE, DISK FULL, ETC.)
+# []  - OSError: (NEED PERMISSION ISSUE, DISK FULL, ETC.)
 # [X] - FileNotFoundError: "No such file or directory"
 # [X] - PermissionError: "Forbidden"
 
@@ -41,7 +41,7 @@ from pandas.io.xml import read_xml
 # [X] - TypeError: "...is not a valid type for attr_cols"
 # [X] - TypeError: "...is not a valid type for elem_cols"
 # [X] - LookupError: "unknown encoding"
-# []  - OSError: (NEED PERMISSOIN ISSUE, DISK FULL, ETC.)
+# []  - OSError: (NEED PERMISSION ISSUE, DISK FULL, ETC.)
 # [X] - FileNotFoundError: "No such file or directory"
 # [X] - KeyError: "...is not included in namespaces"
 # [X] - KeyError: "no valid column"

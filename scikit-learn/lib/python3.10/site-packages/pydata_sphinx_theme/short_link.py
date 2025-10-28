@@ -64,7 +64,7 @@ class ShortenLinkTransform(SphinxPostTransform):
             uri: the link to the platform content
 
         Returns:
-            the reformated url title
+            the reformatted url title
         """
         path = uri.path
         if path == "":

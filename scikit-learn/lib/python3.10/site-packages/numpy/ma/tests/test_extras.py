@@ -1798,9 +1798,9 @@ class TestShapeBase:
         assert_equal(b.mask.shape, b.data.shape)
 
     def test_shape_scalar(self):
-        # the atleast and diagflat function should work with scalars
+        # the at least and diagflat function should work with scalars
         # GitHub issue #3367
-        # Additionally, the atleast functions should accept multiple scalars
+        # Additionally, the at least functions should accept multiple scalars
         # correctly
         b = atleast_1d(1.0)
         assert_equal(b.shape, (1,))

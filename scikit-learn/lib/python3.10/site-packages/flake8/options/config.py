@@ -35,7 +35,7 @@ def _find_config_file(path: str) -> str | None:
             try:
                 cfg.read(cfg_path, encoding="UTF-8")
             except (UnicodeDecodeError, configparser.ParsingError) as e:
-                LOG.warning("ignoring unparseable config %s: %s", cfg_path, e)
+                LOG.warning("ignoring unparsable config %s: %s", cfg_path, e)
             else:
                 # only consider it a config if it contains flake8 sections
                 if "flake8" in cfg or "flake8:local-plugins" in cfg:

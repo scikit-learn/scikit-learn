@@ -173,7 +173,7 @@ Bugfixes
 
     def test_markdown(self):
         """
-        Check formating of default markdown template.
+        Check formatting of default markdown template.
         """
         fragments = {
             "": {

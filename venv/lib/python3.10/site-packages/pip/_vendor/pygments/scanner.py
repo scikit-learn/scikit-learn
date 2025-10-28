@@ -72,7 +72,7 @@ class Scanner:
     def scan(self, pattern):
         """
         Scan the text for the given pattern and update pos/match
-        and related fields. The return value is a boolen that
+        and related fields. The return value is a boolean that
         indicates if the pattern matched. The matched value is
         stored on the instance as ``match``, the last value is
         stored as ``last``. ``start_pos`` is the position of the

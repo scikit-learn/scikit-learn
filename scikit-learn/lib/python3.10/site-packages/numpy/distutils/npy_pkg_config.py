@@ -370,7 +370,7 @@ def read_config(pkgname, dirs=None):
         return v
 
 # TODO:
-#   - implements version comparison (modversion + atleast)
+#   - implements version comparison (modversion + at least)
 
 # pkg-config simple emulator - useful for debugging, and maybe later to query
 # the system

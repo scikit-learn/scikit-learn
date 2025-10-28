@@ -618,7 +618,7 @@ class RegexLexer(Lexer, metaclass=RegexLexerMeta):
         """
         Split ``text`` into (tokentype, text) pairs.
 
-        ``stack`` is the inital stack (default: ``['root']``)
+        ``stack`` is the initial stack (default: ``['root']``)
         """
         pos = 0
         tokendefs = self._tokens
@@ -792,7 +792,7 @@ def do_insertions(insertions, tokens):
     # iterate over the token stream where we want to insert
     # the tokens from the insertion list.
     for i, t, v in tokens:
-        # first iteration. store the postition of first item
+        # first iteration. store the position of first item
         if realpos is None:
             realpos = i
         oldi = 0

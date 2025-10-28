@@ -31,10 +31,10 @@ class CallbackFileWrapper(object):
         self.__callback = callback
 
     def __getattr__(self, name):
-        # The vaguaries of garbage collection means that self.__fp is
+        # The vagaries of garbage collection means that self.__fp is
         # not always set.  By using __getattribute__ and the private
         # name[0] allows looking up the attribute value and raising an
-        # AttributeError when it doesn't exist. This stop thigns from
+        # AttributeError when it doesn't exist. This stop things from
         # infinitely recursing calls to getattr in the case where
         # self.__fp hasn't been set.
         #

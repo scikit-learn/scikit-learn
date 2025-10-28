@@ -332,7 +332,7 @@ def get_axes_properties(ax):
 
 def iter_all_children(obj, skipContainers=False):
     """
-    Returns an iterator over all childen and nested children using
+    Returns an iterator over all children and nested children using
     obj's get_children() method
 
     if skipContainers is true, only childless objects are returned.

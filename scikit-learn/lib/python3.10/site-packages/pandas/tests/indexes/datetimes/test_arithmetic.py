@@ -1,5 +1,5 @@
 # Arithmetic tests specific to DatetimeIndex are generally about `freq`
-#  rentention or inference.  Other arithmetic tests belong in
+#  retention or inference.  Other arithmetic tests belong in
 #  tests/arithmetic/test_datetime64.py
 import pytest
 

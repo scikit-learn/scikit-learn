@@ -69,12 +69,12 @@ class Emitter:
         # Characteristics of the last emitted character:
         #  - current position.
         #  - is it a whitespace?
-        #  - is it an indention character
+        #  - is it an indentation character
         #    (indentation space, '-', '?', or ':')?
         self.line = 0
         self.column = 0
         self.whitespace = True
-        self.indention = True
+        self.indentation = True
 
         # Whether the document requires an explicit document indicator
         self.open_ended = False
@@ -366,7 +366,7 @@ class Emitter:
     # Block sequence handlers.
 
     def expect_block_sequence(self):
-        indentless = (self.mapping_context and not self.indention)
+        indentless = (self.mapping_context and not self.indentation)
         self.increase_indent(flow=False, indentless=indentless)
         self.state = self.expect_first_block_sequence_item
 
@@ -379,7 +379,7 @@ class Emitter:
             self.state = self.states.pop()
         else:
             self.write_indent()
-            self.write_indicator('-', True, indention=True)
+            self.write_indicator('-', True, indentation=True)
             self.states.append(self.expect_block_sequence_item)
             self.expect_node(sequence=True)
 
@@ -402,7 +402,7 @@ class Emitter:
                 self.states.append(self.expect_block_mapping_simple_value)
                 self.expect_node(mapping=True, simple_key=True)
             else:
-                self.write_indicator('?', True, indention=True)
+                self.write_indicator('?', True, indentation=True)
                 self.states.append(self.expect_block_mapping_value)
                 self.expect_node(mapping=True)
 
@@ -413,7 +413,7 @@ class Emitter:
 
     def expect_block_mapping_value(self):
         self.write_indent()
-        self.write_indicator(':', True, indention=True)
+        self.write_indicator(':', True, indentation=True)
         self.states.append(self.expect_block_mapping_key)
         self.expect_node(mapping=True)
 
@@ -798,13 +798,13 @@ class Emitter:
         self.flush_stream()
 
     def write_indicator(self, indicator, need_whitespace,
-            whitespace=False, indention=False):
+            whitespace=False, indentation=False):
         if self.whitespace or not need_whitespace:
             data = indicator
         else:
             data = ' '+indicator
         self.whitespace = whitespace
-        self.indention = self.indention and indention
+        self.indentation = self.indentation and indentation
         self.column += len(data)
         self.open_ended = False
         if self.encoding:
@@ -813,7 +813,7 @@ class Emitter:
 
     def write_indent(self):
         indent = self.indent or 0
-        if not self.indention or self.column > indent   \
+        if not self.indentation or self.column > indent   \
                 or (self.column == indent and not self.whitespace):
             self.write_line_break()
         if self.column < indent:
@@ -828,7 +828,7 @@ class Emitter:
         if data is None:
             data = self.best_line_break
         self.whitespace = True
-        self.indention = True
+        self.indentation = True
         self.line += 1
         self.column = 0
         if self.encoding:
@@ -967,7 +967,7 @@ class Emitter:
                 self.stream.write(data)
                 self.write_indent()
                 self.whitespace = False
-                self.indention = False
+                self.indentation = False
                 if text[start] == ' ':
                     data = '\\'
                     self.column += len(data)
@@ -1089,7 +1089,7 @@ class Emitter:
                 data = data.encode(self.encoding)
             self.stream.write(data)
         self.whitespace = False
-        self.indention = False
+        self.indentation = False
         spaces = False
         breaks = False
         start = end = 0
@@ -1102,7 +1102,7 @@ class Emitter:
                     if start+1 == end and self.column > self.best_width and split:
                         self.write_indent()
                         self.whitespace = False
-                        self.indention = False
+                        self.indentation = False
                     else:
                         data = text[start:end]
                         self.column += len(data)
@@ -1121,7 +1121,7 @@ class Emitter:
                             self.write_line_break(br)
                     self.write_indent()
                     self.whitespace = False
-                    self.indention = False
+                    self.indentation = False
                     start = end
             else:
                 if ch is None or ch in ' \n\x85\u2028\u2029':

@@ -6,7 +6,7 @@ from towncrier import _novcs
 class TestNOVCS(TestCase):
     def test_get_default_compare_branch(self):
         """
-        Witout a version control system, there is no default branch.
+        Without a version control system, there is no default branch.
         """
         self.assertEqual(None, _novcs.get_default_compare_branch([]))
 

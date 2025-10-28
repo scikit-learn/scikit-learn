@@ -93,7 +93,7 @@ class Application:
         """Run the actual checks with the FileChecker Manager.
 
         This method encapsulates the logic to make a
-        :class:`~flake8.checker.Manger` instance run the checks it is
+        :class:`~flake8.checker.Manager` instance run the checks it is
         managing.
         """
         assert self.file_checker_manager is not None

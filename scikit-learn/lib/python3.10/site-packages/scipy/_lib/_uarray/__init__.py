@@ -33,7 +33,7 @@ overridable by :obj:`uarray`. Needless to say, writing a backend and
 creating multimethods are mostly orthogonal activities, and knowing
 one doesn't necessarily require knowledge of the other, although it
 is certainly helpful. We expect core API designers/specifiers to write the
-multimethods, and implementors to override them. But, as is often the case,
+multimethods, and implementers to override them. But, as is often the case,
 similar people write both.
 
 Without further ado, here's an example multimethod:

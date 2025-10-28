@@ -72,7 +72,7 @@ class Est(Stat):
         Name of a :class:`numpy.ndarray` method or a vector -> scalar function.
     errorbar : str, (str, float) tuple, or callable
         Name of errorbar method (one of "ci", "pi", "se" or "sd"), or a tuple
-        with a method name ane a level parameter, or a function that maps from a
+        with a method name and a level parameter, or a function that maps from a
         vector to a (min, max) interval.
     n_boot : int
        Number of bootstrap samples to draw for "ci" errorbars.

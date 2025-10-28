@@ -16,7 +16,7 @@
 
 # TODO:
 #  - Options to map style's bold/underline/italic/border attributes
-#    to some ANSI attrbutes (something like 'italic=underline')
+#    to some ANSI attributes (something like 'italic=underline')
 #  - An option to output "style RGB to xterm RGB/index" conversion table
 #  - An option to indicate that we are running in "reverse background"
 #    xterm. This means that default colors are white-on-black, not

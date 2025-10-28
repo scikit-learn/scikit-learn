@@ -4,7 +4,7 @@
 """
 Entry point of the command line interface.
 
-Each sub-command has its separate CLI definition andd help messages.
+Each sub-command has its separate CLI definition and help messages.
 """
 
 from __future__ import annotations

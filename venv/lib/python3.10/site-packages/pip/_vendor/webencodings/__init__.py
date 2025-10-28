@@ -191,7 +191,7 @@ def iter_decode(input, fallback_encoding, errors='replace'):
         An iterable of byte strings.
 
         The input is first consumed just enough to determine the encoding
-        based on the precense of a BOM,
+        based on the presence of a BOM,
         then consumed on demand when the return value is.
     :param fallback_encoding:
         An :class:`Encoding` object or a label string.
@@ -218,8 +218,8 @@ def _iter_decode_generator(input, decoder):
     """
     decode = decoder.decode
     input = iter(input)
-    for chunck in input:
-        output = decode(chunck)
+    for chunk in input:
+        output = decode(chunk)
         if output:
             assert decoder.encoding is not None
             yield decoder.encoding
@@ -234,8 +234,8 @@ def _iter_decode_generator(input, decoder):
             yield output
         return
 
-    for chunck in input:
-        output = decode(chunck)
+    for chunk in input:
+        output = decode(chunk)
         if output:
             yield output
     output = decode(b'', final=True)
@@ -260,8 +260,8 @@ def iter_encode(input, encoding=UTF8, errors='strict'):
 
 
 def _iter_encode_generator(input, encode):
-    for chunck in input:
-        output = encode(chunck)
+    for chunk in input:
+        output = encode(chunk)
         if output:
             yield output
     output = encode('', final=True)

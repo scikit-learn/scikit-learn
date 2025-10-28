@@ -3,7 +3,7 @@
 Instances of _StrPath should not be constructed except in Sphinx itself.
 Consumers of Sphinx APIs should prefer using ``pathlib.Path`` objects
 where possible. _StrPath objects can be treated as equivalent to ``Path``,
-save that ``_StrPath.replace`` is overriden with ``str.replace``.
+save that ``_StrPath.replace`` is overridden with ``str.replace``.
 
 To continue treating path-like objects as strings, use ``os.fspath``,
 or explicit string coercion.

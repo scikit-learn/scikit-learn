@@ -197,7 +197,7 @@ class SimpleQueue(mp_SimpleQueue):
     def __init__(self, reducers=None, ctx=None):
         super().__init__(ctx=ctx)
 
-        # Add possiblity to use custom reducers
+        # Add possibility to use custom reducers
         self._reducers = reducers
 
     def close(self):

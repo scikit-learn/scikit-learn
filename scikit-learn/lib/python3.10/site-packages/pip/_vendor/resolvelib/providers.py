@@ -103,7 +103,7 @@ class AbstractProvider(Generic[RT, CT, KT]):
         :param requirements: A mapping of requirements that all returned
             candidates must satisfy. Each key is an identifier, and the value
             an iterator of requirements for that dependency.
-        :param incompatibilities: A mapping of known incompatibile candidates of
+        :param incompatibilities: A mapping of known incompatible candidates of
             each dependency. Each key is an identifier, and the value an
             iterator of incompatibilities known to the resolver. All
             incompatibilities *must* be excluded from the return value.
@@ -180,7 +180,7 @@ class AbstractProvider(Generic[RT, CT, KT]):
         Must return a non-empty subset of `identifiers`, with the default
         implementation being to return `identifiers` unchanged. Those `identifiers`
         will then be passed to the sort key `get_preference` to pick the most
-        prefered requirement to attempt to pin, unless `narrow_requirement_selection`
+        preferred requirement to attempt to pin, unless `narrow_requirement_selection`
         returns only 1 requirement, in which case that will be used without
         calling the sort key `get_preference`.
 

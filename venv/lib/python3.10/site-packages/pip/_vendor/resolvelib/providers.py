@@ -92,7 +92,7 @@ class AbstractProvider(object):
     def is_satisfied_by(self, requirement, candidate):
         """Whether the given requirement can be satisfied by a candidate.
 
-        The candidate is guarenteed to have been generated from the
+        The candidate is guaranteed to have been generated from the
         requirement.
 
         A boolean should be returned to indicate whether ``candidate`` is a
@@ -122,7 +122,7 @@ class AbstractResolver(object):
         """Take a collection of constraints, spit out the resolution result.
 
         This returns a representation of the final resolution state, with one
-        guarenteed attribute ``mapping`` that contains resolved candidates as
+        guaranteed attribute ``mapping`` that contains resolved candidates as
         values. The keys are their respective identifiers.
 
         :param requirements: A collection of constraints.

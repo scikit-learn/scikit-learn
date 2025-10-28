@@ -36,7 +36,7 @@ class AbstractResolver(Generic[RT, CT, KT]):
         """Take a collection of constraints, spit out the resolution result.
 
         This returns a representation of the final resolution state, with one
-        guarenteed attribute ``mapping`` that contains resolved candidates as
+        guaranteed attribute ``mapping`` that contains resolved candidates as
         values. The keys are their respective identifiers.
 
         :param requirements: A collection of constraints.

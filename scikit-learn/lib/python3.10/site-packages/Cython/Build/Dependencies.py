@@ -547,7 +547,7 @@ class DependencyTree:
     @cached_method
     def cimports_externs_incdirs(self, filename):
         # This is really ugly. Nested cimports are resolved with respect to the
-        # includer, but includes are resolved with respect to the includee.
+        # includer, but includes are resolved with respect to the include.
         cimports, includes, externs = self.parse_dependencies(filename)[:3]
         cimports = set(cimports)
         externs = set(externs)

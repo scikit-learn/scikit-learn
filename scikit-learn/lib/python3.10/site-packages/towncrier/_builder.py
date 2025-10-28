@@ -112,7 +112,7 @@ def find_fragments(
     strict: bool,
 ) -> tuple[Mapping[str, Mapping[tuple[str, str, int], str]], list[tuple[str, str]]]:
     """
-    Sections are a dictonary of section names to paths.
+    Sections are a dictionary of section names to paths.
 
     If strict, raise ClickException if any fragments have an invalid name.
     """

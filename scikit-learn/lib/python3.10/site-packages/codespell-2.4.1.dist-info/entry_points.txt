@@ -1,0 +1,2 @@
+[console_scripts]
+codespell = codespell_lib:_script_main

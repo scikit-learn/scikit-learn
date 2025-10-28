@@ -421,7 +421,7 @@ class _OptionParser:
 
         # If we got any unknown options we recombine the string of the
         # remaining options and re-attach the prefix, then report that
-        # to the state as new larg.  This way there is basic combinatorics
+        # to the state as new large.  This way there is basic combinatorics
         # that can be achieved while still ignoring unknown arguments.
         if self.ignore_unknown_options and unknown_options:
             state.largs.append(f"{prefix}{''.join(unknown_options)}")

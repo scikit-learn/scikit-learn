@@ -64,7 +64,7 @@ interpolated.
 Categorical:
 ------------
 Alternatively, a categorical colormap is used to assign a specific value in a
-color column to a specific color everytime it appears in the dataset.
+color column to a specific color every time it appears in the dataset.
 
 A column of strings in a panadas.dataframe that is chosen to serve as the
 color index would naturally use a categorical colormap. However, you can
@@ -419,7 +419,7 @@ def convert_colors_to_same_type(
 
     Takes a single color or an iterable of colors, as well as a list of scale
     values, and outputs a 2-pair of the list of color(s) converted all to an
-    rgb or tuple color type, aswell as the scale as the second element. If
+    rgb or tuple color type, as well as the scale as the second element. If
     colors is a Plotly Scale name, then 'scale' will be forced to the scale
     from the respective colorscale and the colors in that colorscale will also
     be coverted to the selected colortype. If colors is None, then there is an
@@ -567,8 +567,8 @@ def make_colorscale(colors, scale=None):
 
     Takes a list of colors and scales and constructs a colorscale based
     on the colors in sequential order. If 'scale' is left empty, a linear-
-    interpolated colorscale will be generated. If 'scale' is a specificed
-    list, it must be the same legnth as colors and must contain all floats
+    interpolated colorscale will be generated. If 'scale' is a specified
+    list, it must be the same length as colors and must contain all floats
     For documentation regarding to the form of the output, see
     https://plot.ly/python/reference/#mesh3d-colorscale
 
@@ -845,7 +845,7 @@ def sample_colorscale(colorscale, samplepoints, low=0.0, high=1.0, colortype="rg
     Interpolates between colors in a colorscale to find the specific colors
     corresponding to the specified sample values. The colorscale can be specified
     as a list of `[scale, color]` pairs, as a list of colors, or as a named
-    plotly colorscale. The samplepoints can be specefied as an iterable of specific
+    plotly colorscale. The samplepoints can be specified as an iterable of specific
     points in the range [0.0, 1.0], or as an integer number of points which will
     be spaced equally between the low value (default 0.0) and the high value
     (default 1.0). The output is a list of colors, formatted according to the

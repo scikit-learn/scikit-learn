@@ -396,7 +396,7 @@ def unique_everseen(iterable, key=None):
         >>> list(unique_everseen(iterable, key=tuple))  # Faster
         [[1, 2], [2, 3]]
 
-    Similary, you may want to convert unhashable ``set`` objects with
+    Similarly, you may want to convert unhashable ``set`` objects with
     ``key=frozenset``. For ``dict`` objects,
     ``key=lambda x: frozenset(x.items())`` can be used.
 

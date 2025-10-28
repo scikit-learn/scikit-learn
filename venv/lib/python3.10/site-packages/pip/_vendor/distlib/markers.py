@@ -38,7 +38,7 @@ def _get_versions(s):
 
 class Evaluator(object):
     """
-    This class is used to evaluate marker expessions.
+    This class is used to evaluate marker expressions.
     """
 
     operations = {

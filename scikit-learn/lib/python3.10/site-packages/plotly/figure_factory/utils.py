@@ -236,7 +236,7 @@ def annotation_dict_for_label(
 
 def list_of_options(iterable, conj="and", period=True):
     """
-    Returns an English listing of objects seperated by commas ','
+    Returns an English listing of objects separated by commas ','
 
     For example, ['foo', 'bar', 'baz'] becomes 'foo, bar and baz'
     if the conjunction 'and' is selected.

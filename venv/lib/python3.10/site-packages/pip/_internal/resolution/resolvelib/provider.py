@@ -117,7 +117,7 @@ class PipProvider(_ProviderBase):
         The lower the return value is, the more preferred this group of
         arguments is.
 
-        Currently pip considers the followings in order:
+        Currently pip considers the following in order:
 
         * Prefer if any of the known requirements is "direct", e.g. points to an
           explicit URL.

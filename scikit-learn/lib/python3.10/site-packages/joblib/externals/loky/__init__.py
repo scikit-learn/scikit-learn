@@ -1,4 +1,4 @@
-r"""The :mod:`loky` module manages a pool of worker that can be re-used across time.
+r"""The :mod:`loky` module manages a pool of worker that can be reused across time.
 It provides a robust and dynamic implementation os the
 :class:`ProcessPoolExecutor` and a function :func:`get_reusable_executor` which
 hide the pool management under the hood.

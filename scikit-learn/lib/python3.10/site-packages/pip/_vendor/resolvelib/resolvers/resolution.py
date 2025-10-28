@@ -410,10 +410,10 @@ class Resolution(Generic[RT, CT, KT]):
         return False
 
     def _extract_causes(
-        self, criteron: list[Criterion[RT, CT]]
+        self, criterion: list[Criterion[RT, CT]]
     ) -> list[RequirementInformation[RT, CT]]:
         """Extract causes from list of criterion and deduplicate"""
-        return list({id(i): i for c in criteron for i in c.information}.values())
+        return list({id(i): i for c in criterion for i in c.information}.values())
 
     def resolve(self, requirements: Iterable[RT], max_rounds: int) -> State[RT, CT, KT]:
         if self._states:

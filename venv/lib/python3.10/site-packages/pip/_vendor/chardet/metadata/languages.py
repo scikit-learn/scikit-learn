@@ -11,7 +11,7 @@ from __future__ import absolute_import, print_function
 from string import ascii_letters
 
 
-# TODO: Add Ukranian (KOI8-U)
+# TODO: Add Ukrainian (KOI8-U)
 
 class Language(object):
     """Metadata about a language useful for training models

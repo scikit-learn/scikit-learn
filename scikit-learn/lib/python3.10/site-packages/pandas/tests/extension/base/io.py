@@ -13,7 +13,7 @@ class BaseParsingTests:
     def test_EA_types(self, engine, data, request):
         if isinstance(data.dtype, pd.CategoricalDtype):
             # in parsers.pyx _convert_with_dtype there is special-casing for
-            #  Categorical that pre-empts _from_sequence_of_strings
+            #  Categorical that preempts _from_sequence_of_strings
             pass
         elif isinstance(data.dtype, pd.core.dtypes.dtypes.NumpyEADtype):
             # These get unwrapped internally so are treated as numpy dtypes

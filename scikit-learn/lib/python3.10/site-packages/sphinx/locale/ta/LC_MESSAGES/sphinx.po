@@ -3010,7 +3010,7 @@ msgstr ""
 
 #: sphinx/ext/autosummary/__init__.py:806
 msgid ""
-"autosummary generats .rst files internally. But your source_suffix does not "
+"autosummary generates .rst files internally. But your source_suffix does not "
 "contain .rst. Skipped."
 msgstr ""
 
