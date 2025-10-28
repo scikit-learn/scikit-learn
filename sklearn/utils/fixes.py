@@ -68,7 +68,7 @@ def _mode(a, axis=0):
     return scipy.stats.mode(a, axis=axis)
 
 
-# TODO: Remove when Scipy 1.12 is the minimum supported version
+# TODO: Remove when SciPy 1.12 is the minimum supported version
 if sp_base_version >= parse_version("1.12.0"):
     _sparse_linalg_cg = scipy.sparse.linalg.cg
 else:
@@ -81,7 +81,7 @@ else:
         return scipy.sparse.linalg.cg(A, b, **kwargs)
 
 
-# TODO : remove this when required minimum version of scipy >= 1.9.0
+# TODO : remove this when required minimum version of SciPy >= 1.9.0
 def _yeojohnson_lambda(_neg_log_likelihood, x):
     """Estimate the optimal Yeo-Johnson transformation parameter (lambda).
 
@@ -114,7 +114,7 @@ def _yeojohnson_lambda(_neg_log_likelihood, x):
 
 
 # TODO: Fuse the modern implementations of _sparse_min_max and _sparse_nan_min_max
-# into the public min_max_axis function when Scipy 1.11 is the minimum supported
+# into the public min_max_axis function when SciPy 1.11 is the minimum supported
 # version and delete the backport in the else branch below.
 if sp_base_version >= parse_version("1.11.0"):
 
@@ -230,7 +230,10 @@ def pd_fillna(pd, frame):
         infer_objects_kwargs = (
             {} if parse_version(pd_version) >= parse_version("3") else {"copy": False}
         )
-        with pd.option_context("future.no_silent_downcasting", True):
+        if parse_version(pd_version) < parse_version("3.0"):
+            with pd.option_context("future.no_silent_downcasting", True):
+                frame = frame.fillna(value=np.nan).infer_objects(**infer_objects_kwargs)
+        else:
             frame = frame.fillna(value=np.nan).infer_objects(**infer_objects_kwargs)
     return frame
 
@@ -352,7 +355,7 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
     return np.int32
 
 
-# TODO: Remove when Scipy 1.12 is the minimum supported version
+# TODO: Remove when SciPy 1.12 is the minimum supported version
 if sp_version < parse_version("1.12"):
     from sklearn.externals._scipy.sparse.csgraph import laplacian
 else:

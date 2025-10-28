@@ -1,12 +1,13 @@
 - :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
-  :class:`linear_model.Lasso`, :class:`linear_model.LassoCV` as well as
+  :class:`linear_model.Lasso`, :class:`linear_model.LassoCV`,
+  :class:`linear_model.MultiTaskElasticNetCV`, :class:`linear_model.MultiTaskLassoCV`
+  as well as
   :func:`linear_model.lasso_path` and :func:`linear_model.enet_path` now implement
-  gap safe screening rules in the coordinate descent solver for dense `X` (with
-  `precompute=False` or `"auto"` with `n_samples < n_features`) and sparse `X`
-  (always).
+  gap safe screening rules in the coordinate descent solver for dense and sparse `X`.
   The speedup of fitting time is particularly pronounced (10-times is possible) when
   computing regularization paths like the \*CV-variants of the above estimators do.
   There is now an additional check of the stopping criterion before entering the main
   loop of descent steps. As the stopping criterion requires the computation of the dual
   gap, the screening happens whenever the dual gap is computed.
-  By :user:`Christian Lorentzen <lorentzenchr>` :pr:`31882` and
+  By :user:`Christian Lorentzen <lorentzenchr>` :pr:`31882`, :pr:`31986`,
+  :pr:`31987` and
