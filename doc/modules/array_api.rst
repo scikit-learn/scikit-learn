@@ -147,6 +147,7 @@ Metrics
 
 - :func:`sklearn.metrics.accuracy_score`
 - :func:`sklearn.metrics.brier_score_loss`
+- :func:`sklearn.metrics.cluster.calinski_harabasz_score`
 - :func:`sklearn.metrics.confusion_matrix`
 - :func:`sklearn.metrics.d2_brier_score`
 - :func:`sklearn.metrics.d2_log_loss_score`
