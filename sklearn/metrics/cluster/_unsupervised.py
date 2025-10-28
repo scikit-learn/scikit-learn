@@ -16,7 +16,11 @@ from sklearn.metrics.pairwise import (
 )
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import _safe_indexing, check_random_state, check_X_y
-from sklearn.utils._array_api import get_namespace_and_device, xpx
+from sklearn.utils._array_api import (
+    _max_precision_float_dtype,
+    get_namespace_and_device,
+    xpx,
+)
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 
 
@@ -363,7 +367,8 @@ def calinski_harabasz_score(X, labels):
     114.8...
     """
 
-    xp, _, _ = get_namespace_and_device(X, labels)
+    xp, _, device_ = get_namespace_and_device(X, labels)
+    X = xp.astype(X, _max_precision_float_dtype(xp, device_), copy=False)
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()
     labels = le.fit_transform(labels)
@@ -374,10 +379,10 @@ def calinski_harabasz_score(X, labels):
     check_number_of_labels(n_labels, n_samples)
 
     extra_disp, intra_disp = 0.0, 0.0
-    mean = xp.sum(X, axis=0) / X.shape[0]
+    mean = xp.mean(X, axis=0)
     for k in range(n_labels):
         cluster_k = X[labels == k]
-        mean_k = xp.sum(cluster_k, axis=0) / cluster_k.shape[0]
+        mean_k = xp.mean(cluster_k, axis=0)
         extra_disp += cluster_k.shape[0] * xp.sum((mean_k - mean) ** 2)
         intra_disp += xp.sum((cluster_k - mean_k) ** 2)
 
