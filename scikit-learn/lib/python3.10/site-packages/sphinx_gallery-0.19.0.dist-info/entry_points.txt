@@ -1,0 +1,2 @@
+[console_scripts]
+sphinx_gallery_py2jupyter = sphinx_gallery.notebook:python_to_jupyter_cli

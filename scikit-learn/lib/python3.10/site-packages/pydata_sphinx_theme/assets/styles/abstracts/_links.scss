@@ -1,0 +1,222 @@
+// Consistent styling for links
+// ============================
+
+@use "sass:string";
+
+// Define some useful variables for links styling consistency
+
+// The default thickness of the underline for links will be either:
+//  - 1px
+//  - 0.0625rem if it's thicker than 1px because the user has changed the text
+//    size in their browser
+$link-underline-thickness: string.unquote("max(1px, .0625rem)") !default;
+
+// Offset of link underlines from text baseline
+// The default is 3px expressed as ems, as calculated against the default body
+// font size (on desktop).
+$link-underline-offset: 0.1578em !default;
+
+// Thickness of link underlines in hover state
+// The default for each link will be the thickest of the following:
+//  - 3px
+//  - 0.1875rem, if it's thicker than 3px because the user has changed the text
+//    size in their browser
+//  - 0.12em (relative to the link's text size)
+$link-hover-decoration-thickness: string.unquote(
+  "max(3px, .1875rem, .12em)"
+) !default;
+
+// Ensures links have an underline decoration by default - needed to meet
+// WCAG SC 1.4.1
+@mixin link-decoration {
+  text-decoration: underline;
+
+  @if $link-underline-thickness {
+    text-decoration-thickness: $link-underline-thickness;
+  }
+
+  @if $link-underline-offset {
+    text-underline-offset: $link-underline-offset;
+  }
+}
+
+// Ensures links have an underline decoration on hover - distinct from the
+// default behaviour
+@mixin link-decoration-hover {
+  @if $link-hover-decoration-thickness {
+    text-decoration-thickness: $link-hover-decoration-thickness;
+
+    // Disable ink skipping on underlines on hover.
+    text-decoration-skip-ink: none;
+  }
+}
+
+// Simple hover style - can be used alone or in conjunction with other mixins
+// Add the text underline and change in thickness on hover.
+// Intended for use with the `:hover` pseudo-class.
+@mixin link-style-hover {
+  @include link-decoration;
+  @include link-decoration-hover;
+
+  color: var(--pst-color-link-hover);
+}
+
+// Default link styles
+// -------------------
+// Defines: default unvisited, visited, hover, and active.
+// TODO: @trallard to improve focus styles in subsequent PR
+@mixin link-style-default {
+  // So that really long links don't spill out of their container
+  word-wrap: break-word;
+  color: var(--pst-color-link);
+
+  @include link-decoration;
+
+  &:hover {
+    color: var(--pst-color-link-hover);
+
+    @include link-decoration-hover;
+  }
+
+  // TODO: @trallard to add active styles in subsequent PR
+  &:active {
+    color: var(--pst-color-link);
+  }
+
+  // Visited should still be hoverable
+  &:visited {
+    color: var(--pst-color-link);
+
+    &:hover {
+      color: var(--pst-color-link-hover);
+    }
+  }
+}
+
+// Text link styles
+// ----------------
+// Makes links use the muted text colour and removes the underline.
+// Use this mixin for navigation bar links.
+@mixin link-style-text {
+  color: var(--pst-color-text-muted);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--pst-color-link-hover);
+
+    @include link-decoration;
+    @include link-decoration-hover;
+  }
+}
+
+// Sidebar and TOC links
+// ---------------------
+// Makes links use the muted text colour and removes the underline.
+// Use this mixin for navigation the primary sidebar and table of contents.
+// Active and hover should work together rather than one overriding the other.
+@mixin link-sidebar {
+  color: var(--pst-color-text-muted);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    background-color: transparent;
+    color: var(--pst-color-link-hover);
+
+    @include link-decoration-hover;
+  }
+
+  // TODO: @trallard to update active styles in subsequent PR
+  &:active {
+    color: var(--pst-color-link-hover);
+  }
+
+  &:focus-visible {
+    box-shadow: $focus-ring-box-shadow;
+    outline: none;
+    z-index: 10; // keep focus ring on top (prevent the link-sidebar-current notch from lying on top of the ring)
+  }
+}
+
+// Sidebar current page link styles
+// --------------------------------
+// Adds a vertical line on the left hand side of the link to indicate that
+// it's the current page. Note this is distinct from an active state.
+// Used on the primary sidebar and the TOC.
+// We want the side box shadow to have the same thickness as the hover underline
+@mixin link-sidebar-current {
+  font-weight: 600;
+  color: var(--pst-color-primary);
+
+  @if $link-hover-decoration-thickness {
+    $notch-shadow: inset
+      $link-hover-decoration-thickness
+      0
+      0
+      var(--pst-color-primary);
+
+    box-shadow: $notch-shadow;
+
+    &:focus-visible {
+      box-shadow: $notch-shadow, $focus-ring-box-shadow;
+      outline: none;
+    }
+  }
+}
+
+// Header navbar text and icon links
+// ---------------------------------
+// (includes light/dark mode button)
+
+// This mixin makes it possible to show hover/underline and focus/ring styles at
+// the same time. The trick is to use:
+//    - a pseudo-element with bottom border for the hover underline
+//    - a CSS outline for the focus ring.
+
+// Normally we use box-shadow for underline and outline for focus ring. But we
+// cannot apply box-shadow and outline together on the same element because the
+// border-radius value that we use to round the outline will also round the
+// box-shadow used for the underline. We also cannot use text-underline because
+// it does not work on non-text links, nor do we want to use it on text links
+// that we want to treat as blocks, such as the header nav links because the
+// underline will wrap across two lines if the link text also wraps across two
+// lines.
+@mixin link-style-block {
+  color: var(--pst-color-text-muted);
+
+  // Set position relative so that the child ::before pseudo-element's absolute
+  // position is relative to this element.
+  position: relative;
+
+  // Set up pseudo-element used for hover underline styles
+  &::before {
+    content: "";
+    display: block;
+    position: absolute;
+    inset: 0;
+    background-color: transparent;
+
+    @if $link-hover-decoration-thickness {
+      bottom: calc(-1 * $link-hover-decoration-thickness);
+      margin: $link-hover-decoration-thickness 0;
+    }
+  }
+
+  &:hover {
+    color: var(--pst-color-secondary);
+    text-decoration: none; // override the link-style-hover mixin
+    &::before {
+      @if $link-hover-decoration-thickness {
+        border-bottom: $link-hover-decoration-thickness
+          solid
+          var(--pst-color-secondary);
+      }
+    }
+  }
+
+  &:focus-visible {
+    box-shadow: none; // override Bootstrap
+    outline: 3px solid var(--pst-color-accent);
+    outline-offset: $focus-ring-width;
+  }
+}

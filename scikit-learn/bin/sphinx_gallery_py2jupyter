@@ -1,0 +1,7 @@
+#!/home/lenovo/scikit-learn/scikit-learn/bin/python3
+import sys
+from sphinx_gallery.notebook import python_to_jupyter_cli
+if __name__ == '__main__':
+    if sys.argv[0].endswith('.exe'):
+        sys.argv[0] = sys.argv[0][:-4]
+    sys.exit(python_to_jupyter_cli())

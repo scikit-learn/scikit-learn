@@ -1,0 +1,457 @@
+# Copyright (c) Amber Brown, 2015
+# See LICENSE for details.
+
+
+from __future__ import annotations
+
+import os
+import re
+import textwrap
+
+from collections import defaultdict
+from collections.abc import Iterable, Iterator, Mapping, Sequence
+from fnmatch import fnmatch
+from pathlib import Path
+from typing import Any, DefaultDict, NamedTuple
+
+from click import ClickException
+from jinja2 import Template
+
+from towncrier._settings.load import Config
+
+
+# Returns issue, category and counter or (None, None, None) if the basename
+# could not be parsed or doesn't contain a valid category.
+def parse_newfragment_basename(
+    basename: str, frag_type_names: Iterable[str]
+) -> tuple[str, str, int] | tuple[None, None, None]:
+    invalid = (None, None, None)
+    parts = basename.split(".")
+
+    if len(parts) == 1:
+        return invalid
+
+    # There are at least 2 parts. Search for a valid category from the second
+    # part onwards starting at the back.
+    # The category is used as the reference point in the parts list to later
+    # infer the issue number and counter value.
+    for i in reversed(range(1, len(parts))):
+        if parts[i] in frag_type_names:
+            # Current part is a valid category according to given definitions.
+            category = parts[i]
+            # Use all previous parts as the issue number.
+            # NOTE: This allows news fragment names like fix-1.2.3.feature or
+            # something-cool.feature.ext for projects that don't use issue
+            # numbers in news fragment names.
+            issue = ".".join(parts[0:i]).strip()
+            # If the issue is an integer, remove any leading zeros (to resolve
+            # issue #126).
+            if issue.isdigit():
+                issue = str(int(issue))
+            counter = 0
+            # Use the following part as the counter if it exists and is a valid
+            # digit.
+            if len(parts) > (i + 1) and parts[i + 1].isdigit():
+                counter = int(parts[i + 1])
+            return issue, category, counter
+    else:
+        # No valid category found.
+        return invalid
+
+
+class FragmentsPath:
+    """
+    A helper to get the full path to a fragments directory.
+
+    This is a callable that optionally takes a section directory and returns the full
+    path to the fragments directory for that section (or the default if no section is
+    provided).
+    """
+
+    def __init__(self, base_directory: str, config: Config):
+        self.base_directory = base_directory
+        self.config = config
+        if config.directory is not None:
+            self.base_directory = os.path.abspath(
+                os.path.join(base_directory, config.directory)
+            )
+            self.append_directory = ""
+        else:
+            self.base_directory = os.path.abspath(
+                os.path.join(base_directory, config.package_dir, config.package)
+            )
+            self.append_directory = "newsfragments"
+
+    def __call__(self, section_directory: str = "") -> str:
+        return os.path.join(
+            self.base_directory, section_directory, self.append_directory
+        )
+
+
+# Returns a structure like:
+#
+# {
+#     "": {
+#         ("142", "misc", 1): "",
+#         ("1", "feature", 1): "some cool description",
+#     },
+#     "Names": {},
+#     "Web": {("3", "bugfix", 1): "Fixed a thing"},
+# }
+#
+# and a list like:
+# [
+#    ("/path/to/fragments/142.misc.1", "misc"),
+#    ("/path/to/fragments/1.feature.1", "feature"),
+# ]
+#
+# We should really use attrs.
+def find_fragments(
+    base_directory: str,
+    config: Config,
+    strict: bool,
+) -> tuple[Mapping[str, Mapping[tuple[str, str, int], str]], list[tuple[str, str]]]:
+    """
+    Sections are a dictonary of section names to paths.
+
+    If strict, raise ClickException if any fragments have an invalid name.
+    """
+    ignored_files = {
+        ".gitignore",
+        ".gitkeep",
+        ".keep",
+        "readme",
+        "readme.md",
+        "readme.rst",
+    }
+    if isinstance(config.template, str):
+        # Template can be a tuple of (package_name, resource_name).
+        #
+        # See https://github.com/twisted/towncrier/issues/634
+        ignored_files.add(os.path.basename(config.template))
+    if config.ignore:
+        ignored_files.update(filename.lower() for filename in config.ignore)
+
+    get_section_path = FragmentsPath(base_directory, config)
+
+    content = {}
+    fragment_files = []
+    # Multiple orphan news fragments are allowed per section, so initialize a counter
+    # that can be incremented automatically.
+    orphan_fragment_counter: DefaultDict[str | None, int] = defaultdict(int)
+
+    for key, section_dir in config.sections.items():
+        section_dir = get_section_path(section_dir)
+
+        try:
+            files = os.listdir(section_dir)
+        except FileNotFoundError:
+            files = []
+
+        file_content = {}
+
+        for basename in files:
+            if any(
+                [
+                    fnmatch(basename.lower(), ignore_pattern)
+                    for ignore_pattern in ignored_files
+                ]
+            ):
+                continue
+
+            issue, category, counter = parse_newfragment_basename(
+                basename, config.types
+            )
+            if category is None:
+                if strict and issue is None:
+                    raise ClickException(
+                        f"Invalid news fragment name: {basename}\n"
+                        "If this filename is deliberate, add it to "
+                        "'ignore' in your configuration."
+                    )
+                continue
+            assert issue is not None
+            assert counter is not None
+            if config.orphan_prefix and issue.startswith(config.orphan_prefix):
+                issue = ""
+                # Use and increment the orphan news fragment counter.
+                counter = orphan_fragment_counter[category]
+                orphan_fragment_counter[category] += 1
+
+            if (
+                config.issue_pattern
+                and issue  # not orphan
+                and not re.fullmatch(config.issue_pattern, issue)
+            ):
+                raise ClickException(
+                    f"Issue name '{issue}' does not match the "
+                    f"configured pattern, '{config.issue_pattern}'"
+                )
+            full_filename = os.path.join(section_dir, basename)
+            fragment_files.append((full_filename, category))
+            data = Path(full_filename).read_text(encoding="utf-8", errors="replace")
+
+            if (issue, category, counter) in file_content:
+                raise ValueError(
+                    "multiple files for {}.{} in {}".format(
+                        issue, category, section_dir
+                    )
+                )
+            file_content[issue, category, counter] = data
+
+        content[key] = file_content
+
+    return content, fragment_files
+
+
+def indent(text: str, prefix: str) -> str:
+    """
+    Adds `prefix` to the beginning of non-empty lines in `text`.
+    """
+
+    # Based on Python 3's textwrap.indent
+    def prefixed_lines() -> Iterator[str]:
+        for line in text.splitlines(True):
+            yield (prefix + line if line.strip() else line)
+
+    return "".join(prefixed_lines())
+
+
+# Takes the output from find_fragments above. Probably it would be useful to
+# add an example output here. Next time someone digs deep enough to figure it
+# out, please do so...
+def split_fragments(
+    fragments: Mapping[str, Mapping[tuple[str, str, int], str]],
+    definitions: Mapping[str, Mapping[str, Any]],
+    all_bullets: bool = True,
+) -> Mapping[str, Mapping[str, Mapping[str, Sequence[str]]]]:
+    output = {}
+
+    for section_name, section_fragments in fragments.items():
+        section: dict[str, dict[str, list[str]]] = {}
+
+        for (issue, category, counter), content in section_fragments.items():
+            if all_bullets:
+                # By default all fragmetns are append by "-" automatically,
+                # and need to be indented because of that.
+                # (otherwise, assume they are formatted correctly)
+                content = indent(content.strip(), "  ")[2:]
+            else:
+                # Assume the text is formatted correctly
+                content = content.rstrip()
+
+            if definitions[category]["showcontent"] is False and issue:
+                # If this category is not supposed to show content (and we have an
+                # issue) then we should just add the issue to the section rather than
+                # the content. If there isn't an issue, still add the content so that
+                # it's recorded.
+                content = ""
+
+            texts = section.setdefault(category, {})
+
+            issues = texts.setdefault(content, [])
+            if issue:
+                # Only add the issue if we have one (it can be blank for orphan news
+                # fragments).
+                issues.append(issue)
+                issues.sort()
+
+        output[section_name] = section
+
+    return output
+
+
+class IssueParts(NamedTuple):
+    is_digit: bool
+    has_digit: bool
+    non_digit_part: str
+    number: int
+
+
+def issue_key(issue: str) -> IssueParts:
+    """
+    Used to sort the issue ID inside a news fragment in a human-friendly way.
+
+    Issue IDs are grouped by their non-integer part, then sorted by their integer part.
+
+    For backwards compatible consistency, issues without no number are sorted first and
+    digit only issues are sorted last.
+
+    For example::
+
+    >>> sorted(["2", "#11", "#3", "gh-10", "gh-4", "omega", "alpha"], key=issue_key)
+    ['alpha', 'omega', '#3', '#11', 'gh-4', 'gh-10', '2']
+    """
+    if issue.isdigit():
+        return IssueParts(
+            is_digit=True, has_digit=True, non_digit_part="", number=int(issue)
+        )
+    match = re.search(r"\d+", issue)
+    if not match:
+        return IssueParts(
+            is_digit=False, has_digit=False, non_digit_part=issue, number=-1
+        )
+    return IssueParts(
+        is_digit=False,
+        has_digit=True,
+        non_digit_part=issue[: match.start()] + issue[match.end() :],
+        number=int(match.group()),
+    )
+
+
+def entry_key(entry: tuple[str, Sequence[str]]) -> tuple[str, list[IssueParts]]:
+    content, issues = entry
+    # Orphan news fragments (those without any issues) should sort last by content.
+    return "" if issues else content, [issue_key(issue) for issue in issues]
+
+
+def bullet_key(entry: tuple[str, Sequence[str]]) -> int:
+    text, _ = entry
+    if not text:
+        return -1
+    if text[:2] == "- ":
+        return 0
+    elif text[:2] == "* ":
+        return 1
+    elif text[:3] == "#. ":
+        return 2
+    return 3
+
+
+def render_issue(issue_format: str | None, issue: str) -> str:
+    if issue_format is None:
+        try:
+            int(issue)
+            return "#" + issue
+        except Exception:
+            return issue
+    else:
+        return issue_format.format(issue=issue)
+
+
+def append_newlines_if_trailing_code_block(text: str) -> str:
+    """
+    Appends two newlines to a text string if it ends with a code block.
+
+    Used by `render_fragments` to avoid appending link to issue number into the code block.
+    """
+    # Search for the existence of a code block at the end. We do this by searching for:
+    # 1. start of code block: two ":", followed by two newlines
+    # 2. any number of indented, or empty, lines (or the code block would end)
+    # 3. one line of indented text w/o a trailing newline (because the string is stripped)
+    # 4. end of the string.
+    indented_text = r"  [ \t]+[^\n]*"
+    empty_or_indented_text_lines = f"(({indented_text})?\n)*"
+    regex = r"::\n\n" + empty_or_indented_text_lines + indented_text + "$"
+    if re.search(regex, text):
+        # We insert one space, the default template inserts another, which results
+        # in the correct indentation given default bullet indentation.
+        # Non-default templates with different indentation will likely encounter issues
+        # if they have trailing code blocks.
+        return text + "\n\n "
+    return text
+
+
+def render_fragments(
+    template: str,
+    issue_format: str | None,
+    fragments: Mapping[str, Mapping[str, Mapping[str, Sequence[str]]]],
+    definitions: Mapping[str, Mapping[str, Any]],
+    underlines: Sequence[str],
+    wrap: bool,
+    versiondata: Mapping[str, str],
+    top_underline: str = "=",
+    all_bullets: bool = False,
+    render_title: bool = True,
+    md_header_level: int = 1,
+) -> str:
+    """
+    Render the fragments into a news file.
+    """
+
+    jinja_template = Template(template, trim_blocks=True)
+
+    data: dict[str, dict[str, dict[str, list[str]]]] = {}
+    issues_by_category: dict[str, dict[str, list[str]]] = {}
+
+    for section_name, section_value in fragments.items():
+        data[section_name] = {}
+        issues_by_category[section_name] = {}
+
+        for category_name, category_value in section_value.items():
+            category_issues: set[str] = set()
+            # Suppose we start with an ordering like this:
+            #
+            # - Fix the thing (#7, #123, #2)
+            # - Fix the other thing (#1)
+
+            # First we sort the issues inside each line:
+            #
+            # - Fix the thing (#2, #7, #123)
+            # - Fix the other thing (#1)
+            entries = []
+            for text, issues in category_value.items():
+                entries.append((text, sorted(issues, key=issue_key)))
+                category_issues.update(issues)
+
+            # Then we sort the lines:
+            #
+            # - Fix the other thing (#1)
+            # - Fix the thing (#2, #7, #123)
+            entries.sort(key=entry_key)
+            if not all_bullets:
+                entries.sort(key=bullet_key)
+
+            # Then we put these nicely sorted entries back in an ordered dict
+            # for the template, after formatting each issue number
+            categories = {}
+            for text, issues in entries:
+                text = append_newlines_if_trailing_code_block(text)
+                rendered = [render_issue(issue_format, i) for i in issues]
+                categories[text] = rendered
+
+            data[section_name][category_name] = categories
+            issues_by_category[section_name][category_name] = [
+                render_issue(issue_format, i)
+                for i in sorted(category_issues, key=issue_key)
+            ]
+
+    done = []
+
+    def get_indent(text: str) -> str:
+        # If bullets are not assumed and we wrap, the subsequent
+        # indentation depends on whether or not this is a bullet point.
+        # (it is probably usually best to disable wrapping in that case)
+        if all_bullets or text[:2] == "- " or text[:2] == "* ":
+            return "  "
+        elif text[:3] == "#. ":
+            return "   "
+        return ""
+
+    res = jinja_template.render(
+        render_title=render_title,
+        sections=data,
+        definitions=definitions,
+        underlines=underlines,
+        versiondata=versiondata,
+        top_underline=top_underline,
+        get_indent=get_indent,  # simplify indentation in the jinja template.
+        issues_by_category=issues_by_category,
+        header_prefix="#" * md_header_level,
+    )
+
+    for line in res.split("\n"):
+        if wrap:
+            done.append(
+                textwrap.fill(
+                    line,
+                    width=79,
+                    subsequent_indent=get_indent(line),
+                    break_long_words=False,
+                    break_on_hyphens=False,
+                )
+            )
+        else:
+            done.append(line)
+
+    return "\n".join(done)

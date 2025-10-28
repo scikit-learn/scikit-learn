@@ -1,0 +1,10 @@
+{# Displays a search field image that opens a search overlay when clicked. #}
+{#
+    As this function will only work when JavaScript is enabled,
+    we add a class that will hide it if js is disable.
+#}
+<button class="btn search-button-field search-button__button pst-js-only" title="{{ _('Search') }}" aria-label="{{ _('Search') }}" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">{{ _('Search') }}</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>

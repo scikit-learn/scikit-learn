@@ -1,0 +1,14 @@
+/**
+ * Special-cases for packages in the PyData ecosystem
+ */
+
+// xarray output display in bootstrap
+.xr-wrap[hidden] {
+  display: block !important;
+}
+
+// ipywidgets
+.jp-OutputArea-output.lm-Widget {
+  // override overflow:hidden rule from Lumino (.lm-Widget) to allow scrolling
+  overflow: auto;
+}

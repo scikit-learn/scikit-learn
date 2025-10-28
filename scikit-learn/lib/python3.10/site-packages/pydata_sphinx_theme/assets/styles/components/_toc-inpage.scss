@@ -1,0 +1,57 @@
+/* Collapsing of the TOC sidebar while scrolling */
+
+/* Nav: hide second level (shown on .active) */
+
+nav.page-toc {
+  // A little extra space before the buttons
+  margin-bottom: 1rem;
+}
+
+.bd-toc .nav {
+  .nav {
+    display: none;
+
+    // So we can manually specify a level as visible in the config
+    &.visible {
+      display: block;
+    }
+  }
+
+  > .active > ul {
+    display: block;
+  }
+}
+
+// Each entry of the in-page TOC
+.toc-entry {
+  display: block;
+
+  a > code {
+    color: var(--pst-color-text-muted);
+  }
+
+  a.nav-link {
+    display: block;
+    padding: $toc-item-padding-y 0;
+
+    // Padding w/ negative margin so the top TOC item highlight overlaps w/ the TOC border
+    padding-left: 1rem;
+    margin-left: -1rem;
+
+    @include link-sidebar;
+
+    &.active {
+      @include link-sidebar-current;
+
+      background-color: transparent;
+
+      &:hover {
+        color: var(--pst-color-link-hover);
+      }
+    }
+
+    &:focus-visible {
+      border-radius: $focus-ring-radius;
+    }
+  }
+}

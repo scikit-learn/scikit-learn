@@ -1,0 +1,7 @@
+Wheel-Version: 1.0
+Generator: setuptools (75.3.2)
+Root-Is-Purelib: false
+Tag: cp36-abi3-manylinux_2_12_x86_64
+Tag: cp36-abi3-manylinux2010_x86_64
+Tag: cp36-abi3-manylinux_2_28_x86_64
+

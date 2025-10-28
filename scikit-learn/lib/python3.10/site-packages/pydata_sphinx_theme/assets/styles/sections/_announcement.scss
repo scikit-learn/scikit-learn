@@ -1,0 +1,79 @@
+.pst-async-banner-revealer {
+  // Setting height to 0 and overflow to hidden allows us to add up the heights
+  // of this element's children before revealing them.
+  height: 0;
+  overflow: hidden;
+
+  // Height to be set by JavaScript, which should trigger the following
+  // transition rule (unless the user has set their system to reduce motion).
+  transition: height 300ms ease-in-out;
+
+  @media (prefers-reduced-motion) {
+    transition: none;
+  }
+}
+
+#bd-header-version-warning,
+.bd-header-announcement {
+  min-height: 3rem;
+  width: 100%;
+  display: flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0.5rem 12.5%; // Horizontal padding so the width is 75%
+  // One breakpoint less than $breakpoint-sidebar-primary. See variables/_layout.scss for more info.
+  @include media-breakpoint-down(lg) {
+    // Announcements can take a bit more width on mobile
+    padding: 0.5rem 2%;
+  }
+
+  p {
+    font-weight: bold;
+    margin: 0;
+  }
+
+  // Ensure there is enough contrast against the background
+  a {
+    color: var(--pst-color-inline-code-links);
+  }
+
+  // The "Switch to stable version" link (styled like a button)
+  .pst-button-link-to-stable-version {
+    @include box-shadow;
+
+    $background-color: var(--pst-color-danger);
+    $hover-background-color: var(--pst-color-danger-highlight);
+    $color: var(--pst-color-danger-text);
+
+    background-color: $background-color;
+    border-color: $background-color;
+    color: $color;
+    border-radius: 0.25rem;
+
+    &:hover {
+      // applying the same style as the SD "buttons"
+      @include link-style-hover;
+
+      text-decoration-thickness: 1px;
+      background-color: $hover-background-color;
+      border-color: $hover-background-color;
+      color: var(--pst-color-danger-highlight-text);
+    }
+
+    &:focus-visible {
+      outline: $focus-ring-width solid $background-color;
+      outline-offset: $focus-ring-width;
+    }
+  }
+}
+
+// Bg color is now defined in the theme color palette - using our secondary color
+.bd-header-announcement {
+  background-color: var(--pst-color-secondary-bg);
+}
+
+#bd-header-version-warning {
+  background-color: var(--pst-color-danger-bg);
+}

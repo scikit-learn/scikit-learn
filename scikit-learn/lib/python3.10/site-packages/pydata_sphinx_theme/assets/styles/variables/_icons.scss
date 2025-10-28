@@ -1,0 +1,29 @@
+html {
+  /*****************************************************************************
+  * Icon
+  */
+
+  // Font size across all icons
+  --pst-font-size-icon: 1.5rem;
+
+  // Font Awesome default icons
+  --pst-icon-check-circle: "\f058"; // fa-solid fa-circle-check
+  --pst-icon-info-circle: "\f05a"; // fa-solid fa-circle-info
+  --pst-icon-exclamation-triangle: "\f071"; // fa-solid fa-triangle-exclamation
+  --pst-icon-exclamation-circle: "\f06a"; // fa-solid fa-circle-exclamation
+  --pst-icon-times-circle: "\f057"; // fa-solid fa-circle-xmark
+  --pst-icon-lightbulb: "\f0eb"; // fa-solid fa-lightbulb
+  --pst-icon-download: "\f019"; // fa-solid fa-download
+  --pst-icon-angle-left: "\f104"; // fa-solid fa-angle-left
+  --pst-icon-angle-right: "\f105"; // fa-solid fa-angle-right
+  --pst-icon-external-link: "\f35d"; // fa-solid fa-up-right-from-square
+  --pst-icon-search-minus: "\f010"; // fa-solid fa-magnifying-glass-minus
+  --pst-icon-github: "\f09b"; // fa-brands fa-github
+  --pst-icon-gitlab: "\f296"; // fa-brands fa-gitlab
+  --pst-icon-share: "\f064"; // fa-solid fa-share
+  --pst-icon-bell: "\f0f3"; // fa-solid fa-bell
+  --pst-icon-pencil: "\f303"; // fa-solid fa-pencil
+
+  // Bootstrap icons
+  --pst-breadcrumb-divider: "\f105";
+}

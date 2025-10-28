@@ -1,0 +1,22 @@
+{# Displays a dropdown box for switching among different versions of your documentation. #}
+{%- set button_id = unique_html_id("pst-version-switcher-button") -%}
+{%- set dropdown_id = unique_html_id("pst-version-switcher-list") -%}
+{# As the version switcher will only work when JavaScript is enabled, we hide it with pst-js-only #}
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="{{ button_id }}"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="{{ dropdown_id }}"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="{{ dropdown_id }}"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="{{ button_id }}">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div>

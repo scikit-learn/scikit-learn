@@ -1,0 +1,7 @@
+{# Displays the version of pydata-sphinx-theme used to build the documentation. #}
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  {% trans trimmed theme_version=theme_version|e, PST_url="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html" %}
+    Built with the <a href="{{ PST_url }}">PyData Sphinx Theme</a> {{ theme_version }}.
+  {% endtrans %}
+</p>

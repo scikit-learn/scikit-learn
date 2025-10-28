@@ -1,0 +1,16 @@
+{# Displays the download link for the Python source code of the example. #}
+{% set download_links = get_download_links() %}
+{% if download_links %}
+  <div class="sphx-glr-sidebar-component">
+    {% for key, link_info in download_links.items() %}
+      {% if link_info %}
+        <div class="sphx-glr-sidebar-item sphx-glr-download-{{ key }}-sidebar" title="{{ link_info.title }}">
+          <a download href="{{ pathto(link_info.link, 1) }}">
+            <i class="fa-solid fa-download"></i>
+            Download {{ link_info.label }}
+          </a>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}

@@ -1,0 +1,142 @@
+/**
+ * Styles for various Sphinx execution libraries to display pre-executed notebooks.
+ * For now, where these define output sections, we simply revert their background
+ * to be a "light theme" background. This ensures that inputs/outputs behave similarly,
+ * because the CSS is often controlled by each package.
+ * In the future, we might add dark theme support for specific packages.
+ */
+
+/*******************************************************************************
+ * nbsphinx
+ */
+html div.rendered_html,
+// NBsphinx ipywidgets output selector
+html .jp-RenderedHTMLCommon {
+  // Add some margin around the element box for the focus ring. Otherwise the
+  // focus ring gets clipped because the containing elements have `overflow:
+  // hidden` applied to them (via the `.lm-Widget` selector)
+  margin: $focus-ring-width;
+
+  table {
+    table-layout: auto;
+  }
+}
+
+.bd-content .nboutput {
+  .output_area {
+    &.rendered_html,
+    .jp-RenderedHTMLCommon {
+      // pandas
+      table.dataframe {
+        @include table-colors;
+
+        tbody {
+          tr:hover {
+            background-color: var(--pst-color-table-row-hover-bg);
+          }
+        }
+      }
+    }
+
+    // Dark theme special-cases
+    html[data-theme="dark"] & {
+      &.rendered_html:not(:has(table.dataframe)),
+      // ipywidgets
+      .widget-subarea {
+        @include cell-output-background;
+      }
+
+      &.stderr {
+        background-color: var(--pst-color-danger);
+      }
+    }
+  }
+}
+
+// Add extra padding to the final item in an nbsphinx container
+div.nblast.container {
+  margin-bottom: 1rem;
+}
+
+// Override nbsphinx's colors for notebook cell prompts because they do not have
+// sufficient contrast. Colors chosen from accessible-pygments
+// a11y-high-contrast-{light,dark} themes.
+
+// Notebook cell input line number. Replace nbsphinx's low contrast blue with
+// higher contrast blues.
+.nbinput.container .prompt pre {
+  html[data-theme="light"] & {
+    // Copied from accessible-pygments [a11y-high-contrast-light](https://github.com/Quansight-Labs/accessible-pygments/tree/main/a11y_pygments/a11y_high_contrast_light)
+    color: #005b82;
+  }
+
+  html[data-theme="dark"] & {
+    // Copied from accessible-pygments [a11y-high-contrast-dark](https://github.com/Quansight-Labs/accessible-pygments/tree/main/a11y_pygments/a11y_high_contrast_dark)
+    color: #00e0e0;
+  }
+}
+
+// Notebook cell output line number. Replace nbsphinx's low contrast red with
+// higher contrast red / orange.
+.nboutput.container .prompt pre {
+  html[data-theme="light"] & {
+    // Copied from accessible-pygments [a11y-high-contrast-light](https://github.com/Quansight-Labs/accessible-pygments/tree/main/a11y_pygments/a11y_high_contrast_light)
+    color: #a12236;
+  }
+
+  html[data-theme="dark"] & {
+    // Copied from accessible-pygments [a11y-high-contrast-dark](https://github.com/Quansight-Labs/accessible-pygments/tree/main/a11y_pygments/a11y_high_contrast_dark)
+    color: #ffa07a;
+  }
+}
+
+/*******************************************************************************
+ * myst NB
+ */
+
+div.cell_output .output {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.bd-content div.cell_output {
+  // pandas
+  table.dataframe {
+    @include table-colors;
+
+    tbody {
+      tr:hover {
+        background-color: var(--pst-color-table-row-hover-bg);
+      }
+    }
+  }
+
+  html[data-theme="dark"] & {
+    img,
+    .text_html:not(:has(table.dataframe)),
+    // ipywidgets
+    .widget-subarea {
+      @include cell-output-background;
+    }
+  }
+}
+
+// Prevent tables from scrunching together
+.bd-content {
+  div.cell_input {
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+  }
+
+  div.cell_input,
+  div.output {
+    border-radius: $admonition-border-radius;
+  }
+
+  div.output {
+    table {
+      table-layout: auto;
+    }
+  }
+}

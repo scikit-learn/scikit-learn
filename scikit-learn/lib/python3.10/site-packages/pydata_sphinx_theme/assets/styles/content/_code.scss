@@ -1,0 +1,71 @@
+/**
+ * Code block styling
+ * Note that we inherit a lot of styling from Bootstrap so not many rules here.
+ */
+
+// General code block behavior
+// Unset bootstrap behavior
+div[class*="highlight-"],
+div.highlight,
+div.literal-block-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: unset;
+  border-radius: $admonition-border-radius;
+  break-inside: avoid;
+}
+
+// Code blocks with captions
+// There's a wrapper when the code block has a title
+div.literal-block-wrapper {
+  border: 1px solid var(--pst-color-border);
+  border-radius: $admonition-border-radius;
+
+  // This is where the title goes
+  div.code-block-caption {
+    margin: 0;
+    border-bottom: 1px solid var(--pst-color-border);
+    padding: 0.5rem;
+    font-size: 1rem;
+    font-weight: var(--pst-font-weight-caption);
+
+    a.headerlink {
+      font-size: inherit;
+    }
+  }
+
+  // Remove the upper border radius since we want it to connect with the title
+  // Remove the box shadow so the wrapper gets the shadow instead
+  div[class*="highlight-"] {
+    margin: 0;
+    border-radius: 0;
+
+    pre {
+      border: none;
+      box-shadow: none;
+    }
+  }
+}
+
+/**
+ * In-line code
+ */
+code.literal {
+  padding: 0.1rem 0.25rem;
+  background-color: var(--pst-color-surface);
+  border: 1px solid var(--pst-color-border);
+  border-radius: 0.25rem;
+}
+
+a > code {
+  color: var(--pst-color-inline-code-links);
+
+  &:hover {
+    color: var(--pst-color-link-hover);
+  }
+}
+
+// Minimum opacity needed for linenos to be WCAG AA conformant
+span.linenos {
+  opacity: 0.8 !important;
+}

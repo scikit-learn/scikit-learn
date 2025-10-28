@@ -1,0 +1,152 @@
+Metadata-Version: 2.1
+Name: pydata-sphinx-theme
+Version: 0.16.1
+Summary: Bootstrap-based Sphinx theme from the PyData community
+Maintainer-Email: Joris Van den Bossche <jorisvandenbossche@gmail.com>
+License: BSD 3-Clause License
+         
+         Copyright (c) 2018, pandas
+         All rights reserved.
+         
+         Redistribution and use in source and binary forms, with or without
+         modification, are permitted provided that the following conditions are met:
+         
+         * Redistributions of source code must retain the above copyright notice, this
+           list of conditions and the following disclaimer.
+         
+         * Redistributions in binary form must reproduce the above copyright notice,
+           this list of conditions and the following disclaimer in the documentation
+           and/or other materials provided with the distribution.
+         
+         * Neither the name of the copyright holder nor the names of its
+           contributors may be used to endorse or promote products derived from
+           this software without specific prior written permission.
+         
+         THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+         AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+         IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+         DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+         FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+         DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+         SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+         CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+         OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+         OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+         
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Framework :: Sphinx
+Classifier: Framework :: Sphinx :: Theme
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: OS Independent
+Project-URL: Source, https://github.com/pydata/pydata-sphinx-theme
+Requires-Python: >=3.9
+Requires-Dist: sphinx>=6.1
+Requires-Dist: beautifulsoup4
+Requires-Dist: docutils!=0.17.0
+Requires-Dist: Babel
+Requires-Dist: pygments>=2.7
+Requires-Dist: accessible-pygments
+Requires-Dist: typing-extensions
+Provides-Extra: doc
+Requires-Dist: numpydoc; extra == "doc"
+Requires-Dist: linkify-it-py; extra == "doc"
+Requires-Dist: rich; extra == "doc"
+Requires-Dist: sphinxext-rediraffe; extra == "doc"
+Requires-Dist: sphinx-sitemap; extra == "doc"
+Requires-Dist: sphinx-autoapi>=3.0.0; extra == "doc"
+Requires-Dist: myst-parser; extra == "doc"
+Requires-Dist: ablog>=0.11.8; extra == "doc"
+Requires-Dist: jupyter_sphinx; extra == "doc"
+Requires-Dist: pandas; extra == "doc"
+Requires-Dist: plotly; extra == "doc"
+Requires-Dist: matplotlib; extra == "doc"
+Requires-Dist: numpy; extra == "doc"
+Requires-Dist: xarray; extra == "doc"
+Requires-Dist: sphinx-copybutton; extra == "doc"
+Requires-Dist: sphinx-design; extra == "doc"
+Requires-Dist: sphinx-togglebutton; extra == "doc"
+Requires-Dist: jupyterlite-sphinx; extra == "doc"
+Requires-Dist: sphinxcontrib-youtube>=1.4.1; extra == "doc"
+Requires-Dist: sphinx-favicon>=1.0.1; extra == "doc"
+Requires-Dist: ipykernel; extra == "doc"
+Requires-Dist: nbsphinx; extra == "doc"
+Requires-Dist: ipyleaflet; extra == "doc"
+Requires-Dist: colorama; extra == "doc"
+Requires-Dist: ipywidgets; extra == "doc"
+Requires-Dist: graphviz; extra == "doc"
+Provides-Extra: test
+Requires-Dist: pytest; extra == "test"
+Requires-Dist: pytest-cov; extra == "test"
+Requires-Dist: pytest-regressions; extra == "test"
+Requires-Dist: sphinx[test]; extra == "test"
+Provides-Extra: dev
+Requires-Dist: pyyaml; extra == "dev"
+Requires-Dist: pre-commit; extra == "dev"
+Requires-Dist: pydata-sphinx-theme[doc,test]; extra == "dev"
+Requires-Dist: tox; extra == "dev"
+Requires-Dist: pandoc; extra == "dev"
+Requires-Dist: sphinx-theme-builder[cli]; extra == "dev"
+Provides-Extra: a11y
+Requires-Dist: pytest-playwright; extra == "a11y"
+Provides-Extra: i18n
+Requires-Dist: Babel; extra == "i18n"
+Requires-Dist: jinja2; extra == "i18n"
+Description-Content-Type: text/markdown
+
+# The PyData Sphinx Theme
+
+[![License badge](https://img.shields.io/badge/License-BSD_3--Clause-yellow?logo=opensourceinitiative&logoColor=white)](https://github.com/pydata/pydata-sphinx-theme/blob/main/LICENSE)
+[![PyPI version badge](https://img.shields.io/pypi/v/pydata-sphinx-theme?logo=python&logoColor=white&color=orange)](https://pypi.org/project/pydata-sphinx-theme/)
+[![conda-forge version badge](https://img.shields.io/conda/vn/conda-forge/pydata-sphinx-theme.svg?logo=anaconda&logoColor=white&color=orange)](https://anaconda.org/conda-forge/pydata-sphinx-theme)
+[![GitHub Workflow test status badge](https://img.shields.io/github/actions/workflow/status/pydata/pydata-sphinx-theme/CI.yml?logo=github&logoColor=white)](https://github.com/pydata/pydata-sphinx-theme/actions/workflows/CI.yml)
+[![Read the Docs build status badge](https://img.shields.io/readthedocs/pydata-sphinx-theme/latest?logo=readthedocs&logoColor=white)](https://readthedocs.org/projects/pydata-sphinx-theme/builds/)
+
+A clean, three-column, Bootstrap-based Sphinx theme by and for the [PyData community](https://pydata.org).
+
+- :books: Documentation: https://pydata-sphinx-theme.readthedocs.io/en/stable
+- :bulb: Examples: https://pydata-sphinx-theme.readthedocs.io/en/stable/examples
+- :raised_hands: Contribute: https://pydata-sphinx-theme.readthedocs.io/en/stable/community
+- :globe_with_meridians: Translate: https://explore.transifex.com/12rambau/pydata-sphinx-theme/
+
+[![PyData theme - Configure the search position demo image showcasing both the light and dark theme in a single image.](./docs/_static/theme-demo-screenshot.png)](https://pydata-sphinx-theme.readthedocs.io/en/stable)
+
+## Installation and usage
+
+The theme is available on PyPI and conda-forge. You can install
+and use as follows:
+
+- Install the `pydata-sphinx-theme` in your doc build environment:
+
+  ```bash
+  pip install pydata-sphinx-theme
+  # or
+  conda install pydata-sphinx-theme --channel conda-forge
+  ```
+
+- Then, in the `conf.py` of your sphinx docs, you update the `html_theme`
+  configuration option:
+
+  ```python
+  html_theme = "pydata_sphinx_theme"
+  ```
+
+And that's it!
+
+> [!NOTE]
+> This theme may not work with the latest major versions of Sphinx, especially
+> if they have only recently been released. Please give us a few months of
+> time to work out any bugs and changes when new releases are made.
+> See [our contributing documentation](https://pydata-sphinx-theme.readthedocs.io/en/stable/community/practices/versions.html#supported-sphinx-versions) for more information.
+
+## Contribute to and develop the theme
+
+Contributions are very welcome! Installing the development version, building
+the example docs and developing the `CSS/JS` of the theme, etc., is explained in
+more detail in the contributing section of the documentation:
+
+- [Community and contributing documentation](https://pydata-sphinx-theme.readthedocs.io/en/latest/community/index.html)

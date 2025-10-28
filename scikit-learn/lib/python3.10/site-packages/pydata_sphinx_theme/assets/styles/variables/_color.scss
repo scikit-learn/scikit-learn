@@ -1,0 +1,355 @@
+/*******************************************************************************
+* master color map. Only the colors that actually differ between light and dark
+* themes are specified separately.
+*
+* To see the full list of colors see https://www.figma.com/file/rUrrHGhUBBIAAjQ82x6pz9/PyData-Design-system---proposal-for-implementation-(2)?node-id=1234%3A765&t=ifcFT1JtnrSshGfi-1
+*/
+
+@use "sass:map";
+@use "sass:meta";
+@use "sass:string";
+
+/**
+* Function to get items from nested maps
+*/
+// @param {Map} $map - Map
+// @param {Arglist} $keys - Keys to fetch
+// @return {*}
+@function map-deep-get($map, $keys...) {
+  @each $key in $keys {
+    $map: map.get($map, $key);
+  }
+
+  @return $map;
+}
+
+/* Assign base colors for the PyData theme */
+$color-palette: (
+  // Primary color
+  "teal":
+    (
+      "50": #f4fbfc,
+      "100": #e9f6f8,
+      "200": #d0ecf1,
+      "300": #abdde6,
+      "400": #3fb1c5,
+      "500": #0a7d91,
+      "600": #085d6c,
+      "700": #064752,
+      "800": #042c33,
+      "900": #021b1f,
+    ),
+  // Secondary color
+  "violet":
+    (
+      "50": #f4eefb,
+      "100": #e0c7ff,
+      "200": #d5b4fd,
+      "300": #b780ff,
+      "400": #9c5ffd,
+      "500": #8045e5,
+      "600": #6432bd,
+      "700": #4b258f,
+      "800": #341a61,
+      "900": #1e0e39,
+    ),
+  // Neutrals
+  "gray":
+    (
+      "50": #f9f9fa,
+      "100": #f3f4f5,
+      "200": #e5e7ea,
+      "300": #d1d5da,
+      "400": #9ca4af,
+      "500": #677384,
+      "600": #48566b,
+      "700": #29313d,
+      "800": #222832,
+      "900": #14181e,
+    ),
+  // Accent color
+  "pink":
+    (
+      "50": #fcf8fd,
+      "100": #fcf0fa,
+      "200": #f8dff5,
+      "300": #f3c7ee,
+      "400": #e47fd7,
+      "500": #c132af,
+      "600": #912583,
+      "700": #6e1c64,
+      "800": #46123f,
+      "900": #2b0b27,
+    ),
+  "foundation": (
+    "white": #ffffff,
+    // gray-900
+    "black": #14181e,
+  )
+);
+
+:root {
+  // Add theme colours to the html root element
+  @each $group-color, $color in $color-palette {
+    @each $color-name, $definition in $color {
+      --pst-#{$group-color}-#{$color-name}: #{$definition};
+    }
+  }
+}
+
+// Static SCSS variables used thoroughout the theme
+// Minimum contrast ratio used for the theme.
+// Acceptable values for WCAG 2.0 are 3, 4.5 and 7.
+// See https://www.w3.org/TR/WCAG20/#visual-audio-contrast-contrast
+// 4.5 - is for text that is 14pt or less
+$min-contrast-ratio-4: 4.5;
+
+// 3 is for text that is 18pt or bold, or for non-text elements
+$min-contrast-ratio-3: 3;
+
+// Customize the light and dark text colors for use in our color contrast function.
+$foundation-black: #14181e;
+$foundation-white: #fff;
+
+// This is a custom - calculated  color between gray 100 and 200 - to reduce
+// the contrast ratio (avoid a jarring effect)
+$base-light-text: #ced6dd;
+
+// used in sphinx_design - gray 100
+$foundation-light-gray: #f3f4f5;
+
+// used in sphinx_design - gray 700
+$foundation-muted-gray: #29313d;
+
+// used in sphinx_design - gray 800
+$foundation-dark-gray: #222832;
+$pst-semantic-colors: (
+  "primary": (
+    "light": #{map-deep-get($color-palette, "teal", "500")},
+    "bg-light": #{map-deep-get($color-palette, "teal", "200")},
+    "dark": #{map-deep-get($color-palette, "teal", "400")},
+    "bg-dark": #{map-deep-get($color-palette, "teal", "800")},
+  ),
+  "secondary": (
+    "light": #{map-deep-get($color-palette, "violet", "500")},
+    "bg-light": #{map-deep-get($color-palette, "violet", "100")},
+    "dark": #{map-deep-get($color-palette, "violet", "400")},
+    "bg-dark": #{map-deep-get($color-palette, "violet", "800")},
+  ),
+  "accent": (
+    "light": #{map-deep-get($color-palette, "pink", "500")},
+    "bg-light": #{map-deep-get($color-palette, "pink", "200")},
+    "dark": #{map-deep-get($color-palette, "pink", "400")},
+    "bg-dark": #{map-deep-get($color-palette, "pink", "800")},
+  ),
+  "info": (
+    "light": #276be9,
+    "bg-light": #dce7fc,
+    "dark": #79a3f2,
+    "bg-dark": #06245d,
+  ),
+  "warning": (
+    "light": #f66a0a,
+    "bg-light": #f8e3d0,
+    "dark": #ff9245,
+    "bg-dark": #652a02,
+  ),
+  "success": (
+    "light": #00843f,
+    "bg-light": #d6ece1,
+    "dark": #5fb488,
+    "bg-dark": #002f17,
+  ),
+  // This is based on the warning color
+  "attention":
+    (
+      "light": var(--pst-color-warning),
+      "bg-light": var(--pst-color-warning-bg),
+      "dark": var(--pst-color-warning),
+      "bg-dark": var(--pst-color-warning-bg),
+    ),
+  "danger": (
+    "light": #d72d47,
+    "bg-light": #f9e1e4,
+    "dark": #e78894,
+    "bg-dark": #4e111b,
+  ),
+  "text-base": (
+    "light": #{map-deep-get($color-palette, "gray", "800")},
+    "dark": $base-light-text,
+  ),
+  "text-muted": (
+    "light": #{map-deep-get($color-palette, "gray", "600")},
+    "dark": #{map-deep-get($color-palette, "gray", "400")},
+  ),
+  "shadow": (
+    "light": rgba(0, 0, 0, 0.1),
+    "dark": rgba(0, 0, 0, 0.2),
+  ),
+  "border": (
+    "light": #{map-deep-get($color-palette, "gray", "300")},
+    "dark": #{map-deep-get($color-palette, "gray", "600")},
+  ),
+  "border-muted": (
+    "light": rgba(23, 23, 26, 0.2),
+    "dark": #{map-deep-get($color-palette, "gray", "700")},
+  ),
+  "blockquote-notch": (
+    // These colors have a contrast ratio > 3.0 against both the background and
+    // surface colors that the notch is sandwiched between
+    "light": #{map-deep-get($color-palette, "gray", "500")},
+    "dark": #{map-deep-get($color-palette, "gray", "400")},
+  ),
+  "inline-code": (
+    "light": #{map-deep-get($color-palette, "pink", "600")},
+    "dark": #{map-deep-get($color-palette, "pink", "300")},
+  ),
+  "inline-code-links": (
+    // need to make sure there is enough contrast against the code bg
+    "light": #{map-deep-get($color-palette, "teal", "600")},
+    // keep primary color for dark mode
+    "dark": #{map-deep-get($color-palette, "teal", "400")},
+  ),
+  "target": (
+    "light": #f3cf95,
+    "dark": #675c04,
+  ),
+  "table": (
+    "light": #{map-deep-get($color-palette, "foundation", "black")},
+    "dark": #{map-deep-get($color-palette, "foundation", "white")},
+  ),
+  "table-row-hover": (
+    "bg-light": #{map-deep-get($color-palette, "violet", "200")},
+    "bg-dark": #{map-deep-get($color-palette, "violet", "700")},
+  ),
+  "table-inner-border": (
+    "light": #{map-deep-get($color-palette, "gray", "200")},
+    "dark": #364150,
+  ),
+  // DEPTH COLORS - you can see the elevation colours and shades
+  // in the Figma file https://www.figma.com/file/rUrrHGhUBBIAAjQ82x6pz9/PyData-Design-system---proposal-for-implementation-(2)?node-id=1492%3A922&t=sQeQZehkOzposYEg-1
+  // background: color of the canvas / the furthest back layer
+  "background":
+    (
+      "light": #{map-deep-get($color-palette, "foundation", "white")},
+      "dark": #{map-deep-get($color-palette, "foundation", "black")},
+    ),
+  // on-background: provides slight contrast against background
+  // (by use of shadows in light theme)
+  "on-background":
+    (
+      "light": #{map-deep-get($color-palette, "foundation", "white")},
+      "dark": #{map-deep-get($color-palette, "gray", "800")},
+    ),
+  "surface": (
+    "light": #{map-deep-get($color-palette, "gray", "100")},
+    "dark": #{map-deep-get($color-palette, "gray", "700")},
+  ),
+  // on_surface: object on top of surface object (without shadows)
+  "on-surface":
+    (
+      "light": #{map-deep-get($color-palette, "gray", "800")},
+      "dark": $foundation-light-gray,
+    ),
+);
+
+/*******************************************************************************
+* write the color rules for each theme (light/dark)
+*/
+
+/* NOTE:
+ * Mixins enable us to reuse the same definitions for the different modes
+ * https://sass-lang.com/documentation/at-rules/mixin
+ * #{something} inserts a variable into a CSS selector or property name
+ * https://sass-lang.com/documentation/interpolation
+ */
+@mixin theme-colors($mode) {
+  // check if this color is defined differently for light/dark
+  @each $col-name, $definition in $pst-semantic-colors {
+    @if meta.type-of($definition) == map {
+      @each $key, $val in $definition {
+        @if string.index($key, $mode) {
+          // since now we define the bg colours in the semantic colours and not
+          // by changing opacity, we need to check if the key contains bg and the
+          // correct mode (light/dark)
+          @if string.index($key, "bg") {
+            --pst-color-#{$col-name}-bg: #{$val};
+          } @else {
+            --pst-color-#{$col-name}: #{$val};
+          }
+        }
+      }
+    } @else {
+      --pst-color-#{$col-name}: #{$definition};
+    }
+  }
+
+  // assign the "duplicate" colors (ones that just reference other variables)
+  & {
+    --pst-color-heading: var(--pst-color-text-base);
+    --pst-color-link: var(--pst-color-primary);
+    --pst-color-link-hover: var(--pst-color-secondary);
+    --pst-color-table-outer-border: var(--pst-color-surface);
+    --pst-color-table-heading-bg: var(--pst-color-surface);
+    --pst-color-table-row-zebra-high-bg: var(--pst-color-on-background);
+    --pst-color-table-row-zebra-low-bg: var(--pst-color-surface);
+  }
+
+  // adapt to light/dark-specific content
+  @if $mode == "light" {
+    .only-dark,
+    .only-dark ~ figcaption {
+      display: none !important;
+    }
+  } @else {
+    .only-light,
+    .only-light ~ figcaption {
+      display: none !important;
+    }
+
+    /* Adjust images in dark mode (unless they have class .only-dark or
+     * .dark-light, in which case assume they're already optimized for dark
+     * mode).
+     */
+    img:not(.only-dark, .dark-light) {
+      filter: brightness(0.8) contrast(1.2);
+    }
+
+    /* Give images a light background in dark mode in case they have
+    *  transparency and black text (unless they have class .only-dark or .dark-light, in
+    *  which case assume they're already optimized for dark mode).
+    */
+    .bd-content img:not(.only-dark, .dark-light) {
+      background-color: rgb(255 255 255);
+      border-radius: 0.25rem;
+    }
+
+    // MathJax SVG outputs should be filled to same color as text.
+    .MathJax_SVG * {
+      fill: var(--pst-color-text-base);
+    }
+  }
+}
+
+/* Defaults to light mode if data-theme is not set */
+html:not([data-theme]) {
+  @include theme-colors("light");
+}
+
+/* NOTE: @each {...} is like a for-loop
+ * https://sass-lang.com/documentation/at-rules/control/each
+ */
+@each $mode in (light, dark) {
+  html[data-theme="#{$mode}"] {
+    @include theme-colors($mode);
+
+    color-scheme: $mode;
+  }
+}
+
+// assign classes too, for runtime use of theme colors
+@each $col-name, $definition in $pst-semantic-colors {
+  .pst-color-#{$col-name} {
+    color: var(--pst-color-#{$col-name});
+  }
+}

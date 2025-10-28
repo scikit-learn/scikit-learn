@@ -1,0 +1,17 @@
+{# Sample template for the html cover page. #}
+{%- extends "layout.html" %}
+{%- block header %}{% endblock %}
+{%- block rootrellink %}{% endblock %}
+{%- block relbaritems %}{% endblock %}
+{%- block sidebarlogo %}{% endblock %}
+{%- block linktags %}{% endblock %}
+{%- block relbar1 %}{% endblock %}
+{%- block sidebar1 %}{% endblock %}
+{%- block sidebar2 %}{% endblock %}
+{%- block footer %}{% endblock %}
+
+{% block content %}
+  <div class="epub-cover">
+    <img src="{{ image }}" alt="Cover image" />
+  </div>
+{% endblock %}

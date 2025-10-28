@@ -1,0 +1,57 @@
+/**
+ * Tables
+ */
+
+table {
+  // default to table-center
+  margin-left: auto;
+  margin-right: auto;
+
+  &.table-right {
+    margin-right: 0;
+  }
+
+  &.table-left {
+    margin-left: 0;
+  }
+}
+
+// customize table caption from bootstrap
+// to display them on top and centered
+table caption {
+  text-align: center;
+  caption-side: top;
+  color: var(--pst-color-text-muted);
+}
+
+// MyST Markdown tables use these classes to control alignment
+th,
+td {
+  &.text-left {
+    text-align: left;
+  }
+
+  &.text-right {
+    text-align: right;
+  }
+
+  &.text-center {
+    text-align: center;
+  }
+}
+
+// override bootstrap table colors
+.table {
+  @include table-colors;
+
+  --bs-table-bg: transparent; // background
+  --bs-table-color: var(
+    --pst-color-text-base
+  ); // ensure text and bullets are visible
+}
+
+.pst-scrollable-table-container {
+  // Put a horizontal scrollbar just below tables that are too wide to fit
+  // within the main column
+  overflow-x: auto;
+}

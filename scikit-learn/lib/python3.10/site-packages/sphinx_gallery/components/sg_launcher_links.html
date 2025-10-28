@@ -1,0 +1,15 @@
+{# Displays the launcher badges for the example. #}
+{% set launcher_links = get_launcher_links() %}
+{% if launcher_links %}
+  <div class="sphx-glr-sidebar-component">
+    {% for key, link_info in launcher_links.items() %}
+      {% if link_info %}
+        <div class="sphx-glr-sidebar-item {{ key }}-badge-sidebar">
+          <a href="{{ link_info.link }}">
+            <img src="{{ link_info.img_src }}" alt="{{ link_info.img_alt }}">
+          </a>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}

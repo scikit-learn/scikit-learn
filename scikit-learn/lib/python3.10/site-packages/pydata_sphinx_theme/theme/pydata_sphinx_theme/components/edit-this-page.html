@@ -1,0 +1,17 @@
+{# Displays a link to the edit interface of the page source in the specified Version Control System. #}
+{% if sourcename is defined and theme_use_edit_page_button==true and page_source_suffix %}
+  {% set src = sourcename.split('.') %}
+  <div class="tocsection editthispage">
+    <a href="{{ get_edit_provider_and_url()[1] }}">
+      <i class="fa-solid fa-pencil"></i>
+      {% set provider = get_edit_provider_and_url()[0] %}
+      {% block edit_this_page_text %}
+        {% if provider %}
+          {% trans provider=provider %}Edit on {{ provider }}{% endtrans %}
+        {% else %}
+          {% trans %}Edit{% endtrans %}
+        {% endif %}
+      {% endblock %}
+    </a>
+  </div>
+{% endif %}

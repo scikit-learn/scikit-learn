@@ -1,0 +1,104 @@
+#                   --- THIS FILE IS AUTO-GENERATED ---
+# Modifications will be overwitten the next time code generation run.
+
+from plotly.basedatatypes import BaseLayoutHierarchyType as _BaseLayoutHierarchyType
+import copy as _copy
+
+
+class Activeshape(_BaseLayoutHierarchyType):
+    _parent_path_str = "layout"
+    _path_str = "layout.activeshape"
+    _valid_props = {"fillcolor", "opacity"}
+
+    @property
+    def fillcolor(self):
+        """
+        Sets the color filling the active shape' interior.
+
+        The 'fillcolor' property is a color and may be specified as:
+          - A hex string (e.g. '#ff0000')
+          - An rgb/rgba string (e.g. 'rgb(255,0,0)')
+          - An hsl/hsla string (e.g. 'hsl(0,100%,50%)')
+          - An hsv/hsva string (e.g. 'hsv(0,100%,100%)')
+          - A named CSS color: see https://plotly.com/python/css-colors/ for a list
+
+        Returns
+        -------
+        str
+        """
+        return self["fillcolor"]
+
+    @fillcolor.setter
+    def fillcolor(self, val):
+        self["fillcolor"] = val
+
+    @property
+    def opacity(self):
+        """
+        Sets the opacity of the active shape.
+
+        The 'opacity' property is a number and may be specified as:
+          - An int or float in the interval [0, 1]
+
+        Returns
+        -------
+        int|float
+        """
+        return self["opacity"]
+
+    @opacity.setter
+    def opacity(self, val):
+        self["opacity"] = val
+
+    @property
+    def _prop_descriptions(self):
+        return """\
+        fillcolor
+            Sets the color filling the active shape' interior.
+        opacity
+            Sets the opacity of the active shape.
+        """
+
+    def __init__(self, arg=None, fillcolor=None, opacity=None, **kwargs):
+        """
+        Construct a new Activeshape object
+
+        Parameters
+        ----------
+        arg
+            dict of properties compatible with this constructor or
+            an instance of
+            :class:`plotly.graph_objs.layout.Activeshape`
+        fillcolor
+            Sets the color filling the active shape' interior.
+        opacity
+            Sets the opacity of the active shape.
+
+        Returns
+        -------
+        Activeshape
+        """
+        super().__init__("activeshape")
+        if "_parent" in kwargs:
+            self._parent = kwargs["_parent"]
+            return
+
+        if arg is None:
+            arg = {}
+        elif isinstance(arg, self.__class__):
+            arg = arg.to_plotly_json()
+        elif isinstance(arg, dict):
+            arg = _copy.copy(arg)
+        else:
+            raise ValueError("""\
+The first argument to the plotly.graph_objs.layout.Activeshape
+constructor must be a dict or
+an instance of :class:`plotly.graph_objs.layout.Activeshape`""")
+
+        self._skip_invalid = kwargs.pop("skip_invalid", False)
+        self._validate = kwargs.pop("_validate", True)
+
+        self._set_property("fillcolor", arg, fillcolor)
+        self._set_property("opacity", arg, opacity)
+        self._process_kwargs(**dict(arg, **kwargs))
+        self._skip_invalid = False

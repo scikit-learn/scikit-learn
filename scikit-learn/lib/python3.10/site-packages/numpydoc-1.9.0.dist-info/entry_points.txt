@@ -1,0 +1,2 @@
+[console_scripts]
+numpydoc = numpydoc.cli:main

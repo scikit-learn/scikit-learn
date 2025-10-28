@@ -1,0 +1,12 @@
+.header-article__inner {
+  padding: 0 0.5rem;
+
+  // The items define the height so that it disappears if there are no items
+  .header-article-item {
+    min-height: var(--pst-header-article-height);
+  }
+
+  .header-article-items__end {
+    margin-left: auto;
+  }
+}

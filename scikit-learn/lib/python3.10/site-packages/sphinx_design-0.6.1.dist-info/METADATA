@@ -1,0 +1,134 @@
+Metadata-Version: 2.1
+Name: sphinx_design
+Version: 0.6.1
+Summary: A sphinx extension for designing beautiful, view size responsive web components.
+Keywords: sphinx,extension,material design,web components
+Author-email: Chris Sewell <chrisj_sewell@hotmail.com>
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Classifier: Development Status :: 4 - Beta
+Classifier: Framework :: Sphinx :: Extension
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Text Processing :: Markup
+Classifier: Topic :: Text Processing :: Markup :: Markdown
+Classifier: Topic :: Text Processing :: Markup :: reStructuredText
+Requires-Dist: sphinx>=6,<9
+Requires-Dist: pre-commit>=3,<4 ; extra == "code-style"
+Requires-Dist: myst-parser>=2,<4 ; extra == "rtd"
+Requires-Dist: myst-parser>=2,<4 ; extra == "testing"
+Requires-Dist: pytest~=8.3 ; extra == "testing"
+Requires-Dist: pytest-cov ; extra == "testing"
+Requires-Dist: pytest-regressions ; extra == "testing"
+Requires-Dist: defusedxml ; extra == "testing"
+Requires-Dist: pytest~=8.3 ; extra == "testing-no-myst"
+Requires-Dist: pytest-cov ; extra == "testing-no-myst"
+Requires-Dist: pytest-regressions ; extra == "testing-no-myst"
+Requires-Dist: defusedxml ; extra == "testing-no-myst"
+Requires-Dist: furo~=2024.7.18 ; extra == "theme-furo"
+Requires-Dist: sphinx-immaterial~=0.12.2 ; extra == "theme-im"
+Requires-Dist: pydata-sphinx-theme~=0.15.2 ; extra == "theme-pydata"
+Requires-Dist: sphinx-rtd-theme~=2.0 ; extra == "theme-rtd"
+Requires-Dist: sphinx-book-theme~=1.1 ; extra == "theme-sbt"
+Project-URL: Documentation, https://sphinx-design.readthedocs.io
+Project-URL: Homepage, https://github.com/executablebooks/sphinx-design
+Provides-Extra: code-style
+Provides-Extra: rtd
+Provides-Extra: testing
+Provides-Extra: testing-no-myst
+Provides-Extra: theme-furo
+Provides-Extra: theme-im
+Provides-Extra: theme-pydata
+Provides-Extra: theme-rtd
+Provides-Extra: theme-sbt
+
+# sphinx-design
+
+[![Github-CI][github-ci]][github-link]
+[![Coverage Status][codecov-badge]][codecov-link]
+[![PyPI][pypi-badge]][pypi-link]
+
+A sphinx extension for designing beautiful, view size responsive web components.
+
+Created with inspiration from [Bootstrap](https://getbootstrap.com/) (v5), [Material Design](https://material.io) and [Material-UI](https://material-ui.com/) design frameworks.
+
+## Usage
+
+Simply pip install `sphinx-design` and add the extension to your `conf.py`:
+
+```python
+extensions = ["sphinx_design"]
+```
+
+## Supported browsers
+
+- Chrome >= 60
+- Firefox >= 60
+- Firefox ESR
+- iOS >= 12
+- Safari >= 12
+- Explorer >= 12
+
+(Mirrors: <https://github.com/twbs/bootstrap/blob/v5.0.2/.browserslistrc>)
+
+## Theme support
+
+View the documentation in multiple themes:
+
+- [alabaster](https://sphinx-design.readthedocs.io/en/alabaster-theme)
+- [sphinx-book-theme](https://sphinx-design.readthedocs.io/en/sbt-theme)
+- [pydata-sphinx-theme](https://sphinx-design.readthedocs.io/en/pydata-theme)
+- [sphinx-rtd-theme](https://sphinx-design.readthedocs.io/en/rtd-theme)
+- [furo](https://sphinx-design.readthedocs.io/en/furo-theme)
+
+## Comparison to sphinx-panels
+
+This package is an iteration on [sphinx-panels](https://github.com/executablebooks/sphinx-panels) and intends to replace it.
+See [Migrating from sphinx-panels](./docs/get_started.md) for more information.
+
+## Development
+
+It is recommended to use [tox](https://tox.readthedocs.io/en/latest/) to run the tests and document builds.
+Run `tox -va` to see all the available tox environments.
+
+To run linting, formatting and SASS compilation, use [pre-commit](https://pre-commit.com/).
+`pre-commit run --all css` will run the SASS compiler, for which you will need [node](https://nodejs.org) and [npm](https://www.npmjs.com/) installed,
+or you can directly run `npm run css`.
+
+## TODO
+
+- note design goal; to be flexible, but limit the amount of directive nesting required.
+  This factors in to
+  - card header/footer syntax? (don't really want to have to use separate directives for these, hence `^^^`/`+++` syntax)
+  - auto-wrap `grid-item` and `tab-item`, if not already inside `grid` or `tab-set`?
+
+grids items cannot contain headers; is this in anyway possible with docutils structure?
+
+naming of directives/roles: standard prefix?
+
+why are cards setup with "word-wrap: break-word;"?
+
+handle latex
+
+Use autoprefixer when compiling SASS (see <https://getbootstrap.com/docs/5.0/getting-started/browsers-devices/#supported-browsers>)
+
+horizontal card (grid row inside card, picture on left)
+
+subtitle for card (see <https://material.io/components/cards#anatomy>)
+
+
+[github-ci]: https://github.com/executablebooks/sphinx-design/workflows/continuous-integration/badge.svg?branch=main
+[github-link]: https://github.com/executablebooks/sphinx-design
+[codecov-badge]: https://codecov.io/gh/executablebooks/sphinx-design/branch/main/graph/badge.svg
+[codecov-link]: https://codecov.io/gh/executablebooks/sphinx-design
+[pypi-badge]: https://img.shields.io/pypi/v/sphinx-design.svg
+[pypi-link]: https://pypi.org/project/sphinx-design
+

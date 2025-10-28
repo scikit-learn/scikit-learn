@@ -1,0 +1,34 @@
+.bd-footer {
+  width: 100%;
+  border-top: 1px solid var(--pst-color-border);
+
+  .bd-footer__inner {
+    display: flex;
+    flex-grow: 1;
+    padding: 1rem;
+    margin: auto;
+  }
+
+  .footer-items__start,
+  .footer-items__center,
+  .footer-items__end {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-grow: 1;
+  }
+
+  .footer-items__center {
+    text-align: center;
+  }
+
+  .footer-items__end {
+    text-align: end;
+  }
+
+  // So that paragraphs don't take up extra room
+  .footer-item p {
+    margin-bottom: 0;
+  }
+}

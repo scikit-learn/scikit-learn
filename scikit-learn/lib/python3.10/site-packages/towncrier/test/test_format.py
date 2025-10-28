@@ -1,0 +1,535 @@
+# Copyright (c) Amber Brown, 2015
+# See LICENSE for details.
+
+
+from twisted.trial.unittest import TestCase
+
+from .._builder import render_fragments, split_fragments
+from .helpers import read_pkg_resource
+
+
+class FormatterTests(TestCase):
+    maxDiff = None
+
+    def test_split(self):
+        fragments = {
+            "": {
+                ("1", "misc", 0): "",
+                ("baz", "misc", 0): "",
+                ("2", "feature", 0): "Foo added.",
+                ("5", "feature", 0): "Foo added.    \n",
+                ("6", "bugfix", 0): "Foo added.",
+            },
+            "Web": {
+                ("3", "bugfix", 0): "Web fixed.    ",
+                ("4", "feature", 0): "Foo added.",
+            },
+        }
+
+        expected_output = {
+            "": {
+                "misc": {"": ["1", "baz"]},
+                "feature": {"Foo added.": ["2", "5"]},
+                "bugfix": {"Foo added.": ["6"]},
+            },
+            "Web": {
+                "bugfix": {"Web fixed.": ["3"]},
+                "feature": {"Foo added.": ["4"]},
+            },
+        }
+
+        definitions = {
+            "feature": {"name": "Features", "showcontent": True},
+            "bugfix": {"name": "Bugfixes", "showcontent": True},
+            "misc": {"name": "Misc", "showcontent": False},
+        }
+
+        output = split_fragments(fragments, definitions)
+
+        self.assertEqual(expected_output, output)
+
+    def test_basic(self):
+        """
+        Basic functionality -- getting a bunch of news fragments and formatting
+        them into a rST file -- works.
+        """
+        fragments = {
+            "": {
+                # asciibetical sorting will do 1, 142, 9
+                # we want 1, 9, 142 instead
+                ("142", "misc", 0): "",
+                ("1", "misc", 0): "",
+                ("9", "misc", 0): "",
+                ("bar", "misc", 0): "",
+                ("4", "feature", 0): "Stuff!",
+                ("2", "feature", 0): "Foo added.",
+                ("72", "feature", 0): "Foo added.",
+                ("9", "feature", 0): "Foo added.",
+                ("baz", "feature", 0): "Fun!",
+            },
+            "Names": {},
+            "Web": {("3", "bugfix", 0): "Web fixed."},
+        }
+
+        definitions = {
+            "feature": {"name": "Features", "showcontent": True},
+            "bugfix": {"name": "Bugfixes", "showcontent": True},
+            "misc": {"name": "Misc", "showcontent": False},
+        }
+
+        expected_output = """MyProject 1.0 (never)
+=====================
+
+Features
+--------
+
+- Fun! (baz)
+- Foo added. (#2, #9, #72)
+- Stuff! (#4)
+
+
+Misc
+----
+
+- bar, #1, #9, #142
+
+
+Names
+-----
+
+No significant changes.
+
+
+Web
+---
+
+Bugfixes
+~~~~~~~~
+
+- Web fixed. (#3)
+
+
+"""
+
+        template = read_pkg_resource("templates/default.rst")
+
+        fragments = split_fragments(fragments, definitions)
+        output = render_fragments(
+            template,
+            None,
+            fragments,
+            definitions,
+            ["-", "~"],
+            wrap=True,
+            versiondata={"name": "MyProject", "version": "1.0", "date": "never"},
+        )
+        self.assertEqual(output, expected_output)
+
+        # Check again with non-default underlines
+        expected_output_weird_underlines = """MyProject 1.0 (never)
+=====================
+
+Features
+********
+
+- Fun! (baz)
+- Foo added. (#2, #9, #72)
+- Stuff! (#4)
+
+
+Misc
+****
+
+- bar, #1, #9, #142
+
+
+Names
+*****
+
+No significant changes.
+
+
+Web
+***
+
+Bugfixes
+^^^^^^^^
+
+- Web fixed. (#3)
+
+
+"""
+
+        output = render_fragments(
+            template,
+            None,
+            fragments,
+            definitions,
+            ["*", "^"],
+            wrap=True,
+            versiondata={"name": "MyProject", "version": "1.0", "date": "never"},
+        )
+        self.assertEqual(output, expected_output_weird_underlines)
+
+    def test_markdown(self):
+        """
+        Check formating of default markdown template.
+        """
+        fragments = {
+            "": {
+                # asciibetical sorting will do 1, 142, 9
+                # we want 1, 9, 142 instead
+                ("142", "misc", 0): "",
+                ("1", "misc", 0): "",
+                ("9", "misc", 0): "",
+                ("bar", "misc", 0): "",
+                ("4", "feature", 0): "Stuff!",
+                ("2", "feature", 0): "Foo added.",
+                ("72", "feature", 0): "Foo added.",
+                ("9", "feature", 0): "Foo added.",
+                ("3", "feature", 0): "Multi-line\nhere",
+                ("baz", "feature", 0): "Fun!",
+            },
+            "Names": {},
+            "Web": {
+                ("3", "bugfix", 0): "Web fixed.",
+                ("2", "bugfix", 0): "Multi-line bulleted\n- fix\n- here",
+            },
+        }
+
+        definitions = {
+            "feature": {"name": "Features", "showcontent": True},
+            "bugfix": {"name": "Bugfixes", "showcontent": True},
+            "misc": {"name": "Misc", "showcontent": False},
+        }
+
+        expected_output = """# MyProject 1.0 (never)
+
+## Features
+
+- Fun! (baz)
+- Foo added. (#2, #9, #72)
+- Multi-line
+  here (#3)
+- Stuff! (#4)
+
+## Misc
+
+- bar, #1, #9, #142
+
+
+## Names
+
+No significant changes.
+
+
+## Web
+
+### Bugfixes
+
+- Multi-line bulleted
+  - fix
+  - here
+
+  (#2)
+- Web fixed. (#3)
+
+
+"""
+
+        template = read_pkg_resource("templates/default.md")
+
+        fragments = split_fragments(fragments, definitions)
+        output = render_fragments(
+            template,
+            None,
+            fragments,
+            definitions,
+            ["-", "~"],
+            wrap=True,
+            versiondata={"name": "MyProject", "version": "1.0", "date": "never"},
+        )
+        self.assertEqual(output, expected_output)
+
+        # Also test with custom issue format
+        expected_output = """# MyProject 1.0 (never)
+
+## Features
+
+- Fun! ([baz])
+- Foo added. ([2], [9], [72])
+- Multi-line
+  here ([3])
+- Stuff! ([4])
+
+[baz]: https://github.com/twisted/towncrier/issues/baz
+[2]: https://github.com/twisted/towncrier/issues/2
+[3]: https://github.com/twisted/towncrier/issues/3
+[4]: https://github.com/twisted/towncrier/issues/4
+[9]: https://github.com/twisted/towncrier/issues/9
+[72]: https://github.com/twisted/towncrier/issues/72
+
+## Misc
+
+- [bar], [1], [9], [142]
+
+[bar]: https://github.com/twisted/towncrier/issues/bar
+[1]: https://github.com/twisted/towncrier/issues/1
+[9]: https://github.com/twisted/towncrier/issues/9
+[142]: https://github.com/twisted/towncrier/issues/142
+
+
+## Names
+
+No significant changes.
+
+
+## Web
+
+### Bugfixes
+
+- Multi-line bulleted
+  - fix
+  - here
+
+  ([2])
+- Web fixed. ([3])
+
+[2]: https://github.com/twisted/towncrier/issues/2
+[3]: https://github.com/twisted/towncrier/issues/3
+
+
+"""
+
+        output = render_fragments(
+            template,
+            "[{issue}]: https://github.com/twisted/towncrier/issues/{issue}",
+            fragments,
+            definitions,
+            ["-", "~"],
+            wrap=True,
+            versiondata={"name": "MyProject", "version": "1.0", "date": "never"},
+        )
+
+        self.assertEqual(output, expected_output)
+
+    def test_issue_format(self):
+        """
+        issue_format option can be used to format issue text.
+        And sorting happens before formatting, so numerical issues are still
+        ordered numerically even if that doesn't match asciibetical order on
+        the final text.
+        """
+        fragments = {
+            "": {
+                # asciibetical sorting will do 1, 142, 9
+                # we want 1, 9, 142 instead
+                ("142", "misc", 0): "",
+                ("1", "misc", 0): "",
+                ("9", "misc", 0): "",
+                ("bar", "misc", 0): "",
+            }
+        }
+
+        definitions = {"misc": {"name": "Misc", "showcontent": False}}
+
+        expected_output = """MyProject 1.0 (never)
+=====================
+
+Misc
+----
+
+- xxbar, xx1, xx9, xx142
+
+
+"""
+
+        template = read_pkg_resource("templates/default.rst")
+
+        fragments = split_fragments(fragments, definitions)
+        output = render_fragments(
+            template,
+            "xx{issue}",
+            fragments,
+            definitions,
+            ["-", "~"],
+            wrap=True,
+            versiondata={"name": "MyProject", "version": "1.0", "date": "never"},
+        )
+        self.assertEqual(output, expected_output)
+
+    def test_line_wrapping(self):
+        """
+        Output is nicely wrapped, but doesn't break up words (which can mess
+        up URLs)
+        """
+        self.maxDiff = None
+
+        fragments = {
+            "": {
+                (
+                    "1",
+                    "feature",
+                    0,
+                ): """
+                asdf asdf asdf asdf looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong newsfragment.
+                """,  # NOQA
+                ("2", "feature", 0): "https://google.com/q=?" + "-" * 100,
+                ("3", "feature", 0): "a " * 80,
+            }
+        }
+
+        definitions = {"feature": {"name": "Features", "showcontent": True}}
+
+        expected_output = """MyProject 1.0 (never)
+=====================
+
+Features
+--------
+
+- asdf asdf asdf asdf
+  looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong
+  newsfragment. (#1)
+-
+  https://google.com/q=?----------------------------------------------------------------------------------------------------
+  (#2)
+- a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a
+  a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a
+  a a (#3)
+
+
+"""
+
+        template = read_pkg_resource("templates/default.rst")
+
+        fragments = split_fragments(fragments, definitions)
+        output = render_fragments(
+            template,
+            None,
+            fragments,
+            definitions,
+            ["-", "~"],
+            wrap=True,
+            versiondata={"name": "MyProject", "version": "1.0", "date": "never"},
+        )
+        self.assertEqual(output, expected_output)
+
+    def test_line_wrapping_disabled(self):
+        """
+        Output is not wrapped if it's disabled.
+        """
+        self.maxDiff = None
+
+        fragments = {
+            "": {
+                (
+                    "1",
+                    "feature",
+                    0,
+                ): """
+                asdf asdf asdf asdf looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong newsfragment.
+                """,  # NOQA
+                ("2", "feature", 0): "https://google.com/q=?" + "-" * 100,
+                ("3", "feature", 0): "a " * 80,
+            }
+        }
+
+        definitions = {"feature": {"name": "Features", "showcontent": True}}
+
+        expected_output = """MyProject 1.0 (never)
+=====================
+
+Features
+--------
+
+- asdf asdf asdf asdf looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong newsfragment. (#1)
+- https://google.com/q=?---------------------------------------------------------------------------------------------------- (#2)
+- a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a (#3)
+
+
+"""  # NOQA
+
+        template = read_pkg_resource("templates/default.rst")
+
+        fragments = split_fragments(fragments, definitions)
+        output = render_fragments(
+            template,
+            None,
+            fragments,
+            definitions,
+            ["-", "~"],
+            wrap=False,
+            versiondata={"name": "MyProject", "version": "1.0", "date": "never"},
+        )
+        self.assertEqual(output, expected_output)
+
+    def test_trailing_block(self) -> None:
+        """
+        Make sure a newline gets inserted before appending the issue number, if the
+        newsfragment ends with an indented block.
+        """
+
+        fragments = {
+            "": {
+                (
+                    "1",
+                    "feature",
+                    0,
+                ): (
+                    "this fragment has a trailing code block::\n\n"
+                    "    def foo(): ...\n\n"
+                    "   \n"
+                    "    def bar(): ..."
+                ),
+                (
+                    "2",
+                    "feature",
+                    0,
+                ): (
+                    "this block is not trailing::\n\n"
+                    "    def foo(): ...\n"
+                    "    def bar(): ...\n\n"
+                    "so we can append the issue number directly after this"
+                ),
+            }
+        }
+        # the line with 3 spaces (and nothing else) is stripped
+        expected_output = """MyProject 1.0 (never)
+=====================
+
+Features
+--------
+
+- this fragment has a trailing code block::
+
+      def foo(): ...
+
+
+      def bar(): ...
+
+  (#1)
+- this block is not trailing::
+
+      def foo(): ...
+      def bar(): ...
+
+  so we can append the issue number directly after this (#2)
+
+
+"""
+
+        definitions = {
+            "feature": {"name": "Features", "showcontent": True},
+        }
+        template = read_pkg_resource("templates/default.rst")
+        fragments_split = split_fragments(fragments, definitions)
+        output = render_fragments(
+            template,
+            None,
+            fragments_split,
+            definitions,
+            ["-", "~"],
+            wrap=True,
+            versiondata={"name": "MyProject", "version": "1.0", "date": "never"},
+        )
+        self.assertEqual(output, expected_output)

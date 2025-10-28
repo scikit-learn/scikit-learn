@@ -1,0 +1,3 @@
+using github.com/google/material-design-icons
+v4.0.0-46-gc9e5528
+c9e552847da3445dec2e384e9e2e7230efaca468

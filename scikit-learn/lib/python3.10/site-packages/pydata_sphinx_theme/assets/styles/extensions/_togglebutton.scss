@@ -1,0 +1,145 @@
+/**
+ * Sphinx togglebutton
+ *
+ * The rules in this style sheet are meant to tweak the
+ * [sphinx-togglebutton](https://sphinx-togglebutton.readthedocs.io/en/latest/index.html)
+ * extension so that it matches the look and feel of this theme.
+ */
+
+.bd-content {
+  @mixin chevron-down {
+    .toggle-chevron-right {
+      transform: rotate(90deg); // point chevron down
+      transition: none; // match non-animated behavior of other chevrons on site
+    }
+  }
+
+  @mixin chevron-up {
+    .toggle-chevron-right {
+      transform: rotate(-90deg); // point chevron up
+      transition: none; // match non-animated behavior of other chevrons on site
+    }
+  }
+
+  // Apply this mixin to the element that will be hovered. These styles are
+  // intended to match what sphinx-design does for its dropdown admonitions.
+  @mixin icon-hover-effects {
+    &:hover .tb-icon {
+      opacity: 1;
+      scale: 1.1;
+    }
+
+    .tb-icon {
+      opacity: 0.6;
+    }
+  }
+
+  // Collapsible admonition, implemented as <div> + <button>
+  .dropdown.admonition.toggle {
+    // The title is visible when the admonition is collapsed and expanded
+    .admonition-title {
+      @include icon-hover-effects;
+      @include hover-darken-lighten;
+
+      &:hover {
+        box-shadow: none;
+      }
+    }
+
+    button.toggle-button {
+      color: inherit;
+
+      // When disclosure widget is closed
+      &.toggle-button-hidden {
+        @include chevron-down;
+      }
+
+      // When open
+      @include chevron-up;
+    }
+
+    // Focus ring
+    // ----------
+    // Sphinx-togglebutton makes the entire admonition header clickable, but
+    // only the button within the header is focusable. But we want the entire
+    // header and not just the button inside the header to be surrounded by a
+    // a focus ring.
+    &:has(:focus-visible) {
+      /* Override Sphinx Toggle Button. Make the overflow visible, otherwise the
+      focus ring is hidden. */
+      overflow: visible;
+
+      /*
+      Why not just do the following?
+
+      ```
+      .admonition-title {
+        outline: $focus-ring-outline;
+      }
+      ```
+
+      Why use ::before? If we put the focus ring on the ::before pseudo-element,
+      we can reposition the focus ring by repositioning the pseudo-element.
+
+      Why reposition? The left edge of the admonition title box does not align
+      with the left edge of the overall admonition box. There is a left border
+      that belongs to the overall box. The border is outside of the admonition
+      title, which means it is also outside of a focus ring around the title. We
+      can make the focus ring bigger, with `outline-offset`, but this will
+      result in a ring that looks off-centered. So we have to pull the ring left
+      and stretch it right. That's what the pseudo-element allows us to do.
+
+      Note: we do not have to do this for collapsible admonitions made with
+      Sphinx Design (as opposed to sphinx-togglebutton).
+      */
+      .admonition-title::before {
+        content: "";
+
+        // pull the focus ring left and expand it right to be perfectly centered
+        // between the left border and the right edge of the admonition title
+        left: -$admonition-left-border-width;
+        width: calc(100% + $admonition-left-border-width);
+        height: 100%;
+        outline: $focus-ring-outline;
+        outline-offset: $focus-ring-offset;
+        border-radius: $focus-ring-width;
+      }
+
+      // When expanded, sharpen the bottom left and right corners of the focus ring
+      &:not(.toggle-hidden) .admonition-title::before {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+    }
+  }
+
+  // Collapsible component, implemented as <details> + <summary>
+  details.toggle-details {
+    // Over-ride border color to re-use our primary color
+    summary {
+      border-left: 3px solid var(--pst-color-primary);
+
+      @include chevron-down;
+      @include icon-hover-effects;
+      @include hover-darken-lighten;
+
+      &:hover {
+        box-shadow: none;
+      }
+
+      &:focus-visible {
+        outline-offset: $focus-ring-offset;
+      }
+    }
+
+    // When expanded, sharpen the bottom left and right corners of the focus ring
+    &[open] {
+      @include chevron-up;
+
+      :focus-visible {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+    }
+  }
+}

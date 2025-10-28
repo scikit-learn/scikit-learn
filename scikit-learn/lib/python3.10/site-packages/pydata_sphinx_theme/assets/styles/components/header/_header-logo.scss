@@ -1,0 +1,38 @@
+/**
+ * Logo in the navbar
+ */
+
+.navbar-brand {
+  position: relative;
+  height: var(--pst-header-height);
+  max-height: var(--pst-header-height);
+  padding: 0.5rem 0;
+  width: auto;
+  margin: 0;
+  display: flex;
+
+  // Ensure that the logo stays the same length while other content shrinks
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.5rem;
+
+  // If there's no logo image, we use a p element w/ the site title
+  p {
+    color: var(--pst-color-text-base);
+    margin-bottom: 0;
+  }
+
+  // If there's a logo, it'll be in an img block
+  img {
+    max-width: 100%;
+    height: 100%;
+    width: auto;
+  }
+
+  &:hover,
+  &:visited:hover {
+    @include link-style-hover;
+
+    color: var(--pst-color-text-base);
+  }
+}

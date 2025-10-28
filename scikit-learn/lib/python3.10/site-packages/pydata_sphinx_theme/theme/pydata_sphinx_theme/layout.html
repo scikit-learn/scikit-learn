@@ -1,0 +1,145 @@
+{# We redefine <html/> for "basic/layout.html" to add a default `data-theme` attribute when
+ # a default mode has been set. This also improves compatibility when JavaScript is disabled.
+ #}
+{% set html_tag %}
+<html{% if not html5_doctype %} xmlns="http://www.w3.org/1999/xhtml"{% endif %}{% if language is not none %} lang="{{ language }}"{% endif %} data-content_root="{{ content_root }}" {% if default_mode %}data-theme="{{ default_mode }}"{% endif %}>
+{% endset %}
+{%- extends "basic/layout.html" %}
+{%- import "static/webpack-macros.html" as _webpack with context %}
+{# A flag for whether we include a secondary sidebar based on the page metadata #}
+{# Note: secondary_sidebar_items is an array set by set_secondary_sidebar_items() in utils.py #}
+{% set remove_sidebar_secondary = (meta is defined and meta is not none and 'html_theme.sidebar_secondary.remove' in meta) or secondary_sidebar_items|length == 0 %}
+{%- block css %}
+  {# The data-cfasync attribute disables CloudFlare's Rocket loader so that #}
+  {# mode/theme are correctly set before the browser renders the page. #}
+  {# https://github.com/pydata/pydata-sphinx-theme/pull/1045 #}
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "{{ default_mode }}";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "{{ default_mode }}";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  {{ _webpack.head_pre_assets() }}
+  {{- css() }}
+  {{ _webpack.head_js_preload() }}
+{%- endblock css %}
+{%- block extrahead %}
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="{{ language }}"/>
+  <meta name="docsearch:version" content="{{ version }}" />
+  {%- if last_updated %}
+    <meta name="docbuild:last-update" content="{{ last_updated | e }}"/>
+  {%- endif %}
+{%- endblock extrahead %}
+{% block body_tag %}
+  {# set up with scrollspy to update the toc as we scroll #}
+  {# ref: https://getbootstrap.com/docs/4.0/components/scrollspy/ #}
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="{{ default_mode }}">
+
+  {# A button hidden by default to help assistive devices quickly jump to main content #}
+  {# ref: https://www.youtube.com/watch?v=VUR0I5mqq7I #}
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">{{ _("Skip to main content") }}</a></div>
+
+{%- endblock %}
+
+{%- block content %}
+  {# A tiny helper pixel to detect if we've scrolled #}
+  <div id="pst-scroll-pixel-helper"></div>
+
+  {%- if theme_back_to_top_button %}
+  {# the scroll to top button #}
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    {{- _("Back to top") -}}
+  </button>
+  {%- endif %}
+
+  {# A search field pop-up that will only show when the search button is clicked #}
+  <dialog id="pst-search-dialog">
+    {% include "../components/search-field.html" %}
+  </dialog>
+
+  {% include "sections/announcement.html" %}
+
+  {% block docs_navbar %}
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+      {%- include "sections/header.html" %}
+    </header>
+  {% endblock docs_navbar %}
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      {# Primary sidebar #}
+      {# If we have no sidebar TOC, pop the TOC component from the sidebars list #}
+      {% if suppress_sidebar_toctree(includehidden=theme_sidebar_includehidden | tobool) %}
+        {% set sidebars = sidebars | reject("in", "sidebar-nav-bs.html") | list %}
+      {% endif %}
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar{% if not sidebars %} hide-on-wide{% endif %}">
+        {% include "sections/sidebar-primary.html" %}
+      </div>
+      {# Using an ID here so that the skip-link works #}
+      <main id="main-content" class="bd-main" role="main">
+        {# Main content area #}
+        {% block docs_main %}
+          <div class="bd-content">
+            <div class="bd-article-container">
+              {# Article header #}
+              <div class="bd-header-article d-print-none">{% include "sections/header-article.html" %}</div>
+              {# Article content #}
+              {% block docs_body %}
+              {# This is empty and only shows up if text has been highlighted by the URL #}
+                {% include "components/searchbox.html" %}
+                <article class="bd-article">
+                  {% block body %}{% endblock %}
+                </article>
+              {% endblock docs_body %}
+              {# Article Footer #}
+              {% if theme_article_footer_items %}
+                <footer class="bd-footer-article">
+                  {% include "sections/footer-article.html" %}
+                </footer>
+              {% endif %}
+              {# prev-next buttons #}
+              {% if theme_show_prev_next %}
+                <footer class="prev-next-footer d-print-none">
+                  {% include "components/prev-next.html" %}
+                </footer>
+              {% endif %}
+            </div>
+            {# Secondary sidebar #}
+            {% block docs_toc %}
+              {% if not remove_sidebar_secondary %}
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc">{% include "sections/sidebar-secondary.html" %}</div>
+              {% endif %}
+            {% endblock docs_toc %}
+          </div>
+          <footer class="bd-footer-content">
+            {% include "sections/footer-content.html" %}
+          </footer>
+        {% endblock docs_main %}
+      </main>
+    </div>
+  </div>
+  {# Scripts placed at the end of the page to cut down on time to first content #}
+  {%- block scripts_end %}{{ _webpack.body_post() }}{%- endblock scripts_end %}
+{%- endblock content %}
+{# Footer #}
+{%- block footer %}
+  <footer class="bd-footer">
+    {%- include "sections/footer.html" %}
+  </footer>
+{%- endblock footer %}
+{# Silence the sidebars and relbars since we define our own #}
+{% block header %}{% endblock %}
+{% block relbar1 %}{% endblock %}
+{% block relbar2 %}{% endblock %}
+{% block sidebarsourcelink %}{% endblock %}

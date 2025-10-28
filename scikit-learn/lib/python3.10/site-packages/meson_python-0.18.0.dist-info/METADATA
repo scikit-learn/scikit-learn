@@ -1,0 +1,61 @@
+Metadata-Version: 2.4
+Name: meson-python
+Version: 0.18.0
+Summary: Meson Python build backend (PEP 517)
+Keywords: meson,build,backend,pep517,package
+Maintainer-Email: Ralf Gommers <ralf.gommers@gmail.com>, Daniele Nicolodi <daniele@grinta.net>, Henry Schreiner <HenrySchreinerIII@gmail.com>, Thomas Li <47963215+lithomas1@users.noreply.github.com>
+License-Expression: MIT
+License-File: LICENSES/MIT.txt
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Programming Language :: Python
+Classifier: Topic :: Software Development :: Build Tools
+Project-URL: homepage, https://github.com/mesonbuild/meson-python
+Project-URL: repository, https://github.com/mesonbuild/meson-python
+Project-URL: documentation, https://mesonbuild.com/meson-python/
+Project-URL: changelog, https://mesonbuild.com/meson-python/changelog.html
+Requires-Python: >=3.8
+Requires-Dist: meson>=0.64.0; python_version < "3.12"
+Requires-Dist: meson>=1.2.3; python_version >= "3.12"
+Requires-Dist: packaging>=23.2
+Requires-Dist: pyproject-metadata>=0.9.0
+Requires-Dist: tomli>=1.0.0; python_version < "3.11"
+Provides-Extra: test
+Requires-Dist: build; extra == "test"
+Requires-Dist: pytest>=6.0; extra == "test"
+Requires-Dist: pytest-cov[toml]; extra == "test"
+Requires-Dist: pytest-mock; extra == "test"
+Requires-Dist: cython>=3.0.3; extra == "test"
+Requires-Dist: wheel; extra == "test"
+Requires-Dist: typing-extensions>=3.7.4; python_version < "3.11" and extra == "test"
+Provides-Extra: docs
+Requires-Dist: furo>=2024.08.06; extra == "docs"
+Requires-Dist: sphinx~=8.1.0; extra == "docs"
+Requires-Dist: sphinx-copybutton>=0.5.0; extra == "docs"
+Requires-Dist: sphinx-design>=0.1.0; extra == "docs"
+Requires-Dist: sphinxext-opengraph>=0.7.0; extra == "docs"
+Description-Content-Type: text/x-rst
+
+.. SPDX-FileCopyrightText: 2021 The meson-python developers
+
+.. SPDX-License-Identifier: MIT
+
+meson-python
+============
+
+``meson-python`` is a Python build back-end built on top of the Meson__
+build system. It enables using Meson for the configuration and build
+steps of Python packages. Meson is an open source build system meant
+to be both extremely fast, and, even more importantly, as user
+friendly as possible. ``meson-python`` is best suited for building
+Python packages containing extension modules implemented in languages
+such as C, C++, Cython, Fortran, Pythran, or Rust. Consult the
+documentation__ for more details.
+
+Questions regarding the use of ``meson-python`` can be directed to the
+discussions__ space on GitHub. Bug reports and feature requests can be
+filed as GitHub issues__.
+
+__ https://mesonbuild.com/
+__ https://mesonbuild.com/meson-python/
+__ https://github.com/mesonbuild/meson-python/discussions/
+__ https://github.com/mesonbuild/meson-python/issues/

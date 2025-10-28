@@ -1,0 +1,2 @@
+[sphinx.html_themes]
+pydata_sphinx_theme = pydata_sphinx_theme

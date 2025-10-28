@@ -1,0 +1,16 @@
+{# Displays an interactive search field directly on the page. #}
+<form class="bd-search d-flex align-items-center"
+      action="{{ pathto('search') }}"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="{{ theme_search_bar_text }}"
+         aria-label="{{ theme_search_bar_text }}"
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>

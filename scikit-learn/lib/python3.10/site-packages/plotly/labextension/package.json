@@ -1,0 +1,39 @@
+{
+  "name": "jupyterlab-plotly",
+  "main": "lib/mimeExtension.js",
+  "version": "6.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/plotly/plotly.py"
+  },
+  "description": "The plotly Jupyter extension",
+  "author": "The plotly.py team",
+  "license": "MIT",
+  "scripts": {
+    "build:widget": "esbuild --bundle --alias:plotly.js=plotly.js/dist/plotly --format=esm --minify --outfile=../plotly/package_data/widgetbundle.js src/widget.ts",
+    "build:mimerenderer": "esbuild --bundle --alias:plotly.js=plotly.js/dist/plotly --format=esm --minify --outfile=lib/mimeExtension.js src/mimeExtension.ts",
+    "build:labextension": "jupyter labextension build .",
+    "build": "npm run build:widget && npm run build:mimerenderer && npm run build:labextension",
+    "watch": "npm run build -- --watch --sourcemap=inline",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "lodash-es": "^4.17.21",
+    "plotly.js": "3.1.1",
+    "@lumino/widgets": "~2.4.0"
+  },
+  "devDependencies": {
+    "@jupyterlab/builder": "^4.3.6 || ^3.6.8",
+    "@types/plotly.js": "^2.33.4",
+    "esbuild": "^0.23.1",
+    "typescript": "^5.6.2"
+  },
+  "jupyterlab": {
+    "mimeExtension": true,
+    "outputDir": "../plotly/labextension",
+    "_build": {
+      "load": "static/remoteEntry.6e6831fa75252e0d6206.js",
+      "mimeExtension": "./mimeExtension"
+    }
+  }
+}

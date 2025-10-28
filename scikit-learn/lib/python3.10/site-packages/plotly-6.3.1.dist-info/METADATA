@@ -1,0 +1,239 @@
+Metadata-Version: 2.4
+Name: plotly
+Version: 6.3.1
+Summary: An open-source interactive data visualization library for Python
+Author-email: Chris P <chris@plot.ly>
+Maintainer-email: Martha Cryan <martha.cryan@plot.ly>, Emily Kellison-Linn <emily@plot.ly>
+License: MIT License
+        
+        Copyright (c) 2016-2024 Plotly Technologies Inc.
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in
+        all copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+        THE SOFTWARE.
+        
+Project-URL: HomePage, https://plotly.com/python/
+Project-URL: Documentation, https://plotly.com/python/
+Project-URL: Github, https://github.com/plotly/plotly.py
+Project-URL: Changelog, https://github.com/plotly/plotly.py/blob/main/CHANGELOG.md
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Scientific/Engineering :: Visualization
+Classifier: License :: OSI Approved :: MIT License
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE.txt
+Requires-Dist: narwhals>=1.15.1
+Requires-Dist: packaging
+Provides-Extra: express
+Requires-Dist: numpy; extra == "express"
+Provides-Extra: kaleido
+Requires-Dist: kaleido>=1.0.0; extra == "kaleido"
+Provides-Extra: dev-core
+Requires-Dist: pytest; extra == "dev-core"
+Requires-Dist: requests; extra == "dev-core"
+Requires-Dist: ruff==0.11.12; extra == "dev-core"
+Provides-Extra: dev-build
+Requires-Dist: plotly[dev_core]; extra == "dev-build"
+Requires-Dist: build; extra == "dev-build"
+Requires-Dist: jupyter; extra == "dev-build"
+Provides-Extra: dev-optional
+Requires-Dist: plotly[dev_build]; extra == "dev-optional"
+Requires-Dist: plotly[kaleido]; extra == "dev-optional"
+Requires-Dist: anywidget; extra == "dev-optional"
+Requires-Dist: colorcet; extra == "dev-optional"
+Requires-Dist: fiona<=1.9.6; python_version <= "3.8" and extra == "dev-optional"
+Requires-Dist: geopandas; extra == "dev-optional"
+Requires-Dist: inflect; extra == "dev-optional"
+Requires-Dist: numpy; extra == "dev-optional"
+Requires-Dist: orjson; extra == "dev-optional"
+Requires-Dist: pandas; extra == "dev-optional"
+Requires-Dist: pdfrw; extra == "dev-optional"
+Requires-Dist: pillow; extra == "dev-optional"
+Requires-Dist: plotly-geo; extra == "dev-optional"
+Requires-Dist: polars[timezone]; extra == "dev-optional"
+Requires-Dist: pyarrow; extra == "dev-optional"
+Requires-Dist: pyshp; extra == "dev-optional"
+Requires-Dist: pytz; extra == "dev-optional"
+Requires-Dist: scikit-image; extra == "dev-optional"
+Requires-Dist: scipy; extra == "dev-optional"
+Requires-Dist: shapely; extra == "dev-optional"
+Requires-Dist: statsmodels; extra == "dev-optional"
+Requires-Dist: vaex; python_version <= "3.9" and extra == "dev-optional"
+Requires-Dist: xarray; extra == "dev-optional"
+Provides-Extra: dev
+Requires-Dist: plotly[dev_optional]; extra == "dev"
+Dynamic: license-file
+
+# plotly.py
+
+<table>
+    <tr>
+        <td>Latest Release</td>
+        <td>
+            <a href="https://pypi.org/project/plotly/"/>
+            <img src="https://badge.fury.io/py/plotly.svg"/>
+        </td>
+    </tr>
+    <tr>
+        <td>User forum</td>
+        <td>
+            <a href="https://community.plotly.com/"/>
+            <img src="https://img.shields.io/badge/help_forum-discourse-blue.svg"/>
+        </td>
+    </tr>
+    <tr>
+        <td>PyPI Downloads</td>
+        <td>
+            <a href="https://pepy.tech/project/plotly"/>
+            <img src="https://pepy.tech/badge/plotly/month"/>
+        </td>
+    </tr>
+    <tr>
+        <td>License</td>
+        <td>
+            <a href="https://opensource.org/licenses/MIT"/>
+            <img src="https://img.shields.io/badge/License-MIT-yellow.svg"/>
+        </td>
+    </tr>
+</table>
+
+<div align="center">
+  <a href="https://dash.plotly.com/project-maintenance">
+    <img src="https://dash.plotly.com/assets/images/maintained-by-plotly.png" width="400px" alt="Maintained by Plotly">
+  </a>
+</div>
+
+## Quickstart
+
+`pip install plotly`
+
+```python
+import plotly.express as px
+fig = px.bar(x=["a", "b", "c"], y=[1, 3, 2])
+fig.show()
+```
+
+See the [Python documentation](https://plotly.com/python/) for more examples.
+
+## Overview
+
+[plotly.py](https://plotly.com/python/) is an interactive, open-source, and browser-based graphing library for Python :sparkles:
+
+Built on top of [plotly.js](https://github.com/plotly/plotly.js), `plotly.py` is a high-level, declarative charting library. plotly.js ships with over 30 chart types, including scientific charts, 3D graphs, statistical charts, SVG maps, financial charts, and more.
+
+`plotly.py` is [MIT Licensed](https://github.com/plotly/plotly.py/blob/main/LICENSE.txt). Plotly graphs can be viewed in [Jupyter notebooks](https://jupyter.org), other Python notebook software such as [marimo](https://marimo.io), as standalone HTML files, or integrated into [Dash applications](https://dash.plotly.com/).
+
+[Contact us](https://plotly.com/consulting-and-oem/) for consulting, dashboard development, application integration, and feature additions.
+
+<p align="center">
+    <a href="https://plotly.com/python/" target="_blank">
+    <img src="https://raw.githubusercontent.com/cldougl/plot_images/add_r_img/plotly_2017.png">
+</a></p>
+
+---
+
+- [Online Documentation](https://plotly.com/python/)
+- [Contributing to plotly](https://github.com/plotly/plotly.py/blob/main/CONTRIBUTING.md)
+- [Changelog](https://github.com/plotly/plotly.py/blob/main/CHANGELOG.md)
+- [Code of Conduct](https://github.com/plotly/plotly.py/blob/main/CODE_OF_CONDUCT.md)
+- [Community forum](https://community.plotly.com)
+
+---
+
+## Installation
+
+plotly.py may be installed using pip
+
+```
+pip install plotly
+```
+
+or conda.
+
+```
+conda install -c conda-forge plotly
+```
+
+### Jupyter Widget Support
+
+For use as a Jupyter widget, install `jupyter` and `anywidget`
+packages using `pip`:
+
+```
+pip install jupyter anywidget
+```
+
+or `conda`:
+
+```
+conda install jupyter anywidget
+```
+
+### Static Image Export
+
+plotly.py supports [static image export](https://plotly.com/python/static-image-export/),
+using either the [`kaleido`](https://github.com/plotly/Kaleido)
+package (recommended, supported as of `plotly` version 4.9) or the [orca](https://github.com/plotly/orca)
+command line utility (legacy as of `plotly` version 4.9).
+
+#### Kaleido
+
+The [`kaleido`](https://github.com/plotly/Kaleido) package has no dependencies and can be installed
+using pip
+
+```
+pip install -U kaleido
+```
+
+or conda
+
+```
+conda install -c conda-forge python-kaleido
+```
+
+### Extended Geo Support
+
+Some plotly.py features rely on fairly large geographic shape files. The county
+choropleth figure factory is one such example. These shape files are distributed as a
+separate `plotly-geo` package. This package can be installed using pip...
+
+```
+pip install plotly-geo==1.0.0
+```
+
+or conda
+
+```
+conda install -c plotly plotly-geo=1.0.0
+```
+
+`plotly-geo` can be found on Github at https://github.com/plotly/plotly-geo.
+
+## Copyright and Licenses
+
+Code and documentation copyright 2019 Plotly, Inc.
+
+Code released under the [MIT license](https://github.com/plotly/plotly.py/blob/main/LICENSE.txt).
+
+Docs released under the [Creative Commons license](https://github.com/plotly/documentation/blob/source/LICENSE).
+

@@ -1,0 +1,48 @@
+/**
+ * Sphinx Copybutton
+ * ref: https://sphinx-copybutton.readthedocs.io/
+ */
+
+div.highlight button.copybtn {
+  // Nicer spacing
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  // Don't over-ride the success color
+  &:not(.success) {
+    color: var(--pst-color-muted);
+  }
+
+  border: none;
+  background-color: var(--pst-color-surface);
+
+  &:hover {
+    &:not(.success) {
+      color: var(--pst-color-text);
+      background-color: var(--pst-color-shadow);
+    }
+  }
+
+  // Tooltip styling
+  &.o-tooltip--left::after {
+    color: var(--pst-color-text);
+    background-color: var(--pst-color-surface);
+  }
+
+  &:focus {
+    // For keyboard users, make the copy button visible when focussed.
+    opacity: 1;
+  }
+
+  &:focus-visible {
+    outline: $focus-ring-outline;
+  }
+}
+
+div.highlight:has(button.copybtn) {
+  // Make sure the code block has enough height for the copy button.
+  // Sphinx-copybutton sets 0.3em top offset plus 1.7em height:
+  // https://github.com/executablebooks/sphinx-copybutton/blob/master/sphinx_copybutton/_static/copybutton.css
+  min-height: 2em;
+}

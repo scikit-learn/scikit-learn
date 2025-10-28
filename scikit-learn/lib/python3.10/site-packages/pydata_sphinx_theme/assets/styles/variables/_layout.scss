@@ -1,0 +1,48 @@
+html {
+  /*****************************************************************************
+  * Overall Layout Variables
+  */
+
+  // Header height will impact the top offset for many sections
+  // Article header is 66% of Header
+  --pst-header-height: 4rem;
+  --pst-header-article-height: calc(var(--pst-header-height) * 2 / 3);
+  --pst-sidebar-secondary: 17rem;
+}
+
+/*******************************************************************************
+* Breakpoints that trigger UI changes
+*
+* Note that media-breakpoint-down begins at the next highest level!
+* So we should choose a media-breakpoint-down one *lower* than when we want to start
+* example: media-breakpoint-up(md) and media-breakpoint-down(sm) trigger at the same time
+* ref: https://github.com/twbs/bootstrap/issues/31214
+*/
+$breakpoint-sidebar-primary: lg; // When we collapse the primary sidebar
+$breakpoint-sidebar-secondary: xl; // When we collapse the secondary sidebar
+$breakpoint-page-width: 88rem; // taken from sphinx-basic-ng, which we are ultimately going to inherit
+
+/*******************************************************************************
+* Define the animation behaviour
+*/
+$animation-time: 200ms;
+
+/*******************************************************************************
+* UI shaping and padding
+*/
+$admonition-border-radius: 0.25rem;
+
+// In this theme, some focus rings have rounded corners while others do not.
+// This variable sets the border radius for the rounded focus rings.
+$focus-ring-radius: 0.125rem; // 2px at 100% zoom and 16px base font.
+
+$navbar-link-padding-y: 0.25rem;
+
+// Ensure that there is no overlap of bumper disks (smallest circle that
+// contains the bounding box of the interactive element).
+// - https://github.com/Quansight-Labs/czi-scientific-python-mgmt/issues/81#issuecomment-2251325783
+$nav-icon-column-gap: 1.12rem;
+
+// Determines vertical space between entries in both the section (left/primary
+// sidebar) and page (right/secondary sidebar) table of contents
+$toc-item-padding-y: 0.25rem;

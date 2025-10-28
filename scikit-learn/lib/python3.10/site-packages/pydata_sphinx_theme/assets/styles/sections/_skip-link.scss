@@ -1,0 +1,36 @@
+/***
+ * Rules for the UX/UI of skip navigation link btn.
+ * It's only visible to people
+ * navigating with keyboard for accessibility purposes
+ * ref: https://www.youtube.com/watch?v=VUR0I5mqq7I
+ ***/
+
+.skip-link {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  background-color: var(--pst-color-warning);
+  padding: 0.5rem;
+  z-index: $zindex-modal;
+  border-bottom: 1px solid var(--pst-color-border);
+
+  // This shows / hides the button
+  transform: translateY(-100%);
+  transition: transform 150ms ease-in-out;
+
+  &:focus-within {
+    transform: translateY(0%);
+  }
+
+  a {
+    // Ensure we are using a WCAG conformant colour
+    color: var(--pst-color-warning-text) !important;
+
+    &:focus-visible {
+      // use color with sufficient contrast
+      outline-color: $foundation-black;
+    }
+  }
+}

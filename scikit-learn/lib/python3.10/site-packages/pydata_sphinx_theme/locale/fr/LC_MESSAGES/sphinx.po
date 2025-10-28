@@ -1,0 +1,200 @@
+# English translations for PROJECT.
+# Copyright (C) 2024 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+# Translators:
+# Rambaud Pierrick <pierrick.rambaud49@gmail.com>, 2024
+# Denis Bitouzé <dbitouze@wanadoo.fr>, 2024
+#
+msgid ""
+msgstr ""
+
+#: docs/conf.py:111
+msgid "Click to expand"
+msgstr "Cliquer pour développer"
+
+#: docs/conf.py:112
+msgid "Click to collapse"
+msgstr "Cliquer pour réduire"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/layout.html:48
+msgid "Skip to main content"
+msgstr "Passer au contenu principal"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/layout.html:60
+msgid "Back to top"
+msgstr "Haut de page"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/search-button-field.html:6
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/search-button-field.html:8
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/search-button.html:3
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/search.html:5
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/search.html:28
+msgid "Search"
+msgstr "Recherche"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/search.html:8
+msgid "Error"
+msgstr "Erreur"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/search.html:9
+msgid "Please activate JavaScript to enable the search functionality."
+msgstr "Le JavaScript doit être activé pour que la recherche fonctionne."
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/breadcrumbs.html:6
+msgid "Breadcrumb"
+msgstr "Fil d'Ariane"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/breadcrumbs.html:10
+msgid "Home"
+msgstr "Accueil"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/copyright.html:5
+#, python-format
+msgid "Copyright %(copyright)s"
+msgstr "Copyright %(copyright)s"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/copyright.html:8
+#, python-format
+msgid "© Copyright %(copyright)s."
+msgstr "© Copyright %(copyright)s."
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/edit-this-page.html:10
+#, python-format
+msgid "Edit on %(provider)s"
+msgstr "Modifier sur %(provider)s"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/edit-this-page.html:12
+msgid "Edit"
+msgstr "Modifier"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/indices.html:4
+msgid "Indices"
+msgstr "Index"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/indices.html:11
+msgid "General Index"
+msgstr "Index général"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/indices.html:15
+msgid "Global Module Index"
+msgstr "Index général des modules"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/indices.html:19
+msgid "Python Module Index"
+msgstr "Index des modules Python"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/last-updated.html:4
+#, python-format
+msgid "Last updated on %(last_updated)s."
+msgstr "Mis à jour le %(last_updated)s."
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/page-toc.html:8
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/sections/header.html:43
+msgid "On this page"
+msgstr "Sur cette page"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/prev-next.html:6
+msgid "previous page"
+msgstr "page précédente"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/prev-next.html:9
+msgid "previous"
+msgstr "précédente"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/prev-next.html:17
+msgid "next page"
+msgstr "page suivante"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/prev-next.html:19
+msgid "next"
+msgstr "suivante"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/sidebar-nav-bs.html:3
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/sidebar-nav-bs.html:4
+msgid "Section Navigation"
+msgstr "Navigation dans la section"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/sourcelink.html:5
+msgid "Show Source"
+msgstr "Afficher le code source"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/sphinx-version.html:4
+#, python-format
+msgid ""
+"Created using <a href=\"https://www.sphinx-doc.org/\">Sphinx</a> "
+"%(sphinx_version)s."
+msgstr ""
+"Créé en utilisant <a href=\"https://www.sphinx-doc.org/\">Sphinx</a> "
+"%(sphinx_version)s."
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/theme-switcher.html:3
+msgid "Color mode"
+msgstr "Thème"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/theme-switcher.html:4
+msgid "Light"
+msgstr "Clair"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/theme-switcher.html:5
+msgid "Dark"
+msgstr "Sombre"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/theme-switcher.html:6
+msgid "System Settings"
+msgstr "Paramètres système"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/theme-version.html:4
+#, python-format
+msgid ""
+"Built with the <a href=\"%(PST_url)s\">PyData Sphinx Theme</a> "
+"%(theme_version)s."
+msgstr ""
+"Construit avec le <a href=\"%(PST_url)s\">thème PyData Sphinx</a> "
+"%(theme_version)s."
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/sections/announcement.html:4
+msgid "Version warning"
+msgstr "Alerte de version"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/sections/announcement.html:6
+msgid "Announcement"
+msgstr "Annonce"
+
+#: src/pydata_sphinx_theme/theme/pydata_sphinx_theme/sections/header.html:3
+msgid "Site navigation"
+msgstr "Navigation dans le site"
+
+#~ msgid "Breadcrumbs"
+#~ msgstr "Fils d'Ariane"
+
+#~ msgid "GitHub"
+#~ msgstr "GitHub"
+
+#~ msgid "GitLab"
+#~ msgstr "GitLab"
+
+#~ msgid "Bitbucket"
+#~ msgstr "Bitbucket"
+
+#~ msgid "Twitter"
+#~ msgstr "Twitter"
+
+#~ msgid "Site Navigation"
+#~ msgstr "Navigation dans le site"
+
+#~ msgid "© <a href=\"%(path)s\">Copyright</a> %(copyright)s."
+#~ msgstr "© <a href=\"%(path)s\">Copyright</a> %(copyright)s."
+
+#~ msgid "light/dark"
+#~ msgstr "clair/sombre"
+
+#~ msgid ""
+#~ "Built with the <a href=\"https://pydata-sphinx-"
+#~ "theme.readthedocs.io/en/stable/index.html\">PyData Sphinx Theme</a> "
+#~ "%(theme_version)s."
+#~ msgstr ""
+#~ "Construit avec le <a href=\"https://pydata-sphinx-"
+#~ "theme.readthedocs.io/en/stable/index.html\">thème PyData Sphinx</a> "
+#~ "%(theme_version)s."

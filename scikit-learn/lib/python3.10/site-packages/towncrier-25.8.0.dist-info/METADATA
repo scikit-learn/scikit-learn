@@ -1,0 +1,85 @@
+Metadata-Version: 2.4
+Name: towncrier
+Version: 25.8.0
+Summary: Building newsfiles for your project.
+Project-URL: Documentation, https://towncrier.readthedocs.io/
+Project-URL: Chat, https://web.libera.chat/?channels=%23twisted
+Project-URL: Mailing list, https://mail.python.org/mailman3/lists/twisted.python.org/
+Project-URL: Issues, https://github.com/twisted/towncrier/issues
+Project-URL: Repository, https://github.com/twisted/towncrier
+Project-URL: Tests, https://github.com/twisted/towncrier/actions?query=branch%3Atrunk
+Project-URL: Coverage, https://codecov.io/gh/twisted/towncrier
+Project-URL: Distribution, https://pypi.org/project/towncrier
+License-Expression: MIT
+License-File: LICENSE
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Requires-Python: >=3.9
+Requires-Dist: click
+Requires-Dist: importlib-metadata>=4.6; python_version < '3.10'
+Requires-Dist: importlib-resources>=5; python_version < '3.10'
+Requires-Dist: jinja2
+Requires-Dist: tomli; python_version < '3.11'
+Provides-Extra: dev
+Requires-Dist: furo>=2024.05.06; extra == 'dev'
+Requires-Dist: nox; extra == 'dev'
+Requires-Dist: packaging; extra == 'dev'
+Requires-Dist: sphinx>=5; extra == 'dev'
+Requires-Dist: twisted; extra == 'dev'
+Description-Content-Type: text/x-rst
+
+Hear ye, hear ye, says the ``towncrier``
+========================================
+
+.. image:: https://img.shields.io/badge/Docs-Read%20The%20Docs-black
+   :alt: Documentation
+   :target: https://towncrier.readthedocs.io/
+
+.. image:: https://img.shields.io/badge/license-MIT-C06524
+   :alt: License: MIT
+   :target: https://github.com/twisted/towncrier/blob/trunk/LICENSE
+
+.. image:: https://img.shields.io/pypi/v/towncrier
+   :alt: PyPI release
+   :target: https://pypi.org/project/towncrier/
+
+``towncrier`` is a utility to produce useful, summarized news files (also known as changelogs) for your project.
+
+Rather than reading the Git history, or having one single file which developers all write to and produce merge conflicts, ``towncrier`` reads "news fragments" which contain information useful to **end users**.
+
+Used by `Twisted <https://github.com/twisted/twisted>`_, `pytest <https://github.com/pytest-dev/pytest/>`_, `pip <https://github.com/pypa/pip/>`_, `BuildBot <https://github.com/buildbot/buildbot>`_, and `attrs <https://github.com/python-attrs/attrs>`_, among others.
+
+While the command line tool ``towncrier`` requires Python to run, as long as you don't use any Python-specific affordances (like auto-detection of the project version), it is usable with **any project type** on **any platform**.
+
+
+Philosophy
+----------
+
+``towncrier`` delivers the news which is convenient to those that hear it, not those that write it.
+
+That is, by duplicating what has changed from the "developer log" (which may contain complex information about the original issue, how it was fixed, who authored the fix, and who reviewed the fix) into a "news fragment" (a small file containing just enough information to be useful to end users), ``towncrier`` can produce a digest of the changes which is valuable to those who may wish to use the software.
+These fragments are also commonly called "topfiles" or "newsfiles".
+
+``towncrier`` works best in a development system where all merges involve closing an issue.
+
+To get started, check out our `tutorial <https://towncrier.readthedocs.io/en/latest/tutorial.html>`_!
+
+.. links
+
+Project Links
+-------------
+
+- **PyPI**: https://pypi.org/project/towncrier/
+- **Documentation**: https://towncrier.readthedocs.io/
+- **Release Notes**: https://github.com/twisted/towncrier/blob/trunk/NEWS.rst
+- **License**: `MIT <https://github.com/twisted/towncrier/blob/trunk/LICENSE>`_

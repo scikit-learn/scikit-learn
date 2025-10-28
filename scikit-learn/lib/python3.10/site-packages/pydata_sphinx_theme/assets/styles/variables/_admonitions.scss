@@ -1,0 +1,18 @@
+html {
+  /*****************************************************************************
+  * Admonitions
+  **/
+
+  --pst-icon-admonition-default: var(--pst-icon-bell);
+  --pst-icon-admonition-note: var(--pst-icon-info-circle);
+  --pst-icon-admonition-attention: var(--pst-icon-exclamation-circle);
+  --pst-icon-admonition-caution: var(--pst-icon-exclamation-triangle);
+  --pst-icon-admonition-warning: var(--pst-icon-exclamation-triangle);
+  --pst-icon-admonition-danger: var(--pst-icon-exclamation-triangle);
+  --pst-icon-admonition-error: var(--pst-icon-times-circle);
+  --pst-icon-admonition-hint: var(--pst-icon-lightbulb);
+  --pst-icon-admonition-tip: var(--pst-icon-lightbulb);
+  --pst-icon-admonition-important: var(--pst-icon-exclamation-circle);
+  --pst-icon-admonition-seealso: var(--pst-icon-share);
+  --pst-icon-admonition-todo: var(--pst-icon-pencil);
+}

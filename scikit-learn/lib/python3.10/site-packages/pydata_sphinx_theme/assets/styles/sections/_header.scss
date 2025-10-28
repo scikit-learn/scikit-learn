@@ -1,0 +1,259 @@
+/**
+ * Header at the top of the page
+ * It includes the announcement bar and the navigation bar.
+ */
+
+// Styling for the Icon links can be found in components/_icon-links.scss
+
+// If we want the shadow to only point downward in the future, set
+// box-shadow to: 0 0.125rem 0.25rem -0.125rem rgba(0, 0, 0, 0.11);
+.bd-header {
+  position: sticky;
+  top: 0;
+  z-index: $zindex-fixed;
+
+  // Overrides bootstrap
+  background-color: var(--pst-color-on-background) !important;
+  box-shadow: 0 0.125rem 0.25rem 0 var(--pst-color-shadow);
+  width: 100%;
+  padding: 0;
+  max-width: 100vw;
+  justify-content: center;
+
+  .bd-header__inner {
+    display: flex;
+    align-items: center;
+    height: fit-content;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  :focus-visible {
+    border-radius: $focus-ring-radius;
+  }
+
+  // These items will define the height of the header
+  .navbar-item {
+    height: var(--pst-header-height);
+    max-height: var(--pst-header-height);
+    display: flex;
+    align-items: center;
+  }
+
+  // Hide the navbar header items on mobile because they're in the sidebar
+  .navbar-header-items {
+    display: none;
+    flex-shrink: 1;
+
+    @include media-breakpoint-up($breakpoint-sidebar-primary) {
+      display: inherit;
+      flex-grow: 1;
+      padding: 0 0 0 0.5rem;
+    }
+  }
+
+  .navbar-header-items__end,
+  .navbar-header-items__center,
+  .navbar-header-items__start {
+    display: flex;
+    align-items: center;
+    flex-flow: wrap;
+
+    // In case we wrap our items to multiple rows on small screens
+    row-gap: 0;
+  }
+
+  .navbar-header-items__end,
+  .navbar-header-items__center {
+    column-gap: $nav-icon-column-gap;
+  }
+
+  // A little smaller because this is displayed by default on mobile
+  .navbar-header-items__start {
+    flex-shrink: 0;
+    margin-right: auto;
+    gap: 0.5rem;
+  }
+
+  .navbar-header-items__end {
+    // End navbar items should snap to the right
+    justify-content: end;
+  }
+
+  // Contains the navigation links within the navbar
+  ul.navbar-nav {
+    display: flex;
+
+    @include media-breakpoint-up($breakpoint-sidebar-primary) {
+      // Align on wide screens so the dropdown button is centered properly
+      align-items: baseline;
+    }
+
+    > li.nav-item {
+      margin-inline: 2px; // breathing room so hover and focus styles do not overlap
+
+      > .nav-link {
+        @include link-style-block;
+
+        padding-inline: 6px;
+      }
+
+      &.current {
+        > .nav-link {
+          color: var(--pst-color-primary);
+
+          // Underline the current navbar item
+          &::before {
+            border-bottom: 3px solid var(--pst-color-primary);
+          }
+        }
+      }
+
+      &.dropdown {
+        margin-inline: 4px;
+
+        button {
+          padding-inline: 8px;
+        }
+
+        > .dropdown-toggle {
+          border-radius: $focus-ring-radius; // make border radius the same for both hover ring and focus ring
+          color: var(--pst-color-text-muted);
+
+          &:focus-visible {
+            box-shadow: $focus-ring-box-shadow;
+          }
+
+          &:hover {
+            text-decoration: none;
+            box-shadow: 0 0 0 $focus-ring-width var(--pst-color-link-hover); // purple focus ring
+            // Brighten the text on hover (muted -> base)
+            color: var(--pst-color-text-base);
+          }
+        }
+      }
+    }
+
+    li a.nav-link.dropdown-item {
+      @include link-style-text;
+    }
+
+    // Dropdowns for the extra links
+    .dropdown {
+      button {
+        display: unset;
+        border: none;
+
+        &:hover {
+          @include link-style-hover;
+        }
+      }
+
+      .dropdown-menu {
+        z-index: $zindex-popover;
+        border: 1px solid var(--pst-color-border);
+        box-shadow: 0 0 0.3rem 0.1rem var(--pst-color-shadow);
+        background-color: var(--pst-color-on-background);
+        padding: 0.5rem 0;
+        margin: 0.5rem 0;
+        min-width: 20rem;
+
+        .dropdown-item {
+          // Give the items in the dropdown some breathing room but let the hit
+          // and hover area of the items extend to the edges of the menu
+          padding: 0.25rem 1.5rem;
+
+          // Override Bootstrap
+          &:focus:not(:hover, :active) {
+            background-color: inherit;
+          }
+
+          &:focus-visible {
+            z-index: 10; // keep focus ring on top (prevent the hover background of the next dropdown item from covering the ring)
+          }
+        }
+
+        // Hide the menu unless show has been clicked
+        &:not(.show) {
+          display: none;
+        }
+      }
+    }
+  }
+
+  // **************************************************************
+  // Showing and hiding the sidebar toggle buttons and header items
+  // **************************************************************
+
+  // Toggle buttons
+  button.sidebar-toggle {
+    font-size: var(--pst-font-size-icon);
+    color: var(--pst-color-muted);
+    margin-bottom: 0;
+    background-color: inherit;
+    padding: 0.5rem;
+  }
+
+  button.primary-toggle {
+    margin-right: 1rem;
+
+    @include media-breakpoint-up($breakpoint-sidebar-primary) {
+      display: none;
+    }
+  }
+
+  button.secondary-toggle {
+    margin-left: 1rem;
+
+    @include media-breakpoint-up($breakpoint-sidebar-secondary) {
+      display: none;
+    }
+  }
+}
+
+// inline the element in the navbar as long as they fit and use display block when collapsing
+@include media-breakpoint-up($breakpoint-sidebar-primary) {
+  .navbar-center-items .navbar-item {
+    display: inline-block;
+  }
+}
+
+.nav-link {
+  &:hover {
+    @include link-style-hover;
+  }
+
+  // Override Bootstrap
+  transition: none;
+
+  &.nav-external::after {
+    font: var(--fa-font-solid);
+    content: var(--pst-icon-external-link);
+    font-size: 0.75em;
+    margin-left: 0.3em;
+  }
+}
+
+.bd-navbar-elements li.nav-item i {
+  font-size: 0.7rem;
+  padding-left: 2px;
+  vertical-align: middle;
+}
+
+// THe elements next to the hamburger menu only show on narrow screens
+.navbar-persistent--mobile {
+  margin-left: auto;
+
+  @include media-breakpoint-up($breakpoint-sidebar-primary) {
+    display: none;
+  }
+}
+
+// The navbar-persistent content should only show on wide screens
+.navbar-persistent--container {
+  display: none;
+
+  @include media-breakpoint-up($breakpoint-sidebar-primary) {
+    display: flex;
+  }
+}

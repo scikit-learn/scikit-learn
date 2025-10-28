@@ -1,0 +1,63 @@
+/**
+* Previous / Next navigation buttons
+**/
+.prev-next-area {
+  width: 100%;
+
+  p {
+    color: var(--pst-color-text-muted);
+    margin: 0 0.3em;
+    line-height: 1.3em;
+  }
+
+  i {
+    font-size: 1.2em;
+  }
+
+  a {
+    // So that buttons align with icons
+    display: flex;
+    align-items: center;
+    border: none;
+    padding: 10px;
+    max-width: 45%;
+    overflow-x: hidden;
+    color: var(--pst-color-text-muted);
+    text-decoration: none;
+
+    p.prev-next-title {
+      @include link-style-default;
+
+      font-weight: var(--pst-admonition-font-weight-heading);
+      font-size: 1.1em;
+    }
+
+    &:hover,
+    &:visited:hover {
+      p.prev-next-title {
+        @include link-style-hover;
+      }
+    }
+
+    .prev-next-info {
+      flex-direction: column;
+      margin: 0 0.5em;
+
+      .prev-next-subtitle {
+        text-transform: capitalize;
+      }
+    }
+
+    &.left-prev {
+      float: left;
+    }
+
+    &.right-next {
+      float: right;
+
+      div.prev-next-info {
+        text-align: right;
+      }
+    }
+  }
+}

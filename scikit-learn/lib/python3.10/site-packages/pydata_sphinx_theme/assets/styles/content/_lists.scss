@@ -1,0 +1,16 @@
+// Override bootstrap by restoring the basic theme default.
+dd {
+  margin-top: 3px;
+  margin-bottom: 10px;
+  margin-left: 30px;
+}
+
+ol,
+ul {
+  padding-inline-start: 2rem;
+
+  li > p:first-child {
+    margin-bottom: 0.25rem;
+    margin-top: 0.25rem;
+  }
+}
