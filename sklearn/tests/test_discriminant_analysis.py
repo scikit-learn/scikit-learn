@@ -825,8 +825,8 @@ def test_qda_shrinkage_performance(global_random_seed, n_features, train_size):
     # covariance shrinkage.
     cv = ShuffleSplit(n_splits=5, train_size=train_size, random_state=0)
     qda_shrinkage = QuadraticDiscriminantAnalysis(solver="eigen", shrinkage="auto")
-
     qda_no_shrinkage = QuadraticDiscriminantAnalysis(solver="svd")
+
     scores_no_shrinkage = cross_val_score(
         qda_no_shrinkage, X, y, cv=cv, scoring="d2_brier_score"
     )
