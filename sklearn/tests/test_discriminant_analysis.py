@@ -613,6 +613,7 @@ def test_qda_coefs(global_random_seed):
         n_samples=n_samples,
         n_features=n_features,
         centers=n_classes,
+        cluster_std=[1.0, 3.0],
         random_state=global_random_seed,
     )
 

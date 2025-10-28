@@ -1040,7 +1040,7 @@ class QuadraticDiscriminantAnalysis(
         cov = None
         if self.store_covariance:
             # cov = V * (S^2 / (n-1)) * V.T
-            cov = np.dot(scaling * Vt.T, Vt)
+            cov = scaling * Vt.T @ Vt
 
         return scaling, rotation, cov
 
