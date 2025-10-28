@@ -1,0 +1,2 @@
+- Fixed a bug in :class:`preprocessing.OneHotEncoder` where `handle_unknown='warn'` incorrectly behaved like `'ignore'` instead of `'infrequent_if_exist'`.
+  By :user:`Nithurshen <nithurshen>`
