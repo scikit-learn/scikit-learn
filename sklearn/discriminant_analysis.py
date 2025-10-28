@@ -1119,7 +1119,7 @@ class QuadraticDiscriminantAnalysis(
             rank = np.sum(scaling_class > self.tol)
             if rank < n_features:
                 n_samples_class = X_class.shape[0]
-                if self.solver == "svd" and n_samples_class < n_features:
+                if self.solver == "svd" and n_samples_class <= n_features:
                     raise linalg.LinAlgError(
                         f"The covariance matrix of class {class_label} is not full "
                         f"rank. When using `solver='svd'` the number of samples in "
