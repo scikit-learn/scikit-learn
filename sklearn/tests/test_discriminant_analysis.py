@@ -608,7 +608,7 @@ def test_qda_coefs(global_random_seed):
     # Test if the coefficients of the solvers are approximately the same.
     n_features = 2
     n_classes = 2
-    n_samples = 1000
+    n_samples = 3000
     X, y = make_blobs(
         n_samples=n_samples,
         n_features=n_features,
@@ -624,13 +624,16 @@ def test_qda_coefs(global_random_seed):
     clf_eigen.fit(X, y)
 
     for class_idx in range(n_classes):
-        assert_array_almost_equal(
+        assert_allclose(
             np.abs(clf_svd.rotations_[class_idx]),
             np.abs(clf_eigen.rotations_[class_idx]),
-            1,
+            rtol=1e-3,
+            err_msg=f"SVD and Eigen rotations differ for class {class_idx}",
         )
-        assert_array_almost_equal(
-            clf_svd.scalings_[class_idx], clf_eigen.scalings_[class_idx], 1
+        assert_allclose(
+            clf_svd.scalings_[class_idx], clf_eigen.scalings_[class_idx],
+            rtol=1e-3,
+            err_msg=f"SVD and Eigen scalings differ for class {class_idx}",
         )
 
 
