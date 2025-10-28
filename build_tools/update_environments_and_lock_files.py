@@ -206,7 +206,7 @@ build_metadata_list = [
             + ["ccache"]
         ),
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
             "blas": "[build=openblas]",
         },
     },
@@ -302,7 +302,7 @@ build_metadata_list = [
             "pip",
         ],
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
             "blas": "[build=openblas]",
         },
     },
@@ -395,6 +395,9 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "python": "3.10",
+            # Pinned while https://github.com/pola-rs/polars/issues/25039 is
+            # not fixed.
+            "polars": "1.34.0",
         },
     },
     {
@@ -407,7 +410,7 @@ build_metadata_list = [
         "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
         + ["pip", "ccache"],
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
             # The following is needed to avoid getting libnvpl build for blas for some
             # reason.
             "blas": "[build=openblas]",

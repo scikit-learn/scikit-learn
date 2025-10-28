@@ -30,7 +30,7 @@ dependencies:
   - numpydoc<1.9.0
   - sphinx-prompt
   - plotly
-  - polars
+  - polars=1.34.0
   - pooch
   - sphinxext-opengraph
   - sphinx-remove-toctrees
