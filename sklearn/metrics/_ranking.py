@@ -382,7 +382,8 @@ def det_curve(
     # i.e. tps = fps = 0
     tps = xp.concat((xp.asarray([0.0], device=device), tps))
     fps = xp.concat((xp.asarray([0.0], device=device), fps))
-    thresholds = xp.concat((xp.asarray([np.inf], device=device), thresholds))
+    thresholds = xp.astype(thresholds, _max_precision_float_dtype(xp, device))
+    thresholds = xp.concat((xp.asarray([xp.inf], device=device), thresholds))
 
     if drop_intermediate and len(fps) > 2:
         # Drop thresholds where true positives (tp) do not change from the
