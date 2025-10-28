@@ -718,8 +718,8 @@ def test_qda_regularization(global_random_seed, solver):
 
     # LinAlgError should also be there for the n_samples_in_a_class <
     # n_features case.
-    X = rng.normal(size=(8, 4))
-    y = np.array([1, 1, 1, 1, 1, 2, 2, 2])
+    X = rng.normal(size=(9, 4))
+    y = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2])
 
     clf = QuadraticDiscriminantAnalysis(solver=solver)
     if solver == "svd":
