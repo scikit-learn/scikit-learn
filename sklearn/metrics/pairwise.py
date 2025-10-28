@@ -83,10 +83,10 @@ def _find_floating_dtype_allow_sparse(X, Y, xp=None):
 def _find_dtype_for_check_pairwise_arrays(X, Y, metric):
     """Find the necessary dtype to pass to `check_pairwise_arrays`
 
-    `check_pairwise_arrays` may need to cast the inputs to a common dtype: ``bool`` for
-    boolean metrics, and ``float32|float64`` otherwise (inferred by passing it
-    ``"infer_float"``). This helper is metric-aware and returns the required dtype so
-    said cast is performed only if needed, and warns if a cast to bool will be done.
+    Metric-aware helper that returns bool when metric is a
+    `PAIRWISE_BOOLEAN_FUNCTIONS` and "infer_float" otherwise. This
+    ensures that `check_pairwise_arrays` does not cast to float
+    for boolean functions.
     """
 
     if metric in PAIRWISE_BOOLEAN_FUNCTIONS:
