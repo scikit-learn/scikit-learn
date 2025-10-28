@@ -999,7 +999,7 @@ class QuadraticDiscriminantAnalysis(
         self.tol = tol
         self.covariance_estimator = covariance_estimator
 
-    def _solve_eigen(self, X, shrinkage, covariance_estimator):
+    def _solve_eigen(self, X):
         """Eigenvalue solver.
 
         The eigenvalue solver uses the eigen decomposition of the data
@@ -1010,25 +1010,10 @@ class QuadraticDiscriminantAnalysis(
         ----------
         X : array-like of shape (n_samples, n_features)
             Training data.
-
-        shrinkage : 'auto', float or None
-            Shrinkage parameter, possible values:
-              - None: no shrinkage.
-              - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
-              - float between 0 and 1: fixed shrinkage constant.
-
-            Shrinkage parameter is ignored if  `covariance_estimator` is not None
-
-        covariance_estimator : estimator, default=None
-            If not None, `covariance_estimator` is used to estimate the
-            covariance matrices instead of relying the empirical covariance
-            estimator (with potential shrinkage). The object should have a fit
-            method and a ``covariance_`` attribute like the estimators in
-            sklearn.covariance. If None the shrinkage parameter drives the estimate.
         """
         n_samples, n_features = X.shape
 
-        cov = _cov(X, shrinkage, covariance_estimator)
+        cov = _cov(X, self.shrinkage, self.covariance_estimator)
         scaling, rotation = linalg.eigh(cov)  # scalings are eigenvalues
         rotation = rotation[:, np.argsort(scaling)[::-1]]  # sort eigenvectors
         scaling = scaling[np.argsort(scaling)[::-1]]  # sort eigenvalues
@@ -1112,11 +1097,7 @@ class QuadraticDiscriminantAnalysis(
                 )
             specific_solver = self._solve_svd
         elif self.solver == "eigen":
-            specific_solver = lambda X: self._solve_eigen(
-                X,
-                shrinkage=self.shrinkage,
-                covariance_estimator=self.covariance_estimator,
-            )
+            specific_solver = self._solve_eigen
 
         means = []
         cov = []
