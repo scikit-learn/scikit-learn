@@ -1837,13 +1837,10 @@ def test_pairwise_argmin_correct_warnings_for_bool_and_nonbool(
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always", category=DataConversionWarning)
         pairwise_fn(X, Y, metric=metric)
-        assert not any(w.category is DataConversionWarning for w in record), (
-            f"DataConversionWarning should not ocur for bool non-arrays for {metric}"
-        )
+        msg = f"DataConversionWarning should not occur for boolean data for {metric}"
+        assert not any(w.category is DataConversionWarning for w in record), msg
         pairwise_fn(X_arr, Y_arr, metric=metric)
-        assert not any(w.category is DataConversionWarning for w in record), (
-            f"DataConversionWarning should not ocur for bool arrays for {metric}"
-        )
+        assert not any(w.category is DataConversionWarning for w in record), msg
 
     with pytest.warns(DataConversionWarning):
         pairwise_fn(X_arr.astype(np.float32), Y_arr, metric=metric)
