@@ -889,7 +889,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     y_true = y_true == pos_label
 
     # sort scores and corresponding truth values
-    desc_score_indices = xp.argsort(y_score, stable=True)[::-1]
+    desc_score_indices = xp.argsort(y_score, stable=True, descending=True)
     y_score = y_score[desc_score_indices]
     y_true = y_true[desc_score_indices]
     if sample_weight is not None:
