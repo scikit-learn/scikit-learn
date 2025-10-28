@@ -118,28 +118,16 @@ def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
     n_samples_bootstrap : int
         The total number of samples to draw for the bootstrap sample.
     """
-    if max_samples is None:
-        if sample_weight is None:
-            return n_samples
-        else:
-            sw_sum = np.sum(sample_weight)
-            if sw_sum <= 1:
-                raise ValueError(
-                    f"The total sum of sample weights is {sw_sum}, which prevents "
-                    f"resampling when {max_samples=}. Either pass max_samples as "
-                    "an integer or use a larger sample_weight."
-                )
-            return max(int(sw_sum), 1)
-
     if isinstance(max_samples, Integral):
         if max_samples > n_samples:
             msg = "`max_samples` must be <= n_samples={} but got value {}"
             raise ValueError(msg.format(n_samples, max_samples))
         return max_samples
 
-    if isinstance(max_samples, Real):
+    if max_samples is None or isinstance(max_samples, Real):
+        fraction = 1.0 if max_samples is None else max_samples
         if sample_weight is None:
-            return max(int(max_samples * n_samples), 1)
+            return max(int(fraction * n_samples), 1)
         else:
             sw_sum = np.sum(sample_weight)
             if sw_sum <= 1:
@@ -148,7 +136,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
                     f"resampling with a fractional value for {max_samples=}. Either"
                     " pass max_samples as an integer or use a larger sample_weight."
                 )
-            return max(int(max_samples * sw_sum), 1)
+            return max(int(fraction * sw_sum), 1)
 
 
 def _generate_sample_indices(
