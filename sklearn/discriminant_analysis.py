@@ -1121,7 +1121,7 @@ class QuadraticDiscriminantAnalysis(
                 msg_param = "shrinkage" if self.solver == "eigen" else "reg_param"
                 warnings.warn(
                     f"The covariance matrix of class {class_label} is not full rank. "
-                    "Increasing the value of parameter `{msg_param}` might help"
+                    f"Increasing the value of parameter `{msg_param}` might help"
                     " reducing the collinearity.",
                     linalg.LinAlgWarning,
                 )
