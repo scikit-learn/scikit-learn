@@ -1103,12 +1103,12 @@ class QuadraticDiscriminantAnalysis(
         cov = []
         scalings = []
         rotations = []
-        for idx, group in enumerate(self.classes_):
-            X_class = X[y == group, :]
+        for class_idx, class_label in enumerate(self.classes_):
+            X_class = X[y == class_label, :]
             if len(X_class) == 1:
                 raise ValueError(
                     "y has only 1 sample in class %s, covariance is ill defined."
-                    % str(self.classes_[idx])
+                    % str(self.classes_[class_idx])
                 )
 
             mean_class = X_class.mean(0)
@@ -1120,7 +1120,7 @@ class QuadraticDiscriminantAnalysis(
             if rank < n_features:
                 msg_param = "shrinkage" if self.solver == "eigen" else "reg_param"
                 warnings.warn(
-                    f"The covariance matrix of class {group} is not full rank. "
+                    f"The covariance matrix of class {class_label} is not full rank. "
                     "Increasing the value of parameter `{msg_param}` might help"
                     " reducing the collinearity.",
                     linalg.LinAlgWarning,
