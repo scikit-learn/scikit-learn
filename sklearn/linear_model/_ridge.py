@@ -2103,17 +2103,20 @@ class _RidgeGCV(LinearModel):
         )
 
     def _svd_decompose_design_matrix(self, X, y, sqrt_sw):
+        n_samples, n_features = X.shape
         xp, _, device_ = get_namespace_and_device(X)
         # X already centered
-        X_mean = xp.zeros(X.shape[1], dtype=X.dtype, device=device_)
+        X_mean = xp.zeros(n_features, dtype=X.dtype, device=device_)
         if self.fit_intercept:
             # to emulate fit_intercept=True situation, add a column
             # containing the square roots of the sample weights
             # by centering, the other columns are orthogonal to that one
             intercept_column = sqrt_sw[:, None]
             X = xp.concat((X, intercept_column), axis=1)
-        U, singvals, _ = xp.linalg.svd(X, full_matrices=True)
-        singvals_sq = xp.zeros(U.shape[0], dtype=X.dtype, device=device_)
+        full_matrices = n_features < n_samples
+        U, singvals, _ = xp.linalg.svd(X, full_matrices=full_matrices)
+        assert U.shape == (n_samples, n_samples)
+        singvals_sq = xp.zeros(n_samples, dtype=X.dtype, device=device_)
         singvals_sq[: singvals.shape[0]] = singvals**2
         UT_y = U.T @ y
         return X_mean, singvals_sq, U, UT_y
