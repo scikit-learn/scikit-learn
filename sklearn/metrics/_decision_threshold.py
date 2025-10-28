@@ -9,9 +9,7 @@ Utilizes `_CurveScorer` methods to do all the computation.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from numbers import Integral
-
-from sklearn.utils._param_validation import Interval, validate_params
+from sklearn.utils._param_validation import validate_params
 
 
 @validate_params(
@@ -19,10 +17,6 @@ from sklearn.utils._param_validation import Interval, validate_params
         "score_func": [callable],
         "y_true": ["array-like"],
         "y_score": ["array-like"],
-        "thresholds": [
-            Interval(Integral, 2, None, closed="left"),
-            "array-like",
-        ],
         "greater_is_better": ["boolean"],
         "labels": ["array-like", None],
     },
