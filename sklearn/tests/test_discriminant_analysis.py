@@ -623,11 +623,15 @@ def test_qda_coefs(global_random_seed):
     clf_svd.fit(X, y)
     clf_eigen.fit(X, y)
 
-    for i in range(n_classes):
+    for class_idx in range(n_classes):
         assert_array_almost_equal(
-            np.abs(clf_svd.rotations_[i]), np.abs(clf_eigen.rotations_[i]), 1
+            np.abs(clf_svd.rotations_[class_idx]),
+            np.abs(clf_eigen.rotations_[class_idx]),
+            1,
         )
-        assert_array_almost_equal(clf_svd.scalings_[i], clf_eigen.scalings_[i], 1)
+        assert_array_almost_equal(
+            clf_svd.scalings_[class_idx], clf_eigen.scalings_[class_idx], 1
+        )
 
 
 def test_qda_priors():
