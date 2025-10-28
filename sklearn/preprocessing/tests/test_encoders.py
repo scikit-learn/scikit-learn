@@ -821,7 +821,8 @@ def test_ohe_handle_unknown_warn(drop):
 
     warn_msg = (
         r"Found unknown categories in columns \[0\] during transform. "
-        r"These unknown categories will be encoded as all zeros"
+        r"These unknown categories will be encoded as the "
+        r"infrequent category."
     )
     with pytest.warns(UserWarning, match=warn_msg):
         X_trans = ohe.transform(X_test)
@@ -1520,11 +1521,18 @@ def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
     X_test = [["c", 3]]
     X_expected = np.array([[0, 0, 0]])
 
-    warn_msg = (
-        r"Found unknown categories in columns \[0, 1\] during "
-        "transform. These unknown categories will be encoded as all "
-        "zeros"
-    )
+    if handle_unknown == "ignore":
+        warn_msg = (
+            r"Found unknown categories in columns \[0, 1\] during "
+            r"transform. These unknown categories will be encoded as all "
+            r"zeros"
+        )
+    else:
+        warn_msg = (
+            r"Found unknown categories in columns \[0, 1\] during "
+            r"transform. These unknown categories will be encoded as the "
+            r"infrequent category."
+        )
     with pytest.warns(UserWarning, match=warn_msg):
         X_trans = ohe.transform(X_test)
     assert_allclose(X_trans, X_expected)
@@ -1557,11 +1565,18 @@ def test_ohe_drop_if_binary_handle_unknown_ignore_warns(handle_unknown):
     X_test = [["c", 3]]
     X_expected = np.array([[0, 0, 0, 0]])
 
-    warn_msg = (
-        r"Found unknown categories in columns \[0, 1\] during "
-        "transform. These unknown categories will be encoded as all "
-        "zeros"
-    )
+    if handle_unknown == "ignore":
+        warn_msg = (
+            r"Found unknown categories in columns \[0, 1\] during "
+            r"transform. These unknown categories will be encoded as all "
+            r"zeros"
+        )
+    else:
+        warn_msg = (
+            r"Found unknown categories in columns \[0, 1\] during "
+            r"transform. These unknown categories will be encoded as the "
+            r"infrequent category."
+        )
     with pytest.warns(UserWarning, match=warn_msg):
         X_trans = ohe.transform(X_test)
     assert_allclose(X_trans, X_expected)
@@ -1589,10 +1604,17 @@ def test_ohe_drop_first_explicit_categories(handle_unknown):
     X_test = [["c", 1]]
     X_expected = np.array([[0, 0]])
 
-    warn_msg = (
-        r"Found unknown categories in columns \[0\] during transform. "
-        r"These unknown categories will be encoded as all zeros"
-    )
+    if handle_unknown == "ignore":
+        warn_msg = (
+            r"Found unknown categories in columns \[0\] during transform. "
+            r"These unknown categories will be encoded as all zeros"
+        )
+    else:
+        warn_msg = (
+            r"Found unknown categories in columns \[0\] during transform. "
+            r"These unknown categories will be encoded as the "
+            r"infrequent category."
+        )
     with pytest.warns(UserWarning, match=warn_msg):
         X_trans = ohe.transform(X_test)
     assert_allclose(X_trans, X_expected)
@@ -2365,3 +2387,38 @@ def test_encoder_not_fitted(Encoder):
     encoder = Encoder(categories=[["A", "B", "C"]])
     with pytest.raises(NotFittedError):
         encoder.transform(X)
+
+
+def test_onehotencoder_handle_unknown_warn_maps_to_infrequent():
+    """
+    Check handle_unknown='warn' behave like 'infrequent_if_exist' and map
+    to the infrequent category.
+    """
+
+    import pandas as pd
+
+    train_data = pd.DataFrame(
+        {"building_type": ["restaurant"] * 3 + ["shop"] * 3 + ["snack"]}
+    )
+    test_data = pd.DataFrame({"building_type": ["restaurant", "snack", "casino"]})
+
+    encoder_warn = OneHotEncoder(
+        handle_unknown="warn", sparse_output=False, min_frequency=2, drop="first"
+    )
+    encoder_warn.fit(train_data)
+
+    encoder_infreq = OneHotEncoder(
+        handle_unknown="infrequent_if_exist",
+        sparse_output=False,
+        min_frequency=2,
+        drop="first",
+    )
+    encoder_infreq.fit(train_data)
+    result_infreq = encoder_infreq.transform(test_data)
+
+    warning_match = "unknown categories will be encoded as the infrequent category"
+
+    with pytest.warns(UserWarning, match=warning_match):
+        result_warn = encoder_warn.transform(test_data)
+
+    assert_allclose(result_warn[2], result_infreq[2])

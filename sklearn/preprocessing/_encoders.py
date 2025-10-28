@@ -244,15 +244,21 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             # We use check_unknown=False, since _check_unknown was
             # already called above.
             X_int[:, i] = _encode(Xi, uniques=self.categories_[i], check_unknown=False)
-        if columns_with_unknown:
-            warnings.warn(
-                (
-                    "Found unknown categories in columns "
-                    f"{columns_with_unknown} during transform. These "
-                    "unknown categories will be encoded as all zeros"
-                ),
-                UserWarning,
-            )
+            if columns_with_unknown:
+                if handle_unknown == "infrequent_if_exist":
+                    msg = (
+                        "Found unknown categories in columns "
+                        f"{columns_with_unknown} during transform. These "
+                        "unknown categories will be encoded as the "
+                        "infrequent category."
+                    )
+                else:
+                    msg = (
+                        "Found unknown categories in columns "
+                        f"{columns_with_unknown} during transform. These "
+                        "unknown categories will be encoded as all zeros"
+                    )
+                warnings.warn(msg, UserWarning)
 
         self._map_infrequent_categories(X_int, X_mask, ignore_category_indices)
         return X_int, X_mask
@@ -436,7 +442,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 continue
 
             X_int[~X_mask[:, col_idx], col_idx] = infrequent_idx[0]
-            if self.handle_unknown == "infrequent_if_exist":
+            if self.handle_unknown in ("infrequent_if_exist", "warn"):
                 # All the unknown values are now mapped to the
                 # infrequent_idx[0], which makes the unknown values valid
                 # This is needed in `transform` when the encoding is formed
