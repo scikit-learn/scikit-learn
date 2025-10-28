@@ -84,7 +84,7 @@ def decision_threshold_curve(
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
     >>> score_thresholds, thresholds = decision_threshold_curve(
-    ...     accuracy_score, y_true, y_score, thresholds=4)
+    ...     accuracy_score, y_true, y_score)
     >>> thresholds
     array([0.1, 0.33333333, 0.56666667, 0.8 ])
     >>> score_thresholds
