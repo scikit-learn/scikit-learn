@@ -1,2 +1,0 @@
-# A tiny data file for test purposes only
-1  2  3  4  5  6

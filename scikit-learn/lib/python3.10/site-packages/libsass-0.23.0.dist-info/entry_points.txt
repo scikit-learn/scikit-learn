@@ -1,8 +1,0 @@
-[console_scripts]
-pysassc = pysassc:main
-
-[distutils.commands]
-build_sass = sassutils.distutils:build_sass
-
-[distutils.setup_keywords]
-sass_manifests = sassutils.distutils:validate_manifests

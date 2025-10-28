@@ -1,6 +1,0 @@
-from numpy.typing import NDArray
-from typing import Any
-
-def pick_pade_structure(a: NDArray[Any]) -> tuple[int, int]: ...
-
-def pade_UV_calc(Am: NDArray[Any], m: int) -> int: ...

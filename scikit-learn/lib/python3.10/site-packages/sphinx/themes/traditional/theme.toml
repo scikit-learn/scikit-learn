@@ -1,9 +1,0 @@
-[theme]
-inherit = "basic"
-stylesheets = [
-    "traditional.css",
-]
-
-[options]
-body_min_width = "0"
-body_max_width = "none"

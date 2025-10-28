@@ -1,7 +1,0 @@
-#!/home/lenovo/scikit-learn/scikit-learn/bin/python3
-import sys
-from docutils.core import rst2latex
-if __name__ == '__main__':
-    if sys.argv[0].endswith('.exe'):
-        sys.argv[0] = sys.argv[0][:-4]
-    sys.exit(rst2latex())
