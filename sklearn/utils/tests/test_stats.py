@@ -242,19 +242,6 @@ def test_weighted_percentile_array_api_consistency(
     global_random_seed, array_namespace, device, dtype_name, data, weights, percentile
 ):
     """Check `_weighted_percentile` gives consistent results with array API."""
-    if array_namespace == "array_api_strict":
-        try:
-            import array_api_strict
-        except ImportError:
-            pass
-        else:
-            if device == array_api_strict.Device("device1"):
-                # See https://github.com/data-apis/array-api-strict/issues/134
-                pytest.xfail(
-                    "array_api_strict has bug when indexing with tuple of arrays "
-                    "on non-'CPU_DEVICE' devices."
-                )
-
     xp = _array_api_for_tests(array_namespace, device)
 
     # Skip test for percentile=0 edge case (#20528) on namespace/device where
