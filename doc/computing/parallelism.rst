@@ -273,6 +273,25 @@ admissible seeds on your local machine:
 
     SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all" pytest -v -k test_your_test_name
 
+Here is an example of a test using the `global_random_seed` fixture:
+
+.. code-block:: python
+
+    def test_your_test_name(global_random_seed):
+        # The fixture provides a random seed in the range [0, 99]
+        rng = np.random.RandomState(global_random_seed)
+
+        # Your test code using the random number generator
+        X = rng.randn(100, 10)
+        y = rng.randint(0, 2, size=100)
+
+        # Test your estimator
+        est = YourEstimator()
+        est.fit(X, y)
+
+        # Make assertions that should pass for any seed in [0, 99]
+        assert est.score(X, y) > 0.5
+
 `SKLEARN_SKIP_NETWORK_TESTS`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
