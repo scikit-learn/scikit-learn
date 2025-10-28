@@ -52,10 +52,6 @@ X2 = np.array(
 # One element class
 y4 = np.array([1, 1, 1, 1, 1, 1, 1, 1, 2])
 
-# Data with less samples in a class than n_features
-X5 = np.c_[np.arange(8), np.zeros((8, 3))]
-y5 = np.array([0, 0, 0, 0, 0, 1, 1, 1])
-
 solver_shrinkage = [
     ("svd", None),
     ("lsqr", None),
@@ -694,19 +690,20 @@ def test_qda_store_covariance():
 
 
 @pytest.mark.parametrize("solver", ["svd", "eigen"])
-def test_qda_regularization(solver):
+def test_qda_regularization(global_random_seed, solver):
     # The default is reg_param=0. and will cause issues when there is a
     # constant variable.
+    rng = np.random.default_rng(global_random_seed)
 
     # Fitting on data with constant variable without regularization
     # triggers a LinAlgError.
-    msg = r"The covariance matrix of class .+ is not full rank"
+    msg = r"The covariance matrix of class .+ is not full rank."
     clf = QuadraticDiscriminantAnalysis(solver=solver)
-    with pytest.warns(linalg.LinAlgWarning, match=msg):
-        y_pred = clf.fit(X2, y6)
+    with pytest.raises(linalg.LinAlgError, match=msg):
+        clf.fit(X2, y6)
 
-    y_pred = clf.predict(X2)
-    assert np.any(y_pred != y6)
+    with pytest.raises(AttributeError):
+        y_pred = clf.predict(X2)
 
     # Adding a little regularization fixes the fit time error.
     if solver == "svd":
@@ -719,22 +716,31 @@ def test_qda_regularization(solver):
     y_pred = clf.predict(X2)
     assert_array_equal(y_pred, y6)
 
-    # LinAlgWarning should also be there for the n_samples_in_a_class <
+    # LinAlgError should also be there for the n_samples_in_a_class <
     # n_features case.
-    clf = QuadraticDiscriminantAnalysis(solver=solver)
-    with pytest.warns(linalg.LinAlgWarning, match=msg):
-        clf.fit(X5, y5)
+    X = rng.normal(size=(8, 4))
+    y = np.array([1, 1, 1, 1, 1, 2, 2, 2])
 
-    # The warning will persist even with regularization for SVD
+    clf = QuadraticDiscriminantAnalysis(solver=solver)
+    if solver == "svd":
+        msg2 = msg + " When using `solver='svd'`"
+    elif solver == "eigen":
+        msg2 = msg
+
+    with pytest.raises(linalg.LinAlgError, match=msg2):
+        clf.fit(X, y)
+
+    # The error will persist even with regularization for SVD
     # because the number of singular values is limited by n_samples_in_a_class.
     if solver == "svd":
         clf = QuadraticDiscriminantAnalysis(solver=solver, reg_param=0.3)
-        with pytest.warns(linalg.LinAlgWarning, match=msg):
-            clf.fit(X5, y5)
+        with pytest.raises(linalg.LinAlgError, match=msg2):
+            clf.fit(X, y)
     # The warning will be gone for Eigen with regularization, because
     # the covariance matrix will be full-rank.
     elif solver == "eigen":
         clf = QuadraticDiscriminantAnalysis(solver=solver, shrinkage=0.3)
+        clf.fit(X, y)
 
 
 def test_covariance():
