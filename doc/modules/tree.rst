@@ -348,12 +348,24 @@ nodes**, the total complexity scales linearly with
 worst-case complexity, that is, when the tree is grown until each sample ends up
 in its own leaf.
 
+Many implementations such as scikit-learn use efficient caching tricks to keep
+track of the general order of indices at each node such that the features do not
+need to be re-sorted at each node; hence, the time complexity of these
+implementations is just
+:math:`\mathcal{O}(n_{features}n_{samples}\log(n_{samples}))` [1]_.
+
 Inference cost is independent of the splitter strategy. It depends only on the
 tree depth, :math:`\mathcal{O}(\text{depth})`. In an approximately balanced
 binary tree, each split halves the data, and then the number of such halvings
 grows with the depth as powers of two. If this process continues until each
 sample is isolated in its own leaf, the resulting depth is
 :math:`\mathcal{O}(\log(n_{samples}))`.
+
+.. rubric:: References
+
+.. [1] S. Raschka,  `Stat 451: Machine learning lecture notes.
+  <https://sebastianraschka.com/pdf/lecture-notes/stat451fs20/06-trees__notes.pdf>`_
+  University of Wisconsin-Madison (2020).
 
 Tips on practical use
 =====================
