@@ -7,7 +7,7 @@ This file contains is additional guidance for AI agents and other AI editors.
 - Describe the "why" of the changes, why the proposed solution is the right one.
 - Highlight areas of the proposed changes that require careful review.
 - Always add a disclaimer to the PR description mentioning how AI agents are involved with the contribution.
-- Reduce the verbosity of your comments, more text and detail is not always better.
+- Reduce the verbosity of your comments, more text and detail is not always better. Avoid flattery, avoid stating the obvious, avoid filler phrases, prefer technical clarity over marketing tone.
 
 ### AI/Agent disclosure template (copy/paste & edit):
 
