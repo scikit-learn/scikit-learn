@@ -801,9 +801,8 @@ def test_get_feature_names_out():
 @pytest.mark.parametrize("n_features", [25])
 @pytest.mark.parametrize("train_size", [100])
 def test_qda_shrinkage_performance(global_random_seed, n_features, train_size):
-    # Test that QDA with shrinkage performs better than without
-    # shrinkage on a case where there's a small number of samples
-    # per class.
+    # Test that QDA with shrinkage performs better than without shrinkage on
+    # a case where there's a small number of samples per class.
     n_samples = 1000
     n_features = n_features
 
