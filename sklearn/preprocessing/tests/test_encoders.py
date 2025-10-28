@@ -2395,12 +2395,10 @@ def test_onehotencoder_handle_unknown_warn_maps_to_infrequent():
     to the infrequent category.
     """
 
-    import pandas as pd
-
-    train_data = pd.DataFrame(
-        {"building_type": ["restaurant"] * 3 + ["shop"] * 3 + ["snack"]}
-    )
-    test_data = pd.DataFrame({"building_type": ["restaurant", "snack", "casino"]})
+    train_data = train_data = np.array(
+        ["restaurant"] * 3 + ["shop"] * 3 + ["snack"]
+    ).reshape(-1, 1)
+    test_data = np.array(["restaurant", "snack", "casino"]).reshape(-1, 1)
 
     encoder_warn = OneHotEncoder(
         handle_unknown="warn", sparse_output=False, min_frequency=2, drop="first"
