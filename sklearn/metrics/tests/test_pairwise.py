@@ -1829,9 +1829,7 @@ def test_sparse_manhattan_readonly_dataset(csr_container):
 def test_pairwise_argmin_correct_warnings_for_bool_and_nonbool(
     metric, pairwise_fn, csr_container
 ):
-    """Check for unnecessary DataConversionWarning with boolean metrics.
-    A warning should be raised only for non-boolean data and not for boolean data.
-    """
+    """Check `DataConversionWarning` is not raised with bool data and bool metrics."""
     X = [[True, True, False, True], [True, False, True, True]]
     Y = [[False, True, False, True], [True, False, True, True]]
     X_arr = np.asarray(X)
