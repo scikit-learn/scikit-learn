@@ -47,6 +47,7 @@ from sklearn.metrics._scorer import (
     _MultimetricScorer,
     _PassthroughScorer,
     _Scorer,
+    _BaseScorer,
 )
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.multiclass import OneVsRestClassifier
@@ -1381,6 +1382,61 @@ def test_multimetric_scoring_kwargs():
     scorer_dict = _check_multimetric_scoring(clf, scorers)
     multi_scorer = _MultimetricScorer(scorers=scorer_dict)
     multi_scorer(clf, X, y, common_arg=1, sample_weight=1)
+
+
+@config_context(enable_metadata_routing=False)
+def test_multimetric_scorer_mixed_callable_no_attribute_error_with_sample_weight():
+    """Non-regression test for gh-31599.
+
+    _MultimetricScorer should not raise ``AttributeError`` when some of the
+    scorers are plain callables that do not define ``_accept_sample_weight``.
+    The scorer should still run and return a dict of scores.
+    """
+
+    class DummyEstimator(BaseEstimator):
+        def fit(self, X, y):
+            self._y = np.asarray(y)
+            return self
+
+        def predict(self, X):
+            # simple constant prediction based on training mean
+            return np.full(len(X), float(np.mean(self._y)))
+
+        def score(self, X, y, sample_weight=None):
+            # arbitrary deterministic numeric score
+            return 0.5
+
+    def simple_score_func(y_true, y_pred):
+        return 1.0
+
+    class SimpleScorer(_BaseScorer):
+        def _score(self, method_caller, estimator, X, y_true, **kwargs):
+            y_pred = method_caller(estimator, "predict", X)
+            return simple_score_func(y_true, y_pred)
+
+    def default_score(estimator, X, y, sample_weight=None, **kws):
+        # plain callable, not a _BaseScorer instance
+        return estimator.score(X, y, sample_weight=sample_weight)
+
+    X, y = make_regression(n_samples=10, n_features=2, random_state=0)
+    est = DummyEstimator().fit(X, y)
+
+    scorer_dict = {
+        "simple": SimpleScorer(
+            simple_score_func, sign=1, kwargs={}, response_method="predict"
+        ),
+        "default": default_score,
+    }
+
+    multimetric = _MultimetricScorer(scorers=scorer_dict)
+
+    # Prior to the fix in gh-31599 this call would raise
+    # AttributeError: 'function' object has no attribute '_accept_sample_weight'
+    scores = multimetric(est, X, y, sample_weight=np.ones_like(y))
+
+    assert set(scores) == {"simple", "default"}
+    for val in scores.values():
+        assert isinstance(val, numbers.Number)
 
 
 def test_kwargs_without_metadata_routing_error():

@@ -155,10 +155,12 @@ class _MultimetricScorer:
             )
             if "sample_weight" in kwargs:
                 for name, scorer in self._scorers.items():
-                    if scorer._accept_sample_weight():
-                        routed_params[name].score["sample_weight"] = kwargs[
-                            "sample_weight"
-                        ]
+                    try:
+                        accepts = scorer._accept_sample_weight()
+                    except AttributeError:
+                        accepts = False
+                    if accepts:
+                        routed_params[name].score["sample_weight"] = kwargs["sample_weight"]
 
         for name, scorer in self._scorers.items():
             try:
