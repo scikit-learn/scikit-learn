@@ -95,7 +95,8 @@ def _find_dtype_for_check_pairwise_arrays(X, Y, metric):
 
         xp, _ = get_namespace(X, Y)
         # Similarly to _return_float_dtype, non-ndarray numpy-namespaced
-        # objects are cast to ndarrays
+        # objects are cast to ndarrays. This allows accessing dtype. They need
+        # to be converted to ndarrays anyways to perform any pairwise calculation
         if _is_numpy_namespace(xp):
             if not isinstance(X, np.ndarray):
                 X = np.asarray(X)
