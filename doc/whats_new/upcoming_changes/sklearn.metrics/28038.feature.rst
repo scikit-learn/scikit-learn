@@ -1,0 +1,3 @@
+- Add `zero_division` parameter to :func:`metrics.balanced_accuracy_score`.
+  It notably allows to make it consistent with macro-average recall.
+  By :user:`Tenga Cortal <TengaCortal>`
