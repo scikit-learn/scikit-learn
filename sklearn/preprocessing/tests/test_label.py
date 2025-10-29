@@ -755,6 +755,8 @@ def test_invalid_input_label_binarize():
             ["bird", "cat", "dog"],
             [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
         ],
+        [False, [1, 0, 0, 1], [0, 1], [[1], [0], [0], [1]]],
+        [False, [1, 0, 2, 9], [0, 1, 2], [[0, 1, 0], [1, 0, 0], [0, 0, 1], [0, 0, 0]]],
     ],
 )
 @pytest.mark.parametrize(
@@ -773,7 +775,9 @@ def test_label_binarize_array_api_compliance(
 
         # `sparse_output=True` is not allowed for non-NumPy namespace
         if not _is_numpy_namespace(xp) and not string_labels:
-            with pytest.raises(ValueError):
+            msg = "`sparse_output=True` is not supported for Array API "
+
+            with pytest.raises(ValueError, match=msg):
                 label_binarize(y=y, classes=classes, sparse_output=True)
 
         # Numeric class labels should not raise any errors for non-NumPy namespace
