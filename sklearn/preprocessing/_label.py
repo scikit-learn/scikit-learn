@@ -587,7 +587,9 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
     n_samples = y.shape[0] if hasattr(y, "shape") else len(y)
     n_classes = classes.shape[0] if hasattr(classes, "shape") else len(classes)
     dtype_ = _find_matching_floating_dtype(y, xp=xp)
-    int_dtype_ = indexing_dtype(xp)
+    int_dtype_ = (
+        y.dtype if hasattr(y, "dtype") and "int" in str(y.dtype) else indexing_dtype(xp)
+    )
 
     if y_type == "binary":
         if n_classes == 1:
@@ -664,7 +666,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         if pos_switch:
             Y[Y == pos_label] = 0
 
-        Y = xp.astype(Y, dtype_)
+        Y = xp.astype(Y, int_dtype_)
     else:
         Y.data = Y.data.astype(int, copy=False)
 
@@ -722,7 +724,7 @@ def _inverse_binarize_multiclass(y, classes, xp=None):
         ]
         for i in samples:
             ind = y.indices[y.indptr[i] : y.indptr[i + 1]]
-            y_i_argmax[i] = classes[np.setdiff1d(outputs, ind)][0]
+            y_i_argmax[i] = classes[xpx.setdiff1d(outputs, ind, xp=xp)][0]
 
         return classes[y_i_argmax]
     else:

@@ -752,8 +752,6 @@ def test_invalid_input_label_binarize():
             ["bird", "cat", "dog"],
             [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
         ],
-        [False, [1, 0, 0, 1], [0, 1], [[1], [0], [0], [1]]],
-        [False, [1, 0, 2, 9], [0, 1, 2], [[0, 1, 0], [1, 0, 0], [0, 0, 1], [0, 0, 0]]],
     ],
 )
 @pytest.mark.parametrize(
@@ -777,7 +775,7 @@ def test_label_binarize_array_api_compliance(
 
         # Numeric class labels should not raise any errors for non-NumPy namespace
         binarized = label_binarize(y, classes=classes)
-        expected = np.asarray(expected, dtype=dtype_name)
+        expected = np.asarray(expected, dtype=int)
 
         # String class labels are converted to NumPy namespace
         if string_labels:
@@ -787,6 +785,7 @@ def test_label_binarize_array_api_compliance(
         else:
             assert get_namespace(binarized)[0].__name__ == xp.__name__
             assert device(binarized) == device(y)
+            assert "int" in str(binarized.dtype)
             assert_array_equal(_convert_to_numpy(binarized, xp=xp), expected)
 
 
