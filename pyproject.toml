@@ -71,7 +71,7 @@ docs = [
 ]
 examples = [
     "matplotlib>=3.6.1",
-    "scikit-image>=0.19.0",
+    "scikit-image>=0.22.0",
     "pandas>=1.5.0",
     "seaborn>=0.9.1",
     "pooch>=1.6.0",
@@ -79,7 +79,7 @@ examples = [
 ]
 tests = [
     "matplotlib>=3.6.1",
-    "scikit-image>=0.19.0",
+    "scikit-image>=0.22.0",
     "pandas>=1.5.0",
     "pytest>=7.1.2",
     "pytest-cov>=2.9.0",
