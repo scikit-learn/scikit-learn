@@ -313,7 +313,9 @@ build_metadata_list = [
         "folder": "build_tools/circle",
         "platform": "linux-64",
         "channels": ["conda-forge"],
-        "conda_dependencies": common_dependencies_without_coverage
+        "conda_dependencies": remove_from(
+            common_dependencies_without_coverage, ["pandas"]
+        )
         + [
             "scikit-image",
             "seaborn",
@@ -335,9 +337,12 @@ build_metadata_list = [
         ],
         "pip_dependencies": [
             "sphinxcontrib-sass",
+            # TODO: move pandas to conda_dependencies when pandas 1.5.1 is the minimum
+            # supported version
+            "pandas",
         ],
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
             "numpy": "min",
             "scipy": "min",
             "matplotlib": "min",
