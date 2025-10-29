@@ -1646,7 +1646,9 @@ def check_dtype_object(name, estimator_orig):
     n_classes = 4
     n_samples_per_class = 14
     n_samples_total = n_classes * n_samples_per_class
-    X = _enforce_estimator_tags_X(estimator_orig, rng.uniform(size=(n_samples_total, 10)))
+    X = _enforce_estimator_tags_X(
+        estimator_orig, rng.uniform(size=(n_samples_total, 10))
+    )
     X = X.astype(object)
     tags = get_tags(estimator_orig)
     y = np.repeat(np.arange(n_classes), n_samples_per_class)
