@@ -14,12 +14,13 @@ from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
 from sklearn.utils import column_or_1d
 from sklearn.utils._array_api import (
     _convert_to_numpy,
+    _find_matching_floating_dtype,
     _is_numpy_namespace,
-    _max_precision_float_dtype,
-    _max_precision_integer_dtype,
+    _isin,
     device,
     get_namespace,
     get_namespace_and_device,
+    indexing_dtype,
     xpx,
 )
 from sklearn.utils._encode import _encode, _unique
@@ -585,13 +586,14 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
     n_samples = y.shape[0] if hasattr(y, "shape") else len(y)
     n_classes = classes.shape[0] if hasattr(classes, "shape") else len(classes)
+    dtype_ = _find_matching_floating_dtype(y, xp=xp)
 
     if y_type == "binary":
         if n_classes == 1:
             if sparse_output:
                 return sp.csr_matrix((n_samples, 1), dtype=int)
             else:
-                Y = xp.zeros((n_samples, 1), dtype=xp.int64)
+                Y = xp.zeros((n_samples, 1), dtype=dtype_)
                 Y += neg_label
                 return Y
         elif n_classes >= 3:
@@ -611,18 +613,14 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         y = column_or_1d(y)
 
         # pick out the known labels from y
-        y_in_classes = xp.asarray(
-            xp.any(y[:, None] == classes[None, :], axis=1), dtype=xp.bool
-        )
-        y_in_classes_int = xp.asarray(
-            xp.any(y[:, None] == classes[None, :], axis=1), dtype=xp.int64
-        )
+        y_in_classes = _isin(y, classes, xp)
         y_seen = y[y_in_classes]
+        y_in_classes = xp.astype(_isin(y, classes, xp), indexing_dtype(xp))
         indices = xp.searchsorted(sorted_class, y_seen)
         indptr = xp.concat(
             (
                 xp.asarray([0], device=device_),
-                xp.cumulative_sum(y_in_classes_int, axis=0),
+                xp.cumulative_sum(y_in_classes, axis=0),
             )
         )
         data = xp.full_like(indices, pos_label)
@@ -664,6 +662,8 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
         if pos_switch:
             Y[Y == pos_label] = 0
+
+        Y = xp.astype(Y, dtype_)
     else:
         Y.data = Y.data.astype(int, copy=False)
 
@@ -743,8 +743,7 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold, xp=None):
         )
 
     xp, _, device_ = get_namespace_and_device(y, xp=xp)
-    float_dtype_ = _max_precision_float_dtype(xp, device_)
-    int_dtype_ = _max_precision_integer_dtype(xp, device_)
+    dtype_ = _find_matching_floating_dtype(y, xp=xp)
 
     classes = xp.asarray(classes, device=device_)
 
@@ -754,17 +753,17 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold, xp=None):
             if y.format not in ("csr", "csc"):
                 y = y.tocsr()
             y.data = xp.asarray(
-                xp.asarray(y.data, dtype=float_dtype_, device=device_) > threshold,
-                dtype=int_dtype_,
+                xp.asarray(y.data, dtype=dtype_, device=device_) > threshold,
+                dtype=dtype_,
                 device=device_,
             )
             y.eliminate_zeros()
         else:
-            y = xp.asarray(y.toarray() > threshold, dtype=xp.int64, device=device_)
+            y = xp.asarray(y.toarray() > threshold, dtype=dtype_, device=device_)
     else:
         y = xp.asarray(
-            xp.asarray(y, dtype=float_dtype_, device=device_) > threshold,
-            dtype=int_dtype_,
+            xp.asarray(y, dtype=dtype_, device=device_) > threshold,
+            dtype=dtype_,
             device=device_,
         )
 
