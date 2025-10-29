@@ -727,7 +727,7 @@ def test_stratified_group_kfold_homogeneous_groups(y, groups, expected):
 def test_stratified_group_kfold_shuffle_preserves_stratification():
     # Check StratifiedGroupKFold with shuffle=True preserves stratification:
     # shuffling only affects tie-breaking among groups with identical
-    # standard deviation of class distribution
+    # standard deviation of class distribution (see #32478)
     y = np.array([0] * 12 + [1] * 6)
     X = np.ones((len(y), 1))
     # Groups are arranged so perfect stratification across 3 folds is
