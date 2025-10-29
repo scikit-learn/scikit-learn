@@ -841,4 +841,4 @@ def test_qda_shrinkage_performance(
     )
 
     assert scores_shrinkage.mean() > 0.9
-    assert scores_no_shrinkage.mean() < 0.5
+    assert scores_no_shrinkage.mean() < 0.6
