@@ -871,7 +871,7 @@ class QuadraticDiscriminantAnalysis(
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
           - float between 0 and 1: fixed shrinkage parameter.
 
-        This should be left to None if `covariance_estimator` is used.
+        This should be left to `None` if `covariance_estimator` is used.
         Note that shrinkage works only with 'eigen' solver.
 
     priors : array-like of shape (n_classes,), default=None
