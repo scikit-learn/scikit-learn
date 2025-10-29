@@ -587,6 +587,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
     n_samples = y.shape[0] if hasattr(y, "shape") else len(y)
     n_classes = classes.shape[0] if hasattr(classes, "shape") else len(classes)
     dtype_ = _find_matching_floating_dtype(y, xp=xp)
+    int_dtype_ = indexing_dtype(xp)
 
     if y_type == "binary":
         if n_classes == 1:
@@ -615,7 +616,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         # pick out the known labels from y
         y_in_classes = _isin(y, classes, xp)
         y_seen = y[y_in_classes]
-        y_in_classes = xp.astype(_isin(y, classes, xp), indexing_dtype(xp))
+        y_in_classes = xp.astype(_isin(y, classes, xp), int_dtype_)
         indices = xp.searchsorted(sorted_class, y_seen)
         indptr = xp.concat(
             (
@@ -744,6 +745,7 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold, xp=None):
 
     xp, _, device_ = get_namespace_and_device(y, xp=xp)
     dtype_ = _find_matching_floating_dtype(y, xp=xp)
+    int_dtype_ = indexing_dtype(xp)
 
     classes = xp.asarray(classes, device=device_)
 
@@ -754,7 +756,7 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold, xp=None):
                 y = y.tocsr()
             y.data = xp.asarray(
                 xp.asarray(y.data, dtype=dtype_, device=device_) > threshold,
-                dtype=dtype_,
+                dtype=int_dtype_,
                 device=device_,
             )
             y.eliminate_zeros()
@@ -763,7 +765,7 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold, xp=None):
     else:
         y = xp.asarray(
             xp.asarray(y, dtype=dtype_, device=device_) > threshold,
-            dtype=dtype_,
+            dtype=int_dtype_,
             device=device_,
         )
 
