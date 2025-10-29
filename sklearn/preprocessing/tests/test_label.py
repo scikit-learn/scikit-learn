@@ -274,12 +274,14 @@ def test_label_binarizer_array_api_compliance(
 
         binarized = lb_xp.fit_transform(y)
         assert get_namespace(binarized)[0].__name__ == xp.__name__
+        assert "int" in str(binarized.dtype)
         assert device(binarized) == device(y)
         assert_array_equal(_convert_to_numpy(binarized, xp=xp), np.asarray(expected))
 
         fitted_classes = lb_xp.classes_
         assert get_namespace(fitted_classes)[0].__name__ == xp.__name__
         assert device(fitted_classes) == device(y)
+        assert "int" in str(fitted_classes.dtype)
         assert_array_equal(
             _convert_to_numpy(fitted_classes, xp=xp), np.asarray(classes)
         )
@@ -287,6 +289,7 @@ def test_label_binarizer_array_api_compliance(
         expected_xp = xp.asarray(expected, device=device_)
         binarized_inverse = lb_xp.inverse_transform(expected_xp)
         assert get_namespace(binarized_inverse)[0].__name__ == xp.__name__
+        assert "int" in str(binarized_inverse.dtype)
         assert device(binarized_inverse) == device(y)
         assert_array_equal(
             _convert_to_numpy(binarized_inverse, xp=xp), _convert_to_numpy(y, xp=xp)
