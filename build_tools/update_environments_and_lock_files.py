@@ -395,6 +395,9 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "python": "3.10",
+            # Pinned while https://github.com/pola-rs/polars/issues/25039 is
+            # not fixed.
+            "polars": "1.34.0",
         },
     },
     {
