@@ -73,9 +73,9 @@ examples = [
     "matplotlib>=3.6.1",
     "scikit-image>=0.22.0",
     "pandas>=1.5.0",
-    "seaborn>=0.9.1",
-    "pooch>=1.6.0",
-    "plotly>=5.14.0",
+    "seaborn>=0.13.0",
+    "pooch>=1.8.0",
+    "plotly>=5.18.0",
 ]
 tests = [
     "matplotlib>=3.6.1",
@@ -89,7 +89,7 @@ tests = [
     "polars>=0.20.30",
     "pyarrow>=12.0.0",
     "numpydoc>=1.2.0",
-    "pooch>=1.6.0",
+    "pooch>=1.8.0",
 ]
 maintenance = ["conda-lock==3.0.1"]
 
