@@ -911,7 +911,7 @@ class QuadraticDiscriminantAnalysis(
         :mod:`sklearn.covariance`. If None the shrinkage parameter drives the
         estimate.
 
-        This should be left to None if `shrinkage` is used.
+        This should be left to `None` if `shrinkage` is used.
         Note that `covariance_estimator` works only with the 'eigen' solver.
 
     Attributes
