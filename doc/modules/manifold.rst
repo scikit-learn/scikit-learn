@@ -501,7 +501,7 @@ Classical MDS, also known as
 *principal coordinates analysis (PCoA)* or *Torgerson's scaling*, is implemented
 in the separate :class:`ClassicalMDS` class. Classical MDS replaces the stress
 loss function with a different loss function called *strain*, which has an
-exact solution in terms of eigendecomposition of the Gram matrix. 
+exact solution in terms of eigendecomposition. 
 If the dissimilarity matrix consists of the pairwise
 Euclidean distances between some vectors, then classical MDS is equivalent
 to PCA applied to this set of vectors.
@@ -515,12 +515,16 @@ to PCA applied to this set of vectors.
 Formally, the loss function of classical MDS (strain) is given by
 
 .. math::
-    \sqrt{\frac{\sum_{i,j} (b_{ij} - z_i^\top z_j)^2}{\sum_{i,j}
+    \frac{\|B - ZZ^T\|_F}{\|B\|_F}
+    =\sqrt{\frac{\sum_{i,j} (b_{ij} - z_i^\top z_j)^2}{\sum_{i,j}
     b_{ij}^2}},
 
-where :math:`z_i` are embedding vectors and :math:`b_{ij}` are the elements
-of the Gram matrix :math:`B`, given by :math:`B = -\frac{1}{2}C\Delta C`,
-where :math:`C\Delta C` is the double-centered matrix of squared dissimilarities,
+
+where :math:`Z` is the :math:`n \times d` embedding matrix whose rows are
+:math:`z_i^T`, :math:`\|\cdot\|_F` denotes the Frobenius norm, and
+:math:`B` is the Gram matrix with elements :math:`b_{ij}`, 
+given by :math:`B = -\frac{1}{2}C\Delta C`.
+Here :math:`C\Delta C` is the double-centered matrix of squared dissimilarities,
 with :math:`\Delta` being the matrix of squared input dissimilarities
 :math:`\delta^2_{ij}` and :math:`C=I-J/n` is the centering matrix
 (identity matrix minus a matrix of all ones divided by :math:`n`).
