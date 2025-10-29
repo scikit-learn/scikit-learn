@@ -86,10 +86,6 @@ def _any_isnan_axis0(const float32_t[:, :] X):
     return np.asarray(isnan_out)
 
 
-# =============================================================================
-# WeightedFenwickTree data structure
-# =============================================================================
-
 cdef class WeightedFenwickTree:
     """
     Fenwick tree (Binary Indexed Tree) specialized for maintaining:
