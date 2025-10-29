@@ -689,45 +689,42 @@ def _inverse_binarize_multiclass(y, classes, xp=None):
 
     Multiclass uses the maximal score instead of a threshold.
     """
-    xp, _, device_ = get_namespace_and_device(y, xp=xp)
-
-    classes = xp.asarray(classes, device=device_)
-
     if sp.issparse(y):
+        classes = np.asarray(classes)
         # Find the argmax for each row in y where y is a CSR matrix
 
         y = y.tocsr()
         n_samples, n_outputs = y.shape
-        outputs = xp.arange(n_outputs)
+        outputs = np.arange(n_outputs)
         row_max = min_max_axis(y, 1)[1]
-        row_nnz = xp.diff(y.indptr)
+        row_nnz = np.diff(y.indptr)
 
-        y_data_repeated_max = xp.repeat(row_max, row_nnz)
+        y_data_repeated_max = np.repeat(row_max, row_nnz)
         # picks out all indices obtaining the maximum per row
-        y_i_all_argmax = xp.flatnonzero(y_data_repeated_max == y.data)
+        y_i_all_argmax = np.flatnonzero(y_data_repeated_max == y.data)
 
         # For corner case where last row has a max of 0
         if row_max[-1] == 0:
-            y_i_all_argmax = xp.append(y_i_all_argmax, [len(y.data)])
+            y_i_all_argmax = np.append(y_i_all_argmax, [len(y.data)])
 
         # Gets the index of the first argmax in each row from y_i_all_argmax
-        index_first_argmax = xp.searchsorted(y_i_all_argmax, y.indptr[:-1])
+        index_first_argmax = np.searchsorted(y_i_all_argmax, y.indptr[:-1])
         # first argmax of each row
-        y_ind_ext = xp.append(y.indices, [0])
+        y_ind_ext = np.append(y.indices, [0])
         y_i_argmax = y_ind_ext[y_i_all_argmax[index_first_argmax]]
         # Handle rows of all 0
-        y_i_argmax[xp.where(row_nnz == 0)[0]] = 0
+        y_i_argmax[np.where(row_nnz == 0)[0]] = 0
 
         # Handles rows with max of 0 that contain negative numbers
-        samples = xp.arange(n_samples)[
-            (row_nnz > 0) & (xp.reshape(row_max, (-1,)) == 0)
-        ]
+        samples = np.arange(n_samples)[(row_nnz > 0) & (row_max.ravel() == 0)]
         for i in samples:
             ind = y.indices[y.indptr[i] : y.indptr[i + 1]]
-            y_i_argmax[i] = classes[xpx.setdiff1d(outputs, ind, xp=xp)][0]
+            y_i_argmax[i] = classes[np.setdiff1d(outputs, ind)][0]
 
         return classes[y_i_argmax]
     else:
+        xp, _, device_ = get_namespace_and_device(y, xp=xp)
+        classes = xp.asarray(classes, device=device_)
         indices = xp.argmax(y, axis=1)
         indices = xp.clip(indices, 0, classes.shape[0] - 1)
 
@@ -747,7 +744,9 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold, xp=None):
 
     xp, _, device_ = get_namespace_and_device(y, xp=xp)
     dtype_ = _find_matching_floating_dtype(y, xp=xp)
-    int_dtype_ = indexing_dtype(xp)
+    int_dtype_ = (
+        y.dtype if hasattr(y, "dtype") and "int" in str(y.dtype) else indexing_dtype(xp)
+    )
 
     classes = xp.asarray(classes, device=device_)
 
