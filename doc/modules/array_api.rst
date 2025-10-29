@@ -146,6 +146,7 @@ Metrics
 -------
 
 - :func:`sklearn.metrics.accuracy_score`
+- :func:`sklearn.metrics.balanced_accuracy_score`
 - :func:`sklearn.metrics.brier_score_loss`
 - :func:`sklearn.metrics.confusion_matrix`
 - :func:`sklearn.metrics.d2_brier_score`
