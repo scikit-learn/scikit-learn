@@ -2918,7 +2918,7 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
         else nullcontext()
     )
     with context_manager:
-        per_class = xpx.create_diagonal(C, xp=xp) / xp.sum(C, axis=1)
+        per_class = xp.linalg.diagonal(C) / xp.sum(C, axis=1)
     if xp.any(xp.isnan(per_class)):
         warnings.warn("y_pred contains classes not in y_true")
         per_class = per_class[~xp.isnan(per_class)]
