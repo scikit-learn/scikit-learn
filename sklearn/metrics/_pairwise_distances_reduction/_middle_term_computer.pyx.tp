@@ -27,7 +27,7 @@ from sklearn.utils._cython_blas cimport (
 from sklearn.utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
 
 import numpy as np
-from scipy.sparse import issparse, csr_matrix
+from scipy.sparse import issparse, csr_matrix, csr_array
 
 
 cdef void _middle_term_sparse_sparse_64(
@@ -197,7 +197,7 @@ cdef class MiddleTermComputer{{name_suffix}}:
         )
 
     @classmethod
-    def unpack_csr_matrix(cls, X: csr_matrix):
+    def unpack_csr(cls, X: csr_matrix | csr_array):
         """Ensure that the CSR matrix is indexed with np.int32."""
         X_data = np.asarray(X.data, dtype=np.float64)
         X_indices = np.asarray(X.indices, dtype=np.int32)
@@ -471,8 +471,8 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
             n_features,
             chunk_size,
         )
-        self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
-        self.Y_data, self.Y_indices, self.Y_indptr = self.unpack_csr_matrix(Y)
+        self.X_data, self.X_indices, self.X_indptr = self.unpack_csr(X)
+        self.Y_data, self.Y_indices, self.Y_indptr = self.unpack_csr(Y)
 
     cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
         self,
@@ -559,7 +559,7 @@ cdef class SparseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name
             n_features,
             chunk_size,
         )
-        self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
+        self.X_data, self.X_indices, self.X_indptr = self.unpack_csr(X)
         self.Y = Y
         self.c_ordered_middle_term = c_ordered_middle_term
 
