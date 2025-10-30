@@ -8,6 +8,18 @@ from sklearn._config import get_config
 from sklearn.utils.fixes import parse_version
 
 
+class _IDCounter:
+    """Generate sequential ids with a prefix."""
+
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.count = 0
+
+    def get_id(self):
+        self.count += 1
+        return f"{self.prefix}-{self.count}"
+
+
 class _HTMLDocumentationLinkMixin:
     """Mixin class allowing to generate a link to the API documentation.
 
