@@ -1,4 +1,0 @@
--:func:`base.is_regressor`, :func:`base.is_classifier`, :func:`base.is_clusterer`
-  and :func:`is_outlier_detector` now provide helpful error messages when users 
-  accidentally pass a class instead of an instance.
-  By :user:`Achyuthan S <Achyuthan-S>` and :user:`Anne Beyer <AnneBeyer>`.
