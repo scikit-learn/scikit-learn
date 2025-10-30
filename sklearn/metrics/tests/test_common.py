@@ -2052,6 +2052,7 @@ def check_array_api_multiclass_classification_metric(
     additional_params = {
         "average": ("micro", "macro", "weighted"),
         "beta": (0.2, 0.5, 0.8),
+        "adjusted": (False, True),
     }
     metric_kwargs_combinations = _get_metric_kwargs_for_array_api_testing(
         metric=metric,
@@ -2248,6 +2249,10 @@ array_api_metric_checkers = {
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
+    ],
+    balanced_accuracy_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
     ],
     confusion_matrix: [
         check_array_api_binary_classification_metric,
