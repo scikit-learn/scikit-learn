@@ -116,11 +116,15 @@ function detectTheme(element) {
         return 'light';
     }
 
-    // Guess based on a reference element's color
-    const color = window.getComputedStyle(element, null).getPropertyValue('color');
+    // Guess based on a parent element's color
+    const color = window.getComputedStyle(element.parentNode, null).getPropertyValue('color');
     const match = color.match(/^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)\s*$/i);
     if (match) {
-        const [r, g, b] = [match[1], match[2], match[3]];
+        const [r, g, b] = [
+            parseFloat(match[1]),
+            parseFloat(match[2]),
+            parseFloat(match[3])
+        ];
 
         // https://en.wikipedia.org/wiki/HSL_and_HSV#Lightness
         const luma = 0.299 * r + 0.587 * g + 0.114 * b;

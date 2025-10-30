@@ -1,0 +1,4 @@
+- :class:`calibration.CalibratedClassifierCV` now supports array API compatible
+  inputs with `method="temperature"` and when the underlying `estimator` also
+  supports the array API.
+  By :user:`Omar Salman <OmarManzoor>`
