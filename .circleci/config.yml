@@ -5,7 +5,8 @@ jobs:
     docker:
       - image: cimg/python:3.10.16
     steps:
-      - checkout
+      - checkout:
+          method: full
       - run:
           name: dependencies
           command: |
@@ -29,7 +30,8 @@ jobs:
       # versions of the same dependencies.
       - SKLEARN_WARNINGS_AS_ERRORS: '0'
     steps:
-      - checkout
+      - checkout:
+          method: full
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
           key: v1-doc-min-deps-datasets-{{ .Branch }}
@@ -66,7 +68,8 @@ jobs:
       # recent versions of the dependencies.
       - SKLEARN_WARNINGS_AS_ERRORS: '1'
     steps:
-      - checkout
+      - checkout:
+          method: full
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
           key: v1-doc-datasets-{{ .Branch }}
@@ -100,7 +103,8 @@ jobs:
     docker:
       - image: cimg/base:current-22.04
     steps:
-      - checkout
+      - checkout:
+          method: full
       - run: ./build_tools/circle/checkout_merge_commit.sh
       # Attach documentation generated in the 'doc' step so that it can be
       # deployed.
