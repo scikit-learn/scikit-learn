@@ -210,4 +210,4 @@ def _weighted_percentile(
     if n_dim_percentile == 0:
         result = result[..., 0]
 
-    return result[..., 0] if n_dim == 1 else result
+    return result[0, ...] if n_dim == 1 else result

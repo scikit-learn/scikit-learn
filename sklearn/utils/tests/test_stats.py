@@ -38,7 +38,7 @@ def test_weighted_percentile_matches_median(size, average):
 
 
 @pytest.mark.parametrize("average", [True, False])
-@pytest.mark.parametrize("percentile_rank", [20, 35, 61])
+@pytest.mark.parametrize("percentile_rank", [20, 35, 61, [5, 47]])
 @pytest.mark.parametrize("size", [10, 15])
 def test_weighted_percentile_matches_numpy(
     global_random_seed, size, percentile_rank, average
