@@ -103,7 +103,7 @@ def _yeojohnson_lambda(_neg_log_likelihood, x):
     lmbda : float
         The estimated lambda parameter for the Yeo-Johnson transformation.
     """
-    min_scipy_version = "1.9.0"
+    min_scipy_version = "1.10.0"
 
     if sp_version < parse_version(min_scipy_version):
         # choosing bracket -2, 2 like for boxcox

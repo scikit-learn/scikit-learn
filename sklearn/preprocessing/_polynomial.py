@@ -460,23 +460,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 # edge case: deal with empty matrix
                 XP = sparse.csr_matrix((n_samples, 0), dtype=X.dtype)
             else:
-                # `scipy.sparse.hstack` breaks in scipy<1.9.2
-                # when `n_output_features_ > max_int32`
-                all_int32 = all(mat.indices.dtype == np.int32 for mat in to_stack)
-                if (
-                    sp_version < parse_version("1.9.2")
-                    and self.n_output_features_ > max_int32
-                    and all_int32
-                ):
-                    raise ValueError(  # pragma: no cover
-                        "In scipy versions `<1.9.2`, the function `scipy.sparse.hstack`"
-                        " produces negative columns when:\n1. The output shape contains"
-                        " `n_cols` too large to be represented by a 32bit signed"
-                        " integer.\n2. All sub-matrices to be stacked have indices of"
-                        " dtype `np.int32`.\nTo avoid this error, either use a version"
-                        " of scipy `>=1.9.2` or alter the `PolynomialFeatures`"
-                        " transformer to produce fewer than 2^31 output features"
-                    )
                 XP = sparse.hstack(to_stack, dtype=X.dtype, format="csr")
         elif sparse.issparse(X) and X.format == "csc" and self._max_degree < 4:
             return self.transform(X.tocsr()).tocsc()
@@ -1272,33 +1255,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 output_list.append(XBS_sparse)
 
         if use_sparse:
-            # TODO: Remove this conditional error when the minimum supported version of
-            # SciPy is 1.9.2
-            # `scipy.sparse.hstack` breaks in scipy<1.9.2
-            # when `n_features_out_ > max_int32`
-            max_int32 = np.iinfo(np.int32).max
-            all_int32 = True
-            for mat in output_list:
-                all_int32 &= mat.indices.dtype == np.int32
-            if (
-                sp_version < parse_version("1.9.2")
-                and self.n_features_out_ > max_int32
-                and all_int32
-            ):
-                raise ValueError(
-                    "In scipy versions `<1.9.2`, the function `scipy.sparse.hstack`"
-                    " produces negative columns when:\n1. The output shape contains"
-                    " `n_cols` too large to be represented by a 32bit signed"
-                    " integer.\n. All sub-matrices to be stacked have indices of"
-                    " dtype `np.int32`.\nTo avoid this error, either use a version"
-                    " of scipy `>=1.9.2` or alter the `SplineTransformer`"
-                    " transformer to produce fewer than 2^31 output features"
-                )
             XBS = sparse.hstack(output_list, format="csr")
-        elif self.sparse_output:
-            # TODO: Remove conversion to csr, once scipy 1.10 is the minimum version:
-            # Adjust format of XBS to sparse, for scipy versions < 1.10.0:
-            XBS = sparse.csr_matrix(XBS)
 
         if self.include_bias:
             return XBS
