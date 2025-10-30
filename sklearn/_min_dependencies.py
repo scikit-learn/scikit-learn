@@ -26,7 +26,7 @@ dependent_packages = {
     "cython": (CYTHON_MIN_VERSION, "build"),
     "meson-python": ("0.17.1", "build"),
     "matplotlib": ("3.6.1", "benchmark, docs, examples, tests"),
-    "scikit-image": ("0.19.0", "docs, examples, tests"),
+    "scikit-image": ("0.19.0", "docs, examples"),
     "pandas": ("1.5.0", "benchmark, docs, examples, tests"),
     "seaborn": ("0.9.1", "docs, examples"),
     "memory_profiler": ("0.57.0", "benchmark, docs"),

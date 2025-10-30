@@ -219,7 +219,7 @@ build_metadata_list = [
         "channels": ["conda-forge"],
         "conda_dependencies": ["python", "ccache"],
         "package_constraints": {
-            # TODO: remove this constraint once scikit-image and pyamg provide binary
+            # TODO: remove this constraint once pyamg provide binary
             # wheels for Python 3.14 (or later) on PyPI.
             "python": "3.13",
         },
@@ -227,7 +227,7 @@ build_metadata_list = [
             remove_from(common_dependencies, ["python", "blas", "pip"])
             + docstring_test_dependencies
             # Test with some optional dependencies
-            + ["lightgbm", "scikit-image"]
+            + ["lightgbm"]
             # Test array API on CPU without PyTorch
             + ["array-api-strict"]
             # doctests dependencies

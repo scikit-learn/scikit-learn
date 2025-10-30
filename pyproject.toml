@@ -79,7 +79,6 @@ examples = [
 ]
 tests = [
     "matplotlib>=3.6.1",
-    "scikit-image>=0.19.0",
     "pandas>=1.5.0",
     "pytest>=7.1.2",
     "pytest-cov>=2.9.0",
