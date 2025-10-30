@@ -31,7 +31,7 @@ We agree that AI can be a useful development assistant, but the use of any kind 
 AI assistance has to be disclosed as per our Automated Contributions Policy
 (see https://scikit-learn.org/dev/developers/contributing.html#automated-contributions-policy).
 Please select one of the following:
-* I hereby confirm that no AI assistance was used in the creation of this PR.
+* I confirm that no AI assistance was used in the creation of this PR.
 * I used AI assistance in the creation of this PR (specifically <ADD TOOLS/DETAILS HERE>),
   but I confirm that I checked and understood all changes and can explain them on request.
 * This PR was created by an AI Agent.
