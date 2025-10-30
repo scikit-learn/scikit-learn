@@ -140,8 +140,9 @@ but reviewers are not interested in unknowingly interacting back and forth with
 automated chatbots that fundamentally do not care about the value of our open
 source project.
 
-Please self review all code or documentation changes made by AI tools before
-submitting them under your name.
+Please self review all code or documentation changes made by AI tools and make sure
+you understand all changes and can explain them on request, before submitting them
+under your name.
 
 Submitting a bug report or a feature request
 ============================================
