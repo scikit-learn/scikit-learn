@@ -98,6 +98,7 @@ from sklearn.metrics.pairwise import (
     pairwise_distances_argmin_min,
     pairwise_distances_chunked,
     pairwise_kernels,
+    laplacian_kernel,
 )
 
 __all__ = [
@@ -170,6 +171,7 @@ __all__ = [
     "pairwise_distances_argmin_min",
     "pairwise_distances_chunked",
     "pairwise_kernels",
+    "laplacian_kernel",
     "precision_recall_curve",
     "precision_recall_fscore_support",
     "precision_score",
