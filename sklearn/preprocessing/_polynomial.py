@@ -29,7 +29,6 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._param_validation import Interval, StrOptions
-from sklearn.utils.fixes import parse_version, sp_version
 from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
@@ -1010,18 +1009,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         n_splines = self.bsplines_[0].c.shape[1]
         degree = self.degree
 
-        # TODO: Remove this condition, once scipy 1.10 is the minimum version.
-        #       Only scipy >= 1.10 supports design_matrix(.., extrapolate=..).
-        #       The default (implicit in scipy < 1.10) is extrapolate=False.
-        scipy_1_10 = sp_version >= parse_version("1.10.0")
         # Note: self.bsplines_[0].extrapolate is True for extrapolation in
         # ["periodic", "continue"]
-        if scipy_1_10:
-            use_sparse = self.sparse_output
-            kwargs_extrapolate = {"extrapolate": self.bsplines_[0].extrapolate}
-        else:
-            use_sparse = self.sparse_output and not self.bsplines_[0].extrapolate
-            kwargs_extrapolate = dict()
+        use_sparse = self.sparse_output
+        kwargs_extrapolate = {"extrapolate": self.bsplines_[0].extrapolate}
 
         # Note that scipy BSpline returns float64 arrays and converts input
         # x=X[:, i] to c-contiguous float64.

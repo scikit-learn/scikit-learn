@@ -56,24 +56,17 @@ if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
         f" should have pytest >= {PYTEST_MIN_VERSION} installed."
     )
 
-scipy_datasets_require_network = sp_version >= parse_version("1.10")
-
 
 def raccoon_face_or_skip():
     # SciPy >= 1.10 requires network to access to get data
-    if scipy_datasets_require_network:
-        run_network_tests = environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "0"
-        if not run_network_tests:
-            raise SkipTest("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
-
-        try:
-            import pooch  # noqa: F401
-        except ImportError:
-            raise SkipTest("test requires pooch to be installed")
-
-        from scipy.datasets import face
-    else:
-        from scipy.misc import face
+    run_network_tests = environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "0"
+    if not run_network_tests:
+        raise SkipTest("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
+    try:
+        import pooch  # noqa: F401
+    except ImportError:
+        raise SkipTest("test requires pooch to be installed")
+    from scipy.datasets import face
 
     return face(gray=True)
 
@@ -91,8 +84,7 @@ dataset_fetchers = {
     "fetch_species_distributions_fxt": fetch_species_distributions,
 }
 
-if scipy_datasets_require_network:
-    dataset_fetchers["raccoon_face_fxt"] = raccoon_face_or_skip
+dataset_fetchers["raccoon_face_fxt"] = raccoon_face_or_skip
 
 _SKIP32_MARK = pytest.mark.skipif(
     environ.get("SKLEARN_RUN_FLOAT32_TESTS", "0") != "1",
