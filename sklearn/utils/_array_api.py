@@ -906,21 +906,6 @@ def indexing_dtype(xp):
     return xp.asarray(0).dtype
 
 
-def _searchsorted(a, v, *, side="left", sorter=None, xp=None):
-    # Temporary workaround needed as long as searchsorted is not widely
-    # adopted by implementers of the Array API spec. This is a quite
-    # recent addition to the spec:
-    # https://data-apis.org/array-api/latest/API_specification/generated/array_api.searchsorted.html
-    xp, _ = get_namespace(a, v, xp=xp)
-    if hasattr(xp, "searchsorted"):
-        return xp.searchsorted(a, v, side=side, sorter=sorter)
-
-    a_np = _convert_to_numpy(a, xp=xp)
-    v_np = _convert_to_numpy(v, xp=xp)
-    indices = numpy.searchsorted(a_np, v_np, side=side, sorter=sorter)
-    return xp.asarray(indices, device=device(a))
-
-
 def _isin(element, test_elements, xp, assume_unique=False, invert=False):
     """Calculates ``element in test_elements``, broadcasting over `element`
     only.
@@ -1107,3 +1092,15 @@ def _linalg_solve(cov_chol, eye_matrix, xp):
         return scipy.linalg.solve_triangular(cov_chol, eye_matrix, lower=True)
     else:
         return xp.linalg.solve(cov_chol, eye_matrix)
+
+
+def _half_multinomial_loss(y, pred, sample_weight=None, xp=None):
+    """A version of the multinomial loss that is compatible with the array API"""
+    xp, _, device_ = get_namespace_and_device(y, pred, sample_weight)
+    log_sum_exp = _logsumexp(pred, axis=1, xp=xp)
+    y = xp.asarray(y, dtype=xp.int64, device=device_)
+    class_margins = xp.arange(y.shape[0], device=device_) * pred.shape[1]
+    label_predictions = xp.take(_ravel(pred), y + class_margins)
+    return float(
+        _average(log_sum_exp - label_predictions, weights=sample_weight, xp=xp)
+    )
