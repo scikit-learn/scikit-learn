@@ -3,46 +3,41 @@
 
 import html
 
-from sklearn.utils._repr_html.base import _IDCounter
-
-_FEATURES_ID_COUNTER = _IDCounter("sk-features-id")
-
 
 def _features_html(features, is_fitted_css_class=""):
     FEATURES_TABLE_TEMPLATE = """
-        <div class="sk-item">
-          <div class="sk-estimator {is_fitted_css_class} sk-toggleable">
-            <input class="sk-toggleable__control sk-hidden--visually" id="{feature_id}"
-            type="checkbox">
-            <label for="{feature_id}" class="sk-toggleable__label {is_fitted_css_class}
-            sk-toggleable__label-arrow">
+        <div class="sk-estimator {is_fitted_css_class}">
+          <details>
+            <summary>
               <div>{total_features} features</div>
-              <div class="image-container" title="Copy all output features" onclick="
-                event.preventDefault();
-                event.stopPropagation();
-                var checkboxElem = this.closest('.sk-toggleable')
-                                  .querySelector('input');
-                var wasChecked = checkboxElem.checked;
-                checkboxElem.checked = true;
-                var content = this.closest('.sk-item').querySelector('tbody')
-                              .innerText.trim();
-                if (!wasChecked) checkboxElem.checked = false;
-                copyRowsToClipboard(content, this);
-                ">
-                  <i class="copy-paste-icon"></i>
+              <div class="image-container"
+                   title="Copy all output features">
+                <i class="copy-paste-icon"
+                  onclick="
+                  event.stopPropagation();
+                  event.preventDefault();
+
+                  var detailsElem = this.closest('.features')
+                  .querySelector('details');
+                  var wasOpen = detailsElem.open;
+                  detailsElem.open = true;
+                  var content = this.closest('.features').querySelector('tbody')
+                                .innerText.trim();
+                  if (!wasOpen) detailsElem.open = false;
+                  copyRowsToClipboard(content, this);
+                  "
+                  >
+                </i>
               </div>
-            </label>
-            <div class="sk-toggleable__content {is_fitted_css_class}">
-              <div class="estimator-table">
-                <table class="parameters-table">
+            </summary>
+            <div class="features-container">
+                <table class="features-table">
                   <tbody>
                     {rows}
                   </tbody>
                 </table>
-              </div>
             </div>
           </div>
-        </div>
     """
 
     FEATURES_ROW_TEMPLATE = """
@@ -60,6 +55,5 @@ def _features_html(features, is_fitted_css_class=""):
     return FEATURES_TABLE_TEMPLATE.format(
         total_features=total_features,
         is_fitted_css_class=is_fitted_css_class,
-        feature_id=_FEATURES_ID_COUNTER.get_id(),
         rows="".join(rows),
     )
