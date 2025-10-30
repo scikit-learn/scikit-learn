@@ -850,7 +850,7 @@ def test_ridge_gcv_vs_ridge_loo_cv(
 
 @pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_ridge_gcv_noiseless(gcv_mode, fit_intercept):
+def test_ridge_gcv_noiseless_overdetermined(gcv_mode, fit_intercept):
     # Ridge should recover the true coefficients in the noiseless overdetermined case
     alphas = [1e-16]
     gcv_ridge = RidgeCV(alphas=alphas, gcv_mode=gcv_mode, fit_intercept=fit_intercept)
@@ -859,6 +859,30 @@ def test_ridge_gcv_noiseless(gcv_mode, fit_intercept):
     )
     gcv_ridge.fit(X, y)
     assert_allclose(gcv_ridge.coef_, coef, atol=1e-10)
+
+
+@pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
+@pytest.mark.parametrize("fit_intercept", [True, False])
+def test_ridge_gcv_noiseless_underdetermined(gcv_mode, fit_intercept):
+    # Ridge should recover the least squares solution in the noiseless
+    # underdetermined case
+    alphas = [1e-16]
+    gcv_ridge = RidgeCV(alphas=alphas, gcv_mode=gcv_mode, fit_intercept=fit_intercept)
+    X, y, coef = make_regression(
+        n_samples=50, n_features=100, noise=0, coef=True, random_state=42
+    )
+    gcv_ridge.fit(X, y)
+    cond = max(X.shape) * np.finfo(X.dtype).eps
+    if fit_intercept:
+        X_mean = X.mean(axis=0)
+        y_mean = y.mean()
+        coef = linalg.lstsq(X - X_mean, y - y_mean, cond=cond)[0]
+        intercept = y_mean - np.dot(X_mean, coef)
+        assert_allclose(gcv_ridge.coef_, coef, atol=1e-10)
+        assert_allclose(gcv_ridge.intercept_, intercept, atol=1e-10)
+    else:
+        coef = linalg.lstsq(X, y, cond=cond)[0]
+        assert_allclose(gcv_ridge.coef_, coef, atol=1e-10)
 
 
 def test_ridge_loo_cv_asym_scoring():
