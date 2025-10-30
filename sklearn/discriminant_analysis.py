@@ -796,13 +796,7 @@ class LinearDiscriminantAnalysis(
         xp, _ = get_namespace(X)
         prediction = self.predict_proba(X)
 
-        info = xp.finfo(prediction.dtype)
-        if hasattr(info, "smallest_normal"):
-            smallest_normal = info.smallest_normal
-        else:
-            # smallest_normal was introduced in NumPy 1.22
-            smallest_normal = info.tiny
-
+        smallest_normal = xp.finfo(prediction.dtype).smallest_normal
         prediction[prediction == 0.0] += smallest_normal
         return xp.log(prediction)
 
@@ -826,7 +820,7 @@ class LinearDiscriminantAnalysis(
             In the two-class case, the shape is `(n_samples,)`, giving the
             log likelihood ratio of the positive class.
         """
-        # Only override for the doc
+        # Only overrides for the docstring.
         return super().decision_function(X)
 
     def __sklearn_tags__(self):
@@ -1074,55 +1068,5 @@ class QuadraticDiscriminantAnalysis(
             In the two-class case, the shape is `(n_samples,)`, giving the
             log likelihood ratio of the positive class.
         """
+        # Only overrides for the docstring.
         return super().decision_function(X)
-
-    def predict(self, X):
-        """Perform classification on an array of test vectors X.
-
-        The predicted class C for each sample in X is returned.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            Vector to be scored, where `n_samples` is the number of samples and
-            `n_features` is the number of features.
-
-        Returns
-        -------
-        C : ndarray of shape (n_samples,)
-            Estimated probabilities.
-        """
-        return super().predict(X)
-
-    def predict_proba(self, X):
-        """Return posterior probabilities of classification.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            Array of samples/test vectors.
-
-        Returns
-        -------
-        C : ndarray of shape (n_samples, n_classes)
-            Posterior probabilities of classification per class.
-        """
-        # compute the likelihood of the underlying gaussian models
-        # up to a multiplicative constant.
-        return super().predict_proba(X)
-
-    def predict_log_proba(self, X):
-        """Return log of posterior probabilities of classification.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            Array of samples/test vectors.
-
-        Returns
-        -------
-        C : ndarray of shape (n_samples, n_classes)
-            Posterior log-probabilities of classification per class.
-        """
-        # XXX : can do better to avoid precision overflows
-        return super().predict_log_proba(X)

@@ -1,0 +1,17 @@
+sklearn/tree/_utils.c: \
+  sklearn/utils/_typedefs.pxd \
+  sklearn/tree/_splitter.pxd \
+  ../../micromamba/envs/scikit-learn-dev/lib/python3.13/site-packages/Cython/Includes/cpython/object.pxd \
+  ../../micromamba/envs/scikit-learn-dev/lib/python3.13/site-packages/Cython/Includes/libc/string.pxd \
+  sklearn/tree/_criterion.pxd \
+  ../../micromamba/envs/scikit-learn-dev/lib/python3.13/site-packages/Cython/Includes/libc/stdio.pxd \
+  ../../micromamba/envs/scikit-learn-dev/lib/python3.13/site-packages/numpy/__init__.cython-30.pxd \
+  sklearn/tree/_utils.pxd \
+  sklearn/tree/_utils.pyx \
+  ../../micromamba/envs/scikit-learn-dev/lib/python3.13/site-packages/Cython/Includes/cpython/ref.pxd \
+  sklearn/tree/_tree.pxd \
+  sklearn/neighbors/_quad_tree.pxd \
+  sklearn/utils/_random.pxd \
+  ../../micromamba/envs/scikit-learn-dev/lib/python3.13/site-packages/Cython/Includes/cpython/type.pxd \
+  ../../micromamba/envs/scikit-learn-dev/lib/python3.13/site-packages/Cython/Includes/libc/math.pxd \
+  ../../micromamba/envs/scikit-learn-dev/lib/python3.13/site-packages/Cython/Includes/libc/stdlib.pxd
