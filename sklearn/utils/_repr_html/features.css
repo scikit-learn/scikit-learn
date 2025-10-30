@@ -1,3 +1,14 @@
+.features summary {
+  cursor: pointer;
+  display: flex;
+  margin-bottom: 0;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+}
+
+/*
 .features {
   font-family: monospace;
   cursor: pointer;
