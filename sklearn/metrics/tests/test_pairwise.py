@@ -488,7 +488,7 @@ def test_pairwise_kernels(metric, csr_container):
 )
 @pytest.mark.parametrize(
     "metric",
-    ["rbf", "sigmoid", "polynomial", "linear", "chi2", "additive_chi2"],
+    ["rbf", "sigmoid", "polynomial", "linear", "laplacian", "chi2", "additive_chi2"],
 )
 def test_pairwise_kernels_array_api(metric, array_namespace, device, dtype_name):
     # Test array API support in pairwise_kernels.
