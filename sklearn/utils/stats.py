@@ -64,7 +64,8 @@ def _weighted_percentile(
 
     percentile_rank: scalar or 1D array, default=50
         The probability level(s) of the percentile(s) to compute, in percent. Must be
-        between 0 and 100. If a 1D array, computes multiple percentiles.
+        between 0 and 100. If a 1D array, computes all percentiles (along each
+        axis 0 if `array` is 2D).
 
     average : bool, default=False
         If `True`, uses the "averaged_inverted_cdf" quantile method, otherwise
