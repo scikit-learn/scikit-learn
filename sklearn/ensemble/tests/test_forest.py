@@ -129,6 +129,10 @@ def test_get_n_samples_bootstrap():
     assert _get_n_samples_bootstrap(100, None, None) == 100
     # case max_samples * n_samples < 1
     assert _get_n_samples_bootstrap(100, 0.9 / 100, None) == 1
+    # error raised for unexpected max_samples type
+    msg = "max_samples must be None, int or float"
+    with pytest.raises(ValueError, match=msg):
+        _get_n_samples_bootstrap(100, "b", None)
 
     # Test with sample_weight
     sw = np.full(100, fill_value=2)

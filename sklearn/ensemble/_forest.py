@@ -124,19 +124,26 @@ def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
             raise ValueError(msg.format(n_samples, max_samples))
         return max_samples
 
-    if max_samples is None or isinstance(max_samples, Real):
-        fraction = 1.0 if max_samples is None else max_samples
-        if sample_weight is None:
-            return max(int(fraction * n_samples), 1)
-        else:
-            sw_sum = np.sum(sample_weight)
-            if sw_sum <= 1:
-                raise ValueError(
-                    f"The total sum of sample weights is {sw_sum}, which prevents "
-                    f"resampling with a fractional value for {max_samples=}. Either"
-                    " pass max_samples as an integer or use a larger sample_weight."
-                )
-            return max(int(fraction * sw_sum), 1)
+    if max_samples is None:
+        fraction = 1.0
+    elif isinstance(max_samples, Real):
+        fraction = max_samples
+    else:
+        raise ValueError(
+            f"max_samples must be None, int or float got {type(max_samples)}"
+        )
+
+    if sample_weight is None:
+        return max(int(fraction * n_samples), 1)
+    else:
+        sw_sum = np.sum(sample_weight)
+        if sw_sum <= 1:
+            raise ValueError(
+                f"The total sum of sample weights is {sw_sum}, which prevents "
+                f"resampling with a fractional value for {max_samples=}. Either"
+                " pass max_samples as an integer or use a larger sample_weight."
+            )
+        return max(int(fraction * sw_sum), 1)
 
 
 def _generate_sample_indices(
