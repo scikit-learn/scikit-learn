@@ -527,11 +527,6 @@ def move_to(*arrays, xp, device):
             "Sparse arrays are only accepted (and passed through) when the target "
             "namespace is Numpy"
         )
-    # Early return if all `arrays` are sparse or None (to numpy)
-    if all(
-        sparse_mask[i] or none_mask[i] for i in range(len(arrays))
-    ) and _is_numpy_namespace(xp):
-        return arrays
 
     converted_arrays = []
 
