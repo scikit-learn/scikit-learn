@@ -33,7 +33,9 @@ set_config(display="diagram")
 # We'll use the Titanic dataset from OpenML, which contains both numeric
 # and categorical features.
 
-X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True, parser="pandas")
+X, y = fetch_openml(
+    "titanic", version=1, as_frame=True, return_X_y=True, parser="pandas"
+)
 
 # Select relevant columns
 num_cols = ["age", "fare"]
@@ -60,10 +62,7 @@ preprocessor = ColumnTransformer(
 # -------------------------
 # Combine preprocessing with a classifier.
 
-clf = make_pipeline(
-    preprocessor,
-    LogisticRegression(max_iter=1000, random_state=42)
-)
+clf = make_pipeline(preprocessor, LogisticRegression(max_iter=1000, random_state=42))
 
 # Display the pipeline structure
 clf
@@ -91,9 +90,8 @@ print(f"Test accuracy: {test_score:.3f}")
 # ---------------------------------
 # View the feature names after transformation.
 
-feature_names = (
-    num_cols +
-    list(preprocessor.named_transformers_["cat"].get_feature_names_out(cat_cols))
+feature_names = num_cols + list(
+    preprocessor.named_transformers_["cat"].get_feature_names_out(cat_cols)
 )
 
 print(f"\nTotal features after transformation: {len(feature_names)}")
