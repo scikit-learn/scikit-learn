@@ -101,7 +101,7 @@ need to override, but it works for simple consumers as is.
 import inspect
 from collections import defaultdict, namedtuple
 from copy import deepcopy
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Callable, Iterable, Optional, Union
 from warnings import warn
 
 from sklearn import get_config
@@ -1456,9 +1456,34 @@ class _MetadataRequester:
         super().__init_subclass__(**kwargs)
 
     @classmethod
-    def _get_class_level_metadata_request_values(cls, method: str):
+    def _get_class_level_metadata_request_values(
+        cls,
+        method_name: str,
+        method: Callable | None = None,
+        ignore_params: Iterable[str] | None = None,
+    ):
         """Get class level metadata request values.
 
+        Parameters
+        ----------
+        method_name : str
+            The name of the method to get the metadata request values for.
+
+        method : callable, default=None
+            The method to get the metadata request values for. If None, the method
+            from the class with the name `method_name` is used.
+
+        ignore_params : set, default=None
+            A set of parameter names to ignore. The usual parameters
+            `X`, `y`, `Y`, `Xt`, `yt` are always ignored.
+
+        Returns
+        -------
+        requests : dict
+            A dictionary of metadata request values.
+
+        Notes
+        -----
         This method first checks the `method`'s signature for passable metadata and then
         updates these with the metadata request values set at class level via the
         ``__metadata_request__{method}`` class attributes.
@@ -1468,18 +1493,34 @@ class _MetadataRequester:
         """
         # Here we use `isfunction` instead of `ismethod` because calling `getattr`
         # on a class instead of an instance returns an unbound function.
-        if not hasattr(cls, method) or not inspect.isfunction(getattr(cls, method)):
+        # If the given method doesn't exist or is not a function on the class, we simply
+        # return early with an empty dict.
+        if method is None and (
+            not hasattr(cls, method_name)
+            or not inspect.isfunction(getattr(cls, method_name))
+        ):
             return dict()
-        # ignore the first parameter of the method, which is usually "self"
-        signature_items = list(
-            inspect.signature(getattr(cls, method)).parameters.items()
-        )[1:]
+
+        resolved_method: Callable = (
+            method if method is not None else getattr(cls, method_name)
+        )
+
+        # ignore the first parameter of the method, which is usually "self".
+        # In case of a callable which is usually passed from a scorer, we can still
+        # safely ignore the first argument which is "y_true"
+        signature_items = list(inspect.signature(resolved_method).parameters.items())[
+            1:
+        ]
+
+        ignore_params = set() if ignore_params is None else set(ignore_params)
+        ignore_params.update({"X", "y", "Y", "Xt", "yt"})
+
         params = defaultdict(
             str,
             {
                 param_name: None
                 for param_name, param_info in signature_items
-                if param_name not in {"X", "y", "Y", "Xt", "yt"}
+                if param_name not in ignore_params
                 and param_info.kind
                 not in {param_info.VAR_POSITIONAL, param_info.VAR_KEYWORD}
             },
@@ -1492,7 +1533,7 @@ class _MetadataRequester:
         # ``vars`` doesn't report the parent class attributes. We go through
         # the reverse of the MRO so that child classes have precedence over
         # their parents.
-        substr = f"__metadata_request__{method}"
+        substr = f"__metadata_request__{method_name}"
         for base_class in reversed(inspect.getmro(cls)):
             # Copy is needed with free-threaded context to avoid
             # RuntimeError: dictionary changed size during iteration.
