@@ -739,7 +739,7 @@ def test_stacking_classifier_multilabel_decision_function():
 @pytest.mark.parametrize("passthrough", [False, True])
 def test_stacking_classifier_multilabel_auto_predict(stack_method, passthrough):
     """Check the behaviour for the multilabel classification case for stack methods
-    supported for all estimators or automatically picked up.
+    supported for all estimators are automatically picked up.
     """
     X_train, X_test, y_train, y_test = train_test_split(
         X_multilabel, y_multilabel, stratify=y_multilabel, random_state=42
