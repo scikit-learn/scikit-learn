@@ -1,0 +1,4 @@
+- Fixed splitting logic during training in :class:`tree.DecisionTree*`
+  (and consequently in :class:`ensemble.RandomForest*`)
+  for nodes containing mostly missing values.
+  By :user:`Arthur Lacote <cakedev0>`
