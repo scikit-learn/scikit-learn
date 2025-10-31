@@ -8,6 +8,7 @@ Sequential feature selection
 from numbers import Integral, Real
 
 import numpy as np
+import pandas as pd
 
 from sklearn.base import (
     BaseEstimator,
@@ -316,7 +317,10 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             candidate_mask[feature_idx] = True
             if self.direction == "backward":
                 candidate_mask = ~candidate_mask
-            X_new = X[:, candidate_mask]
+            if isinstance(X, pd.DataFrame):
+                X_new = X.iloc[:, candidate_mask]
+            else:
+                X_new = X[:, candidate_mask]
             scores[feature_idx] = cross_val_score(
                 estimator,
                 X_new,
