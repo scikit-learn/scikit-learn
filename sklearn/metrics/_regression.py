@@ -1830,7 +1830,11 @@ def d2_pinball_score(
 
     y_quantile = xp.tile(
         _weighted_percentile(
-            y_true, sample_weight=sample_weight, percentile_rank=alpha * 100, xp=xp
+            y_true,
+            sample_weight=sample_weight,
+            percentile_rank=alpha * 100,
+            average=True,
+            xp=xp,
         ),
         (y_true.shape[0], 1),
     )
