@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 ColumnTransformer for Preprocessing
 ====================================
@@ -6,11 +9,15 @@ Demonstrates how to use :class:`~sklearn.compose.ColumnTransformer` to apply
 different preprocessing to numeric and categorical features in a pipeline.
 
 This example shows:
-- Scaling numeric features with :class:`~sklearn.preprocessing.StandardScaler`
-- Encoding categorical features with :class:`~sklearn.preprocessing.OneHotEncoder`
-- Combining preprocessing with a :class:`~sklearn.linear_model.LogisticRegression` classifier
 
-For more details, see the :ref:`Column Transformer <column_transformer>` user guide.
+- Scaling numeric features with :class:`~sklearn.preprocessing.StandardScaler`
+- Encoding categorical features with
+  :class:`~sklearn.preprocessing.OneHotEncoder`
+- Combining preprocessing with a
+  :class:`~sklearn.linear_model.LogisticRegression` classifier
+
+For more details, see the :ref:`Column Transformer <column_transformer>`
+user guide.
 """
 
 # %%
@@ -48,12 +55,17 @@ print(f"\nFirst few rows:\n{X.head()}")
 # %%
 # Define the Preprocessing Pipeline
 # ----------------------------------
-# Use ColumnTransformer to apply different transformations to different columns.
+# Use ColumnTransformer to apply different transformations to different
+# columns.
 
 preprocessor = ColumnTransformer(
     transformers=[
         ("num", StandardScaler(), num_cols),
-        ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), cat_cols),
+        (
+            "cat",
+            OneHotEncoder(handle_unknown="ignore", sparse_output=False),
+            cat_cols,
+        ),
     ]
 )
 
@@ -62,7 +74,9 @@ preprocessor = ColumnTransformer(
 # -------------------------
 # Combine preprocessing with a classifier.
 
-clf = make_pipeline(preprocessor, LogisticRegression(max_iter=1000, random_state=42))
+clf = make_pipeline(
+    preprocessor, LogisticRegression(max_iter=1000, random_state=42)
+)
 
 # Display the pipeline structure
 clf
