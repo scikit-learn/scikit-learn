@@ -1,7 +1,7 @@
 """
 Check that OpenMP dependencies are correctly defined in meson.build files.
 
-This is based on trying to make sure the the following two things match:
+This is based on trying to make sure the following two things match:
 - the Cython files using OpenMP (based on a git grep regex)
 - the Cython extension modules that are built with OpenMP compiler flags (based
   on meson introspect json output)

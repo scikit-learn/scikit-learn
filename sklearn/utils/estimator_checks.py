@@ -20,11 +20,13 @@ import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
 
+from sklearn import config_context
 from sklearn.base import (
     BaseEstimator,
     BiclusterMixin,
     ClassifierMixin,
     ClassNamePrefixFeaturesOutMixin,
+    ClusterMixin,
     DensityMixin,
     MetaEstimatorMixin,
     MultiOutputMixin,
@@ -32,53 +34,49 @@ from sklearn.base import (
     OutlierMixin,
     RegressorMixin,
     TransformerMixin,
-)
-
-from .. import config_context
-from ..base import (
-    ClusterMixin,
     clone,
     is_classifier,
     is_outlier_detector,
     is_regressor,
 )
-from ..datasets import (
+from sklearn.datasets import (
     load_iris,
     make_blobs,
     make_classification,
     make_multilabel_classification,
     make_regression,
 )
-from ..exceptions import (
+from sklearn.exceptions import (
     DataConversionWarning,
     EstimatorCheckFailedWarning,
     NotFittedError,
     SkipTestWarning,
 )
-from ..linear_model._base import LinearClassifierMixin
-from ..metrics import accuracy_score, adjusted_rand_score, f1_score
-from ..metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
-from ..model_selection import LeaveOneGroupOut, ShuffleSplit, train_test_split
-from ..model_selection._validation import _safe_split
-from ..pipeline import make_pipeline
-from ..preprocessing import StandardScaler, scale
-from ..utils import _safe_indexing
-from ..utils._array_api import (
+from sklearn.linear_model._base import LinearClassifierMixin
+from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
+from sklearn.metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
+from sklearn.model_selection import LeaveOneGroupOut, ShuffleSplit, train_test_split
+from sklearn.model_selection._validation import _safe_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler, scale
+from sklearn.utils import _safe_indexing, shuffle
+from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
     get_namespace,
     yield_namespace_device_dtype_combinations,
 )
-from ..utils._array_api import device as array_device
-from ..utils._param_validation import (
+from sklearn.utils._array_api import device as array_device
+from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._param_validation import (
+    Interval,
     InvalidParameterError,
+    StrOptions,
     generate_invalid_param_val,
     make_constraint,
+    validate_params,
 )
-from . import shuffle
-from ._missing import is_scalar_nan
-from ._param_validation import Interval, StrOptions, validate_params
-from ._tags import (
+from sklearn.utils._tags import (
     ClassifierTags,
     InputTags,
     RegressorTags,
@@ -86,12 +84,12 @@ from ._tags import (
     TransformerTags,
     get_tags,
 )
-from ._test_common.instance_generator import (
+from sklearn.utils._test_common.instance_generator import (
     CROSS_DECOMPOSITION,
     _get_check_estimator_ids,
     _yield_instances_for_check,
 )
-from ._testing import (
+from sklearn.utils._testing import (
     SkipTest,
     _array_api_for_tests,
     _get_args,
@@ -105,7 +103,7 @@ from ._testing import (
     raises,
     set_random_state,
 )
-from .validation import _num_samples, check_is_fitted, has_fit_parameter
+from sklearn.utils.validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
 
@@ -426,6 +424,7 @@ def _maybe_mark(
     expected_failed_checks: dict[str, str] | None = None,
     mark: Literal["xfail", "skip", None] = None,
     pytest=None,
+    xfail_strict: bool | None = None,
 ):
     """Mark the test as xfail or skip if needed.
 
@@ -444,6 +443,13 @@ def _maybe_mark(
         Pytest module to use to mark the check. This is only needed if ``mark`` is
         `"xfail"`. Note that one can run `check_estimator` without having `pytest`
         installed. This is used in combination with `parametrize_with_checks` only.
+    xfail_strict : bool, default=None
+        Whether to run checks in xfail strict mode. This option is ignored unless
+        `mark="xfail"`. If True, checks that are expected to fail but actually
+        pass will lead to a test failure. If False, unexpectedly passing tests
+        will be marked as xpass. If None, the default pytest behavior is used.
+
+        .. versionadded:: 1.8
     """
     should_be_marked, reason = _should_be_skipped_or_marked(
         estimator, check, expected_failed_checks
@@ -453,7 +459,14 @@ def _maybe_mark(
 
     estimator_name = estimator.__class__.__name__
     if mark == "xfail":
-        return pytest.param(estimator, check, marks=pytest.mark.xfail(reason=reason))
+        # With xfail_strict=None we want the value from the pytest config to
+        # take precedence and that means not passing strict to the xfail
+        # mark at all.
+        if xfail_strict is None:
+            mark = pytest.mark.xfail(reason=reason)
+        else:
+            mark = pytest.mark.xfail(reason=reason, strict=xfail_strict)
+        return pytest.param(estimator, check, marks=mark)
     else:
 
         @wraps(check)
@@ -503,6 +516,7 @@ def estimator_checks_generator(
     legacy: bool = True,
     expected_failed_checks: dict[str, str] | None = None,
     mark: Literal["xfail", "skip", None] = None,
+    xfail_strict: bool | None = None,
 ):
     """Iteratively yield all check callables for an estimator.
 
@@ -530,6 +544,13 @@ def estimator_checks_generator(
         xfail(`pytest.mark.xfail`) or skip. Marking a test as "skip" is done via
         wrapping the check in a function that raises a
         :class:`~sklearn.exceptions.SkipTest` exception.
+    xfail_strict : bool, default=None
+        Whether to run checks in xfail strict mode. This option is ignored unless
+        `mark="xfail"`. If True, checks that are expected to fail but actually
+        pass will lead to a test failure. If False, unexpectedly passing tests
+        will be marked as xpass. If None, the default pytest behavior is used.
+
+        .. versionadded:: 1.8
 
     Returns
     -------
@@ -554,6 +575,7 @@ def estimator_checks_generator(
                 expected_failed_checks=expected_failed_checks,
                 mark=mark,
                 pytest=pytest,
+                xfail_strict=xfail_strict,
             )
 
 
@@ -562,6 +584,7 @@ def parametrize_with_checks(
     *,
     legacy: bool = True,
     expected_failed_checks: Callable | None = None,
+    xfail_strict: bool | None = None,
 ):
     """Pytest specific decorator for parametrizing estimator checks.
 
@@ -607,8 +630,15 @@ def parametrize_with_checks(
         Where `"check_name"` is the name of the check, and `"my reason"` is why
         the check fails. These tests will be marked as xfail if the check fails.
 
-
         .. versionadded:: 1.6
+
+    xfail_strict : bool, default=None
+        Whether to run checks in xfail strict mode. If True, checks that are
+        expected to fail but actually pass will lead to a test failure. If
+        False, unexpectedly passing tests will be marked as xpass. If None,
+        the default pytest behavior is used.
+
+        .. versionadded:: 1.8
 
     Returns
     -------
@@ -642,7 +672,12 @@ def parametrize_with_checks(
 
     def _checks_generator(estimators, legacy, expected_failed_checks):
         for estimator in estimators:
-            args = {"estimator": estimator, "legacy": legacy, "mark": "xfail"}
+            args = {
+                "estimator": estimator,
+                "legacy": legacy,
+                "mark": "xfail",
+                "xfail_strict": xfail_strict,
+            }
             if callable(expected_failed_checks):
                 args["expected_failed_checks"] = expected_failed_checks(estimator)
             yield from estimator_checks_generator(**args)
@@ -656,7 +691,6 @@ def parametrize_with_checks(
 
 @validate_params(
     {
-        "generate_only": ["boolean"],
         "legacy": ["boolean"],
         "expected_failed_checks": [dict, None],
         "on_skip": [StrOptions({"warn"}), None],
@@ -667,7 +701,6 @@ def parametrize_with_checks(
 )
 def check_estimator(
     estimator=None,
-    generate_only=False,
     *,
     legacy: bool = True,
     expected_failed_checks: dict[str, str] | None = None,
@@ -699,18 +732,6 @@ def check_estimator(
     ----------
     estimator : estimator object
         Estimator instance to check.
-
-    generate_only : bool, default=False
-        When `False`, checks are evaluated when `check_estimator` is called.
-        When `True`, `check_estimator` returns a generator that yields
-        (estimator, check) tuples. The check is run by calling
-        `check(estimator)`.
-
-        .. versionadded:: 0.22
-
-        .. deprecated:: 1.6
-            `generate_only` will be removed in 1.8. Use
-            :func:`~sklearn.utils.estimator_checks.estimator_checks_generator` instead.
 
     legacy : bool, default=True
         Whether to include legacy checks. Over time we remove checks from this category
@@ -788,17 +809,6 @@ def check_estimator(
                 "expected_to_fail_reason": expected_to_fail_reason,
             }
 
-    estimator_checks_generator : generator
-        Generator that yields (estimator, check) tuples. Returned when
-        `generate_only=True`.
-
-        ..
-            TODO(1.8): remove return value
-
-        .. deprecated:: 1.6
-            ``generate_only`` will be removed in 1.8. Use
-            :func:`~sklearn.utils.estimator_checks.estimator_checks_generator` instead.
-
     Raises
     ------
     Exception
@@ -834,18 +844,6 @@ def check_estimator(
         raise ValueError("callback cannot be provided together with on_fail='raise'")
 
     name = type(estimator).__name__
-
-    # TODO(1.8): remove generate_only
-    if generate_only:
-        warnings.warn(
-            "`generate_only` is deprecated in 1.6 and will be removed in 1.8. "
-            "Use :func:`~sklearn.utils.estimator_checks.estimator_checks_generator` "
-            "instead.",
-            FutureWarning,
-        )
-        return estimator_checks_generator(
-            estimator, legacy=legacy, expected_failed_checks=None, mark="skip"
-        )
 
     test_results = []
 
@@ -1049,6 +1047,7 @@ def check_array_api_input(
     device=None,
     dtype_name="float64",
     check_values=False,
+    check_sample_weight=False,
 ):
     """Check that the estimator can work consistently with the Array API
 
@@ -1057,6 +1056,8 @@ def check_array_api_input(
 
     When check_values is True, it also checks that calling the estimator on the
     array_api Array gives the same results as ndarrays.
+
+    When sample_weight is True, dummy sample weights are passed to the fit call.
     """
     xp = _array_api_for_tests(array_namespace, device)
 
@@ -1070,8 +1071,15 @@ def check_array_api_input(
 
     X_xp = xp.asarray(X, device=device)
     y_xp = xp.asarray(y, device=device)
+    fit_kwargs = {}
+    fit_kwargs_xp = {}
+    if check_sample_weight:
+        fit_kwargs["sample_weight"] = np.ones(X.shape[0], dtype=X.dtype)
+        fit_kwargs_xp["sample_weight"] = xp.asarray(
+            fit_kwargs["sample_weight"], device=device
+        )
 
-    est.fit(X, y)
+    est.fit(X, y, **fit_kwargs)
 
     array_attributes = {
         key: value for key, value in vars(est).items() if isinstance(value, np.ndarray)
@@ -1079,7 +1087,7 @@ def check_array_api_input(
 
     est_xp = clone(est)
     with config_context(array_api_dispatch=True):
-        est_xp.fit(X_xp, y_xp)
+        est_xp.fit(X_xp, y_xp, **fit_kwargs_xp)
         input_ns = get_namespace(X_xp)[0].__name__
 
     # Fitted attributes which are arrays must have the same
@@ -1093,7 +1101,8 @@ def check_array_api_input(
             f"got {attribute_ns}"
         )
 
-        assert array_device(est_xp_param) == array_device(X_xp)
+        with config_context(array_api_dispatch=True):
+            assert array_device(est_xp_param) == array_device(X_xp)
 
         est_xp_param_np = _convert_to_numpy(est_xp_param, xp=xp)
         if check_values:
@@ -1105,7 +1114,11 @@ def check_array_api_input(
             )
         else:
             assert attribute.shape == est_xp_param_np.shape
-            assert attribute.dtype == est_xp_param_np.dtype
+            if device == "mps" and np.issubdtype(est_xp_param_np.dtype, np.floating):
+                # for mps devices the maximum supported floating dtype is float32
+                assert est_xp_param_np.dtype == np.float32
+            else:
+                assert est_xp_param_np.dtype == attribute.dtype
 
     # Check estimator methods, if supported, give the same results
     methods = (
@@ -1180,7 +1193,9 @@ def check_array_api_input(
             f"got {result_ns}."
         )
 
-        assert array_device(result_xp) == array_device(X_xp)
+        with config_context(array_api_dispatch=True):
+            assert array_device(result_xp) == array_device(X_xp)
+
         result_xp_np = _convert_to_numpy(result_xp, xp=xp)
 
         if check_values:
@@ -1205,7 +1220,8 @@ def check_array_api_input(
                 f" {input_ns}, got {inverse_result_ns}."
             )
 
-            assert array_device(invese_result_xp) == array_device(X_xp)
+            with config_context(array_api_dispatch=True):
+                assert array_device(invese_result_xp) == array_device(X_xp)
 
             invese_result_xp_np = _convert_to_numpy(invese_result_xp, xp=xp)
             if check_values:
@@ -1226,6 +1242,7 @@ def check_array_api_input_and_values(
     array_namespace,
     device=None,
     dtype_name="float64",
+    check_sample_weight=False,
 ):
     return check_array_api_input(
         name,
@@ -1234,6 +1251,7 @@ def check_array_api_input_and_values(
         device=device,
         dtype_name=dtype_name,
         check_values=True,
+        check_sample_weight=check_sample_weight,
     )
 
 
@@ -1625,10 +1643,16 @@ def check_sample_weights_not_overwritten(name, estimator_orig):
 def check_dtype_object(name, estimator_orig):
     # check that estimators treat dtype object as numeric if possible
     rng = np.random.RandomState(0)
-    X = _enforce_estimator_tags_X(estimator_orig, rng.uniform(size=(40, 10)))
+    n_classes = 4
+    n_samples_per_class = 14
+    n_samples_total = n_classes * n_samples_per_class
+    X = _enforce_estimator_tags_X(
+        estimator_orig, rng.uniform(size=(n_samples_total, 10))
+    )
     X = X.astype(object)
     tags = get_tags(estimator_orig)
-    y = (X[:, 0] * 4).astype(int)
+    y = np.repeat(np.arange(n_classes), n_samples_per_class)
+    y = rng.permutation(y)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -4435,14 +4459,14 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     if "warm_start" in estimator.get_params():
         estimator.set_params(warm_start=False)
 
-    n_samples = 10
+    n_samples = 15
     X = rng.normal(size=(n_samples, 4))
     X = _enforce_estimator_tags_X(estimator, X)
 
     if is_regressor(estimator):
         y = rng.normal(size=n_samples)
     else:
-        y = rng.randint(low=0, high=2, size=n_samples)
+        y = rng.permutation(np.repeat(np.arange(3), 5))
     y = _enforce_estimator_tags_y(estimator, y)
 
     err_msg = (

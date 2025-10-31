@@ -12,18 +12,24 @@ from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.special import logsumexp
 
-from .base import (
-    BaseEstimator,
-    ClassifierMixin,
-    _fit_context,
+import sklearn.externals.array_api_extra as xpx
+from sklearn.base import BaseEstimator, ClassifierMixin, _fit_context
+from sklearn.preprocessing import LabelBinarizer, binarize, label_binarize
+from sklearn.utils._array_api import (
+    _average,
+    _convert_to_numpy,
+    _find_matching_floating_dtype,
+    _isin,
+    _logsumexp,
+    get_namespace,
+    get_namespace_and_device,
+    size,
 )
-from .preprocessing import LabelBinarizer, binarize, label_binarize
-from .utils._param_validation import Interval
-from .utils.extmath import safe_sparse_dot
-from .utils.multiclass import _check_partial_fit_first_call
-from .utils.validation import (
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.multiclass import _check_partial_fit_first_call
+from sklearn.utils.validation import (
     _check_n_features,
     _check_sample_weight,
     check_is_fitted,
@@ -102,9 +108,13 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             Predicted target values for X.
         """
         check_is_fitted(self)
+        xp, _ = get_namespace(X)
         X = self._check_X(X)
         jll = self._joint_log_likelihood(X)
-        return self.classes_[np.argmax(jll, axis=1)]
+        pred_indices = xp.argmax(jll, axis=1)
+        if isinstance(self.classes_[0], str):
+            pred_indices = _convert_to_numpy(pred_indices, xp=xp)
+        return self.classes_[pred_indices]
 
     def predict_log_proba(self, X):
         """
@@ -123,11 +133,12 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             order, as they appear in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
+        xp, _ = get_namespace(X)
         X = self._check_X(X)
         jll = self._joint_log_likelihood(X)
         # normalize by P(x) = P(f_1, ..., f_n)
-        log_prob_x = logsumexp(jll, axis=1)
-        return jll - np.atleast_2d(log_prob_x).T
+        log_prob_x = _logsumexp(jll, axis=1, xp=xp)
+        return jll - xpx.atleast_nd(log_prob_x, ndim=2).T
 
     def predict_proba(self, X):
         """
@@ -145,7 +156,8 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute :term:`classes_`.
         """
-        return np.exp(self.predict_log_proba(X))
+        xp, _ = get_namespace(X)
+        return xp.exp(self.predict_log_proba(X))
 
 
 class GaussianNB(_BaseNB):
@@ -263,8 +275,9 @@ class GaussianNB(_BaseNB):
             Returns the instance itself.
         """
         y = validate_data(self, y=y)
+        xp_y, _ = get_namespace(y)
         return self._partial_fit(
-            X, y, np.unique(y), _refit=True, sample_weight=sample_weight
+            X, y, xp_y.unique_values(y), _refit=True, sample_weight=sample_weight
         )
 
     def _check_X(self, X):
@@ -311,20 +324,21 @@ class GaussianNB(_BaseNB):
         total_var : array-like of shape (number of Gaussians,)
             Updated variance for each Gaussian over the combined set.
         """
+        xp, _ = get_namespace(X)
         if X.shape[0] == 0:
             return mu, var
 
         # Compute (potentially weighted) mean and variance of new datapoints
         if sample_weight is not None:
-            n_new = float(sample_weight.sum())
+            n_new = float(xp.sum(sample_weight))
             if np.isclose(n_new, 0.0):
                 return mu, var
-            new_mu = np.average(X, axis=0, weights=sample_weight)
-            new_var = np.average((X - new_mu) ** 2, axis=0, weights=sample_weight)
+            new_mu = _average(X, axis=0, weights=sample_weight, xp=xp)
+            new_var = _average((X - new_mu) ** 2, axis=0, weights=sample_weight, xp=xp)
         else:
             n_new = X.shape[0]
-            new_var = np.var(X, axis=0)
-            new_mu = np.mean(X, axis=0)
+            new_var = xp.var(X, axis=0)
+            new_mu = xp.mean(X, axis=0)
 
         if n_past == 0:
             return new_mu, new_var
@@ -424,42 +438,51 @@ class GaussianNB(_BaseNB):
 
         first_call = _check_partial_fit_first_call(self, classes)
         X, y = validate_data(self, X, y, reset=first_call)
+        xp, _, device_ = get_namespace_and_device(X)
+        float_dtype = _find_matching_floating_dtype(X, xp=xp)
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X)
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=float_dtype)
 
+        xp_y, _ = get_namespace(y)
         # If the ratio of data variance between dimensions is too small, it
         # will cause numerical errors. To address this, we artificially
         # boost the variance by epsilon, a small fraction of the standard
         # deviation of the largest dimension.
-        self.epsilon_ = self.var_smoothing * np.var(X, axis=0).max()
+        self.epsilon_ = self.var_smoothing * xp.max(xp.var(X, axis=0))
 
         if first_call:
             # This is the first call to partial_fit:
             # initialize various cumulative counters
             n_features = X.shape[1]
-            n_classes = len(self.classes_)
-            self.theta_ = np.zeros((n_classes, n_features))
-            self.var_ = np.zeros((n_classes, n_features))
+            n_classes = self.classes_.shape[0]
+            self.theta_ = xp.zeros(
+                (n_classes, n_features), dtype=float_dtype, device=device_
+            )
+            self.var_ = xp.zeros(
+                (n_classes, n_features), dtype=float_dtype, device=device_
+            )
 
-            self.class_count_ = np.zeros(n_classes, dtype=np.float64)
+            self.class_count_ = xp.zeros(n_classes, dtype=float_dtype, device=device_)
 
             # Initialise the class prior
             # Take into account the priors
             if self.priors is not None:
-                priors = np.asarray(self.priors)
+                priors = xp.asarray(self.priors, dtype=float_dtype, device=device_)
                 # Check that the provided prior matches the number of classes
-                if len(priors) != n_classes:
+                if priors.shape[0] != n_classes:
                     raise ValueError("Number of priors must match number of classes.")
                 # Check that the sum is 1
-                if not np.isclose(priors.sum(), 1.0):
+                if not xpx.isclose(xp.sum(priors), 1.0):
                     raise ValueError("The sum of the priors should be 1.")
                 # Check that the priors are non-negative
-                if (priors < 0).any():
+                if xp.any(priors < 0):
                     raise ValueError("Priors must be non-negative.")
                 self.class_prior_ = priors
             else:
                 # Initialize the priors to zeros for each class
-                self.class_prior_ = np.zeros(len(self.classes_), dtype=np.float64)
+                self.class_prior_ = xp.zeros(
+                    self.classes_.shape[0], dtype=float_dtype, device=device_
+                )
         else:
             if X.shape[1] != self.theta_.shape[1]:
                 msg = "Number of features %d does not match previous data %d."
@@ -469,22 +492,23 @@ class GaussianNB(_BaseNB):
 
         classes = self.classes_
 
-        unique_y = np.unique(y)
-        unique_y_in_classes = np.isin(unique_y, classes)
+        unique_y = xp_y.unique_values(y)
+        unique_y_in_classes = _isin(unique_y, classes, xp=xp_y)
 
-        if not np.all(unique_y_in_classes):
+        if not xp_y.all(unique_y_in_classes):
             raise ValueError(
                 "The target label(s) %s in y do not exist in the initial classes %s"
                 % (unique_y[~unique_y_in_classes], classes)
             )
 
         for y_i in unique_y:
-            i = classes.searchsorted(y_i)
-            X_i = X[y == y_i, :]
+            i = int(xp_y.searchsorted(classes, y_i))
+            y_i_mask = xp.asarray(y == y_i, device=device_)
+            X_i = X[y_i_mask]
 
             if sample_weight is not None:
-                sw_i = sample_weight[y == y_i]
-                N_i = sw_i.sum()
+                sw_i = sample_weight[y_i_mask]
+                N_i = xp.sum(sw_i)
             else:
                 sw_i = None
                 N_i = X_i.shape[0]
@@ -502,20 +526,28 @@ class GaussianNB(_BaseNB):
         # Update if only no priors is provided
         if self.priors is None:
             # Empirical prior, with sample_weight taken into account
-            self.class_prior_ = self.class_count_ / self.class_count_.sum()
+            self.class_prior_ = self.class_count_ / xp.sum(self.class_count_)
 
         return self
 
     def _joint_log_likelihood(self, X):
+        xp, _ = get_namespace(X)
         joint_log_likelihood = []
-        for i in range(np.size(self.classes_)):
-            jointi = np.log(self.class_prior_[i])
-            n_ij = -0.5 * np.sum(np.log(2.0 * np.pi * self.var_[i, :]))
-            n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) / (self.var_[i, :]), 1)
+        for i in range(size(self.classes_)):
+            jointi = xp.log(self.class_prior_[i])
+            n_ij = -0.5 * xp.sum(xp.log(2.0 * xp.pi * self.var_[i, :]))
+            n_ij = n_ij - 0.5 * xp.sum(
+                ((X - self.theta_[i, :]) ** 2) / (self.var_[i, :]), axis=1
+            )
             joint_log_likelihood.append(jointi + n_ij)
 
-        joint_log_likelihood = np.array(joint_log_likelihood).T
+        joint_log_likelihood = xp.stack(joint_log_likelihood).T
         return joint_log_likelihood
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = True
+        return tags
 
 
 class _BaseDiscreteNB(_BaseNB):

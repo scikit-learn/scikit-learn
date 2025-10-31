@@ -1,0 +1,3 @@
+- :class:`decomposition.SparseCoder` now follows the transformer API of scikit-learn.
+  In addition, the :meth:`fit` method now validates the input and parameters.
+  By :user:`François Paugam <FrancoisPgm>`.

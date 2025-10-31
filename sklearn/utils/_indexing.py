@@ -10,12 +10,15 @@ from itertools import compress, islice
 import numpy as np
 from scipy.sparse import issparse
 
+from sklearn.utils._array_api import (
+    _is_numpy_namespace,
+    ensure_common_namespace_device,
+    get_namespace,
+)
+from sklearn.utils._param_validation import Interval, validate_params
+from sklearn.utils.extmath import _approximate_mode
 from sklearn.utils.fixes import PYARROW_VERSION_BELOW_17
-
-from ._array_api import _is_numpy_namespace, get_namespace
-from ._param_validation import Interval, validate_params
-from .extmath import _approximate_mode
-from .validation import (
+from sklearn.utils.validation import (
     _check_sample_weight,
     _is_arraylike_not_scalar,
     _is_pandas_df,
@@ -32,6 +35,7 @@ def _array_indexing(array, key, key_dtype, axis):
     """Index an array or scipy.sparse consistently across NumPy version."""
     xp, is_array_api = get_namespace(array)
     if is_array_api:
+        key = ensure_common_namespace_device(array, key)[0]
         return xp.take(array, key, axis=axis)
     if issparse(array) and key_dtype == "bool":
         key = np.asarray(key)
@@ -302,7 +306,10 @@ def _safe_indexing(X, indices, *, axis=0):
     indices_dtype = _determine_key_type(indices)
 
     if axis == 0 and indices_dtype == "str":
-        raise ValueError("String indexing is not supported with 'axis=0'")
+        raise ValueError(
+            f"String indexing (indices={indices}) is not supported with 'axis=0'. "
+            "Did you mean to use axis=1 for column selection?"
+        )
 
     if axis == 1 and isinstance(X, list):
         raise ValueError("axis=1 is not supported for lists")

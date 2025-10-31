@@ -14,11 +14,13 @@ from joblib import effective_n_jobs
 from scipy.sparse import csr_matrix, issparse
 from scipy.spatial import distance
 
-from .. import config_context
-from ..exceptions import DataConversionWarning
-from ..preprocessing import normalize
-from ..utils import check_array, gen_batches, gen_even_slices
-from ..utils._array_api import (
+from sklearn import config_context
+from sklearn.exceptions import DataConversionWarning
+from sklearn.metrics._pairwise_distances_reduction import ArgKmin
+from sklearn.metrics._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
+from sklearn.preprocessing import normalize
+from sklearn.utils import check_array, gen_batches, gen_even_slices
+from sklearn.utils._array_api import (
     _fill_diagonal,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
@@ -27,10 +29,10 @@ from ..utils._array_api import (
     get_namespace,
     get_namespace_and_device,
 )
-from ..utils._chunking import get_chunk_n_rows
-from ..utils._mask import _get_mask
-from ..utils._missing import is_scalar_nan
-from ..utils._param_validation import (
+from sklearn.utils._chunking import get_chunk_n_rows
+from sklearn.utils._mask import _get_mask
+from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._param_validation import (
     Hidden,
     Interval,
     MissingValues,
@@ -38,13 +40,10 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
-from ..utils.deprecation import _deprecate_force_all_finite
-from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.fixes import parse_version, sp_base_version
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _num_samples, check_non_negative
-from ._pairwise_distances_reduction import ArgKmin
-from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
+from sklearn.utils.extmath import row_norms, safe_sparse_dot
+from sklearn.utils.fixes import parse_version, sp_base_version
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import _num_samples, check_non_negative
 
 
 # Utility Functions
@@ -88,8 +87,7 @@ def check_pairwise_arrays(
     precomputed=False,
     dtype="infer_float",
     accept_sparse="csr",
-    force_all_finite="deprecated",
-    ensure_all_finite=None,
+    ensure_all_finite=True,
     ensure_2d=True,
     copy=False,
 ):
@@ -130,25 +128,6 @@ def check_pairwise_arrays(
         to be any format. False means that a sparse matrix input will
         raise an error.
 
-    force_all_finite : bool or 'allow-nan', default=True
-        Whether to raise an error on np.inf, np.nan, pd.NA in array. The
-        possibilities are:
-
-        - True: Force all values of array to be finite.
-        - False: accepts np.inf, np.nan, pd.NA in array.
-        - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
-          cannot be infinite.
-
-        .. versionadded:: 0.22
-           ``force_all_finite`` accepts the string ``'allow-nan'``.
-
-        .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`.
-
-        .. deprecated:: 1.6
-           `force_all_finite` was renamed to `ensure_all_finite` and will be removed
-           in 1.8.
-
     ensure_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in array. The
         possibilities are:
@@ -183,8 +162,6 @@ def check_pairwise_arrays(
         An array equal to Y if Y was not None, guaranteed to be a numpy array.
         If Y was None, safe_Y will be a pointer to X.
     """
-    ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
-
     xp, _ = get_namespace(X, Y)
     X, Y, dtype_float = _find_floating_dtype_allow_sparse(X, Y, xp=xp)
 
@@ -305,7 +282,7 @@ def euclidean_distances(
     However, this is not the most precise way of doing this computation,
     because this equation potentially suffers from "catastrophic cancellation".
     Also, the distance matrix returned by this function may not be exactly
-    symmetric as required by, e.g., ``scipy.spatial.distance`` functions.
+    symmetric as required by, e.g., :mod:`scipy.spatial.distance` functions.
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -757,7 +734,7 @@ def pairwise_distances_argmin_min(
 
     metric : str or callable, default='euclidean'
         Metric to use for distance computation. Any metric from scikit-learn
-        or scipy.spatial.distance can be used.
+        or :mod:`scipy.spatial.distance` can be used.
 
         If metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
@@ -772,13 +749,13 @@ def pairwise_distances_argmin_min(
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
           'manhattan', 'nan_euclidean']
 
-        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+        - from :mod:`scipy.spatial.distance`: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
           'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
           'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
           'yule']
 
-        See the documentation for scipy.spatial.distance for details on these
+        See the documentation for :mod:`scipy.spatial.distance` for details on these
         metrics.
 
         .. note::
@@ -905,7 +882,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
 
     metric : str or callable, default="euclidean"
         Metric to use for distance computation. Any metric from scikit-learn
-        or scipy.spatial.distance can be used.
+        or :mod:`scipy.spatial.distance` can be used.
 
         If metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
@@ -920,13 +897,13 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
           'manhattan', 'nan_euclidean']
 
-        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+        - from :mod:`scipy.spatial.distance`: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
           'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
           'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
           'yule']
 
-        See the documentation for scipy.spatial.distance for details on these
+        See the documentation for :mod:`scipy.spatial.distance` for details on these
         metrics.
 
         .. note::
@@ -1060,7 +1037,7 @@ def haversine_distances(X, Y=None):
     array([[    0.        , 11099.54035582],
            [11099.54035582,     0.        ]])
     """
-    from ..metrics import DistanceMetric
+    from sklearn.metrics import DistanceMetric
 
     return DistanceMetric.get_metric("haversine").pairwise(X, Y)
 
@@ -1112,17 +1089,38 @@ def manhattan_distances(X, Y=None):
            [4., 4.]])
     """
     X, Y = check_pairwise_arrays(X, Y)
+    n_x, n_y = X.shape[0], Y.shape[0]
 
     if issparse(X) or issparse(Y):
         X = csr_matrix(X, copy=False)
         Y = csr_matrix(Y, copy=False)
         X.sum_duplicates()  # this also sorts indices in-place
         Y.sum_duplicates()
-        D = np.zeros((X.shape[0], Y.shape[0]))
+        D = np.zeros((n_x, n_y))
         _sparse_manhattan(X.data, X.indices, X.indptr, Y.data, Y.indices, Y.indptr, D)
         return D
 
-    return distance.cdist(X, Y, "cityblock")
+    xp, _, device_ = get_namespace_and_device(X, Y)
+
+    if _is_numpy_namespace(xp):
+        return distance.cdist(X, Y, "cityblock")
+
+    # array API support
+    float_dtype = _find_matching_floating_dtype(X, Y, xp=xp)
+    out = xp.empty((n_x, n_y), dtype=float_dtype, device=device_)
+    batch_size = 1024
+    for i in range(0, n_x, batch_size):
+        i_end = min(i + batch_size, n_x)
+        batch_X = X[i:i_end, ...]
+        for j in range(0, n_y, batch_size):
+            j_end = min(j + batch_size, n_y)
+            batch_Y = Y[j:j_end, ...]
+            block_dist = xp.sum(
+                xp.abs(batch_X[:, None, :] - batch_Y[None, :, :]), axis=2
+            )
+            out[i:i_end, j:j_end] = block_dist
+
+    return out
 
 
 @validate_params(
@@ -1674,7 +1672,11 @@ def laplacian_kernel(X, Y=None, gamma=None):
         gamma = 1.0 / X.shape[1]
 
     K = -gamma * manhattan_distances(X, Y)
-    np.exp(K, K)  # exponentiate K in-place
+    xp, _ = get_namespace(X, Y)
+    if _is_numpy_namespace(xp):
+        np.exp(K, K)  # exponentiate K in-place
+    else:
+        K = xp.exp(K)
     return K
 
 
@@ -1968,7 +1970,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
 
     # enforce a threading backend to prevent data communication overhead
     fd = delayed(_transposed_dist_wrapper)
-    # Transpose `ret` such that a given thread writes its ouput to a contiguous chunk.
+    # Transpose `ret` such that a given thread writes its output to a contiguous chunk.
     # Note `order` (i.e. F/C-contiguous) is not included in array API standard, see
     # https://github.com/data-apis/array-api/issues/571 for details.
     # We assume that currently (April 2025) all array API compatible namespaces
@@ -2146,7 +2148,7 @@ def pairwise_distances_chunked(
     metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
-        allowed by scipy.spatial.distance.pdist for its metric parameter,
+        allowed by :func:`scipy.spatial.distance.pdist` for its metric parameter,
         or a metric listed in pairwise.PAIRWISE_DISTANCE_FUNCTIONS.
         If metric is "precomputed", X is assumed to be a distance matrix.
         Alternatively, if metric is a callable function, it is called on
@@ -2170,7 +2172,7 @@ def pairwise_distances_chunked(
 
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
-        If using a scipy.spatial.distance metric, the parameters are still
+        If using a :mod:`scipy.spatial.distance` metric, the parameters are still
         metric dependent. See the scipy docs for usage examples.
 
     Yields
@@ -2279,12 +2281,7 @@ def pairwise_distances_chunked(
         "Y": ["array-like", "sparse matrix", None],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
         "n_jobs": [Integral, None],
-        "force_all_finite": [
-            "boolean",
-            StrOptions({"allow-nan"}),
-            Hidden(StrOptions({"deprecated"})),
-        ],
-        "ensure_all_finite": ["boolean", StrOptions({"allow-nan"}), Hidden(None)],
+        "ensure_all_finite": ["boolean", StrOptions({"allow-nan"})],
     },
     prefer_skip_nested_validation=True,
 )
@@ -2294,8 +2291,7 @@ def pairwise_distances(
     metric="euclidean",
     *,
     n_jobs=None,
-    force_all_finite="deprecated",
-    ensure_all_finite=None,
+    ensure_all_finite=True,
     **kwds,
 ):
     """Compute the distance matrix from a feature array X and optional Y.
@@ -2326,12 +2322,11 @@ def pairwise_distances(
       'manhattan', 'nan_euclidean']. All metrics support sparse matrix
       inputs except 'nan_euclidean'.
 
-    - From scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+    - From :mod:`scipy.spatial.distance`: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
       'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
-      'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
-      See the documentation for scipy.spatial.distance for details on these
-      metrics. These metrics do not support sparse matrix inputs.
+      'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule'].
+      These metrics do not support sparse matrix inputs.
 
     .. note::
         `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
@@ -2340,7 +2335,7 @@ def pairwise_distances(
         `'matching'` has been removed in SciPy 1.9 (use `'hamming'` instead).
 
     Note that in the case of 'cityblock', 'cosine' and 'euclidean' (which are
-    valid scipy.spatial.distance metrics), the scikit-learn implementation
+    valid :mod:`scipy.spatial.distance` metrics), the scikit-learn implementation
     will be used, which is faster and has support for sparse matrices (except
     for 'cityblock'). For a verbose description of the metrics from
     scikit-learn, see :func:`sklearn.metrics.pairwise.distance_metrics`
@@ -2363,7 +2358,7 @@ def pairwise_distances(
     metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
-        allowed by scipy.spatial.distance.pdist for its metric parameter, or
+        allowed by :func:`scipy.spatial.distance.pdist` for its metric parameter, or
         a metric listed in ``pairwise.PAIRWISE_DISTANCE_FUNCTIONS``.
         If metric is "precomputed", X is assumed to be a distance matrix.
         Alternatively, if metric is a callable function, it is called on each
@@ -2383,26 +2378,6 @@ def pairwise_distances(
         The "euclidean" and "cosine" metrics rely heavily on BLAS which is already
         multithreaded. So, increasing `n_jobs` would likely cause oversubscription
         and quickly degrade performance.
-
-    force_all_finite : bool or 'allow-nan', default=True
-        Whether to raise an error on np.inf, np.nan, pd.NA in array. Ignored
-        for a metric listed in ``pairwise.PAIRWISE_DISTANCE_FUNCTIONS``. The
-        possibilities are:
-
-        - True: Force all values of array to be finite.
-        - False: accepts np.inf, np.nan, pd.NA in array.
-        - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
-          cannot be infinite.
-
-        .. versionadded:: 0.22
-           ``force_all_finite`` accepts the string ``'allow-nan'``.
-
-        .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`.
-
-        .. deprecated:: 1.6
-           `force_all_finite` was renamed to `ensure_all_finite` and will be removed
-           in 1.8.
 
     ensure_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in array. Ignored
@@ -2452,7 +2427,6 @@ def pairwise_distances(
     array([[1., 2.],
            [2., 1.]])
     """
-    ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
 
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(
@@ -2681,7 +2655,7 @@ def pairwise_kernels(
            [1., 2.]])
     """
     # import GPKernel locally to prevent circular imports
-    from ..gaussian_process.kernels import Kernel as GPKernel
+    from sklearn.gaussian_process.kernels import Kernel as GPKernel
 
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(X, Y, precomputed=True)

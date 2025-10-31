@@ -18,6 +18,8 @@ from sklearn.metrics import (
     confusion_matrix,
     coverage_error,
     d2_absolute_error_score,
+    d2_brier_score,
+    d2_log_loss_score,
     d2_pinball_score,
     d2_tweedie_score,
     dcg_score,
@@ -62,7 +64,9 @@ from sklearn.metrics.pairwise import (
     cosine_distances,
     cosine_similarity,
     euclidean_distances,
+    laplacian_kernel,
     linear_kernel,
+    manhattan_distances,
     paired_cosine_distances,
     paired_euclidean_distances,
     pairwise_distances,
@@ -116,9 +120,9 @@ from sklearn.utils.validation import _num_samples, check_random_state
 #   - CLASSIFICATION_METRICS: all classification metrics
 #     which compare a ground truth and the estimated targets as returned by a
 #     classifier.
-#   - THRESHOLDED_METRICS: all classification metrics which
-#     compare a ground truth and a score, e.g. estimated probabilities or
-#     decision function (format might vary)
+#   - CONTINUOUS_CLASSIFICATION_METRICS: all classification metrics which
+#     compare a ground truth and a continuous score, e.g. estimated
+#     probabilities or decision function (format might vary)
 #
 # Those dictionaries will be used to test systematically some invariance
 # properties, e.g. invariance toward several input layout.
@@ -239,7 +243,7 @@ CURVE_METRICS = {
     "det_curve": det_curve,
 }
 
-THRESHOLDED_METRICS = {
+CONTINUOUS_CLASSIFICATION_METRICS = {
     "coverage_error": coverage_error,
     "label_ranking_loss": label_ranking_loss,
     "log_loss": log_loss,
@@ -271,10 +275,12 @@ THRESHOLDED_METRICS = {
     "ndcg_score": ndcg_score,
     "dcg_score": dcg_score,
     "top_k_accuracy_score": top_k_accuracy_score,
+    "d2_brier_score": d2_brier_score,
+    "d2_log_loss_score": d2_log_loss_score,
 }
 
 ALL_METRICS = dict()
-ALL_METRICS.update(THRESHOLDED_METRICS)
+ALL_METRICS.update(CONTINUOUS_CLASSIFICATION_METRICS)
 ALL_METRICS.update(CLASSIFICATION_METRICS)
 ALL_METRICS.update(REGRESSION_METRICS)
 ALL_METRICS.update(CURVE_METRICS)
@@ -340,7 +346,7 @@ METRICS_WITH_AVERAGING = {
 }
 
 # Threshold-based metrics with an "average" argument
-THRESHOLDED_METRICS_WITH_AVERAGING = {
+CONTINOUS_CLASSIFICATION_METRICS_WITH_AVERAGING = {
     "roc_auc_score",
     "average_precision_score",
     "partial_roc_auc",
@@ -352,6 +358,7 @@ METRICS_WITH_POS_LABEL = {
     "precision_recall_curve",
     "det_curve",
     "brier_score_loss",
+    "d2_brier_score",
     "precision_score",
     "recall_score",
     "f1_score",
@@ -401,7 +408,9 @@ METRICS_WITH_LABELS = {
     "unnormalized_multilabel_confusion_matrix_sample",
     "cohen_kappa_score",
     "log_loss",
+    "d2_log_loss_score",
     "brier_score_loss",
+    "d2_brier_score",
 }
 
 # Metrics with a "normalize" option
@@ -412,7 +421,7 @@ METRICS_WITH_NORMALIZE_OPTION = {
 }
 
 # Threshold-based metrics with "multilabel-indicator" format support
-THRESHOLDED_MULTILABEL_METRICS = {
+CONTINUOUS_MULTILABEL_METRICS = {
     "log_loss",
     "unnormalized_log_loss",
     "brier_score_loss",
@@ -430,6 +439,8 @@ THRESHOLDED_MULTILABEL_METRICS = {
     "ndcg_score",
     "dcg_score",
     "label_ranking_average_precision_score",
+    "d2_log_loss_score",
+    "d2_brier_score",
 }
 
 # Classification metrics with  "multilabel-indicator" format
@@ -599,7 +610,7 @@ def test_symmetry_consistency():
     assert (
         SYMMETRIC_METRICS
         | NOT_SYMMETRIC_METRICS
-        | set(THRESHOLDED_METRICS)
+        | set(CONTINUOUS_CLASSIFICATION_METRICS)
         | METRIC_UNDEFINED_BINARY_MULTICLASS
     ) == set(ALL_METRICS)
 
@@ -730,7 +741,7 @@ def test_sample_order_invariance_multilabel_and_multioutput():
             err_msg="%s is not sample order invariant" % name,
         )
 
-    for name in THRESHOLDED_MULTILABEL_METRICS:
+    for name in CONTINUOUS_MULTILABEL_METRICS:
         metric = ALL_METRICS[name]
         assert_allclose(
             metric(y_true, y_score),
@@ -869,7 +880,7 @@ def test_format_invariance_with_1d_vectors(name):
         # NB: We do not test for y1_row, y2_row as these may be
         # interpreted as multilabel or multioutput data.
         if name not in (
-            MULTIOUTPUT_METRICS | THRESHOLDED_MULTILABEL_METRICS | MULTILABELS_METRICS
+            MULTIOUTPUT_METRICS | CONTINUOUS_MULTILABEL_METRICS | MULTILABELS_METRICS
         ):
             if "roc_auc" in name:
                 # for consistency between the `roc_cuve` and `roc_auc_score`
@@ -879,6 +890,38 @@ def test_format_invariance_with_1d_vectors(name):
             else:
                 with pytest.raises(ValueError):
                     metric(y1_row, y2_row)
+
+
+@pytest.mark.parametrize("metric", CLASSIFICATION_METRICS.values())
+def test_classification_with_invalid_sample_weight(metric):
+    # Check invalid `sample_weight` raises correct error
+    random_state = check_random_state(0)
+    n_samples = 20
+    y1 = random_state.randint(0, 2, size=(n_samples,))
+    y2 = random_state.randint(0, 2, size=(n_samples,))
+
+    sample_weight = random_state.random_sample(size=(n_samples - 1,))
+    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
+        metric(y1, y2, sample_weight=sample_weight)
+
+    sample_weight = random_state.random_sample(size=(n_samples,))
+    sample_weight[0] = np.inf
+    with pytest.raises(ValueError, match="Input sample_weight contains infinity"):
+        metric(y1, y2, sample_weight=sample_weight)
+
+    sample_weight[0] = np.nan
+    with pytest.raises(ValueError, match="Input sample_weight contains NaN"):
+        metric(y1, y2, sample_weight=sample_weight)
+
+    sample_weight = np.array([1 + 2j, 3 + 4j, 5 + 7j])
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        metric(y1[:3], y2[:3], sample_weight=sample_weight)
+
+    sample_weight = random_state.random_sample(size=(n_samples * 2,)).reshape(
+        (n_samples, 2)
+    )
+    with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
+        metric(y1, y2, sample_weight=sample_weight)
 
 
 @pytest.mark.parametrize(
@@ -937,9 +980,10 @@ def test_classification_invariance_string_vs_numbers_labels(name):
             )
 
 
-@pytest.mark.parametrize("name", THRESHOLDED_METRICS)
-def test_thresholded_invariance_string_vs_numbers_labels(name):
-    # Ensure that thresholded metrics with string labels are invariant
+@pytest.mark.parametrize("name", CONTINUOUS_CLASSIFICATION_METRICS)
+def test_continuous_classification_invariance_string_vs_numbers_labels(name):
+    # Ensure that continuous metrics with string labels are invariant under
+    # class relabeling.
     random_state = check_random_state(0)
     y1 = random_state.randint(0, 2, size=(20,))
     y2 = random_state.randint(0, 2, size=(20,))
@@ -949,7 +993,7 @@ def test_thresholded_invariance_string_vs_numbers_labels(name):
     pos_label_str = "spam"
 
     with ignore_warnings():
-        metric = THRESHOLDED_METRICS[name]
+        metric = CONTINUOUS_CLASSIFICATION_METRICS[name]
         if name not in METRIC_UNDEFINED_BINARY:
             # Ugly, but handle case with a pos_label and label
             metric_str = metric
@@ -990,10 +1034,11 @@ invalids_nan_inf = [
 
 
 @pytest.mark.parametrize(
-    "metric", chain(THRESHOLDED_METRICS.values(), REGRESSION_METRICS.values())
+    "metric",
+    chain(CONTINUOUS_CLASSIFICATION_METRICS.values(), REGRESSION_METRICS.values()),
 )
 @pytest.mark.parametrize("y_true, y_score", invalids_nan_inf)
-def test_regression_thresholded_inf_nan_input(metric, y_true, y_score):
+def test_continuous_inf_nan_input(metric, y_true, y_score):
     # Reshape since coverage_error only accepts 2D arrays.
     if metric == coverage_error:
         y_true = [y_true]
@@ -1082,7 +1127,7 @@ def check_single_sample_multioutput(name):
         # Those metrics are not always defined with one sample
         # or in multiclass classification
         - METRIC_UNDEFINED_BINARY_MULTICLASS
-        - set(THRESHOLDED_METRICS)
+        - set(CONTINUOUS_CLASSIFICATION_METRICS)
     ),
 )
 def test_single_sample(name):
@@ -1231,7 +1276,7 @@ def test_normalize_option_binary_classification(name):
     y_score = random_state.normal(size=y_true.shape)
 
     metrics = ALL_METRICS[name]
-    pred = y_score if name in THRESHOLDED_METRICS else y_pred
+    pred = y_score if name in CONTINUOUS_CLASSIFICATION_METRICS else y_pred
     measure_normalized = metrics(y_true, pred, normalize=True)
     measure_not_normalized = metrics(y_true, pred, normalize=False)
 
@@ -1260,7 +1305,7 @@ def test_normalize_option_multiclass_classification(name):
     y_score = random_state.uniform(size=(n_samples, n_classes))
 
     metrics = ALL_METRICS[name]
-    pred = y_score if name in THRESHOLDED_METRICS else y_pred
+    pred = y_score if name in CONTINUOUS_CLASSIFICATION_METRICS else y_pred
     measure_normalized = metrics(y_true, pred, normalize=True)
     measure_not_normalized = metrics(y_true, pred, normalize=False)
 
@@ -1310,7 +1355,7 @@ def test_normalize_option_multilabel_classification(name):
     y_pred += [0] * n_classes
 
     metrics = ALL_METRICS[name]
-    pred = y_score if name in THRESHOLDED_METRICS else y_pred
+    pred = y_score if name in CONTINUOUS_CLASSIFICATION_METRICS else y_pred
     measure_normalized = metrics(y_true, pred, normalize=True)
     measure_not_normalized = metrics(y_true, pred, normalize=False)
 
@@ -1390,7 +1435,7 @@ def check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize, y_sc
         _check_averaging(
             metric, y_true, y_pred, y_true_binarize, y_pred_binarize, is_multilabel
         )
-    elif name in THRESHOLDED_METRICS_WITH_AVERAGING:
+    elif name in CONTINOUS_CLASSIFICATION_METRICS_WITH_AVERAGING:
         _check_averaging(
             metric, y_true, y_score, y_true_binarize, y_score, is_multilabel
         )
@@ -1414,7 +1459,8 @@ def test_averaging_multiclass(name):
 
 
 @pytest.mark.parametrize(
-    "name", sorted(METRICS_WITH_AVERAGING | THRESHOLDED_METRICS_WITH_AVERAGING)
+    "name",
+    sorted(METRICS_WITH_AVERAGING | CONTINOUS_CLASSIFICATION_METRICS_WITH_AVERAGING),
 )
 def test_averaging_multilabel(name):
     n_samples, n_classes = 40, 5
@@ -1595,6 +1641,9 @@ def test_regression_sample_weight_invariance(name):
     check_sample_weight_invariance(name, metric, y_true, y_pred, sample_weight)
 
 
+# XXX: ValueError("Complex data not supported") propagates via the warnings
+# machinery which is not thread-safe (at the time of CPython 3.13 at least).
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize(
     "name",
     sorted(
@@ -1613,6 +1662,19 @@ def test_regression_with_invalid_sample_weight(name):
     sample_weight = random_state.random_sample(size=(n_samples - 1,))
     with pytest.raises(ValueError, match="Found input variables with inconsistent"):
         metric(y_true, y_pred, sample_weight=sample_weight)
+
+    sample_weight = random_state.random_sample(size=(n_samples,))
+    sample_weight[0] = np.inf
+    with pytest.raises(ValueError, match="Input sample_weight contains infinity"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
+
+    sample_weight[0] = np.nan
+    with pytest.raises(ValueError, match="Input sample_weight contains NaN"):
+        metric(y_true, y_pred, sample_weight=sample_weight)
+
+    sample_weight = np.array([1 + 2j, 3 + 4j, 5 + 7j])
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        metric(y_true[:3], y_pred[:3], sample_weight=sample_weight)
 
     sample_weight = random_state.random_sample(size=(n_samples * 2,)).reshape(
         (n_samples, 2)
@@ -1638,7 +1700,7 @@ def test_binary_sample_weight_invariance(name):
     y_pred = random_state.randint(0, 2, size=(n_samples,))
     y_score = random_state.random_sample(size=(n_samples,))
     metric = ALL_METRICS[name]
-    if name in THRESHOLDED_METRICS:
+    if name in CONTINUOUS_CLASSIFICATION_METRICS:
         check_sample_weight_invariance(name, metric, y_true, y_score)
     else:
         check_sample_weight_invariance(name, metric, y_true, y_pred)
@@ -1661,7 +1723,7 @@ def test_multiclass_sample_weight_invariance(name):
     y_pred = random_state.randint(0, 5, size=(n_samples,))
     y_score = random_state.random_sample(size=(n_samples, 5))
     metric = ALL_METRICS[name]
-    if name in THRESHOLDED_METRICS:
+    if name in CONTINUOUS_CLASSIFICATION_METRICS:
         # softmax
         temp = np.exp(-y_score)
         y_score_norm = temp / temp.sum(axis=-1).reshape(-1, 1)
@@ -1673,7 +1735,7 @@ def test_multiclass_sample_weight_invariance(name):
 @pytest.mark.parametrize(
     "name",
     sorted(
-        (MULTILABELS_METRICS | THRESHOLDED_MULTILABEL_METRICS)
+        (MULTILABELS_METRICS | CONTINUOUS_MULTILABEL_METRICS)
         - METRICS_WITHOUT_SAMPLE_WEIGHT
     ),
 )
@@ -1694,7 +1756,7 @@ def test_multilabel_sample_weight_invariance(name):
     y_score /= y_score.sum(axis=1, keepdims=True)
 
     metric = ALL_METRICS[name]
-    if name in THRESHOLDED_METRICS:
+    if name in CONTINUOUS_CLASSIFICATION_METRICS:
         check_sample_weight_invariance(name, metric, y_true, y_score)
     else:
         check_sample_weight_invariance(name, metric, y_true, y_pred)
@@ -1760,9 +1822,9 @@ def test_multilabel_label_permutations_invariance(name):
 
 
 @pytest.mark.parametrize(
-    "name", sorted(THRESHOLDED_MULTILABEL_METRICS | MULTIOUTPUT_METRICS)
+    "name", sorted(CONTINUOUS_MULTILABEL_METRICS | MULTIOUTPUT_METRICS)
 )
-def test_thresholded_multilabel_multioutput_permutations_invariance(name):
+def test_continuous_multilabel_multioutput_permutations_invariance(name):
     random_state = check_random_state(0)
     n_samples, n_classes = 20, 4
     y_true = random_state.randint(0, 2, size=(n_samples, n_classes))
@@ -1796,9 +1858,10 @@ def test_thresholded_multilabel_multioutput_permutations_invariance(name):
 
 
 @pytest.mark.parametrize(
-    "name", sorted(set(THRESHOLDED_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS)
+    "name",
+    sorted(set(CONTINUOUS_CLASSIFICATION_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS),
 )
-def test_thresholded_metric_permutation_invariance(name):
+def test_continuous_metric_permutation_invariance(name):
     n_samples, n_classes = 100, 3
     random_state = check_random_state(0)
 
@@ -1907,42 +1970,49 @@ def check_array_api_metric(
         # Exception type may need to be updated in the future for other libraries.
         numpy_as_array_works = False
 
+    def _check_metric_matches(metric_a, metric_b, convert_a=False):
+        if convert_a:
+            metric_a = _convert_to_numpy(xp.asarray(metric_a), xp)
+        assert_allclose(metric_a, metric_b, atol=_atol_for_type(dtype_name))
+
+    def _check_each_metric_matches(metric_a, metric_b, convert_a=False):
+        for metric_a_val, metric_b_val in zip(metric_a, metric_b):
+            _check_metric_matches(metric_a_val, metric_b_val, convert_a=convert_a)
+
     if numpy_as_array_works:
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
-        assert_allclose(
-            metric_xp,
-            metric_np,
-            atol=_atol_for_type(dtype_name),
-        )
-        metric_xp_mixed_1 = metric(a_np, b_xp, **metric_kwargs)
-        assert_allclose(
-            metric_xp_mixed_1,
-            metric_np,
-            atol=_atol_for_type(dtype_name),
-        )
-        metric_xp_mixed_2 = metric(a_xp, b_np, **metric_kwargs)
-        assert_allclose(
-            metric_xp_mixed_2,
-            metric_np,
-            atol=_atol_for_type(dtype_name),
-        )
+
+        # Handle cases where multiple return values are not of the same shape,
+        # e.g. precision_recall_curve:
+        if (
+            isinstance(metric_np, tuple)
+            and len(set([metric_val.shape for metric_val in metric_np])) > 1
+        ):
+            _check_each_metric_matches(metric_xp, metric_np)
+
+            metric_xp_mixed_1 = metric(a_np, b_xp, **metric_kwargs)
+            _check_each_metric_matches(metric_xp_mixed_1, metric_np)
+
+            metric_xp_mixed_2 = metric(a_xp, b_np, **metric_kwargs)
+            _check_each_metric_matches(metric_xp_mixed_2, metric_np)
+
+        else:
+            _check_metric_matches(metric_xp, metric_np)
+
+            metric_xp_mixed_1 = metric(a_np, b_xp, **metric_kwargs)
+            _check_metric_matches(metric_xp_mixed_1, metric_np)
+
+            metric_xp_mixed_2 = metric(a_xp, b_np, **metric_kwargs)
+            _check_metric_matches(metric_xp_mixed_2, metric_np)
 
     with config_context(array_api_dispatch=True):
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
 
-        def _check_metric_matches(xp_val, np_val):
-            assert_allclose(
-                _convert_to_numpy(xp.asarray(xp_val), xp),
-                np_val,
-                atol=_atol_for_type(dtype_name),
-            )
-
         # Handle cases where there are multiple return values, e.g. roc_curve:
         if isinstance(metric_xp, tuple):
-            for metric_xp_val, metric_np_val in zip(metric_xp, metric_np):
-                _check_metric_matches(metric_xp_val, metric_np_val)
+            _check_each_metric_matches(metric_xp, metric_np, convert_a=True)
         else:
-            _check_metric_matches(metric_xp, metric_np)
+            _check_metric_matches(metric_xp, metric_np, convert_a=True)
 
 
 def check_array_api_binary_classification_metric(
@@ -1983,6 +2053,7 @@ def check_array_api_multiclass_classification_metric(
     additional_params = {
         "average": ("micro", "macro", "weighted"),
         "beta": (0.2, 0.5, 0.8),
+        "adjusted": (False, True),
     }
     metric_kwargs_combinations = _get_metric_kwargs_for_array_api_testing(
         metric=metric,
@@ -2180,6 +2251,19 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
+    balanced_accuracy_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+    ],
+    cohen_kappa_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+    ],
+    confusion_matrix: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+    ],
+    det_curve: [check_array_api_binary_classification_metric],
     f1_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
@@ -2204,6 +2288,7 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
+    precision_recall_curve: [check_array_api_binary_classification_metric],
     recall_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
@@ -2275,7 +2360,9 @@ array_api_metric_checkers = {
     paired_euclidean_distances: [check_array_api_metric_pairwise],
     cosine_distances: [check_array_api_metric_pairwise],
     euclidean_distances: [check_array_api_metric_pairwise],
+    manhattan_distances: [check_array_api_metric_pairwise],
     linear_kernel: [check_array_api_metric_pairwise],
+    laplacian_kernel: [check_array_api_metric_pairwise],
     polynomial_kernel: [check_array_api_metric_pairwise],
     rbf_kernel: [check_array_api_metric_pairwise],
     root_mean_squared_error: [
@@ -2308,24 +2395,6 @@ def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers)
 )
 @pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
 def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):
-    # TODO: Remove once array-api-strict > 2.3.1
-    # https://github.com/data-apis/array-api-strict/issues/134 has been fixed but
-    # not released yet.
-    if (
-        getattr(metric, "__name__", None)
-        in ("median_absolute_error", "d2_pinball_score", "d2_absolute_error_score")
-        and array_namespace == "array_api_strict"
-    ):
-        try:
-            import array_api_strict
-        except ImportError:
-            pass
-        else:
-            if device == array_api_strict.Device("device1"):
-                pytest.xfail(
-                    "`_weighted_percentile` is affected by array_api_strict bug when "
-                    "indexing with tuple of arrays on non-'CPU_DEVICE' devices."
-                )
     check_func(metric, array_namespace, device, dtype_name)
 
 

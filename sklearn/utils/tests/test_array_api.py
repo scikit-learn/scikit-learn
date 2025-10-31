@@ -7,6 +7,7 @@ import scipy
 from numpy.testing import assert_allclose
 
 from sklearn._config import config_context
+from sklearn._loss import HalfMultinomialLoss
 from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import (
     _add_to_diagonal,
@@ -18,6 +19,7 @@ from sklearn.utils._array_api import (
     _estimator_with_converted_arrays,
     _fill_diagonal,
     _get_namespace_device_dtype_ids,
+    _half_multinomial_loss,
     _is_numpy_namespace,
     _isin,
     _logsumexp,
@@ -33,6 +35,7 @@ from sklearn.utils._array_api import (
     get_namespace_and_device,
     indexing_dtype,
     np_compat,
+    supported_float_dtypes,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -165,10 +168,10 @@ def test_average(
     with config_context(array_api_dispatch=True):
         result = _average(array_in, axis=axis, weights=weights, normalize=normalize)
 
-    if np_version < parse_version("2.0.0") or np_version >= parse_version("2.1.0"):
-        # NumPy 2.0 has a problem with the device attribute of scalar arrays:
-        # https://github.com/numpy/numpy/issues/26850
-        assert device(array_in) == device(result)
+        if np_version < parse_version("2.0.0") or np_version >= parse_version("2.1.0"):
+            # NumPy 2.0 has a problem with the device attribute of scalar arrays:
+            # https://github.com/numpy/numpy/issues/26850
+            assert device(array_in) == device(result)
 
     result = _convert_to_numpy(result, xp)
     assert_allclose(result, expected, atol=_atol_for_type(dtype_name))
@@ -717,7 +720,7 @@ def test_median(namespace, device, dtype_name, axis):
         result_xp = _median(X_xp, axis=axis)
 
         if xp.__name__ != "array_api_strict":
-            # We covert array-api-strict arrays to numpy arrays as `median` is not
+            # We convert array-api-strict arrays to numpy arrays as `median` is not
             # part of the Array API spec
             assert get_namespace(result_xp)[0] == xp
             assert result_xp.device == X_xp.device
@@ -777,3 +780,55 @@ def test_logsumexp_like_scipy_logsumexp(array_namespace, device_, dtype_name, ax
         res_xp_2 = _logsumexp(array_xp_2, axis=axis)
         res_xp_2 = _convert_to_numpy(res_xp_2, xp)
         assert_allclose(res_np_2, res_xp_2, rtol=rtol)
+
+
+@pytest.mark.parametrize(
+    ("namespace", "device_", "expected_types"),
+    [
+        ("numpy", None, ("float64", "float32", "float16")),
+        ("array_api_strict", None, ("float64", "float32")),
+        ("torch", "cpu", ("float64", "float32", "float16")),
+        ("torch", "cuda", ("float64", "float32", "float16")),
+        ("torch", "mps", ("float32", "float16")),
+    ],
+)
+def test_supported_float_types(namespace, device_, expected_types):
+    xp = _array_api_for_tests(namespace, device_)
+    float_types = supported_float_dtypes(xp, device=device_)
+    expected = tuple(getattr(xp, dtype_name) for dtype_name in expected_types)
+    assert float_types == expected
+
+
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize(
+    "namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_half_multinomial_loss(use_sample_weight, namespace, device_, dtype_name):
+    """Check that the array API version of :func:`_half_multinomial_loss` works
+    correctly and matches the results produced by :class:`HalfMultinomialLoss`
+    of the private `_loss` module.
+    """
+    n_samples = 5
+    n_classes = 3
+    rng = numpy.random.RandomState(42)
+    y = rng.randint(0, n_classes, n_samples).astype(dtype_name)
+    pred = rng.rand(n_samples, n_classes).astype(dtype_name)
+    xp = _array_api_for_tests(namespace, device_)
+    y_xp = xp.asarray(y, device=device_)
+    pred_xp = xp.asarray(pred, device=device_)
+    if use_sample_weight:
+        sample_weight = numpy.ones_like(y)
+        sample_weight[1::2] = 2
+        sample_weight_xp = xp.asarray(sample_weight, device=device_)
+    else:
+        sample_weight, sample_weight_xp = None, None
+
+    np_loss = HalfMultinomialLoss(n_classes=n_classes)(
+        y_true=y, raw_prediction=pred, sample_weight=sample_weight
+    )
+    with config_context(array_api_dispatch=True):
+        xp_loss = _half_multinomial_loss(
+            y=y_xp, pred=pred_xp, sample_weight=sample_weight_xp, xp=xp
+        )
+
+    assert numpy.isclose(np_loss, xp_loss)
