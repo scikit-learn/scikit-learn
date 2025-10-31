@@ -153,6 +153,7 @@ Metrics
 - :func:`sklearn.metrics.d2_brier_score`
 - :func:`sklearn.metrics.d2_log_loss_score`
 - :func:`sklearn.metrics.d2_tweedie_score`
+- :func:`sklearn.metrics.det_curve`
 - :func:`sklearn.metrics.explained_variance_score`
 - :func:`sklearn.metrics.f1_score`
 - :func:`sklearn.metrics.fbeta_score`
