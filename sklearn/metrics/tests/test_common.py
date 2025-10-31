@@ -2129,7 +2129,7 @@ def check_array_api_continuous_classification_metric(
     metric, array_namespace, device, dtype_name
 ):
     y_true_np = np.array([[0, 1, 0], [1, 1, 0]])
-    y_score_np = np.array([[0.1, 10.0, -3], [0, 1, 3]])
+    y_score_np = np.array([[0.1, 10.0, -3], [0.0, 1.0, 3.0]])
 
     check_array_api_metric(
         metric,
