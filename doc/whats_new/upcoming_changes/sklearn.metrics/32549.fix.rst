@@ -1,0 +1,2 @@
+- All classification metrics now raise a `ValueError` when empty input is provided.
+  By :user:`Stefanie Senger <StefanieSenger>`.
