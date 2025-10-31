@@ -120,6 +120,7 @@ Reference Steps
         {% if key == "rc" -%}
         * [ ] Update the sklearn dev0 version in main branch
         {%- endif %}
+        * [ ] Cleanup the doc repo to free up space
         * [ ] Set the version number in the release branch
         * [ ] Set an upper bound on build dependencies in the release branch
         * [ ] Generate the changelog in the release branch
@@ -159,6 +160,24 @@ Reference Steps
       - Change the what's new file to the newly created one in the `filename` field of
         the `tool.towncrier` section in `pyproject.toml`.
     {% endif %}
+
+    - The `scikit-learn/scikit-learn.github.io` needs to be cleaned up so that ideally
+      it stays <5GB in size. Before doing this, create a fork of the existing repo
+      in your own user, to have a place with the history of the repo in case it's
+      needed. These commands will purge the history from the repo.
+
+      .. prompt:: bash
+
+        # need a non-shallow copy, and using https is much faster than ssh here
+        git clone https://github.com/scikit-learn/scikit-learn.github.io.git
+        cd scikit-learn.github.io
+        git remote add write git@github.com:scikit-learn/scikit-learn.github.io.git
+        # checkout an orphan branch w/o history
+        git checkout --orphan temp_branch
+        git branch -D main
+        # rename current branch to main to replace it
+        git branch -m main
+        git push --force write main
 
     - In the release branch, change the version number `__version__` in
       `sklearn/__init__.py` to `{{ version_full }}`.
