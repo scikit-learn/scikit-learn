@@ -1089,17 +1089,38 @@ def manhattan_distances(X, Y=None):
            [4., 4.]])
     """
     X, Y = check_pairwise_arrays(X, Y)
+    n_x, n_y = X.shape[0], Y.shape[0]
 
     if issparse(X) or issparse(Y):
         X = csr_matrix(X, copy=False)
         Y = csr_matrix(Y, copy=False)
         X.sum_duplicates()  # this also sorts indices in-place
         Y.sum_duplicates()
-        D = np.zeros((X.shape[0], Y.shape[0]))
+        D = np.zeros((n_x, n_y))
         _sparse_manhattan(X.data, X.indices, X.indptr, Y.data, Y.indices, Y.indptr, D)
         return D
 
-    return distance.cdist(X, Y, "cityblock")
+    xp, _, device_ = get_namespace_and_device(X, Y)
+
+    if _is_numpy_namespace(xp):
+        return distance.cdist(X, Y, "cityblock")
+
+    # array API support
+    float_dtype = _find_matching_floating_dtype(X, Y, xp=xp)
+    out = xp.empty((n_x, n_y), dtype=float_dtype, device=device_)
+    batch_size = 1024
+    for i in range(0, n_x, batch_size):
+        i_end = min(i + batch_size, n_x)
+        batch_X = X[i:i_end, ...]
+        for j in range(0, n_y, batch_size):
+            j_end = min(j + batch_size, n_y)
+            batch_Y = Y[j:j_end, ...]
+            block_dist = xp.sum(
+                xp.abs(batch_X[:, None, :] - batch_Y[None, :, :]), axis=2
+            )
+            out[i:i_end, j:j_end] = block_dist
+
+    return out
 
 
 @validate_params(
