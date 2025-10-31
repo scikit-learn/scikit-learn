@@ -973,15 +973,21 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
 
     xp, _, device_ = get_namespace_and_device(y1, y2)
     n_classes = confusion.shape[0]
+    # array_api_strict only supports floating point dtypes for __truediv__
+    # which is used below to compute `expected` as well as `k`. Therefore
+    # we use the maximum floating point dtype available for relevant arrays
+    # to avoid running into this problem.
+    max_float_dtype = _max_precision_float_dtype(xp, device=device_)
+    confusion = xp.astype(confusion, max_float_dtype, copy=False)
     sum0 = xp.sum(confusion, axis=0)
     sum1 = xp.sum(confusion, axis=1)
     expected = xp.linalg.outer(sum0, sum1) / xp.sum(sum0)
 
     if weights is None:
-        w_mat = xp.ones([n_classes, n_classes], dtype=xp.int64, device=device_)
+        w_mat = xp.ones([n_classes, n_classes], dtype=max_float_dtype, device=device_)
         _fill_diagonal(w_mat, 0, xp=xp)
     else:  # "linear" or "quadratic"
-        w_mat = xp.zeros([n_classes, n_classes], dtype=xp.int64, device=device_)
+        w_mat = xp.zeros([n_classes, n_classes], dtype=max_float_dtype, device=device_)
         w_mat += xp.arange(n_classes)
         if weights == "linear":
             w_mat = xp.abs(w_mat - w_mat.T)
