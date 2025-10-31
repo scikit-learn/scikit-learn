@@ -211,3 +211,13 @@ Citation
 ~~~~~~~~
 
 If you use scikit-learn in a scientific publication, we would appreciate citations: https://scikit-learn.org/stable/about.html#citing-scikit-learn
+
+My Contribution
+===============
+
+- Minor documentation update by `Himani Devadiga <https://github.com/Himani-s-Devadiga>`_
+
+🧠 Added by: Himani Devadiga
+
+**Contribution:** Improved documentation and explored the repository as part of my open-source learning journey.  
+**GitHub:** `Himani-s-Devadiga <https://github.com/Himani-s-Devadiga>`_
