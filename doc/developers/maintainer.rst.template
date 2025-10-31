@@ -162,13 +162,14 @@ Reference Steps
     {% endif %}
 
     - The `scikit-learn/scikit-learn.github.io` needs to be cleaned up so that ideally
-      it stays <5GB in size. Before doing this, create a fork of the existing repo
-      in your own user, to have a place with the history of the repo in case it's
+      it stays <5GB in size. Before doing this, create a new fresh fork of the existing
+      repo in your own user, to have a place with the history of the repo in case it's
       needed. These commands will purge the history from the repo.
 
       .. prompt:: bash
 
         # need a non-shallow copy, and using https is much faster than ssh here
+        # note that this will be a large download size, up to 100GB (repo size limit)
         git clone https://github.com/scikit-learn/scikit-learn.github.io.git
         cd scikit-learn.github.io
         git remote add write git@github.com:scikit-learn/scikit-learn.github.io.git
