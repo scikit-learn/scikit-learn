@@ -1,7 +1,40 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+"""
+Standardize features by removing the mean and scaling to unit variance.
 
+Each feature is centered using the mean and scaled to unit variance
+computed on the training set, making magnitudes comparable across columns
+for many estimators.
 
+Parameters
+----------
+copy : bool, default=True
+    If False, try to avoid a copy and overwrite the input X when possible.
+
+with_mean : bool, default=True
+    Center each feature by subtracting the training set mean.
+    Disabled automatically for sparse inputs to preserve sparsity.
+
+with_std : bool, default=True
+    Scale each feature to unit variance using the training set standard deviation.
+
+See Also
+--------
+sklearn.preprocessing.MinMaxScaler : Scale features to a given range.
+sklearn.preprocessing.RobustScaler : Scale features using robust statistics.
+
+Examples
+--------
+>>> import numpy as np
+>>> from sklearn.preprocessing import StandardScaler
+>>> X = np.array([[1., 2.], [3., 0.], [5., 4.]])
+>>> X_tr = StandardScaler().fit_transform(X)
+>>> np.allclose(X_tr.mean(axis=0), 0.0, atol=1e-7)
+True
+>>> np.allclose(X_tr.std(axis=0), 1.0, atol=1e-7)
+True
+"""
 import warnings
 from numbers import Integral, Real
 
