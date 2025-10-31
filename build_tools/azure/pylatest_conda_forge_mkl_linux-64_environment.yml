@@ -3,6 +3,7 @@
 # build_tools/update_environments_and_lock_files.py
 channels:
   - conda-forge
+  - https://software.repos.intel.com/python/conda/
 dependencies:
   - python
   - numpy
@@ -29,4 +30,4 @@ dependencies:
   - pyarrow
   - array-api-strict
   - scipy-doctest
-  - intel::dpnp
+  - dpnp
