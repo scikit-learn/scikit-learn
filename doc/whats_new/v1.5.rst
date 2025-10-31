@@ -220,8 +220,7 @@ Support for building with Meson
 -------------------------------
 
 From scikit-learn 1.5 onwards, Meson is the main supported way to build
-scikit-learn, see :ref:`meson_build_backend` for more
-details.
+scikit-learn.
 
 Unless we discover a major blocker, setuptools support will be dropped in
 scikit-learn 1.6. The 1.5.x releases will support building scikit-learn with
