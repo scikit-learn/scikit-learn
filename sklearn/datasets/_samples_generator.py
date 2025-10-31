@@ -260,7 +260,51 @@ def make_classification(
     n_random = n_features - n_informative - n_redundant - n_repeated
     n_clusters = n_classes * n_clusters_per_class
 
-    # Distribute samples among clusters by weight
+    # Build the polytope whose vertices become cluster centroids
+    # This is independent of n_samples
+    centroids = _generate_hypercube(n_clusters, n_informative, generator).astype(
+        float, copy=False
+    )
+    centroids *= 2 * class_sep
+    centroids -= class_sep
+    if not hypercube:
+        centroids *= generator.uniform(size=(n_clusters, 1))
+        centroids *= generator.uniform(size=(1, n_informative))
+
+    # Pre-generate transformation matrices A for each cluster
+    # These define the distribution and should be independent of n_samples
+    A_matrices = []
+    for k in range(n_clusters):
+        A = 2 * generator.uniform(size=(n_informative, n_informative)) - 1
+        A_matrices.append(A)
+
+    # Pre-generate redundant feature transformation matrix B
+    # This is also independent of n_samples
+    if n_redundant > 0:
+        B = 2 * generator.uniform(size=(n_informative, n_redundant)) - 1
+
+    # Pre-generate indices for repeated features
+    # This is independent of n_samples
+    n = n_informative + n_redundant
+    if n_repeated > 0:
+        repeated_indices = ((n - 1) * generator.uniform(size=n_repeated) + 0.5).astype(
+            np.intp
+        )
+
+    # Pre-calculate shift and scale if they are not provided
+    # These define the distribution and should be independent of n_samples
+    if shift is None:
+        shift_val = (2 * generator.uniform(size=n_features) - 1) * class_sep
+    else:
+        shift_val = shift
+
+    if scale is None:
+        scale_val = 1 + 100 * generator.uniform(size=n_features)
+    else:
+        scale_val = scale
+
+    # NOW we distribute samples among clusters by weight
+    # This depends on n_samples but comes after distribution definition
     n_samples_per_cluster = [
         int(n_samples * weights_[k % n_classes] / n_clusters_per_class)
         for k in range(n_clusters)
@@ -273,43 +317,30 @@ def make_classification(
     X = np.zeros((n_samples, n_features))
     y = np.zeros(n_samples, dtype=int)
 
-    # Build the polytope whose vertices become cluster centroids
-    centroids = _generate_hypercube(n_clusters, n_informative, generator).astype(
-        float, copy=False
-    )
-    centroids *= 2 * class_sep
-    centroids -= class_sep
-    if not hypercube:
-        centroids *= generator.uniform(size=(n_clusters, 1))
-        centroids *= generator.uniform(size=(1, n_informative))
-
-    # Initially draw informative features from the standard normal
+    # Draw informative features from the standard normal
+    # This is the main n_samples-dependent draw
     X[:, :n_informative] = generator.standard_normal(size=(n_samples, n_informative))
 
-    # Create each cluster; a variant of make_blobs
+    # Create each cluster using pre-generated transformations
     stop = 0
-    for k, centroid in enumerate(centroids):
+    for k, (centroid, A) in enumerate(zip(centroids, A_matrices)):
         start, stop = stop, stop + n_samples_per_cluster[k]
         y[start:stop] = k % n_classes  # assign labels
         X_k = X[start:stop, :n_informative]  # slice a view of the cluster
 
-        A = 2 * generator.uniform(size=(n_informative, n_informative)) - 1
         X_k[...] = np.dot(X_k, A)  # introduce random covariance
 
         X_k += centroid  # shift the cluster to a vertex
 
-    # Create redundant features
+    # Create redundant features using pre-generated B
     if n_redundant > 0:
-        B = 2 * generator.uniform(size=(n_informative, n_redundant)) - 1
         X[:, n_informative : n_informative + n_redundant] = np.dot(
             X[:, :n_informative], B
         )
 
-    # Repeat some features
-    n = n_informative + n_redundant
+    # Repeat some features using pre-generated indices
     if n_repeated > 0:
-        indices = ((n - 1) * generator.uniform(size=n_repeated) + 0.5).astype(np.intp)
-        X[:, n : n + n_repeated] = X[:, indices]
+        X[:, n : n + n_repeated] = X[:, repeated_indices]
 
     # Fill useless features
     if n_random > 0:
@@ -321,13 +352,8 @@ def make_classification(
         y[flip_mask] = generator.randint(n_classes, size=flip_mask.sum())
 
     # Randomly shift and scale
-    if shift is None:
-        shift = (2 * generator.uniform(size=n_features) - 1) * class_sep
-    X += shift
-
-    if scale is None:
-        scale = 1 + 100 * generator.uniform(size=n_features)
-    X *= scale
+    X += shift_val
+    X *= scale_val
 
     indices = np.arange(n_features)
     if shuffle:
