@@ -119,6 +119,7 @@ Estimators
 - :class:`linear_model.RidgeClassifier` (with `solver="svd"`)
 - :class:`linear_model.RidgeClassifierCV` (with `solver="svd"`, see :ref:`device_support_for_float64`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
+- :class:`naive_bayes.GaussianNB`
 - :class:`preprocessing.Binarizer`
 - :class:`preprocessing.KernelCenterer`
 - :class:`preprocessing.LabelEncoder`
@@ -146,11 +147,13 @@ Metrics
 -------
 
 - :func:`sklearn.metrics.accuracy_score`
+- :func:`sklearn.metrics.balanced_accuracy_score`
 - :func:`sklearn.metrics.brier_score_loss`
 - :func:`sklearn.metrics.confusion_matrix`
 - :func:`sklearn.metrics.d2_brier_score`
 - :func:`sklearn.metrics.d2_log_loss_score`
 - :func:`sklearn.metrics.d2_tweedie_score`
+- :func:`sklearn.metrics.det_curve`
 - :func:`sklearn.metrics.explained_variance_score`
 - :func:`sklearn.metrics.f1_score`
 - :func:`sklearn.metrics.fbeta_score`
