@@ -1425,11 +1425,11 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     if y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different shape")
 
-    y_true_logical_not = xp.astype(y_true, xp.bool, device=device_, copy=False)
-    inf_val = xp.asarray(xp.inf, dtype=y_score.dtype, device=device_)
-    y_score_relevant_only = xp.where(y_true_logical_not, y_score, inf_val)
-    y_min_relevant = xp.reshape(xp.min(y_score_relevant_only, axis=1), (-1, 1))
+    y_true_bool = xp.astype(y_true, xp.bool, device=device_, copy=False)
+    y_score_masked = xp.where(y_true_bool, y_score, xp.inf)
+    y_min_relevant = xp.reshape(xp.min(y_score_masked, axis=1), (-1, 1))
     coverage = xp.count_nonzero(y_score >= y_min_relevant, axis=1)
+
     return _average(coverage, weights=sample_weight)
 
 
