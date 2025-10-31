@@ -29,6 +29,7 @@ from sklearn.utils import (
     column_or_1d,
 )
 from sklearn.utils._array_api import (
+    _average,
     _max_precision_float_dtype,
     get_namespace_and_device,
     size,
@@ -1412,6 +1413,7 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     >>> coverage_error(y_true, y_score)
     1.5
     """
+    xp, _, device_ = get_namespace_and_device(y_true, y_score, sample_weight)
     y_true = check_array(y_true, ensure_2d=True)
     y_score = check_array(y_score, ensure_2d=True)
     check_consistent_length(y_true, y_score, sample_weight)
@@ -1423,12 +1425,12 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     if y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different shape")
 
-    y_score_mask = np.ma.masked_array(y_score, mask=np.logical_not(y_true))
-    y_min_relevant = y_score_mask.min(axis=1).reshape((-1, 1))
-    coverage = (y_score >= y_min_relevant).sum(axis=1)
-    coverage = coverage.filled(0)
-
-    return float(np.average(coverage, weights=sample_weight))
+    y_true_logical_not = xp.astype(y_true, xp.bool, device=device_, copy=False)
+    inf_val = xp.asarray(xp.inf, dtype=y_score.dtype, device=device_)
+    y_score_relevant_only = xp.where(y_true_logical_not, y_score, inf_val)
+    y_min_relevant = xp.reshape(xp.min(y_score_relevant_only, axis=1), (-1, 1))
+    coverage = xp.count_nonzero(y_score >= y_min_relevant, axis=1)
+    return _average(coverage, weights=sample_weight)
 
 
 @validate_params(
