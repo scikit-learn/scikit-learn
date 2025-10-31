@@ -79,7 +79,7 @@ clf = make_pipeline(
 )
 
 # Display the pipeline structure
-clf
+# clf # This line is meant for an interactive environment like Jupyter
 
 # %%
 # Train and Evaluate the Model
@@ -104,9 +104,12 @@ print(f"Test accuracy: {test_score:.3f}")
 # ---------------------------------
 # View the feature names after transformation.
 
-feature_names = num_cols + list(
-    preprocessor.named_transformers_["cat"].get_feature_names_out(cat_cols)
-)
+# We need to get the feature names from the OneHotEncoder
+cat_feature_names = preprocessor.named_transformers_["cat"].get_feature_names_out(cat_cols)
+
+# Combine with numeric feature names
+feature_names = num_cols + list(cat_feature_names)
+
 
 print(f"\nTotal features after transformation: {len(feature_names)}")
 print(f"Feature names: {feature_names}")
