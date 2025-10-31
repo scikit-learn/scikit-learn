@@ -14,6 +14,7 @@ import joblib
 import numpy as np
 import pytest
 from _pytest.doctest import DoctestItem
+from scipy.datasets import face
 from threadpoolctl import threadpool_limits
 
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
@@ -58,7 +59,7 @@ if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
 
 
 def raccoon_face_or_skip():
-    # SciPy >= 1.10 requires network to access to get data
+    # SciPy requires network to access to get data
     run_network_tests = environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "0"
     if not run_network_tests:
         raise SkipTest("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
@@ -66,7 +67,6 @@ def raccoon_face_or_skip():
         import pooch  # noqa: F401
     except ImportError:
         raise SkipTest("test requires pooch to be installed")
-    from scipy.datasets import face
 
     return face(gray=True)
 
