@@ -163,6 +163,7 @@ scoring = {
 # Eq. (2) in Elkan's paper [2]_.
 import numpy as np
 
+
 def credit_gain_score(y, y_pred, neg_label, pos_label):
     cm = confusion_matrix(y, y_pred, labels=[neg_label, pos_label])
 
