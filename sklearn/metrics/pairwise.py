@@ -1672,7 +1672,11 @@ def laplacian_kernel(X, Y=None, gamma=None):
         gamma = 1.0 / X.shape[1]
 
     K = -gamma * manhattan_distances(X, Y)
-    np.exp(K, K)  # exponentiate K in-place
+    xp, _ = get_namespace(X, Y)
+    if _is_numpy_namespace(xp):
+        np.exp(K, K)  # exponentiate K in-place
+    else:
+        K = xp.exp(K)
     return K
 
 
