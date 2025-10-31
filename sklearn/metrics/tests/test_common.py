@@ -64,6 +64,7 @@ from sklearn.metrics.pairwise import (
     cosine_distances,
     cosine_similarity,
     euclidean_distances,
+    laplacian_kernel,
     linear_kernel,
     manhattan_distances,
     paired_cosine_distances,
@@ -2353,6 +2354,7 @@ array_api_metric_checkers = {
     euclidean_distances: [check_array_api_metric_pairwise],
     manhattan_distances: [check_array_api_metric_pairwise],
     linear_kernel: [check_array_api_metric_pairwise],
+    laplacian_kernel: [check_array_api_metric_pairwise],
     polynomial_kernel: [check_array_api_metric_pairwise],
     rbf_kernel: [check_array_api_metric_pairwise],
     root_mean_squared_error: [

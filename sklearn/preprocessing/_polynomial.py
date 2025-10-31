@@ -791,12 +791,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             if sample_weight is None:
                 knots = np.nanpercentile(X, percentile_ranks, axis=0)
             else:
-                knots = np.array(
-                    [
-                        _weighted_percentile(X, sample_weight, percentile_rank)
-                        for percentile_rank in percentile_ranks
-                    ]
-                )
+                knots = _weighted_percentile(X, sample_weight, percentile_ranks).T
 
         else:
             # knots == 'uniform':
