@@ -1,3 +1,4 @@
+import io
 import re
 import subprocess
 import sys
@@ -8,7 +9,8 @@ import pandas as pd
 import requests
 from packaging import version
 
-df_list = pd.read_html("https://devguide.python.org/versions/")
+req = requests.get("https://devguide.python.org/versions/")
+df_list = pd.read_html(io.StringIO(req.content.decode("utf-8")))
 df = pd.concat(df_list).astype({"Branch": str})
 release_dates = {}
 python_version_info = {

@@ -665,8 +665,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         pos_label : int, float, bool or str, default=None
             The class considered as the positive class when computing the ROC AUC
-            metrics. By default, `estimators.classes_[1]` is considered
-            as the positive class.
+            metrics. By default, `estimator.classes_[1]` (using `estimator` from
+            `cv_results`) is considered as the positive class.
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
@@ -730,12 +730,11 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        pos_label_ = cls._validate_from_cv_results_params(
+        cls._validate_from_cv_results_params(
             cv_results,
             X,
             y,
             sample_weight=sample_weight,
-            pos_label=pos_label,
         )
 
         fpr_folds, tpr_folds, auc_folds = [], [], []
@@ -743,11 +742,11 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             cv_results["estimator"], cv_results["indices"]["test"]
         ):
             y_true = _safe_indexing(y, test_indices)
-            y_pred, _ = _get_response_values_binary(
+            y_pred, pos_label_ = _get_response_values_binary(
                 estimator,
                 _safe_indexing(X, test_indices),
                 response_method=response_method,
-                pos_label=pos_label_,
+                pos_label=pos_label,
             )
             sample_weight_fold = (
                 None

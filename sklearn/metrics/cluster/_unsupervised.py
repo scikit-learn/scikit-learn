@@ -16,7 +16,7 @@ from sklearn.metrics.pairwise import (
 )
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import _safe_indexing, check_random_state, check_X_y
-from sklearn.utils._array_api import _atol_for_type, xpx
+from sklearn.utils._array_api import xpx
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 
 
@@ -282,7 +282,7 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
             "elements on the diagonal. Use np.fill_diagonal(X, 0)."
         )
         if X.dtype.kind == "f":
-            atol = _atol_for_type(X.dtype)
+            atol = np.finfo(X.dtype).eps * 100
 
             if np.any(np.abs(X.diagonal()) > atol):
                 raise error_msg

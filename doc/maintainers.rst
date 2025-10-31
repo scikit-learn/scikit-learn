@@ -66,6 +66,10 @@
     <p>Omar Salman</p>
     </div>
     <div>
+    <a href='https://github.com/StefanieSenger'><img src='https://avatars.githubusercontent.com/u/91849487?v=4' class='avatar' /></a> <br />
+    <p>Stefanie Senger</p>
+    </div>
+    <div>
     <a href='https://github.com/GaelVaroquaux'><img src='https://avatars.githubusercontent.com/u/208217?v=4' class='avatar' /></a> <br />
     <p>Gael Varoquaux</p>
     </div>

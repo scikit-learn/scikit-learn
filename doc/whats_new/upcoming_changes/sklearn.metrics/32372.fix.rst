@@ -1,0 +1,4 @@
+- :meth:`metrics.RocCurveDisplay.from_cv_results` will now infer `pos_label` as
+  `estimator.classes_[-1]`, using the estimator from `cv_results`, when
+  `pos_label=None`. Previously, an error was raised when `pos_label=None`.
+  By :user:`Lucy Liu <lucyleeow>`.

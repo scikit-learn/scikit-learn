@@ -14,8 +14,6 @@ example is based on the Ames housing data set.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-print(__doc__)
-
 # %%
 # Synthetic example
 # #################

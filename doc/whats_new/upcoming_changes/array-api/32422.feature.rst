@@ -1,0 +1,4 @@
+- :func:`sklearn.metrics.brier_score_loss`, :func:`sklearn.metrics.log_loss`,
+  :func:`sklearn.metrics.d2_brier_score` and :func:`sklearn.metrics.d2_log_loss_score`
+  now support array API compatible inputs.
+  By :user:`Omar Salman <OmarManzoor>`

@@ -121,7 +121,7 @@ datasets = [
     ("MNIST_20000", load_mnist(n_samples=20_000)),
 ]
 
-n_iter = 500
+max_iter = 500
 perplexity = 30
 metric = "euclidean"
 # TSNE requires a certain number of neighbors which depends on the
@@ -130,11 +130,11 @@ metric = "euclidean"
 n_neighbors = int(3.0 * perplexity + 1) + 1
 
 tsne_params = dict(
-    init="random",  # pca not supported for sparse matrices
+    init="random",  # pca cannot be used with precomputed distances
     perplexity=perplexity,
     method="barnes_hut",
     random_state=42,
-    n_iter=n_iter,
+    max_iter=max_iter,
     learning_rate="auto",
 )
 

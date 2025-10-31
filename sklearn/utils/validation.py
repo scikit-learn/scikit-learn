@@ -32,7 +32,6 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
 from sklearn.utils._tags import get_tags
-from sklearn.utils.deprecation import _deprecate_force_all_finite
 from sklearn.utils.fixes import (
     ComplexWarning,
     _object_dtype_isnan,
@@ -229,9 +228,7 @@ def assert_all_finite(
     )
 
 
-def as_float_array(
-    X, *, copy=True, force_all_finite="deprecated", ensure_all_finite=None
-):
+def as_float_array(X, *, copy=True, ensure_all_finite=True):
     """Convert an array-like to an array of floats.
 
     The new dtype will be np.float32 or np.float64, depending on the original
@@ -246,25 +243,6 @@ def as_float_array(
     copy : bool, default=True
         If True, a copy of X will be created. If False, a copy may still be
         returned if X's dtype is not a floating point type.
-
-    force_all_finite : bool or 'allow-nan', default=True
-        Whether to raise an error on np.inf, np.nan, pd.NA in X. The
-        possibilities are:
-
-        - True: Force all values of X to be finite.
-        - False: accepts np.inf, np.nan, pd.NA in X.
-        - 'allow-nan': accepts only np.nan and pd.NA values in X. Values cannot
-          be infinite.
-
-        .. versionadded:: 0.20
-           ``force_all_finite`` accepts the string ``'allow-nan'``.
-
-        .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`
-
-        .. deprecated:: 1.6
-           `force_all_finite` was renamed to `ensure_all_finite` and will be removed
-           in 1.8.
 
     ensure_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in X. The
@@ -291,8 +269,6 @@ def as_float_array(
     >>> as_float_array(array)
     array([0., 0., 1., 2., 2.])
     """
-    ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
-
     if isinstance(X, np.matrix) or (
         not isinstance(X, np.ndarray) and not sp.issparse(X)
     ):
@@ -755,8 +731,7 @@ def check_array(
     order=None,
     copy=False,
     force_writeable=False,
-    force_all_finite="deprecated",
-    ensure_all_finite=None,
+    ensure_all_finite=True,
     ensure_non_negative=False,
     ensure_2d=True,
     allow_nd=False,
@@ -813,25 +788,6 @@ def check_array(
         writeability of the input array is preserved.
 
         .. versionadded:: 1.6
-
-    force_all_finite : bool or 'allow-nan', default=True
-        Whether to raise an error on np.inf, np.nan, pd.NA in array. The
-        possibilities are:
-
-        - True: Force all values of array to be finite.
-        - False: accepts np.inf, np.nan, pd.NA in array.
-        - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
-          cannot be infinite.
-
-        .. versionadded:: 0.20
-           ``force_all_finite`` accepts the string ``'allow-nan'``.
-
-        .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`
-
-        .. deprecated:: 1.6
-           `force_all_finite` was renamed to `ensure_all_finite` and will be removed
-           in 1.8.
 
     ensure_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in array. The
@@ -892,8 +848,6 @@ def check_array(
     >>> X_checked
     array([[1, 2, 3], [4, 5, 6]])
     """
-    ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
-
     if isinstance(array, np.matrix):
         raise TypeError(
             "np.matrix is not supported. Please convert to a numpy array with "
@@ -1223,8 +1177,7 @@ def check_X_y(
     order=None,
     copy=False,
     force_writeable=False,
-    force_all_finite="deprecated",
-    ensure_all_finite=None,
+    ensure_all_finite=True,
     ensure_2d=True,
     allow_nd=False,
     multi_output=False,
@@ -1284,26 +1237,6 @@ def check_X_y(
         writeability of the input array is preserved.
 
         .. versionadded:: 1.6
-
-    force_all_finite : bool or 'allow-nan', default=True
-        Whether to raise an error on np.inf, np.nan, pd.NA in array. This parameter
-        does not influence whether y can have np.inf, np.nan, pd.NA values.
-        The possibilities are:
-
-        - True: Force all values of X to be finite.
-        - False: accepts np.inf, np.nan, pd.NA in X.
-        - 'allow-nan': accepts only np.nan or pd.NA values in X. Values cannot
-          be infinite.
-
-        .. versionadded:: 0.20
-           ``force_all_finite`` accepts the string ``'allow-nan'``.
-
-        .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`
-
-        .. deprecated:: 1.6
-           `force_all_finite` was renamed to `ensure_all_finite` and will be removed
-           in 1.8.
 
     ensure_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in array. This parameter
@@ -1377,8 +1310,6 @@ def check_X_y(
         raise ValueError(
             f"{estimator_name} requires y to be passed, but the target y is None"
         )
-
-    ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
 
     X = check_array(
         X,
@@ -2152,6 +2083,7 @@ def _check_sample_weight(
     dtype=None,
     force_float_dtype=True,
     ensure_non_negative=False,
+    ensure_same_device=True,
     copy=False,
 ):
     """Validate sample weights.
@@ -2189,6 +2121,9 @@ def _check_sample_weight(
 
         .. versionadded:: 1.0
 
+    ensure_same_device : bool, default=True
+        Whether `sample_weight` should be forced to be on the same device as `X`.
+
     copy : bool, default=False
         If True, a copy of sample_weight will be created.
 
@@ -2197,9 +2132,7 @@ def _check_sample_weight(
     sample_weight : ndarray of shape (n_samples,)
         Validated sample weight. It is guaranteed to be "C" contiguous.
     """
-    xp, _, device = get_namespace_and_device(
-        sample_weight, X, remove_types=(int, float)
-    )
+    xp, is_array_api, device = get_namespace_and_device(X, remove_types=(int, float))
 
     n_samples = _num_samples(X)
 
@@ -2217,6 +2150,8 @@ def _check_sample_weight(
     else:
         if force_float_dtype and dtype is None:
             dtype = float_dtypes
+        if is_array_api and ensure_same_device:
+            sample_weight = xp.asarray(sample_weight, device=device)
         sample_weight = check_array(
             sample_weight,
             accept_sparse=False,

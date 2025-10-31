@@ -852,13 +852,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     def _fit(self, X, skip_num_points=0):
         """Private function to fit the model using X as training data."""
 
-        if isinstance(self.init, str) and self.init == "pca" and issparse(X):
-            raise TypeError(
-                "PCA initialization is currently not supported "
-                "with the sparse input matrix. Use "
-                'init="random" instead.'
-            )
-
         if self.learning_rate == "auto":
             # See issue #18018
             self.learning_rate_ = X.shape[0] / self.early_exaggeration / 4
@@ -1009,7 +1002,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         elif self.init == "pca":
             pca = PCA(
                 n_components=self.n_components,
-                svd_solver="randomized",
                 random_state=random_state,
             )
             # Always output a numpy array, no matter what is configured globally
@@ -1181,4 +1173,5 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.pairwise = self.metric == "precomputed"
+        tags.input_tags.sparse = True
         return tags

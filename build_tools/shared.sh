@@ -62,9 +62,9 @@ create_conda_environment_from_lock_file() {
     # https://conda.github.io/conda-lock/output/#explicit-lockfile
     lock_file_has_pip_packages=$(grep -q files.pythonhosted.org $LOCK_FILE && echo "true" || echo "false")
     if [[ "$lock_file_has_pip_packages" == "false" ]]; then
-        conda create --name $ENV_NAME --file $LOCK_FILE
+        conda create --quiet --name $ENV_NAME --file $LOCK_FILE
     else
         python -m pip install "$(get_dep conda-lock min)"
-        conda-lock install --name $ENV_NAME $LOCK_FILE
+        conda-lock install --log-level WARNING --name $ENV_NAME $LOCK_FILE
     fi
 }

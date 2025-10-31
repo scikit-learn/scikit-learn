@@ -5,7 +5,7 @@ Balance model complexity and cross-validated score
 
 This example demonstrates how to balance model complexity and cross-validated score by
 finding a decent accuracy within 1 standard deviation of the best accuracy score while
-minimising the number of :class:`~sklearn.decomposition.PCA` components [1]. It uses
+minimising the number of :class:`~sklearn.decomposition.PCA` components [1]_. It uses
 :class:`~sklearn.model_selection.GridSearchCV` with a custom refit callable to select
 the optimal model.
 
@@ -14,9 +14,11 @@ of PCA components. The balanced case is when `n_components=10` and `accuracy=0.8
 which falls into the range within 1 standard deviation of the best accuracy
 score.
 
-[1] Hastie, T., Tibshirani, R.,, Friedman, J. (2001). Model Assessment and
-Selection. The Elements of Statistical Learning (pp. 219-260). New York,
-NY, USA: Springer New York Inc..
+References
+----------
+.. [1] Hastie, T., Tibshirani, R., Friedman, J. (2001). Model Assessment and
+   Selection. The Elements of Statistical Learning (pp. 219-260). New York,
+   NY, USA: Springer New York Inc.
 """
 
 # Authors: The scikit-learn developers
@@ -47,10 +49,12 @@ from sklearn.pipeline import Pipeline
 # ----------------
 #
 # We define two helper functions:
+#
 # 1. `lower_bound`: Calculates the threshold for acceptable performance
-# (best score - 1 std)
+#    (best score - 1 std)
+#
 # 2. `best_low_complexity`: Selects the model with the fewest PCA components that
-# exceeds this threshold
+#    exceeds this threshold
 
 
 def lower_bound(cv_results):
@@ -106,7 +110,9 @@ def best_low_complexity(cv_results):
 # --------------------------------------
 #
 # We create a pipeline with two steps:
+#
 # 1. Dimensionality reduction using PCA
+#
 # 2. Classification using LogisticRegression
 #
 # We'll search over different numbers of PCA components to find the optimal complexity.
@@ -367,9 +373,12 @@ print(summary_df)
 # callable with :class:`~sklearn.model_selection.GridSearchCV`.
 #
 # Key takeaways:
+#
 # 1. The one-standard-error rule provides a good rule of thumb to select simpler models
+#
 # 2. Custom refit callables in :class:`~sklearn.model_selection.GridSearchCV` allow for
-# flexible model selection strategies
+#    flexible model selection strategies
+#
 # 3. Visualizing both train and test scores helps identify potential overfitting
 #
 # This approach can be applied to other model selection scenarios where balancing

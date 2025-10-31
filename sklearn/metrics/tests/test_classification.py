@@ -3670,3 +3670,114 @@ def test_confusion_matrix_array_api(array_namespace, device, _):
         result = confusion_matrix(y_true, y_pred, labels=labels)
         assert get_namespace(result)[0] == get_namespace(y_pred)[0]
         assert array_api_device(result) == array_api_device(y_pred)
+
+
+@pytest.mark.parametrize(
+    "prob_metric", [brier_score_loss, log_loss, d2_brier_score, d2_log_loss_score]
+)
+@pytest.mark.parametrize("str_y_true", [False, True])
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_probabilistic_metrics_array_api(
+    prob_metric, str_y_true, use_sample_weight, array_namespace, device_, dtype_name
+):
+    """Test that :func:`brier_score_loss`, :func:`log_loss`, func:`d2_brier_score`
+    and :func:`d2_log_loss_score` work correctly with the array API for binary
+    and mutli-class inputs.
+    """
+    xp = _array_api_for_tests(array_namespace, device_)
+    sample_weight = np.array([1, 2, 3, 1]) if use_sample_weight else None
+
+    # binary case
+    extra_kwargs = {}
+    if str_y_true:
+        y_true_np = np.array(["yes", "no", "yes", "no"])
+        y_true_xp_or_np = np.asarray(y_true_np)
+        if "brier" in prob_metric.__name__:
+            # `brier_score_loss` and `d2_brier_score` require specifying the
+            # `pos_label`
+            extra_kwargs["pos_label"] = "yes"
+    else:
+        y_true_np = np.array([1, 0, 1, 0])
+        y_true_xp_or_np = xp.asarray(y_true_np, device=device_)
+
+    y_prob_np = np.array([0.5, 0.2, 0.7, 0.6], dtype=dtype_name)
+    y_prob_xp = xp.asarray(y_prob_np, device=device_)
+    metric_score_np = prob_metric(
+        y_true_np, y_prob_np, sample_weight=sample_weight, **extra_kwargs
+    )
+    with config_context(array_api_dispatch=True):
+        metric_score_xp = prob_metric(
+            y_true_xp_or_np, y_prob_xp, sample_weight=sample_weight, **extra_kwargs
+        )
+
+    assert metric_score_xp == pytest.approx(metric_score_np)
+
+    # multi-class case
+    if str_y_true:
+        y_true_np = np.array(["a", "b", "c", "d"])
+        y_true_xp_or_np = np.asarray(y_true_np)
+    else:
+        y_true_np = np.array([0, 1, 2, 3])
+        y_true_xp_or_np = xp.asarray(y_true_np, device=device_)
+
+    y_prob_np = np.array(
+        [
+            [0.5, 0.2, 0.2, 0.1],
+            [0.4, 0.4, 0.1, 0.1],
+            [0.1, 0.1, 0.7, 0.1],
+            [0.1, 0.2, 0.6, 0.1],
+        ],
+        dtype=dtype_name,
+    )
+    y_prob_xp = xp.asarray(y_prob_np, device=device_)
+    metric_score_np = prob_metric(y_true_np, y_prob_np)
+    with config_context(array_api_dispatch=True):
+        metric_score_xp = prob_metric(y_true_xp_or_np, y_prob_xp)
+
+    assert metric_score_xp == pytest.approx(metric_score_np)
+
+
+@pytest.mark.parametrize(
+    "prob_metric", [brier_score_loss, log_loss, d2_brier_score, d2_log_loss_score]
+)
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_probabilistic_metrics_multilabel_array_api(
+    prob_metric, use_sample_weight, array_namespace, device_, dtype_name
+):
+    """Test that :func:`brier_score_loss`, :func:`log_loss`, func:`d2_brier_score`
+    and :func:`d2_log_loss_score` work correctly with the array API for
+    multi-label inputs.
+    """
+    xp = _array_api_for_tests(array_namespace, device_)
+    sample_weight = np.array([1, 2, 3, 1]) if use_sample_weight else None
+    y_true_np = np.array(
+        [
+            [0, 0, 1, 1],
+            [1, 0, 1, 0],
+            [0, 1, 0, 0],
+            [1, 1, 0, 1],
+        ],
+        dtype=dtype_name,
+    )
+    y_true_xp = xp.asarray(y_true_np, device=device_)
+    y_prob_np = np.array(
+        [
+            [0.15, 0.27, 0.46, 0.12],
+            [0.33, 0.38, 0.06, 0.23],
+            [0.06, 0.28, 0.03, 0.63],
+            [0.14, 0.31, 0.26, 0.29],
+        ],
+        dtype=dtype_name,
+    )
+    y_prob_xp = xp.asarray(y_prob_np, device=device_)
+    metric_score_np = prob_metric(y_true_np, y_prob_np, sample_weight=sample_weight)
+    with config_context(array_api_dispatch=True):
+        metric_score_xp = prob_metric(y_true_xp, y_prob_xp, sample_weight=sample_weight)
+
+    assert metric_score_xp == pytest.approx(metric_score_np)

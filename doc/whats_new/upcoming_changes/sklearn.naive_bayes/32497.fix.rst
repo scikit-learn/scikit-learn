@@ -1,0 +1,3 @@
+- :class:`naive_bayes.GaussianNB` preserves the dtype of the fitted attributes
+  according to the dtype of `X`.
+  By :user:`Omar Salman <OmarManzoor>`

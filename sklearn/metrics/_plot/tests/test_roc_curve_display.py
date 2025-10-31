@@ -8,7 +8,7 @@ from scipy.integrate import trapezoid
 from sklearn import clone
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_breast_cancer, make_classification
-from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import RocCurveDisplay, auc, roc_curve
 from sklearn.model_selection import cross_validate, train_test_split
@@ -264,7 +264,7 @@ def test_roc_curve_from_cv_results_param_validation(pyplot, data_binary):
 
     # `pos_label` inconsistency
     y_multi[y_multi == 1] = 2
-    with pytest.raises(ValueError, match=r"y takes value in \{0, 2\}"):
+    with pytest.warns(UndefinedMetricWarning, match="No positive samples in y_true"):
         RocCurveDisplay.from_cv_results(cv_results, X, y_multi)
 
     # `name` is list while `curve_kwargs` is None or dict
@@ -586,6 +586,18 @@ def test_roc_curve_from_cv_results_curve_kwargs(pyplot, data_binary, curve_kwarg
             assert color == "red"
         else:
             assert color == curve_kwargs[idx]["c"]
+
+
+def test_roc_curve_from_cv_results_pos_label_inferred(pyplot, data_binary):
+    """Check `pos_label` inferred correctly by `from_cv_results(pos_label=None)`."""
+    X, y = data_binary
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+
+    disp = RocCurveDisplay.from_cv_results(cv_results, X, y, pos_label=None)
+    # Should be `estimator.classes_[1]`
+    assert disp.pos_label == 1
 
 
 def _check_chance_level(plot_chance_level, chance_level_kw, display):

@@ -19,8 +19,6 @@ for years after 2001.
     <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_.
 """
 
-print(__doc__)
-
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 

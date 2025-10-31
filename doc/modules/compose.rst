@@ -507,7 +507,7 @@ on data type or column name::
   ...       make_column_selector(dtype_include=np.number)),
   ...       ('onehot',
   ...       OneHotEncoder(),
-  ...       make_column_selector(pattern='city', dtype_include=object))])
+  ...       make_column_selector(pattern='city', dtype_include=[object, "string"]))])
   >>> ct.fit_transform(X)
   array([[ 0.904,  0.      ,  1. ,  0. ,  0. ],
          [-1.507,  1.414,  1. ,  0. ,  0. ],

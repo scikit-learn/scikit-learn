@@ -4,7 +4,7 @@
 from sklearn.utils._typedefs cimport uint32_t
 
 
-cdef inline uint32_t DEFAULT_SEED = 1
+cdef const uint32_t DEFAULT_SEED = 1
 
 cdef enum:
     # Max value for our rand_r replacement (near the bottom).

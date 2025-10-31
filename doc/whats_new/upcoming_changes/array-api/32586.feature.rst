@@ -1,0 +1,2 @@
+- :func:`sklearn.metrics.det_curve` now supports Array API compliant inputs.
+  By :user:`Josef Affourtit <jaffourt>`.

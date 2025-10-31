@@ -1,3 +1,5 @@
+import os
+
 from get_commit_message import get_commit_message
 
 
@@ -12,6 +14,12 @@ def get_selected_tests():
         <test_name_2>
         ...
     """
+    if "SELECTED_TESTS" in os.environ:
+        raise RuntimeError(
+            "This legacy script should only be used on Azure. "
+            "On GitHub actions, use the 'SELECTED_TESTS' environment variable"
+        )
+
     commit_message = get_commit_message()
 
     if "[all random seeds]" in commit_message:

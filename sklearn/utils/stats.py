@@ -62,9 +62,10 @@ def _weighted_percentile(
         Weights for each value in `array`. Must be same shape as `array` or of shape
         `(array.shape[0],)`.
 
-    percentile_rank: int or float, default=50
-        The probability level of the percentile to compute, in percent. Must be between
-        0 and 100.
+    percentile_rank: scalar or 1D array, default=50
+        The probability level(s) of the percentile(s) to compute, in percent. Must be
+        between 0 and 100. If a 1D array, computes all percentiles (along each
+        axis 0 if `array` is 2D).
 
     average : bool, default=False
         If `True`, uses the "averaged_inverted_cdf" quantile method, otherwise
@@ -79,14 +80,22 @@ def _weighted_percentile(
 
     Returns
     -------
-    percentile : scalar or 0D array if `array` 1D (or 0D), array if `array` 2D
-        Weighted percentile at the requested probability level.
+    percentile : scalar, 1D array, or 2D array
+        Weighted percentile at the requested probability level(s).
+        If `array` is 1D and `percentile_rank` is scalar, returns a scalar.
+        If `array` is 2D and `percentile_rank` is scalar, returns a 1D array
+            of shape `(array.shape[1],)`
+        If `array` is 1D and `percentile_rank` is 1D, returns a 1D array
+            of shape `(percentile_rank.shape[0],)`
+        If `array` is 2D and `percentile_rank` is 1D, returns a 2D array
+            of shape `(array.shape[1], percentile_rank.shape[0])`
     """
     xp, _, device = get_namespace_and_device(array)
     # `sample_weight` should follow `array` for dtypes
     floating_dtype = _find_matching_floating_dtype(array, xp=xp)
     array = xp.asarray(array, dtype=floating_dtype, device=device)
     sample_weight = xp.asarray(sample_weight, dtype=floating_dtype, device=device)
+    percentile_rank = xp.asarray(percentile_rank, dtype=floating_dtype, device=device)
 
     n_dim = array.ndim
     if n_dim == 0:
@@ -96,6 +105,11 @@ def _weighted_percentile(
     # When sample_weight 1D, repeat for each array.shape[1]
     if array.shape != sample_weight.shape and array.shape[0] == sample_weight.shape[0]:
         sample_weight = xp.tile(sample_weight, (array.shape[1], 1)).T
+
+    n_dim_percentile = percentile_rank.ndim
+    if n_dim_percentile == 0:
+        percentile_rank = xp.reshape(percentile_rank, (1,))
+
     # Sort `array` and `sample_weight` along axis=0:
     sorted_idx = xp.argsort(array, axis=0, stable=False)
     sorted_weights = xp.take_along_axis(sample_weight, sorted_idx, axis=0)
@@ -119,72 +133,81 @@ def _weighted_percentile(
     # `xp.searchsorted` calls take contiguous inputs as a result (for
     # performance reasons).
     weight_cdf = xp.cumulative_sum(sorted_weights.T, axis=1)
-    adjusted_percentile_rank = percentile_rank / 100 * weight_cdf[..., -1]
 
-    # Ignore leading `sample_weight=0` observations when `percentile_rank=0` (#20528)
-    mask = adjusted_percentile_rank == 0
-    adjusted_percentile_rank[mask] = xp.nextafter(
-        adjusted_percentile_rank[mask], adjusted_percentile_rank[mask] + 1
-    )
-    # For each feature with index j, find sample index i of the scalar value
-    # `adjusted_percentile_rank[j]` in 1D array `weight_cdf[j]`, such that:
-    # weight_cdf[j, i-1] < adjusted_percentile_rank[j] <= weight_cdf[j, i].
-    # Note `searchsorted` defaults to equality on the right, whereas Hyndman and Fan
-    # reference equation has equality on the left.
-    percentile_indices = xp.stack(
-        [
-            xp.searchsorted(
-                weight_cdf[feature_idx, ...], adjusted_percentile_rank[feature_idx]
-            )
-            for feature_idx in range(weight_cdf.shape[0])
-        ],
-    )
-    # `percentile_indices` may be equal to `sorted_idx.shape[0]` due to floating
-    # point error (see #11813)
-    max_idx = sorted_idx.shape[0] - 1
-    percentile_indices = xp.clip(percentile_indices, 0, max_idx)
+    n_percentiles = percentile_rank.shape[0]
+    result = xp.empty((n_features, n_percentiles), dtype=floating_dtype, device=device)
 
-    col_indices = xp.arange(array.shape[1], device=device)
-    percentile_in_sorted = sorted_idx[percentile_indices, col_indices]
+    for p_idx, p_rank in enumerate(percentile_rank):
+        adjusted_percentile_rank = p_rank / 100 * weight_cdf[..., -1]
 
-    if average:
-        # From Hyndman and Fan (1996), `fraction_above` is `g`
-        fraction_above = (
-            weight_cdf[col_indices, percentile_indices] - adjusted_percentile_rank
+        # Ignore leading `sample_weight=0` observations
+        # when `percentile_rank=0` (#20528)
+        mask = adjusted_percentile_rank == 0
+        adjusted_percentile_rank[mask] = xp.nextafter(
+            adjusted_percentile_rank[mask], adjusted_percentile_rank[mask] + 1
         )
-        is_fraction_above = fraction_above > xp.finfo(floating_dtype).eps
-        percentile_plus_one_indices = xp.clip(percentile_indices + 1, 0, max_idx)
-        percentile_plus_one_in_sorted = sorted_idx[
-            percentile_plus_one_indices, col_indices
-        ]
-        # Handle case when next index ('plus one') has sample weight of 0
-        zero_weight_cols = col_indices[
-            sample_weight[percentile_plus_one_in_sorted, col_indices] == 0
-        ]
-        for col_idx in zero_weight_cols:
-            cdf_val = weight_cdf[col_idx, percentile_indices[col_idx]]
-            # Search for next index where `weighted_cdf` is greater
-            next_index = xp.searchsorted(
-                weight_cdf[col_idx, ...], cdf_val, side="right"
-            )
-            # Handle case where there are trailing 0 sample weight samples
-            # and `percentile_indices` is already max index
-            if next_index >= max_idx:
-                # use original `percentile_indices` again
-                next_index = percentile_indices[col_idx]
-
-            percentile_plus_one_in_sorted[col_idx] = sorted_idx[next_index, col_idx]
-
-        result = xp.where(
-            is_fraction_above,
-            array[percentile_in_sorted, col_indices],
-            (
-                array[percentile_in_sorted, col_indices]
-                + array[percentile_plus_one_in_sorted, col_indices]
-            )
-            / 2,
+        # For each feature with index j, find sample index i of the scalar value
+        # `adjusted_percentile_rank[j]` in 1D array `weight_cdf[j]`, such that:
+        # weight_cdf[j, i-1] < adjusted_percentile_rank[j] <= weight_cdf[j, i].
+        # Note `searchsorted` defaults to equality on the right, whereas Hyndman and Fan
+        # reference equation has equality on the left.
+        percentile_indices = xp.stack(
+            [
+                xp.searchsorted(
+                    weight_cdf[feature_idx, ...], adjusted_percentile_rank[feature_idx]
+                )
+                for feature_idx in range(weight_cdf.shape[0])
+            ],
         )
-    else:
-        result = array[percentile_in_sorted, col_indices]
+        # `percentile_indices` may be equal to `sorted_idx.shape[0]` due to floating
+        # point error (see #11813)
+        max_idx = sorted_idx.shape[0] - 1
+        percentile_indices = xp.clip(percentile_indices, 0, max_idx)
 
-    return result[0] if n_dim == 1 else result
+        col_indices = xp.arange(array.shape[1], device=device)
+        percentile_in_sorted = sorted_idx[percentile_indices, col_indices]
+
+        if average:
+            # From Hyndman and Fan (1996), `fraction_above` is `g`
+            fraction_above = (
+                weight_cdf[col_indices, percentile_indices] - adjusted_percentile_rank
+            )
+            is_fraction_above = fraction_above > xp.finfo(floating_dtype).eps
+            percentile_plus_one_indices = xp.clip(percentile_indices + 1, 0, max_idx)
+            percentile_plus_one_in_sorted = sorted_idx[
+                percentile_plus_one_indices, col_indices
+            ]
+            # Handle case when next index ('plus one') has sample weight of 0
+            zero_weight_cols = col_indices[
+                sample_weight[percentile_plus_one_in_sorted, col_indices] == 0
+            ]
+            for col_idx in zero_weight_cols:
+                cdf_val = weight_cdf[col_idx, percentile_indices[col_idx]]
+                # Search for next index where `weighted_cdf` is greater
+                next_index = xp.searchsorted(
+                    weight_cdf[col_idx, ...], cdf_val, side="right"
+                )
+                # Handle case where there are trailing 0 sample weight samples
+                # and `percentile_indices` is already max index
+                if next_index >= max_idx:
+                    # use original `percentile_indices` again
+                    next_index = percentile_indices[col_idx]
+
+                percentile_plus_one_in_sorted[col_idx] = sorted_idx[next_index, col_idx]
+
+            result[..., p_idx] = xp.where(
+                is_fraction_above,
+                array[percentile_in_sorted, col_indices],
+                (
+                    array[percentile_in_sorted, col_indices]
+                    + array[percentile_plus_one_in_sorted, col_indices]
+                )
+                / 2,
+            )
+        else:
+            result[..., p_idx] = array[percentile_in_sorted, col_indices]
+
+    if n_dim_percentile == 0:
+        result = result[..., 0]
+
+    return result[0, ...] if n_dim == 1 else result
