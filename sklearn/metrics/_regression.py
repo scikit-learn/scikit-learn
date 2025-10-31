@@ -936,7 +936,7 @@ def median_absolute_error(
     return float(_average(output_errors, weights=multioutput, xp=xp))
 
 
-def _assemble_r2_explained_variance(
+def _assemble_fraction_of_explained_deviance(
     numerator, denominator, n_outputs, multioutput, force_finite, xp, device
 ):
     """Common part used by explained variance score and :math:`R^2` score."""
@@ -1121,7 +1121,7 @@ def explained_variance_score(
         (y_true - y_true_avg) ** 2, weights=sample_weight, axis=0, xp=xp
     )
 
-    return _assemble_r2_explained_variance(
+    return _assemble_fraction_of_explained_deviance(
         numerator=numerator,
         denominator=denominator,
         n_outputs=y_true.shape[1],
@@ -1300,7 +1300,7 @@ def r2_score(
         axis=0,
     )
 
-    return _assemble_r2_explained_variance(
+    return _assemble_fraction_of_explained_deviance(
         numerator=numerator,
         denominator=denominator,
         n_outputs=y_true.shape[1],
@@ -1847,7 +1847,7 @@ def d2_pinball_score(
         multioutput="raw_values",
     )
 
-    return _assemble_r2_explained_variance(
+    return _assemble_fraction_of_explained_deviance(
         numerator=numerator,
         denominator=denominator,
         n_outputs=y_true.shape[1],
