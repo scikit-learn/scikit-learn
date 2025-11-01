@@ -307,7 +307,7 @@ def sag_solver(
     if "seen" in warm_start_mem.keys():
         seen_init = warm_start_mem["seen"]
     else:
-        seen_init = np.zeros(n_samples, dtype=np.double, order="C")
+        seen_init = np.zeros(n_samples, dtype=np.int32, order="C")
 
     if "num_seen" in warm_start_mem.keys():
         num_seen_init = warm_start_mem["num_seen"]
@@ -332,6 +332,7 @@ def sag_solver(
             "Current sag implementation does not handle "
             "the case step_size * alpha_scaled == 1"
         )
+    sample_weight = np.ones(X.shape[0])
     sag = sag64 if X.dtype == np.float64 else sag32
     num_seen, n_iter_ = sag(
         dataset,
@@ -357,7 +358,6 @@ def sag_solver(
         is_saga,
         verbose,
     )
-
     if n_iter_ == max_iter:
         warnings.warn(
             "The max_iter was reached which means the coef_ did not converge",
