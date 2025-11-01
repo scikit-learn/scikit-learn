@@ -1375,3 +1375,17 @@ def test_relocating_with_duplicates(algorithm, array_constr):
         km.fit(array_constr(X))
 
     assert km.n_iter_ == 1
+import pytest
+from sklearn.cluster import KMeans
+from sklearn.utils._testing import global_random_seed
+import numpy as np
+
+@pytest.mark.parametrize("seed", [0, 1, 2, 3, 4])
+def test_kmeans_global_random_seed(seed):
+    """Test KMeans behavior consistency with global random seed."""
+    with global_random_seed(seed):
+        X = np.random.rand(50, 2)
+        kmeans1 = KMeans(n_clusters=3, random_state=42, n_init="auto").fit(X)
+        kmeans2 = KMeans(n_clusters=3, random_state=42, n_init="auto").fit(X)
+        # Ensures identical clustering for same seed
+        np.testing.assert_array_equal(kmeans1.labels_, kmeans2.labels_)
