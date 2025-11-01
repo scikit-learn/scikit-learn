@@ -158,16 +158,9 @@ def test_move_to_array_api_conversions_numpy_to_torch_mps():
 
 def test_move_to_array_api_conversions_strict_tor_torch():
     """Check conversion of array-api-strict CPU_DEVICE to torch."""
-    try:
-        import array_api_strict
-
-        array_api_strict_available = True
-    except ImportError:
-        array_api_strict_available = False
-
-    if not array_api_strict_available:
-        pytest.mark.skip(reason="array-api-strict not available")
-
+    array_api_strict = pytest.importorskip(
+        "array_api_strict", reason="array-api-strict not available"
+    )
     xp_strict = _array_api_for_tests("array_api_strict", None)
     xp_torch = _array_api_for_tests("torch", "mps")
 
