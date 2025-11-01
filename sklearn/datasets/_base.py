@@ -11,6 +11,7 @@ import hashlib
 import os
 import re
 import shutil
+import sys
 import time
 import unicodedata
 import warnings
@@ -42,17 +43,21 @@ RemoteFileMetadata = namedtuple("RemoteFileMetadata", ["filename", "url", "check
 @validate_params(
     {
         "data_home": [str, os.PathLike, None],
+        "use_default_location": ["boolean", StrOptions({"deprecated"})],
     },
     prefer_skip_nested_validation=True,
 )
-def get_data_home(data_home=None) -> str:
+def get_data_home(data_home=None, *, use_default_location="deprecated") -> str:
     """Return the path of the scikit-learn data directory.
 
     This folder is used by some large dataset loaders to avoid downloading the
     data several times.
 
-    By default the data directory is set to a folder named 'scikit_learn_data' in the
-    user home folder.
+    By default the data directory is set to a folder named 'scikit-learn' in the
+    operating system's standard cache directory:
+    - Linux/Unix: $XDG_CACHE_HOME/scikit-learn (defaults to ~/.cache/scikit-learn)
+    - macOS: ~/Library/Caches/scikit-learn
+    - Windows: %LOCALAPPDATA%/scikit-learn (defaults to ~/AppData/Local/scikit-learn)
 
     Alternatively, it can be set by the 'SCIKIT_LEARN_DATA' environment
     variable or programmatically by giving an explicit folder path. The '~'
@@ -64,7 +69,20 @@ def get_data_home(data_home=None) -> str:
     ----------
     data_home : str or path-like, default=None
         The path to scikit-learn data directory. If `None`, the default path
-        is `~/scikit_learn_data`.
+        is determined by the operating system's standard cache directory.
+    use_default_location : bool or "deprecated", default="deprecated"
+        Whether to use the old default location at ~/scikit_learn_data.
+        If True, uses the old default location. If "deprecated" (default),
+        uses the old location only if it exists and warns about deprecation.
+        If False, uses the new OS-specific cache directory.
+
+        .. deprecated:: 1.7
+           The parameter `use_default_location=True` is deprecated in 1.7 and will be
+           removed in 1.9. The new default paths are:
+
+           - Linux/Unix: ~/.cache/scikit-learn
+           - macOS: ~/Library/Caches/scikit-learn
+           - Windows: ~/AppData/Local/scikit-learn
 
     Returns
     -------
@@ -80,7 +98,52 @@ def get_data_home(data_home=None) -> str:
     True
     """
     if data_home is None:
-        data_home = environ.get("SCIKIT_LEARN_DATA", join("~", "scikit_learn_data"))
+        if use_default_location == "deprecated":
+            old_default = join(expanduser("~"), "scikit_learn_data")
+            if os.path.exists(old_default):
+                warnings.warn(
+                    "The default data directory '~/scikit_learn_data' is deprecated "
+                    "in 1.7 and will be removed in 1.9. The new default paths are:\n"
+                    "- Linux/Unix: ~/.cache/scikit-learn\n"
+                    "- macOS: ~/Library/Caches/scikit-learn\n"
+                    "- Windows: ~/AppData/Local/scikit-learn\n\n"
+                    "To migrate your data:\n"
+                    "1. Copy the contents of '~/scikit_learn_data' to the new\n"
+                    "   location for your OS\n"
+                    "2. Delete the old '~/scikit_learn_data' directory to properly\n"
+                    "   use the new location",
+                    FutureWarning,
+                )
+                return old_default
+            use_default_location = False
+        elif use_default_location is True:
+            warnings.warn(
+                "The default data directory '~/scikit_learn_data' is deprecated "
+                "in 1.7 and will be removed in 1.9. The new default paths are:\n"
+                "- Linux/Unix: ~/.cache/scikit-learn\n"
+                "- macOS: ~/Library/Caches/scikit-learn\n"
+                "- Windows: ~/AppData/Local/scikit-learn\n\n"
+                "To migrate your data:\n"
+                "1. Copy the contents of '~/scikit_learn_data' to the new\n"
+                "   location for your OS\n"
+                "2. Delete the old '~/scikit_learn_data' directory to properly\n"
+                "   use the new location",
+                FutureWarning,
+            )
+            return join(expanduser("~"), "scikit_learn_data")
+
+        if use_default_location:
+            return join(expanduser("~"), "scikit_learn_data")
+
+        cache_dirs = {
+            "win32": environ.get(
+                "LOCALAPPDATA", join(expanduser("~"), "AppData", "Local")
+            ),
+            "darwin": join(expanduser("~"), "Library", "Caches"),
+            "default": environ.get("XDG_CACHE_HOME", join(expanduser("~"), ".cache")),
+        }
+        cache_dir = cache_dirs.get(sys.platform, cache_dirs["default"])
+        data_home = environ.get("SCIKIT_LEARN_DATA", join(cache_dir, "scikit-learn"))
     data_home = expanduser(data_home)
     makedirs(data_home, exist_ok=True)
     return data_home
@@ -99,7 +162,7 @@ def clear_data_home(data_home=None):
     ----------
     data_home : str or path-like, default=None
         The path to scikit-learn data directory. If `None`, the default path
-        is `~/scikit_learn_data`.
+        is determined by the operating system's standard cache directory.
 
     Examples
     --------
