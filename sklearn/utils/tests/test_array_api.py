@@ -112,7 +112,7 @@ def test_get_namespace_array_api(monkeypatch):
 
 
 def test_move_to_array_api_conversions_cupy_to_torch():
-    """Check conversion of Cupy to torch."""
+    """Check conversion of CuPy to torch."""
     xp_torch = _array_api_for_tests("torch", "cuda")
     xp_cupy = _array_api_for_tests("cupy", None)
 
@@ -127,7 +127,7 @@ def test_move_to_array_api_conversions_cupy_to_torch():
 
 
 def test_move_to_array_api_conversions_numpy_to_torch_cuda():
-    """Check conversion of Numpy to torch."""
+    """Check conversion of NumPy to torch."""
     xp_torch = _array_api_for_tests("torch", "cuda")
 
     with config_context(array_api_dispatch=True):
@@ -142,7 +142,7 @@ def test_move_to_array_api_conversions_numpy_to_torch_cuda():
 
 
 def test_move_to_array_api_conversions_numpy_to_torch_mps():
-    """Check conversion of Numpy to torch mps."""
+    """Check conversion of NumPy to torch mps."""
     xp_torch = _array_api_for_tests("torch", "mps")
 
     with config_context(array_api_dispatch=True):
@@ -156,7 +156,7 @@ def test_move_to_array_api_conversions_numpy_to_torch_mps():
         assert device(array_out) == device_torch
 
 
-def test_move_to_array_api_conversions_strict_tor_torch():
+def test_move_to_array_api_conversions_strict_to_torch_mps():
     """Check conversion of array-api-strict CPU_DEVICE to torch."""
     array_api_strict = pytest.importorskip(
         "array_api_strict", reason="array-api-strict not available"
@@ -189,17 +189,17 @@ def test_move_to_sparse():
     with config_context(array_api_dispatch=True):
         device_cpu = xp_torch.asarray([1]).device
 
-        # sparse to numpy
+        # sparse to NumPy
         result1, result2 = move_to(sparse1, sparse2, xp=xp_numpy, device=None)
         assert result1 is sparse1
         assert result2 is sparse2
 
-        # sparse and None to numpy
+        # sparse and None to NumPy
         result1, result2 = move_to(sparse1, None, xp=xp_numpy, device=None)
         assert result1 is sparse1
         assert result2 is None
 
-        # sparse to non-Numpy
+        # sparse to non-NumPy
         msg = r"Sparse arrays are only accepted \(and passed through\)"
         with pytest.raises(TypeError, match=msg):
             move_to(sparse1, numpy_array, xp=xp_torch, device=device_cpu)
