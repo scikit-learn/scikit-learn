@@ -2085,6 +2085,7 @@ def _check_sample_weight(
     ensure_non_negative=False,
     ensure_same_device=True,
     copy=False,
+    allow_all_zero_weights=False,
 ):
     """Validate sample weights.
 
@@ -2126,6 +2127,9 @@ def _check_sample_weight(
 
     copy : bool, default=False
         If True, a copy of sample_weight will be created.
+
+    allow_all_zero_weights : bool, default=False,
+        Whether or not to raise an error when sample weights are all zero.
 
     Returns
     -------
@@ -2173,6 +2177,12 @@ def _check_sample_weight(
                 "sample_weight.shape == {}, expected {}!".format(
                     sample_weight.shape, (n_samples,)
                 )
+            )
+
+    if not allow_all_zero_weights:
+        if xp.all(sample_weight == 0):
+            raise ValueError(
+                "Sample weights must contain at least one non-zero number."
             )
 
     if ensure_non_negative:
