@@ -22,6 +22,7 @@ from sklearn.metrics import (
     mean_squared_log_error,
     mean_tweedie_deviance,
     median_absolute_error,
+    overlay_dx_score,
     r2_score,
     root_mean_squared_error,
     root_mean_squared_log_error,
@@ -634,3 +635,160 @@ def test_pinball_loss_relation_with_mae(global_random_seed):
         mean_absolute_error(y_true, y_pred)
         == mean_pinball_loss(y_true, y_pred, alpha=0.5) * 2
     )
+
+
+def test_overlay_dx_score_basic():
+    """Test basic functionality of overlay_dx_score."""
+    # Perfect predictions should return ~1.0
+    y_true = np.array([1, 2, 3, 4, 5])
+    y_pred = np.array([1, 2, 3, 4, 5])
+    score = overlay_dx_score(y_true, y_pred)
+    assert score == pytest.approx(1.0, abs=0.01)
+
+    # Predictions with small errors
+    y_pred = np.array([1.1, 2.0, 3.1, 4.0, 5.1])
+    score = overlay_dx_score(y_true, y_pred)
+    assert 0 < score < 1
+    assert score > 0.8  # Should be high for small errors
+
+    # Predictions with larger errors
+    y_pred = np.array([2, 3, 4, 5, 6])  # Shifted by 1
+    score = overlay_dx_score(y_true, y_pred)
+    assert 0 < score < 1
+    assert score < 0.9  # Should be lower than perfect
+
+
+def test_overlay_dx_score_multioutput():
+    """Test overlay_dx_score with multioutput."""
+    y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+
+    # Test uniform_average (default)
+    score = overlay_dx_score(y_true, y_pred, multioutput="uniform_average")
+    assert isinstance(score, (float, np.floating))
+    assert 0 <= score <= 1
+
+    # Test raw_values
+    scores = overlay_dx_score(y_true, y_pred, multioutput="raw_values")
+    assert len(scores) == 2
+    assert all(0 <= s <= 1 for s in scores)
+
+    # Test with custom weights
+    score_weighted = overlay_dx_score(y_true, y_pred, multioutput=[0.3, 0.7])
+    assert isinstance(score_weighted, (float, np.floating))
+    assert 0 <= score_weighted <= 1
+
+
+def test_overlay_dx_score_sample_weight():
+    """Test overlay_dx_score with sample weights."""
+    y_true = np.array([1, 2, 3, 4, 5])
+    y_pred = np.array([1.5, 2.5, 3.5, 4.5, 5.5])
+
+    # Without weights
+    score_no_weight = overlay_dx_score(y_true, y_pred)
+
+    # With uniform weights (should give same result)
+    weights = np.ones(5)
+    score_uniform_weight = overlay_dx_score(y_true, y_pred, sample_weight=weights)
+    assert score_no_weight == pytest.approx(score_uniform_weight)
+
+    # With different weights
+    weights = np.array([0.1, 0.1, 0.1, 0.1, 0.6])  # Emphasize last sample
+    score_weighted = overlay_dx_score(y_true, y_pred, sample_weight=weights)
+    assert isinstance(score_weighted, (float, np.floating))
+    assert 0 <= score_weighted <= 1
+
+
+def test_overlay_dx_score_edge_cases():
+    """Test overlay_dx_score with edge cases."""
+    # Constant target values
+    y_true = np.array([5, 5, 5, 5])
+    y_pred = np.array([5, 5, 5, 5])
+    score = overlay_dx_score(y_true, y_pred)
+    assert score == pytest.approx(1.0)
+
+    # Constant target, different prediction
+    y_pred = np.array([6, 6, 6, 6])
+    score = overlay_dx_score(y_true, y_pred)
+    assert score == pytest.approx(0.0)
+
+    # Single sample
+    y_true = np.array([1])
+    y_pred = np.array([1])
+    score = overlay_dx_score(y_true, y_pred)
+    assert isinstance(score, (float, np.floating))
+    assert 0 <= score <= 1
+
+
+def test_overlay_dx_score_parameters():
+    """Test overlay_dx_score with different parameter values."""
+    y_true = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    y_pred = y_true + 0.5
+
+    # Default parameters
+    score_default = overlay_dx_score(y_true, y_pred)
+
+    # Smaller max_percentage
+    score_small_max = overlay_dx_score(y_true, y_pred, max_percentage=50.0)
+    assert 0 <= score_small_max <= 1
+
+    # Different step size
+    score_diff_step = overlay_dx_score(y_true, y_pred, step=0.5)
+    assert 0 <= score_diff_step <= 1
+
+    # Custom min_percentage
+    score_custom_min = overlay_dx_score(y_true, y_pred, min_percentage=1.0, step=1.0)
+    assert 0 <= score_custom_min <= 1
+
+
+def test_overlay_dx_score_range():
+    """Test that overlay_dx_score returns values in [0, 1]."""
+    rng = np.random.RandomState(42)
+    n_samples = 50
+    y_true = rng.randn(n_samples) * 10 + 5
+    y_pred = y_true + rng.randn(n_samples) * 2
+
+    score = overlay_dx_score(y_true, y_pred)
+    assert 0 <= score <= 1
+
+    # Test with various error levels
+    for error_scale in [0.1, 0.5, 1.0, 2.0, 5.0]:
+        y_pred_test = y_true + rng.randn(n_samples) * error_scale
+        score_test = overlay_dx_score(y_true, y_pred_test)
+        assert 0 <= score_test <= 1
+
+
+def test_overlay_dx_score_integration():
+    """Test overlay_dx_score integration with make_scorer and GridSearchCV."""
+    from sklearn.linear_model import Ridge
+    from sklearn.model_selection import GridSearchCV
+
+    X = np.array([[1], [2], [3], [4], [5]])
+    y = np.array([2.5, 3.0, 3.5, 4.0, 4.5])
+
+    # Create scorer
+    scorer = make_scorer(overlay_dx_score)
+
+    # Use in GridSearchCV
+    param_grid = {"alpha": [0.1, 1.0, 10.0]}
+    grid = GridSearchCV(Ridge(), param_grid=param_grid, scoring=scorer, cv=2)
+    grid.fit(X, y)
+
+    assert "alpha" in grid.best_params_
+    assert grid.best_score_ >= 0
+    assert grid.best_score_ <= 1
+
+
+def test_overlay_dx_score_cross_val():
+    """Test overlay_dx_score with cross_val_score."""
+    from sklearn.linear_model import LinearRegression
+    from sklearn.model_selection import cross_val_score
+
+    X = np.array([[1], [2], [3], [4], [5], [6], [7], [8]])
+    y = np.array([2, 3, 4, 5, 6, 7, 8, 9])
+
+    scorer = make_scorer(overlay_dx_score)
+    scores = cross_val_score(LinearRegression(), X, y, scoring=scorer, cv=3)
+
+    assert len(scores) == 3
+    assert all(0 <= s <= 1 for s in scores)

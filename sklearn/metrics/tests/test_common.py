@@ -46,6 +46,7 @@ from sklearn.metrics import (
     median_absolute_error,
     multilabel_confusion_matrix,
     ndcg_score,
+    overlay_dx_score,
     precision_recall_curve,
     precision_score,
     r2_score,
@@ -147,6 +148,7 @@ REGRESSION_METRICS = {
     "d2_tweedie_score": partial(d2_tweedie_score, power=1.4),
     "d2_pinball_score": d2_pinball_score,
     "d2_absolute_error_score": d2_absolute_error_score,
+    "overlay_dx_score": overlay_dx_score,
 }
 
 CLASSIFICATION_METRICS = {

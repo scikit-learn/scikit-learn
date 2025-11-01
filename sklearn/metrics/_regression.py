@@ -53,6 +53,7 @@ __ALL__ = [
     "d2_tweedie_score",
     "d2_pinball_score",
     "d2_absolute_error_score",
+    "overlay_dx_score",
 ]
 
 
@@ -1959,3 +1960,248 @@ def d2_absolute_error_score(
     return d2_pinball_score(
         y_true, y_pred, sample_weight=sample_weight, alpha=0.5, multioutput=multioutput
     )
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [
+            StrOptions({"raw_values", "uniform_average"}),
+            "array-like",
+        ],
+        "max_percentage": [Interval(Real, 0, None, closed="left")],
+        "min_percentage": [Interval(Real, 0, None, closed="left")],
+        "step": [Interval(Real, 0, None, closed="left")],
+    },
+    prefer_skip_nested_validation=True,
+)
+def overlay_dx_score(
+    y_true,
+    y_pred,
+    *,
+    sample_weight=None,
+    multioutput="uniform_average",
+    max_percentage=100.0,
+    min_percentage=0.1,
+    step=0.1,
+):
+    """Overlay DX metric for evaluating regression predictions.
+
+    Measures alignment by computing area under curve showing percentage
+    of predictions within tolerance intervals of varying sizes. This metric
+    is particularly useful for time series forecasting evaluation where visual
+    alignment matters more than absolute error, and it is less sensitive to
+    outliers than MSE/RMSE.
+
+    Best possible score is 1.0, lower values indicate worse alignment.
+
+    Read more in the :ref:`User Guide <overlay_dx_score>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Estimated target values.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines aggregating of multiple output values.
+        Array-like value defines weights used to average scores.
+
+        'raw_values' :
+            Returns a full set of scores in case of multioutput input.
+
+        'uniform_average' :
+            Scores of all outputs are averaged with uniform weight.
+
+    max_percentage : float, default=100.0
+        Maximum percentage of data range to use for tolerance intervals.
+        Tolerance intervals are defined as percentages of the data range.
+
+    min_percentage : float, default=0.1
+        Minimum percentage of data range to use for tolerance intervals.
+
+    step : float, default=0.1
+        Step size for generating tolerance levels between min_percentage and
+        max_percentage.
+
+    Returns
+    -------
+    score : float or ndarray of floats
+        The overlay DX score between 0 and 1 (higher is better),
+        or ndarray of scores if 'multioutput' is 'raw_values'.
+
+    Notes
+    -----
+    The overlay DX metric calculates the area under a curve that shows the
+    percentage of predictions falling within tolerance intervals of different
+    sizes. The score is normalized by the maximum possible area to yield a
+    value between 0 and 1.
+
+    When all target values are constant (zero range), the function returns 1.0
+    if predictions match the constant value, otherwise 0.0.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import overlay_dx_score
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> overlay_dx_score(y_true, y_pred)
+    0.772...
+
+    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+    >>> overlay_dx_score(y_true, y_pred, multioutput='uniform_average')
+    0.689...
+
+    >>> overlay_dx_score(y_true, y_pred, multioutput='raw_values')
+    array([0.8125    , 0.57142857])
+
+    >>> # Perfect predictions
+    >>> overlay_dx_score([1, 2, 3], [1, 2, 3])
+    1.0
+
+    Creating a scorer object for use with model selection:
+
+    >>> from sklearn.metrics import make_scorer
+    >>> from sklearn.model_selection import GridSearchCV
+    >>> from sklearn.linear_model import Ridge
+    >>> import numpy as np
+    >>> X = np.array([[1], [2], [3], [4]])
+    >>> y = np.array([2.5, 0.0, 2, 8])
+    >>> overlay_scorer = make_scorer(overlay_dx_score)
+    >>> grid = GridSearchCV(
+    ...     Ridge(),
+    ...     param_grid={"alpha": [0.1, 1.0, 10.0]},
+    ...     scoring=overlay_scorer,
+    ...     cv=2,
+    ... ).fit(X, y)
+    >>> grid.best_params_
+    {'alpha': 0.1}
+    """
+    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
+
+    _, y_true, y_pred, sample_weight, multioutput = (
+        _check_reg_targets_with_floating_dtype(
+            y_true, y_pred, sample_weight, multioutput, xp=xp
+        )
+    )
+
+    n_samples, n_outputs = y_true.shape
+
+    # Handle empty input
+    if n_samples == 0:
+        if isinstance(multioutput, str) and multioutput == "raw_values":
+            return xp.zeros(n_outputs)
+        return 0.0
+
+    # Generate tolerance levels (percentages)
+    # Use numpy for generating the percentage array
+    percentages = np.arange(max_percentage, min_percentage - step, -step)
+    if len(percentages) == 0:
+        percentages = np.array([max_percentage])
+
+    # Compute scores for each output
+    output_scores = np.zeros(n_outputs)
+
+    for output_idx in range(n_outputs):
+        y_true_out = y_true[:, output_idx]
+        y_pred_out = y_pred[:, output_idx]
+
+        # Compute data range for this output
+        value_range = float(xp.max(y_true_out)) - float(xp.min(y_true_out))
+
+        # Handle constant target values (zero range)
+        if value_range == 0:
+            # Check if predictions match the constant value
+            if sample_weight is None:
+                matches = bool(xp.all(y_pred_out == y_true_out[0]))
+            else:
+                # Weighted check: all non-zero weighted predictions should match
+                weights = sample_weight
+                if hasattr(xp, "asnumpy"):
+                    weights = xp.asnumpy(weights)
+                else:
+                    weights = np.asarray(weights)
+                # Check if all weighted samples match (ignoring zero weights)
+                mask = weights != 0
+                if xp.sum(xp.asarray(mask)) == 0:
+                    # All weights are zero
+                    matches = True
+                else:
+                    pred_matches = y_pred_out == y_true_out[0]
+                    if hasattr(xp, "asnumpy"):
+                        pred_matches = xp.asnumpy(pred_matches)
+                    else:
+                        pred_matches = np.asarray(pred_matches)
+                    matches = bool(np.all(~mask | pred_matches))
+            output_scores[output_idx] = 1.0 if matches else 0.0
+            continue
+
+        # Calculate overlay percentages for each tolerance level
+        overlay_pct_values = []
+        for pct in percentages:
+            # Calculate tolerance width as percentage of range
+            tolerance = float(pct) / 100.0 * value_range / 2.0
+
+            # Compute absolute differences
+            abs_diff = xp.abs(y_pred_out - y_true_out)
+
+            # Count predictions within tolerance (weighted if sample_weight provided)
+            if sample_weight is None:
+                within_tolerance = abs_diff <= tolerance
+                n_within = float(xp.sum(xp.asarray(within_tolerance, dtype=xp.float64)))
+                overlay_pct = (n_within / n_samples) * 100.0
+            else:
+                # Weighted overlay calculation
+                weights = sample_weight
+                within_tolerance = abs_diff <= tolerance
+                # Convert boolean to numeric for weighted sum
+                within_mask = xp.where(
+                    within_tolerance,
+                    xp.asarray(1.0, dtype=xp.float64),
+                    xp.asarray(0.0, dtype=xp.float64),
+                )
+                weighted_sum = float(_average(within_mask, weights=weights, xp=xp))
+                overlay_pct = weighted_sum * 100.0
+
+            overlay_pct_values.append(float(overlay_pct))
+
+        # Compute area under the curve using trapezoidal rule
+        # percentages are in descending order (max to min)
+        # dx is the step size in percentage units
+        dx = step
+        area = float(np.trapz(overlay_pct_values, dx=dx))
+
+        # Normalize by maximum possible area
+        max_area = max_percentage * 100.0
+        score = area / max_area if max_area > 0 else 0.0
+
+        # Clamp to [0, 1] range
+        output_scores[output_idx] = max(0.0, min(1.0, score))
+
+    # Handle multioutput aggregation
+    if isinstance(multioutput, str):
+        if multioutput == "raw_values":
+            # Return array using the appropriate namespace
+            result = (
+                xp.asarray(output_scores) if hasattr(xp, "asarray") else output_scores
+            )
+            if n_outputs == 1:
+                return result[0]
+            return result
+        else:  # multioutput == "uniform_average"
+            avg_weights = None
+    else:
+        avg_weights = multioutput
+
+    # Average across outputs
+    mean_score = float(np.average(output_scores, weights=avg_weights))
+    return mean_score
