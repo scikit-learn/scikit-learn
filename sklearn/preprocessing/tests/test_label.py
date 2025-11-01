@@ -253,9 +253,9 @@ def test_label_binarizer_array_api_compliance(
     with config_context(array_api_dispatch=True):
         y = xp.asarray(y, device=device_)
 
-        # `sparse_output=True` is not allowed for non-NumPy namespace.
-        # Similarly, if `LabelBinarizer` is fitted on sparse matrix,
-        # then inverse-transforming non-NumPy array is not allowed.
+        # `sparse_output=True` is not allowed for non-NumPy namespaces.
+        # Similarly, if `LabelBinarizer` is fitted on a sparse matrix,
+        # then inverse-transforming non-NumPy arrays is not allowed.
         if not _is_numpy_namespace(xp):
             with pytest.raises(ValueError):
                 LabelBinarizer(sparse_output=True).fit(y)
