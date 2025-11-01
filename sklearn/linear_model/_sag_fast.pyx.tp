@@ -58,6 +58,7 @@ def sag{{name_suffix}}(
     SequentialDataset{{name_suffix}} dataset,
     {{c_type}}[:, ::1] weights_array,
     {{c_type}}[::1] intercept_array,
+    {{c_type}}[:, ::1] sample_weight,
     int n_samples,
     int n_features,
     int n_classes,
@@ -125,7 +126,7 @@ def sag{{name_suffix}}(
     # the label value for current sample
     cdef {{c_type}} y
     # the sample weight
-    cdef {{c_type}} sample_weight
+    # cdef {{c_type}} sample_weight
 
     # helper variable for indexes
     cdef int f_idx, s_idx, feature_ind, class_ind, j
@@ -235,12 +236,13 @@ def sag{{name_suffix}}(
                 # update the number of samples seen and the seen array
                 if seen_init[sample_ind] == 0:
                     num_seen += 1
-                    seen_init[sample_ind] = 1
+                    seen_init[sample_ind] = sample_weight[sample_ind]
 
                 # make the weight updates (just-in-time gradient step, and prox operator)
                 if sample_itr > 0:
                    status = lagged_update{{name_suffix}}(
                        weights=weights,
+                       sample_weight=sample_weight,
                        wscale=wscale,
                        xnnz=xnnz,
                        n_samples=n_samples,

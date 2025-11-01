@@ -10,7 +10,7 @@ import pytest
 from sklearn.base import clone
 from sklearn.datasets import load_iris, make_blobs, make_classification
 from sklearn.linear_model import LogisticRegression, Ridge
-from sklearn.linear_model._sag import get_auto_step_size
+from sklearn.linear_model._sag import get_auto_step_size, sag_solver
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import check_random_state, compute_class_weight
@@ -902,7 +902,7 @@ def test_sag_classifier_raises_error(solver):
         clf.fit(X, y)
 
 
-@pytest.mark.parametrize("solver", [sag, sag_sparse])
+@pytest.mark.parametrize("solver", [sag, sag_sparse, sag_solver])
 @pytest.mark.parametrize("decay", [True, False])
 @pytest.mark.parametrize("saga", [True, False])
 @pytest.mark.parametrize("fit_intercept", [True, False])
@@ -932,27 +932,43 @@ def test_sag_weighted_classification_convergence(solver, decay, saga, fit_interc
     true_intercept = est.intercept_
 
     y = 2 * y - 1
-    sag_kwargs = dict(
-        dloss=log_dloss,
-        max_iter=max_iter,
-        sparse=decay,
-        tol=tol,
-        fit_intercept=fit_intercept,
-        saga=saga,
-    )
 
-    step_size = get_step_size(
-        X, alpha, fit_intercept, classification=True, sample_weight=sample_weights
-    )
+    if solver != sag_solver:
+        sag_kwargs = dict(
+            dloss=log_dloss,
+            max_iter=max_iter,
+            sparse=decay,
+            tol=tol,
+            fit_intercept=fit_intercept,
+            saga=saga,
+        )
 
-    weights, intercept, n_iter = solver(
-        X, y, step_size, alpha, sample_weight=sample_weights, **sag_kwargs
-    )
+        step_size = get_step_size(
+            X, alpha, fit_intercept, classification=True, sample_weight=sample_weights
+        )
+
+        weights, intercept, n_iter = solver(
+            X, y, step_size, alpha, sample_weight=sample_weights, **sag_kwargs
+        )
+    else:
+        sag_kwargs = dict(
+            loss="log",
+            max_iter=max_iter,
+            tol=tol,
+            fit_intercept=fit_intercept,
+            is_saga=saga,
+        )
+        weights, n_iter, warm_start_mem = solver(
+            X, y, sample_weights, alpha, **sag_kwargs
+        )
+        intercept = weights[-1]
+        weights = weights[:-1]
+
     assert_allclose(weights, true_weights)
     assert_allclose(intercept, true_intercept)
 
 
-@pytest.mark.parametrize("solver", [sag, sag_sparse])
+@pytest.mark.parametrize("solver", [sag, sag_sparse, sag_solver])
 @pytest.mark.parametrize("decay", [True, False])
 @pytest.mark.parametrize("saga", [True, False])
 @pytest.mark.parametrize("fit_intercept", [True, False])
@@ -983,19 +999,33 @@ def test_sag_weighted_regression_convergence(solver, decay, saga, fit_intercept)
     true_weights = est.coef_.ravel()
     true_intercept = est.intercept_
 
-    sag_kwargs = dict(
-        dloss=squared_dloss,
-        max_iter=max_iter,
-        sparse=decay,
-        tol=tol,
-        fit_intercept=fit_intercept,
-        saga=saga,
-    )
-    step_size = get_step_size(
-        X, alpha, fit_intercept, classification=False, sample_weight=sample_weights
-    )
-    weights, intercept, n_iter = solver(
-        X, y, step_size, alpha, sample_weight=sample_weights, **sag_kwargs
-    )
+    if solver != sag_solver:
+        sag_kwargs = dict(
+            dloss=squared_dloss,
+            max_iter=max_iter,
+            sparse=decay,
+            tol=tol,
+            fit_intercept=fit_intercept,
+            saga=saga,
+        )
+        step_size = get_step_size(
+            X, alpha, fit_intercept, classification=False, sample_weight=sample_weights
+        )
+        weights, intercept, n_iter = solver(
+            X, y, step_size, alpha, sample_weight=sample_weights, **sag_kwargs
+        )
+    else:
+        sag_kwargs = dict(
+            loss="squared",
+            max_iter=max_iter,
+            tol=tol,
+            fit_intercept=fit_intercept,
+            is_saga=saga,
+        )
+        weights, n_iter, warm_start_mem = solver(
+            X, y, sample_weights, alpha, **sag_kwargs
+        )
+        intercept = weights[-1]
+        weights = weights[:-1]
     assert_allclose(weights, true_weights, atol=1e-10)
     assert_allclose(intercept, true_intercept)
