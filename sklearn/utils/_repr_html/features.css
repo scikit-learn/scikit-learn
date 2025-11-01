@@ -1,0 +1,120 @@
+.features {
+  font-family: monospace;
+  cursor: pointer;
+  background-color: var(--sklearn-color-unfitted-level-0);
+  border: 1px dotted var(--sklearn-color-border-box);
+  border-radius: .20em;
+  margin-bottom: 0.5em;
+  display: flex;
+  align-items: first baseline;
+  justify-content: center;
+}
+
+.features.fitted {
+  background-color: var(--sklearn-color-fitted-level-0);
+}
+
+.features summary {
+  position: sticky;
+  top: 0;
+  padding: .25em .5em;
+  border: none;
+  border-radius: .20em 0 0 .20em;
+}
+
+.features summary::marker {
+  font-size: 0.8em;
+  color: var(--sklearn-color-icon);
+}
+
+.features details[open] > summary {
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-unfitted-level-2);
+  border-radius: .20em 0 0 0;
+}
+
+.features.fitted details[open] > summary {
+  background-color: var(--sklearn-color-fitted-level-2);
+  border-radius: .20em 0 0 0;
+}
+
+.features details[open] ~ .image-container {
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+.features.fitted details[open] ~ .image-container {
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
+.features details:hover > summary {
+  margin: 0;
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+.features details:hover ~ .image-container {
+  margin: 0;
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+.features.fitted details:hover ~ .image-container {
+  margin: 0;
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
+.features.fitted details:hover > summary {
+  margin: 0;
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
+.features .features-container {
+  max-width: 15em;
+  max-height: 10em;
+  overflow: auto;
+  scrollbar-width: thin;
+  padding: .25em .5em;
+  background-color: var(--sklearn-color-unfitted-level-0);
+  border-radius: 0 0 .5em .5em;
+}
+
+.features.fitted .features-container {
+  background-color: var(--sklearn-color-fitted-level-0);
+}
+
+.features .image-container {
+  margin: 0;
+  padding: .25em .5em;
+}
+
+.features .copy-paste-icon {
+  background-size: 10px 10px;
+  width: 10px;
+  height: 10px;
+  filter: grayscale(100%) opacity(60%);
+}
+
+.features .image-container:hover {
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+.features.fitted .image-container:hover {
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
+.features:has(.image-container:hover) summary {
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+.features.fitted:has(.image-container:hover) summary {
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
+.features .features-container table {
+    width: 95%;
+    margin: 0;
+}
+
+.features .features-container table td {
+  text-align: left;
+  padding: 0;
+  white-space: nowrap;
+  color: var(--sklearn-color-text);
+}
