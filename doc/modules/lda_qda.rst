@@ -172,12 +172,13 @@ small compared to the number of features.
 In this scenario, the empirical sample covariance is a poor
 estimator, and shrinkage helps improving the generalization performance of
 the classifier.
-Shrinkage LDA can be used by setting the ``shrinkage`` parameter of
-the :class:`~discriminant_analysis.LinearDiscriminantAnalysis` class to `'auto'`.
+Shrinkage can be used with LDA (or QDA) by setting the ``shrinkage`` parameter of
+the :class:`~discriminant_analysis.LinearDiscriminantAnalysis` class
+(or :class:`~discriminant_analysis.QuadraticDiscriminantAnalysis`) to `'auto'`.
 This automatically determines the optimal shrinkage parameter in an analytic
 way following the lemma introduced by Ledoit and Wolf [2]_. Note that
 currently shrinkage only works when setting the ``solver`` parameter to `'lsqr'`
-or `'eigen'`.
+or `'eigen'` (only `'eigen'` is implemented for QDA).
 
 The ``shrinkage`` parameter can also be manually set between 0 and 1. In
 particular, a value of 0 corresponds to no shrinkage (which means the empirical
@@ -192,14 +193,15 @@ best choice. For example if the distribution of the data
 is normally distributed, the
 Oracle Approximating Shrinkage estimator :class:`sklearn.covariance.OAS`
 yields a smaller Mean Squared Error than the one given by Ledoit and Wolf's
-formula used with `shrinkage="auto"`. In LDA, the data are assumed to be gaussian
-conditionally to the class. If these assumptions hold, using LDA with
+formula used with `shrinkage="auto"`. In LDA and QDA, the data are assumed to be gaussian
+conditionally to the class. If these assumptions hold, using LDA and QDA with
 the OAS estimator of covariance will yield a better classification
 accuracy than if Ledoit and Wolf or the empirical covariance estimator is used.
 
 The covariance estimator can be chosen using the ``covariance_estimator``
 parameter of the :class:`discriminant_analysis.LinearDiscriminantAnalysis`
-class. A covariance estimator should have a :term:`fit` method and a
+and :class:`discriminant_analysis.QuadraticDiscriminantAnalysis` classes.
+A covariance estimator should have a :term:`fit` method and a
 ``covariance_`` attribute like all covariance estimators in the
 :mod:`sklearn.covariance` module.
 
@@ -223,8 +225,7 @@ class priors :math:`P(y=k)`, the class means :math:`\mu_k`, and the
 covariance matrices.
 
 The 'svd' solver is the default solver used for
-:class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`, and it is
-the only available solver for
+:class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis` and
 :class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`.
 It can perform both classification and transform (for LDA).
 As it does not rely on the calculation of the covariance matrix, the 'svd'
@@ -247,9 +248,14 @@ This solver computes the coefficients
 \mu_k`, thus avoiding the explicit computation of the inverse
 :math:`\Sigma^{-1}`.
 
-The `'eigen'` solver is based on the optimization of the between class scatter to
+The `'eigen'` solver for :class:`~discriminant_analysis.LinearDiscriminantAnalysis`
+is based on the optimization of the between class scatter to
 within class scatter ratio. It can be used for both classification and
-transform, and it supports shrinkage. However, the `'eigen'` solver needs to
+transform, and it supports shrinkage.
+For :class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`,
+the `'eigen'` solver is based on computing the eigenvalues and eigenvectors of each
+class covariance matrix. It allows using shrinkage for classification.
+However, the `'eigen'` solver needs to
 compute the covariance matrix, so it might not be suitable for situations with
 a high number of features.
 
