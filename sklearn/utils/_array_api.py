@@ -517,8 +517,9 @@ def move_to(*arrays, xp, device):
 
     Returns
     -------
-    arrays : list
-        Arrays with the same namespace and device as reference.
+    arrays : tuple or array
+        Tuple of arrays with the same namespace and device as reference. Single array
+        returned if only one `arrays` input.
     """
     sparse_mask = [sp.issparse(array) for array in arrays]
     none_mask = [array is None for array in arrays]
@@ -567,7 +568,9 @@ def move_to(*arrays, xp, device):
                         array_converted = xp.asarray(array_np, device=device)
                 converted_arrays.append(array_converted)
 
-    return tuple(converted_arrays)
+    return (
+        converted_arrays[0] if len(converted_arrays) == 1 else tuple(converted_arrays)
+    )
 
 
 def _expit(X, xp=None):

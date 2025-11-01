@@ -121,7 +121,7 @@ def test_move_to_array_api_conversions_cupy_to_torch():
 
         array_cupy = xp_cupy.asarray([1, 2, 3], device=None)
 
-        (array_out,) = move_to(array_cupy, xp=xp_torch, device=device_torch)
+        array_out = move_to(array_cupy, xp=xp_torch, device=device_torch)
         assert get_namespace(array_out)[0] == xp_torch
         assert device(array_out) == device_torch
 
@@ -135,7 +135,7 @@ def test_move_to_array_api_conversions_numpy_to_torch_cuda():
 
         array_np = numpy.asarray([1, 2, 3], device=None)
 
-        (array_out,) = move_to(array_np, xp=xp_torch, device=device_torch)
+        array_out = move_to(array_np, xp=xp_torch, device=device_torch)
 
         assert get_namespace(array_out)[0] == xp_torch
         assert device(array_out) == device_torch
@@ -150,7 +150,7 @@ def test_move_to_array_api_conversions_numpy_to_torch_mps():
 
         array_np = numpy.asarray([1, 2, 3], device=None)
 
-        (array_out,) = move_to(array_np, xp=xp_torch, device=device_torch)
+        array_out = move_to(array_np, xp=xp_torch, device=device_torch)
 
         assert get_namespace(array_out)[0] == xp_torch
         assert device(array_out) == device_torch
@@ -178,7 +178,7 @@ def test_move_to_array_api_conversions_strict_tor_torch():
             [1, 2, 3], device=array_api_strict.Device("CPU_DEVICE")
         )
 
-        (array_1_out,) = move_to(array_strict, xp=xp_torch, device=device_torch)
+        array_1_out = move_to(array_strict, xp=xp_torch, device=device_torch)
 
         assert get_namespace(array_1_out)[0] == xp_torch
         assert device(array_1_out) == device_torch
