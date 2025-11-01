@@ -311,7 +311,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
 
         if self.sparse_output and not _is_numpy_namespace(get_namespace(y)[0]):
             raise ValueError(
-                "`sparse_output=True` is not supported for Array API "
+                "`sparse_output=True` is not supported for array API "
                 "namespace {xp.__name__}. "
                 "Use `sparse_output=False` to return a dense array instead."
             )
@@ -375,7 +375,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
 
         if self.sparse_output and not _is_numpy_namespace(get_namespace(y)[0]):
             raise ValueError(
-                "`sparse_output=True` is not supported for Array API "
+                "`sparse_output=True` is not supported for array API "
                 "namespace {xp.__name__}. "
                 "Use `sparse_output=False` to return a dense array instead."
             )
@@ -579,7 +579,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
     if sparse_output and not _is_numpy_namespace(xp):
         raise ValueError(
-            "`sparse_output=True` is not supported for Array API "
+            "`sparse_output=True` is not supported for array API "
             "namespace {xp.__name__}. "
             "Use `sparse_output=False` to return a dense array instead."
         )
