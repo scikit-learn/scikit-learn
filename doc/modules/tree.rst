@@ -560,12 +560,23 @@ Regression criteria
 -------------------
 
 If the target is a continuous value, then for node :math:`m`, common
-criteria to minimize as for determining locations for future splits are Mean
-Squared Error (MSE or L2 error), Poisson deviance as well as Mean Absolute
-Error (MAE or L1 error). MSE and Poisson deviance both set the predicted value
-of terminal nodes to the learned mean value :math:`\bar{y}_m` of the node
-whereas the MAE sets the predicted value of terminal nodes to the median
-:math:`median(y)_m`.
+criteria used to score candidate splits are Mean Squared Error (MSE or
+L2 error), Friedman MSE, Poisson deviance, as well as Mean Absolute
+Error (MAE or L1 error). MSE, Friedman MSE, and Poisson deviance all
+set the predicted value of terminal nodes to the learned mean value
+:math:`\bar{y}_m` of the node, whereas the MAE sets the predicted value
+of terminal nodes to the median :math:`median(y)_m`.
+
+Friedman MSE (``criterion="friedman_mse"``) is a variance-reduction
+criterion that evaluates a split using the improvement in squared error
+between the parent node and its children, rather than only the raw MSE
+of the children. It was originally proposed for gradient boosting
+regression trees and is the default in
+:class:`~sklearn.ensemble.GradientBoostingRegressor` and
+:class:`~sklearn.ensemble.HistGradientBoostingRegressor`. In practice it
+often yields better split decisions for additive ensembles. For
+standalone decision trees and random forests it typically behaves
+similarly to ``"squared_error"``.
 
 Mean Squared Error:
 
