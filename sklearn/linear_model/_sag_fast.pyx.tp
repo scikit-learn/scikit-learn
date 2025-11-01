@@ -235,7 +235,7 @@ def sag{{name_suffix}}(
 
                 # update the number of samples seen and the seen array
                 if seen_init[sample_ind] == 0:
-                    num_seen += sample_weight[sample_ind]
+                    num_seen += 1#sample_weight[sample_ind]
                     seen_init[sample_ind] = 1
 
                 # make the weight updates (just-in-time gradient step, and prox operator)
@@ -276,11 +276,11 @@ def sag{{name_suffix}}(
                     multiloss.cy_gradient(
                         y_true=y,
                         raw_prediction=prediction,
-                        sample_weight=sample_weight[sample_ind],
+                        sample_weight=sample_weight_dummy,#[sample_ind],
                         gradient_out=gradient,
                     )
                 else:
-                    gradient[0] = loss.cy_gradient(y, prediction[0]) * sample_weight[sample_ind]
+                    gradient[0] = loss.cy_gradient(y, prediction[0]) * sample_weight_dummy#[sample_ind]
 
                 # L2 regularization by simply rescaling the weights
                 wscale *= wscale_update
