@@ -618,8 +618,9 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         # pick out the known labels from y
         y_in_classes = _isin(y, classes, xp)
         y_seen = y[y_in_classes]
-        y_in_classes = xp.astype(_isin(y, classes, xp), int_dtype_)
         indices = xp.searchsorted(sorted_class, y_seen)
+        # cast `y_in_classes`` to integer dtype for `xp.cumulative_sum`
+        y_in_classes = xp.astype(y_in_classes, int_dtype_)
         indptr = xp.concat(
             (
                 xp.asarray([0], device=device_),
