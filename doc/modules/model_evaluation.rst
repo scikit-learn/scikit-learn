@@ -63,7 +63,7 @@ The most common decisions are done on binary classification tasks, where the res
 probability of rain a decision is made on how to act (whether to take mitigating
 measures like an umbrella or not).
 For classifiers, this is what :term:`predict` returns.
-See also :ref:`TunedThresholdClassifierCV`.
+See also :ref:`threshold_tunning`.
 There are many scoring functions which measure different aspects of such a
 decision, most of them are covered with or derived from the
 :func:`metrics.confusion_matrix`.

@@ -75,6 +75,7 @@ from sklearn.utils._param_validation import (
     validate_params,
 )
 from sklearn.utils._response import _get_response_values
+from sklearn.utils._unique import cached_unique
 from sklearn.utils.metadata_routing import (
     MetadataRequest,
     MetadataRouter,
@@ -1021,23 +1022,26 @@ class _CurveScorer(_BaseScorer):
         `score_func(y_true, y_pred, **kwargs)`.
 
     sign : int
-        Either 1 or -1 to returns the score with `sign * score_func(estimator, X, y)`.
-        Thus, `sign` defined if higher scores are better or worse.
+        Either 1 or -1. Score is returned as `sign * score_func(estimator, X, y)`.
+        Thus, `sign` defines whether higher scores are better or worse.
 
     kwargs : dict
         Additional parameters to pass to the score function.
 
-    thresholds : int or array-like
-        Related to the number of decision thresholds for which we want to compute the
-        score. If an integer, it will be used to generate `thresholds` thresholds
-        uniformly distributed between the minimum and maximum predicted scores. If an
-        array-like, it will be used as the thresholds.
+    thresholds : int or array-like or None
+        Specifies number of decision thresholds to compute score for.
 
-    response_method : str
+        * if an integer, it will be used to generate `thresholds` thresholds uniformly
+          distributed between the minimum and maximum of `y_score`
+        * if an array-like, it will be used as the thresholds
+        * if None, a threshold will be set for each unique `y_score`
+
+    response_method : str, default=None
         The method to call on the estimator to get the response values.
+        If set to `None`, the `_scores_from_estimator` method cannot be used.
     """
 
-    def __init__(self, score_func, sign, kwargs, thresholds, response_method):
+    def __init__(self, score_func, sign, kwargs, thresholds, response_method=None):
         super().__init__(
             score_func=score_func,
             sign=sign,
@@ -1060,8 +1064,82 @@ class _CurveScorer(_BaseScorer):
         instance._metadata_request = scorer._get_metadata_request()
         return instance
 
+    def _scores_from_predictions(
+        self,
+        y_true,
+        y_score,
+        classes=None,
+        **kwargs,
+    ):
+        """Computes scores per threshold, given continuous response and true labels.
+
+        Parameters
+        ----------
+        y_true : array-like of shape (n_samples,)
+            Ground truth (correct) target labels.
+
+        y_score : array-like of shape (n_samples,)
+            Continuous response scores.
+
+        classes: array-like, default=None
+            Class labels. If `None`, inferred from `y_true`.
+
+        **kwargs : dict
+            Parameters to pass to `self.score_func`.
+
+        Returns
+        -------
+        score_thresholds : ndarray of shape (thresholds,)
+            The scores associated with each threshold.
+
+        thresholds : ndarray of shape (thresholds,)
+            The thresholds used to compute the scores.
+        """
+        # This could also be done in `decision_threshold_curve`, not sure which
+        # is better
+        y_true_unique = cached_unique(y_true)
+        if classes is None:
+            classes = y_true_unique
+        # not sure if this separate error msg needed.
+        # there is the possibility that set(classes) != set(y_true_unique) fails
+        # because `y_true` only contains one class.
+        if len(y_true_unique) == 1:
+            raise ValueError("`y_true` only contains one class label.")
+        if set(classes) != set(y_true_unique):
+            raise ValueError(
+                f"`classes` ({classes}) is not equal to the unique values found in "
+                f"`y_true` ({y_true_unique})."
+            )
+
+        if self._thresholds is None:
+            desc_score_indices = np.argsort(y_score, stable=True)[::-1]
+            y_score = y_score[desc_score_indices]
+            distinct_value_indices = np.nonzero(np.diff(y_score))[0]
+            potential_thresholds = np.concat(
+                [distinct_value_indices, np.asarray([y_true.shape[0] - 1])]
+            )
+        elif isinstance(self._thresholds, Integral):
+            potential_thresholds = np.linspace(
+                np.min(y_score), np.max(y_score), self._thresholds
+            )
+        else:
+            potential_thresholds = np.asarray(self._thresholds)
+
+        score_thresholds = [
+            self._sign
+            * self._score_func(
+                y_true,
+                _threshold_scores_to_class_labels(
+                    y_score, th, classes, self._get_pos_label()
+                ),
+                **{**self._kwargs, **kwargs},
+            )
+            for th in potential_thresholds
+        ]
+        return np.array(score_thresholds), potential_thresholds
+
     def _score(self, method_caller, estimator, X, y_true, **kwargs):
-        """Evaluate predicted target values for X relative to y_true.
+        """Computes scores per threshold, given estimator, X and true labels.
 
         Parameters
         ----------
@@ -1090,27 +1168,21 @@ class _CurveScorer(_BaseScorer):
         potential_thresholds : ndarray of shape (thresholds,)
             The potential thresholds used to compute the scores.
         """
-        pos_label = self._get_pos_label()
+        if self._response_method is None:
+            raise ValueError(
+                "This method cannot be used when `_CurveScorer` initialized with "
+                "`response_method=None`"
+            )
+
         y_score = method_caller(
-            estimator, self._response_method, X, pos_label=pos_label
+            estimator, self._response_method, X, pos_label=self._get_pos_label()
         )
 
-        scoring_kwargs = {**self._kwargs, **kwargs}
-        if isinstance(self._thresholds, Integral):
-            potential_thresholds = np.linspace(
-                np.min(y_score), np.max(y_score), self._thresholds
-            )
-        else:
-            potential_thresholds = np.asarray(self._thresholds)
-        score_thresholds = [
-            self._sign
-            * self._score_func(
-                y_true,
-                _threshold_scores_to_class_labels(
-                    y_score, th, estimator.classes_, pos_label
-                ),
-                **scoring_kwargs,
-            )
-            for th in potential_thresholds
-        ]
-        return np.array(score_thresholds), potential_thresholds
+        # why 'potential' ?
+        score_thresholds, potential_thresholds = self._scores_from_predictions(
+            y_true,
+            y_score,
+            estimator.classes_,
+            **kwargs,
+        )
+        return score_thresholds, potential_thresholds
