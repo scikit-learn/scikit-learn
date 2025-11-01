@@ -1003,9 +1003,9 @@ of continuous attributes to one with only nominal attributes.
 
 One-hot encoded discretized features can make a model more expressive, while
 maintaining interpretability. For instance, pre-processing with a discretizer
-can introduce nonlinearity to linear models. For more advanced possibilities,
-in particular smooth ones, see :ref:`generating_polynomial_features` further
-below.
+can introduce nonlinearity to linear models. For more advanced possibilities, in
+particular smooth ones, see :ref:`generating_polynomial_features` or
+:ref:`generating_orthogonal_polynomial_features` further below.
 
 K-bins discretization
 ---------------------
@@ -1147,7 +1147,9 @@ Generating polynomial features
 Often it's useful to add complexity to a model by considering nonlinear
 features of the input data. We show two possibilities that are both based on
 polynomials: The first one uses pure polynomials, the second one uses splines,
-i.e. piecewise polynomials.
+i.e. piecewise polynomials. See also
+:ref:`generating_orthogonal_polynomial_features` for a similar approach based
+on orthogonal polynomials.
 
 .. _polynomial_features:
 
@@ -1277,6 +1279,146 @@ Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
     spline function procedures in R <10.1186/s12874-019-0666-3>`.
     BMC Med Res Methodol 19, 46 (2019).
 
+
+.. _generating_orthogonal_polynomial_features:
+
+Generating orthogonal polynomial features
+=========================================
+
+This transformer is an extension of the :class:`PolynomialFeatures` transformer
+outlined above. Instead of considering simple powers of the features, this
+transformer uses orthogonal polynomials to transform the features. Orthogonal
+polynomial features are used implicitly in
+:class:`~sklearn.polynomial_chaos.PolynomialChaosExpansion`\ s.
+
+Consider the sequence of *Legendre* orthogonal polynomials
+
+.. math::
+  P_0(x) &= 1 \\
+  P_1(x) &= x \\
+  P_2(x) &= \frac{1}{2}(3x^2 - 1) \\
+  P_3(x) &= \frac{1}{2}(5x^3 - 3x) \\
+  \vdots
+
+We can transform input features to higher-order orthogonal polynomials, including
+interaction terms, using :class:`OrthogonalPolynomialFeatures`::
+
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import OrthogonalPolynomialFeatures
+    >>> X = np.linspace(0, 1, num=6).reshape(3, 2)
+    >>> X
+    array([[0. , 0.2],
+           [0.4, 0.6],
+           [0.8, 1. ]])
+    >>> poly = OrthogonalPolynomialFeatures()
+    >>> poly.fit_transform(X)
+    array([[ 1.  ,  0.  , -0.5 ,  0.2 ,  0.  , -0.44],
+           [ 1.  ,  0.4 , -0.26,  0.6 ,  0.24,  0.04],
+           [ 1.  ,  0.8 ,  0.46,  1.  ,  0.8 ,  1.  ]])
+
+In this example, the features of :math:`X` have been transformed
+from :math:`(X_1, X_2)` to :math:`\{P_i(X_1)P_j(X_2)\}` where
+:math:`(i, j) \in \{(0, 0), (1, 0), (2, 0), (0, 1), (1, 1), (0, 2)\}`.
+
+By default, only polynomials for which the total degree is less than or equal to
+2 are considered. In some cases, it may be beneficial to include specific
+combinations of input features. These combinations of input features can be
+defined in two different ways: using predefined multiindex set shapes, or
+using custom multiindex sets.
+
+.. _predefined_multiindex_set_shapes:
+
+Predefined multiindex set shapes
+--------------------------------
+
+In a first approach, :class:`OrthogonalPolynomialFeatures` take a combination of
+a ``degree``, a ``truncation`` rule, and optional ``weights``.
+
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import OrthogonalPolynomialFeatures
+    >>> X = np.linspace(0, 1, num=6).reshape(3, 2)
+    >>> poly = OrthogonalPolynomialFeatures(degree=4, truncation="total_degree", weights=(1, 1/2))
+    >>> X_transformed = poly.fit_transform(X)
+    >>> a = np.zeros((5, 5), dtype=int)
+    >>> for m in poly.multiindices_:
+    ...     a[m[0], m[1]] = 1
+    ...
+    >>> for row in a[::-1]:
+    ...     for x in row:
+    ...             print("x" if x else " ", end=" ")
+    ...     print()
+    ...
+    x
+    x
+    x x
+    x x
+    x x x
+
+There are 4 different types of predefined multiindex set shapes:
+
+- `full_tensor`\ : the indices :math:`\boldsymbol{\ell} = \{\ell_j\}_{j=1}^d` in
+  this index set satisfy
+
+  .. math::
+      \frac{\ell_j}{w_j} < k
+
+  for :math:`1 < j < d`, where :math:`w_j` is the :math:`j`\ th weight and
+  :math:`k` is the degree of the index set.
+- `total_degree`\ : the indices :math:`\boldsymbol{\ell} = \{\ell_j\}_{j=1}^d` in
+  this index set satisfy
+
+    .. math::
+        \sum_{j=1}^d \frac{\ell_j}{w_j} < k
+
+    where :math:`w_j` is the :math:`j`\ th weight and :math:`k` is the degree of
+    the index set.
+- `hyperbolic_cross`\ : the indices :math:`\boldsymbol{\ell} =
+  \{\ell_j\}_{j=1}^d` in this index set satisfy
+
+    .. math::
+        \prod_{j=1}^d \left(\frac{\ell_j}{w_j} + 1\right) - 1 < k
+
+    where :math:`w_j` is the :math:`j`\ th weight and :math:`k` is the degree of
+    the index set.
+- `Zaremba_cross`\ : the indices :math:`\boldsymbol{\ell} = \{\ell_j\}_{j=1}^d`
+  in this index set satisfy
+
+    .. math::
+        \prod_{j=1}^d \max\left(\frac{\ell_j}{w_j}, 1\right) < k
+
+    where :math:`w_j` is the :math:`j`\ th weight and :math:`k` is the degree of
+    the index set.
+
+The weights allow us to select certain preferential features where higher-degree
+polynomials should be used. Below is an illustration of the (unweighted) multiindex set
+shapes for `degree=6`.
+
+.. figure:: ../auto_examples/polynomial_chaos/images/sphx_glr_plot_index_sets_002.png
+   :target: ../auto_examples/polynomial_chaos/plot_index_sets.html
+   :align: center
+   :scale: 100
+
+.. _custom_multiindex_sets:
+
+Custom multiindex sets
+----------------------
+
+In a second approach, :class:`OrthogonalPolynomialFeatures` accept a matrix
+with individual multiindices, one multiindex on every row.
+
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import OrthogonalPolynomialFeatures
+    >>> X = np.linspace(0, 1, num=6).reshape(3, 2)
+    >>> X
+    array([[0. , 0.2],
+           [0.4, 0.6],
+           [0.8, 1. ]])
+    >>> multiindices = np.array([[0, 0], [1, 0], [2, 0], [0, 1], [1, 1]], dtype=int)
+    >>> poly = OrthogonalPolynomialFeatures(multiindices=multiindices)
+    >>> poly.fit_transform(X)
+    array([[ 1.  ,  0.  , -0.5 ,  0.2 ,  0.  ],
+           [ 1.  ,  0.4 , -0.26,  0.6 ,  0.24],
+           [ 1.  ,  0.8 ,  0.46,  1.  ,  0.8 ]])
 
 .. _function_transformer:
 

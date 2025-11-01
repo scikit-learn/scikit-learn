@@ -363,7 +363,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 f" have {self.n_output_features_} features which is too large to be"
                 f" indexed by {np.intp().dtype.name}. Please change some or all of the"
                 " following:\n- The number of features in the input, currently"
-                f" {n_features=}\n- The range of degrees to calculate, currently"
+                f" {n_features}\n- The range of degrees to calculate, currently"
                 f" [{self._min_degree}, {self._max_degree}]\n- Whether to include only"
                 f" interaction terms, currently {self.interaction_only}\n- Whether to"
                 f" include a bias term, currently {self.include_bias}."
