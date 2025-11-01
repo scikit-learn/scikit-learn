@@ -58,7 +58,7 @@ def sag{{name_suffix}}(
     SequentialDataset{{name_suffix}} dataset,
     {{c_type}}[:, ::1] weights_array,
     {{c_type}}[::1] intercept_array,
-    {{c_type}}[:, ::1] sample_weight,
+    {{c_type}}[::1] sample_weight,
     int n_samples,
     int n_features,
     int n_classes,
@@ -70,7 +70,7 @@ def sag{{name_suffix}}(
     double beta,
     {{c_type}}[:, ::1] sum_gradient_init,
     {{c_type}}[:, ::1] gradient_memory_init,
-    bint[::1] seen_init,
+    double[::1] seen_init,
     int num_seen,
     bint fit_intercept,
     {{c_type}}[::1] intercept_sum_gradient_init,
@@ -126,7 +126,7 @@ def sag{{name_suffix}}(
     # the label value for current sample
     cdef {{c_type}} y
     # the sample weight
-    # cdef {{c_type}} sample_weight
+    cdef {{c_type}} sample_weight_dummy
 
     # helper variable for indexes
     cdef int f_idx, s_idx, feature_ind, class_ind, j
@@ -228,7 +228,7 @@ def sag{{name_suffix}}(
         for n_iter in range(max_iter):
             for sample_itr in range(n_samples):
                 # extract a random sample
-                sample_ind = dataset.random(&x_data_ptr, &x_ind_ptr, &xnnz, &y, &sample_weight)
+                sample_ind = dataset.random(&x_data_ptr, &x_ind_ptr, &xnnz, &y, &sample_weight_dummy)
 
                 # cached index for gradient_memory
                 s_idx = sample_ind * n_classes
@@ -242,7 +242,6 @@ def sag{{name_suffix}}(
                 if sample_itr > 0:
                    status = lagged_update{{name_suffix}}(
                        weights=weights,
-                       sample_weight=sample_weight,
                        wscale=wscale,
                        xnnz=xnnz,
                        n_samples=n_samples,
@@ -277,11 +276,11 @@ def sag{{name_suffix}}(
                     multiloss.cy_gradient(
                         y_true=y,
                         raw_prediction=prediction,
-                        sample_weight=sample_weight,
+                        sample_weight=sample_weight[sample_ind],
                         gradient_out=gradient,
                     )
                 else:
-                    gradient[0] = loss.cy_gradient(y, prediction[0]) * sample_weight
+                    gradient[0] = loss.cy_gradient(y, prediction[0]) * sample_weight[sample_ind]
 
                 # L2 regularization by simply rescaling the weights
                 wscale *= wscale_update

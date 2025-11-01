@@ -87,7 +87,7 @@ def get_auto_step_size(
     if is_saga:
         # SAGA theoretical step size is 1/3L or 1 / (2 * (L + mu n))
         # See Defazio et al. 2014
-        mun = min(2 * n_samples * alpha_scaled, L)
+        mun = min(2 * n_samples * alpha_scaled, L.max())
         step = 1.0 / (2 * L.max() + mun)
     else:
         # SAG theoretical step size is 1/16L but it is recommended to use 1 / L
@@ -307,7 +307,7 @@ def sag_solver(
     if "seen" in warm_start_mem.keys():
         seen_init = warm_start_mem["seen"]
     else:
-        seen_init = np.zeros(n_samples, dtype=np.int32, order="C")
+        seen_init = np.zeros(n_samples, dtype=np.double, order="C")
 
     if "num_seen" in warm_start_mem.keys():
         num_seen_init = warm_start_mem["num_seen"]
@@ -332,7 +332,6 @@ def sag_solver(
             "Current sag implementation does not handle "
             "the case step_size * alpha_scaled == 1"
         )
-
     sag = sag64 if X.dtype == np.float64 else sag32
     num_seen, n_iter_ = sag(
         dataset,

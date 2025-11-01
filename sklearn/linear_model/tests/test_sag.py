@@ -955,11 +955,13 @@ def test_sag_weighted_classification_convergence(solver, decay, saga, fit_interc
             loss="log",
             max_iter=max_iter,
             tol=tol,
-            fit_intercept=fit_intercept,
+            warm_start_mem={
+                "coef": np.zeros((X.shape[1] + int(fit_intercept), 1), dtype=X.dtype)
+            },
             is_saga=saga,
         )
         weights, n_iter, warm_start_mem = solver(
-            X, y, sample_weights, alpha, **sag_kwargs
+            X, y, sample_weights, alpha=alpha, **sag_kwargs
         )
         intercept = weights[-1]
         weights = weights[:-1]
@@ -1019,11 +1021,13 @@ def test_sag_weighted_regression_convergence(solver, decay, saga, fit_intercept)
             loss="squared",
             max_iter=max_iter,
             tol=tol,
-            fit_intercept=fit_intercept,
+            warm_start_mem={
+                "coef": np.zeros((X.shape[1] + int(fit_intercept), 1), dtype=X.dtype)
+            },
             is_saga=saga,
         )
         weights, n_iter, warm_start_mem = solver(
-            X, y, sample_weights, alpha, **sag_kwargs
+            X, y, sample_weights, alpha=alpha, **sag_kwargs
         )
         intercept = weights[-1]
         weights = weights[:-1]
