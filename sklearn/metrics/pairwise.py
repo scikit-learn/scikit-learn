@@ -80,35 +80,35 @@ def _find_floating_dtype_allow_sparse(X, Y, xp=None):
     return X, Y, dtype_float
 
 
-def _check_pairwise_arrays_for_metric(
+def _check_pairwise_arrays_for_scipy_metric(
     X,
     Y,
     *,
     metric,
     precomputed=False,
-    accept_sparse="csr",
     ensure_all_finite=True,
     ensure_2d=True,
     copy=False,
 ):
     """Metric-aware wrapper for `check_pairwise_arrays`
 
-    Accepts a metric instead of a dtype, and forwards `bool` as dtype when the metric is
-    a `PAIRWISE_BOOLEAN_FUNCTIONS`, otherwise forwards `"infer_float"`.
+    Accepts a scipy metric instead of a dtype, and forwards `bool` as dtype when the
+    metric is a `PAIRWISE_BOOLEAN_FUNCTIONS`, otherwise forwards `"infer_float"`.
 
     This ensures `check_pairwise_arrays` doesn't cast boolean arrays to float, if
-    the metric is boolean.
+    the scipy metric is boolean.
+
+    Raises on sparse inputs, since scipy distance metrics don't support these
 
     All other parameters are forwarded to `check_pairwise_arrays` unchanged
     """
+    if issparse(X) or issparse(Y):
+        raise TypeError(
+            f"scipy distance metrics, such as '{metric}',"
+            " do not support sparse matrices."
+        )
 
     if metric in PAIRWISE_BOOLEAN_FUNCTIONS:
-        if issparse(X) or issparse(Y):
-            raise TypeError(
-                f"scipy distance metrics, such as '{metric}',"
-                " do not support sparse matrices."
-            )
-
         # Convert numpy-namespaced objects to ndarrays early to access dtype
         # This conversion (normally done by check_array, in check_pairwise_arrays)
         # is eventually needed anyways for pairwise calculations
@@ -131,7 +131,6 @@ def _check_pairwise_arrays_for_metric(
         Y,
         precomputed=precomputed,
         dtype=dtype,
-        accept_sparse=accept_sparse,
         ensure_all_finite=ensure_all_finite,
         ensure_2d=ensure_2d,
         copy=copy,
@@ -851,10 +850,11 @@ def pairwise_distances_argmin_min(
     >>> distances
     array([1., 1.])
     """
-    ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
-    X, Y = _check_pairwise_arrays_for_metric(
-        X, Y, metric=metric, ensure_all_finite=ensure_all_finite
-    )
+    # If metric is not boolean, inputs could be delegated to ArgKmin, so do array
+    # validation here. Otherwise do validation in pairwise_distances_chunked.
+    if metric not in PAIRWISE_BOOLEAN_FUNCTIONS:
+        ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
+        check_pairwise_arrays(X, Y, ensure_all_finite=ensure_all_finite)
 
     if axis == 0:
         X, Y = Y, X
@@ -994,10 +994,11 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     >>> pairwise_distances_argmin(X, Y)
     array([0, 1])
     """
-    ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
-    X, Y = _check_pairwise_arrays_for_metric(
-        X, Y, metric=metric, ensure_all_finite=ensure_all_finite
-    )
+    # If metric is not boolean, inputs could be delegated to ArgKmin, so do array
+    # validation here. Otherwise do validation in pairwise_distances_chunked.
+    if metric not in PAIRWISE_BOOLEAN_FUNCTIONS:
+        ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
+        check_pairwise_arrays(X, Y, ensure_all_finite=ensure_all_finite)
 
     if axis == 0:
         X, Y = Y, X
@@ -2511,13 +2512,7 @@ def pairwise_distances(
             **kwds,
         )
     else:
-        if issparse(X) or issparse(Y):
-            raise TypeError(
-                f"scipy distance metrics, such as '{metric}',"
-                " do not support sparse matrices."
-            )
-
-        X, Y = _check_pairwise_arrays_for_metric(
+        X, Y = _check_pairwise_arrays_for_scipy_metric(
             X, Y, metric=metric, ensure_all_finite=ensure_all_finite
         )
 
