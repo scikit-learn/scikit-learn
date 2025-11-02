@@ -1629,6 +1629,45 @@ def test_quantile_transformer_sorted_quantiles(array_type):
     assert all(np.diff(quantiles) >= 0)
 
 
+def test_quantile_transformer_sparse_subsample_consistency():
+    """Test that QuantileTransformer handles sparse subsampling correctly.
+    
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/32587
+    
+    When using ignore_implicit_zeros=True with sparse matrices, the subsampling
+    logic should not result in zero column_subsample values, which would cause
+    quantiles to collapse to zeros and break transformation continuity.
+    """
+    subsample = 10_000
+    qt = QuantileTransformer(ignore_implicit_zeros=True, subsample=subsample)
+    n, d = 10**6, 2
+    
+    # Create a sparse matrix where:
+    # - Column 0 has subsample-1 explicit values
+    # - Column 1 has subsample+1 explicit values
+    # This tests the edge case where column_subsample could become zero
+    col = np.repeat([0, 1], [subsample - 1, subsample + 1])
+    row = np.arange(subsample * 2)
+    data = np.random.RandomState(42).randn(subsample * 2)
+    X = sparse.csc_matrix((data, (row, col)), shape=(n, d))
+    
+    # Transform the data
+    Y = qt.fit_transform(X)
+    
+    # The second column should not be all zeros after transformation
+    # This would indicate that the quantiles collapsed
+    assert not np.all(Y[:, 1].data == 0), (
+        "Column 1 quantiles collapsed to zero, indicating subsample bug"
+    )
+    
+    # Additionally verify that quantiles are properly computed
+    # (i.e., not all the same value which would indicate collapsed quantiles)
+    assert len(np.unique(qt.quantiles_[:, 1])) > 1, (
+        "Column 1 quantiles are not diverse, indicating collapsed quantiles"
+    )
+
+
 def test_robust_scaler_invalid_range():
     for range_ in [
         (-1, 90),
