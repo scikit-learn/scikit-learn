@@ -1,4 +1,4 @@
-.. _install_bleeding_edge:
+.. _setup_development_environment:
 
 Set up your development environment
 -----------------------------------
