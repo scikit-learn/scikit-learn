@@ -76,6 +76,7 @@ def _validate_cv_no_overlap(cv_splitter, X, y, groups=None):
 
 
 class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
+    # ...existing code...
     """Target Encoder for regression and classification targets.
 
     Each category is encoded based on a shrunk estimate of the average target
@@ -268,6 +269,108 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.shuffle = shuffle
         self.random_state = random_state
 
+    # -------------------------------------------------------------------------
+    # Helper: Setup cross-validation splitter
+    # -------------------------------------------------------------------------
+    def _setup_cv(self, X, y, groups=None):
+        """Initialize CV splitter depending on user-provided cv and target type.
+
+        This helper selects GroupKFold when `groups` is provided and the user
+        passed an integer for `cv`. If the user passed a CV instance into
+        `self.cv`, that instance will be used unchanged by callers (we return
+        it as-is in that case).
+        """
+        # If user provided a CV instance (not int), keep it as-is
+        if not isinstance(self.cv, Integral):
+            # user supplied cv instance; use that directly
+            self.cv_ = self.cv
+            return self.cv_
+
+        # If cv is an integer, choose appropriate splitter.
+        if groups is not None:
+            # When groups provided, prefer GroupKFold
+            self.cv_ = GroupKFold(n_splits=self.cv)
+        elif self.target_type_ == "continuous":
+            self.cv_ = KFold(
+                n_splits=self.cv, shuffle=self.shuffle, random_state=self.random_state
+            )
+        else:
+            self.cv_ = StratifiedKFold(
+                n_splits=self.cv, shuffle=self.shuffle, random_state=self.random_state
+            )
+
+        return self.cv_
+
+    @_fit_context(prefer_skip_nested_validation=True)
+    def fit(self, X, y, **fit_params):
+        """Fit the :class:`TargetEncoder` to X and y.
+
+        Accepts metadata routing parameters via **fit_params (for example
+        ``groups``). The routing machinery will forward the ``groups`` array
+        into internal CV splitters when appropriate.
+        """
+        groups = fit_params.get("groups", None)
+        # _fit_encodings_all remains responsible for setting target_type_,
+        # classes_, encodings_ and target_mean_. We forward groups for
+        # completeness and future hooks, currently _fit_encodings_all ignores it.
+        self._fit_encodings_all(X, y, groups=groups)
+        return self
+
+    @_fit_context(prefer_skip_nested_validation=True)
+    def fit_transform(self, X, y, **fit_params):
+        """Fit TargetEncoder and transform X using cross-fitting.
+
+        Accepts **fit_params so metadata (like ``groups``) can be routed into
+        the cross-validation splitters.
+        """
+        groups = fit_params.get("groups", None)
+
+        X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(
+            X, y, groups=groups
+        )
+
+        # Setup CV splitter based on provided groups / target type
+        cv = self._setup_cv(X, y, groups)
+
+        # Only validate non-approved splitters to avoid overhead for the usual
+        # KFold / StratifiedKFold / GroupKFold cases.
+        if not isinstance(cv, APPROVED_CV_SPLITTERS):
+            _validate_cv_no_overlap(cv, X, y, groups)
+
+        # Prepare output array shape depending on multiclass vs single-target
+        if self.target_type_ == "multiclass":
+            X_out = np.empty(
+                (X_ordinal.shape[0], X_ordinal.shape[1] * len(self.classes_)),
+                dtype=np.float64,
+            )
+        else:
+            X_out = np.empty_like(X_ordinal, dtype=np.float64)
+
+        # Perform cross-fitting across folds (cv.split accepts groups when needed)
+        for train_idx, test_idx in cv.split(X, y, groups):
+            X_train, y_train = X_ordinal[train_idx, :], y_encoded[train_idx]
+            y_train_mean = np.mean(y_train, axis=0)
+
+            if self.target_type_ == "multiclass":
+                encodings = self._fit_encoding_multiclass(
+                    X_train, y_train, n_categories, y_train_mean
+                )
+            else:
+                encodings = self._fit_encoding_binary_or_continuous(
+                    X_train, y_train, n_categories, y_train_mean
+                )
+
+            self._transform_X_ordinal(
+                X_out,
+                X_ordinal,
+                ~X_known_mask,
+                test_idx,
+                encodings,
+                y_train_mean,
+            )
+
+        return X_out
+
     def get_metadata_routing(self):
         """Define how metadata such as `groups` is routed to CV splitters.
 
@@ -277,122 +380,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             The router defining how metadata like `groups` is passed from
             the encoder to its internal CV splitter.
         """
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
         router.add(
             self.cv,
             method_mapping=MethodMapping()
-            .add(caller="fit", callee="split")
-            .add(caller="fit_transform", callee="split"),
+                .add(caller="fit", callee="split")
+                .add(caller="fit_transform", callee="split"),
         )
         return router
-
-    @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y, groups=None):
-        """Fit the :class:`TargetEncoder` to X and y.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            The data to determine the categories of each feature.
-
-        y : array-like of shape (n_samples,)
-            The target data used to encode the categories.
-
-        groups : array-like of shape (n_samples,), default=None
-                 Group labels for the samples used while splitting the dataset into
-                 train/test set. Only used in conjunction with GroupKFold when provided
-                 to avoid data leakage in grouped/clustered data.
-
-        Returns
-        -------
-        self : object
-            Fitted encoder.
-        """
-        self._fit_encodings_all(X, y)
-        return self
-
-    @_fit_context(prefer_skip_nested_validation=True)
-    def fit_transform(self, X, y, groups=None):
-        """Fit :class:`TargetEncoder` and transform X with the target encoding.
-
-        .. note::
-            `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
-            :term:`cross fitting` scheme is used in `fit_transform` for encoding.
-            See the :ref:`User Guide <target_encoder>`. for details.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            The data to determine the categories of each feature.
-
-        y : array-like of shape (n_samples,)
-            The target data used to encode the categories.
-
-        groups : array-like of shape (n_samples,), default=None
-            Group labels for the samples used while splitting the dataset into
-            train/test set. Only used to avoid data leakage in grouped or
-            clustered data.
-
-        Returns
-        -------
-        X_trans : ndarray of shape (n_samples, n_features) or \
-                    (n_samples, (n_features * n_classes))
-            Transformed input.
-        """
-
-        X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
-
-        # The cv splitter is voluntarily restricted to *KFold to enforce non
-        # overlapping validation folds, otherwise the fit_transform output will
-        # not be well-specified.
-        if groups is not None:
-            cv = GroupKFold(n_splits=self.cv)
-        elif self.target_type_ == "continuous":
-            cv = KFold(self.cv, shuffle=self.shuffle, random_state=self.random_state)
-        else:
-            cv = StratifiedKFold(
-                self.cv, shuffle=self.shuffle, random_state=self.random_state
-            )
-        # Only validate non-approved splitters to avoid overhead
-        if not isinstance(cv, APPROVED_CV_SPLITTERS):
-            _validate_cv_no_overlap(cv, X, y, groups)
-
-        # If 'multiclass' multiply axis=1 by num classes else keep shape the same
-        if self.target_type_ == "multiclass":
-            X_out = np.empty(
-                (X_ordinal.shape[0], X_ordinal.shape[1] * len(self.classes_)),
-                dtype=np.float64,
-            )
-        else:
-            X_out = np.empty_like(X_ordinal, dtype=np.float64)
-
-        for train_idx, test_idx in cv.split(X, y, groups):
-            X_train, y_train = X_ordinal[train_idx, :], y_encoded[train_idx]
-            y_train_mean = np.mean(y_train, axis=0)
-
-            if self.target_type_ == "multiclass":
-                encodings = self._fit_encoding_multiclass(
-                    X_train,
-                    y_train,
-                    n_categories,
-                    y_train_mean,
-                )
-            else:
-                encodings = self._fit_encoding_binary_or_continuous(
-                    X_train,
-                    y_train,
-                    n_categories,
-                    y_train_mean,
-                )
-            self._transform_X_ordinal(
-                X_out,
-                X_ordinal,
-                ~X_known_mask,
-                test_idx,
-                encodings,
-                y_train_mean,
-            )
-        return X_out
 
     def transform(self, X):
         """Transform X with the target encoding.
@@ -436,8 +431,17 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         )
         return X_out
 
-    def _fit_encodings_all(self, X, y):
-        """Fit a target encoding with all the data."""
+    def _fit_encodings_all(self, X, y, groups=None):
+        """Fit a target encoding with all the data.
+
+        Parameters
+        ----------
+        X, y : training arrays
+        groups : array-like, optional
+            Group labels forwarded by callers for metadata routing; currently
+            not used when computing encodings on the full dataset.
+        Note: groups is accepted for routing consistency but not used in computation.
+        """
         # avoid circular import
         from sklearn.preprocessing import LabelBinarizer, LabelEncoder
 
