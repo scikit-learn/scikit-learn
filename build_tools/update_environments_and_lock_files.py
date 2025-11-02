@@ -121,7 +121,7 @@ build_metadata_list = [
         "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channels": ["conda-forge"],
+        "channels": ["conda-forge", "https://software.repos.intel.com/python/conda/"],
         "conda_dependencies": common_dependencies
         + [
             "ccache",
@@ -131,6 +131,7 @@ build_metadata_list = [
             "pyarrow",
             "array-api-strict",
             "scipy-doctest",
+            "dpnp",
         ],
         "package_constraints": {
             "blas": "[build=mkl]",

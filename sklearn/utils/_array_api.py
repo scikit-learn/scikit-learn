@@ -49,6 +49,7 @@ def yield_namespaces(include_numpy_namespaces=True):
         "array_api_strict",
         "cupy",
         "torch",
+        "dpnp",
     ]:
         if not include_numpy_namespaces and array_namespace in _NUMPY_NAMESPACE_NAMES:
             continue
@@ -89,6 +90,13 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
             ):
                 yield array_namespace, device, dtype
             yield array_namespace, "mps", "float32"
+
+        elif array_namespace == "dpnp":
+            # XXX: add "accelerator" device type?
+            for device, dtype in itertools.product(
+                ("cpu", "gpu"), ("float64", "float32")
+            ):
+                yield array_namespace, device, dtype
 
         elif array_namespace == "array_api_strict":
             try:
@@ -839,6 +847,8 @@ def _convert_to_numpy(array, xp):
         return array.get()
     elif _is_xp_namespace(xp, "array_api_strict"):
         return numpy.asarray(xp.asarray(array, device=xp.Device("CPU_DEVICE")))
+    elif _is_xp_namespace(xp, "dpnp"):  # pragma: nocover
+        return array.asnumpy()
 
     return numpy.asarray(array)
 
