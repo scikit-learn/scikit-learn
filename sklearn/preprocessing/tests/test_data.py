@@ -1629,6 +1629,59 @@ def test_quantile_transformer_sorted_quantiles(array_type):
     assert all(np.diff(quantiles) >= 0)
 
 
+def test_quantiletransformer_sparse_subsample_consistency():
+    """Regression test for sparse subsample logic (issue #32587).
+
+    Construct a very sparse CSC matrix with two nearly-identical columns.
+    One column has `subsample - 1` non-zeros, the other `subsample + 1`.
+    For large declared n_samples, the old bug could create a zero-sized
+    column sample leading to collapsed quantiles (all zeros). After the fix,
+    both columns should produce non-degenerate quantiles.
+    """
+    rng = np.random.RandomState(0)
+
+    subsample = 10_000
+    qt = QuantileTransformer(
+        ignore_implicit_zeros=True,
+        subsample=subsample,
+        random_state=0,
+    )
+
+    # Very large declared number of rows. Sparse shape is cheap to declare.
+    n = 10**9
+    d = 2
+
+    # Column 0 has subsample - 1 non-zeros, column 1 has subsample + 1.
+    col = np.repeat([0, 1], [subsample - 1, subsample + 1])
+
+    # Choose some row indices (distinct, does not matter beyond being valid)
+    row = np.arange(col.shape[0], dtype=np.int64)
+
+    # deterministic "data" values for reproducibility
+    data = rng.randn(col.shape[0])
+
+    X = sparse.csc_matrix((data, (row, col)), shape=(n, d))
+
+    Y = qt.fit_transform(X)
+
+    # Extract nonzero transformed values per column
+    y0 = Y[:, 0].data
+    y1 = Y[:, 1].data
+
+    # Check that quantiles for both columns are not degenerate (all 0 or 1).
+    # Use several quantiles to be robust.
+    q0 = np.quantile(y0, np.linspace(0, 1, 11))
+    q1 = np.quantile(y1, np.linspace(0, 1, 11))
+
+    # Neither column should be entirely 0 or entirely 1
+    assert not np.all((y0 == 0) | (y0 == 1)), "Column 0 transformed to degenerate values"
+    assert not np.all((y1 == 0) | (y1 == 1)), "Column 1 transformed to degenerate values"
+
+    # Quantiles should be reasonably different across the range (sanity check)
+    assert np.max(q0) - np.min(q0) > 1e-6
+    assert np.max(q1) - np.min(q1) > 1e-6
+
+
 def test_robust_scaler_invalid_range():
     for range_ in [
         (-1, 90),
