@@ -156,7 +156,7 @@ def test_pairwise_distances_for_dense_data(global_dtype):
     yield_namespace_device_dtype_combinations(),
     ids=_get_namespace_device_dtype_ids,
 )
-@pytest.mark.parametrize("metric", ["cosine", "euclidean"])
+@pytest.mark.parametrize("metric", ["cosine", "euclidean", "manhattan"])
 def test_pairwise_distances_array_api(array_namespace, device, dtype_name, metric):
     # Test array API support in pairwise_distances.
     xp = _array_api_for_tests(array_namespace, device)
@@ -398,8 +398,10 @@ def test_pairwise_parallel(func, metric, kwds, dtype):
     "func, metric, kwds",
     [
         (pairwise_distances, "euclidean", {}),
+        (pairwise_distances, "manhattan", {}),
         (pairwise_kernels, "polynomial", {"degree": 1}),
         (pairwise_kernels, callable_rbf_kernel, {"gamma": 0.1}),
+        (pairwise_kernels, "laplacian", {"gamma": 0.1}),
     ],
 )
 def test_pairwise_parallel_array_api(
@@ -486,7 +488,7 @@ def test_pairwise_kernels(metric, csr_container):
 )
 @pytest.mark.parametrize(
     "metric",
-    ["rbf", "sigmoid", "polynomial", "linear", "chi2", "additive_chi2"],
+    ["rbf", "sigmoid", "polynomial", "linear", "laplacian", "chi2", "additive_chi2"],
 )
 def test_pairwise_kernels_array_api(metric, array_namespace, device, dtype_name):
     # Test array API support in pairwise_kernels.
