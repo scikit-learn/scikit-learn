@@ -91,7 +91,10 @@ def _find_dtype_for_check_pairwise_arrays(X, Y, metric):
 
     if metric in PAIRWISE_BOOLEAN_FUNCTIONS:
         if issparse(X) or issparse(Y):
-            raise TypeError("scipy distance metrics do not support sparse matrices.")
+            raise TypeError(
+                f"scipy distance metrics, such as '{metric}',"
+                " do not support sparse matrices."
+            )
 
         xp, _ = get_namespace(X, Y)
         # Similarly to _return_float_dtype, non-ndarray numpy-namespaced
@@ -2459,7 +2462,10 @@ def pairwise_distances(
         )
     else:
         if issparse(X) or issparse(Y):
-            raise TypeError("scipy distance metrics do not support sparse matrices.")
+            raise TypeError(
+                f"scipy distance metrics, such as '{metric}',"
+                " do not support sparse matrices."
+            )
 
         X, Y, dtype = _find_dtype_for_check_pairwise_arrays(X, Y, metric)
         X, Y = check_pairwise_arrays(
