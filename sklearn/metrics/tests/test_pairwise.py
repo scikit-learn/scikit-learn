@@ -1850,6 +1850,7 @@ def test_pairwise_argmin_correct_warnings_for_bool_and_nonbool(
     X_sparse = csr_container(X_arr)
     Y_sparse = csr_container(Y_arr)
     with pytest.raises(
-        TypeError, match="scipy distance metrics do not support sparse matrices."
+        TypeError,
+        match="scipy distance metrics, such as .*, do not support sparse matrices.",
     ):
         pairwise_fn(X_sparse, Y_sparse, metric=metric)

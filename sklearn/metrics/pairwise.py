@@ -121,7 +121,7 @@ def _check_pairwise_arrays_for_metric(
         if not xp.isdtype(X.dtype, "bool") or (
             Y is not None and not xp.isdtype(Y.dtype, "bool")
         ):
-            msg = f"Data will be converted to boolean for metric {metric}"
+            msg = f"Data was converted to boolean for metric {metric}"
             warnings.warn(msg, DataConversionWarning)
         dtype = xp.bool
     else:
