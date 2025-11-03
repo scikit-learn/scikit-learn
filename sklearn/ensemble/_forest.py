@@ -506,7 +506,12 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     n_estimators_built += 1
 
                     # Compute OOB score with current trees
-                    if n_estimators_built % max(1, n_more_estimators // 10) == 0 or n_estimators_built == n_more_estimators:
+                    check_interval = max(1, n_more_estimators // 10)
+                    should_check = (
+                        n_estimators_built % check_interval == 0
+                        or n_estimators_built == n_more_estimators
+                    )
+                    if should_check:
                         y_type = type_of_target(y)
                         if y_type == "unknown" or (
                             is_classifier(self) and y_type == "multiclass-multioutput"
