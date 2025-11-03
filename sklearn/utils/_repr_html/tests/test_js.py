@@ -25,7 +25,7 @@ def local_server(request):
     def test_something(page, local_server):
         url, set_html_response = local_server
         set_html_response("<html>...</html>")
-        page.goto(local_server)
+        page.goto(url)
         ...
     ```
     """
@@ -98,6 +98,9 @@ def test_copy_paste(page, local_server):
         "copyToClipboard('test', document.querySelector('.sk-toggleable__content'))"
     )
     clipboard_content = page.evaluate("navigator.clipboard.readText()")
+
+    # `copyToClipboard` function concatenates the `data-param-prefix`` attribute
+    #  with the first argument. Hence we expect "prefixtest" and not just test.
     assert clipboard_content == "prefixtest"
 
 
