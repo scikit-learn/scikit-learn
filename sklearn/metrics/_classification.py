@@ -40,7 +40,6 @@ from sklearn.utils._array_api import (
     _max_precision_float_dtype,
     _tolist,
     _union1d,
-    ensure_common_namespace_device,
     get_namespace,
     get_namespace_and_device,
     move_to,
@@ -3378,7 +3377,8 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
     0.21616
     """
     if sample_weight is not None:
-        sample_weight = ensure_common_namespace_device(y_pred, sample_weight)[0]
+        xp, _, device_ = get_namespace_and_device(y_pred)
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
     transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
         y_true, y_pred, sample_weight, labels
@@ -3393,9 +3393,9 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
 
 def _log_loss(transformed_labels, y_pred, *, normalize=True, sample_weight=None):
     """Log loss for transformed labels and validated probabilistic predictions."""
-    xp, _ = get_namespace(y_pred, transformed_labels)
+    xp, _, device_ = get_namespace_and_device(y_pred, transformed_labels)
     if sample_weight is not None:
-        sample_weight = ensure_common_namespace_device(y_pred, sample_weight)[0]
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
     eps = xp.finfo(y_pred.dtype).eps
     y_pred = xp.clip(y_pred, eps, 1 - eps)
     loss = -xp.sum(xlogy(transformed_labels, y_pred), axis=1)
@@ -3772,7 +3772,7 @@ def brier_score_loss(
         y_proba, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
     )
     if sample_weight is not None:
-        sample_weight = ensure_common_namespace_device(y_proba, sample_weight)[0]
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
     if y_proba.ndim == 1 or y_proba.shape[1] == 1:
         transformed_labels, y_proba = _validate_binary_probabilistic_prediction(
@@ -3861,7 +3861,8 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
 
     y_pred = check_array(y_pred, ensure_2d=False, dtype="numeric")
     if sample_weight is not None:
-        sample_weight = ensure_common_namespace_device(y_pred, sample_weight)[0]
+        xp, _, device_ = get_namespace_and_device(y_pred)
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
     transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
         y_true, y_pred, sample_weight, labels
@@ -3964,7 +3965,7 @@ def d2_brier_score(
         y_proba, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
     )
     if sample_weight is not None:
-        sample_weight = ensure_common_namespace_device(y_proba, sample_weight)[0]
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
     if y_proba.ndim == 1 or y_proba.shape[1] == 1:
         transformed_labels, y_proba = _validate_binary_probabilistic_prediction(
