@@ -35,7 +35,6 @@ Single and multi-output problems are both handled.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import threading
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 from warnings import catch_warnings, simplefilter, warn
@@ -944,10 +943,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         # Collect all predictions without lock to avoid contention
         all_predictions = Parallel(
             n_jobs=n_jobs, verbose=self.verbose, prefer="threads"
-        )(
-            delayed(_predict_proba_tree)(e, X)
-            for e in self.estimators_
-        )
+        )(delayed(_predict_proba_tree)(e, X) for e in self.estimators_)
 
         # Accumulate predictions in main thread (no lock needed)
         all_proba = [
@@ -1074,10 +1070,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         # Collect all predictions without lock to avoid contention
         all_predictions = Parallel(
             n_jobs=n_jobs, verbose=self.verbose, prefer="threads"
-        )(
-            delayed(_predict_tree)(e, X)
-            for e in self.estimators_
-        )
+        )(delayed(_predict_tree)(e, X) for e in self.estimators_)
 
         # Accumulate predictions in main thread (no lock needed)
         if self.n_outputs_ > 1:
