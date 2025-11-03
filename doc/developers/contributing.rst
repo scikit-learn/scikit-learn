@@ -209,7 +209,7 @@ then submit a "pull request" (PR).
 
 To get started, you need to
 
-#. :ref:`install_bleeding_edge`
+#. :ref:`setup_development_environment`
 #. Find an issue to work on (see :ref:`new_contributors`)
 #. Follow the :ref:`development_workflow`
 #. Make sure, you noted the :ref:`pr_checklist`
@@ -948,7 +948,7 @@ Building the documentation
 **Before submitting a pull request check if your modifications have introduced
 new sphinx warnings by building the documentation locally and try to fix them.**
 
-First, make sure you have :ref:`properly installed <install_bleeding_edge>` the
+First, make sure you have :ref:`properly installed <setup_development_environment>` the
 development version. On top of that, building the documentation requires installing some
 additional packages:
 
