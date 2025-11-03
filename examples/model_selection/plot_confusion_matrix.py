@@ -74,15 +74,16 @@ plt.show()
 # Binary Classification
 # =====================
 #
-# For binary problems, :func:`sklearn.metrics.confusion_matrix` has the ``ravel`` method
+# For binary problems, :func:`sklearn.metrics.confusion_matrix` has the `ravel` method
 # we can use get counts of true negatives, false positives, false negatives and
 # true positives.
 #
-# :func:`sklearn.metrics.confusion_matrix_at_thresholds`
-# can be used to count true negatives, false positives, false negatives and true
-# positives for different threshold values. It is fundamental for binary classification
-# metrics like :func:`sklearn.metrics.roc_auc_score` and
-# :func:`sklearn.metrics.det_curve`.
+# To obtain true negatives, false positives, false negatives and true
+# positives counts at different thresholds, one can use
+# :func:`sklearn.metrics.confusion_matrix_at_thresholds`.
+# This is fundamental for binary classification
+# metrics like :func:`~sklearn.metrics.roc_auc_score` and
+# :func:`~sklearn.metrics.det_curve`.
 
 from sklearn.datasets import make_classification
 from sklearn.metrics import confusion_matrix_at_thresholds

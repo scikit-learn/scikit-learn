@@ -835,6 +835,8 @@ false negatives and true positives for different thresholds::
   >>> thresholds
   array([0.8, 0.4, 0.35, 0.1])
 
+Note that the thresholds consist of distinct `y_score` values, in increasing order.
+
 .. rubric:: Examples
 
 * See :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
