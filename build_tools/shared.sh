@@ -65,6 +65,6 @@ create_conda_environment_from_lock_file() {
         conda create --quiet --name $ENV_NAME --file $LOCK_FILE
     else
         python -m pip install "$(get_dep conda-lock min)"
-        conda-lock install --log-level WARNING --name $ENV_NAME $LOCK_FILE
+        conda-lock install --log-level DEBUG --name $ENV_NAME $LOCK_FILE
     fi
 }
