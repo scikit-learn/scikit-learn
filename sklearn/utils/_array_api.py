@@ -772,7 +772,7 @@ def _median(x, axis=None, keepdims=False, xp=None):
     # in most array libraries, and all that we support (as of May 2025).
     # TODO: consider simplifying this code to use scipy instead once the oldest
     # supported SciPy version provides `scipy.stats.quantile` with native array API
-    # support (likely scipy 1.6 at the time of writing). Proper benchmarking of
+    # support (likely scipy 1.16 at the time of writing). Proper benchmarking of
     # either option with popular array namespaces is required to evaluate the
     # impact of this choice.
     xp, _, device = get_namespace_and_device(x, xp=xp)
