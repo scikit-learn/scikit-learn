@@ -99,7 +99,7 @@ def test_copy_paste(page, local_server):
     )
     clipboard_content = page.evaluate("navigator.clipboard.readText()")
 
-    # `copyToClipboard` function concatenates the `data-param-prefix`` attribute
+    # `copyToClipboard` function concatenates the `data-param-prefix` attribute
     #  with the first argument. Hence we expect "prefixtest" and not just test.
     assert clipboard_content == "prefixtest"
 
