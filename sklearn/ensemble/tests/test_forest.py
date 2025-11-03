@@ -1883,11 +1883,11 @@ def test_parallel_prediction_without_lock_contention(n_jobs, Forest):
 
     if Forest == RandomForestClassifier:
         y_train = rng.randint(0, 3, 100)
-        
+
         # Train with parallel
         forest_parallel = Forest(n_estimators=20, n_jobs=n_jobs, random_state=0)
         forest_parallel.fit(X_train, y_train)
-        
+
         # Train with serial (n_jobs=1)
         forest_serial = Forest(n_estimators=20, n_jobs=1, random_state=0)
         forest_serial.fit(X_train, y_train)
@@ -1904,11 +1904,11 @@ def test_parallel_prediction_without_lock_contention(n_jobs, Forest):
 
     else:  # RandomForestRegressor
         y_train = rng.rand(100)
-        
+
         # Train with parallel
         forest_parallel = Forest(n_estimators=20, n_jobs=n_jobs, random_state=0)
         forest_parallel.fit(X_train, y_train)
-        
+
         # Train with serial
         forest_serial = Forest(n_estimators=20, n_jobs=1, random_state=0)
         forest_serial.fit(X_train, y_train)
