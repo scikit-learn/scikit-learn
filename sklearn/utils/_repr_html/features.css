@@ -14,13 +14,6 @@
   background-color: var(--sklearn-color-fitted-level-0);
 }
 
-/* .features summary {
-  position: sticky;
-  top: 0;
-  padding: .25em .5em;
-  border: none;
-  border-radius: .20em 0 0 .20em;
-} */
 .features summary {
 cursor: pointer;
 display: flex;
@@ -29,21 +22,12 @@ text-align: center;
 align-items: center;
 justify-content: center;
 gap: 0.5em;
+padding: .2em;
 }
 .features summary::marker {
   font-size: 0.8em;
   color: var(--sklearn-color-icon);
 }
-
-/*
-.features summary {
-  cursor: pointer;
-  margin-bottom: 0;
-  text-align: center;
-  justify-content: center;
-  gap: 0.5em;
-}
-*/
 
 .features details[open] > summary {
   color: var(--sklearn-color-text);
@@ -56,26 +40,9 @@ gap: 0.5em;
   border-radius: .20em 0 0 0;
 }
 
-.features details[open] ~ .image-container {
-  background-color: var(--sklearn-color-unfitted-level-2);
-}
-.features.fitted details[open] ~ .image-container {
-  background-color: var(--sklearn-color-fitted-level-2);
-}
-
 .features details:hover > summary {
   margin: 0;
   background-color: var(--sklearn-color-unfitted-level-2);
-}
-
-.features details:hover ~ .image-container {
-  margin: 0;
-  background-color: var(--sklearn-color-unfitted-level-2);
-}
-
-.features.fitted details:hover ~ .image-container {
-  margin: 0;
-  background-color: var(--sklearn-color-fitted-level-2);
 }
 
 .features.fitted details:hover > summary {
@@ -97,11 +64,6 @@ gap: 0.5em;
   background-color: var(--sklearn-color-fitted-level-0);
 }
 
-.features .image-container {
-  margin: 0;
-  padding: .25em .5em;
-}
-
 .features .copy-paste-icon {
   background-size: 10px 10px;
   width: 10px;
@@ -109,25 +71,9 @@ gap: 0.5em;
   filter: grayscale(100%) opacity(60%);
 }
 
-.features .image-container:hover {
-  background-color: var(--sklearn-color-unfitted-level-2);
-}
-
-.features.fitted .image-container:hover {
-  background-color: var(--sklearn-color-fitted-level-2);
-}
-
-.features:has(.image-container:hover) summary {
-  background-color: var(--sklearn-color-unfitted-level-2);
-}
-
-.features.fitted:has(.image-container:hover) summary {
-  background-color: var(--sklearn-color-fitted-level-2);
-}
-
 .features .features-container table {
-    width: 95%;
-    margin: 0;
+  width: 100%;
+  margin: 0;
 }
 
 .features .features-container table td {
