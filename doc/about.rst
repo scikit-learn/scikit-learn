@@ -198,10 +198,10 @@ The project would like to thank the following funders.
 ..........
 
 Active Sponsors
-================
+===============
 
 Founding sponsors
-----------------
+-----------------
 
 .. div:: sk-text-image-grid-small
 
@@ -235,7 +235,7 @@ Gold sponsors
 ..........
 
 Silver sponsors
-----------------
+---------------
 
 .. div:: sk-text-image-grid-small
 
@@ -252,7 +252,7 @@ Silver sponsors
 ..........
 
 Bronze sponsors
-----------------
+---------------
 
 .. div:: sk-text-image-grid-small
 
