@@ -1,14 +1,3 @@
-.features summary {
-  cursor: pointer;
-  display: flex;
-  margin-bottom: 0;
-  text-align: center;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5em;
-}
-
-/*
 .features {
   font-family: monospace;
   cursor: pointer;
@@ -25,18 +14,36 @@
   background-color: var(--sklearn-color-fitted-level-0);
 }
 
-.features summary {
+/* .features summary {
   position: sticky;
   top: 0;
   padding: .25em .5em;
   border: none;
   border-radius: .20em 0 0 .20em;
+} */
+.features summary {
+cursor: pointer;
+display: flex;
+margin-bottom: 0;
+text-align: center;
+align-items: center;
+justify-content: center;
+gap: 0.5em;
 }
-
 .features summary::marker {
   font-size: 0.8em;
   color: var(--sklearn-color-icon);
 }
+
+/*
+.features summary {
+  cursor: pointer;
+  margin-bottom: 0;
+  text-align: center;
+  justify-content: center;
+  gap: 0.5em;
+}
+*/
 
 .features details[open] > summary {
   color: var(--sklearn-color-text);

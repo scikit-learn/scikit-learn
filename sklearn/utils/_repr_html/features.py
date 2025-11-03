@@ -6,7 +6,7 @@ import html
 
 def _features_html(features, is_fitted_css_class=""):
     FEATURES_TABLE_TEMPLATE = """
-        <div class="sk-estimator {is_fitted_css_class}">
+        <div class="features {is_fitted_css_class}">
           <details>
             <summary>
               <div>{total_features} features</div>
