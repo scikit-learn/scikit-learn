@@ -193,24 +193,22 @@ def contingency_matrix(
         )
 
     # dense array calculation using matmul
+    float_dtype = _max_precision_float_dtype(xp, device_)
     A = xp.astype(
         class_idx[:, None]
         == xp.arange(n_classes, device=device_, dtype=class_idx.dtype),
-        xp.int32,
+        float_dtype,
     )
     B = xp.astype(
         cluster_idx[:, None]
         == xp.arange(n_clusters, device=device_, dtype=cluster_idx.dtype),
-        xp.int32,
+        float_dtype,
     )
 
     contingency = A.T @ B
 
     if eps is not None:
-        contingency = (
-            xp.astype(contingency, _max_precision_float_dtype(xp, device_)) + eps
-        )
-
+        contingency = contingency + eps
     return contingency
 
 
