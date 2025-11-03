@@ -152,10 +152,11 @@ scoring = {
 # Scikit-learn model selection tools expect that we follow a convention
 # that "higher" means "better", hence the following gain matrix assigns
 # negative gains (costs) to the two kinds of prediction errors:
-# - a gain of -1 for each false positive ("good" credit labeled as "bad"),
-# - a gain of -5 for each false negative ("bad" credit labeled as "good"),
-# The true positives and true negatives are assigned null gains in this
-# metric.
+#
+# - a gain of `-1` for each false positive ("good" credit labeled as "bad"),
+# - a gain of `-5` for each false negative ("bad" credit labeled as "good"),
+# - a `0` gain for true positives and true negatives.
+#
 #
 # Note that theoretically, given that our model is calibrated and our data
 # set representative and large enough, we do not need to tune the
