@@ -22,6 +22,8 @@ See also :ref:`minimal_cost_complexity_pruning` for details on pruning.
 
 import matplotlib.pyplot as plt
 
+import numpy as np      #
+
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
@@ -106,5 +108,33 @@ ax.set_ylabel("accuracy")
 ax.set_title("Accuracy vs alpha for training and testing sets")
 ax.plot(ccp_alphas, train_scores, marker="o", label="train", drawstyle="steps-post")
 ax.plot(ccp_alphas, test_scores, marker="o", label="test", drawstyle="steps-post")
+
+
+# Highlight the best alpha on the plot
+best_alpha_idx = np.argmax(test_scores)
+best_alpha = ccp_alphas[best_alpha_idx]
+ax.axvline(best_alpha, linestyle="--", color="k", label=f"best test alpha: {best_alpha:.4f}")
+
+
 ax.legend()
 plt.show()
+
+
+# %%
+# Automatically finding the best alpha with cross-validation
+# -----------------------------------------------------------
+# The process of finding the optimal ``ccp_alpha`` can be automated using
+# cross-validation. We can use :class:`~sklearn.model_selection.GridSearchCV`
+# to search over the `ccp_alpha` values we generated with the pruning path.
+
+from sklearn.model_selection import GridSearchCV
+
+param_grid = {"ccp_alpha": ccp_alphas}
+search = GridSearchCV(DecisionTreeClassifier(random_state=0), param_grid, cv=5)
+search.fit(X_train, y_train)
+
+best_alpha_cv = search.best_params_["ccp_alpha"]
+print(f"Best ccp_alpha found via 5-fold cross-validation: {best_alpha_cv:.4f}")
+
+# We can see that this value is close to the one we found by manually
+# inspecting the test scores.
