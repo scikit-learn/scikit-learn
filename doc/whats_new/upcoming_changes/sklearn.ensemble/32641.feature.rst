@@ -5,4 +5,3 @@
   the specified number of consecutive rounds, enabling automatic determination
   of the optimal forest size and reducing training time.
   By :user:`Karamvir Singh <karamvirsingh1998>`.
-
