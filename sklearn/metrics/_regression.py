@@ -1826,7 +1826,7 @@ def d2_pinball_score(
     )
 
     if sample_weight is None:
-        sample_weight = xp.ones([y_true.shape[0]], dtype=y_pred.dtype, device=device_)
+        sample_weight = xp.ones([y_true.shape[0]], dtype=y_true.dtype, device=device_)
 
     y_quantile = xp.tile(
         _weighted_percentile(
