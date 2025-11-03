@@ -22,11 +22,7 @@ text-align: center;
 align-items: center;
 justify-content: center;
 gap: 0.5em;
-padding: .2em;
-}
-.features summary::marker {
-  font-size: 0.8em;
-  color: var(--sklearn-color-icon);
+padding: .25em;
 }
 
 .features details[open] > summary {
@@ -38,6 +34,15 @@ padding: .2em;
 .features.fitted details[open] > summary {
   background-color: var(--sklearn-color-fitted-level-2);
   border-radius: .20em 0 0 0;
+}
+
+.features details > summary .arrow::before {
+  content: "▸";
+  color: grey;
+}
+
+.features details[open] > summary .arrow::before {
+  content: "▾";
 }
 
 .features details:hover > summary {
@@ -73,12 +78,13 @@ padding: .2em;
 
 .features .features-container table {
   width: 100%;
-  margin: 0;
+  margin: .5;
 }
 
 .features .features-container table td {
   text-align: left;
   padding: 0;
+  border: 1px solid rgba(106, 105, 104, 0.232);
   white-space: nowrap;
   color: var(--sklearn-color-text);
 }

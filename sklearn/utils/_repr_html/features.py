@@ -9,6 +9,7 @@ def _features_html(features, is_fitted_css_class=""):
         <div class="features {is_fitted_css_class}">
           <details>
             <summary>
+              <div class="arrow"></div>
               <div>{total_features} features</div>
               <div class="image-container"
                    title="Copy all output features">
