@@ -225,6 +225,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             Interval(RealNotInt, 0.0, 1.0, closed="right"),
             Interval(Integral, 1, None, closed="left"),
         ],
+        "early_stopping_rounds": [Interval(Integral, 1, None, closed="left"), None],
     }
 
     @abstractmethod
@@ -242,6 +243,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         warm_start=False,
         class_weight=None,
         max_samples=None,
+        early_stopping_rounds=None,
     ):
         super().__init__(
             estimator=estimator,
@@ -257,6 +259,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         self.warm_start = warm_start
         self.class_weight = class_weight
         self.max_samples = max_samples
+        self.early_stopping_rounds = early_stopping_rounds
 
     def apply(self, X):
         """
@@ -446,6 +449,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available if bootstrap=True")
 
+        if self.early_stopping_rounds is not None and not self.oob_score:
+            raise ValueError(
+                "early_stopping_rounds requires oob_score=True to monitor performance"
+            )
+
         random_state = check_random_state(self.random_state)
 
         if not self.warm_start or not hasattr(self, "estimators_"):
@@ -472,40 +480,107 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 # would have got if we hadn't used a warm_start.
                 random_state.randint(MAX_INT, size=len(self.estimators_))
 
-            trees = [
-                self._make_estimator(append=False, random_state=random_state)
-                for i in range(n_more_estimators)
-            ]
+            # Early stopping: build trees incrementally
+            if self.early_stopping_rounds is not None:
+                best_oob_score = -np.inf
+                rounds_no_improve = 0
+                n_estimators_built = 0
 
-            # Parallel loop: we prefer the threading backend as the Cython code
-            # for fitting the trees is internally releasing the Python GIL
-            # making threading more efficient than multiprocessing in
-            # that case. However, for joblib 0.12+ we respect any
-            # parallel_backend contexts set at a higher level,
-            # since correctness does not rely on using threads.
-            trees = Parallel(
-                n_jobs=self.n_jobs,
-                verbose=self.verbose,
-                prefer="threads",
-            )(
-                delayed(_parallel_build_trees)(
-                    t,
-                    self.bootstrap,
-                    X,
-                    y,
-                    sample_weight,
-                    i,
-                    len(trees),
+                while n_estimators_built < n_more_estimators:
+                    # Build one tree at a time for early stopping
+                    tree = self._make_estimator(append=False, random_state=random_state)
+                    tree = _parallel_build_trees(
+                        tree,
+                        self.bootstrap,
+                        X,
+                        y,
+                        sample_weight,
+                        n_estimators_built,
+                        1,
+                        verbose=self.verbose,
+                        class_weight=self.class_weight,
+                        n_samples_bootstrap=n_samples_bootstrap,
+                        missing_values_in_feature_mask=missing_values_in_feature_mask,
+                    )
+                    self.estimators_.append(tree)
+                    n_estimators_built += 1
+
+                    # Compute OOB score with current trees
+                    if n_estimators_built % max(1, n_more_estimators // 10) == 0 or n_estimators_built == n_more_estimators:
+                        y_type = type_of_target(y)
+                        if y_type == "unknown" or (
+                            is_classifier(self) and y_type == "multiclass-multioutput"
+                        ):
+                            continue
+
+                        if callable(self.oob_score):
+                            self._set_oob_score_and_attributes(
+                                X, y, scoring_function=self.oob_score
+                            )
+                        else:
+                            self._set_oob_score_and_attributes(X, y)
+
+                        current_oob_score = self.oob_score_
+
+                        if self.verbose > 0:
+                            print(
+                                f"[{n_estimators_built}/{n_more_estimators}] "
+                                f"OOB Score: {current_oob_score:.4f}"
+                            )
+
+                        if current_oob_score > best_oob_score:
+                            best_oob_score = current_oob_score
+                            rounds_no_improve = 0
+                        else:
+                            rounds_no_improve += 1
+
+                        if rounds_no_improve >= self.early_stopping_rounds:
+                            if self.verbose > 0:
+                                print(
+                                    f"Early stopping at {n_estimators_built} trees "
+                                    f"(best OOB score: {best_oob_score:.4f})"
+                                )
+                            break
+
+                # Store actual number of estimators used
+                self.n_estimators_used_ = len(self.estimators_)
+
+            else:
+                # Standard behavior: build all trees in parallel
+                trees = [
+                    self._make_estimator(append=False, random_state=random_state)
+                    for i in range(n_more_estimators)
+                ]
+
+                # Parallel loop: we prefer the threading backend as the Cython code
+                # for fitting the trees is internally releasing the Python GIL
+                # making threading more efficient than multiprocessing in
+                # that case. However, for joblib 0.12+ we respect any
+                # parallel_backend contexts set at a higher level,
+                # since correctness does not rely on using threads.
+                trees = Parallel(
+                    n_jobs=self.n_jobs,
                     verbose=self.verbose,
-                    class_weight=self.class_weight,
-                    n_samples_bootstrap=n_samples_bootstrap,
-                    missing_values_in_feature_mask=missing_values_in_feature_mask,
+                    prefer="threads",
+                )(
+                    delayed(_parallel_build_trees)(
+                        t,
+                        self.bootstrap,
+                        X,
+                        y,
+                        sample_weight,
+                        i,
+                        len(trees),
+                        verbose=self.verbose,
+                        class_weight=self.class_weight,
+                        n_samples_bootstrap=n_samples_bootstrap,
+                        missing_values_in_feature_mask=missing_values_in_feature_mask,
+                    )
+                    for i, t in enumerate(trees)
                 )
-                for i, t in enumerate(trees)
-            )
 
-            # Collect newly grown trees
-            self.estimators_.extend(trees)
+                # Collect newly grown trees
+                self.estimators_.extend(trees)
 
         if self.oob_score and (
             n_more_estimators > 0 or not hasattr(self, "oob_score_")
@@ -1530,6 +1605,7 @@ class RandomForestClassifier(ForestClassifier):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
+        early_stopping_rounds=None,
     ):
         super().__init__(
             estimator=DecisionTreeClassifier(),
@@ -1555,6 +1631,7 @@ class RandomForestClassifier(ForestClassifier):
             warm_start=warm_start,
             class_weight=class_weight,
             max_samples=max_samples,
+            early_stopping_rounds=early_stopping_rounds,
         )
 
         self.criterion = criterion
@@ -1903,6 +1980,7 @@ class RandomForestRegressor(ForestRegressor):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
+        early_stopping_rounds=None,
     ):
         super().__init__(
             estimator=DecisionTreeRegressor(),
@@ -1927,6 +2005,7 @@ class RandomForestRegressor(ForestRegressor):
             verbose=verbose,
             warm_start=warm_start,
             max_samples=max_samples,
+            early_stopping_rounds=early_stopping_rounds,
         )
 
         self.criterion = criterion

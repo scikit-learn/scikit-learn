@@ -1866,3 +1866,51 @@ def test_non_supported_criterion_raises_error_with_missing_values(Forest):
     msg = ".*does not accept missing values"
     with pytest.raises(ValueError, match=msg):
         forest.fit(X, y)
+
+
+@pytest.mark.parametrize("Forest", [RandomForestClassifier, RandomForestRegressor])
+def test_early_stopping_oob_score(Forest):
+    """Test early stopping based on OOB score convergence."""
+    rng = np.random.RandomState(42)
+    X = rng.rand(100, 10)
+
+    if Forest == RandomForestClassifier:
+        y = rng.randint(0, 2, 100)
+    else:
+        y = rng.rand(100)
+
+    # Train with early stopping
+    forest_early = Forest(
+        n_estimators=100,
+        bootstrap=True,
+        oob_score=True,
+        early_stopping_rounds=3,
+        random_state=0,
+        verbose=0,
+    )
+    forest_early.fit(X, y)
+
+    # Should have stopped early
+    assert hasattr(forest_early, "n_estimators_used_")
+    assert forest_early.n_estimators_used_ < 100, (
+        f"Expected early stopping but used all {forest_early.n_estimators_used_} trees"
+    )
+
+    # Should have OOB score
+    assert hasattr(forest_early, "oob_score_")
+    assert forest_early.oob_score_ > 0
+
+
+def test_early_stopping_requires_oob_score():
+    """Test that early_stopping_rounds requires oob_score=True."""
+    X = np.random.RandomState(0).rand(50, 5)
+    y = np.random.RandomState(0).randint(0, 2, 50)
+
+    forest = RandomForestClassifier(
+        n_estimators=10, early_stopping_rounds=2, oob_score=False, bootstrap=True
+    )
+
+    with pytest.raises(
+        ValueError, match="early_stopping_rounds requires oob_score=True"
+    ):
+        forest.fit(X, y)
