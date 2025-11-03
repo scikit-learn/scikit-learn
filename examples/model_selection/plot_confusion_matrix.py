@@ -78,14 +78,14 @@ plt.show()
 # we can use get counts of true negatives, false positives, false negatives and
 # true positives.
 #
-# :func:`sklearn.metrics.binary_classification_curve`
+# :func:`sklearn.metrics.confusion_matrix_at_thresholds`
 # can be used to count true negatives, false positives, false negatives and true
 # positives for different threshold values. It is fundamental for binary classification
 # metrics like :func:`sklearn.metrics.roc_auc_score` and
 # :func:`sklearn.metrics.det_curve`.
 
 from sklearn.datasets import make_classification
-from sklearn.metrics import binary_classification_curve
+from sklearn.metrics import confusion_matrix_at_thresholds
 
 X, y = make_classification(
     n_samples=100,
@@ -105,7 +105,7 @@ classifier.fit(X_train, y_train)
 
 y_score = classifier.predict_proba(X_test)[:, 1]
 
-tns, fps, fns, tps, threshold = binary_classification_curve(y_test, y_score)
+tns, fps, fns, tps, threshold = confusion_matrix_at_thresholds(y_test, y_score)
 
 # Plot TNs, FPs, FNs and TPs vs Thresholds
 plt.figure(figsize=(10, 6))
