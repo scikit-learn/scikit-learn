@@ -1,0 +1,3 @@
+- Fix shuffle behaviour in :class:`model_selection.StratifiedGroupKFold`. Now
+  stratification among folds is also preserved when `shuffle=True`.
+  By :user:`Pau Folch <pfolch>`.

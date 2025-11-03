@@ -1619,7 +1619,7 @@ def test_quantile_transformer_sorted_quantiles(array_type):
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15733
     # Taken from upstream bug report:
-    # https://github.com/numpy/numpy/issues/14685
+    # https://github.com/numpy/numpy/issues/14685 (which was resolved in numpy 1.20)
     X = np.array([0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 1, 1, 9, 9, 9, 8, 8, 7] * 10)
     X = 0.1 * X.reshape(-1, 1)
     X = _convert_container(X, array_type)
