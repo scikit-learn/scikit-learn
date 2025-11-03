@@ -463,7 +463,7 @@ class MDS(BaseEstimator):
         .. versionchanged:: 1.9
            The default value for `n_init` will change from 4 to 1 in version 1.9.
 
-    init : str, default='random'
+    init : {'random', 'classical_mds'}, default='random'
         The initialization approach. If `random`, random initialization is used.
         If `classical_mds`, then classical MDS is run and used as initialization
         for MDS (in this case, the value of `n_init` is ignored).
