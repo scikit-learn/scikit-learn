@@ -21,8 +21,7 @@ See also :ref:`minimal_cost_complexity_pruning` for details on pruning.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
-
-import numpy as np      #
+import numpy as np  #
 
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
@@ -113,7 +112,9 @@ ax.plot(ccp_alphas, test_scores, marker="o", label="test", drawstyle="steps-post
 # Highlight the best alpha on the plot
 best_alpha_idx = np.argmax(test_scores)
 best_alpha = ccp_alphas[best_alpha_idx]
-ax.axvline(best_alpha, linestyle="--", color="k", label=f"best test alpha: {best_alpha:.4f}")
+ax.axvline(
+    best_alpha, linestyle="--", color="k", label=f"best test alpha: {best_alpha:.4f}"
+)
 
 
 ax.legend()
