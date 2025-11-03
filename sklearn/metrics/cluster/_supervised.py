@@ -19,6 +19,7 @@ from sklearn.metrics.cluster._expected_mutual_info_fast import (
 )
 from sklearn.utils import deprecated
 from sklearn.utils._array_api import (
+    _is_numpy_namespace,
     _max_precision_float_dtype,
     get_namespace_and_device,
 )
@@ -156,29 +157,60 @@ def contingency_matrix(
            [1, 0, 1]])
     """
 
+    xp, _, device_ = get_namespace_and_device(labels_true, labels_pred)
+
     if eps is not None and sparse:
         raise ValueError("Cannot set 'eps' when sparse=True")
 
-    classes, class_idx = np.unique(labels_true, return_inverse=True)
-    clusters, cluster_idx = np.unique(labels_pred, return_inverse=True)
+    classes, class_idx = xp.unique_inverse(labels_true)
+    clusters, cluster_idx = xp.unique_inverse(labels_pred)
     n_classes = classes.shape[0]
     n_clusters = clusters.shape[0]
-    # Using coo_matrix to accelerate simple histogram calculation,
-    # i.e. bins are consecutive integers
-    # Currently, coo_matrix is faster than histogram2d for simple cases
-    contingency = sp.coo_matrix(
-        (np.ones(class_idx.shape[0]), (class_idx, cluster_idx)),
-        shape=(n_classes, n_clusters),
-        dtype=dtype,
-    )
+
+    if _is_numpy_namespace(xp):
+        # Using coo_matrix to accelerate simple histogram calculation,
+        # i.e. bins are consecutive integers
+        # Currently, coo_matrix is faster than histogram2d for simple cases
+        contingency = sp.coo_matrix(
+            (np.ones(class_idx.shape[0]), (class_idx, cluster_idx)),
+            shape=(n_classes, n_clusters),
+            dtype=dtype,
+        )
+        if sparse:
+            contingency = contingency.tocsr()
+            contingency.sum_duplicates()
+        else:
+            contingency = contingency.toarray()
+            if eps is not None:
+                # don't use += as contingency is integer
+                contingency = contingency + eps
+        return contingency
+
     if sparse:
-        contingency = contingency.tocsr()
-        contingency.sum_duplicates()
-    else:
-        contingency = contingency.toarray()
-        if eps is not None:
-            # don't use += as contingency is integer
-            contingency = contingency + eps
+        raise ValueError(
+            f"Array API dispatch to namespace {xp.__name__} only supports "
+            f"sparse=False for contingency_matrix."
+        )
+
+    # dense array calculation using matmul
+    A = xp.astype(
+        class_idx[:, None]
+        == xp.arange(n_classes, device=device_, dtype=class_idx.dtype),
+        xp.int32,
+    )
+    B = xp.astype(
+        cluster_idx[:, None]
+        == xp.arange(n_clusters, device=device_, dtype=cluster_idx.dtype),
+        xp.int32,
+    )
+
+    contingency = A.T @ B
+
+    if eps is not None:
+        contingency = (
+            xp.astype(contingency, _max_precision_float_dtype(xp, device_)) + eps
+        )
+
     return contingency
 
 

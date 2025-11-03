@@ -26,6 +26,7 @@ from sklearn.metrics.cluster._supervised import (
     check_clusterings,
     entropy,
 )
+from sklearn.metrics.tests.test_common import check_array_api_metric
 from sklearn.utils import assert_all_finite
 from sklearn.utils._array_api import (
     _get_namespace_device_dtype_ids,
@@ -530,3 +531,33 @@ def test_fowlkes_mallows_sparse_deprecated(sparse):
         FutureWarning, match="The 'sparse' parameter was deprecated in 1.7"
     ):
         fowlkes_mallows_score([0, 1], [1, 1], sparse=sparse)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_array_api_metric_supervised(array_namespace, device, dtype_name):
+    labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
+    labels_b = np.array([1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 3, 1, 3, 3, 3, 2, 2])
+
+    check_array_api_metric(
+        contingency_matrix,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=labels_a,
+        b_np=labels_b,
+    )
+
+    eps = 0.1
+    check_array_api_metric(
+        contingency_matrix,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=labels_a,
+        b_np=labels_b,
+        eps=eps,
+    )
