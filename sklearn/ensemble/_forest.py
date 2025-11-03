@@ -720,20 +720,14 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return tags
 
 
-def _accumulate_prediction(predict, X, out, lock):
-    """
-    This is a utility function for joblib's Parallel.
+def _predict_proba_tree(tree, X):
+    """Helper function to get predict_proba from a single tree."""
+    return tree.predict_proba(X, check_input=False)
 
-    It can't go locally in ForestClassifier or ForestRegressor, because joblib
-    complains that it cannot pickle it when placed there.
-    """
-    prediction = predict(X, check_input=False)
-    with lock:
-        if len(out) == 1:
-            out[0] += prediction
-        else:
-            for i in range(len(out)):
-                out[i] += prediction[i]
+
+def _predict_tree(tree, X):
+    """Helper function to get prediction from a single tree."""
+    return tree.predict(X, check_input=False)
 
 
 class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
@@ -947,16 +941,26 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         # Assign chunk of trees to jobs
         n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
-        # avoid storing the output of every estimator by summing them here
+        # Collect all predictions without lock to avoid contention
+        all_predictions = Parallel(
+            n_jobs=n_jobs, verbose=self.verbose, prefer="threads"
+        )(
+            delayed(_predict_proba_tree)(e, X)
+            for e in self.estimators_
+        )
+
+        # Accumulate predictions in main thread (no lock needed)
         all_proba = [
             np.zeros((X.shape[0], j), dtype=np.float64)
             for j in np.atleast_1d(self.n_classes_)
         ]
-        lock = threading.Lock()
-        Parallel(n_jobs=n_jobs, verbose=self.verbose, require="sharedmem")(
-            delayed(_accumulate_prediction)(e.predict_proba, X, all_proba, lock)
-            for e in self.estimators_
-        )
+
+        for prediction in all_predictions:
+            if len(all_proba) == 1:
+                all_proba[0] += prediction
+            else:
+                for i in range(len(all_proba)):
+                    all_proba[i] += prediction[i]
 
         for proba in all_proba:
             proba /= len(self.estimators_)
@@ -1067,18 +1071,22 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         # Assign chunk of trees to jobs
         n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
-        # avoid storing the output of every estimator by summing them here
+        # Collect all predictions without lock to avoid contention
+        all_predictions = Parallel(
+            n_jobs=n_jobs, verbose=self.verbose, prefer="threads"
+        )(
+            delayed(_predict_tree)(e, X)
+            for e in self.estimators_
+        )
+
+        # Accumulate predictions in main thread (no lock needed)
         if self.n_outputs_ > 1:
             y_hat = np.zeros((X.shape[0], self.n_outputs_), dtype=np.float64)
         else:
             y_hat = np.zeros((X.shape[0]), dtype=np.float64)
 
-        # Parallel loop
-        lock = threading.Lock()
-        Parallel(n_jobs=n_jobs, verbose=self.verbose, require="sharedmem")(
-            delayed(_accumulate_prediction)(e.predict, X, [y_hat], lock)
-            for e in self.estimators_
-        )
+        for prediction in all_predictions:
+            y_hat += prediction
 
         y_hat /= len(self.estimators_)
 

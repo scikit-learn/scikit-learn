@@ -1866,3 +1866,51 @@ def test_non_supported_criterion_raises_error_with_missing_values(Forest):
     msg = ".*does not accept missing values"
     with pytest.raises(ValueError, match=msg):
         forest.fit(X, y)
+
+
+@pytest.mark.parametrize("n_jobs", [1, 2, 4])
+@pytest.mark.parametrize("Forest", [RandomForestClassifier, RandomForestRegressor])
+def test_parallel_prediction_without_lock_contention(n_jobs, Forest):
+    """Test that parallel prediction produces same results as serial.
+
+    Non-regression test for lock-free parallel prediction optimization.
+    Verifies that removing the threading lock from prediction accumulation
+    does not change the numerical results.
+    """
+    rng = np.random.RandomState(42)
+    X_train = rng.rand(100, 10)
+    X_test = rng.rand(50, 10)
+
+    if Forest == RandomForestClassifier:
+        y_train = rng.randint(0, 3, 100)
+        forest = Forest(n_estimators=20, n_jobs=n_jobs, random_state=0)
+        forest.fit(X_train, y_train)
+
+        # Test predict_proba
+        proba_parallel = forest.predict_proba(X_test)
+
+        # Get serial result
+        forest_serial = clone(forest)
+        forest_serial.n_jobs = 1
+        proba_serial = forest_serial.predict_proba(X_test)
+
+        assert_allclose(proba_parallel, proba_serial)
+
+        # Test predict
+        pred_parallel = forest.predict(X_test)
+        pred_serial = forest_serial.predict(X_test)
+        assert_allclose(pred_parallel, pred_serial)
+
+    else:  # RandomForestRegressor
+        y_train = rng.rand(100)
+        forest = Forest(n_estimators=20, n_jobs=n_jobs, random_state=0)
+        forest.fit(X_train, y_train)
+
+        # Test predict
+        pred_parallel = forest.predict(X_test)
+
+        forest_serial = clone(forest)
+        forest_serial.n_jobs = 1
+        pred_serial = forest_serial.predict(X_test)
+
+        assert_allclose(pred_parallel, pred_serial)
