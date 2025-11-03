@@ -835,7 +835,7 @@ false negatives and true positives for different thresholds::
   >>> thresholds
   array([0.8, 0.4, 0.35, 0.1])
 
-Note that the thresholds consist of distinct `y_score` values, in increasing order.
+Note that the thresholds consist of distinct `y_score` values, in decreasing order.
 
 .. rubric:: Examples
 

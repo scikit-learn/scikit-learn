@@ -872,20 +872,20 @@ def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weigh
     Returns
     -------
     tns : ndarray of shape (n_thresholds,)
-        A count of true negatives, at index i being the number of negative
+        A count of true negatives, at index `i` being the number of negative
         samples assigned a `score < thresholds[i]`.
 
     fps : ndarray of shape (n_thresholds,)
-        A count of false positives, at index i being the number of negative
+        A count of false positives, at index `i` being the number of negative
         samples assigned a `score >= thresholds[i]`. The total number of
         negative samples is equal to `fps[-1]`.
 
     fns : ndarray of shape (n_thresholds,)
-        A count of false negatives, at index i being the number of positive
+        A count of false negatives, at index `i` being the number of positive
         samples assigned a `score < thresholds[i]`.
 
     tps : ndarray of shape (n_thresholds,)
-        An increasing count of true positives, at index i being the number
+        An increasing count of true positives, at index `i` being the number
         of positive samples assigned a `score >= thresholds[i]`. The total
         number of positive samples is equal to `tps[-1]`.
 
