@@ -233,7 +233,10 @@ def _consistency_factor(n_features, alpha):
 
     References
     ----------
-    .. [Butler1993] R. W. Butler. P. L. Davies. M. Jhun. "Asymptotics for the Minimum Covariance Determinant Estimator." Ann. Statist. 21 (3) 1385 - 1400, September, 1993. https://doi.org/10.1214/aos/1176349264]
+    .. [Butler1993] R. W. Butler. P. L. Davies. M. Jhun. "Asymptotics for the
+        Minimum Covariance Determinant Estimator." Ann. Statist. 21 (3)
+        1385 - 1400, September, 1993. https://doi.org/10.1214/aos/1176349264]
+
     .. [Croux1999] Croux, C., Haesbroeck, G. "Influence Function and
         Efficiency of the Minimum Covariance Determinant Scatter Matrix
         Estimator" Journal of Multivariate Analysis 71(2) (1999) 161-190
