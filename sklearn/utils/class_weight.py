@@ -78,9 +78,15 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
 
         sample_weight = _check_sample_weight(sample_weight, y)
         weighted_class_counts = np.bincount(y_ind, weights=sample_weight)
-        recip_freq = weighted_class_counts.sum() / (
-            len(le.classes_) * weighted_class_counts
-        )
+
+        # Protect against division by zero for classes with no weighted samples
+        with np.errstate(divide="ignore", invalid="ignore"):
+            recip_freq = weighted_class_counts.sum() / (
+                len(le.classes_) * weighted_class_counts
+            )
+            # Replace inf/nan with 0 for classes with zero weight
+            recip_freq = np.where(np.isfinite(recip_freq), recip_freq, 0.0)
+
         weight = recip_freq[le.transform(classes)]
     else:
         # user-defined dictionary

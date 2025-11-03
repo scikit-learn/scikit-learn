@@ -332,3 +332,33 @@ def test_compute_sample_weight_sparse(csc_container):
     y = csc_container(np.asarray([[0], [1], [1]]))
     sample_weight = compute_sample_weight("balanced", y)
     assert_allclose(sample_weight, [1.5, 0.75, 0.75])
+
+
+def test_compute_class_weight_balanced_zero_weighted_class():
+    """Test that class_weight='balanced' handles classes with zero weight.
+
+    Non-regression test for issue where division by zero
+    produced inf values for classes with zero total weight when
+    using sample_weight.
+    """
+    # Setup: Class 2 exists but has zero total weight
+    y = np.array([0, 0, 1, 1, 2, 2])
+    classes = np.array([0, 1, 2])
+    sample_weight = np.array([1.0, 1.0, 1.0, 1.0, 0.0, 0.0])
+
+    weights = compute_class_weight(
+        "balanced", classes=classes, y=y, sample_weight=sample_weight
+    )
+
+    # All weights should be finite (no inf or nan)
+    assert np.all(np.isfinite(weights)), "Class weights should not contain inf or nan"
+
+    # Class with zero weight should have zero class_weight
+    assert weights[2] == 0.0, (
+        "Class with zero total weight should have zero class_weight"
+    )
+
+    # Other classes should have positive weights
+    assert weights[0] > 0 and weights[1] > 0, (
+        "Classes with samples should have positive weights"
+    )
