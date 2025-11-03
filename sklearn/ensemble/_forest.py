@@ -942,7 +942,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
         # Collect all predictions without lock to avoid contention
         all_predictions = Parallel(
-            n_jobs=n_jobs, verbose=self.verbose, prefer="threads"
+            n_jobs=n_jobs, verbose=self.verbose, require="sharedmem"
         )(delayed(_predict_proba_tree)(e, X) for e in self.estimators_)
 
         # Accumulate predictions in main thread (no lock needed)
@@ -1069,7 +1069,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         # Collect all predictions without lock to avoid contention
         all_predictions = Parallel(
-            n_jobs=n_jobs, verbose=self.verbose, prefer="threads"
+            n_jobs=n_jobs, verbose=self.verbose, require="sharedmem"
         )(delayed(_predict_tree)(e, X) for e in self.estimators_)
 
         # Accumulate predictions in main thread (no lock needed)

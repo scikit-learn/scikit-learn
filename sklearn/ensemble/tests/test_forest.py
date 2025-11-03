@@ -1883,34 +1883,37 @@ def test_parallel_prediction_without_lock_contention(n_jobs, Forest):
 
     if Forest == RandomForestClassifier:
         y_train = rng.randint(0, 3, 100)
-        forest = Forest(n_estimators=20, n_jobs=n_jobs, random_state=0)
-        forest.fit(X_train, y_train)
+        
+        # Train with parallel
+        forest_parallel = Forest(n_estimators=20, n_jobs=n_jobs, random_state=0)
+        forest_parallel.fit(X_train, y_train)
+        
+        # Train with serial (n_jobs=1)
+        forest_serial = Forest(n_estimators=20, n_jobs=1, random_state=0)
+        forest_serial.fit(X_train, y_train)
 
         # Test predict_proba
-        proba_parallel = forest.predict_proba(X_test)
-
-        # Get serial result
-        forest_serial = clone(forest)
-        forest_serial.n_jobs = 1
+        proba_parallel = forest_parallel.predict_proba(X_test)
         proba_serial = forest_serial.predict_proba(X_test)
-
         assert_allclose(proba_parallel, proba_serial)
 
         # Test predict
-        pred_parallel = forest.predict(X_test)
+        pred_parallel = forest_parallel.predict(X_test)
         pred_serial = forest_serial.predict(X_test)
         assert_allclose(pred_parallel, pred_serial)
 
     else:  # RandomForestRegressor
         y_train = rng.rand(100)
-        forest = Forest(n_estimators=20, n_jobs=n_jobs, random_state=0)
-        forest.fit(X_train, y_train)
+        
+        # Train with parallel
+        forest_parallel = Forest(n_estimators=20, n_jobs=n_jobs, random_state=0)
+        forest_parallel.fit(X_train, y_train)
+        
+        # Train with serial
+        forest_serial = Forest(n_estimators=20, n_jobs=1, random_state=0)
+        forest_serial.fit(X_train, y_train)
 
         # Test predict
-        pred_parallel = forest.predict(X_test)
-
-        forest_serial = clone(forest)
-        forest_serial.n_jobs = 1
+        pred_parallel = forest_parallel.predict(X_test)
         pred_serial = forest_serial.predict(X_test)
-
         assert_allclose(pred_parallel, pred_serial)
