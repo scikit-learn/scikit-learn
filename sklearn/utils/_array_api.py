@@ -552,6 +552,7 @@ def move_to(*arrays, xp, device):
                     # `TypeError` and `NotImplementedError` for packages that do not
                     # yet support dlpack 1.0
                     # (i.e. the `device`/`copy` kwargs, e.g., torch <= 2.8.0)
+                    # TODO: try removing this once DLPack v1 more widely supported
                 except (AttributeError, TypeError, NotImplementedError):
                     # Converting to numpy is tricky, handle this via dedicated function
                     if _is_numpy_namespace(xp):
