@@ -183,8 +183,8 @@ def test_mincovdet_bias_on_normal(n_samples, n_features, global_random_seed):
     """
     threshold = 0.985  # threshold for variance underesitmation
     x = np.random.randn(n_features, n_samples)
-    # Use centered data and assume centered, to reduce test complexity
-    var_emp = np.var(x, axis=1, mean=np.zeros((n_features, 1)))
+    # Assume centered data, to reduce test complexity
+    var_emp = empirical_covariance(x.T, assume_centered=True).diagonal()
     cov_mcd = (
         MinCovDet(support_fraction=1.0, store_precision=False, assume_centered=True)
         .fit(x.T)
