@@ -691,7 +691,6 @@ def parametrize_with_checks(
 
 @validate_params(
     {
-        "generate_only": ["boolean"],
         "legacy": ["boolean"],
         "expected_failed_checks": [dict, None],
         "on_skip": [StrOptions({"warn"}), None],
@@ -702,7 +701,6 @@ def parametrize_with_checks(
 )
 def check_estimator(
     estimator=None,
-    generate_only=False,
     *,
     legacy: bool = True,
     expected_failed_checks: dict[str, str] | None = None,
@@ -734,18 +732,6 @@ def check_estimator(
     ----------
     estimator : estimator object
         Estimator instance to check.
-
-    generate_only : bool, default=False
-        When `False`, checks are evaluated when `check_estimator` is called.
-        When `True`, `check_estimator` returns a generator that yields
-        (estimator, check) tuples. The check is run by calling
-        `check(estimator)`.
-
-        .. versionadded:: 0.22
-
-        .. deprecated:: 1.6
-            `generate_only` will be removed in 1.8. Use
-            :func:`~sklearn.utils.estimator_checks.estimator_checks_generator` instead.
 
     legacy : bool, default=True
         Whether to include legacy checks. Over time we remove checks from this category
@@ -823,17 +809,6 @@ def check_estimator(
                 "expected_to_fail_reason": expected_to_fail_reason,
             }
 
-    estimator_checks_generator : generator
-        Generator that yields (estimator, check) tuples. Returned when
-        `generate_only=True`.
-
-        ..
-            TODO(1.8): remove return value
-
-        .. deprecated:: 1.6
-            ``generate_only`` will be removed in 1.8. Use
-            :func:`~sklearn.utils.estimator_checks.estimator_checks_generator` instead.
-
     Raises
     ------
     Exception
@@ -869,18 +844,6 @@ def check_estimator(
         raise ValueError("callback cannot be provided together with on_fail='raise'")
 
     name = type(estimator).__name__
-
-    # TODO(1.8): remove generate_only
-    if generate_only:
-        warnings.warn(
-            "`generate_only` is deprecated in 1.6 and will be removed in 1.8. "
-            "Use :func:`~sklearn.utils.estimator_checks.estimator_checks_generator` "
-            "instead.",
-            FutureWarning,
-        )
-        return estimator_checks_generator(
-            estimator, legacy=legacy, expected_failed_checks=None, mark="skip"
-        )
 
     test_results = []
 
@@ -1680,10 +1643,16 @@ def check_sample_weights_not_overwritten(name, estimator_orig):
 def check_dtype_object(name, estimator_orig):
     # check that estimators treat dtype object as numeric if possible
     rng = np.random.RandomState(0)
-    X = _enforce_estimator_tags_X(estimator_orig, rng.uniform(size=(40, 10)))
+    n_classes = 4
+    n_samples_per_class = 14
+    n_samples_total = n_classes * n_samples_per_class
+    X = _enforce_estimator_tags_X(
+        estimator_orig, rng.uniform(size=(n_samples_total, 10))
+    )
     X = X.astype(object)
     tags = get_tags(estimator_orig)
-    y = (X[:, 0] * 4).astype(int)
+    y = np.repeat(np.arange(n_classes), n_samples_per_class)
+    y = rng.permutation(y)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -4490,14 +4459,14 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     if "warm_start" in estimator.get_params():
         estimator.set_params(warm_start=False)
 
-    n_samples = 10
+    n_samples = 15
     X = rng.normal(size=(n_samples, 4))
     X = _enforce_estimator_tags_X(estimator, X)
 
     if is_regressor(estimator):
         y = rng.normal(size=n_samples)
     else:
-        y = rng.randint(low=0, high=2, size=n_samples)
+        y = rng.permutation(np.repeat(np.arange(3), 5))
     y = _enforce_estimator_tags_y(estimator, y)
 
     err_msg = (

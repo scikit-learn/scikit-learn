@@ -560,7 +560,7 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
         pickle.loads(tree_pickle_noversion)
 
 
-# The test modifies global state by changing the the TreeNoVersion class
+# The test modifies global state by changing the TreeNoVersion class
 @pytest.mark.thread_unsafe
 def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
     iris = datasets.load_iris()
@@ -1049,6 +1049,19 @@ def test_param_is_non_default(default_value, test_value):
     https://github.com/scikit-learn/scikit-learn/issues/31525
     """
     estimator = make_estimator_with_param(default_value)(param=test_value)
+    non_default = estimator._get_params_html().non_default
+    assert "param" in non_default
+
+
+def test_param_is_non_default_when_pandas_NA():
+    """Check that we detect pandas.Na as non-default parameter.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/32312
+    """
+    pd = pytest.importorskip("pandas")
+
+    estimator = make_estimator_with_param(default_value=0)(param=pd.NA)
     non_default = estimator._get_params_html().non_default
     assert "param" in non_default
 
