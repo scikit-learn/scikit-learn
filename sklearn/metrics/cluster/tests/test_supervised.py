@@ -533,17 +533,12 @@ def test_fowlkes_mallows_sparse_deprecated(sparse):
         fowlkes_mallows_score([0, 1], [1, 1], sparse=sparse)
 
 
-@pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
-)
-def test_array_api_metric_supervised(array_namespace, device, dtype_name):
+def check_array_api_metric_supervised(metric, array_namespace, device, dtype_name):
     labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
     labels_b = np.array([1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 3, 1, 3, 3, 3, 2, 2])
 
     check_array_api_metric(
-        contingency_matrix,
+        metric,
         array_namespace,
         device,
         dtype_name,
@@ -553,7 +548,7 @@ def test_array_api_metric_supervised(array_namespace, device, dtype_name):
 
     eps = 0.1
     check_array_api_metric(
-        contingency_matrix,
+        metric,
         array_namespace,
         device,
         dtype_name,
@@ -561,3 +556,26 @@ def test_array_api_metric_supervised(array_namespace, device, dtype_name):
         b_np=labels_b,
         eps=eps,
     )
+
+
+array_api_metric_checkers = {
+    contingency_matrix: [
+        check_array_api_metric_supervised,
+    ],
+}
+
+
+def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers):
+    for metric, checkers in metric_checkers.items():
+        for checker in checkers:
+            yield metric, checker
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
+def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):
+    check_func(metric, array_namespace, device, dtype_name)
