@@ -2292,7 +2292,10 @@ array_api_metric_checkers = {
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
     ],
-    coverage_error: [check_array_api_continuous_classification_metric],
+    coverage_error: [
+        check_array_api_continuous_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
     det_curve: [check_array_api_binary_classification_metric],
     f1_score: [
         check_array_api_binary_classification_metric,
