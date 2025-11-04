@@ -1,0 +1,2 @@
+- :class:`HashingVectorizer` and :class:`CountVectorizer` support `stop_words` for Russian and German languages
+  By :user:`Mile Mitrovic <mile888>`
