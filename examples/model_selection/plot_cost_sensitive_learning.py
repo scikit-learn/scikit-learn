@@ -157,7 +157,6 @@ scoring = {
 # - a gain of `-5` for each false negative ("bad" credit labeled as "good"),
 # - a `0` gain for true positives and true negatives.
 #
-#
 # Note that theoretically, given that our model is calibrated and our data
 # set representative and large enough, we do not need to tune the
 # threshold, but can safely set it to 1/5 of the cost ratio, as stated by
