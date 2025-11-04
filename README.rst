@@ -29,7 +29,7 @@
 .. |Benchmark| image:: https://img.shields.io/badge/Benchmarked%20by-asv-blue
    :target: https://scikit-learn.org/scikit-learn-benchmarks
 
-.. |PythonMinVersion| replace:: 3.10
+.. |PythonMinVersion| replace:: 3.11
 .. |NumPyMinVersion| replace:: 1.24.1
 .. |SciPyMinVersion| replace:: 1.10.0
 .. |JoblibMinVersion| replace:: 1.3.0
