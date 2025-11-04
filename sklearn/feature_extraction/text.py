@@ -24,7 +24,11 @@ from sklearn.base import (
 )
 from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction._hash import FeatureHasher
-from sklearn.feature_extraction._stop_words import ENGLISH_STOP_WORDS
+from sklearn.feature_extraction._stop_words import (
+    ENGLISH_STOP_WORDS,
+    GERMAN_STOP_WORDS,
+    RUSSIAN_STOP_WORDS,
+)
 from sklearn.preprocessing import normalize
 from sklearn.utils import metadata_routing
 from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
@@ -38,6 +42,8 @@ from sklearn.utils.validation import (
 
 __all__ = [
     "ENGLISH_STOP_WORDS",
+    "GERMAN_STOP_WORDS",
+    "RUSSIAN_STOP_WORDS",
     "CountVectorizer",
     "HashingVectorizer",
     "TfidfTransformer",
@@ -197,14 +203,19 @@ def strip_tags(s):
 
 
 def _check_stop_list(stop):
-    if stop == "english":
-        return ENGLISH_STOP_WORDS
-    elif isinstance(stop, str):
-        raise ValueError("not a built-in stop list: %s" % stop)
-    elif stop is None:
+    stop_words_languages = {
+        "english": ENGLISH_STOP_WORDS,
+        "russian": RUSSIAN_STOP_WORDS,
+        "german": GERMAN_STOP_WORDS,
+    }
+
+    if stop is None:
         return None
-    else:  # assume it's a collection
-        return frozenset(stop)
+    if isinstance(stop, str):
+        if stop in stop_words_languages:
+            return stop_words_languages[stop]
+        raise ValueError(f"not a built-in stop list: {stop}")
+    return frozenset(stop)
 
 
 class _VectorizerMixin:
@@ -659,7 +670,7 @@ class HashingVectorizer(
         preprocessing and n-grams generation steps.
         Only applies if ``analyzer == 'word'``.
 
-    stop_words : {'english'}, list, default=None
+    stop_words : {'english', 'russian', 'german'}, list, default=None
         If 'english', a built-in stop word list for English is used.
         There are several known issues with 'english' and you should
         consider an alternative (see :ref:`stop_words`).
@@ -759,7 +770,7 @@ class HashingVectorizer(
         "lowercase": ["boolean"],
         "preprocessor": [callable, None],
         "tokenizer": [callable, None],
-        "stop_words": [StrOptions({"english"}), list, None],
+        "stop_words": [StrOptions({"english", "russian", "german"}), list, None],
         "token_pattern": [str, None],
         "ngram_range": [tuple],
         "analyzer": [StrOptions({"word", "char", "char_wb"}), callable],
@@ -997,7 +1008,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         preprocessing and n-grams generation steps.
         Only applies if ``analyzer == 'word'``.
 
-    stop_words : {'english'}, list, default=None
+    stop_words : {'english', 'russian', 'german'}, list, default=None
         If 'english', a built-in stop word list for English is used.
         There are several known issues with 'english' and you should
         consider an alternative (see :ref:`stop_words`).
@@ -1143,7 +1154,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         "lowercase": ["boolean"],
         "preprocessor": [callable, None],
         "tokenizer": [callable, None],
-        "stop_words": [StrOptions({"english"}), list, None],
+        "stop_words": [StrOptions({"english", "russian", "german"}), list, None],
         "token_pattern": [str, None],
         "ngram_range": [tuple],
         "analyzer": [StrOptions({"word", "char", "char_wb"}), callable],
@@ -1809,7 +1820,7 @@ class TfidfVectorizer(CountVectorizer):
             is first read from the file and then passed to the given callable
             analyzer.
 
-    stop_words : {'english'}, list, default=None
+    stop_words : {'english', 'russian', 'german'}, list, default=None
         If a string, it is passed to _check_stop_list and the appropriate stop
         list is returned. 'english' is currently the only supported string
         value.

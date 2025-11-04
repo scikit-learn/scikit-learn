@@ -16,6 +16,8 @@ from scipy import sparse
 from sklearn.base import clone
 from sklearn.feature_extraction.text import (
     ENGLISH_STOP_WORDS,
+    GERMAN_STOP_WORDS,
+    RUSSIAN_STOP_WORDS,
     CountVectorizer,
     HashingVectorizer,
     TfidfTransformer,
@@ -360,6 +362,10 @@ def test_countvectorizer_stop_words():
     cv = CountVectorizer()
     cv.set_params(stop_words="english")
     assert cv.get_stop_words() == ENGLISH_STOP_WORDS
+    cv.set_params(stop_words="russian")
+    assert cv.get_stop_words() == RUSSIAN_STOP_WORDS
+    cv.set_params(stop_words="german")
+    assert cv.get_stop_words() == GERMAN_STOP_WORDS
     cv.set_params(stop_words="_bad_str_stop_")
     with pytest.raises(ValueError):
         cv.get_stop_words()
