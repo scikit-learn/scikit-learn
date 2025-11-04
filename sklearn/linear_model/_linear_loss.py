@@ -201,8 +201,8 @@ class LinearModelLoss:
         weights, intercept = self.weight_intercept(coef)
         xp, _, device_ = get_namespace_and_device(X)
 
-        weights_xp = xp.asarray(weights, dtype=X.dtype, device=device_)
-        intercept_xp = xp.asarray(intercept, dtype=X.dtype, device=device_)
+        weights_xp = xp.asarray(weights, device=device_)
+        intercept_xp = xp.asarray(intercept, dtype=weights_xp.dtype, device=device_)
         if not self.base_loss.is_multiclass:
             raw_prediction = X @ weights_xp + intercept_xp
         else:
@@ -337,16 +337,21 @@ class LinearModelLoss:
 
         grad_pointwise /= sw_sum
 
-        X_np = X if sparse.issparse(X) else _convert_to_numpy(X, xp=xp)
         if not self.base_loss.is_multiclass:
             grad = np.empty_like(coef, dtype=weights.dtype)
-            grad[:n_features] = X_np.T @ grad_pointwise + l2_reg_strength * weights
+            X_grad = X.T @ xp.asarray(grad_pointwise, device=device_)
+            grad[:n_features] = (
+                _convert_to_numpy(X_grad, xp=xp) + l2_reg_strength * weights
+            )
             if self.fit_intercept:
                 grad[-1] = grad_pointwise.sum()
         else:
             grad = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
             # grad_pointwise.shape = (n_samples, n_classes)
-            grad[:, :n_features] = grad_pointwise.T @ X_np + l2_reg_strength * weights
+            grad_X = xp.asarray(grad_pointwise, device=device_).T @ X
+            grad[:, :n_features] = (
+                _convert_to_numpy(grad_X, xp) + l2_reg_strength * weights
+            )
             if self.fit_intercept:
                 grad[:, -1] = grad_pointwise.sum(axis=0)
             if coef.ndim == 1:
