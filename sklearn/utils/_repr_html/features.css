@@ -81,6 +81,19 @@ padding: .25em;
   margin: .5;
 }
 
+.features .features-container table tr:nth-child(odd) {
+    background-color: #fff;
+}
+
+.features .features-container table tr:nth-child(even) {
+    background-color: #f6f6f6;
+}
+
+.features .features-container table tr:hover {
+    background-color: #e0e0e0;
+}
+
+
 .features .features-container table td {
   text-align: left;
   padding: 0;
