@@ -19,9 +19,11 @@ from sklearn.metrics.cluster._expected_mutual_info_fast import (
 )
 from sklearn.utils import deprecated
 from sklearn.utils._array_api import (
+    _find_matching_floating_dtype,
     _is_numpy_namespace,
     _max_precision_float_dtype,
     get_namespace_and_device,
+    indexing_dtype,
 )
 from sklearn.utils._param_validation import (
     Hidden,
@@ -165,6 +167,7 @@ def contingency_matrix(
 
     classes, class_idx = xp.unique_inverse(labels_true)
     clusters, cluster_idx = xp.unique_inverse(labels_pred)
+    c_x = class_idx.shape[0]
     n_classes = classes.shape[0]
     n_clusters = clusters.shape[0]
 
@@ -173,7 +176,7 @@ def contingency_matrix(
         # i.e. bins are consecutive integers
         # Currently, coo_matrix is faster than histogram2d for simple cases
         contingency = sp.coo_matrix(
-            (np.ones(class_idx.shape[0]), (class_idx, cluster_idx)),
+            (np.ones(c_x), (class_idx, cluster_idx)),
             shape=(n_classes, n_clusters),
             dtype=dtype,
         )
@@ -187,28 +190,44 @@ def contingency_matrix(
                 contingency = contingency + eps
         return contingency
 
+    # Array API support
     if sparse:
         raise ValueError(
             f"Array API dispatch to namespace {xp.__name__} only supports "
             f"sparse=False for contingency_matrix."
         )
 
-    float_dtype = _max_precision_float_dtype(xp, device_)
-    classes_one_hot = xp.astype(
-        class_idx[:, None]
-        == xp.arange(n_classes, device=device_, dtype=class_idx.dtype),
-        float_dtype,
-    )
-    clusters_one_hot = xp.astype(
-        cluster_idx[:, None]
-        == xp.arange(n_clusters, device=device_, dtype=cluster_idx.dtype),
-        float_dtype,
-    )
+    if eps is None:
+        contingency_dtype = indexing_dtype(xp)
+    else:
+        # float type needed for adding eps
+        contingency_dtype = _find_matching_floating_dtype(
+            labels_true, labels_pred, xp=xp
+        )
 
-    contingency = classes_one_hot.T @ clusters_one_hot
+    contingency = xp.zeros(
+        (n_classes, n_clusters), device=device_, dtype=contingency_dtype
+    )
+    arange_classes = xp.arange(n_classes, device=device_, dtype=class_idx.dtype)
+    arange_clusters = xp.arange(n_clusters, device=device_, dtype=cluster_idx.dtype)
+
+    batch_size = 1024
+    for i in range(0, c_x, batch_size):
+        i_end = min(i + batch_size, c_x)
+        batch_classes = class_idx[i:i_end, ...]
+        batch_clusters = cluster_idx[i:i_end, ...]
+
+        batch_classes_one_hot = xp.astype(
+            batch_classes[:, None] == arange_classes, contingency_dtype
+        )
+        batch_clusters_one_hot = xp.astype(
+            batch_clusters[:, None] == arange_clusters, contingency_dtype
+        )
+
+        contingency += batch_classes_one_hot.T @ batch_clusters_one_hot
 
     if eps is not None:
-        contingency = contingency + eps
+        return contingency + eps
 
     return contingency
 
