@@ -35,7 +35,16 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import LabelEncoder, StandardScaler, scale
 from sklearn.svm import l1_min_c
 from sklearn.utils import compute_class_weight, shuffle
-from sklearn.utils._testing import ignore_warnings, skip_if_no_parallel
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._testing import (
+    _array_api_for_tests,
+    ignore_warnings,
+    skip_if_no_parallel,
+)
 from sklearn.utils.fixes import _IS_32BIT, COO_CONTAINERS, CSR_CONTAINERS
 
 pytestmark = pytest.mark.filterwarnings(
@@ -2537,3 +2546,47 @@ def test_liblinear_multiclass_warning(Estimator):
     )
     with pytest.warns(FutureWarning, match=msg):
         Estimator(solver="liblinear").fit(iris.data, iris.target)
+
+
+@pytest.mark.parametrize("binary", [False, True])
+@pytest.mark.parametrize("use_str_y", [False, True])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_logistic_regression_array_api_compliance(
+    binary, use_str_y, array_namespace, device_, dtype_name
+):
+    xp = _array_api_for_tests(array_namespace, device_)
+    n_samples, _ = iris.data.shape
+    X_np = iris.data.astype(dtype_name)
+    X_xp = xp.asarray(X_np, device=device_)
+    if use_str_y:
+        if binary:
+            target = (iris.target > 0).astype(np.int64)
+            target = np.array(["setosa", "not-setosa"])[target]
+        else:
+            target = iris.target_names[iris.target]
+        y_np = target.copy()
+        y_xp_or_np = np.asarray(y_np, copy=True)
+    else:
+        if binary:
+            target = (iris.target > 0).astype(np.int64)
+        else:
+            target = iris.target
+        y_np = target.astype(dtype_name)
+        y_xp_or_np = xp.asarray(y_np, device=device_)
+
+    lr_np = LogisticRegression(C=n_samples, solver="lbfgs", max_iter=200).fit(
+        X_np, y_np
+    )
+    rtol = 1e-1 if device_ == "mps" else 1e-7
+    with config_context(array_api_dispatch=True):
+        lr_xp = LogisticRegression(C=n_samples, solver="lbfgs", max_iter=200).fit(
+            X_xp, y_xp_or_np
+        )
+        assert_allclose(_convert_to_numpy(lr_xp.coef_, xp=xp), lr_np.coef_, rtol=rtol)
+        assert_allclose(
+            _convert_to_numpy(lr_xp.intercept_, xp=xp), lr_np.intercept_, rtol=rtol
+        )

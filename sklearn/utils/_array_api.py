@@ -1104,3 +1104,8 @@ def _half_multinomial_loss(y, pred, sample_weight=None, xp=None):
     return float(
         _average(log_sum_exp - label_predictions, weights=sample_weight, xp=xp)
     )
+
+
+def _matching_numpy_dtype(X, xp=None):
+    xp, _ = get_namespace(xp=xp)
+    return _convert_to_numpy(X[0, 0], xp=xp).dtype
