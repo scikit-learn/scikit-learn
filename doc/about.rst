@@ -246,7 +246,7 @@ Silver sponsors
 
   .. div:: image-box
 
-    .. image:: images/bnp-paribas.png
+    .. image:: images/bnp-paribas.jpg
       :target: https://group.bnpparibas/
 
 ..........
@@ -280,7 +280,7 @@ Other contributions
 .. |bnp| image:: images/bnp.png
   :target: https://www.bnpparibascardif.com/
 
-.. |bnpparibasgroup| image:: images/bnp-paribas.png
+.. |bnpparibasgroup| image:: images/bnp-paribas.jpg
   :target: https://group.bnpparibas/
 
 .. |dataiku| image:: images/dataiku.png
@@ -313,6 +313,8 @@ Other contributions
 
 
 * `Microsoft <https://microsoft.com/>`_ funds Andreas Müller since 2020.
+
+* `NVidia <https://nvidia.com>`_ funds Tim Head since 2022.
 
 * `Quansight Labs <https://labs.quansight.org>`_ funds Lucy Liu since 2022.
 
@@ -569,3 +571,32 @@ scikit-learn Swag
 Official scikit-learn swag is available for purchase at the `NumFOCUS online store
 <https://numfocus.myspreadshop.com/scikit-learn+logo?idea=6335cad48f3f5268f5f42559>`_.
 A portion of the proceeds from each sale goes to support the scikit-learn project.
+
+.. raw:: html
+
+  <script>
+    // Make all external links on the about page open in a new tab
+    document.addEventListener('DOMContentLoaded', function() {
+      const aboutSection = document.getElementById('about');
+      if (aboutSection) {
+        const links = aboutSection.querySelectorAll('a[href^="http"]');
+        links.forEach(function(link) {
+          // Skip links that already have target attribute
+          if (!link.hasAttribute('target')) {
+            link.setAttribute('target', '_blank');
+            link.setAttribute('rel', 'noopener noreferrer');
+          }
+        });
+      }
+      // Also handle links anywhere on the page if on about.html
+      if (window.location.pathname.includes('about.html')) {
+        const allExternalLinks = document.querySelectorAll('a[href^="http"]');
+        allExternalLinks.forEach(function(link) {
+          if (!link.hasAttribute('target')) {
+            link.setAttribute('target', '_blank');
+            link.setAttribute('rel', 'noopener noreferrer');
+          }
+        });
+      }
+    });
+  </script>
