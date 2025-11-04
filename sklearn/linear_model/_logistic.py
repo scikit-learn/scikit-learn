@@ -1271,6 +1271,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             C_ = self.C
             penalty = self.penalty
 
+        orig_X_dtype = X.dtype
         if solver == "lbfgs":
             _dtype = _max_precision_float_dtype(xp, device=device_)
         else:
@@ -1450,11 +1451,12 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 self.coef_, (n_classes, n_features + int(self.fit_intercept))
             )
 
+        self.coef_ = xp.astype(self.coef_, orig_X_dtype)
         if self.fit_intercept:
             self.intercept_ = self.coef_[:, -1]
             self.coef_ = self.coef_[:, :-1]
         else:
-            self.intercept_ = xp.zeros(n_classes, dtype=X.dtype, device=device_)
+            self.intercept_ = xp.zeros(n_classes, dtype=orig_X_dtype, device=device_)
 
         return self
 
@@ -1488,16 +1490,20 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         ovr = self.multi_class in ["ovr", "warn"] or (
             self.multi_class in ["auto", "deprecated"]
-            and (self.classes_.size <= 2 or self.solver == "liblinear")
+            and (size(self.classes_) <= 2 or self.solver == "liblinear")
         )
         if ovr:
             return super()._predict_proba_lr(X)
         else:
+            xp, _ = get_namespace(X)
             decision = self.decision_function(X)
             if decision.ndim == 1:
                 # Workaround for multi_class="multinomial" and binary outcomes
                 # which requires softmax prediction with only a 1D decision.
-                decision_2d = np.c_[-decision, decision]
+                if _is_numpy_namespace(xp):
+                    decision_2d = np.c_[-decision, decision]
+                else:
+                    decision_2d = xp.concat([-decision, decision], axis=1)
             else:
                 decision_2d = decision
             return softmax(decision_2d, copy=False)
@@ -1521,7 +1527,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             Returns the log-probability of the sample for each class in the
             model, where classes are ordered as they are in ``self.classes_``.
         """
-        return np.log(self.predict_proba(X))
+        xp, _ = get_namespace(X)
+        return xp.log(self.predict_proba(X))
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()

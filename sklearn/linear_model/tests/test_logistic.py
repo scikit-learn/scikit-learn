@@ -36,6 +36,7 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler, scale
 from sklearn.svm import l1_min_c
 from sklearn.utils import compute_class_weight, shuffle
 from sklearn.utils._array_api import (
+    _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
@@ -2581,7 +2582,14 @@ def test_logistic_regression_array_api_compliance(
     lr_np = LogisticRegression(C=n_samples, solver="lbfgs", max_iter=200).fit(
         X_np, y_np
     )
-    rtol = 1e-1 if device_ == "mps" else 1e-7
+    predict_proba_np = lr_np.predict_proba(X_np)
+    preditct_log_proba_np = lr_np.predict_log_proba(X_np)
+    if device_ == "mps":
+        rtol = 1e-1
+    elif dtype_name == "float32":
+        rtol = 1e-5
+    else:
+        rtol = 1e-7
     with config_context(array_api_dispatch=True):
         lr_xp = LogisticRegression(C=n_samples, solver="lbfgs", max_iter=200).fit(
             X_xp, y_xp_or_np
@@ -2589,4 +2597,20 @@ def test_logistic_regression_array_api_compliance(
         assert_allclose(_convert_to_numpy(lr_xp.coef_, xp=xp), lr_np.coef_, rtol=rtol)
         assert_allclose(
             _convert_to_numpy(lr_xp.intercept_, xp=xp), lr_np.intercept_, rtol=rtol
+        )
+
+        predict_proba_xp = lr_xp.predict_proba(X_xp)
+        assert_allclose(
+            _convert_to_numpy(predict_proba_xp, xp=xp),
+            predict_proba_np,
+            rtol=rtol,
+            atol=_atol_for_type(dtype_name),
+        )
+
+        predict_log_proba_xp = lr_xp.predict_log_proba(X_xp)
+        assert_allclose(
+            _convert_to_numpy(predict_log_proba_xp, xp=xp),
+            preditct_log_proba_np,
+            rtol=rtol,
+            atol=_atol_for_type(dtype_name),
         )

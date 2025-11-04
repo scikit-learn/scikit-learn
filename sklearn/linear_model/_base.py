@@ -26,6 +26,8 @@ from sklearn.utils import check_array, check_random_state
 from sklearn.utils._array_api import (
     _asarray_with_order,
     _average,
+    _expit,
+    _is_numpy_namespace,
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
@@ -399,13 +401,17 @@ class LinearClassifierMixin(ClassifierMixin):
         1. / (1. + np.exp(-self.decision_function(X)));
         multiclass is handled by normalizing that over all classes.
         """
+        xp, _ = get_namespace(X)
         prob = self.decision_function(X)
-        expit(prob, out=prob)
+        if _is_numpy_namespace(xp):
+            expit(prob, out=prob)
+        else:
+            prob = _expit(prob, xp=xp)
         if prob.ndim == 1:
-            return np.vstack([1 - prob, prob]).T
+            return xp.stack([1 - prob, prob]).T
         else:
             # OvR normalization, like LibLinear's predict_probability
-            prob /= prob.sum(axis=1).reshape((prob.shape[0], -1))
+            prob /= xp.reshape(xp.sum(prob, axis=1), (prob.shape[0], -1))
             return prob
 
 
