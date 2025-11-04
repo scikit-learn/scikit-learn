@@ -132,7 +132,8 @@ def contingency_matrix(
         .. versionadded:: 0.18
 
     dtype : numeric type, default=np.int64
-        Output dtype. Ignored if `eps` is not `None`.
+        Output dtype. Ignored if `eps` is not `None` or when using Array API dispatch
+        to non-NumPy namespaces.
 
         .. versionadded:: 0.24
 
@@ -192,23 +193,23 @@ def contingency_matrix(
             f"sparse=False for contingency_matrix."
         )
 
-    # dense array calculation using matmul
     float_dtype = _max_precision_float_dtype(xp, device_)
-    A = xp.astype(
+    classes_one_hot = xp.astype(
         class_idx[:, None]
         == xp.arange(n_classes, device=device_, dtype=class_idx.dtype),
         float_dtype,
     )
-    B = xp.astype(
+    clusters_one_hot = xp.astype(
         cluster_idx[:, None]
         == xp.arange(n_clusters, device=device_, dtype=cluster_idx.dtype),
         float_dtype,
     )
 
-    contingency = A.T @ B
+    contingency = classes_one_hot.T @ clusters_one_hot
 
     if eps is not None:
         contingency = contingency + eps
+
     return contingency
 
 
