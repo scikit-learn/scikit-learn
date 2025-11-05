@@ -363,5 +363,5 @@ Note on support for `LogisticRegression`
 The array API support for :class:`linear_model.LogisticRegression` with
 `solver="lbfgs"` is not yet optimal due to several conversions between the
 array API namespace and NumPy. These conversions are needed to ensure
-compatibility with the internal loss module, which is currently implemented
+compatibility with the internal loss module, which is currently only implemented
 in Cython.
