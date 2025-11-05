@@ -99,9 +99,7 @@ scikit_learn_install() {
         # the conda environment.
         find $CONDA_PREFIX -name omp.h -delete -print
         # meson >= 1.5 detects OpenMP installed with brew and OpenMP may be installed
-        # with brew in CI runner. OpenMP was installed with brew in macOS-12 CI
-        # runners which doesn't seem to be the case in macOS-13 runners anymore,
-        # but we keep the next line just to be safe ...
+        # with brew in CI runner
         brew uninstall --ignore-dependencies --force libomp
     fi
 
