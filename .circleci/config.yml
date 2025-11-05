@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   lint:
     docker:
-      - image: cimg/python:3.10.16
+      - image: cimg/python:3.11
     steps:
       - checkout
       - run:
