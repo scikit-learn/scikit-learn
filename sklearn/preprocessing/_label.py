@@ -13,7 +13,6 @@ import scipy.sparse as sp
 from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
 from sklearn.utils import column_or_1d
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
     _isin,
@@ -309,10 +308,12 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
                 f"pos_label={self.pos_label} and neg_label={self.neg_label}"
             )
 
-        if self.sparse_output and not _is_numpy_namespace(get_namespace(y)[0]):
+        xp, _ = get_namespace(y)
+
+        if self.sparse_output and not _is_numpy_namespace(xp):
             raise ValueError(
                 "`sparse_output=True` is not supported for array API "
-                "namespace {xp.__name__}. "
+                f"namespace {xp.__name__}. "
                 "Use `sparse_output=False` to return a dense array instead."
             )
 
@@ -373,10 +374,12 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
         """
         check_is_fitted(self)
 
-        if self.sparse_output and not _is_numpy_namespace(get_namespace(y)[0]):
+        xp, _ = get_namespace(y)
+
+        if self.sparse_output and not _is_numpy_namespace(xp):
             raise ValueError(
                 "`sparse_output=True` is not supported for array API "
-                "namespace {xp.__name__}. "
+                f"namespace {xp.__name__}. "
                 "Use `sparse_output=False` to return a dense array instead."
             )
 
@@ -567,25 +570,25 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
     xp, _, device_ = get_namespace_and_device(y)
 
-    try:
-        classes = xp.asarray(classes, device=device_)
-
-    # e.g., torch.tensor(["yes", "no"])
-    # or cupy.asarray(["yes", "no"])
-    except (ValueError, TypeError) as e:
-        y = _convert_to_numpy(y, xp=xp)
-        xp, _, device_ = get_namespace_and_device(y)
-        classes = xp.asarray(classes)
-
     if sparse_output and not _is_numpy_namespace(xp):
         raise ValueError(
             "`sparse_output=True` is not supported for array API "
-            "namespace {xp.__name__}. "
+            f"'namespace {xp.__name__}'. "
             "Use `sparse_output=False` to return a dense array instead."
         )
 
+    try:
+        classes = xp.asarray(classes, device=device_)
+
+    except (ValueError, TypeError) as e:
+        # `classes` contains an unsupported dtype for this namespace.
+        # For example, attempting to create torch.tensor(["yes", "no"]) will fail.
+        raise ValueError(
+            f"`classes` contains unsupported dtype for array API '{xp.__name__}'."
+        )
+
     n_samples = y.shape[0] if hasattr(y, "shape") else len(y)
-    n_classes = classes.shape[0] if hasattr(classes, "shape") else len(classes)
+    n_classes = classes.shape[0]
     dtype_ = _find_matching_floating_dtype(y, xp=xp)
     int_dtype_ = (
         y.dtype if hasattr(y, "dtype") and "int" in str(y.dtype) else indexing_dtype(xp)
@@ -605,7 +608,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
     sorted_class = xp.sort(classes)
     if y_type == "multilabel-indicator":
         y_n_classes = y.shape[1] if hasattr(y, "shape") else len(y[0])
-        if classes.size != y_n_classes:
+        if n_classes != y_n_classes:
             raise ValueError(
                 "classes {0} mismatch with the labels {1} found in the data".format(
                     classes, unique_labels(y)
@@ -651,7 +654,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
             if sp.issparse(y):
                 y = y.toarray()
 
-            Y = y.copy()
+            Y = xp.asarray(y, device=device_, copy=True)
             if pos_label != 1:
                 Y[Y != 0] = pos_label
 
@@ -738,18 +741,18 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold, xp=None):
     if output_type == "binary" and y.ndim == 2 and y.shape[1] > 2:
         raise ValueError("output_type='binary', but y.shape = {0}".format(y.shape))
 
-    if output_type != "binary" and y.shape[1] != len(classes):
+    xp, _, device_ = get_namespace_and_device(y, xp=xp)
+    classes = xp.asarray(classes, device=device_)
+
+    if output_type != "binary" and y.shape[1] != classes.shape[0]:
         raise ValueError(
             "The number of class is not equal to the number of dimension of y."
         )
 
-    xp, _, device_ = get_namespace_and_device(y, xp=xp)
     dtype_ = _find_matching_floating_dtype(y, xp=xp)
     int_dtype_ = (
         y.dtype if hasattr(y, "dtype") and "int" in str(y.dtype) else indexing_dtype(xp)
     )
-
-    classes = xp.asarray(classes, device=device_)
 
     # Perform thresholding
     if sp.issparse(y):

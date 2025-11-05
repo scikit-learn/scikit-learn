@@ -34,6 +34,7 @@ from sklearn.utils._array_api import (
     _count_nonzero,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
+    _isin,
     _max_precision_float_dtype,
     _tolist,
     _union1d,
@@ -177,24 +178,14 @@ def _one_hot_encoding_multiclass_target(y_true, labels, target_xp, target_device
     Also return the classes provided by `LabelBinarizer` in additional to the
     integer encoded array.
     """
-    xp_y_true, is_y_true_array_api = get_namespace(y_true)
-
-    # For classification metrics both array API compatible and non array API
-    # compatible inputs are allowed for `y_true`. This is because arrays that
-    # store class labels as strings cannot be represented in namespaces other
-    # than Numpy. Thus to avoid unnecessary complexity, we always convert
-    # `y_true` to a Numpy array so that it can be processed appropriately by
-    # `LabelBinarizer` and then transfer the integer encoded output back to the
-    # target namespace and device.
-    if is_y_true_array_api:
-        y_true = _convert_to_numpy(y_true, xp=xp_y_true)
+    xp, _ = get_namespace(y_true)
 
     lb = LabelBinarizer()
     if labels is not None:
         lb = lb.fit(labels)
         # LabelBinarizer does not respect the order implied by labels, which
         # can be misleading.
-        if not np.all(lb.classes_ == labels):
+        if not xp.all(lb.classes_ == labels):
             warnings.warn(
                 f"Labels passed were {labels}. But this function "
                 "assumes labels are ordered lexicographically. "
@@ -202,7 +193,7 @@ def _one_hot_encoding_multiclass_target(y_true, labels, target_xp, target_device
                 "the columns of y_prob correspond to this ordering.",
                 UserWarning,
             )
-        if not np.isin(y_true, labels).all():
+        if not xp.all(_isin(y_true, labels, xp=xp)).all():
             undeclared_labels = set(y_true) - set(labels)
             raise ValueError(
                 f"y_true contains values {undeclared_labels} not belonging "
@@ -212,7 +203,7 @@ def _one_hot_encoding_multiclass_target(y_true, labels, target_xp, target_device
     else:
         lb = lb.fit(y_true)
 
-    if len(lb.classes_) == 1:
+    if lb.classes_.shape[0] == 1:
         if labels is None:
             raise ValueError(
                 "y_true contains only one label ({0}). Please "
@@ -318,7 +309,7 @@ def _validate_multiclass_probabilistic_prediction(
 
     # Check if dimensions are consistent.
     transformed_labels = check_array(transformed_labels)
-    if len(lb_classes) != y_prob.shape[1]:
+    if lb_classes.shape[0] != y_prob.shape[1]:
         if labels is None:
             raise ValueError(
                 "y_true and y_prob contain different number of "

@@ -746,54 +746,57 @@ def test_invalid_input_label_binarize():
 
 
 @pytest.mark.parametrize(
-    "string_labels, y, classes, expected",
+    "y, classes, expected",
     [
-        [True, [1, 0, 0, 1], ["yes", "no"], [[0], [0], [0], [0]]],
+        [[1, 0, 0, 1], ["yes", "no"], [[0], [0], [0], [0]]],
         [
-            True,
             [1, 0, 2, 9],
             ["bird", "cat", "dog"],
             [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
         ],
-        [False, [1, 0, 0, 1], [0, 1], [[1], [0], [0], [1]]],
-        [False, [1, 0, 2, 9], [0, 1, 2], [[0, 1, 0], [1, 0, 0], [0, 0, 1], [0, 0, 0]]],
+        [[1, 0, 0, 1], [0, 1], [[1], [0], [0], [1]]],
+        [[1, 0, 2, 1], [0, 1, 2], [[0, 1, 0], [1, 0, 0], [0, 0, 1], [0, 1, 0]]],
     ],
 )
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
 )
 def test_label_binarize_array_api_compliance(
-    string_labels, y, classes, expected, array_namespace, device_, dtype_name
+    y, classes, expected, array_namespace, device_, dtype_name
 ):
     """Test that :func:`label_binarize` works correctly with the Array API for binary
     and multi-class inputs for numerical labels and non-sparse outputs.
     """
     xp = _array_api_for_tests(array_namespace, device_)
+    xp_is_numpy = _is_numpy_namespace(xp)
+    numeric_dtype = np.issubdtype(np.asarray(y).dtype, np.integer) and np.issubdtype(
+        np.asarray(classes).dtype, np.integer
+    )
 
     with config_context(array_api_dispatch=True):
         y = xp.asarray(y, device=device_)
 
-        # `sparse_output=True` is not allowed for non-NumPy namespace
-        if not _is_numpy_namespace(xp) and not string_labels:
-            msg = "`sparse_output=True` is not supported for Array API "
+        if numeric_dtype:
+            # `sparse_output=True` is not allowed for non-NumPy namespace
+            if not xp_is_numpy:
+                msg = "`sparse_output=True` is not supported for array API "
+                with pytest.raises(ValueError, match=msg):
+                    label_binarize(y=y, classes=classes, sparse_output=True)
 
-            with pytest.raises(ValueError, match=msg):
-                label_binarize(y=y, classes=classes, sparse_output=True)
+            # Numeric class labels should not raise any errors for non-NumPy namespace
+            binarized = label_binarize(y, classes=classes)
+            expected = np.asarray(expected, dtype=int)
 
-        # Numeric class labels should not raise any errors for non-NumPy namespace
-        binarized = label_binarize(y, classes=classes)
-        expected = np.asarray(expected, dtype=int)
-
-        # String class labels are converted to NumPy namespace
-        if string_labels:
-            assert _is_numpy_namespace(get_namespace(binarized)[0])
-            assert_array_equal(binarized, expected)
-
-        else:
+            # String class labels are converted to NumPy namespace
             assert get_namespace(binarized)[0].__name__ == xp.__name__
             assert device(binarized) == device(y)
             assert "int" in str(binarized.dtype)
             assert_array_equal(_convert_to_numpy(binarized, xp=xp), expected)
+
+        if not xp_is_numpy and not numeric_dtype:
+            msg = "`classes` contains unsupported dtype for array API "
+            with pytest.raises(ValueError, match=msg):
+                label_binarize(y=y, classes=classes)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
