@@ -875,6 +875,10 @@ warnings.filterwarnings(
 )
 # TODO(1.10): remove PassiveAggressive
 warnings.filterwarnings("ignore", category=FutureWarning, message="PassiveAggressive")
+# TODO(1.10): remove use_legacy_attributes from LogisticRegressionCV
+warnings.filterwarnings(
+    "ignore", category=FutureWarning, message="use_legacy_attributes"
+)
 if os.environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
     turn_warnings_into_errors()
 
