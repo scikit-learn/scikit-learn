@@ -353,7 +353,6 @@ def _check_optimize_result(solver, result, max_iter=None, extra_warning_msg=None
     # handle both scipy and scikit-learn solver names
     if solver == "lbfgs":
         if max_iter is not None:
-            # In scipy <= 1.0.0, nit may exceed maxiter for lbfgs.
             # See https://github.com/scipy/scipy/issues/7854
             n_iter_i = min(result.nit, max_iter)
         else:
