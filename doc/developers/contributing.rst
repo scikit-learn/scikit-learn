@@ -273,7 +273,7 @@ The next steps describe the process of modifying code and submitting a PR:
    do the version control. When you're done editing, add changed files using
    ``git add`` and then ``git commit``:
 
-    .. prompt:: bash
+   .. prompt:: bash
 
       git add modified_files
       git commit
