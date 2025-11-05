@@ -180,6 +180,77 @@ def test_predict_iris(clf, global_random_seed):
     assert np.mean(pred == target) > 0.95
 
 
+@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
+@pytest.mark.parametrize("solver", ["lbfgs", "newton-cholesky"])
+def test_logistic_glmnet(solver):
+    """Compare Logistic regression with L2 regularization to glmnet"""
+    # 2 classes
+    # library("glmnet")
+    # options(digits=10)
+    # df <- data.frame(a=-4:4, b=c(0,0,1,0,1,1,1,0,0), y=c(0,0,0,1,1,1,1,1,1))
+    # x <- data.matrix(df[,c("a", "b")])
+    # y <- df$y
+    # fit <- glmnet(x=x, y=y, alpha=0, lambda=1, intercept=T, family="binomial",
+    #               standardize=F, thresh=1e-10, nlambda=1)
+    # coef(fit, s=1)
+    # (Intercept) 0.89230405539
+    # a           0.44464569182
+    # b           0.01457563448
+    X = np.array([[-4, -3, -2, -1, 0, 1, 2, 3, 4], [0, 0, 1, 0, 1, 1, 1, 0, 0]]).T
+    y = np.array([0, 0, 0, 1, 1, 1, 1, 1, 1])
+    glm = LogisticRegression(
+        C=1 / 1 / y.shape[0],  # C=1.0 / L2-penalty (Ridge) / n_samples
+        fit_intercept=True,
+        tol=1e-8,
+        max_iter=300,
+        solver=solver,
+    )
+    glm.fit(X, y)
+    assert_allclose(glm.intercept_, 0.89230405539, rtol=1e-5)
+    assert_allclose(glm.coef_, [[0.44464569182, 0.01457563448]], rtol=1e-5)
+
+    # 3 classes
+    # y <- c(0,0,0,1,1,1,2,2,2)
+    # fit <- glmnet(x=x, y=y, alpha=0, lambda=1, intercept=T, family="multinomial",
+    #               standardize=F, thresh=1e-12, nlambda=1)
+    # coef(fit, s=1)
+    # $`0`
+    # 3 x 1 sparse Matrix of class "dgCMatrix"
+    #                        s=1
+    # (Intercept) -0.12004759652
+    # a           -0.38023389305
+    # b           -0.01226499932
+    #
+    # $`1`
+    # 3 x 1 sparse Matrix of class "dgCMatrix"
+    #                          s=1
+    # (Intercept)  2.251747383e-01
+    # a           -8.164030176e-05
+    # b            4.734548012e-02
+    #
+    # $`2`
+    # 3 x 1 sparse Matrix of class "dgCMatrix"
+    #                       s=1
+    # (Intercept) -0.1051271418
+    # a            0.3803155334
+    # b           -0.0350804808
+    y = np.array([0, 0, 0, 1, 1, 1, 2, 2, 2])
+    glm.fit(X, y)
+    assert_allclose(
+        glm.intercept_, [-0.12004759652, 2.251747383e-01, -0.1051271418], rtol=1e-5
+    )
+    assert_allclose(
+        glm.coef_,
+        [
+            [-0.38023389305, -0.01226499932],
+            [-8.164030176e-05, 4.734548012e-02],
+            [0.3803155334, -0.0350804808],
+        ],
+        rtol=1e-5,
+        atol=1e-8,
+    )
+
+
 @pytest.mark.parametrize("LR", [LogisticRegression, LogisticRegressionCV])
 def test_check_solver_option(LR):
     X, y = iris.data, iris.target
