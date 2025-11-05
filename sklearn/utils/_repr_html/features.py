@@ -17,10 +17,9 @@ def _features_html(features, is_fitted_css_class=""):
                   onclick="
                   event.stopPropagation();
                   event.preventDefault();
-
                   copyRowsToClipboard(this);
                   "
-                  >
+                >
                 </i>
               </div>
             </summary>
@@ -36,7 +35,7 @@ def _features_html(features, is_fitted_css_class=""):
 
     FEATURES_ROW_TEMPLATE = """
         <tr>
-            <td>{feature}</td>
+          <td>{feature}</td>
         </tr>
 
     """
