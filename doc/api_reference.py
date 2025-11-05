@@ -732,6 +732,7 @@ API_REFERENCE = {
                     "classification_report",
                     "cohen_kappa_score",
                     "confusion_matrix",
+                    "confusion_matrix_at_thresholds",
                     "d2_brier_score",
                     "d2_log_loss_score",
                     "dcg_score",
@@ -1351,4 +1352,4 @@ DEPRECATED_API_REFERENCE = {
 }
 """
 
-DEPRECATED_API_REFERENCE = {"1.8.0": ["utils.murmurhash3_32"]}  # type: ignore[var-annotated]
+DEPRECATED_API_REFERENCE = {}  # type: ignore[var-annotated]
