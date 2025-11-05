@@ -2560,7 +2560,6 @@ def test_logistic_regression_array_api_compliance(
     binary, use_str_y, array_namespace, device_, dtype_name
 ):
     xp = _array_api_for_tests(array_namespace, device_)
-    n_samples, _ = iris.data.shape
     X_np = iris.data.astype(dtype_name)
     X_xp = xp.asarray(X_np, device=device_)
     if use_str_y:

@@ -1107,7 +1107,10 @@ def _half_multinomial_loss(y, pred, sample_weight=None, xp=None):
 
 
 def _matching_numpy_dtype(X, xp=None):
-    xp, _ = get_namespace(xp=xp)
+    xp, _ = get_namespace(X, xp=xp)
+    if _is_numpy_namespace(xp):
+        return X.dtype
+
     dtypes_dict = xp.__array_namespace_info__().dtypes()
     reversed_dtypes_dict = {dtype: name for name, dtype in dtypes_dict.items()}
     dtype_name = reversed_dtypes_dict[X.dtype]
