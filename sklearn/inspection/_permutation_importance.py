@@ -20,6 +20,7 @@ from sklearn.utils._param_validation import (
     validate_params,
 )
 from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import _is_polars_df_or_series
 
 
 def _weights_scorer(scorer, estimator, X, y, sample_weight):
@@ -60,17 +61,29 @@ def _calculate_permutation_scores(
         if sample_weight is not None:
             sample_weight = _safe_indexing(sample_weight, row_indices, axis=0)
     else:
-        X_permuted = X.copy()
+        if _is_polars_df_or_series(X):
+            X_permuted = X.clone()
+        else:
+            X_permuted = X.copy()
 
     scores = []
     shuffling_idx = np.arange(X_permuted.shape[0])
     for _ in range(n_repeats):
         random_state.shuffle(shuffling_idx)
         if hasattr(X_permuted, "iloc"):
+            # pandas DataFrame
             col = X_permuted.iloc[shuffling_idx, col_idx]
             col.index = X_permuted.index
             X_permuted[X_permuted.columns[col_idx]] = col
+        elif _is_polars_df_or_series(X_permuted):
+            # Polars DataFrame
+            col_name = (
+                X_permuted.columns[col_idx] if isinstance(col_idx, int) else col_idx
+            )
+            shuffled_col = X_permuted[col_name][shuffling_idx]
+            X_permuted = X_permuted.with_columns(shuffled_col.alias(col_name))
         else:
+            # NumPy array
             X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
         scores.append(_weights_scorer(scorer, estimator, X_permuted, y, sample_weight))
 
@@ -266,7 +279,7 @@ def permutation_importance(
     >>> result.importances_std
     array([0.2211, 0.       , 0.       ])
     """
-    if not hasattr(X, "iloc"):
+    if not hasattr(X, "iloc") and not _is_polars_df_or_series(X):
         X = check_array(X, ensure_all_finite="allow-nan", dtype=None)
 
     # Precompute random seed from the random state to be used

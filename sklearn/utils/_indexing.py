@@ -281,7 +281,7 @@ def _safe_indexing(X, indices, *, axis=0):
 
     Notes
     -----
-    CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
+    CSR, CSC, and LIL sparse matrices are supported. COUP sparse matrices are
     not supported.
 
     Examples
@@ -323,8 +323,12 @@ def _safe_indexing(X, indices, *, axis=0):
 
     if (
         axis == 1
-        and indices_dtype == "str"
-        and not (_is_pandas_df(X) or _use_interchange_protocol(X))
+        and indices_dtype == "str" 
+        and not (
+            _is_pandas_df(X) 
+            or _is_polars_df_or_series(X) 
+            or _use_interchange_protocol(X)
+        )
     ):
         raise ValueError(
             "Specifying the columns using strings is only supported for dataframes."
