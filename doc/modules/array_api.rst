@@ -358,7 +358,7 @@ API dispatching or using a device with `float64` support.
 .. _support_for_logistic_regression:
 
 Note on support for `LogisticRegression`
----------------------------------------
+----------------------------------------
 
 The array API support for :class:`linear_model.LogisticRegression` with
 `solver="lbfgs"` is not yet optimal due to several conversions between the
