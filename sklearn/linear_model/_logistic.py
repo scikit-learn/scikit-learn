@@ -1504,10 +1504,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             if decision.ndim == 1:
                 # Workaround for multi_class="multinomial" and binary outcomes
                 # which requires softmax prediction with only a 1D decision.
-                if _is_numpy_namespace(xp):
-                    decision_2d = np.c_[-decision, decision]
-                else:
-                    decision_2d = xp.concat([-decision, decision], axis=1)
+                decision_2d = xp.stack([-decision, decision], axis=1)
             else:
                 decision_2d = decision
             return softmax(decision_2d, copy=False)

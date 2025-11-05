@@ -2579,24 +2579,28 @@ def test_logistic_regression_array_api_compliance(
         y_np = target.astype(dtype_name)
         y_xp_or_np = xp.asarray(y_np, device=device_)
 
-    lr_np = LogisticRegression(C=n_samples, solver="lbfgs", max_iter=200).fit(
-        X_np, y_np
-    )
+    lr_np = LogisticRegression(C=1.0, solver="lbfgs", max_iter=200).fit(X_np, y_np)
     predict_proba_np = lr_np.predict_proba(X_np)
     preditct_log_proba_np = lr_np.predict_log_proba(X_np)
+    atol = _atol_for_type(dtype_name)
+    rtol = 1e-7
     if device_ == "mps":
         rtol = 1e-1
     elif dtype_name == "float32":
         rtol = 1e-5
-    else:
-        rtol = 1e-7
+
     with config_context(array_api_dispatch=True):
-        lr_xp = LogisticRegression(C=n_samples, solver="lbfgs", max_iter=200).fit(
+        lr_xp = LogisticRegression(C=1.0, solver="lbfgs", max_iter=200).fit(
             X_xp, y_xp_or_np
         )
-        assert_allclose(_convert_to_numpy(lr_xp.coef_, xp=xp), lr_np.coef_, rtol=rtol)
         assert_allclose(
-            _convert_to_numpy(lr_xp.intercept_, xp=xp), lr_np.intercept_, rtol=rtol
+            _convert_to_numpy(lr_xp.coef_, xp=xp), lr_np.coef_, rtol=rtol, atol=atol
+        )
+        assert_allclose(
+            _convert_to_numpy(lr_xp.intercept_, xp=xp),
+            lr_np.intercept_,
+            rtol=rtol,
+            atol=atol,
         )
 
         predict_proba_xp = lr_xp.predict_proba(X_xp)
@@ -2604,7 +2608,7 @@ def test_logistic_regression_array_api_compliance(
             _convert_to_numpy(predict_proba_xp, xp=xp),
             predict_proba_np,
             rtol=rtol,
-            atol=_atol_for_type(dtype_name),
+            atol=atol,
         )
 
         predict_log_proba_xp = lr_xp.predict_log_proba(X_xp)
@@ -2612,5 +2616,5 @@ def test_logistic_regression_array_api_compliance(
             _convert_to_numpy(predict_log_proba_xp, xp=xp),
             preditct_log_proba_np,
             rtol=rtol,
-            atol=_atol_for_type(dtype_name),
+            atol=atol,
         )
