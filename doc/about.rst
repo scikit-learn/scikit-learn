@@ -588,4 +588,3 @@ A portion of the proceeds from each sale goes to support the scikit-learn projec
           }
         });
       }
-      // Also handle links anywhere on the page if on about.html
