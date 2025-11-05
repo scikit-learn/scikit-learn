@@ -761,21 +761,19 @@ class MDS(BaseEstimator):
         else:
             self._init = self.init
 
-        if self.dissimilarity != "deprecated" and (
-            not isinstance(self.metric, bool) and self.metric != "euclidean"
-        ):
-            raise ValueError(
-                "You provided both `dissimilarity` and `metric`. Please use "
-                "only `metric`."
-            )
-
         if self.dissimilarity != "deprecated":
-            warnings.warn(
-                "The `dissimilarity` parameter is deprecated and will be removed "
-                "in 1.10. Use `metric` instead.",
-                FutureWarning,
-            )
-            self._metric = self.dissimilarity
+            if not isinstance(self.metric, bool) and self.metric != "euclidean":
+                raise ValueError(
+                    "You provided both `dissimilarity` and `metric`. Please use "
+                    "only `metric`."
+                )
+            else:
+                warnings.warn(
+                    "The `dissimilarity` parameter is deprecated and will be "
+                    "removed in 1.10. Use `metric` instead.",
+                    FutureWarning,
+                )
+                self._metric = self.dissimilarity
 
         if isinstance(self.metric, bool):
             warnings.warn(

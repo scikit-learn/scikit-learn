@@ -261,28 +261,28 @@ def test_future_warning_init_and_metric():
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
 
     # dissimilarity argument deprecated
-    with pytest.warns(FutureWarning):
+    with pytest.warns(FutureWarning, match=r"`dissimilarity` parameter is"):
         mds.MDS(dissimilarity="precomputed", init="random", n_init=1).fit(sim)
 
     # metric=True deprecated
-    with pytest.warns(FutureWarning):
+    with pytest.warns(FutureWarning, match=r"Use metric_mds"):
         mds.MDS(metric=True, init="random", n_init=1).fit(X)
 
     # metric=False deprecated
-    with pytest.warns(FutureWarning):
+    with pytest.warns(FutureWarning, match=r"Use metric_mds"):
         mds.MDS(metric=False, init="random", n_init=1).fit(X)
 
     # default init will become classical_mds in the future
-    with pytest.warns(FutureWarning):
+    with pytest.warns(FutureWarning, match="The default value of `init`"):
         mds.MDS(metric="euclidean", n_init=1).fit(X)
 
     # TODO (1.9): delete this check
     # n_init=1 will become default in the future
-    with pytest.warns(FutureWarning):
+    with pytest.warns(FutureWarning, match="The default value of `n_init`"):
         mds.MDS(metric="euclidean", init="random").fit(X)
 
     # providing both metric and dissimilarity raises an error
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"provided both `dissimilarity`"):
         mds.MDS(
             metric="cosine", dissimilarity="euclidean", init="random", n_init=1
         ).fit(X)
