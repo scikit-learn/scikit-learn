@@ -1021,14 +1021,11 @@ def _modify_in_place_if_numpy(xp, func, *args, out=None, **kwargs):
     return out
 
 
-def _bincount(array, weights=None, minlength=None, xp=None):
+def _bincount(array, weights=None, minlength=0, xp=None):
     # TODO: update if bincount is ever adopted in a future version of the standard:
     # https://github.com/data-apis/array-api/issues/812
     xp, _ = get_namespace(array, xp=xp)
     if hasattr(xp, "bincount"):
-        # `torch` does not support `minlength=None`
-        if minlength is None and _is_xp_namespace(xp, "torch"):
-            minlength = 0
         return xp.bincount(array, weights=weights, minlength=minlength)
 
     array_np = _convert_to_numpy(array, xp=xp)
