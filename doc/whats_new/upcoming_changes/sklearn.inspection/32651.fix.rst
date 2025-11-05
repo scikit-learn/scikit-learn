@@ -1,0 +1,3 @@
+- :class:`~sklearn.inspection.permutation_importance` now supports
+  Polars DataFrames when used in pipelines with :class:`~sklearn.compose.ColumnTransformer`
+  and string column names. By :user:`Shardul369-coder <Shardul369-coder>`
