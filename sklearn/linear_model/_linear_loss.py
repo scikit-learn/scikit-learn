@@ -207,9 +207,7 @@ class LinearModelLoss:
             raw_prediction = X @ weights_xp + intercept_xp
         else:
             # weights has shape (n_classes, n_dof)
-            raw_prediction = (
-                X @ weights_xp.T + intercept_xp
-            )  # ndarray, likely C-contiguous
+            raw_prediction = X @ weights_xp.T + intercept_xp
 
         # TODO: once the loss gradient function itself has been updated to
         # accept non-NumPy array API inputs, let's remove this conversion.
