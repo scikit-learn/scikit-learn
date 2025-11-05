@@ -2588,9 +2588,10 @@ def test_logistic_regression_array_api_compliance(
         y_np = target.astype(dtype_name)
         y_xp_or_np = xp.asarray(y_np, device=device_)
 
-    lr_np = LogisticRegression(
-        C=1.0, solver="lbfgs", max_iter=500, class_weight=class_weight, tol=1e-10
-    ).fit(X_np, y_np)
+    lr_params = dict(
+        C=1.0, solver="lbfgs", tol=1e-12, max_iter=500, class_weight=class_weight
+    )
+    lr_np = LogisticRegression(**lr_params).fit(X_np, y_np)
     predict_proba_np = lr_np.predict_proba(X_np)
     preditct_log_proba_np = lr_np.predict_log_proba(X_np)
     prediction_np = lr_np.predict(X_np)
@@ -2602,9 +2603,7 @@ def test_logistic_regression_array_api_compliance(
         rtol = 1e-5
 
     with config_context(array_api_dispatch=True):
-        lr_xp = LogisticRegression(
-            C=1.0, solver="lbfgs", max_iter=500, class_weight=class_weight, tol=1e-10
-        ).fit(X_xp, y_xp_or_np)
+        lr_xp = LogisticRegression(**lr_params).fit(X_xp, y_xp_or_np)
         for attr_name in ("coef_", "intercept_"):
             attr_xp = getattr(lr_xp, attr_name)
             attr_np = getattr(lr_np, attr_name)
