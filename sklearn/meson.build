@@ -20,8 +20,8 @@ endif
 # Python interpreter can be tricky in cross-compilation settings. For more
 # details, see https://docs.scipy.org/doc/scipy/building/cross_compilation.html
 if not meson.is_cross_build()
-  if not py.version().version_compare('>=3.10')
-    error('scikit-learn requires Python>=3.10, got ' + py.version() + ' instead')
+  if not py.version().version_compare('>=3.11')
+    error('scikit-learn requires Python>=3.11, got ' + py.version() + ' instead')
   endif
 
   cython_min_version = run_command(py, ['_min_dependencies.py', 'cython'], check: true).stdout().strip()
