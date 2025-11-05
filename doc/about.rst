@@ -589,14 +589,3 @@ A portion of the proceeds from each sale goes to support the scikit-learn projec
         });
       }
       // Also handle links anywhere on the page if on about.html
-      if (window.location.pathname.includes('about.html')) {
-        const allExternalLinks = document.querySelectorAll('a[href^="http"]');
-        allExternalLinks.forEach(function(link) {
-          if (!link.hasAttribute('target')) {
-            link.setAttribute('target', '_blank');
-            link.setAttribute('rel', 'noopener noreferrer');
-          }
-        });
-      }
-    });
-  </script>
