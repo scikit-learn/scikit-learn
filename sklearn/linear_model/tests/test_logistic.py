@@ -231,11 +231,14 @@ def test_check_solver_option(LR):
             lr.fit(X, y)
 
 
-@pytest.mark.parametrize("LR", [LogisticRegression, LogisticRegressionCV])
-def test_elasticnet_l1_ratio_err_helpful(LR):
+@pytest.mark.parametrize(
+    ["LR", "arg"],
+    [(LogisticRegression, "l1_ratio"), (LogisticRegressionCV, "l1_ratios")],
+)
+def test_elasticnet_l1_ratio_err_helpful(LR, arg):
     # Check that an informative error message is raised when penalty="elasticnet"
     # but l1_ratio is not specified.
-    model = LR(penalty="elasticnet", solver="saga")
+    model = LR(penalty="elasticnet", **{arg: None}, solver="saga")
     with pytest.raises(ValueError, match=r".*l1_ratio.*"):
         model.fit(np.array([[1, 2], [3, 4]]), np.array([0, 1]))
 
@@ -477,7 +480,7 @@ def test_liblinear_dual_random_state(global_random_seed):
 
 def test_logistic_cv(global_random_seed):
     # test for LogisticRegressionCV object
-    n_samples, n_features = 50, 5
+    n_samples, n_features, n_cv = 50, 5, 3
     rng = np.random.RandomState(global_random_seed)
     X_ref = rng.randn(n_samples, n_features)
     y = np.sign(X_ref.dot(5 * rng.randn(n_features)))
@@ -485,10 +488,11 @@ def test_logistic_cv(global_random_seed):
     X_ref /= X_ref.std()
     lr_cv = LogisticRegressionCV(
         Cs=[1.0],
+        l1_ratios=(0.0,),  # TODO(1.10): remove because it is default now.
         fit_intercept=False,
         random_state=global_random_seed,
         solver="liblinear",
-        cv=3,
+        cv=n_cv,
     )
     lr_cv.fit(X_ref, y)
     lr = LogisticRegression(
@@ -497,15 +501,18 @@ def test_logistic_cv(global_random_seed):
     lr.fit(X_ref, y)
     assert_array_almost_equal(lr.coef_, lr_cv.coef_)
 
-    assert_array_equal(lr_cv.coef_.shape, (1, n_features))
+    assert lr_cv.coef_.shape == (1, n_features)
     assert_array_equal(lr_cv.classes_, [-1, 1])
     assert len(lr_cv.classes_) == 2
 
+    assert lr_cv.Cs_.shape == (1,)
+    n_Cs = lr_cv.Cs_.shape[0]
+    assert lr_cv.l1_ratios_.shape == (1,)
+    n_l1_ratios = lr_cv.l1_ratios_.shape[0]
     coefs_paths = np.asarray(list(lr_cv.coefs_paths_.values()))
-    assert_array_equal(coefs_paths.shape, (1, 3, 1, n_features))
-    assert_array_equal(lr_cv.Cs_.shape, (1,))
+    assert coefs_paths.shape == (1, n_cv, n_Cs, n_l1_ratios, n_features)
     scores = np.asarray(list(lr_cv.scores_.values()))
-    assert_array_equal(scores.shape, (1, 3, 1))
+    assert scores.shape == (1, n_cv, n_Cs, n_l1_ratios)
 
 
 @pytest.mark.parametrize(
@@ -533,7 +540,7 @@ def test_logistic_cv_multinomial_score(
         n_samples=100, random_state=global_random_seed, n_classes=3, n_informative=6
     )
     train, test = np.arange(80), np.arange(80, 100)
-    lr = LogisticRegression(C=1.0)
+    lr = LogisticRegression(C=1.0, penalty="l2")
     # we use lbfgs to support multinomial
     params = lr.get_params()
     # we store the params to set them further in _log_reg_scoring_path
@@ -1405,24 +1412,31 @@ def test_n_iter(solver):
 
     n_Cs = 4
     n_cv_fold = 2
+    n_l1_ratios = 1
 
     # Binary classification case
     clf = LogisticRegression(tol=1e-2, C=1.0, solver=solver, random_state=42)
     clf.fit(X, y_bin)
     assert clf.n_iter_.shape == (1,)
 
+    # TODO(1.10): remove l1_ratios because it is default now.
     clf_cv = LogisticRegressionCV(
-        tol=1e-2, solver=solver, Cs=n_Cs, cv=n_cv_fold, random_state=42
+        tol=1e-2,
+        solver=solver,
+        Cs=n_Cs,
+        l1_ratios=(0.0,),
+        cv=n_cv_fold,
+        random_state=42,
     )
     clf_cv.fit(X, y_bin)
-    assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs)
+    assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs, n_l1_ratios)
 
     # OvR case
     clf.set_params(multi_class="ovr").fit(X, y)
     assert clf.n_iter_.shape == (n_classes,)
 
     clf_cv.set_params(multi_class="ovr").fit(X, y)
-    assert clf_cv.n_iter_.shape == (n_classes, n_cv_fold, n_Cs)
+    assert clf_cv.n_iter_.shape == (n_classes, n_cv_fold, n_Cs, n_l1_ratios)
 
     # multinomial case
     if solver in ("liblinear",):
@@ -1435,7 +1449,7 @@ def test_n_iter(solver):
     assert clf.n_iter_.shape == (1,)
 
     clf_cv.set_params(multi_class="multinomial").fit(X, y)
-    assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs)
+    assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs, n_l1_ratios)
 
 
 @pytest.mark.parametrize("solver", sorted(set(SOLVERS) - set(["liblinear"])))
@@ -1659,7 +1673,7 @@ def test_elastic_net_coeffs(global_random_seed):
     C = 2.0
     l1_ratio = 0.5
     coeffs = list()
-    for penalty, ratio in (("elasticnet", l1_ratio), ("l1", None), ("l2", None)):
+    for penalty, ratio in (("elasticnet", l1_ratio), ("l1", 0), ("l2", 0)):
         lr = LogisticRegression(
             penalty=penalty,
             C=C,
@@ -2537,3 +2551,14 @@ def test_liblinear_multiclass_warning(Estimator):
     )
     with pytest.warns(FutureWarning, match=msg):
         Estimator(solver="liblinear").fit(iris.data, iris.target)
+
+
+# TODO(1.10): remove after deprecation cycle.
+@pytest.mark.parametrize("est", [LogisticRegression, LogisticRegressionCV])
+def test_penalty_deprecated(est):
+    """Check that penalty in LogisticRegression and *CV is deprecated."""
+    X, y = make_classification(n_classes=2, n_samples=20, n_informative=6)
+    lr = est(penalty="l2")
+    msg = "'penalty' was deprecated"
+    with pytest.warns(FutureWarning, match=msg):
+        lr.fit(X, y)
