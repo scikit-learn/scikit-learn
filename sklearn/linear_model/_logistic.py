@@ -37,7 +37,6 @@ from sklearn.utils import (
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
     _matching_numpy_dtype,
-    _max_precision_float_dtype,
     get_namespace,
     get_namespace_and_device,
     size,
@@ -293,7 +292,7 @@ def _logistic_regression_path(
         X = check_array(
             X,
             accept_sparse="csr",
-            dtype=xp.float64,
+            dtype=[xp.float64, xp.float32],
             accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
         )
         y = check_array(y, ensure_2d=False, dtype=None)
@@ -357,6 +356,7 @@ def _logistic_regression_path(
                 y=y_bin,
                 sample_weight=sample_weight,
             )
+            class_weight_ = xp.asarray(class_weight_, dtype=X.dtype, device=device_)
             sample_weight *= class_weight_[le.fit_transform(y_bin)]
 
     else:
@@ -1275,26 +1275,12 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             C_ = self.C
             penalty = self.penalty
 
-        orig_X_dtype = (
-            X.dtype
-            if hasattr(X, "dtype") and xp.isdtype(X.dtype, "real floating")
-            else xp.float64
-        )
-        if solver == "lbfgs":
-            # TODO: refactor the LBFGS solver to allow for low-precision per-sample
-            # gradient computation (to avoid X-size allocations and do the compute
-            # intensive dot products in float32) while keeping float64 gradient
-            # accumulation (when possible).
-            _dtype = _max_precision_float_dtype(xp, device=device_)
-        else:
-            _dtype = [np.float64, np.float32]
-
         X, y = validate_data(
             self,
             X,
             y,
             accept_sparse="csr",
-            dtype=_dtype,
+            dtype=[xp.float64, xp.float32],
             order="C",
             accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
         )
@@ -1463,12 +1449,11 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 self.coef_, (n_classes, n_features + int(self.fit_intercept))
             )
 
-        self.coef_ = xp.astype(self.coef_, orig_X_dtype)
         if self.fit_intercept:
             self.intercept_ = self.coef_[:, -1]
             self.coef_ = self.coef_[:, :-1]
         else:
-            self.intercept_ = xp.zeros(n_classes, dtype=orig_X_dtype, device=device_)
+            self.intercept_ = xp.zeros(n_classes, dtype=X.dtype, device=device_)
 
         return self
 

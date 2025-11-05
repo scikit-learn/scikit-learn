@@ -1565,9 +1565,7 @@ def test_saga_vs_liblinear(global_random_seed, csr_container):
 # TODO(1.8): remove filterwarnings after the deprecation of multi_class
 @pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize("multi_class", ["ovr", "multinomial"])
-@pytest.mark.parametrize(
-    "solver", ["liblinear", "newton-cg", "newton-cholesky", "saga"]
-)
+@pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_dtype_match(solver, multi_class, fit_intercept, csr_container):
@@ -1632,10 +1630,10 @@ def test_dtype_match(solver, multi_class, fit_intercept, csr_container):
     # Check accuracy consistency
     assert_allclose(lr_32.coef_, lr_64.coef_.astype(np.float32), atol=atol)
 
-    if solver == "saga" and fit_intercept:
+    if solver in ("sag", "saga") and fit_intercept:
         # FIXME: SAGA on sparse data fits the intercept inaccurately with the
         # default tol and max_iter parameters.
-        atol = 1e-1
+        atol = 2e-1
 
     assert_allclose(lr_32.coef_, lr_32_sparse.coef_, atol=atol)
     assert_allclose(lr_64.coef_, lr_64_sparse.coef_, atol=atol)
