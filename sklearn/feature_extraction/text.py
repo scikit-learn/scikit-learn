@@ -1523,7 +1523,7 @@ class TfidfTransformer(
     ignored.
     (Note that the idf formula above differs from the standard textbook
     notation that defines the idf as
-    idf(t) = log [ n / (df(t) + 1) ]).
+    idf(t) = log [ n / df(t) ]).
 
     If ``smooth_idf=True`` (the default), the constant "1" is added to the
     numerator and denominator of the idf as if an extra document was seen

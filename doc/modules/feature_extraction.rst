@@ -471,12 +471,11 @@ computed in scikit-learn's :class:`TfidfTransformer`
 and :class:`TfidfVectorizer` differ slightly from the standard textbook
 notation that defines the idf as
 
-:math:`\text{idf}(t) = \log{\frac{n}{1+\text{df}(t)}}.`
+:math:`\text{idf}(t) = \log{\frac{n}{\text{df}(t)}}.`
 
 
 In the :class:`TfidfTransformer` and :class:`TfidfVectorizer`
-with ``smooth_idf=False``, the
-"1" count is added to the idf instead of the idf's denominator:
+with ``smooth_idf=False``, a "1" count is added to the idf:
 
 :math:`\text{idf}(t) = \log{\frac{n}{\text{df}(t)}} + 1`
 
