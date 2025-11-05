@@ -114,6 +114,9 @@ build_metadata_list = [
             "cupy",
             "array-api-strict",
         ],
+        "package_constraints": {
+            "blas": "[build=mkl]",
+        },
     },
     {
         "name": "pylatest_conda_forge_mkl_linux-64",
