@@ -330,6 +330,25 @@ the required packages.
               pytest pytest-cov ruff==0.11.2 mypy numpydoc \
               joblib threadpoolctl
 
+
+.. _pre-commit:
+
+Set up pre-commit
+^^^^^^^^^^^^^^^^^
+
+Additionally, install `pre-commit <https://pre-commit.com/#install>`_ with `pip` in your
+environment to automatically run code style checks before each commit:
+
+.. prompt::
+
+  pip install pre-commit
+  pre-commit install
+
+This automatically formats your code to standards used in this project when
+you make a commit. If any changes are applied, you need to review them and commit again.
+The pre-commit checks can be disabled for a particular commit with `git commit -n`.
+
+
 .. _install_from_source:
 
 Install editable version of scikit-learn
