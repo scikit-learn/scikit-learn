@@ -196,7 +196,7 @@ def _one_hot_encoding_multiclass_target(y_true, labels, target_xp, target_device
                 "the columns of y_prob correspond to this ordering.",
                 UserWarning,
             )
-        if not xp.all(_isin(y_true, labels, xp=xp)).all():
+        if not xp.all(_isin(y_true, labels, xp=xp)):
             undeclared_labels = set(y_true) - set(labels)
             raise ValueError(
                 f"y_true contains values {undeclared_labels} not belonging "
