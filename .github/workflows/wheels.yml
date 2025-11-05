@@ -156,23 +156,23 @@ jobs:
             manylinux_image: manylinux_2_28
 
           # MacOS x86_64
-          - os: macos-13
+          - os: macos-15-intel
             python: 311
             platform_id: macosx_x86_64
-          - os: macos-13
+          - os: macos-15-intel
             python: 312
             platform_id: macosx_x86_64
-          - os: macos-13
+          - os: macos-15-intel
             python: 313
             platform_id: macosx_x86_64
-          - os: macos-13
+          - os: macos-15-intel
             python: 313t
             platform_id: macosx_x86_64
             cibw_enable: cpython-freethreading
-          - os: macos-13
+          - os: macos-15-intel
             python: 314
             platform_id: macosx_x86_64
-          - os: macos-13
+          - os: macos-15-intel
             python: 314t
             platform_id: macosx_x86_64
 
