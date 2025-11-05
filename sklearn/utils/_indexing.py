@@ -323,10 +323,10 @@ def _safe_indexing(X, indices, *, axis=0):
 
     if (
         axis == 1
-        and indices_dtype == "str" 
+        and indices_dtype == "str"
         and not (
-            _is_pandas_df(X) 
-            or _is_polars_df_or_series(X) 
+            _is_pandas_df(X)
+            or _is_polars_df_or_series(X)
             or _use_interchange_protocol(X)
         )
     ):
