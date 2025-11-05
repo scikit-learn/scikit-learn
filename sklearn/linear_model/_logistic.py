@@ -1687,7 +1687,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         # The original class labels
         classes_ = self.classes_ = label_encoder.classes_
-        encoded_labels = label_encoder.transform(label_encoder.classes_)
         n_classes = len(self.classes_)
         is_binary = n_classes == 2
 
@@ -1740,7 +1739,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         if is_binary:
             n_classes = 1
-            encoded_labels = encoded_labels[1:]
             classes_ = classes_[1:]
 
         path_func = delayed(_log_reg_scoring_path)
