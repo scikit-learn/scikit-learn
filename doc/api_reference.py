@@ -691,6 +691,7 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
+                    "ClassicalMDS",
                     "Isomap",
                     "LocallyLinearEmbedding",
                     "MDS",
@@ -731,6 +732,7 @@ API_REFERENCE = {
                     "classification_report",
                     "cohen_kappa_score",
                     "confusion_matrix",
+                    "confusion_matrix_at_thresholds",
                     "d2_brier_score",
                     "d2_log_loss_score",
                     "dcg_score",

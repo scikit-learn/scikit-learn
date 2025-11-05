@@ -77,7 +77,6 @@ class _BinaryClassifierCurveDisplayMixin:
         y,
         *,
         sample_weight,
-        pos_label,
     ):
         check_matplotlib_support(f"{cls.__name__}.from_cv_results")
 
@@ -106,14 +105,6 @@ class _BinaryClassifierCurveDisplayMixin:
                 f"The target `y` is not binary. Got {type_of_target(y)} type of target."
             )
         check_consistent_length(X, y, sample_weight)
-
-        try:
-            pos_label = _check_pos_label_consistency(pos_label, y)
-        except ValueError as e:
-            # Adapt error message
-            raise ValueError(str(e).replace("y_true", "y"))
-
-        return pos_label
 
     @staticmethod
     def _get_legend_label(curve_legend_metric, curve_name, legend_metric_name):
