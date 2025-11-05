@@ -39,6 +39,7 @@ from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
+    device,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -2581,6 +2582,7 @@ def test_logistic_regression_array_api_compliance(
     lr_np = LogisticRegression(C=1.0, solver="lbfgs", max_iter=200).fit(X_np, y_np)
     predict_proba_np = lr_np.predict_proba(X_np)
     preditct_log_proba_np = lr_np.predict_log_proba(X_np)
+    prediction_np = lr_np.predict(X_np)
     atol = _atol_for_type(dtype_name)
     rtol = 1e-7
     if device_ == "mps":
@@ -2592,15 +2594,14 @@ def test_logistic_regression_array_api_compliance(
         lr_xp = LogisticRegression(C=1.0, solver="lbfgs", max_iter=200).fit(
             X_xp, y_xp_or_np
         )
-        assert_allclose(
-            _convert_to_numpy(lr_xp.coef_, xp=xp), lr_np.coef_, rtol=rtol, atol=atol
-        )
-        assert_allclose(
-            _convert_to_numpy(lr_xp.intercept_, xp=xp),
-            lr_np.intercept_,
-            rtol=rtol,
-            atol=atol,
-        )
+        for attr_name in ("coef_", "intercept_"):
+            attr_xp = getattr(lr_xp, attr_name)
+            attr_np = getattr(lr_np, attr_name)
+            assert_allclose(
+                _convert_to_numpy(attr_xp, xp=xp), attr_np, rtol=rtol, atol=atol
+            )
+            assert attr_xp.dtype == X_xp.dtype
+            assert device(attr_xp) == device(X_xp)
 
         predict_proba_xp = lr_xp.predict_proba(X_xp)
         assert_allclose(
@@ -2609,6 +2610,8 @@ def test_logistic_regression_array_api_compliance(
             rtol=rtol,
             atol=atol,
         )
+        assert predict_proba_xp.dtype == X_xp.dtype
+        assert device(predict_proba_xp) == device(X_xp)
 
         predict_log_proba_xp = lr_xp.predict_log_proba(X_xp)
         assert_allclose(
@@ -2617,3 +2620,10 @@ def test_logistic_regression_array_api_compliance(
             rtol=rtol,
             atol=atol,
         )
+        assert predict_log_proba_xp.dtype == X_xp.dtype
+        assert device(predict_log_proba_xp) == device(X_xp)
+
+        prediction_xp = lr_xp.predict(X_xp)
+        if not use_str_y:
+            prediction_xp = _convert_to_numpy(prediction_xp, xp=xp)
+        assert_array_equal(prediction_xp, prediction_np)
