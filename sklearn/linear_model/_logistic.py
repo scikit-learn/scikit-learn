@@ -1256,7 +1256,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         if self.penalty == "elasticnet" and self.l1_ratio is None:
             raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
 
-        xp, is_array_api, device_ = get_namespace_and_device(X)
+        xp, _, device_ = get_namespace_and_device(X)
         xp_y, _ = get_namespace(y)
 
         if self.penalty is None:
@@ -1277,6 +1277,10 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             else xp.float64
         )
         if solver == "lbfgs":
+            # TODO: refactor the LBFGS solver to allow for low-precision per-sample
+            # gradient computation (to avoid X-size allocations and do the compute
+            # intensive dot products in float32) while keeping float64 gradient
+            # accumulation (when possible).
             _dtype = _max_precision_float_dtype(xp, device=device_)
         else:
             _dtype = [np.float64, np.float32]

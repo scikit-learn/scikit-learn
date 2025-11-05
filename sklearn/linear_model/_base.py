@@ -395,9 +395,9 @@ class LinearClassifierMixin(ClassifierMixin):
 
         # if `y` during fitting consisted of strings the `self.classes_` will
         # also contain strings and we handle such a scenario by returning the
-        # predictions according to the namespace of `self.classes_`.
+        # predictions according to the namespace of `self.classes_` i.e. numpy.
         xp_classes, _ = get_namespace(self.classes_)
-        if xp != xp_classes:
+        if _is_numpy_namespace(xp_classes):
             indices = _convert_to_numpy(indices, xp=xp)
 
         return xp_classes.take(self.classes_, indices, axis=0)

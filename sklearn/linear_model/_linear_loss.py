@@ -211,6 +211,8 @@ class LinearModelLoss:
                 X @ weights_xp.T + intercept_xp
             )  # ndarray, likely C-contiguous
 
+        # TODO: once the loss gradient function itself has been updated to
+        # accept non-NumPy array API inputs, let's remove this conversion.
         return weights, intercept, _convert_to_numpy(raw_prediction, xp=xp)
 
     def l2_penalty(self, weights, l2_reg_strength):
@@ -323,6 +325,8 @@ class LinearModelLoss:
             weights, intercept = self.weight_intercept(coef)
 
         xp, _, device_ = get_namespace_and_device(X, y, sample_weight)
+        # TODO: implement add array API support to
+        # `HalfMultinomialLoss.loss_gradient` to avoid the NumPy conversions.
         loss, grad_pointwise = self.base_loss.loss_gradient(
             y_true=_convert_to_numpy(y, xp=xp),
             raw_prediction=raw_prediction,

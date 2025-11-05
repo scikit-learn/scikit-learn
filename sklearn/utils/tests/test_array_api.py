@@ -23,6 +23,7 @@ from sklearn.utils._array_api import (
     _is_numpy_namespace,
     _isin,
     _logsumexp,
+    _matching_numpy_dtype,
     _max_precision_float_dtype,
     _median,
     _nanmax,
@@ -832,3 +833,14 @@ def test_half_multinomial_loss(use_sample_weight, namespace, device_, dtype_name
         )
 
     assert numpy.isclose(np_loss, xp_loss)
+
+
+@pytest.mark.parametrize(
+    "namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_matching_numpy_dtype(namespace, device_, dtype_name):
+    xp = _array_api_for_tests(namespace, device_)
+    X_np = numpy.arange(1000).astype(dtype_name)
+    X_xp = xp.asarray(X_np, device=device_)
+    ret_dtype = _matching_numpy_dtype(X_xp, xp=xp)
+    assert ret_dtype == X_np.dtype
