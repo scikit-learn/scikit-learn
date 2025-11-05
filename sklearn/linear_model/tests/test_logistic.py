@@ -2596,7 +2596,7 @@ def test_logistic_regression_array_api_compliance(
     preditct_log_proba_np = lr_np.predict_log_proba(X_np)
     prediction_np = lr_np.predict(X_np)
     atol = _atol_for_type(dtype_name)
-    rtol = 1e-5 if dtype_name == "float32" else 1e-7
+    rtol = 1e-5
     if device_ == "mps":
         # MPS backed does not allow for float64 computations, leading to
         # reduced precision.
