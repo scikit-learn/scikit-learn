@@ -50,9 +50,15 @@ document.querySelectorAll('.copy-paste-icon').forEach(function(element) {
 });
 
 
-function copyRowsToClipboard(text, element) {
-    // Format the text as a JavaScript array
-    const rows = text.split('\n').map(row => `"${row}"`);
+function copyRowsToClipboard(element) {
+    var detailsElem = element.closest('.features').querySelector('details');
+    var wasOpen = detailsElem.open;
+    detailsElem.open = true;
+    var content = element.closest('.features').querySelector('tbody')
+                  .innerText.trim();
+    if (!wasOpen) detailsElem.open = false;
+
+    const rows = content.split('\n').map(row => `"${row}"`);
     const formattedText = `[${rows.join(',\n ')}\n]`;
 
     const originalHTML = element.innerHTML.replace('✔', '');
@@ -61,7 +67,6 @@ function copyRowsToClipboard(text, element) {
     copyMark.innerHTML = '✔';
     copyMark.style.margin = window.getComputedStyle(element).margin;
     copyMark.style.color = 'green';
-
 
     navigator.clipboard.writeText(formattedText)
         .then(() => {

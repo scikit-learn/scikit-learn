@@ -18,14 +18,7 @@ def _features_html(features, is_fitted_css_class=""):
                   event.stopPropagation();
                   event.preventDefault();
 
-                  var detailsElem = this.closest('.features')
-                  .querySelector('details');
-                  var wasOpen = detailsElem.open;
-                  detailsElem.open = true;
-                  var content = this.closest('.features').querySelector('tbody')
-                                .innerText.trim();
-                  if (!wasOpen) detailsElem.open = false;
-                  copyRowsToClipboard(content, this);
+                  copyRowsToClipboard(this);
                   "
                   >
                 </i>
