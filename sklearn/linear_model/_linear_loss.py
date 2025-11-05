@@ -335,7 +335,7 @@ class LinearModelLoss:
             else None,
             n_threads=n_threads,
         )
-        sw_sum = n_samples if sample_weight is None else xp.sum(sample_weight)
+        sw_sum = float(n_samples if sample_weight is None else xp.sum(sample_weight))
         loss = loss.sum() / sw_sum
         loss += self.l2_penalty(weights, l2_reg_strength)
 

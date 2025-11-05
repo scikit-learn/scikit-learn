@@ -1026,6 +1026,9 @@ def _bincount(array, weights=None, minlength=None, xp=None):
     # https://github.com/data-apis/array-api/issues/812
     xp, _ = get_namespace(array, xp=xp)
     if hasattr(xp, "bincount"):
+        # `torch` does not support `minlength=None`
+        if minlength is None and _is_xp_namespace(xp, "torch"):
+            minlength = 0
         return xp.bincount(array, weights=weights, minlength=minlength)
 
     array_np = _convert_to_numpy(array, xp=xp)

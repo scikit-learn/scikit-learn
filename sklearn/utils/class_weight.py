@@ -6,6 +6,15 @@
 import numpy as np
 from scipy import sparse
 
+from sklearn.utils._array_api import (
+    _bincount,
+    _convert_to_numpy,
+    _is_numpy_namespace,
+    _isin,
+    _max_precision_float_dtype,
+    get_namespace,
+    get_namespace_and_device,
+)
 from sklearn.utils._param_validation import StrOptions, validate_params
 from sklearn.utils.validation import _check_sample_weight
 
@@ -64,35 +73,45 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
     # Import error caused by circular imports.
     from sklearn.preprocessing import LabelEncoder
 
-    if set(y) - set(classes):
+    xp, _, device_ = get_namespace_and_device(y, classes)
+    max_float_dtype = _max_precision_float_dtype(xp, device=device_)
+    if set(_convert_to_numpy(y, xp)) - set(_convert_to_numpy(classes, xp)):
         raise ValueError("classes should include all valid labels that can be in y")
     if class_weight is None or len(class_weight) == 0:
         # uniform class weights
-        weight = np.ones(classes.shape[0], dtype=np.float64, order="C")
+        weight = xp.ones(classes.shape[0], dtype=max_float_dtype, device=device_)
     elif class_weight == "balanced":
         # Find the weight of each class as present in y.
         le = LabelEncoder()
         y_ind = le.fit_transform(y)
-        if not all(np.isin(classes, le.classes_)):
+        if not all(_isin(classes, xp.astype(le.classes_, classes.dtype), xp=xp)):
             raise ValueError("classes should have valid labels that are in y")
 
+        if _is_numpy_namespace(xp) and sample_weight is not None:
+            xp_sw, _ = get_namespace(sample_weight)
+            sample_weight = _convert_to_numpy(sample_weight, xp_sw)
+
         sample_weight = _check_sample_weight(sample_weight, y)
-        weighted_class_counts = np.bincount(y_ind, weights=sample_weight)
-        recip_freq = weighted_class_counts.sum() / (
-            len(le.classes_) * weighted_class_counts
+        weighted_class_counts = _bincount(y_ind, weights=sample_weight, xp=xp)
+        recip_freq = xp.sum(weighted_class_counts) / (
+            le.classes_.shape[0] * weighted_class_counts
         )
         weight = recip_freq[le.transform(classes)]
     else:
         # user-defined dictionary
-        weight = np.ones(classes.shape[0], dtype=np.float64, order="C")
+        weight = xp.ones(classes.shape[0], dtype=max_float_dtype, device=device_)
         unweighted_classes = []
         for i, c in enumerate(classes):
+            try:
+                c = int(c)
+            except ValueError:  # `classes` contains strings
+                c = str(c)
             if c in class_weight:
                 weight[i] = class_weight[c]
             else:
                 unweighted_classes.append(c)
 
-        n_weighted_classes = len(classes) - len(unweighted_classes)
+        n_weighted_classes = classes.shape[0] - len(unweighted_classes)
         if unweighted_classes and n_weighted_classes != len(class_weight):
             unweighted_classes_user_friendly_str = np.array(unweighted_classes).tolist()
             raise ValueError(

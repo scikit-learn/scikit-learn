@@ -2552,13 +2552,14 @@ def test_liblinear_multiclass_warning(Estimator):
 
 @pytest.mark.parametrize("binary", [False, True])
 @pytest.mark.parametrize("use_str_y", [False, True])
+@pytest.mark.parametrize("class_weight", [None, "balanced", "dict"])
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype_name",
     yield_namespace_device_dtype_combinations(),
     ids=_get_namespace_device_dtype_ids,
 )
 def test_logistic_regression_array_api_compliance(
-    binary, use_str_y, array_namespace, device_, dtype_name
+    binary, use_str_y, class_weight, array_namespace, device_, dtype_name
 ):
     xp = _array_api_for_tests(array_namespace, device_)
     X_np = iris.data.astype(dtype_name)
@@ -2567,19 +2568,29 @@ def test_logistic_regression_array_api_compliance(
         if binary:
             target = (iris.target > 0).astype(np.int64)
             target = np.array(["setosa", "not-setosa"])[target]
+            if class_weight == "dict":
+                class_weight = {"setosa": 1.0, "not-setosa": 3.0}
         else:
             target = iris.target_names[iris.target]
+            if class_weight == "dict":
+                class_weight = {"virginica": 1.0, "setosa": 2.0, "versicolor": 3.0}
         y_np = target.copy()
         y_xp_or_np = np.asarray(y_np, copy=True)
     else:
         if binary:
             target = (iris.target > 0).astype(np.int64)
+            if class_weight == "dict":
+                class_weight = {0: 1.0, 1: 3.0}
         else:
             target = iris.target
+            if class_weight == "dict":
+                class_weight = {0: 1.0, 1: 2.0, 2: 3.0}
         y_np = target.astype(dtype_name)
         y_xp_or_np = xp.asarray(y_np, device=device_)
 
-    lr_np = LogisticRegression(C=1.0, solver="lbfgs", max_iter=200).fit(X_np, y_np)
+    lr_np = LogisticRegression(
+        C=1.0, solver="lbfgs", max_iter=500, class_weight=class_weight, tol=1e-10
+    ).fit(X_np, y_np)
     predict_proba_np = lr_np.predict_proba(X_np)
     preditct_log_proba_np = lr_np.predict_log_proba(X_np)
     prediction_np = lr_np.predict(X_np)
@@ -2591,9 +2602,9 @@ def test_logistic_regression_array_api_compliance(
         rtol = 1e-5
 
     with config_context(array_api_dispatch=True):
-        lr_xp = LogisticRegression(C=1.0, solver="lbfgs", max_iter=200).fit(
-            X_xp, y_xp_or_np
-        )
+        lr_xp = LogisticRegression(
+            C=1.0, solver="lbfgs", max_iter=500, class_weight=class_weight, tol=1e-10
+        ).fit(X_xp, y_xp_or_np)
         for attr_name in ("coef_", "intercept_"):
             attr_xp = getattr(lr_xp, attr_name)
             attr_np = getattr(lr_np, attr_name)

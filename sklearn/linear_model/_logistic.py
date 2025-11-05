@@ -326,7 +326,11 @@ def _logistic_regression_path(
         class_weight_ = compute_class_weight(
             class_weight, classes=classes, y=y, sample_weight=sample_weight
         )
-        sample_weight *= class_weight_[le.fit_transform(y)]
+        labels_class_weight = class_weight_[le.fit_transform(y)]
+        labels_class_weight = xp.asarray(
+            labels_class_weight, dtype=X.dtype, device=device_
+        )
+        sample_weight *= labels_class_weight
 
     # For doing a ovr, we need to mask the labels first. For the
     # multinomial case this is not necessary.
@@ -473,7 +477,7 @@ def _logistic_regression_path(
     coefs_order = "C" if not _is_numpy_namespace(xp) else "K"
     for i, C in enumerate(Cs):
         if solver == "lbfgs":
-            l2_reg_strength = 1.0 / (C * sw_sum)
+            l2_reg_strength = float(1.0 / (C * sw_sum))
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)
             ]
