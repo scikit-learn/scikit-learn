@@ -185,7 +185,7 @@ The project would like to thank the following funders.
   .. div:: text-box
 
     `:probabl. <https://probabl.ai>`_ is managing the whole sponsorship program
-    and employs full-time core maintainers such as Adrin Jalali, Arturo Amor,
+    and employs the full-time core maintainers Adrin Jalali, Arturo Amor,
     François Goupil, Guillaume Lemaitre, Jérémie du Boisberranger, Loïc Estève,
     Olivier Grisel, and Stefanie Senger.
 
