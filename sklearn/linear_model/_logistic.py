@@ -151,7 +151,9 @@ def _logistic_regression_path(
             default='lbfgs'
         Numerical solver to use.
 
-    coef : array-like of shape (n_features,), default=None
+    coef : array-like of shape (n_classes, features + int(fit_intercept)) or \
+            (1, n_features + int(fit_intercept)) or \
+            (n_features + int(fit_intercept)), default=None
         Initialization value for coefficients of logistic regression.
         Useless for liblinear solver.
 
@@ -203,7 +205,7 @@ def _logistic_regression_path(
         If None, it will be computed, going through all the samples.
         The value should be precomputed to speed up cross validation.
 
-    sample_weight : array-like of shape(n_samples,), default=None
+    sample_weight : array-like of shape (n_samples,), default=None
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
 
@@ -328,7 +330,7 @@ def _logistic_regression_path(
             else:
                 msg = (
                     f"Initialization coef is of shape {coef.shape}, expected shape "
-                    f"{w0.shape}"
+                    f"{w0.shape} or (1, {w0.shape})"
                 )
                 raise ValueError(msg)
         else:
@@ -631,7 +633,7 @@ def _log_reg_scoring_path(
         If None, it will be computed, going through all the samples.
         The value should be precomputed to speed up cross validation.
 
-    sample_weight : array-like of shape(n_samples,)
+    sample_weight : array-like of shape (n_samples,)
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
 
@@ -661,7 +663,7 @@ def _log_reg_scoring_path(
     scores : ndarray of shape (n_cs,)
         Scores obtained for each Cs.
 
-    n_iter : ndarray of shape(n_cs,)
+    n_iter : ndarray of shape (n_cs,)
         Actual number of iteration for each C in Cs.
     """
     X_train = X[train]
@@ -1482,7 +1484,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Intercept (a.k.a. bias) added to the decision function.
 
         If `fit_intercept` is set to False, the intercept is set to zero.
-        `intercept_` is of shape(1,) when the problem is binary.
+        `intercept_` is of shape (1,) when the problem is binary.
 
     Cs_ : ndarray of shape (n_cs)
         Array of C i.e. inverse of regularization parameter values used
