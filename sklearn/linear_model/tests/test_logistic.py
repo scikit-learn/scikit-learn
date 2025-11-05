@@ -2591,7 +2591,12 @@ def test_logistic_regression_array_api_compliance(
     lr_params = dict(
         C=1.0, solver="lbfgs", tol=1e-12, max_iter=500, class_weight=class_weight
     )
-    lr_np = LogisticRegression(**lr_params).fit(X_np, y_np)
+    with warnings.catch_warnings():
+        # Make sure that we converge in the reference fit.
+        warnings.simplefilter("error", ConvergenceWarning)
+        lr_np = LogisticRegression(**lr_params).fit(X_np, y_np)
+        assert lr_np.n_iter_ < lr_np.max_iter
+
     predict_proba_np = lr_np.predict_proba(X_np)
     preditct_log_proba_np = lr_np.predict_log_proba(X_np)
     prediction_np = lr_np.predict(X_np)
@@ -2603,7 +2608,15 @@ def test_logistic_regression_array_api_compliance(
         rtol = 5e-2
 
     with config_context(array_api_dispatch=True):
-        lr_xp = LogisticRegression(**lr_params).fit(X_xp, y_xp_or_np)
+        with warnings.catch_warnings():
+            # Make sure that we converge when using the namespace/device
+            # specific fit.
+            warnings.simplefilter("error", ConvergenceWarning)
+            lr_xp = LogisticRegression(**lr_params).fit(X_xp, y_xp_or_np)
+
+        assert lr_xp.n_iter_.shape == lr_np.n_iter_.shape
+        assert int(lr_xp.n_iter_[0]) < lr_xp.max_iter
+
         for attr_name in ("coef_", "intercept_"):
             attr_xp = getattr(lr_xp, attr_name)
             attr_np = getattr(lr_np, attr_name)
