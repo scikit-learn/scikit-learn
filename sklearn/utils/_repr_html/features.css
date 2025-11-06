@@ -5,9 +5,6 @@
   border: 1px dotted var(--sklearn-color-border-box);
   border-radius: .20em;
   margin-bottom: 0.5em;
-  display: flex;
-  align-items: first baseline;
-  justify-content: center;
   font-size: inherit; /* Needed for jupyter */
 }
 

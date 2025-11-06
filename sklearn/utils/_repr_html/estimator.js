@@ -77,7 +77,7 @@ function copyRowsToClipboard(element) {
                 copyMark.remove();
                 element.innerHTML = originalHTML;
                 element.style = originalStyle;
-            }, 2000);
+            }, 1000);
         })
         .catch(err => {
             console.error('Failed to copy:', err);
@@ -86,7 +86,7 @@ function copyRowsToClipboard(element) {
             setTimeout(() => {
                 element.innerHTML = originalHTML;
                 element.style = originalStyle;
-            }, 2000);
+            }, 1000);
         });
     return false;
 }
