@@ -574,8 +574,6 @@ A portion of the proceeds from each sale goes to support the scikit-learn projec
 
 .. raw:: html
 
-  <script>
-    // Make all external links on the about page open in a new tab
     document.addEventListener('DOMContentLoaded', function() {
       const aboutSection = document.getElementById('about');
       if (aboutSection) {
