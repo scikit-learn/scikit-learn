@@ -2586,8 +2586,11 @@ def test_logistic_regression_array_api_compliance(
         y_np = target.astype(dtype_name)
         y_xp_or_np = xp.asarray(y_np, device=device_)
 
+    # Use a strong regularization to ensure coef_ can be identified to a higher
+    # precision even when taking into account the iterated discrepancies when
+    # the gradient is computed in float32.
     lr_params = dict(
-        C=1.0, solver="lbfgs", tol=1e-12, max_iter=500, class_weight=class_weight
+        C=1e-2, solver="lbfgs", tol=1e-12, max_iter=500, class_weight=class_weight
     )
     with warnings.catch_warnings():
         # Make sure that we converge in the reference fit.
@@ -2595,11 +2598,14 @@ def test_logistic_regression_array_api_compliance(
         lr_np = LogisticRegression(**lr_params).fit(X_np, y_np)
         assert lr_np.n_iter_ < lr_np.max_iter
 
+    # Check that the model has not converged to a trivial solution:
+    assert np.abs(lr_np.coef_).max() > 0.1
+
     predict_proba_np = lr_np.predict_proba(X_np)
     preditct_log_proba_np = lr_np.predict_log_proba(X_np)
     prediction_np = lr_np.predict(X_np)
     atol = _atol_for_type(dtype_name)
-    rtol = 5e-2 if dtype_name == "float32" else 1e-4
+    rtol = 5e-3 if dtype_name == "float32" else 1e-5
 
     with config_context(array_api_dispatch=True):
         with warnings.catch_warnings():
