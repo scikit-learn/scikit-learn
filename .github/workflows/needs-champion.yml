@@ -1,5 +1,5 @@
-name: needs a champion
-# Post a comment on Issues to explain what the "needs champion" label means.
+name: Needs Decision
+# Post a comment on Issues to explain what the "Needs Decision" label means.
 
 permissions:
   contents: read
@@ -18,13 +18,13 @@ env:
 jobs:
 
   post_comment:
-    name: post_comment
-    if: github.event.label.name == 'needs a champion'
+    name: Add 'Needs Decision' comment
+    if: github.event.label.name == 'Needs decision'
     runs-on: ubuntu-latest
 
     steps:
 
-      - name: add champion comment
+      - name: add 'Needs decision' comment
         run: |
           gh api \
           --method POST \
@@ -36,19 +36,10 @@ jobs:
           BODY: |
             The goal of this comment is to set expectations.
 
-            Issues that propose new features or substantial changes need
-            the support of a scikit-learn maintainer. Without this they
-            are unlikely to get merged.
+            Deciding on new features or substantial changes is a lengthy
+            process. It frequently happens that no maintainer is available
+            to take on this task right now.
 
-            Time to review work is the limiting factor for this project.
-            As such many Pull Requests (PR) are not reviewed or only partially
-            reviewed. This results in a significant number of stalled PRs.
-            This is frustrating for everyone involved.
-
-            An important step before opening a PR is to decide if this work
-            should happen or not. Making this decision can often already
-            take a significant amount of time.
-
-            In conclusion, an important ingredient in a successful PR is
-            a maintainer who has the time and interest to help move
-            the work forward.
+            Please do not create a Pull Request before a decision has been
+            made regarding the proposed work. Making this decision can
+            often take a significant amount of time and effort.
