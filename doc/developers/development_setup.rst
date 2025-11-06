@@ -331,8 +331,6 @@ the required packages.
               joblib threadpoolctl
 
 
-.. _pre-commit:
-
 Set up pre-commit
 ^^^^^^^^^^^^^^^^^
 
