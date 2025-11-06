@@ -11,8 +11,7 @@ def _features_html(features, is_fitted_css_class=""):
             <summary>
               <div class="arrow"></div>
               <div>{total_features} features</div>
-              <div class="image-container"
-                   title="Copy all output features">
+              <div title="Copy all output features">
                 <i class="copy-paste-icon"
                   onclick="
                   event.stopPropagation();
