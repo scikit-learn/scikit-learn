@@ -258,8 +258,7 @@ Bronze sponsors
 
   .. div:: text-box
 
-    `NVIDIA <https://nvidia.com>`_ supports scikit-learn through their
-    sponsorship.
+    `NVIDIA <https://nvidia.com>`_ supports scikit-learn through their sponsorship and employs full-time core maintainer Tim Head. 
 
   .. div:: image-box
 
