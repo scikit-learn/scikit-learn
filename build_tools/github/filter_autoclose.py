@@ -1,3 +1,6 @@
+"""Filter PRs that are labeled 'autoclose' for longer than 14 days. Called from
+.github/workflows/autoclose-schedule.yml."""
+
 import os
 from datetime import datetime, timezone
 
@@ -24,7 +27,6 @@ def _get_paginated_results(url, headers):
 
 
 def get_pull_requests_to_autoclose(GH_REPO, GITHUB_TOKEN, ALL_LABELED_PRS):
-    # get "autoclose" labeled PRs that are older than 14 days
     all_labeled_prs = [int(x) for x in ALL_LABELED_PRS.split()]
     now = datetime.now(timezone.utc)
     pull_requests_to_autoclose = []

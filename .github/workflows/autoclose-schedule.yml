@@ -35,7 +35,7 @@ jobs:
         if: env.PULL_REQUESTS != ''
         run: |
           for PR in $PULL_REQUESTS; do
-            echo "Closing PR #$PR"
+            echo "Autoclosing PR #$PR"
             gh pr close "$PR" \
               --repo "$GH_REPO" \
               --comment "$BODY"
