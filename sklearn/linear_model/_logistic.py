@@ -1919,7 +1919,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         if self.use_legacy_attributes == "warn":
             warnings.warn(
-                "The default value of use_legacy_attributes will change from True"
+                "The default value of use_legacy_attributes will change from True "
                 "to False in version 1.10. "
                 "To silence this warning, explicitly set use_legacy_attributes to "
                 "either True or False.",
