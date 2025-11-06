@@ -643,13 +643,15 @@ underestimate how easy an issue is to solve!
   found `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_.
   Note that not all issues which need contributors will have this tag.
 
-- **Do not open PRs for issues with Needs Triage tag**
+- **Do not open PRs for issues with 'Needs Triage' tag**
 
   The `Needs Triage
   <https://github.com/scikit-learn/scikit-learn/labels/needs%20triage>`_ label means
   that the issue is not yet confirmed or fully understood. It signals to scikit-learn
   members to clarify the problem, discuss scope, and decide on the next steps. You are
-  welcome to join the discussion, but please wait before submitting a PR.
+  welcome to join the discussion, but as per our `Code of Conduct
+  <https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md>`_ please
+  wait before submitting a PR.
 
 Video resources
 ---------------
