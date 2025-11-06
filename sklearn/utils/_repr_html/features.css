@@ -8,6 +8,7 @@
   display: flex;
   align-items: first baseline;
   justify-content: center;
+  font-size: inherit;
 }
 
 .features.fitted {
@@ -100,4 +101,5 @@ padding: .25em;
   border: 1px solid rgba(106, 105, 104, 0.232);
   white-space: nowrap;
   color: var(--sklearn-color-text);
+  table-layout: inherit;
 }
