@@ -201,8 +201,8 @@ class LinearModelLoss:
         weights, intercept = self.weight_intercept(coef)
         xp, _, device_ = get_namespace_and_device(X)
 
-        weights_xp = xp.asarray(weights, device=device_)
-        intercept_xp = xp.asarray(intercept, dtype=weights_xp.dtype, device=device_)
+        weights_xp = xp.asarray(weights, dtype=X.dtype, device=device_)
+        intercept_xp = xp.asarray(intercept, dtype=X.dtype, device=device_)
         if not self.base_loss.is_multiclass:
             raw_prediction = X @ weights_xp + intercept_xp
         else:
