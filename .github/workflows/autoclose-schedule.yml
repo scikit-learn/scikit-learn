@@ -21,24 +21,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
       - name: detect labeled PRs and filter for older than 14 days
         run: |
-          CUTOFF_DAYS=14
-          NOW=$(date +%s)
-          PULL_REQUESTS=""
-          for PR in $(gh pr list --repo "$GH_REPO" --label autoclose --state open --json number --jq '.[].number'); do
-            TIMESTAMP=$(gh api repos/$GH_REPO/issues/$PR/events --jq '
-              map(select(.event == "labeled" and .label.name == "autoclose")) |
-              last?.created_at' | tr -d '"')
-            if [ -n "$TIMESTAMP" ]; then
-              LABEL_TIME=$(date -d "$TIMESTAMP" +%s)
-              AGE=$(( (NOW - LABEL_TIME) / 86400 ))
-              if [ $AGE -gt $CUTOFF_DAYS ]; then
-                PULL_REQUESTS="$PULL_REQUESTS $PR"
-              fi
-            fi
-          done
-          echo "PULL_REQUESTS=$PULL_REQUESTS" >> $GITHUB_ENV
+          set -e
+          ALL_LABELED_PRS=$(gh pr list --repo "$GH_REPO" --label autoclose --state open --json number --jq '.[].number')
+          export ALL_LABELED_PRS="$ALL_LABELED_PRS"
+          python build_tools/github/filter_autoclose_events.py
 
       - name: close labeled PRs and post comment
         if: env.PULL_REQUESTS != ''
