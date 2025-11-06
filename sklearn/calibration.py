@@ -228,22 +228,31 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
     References
     ----------
-    .. [1] Obtaining calibrated probability estimates from decision trees
-           and naive Bayesian classifiers, B. Zadrozny & C. Elkan, ICML 2001
+    .. [1] B. Zadrozny & C. Elkan.
+       `Obtaining calibrated probability estimates from decision trees
+       and naive Bayesian classifiers
+       <https://cseweb.ucsd.edu/~elkan/calibrated.pdf>`_, ICML 2001.
 
-    .. [2] Transforming Classifier Scores into Accurate Multiclass
-           Probability Estimates, B. Zadrozny & C. Elkan, (KDD 2002)
+    .. [2] B. Zadrozny & C. Elkan.
+       `Transforming Classifier Scores into Accurate Multiclass
+       Probability Estimates
+       <https://web.archive.org/web/20060720141520id_/http://www.research.ibm.com:80/people/z/zadrozny/kdd2002-Transf.pdf>`_,
+       KDD 2002.
 
-    .. [3] Probabilistic Outputs for Support Vector Machines and Comparisons to
-           Regularized Likelihood Methods, J. Platt, (1999)
+    .. [3] J. Platt. `Probabilistic Outputs for Support Vector Machines
+       and Comparisons to Regularized Likelihood Methods
+       <https://www.researchgate.net/profile/John-Platt-2/publication/2594015_Probabilistic_Outputs_for_Support_Vector_Machines_and_Comparisons_to_Regularized_Likelihood_Methods/links/004635154cff5262d6000000/Probabilistic-Outputs-for-Support-Vector-Machines-and-Comparisons-to-Regularized-Likelihood-Methods.pdf>`_,
+       1999.
 
-    .. [4] Predicting Good Probabilities with Supervised Learning,
-           A. Niculescu-Mizil & R. Caruana, ICML 2005
+    .. [4] A. Niculescu-Mizil & R. Caruana.
+       `Predicting Good Probabilities with Supervised Learning
+       <https://www.cs.cornell.edu/~alexn/papers/calibration.icml05.crc.rev3.pdf>`_,
+       ICML 2005.
 
-    .. [5] Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger. 2017.
+    .. [5] Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger.
        :doi:`On Calibration of Modern Neural Networks<10.48550/arXiv.1706.04599>`.
        Proceedings of the 34th International Conference on Machine Learning,
-       PMLR 70:1321-1330, 2017
+       PMLR 70:1321-1330, 2017.
 
     Examples
     --------
