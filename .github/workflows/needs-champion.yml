@@ -1,0 +1,54 @@
+name: needs a champion
+# Post a comment on Issues to explain what the "needs champion" label means.
+
+permissions:
+  contents: read
+  issues: write
+
+on:
+  issues:
+    types:
+      - labeled
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GH_REPO: ${{ github.repository }}
+  ISSUE_NUMBER: ${{ github.event.issue.number }}
+
+jobs:
+
+  post_comment:
+    name: post_comment
+    if: github.event.label.name == 'needs a champion'
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: add champion comment
+        run: |
+          gh api \
+          --method POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          /repos/$GH_REPO/issues/$ISSUE_NUMBER/comments \
+          -f "body=$BODY"
+        env:
+          BODY: |
+            The goal of this comment is to set expectations.
+
+            Issues that propose new features or substantial changes need
+            the support of a scikit-learn maintainer. Without this they
+            are unlikely to get merged.
+
+            Time to review work is the limiting factor for this project.
+            As such many Pull Requests (PR) are not reviewed or only partially
+            reviewed. This results in a significant number of stalled PRs.
+            This is frustrating for everyone involved.
+
+            An important step before opening a PR is to decide if this work
+            should happen or not. Making this decision can often already
+            take a significant amount of time.
+
+            In conclusion, an important ingredient in a successful PR is
+            a maintainer who has the time and interest to help move
+            the work forward.
