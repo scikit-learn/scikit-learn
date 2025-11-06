@@ -13,6 +13,7 @@ from sklearn.metrics import (
     accuracy_score,
     auc,
     average_precision_score,
+    confusion_matrix_at_thresholds,
     coverage_error,
     dcg_score,
     det_curve,
@@ -47,6 +48,7 @@ from sklearn.utils.validation import (
 # Utilities for testing
 
 CURVE_FUNCS = [
+    confusion_matrix_at_thresholds,
     det_curve,
     precision_recall_curve,
     roc_curve,
@@ -191,6 +193,25 @@ def _partial_roc_auc_score(y_true, y_predict, max_fpr):
     min_area = 0.5 * (fpr2 - fpr1) * (fpr2 + fpr1)
     max_area = fpr2 - fpr1
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
+
+
+def test_confusion_matrix_at_thresholds(global_random_seed):
+    """Smoke test for confusion_matrix_at_thresholds."""
+    rng = np.random.RandomState(global_random_seed)
+
+    n_samples = 100
+    y_true = rng.randint(0, 2, size=100)
+    y_score = rng.uniform(size=100)
+
+    n_pos = np.sum(y_true)
+    n_neg = n_samples - n_pos
+
+    tns, fps, fns, tps, thresholds = confusion_matrix_at_thresholds(y_true, y_score)
+
+    assert len(tns) == len(fps) == len(fns) == len(tps) == len(thresholds)
+    assert_allclose(tps + fns, n_pos)
+    assert_allclose(tns + fps, n_neg)
+    assert_allclose(tns + fps + fns + tps, n_samples)
 
 
 @pytest.mark.parametrize("drop", [True, False])

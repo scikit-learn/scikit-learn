@@ -1,7 +1,7 @@
 """
-================
-Confusion matrix
-================
+==============================================================
+Evaluate the performance of a classifier with Confusion Matrix
+==============================================================
 
 Example of confusion matrix usage to evaluate the quality
 of the output of a classifier on the iris data set. The
@@ -67,5 +67,58 @@ for title, normalize in titles_options:
 
     print(title)
     print(disp.confusion_matrix)
+
+plt.show()
+
+# %%
+# Binary Classification
+# =====================
+#
+# For binary problems, :func:`sklearn.metrics.confusion_matrix` has the `ravel` method
+# we can use get counts of true negatives, false positives, false negatives and
+# true positives.
+#
+# To obtain true negatives, false positives, false negatives and true
+# positives counts at different thresholds, one can use
+# :func:`sklearn.metrics.confusion_matrix_at_thresholds`.
+# This is fundamental for binary classification
+# metrics like :func:`~sklearn.metrics.roc_auc_score` and
+# :func:`~sklearn.metrics.det_curve`.
+
+from sklearn.datasets import make_classification
+from sklearn.metrics import confusion_matrix_at_thresholds
+
+X, y = make_classification(
+    n_samples=100,
+    n_features=20,
+    n_informative=20,
+    n_redundant=0,
+    n_classes=2,
+    random_state=42,
+)
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=42
+)
+
+classifier = svm.SVC(kernel="linear", C=0.01, probability=True)
+classifier.fit(X_train, y_train)
+
+y_score = classifier.predict_proba(X_test)[:, 1]
+
+tns, fps, fns, tps, threshold = confusion_matrix_at_thresholds(y_test, y_score)
+
+# Plot TNs, FPs, FNs and TPs vs Thresholds
+plt.figure(figsize=(10, 6))
+
+plt.plot(threshold, tns, label="True Negatives (TNs)")
+plt.plot(threshold, fps, label="False Positives (FPs)")
+plt.plot(threshold, fns, label="False Negatives (FNs)")
+plt.plot(threshold, tps, label="True Positives (TPs)")
+plt.xlabel("Thresholds")
+plt.ylabel("Count")
+plt.title("TNs, FPs, FNs and TPs vs Thresholds")
+plt.legend()
+plt.grid()
 
 plt.show()
