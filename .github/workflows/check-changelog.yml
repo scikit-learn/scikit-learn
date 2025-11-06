@@ -23,14 +23,14 @@ jobs:
           set -xe
           changed_files=$(git diff --name-only origin/main)
           # Changelog should be updated only if tests have been modified
-          if [[ "$changed_files" =~ tests ]]
+          if [[ "$changed_files" =~ sklearn\/.+test_.+\.py ]]
           then
             echo "check_changelog=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Check changelog entry
         if: steps.tests_changed.outputs.check_changelog == 'true'
-        uses: scientific-python/action-towncrier-changelog@v1
+        uses: scientific-python/action-towncrier-changelog@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BOT_USERNAME: changelog-bot
