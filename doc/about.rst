@@ -574,15 +574,3 @@ A portion of the proceeds from each sale goes to support the scikit-learn projec
 
 .. raw:: html
 
-    document.addEventListener('DOMContentLoaded', function() {
-      const aboutSection = document.getElementById('about');
-      if (aboutSection) {
-        const links = aboutSection.querySelectorAll('a[href^="http"]');
-        links.forEach(function(link) {
-          // Skip links that already have target attribute
-          if (!link.hasAttribute('target')) {
-            link.setAttribute('target', '_blank');
-            link.setAttribute('rel', 'noopener noreferrer');
-          }
-        });
-      }
