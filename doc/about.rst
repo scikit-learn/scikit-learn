@@ -570,5 +570,4 @@ Official scikit-learn swag is available for purchase at the `NumFOCUS online sto
 <https://numfocus.myspreadshop.com/scikit-learn+logo?idea=6335cad48f3f5268f5f42559>`_.
 A portion of the proceeds from each sale goes to support the scikit-learn project.
 
-.. raw:: html
 
