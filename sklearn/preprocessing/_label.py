@@ -433,7 +433,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
 
         if self.sparse_input_ and not _is_numpy_namespace(xp):
             raise ValueError(
-                f"`LabelBinarizer` was fitted on a sparse matrix, and therefore cannot "
+                "`LabelBinarizer` was fitted on a sparse matrix, and therefore cannot "
                 f"inverse transform a {xp.__name__} array back to a sparse matrix."
             )
 

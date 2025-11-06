@@ -257,16 +257,21 @@ def test_label_binarizer_array_api_compliance(
         # Similarly, if `LabelBinarizer` is fitted on a sparse matrix,
         # then inverse-transforming non-NumPy arrays is not allowed.
         if not _is_numpy_namespace(xp):
-            with pytest.raises(ValueError):
+            sparse_output_msg = "`sparse_output=True` is not supported for array API"
+
+            with pytest.raises(ValueError, match=sparse_output_msg):
                 LabelBinarizer(sparse_output=True).fit(y)
 
-            with pytest.raises(ValueError):
-                lb_np = LabelBinarizer(sparse_output=True).fit(y_np)
+            lb_np = LabelBinarizer(sparse_output=True).fit(y_np)
+            with pytest.raises(ValueError, match=sparse_output_msg):
                 lb_np.transform(y)
 
-            with pytest.raises(ValueError):
-                lb_sparse = LabelBinarizer().fit(y_np)
-                lb_sparse.sparse_input_ = True
+            lb_sparse = LabelBinarizer().fit(y_np)
+            lb_sparse.sparse_input_ = True
+            sparse_input_msg = (
+                "`LabelBinarizer` was fitted on a sparse matrix, and therefore cannot"
+            )
+            with pytest.raises(ValueError, match=sparse_input_msg):
                 lb_sparse.inverse_transform(xp.asarray(expected, device=device_))
 
         # Shouldn't raise error in both `fit` and `transform` when `sparse_output=False`
@@ -787,7 +792,6 @@ def test_label_binarize_array_api_compliance(
             binarized = label_binarize(y, classes=classes)
             expected = np.asarray(expected, dtype=int)
 
-            # String class labels are converted to NumPy namespace
             assert get_namespace(binarized)[0].__name__ == xp.__name__
             assert device(binarized) == device(y)
             assert "int" in str(binarized.dtype)
