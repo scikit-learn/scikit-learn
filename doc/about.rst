@@ -314,7 +314,6 @@ Other contributions
 
 * `Microsoft <https://microsoft.com/>`_ funds Andreas Müller since 2020.
 
-* `NVidia <https://nvidia.com>`_ funds Tim Head since 2022.
 
 * `Quansight Labs <https://labs.quansight.org>`_ funds Lucy Liu since 2022.
 
