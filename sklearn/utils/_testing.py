@@ -1446,12 +1446,6 @@ def _get_warnings_filters_info_list():
             message="Class PassiveAggressive.+is deprecated",
             category=FutureWarning,
         ),
-        # TODO(1.10): remove use_legacy_attributes from LogisticRegressionCV
-        WarningInfo(
-            "ignore",
-            message="The default value of use_legacy_attributes.+",
-            category=FutureWarning,
-        ),
     ]
 
 
