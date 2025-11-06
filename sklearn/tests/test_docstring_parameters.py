@@ -228,10 +228,10 @@ def test_fit_docstring_attributes(name, Estimator):
     elif Estimator.__name__ == "KBinsDiscretizer":
         # default raises an FutureWarning if quantile method is at default "warn"
         est.set_params(quantile_method="averaged_inverted_cdf")
-    # TODO(1.9) remove
+    # TODO(1.10) remove
     elif Estimator.__name__ == "MDS":
         # default raises a FutureWarning
-        est.set_params(n_init=1)
+        est.set_params(n_init=1, init="random")
 
     # Low max iter to speed up tests: we are only interested in checking the existence
     # of fitted attributes. This should be invariant to whether it has converged or not.
