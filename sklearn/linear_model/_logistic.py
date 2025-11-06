@@ -1821,7 +1821,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.linear_model import LogisticRegressionCV
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = LogisticRegressionCV(cv=5, random_state=0).fit(X, y)
+    >>> clf = LogisticRegressionCV(
+    ...     cv=5, random_state=0, use_legacy_attributes=False
+    ... ).fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])
     >>> clf.predict_proba(X[:2, :]).shape

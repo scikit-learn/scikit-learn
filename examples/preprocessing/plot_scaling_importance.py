@@ -206,10 +206,14 @@ from sklearn.pipeline import make_pipeline
 
 Cs = np.logspace(-5, 5, 20)
 
-unscaled_clf = make_pipeline(pca, LogisticRegressionCV(Cs=Cs))
+unscaled_clf = make_pipeline(
+    pca, LogisticRegressionCV(Cs=Cs, use_legacy_attributes=False)
+)
 unscaled_clf.fit(X_train, y_train)
 
-scaled_clf = make_pipeline(scaler, pca, LogisticRegressionCV(Cs=Cs))
+scaled_clf = make_pipeline(
+    scaler, pca, LogisticRegressionCV(Cs=Cs, use_legacy_attributes=False)
+)
 scaled_clf.fit(X_train, y_train)
 
 print(f"Optimal C for the unscaled PCA: {unscaled_clf[-1].C_[0]:.4f}\n")
