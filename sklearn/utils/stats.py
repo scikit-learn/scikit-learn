@@ -93,7 +93,8 @@ def _weighted_percentile(
     Notes
     -----
     When `average=True`, the averaging branch is taken only when the cumulative
-    weight equals the target weighted rank exactly. With floating-point `sample_weight` this exact equality is rare due to rounding, so for non-integer weights
+    weight equals the target weighted rank exactly. With floating-point `sample_weight`
+    this exact equality is rare due to rounding, so for non-integer weights
     and large samples `average=True` often returns the same result as `average=False`
     """
     xp, _, device = get_namespace_and_device(array)
