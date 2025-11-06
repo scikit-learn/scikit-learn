@@ -860,7 +860,7 @@ def test_auc_score_non_binary_class():
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
-def test_binary_clf_curve_multiclass_error(curve_func):
+def test_confusion_matrix_at_thresholds_multiclass_error(curve_func):
     rng = check_random_state(404)
     y_true = rng.randint(0, 3, size=10)
     y_pred = rng.rand(10)
@@ -870,7 +870,7 @@ def test_binary_clf_curve_multiclass_error(curve_func):
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
-def test_binary_clf_curve_implicit_pos_label(curve_func):
+def test_confusion_matrix_at_thresholds_implicit_pos_label(curve_func):
     # Check that using string class labels raises an informative
     # error for any supported string dtype:
     msg = (
@@ -897,7 +897,9 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
 @pytest.mark.filterwarnings("ignore:Support for labels represented as bytes")
 @pytest.mark.parametrize("curve_func", [precision_recall_curve, roc_curve])
 @pytest.mark.parametrize("labels_type", ["list", "array"])
-def test_binary_clf_curve_implicit_bytes_pos_label(curve_func, labels_type):
+def test_confusion_matrix_at_thresholds_implicit_bytes_pos_label(
+    curve_func, labels_type
+):
     # Check that using bytes class labels raises an informative
     # error for any supported string dtype:
     labels = _convert_container([b"a", b"b"], labels_type)
@@ -907,7 +909,7 @@ def test_binary_clf_curve_implicit_bytes_pos_label(curve_func, labels_type):
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
-def test_binary_clf_curve_zero_sample_weight(curve_func):
+def test_confusion_matrix_at_thresholds_zero_sample_weight(curve_func):
     y_true = [0, 0, 1, 1, 1]
     y_score = [0.1, 0.2, 0.3, 0.4, 0.5]
     sample_weight = [1, 1, 1, 0.5, 0]
