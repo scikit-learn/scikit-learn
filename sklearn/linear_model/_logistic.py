@@ -2291,7 +2291,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             n_folds = len(folds)
             n_cs = self.Cs_.size
             n_dof = X.shape[1] + int(self.fit_intercept)
-            self.Cs_ = float(self.Cs_[0])
+            self.C_ = float(self.C_[0])
             newpaths = np.concatenate(list(self.coefs_paths_.values()))
             newscores = self.scores_[classes[0]]  # same for all classes
             newniter = self.n_iter_[0]
