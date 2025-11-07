@@ -368,7 +368,8 @@ def calinski_harabasz_score(X, labels):
     """
 
     xp, _, device_ = get_namespace_and_device(X, labels)
-    X = xp.asarray(X, dtype=_max_precision_float_dtype(xp, device_), device=device_)
+    X = xp.asarray(X, device=device_)
+    X = xp.astype(X, _max_precision_float_dtype(xp, device_), copy=False)
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()
     labels = le.fit_transform(labels)
