@@ -216,7 +216,7 @@ scaled_clf = make_pipeline(
 )
 scaled_clf.fit(X_train, y_train)
 
-print(f"Optimal C for the unscaled PCA: {unscaled_clf[-1].C_[0]:.4f}\n")
+print(f"Optimal C for the unscaled PCA: {unscaled_clf[-1].C_:.4f}\n")
 print(f"Optimal C for the standardized data with PCA: {scaled_clf[-1].C_[0]:.2f}")
 
 # %%
