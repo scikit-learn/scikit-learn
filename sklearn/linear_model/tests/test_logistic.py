@@ -106,7 +106,7 @@ def test_logistic_cv_mock_scorer():
     lr.fit(X, y)
 
     # Cs[2] has the highest score (0.8) from MockScorer
-    assert lr.C_[0] == Cs[2]
+    assert lr.C_ == Cs[2]
 
     # scorer called 8 times (cv*len(Cs))
     assert mock_scorer.calls == cv * len(Cs)
@@ -509,16 +509,16 @@ def test_logistic_cv(global_random_seed, use_legacy_attributes):
     assert lr_cv.coef_.shape == (1, n_features)
     assert_array_equal(lr_cv.classes_, [-1, 1])
     assert len(lr_cv.classes_) == 2
+    assert lr_cv.Cs_.shape == (1,)
 
     if use_legacy_attributes:
         coefs_paths = np.asarray(list(lr_cv.coefs_paths_.values()))
         assert coefs_paths.shape == (1, 3, 1, n_features)
-        assert lr_cv.Cs_.shape == (1,)
         scores = np.asarray(list(lr_cv.scores_.values()))
         assert scores.shape == (1, 3, 1)
     else:
         assert lr_cv.coefs_paths_.shape == (3, 1, 1, 1, n_features)
-        assert isinstance(lr_cv.Cs_, float)
+        assert isinstance(lr_cv.C_, float)
         assert isinstance(lr_cv.l1_ratio_, float)
         assert lr_cv.scores_.shape == (3, 1, 1)
 
@@ -653,13 +653,13 @@ def test_ovr_multinomial_iris(use_legacy_attributes):
 
     # Train clf on the original dataset where classes 0 and 1 are separated
     clf = LogisticRegressionCV(
-        cv=precomputed_folds, multi_class="ovr", use_legacy_attributes=False
+        cv=precomputed_folds, multi_class="ovr", use_legacy_attributes=True
     )
     clf.fit(train, target)
 
     # Conflate classes 0 and 1 and train clf1 on this modified dataset
     clf1 = LogisticRegressionCV(
-        cv=precomputed_folds, multi_class="ovr", use_legacy_attributes=False
+        cv=precomputed_folds, multi_class="ovr", use_legacy_attributes=True
     )
     target_copy = target.copy()
     target_copy[target_copy == 0] = 1
@@ -718,7 +718,7 @@ def test_ovr_multinomial_iris(use_legacy_attributes):
                 n_classes,
                 n_dof,
             )
-            assert isinstance(clf_multi.Cs_, float)
+            assert isinstance(clf_multi.C_, float)
             assert isinstance(clf_multi.l1_ratio_, float)
             assert clf_multi.scores_.shape == (n_folds, n_l1_ratios, n_cs)
 
@@ -1349,9 +1349,10 @@ def test_logistic_regression_cv_refit(global_random_seed, penalty):
         random_state=global_random_seed,
         max_iter=10000,
         tol=1e-12,
-        use_legacy_attributes=False,
     )
-    lr_cv = LogisticRegressionCV(Cs=[1.0], refit=True, **common_params)
+    lr_cv = LogisticRegressionCV(
+        Cs=[1.0], refit=True, use_legacy_attributes=False, **common_params
+    )
     lr_cv.fit(X, y)
     lr = LogisticRegression(C=1.0, **common_params)
     lr.fit(X, y)
@@ -1434,7 +1435,8 @@ def test_max_iter(global_random_seed, max_iter, multi_class, solver, message):
     "ignore:.*'liblinear' solver for multiclass classification is deprecated.*"
 )
 @pytest.mark.parametrize("solver", SOLVERS)
-def test_n_iter(solver):
+@pytest.mark.parametrize("use_legacy_attributes", [True, False])
+def test_n_iter(solver, use_legacy_attributes):
     # Test that self.n_iter_ has the correct format.
     X, y = iris.data, iris.target
     if solver == "lbfgs":
@@ -1462,17 +1464,21 @@ def test_n_iter(solver):
         Cs=n_Cs,
         cv=n_cv_fold,
         random_state=42,
-        use_legacy_attributes=False,
+        use_legacy_attributes=use_legacy_attributes,
     )
     clf_cv.fit(X, y_bin)
-    assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs)
+    if use_legacy_attributes:
+        assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs)
+    else:
+        assert clf_cv.n_iter_.shape == (n_cv_fold, 1, n_Cs)
 
     # OvR case
     clf.set_params(multi_class="ovr").fit(X, y)
     assert clf.n_iter_.shape == (n_classes,)
 
     clf_cv.set_params(multi_class="ovr").fit(X, y)
-    assert clf_cv.n_iter_.shape == (n_classes, n_cv_fold, n_Cs)
+    if use_legacy_attributes:
+        assert clf_cv.n_iter_.shape == (n_classes, n_cv_fold, n_Cs)
 
     # multinomial case
     if solver in ("liblinear",):
@@ -1485,7 +1491,10 @@ def test_n_iter(solver):
     assert clf.n_iter_.shape == (1,)
 
     clf_cv.set_params(multi_class="multinomial").fit(X, y)
-    assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs)
+    if use_legacy_attributes:
+        assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs)
+    else:
+        assert clf_cv.n_iter_.shape == (n_cv_fold, 1, n_Cs)
 
 
 @pytest.mark.parametrize("solver", sorted(set(SOLVERS) - set(["liblinear"])))
@@ -2270,7 +2279,7 @@ def test_scores_attribute_layout_elasticnet():
         random_state=0,
         max_iter=250,
         tol=1e-3,
-        use_legacy_attributes=False,
+        use_legacy_attributes=True,
     )
     lrcv.fit(X, y)
 
@@ -2324,7 +2333,7 @@ def test_multinomial_identifiability_on_iris(global_random_seed, solver, fit_int
 
     clf = LogisticRegression(
         C=len(iris.data),
-        solver="lbfgs",
+        solver=solver,
         fit_intercept=fit_intercept,
         random_state=global_random_seed,
     )
@@ -2434,7 +2443,7 @@ def test_lr_cv_scores_differ_when_sample_weight_is_requested(global_random_seed)
     lr_cv1 = LogisticRegressionCV(
         scoring=scorer1,
         tol=3e-6,
-        use_legacy_attributes=False,
+        use_legacy_attributes=True,
     )
     lr_cv1.fit(X, y, **kwargs)
 
@@ -2443,7 +2452,7 @@ def test_lr_cv_scores_differ_when_sample_weight_is_requested(global_random_seed)
     lr_cv2 = LogisticRegressionCV(
         scoring=scorer2,
         tol=3e-6,
-        use_legacy_attributes=False,
+        use_legacy_attributes=True,
     )
     lr_cv2.fit(X, y, **kwargs)
 
