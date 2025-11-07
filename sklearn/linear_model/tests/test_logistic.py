@@ -1913,7 +1913,7 @@ def test_LogisticRegressionCV_no_refit(penalty, multi_class):
 
 
 # TODO(1.8): remove filterwarnings after the deprecation of multi_class
-# Remove multi_class an change first element of the expected n_iter_.shape from
+# Remove multi_class and change first element of the expected n_iter_.shape from
 # n_classes to 1 (according to the docstring).
 @pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 def test_LogisticRegressionCV_elasticnet_attribute_shapes():
