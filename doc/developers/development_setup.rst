@@ -331,10 +331,12 @@ the required packages.
               joblib threadpoolctl
 
 
+.. _pre_commit:
+
 Set up pre-commit
 ^^^^^^^^^^^^^^^^^
 
-Additionally, install `pre-commit <https://pre-commit.com/#install>`_ with `pip` in your
+Additionally, install `pre-commit <https://pre-commit.com/#install>`__ with `pip` in your
 environment to automatically run code style checks before each commit:
 
 .. prompt::
@@ -344,7 +346,6 @@ environment to automatically run code style checks before each commit:
 
 This automatically formats your code to standards used in this project when
 you make a commit. If any changes are applied, you need to review them and commit again.
-The pre-commit checks can be disabled for a particular commit with `git commit -n`.
 
 
 .. _install_from_source:

@@ -271,15 +271,25 @@ The next steps describe the process of modifying code and submitting a PR:
 
 #. Develop the feature on your feature branch on your computer, using Git to
    do the version control. When you're done editing, add changed files using
-   ``git add`` and then ``git commit``:
+   ``git add`` and then ``git commit`` to record your changes in Git:
 
    .. prompt:: bash
 
       git add modified_files
       git commit
 
-   to record your changes in Git, then push the changes to your GitHub
-   account with:
+   .. note::
+
+     If :ref:`pre-commit <pre_commit>` detects any issues, your commit will not be
+     executed and you will be notified. You have to review the changes and possibly
+     adapt the files (whitespace issues will be fixed automatically, typos have to be
+     corrected manually) before adding and committing the changed files again.
+     Repeat this step until there are no more requested changes and the commit was
+     successful.
+
+     The pre-commit checks can be disabled for a particular commit with `git commit -n`.
+
+   Then push the changes to your GitHub account with:
 
    .. prompt:: bash
 
