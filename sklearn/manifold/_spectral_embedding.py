@@ -180,7 +180,7 @@ def spectral_embedding(
     This embedding can also 'work' even if the ``adjacency`` variable is
     not strictly the adjacency matrix of a graph but more generally
     an affinity or similarity matrix between samples (for instance the
-    heat kernel of a euclidean distance matrix or a k-NN matrix).
+    heat kernel of a Euclidean distance matrix or a k-NN matrix).
 
     However care must taken to always make the affinity matrix symmetric
     so that the eigenvector decomposition works as expected.

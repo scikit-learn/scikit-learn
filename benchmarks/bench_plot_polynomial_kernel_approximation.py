@@ -4,7 +4,7 @@ Benchmark for explicit feature map approximation of polynomial kernels
 ========================================================================
 
 An example illustrating the approximation of the feature map
-of an Homogeneous Polynomial kernel.
+of a Homogeneous Polynomial kernel.
 
 .. currentmodule:: sklearn.kernel_approximation
 
@@ -14,8 +14,8 @@ classification with an SVM on the digits dataset. Results using a linear
 SVM in the original space, a linear SVM using the approximate mappings
 and a kernelized SVM are compared.
 
-The first plot shows the classification accuracy of Nystroem [2] and
-PolynomialCountSketch [1] as the output dimension (n_components) grows.
+The first plot shows the classification accuracy of Nystroem [2]_ and
+PolynomialCountSketch [1]_ as the output dimension (n_components) grows.
 It also shows the accuracy of a linear SVM and a polynomial kernel SVM
 on the same data.
 
@@ -27,16 +27,19 @@ a time-consuming training phase, while training is almost immediate
 for PolynomialCountSketch, whose training phase boils down to
 initializing some random variables (because is data-independent).
 
-[1] Pham, N., & Pagh, R. (2013, August). Fast and scalable polynomial
-kernels via explicit feature maps. In Proceedings of the 19th ACM SIGKDD
-international conference on Knowledge discovery and data mining (pp. 239-247)
-(https://chbrown.github.io/kdd-2013-usb/kdd/p239.pdf)
+References
+----------
+.. [1] Pham, N., & Pagh, R. (2013, August). Fast and scalable polynomial
+       kernels via explicit feature maps. In Proceedings of the 19th ACM
+	   SIGKDD International Conference on Knowledge Discovery and Data
+	   Mining (pp. 239-247)
+	   (https://chbrown.github.io/kdd-2013-usb/kdd/p239.pdf)
 
-[2] Charikar, M., Chen, K., & Farach-Colton, M. (2002, July). Finding frequent
-items in data streams. In International Colloquium on Automata, Languages, and
-Programming (pp. 693-703). Springer, Berlin, Heidelberg.
-(https://people.cs.rutgers.edu/~farach/pubs/FrequentStream.pdf)
-
+.. [2] Charikar, M., Chen, K., & Farach-Colton, M. (2002, July).
+       Finding frequent items in data streams. In International Colloquium
+	   on Automata, Languages, and Programming (pp. 693-703).
+	   Springer, Berlin, Heidelberg.
+	   (https://people.cs.rutgers.edu/~farach/pubs/FrequentStream.pdf)
 """
 
 # Authors: The scikit-learn developers
@@ -136,7 +139,7 @@ ax.set_ylabel("Accuracy (%)")
 ax.set_xlim([out_dims[0], out_dims[-1]])
 fig.tight_layout()
 
-# Now lets evaluate the scalability of PolynomialCountSketch vs Nystroem
+# Now let's evaluate the scalability of PolynomialCountSketch vs Nystroem
 # First we generate some fake data with a lot of samples
 
 fakeData = np.random.randn(10000, 100)
