@@ -297,7 +297,8 @@ def fetch_lfw_people(
     ----------
     data_home : str or path-like, default=None
         Specify another download and cache folder for the datasets. By default
-        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in the operating system's standard
+        cache directory.
 
     funneled : bool, default=True
         Download and use the funneled variant of the dataset.
@@ -539,8 +540,8 @@ def fetch_lfw_pairs(
 
     data_home : str or path-like, default=None
         Specify another download and cache folder for the datasets. By
-        default all scikit-learn data is stored in '~/scikit_learn_data'
-        subfolders.
+        default all scikit-learn data is stored in the operating system's standard
+        cache directory.
 
     funneled : bool, default=True
         Download and use the funneled variant of the dataset.

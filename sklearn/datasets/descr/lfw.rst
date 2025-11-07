@@ -41,7 +41,7 @@ Features            real, between 0 and 255
   to fully decode the relevant part of the JPEG files into numpy arrays. If
   the dataset has  been loaded once, the following times the loading times
   less than 200ms by using a memmapped version memoized on the disk in the
-  ``~/scikit_learn_data/lfw_home/`` folder using ``joblib``.
+  operating system's standard cache directory using ``joblib``.
 
   The first loader is used for the Face Identification task: a multi-class
   classification task (hence supervised learning)::

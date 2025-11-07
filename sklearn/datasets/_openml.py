@@ -828,7 +828,8 @@ def fetch_openml(
 
     data_home : str or path-like, default=None
         Specify another download and cache folder for the data sets. By default
-        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in the operating system's standard
+        cache directory.
 
     target_column : str, list or None, default='default-target'
         Specify the column name in the data to use as target. If
