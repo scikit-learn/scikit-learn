@@ -2,6 +2,7 @@
 .github/workflows/autoclose-schedule.yml."""
 
 import os
+import subprocess
 from datetime import datetime, timezone
 
 import requests
@@ -26,8 +27,24 @@ def _get_paginated_results(url, headers):
     return results
 
 
-def get_pull_requests_to_autoclose(GH_REPO, GITHUB_TOKEN, ALL_LABELED_PRS):
-    all_labeled_prs = [int(x) for x in ALL_LABELED_PRS.split()]
+def get_pull_requests_to_autoclose(GH_REPO, GITHUB_TOKEN):
+    command = [
+        "gh",
+        "pr",
+        "list",
+        "--repo",
+        GH_REPO,
+        "--label",
+        "autoclose",
+        "--state",
+        "open",
+        "--json",
+        "number",
+        "--jq",
+        ".[].number",
+    ]
+    all_labeled_prs = subprocess.check_output(command, text=True)
+    all_labeled_prs = [int(x) for x in all_labeled_prs.split()]
     now = datetime.now(timezone.utc)
     pull_requests_to_autoclose = []
 
@@ -57,11 +74,8 @@ def get_pull_requests_to_autoclose(GH_REPO, GITHUB_TOKEN, ALL_LABELED_PRS):
 if __name__ == "__main__":
     GH_REPO = os.getenv("GH_REPO", "")
     GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
-    ALL_LABELED_PRS = os.getenv("ALL_LABELED_PRS", "")
 
-    pull_requests_to_autoclose = get_pull_requests_to_autoclose(
-        GH_REPO, GITHUB_TOKEN, ALL_LABELED_PRS
-    )
+    pull_requests_to_autoclose = get_pull_requests_to_autoclose(GH_REPO, GITHUB_TOKEN)
 
     with open(os.getenv("GITHUB_ENV"), "a") as f:
         f.write(f"PULL_REQUESTS={pull_requests_to_autoclose}\n")

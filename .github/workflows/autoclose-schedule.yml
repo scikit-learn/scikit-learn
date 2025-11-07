@@ -27,8 +27,6 @@ jobs:
       - name: detect labeled PRs and filter for older than 14 days
         run: |
           set -e
-          ALL_LABELED_PRS=$(gh pr list --repo "$GH_REPO" --label autoclose --state open --json number --jq '.[].number')
-          export ALL_LABELED_PRS="$ALL_LABELED_PRS"
           python build_tools/github/filter_autoclose_events.py
 
       - name: close labeled PRs and post comment
