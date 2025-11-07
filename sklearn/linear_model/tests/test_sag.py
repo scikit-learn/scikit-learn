@@ -284,7 +284,7 @@ def get_step_size(
     L = kappa * (np.sum(X * X, axis=1) + fit_intercept) + alpha
     if sample_weight is not None:
         L *= sample_weight
-        L = L.max()
+    L = L.max()
     if is_saga:
         # SAGA theoretical step size is 1/3L or 1 / (2 * (L + mu n))
         # See Defazio et al. 2014
