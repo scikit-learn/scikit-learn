@@ -492,10 +492,16 @@ def get_namespace_and_device(
         return xp, False, arrays_device
 
 
-def _expit(X, xp=None):
+def _expit(X, out=None, xp=None):
+    # The `out` argument is only valid in the case of `NumPy` as the array api
+    # specification does not allow in-place operations.
     xp, _ = get_namespace(X, xp=xp)
     if _is_numpy_namespace(xp):
-        return xp.asarray(special.expit(numpy.asarray(X)))
+        if out is not None:
+            special.expit(X, out=out)
+        else:
+            out = special.expit(X)
+        return out
 
     return 1.0 / (1.0 + xp.exp(-X))
 

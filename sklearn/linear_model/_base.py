@@ -13,7 +13,6 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg, optimize, sparse
 from scipy.sparse.linalg import lsqr
-from scipy.special import expit
 
 from sklearn.base import (
     BaseEstimator,
@@ -411,10 +410,7 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         xp, _ = get_namespace(X)
         prob = self.decision_function(X)
-        if _is_numpy_namespace(xp):
-            expit(prob, out=prob)
-        else:
-            prob = _expit(prob, xp=xp)
+        prob = _expit(prob, out=prob, xp=xp)
         if prob.ndim == 1:
             return xp.stack([1 - prob, prob]).T
         else:

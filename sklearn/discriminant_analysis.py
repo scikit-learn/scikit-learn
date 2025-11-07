@@ -775,7 +775,7 @@ class LinearDiscriminantAnalysis(
         xp, _ = get_namespace(X)
         decision = self.decision_function(X)
         if size(self.classes_) == 2:
-            proba = _expit(decision, xp)
+            proba = _expit(decision, xp=xp)
             return xp.stack([1 - proba, proba], axis=1)
         else:
             return softmax(decision)
