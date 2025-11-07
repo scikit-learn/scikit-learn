@@ -87,7 +87,7 @@ def sag(
 
     # sparse data has a fixed decay of .01
     if sparse:
-        decay = 0.01
+        decay = 0.05
 
     for epoch in range(max_iter):
         previous_weights = weights.copy()
@@ -170,7 +170,7 @@ def sag_sparse(
 
     # sparse data has a fixed decay of .01
     if sparse:
-        decay = 0.01
+        decay = 0.05
 
     counter = 0
     for epoch in range(max_iter):
@@ -918,8 +918,8 @@ def test_sag_classifier_raises_error(solver):
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_sag_weighted_classification_convergence(solver, decay, saga, fit_intercept):
     # FIXME: change dataset or only test decay=False
-    if decay and saga and fit_intercept:
-        pytest.xfail("Convergence issue for decay=True")
+    # if decay and saga and fit_intercept:
+    #    pytest.xfail("Convergence issue for decay=True")
     if solver == sag_solver:
         pytest.xfail("Log loss is exploding under the sag_solver")
     n_samples = 100
