@@ -33,6 +33,7 @@ from sklearn.utils._array_api import (
     _bincount,
     _convert_to_numpy,
     _count_nonzero,
+    _fill_diagonal,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
     _is_xp_namespace,
@@ -492,6 +493,8 @@ def confusion_matrix(
     ConfusionMatrixDisplay.from_predictions : Plot the confusion matrix
         given the true and predicted labels.
     ConfusionMatrixDisplay : Confusion Matrix visualization.
+    confusion_matrix_at_thresholds : For binary classification, compute true negative,
+        false positive, false negative and true positive counts per threshold.
 
     References
     ----------
@@ -970,23 +973,30 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
             raise ValueError(msg) from e
         raise
 
+    xp, _, device_ = get_namespace_and_device(y1, y2)
     n_classes = confusion.shape[0]
-    sum0 = np.sum(confusion, axis=0)
-    sum1 = np.sum(confusion, axis=1)
-    expected = np.outer(sum0, sum1) / np.sum(sum0)
+    # array_api_strict only supports floating point dtypes for __truediv__
+    # which is used below to compute `expected` as well as `k`. Therefore
+    # we use the maximum floating point dtype available for relevant arrays
+    # to avoid running into this problem.
+    max_float_dtype = _max_precision_float_dtype(xp, device=device_)
+    confusion = xp.astype(confusion, max_float_dtype, copy=False)
+    sum0 = xp.sum(confusion, axis=0)
+    sum1 = xp.sum(confusion, axis=1)
+    expected = xp.linalg.outer(sum0, sum1) / xp.sum(sum0)
 
     if weights is None:
-        w_mat = np.ones([n_classes, n_classes], dtype=int)
-        w_mat.flat[:: n_classes + 1] = 0
+        w_mat = xp.ones([n_classes, n_classes], dtype=max_float_dtype, device=device_)
+        _fill_diagonal(w_mat, 0, xp=xp)
     else:  # "linear" or "quadratic"
-        w_mat = np.zeros([n_classes, n_classes], dtype=int)
-        w_mat += np.arange(n_classes)
+        w_mat = xp.zeros([n_classes, n_classes], dtype=max_float_dtype, device=device_)
+        w_mat += xp.arange(n_classes)
         if weights == "linear":
-            w_mat = np.abs(w_mat - w_mat.T)
+            w_mat = xp.abs(w_mat - w_mat.T)
         else:
             w_mat = (w_mat - w_mat.T) ** 2
 
-    k = np.sum(w_mat * confusion) / np.sum(w_mat * expected)
+    k = xp.sum(w_mat * confusion) / xp.sum(w_mat * expected)
     return float(1 - k)
 
 

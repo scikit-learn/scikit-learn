@@ -114,6 +114,9 @@ build_metadata_list = [
             "cupy",
             "array-api-strict",
         ],
+        "package_constraints": {
+            "blas": "[build=mkl]",
+        },
     },
     {
         "name": "pylatest_conda_forge_mkl_linux-64",
@@ -131,6 +134,7 @@ build_metadata_list = [
             "pyarrow",
             "array-api-strict",
             "scipy-doctest",
+            "pytest-playwright",
         ],
         "package_constraints": {
             "blas": "[build=mkl]",
@@ -459,7 +463,7 @@ build_metadata_list = [
             "threadpoolctl": "min",
             "cython": "min",
         },
-        "python_version": "3.10.4",
+        "python_version": "3.12.3",
     },
 ]
 
