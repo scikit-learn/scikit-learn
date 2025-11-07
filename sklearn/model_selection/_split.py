@@ -2792,7 +2792,8 @@ def train_test_split(
     ----------
     *arrays : sequence of indexables with same length / shape[0]
         Allowed inputs are lists, numpy arrays, scipy-sparse
-        matrices or pandas dataframes.
+        matrices or pandas dataframes. Mixed input types are allowed
+        and are preserved at output.
 
     test_size : float or int, default=None
         If float, should be between 0.0 and 1.0 and represent the proportion
@@ -2912,59 +2913,6 @@ def train_test_split(
     78     1
     76     1
     ...
-    Notes
-    -----
-    The input data types are preserved in the output. If pandas DataFrames
-    or Series are passed as inputs, they will be returned as pandas objects.
-    If numpy arrays are passed, numpy arrays are returned. Mixed input types
-    will result in mixed output types, which can be useful but may surprise
-    beginners.
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.model_selection import train_test_split
-    >>> X, y = np.arange(10).reshape((5, 2)), range(5)
-    >>> X
-    array([[0, 1],
-           [2, 3],
-           [4, 5],
-           [6, 7],
-           [8, 9]])
-    >>> list(y)
-    [0, 1, 2, 3, 4]
-
-    >>> X_train, X_test, y_train, y_test = train_test_split(
-    ...     X, y, test_size=0.33, random_state=42)
-    ...
-    >>> X_train
-    array([[4, 5],
-           [0, 1],
-           [6, 7]])
-    >>> y_train
-    [2, 0, 3]
-    >>> X_test
-    array([[2, 3],
-           [8, 9]])
-    >>> y_test
-    [1, 4]
-
-    >>> train_test_split(y, shuffle=False)
-    [[0, 1, 2], [3, 4]]
-
-    **Preservation of input types with mixed data**
-
-    >>> import pandas as pd
-    >>> # Mixed input types: DataFrame and numpy array
-    >>> X = pd.DataFrame({'a': [1, 2, 3, 4], 'b': [5, 6, 7, 8]})
-    >>> y = np.array([10, 20, 30, 40])
-    >>> X_train, X_test, y_train, y_test = train_test_split(
-    ...     X, y, test_size=0.5, random_state=42)
-    ...
-    >>> type(X_train)
-    <class 'pandas.core.frame.DataFrame'>
-    >>> type(y_train)
-    <class 'numpy.ndarray'>
-
     """
     n_arrays = len(arrays)
     if n_arrays == 0:
