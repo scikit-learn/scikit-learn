@@ -446,7 +446,7 @@ def test_temperature_scaling(n_classes, ensemble):
         random_state=42,
     )
     X_train, X_cal, y_train, y_cal = train_test_split(X, y, random_state=42)
-    clf = LogisticRegression(penalty=None, tol=1e-8, max_iter=200, random_state=0)
+    clf = LogisticRegression(C=np.inf, tol=1e-8, max_iter=200, random_state=0)
     clf.fit(X_train, y_train)
     # Train the calibrator on the calibrating set
     cal_clf = CalibratedClassifierCV(

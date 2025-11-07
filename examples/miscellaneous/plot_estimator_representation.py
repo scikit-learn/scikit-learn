@@ -24,7 +24,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 # values when displayed as a string. This reduces the visual noise and makes it
 # easier to spot what the differences are when comparing instances.
 
-lr = LogisticRegression(penalty="l1")
+lr = LogisticRegression(l1_ratio=1)
 print(lr)
 
 # %%

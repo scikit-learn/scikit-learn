@@ -40,6 +40,13 @@ def _calculate_threshold(estimator, importances, threshold):
         is_elasticnetcv_l1_penalized = est_name == "ElasticNetCV" and (
             hasattr(estimator, "l1_ratio_") and np.isclose(estimator.l1_ratio_, 1.0)
         )
+        is_logreg_l1_penalized = est_name == "LogisticRegression" and (
+            hasattr(estimator, "l1_ratio") and np.isclose(estimator.l1_ratio, 1.0)
+        )
+        is_logregcv_l1_penalized = est_name == "LogisticRegressionCV" and (
+            hasattr(estimator, "l1_ratio_")
+            and np.all(np.isclose(estimator.l1_ratio_, 1.0))
+        )
         if (
             is_l1_penalized
             or is_lasso
