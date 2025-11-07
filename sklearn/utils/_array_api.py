@@ -494,7 +494,7 @@ def get_namespace_and_device(
 
 def _expit(X, out=None, xp=None):
     # The `out` argument is only valid in the case of `NumPy` as the array api
-    # specification does not allow in-place operations.
+    # specification does not allow in-place `exp`.
     xp, _ = get_namespace(X, xp=xp)
     if _is_numpy_namespace(xp):
         if out is not None:
