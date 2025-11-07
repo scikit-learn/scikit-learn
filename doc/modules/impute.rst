@@ -190,7 +190,7 @@ Nearest neighbors imputation
 ============================
 
 The :class:`KNNImputer` class provides imputation for filling in missing values
-using the k-Nearest Neighbors approach. By default, a Euclidean distance metric
+using the k-Nearest Neighbors approach. By default, a euclidean distance metric
 that supports missing values,
 :func:`~sklearn.metrics.pairwise.nan_euclidean_distances`, is used to find the
 nearest neighbors. Each missing feature is imputed using values from

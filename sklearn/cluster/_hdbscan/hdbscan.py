@@ -524,7 +524,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
           computing additional pairwise distances between points of the
           same cluster but guarantees the output is an observed data point.
           The medoid is also well-defined for arbitrary metrics, and does not
-          depend on a Euclidean metric.
+          depend on a euclidean metric.
         - `"both"` which computes and stores both forms of centers.
 
     copy : bool, default=False
