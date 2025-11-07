@@ -392,7 +392,7 @@ class LinearClassifierMixin(ClassifierMixin):
         else:
             indices = xp.argmax(scores, axis=1)
 
-        # if `y` during fitting consisted of strings the `self.classes_` will
+        # if `y` during fitting consisted of strings then `self.classes_` will
         # also contain strings and we handle such a scenario by returning the
         # predictions according to the namespace of `self.classes_` i.e. numpy.
         xp_classes, _ = get_namespace(self.classes_)
