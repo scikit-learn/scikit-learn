@@ -13,6 +13,7 @@ import scipy.sparse as sp
 from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
 from sklearn.utils import column_or_1d
 from sklearn.utils._array_api import (
+    _convert_to_numpy,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
     _isin,
@@ -619,7 +620,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         y = column_or_1d(y)
 
         # pick out the known labels from y
-        y_in_classes = _isin(y, classes, xp)
+        y_in_classes = _isin(y, classes, xp=xp)
         y_seen = y[y_in_classes]
         indices = xp.searchsorted(sorted_class, y_seen)
         # cast `y_in_classes`` to integer dtype for `xp.cumulative_sum`
@@ -632,16 +633,18 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         )
         data = xp.full_like(indices, pos_label)
 
-        if sparse_output:
-            Y = sp.csr_matrix((data, indices, indptr), shape=(n_samples, n_classes))
-        else:
-            Y = xp.zeros((n_samples, n_classes), dtype=data.dtype, device=device_)
+        # Fall back to NumPy namespace to construct the sparse matrix of one-hot labels
+        Y = sp.csr_matrix(
+            (
+                _convert_to_numpy(data, xp=xp),
+                _convert_to_numpy(indices, xp=xp),
+                _convert_to_numpy(indptr, xp=xp),
+            ),
+            shape=(n_samples, n_classes),
+        )
 
-            for i in range(n_samples):
-                start = int(indptr[i])
-                end = int(indptr[i + 1])
-                for j in range(start, end):
-                    Y[i, int(indices[j])] = data[j]
+        if not sparse_output:
+            Y = xp.asarray(Y.toarray(), device=device_)
 
     elif y_type == "multilabel-indicator":
         if sparse_output:
