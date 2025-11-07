@@ -135,6 +135,7 @@ METAESTIMATORS: list = [
     },
     {
         "metaestimator": LogisticRegressionCV,
+        "init_args": {"l1_ratios": (0,)},  # TODO(1.10): remove l1_ratios
         "X": X,
         "y": y,
         "scorer_name": "scoring",

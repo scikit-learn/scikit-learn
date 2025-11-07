@@ -76,7 +76,9 @@ def _check_solver(solver, penalty, dual):
         )
 
     if solver == "liblinear" and penalty is None:
-        raise ValueError("penalty=None is not supported for the liblinear solver")
+        raise ValueError(
+            "C=np.inf as well as penalty=None is not supported for the liblinear solver"
+        )
 
     return solver
 
@@ -873,12 +875,13 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            `penalty` was deprecated in version 1.8 and will be removed in 1.10.
            Use `l1_ratio` instead. `l1_ratio=0` for `penalty='l2'`, `l1_ratio=1` for
            `penalty='l1'` and `l1_ratio` set to any float between 0 and 1 for
-           'penalty='elasticnet'`.
+           `'penalty='elasticnet'`.
 
     C : float, default=1.0
         Inverse of regularization strength; must be a positive float.
         Like in support vector machines, smaller values specify stronger
-        regularization. For a visual example on the effect of tuning the `C` parameter
+        regularization. `C=np.inf` results in unpenalized logistic regression.
+        For a visual example on the effect of tuning the `C` parameter
         with an L1 penalty, see:
         :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`.
 
