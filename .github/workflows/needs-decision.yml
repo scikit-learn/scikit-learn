@@ -19,7 +19,7 @@ jobs:
 
   post_comment:
     name: Add 'Needs Decision' comment
-    if: github.event.label.name == 'Needs decision'
+    if: github.event.label.name == 'Needs Decision'
     runs-on: ubuntu-latest
 
     steps:
