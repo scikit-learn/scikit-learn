@@ -34,7 +34,8 @@ jobs:
           -f "body=$BODY"
         env:
           BODY: |
-            The goal of this comment is to set expectations.
+            Thanks for the work you've done so far. The goal of this comment
+            is to set expectations.
 
             Deciding on new features or substantial changes is a lengthy
             process. It frequently happens that no maintainer is available
