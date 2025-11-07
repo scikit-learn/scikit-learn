@@ -1,11 +1,11 @@
+import math
 import re
-import warnings
 
 import numpy as np
 import pytest
 from scipy import stats
 
-from sklearn import datasets, svm
+from sklearn import datasets
 from sklearn.datasets import make_multilabel_classification
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.linear_model import LogisticRegression
@@ -13,6 +13,7 @@ from sklearn.metrics import (
     accuracy_score,
     auc,
     average_precision_score,
+    confusion_matrix_at_thresholds,
     coverage_error,
     dcg_score,
     det_curve,
@@ -34,7 +35,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.extmath import softmax
 from sklearn.utils.fixes import CSR_CONTAINERS
@@ -48,6 +48,7 @@ from sklearn.utils.validation import (
 # Utilities for testing
 
 CURVE_FUNCS = [
+    confusion_matrix_at_thresholds,
     det_curve,
     precision_recall_curve,
     roc_curve,
@@ -85,7 +86,7 @@ def make_prediction(dataset=None, binary=False):
     X = np.c_[X, rng.randn(n_samples, 200 * n_features)]
 
     # run classifier, get class probabilities and label predictions
-    clf = svm.SVC(kernel="linear", probability=True, random_state=0)
+    clf = LogisticRegression(random_state=0)
     y_score = clf.fit(X[:half], y[:half]).predict_proba(X[half:])
 
     if binary:
@@ -192,6 +193,25 @@ def _partial_roc_auc_score(y_true, y_predict, max_fpr):
     min_area = 0.5 * (fpr2 - fpr1) * (fpr2 + fpr1)
     max_area = fpr2 - fpr1
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
+
+
+def test_confusion_matrix_at_thresholds(global_random_seed):
+    """Smoke test for confusion_matrix_at_thresholds."""
+    rng = np.random.RandomState(global_random_seed)
+
+    n_samples = 100
+    y_true = rng.randint(0, 2, size=100)
+    y_score = rng.uniform(size=100)
+
+    n_pos = np.sum(y_true)
+    n_neg = n_samples - n_pos
+
+    tns, fps, fns, tps, thresholds = confusion_matrix_at_thresholds(y_true, y_score)
+
+    assert len(tns) == len(fps) == len(fns) == len(tps) == len(thresholds)
+    assert_allclose(tps + fns, n_pos)
+    assert_allclose(tns + fps, n_neg)
+    assert_allclose(tns + fps + fns + tps, n_samples)
 
 
 @pytest.mark.parametrize("drop", [True, False])
@@ -356,6 +376,7 @@ def test_roc_curve_toydata():
     assert_array_almost_equal(fpr, [0, 1])
     assert_almost_equal(roc_auc, 0.5)
 
+    # case with no positive samples
     y_true = [0, 0]
     y_score = [0.25, 0.75]
     # assert UndefinedMetricWarning because of no positive sample in y_true
@@ -364,12 +385,17 @@ def test_roc_curve_toydata():
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
         tpr, fpr, _ = roc_curve(y_true, y_score)
-
-    with pytest.raises(ValueError):
-        roc_auc_score(y_true, y_score)
     assert_array_almost_equal(tpr, [0.0, 0.5, 1.0])
     assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
+    expected_message = (
+        "Only one class is present in y_true. "
+        "ROC AUC score is not defined in that case."
+    )
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        auc = roc_auc_score(y_true, y_score)
+    assert math.isnan(auc)
 
+    # case with no negative samples
     y_true = [1, 1]
     y_score = [0.25, 0.75]
     # assert UndefinedMetricWarning because of no negative sample in y_true
@@ -378,27 +404,31 @@ def test_roc_curve_toydata():
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
         tpr, fpr, _ = roc_curve(y_true, y_score)
-
-    with pytest.raises(ValueError):
-        roc_auc_score(y_true, y_score)
     assert_array_almost_equal(tpr, [np.nan, np.nan, np.nan])
     assert_array_almost_equal(fpr, [0.0, 0.5, 1.0])
+    expected_message = (
+        "Only one class is present in y_true. "
+        "ROC AUC score is not defined in that case."
+    )
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        auc = roc_auc_score(y_true, y_score)
+    assert math.isnan(auc)
 
     # Multi-label classification task
     y_true = np.array([[0, 1], [0, 1]])
     y_score = np.array([[0, 1], [0, 1]])
-    with pytest.raises(ValueError):
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
         roc_auc_score(y_true, y_score, average="macro")
-    with pytest.raises(ValueError):
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
         roc_auc_score(y_true, y_score, average="weighted")
     assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), 1.0)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), 1.0)
 
     y_true = np.array([[0, 1], [0, 1]])
     y_score = np.array([[0, 1], [1, 0]])
-    with pytest.raises(ValueError):
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
         roc_auc_score(y_true, y_score, average="macro")
-    with pytest.raises(ValueError):
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
         roc_auc_score(y_true, y_score, average="weighted")
     assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), 0.5)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), 0.5)
@@ -815,33 +845,22 @@ def test_auc_score_non_binary_class():
     y_pred = rng.rand(10)
     # y_true contains only one class value
     y_true = np.zeros(10, dtype="int")
-    err_msg = "ROC AUC score is not defined"
-    with pytest.raises(ValueError, match=err_msg):
+    warn_message = (
+        "Only one class is present in y_true. "
+        "ROC AUC score is not defined in that case."
+    )
+    with pytest.warns(UndefinedMetricWarning, match=warn_message):
         roc_auc_score(y_true, y_pred)
     y_true = np.ones(10, dtype="int")
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.warns(UndefinedMetricWarning, match=warn_message):
         roc_auc_score(y_true, y_pred)
     y_true = np.full(10, -1, dtype="int")
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.warns(UndefinedMetricWarning, match=warn_message):
         roc_auc_score(y_true, y_pred)
-
-    with warnings.catch_warnings(record=True):
-        rng = check_random_state(404)
-        y_pred = rng.rand(10)
-        # y_true contains only one class value
-        y_true = np.zeros(10, dtype="int")
-        with pytest.raises(ValueError, match=err_msg):
-            roc_auc_score(y_true, y_pred)
-        y_true = np.ones(10, dtype="int")
-        with pytest.raises(ValueError, match=err_msg):
-            roc_auc_score(y_true, y_pred)
-        y_true = np.full(10, -1, dtype="int")
-        with pytest.raises(ValueError, match=err_msg):
-            roc_auc_score(y_true, y_pred)
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
-def test_binary_clf_curve_multiclass_error(curve_func):
+def test_confusion_matrix_at_thresholds_multiclass_error(curve_func):
     rng = check_random_state(404)
     y_true = rng.randint(0, 3, size=10)
     y_pred = rng.rand(10)
@@ -851,7 +870,7 @@ def test_binary_clf_curve_multiclass_error(curve_func):
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
-def test_binary_clf_curve_implicit_pos_label(curve_func):
+def test_confusion_matrix_at_thresholds_implicit_pos_label(curve_func):
     # Check that using string class labels raises an informative
     # error for any supported string dtype:
     msg = (
@@ -875,25 +894,22 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
         np.testing.assert_allclose(int_curve_part, float_curve_part)
 
 
-# TODO(1.7): Update test to check for error when bytes support is removed.
-@ignore_warnings(category=FutureWarning)
+@pytest.mark.filterwarnings("ignore:Support for labels represented as bytes")
 @pytest.mark.parametrize("curve_func", [precision_recall_curve, roc_curve])
 @pytest.mark.parametrize("labels_type", ["list", "array"])
-def test_binary_clf_curve_implicit_bytes_pos_label(curve_func, labels_type):
+def test_confusion_matrix_at_thresholds_implicit_bytes_pos_label(
+    curve_func, labels_type
+):
     # Check that using bytes class labels raises an informative
     # error for any supported string dtype:
     labels = _convert_container([b"a", b"b"], labels_type)
-    msg = (
-        "y_true takes value in {b'a', b'b'} and pos_label is not "
-        "specified: either make y_true take value in {0, 1} or "
-        "{-1, 1} or pass pos_label explicitly."
-    )
-    with pytest.raises(ValueError, match=msg):
+    msg = "Support for labels represented as bytes is not supported"
+    with pytest.raises(TypeError, match=msg):
         curve_func(labels, [0.0, 1.0])
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
-def test_binary_clf_curve_zero_sample_weight(curve_func):
+def test_confusion_matrix_at_thresholds_zero_sample_weight(curve_func):
     y_true = [0, 0, 1, 1, 1]
     y_score = [0.1, 0.2, 0.3, 0.4, 0.5]
     sample_weight = [1, 1, 1, 0.5, 0]
@@ -941,7 +957,7 @@ def _test_precision_recall_curve(y_true, y_score, drop):
     # Test Precision-Recall and area under PR curve
     p, r, thresholds = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
     precision_recall_auc = _average_precision_slow(y_true, y_score)
-    assert_array_almost_equal(precision_recall_auc, 0.859, 3)
+    assert_array_almost_equal(precision_recall_auc, 0.869, 3)
     assert_array_almost_equal(
         precision_recall_auc, average_precision_score(y_true, y_score)
     )
@@ -1246,18 +1262,18 @@ def test_score_scale_invariance():
         ([0, 0, 1], [0, 0.25, 0.5], [0], [0]),
         ([0, 0, 1], [0.5, 0.75, 1], [0], [0]),
         ([0, 0, 1], [0.25, 0.5, 0.75], [0], [0]),
-        ([0, 1, 0], [0, 0.5, 1], [0.5], [0]),
-        ([0, 1, 0], [0, 0.25, 0.5], [0.5], [0]),
-        ([0, 1, 0], [0.5, 0.75, 1], [0.5], [0]),
-        ([0, 1, 0], [0.25, 0.5, 0.75], [0.5], [0]),
+        ([0, 1, 0], [0, 0.5, 1], [0.5, 0.5, 0], [0, 1, 1]),
+        ([0, 1, 0], [0, 0.25, 0.5], [0.5, 0.5, 0], [0, 1, 1]),
+        ([0, 1, 0], [0.5, 0.75, 1], [0.5, 0.5, 0], [0, 1, 1]),
+        ([0, 1, 0], [0.25, 0.5, 0.75], [0.5, 0.5, 0], [0, 1, 1]),
         ([0, 1, 1], [0, 0.5, 1], [0.0], [0]),
         ([0, 1, 1], [0, 0.25, 0.5], [0], [0]),
         ([0, 1, 1], [0.5, 0.75, 1], [0], [0]),
         ([0, 1, 1], [0.25, 0.5, 0.75], [0], [0]),
-        ([1, 0, 0], [0, 0.5, 1], [1, 1, 0.5], [0, 1, 1]),
-        ([1, 0, 0], [0, 0.25, 0.5], [1, 1, 0.5], [0, 1, 1]),
-        ([1, 0, 0], [0.5, 0.75, 1], [1, 1, 0.5], [0, 1, 1]),
-        ([1, 0, 0], [0.25, 0.5, 0.75], [1, 1, 0.5], [0, 1, 1]),
+        ([1, 0, 0], [0, 0.5, 1], [1, 1, 0.5, 0], [0, 1, 1, 1]),
+        ([1, 0, 0], [0, 0.25, 0.5], [1, 1, 0.5, 0], [0, 1, 1, 1]),
+        ([1, 0, 0], [0.5, 0.75, 1], [1, 1, 0.5, 0], [0, 1, 1, 1]),
+        ([1, 0, 0], [0.25, 0.5, 0.75], [1, 1, 0.5, 0], [0, 1, 1, 1]),
         ([1, 0, 1], [0, 0.5, 1], [1, 1, 0], [0, 0.5, 0.5]),
         ([1, 0, 1], [0, 0.25, 0.5], [1, 1, 0], [0, 0.5, 0.5]),
         ([1, 0, 1], [0.5, 0.75, 1], [1, 1, 0], [0, 0.5, 0.5]),
@@ -1273,16 +1289,41 @@ def test_det_curve_toydata(y_true, y_score, expected_fpr, expected_fnr):
 
 
 @pytest.mark.parametrize(
+    ["y_true", "y_score", "expected_fpr", "expected_fnr", "drop_intermediate"],
+    [
+        # drop when true positives do not change from the previous or subsequent point
+        ([1, 0, 0], [0, 0.5, 1], [1, 1, 0.5, 0.0], [0, 1, 1, 1], False),
+        ([1, 0, 0], [0, 0.5, 1], [1, 1, 0.0], [0, 1, 1], True),
+        ([1, 0, 0], [0, 0.25, 0.5], [1, 1, 0.5, 0.0], [0, 1, 1, 1], False),
+        ([1, 0, 0], [0, 0.25, 0.5], [1, 1, 0.0], [0, 1, 1], True),
+        # do nothing otherwise
+        ([1, 0, 1], [0, 0.5, 1], [1, 1, 0], [0, 0.5, 0.5], False),
+        ([1, 0, 1], [0, 0.5, 1], [1, 1, 0], [0, 0.5, 0.5], True),
+        ([1, 0, 1], [0, 0.25, 0.5], [1, 1, 0], [0, 0.5, 0.5], False),
+        ([1, 0, 1], [0, 0.25, 0.5], [1, 1, 0], [0, 0.5, 0.5], True),
+    ],
+)
+def test_det_curve_drop_intermediate(
+    y_true, y_score, expected_fpr, expected_fnr, drop_intermediate
+):
+    # Check on a batch of small examples.
+    fpr, fnr, _ = det_curve(y_true, y_score, drop_intermediate=drop_intermediate)
+
+    assert_allclose(fpr, expected_fpr)
+    assert_allclose(fnr, expected_fnr)
+
+
+@pytest.mark.parametrize(
     "y_true,y_score,expected_fpr,expected_fnr",
     [
-        ([1, 0], [0.5, 0.5], [1], [0]),
-        ([0, 1], [0.5, 0.5], [1], [0]),
-        ([0, 0, 1], [0.25, 0.5, 0.5], [0.5], [0]),
-        ([0, 1, 0], [0.25, 0.5, 0.5], [0.5], [0]),
+        ([1, 0], [0.5, 0.5], [1, 0], [0, 1]),
+        ([0, 1], [0.5, 0.5], [1, 0], [0, 1]),
+        ([0, 0, 1], [0.25, 0.5, 0.5], [0.5, 0], [0, 1]),
+        ([0, 1, 0], [0.25, 0.5, 0.5], [0.5, 0], [0, 1]),
         ([0, 1, 1], [0.25, 0.5, 0.5], [0], [0]),
-        ([1, 0, 0], [0.25, 0.5, 0.5], [1], [0]),
-        ([1, 0, 1], [0.25, 0.5, 0.5], [1], [0]),
-        ([1, 1, 0], [0.25, 0.5, 0.5], [1], [0]),
+        ([1, 0, 0], [0.25, 0.5, 0.5], [1, 1, 0], [0, 1, 1]),
+        ([1, 0, 1], [0.25, 0.5, 0.5], [1, 1, 0], [0, 0.5, 1]),
+        ([1, 1, 0], [0.25, 0.5, 0.5], [1, 1, 0], [0, 0.5, 1]),
     ],
 )
 def test_det_curve_tie_handling(y_true, y_score, expected_fpr, expected_fnr):
@@ -1306,9 +1347,9 @@ def test_det_curve_constant_scores(y_score):
         y_true=[0, 1, 0, 1, 0, 1], y_score=np.full(6, y_score)
     )
 
-    assert_allclose(fpr, [1])
-    assert_allclose(fnr, [0])
-    assert_allclose(threshold, [y_score])
+    assert_allclose(fpr, [1, 0])
+    assert_allclose(fnr, [0, 1])
+    assert_allclose(threshold, [y_score, np.inf])
 
 
 @pytest.mark.parametrize(
@@ -1333,8 +1374,8 @@ def test_det_curve_perfect_scores(y_true):
     [
         ([0, 1], [0, 0.5, 1], "inconsistent numbers of samples"),
         ([0, 1, 1], [0, 0.5], "inconsistent numbers of samples"),
-        ([0, 0, 0], [0, 0.5, 1], "Only one class present in y_true"),
-        ([1, 1, 1], [0, 0.5, 1], "Only one class present in y_true"),
+        ([0, 0, 0], [0, 0.5, 1], "Only one class is present in y_true"),
+        ([1, 1, 1], [0, 0.5, 1], "Only one class is present in y_true"),
         (
             ["cancer", "cancer", "not cancer"],
             [0.2, 0.3, 0.8],
@@ -2250,25 +2291,3 @@ def test_roc_curve_with_probablity_estimates(global_random_seed):
     y_score = rng.rand(10)
     _, _, thresholds = roc_curve(y_true, y_score)
     assert np.isinf(thresholds[0])
-
-
-# TODO(1.7): remove
-def test_precision_recall_curve_deprecation_warning():
-    """Check the message for future deprecation."""
-    # Check precision_recall_curve function
-    y_true, _, y_score = make_prediction(binary=True)
-
-    warn_msg = "probas_pred was deprecated in version 1.5"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        precision_recall_curve(
-            y_true,
-            probas_pred=y_score,
-        )
-
-    error_msg = "`probas_pred` and `y_score` cannot be both specified"
-    with pytest.raises(ValueError, match=error_msg):
-        precision_recall_curve(
-            y_true,
-            probas_pred=y_score,
-            y_score=y_score,
-        )

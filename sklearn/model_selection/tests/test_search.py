@@ -15,17 +15,19 @@ import pytest
 from scipy.stats import bernoulli, expon, uniform
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
+from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from sklearn.cluster import KMeans
+from sklearn.compose import ColumnTransformer
 from sklearn.datasets import (
     make_blobs,
     make_classification,
     make_multilabel_classification,
 )
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.exceptions import FitFailedWarning
-from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import (
@@ -59,12 +61,20 @@ from sklearn.model_selection import (
     StratifiedShuffleSplit,
     train_test_split,
 )
-from sklearn.model_selection._search import BaseSearchCV
+from sklearn.model_selection._search import (
+    BaseSearchCV,
+    _yield_masked_array_for_each_param,
+)
 from sklearn.model_selection.tests.common import OneTimeSplitter
 from sklearn.naive_bayes import ComplementNB
 from sklearn.neighbors import KernelDensity, KNeighborsClassifier, LocalOutlierFactor
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import (
+    OneHotEncoder,
+    OrdinalEncoder,
+    SplineTransformer,
+    StandardScaler,
+)
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tests.metadata_routing_common import (
     ConsumingScorer,
@@ -72,24 +82,31 @@ from sklearn.tests.metadata_routing_common import (
     check_recorded_metadata,
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils._array_api import (
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 from sklearn.utils._testing import (
     MinimalClassifier,
     MinimalRegressor,
     MinimalTransformer,
+    _array_api_for_tests,
     assert_allclose,
+    assert_allclose_dense_sparse,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
+    set_random_state,
 )
+from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
 
 # Neither of the following two estimators inherit from BaseEstimator,
 # to test hyperparameter search on user-defined classifiers.
-class MockClassifier:
+class MockClassifier(ClassifierMixin, BaseEstimator):
     """Dummy classifier to test the parameter search algorithms"""
 
     def __init__(self, foo_param=0):
@@ -202,7 +219,7 @@ def test_parameter_grid():
 def test_grid_search():
     # Test that the best estimator contains the right value for foo_param
     clf = MockClassifier()
-    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, cv=3, verbose=3)
+    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, cv=2, verbose=3)
     # make sure it selects the smallest parameter in case of ties
     old_stdout = sys.stdout
     sys.stdout = StringIO()
@@ -261,7 +278,6 @@ def test_SearchCV_with_fit_params(SearchCV):
     searcher.fit(X, y, spam=np.ones(10), eggs=np.zeros(10))
 
 
-@ignore_warnings
 def test_grid_search_no_score():
     # Test grid-search on classifier that has no score function.
     clf = LinearSVC(random_state=0)
@@ -373,11 +389,11 @@ def test_classes__property():
 def test_trivial_cv_results_attr():
     # Test search over a "grid" with only one point.
     clf = MockClassifier()
-    grid_search = GridSearchCV(clf, {"foo_param": [1]}, cv=3)
+    grid_search = GridSearchCV(clf, {"foo_param": [1]}, cv=2)
     grid_search.fit(X, y)
     assert hasattr(grid_search, "cv_results_")
 
-    random_search = RandomizedSearchCV(clf, {"foo_param": [0]}, n_iter=1, cv=3)
+    random_search = RandomizedSearchCV(clf, {"foo_param": [0]}, n_iter=1, cv=2)
     random_search.fit(X, y)
     assert hasattr(grid_search, "cv_results_")
 
@@ -386,7 +402,7 @@ def test_no_refit():
     # Test that GSCV can be used for model selection alone without refitting
     clf = MockClassifier()
     for scoring in [None, ["accuracy", "precision"]]:
-        grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, refit=False, cv=3)
+        grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, refit=False, cv=2)
         grid_search.fit(X, y)
         assert (
             not hasattr(grid_search, "best_estimator_")
@@ -453,7 +469,7 @@ def test_grid_search_when_param_grid_includes_range():
     # Test that the best estimator contains the right value for foo_param
     clf = MockClassifier()
     grid_search = None
-    grid_search = GridSearchCV(clf, {"foo_param": range(1, 4)}, cv=3)
+    grid_search = GridSearchCV(clf, {"foo_param": range(1, 4)}, cv=2)
     grid_search.fit(X, y)
     assert grid_search.best_estimator_.foo_param == 2
 
@@ -611,7 +627,7 @@ class BrokenClassifier(BaseEstimator):
         return np.zeros(X.shape[0])
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_refit():
     # Regression test for bug in refitting
     # Simulates re-fitting a broken estimator; this used to break with
@@ -800,7 +816,6 @@ def test_y_as_list():
     assert hasattr(grid_search, "cv_results_")
 
 
-@ignore_warnings
 def test_pandas_input():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
@@ -1195,18 +1210,14 @@ def test_random_search_cv_results_multimetric():
     n_splits = 3
     n_search_iter = 30
 
-    # Scipy 0.12's stats dists do not accept seed, hence we use param grid
-    params = dict(C=np.logspace(-4, 1, 3), gamma=np.logspace(-5, 0, 3, base=0.1))
+    params = dict(C=np.logspace(-4, 1, 3))
     for refit in (True, False):
         random_searches = []
         for scoring in (("accuracy", "recall"), "accuracy", "recall"):
             # If True, for multi-metric pass refit='accuracy'
-            if refit:
-                probability = True
-                refit = "accuracy" if isinstance(scoring, tuple) else refit
-            else:
-                probability = False
-            clf = SVC(probability=probability, random_state=42)
+            if refit and isinstance(scoring, tuple):
+                refit = "accuracy"
+            clf = LogisticRegression(random_state=42)
             random_search = RandomizedSearchCV(
                 clf,
                 n_iter=n_search_iter,
@@ -1296,6 +1307,7 @@ def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
 )
 def test_search_cv_score_samples_error(search_cv):
     X, y = make_blobs(n_samples=100, n_features=4, random_state=42)
+    search_cv = clone(search_cv)
     search_cv.fit(X, y)
 
     # Make sure to error out when underlying estimator does not implement
@@ -1307,6 +1319,112 @@ def test_search_cv_score_samples_error(search_cv):
         search_cv.score_samples(X)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg == str(exec_info.value.__cause__)
+
+
+def test_unsupported_sample_weight_scorer():
+    """Checks that fitting with sample_weight raises a warning if the scorer does not
+    support sample_weight"""
+
+    def fake_score_func(y_true, y_pred):
+        "Fake scoring function that does not support sample_weight"
+        return 0.5
+
+    fake_scorer = make_scorer(fake_score_func)
+
+    X, y = make_classification(n_samples=10, n_features=4, random_state=42)
+    sw = np.ones_like(y)
+    search_cv = GridSearchCV(estimator=LogisticRegression(), param_grid={"C": [1, 10]})
+    # function
+    search_cv.set_params(scoring=fake_score_func)
+    with pytest.warns(UserWarning, match="does not support sample_weight"):
+        search_cv.fit(X, y, sample_weight=sw)
+    # scorer
+    search_cv.set_params(scoring=fake_scorer)
+    with pytest.warns(UserWarning, match="does not support sample_weight"):
+        search_cv.fit(X, y, sample_weight=sw)
+    # multi-metric evaluation
+    search_cv.set_params(
+        scoring=dict(fake=fake_scorer, accuracy="accuracy"), refit=False
+    )
+    # only fake scorer does not support sample_weight
+    with pytest.warns(
+        UserWarning, match=r"The scoring fake=.* does not support sample_weight"
+    ):
+        search_cv.fit(X, y, sample_weight=sw)
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        GridSearchCV(estimator=LogisticRegression(), param_grid={"C": [1, 10, 100]}),
+        RandomizedSearchCV(
+            estimator=Ridge(), param_distributions={"alpha": [1, 0.1, 0.01]}
+        ),
+    ],
+)
+def test_search_cv_sample_weight_equivalence(estimator):
+    estimator_weighted = clone(estimator)
+    estimator_repeated = clone(estimator)
+    set_random_state(estimator_weighted, random_state=0)
+    set_random_state(estimator_repeated, random_state=0)
+
+    rng = np.random.RandomState(42)
+    n_classes = 3
+    n_samples_per_group = 30
+    n_groups = 4
+    n_samples = n_groups * n_samples_per_group
+    X = rng.rand(n_samples, n_samples * 2)
+    y = rng.randint(0, n_classes, size=n_samples)
+    sw = rng.randint(0, 5, size=n_samples)
+    # we use groups with LeaveOneGroupOut to ensure that
+    # the splits are the same in the repeated/weighted datasets
+    groups = np.tile(np.arange(n_groups), n_samples_per_group)
+
+    X_weighted = X
+    y_weighted = y
+    groups_weighted = groups
+    splits_weighted = list(LeaveOneGroupOut().split(X_weighted, groups=groups_weighted))
+    estimator_weighted.set_params(cv=splits_weighted)
+    # repeat samples according to weights
+    X_repeated = X_weighted.repeat(repeats=sw, axis=0)
+    y_repeated = y_weighted.repeat(repeats=sw)
+    groups_repeated = groups_weighted.repeat(repeats=sw)
+    splits_repeated = list(LeaveOneGroupOut().split(X_repeated, groups=groups_repeated))
+    estimator_repeated.set_params(cv=splits_repeated)
+
+    y_weighted = _enforce_estimator_tags_y(estimator_weighted, y_weighted)
+    y_repeated = _enforce_estimator_tags_y(estimator_repeated, y_repeated)
+
+    estimator_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
+    estimator_weighted.fit(X_weighted, y=y_weighted, sample_weight=sw)
+
+    # check that scores stored in cv_results_
+    # are equal for the weighted/repeated datasets
+    score_keys = [
+        key for key in estimator_repeated.cv_results_ if key.endswith("score")
+    ]
+    for key in score_keys:
+        s1 = estimator_repeated.cv_results_[key]
+        s2 = estimator_weighted.cv_results_[key]
+        err_msg = f"{key} values are not equal for weighted/repeated datasets"
+        assert_allclose(s1, s2, err_msg=err_msg)
+
+    for key in ["best_score_", "best_index_"]:
+        s1 = getattr(estimator_repeated, key)
+        s2 = getattr(estimator_weighted, key)
+        err_msg = f"{key} values are not equal for weighted/repeated datasets"
+        assert_almost_equal(s1, s2, err_msg=err_msg)
+
+    for method in ["predict_proba", "decision_function", "predict", "transform"]:
+        if hasattr(estimator, method):
+            s1 = getattr(estimator_repeated, method)(X)
+            s2 = getattr(estimator_weighted, method)(X)
+            err_msg = (
+                f"Comparing the output of {method} revealed that fitting "
+                "with `sample_weight` is not equivalent to fitting with removed "
+                "or repeated data points."
+            )
+            assert_allclose_dense_sparse(s1, s2, err_msg=err_msg)
 
 
 @pytest.mark.parametrize(
@@ -1325,6 +1443,7 @@ def test_search_cv_score_samples_error(search_cv):
     ],
 )
 def test_search_cv_score_samples_method(search_cv):
+    search_cv = clone(search_cv)  # Avoid side effects from previous tests.
     # Set parameters
     rng = np.random.RandomState(42)
     n_samples = 300
@@ -1403,12 +1522,10 @@ def test_search_cv_results_none_param():
             est_parameters,
             cv=cv,
         ).fit(X, y)
-        assert_array_equal(
-            grid_search.cv_results_["param_random_state"], [0, float("nan")]
-        )
+        assert_array_equal(grid_search.cv_results_["param_random_state"], [0, None])
 
 
-@ignore_warnings()
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.FitFailedWarning")
 def test_search_cv_timing():
     svc = LinearSVC(random_state=0)
 
@@ -1489,13 +1606,13 @@ def test_grid_search_correct_score_results():
 def test_pickle():
     # Test that a fit search can be pickled
     clf = MockClassifier()
-    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, refit=True, cv=3)
+    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, refit=True, cv=2)
     grid_search.fit(X, y)
     grid_search_pickled = pickle.loads(pickle.dumps(grid_search))
     assert_array_almost_equal(grid_search.predict(X), grid_search_pickled.predict(X))
 
     random_search = RandomizedSearchCV(
-        clf, {"foo_param": [1, 2, 3]}, refit=True, n_iter=3, cv=3
+        clf, {"foo_param": [1, 2, 3]}, refit=True, n_iter=3, cv=2
     )
     random_search.fit(X, y)
     random_search_pickled = pickle.loads(pickle.dumps(random_search))
@@ -1894,7 +2011,7 @@ def test_grid_search_cv_splits_consistency():
 
 def test_transform_inverse_transform_round_trip():
     clf = MockClassifier()
-    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, cv=3, verbose=3)
+    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, cv=2, verbose=3)
 
     grid_search.fit(X, y)
     X_round_trip = grid_search.inverse_transform(grid_search.transform(X))
@@ -1978,6 +2095,9 @@ def test__custom_fit_no_run_search():
         BadSearchCV(SVC()).fit(X, y)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_empty_cv_iterator_error():
     # Use global X, y
 
@@ -2003,6 +2123,8 @@ def test_empty_cv_iterator_error():
         ridge.fit(X[:train_size], y[:train_size])
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
 def test_random_search_bad_cv():
     # Use global X, y
 
@@ -2268,13 +2390,15 @@ def test_search_cv_pairwise_property_delegated_to_base_estimator(pairwise):
     """
 
     class TestEstimator(BaseEstimator):
-        def _more_tags(self):
-            return {"pairwise": pairwise}
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            tags.input_tags.pairwise = pairwise
+            return tags
 
     est = TestEstimator()
     attr_message = "BaseSearchCV pairwise tag must match estimator"
     cv = GridSearchCV(est, {"n_neighbors": [10]})
-    assert pairwise == cv._get_tags()["pairwise"], attr_message
+    assert pairwise == cv.__sklearn_tags__().input_tags.pairwise, attr_message
 
 
 def test_search_cv__pairwise_property_delegated_to_base_estimator():
@@ -2290,8 +2414,10 @@ def test_search_cv__pairwise_property_delegated_to_base_estimator():
         def __init__(self, pairwise=True):
             self.pairwise = pairwise
 
-        def _more_tags(self):
-            return {"pairwise": self.pairwise}
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            tags.input_tags.pairwise = self.pairwise
+            return tags
 
     est = EstimatorPairwise()
     attr_message = "BaseSearchCV _pairwise property must match estimator"
@@ -2299,7 +2425,9 @@ def test_search_cv__pairwise_property_delegated_to_base_estimator():
     for _pairwise_setting in [True, False]:
         est.set_params(pairwise=_pairwise_setting)
         cv = GridSearchCV(est, {"n_neighbors": [10]})
-        assert _pairwise_setting == cv._get_tags()["pairwise"], attr_message
+        assert _pairwise_setting == cv.__sklearn_tags__().input_tags.pairwise, (
+            attr_message
+        )
 
 
 def test_search_cv_pairwise_property_equivalence_of_precomputed():
@@ -2497,6 +2625,9 @@ def test_search_estimator_param(SearchCV, param_search):
     assert gs.best_estimator_.named_steps["clf"].C == 0.01
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_search_with_2d_array():
     parameter_grid = {
         "vect__ngram_range": ((1, 1), (1, 2)),  # unigrams or bigrams
@@ -2537,50 +2668,27 @@ def test_search_html_repr():
     search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=False)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<pre>DummyClassifier()</pre>" in repr_html
+        assert "<div>DummyClassifier</div>" in repr_html
 
     # Fitted with `refit=False` shows the original pipeline
     search_cv.fit(X, y)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<pre>DummyClassifier()</pre>" in repr_html
+        assert "<div>DummyClassifier</div>" in repr_html
 
     # Fitted with `refit=True` shows the best estimator
     search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=True)
     search_cv.fit(X, y)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<pre>DummyClassifier()</pre>" not in repr_html
-        assert "<pre>LogisticRegression()</pre>" in repr_html
-
-
-# TODO(1.7): remove this test
-@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
-def test_inverse_transform_Xt_deprecation(SearchCV):
-    clf = MockClassifier()
-    search = SearchCV(clf, {"foo_param": [1, 2, 3]}, cv=3, verbose=3)
-
-    X2 = search.fit(X, y).transform(X)
-
-    with pytest.raises(TypeError, match="Missing required positional argument"):
-        search.inverse_transform()
-
-    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
-        search.inverse_transform(X=X2, Xt=X2)
-
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("error")
-        search.inverse_transform(X2)
-
-    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
-        search.inverse_transform(Xt=X2)
+        assert "<div>DummyClassifier</div>" not in repr_html
+        assert "<div>LogisticRegression</div>" in repr_html
 
 
 # Metadata Routing Tests
 # ======================
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "SearchCV, param_search",
     [
@@ -2588,6 +2696,7 @@ def test_inverse_transform_Xt_deprecation(SearchCV):
         (RandomizedSearchCV, "param_distributions"),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_multi_metric_search_forwards_metadata(SearchCV, param_search):
     """Test that *SearchCV forwards metadata correctly when passed multiple metrics."""
     X, y = make_classification(random_state=42)
@@ -2612,6 +2721,7 @@ def test_multi_metric_search_forwards_metadata(SearchCV, param_search):
         check_recorded_metadata(
             obj=_scorer,
             method="score",
+            parent="_score",
             split_params=("sample_weight", "metadata"),
             sample_weight=score_weights,
             metadata=score_metadata,
@@ -2686,3 +2796,177 @@ def test_cv_results_dtype_issue_29074():
     grid_search.fit(X, y)
     for param in param_grid:
         assert grid_search.cv_results_[f"param_{param}"].dtype == object
+
+
+def test_search_with_estimators_issue_29157():
+    """Check cv_results_ for estimators with a `dtype` parameter, e.g. OneHotEncoder."""
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(
+        {
+            "numeric_1": [1, 2, 3, 4, 5],
+            "object_1": ["a", "a", "a", "a", "a"],
+            "target": [1.0, 4.1, 2.0, 3.0, 1.0],
+        }
+    )
+    X = df.drop("target", axis=1)
+    y = df["target"]
+    enc = ColumnTransformer(
+        [("enc", OneHotEncoder(sparse_output=False), ["object_1"])],
+        remainder="passthrough",
+    )
+    pipe = Pipeline(
+        [
+            ("enc", enc),
+            ("regressor", LinearRegression()),
+        ]
+    )
+    grid_params = {
+        "enc__enc": [
+            OneHotEncoder(sparse_output=False),
+            OrdinalEncoder(),
+        ]
+    }
+    grid_search = GridSearchCV(pipe, grid_params, cv=2)
+    grid_search.fit(X, y)
+    assert grid_search.cv_results_["param_enc__enc"].dtype == object
+
+
+def test_cv_results_multi_size_array():
+    """Check that GridSearchCV works with params that are arrays of different sizes.
+
+    Non-regression test for #29277.
+    """
+    n_features = 10
+    X, y = make_classification(n_features=10)
+
+    spline_reg_pipe = make_pipeline(
+        SplineTransformer(extrapolation="periodic"),
+        LogisticRegression(),
+    )
+
+    n_knots_list = [n_features * i for i in [10, 11, 12]]
+    knots_list = [
+        np.linspace(0, np.pi * 2, n_knots).reshape((-1, n_features))
+        for n_knots in n_knots_list
+    ]
+    spline_reg_pipe_cv = GridSearchCV(
+        estimator=spline_reg_pipe,
+        param_grid={
+            "splinetransformer__knots": knots_list,
+        },
+    )
+
+    spline_reg_pipe_cv.fit(X, y)
+    assert (
+        spline_reg_pipe_cv.cv_results_["param_splinetransformer__knots"].dtype == object
+    )
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
+def test_array_api_search_cv_classifier(SearchCV, array_namespace, device, dtype):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    X = np.arange(100).reshape((10, 10))
+    X_np = X.astype(dtype)
+    X_xp = xp.asarray(X_np, device=device)
+
+    # y should always be an integer, no matter what `dtype` is
+    y_np = np.array([0] * 5 + [1] * 5)
+    y_xp = xp.asarray(y_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        searcher = SearchCV(
+            LinearDiscriminantAnalysis(),
+            {"tol": [1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7]},
+            cv=2,
+            error_score="raise",
+        )
+        searcher.fit(X_xp, y_xp)
+        searcher.score(X_xp, y_xp)
+
+
+# Construct these outside the tests so that the same object is used
+# for both input and `expected`
+one_hot_encoder = OneHotEncoder()
+ordinal_encoder = OrdinalEncoder()
+
+# If we construct this directly via `MaskedArray`, the list of tuples
+# gets auto-converted to a 2D array.
+ma_with_tuples = np.ma.MaskedArray(np.empty(2), mask=True, dtype=object)  # type: ignore[var-annotated]
+ma_with_tuples[0] = (1, 2)
+ma_with_tuples[1] = (3, 4)
+
+
+@pytest.mark.parametrize(
+    ("candidate_params", "expected"),
+    [
+        pytest.param(
+            [{"foo": 1}, {"foo": 2}],
+            [
+                ("param_foo", np.ma.MaskedArray(np.array([1, 2]))),
+            ],
+            id="simple numeric, single param",
+        ),
+        pytest.param(
+            [{"foo": 1, "bar": 3}, {"foo": 2, "bar": 4}, {"foo": 3}],
+            [
+                ("param_foo", np.ma.MaskedArray(np.array([1, 2, 3]))),
+                (
+                    "param_bar",
+                    np.ma.MaskedArray(np.array([3, 4, 0]), mask=[False, False, True]),
+                ),
+            ],
+            id="simple numeric, one param is missing in one round",
+        ),
+        pytest.param(
+            [{"foo": [[1], [2], [3]]}, {"foo": [[1], [2]]}],
+            [
+                (
+                    "param_foo",
+                    np.ma.MaskedArray([[[1], [2], [3]], [[1], [2]]], dtype=object),
+                ),
+            ],
+            id="lists of different lengths",
+        ),
+        pytest.param(
+            [{"foo": (1, 2)}, {"foo": (3, 4)}],
+            [
+                (
+                    "param_foo",
+                    ma_with_tuples,
+                ),
+            ],
+            id="lists tuples",
+        ),
+        pytest.param(
+            [{"foo": ordinal_encoder}, {"foo": one_hot_encoder}],
+            [
+                (
+                    "param_foo",
+                    np.ma.MaskedArray([ordinal_encoder, one_hot_encoder], dtype=object),
+                ),
+            ],
+            id="estimators",
+        ),
+    ],
+)
+def test_yield_masked_array_for_each_param(candidate_params, expected):
+    result = list(_yield_masked_array_for_each_param(candidate_params))
+    for (key, value), (expected_key, expected_value) in zip(result, expected):
+        assert key == expected_key
+        assert value.dtype == expected_value.dtype
+        np.testing.assert_array_equal(value, expected_value)
+        np.testing.assert_array_equal(value.mask, expected_value.mask)
+
+
+def test_yield_masked_array_no_runtime_warning():
+    # non-regression test for https://github.com/scikit-learn/scikit-learn/issues/29929
+    candidate_params = [{"param": i} for i in range(1000)]
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        list(_yield_masked_array_for_each_param(candidate_params))

@@ -1,6 +1,5 @@
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Raghav RV <rvraghav93@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import importlib
 import inspect
@@ -17,12 +16,13 @@ from sklearn.datasets import make_classification
 
 # make it possible to discover experimental estimators when calling `all_estimators`
 from sklearn.experimental import (
-    enable_halving_search_cv,  # noqa
-    enable_iterative_imputer,  # noqa
+    enable_halving_search_cv,  # noqa: F401
+    enable_iterative_imputer,  # noqa: F401
 )
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import all_estimators
+from sklearn.utils._test_common.instance_generator import _construct_instances
 from sklearn.utils._testing import (
     _get_func_name,
     check_docstring_parameters,
@@ -30,11 +30,9 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.utils.estimator_checks import (
-    _construct_instance,
     _enforce_estimator_tags_X,
     _enforce_estimator_tags_y,
 )
-from sklearn.utils.fixes import _IS_PYPY, parse_version, sp_version
 
 # walk_packages() ignores DeprecationWarnings, now we need to ignore
 # FutureWarnings
@@ -46,18 +44,18 @@ with warnings.catch_warnings():
         [
             pckg[1]
             for pckg in walk_packages(prefix="sklearn.", path=sklearn_path)
-            if not ("._" in pckg[1] or ".tests." in pckg[1])
+            if not any(
+                substr in pckg[1] for substr in ["._", ".tests.", "sklearn.externals"]
+            )
         ]
     )
 
 # functions to ignore args / docstring of
-# TODO(1.7): remove "sklearn.utils._joblib"
 _DOCSTRING_IGNORES = [
     "sklearn.utils.deprecation.load_mlcomp",
     "sklearn.pipeline.make_pipeline",
     "sklearn.pipeline.make_union",
     "sklearn.utils.extmath.safe_sparse_dot",
-    "sklearn.utils._joblib",
     "HalfBinomialLoss",
 ]
 
@@ -72,11 +70,6 @@ _METHODS_IGNORE_NONE_Y = [
 ]
 
 
-# numpydoc 0.8.0's docscrape tool raises because of collections.abc under
-# Python 3.7
-@pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.skipif(_IS_PYPY, reason="test segfaults on PyPy")
 def test_docstring_parameters():
     # Test module docstring formatting
 
@@ -179,10 +172,11 @@ def _construct_sparse_coder(Estimator):
     return Estimator(dictionary=dictionary)
 
 
-@ignore_warnings(category=sklearn.exceptions.ConvergenceWarning)
-# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
-# and substituted with the SAMME algorithm as a default
-@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
+# TODO(1.10): remove copy warning filter
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `copy` will change from False to True in 1.10."
+)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("name, Estimator", all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
     pytest.importorskip("numpydoc")
@@ -206,8 +200,13 @@ def test_fit_docstring_attributes(name, Estimator):
         est = _construct_compose_pipeline_instance(Estimator)
     elif Estimator.__name__ == "SparseCoder":
         est = _construct_sparse_coder(Estimator)
+    elif Estimator.__name__ == "FrozenEstimator":
+        X, y = make_classification(n_samples=20, n_features=5, random_state=0)
+        est = Estimator(LogisticRegression().fit(X, y))
     else:
-        est = _construct_instance(Estimator)
+        # TODO(devtools): use _tested_estimators instead of all_estimators in the
+        # decorator
+        est = next(_construct_instances(Estimator))
 
     if Estimator.__name__ == "SelectKBest":
         est.set_params(k=2)
@@ -225,14 +224,14 @@ def test_fit_docstring_attributes(name, Estimator):
     elif Estimator.__name__ == "TSNE":
         # default raises an error, perplexity must be less than n_samples
         est.set_params(perplexity=2)
-
-    # TODO(1.6): remove (avoid FutureWarning)
-    if Estimator.__name__ in ("NMF", "MiniBatchNMF"):
-        est.set_params(n_components="auto")
-
-    if Estimator.__name__ == "QuantileRegressor":
-        solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
-        est.set_params(solver=solver)
+    # TODO(1.9) remove
+    elif Estimator.__name__ == "KBinsDiscretizer":
+        # default raises an FutureWarning if quantile method is at default "warn"
+        est.set_params(quantile_method="averaged_inverted_cdf")
+    # TODO(1.10) remove
+    elif Estimator.__name__ == "MDS":
+        # default raises a FutureWarning
+        est.set_params(n_init=1, init="random")
 
     # Low max iter to speed up tests: we are only interested in checking the existence
     # of fitted attributes. This should be invariant to whether it has converged or not.
@@ -276,11 +275,11 @@ def test_fit_docstring_attributes(name, Estimator):
         y = _enforce_estimator_tags_y(est, y)
         X = _enforce_estimator_tags_X(est, X)
 
-    if "1dlabels" in est._get_tags()["X_types"]:
+    if est.__sklearn_tags__().target_tags.one_d_labels:
         est.fit(y)
-    elif "2dlabels" in est._get_tags()["X_types"]:
+    elif est.__sklearn_tags__().target_tags.two_d_labels:
         est.fit(np.c_[y, y])
-    elif "3darray" in est._get_tags()["X_types"]:
+    elif est.__sklearn_tags__().input_tags.three_d_array:
         est.fit(X[np.newaxis, ...], y)
     else:
         est.fit(X, y)

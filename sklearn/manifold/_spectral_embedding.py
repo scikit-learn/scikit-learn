@@ -1,9 +1,7 @@
 """Spectral Embedding."""
 
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Wei LI <kuantkid@gmail.com>
-# License: BSD 3 clause
-
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
@@ -14,19 +12,16 @@ from scipy.linalg import eigh
 from scipy.sparse.csgraph import connected_components
 from scipy.sparse.linalg import eigsh, lobpcg
 
-from ..base import BaseEstimator, _fit_context
-from ..metrics.pairwise import rbf_kernel
-from ..neighbors import NearestNeighbors, kneighbors_graph
-from ..utils import (
-    check_array,
-    check_random_state,
-    check_symmetric,
-)
-from ..utils._arpack import _init_arpack_v0
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.extmath import _deterministic_vector_sign_flip
-from ..utils.fixes import laplacian as csgraph_laplacian
-from ..utils.fixes import parse_version, sp_version
+from sklearn.base import BaseEstimator, _fit_context
+from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.neighbors import NearestNeighbors, kneighbors_graph
+from sklearn.utils import check_array, check_random_state, check_symmetric
+from sklearn.utils._arpack import _init_arpack_v0
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.extmath import _deterministic_vector_sign_flip
+from sklearn.utils.fixes import laplacian as csgraph_laplacian
+from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils.validation import validate_data
 
 
 def _graph_connected_component(graph, node_id):
@@ -333,9 +328,8 @@ def _spectral_embedding(
     laplacian, dd = csgraph_laplacian(
         adjacency, normed=norm_laplacian, return_diag=True
     )
-    if (
-        eigen_solver == "arpack"
-        or eigen_solver != "lobpcg"
+    if eigen_solver == "arpack" or (
+        eigen_solver != "lobpcg"
         and (not sparse.issparse(laplacian) or n_nodes < 5 * n_components)
     ):
         # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
@@ -648,14 +642,14 @@ class SpectralEmbedding(BaseEstimator):
         self.n_neighbors = n_neighbors
         self.n_jobs = n_jobs
 
-    def _more_tags(self):
-        return {
-            "pairwise": self.affinity
-            in [
-                "precomputed",
-                "precomputed_nearest_neighbors",
-            ]
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        tags.input_tags.pairwise = self.affinity in [
+            "precomputed",
+            "precomputed_nearest_neighbors",
+        ]
+        return tags
 
     def _get_affinity_matrix(self, X, Y=None):
         """Calculate the affinity matrix from data
@@ -738,7 +732,7 @@ class SpectralEmbedding(BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, accept_sparse="csr", ensure_min_samples=2)
+        X = validate_data(self, X, accept_sparse="csr", ensure_min_samples=2)
 
         random_state = check_random_state(self.random_state)
 

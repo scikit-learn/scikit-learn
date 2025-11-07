@@ -3,11 +3,14 @@
 It allows to make uniform checks and validation.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 
-from ..base import is_classifier
-from .multiclass import type_of_target
-from .validation import _check_response_method, check_is_fitted
+from sklearn.base import is_classifier
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import _check_response_method, check_is_fitted
 
 
 def _process_predict_proba(*, y_pred, target_type, classes, pos_label):
@@ -81,7 +84,7 @@ def _process_decision_function(*, y_pred, target_type, classes, pos_label):
     Parameters
     ----------
     y_pred : ndarray
-        Output of `estimator.predict_proba`. The shape depends on the target type:
+        Output of `estimator.decision_function`. The shape depends on the target type:
 
         - for binary classification, it is a 1d array of shape `(n_samples,)` where the
           sign is assuming that `classes[1]` is the positive class;
@@ -192,7 +195,7 @@ def _get_response_values(
         If the response method can be applied to a classifier only and
         `estimator` is a regressor.
     """
-    from sklearn.base import is_classifier, is_outlier_detector  # noqa
+    from sklearn.base import is_classifier, is_outlier_detector
 
     if is_classifier(estimator):
         prediction_method = _check_response_method(estimator, response_method)

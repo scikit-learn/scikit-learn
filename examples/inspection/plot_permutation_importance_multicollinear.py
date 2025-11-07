@@ -21,23 +21,35 @@ picking a threshold, and keeping a single feature from each cluster.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Random Forest Feature Importance on Breast Cancer Data
 # ------------------------------------------------------
 #
 # First, we define a function to ease the plotting:
+import matplotlib
+
 from sklearn.inspection import permutation_importance
+from sklearn.utils.fixes import parse_version
 
 
 def plot_permutation_importance(clf, X, y, ax):
     result = permutation_importance(clf, X, y, n_repeats=10, random_state=42, n_jobs=2)
     perm_sorted_idx = result.importances_mean.argsort()
 
-    ax.boxplot(
-        result.importances[perm_sorted_idx].T,
-        vert=False,
-        labels=X.columns[perm_sorted_idx],
+    # `labels` argument in boxplot is deprecated in matplotlib 3.9 and has been
+    # renamed to `tick_labels`. The following code handles this, but as a
+    # scikit-learn user you probably can write simpler code by using `labels=...`
+    # (matplotlib < 3.9) or `tick_labels=...` (matplotlib >= 3.9).
+    tick_labels_parameter_name = (
+        "tick_labels"
+        if parse_version(matplotlib.__version__) >= parse_version("3.9")
+        else "labels"
     )
+    tick_labels_dict = {tick_labels_parameter_name: X.columns[perm_sorted_idx]}
+    ax.boxplot(result.importances[perm_sorted_idx].T, vert=False, **tick_labels_dict)
     ax.axvline(x=0, color="k", linestyle="--")
     return ax
 
@@ -66,7 +78,6 @@ import pandas as pd
 
 mdi_importances = pd.Series(clf.feature_importances_, index=X_train.columns)
 tree_importance_sorted_idx = np.argsort(clf.feature_importances_)
-tree_indices = np.arange(0, len(clf.feature_importances_)) + 0.5
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
 mdi_importances.sort_values().plot.barh(ax=ax1)

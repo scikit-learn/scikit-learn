@@ -1,69 +1,48 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from collections.abc import MutableMapping
 from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     MetaEstimatorMixin,
     _fit_context,
     clone,
 )
-from ..exceptions import NotFittedError
-from ..metrics import (
-    check_scoring,
-    get_scorer_names,
-)
-from ..metrics._scorer import _BaseScorer
-from ..utils import _safe_indexing
-from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
-from ..utils._response import _get_response_values_binary
-from ..utils.metadata_routing import (
+from sklearn.exceptions import NotFittedError
+from sklearn.metrics import check_scoring, get_scorer_names
+from sklearn.metrics._scorer import _CurveScorer, _threshold_scores_to_class_labels
+from sklearn.model_selection._split import StratifiedShuffleSplit, check_cv
+from sklearn.utils import _safe_indexing, get_tags
+from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
+from sklearn.utils._response import _get_response_values_binary
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     process_routing,
 )
-from ..utils.metaestimators import available_if
-from ..utils.multiclass import type_of_target
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_method_params,
+    _estimator_has,
     _num_samples,
     check_is_fitted,
     indexable,
 )
-from ._split import StratifiedShuffleSplit, check_cv
 
 
-def _estimator_has(attr):
-    """Check if we can delegate a method to the underlying estimator.
-
-    First, we check the fitted estimator if available, otherwise we
-    check the unfitted estimator.
-    """
-
-    def check(self):
-        if hasattr(self, "estimator_"):
-            getattr(self.estimator_, attr)
-        else:
-            getattr(self.estimator, attr)
-        return True
-
-    return check
-
-
-def _threshold_scores_to_class_labels(y_score, threshold, classes, pos_label):
-    """Threshold `y_score` and return the associated class labels."""
-    if pos_label is None:
-        map_thresholded_score_to_label = np.array([0, 1])
-    else:
-        pos_label_idx = np.flatnonzero(classes == pos_label)[0]
-        neg_label_idx = np.flatnonzero(classes != pos_label)[0]
-        map_thresholded_score_to_label = np.array([neg_label_idx, pos_label_idx])
-
-    return classes[map_thresholded_score_to_label[(y_score >= threshold).astype(int)]]
+def _check_is_fitted(estimator):
+    try:
+        check_is_fitted(estimator.estimator)
+    except NotFittedError:
+        check_is_fitted(estimator, "estimator_")
 
 
 class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
@@ -93,7 +72,6 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
           error.
     """
 
-    _required_parameters = ["estimator"]
     _parameter_constraints: dict = {
         "estimator": [
             HasMethods(["fit", "predict_proba"]),
@@ -177,8 +155,9 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
         probabilities : ndarray of shape (n_samples, n_classes)
             The class probabilities of the input samples.
         """
-        check_is_fitted(self, "estimator_")
-        return self.estimator_.predict_proba(X)
+        _check_is_fitted(self)
+        estimator = getattr(self, "estimator_", self.estimator)
+        return estimator.predict_proba(X)
 
     @available_if(_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X):
@@ -195,8 +174,9 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
         log_probabilities : ndarray of shape (n_samples, n_classes)
             The logarithm class probabilities of the input samples.
         """
-        check_is_fitted(self, "estimator_")
-        return self.estimator_.predict_log_proba(X)
+        _check_is_fitted(self)
+        estimator = getattr(self, "estimator_", self.estimator)
+        return estimator.predict_log_proba(X)
 
     @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
@@ -213,21 +193,15 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
         decisions : ndarray of shape (n_samples,)
             The decision function computed the fitted estimator.
         """
-        check_is_fitted(self, "estimator_")
-        return self.estimator_.decision_function(X)
+        _check_is_fitted(self)
+        estimator = getattr(self, "estimator_", self.estimator)
+        return estimator.decision_function(X)
 
-    def _more_tags(self):
-        return {
-            "binary_only": True,
-            "_xfail_checks": {
-                "check_classifiers_train": "Threshold at probability 0.5 does not hold",
-                "check_sample_weights_invariance": (
-                    "Due to the cross-validation and sample ordering, removing a sample"
-                    " is not strictly equal to putting is weight to zero. Specific unit"
-                    " tests are added for TunedThresholdClassifierCV specifically."
-                ),
-            },
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.classifier_tags.multi_class = False
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
+        return tags
 
 
 class FixedThresholdClassifier(BaseThresholdClassifier):
@@ -270,13 +244,6 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
         * otherwise, one of `"predict_proba"` or `"decision_function"`.
           If the method is not implemented by the classifier, it will raise an
           error.
-
-    prefit : bool, default=False
-        Whether a pre-fitted model is expected to be passed into the constructor
-        directly or not. If `True`, `estimator` must be a fitted estimator. If `False`,
-        `estimator` is fitted and updated by calling `fit`.
-
-        .. versionadded:: 1.6
 
     Attributes
     ----------
@@ -343,7 +310,6 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
         **BaseThresholdClassifier._parameter_constraints,
         "threshold": [StrOptions({"auto"}), Real],
         "pos_label": [Real, str, "boolean", None],
-        "prefit": ["boolean"],
     }
 
     def __init__(
@@ -353,12 +319,22 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
         threshold="auto",
         pos_label=None,
         response_method="auto",
-        prefit=False,
     ):
         super().__init__(estimator=estimator, response_method=response_method)
         self.pos_label = pos_label
         self.threshold = threshold
-        self.prefit = prefit
+
+    @property
+    def classes_(self):
+        if estimator := getattr(self, "estimator_", None):
+            return estimator.classes_
+        try:
+            check_is_fitted(self.estimator)
+            return self.estimator.classes_
+        except NotFittedError:
+            raise AttributeError(
+                "The underlying estimator is not fitted yet."
+            ) from NotFittedError
 
     def _fit(self, X, y, **params):
         """Fit the classifier.
@@ -381,13 +357,7 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
             Returns an instance of self.
         """
         routed_params = process_routing(self, "fit", **params)
-        if self.prefit:
-            check_is_fitted(self.estimator)
-            self.estimator_ = self.estimator
-        else:
-            self.estimator_ = clone(self.estimator).fit(
-                X, y, **routed_params.estimator.fit
-            )
+        self.estimator_ = clone(self.estimator).fit(X, y, **routed_params.estimator.fit)
         return self
 
     def predict(self, X):
@@ -403,9 +373,12 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
         class_labels : ndarray of shape (n_samples,)
             The predicted class.
         """
-        check_is_fitted(self, "estimator_")
+        _check_is_fitted(self)
+
+        estimator = getattr(self, "estimator_", self.estimator)
+
         y_score, _, response_method_used = _get_response_values_binary(
-            self.estimator_,
+            estimator,
             X,
             self._get_response_method(),
             pos_label=self.pos_label,
@@ -433,116 +406,11 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             estimator=self.estimator,
             method_mapping=MethodMapping().add(callee="fit", caller="fit"),
         )
         return router
-
-
-class _CurveScorer(_BaseScorer):
-    """Scorer taking a continuous response and output a score for each threshold.
-
-    Parameters
-    ----------
-    score_func : callable
-        The score function to use. It will be called as
-        `score_func(y_true, y_pred, **kwargs)`.
-
-    sign : int
-        Either 1 or -1 to returns the score with `sign * score_func(estimator, X, y)`.
-        Thus, `sign` defined if higher scores are better or worse.
-
-    kwargs : dict
-        Additional parameters to pass to the score function.
-
-    thresholds : int or array-like
-        Related to the number of decision thresholds for which we want to compute the
-        score. If an integer, it will be used to generate `thresholds` thresholds
-        uniformly distributed between the minimum and maximum predicted scores. If an
-        array-like, it will be used as the thresholds.
-
-    response_method : str
-        The method to call on the estimator to get the response values.
-    """
-
-    def __init__(self, score_func, sign, kwargs, thresholds, response_method):
-        super().__init__(
-            score_func=score_func,
-            sign=sign,
-            kwargs=kwargs,
-            response_method=response_method,
-        )
-        self._thresholds = thresholds
-
-    @classmethod
-    def from_scorer(cls, scorer, response_method, thresholds):
-        """Create a continuous scorer from a normal scorer."""
-        instance = cls(
-            score_func=scorer._score_func,
-            sign=scorer._sign,
-            response_method=response_method,
-            thresholds=thresholds,
-            kwargs=scorer._kwargs,
-        )
-        # transfer the metadata request
-        instance._metadata_request = scorer._get_metadata_request()
-        return instance
-
-    def _score(self, method_caller, estimator, X, y_true, **kwargs):
-        """Evaluate predicted target values for X relative to y_true.
-
-        Parameters
-        ----------
-        method_caller : callable
-            Returns predictions given an estimator, method name, and other
-            arguments, potentially caching results.
-
-        estimator : object
-            Trained estimator to use for scoring.
-
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Test data that will be fed to estimator.predict.
-
-        y_true : array-like of shape (n_samples,)
-            Gold standard target values for X.
-
-        **kwargs : dict
-            Other parameters passed to the scorer. Refer to
-            :func:`set_score_request` for more details.
-
-        Returns
-        -------
-        scores : ndarray of shape (thresholds,)
-            The scores associated to each threshold.
-
-        potential_thresholds : ndarray of shape (thresholds,)
-            The potential thresholds used to compute the scores.
-        """
-        pos_label = self._get_pos_label()
-        y_score = method_caller(
-            estimator, self._response_method, X, pos_label=pos_label
-        )
-
-        scoring_kwargs = {**self._kwargs, **kwargs}
-        if isinstance(self._thresholds, Integral):
-            potential_thresholds = np.linspace(
-                np.min(y_score), np.max(y_score), self._thresholds
-            )
-        else:
-            potential_thresholds = np.asarray(self._thresholds)
-        score_thresholds = [
-            self._sign
-            * self._score_func(
-                y_true,
-                _threshold_scores_to_class_labels(
-                    y_score, th, estimator.classes_, pos_label
-                ),
-                **scoring_kwargs,
-            )
-            for th in potential_thresholds
-        ]
-        return np.array(score_thresholds), potential_thresholds
 
 
 def _fit_and_score_over_thresholds(
@@ -584,13 +452,8 @@ def _fit_and_score_over_thresholds(
     curve_scorer : scorer instance
         The scorer taking `classifier` and the validation set as input and outputting
         decision thresholds and scores as a curve. Note that this is different from
-        the usual scorer that output a single score value:
-
-        * when `score_method` is one of the four constraint metrics, the curve scorer
-          will output a curve of two scores parametrized by the decision threshold, e.g.
-          TPR/TNR or precision/recall curves for each threshold;
-        * otherwise, the curve scorer will output a single score value for each
-          threshold.
+        the usual scorer that outputs a single score value as `curve_scorer`
+        outputs a single score value for each threshold.
 
     score_params : dict
         Parameters to pass to the `score` method of the underlying scorer.
@@ -668,9 +531,10 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
     scoring : str or callable, default="balanced_accuracy"
         The objective metric to be optimized. Can be one of:
 
-        * a string associated to a scoring function for binary classification
-          (see :ref:`scoring_parameter`);
-        * a scorer callable object created with :func:`~sklearn.metrics.make_scorer`;
+        - str: string associated to a scoring function for binary classification,
+          see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
 
     response_method : {"auto", "decision_function", "predict_proba"}, default="auto"
         Methods by the classifier `estimator` corresponding to the
@@ -1014,7 +878,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
             routing information.
         """
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add(
                 estimator=self.estimator,
                 method_mapping=MethodMapping().add(callee="fit", caller="fit"),

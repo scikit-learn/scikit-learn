@@ -1,10 +1,9 @@
-# Authors: Robert Layton <robertlayton@gmail.com>
-#           Corey Lynch <coreylynch9@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.math cimport exp, lgamma
 
-from ...utils._typedefs cimport float64_t, int64_t
+from sklearn.utils._typedefs cimport float64_t, int64_t
 
 import numpy as np
 from scipy.special import gammaln

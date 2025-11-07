@@ -1,16 +1,13 @@
-# Author: Andreas Mueller <amueller@ais.uni-bonn.de>
-#         Lars Buitinck
-#         Paolo Toccaceli
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from cython cimport floating
 from cython.parallel cimport prange
 from libc.math cimport fabs
 
-from ..utils._typedefs cimport intp_t
+from sklearn.utils._typedefs cimport intp_t
 
-from ..utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
 
 def _chi2_kernel_fast(floating[:, :] X,

@@ -1,6 +1,9 @@
 """This module contains the _EstimatorPrettyPrinter class used in
 BaseEstimator.__repr__ for pretty-printing estimators"""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
 # 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018 Python Software Foundation;
 # All Rights Reserved
@@ -66,9 +69,9 @@ BaseEstimator.__repr__ for pretty-printing estimators"""
 import inspect
 import pprint
 
-from .._config import get_config
-from ..base import BaseEstimator
-from ._missing import is_scalar_nan
+from sklearn._config import get_config
+from sklearn.base import BaseEstimator
+from sklearn.utils._missing import is_scalar_nan
 
 
 class KeyValTuple(tuple):
@@ -344,7 +347,7 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
     # PrettyPrinter class to call methods of _EstimatorPrettyPrinter (see issue
     # 12906)
     # mypy error: "Type[PrettyPrinter]" has no attribute "_dispatch"
-    _dispatch = pprint.PrettyPrinter._dispatch.copy()  # type: ignore
+    _dispatch = pprint.PrettyPrinter._dispatch.copy()  # type: ignore[attr-defined]
     _dispatch[BaseEstimator.__repr__] = _pprint_estimator
     _dispatch[KeyValTuple.__repr__] = _pprint_key_val_tuple
 
@@ -427,7 +430,7 @@ def _safe_repr(object, context, maxlevels, level, changed_only=False):
     if issubclass(typ, BaseEstimator):
         objid = id(object)
         if maxlevels and level >= maxlevels:
-            return "{...}", False, objid in context
+            return f"{typ.__name__}(...)", False, objid in context
         if objid in context:
             return pprint._recursion(object), False, True
         context[objid] = 1

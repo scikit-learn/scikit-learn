@@ -13,15 +13,87 @@ For a short description of the main highlights of the release, please refer to
 
 .. include:: changelog_legend.inc
 
+.. _changes_1_5_2:
+
+Version 1.5.2
+=============
+
+**September 2024**
+
+Changes impacting many modules
+------------------------------
+
+- |Fix| Fixed performance regression in a few Cython modules in
+  `sklearn._loss`, `sklearn.manifold`, `sklearn.metrics` and `sklearn.utils`,
+  which were built without OpenMP support.
+  :pr:`29694` by :user:`Loïc Estèvce <lesteve>`.
+
+Changelog
+---------
+
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| Raise error when :class:`~sklearn.model_selection.LeaveOneOut` used in
+  `cv`, matching what would happen if `KFold(n_splits=n_samples)` was used.
+  :pr:`29545` by :user:`Lucy Liu <lucyleeow>`
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| Fixed :class:`compose.TransformedTargetRegressor` not to raise `UserWarning` if
+  transform output is set to `pandas` or `polars`, since it isn't a transformer.
+  :pr:`29401` by :user:`Stefanie Senger <StefanieSenger>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Increase rank deficiency threshold in the whitening step of
+  :class:`decomposition.FastICA` with `whiten_solver="eigh"` to improve the
+  platform-agnosticity of the estimator.
+  :pr:`29612` by :user:`Olivier Grisel <ogrisel>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fix a regression in :func:`metrics.accuracy_score` and in
+  :func:`metrics.zero_one_loss` causing an error for Array API dispatch with multilabel
+  inputs.
+  :pr:`29336` by :user:`Edoardo Abati <EdAbati>`.
+
+:mod:`sklearn.svm`
+..................
+
+- |Fix| Fixed a regression in :class:`svm.SVC` and :class:`svm.SVR` such that we accept
+  `C=float("inf")`.
+  :pr:`29780` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 .. _changes_1_5_1:
 
 Version 1.5.1
 =============
 
-**TODO**
+**July 2024**
+
+Changes impacting many modules
+------------------------------
+
+- |Fix| Fixed a regression in the validation of the input data of all estimators where
+  an unexpected error was raised when passing a DataFrame backed by a read-only buffer.
+  :pr:`29018` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a regression causing a dead-lock at import time in some settings.
+  :pr:`29235` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 Changelog
 ---------
+
+:mod:`sklearn.compose`
+......................
+
+- |Efficiency| Fix a performance regression in :class:`compose.ColumnTransformer`
+  where the full input data was copied for each transformer when `n_jobs > 1`.
+  :pr:`29330` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.metrics`
 ......................
@@ -31,6 +103,11 @@ Changelog
   instead of implicitly converting those inputs as regular NumPy arrays.
   :pr:`29119` by :user:`Olivier Grisel`.
 
+- |Fix| Fix a regression in
+  :func:`metrics.zero_one_loss` causing an error for Array API dispatch with multilabel
+  inputs.
+  :pr:`29269` by :user:`Yaroslav Korobko <Tialo>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -38,6 +115,29 @@ Changelog
   grids that have heterogeneous parameter values.
   :pr:`29078` by :user:`Loïc Estève <lesteve>`.
 
+- |Fix| Fix a regression in :class:`model_selection.GridSearchCV` for parameter
+  grids that have estimators as parameter values.
+  :pr:`29179` by :user:`Marco Gorelli<MarcoGorelli>`.
+
+- |Fix| Fix a regression in :class:`model_selection.GridSearchCV` for parameter
+  grids that have arrays of different sizes as parameter values.
+  :pr:`29314` by :user:`Marco Gorelli<MarcoGorelli>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fix an issue in :func:`tree.export_graphviz` and :func:`tree.plot_tree`
+  that could potentially result in exception or wrong results on 32bit OSes.
+  :pr:`29327` by :user:`Loïc Estève<lesteve>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |API| :func:`utils.validation.check_array` has a new parameter, `force_writeable`, to
+  control the writeability of the output array. If set to `True`, the output array will
+  be guaranteed to be writeable and a copy will be made if the input array is read-only.
+  If set to `False`, no guarantee is made about the writeability of the output array.
+  :pr:`29018` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 .. _changes_1_5:
 
@@ -120,8 +220,7 @@ Support for building with Meson
 -------------------------------
 
 From scikit-learn 1.5 onwards, Meson is the main supported way to build
-scikit-learn, see :ref:`Building from source <install_bleeding_edge>` for more
-details.
+scikit-learn.
 
 Unless we discover a major blocker, setuptools support will be dropped in
 scikit-learn 1.6. The 1.5.x releases will support building scikit-learn with
@@ -133,7 +232,7 @@ Meson support for building scikit-learn was added in :pr:`28040` by
 Metadata Routing
 ----------------
 
-The following models now support metadata routing in one or more or their
+The following models now support metadata routing in one or more of their
 methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
 more details.
 
@@ -153,13 +252,13 @@ more details.
   :class:`model_selection.GridSearchCV` object or the underlying scorer.
   :pr:`27560` by :user:`Omar Salman <OmarManzoor>`.
 
-- |Feature| :class:`GraphicalLassoCV` now supports metadata routing in it's
+- |Feature| :class:`GraphicalLassoCV` now supports metadata routing in its
   `fit` method and routes metadata to the CV splitter.
   :pr:`27566` by :user:`Omar Salman <OmarManzoor>`.
 
 - |Feature| :class:`linear_model.RANSACRegressor` now supports metadata routing
   in its ``fit``, ``score`` and ``predict`` methods and route metadata to its
-  underlying estimator's' ``fit``, ``score`` and ``predict`` methods.
+  underlying estimator's ``fit``, ``score`` and ``predict`` methods.
   :pr:`28261` by :user:`Stefanie Senger <StefanieSenger>`.
 
 - |Feature| :class:`ensemble.VotingClassifier` and
@@ -235,7 +334,7 @@ Changelog
   masks, rather than column indices.
   :pr:`27657` by :user:`Jérôme Dockès <jeromedockes>`.
 
-- |Fix| Fixed an bug in :class:`compose.ColumnTransformer` with `n_jobs > 1`, where the
+- |Fix| Fixed a bug in :class:`compose.ColumnTransformer` with `n_jobs > 1`, where the
   intermediate selected columns were passed to the transformers as read-only arrays.
   :pr:`28822` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
@@ -247,12 +346,13 @@ Changelog
   the previous predicted values were not affected by this bug.
   :pr:`28612` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |API| Deprecates `Y` in favor of `y` in the methods fit, transform and
-  inverse_transform of:
-  :class:`cross_decomposition.PLSRegression`.
+- |API| Deprecates `Y` in favor of `y` in the methods `fit`, `transform` and
+  `inverse_transform` of:
+  :class:`cross_decomposition.PLSRegression`,
   :class:`cross_decomposition.PLSCanonical`,
-  :class:`cross_decomposition.CCA`,
-  and :class:`cross_decomposition.PLSSVD`.
+  and :class:`cross_decomposition.CCA`,
+  and methods `fit` and `transform` of:
+  :class:`cross_decomposition.PLSSVD`.
   `Y` will be removed in version 1.7.
   :pr:`28604` by :user:`David Leon <davidleon123>`.
 
@@ -278,7 +378,7 @@ Changelog
 ............................
 
 - |Efficiency| :class:`decomposition.PCA` with `svd_solver="full"` now assigns
-  a contiguous `components_` attribute instead of an non-contiguous slice of
+  a contiguous `components_` attribute instead of a non-contiguous slice of
   the singular vectors. When `n_components << n_features`, this can save some
   memory and, more importantly, help speed-up subsequent calls to the `transform`
   method by more than an order of magnitude by leveraging cache locality of
@@ -402,13 +502,13 @@ Changelog
 
 - |API| Parameter `multi_class` was deprecated in
   :class:`linear_model.LogisticRegression` and
-  :class:`linear_model.LogisticRegressionCV`. `multi_class` will be removed in 1.7,
+  :class:`linear_model.LogisticRegressionCV`. `multi_class` will be removed in 1.8,
   and internally, for 3 and more classes, it will always use multinomial.
   If you still want to use the one-vs-rest scheme, you can use
   `OneVsRestClassifier(LogisticRegression(..))`.
   :pr:`28703` by :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |API| `store_cv_values` and `cv_values_` are deprecated in favor of
+- |API| Parameters `store_cv_values` and `cv_values_` are deprecated in favor of
   `store_cv_results` and `cv_results_` in `~linear_model.RidgeCV` and
   `~linear_model.RidgeClassifierCV`.
   :pr:`28915` by :user:`Lucy Liu <lucyleeow>`.
@@ -556,7 +656,7 @@ Changelog
 - |API| :func:`utils.tosequence` is deprecated and will be removed in version 1.7.
   :pr:`28763` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |API| :class:`utils.parallel_backend` and :func:`utils.register_parallel_backend` are
+- |API| `utils.parallel_backend` and `utils.register_parallel_backend` are
   deprecated and will be removed in version 1.7. Use `joblib.parallel_backend` and
   `joblib.register_parallel_backend` instead.
   :pr:`28847` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
@@ -576,29 +676,38 @@ Changelog
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.4, including:
 
-101AlexMartin, Abdulaziz Aloqeely, Adam J. Stewart, Adam Li, Adarsh Wase, Adrin
-Jalali, Advik Sinha, Akash Srivastava, Akihiro Kuno, Alan Guedes, Alexis
-IMBERT, Ana Paula Gomes, Anderson Nelson, Andrei Dzis, Arnaud Capitaine, Arturo
-Amor, Aswathavicky, Bharat Raghunathan, Brendan Lu, Bruno, Cemlyn, Christian
-Lorentzen, Christian Veenhuis, Cindy Liang, Claudio Salvatore Arcidiacono,
-Connor Boyle, Conrad Stevens, crispinlogan, davidleon123, DerWeh, Dipan Banik,
-Duarte São José, DUONG, Eddie Bergman, Edoardo Abati, Egehan Gunduz, Emad
-Izadifar, Erich Schubert, Filip Karlo Došilović, Franck Charras, Gael
-Varoquaux, Gönül Aycı, Guillaume Lemaitre, Gyeongjae Choi, Harmanan Kohli,
-Hong Xiang Yue, Ian Faust, itsaphel, Ivan Wiryadi, Jack Bowyer, Javier Marin
-Tur, Jérémie du Boisberranger, Jérôme Dockès, Jiawei Zhang, Joel Nothman,
-Johanna Bayer, John Cant, John Hopfensperger, jpcars, jpienaar-tuks, Julian
-Libiseller-Egger, Julien Jerphanion, KanchiMoe, Kaushik Amar Das, keyber,
-Koustav Ghosh, kraktus, Krsto Proroković, ldwy4, LeoGrin, lihaitao, Linus
-Sommer, Loic Esteve, Lucy Liu, Lukas Geiger, manasimj, Manuel Labbé, Manuel
-Morales, Marco Edward Gorelli, Maren Westermann, Marija Vlajic, Mark Elliot,
-Mateusz Sokół, Mavs, Michael Higgins, Michael Mayer, miguelcsilva, Miki
-Watanabe, Mohammed Hamdy, myenugula, Nathan Goldbaum, Naziya Mahimkar, Neto,
-Olivier Grisel, Omar Salman, Patrick Wang, Pierre de Fréminville, Priyash
-Shah, Puneeth K, Rahil Parikh, raisadz, Raj Pulapakura, Ralf Gommers, Ralph
-Urlus, Randolf Scholz, Reshama Shaikh, Richard Barnes, Rodrigo Romero, Saad
-Mahmood, Salim Dohri, Sandip Dutta, SarahRemus, scikit-learn-bot, Shaharyar
-Choudhry, Shubham, sperret6, Stefanie Senger, Suha Siddiqui, Thanh Lam DANG,
-thebabush, Thomas J. Fan, Thomas Lazarus, Thomas Li, Tialo, Tim Head, Tuhin
-Sharma, VarunChaduvula, Vineet Joshi, virchan, Waël Boukhobza, Weyb, Will
-Dean, Xavier Beltran, Xiao Yuan, Xuefeng Xu, Yao Xiao
+101AlexMartin, Abdulaziz Aloqeely, Adam J. Stewart, Adam Li, Adarsh Wase,
+Adeyemi Biola, Aditi Juneja, Adrin Jalali, Advik Sinha, Aisha, Akash
+Srivastava, Akihiro Kuno, Alan Guedes, Alberto Torres, Alexis IMBERT, alexqiao,
+Ana Paula Gomes, Anderson Nelson, Andrei Dzis, Arif Qodari, Arnaud Capitaine,
+Arturo Amor, Aswathavicky, Audrey Flanders, awwwyan, baggiponte, Bharat
+Raghunathan, bme-git, brdav, Brendan Lu, Brigitta Sipőcz, Bruno, Cailean
+Carter, Cemlyn, Christian Lorentzen, Christian Veenhuis, Cindy Liang, Claudio
+Salvatore Arcidiacono, Connor Boyle, Conrad Stevens, crispinlogan, David
+Matthew Cherney, Davide Chicco, davidleon123, dependabot[bot], DerWeh, dinga92,
+Dipan Banik, Drew Craeton, Duarte São José, DUONG, Eddie Bergman, Edoardo
+Abati, Egehan Gunduz, Emad Izadifar, EmilyXinyi, Erich Schubert, Evelyn, Filip
+Karlo Došilović, Franck Charras, Gael Varoquaux, Gönül Aycı, Guillaume
+Lemaitre, Gyeongjae Choi, Harmanan Kohli, Hong Xiang Yue, Ian Faust, Ilya
+Komarov, itsaphel, Ivan Wiryadi, Jack Bowyer, Javier Marin Tur, Jérémie du
+Boisberranger, Jérôme Dockès, Jiawei Zhang, João Morais, Joe Cainey, Joel
+Nothman, Johanna Bayer, John Cant, John Enblom, John Hopfensperger, jpcars,
+jpienaar-tuks, Julian Chan, Julian Libiseller-Egger, Julien Jerphanion,
+KanchiMoe, Kaushik Amar Das, keyber, Koustav Ghosh, kraktus, Krsto Proroković,
+Lars, ldwy4, LeoGrin, lihaitao, Linus Sommer, Loic Esteve, Lucy Liu, Lukas
+Geiger, m-maggi, manasimj, Manuel Labbé, Manuel Morales, Marco Edward Gorelli,
+Marco Wolsza, Maren Westermann, Marija Vlajic, Mark Elliot, Martin Helm,
+Mateusz Sokół, mathurinm, Mavs, Michael Dawson, Michael Higgins, Michael Mayer,
+miguelcsilva, Miki Watanabe, Mohammed Hamdy, myenugula, Nathan Goldbaum, Naziya
+Mahimkar, nbrown-ScottLogic, Neto, Nithish Bolleddula, notPlancha, Olivier
+Grisel, Omar Salman, ParsifalXu, Patrick Wang, Pierre de Fréminville, Piotr,
+Priyank Shroff, Priyansh Gupta, Priyash Shah, Puneeth K, Rahil Parikh, raisadz,
+Raj Pulapakura, Ralf Gommers, Ralph Urlus, Randolf Scholz, renaissance0ne,
+Reshama Shaikh, Richard Barnes, Robert Pollak, Roberto Rosati, Rodrigo Romero,
+rwelsch427, Saad Mahmood, Salim Dohri, Sandip Dutta, SarahRemus,
+scikit-learn-bot, Shaharyar Choudhry, Shubham, sperret6, Stefanie Senger,
+Steffen Schneider, Suha Siddiqui, Thanh Lam DANG, thebabush, Thomas, Thomas J.
+Fan, Thomas Lazarus, Tialo, Tim Head, Tuhin Sharma, Tushar Parimi,
+VarunChaduvula, Vineet Joshi, virchan, Waël Boukhobza, Weyb, Will Dean, Xavier
+Beltran, Xiao Yuan, Xuefeng Xu, Yao Xiao, yareyaredesuyo, Ziad Amerr, Štěpán
+Sršeň

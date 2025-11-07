@@ -220,7 +220,7 @@ Given these singular vectors, they are ranked according to which can
 be best approximated by a piecewise-constant vector. The
 approximations for each vector are found using one-dimensional k-means
 and scored using the Euclidean distance. Some subset of the best left
-and right singular vector are selected. Next, the data is projected to
+and right singular vectors are selected. Next, the data is projected to
 this best subset of singular vectors and clustered.
 
 For instance, if :math:`p` singular vectors were calculated, the
@@ -276,7 +276,7 @@ now, only the Jaccard index is implemented:
 
 where :math:`A` and :math:`B` are biclusters, :math:`|A \cap B|` is
 the number of elements in their intersection. The Jaccard index
-achieves its minimum of 0 when the biclusters to not overlap at all
+achieves its minimum of 0 when the biclusters do not overlap at all
 and its maximum of 1 when they are identical.
 
 Several methods have been developed to compare two sets of biclusters.
@@ -288,7 +288,8 @@ available:
 
 2. Assign biclusters from one set to another in a one-to-one fashion
    to maximize the sum of their similarities. This step is performed
-   using the Hungarian algorithm.
+   using :func:`scipy.optimize.linear_sum_assignment`, which uses a
+   modified Jonker-Volgenant algorithm.
 
 3. The final sum of similarities is divided by the size of the larger
    set.

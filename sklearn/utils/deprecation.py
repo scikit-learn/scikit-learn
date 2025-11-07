@@ -1,5 +1,9 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import functools
 import warnings
+from inspect import signature
 
 __all__ = ["deprecated"]
 
@@ -61,17 +65,21 @@ class deprecated:
             msg += "; %s" % self.extra
 
         new = cls.__new__
+        sig = signature(cls)
 
         def wrapped(cls, *args, **kwargs):
             warnings.warn(msg, category=FutureWarning)
             if new is object.__new__:
                 return object.__new__(cls)
+
             return new(cls, *args, **kwargs)
 
         cls.__new__ = wrapped
 
         wrapped.__name__ = "__new__"
         wrapped.deprecated_original = new
+        # Restore the original signature, see PEP 362.
+        cls.__signature__ = sig
 
         return cls
 
@@ -97,7 +105,7 @@ class deprecated:
         msg = self.extra
 
         @property
-        @functools.wraps(prop)
+        @functools.wraps(prop.fget)
         def wrapped(*args, **kwargs):
             warnings.warn(msg, category=FutureWarning)
             return prop.fget(*args, **kwargs)
@@ -114,22 +122,3 @@ def _is_deprecated(func):
         [c.cell_contents for c in closures if isinstance(c.cell_contents, str)]
     )
     return is_deprecated
-
-
-# TODO: remove in 1.7
-def _deprecate_Xt_in_inverse_transform(X, Xt):
-    """Helper to deprecate the `Xt` argument in favor of `X` in inverse_transform."""
-    if X is not None and Xt is not None:
-        raise TypeError("Cannot use both X and Xt. Use X only.")
-
-    if X is None and Xt is None:
-        raise TypeError("Missing required positional argument: X.")
-
-    if Xt is not None:
-        warnings.warn(
-            "Xt was renamed X in version 1.5 and will be removed in 1.7.",
-            FutureWarning,
-        )
-        return Xt
-
-    return X

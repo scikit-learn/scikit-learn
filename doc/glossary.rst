@@ -198,7 +198,8 @@ General Concepts
         This refers to the tests run on almost every estimator class in
         Scikit-learn to check they comply with basic API conventions.  They are
         available for external use through
-        :func:`utils.estimator_checks.check_estimator`, with most of the
+        :func:`utils.estimator_checks.check_estimator` or
+        :func:`utils.estimator_checks.parametrize_with_checks`, with most of the
         implementation in ``sklearn/utils/estimator_checks.py``.
 
         Note: Some exceptions to the common testing regime are currently
@@ -293,8 +294,8 @@ General Concepts
         error, but demand more computational resources, resulting in slower
         operations and increased memory usage. In contrast, 32-bit types
         promise enhanced operation speed and reduced memory consumption, but
-        introduce a larger floating-point error. The efficiency improvement are
-        dependent on lower level optimization such as like vectorization,
+        introduce a larger floating-point error. The efficiency improvements are
+        dependent on lower level optimization such as vectorization,
         single instruction multiple dispatch (SIMD), or cache optimization but
         crucially on the compatibility of the algorithm in use.
 
@@ -407,8 +408,7 @@ General Concepts
         likelihoods.
 
     estimator tags
-        A proposed feature (e.g. :issue:`8022`) by which the capabilities of an
-        estimator are described through a set of semantic tags.  This would
+        Estimator tags describe certain capabilities of an estimator.  This would
         enable some runtime behaviors based on estimator inspection, but it
         also allows each estimator to be tested for appropriate invariances
         while being excepted from other :term:`common tests`.
@@ -416,15 +416,6 @@ General Concepts
         Some aspects of estimator tags are currently determined through
         the :term:`duck typing` of methods like ``predict_proba`` and through
         some special attributes on estimator objects:
-
-        .. glossary::
-
-            ``_estimator_type``
-                This string-valued attribute identifies an estimator as being a
-                classifier, regressor, etc. It is set by mixins such as
-                :class:`base.ClassifierMixin`, but needs to be more explicitly
-                adopted on a :term:`meta-estimator`.  Its value should usually be
-                checked by way of a helper such as :func:`base.is_classifier`.
 
         For more detailed info, see :ref:`estimator_tags`.
 
@@ -516,7 +507,7 @@ General Concepts
 
     joblib
         A Python library (https://joblib.readthedocs.io) used in Scikit-learn to
-        facilite simple parallelism and caching.  Joblib is oriented towards
+        facilitate simple parallelism and caching.  Joblib is oriented towards
         efficiently working with numpy arrays, such as through use of
         :term:`memory mapping`. See :ref:`parallelism` for more
         information.
@@ -710,6 +701,9 @@ General Concepts
         Elsewhere a sample is called an instance, data point, or observation.
         ``n_samples`` indicates the number of samples in a dataset, being the
         number of rows in a data array :term:`X`.
+        Note that this definition is standard in machine learning and deviates from
+        statistics where it means *a set of individuals or objects collected or
+        selected*.
 
     sample property
     sample properties
@@ -753,7 +747,7 @@ General Concepts
     sparse matrix
     sparse graph
         A representation of two-dimensional numeric data that is more memory
-        efficient the corresponding dense numpy array where almost all elements
+        efficient than the corresponding dense numpy array where almost all elements
         are zero. We use the :mod:`scipy.sparse` framework, which provides
         several underlying sparse data representations, or *formats*.
         Some formats are more efficient than others for particular tasks, and
@@ -857,8 +851,8 @@ Class APIs and Estimator Types
         strategy over the binary classification problem.
 
         Classifiers must store a :term:`classes_` attribute after fitting,
-        and usually inherit from :class:`base.ClassifierMixin`, which sets
-        their :term:`_estimator_type` attribute.
+        and inherit from :class:`base.ClassifierMixin`, which sets
+        their corresponding :term:`estimator tags` correctly.
 
         A classifier can be distinguished from other estimators with
         :func:`~base.is_classifier`.
@@ -946,8 +940,11 @@ Class APIs and Estimator Types
         :class:`ensemble.BaggingClassifier`.
 
         In a meta-estimator's :term:`fit` method, any contained estimators
-        should be :term:`cloned` before they are fit (although FIXME: Pipeline
-        and FeatureUnion do not do this currently). An exception to this is
+        should be :term:`cloned` before they are fit.
+
+        .. FIXME: Pipeline and FeatureUnion do not do this currently
+
+        An exception to this is
         that an estimator may explicitly document that it accepts a pre-fitted
         estimator (e.g. using ``prefit=True`` in
         :class:`feature_selection.SelectFromModel`). One known issue with this
@@ -1001,8 +998,8 @@ Class APIs and Estimator Types
         A :term:`supervised` (or :term:`semi-supervised`) :term:`predictor`
         with :term:`continuous` output values.
 
-        Regressors usually inherit from :class:`base.RegressorMixin`, which
-        sets their :term:`_estimator_type` attribute.
+        Regressors inherit from :class:`base.RegressorMixin`, which sets their
+        :term:`estimator tags` correctly.
 
         A regressor can be distinguished from other estimators with
         :func:`~base.is_regressor`.
@@ -1194,7 +1191,7 @@ Target Types
         :term:`multiclass` targets, horizontally stacked into an array
         of shape ``(n_samples, n_outputs)``.
 
-        XXX: For simplicity, we may not always support string class labels
+        Note: For simplicity, we may not always support string class labels
         for multiclass multioutput, and integer class labels should be used.
 
         :mod:`~sklearn.multioutput` provides estimators which estimate multi-output
@@ -1344,7 +1341,7 @@ Methods
     ``get_n_splits``
         On a :term:`CV splitter` (not an estimator), returns the number of
         elements one would get if iterating through the return value of
-        :term:`split` given the same parameters.  Takes the same parameters as
+        :term:`split` given the same parameters. Takes the same parameters as
         split.
 
     ``get_params``
@@ -1387,7 +1384,7 @@ Methods
         To clear the model, a new estimator should be constructed, for instance
         with :func:`base.clone`.
 
-        NOTE: Using ``partial_fit`` after ``fit`` results in undefined behavior.
+        Note: Using ``partial_fit`` after ``fit`` results in undefined behavior.
 
     ``predict``
         Makes a prediction for each sample, usually only taking :term:`X` as
@@ -1596,8 +1593,7 @@ functions or non-estimator constructors.
         estimators: some, but not all, use it to mean a single epoch (i.e. a
         pass over every sample in the data).
 
-        FIXME perhaps we should have some common tests about the relationship
-        between ConvergenceWarning and max_iter.
+        .. FIXME: perhaps we should have some common tests about the relationship between ConvergenceWarning and max_iter.
 
     ``memory``
         Some estimators make use of :class:`joblib.Memory` to
@@ -1617,7 +1613,7 @@ functions or non-estimator constructors.
         for some algorithms, an improper distance metric (one that does not
         obey the triangle inequality, such as Cosine Distance) may be used.
 
-        XXX: hierarchical clustering uses ``affinity`` with this meaning.
+        Note: Hierarchical clustering uses ``affinity`` with this meaning.
 
         We also use *metric* to refer to :term:`evaluation metrics`, but avoid
         using this sense as a parameter name.
@@ -1702,9 +1698,15 @@ functions or non-estimator constructors.
         objects and avoid common pitfalls, you may refer to :ref:`randomness`.
 
     ``scoring``
-        Specifies the score function to be maximized (usually by :ref:`cross
-        validation <cross_validation>`), or -- in some cases -- multiple score
-        functions to be reported. The score function can be a string accepted
+        Depending on the object, can specify:
+
+        * the score function to be maximized (usually by
+          :ref:`cross validation <cross_validation>`),
+        * the multiple score functions to be reported,
+        * the score function to be used to check early stopping, or
+        * for visualization related objects, the score function to output or plot
+
+        The score function can be a string accepted
         by :func:`metrics.get_scorer` or a callable :term:`scorer`, not to be
         confused with an :term:`evaluation metric`, as the latter have a more
         diverse API.  ``scoring`` may also be set to None, in which case the
@@ -1715,8 +1717,7 @@ functions or non-estimator constructors.
         either as a list of unique strings, a dictionary with names as keys and
         callables as values or a callable that returns a dictionary. Note that
         this does *not* specify which score function is to be maximized, and
-        another parameter such as ``refit`` maybe used for this purpose.
-
+        another parameter such as ``refit`` may be used for this purpose.
 
         The ``scoring`` parameter is validated and interpreted using
         :func:`metrics.check_scoring`.
@@ -1757,7 +1758,7 @@ functions or non-estimator constructors.
 
         Other models, usually using gradient-based solvers, have a different
         behavior. They all expose a ``max_iter`` parameter. The reported
-        ``n_iter_`` corresponds to the number of iteration done during the last
+        ``n_iter_`` corresponds to the number of iterations done during the last
         call to ``fit`` and will be at most ``max_iter``. Thus, we do not
         consider the state of the estimator since the initialization.
 
@@ -1799,7 +1800,7 @@ See concept :term:`attribute`.
         the number of output features and :term:`n_features` is the number of
         input features.
 
-        See also :term:`components_` which is a similar attribute for linear
+        See also :term:`coef_` which is a similar attribute for linear
         predictors.
 
     ``coef_``
@@ -1854,26 +1855,53 @@ See concept :term:`sample property`.
         See :ref:`group_cv`.
 
     ``sample_weight``
-        A relative weight for each sample.  Intuitively, if all weights are
-        integers, a weighted model or score should be equivalent to that
-        calculated when repeating the sample the number of times specified in
-        the weight.  Weights may be specified as floats, so that sample weights
-        are usually equivalent up to a constant positive scaling factor.
+        A weight for each data point. Intuitively, if all weights are integers,
+        using them in an estimator or a :term:`scorer` is like duplicating each
+        data point as many times as the weight value. Weights can also be
+        specified as floats, and can have the same effect as above, as many
+        estimators and scorers are scale invariant. For example, weights ``[1,
+        2, 3]`` would be equivalent to weights ``[0.1, 0.2, 0.3]`` as they
+        differ by a constant factor of 10. Note however that several estimators
+        are not invariant to the scale of weights.
 
-        FIXME  Is this interpretation always the case in practice? We have no
-        common tests.
+        `sample_weight` can be both an argument of the estimator's :term:`fit` method
+        for model training or a parameter of a :term:`scorer` for model
+        evaluation. These callables are said to *consume* the sample weights
+        while other components of scikit-learn can *route*  the weights to the
+        underlying estimators or scorers (see
+        :ref:`glossary_metadata_routing`).
 
-        Some estimators, such as decision trees, support negative weights.
-        FIXME: This feature or its absence may not be tested or documented in
-        many estimators.
+        Weighting samples can be useful in several contexts. For instance, if
+        the training data is not uniformly sampled from the target population,
+        it can be corrected by weighting the training data points based on the
+        `inverse probability
+        <https://en.wikipedia.org/wiki/Inverse_probability_weighting>`_ of
+        their selection for training (e.g. inverse propensity weighting).
 
-        This is not entirely the case where other parameters of the model
-        consider the number of samples in a region, as with ``min_samples`` in
-        :class:`cluster.DBSCAN`.  In this case, a count of samples becomes
-        to a sum of their weights.
+        Some model hyper-parameters are expressed in terms of a discrete number
+        of data points in a region of the feature space. When fitting with
+        sample weights, a count of data points is often automatically converted
+        to a sum of their weights, but this is not always the case. Please
+        refer to the model docstring for details.
 
-        In classification, sample weights can also be specified as a function
-        of class with the :term:`class_weight` estimator :term:`parameter`.
+        In classification, weights can also be specified for all samples
+        belonging to a given target class with the :term:`class_weight`
+        estimator :term:`parameter`. If both ``sample_weight`` and
+        ``class_weight`` are provided, the final weight assigned to a sample is
+        the product of the two.
+
+        At the time of writing (version 1.8), not all scikit-learn estimators
+        correctly implement the weight-repetition equivalence property. The
+        `#16298 meta issue
+        <https://github.com/scikit-learn/scikit-learn/issues/16298>`_ tracks
+        ongoing work to detect and fix remaining discrepancies.
+
+        Furthermore, some estimators have a stochastic fit method. For
+        instance, :class:`cluster.KMeans` depends on a random initialization,
+        bagging models randomly resample from the training data, etc. In this
+        case, the sample weight-repetition equivalence property described above
+        does not hold exactly. However, it should hold at least in expectation
+        over the randomness of the fitting procedure.
 
     ``X``
         Denotes data that is observed at training and prediction time, used as

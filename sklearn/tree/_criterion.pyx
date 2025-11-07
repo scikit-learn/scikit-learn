@@ -1,16 +1,5 @@
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Brian Holt <bdholt1@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-#          Satrajit Gosh <satrajit.ghosh@gmail.com>
-#          Lars Buitinck
-#          Arnaud Joly <arnaud.v.joly@gmail.com>
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Fares Hedayati <fares.hedayati@gmail.com>
-#          Jacob Schreiber <jmschreiber91@gmail.com>
-#          Nelson Liu <nelson@nelsonliu.me>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.string cimport memcpy
 from libc.string cimport memset
@@ -22,8 +11,8 @@ cnp.import_array()
 
 from scipy.special.cython_special cimport xlogy
 
-from ._utils cimport log
-from ._utils cimport WeightedMedianCalculator
+from sklearn.tree._utils cimport log
+from sklearn.tree._utils cimport WeightedMedianCalculator
 
 # EPSILON is used in the Poisson criterion
 cdef float64_t EPSILON = 10 * np.finfo('double').eps
@@ -501,10 +490,6 @@ cdef class ClassificationCriterion(Criterion):
         # self.sample_indices[-self.n_missing:] that is
         # self.sample_indices[end_non_missing:self.end].
         cdef intp_t end_non_missing = self.end - self.n_missing
-
-        cdef const intp_t[:] sample_indices = self.sample_indices
-        cdef const float64_t[:] sample_weight = self.sample_weight
-
         cdef intp_t i
         cdef intp_t p
         cdef intp_t k
@@ -520,10 +505,10 @@ cdef class ClassificationCriterion(Criterion):
         # of computations, i.e. from pos to new_pos or from end to new_po.
         if (new_pos - pos) <= (end_non_missing - new_pos):
             for p in range(pos, new_pos):
-                i = sample_indices[p]
+                i = self.sample_indices[p]
 
-                if sample_weight is not None:
-                    w = sample_weight[i]
+                if self.sample_weight is not None:
+                    w = self.sample_weight[i]
 
                 for k in range(self.n_outputs):
                     self.sum_left[k, <intp_t> self.y[i, k]] += w
@@ -534,10 +519,10 @@ cdef class ClassificationCriterion(Criterion):
             self.reverse_reset()
 
             for p in range(end_non_missing - 1, new_pos - 1, -1):
-                i = sample_indices[p]
+                i = self.sample_indices[p]
 
-                if sample_weight is not None:
-                    w = sample_weight[i]
+                if self.sample_weight is not None:
+                    w = self.sample_weight[i]
 
                 for k in range(self.n_outputs):
                     self.sum_left[k, <intp_t> self.y[i, k]] -= w
@@ -975,9 +960,6 @@ cdef class RegressionCriterion(Criterion):
 
     cdef int update(self, intp_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left."""
-        cdef const float64_t[:] sample_weight = self.sample_weight
-        cdef const intp_t[:] sample_indices = self.sample_indices
-
         cdef intp_t pos = self.pos
 
         # The missing samples are assumed to be in
@@ -998,10 +980,10 @@ cdef class RegressionCriterion(Criterion):
         # of computations, i.e. from pos to new_pos or from end to new_pos.
         if (new_pos - pos) <= (end_non_missing - new_pos):
             for p in range(pos, new_pos):
-                i = sample_indices[p]
+                i = self.sample_indices[p]
 
-                if sample_weight is not None:
-                    w = sample_weight[i]
+                if self.sample_weight is not None:
+                    w = self.sample_weight[i]
 
                 for k in range(self.n_outputs):
                     self.sum_left[k] += w * self.y[i, k]
@@ -1011,10 +993,10 @@ cdef class RegressionCriterion(Criterion):
             self.reverse_reset()
 
             for p in range(end_non_missing - 1, new_pos - 1, -1):
-                i = sample_indices[p]
+                i = self.sample_indices[p]
 
-                if sample_weight is not None:
-                    w = sample_weight[i]
+                if self.sample_weight is not None:
+                    w = self.sample_weight[i]
 
                 for k in range(self.n_outputs):
                     self.sum_left[k] -= w * self.y[i, k]

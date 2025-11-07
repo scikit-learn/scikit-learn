@@ -3,17 +3,20 @@
 # This module is not a separate sub-folder since that would result in a circular
 # import issue.
 #
-# Author: Adrin Jalali <adrin.jalali@gmail.com>
-# License: BSD 3 clause
-
-from ._metadata_requests import WARN, UNUSED, UNCHANGED  # noqa
-from ._metadata_requests import get_routing_for_object  # noqa
-from ._metadata_requests import MetadataRouter  # noqa
-from ._metadata_requests import MetadataRequest  # noqa
-from ._metadata_requests import MethodMapping  # noqa
-from ._metadata_requests import process_routing  # noqa
-from ._metadata_requests import _MetadataRequester  # noqa
-from ._metadata_requests import _routing_enabled  # noqa
-from ._metadata_requests import _raise_for_params  # noqa
-from ._metadata_requests import _RoutingNotSupportedMixin  # noqa
-from ._metadata_requests import _raise_for_unsupported_routing  # noqa
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+from sklearn.utils._metadata_requests import (  # noqa: F401
+    UNCHANGED,
+    UNUSED,
+    WARN,
+    MetadataRequest,
+    MetadataRouter,
+    MethodMapping,
+    _MetadataRequester,
+    _raise_for_params,
+    _raise_for_unsupported_routing,
+    _routing_enabled,
+    _RoutingNotSupportedMixin,
+    get_routing_for_object,
+    process_routing,
+)

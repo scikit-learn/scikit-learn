@@ -33,8 +33,8 @@ more iterations to converge. Here *k-means++* does a good job of both low
 time to initialize and low number of GaussianMixture iterations to converge.
 """
 
-# Author: Gordon Walsh <gordon.p.walsh@gmail.com>
-# Data generation code from Jake Vanderplas <vanderplas@astro.washington.edu>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from timeit import default_timer as timer
 
@@ -44,8 +44,6 @@ import numpy as np
 from sklearn.datasets._samples_generator import make_blobs
 from sklearn.mixture import GaussianMixture
 from sklearn.utils.extmath import row_norms
-
-print(__doc__)
 
 # Generate some data
 

@@ -31,6 +31,9 @@ verified from the labelled scatter plot on the right.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np

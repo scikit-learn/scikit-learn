@@ -1,5 +1,7 @@
 # Workflow to build and test wheels
 name: Wheel builder
+permissions:
+  contents: read
 
 on:
   schedule:
@@ -32,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -44,6 +46,11 @@ jobs:
   build_wheels:
     name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}-${{ matrix.manylinux_image }}
     runs-on: ${{ matrix.os }}
+
+    # For conda-incubator/setup-miniconda to work
+    defaults:
+      run:
+        shell: bash -el {0}
     needs: check_build_trigger
     if: needs.check_build_trigger.outputs.build
 
@@ -54,109 +61,160 @@ jobs:
         include:
           # Window 64 bit
           - os: windows-latest
-            python: 39
-            platform_id: win_amd64
-          - os: windows-latest
-            python: 310
-            platform_id: win_amd64
-          - os: windows-latest
             python: 311
             platform_id: win_amd64
           - os: windows-latest
             python: 312
             platform_id: win_amd64
+          - os: windows-latest
+            python: 313
+            platform_id: win_amd64
+          - os: windows-latest
+            python: 313t
+            platform_id: win_amd64
+            cibw_enable: cpython-freethreading
+          - os: windows-latest
+            python: 314
+            platform_id: win_amd64
+          - os: windows-latest
+            python: 314t
+            platform_id: win_amd64
 
-          # Linux 64 bit manylinux2014
-          - os: ubuntu-latest
-            python: 39
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
+          # Windows on ARM64 (WoA)
+          - os: windows-11-arm
+            python: 311
+            platform_id: win_arm64
+          - os: windows-11-arm
+            python: 312
+            platform_id: win_arm64
+          - os: windows-11-arm
+            python: 313
+            platform_id: win_arm64
+          - os: windows-11-arm
+            python: 313t
+            platform_id: win_arm64
+            cibw_enable: cpython-freethreading
+          - os: windows-11-arm
+            python: 314
+            platform_id: win_arm64
+          - os: windows-11-arm
+            python: 314t
+            platform_id: win_arm64
 
-          # NumPy on Python 3.10 only supports 64bit and is only available with manylinux2014
-          - os: ubuntu-latest
-            python: 310
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
-
+          # Linux
           - os: ubuntu-latest
             python: 311
             platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
+            manylinux_image: manylinux_2_28
           - os: ubuntu-latest
             python: 312
             platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
+            manylinux_image: manylinux_2_28
+          - os: ubuntu-latest
+            python: 313
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux_2_28
+          - os: ubuntu-latest
+            python: 313t
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux_2_28
+            cibw_enable: cpython-freethreading
+          - os: ubuntu-latest
+            python: 314
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux_2_28
+          - os: ubuntu-latest
+            python: 314t
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux_2_28
+
+          # Linux arm
+          - os: ubuntu-24.04-arm
+            python: 311
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux_2_28
+          - os: ubuntu-24.04-arm
+            python: 312
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux_2_28
+          - os: ubuntu-24.04-arm
+            python: 313
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux_2_28
+          - os: ubuntu-24.04-arm
+            python: 313t
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux_2_28
+            cibw_enable: cpython-freethreading
+          - os: ubuntu-24.04-arm
+            python: 314
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux_2_28
+          - os: ubuntu-24.04-arm
+            python: 314t
+            platform_id: manylinux_aarch64
+            manylinux_image: manylinux_2_28
 
           # MacOS x86_64
-          - os: macos-12
-            python: 39
-            platform_id: macosx_x86_64
-          - os: macos-12
-            python: 310
-            platform_id: macosx_x86_64
-          - os: macos-12
+          - os: macos-15-intel
             python: 311
             platform_id: macosx_x86_64
-          - os: macos-12
+          - os: macos-15-intel
             python: 312
+            platform_id: macosx_x86_64
+          - os: macos-15-intel
+            python: 313
+            platform_id: macosx_x86_64
+          - os: macos-15-intel
+            python: 313t
+            platform_id: macosx_x86_64
+            cibw_enable: cpython-freethreading
+          - os: macos-15-intel
+            python: 314
+            platform_id: macosx_x86_64
+          - os: macos-15-intel
+            python: 314t
             platform_id: macosx_x86_64
 
           # MacOS arm64
           - os: macos-14
-            python: 39
-            platform_id: macosx_arm64
-          - os: macos-14
-            python: 310
-            platform_id: macosx_arm64
-          - os: macos-14
             python: 311
             platform_id: macosx_arm64
           - os: macos-14
             python: 312
             platform_id: macosx_arm64
+          - os: macos-14
+            python: 313
+            platform_id: macosx_arm64
+          - os: macos-14
+            python: 313t
+            platform_id: macosx_arm64
+            cibw_enable: cpython-freethreading
+          - os: macos-14
+            python: 314
+            platform_id: macosx_arm64
+          - os: macos-14
+            python: 314t
+            platform_id: macosx_arm64
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11" # update once build dependencies are available
 
-      - name: Install conda for macos arm64
-        if: ${{ matrix.platform_id == 'macosx_arm64' }}
-        run: |
-          set -ex
-          # macos arm64 runners do not have conda installed. Thus we much install conda manually
-          EXPECTED_SHA="dd832d8a65a861b5592b2cf1d55f26031f7c1491b30321754443931e7b1e6832"
-          MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/download/23.11.0-0/Mambaforge-23.11.0-0-MacOSX-arm64.sh"
-          curl -L --retry 10 $MINIFORGE_URL -o miniforge.sh
-
-          # Check SHA
-          file_sha=$(shasum -a 256 miniforge.sh | awk '{print $1}')
-          if [ "$EXPECTED_SHA" != "$file_sha" ]; then
-              echo "SHA values did not match!"
-              exit 1
-          fi
-
-          # Install miniforge
-          MINIFORGE_PATH=$HOME/miniforge
-          bash ./miniforge.sh -b -p $MINIFORGE_PATH
-          echo "$MINIFORGE_PATH/bin" >> $GITHUB_PATH
-          echo "CONDA_HOME=$MINIFORGE_PATH" >> $GITHUB_ENV
-
-      - name: Set conda environment for non-macos arm64 environments
-        if: ${{ matrix.platform_id != 'macosx_arm64' }}
-        run: |
-          # Non-macos arm64 envrionments already have conda installed
-          echo "CONDA_HOME=/usr/local/miniconda" >> $GITHUB_ENV
+      - uses: conda-incubator/setup-miniconda@v3
+        if: ${{ startsWith(matrix.platform_id, 'macosx') }}
+        with:
+          miniforge-version: latest
 
       - name: Build and test wheels
         env:
-          CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease }}
+          CIBW_ENABLE: ${{ matrix.cibw_enable }}
           CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
-            SKLEARN_BUILD_PARALLEL=3
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_ARCHS: all
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
@@ -166,17 +224,28 @@ jobs:
           # toolchain
           CIBW_CONFIG_SETTINGS_WINDOWS: "setup-args=--vsenv"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir}
-          CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }}
-          CIBW_TEST_REQUIRES: pytest pandas
-          CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh
-          CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }}
+          CIBW_BEFORE_BUILD: bash {project}/build_tools/wheels/cibw_before_build.sh {project}
+          CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }} ${{matrix.platform_id}}
+          CIBW_ENVIRONMENT_PASS_LINUX: RUNNER_OS
+          # TODO Put back pandas when there is a pandas release with Python 3.14 wheels
+          # TODO Remove scipy<1.16.2 when hang on macOS_x86_64 has been fixed.
+          # See https://github.com/scikit-learn/scikit-learn/issues/32279 for
+          # more details.
+          CIBW_TEST_REQUIRES: ${{ contains(matrix.python, '314') && 'pytest' || 'pytest pandas' }} scipy<1.16.2
+          # On Windows, we use a custom Docker image and CIBW_TEST_REQUIRES_WINDOWS
+          # does not make sense because it would install dependencies in the host
+          # rather than inside the Docker image
+          CIBW_TEST_REQUIRES_WINDOWS: ""
+          CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh {project}
+          CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }} {project} ${{matrix.platform_id}}
           CIBW_BUILD_VERBOSITY: 1
 
         run: bash build_tools/wheels/build_wheels.sh
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
+          name: cibw-wheels-cp${{ matrix.python }}-${{ matrix.platform_id }}
           path: wheelhouse/*.whl
 
   update-tracker:
@@ -197,17 +266,15 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.9" # update once build dependencies are available
+          python-version: "3.12"
 
       - name: Build source distribution
         run: bash build_tools/github/build_source.sh
-        env:
-          SKLEARN_BUILD_PARALLEL: 3
 
       - name: Test source distribution
         run: bash build_tools/github/test_source.sh
@@ -215,8 +282,9 @@ jobs:
           SKLEARN_SKIP_NETWORK_TESTS: 1
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
+          name: cibw-sdist
           path: dist/*.tar.gz
 
   # Upload the wheels and the source distribution
@@ -230,21 +298,23 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v6
         with:
+          pattern: cibw-*
           path: dist
+          merge-multiple: true
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
 
       - name: Upload artifacts
         env:
           # Secret variables need to be mapped to environment variables explicitly
           SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
           SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_STAGING_UPLOAD_TOKEN }}
-          ARTIFACTS_PATH: dist/artifact
+          ARTIFACTS_PATH: dist
         # Force a replacement if the remote file already exists
         run: bash build_tools/github/upload_anaconda.sh

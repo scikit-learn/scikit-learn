@@ -24,9 +24,8 @@ the best model.
     <0712.0881>`
 """
 
-# Author: Alexandre Gramfort
-#         Guillaume Lemaitre
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # We will use the diabetes dataset.

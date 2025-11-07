@@ -15,9 +15,9 @@ scikit-learn estimators in different contexts and provide some tips and
 tricks for overcoming performance bottlenecks.
 
 Prediction latency is measured as the elapsed time necessary to make a
-prediction (e.g. in micro-seconds). Latency is often viewed as a distribution
+prediction (e.g. in microseconds). Latency is often viewed as a distribution
 and operations engineers often focus on the latency at a given percentile of
-this distribution (e.g. the 90 percentile).
+this distribution (e.g. the 90th percentile).
 
 Prediction throughput is defined as the number of predictions the software can
 deliver in a given amount of time (e.g. in predictions per second).
@@ -30,7 +30,7 @@ to take into account the same exact properties of the data as more complex ones.
 Prediction Latency
 ------------------
 
-One of the most straight-forward concerns one may have when using/choosing a
+One of the most straightforward concerns one may have when using/choosing a
 machine learning toolkit is the latency at which predictions can be made in a
 production environment.
 
@@ -154,10 +154,9 @@ prediction latency too much. We will now review this idea for different
 families of supervised models.
 
 For :mod:`sklearn.linear_model` (e.g. Lasso, ElasticNet,
-SGDClassifier/Regressor, Ridge & RidgeClassifier,
-PassiveAggressiveClassifier/Regressor, LinearSVC, LogisticRegression...) the
-decision function that is applied at prediction time is the same (a dot product)
-, so latency should be equivalent.
+SGDClassifier/Regressor, Ridge & RidgeClassifier, LinearSVC, LogisticRegression...) the
+decision function that is applied at prediction time is the same (a dot product), so
+latency should be equivalent.
 
 Here is an example using
 :class:`~linear_model.SGDClassifier` with the
@@ -352,7 +351,7 @@ feature selection components in a pipeline once we know which features to
 keep from a previous run. Finally, it can help reduce processing time and I/O
 usage upstream in the data access and feature extraction layers by not
 collecting and building features that are discarded by the model. For instance
-if the raw data come from a database, it can make it possible to write simpler
+if the raw data come from a database, it is possible to write simpler
 and faster queries or reduce I/O usage by making the queries return lighter
 records.
 At the moment, reshaping needs to be performed manually in scikit-learn.

@@ -1,8 +1,11 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 
-from ..utils._optional_dependencies import check_matplotlib_support
-from ..utils._plotting import _interval_max_min_ratio, _validate_score_name
-from ._validation import learning_curve, validation_curve
+from sklearn.model_selection._validation import learning_curve, validation_curve
+from sklearn.utils._optional_dependencies import check_matplotlib_support
+from sklearn.utils._plotting import _interval_max_min_ratio, _validate_score_name
 
 
 class _BaseCurveDisplay:
@@ -364,9 +367,13 @@ class LearningCurveDisplay(_BaseCurveDisplay):
             cross-validation strategies that can be used here.
 
         scoring : str or callable, default=None
-            A string (see :ref:`scoring_parameter`) or
-            a scorer callable object / function with signature
-            `scorer(estimator, X, y)` (see :ref:`scoring`).
+            The scoring method to use when calculating the learning curve. Options:
+
+            - str: see :ref:`scoring_string_names` for options.
+            - callable: a scorer callable object (e.g., function) with signature
+              ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
+            - `None`: the `estimator`'s
+              :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
         exploit_incremental_learning : bool, default=False
             If the estimator supports incremental learning, this will be
@@ -481,7 +488,7 @@ class LearningCurveDisplay(_BaseCurveDisplay):
             random_state=random_state,
             error_score=error_score,
             return_times=False,
-            fit_params=fit_params,
+            params=fit_params,
         )
 
         viz = cls(
@@ -747,9 +754,13 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             cross-validation strategies that can be used here.
 
         scoring : str or callable, default=None
-            A string (see :ref:`scoring_parameter`) or
-            a scorer callable object / function with signature
-            `scorer(estimator, X, y)` (see :ref:`scoring`).
+            Scoring method to use when computing the validation curve. Options:
+
+            - str: see :ref:`scoring_string_names` for options.
+            - callable: a scorer callable object (e.g., function) with signature
+              ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
+            - `None`: the `estimator`'s
+              :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
         n_jobs : int, default=None
             Number of jobs to run in parallel. Training the estimator and
@@ -853,7 +864,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             pre_dispatch=pre_dispatch,
             verbose=verbose,
             error_score=error_score,
-            fit_params=fit_params,
+            params=fit_params,
         )
 
         viz = cls(

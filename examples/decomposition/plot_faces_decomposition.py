@@ -7,11 +7,10 @@ This example applies to :ref:`olivetti_faces_dataset` different unsupervised
 matrix decomposition (dimension reduction) methods from the module
 :mod:`sklearn.decomposition` (see the documentation chapter
 :ref:`decompositions`).
-
-
-- Authors: Vlad Niculae, Alexandre Gramfort
-- License: BSD 3 clause
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset preparation
@@ -59,7 +58,7 @@ def plot_gallery(title, images, n_col=n_col, n_row=n_row, cmap=plt.cm.gray):
         facecolor="white",
         constrained_layout=True,
     )
-    fig.set_constrained_layout_pads(w_pad=0.01, h_pad=0.02, hspace=0, wspace=0)
+    fig.get_layout_engine().set(w_pad=0.01, h_pad=0.02, hspace=0, wspace=0)
     fig.set_edgecolor("black")
     fig.suptitle(title, size=16)
     for ax, vec in zip(axs.flat, images):

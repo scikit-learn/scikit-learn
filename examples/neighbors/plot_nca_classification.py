@@ -15,7 +15,8 @@ training set.
 
 """
 
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap

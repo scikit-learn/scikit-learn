@@ -1,23 +1,23 @@
 [project]
 name = "scikit-learn"
-version = "1.6.dev0"
+dynamic = ["version"]
 description = "A set of python modules for machine learning and data mining"
 readme = "README.rst"
 maintainers = [
     {name = "scikit-learn developers", email="scikit-learn@python.org"},
 ]
 dependencies = [
-  "numpy>=1.19.5",
-  "scipy>=1.6.0",
-  "joblib>=1.2.0",
-  "threadpoolctl>=3.1.0",
+  "numpy>=1.24.1",
+  "scipy>=1.10.0",
+  "joblib>=1.3.0",
+  "threadpoolctl>=3.2.0",
 ]
-requires-python = ">=3.9"
-license = {text = "new BSD"}
+requires-python = ">=3.11"
+license = "BSD-3-Clause"
+license-files = ["COPYING"]
 classifiers=[
   "Intended Audience :: Science/Research",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: BSD License",
   "Programming Language :: C",
   "Programming Language :: Python",
   "Topic :: Software Development",
@@ -28,12 +28,11 @@ classifiers=[
   "Operating System :: Unix",
   "Operating System :: MacOS",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: Implementation :: CPython",
-  "Programming Language :: Python :: Implementation :: PyPy",
 ]
 
 [project.urls]
@@ -44,98 +43,93 @@ tracker = "https://github.com/scikit-learn/scikit-learn/issues"
 "release notes" = "https://scikit-learn.org/stable/whats_new"
 
 [project.optional-dependencies]
-build = ["numpy>=1.19.5", "scipy>=1.6.0", "cython>=3.0.10", "meson-python>=0.16.0"]
-install = ["numpy>=1.19.5", "scipy>=1.6.0", "joblib>=1.2.0", "threadpoolctl>=3.1.0"]
-benchmark = ["matplotlib>=3.3.4", "pandas>=1.1.5", "memory_profiler>=0.57.0"]
+build = ["numpy>=1.24.1", "scipy>=1.10.0", "cython>=3.1.2", "meson-python>=0.17.1"]
+install = ["numpy>=1.24.1", "scipy>=1.10.0", "joblib>=1.3.0", "threadpoolctl>=3.2.0"]
+benchmark = ["matplotlib>=3.6.1", "pandas>=1.5.0", "memory_profiler>=0.57.0"]
 docs = [
-    "matplotlib>=3.3.4",
-    "scikit-image>=0.17.2",
-    "pandas>=1.1.5",
-    "seaborn>=0.9.0",
+    "matplotlib>=3.6.1",
+    "scikit-image>=0.22.0",
+    "pandas>=1.5.0",
+    "seaborn>=0.13.0",
     "memory_profiler>=0.57.0",
     "sphinx>=7.3.7",
     "sphinx-copybutton>=0.5.2",
-    "sphinx-gallery>=0.16.0",
+    "sphinx-gallery>=0.17.1",
     "numpydoc>=1.2.0",
-    "Pillow>=7.1.2",
-    "pooch>=1.6.0",
+    "Pillow>=10.1.0",
+    "pooch>=1.8.0",
     "sphinx-prompt>=1.4.0",
     "sphinxext-opengraph>=0.9.1",
-    "plotly>=5.14.0",
-    "polars>=0.20.23",
-    "sphinx-design>=0.5.0",
+    "plotly>=5.18.0",
+    "polars>=0.20.30",
+    "sphinx-design>=0.6.0",
     "sphinxcontrib-sass>=0.3.4",
     "pydata-sphinx-theme>=0.15.3",
     "sphinx-remove-toctrees>=1.0.0.post1",
+    "towncrier>=24.8.0",
 ]
 examples = [
-    "matplotlib>=3.3.4",
-    "scikit-image>=0.17.2",
-    "pandas>=1.1.5",
-    "seaborn>=0.9.0",
-    "pooch>=1.6.0",
-    "plotly>=5.14.0",
+    "matplotlib>=3.6.1",
+    "scikit-image>=0.22.0",
+    "pandas>=1.5.0",
+    "seaborn>=0.13.0",
+    "pooch>=1.8.0",
+    "plotly>=5.18.0",
 ]
 tests = [
-    "matplotlib>=3.3.4",
-    "scikit-image>=0.17.2",
-    "pandas>=1.1.5",
+    "matplotlib>=3.6.1",
+    "pandas>=1.5.0",
     "pytest>=7.1.2",
     "pytest-cov>=2.9.0",
-    "ruff>=0.2.1",
-    "black>=24.3.0",
-    "mypy>=1.9",
-    "pyamg>=4.0.0",
-    "polars>=0.20.23",
+    "ruff>=0.11.7",
+    "mypy>=1.15",
+    "pyamg>=5.0.0",
+    "polars>=0.20.30",
     "pyarrow>=12.0.0",
     "numpydoc>=1.2.0",
-    "pooch>=1.6.0",
+    "pooch>=1.8.0",
 ]
-maintenance = ["conda-lock==2.5.6"]
+maintenance = ["conda-lock==3.0.1"]
 
 [build-system]
 build-backend = "mesonpy"
 # Minimum requirements for the build system to execute.
 requires = [
-    "meson-python>=0.16.0",
-    "Cython>=3.0.10",
-    "numpy>=1.25",
-    "scipy>=1.6.0",
+    "meson-python>=0.17.1",
+    "Cython>=3.1.2",
+    "numpy>=2",
+    "scipy>=1.10.0",
 ]
 
-[tool.black]
-line-length = 88
-target-version = ['py39', 'py310', 'py311']
-preview = true
-exclude = '''
-/(
-    \.eggs         # exclude a few common directories in the
-  | \.git          # root of the project
-  | \.mypy_cache
-  | \.vscode
-  | build
-  | dist
-  | doc/tutorial
-  | doc/_build
-  | doc/auto_examples
-  | sklearn/externals
-  | asv_benchmarks/env
-)/
-'''
+[tool.pytest.ini_options]
+doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"
+testpaths = "sklearn"
+addopts = [
+    "--disable-pytest-warnings",
+    "--color=yes",
+    "--import-mode=importlib",
+]
+# Used by pytest-run-parallel when testing thread-safety (with or without GIL).
+thread_unsafe_fixtures = [
+  "hide_available_pandas",  # relies on monkeypatching
+  "tmp_path",  # does not isolate temporary directories across threads
+  "pyplot",  # some tests might mutate some shared state of pyplot.
+]
+
 
 [tool.ruff]
-# max line length for black
 line-length = 88
-target-version = "py38"
 exclude=[
+    ".eggs",
     ".git",
+    ".mypy_cache",
+    ".vscode",
     "__pycache__",
+    "build",
     "dist",
     "sklearn/externals",
     "doc/_build",
     "doc/auto_examples",
-    "doc/tutorial",
-    "build",
     "asv_benchmarks/env",
     "asv_benchmarks/html",
     "asv_benchmarks/results",
@@ -143,23 +137,81 @@ exclude=[
 ]
 
 [tool.ruff.lint]
-# all rules can be found here: https://beta.ruff.rs/docs/rules/
-select = ["E", "F", "W", "I"]
+# This enables us to use CPY001: copyright header check
+preview = true
+# This enables us to use the explicit preview rules that we want only
+explicit-preview-rules = true
+# all rules can be found here: https://docs.astral.sh/ruff/rules/
+extend-select = ["E501", "W", "I", "CPY001", "PGH", "RUF", "TID252"]
 ignore=[
-    # space before : (needed for how black formats slicing)
-    "E203",
     # do not assign a lambda expression, use a def
     "E731",
     # do not use variables named 'l', 'O', or 'I'
     "E741",
+    # E721 gives many false positives.
+    # Use `is` and `is not` for type comparisons, or `isinstance()` for
+    # isinstance checks
+    "E721",
+    # We don't care much about F841.
+    # Local variable ... is assigned to but never used
+    "F841",
+    # some RUF rules trigger too many changes
+    "RUF002",
+    "RUF003",
+    "RUF005",
+    "RUF012",
+    "RUF015",
+    "RUF021",
+    # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    "W191",
+    "E111",
+    "E114",
+    "E117",
+    "D206",
+    "D300",
+    "Q000",
+    "Q001",
+    "Q002",
+    "Q003",
+    "COM812",
+    "COM819",
 ]
+
+[tool.ruff.lint.flake8-copyright]
+notice-rgx = "\\#\\ Authors:\\ The\\ scikit\\-learn\\ developers\\\r?\\\n\\#\\ SPDX\\-License\\-Identifier:\\ BSD\\-3\\-Clause"
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
 
 [tool.ruff.lint.per-file-ignores]
 # It's fine not to put the import at the top of the file in the examples
 # folder.
 "examples/*"=["E402"]
 "doc/conf.py"=["E402"]
+"**/tests/*"=["CPY001"]
+"asv_benchmarks/*"=["CPY001", "TID252"]
+"benchmarks/*"=["CPY001"]
+"doc/*"=["CPY001"]
+"build_tools/*"=["CPY001"]
+"sklearn/_build_utils/*"=["CPY001"]
+"maint_tools/*"=["CPY001"]
+".spin/*"=["CPY001"]
+".github/*"=["CPY001"]
+# __doc__ is too long (>4096 chars) and therefore false positive on copyright check
+"examples/model_selection/plot_precision_recall.py"=["CPY001"]
+"examples/svm/plot_rbf_parameters.py"=["CPY001"]
+# __all__ has un-imported names
+"sklearn/__init__.py"=["F822"]
+"sklearn/utils/_metadata_requests.py"=["CPY001"]
 
+[tool.mypy]
+ignore_missing_imports = true
+allow_redefinition = true
+exclude = "^sklearn/externals"
+
+[[tool.mypy.overrides]]
+module = ["joblib.*", "sklearn.externals.*"]
+follow_imports = "skip"
 
 [tool.cython-lint]
 # Ignore the same error codes as ruff
@@ -168,8 +220,6 @@ ignore=[
 ignore = [
     # multiple spaces/tab after comma
     'E24',
-    # space before : (needed for how black formats slicing)
-    'E203',
     # line too long
     'E501',
     # do not assign a lambda expression, use a def
@@ -213,3 +263,247 @@ exclude= '''
 sdist-only = []
 git-only = [".*", "asv_benchmarks", "azure-pipelines.yml", "benchmarks", "build_tools", "maint_tools"]
 default-ignore = false
+
+[tool.spin]
+package = "sklearn"  # name of your package
+
+[tool.spin.commands]
+"Build" = [
+  "spin.cmds.pip.install",
+  "spin.cmds.meson.test",
+  ".spin/cmds.py:clean",
+]
+"Documentation" = [
+  "spin.cmds.meson.docs"
+]
+
+[tool.changelog-bot]
+    [tool.changelog-bot.towncrier_changelog]
+        enabled = true
+        verify_pr_number = true
+        changelog_noop_label = "No Changelog Needed"
+        whatsnew_pattern = 'doc/whatsnew/upcoming_changes/[^/]+/\d+\.[^.]+\.rst'
+
+[tool.codespell]
+skip = ["./.git", "*.svg", "./.mypy_cache", "./sklearn/feature_extraction/_stop_words.py", "./sklearn/feature_extraction/tests/test_text.py", "./doc/_build", "./doc/auto_examples", "./doc/modules/generated"]
+ignore-words = "build_tools/codespell_ignore_words.txt"
+
+[tool.towncrier]
+    package = "sklearn"
+    filename = "doc/whats_new/v1.8.rst"
+    single_file = true
+    directory = "doc/whats_new/upcoming_changes"
+    issue_format = ":pr:`{issue}`"
+    template = "doc/whats_new/upcoming_changes/towncrier_template.rst.jinja2"
+    all_bullets = false
+
+    [[tool.towncrier.type]]
+        directory = "major-feature"
+        name = "|MajorFeature|"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "feature"
+        name = "|Feature|"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "efficiency"
+        name = "|Efficiency|"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "enhancement"
+        name = "|Enhancement|"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "fix"
+        name = "|Fix|"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "api"
+        name = "|API|"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "other"
+        name = ""
+        showcontent = true
+
+    [[tool.towncrier.section]]
+        name = "Security"
+        path = "security"
+
+    [[tool.towncrier.section]]
+        name = "Changed models"
+        path = "changed-models"
+
+    [[tool.towncrier.section]]
+        name = "Changes impacting many modules"
+        path = "many-modules"
+
+    [[tool.towncrier.section]]
+        name = "Support for Array API"
+        path = "array-api"
+
+    [[tool.towncrier.section]]
+        name = "Metadata routing"
+        path = "metadata-routing"
+
+    [[tool.towncrier.section]]
+        name = "custom-top-level"
+        path = "custom-top-level"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.base`"
+        path = "sklearn.base"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.calibration`"
+        path = "sklearn.calibration"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.cluster`"
+        path = "sklearn.cluster"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.compose`"
+        path = "sklearn.compose"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.covariance`"
+        path = "sklearn.covariance"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.cross_decomposition`"
+        path = "sklearn.cross_decomposition"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.datasets`"
+        path = "sklearn.datasets"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.decomposition`"
+        path = "sklearn.decomposition"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.discriminant_analysis`"
+        path = "sklearn.discriminant_analysis"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.dummy`"
+        path = "sklearn.dummy"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.ensemble`"
+        path = "sklearn.ensemble"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.exceptions`"
+        path = "sklearn.exceptions"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.feature_extraction`"
+        path = "sklearn.feature_extraction"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.feature_selection`"
+        path = "sklearn.feature_selection"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.frozen`"
+        path = "sklearn.frozen"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.gaussian_process`"
+        path = "sklearn.gaussian_process"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.impute`"
+        path = "sklearn.impute"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.inspection`"
+        path = "sklearn.inspection"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.isotonic`"
+        path = "sklearn.isotonic"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.kernel_approximation`"
+        path = "sklearn.kernel_approximation"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.kernel_ridge`"
+        path = "sklearn.kernel_ridge"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.linear_model`"
+        path = "sklearn.linear_model"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.manifold`"
+        path = "sklearn.manifold"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.metrics`"
+        path = "sklearn.metrics"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.mixture`"
+        path = "sklearn.mixture"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.model_selection`"
+        path = "sklearn.model_selection"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.multiclass`"
+        path = "sklearn.multiclass"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.multioutput`"
+        path = "sklearn.multioutput"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.naive_bayes`"
+        path = "sklearn.naive_bayes"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.neighbors`"
+        path = "sklearn.neighbors"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.neural_network`"
+        path = "sklearn.neural_network"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.pipeline`"
+        path = "sklearn.pipeline"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.preprocessing`"
+        path = "sklearn.preprocessing"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.random_projection`"
+        path = "sklearn.random_projection"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.semi_supervised`"
+        path = "sklearn.semi_supervised"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.svm`"
+        path = "sklearn.svm"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.tree`"
+        path = "sklearn.tree"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.utils`"
+        path = "sklearn.utils"

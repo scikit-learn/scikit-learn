@@ -1,4 +1,8 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import builtins
+import faulthandler
 import platform
 import sys
 from contextlib import suppress
@@ -10,9 +14,9 @@ import joblib
 import numpy as np
 import pytest
 from _pytest.doctest import DoctestItem
+from scipy.datasets import face
 from threadpoolctl import threadpool_limits
 
-from sklearn import config_context, set_config
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
 from sklearn.datasets import (
     fetch_20newsgroups,
@@ -26,7 +30,6 @@ from sklearn.datasets import (
     fetch_rcv1,
     fetch_species_distributions,
 )
-from sklearn.tests import random_seed
 from sklearn.utils._testing import get_pytest_filterwarning_lines
 from sklearn.utils.fixes import (
     _IS_32BIT,
@@ -35,37 +38,35 @@ from sklearn.utils.fixes import (
     sp_version,
 )
 
+try:
+    import pytest_run_parallel  # noqa:F401
+
+    PARALLEL_RUN_AVAILABLE = True
+except ImportError:
+    PARALLEL_RUN_AVAILABLE = False
+
+
+try:
+    from scipy_doctest.conftest import dt_config
+except ModuleNotFoundError:
+    dt_config = None
+
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError(
         f"Your version of pytest is too old. Got version {pytest.__version__}, you"
         f" should have pytest >= {PYTEST_MIN_VERSION} installed."
     )
 
-scipy_datasets_require_network = sp_version >= parse_version("1.10")
-
-
-@pytest.fixture
-def enable_slep006():
-    """Enable SLEP006 for all tests."""
-    with config_context(enable_metadata_routing=True):
-        yield
-
 
 def raccoon_face_or_skip():
-    # SciPy >= 1.10 requires network to access to get data
-    if scipy_datasets_require_network:
-        run_network_tests = environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "0"
-        if not run_network_tests:
-            raise SkipTest("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
-
-        try:
-            import pooch  # noqa
-        except ImportError:
-            raise SkipTest("test requires pooch to be installed")
-
-        from scipy.datasets import face
-    else:
-        from scipy.misc import face
+    # SciPy requires network access to get data
+    run_network_tests = environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "0"
+    if not run_network_tests:
+        raise SkipTest("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
+    try:
+        import pooch  # noqa: F401
+    except ImportError:
+        raise SkipTest("test requires pooch to be installed")
 
     return face(gray=True)
 
@@ -83,8 +84,7 @@ dataset_fetchers = {
     "fetch_species_distributions_fxt": fetch_species_distributions,
 }
 
-if scipy_datasets_require_network:
-    dataset_fetchers["raccoon_face_fxt"] = raccoon_face_or_skip
+dataset_fetchers["raccoon_face_fxt"] = raccoon_face_or_skip
 
 _SKIP32_MARK = pytest.mark.skipif(
     environ.get("SKLEARN_RUN_FLOAT32_TESTS", "0") != "1",
@@ -185,14 +185,14 @@ def pytest_collection_modifyitems(config, items):
             marker = pytest.mark.xfail(
                 reason=(
                     "know failure. See "
-                    "https://github.com/scikit-learn/scikit-learn/issues/17797"  # noqa
+                    "https://github.com/scikit-learn/scikit-learn/issues/17797"
                 )
             )
             item.add_marker(marker)
 
     skip_doctests = False
     try:
-        import matplotlib  # noqa
+        import matplotlib  # noqa: F401
     except ImportError:
         skip_doctests = True
         reason = "matplotlib is required to run the doctests"
@@ -207,8 +207,15 @@ def pytest_collection_modifyitems(config, items):
         )
         skip_doctests = True
 
-    if np_base_version >= parse_version("2"):
+    if np_base_version < parse_version("2"):
+        # TODO: configure numpy to output scalar arrays as regular Python scalars
+        # once possible to improve readability of the tests docstrings.
+        # https://numpy.org/neps/nep-0051-scalar-representation.html#implementation
         reason = "Due to NEP 51 numpy scalar repr has changed in numpy 2"
+        skip_doctests = True
+
+    if sp_version < parse_version("1.14"):
+        reason = "Scipy sparse matrix repr has changed in scipy 1.14"
         skip_doctests = True
 
     # Normally doctest has the entire module's scope. Here we set globs to an empty dict
@@ -230,7 +237,7 @@ def pytest_collection_modifyitems(config, items):
                 if item.name != "sklearn._config.config_context":
                     item.add_marker(skip_marker)
     try:
-        import PIL  # noqa
+        import PIL  # noqa: F401
 
         pillow_installed = True
     except ImportError:
@@ -265,6 +272,56 @@ def pyplot():
     pyplot.close("all")
 
 
+def pytest_generate_tests(metafunc):
+    """Parametrization of global_random_seed fixture
+
+    based on the SKLEARN_TESTS_GLOBAL_RANDOM_SEED environment variable.
+
+    The goal of this fixture is to prevent tests that use it to be sensitive
+    to a specific seed value while still being deterministic by default.
+
+    See the documentation for the SKLEARN_TESTS_GLOBAL_RANDOM_SEED
+    variable for instructions on how to use this fixture.
+
+    https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed
+
+    """
+    # When using pytest-xdist this function is called in the xdist workers.
+    # We rely on SKLEARN_TESTS_GLOBAL_RANDOM_SEED environment variable which is
+    # set in before running pytest and is available in xdist workers since they
+    # are subprocesses.
+    RANDOM_SEED_RANGE = list(range(100))  # All seeds in [0, 99] should be valid.
+    random_seed_var = environ.get("SKLEARN_TESTS_GLOBAL_RANDOM_SEED")
+
+    default_random_seeds = [42]
+
+    if random_seed_var is None:
+        random_seeds = default_random_seeds
+    elif random_seed_var == "all":
+        random_seeds = RANDOM_SEED_RANGE
+    else:
+        if "-" in random_seed_var:
+            start, stop = random_seed_var.split("-")
+            random_seeds = list(range(int(start), int(stop) + 1))
+        else:
+            random_seeds = [int(random_seed_var)]
+
+        if min(random_seeds) < 0 or max(random_seeds) > 99:
+            raise ValueError(
+                "The value(s) of the environment variable "
+                "SKLEARN_TESTS_GLOBAL_RANDOM_SEED must be in the range [0, 99] "
+                f"(or 'all'), got: {random_seed_var}"
+            )
+
+    if "global_random_seed" in metafunc.fixturenames:
+        metafunc.parametrize("global_random_seed", random_seeds)
+
+
+def pytest_addoption(parser, pluginmanager):
+    if not PARALLEL_RUN_AVAILABLE:
+        parser.addini("thread_unsafe_fixtures", "list of stuff")
+
+
 def pytest_configure(config):
     # Use matplotlib agg backend during the tests including doctests
     try:
@@ -282,16 +339,36 @@ def pytest_configure(config):
         allowed_parallelism = max(allowed_parallelism // int(xdist_worker_count), 1)
     threadpool_limits(allowed_parallelism)
 
-    # Register global_random_seed plugin if it is not already registered
-    if not config.pluginmanager.hasplugin("sklearn.tests.random_seed"):
-        config.pluginmanager.register(random_seed)
-
     if environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
         # This seems like the only way to programmatically change the config
         # filterwarnings. This was suggested in
         # https://github.com/pytest-dev/pytest/issues/3311#issuecomment-373177592
         for line in get_pytest_filterwarning_lines():
             config.addinivalue_line("filterwarnings", line)
+
+    faulthandler_timeout = int(environ.get("SKLEARN_FAULTHANDLER_TIMEOUT", "0"))
+    if faulthandler_timeout > 0:
+        faulthandler.enable()
+        faulthandler.dump_traceback_later(faulthandler_timeout, exit=True)
+
+    if not PARALLEL_RUN_AVAILABLE:
+        config.addinivalue_line(
+            "markers",
+            "parallel_threads(n): run the given test function in parallel "
+            "using `n` threads.",
+        )
+        config.addinivalue_line(
+            "markers",
+            "thread_unsafe: mark the test function as single-threaded",
+        )
+        config.addinivalue_line(
+            "markers",
+            "iterations(n): run the given test function `n` times in each thread",
+        )
+        config.addinivalue_line(
+            "markers",
+            "iterations(n): run the given test function `n` times in each thread",
+        )
 
 
 @pytest.fixture
@@ -307,9 +384,7 @@ def hide_available_pandas(monkeypatch):
     monkeypatch.setattr(builtins, "__import__", mocked_import)
 
 
-@pytest.fixture
-def print_changed_only_false():
-    """Set `print_changed_only` to False for the duration of the test."""
-    set_config(print_changed_only=False)
-    yield
-    set_config(print_changed_only=True)  # reset to default
+if dt_config is not None:
+    # Strict mode to differentiate between 3.14 and np.float64(3.14)
+    dt_config.strict_check = True
+    # dt_config.rtol = 0.01
