@@ -691,7 +691,7 @@ def _median(x, axis=None, keepdims=False, xp=None):
     # in most array libraries, and all that we support (as of May 2025).
     # TODO: consider simplifying this code to use scipy instead once the oldest
     # supported SciPy version provides `scipy.stats.quantile` with native array API
-    # support (likely scipy 1.6 at the time of writing). Proper benchmarking of
+    # support (likely scipy 1.16 at the time of writing). Proper benchmarking of
     # either option with popular array namespaces is required to evaluate the
     # impact of this choice.
     xp, _, device = get_namespace_and_device(x, xp=xp)
@@ -1092,3 +1092,15 @@ def _linalg_solve(cov_chol, eye_matrix, xp):
         return scipy.linalg.solve_triangular(cov_chol, eye_matrix, lower=True)
     else:
         return xp.linalg.solve(cov_chol, eye_matrix)
+
+
+def _half_multinomial_loss(y, pred, sample_weight=None, xp=None):
+    """A version of the multinomial loss that is compatible with the array API"""
+    xp, _, device_ = get_namespace_and_device(y, pred, sample_weight)
+    log_sum_exp = _logsumexp(pred, axis=1, xp=xp)
+    y = xp.asarray(y, dtype=xp.int64, device=device_)
+    class_margins = xp.arange(y.shape[0], device=device_) * pred.shape[1]
+    label_predictions = xp.take(_ravel(pred), y + class_margins)
+    return float(
+        _average(log_sum_exp - label_predictions, weights=sample_weight, xp=xp)
+    )
