@@ -1619,7 +1619,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            `penalty` was deprecated in version 1.8 and will be removed in 1.10.
            Use `l1_ratio` instead. `l1_ratio=0` for `penalty='l2'`, `l1_ratio=1` for
            `penalty='l1'` and `l1_ratio` set to any float between 0 and 1 for
-           'penalty='elasticnet'`.
+           `'penalty='elasticnet'`.
 
     scoring : str or callable, default=None
         The scoring method to use for cross-validation. Options:
@@ -1842,7 +1842,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.linear_model import LogisticRegressionCV
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = LogisticRegressionCV(cv=5, random_state=0).fit(X, y)
+    >>> clf = LogisticRegressionCV(l1_ratios=(0,),cv=5, random_state=0).fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])
     >>> clf.predict_proba(X[:2, :]).shape
