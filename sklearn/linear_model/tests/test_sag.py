@@ -274,7 +274,9 @@ def sag_sparse(
     return weights, intercept, n_iter
 
 
-def get_step_size(X, alpha, fit_intercept, classification=True, sample_weight=None):
+def get_step_size(
+    X, alpha, fit_intercept, classification=True, sample_weight=None, is_saga=False
+):
     # Lipschitz smoothness constant for f_i(w) = s_i (loss_i(w)) + alpha ||w||^2):
     # L_i = s_i ( kappa * (||x_i||^2 + fit_intercept) + alpha )
     # where kappa = 1/4 for classification and 1 for regression
@@ -282,8 +284,16 @@ def get_step_size(X, alpha, fit_intercept, classification=True, sample_weight=No
     L = kappa * (np.sum(X * X, axis=1) + fit_intercept) + alpha
     if sample_weight is not None:
         L *= sample_weight
+        L = L.max()
+    if is_saga:
+        # SAGA theoretical step size is 1/3L or 1 / (2 * (L + mu n))
+        # See Defazio et al. 2014
+        mun = min(2 * X.shape[0] * alpha, L)
+        step = 1.0 / (2 * L + mun)
+    else:
+        step = 1 / L
     # Recommended step_size = 1 / max L_i
-    return 1 / L.max()
+    return step
 
 
 def test_classifier_matching():
@@ -908,12 +918,12 @@ def test_sag_classifier_raises_error(solver):
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_sag_weighted_classification_convergence(solver, decay, saga, fit_intercept):
     # FIXME: change dataset or only test decay=False
-    if decay:
+    if decay and saga and fit_intercept:
         pytest.xfail("Convergence issue for decay=True")
     if solver == sag_solver:
         pytest.xfail("Log loss is exploding under the sag_solver")
     n_samples = 100
-    max_iter = 1000
+    max_iter = 3000
     tol = 1e-10
     alpha = 1.1
 
@@ -946,7 +956,12 @@ def test_sag_weighted_classification_convergence(solver, decay, saga, fit_interc
         )
 
         step_size = get_step_size(
-            X, alpha, fit_intercept, classification=True, sample_weight=sample_weights
+            X,
+            alpha,
+            fit_intercept,
+            classification=True,
+            sample_weight=sample_weights,
+            is_saga=saga,
         )
 
         weights, intercept, n_iter = solver(
@@ -1016,7 +1031,12 @@ def test_sag_weighted_regression_convergence(solver, decay, saga, fit_intercept)
             saga=saga,
         )
         step_size = get_step_size(
-            X, alpha, fit_intercept, classification=False, sample_weight=sample_weights
+            X,
+            alpha,
+            fit_intercept,
+            classification=False,
+            sample_weight=sample_weights,
+            is_saga=saga,
         )
         weights, intercept, n_iter = solver(
             X, y, step_size, alpha, sample_weight=sample_weights, **sag_kwargs
