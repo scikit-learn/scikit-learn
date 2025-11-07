@@ -9,6 +9,7 @@ from numbers import Integral
 import numpy as np
 from scipy.sparse import issparse
 
+from sklearn.externals.array_api_compat import is_numpy_array
 from sklearn.metrics.pairwise import (
     _VALID_METRICS,
     pairwise_distances,
@@ -17,6 +18,8 @@ from sklearn.metrics.pairwise import (
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import _safe_indexing, check_random_state, check_X_y
 from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _is_numpy_namespace,
     _max_precision_float_dtype,
     get_namespace_and_device,
     xpx,
@@ -368,8 +371,11 @@ def calinski_harabasz_score(X, labels):
     """
 
     xp, _, device_ = get_namespace_and_device(X, labels)
-    X = xp.asarray(X, device=device_)
-    X = xp.astype(X, _max_precision_float_dtype(xp, device_), copy=False)
+
+    if _is_numpy_namespace(xp) and not is_numpy_array(X):
+        X = _convert_to_numpy(X, xp=xp)
+    else:
+        X = xp.astype(X, _max_precision_float_dtype(xp, device_), copy=False)
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()
     labels = le.fit_transform(labels)
