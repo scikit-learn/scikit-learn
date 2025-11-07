@@ -93,9 +93,13 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
 
         elif array_namespace == "dpnp":
             # XXX: add "accelerator" device type?
-            for device, dtype in itertools.product(
-                ("cpu", "gpu"), ("float64", "float32")
-            ):
+            # TODO: check if device supports FP64
+            # Now check only float32 for Intel GPUs
+            for device, dtype in [
+                ("cpu", "float64"),
+                ("cpu", "float32"),
+                ("gpu", "float32"),
+            ]:
                 yield array_namespace, device, dtype
 
         elif array_namespace == "array_api_strict":
@@ -596,9 +600,14 @@ def _max_precision_float_dtype(xp, device):
     """Return the float dtype with the highest precision supported by the device."""
     # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
     # when/if that becomes more widespread.
-    if _is_xp_namespace(xp, "torch") and str(device).startswith(
-        "mps"
+    if _is_xp_namespace(xp, "torch") and (
+        str(device).startswith("mps") or str(device).startswith("xpu")
     ):  # pragma: no cover
+        return xp.float32
+    elif _is_xp_namespace(xp, "dpnp") and "gpu" in str(device):  # pragma: no cover
+        # TODO: find a way to inspect if device supports float64, now always
+        # return float32 for Intel GPUs (same as above for XPU devices in
+        # PyTorch).
         return xp.float32
     return xp.float64
 
