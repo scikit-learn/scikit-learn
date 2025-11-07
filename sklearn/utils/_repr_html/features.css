@@ -67,6 +67,16 @@ padding: .25em;
   background-color: var(--sklearn-color-fitted-level-0);
 }
 
+.features .image-container {
+  block-size: 1em;
+  inline-size: 1em;
+  padding: 0;
+  margin: 0%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .features .copy-paste-icon {
   background-size: 1em 1em;
   width: 1em;
