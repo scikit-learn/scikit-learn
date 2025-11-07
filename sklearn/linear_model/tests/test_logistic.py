@@ -2598,7 +2598,11 @@ def test_logistic_regression_array_api_compliance(
         lr_np = LogisticRegression(**lr_params).fit(X_np, y_np)
         assert lr_np.n_iter_ < lr_np.max_iter
 
-    # Check that the model has not converged to a trivial solution:
+    # We selected a low value of C (high coef_ regularization) to be able
+    # to identify coef_ to some strict enough precision level. However we
+    # also want to make sure that this choice of regularization does not
+    # constrain the fitted models to a trivial baseline classifier where only
+    # the intercept would be non-zero.
     assert np.abs(lr_np.coef_).max() > 0.1
 
     predict_proba_np = lr_np.predict_proba(X_np)
