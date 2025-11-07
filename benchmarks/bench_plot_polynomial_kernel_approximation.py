@@ -21,8 +21,8 @@ on the same data.
 
 The second plot explores the scalability of PolynomialCountSketch
 and Nystroem. For a sufficiently large output dimension,
-PolynomialCountSketch should be faster as it is :math:`O(n(d+k \log k))`
-while Nystroem is :math:`O(n(dk+k^2))`. In addition, Nystroem requires
+PolynomialCountSketch should be faster as it is O(n(d+klog k))
+while Nystroem is O(n(dk+k^2)). In addition, Nystroem requires
 a time-consuming training phase, while training is almost immediate
 for PolynomialCountSketch, whose training phase boils down to
 initializing some random variables (because is data-independent).
@@ -31,15 +31,15 @@ References
 ----------
 .. [1] Pham, N., & Pagh, R. (2013, August). Fast and scalable polynomial
        kernels via explicit feature maps. In Proceedings of the 19th ACM
-	   SIGKDD International Conference on Knowledge Discovery and Data
-	   Mining (pp. 239-247)
-	   (https://chbrown.github.io/kdd-2013-usb/kdd/p239.pdf)
+           SIGKDD International Conference on Knowledge Discovery and Data
+           Mining (pp. 239-247)
+           (https://chbrown.github.io/kdd-2013-usb/kdd/p239.pdf)
 
 .. [2] Charikar, M., Chen, K., & Farach-Colton, M. (2002, July).
        Finding frequent items in data streams. In International Colloquium
-	   on Automata, Languages, and Programming (pp. 693-703).
-	   Springer, Berlin, Heidelberg.
-	   (https://people.cs.rutgers.edu/~farach/pubs/FrequentStream.pdf)
+           on Automata, Languages, and Programming (pp. 693-703).
+           Springer, Berlin, Heidelberg.
+           (https://people.cs.rutgers.edu/~farach/pubs/FrequentStream.pdf)
 
 """
 
