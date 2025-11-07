@@ -11,7 +11,6 @@ from sklearn.utils._array_api import (
     _convert_to_numpy,
     _is_numpy_namespace,
     _isin,
-    _max_precision_float_dtype,
     get_namespace,
     get_namespace_and_device,
 )
@@ -74,12 +73,11 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
     from sklearn.preprocessing import LabelEncoder
 
     xp, _, device_ = get_namespace_and_device(y, classes)
-    max_float_dtype = _max_precision_float_dtype(xp, device=device_)
     if set(_convert_to_numpy(y, xp)) - set(_convert_to_numpy(classes, xp)):
         raise ValueError("classes should include all valid labels that can be in y")
     if class_weight is None or len(class_weight) == 0:
         # uniform class weights
-        weight = xp.ones(classes.shape[0], dtype=max_float_dtype, device=device_)
+        weight = xp.ones(classes.shape[0], device=device_)
     elif class_weight == "balanced":
         # Find the weight of each class as present in y.
         le = LabelEncoder()
@@ -99,7 +97,7 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
         weight = recip_freq[le.transform(classes)]
     else:
         # user-defined dictionary
-        weight = xp.ones(classes.shape[0], dtype=max_float_dtype, device=device_)
+        weight = xp.ones(classes.shape[0], device=device_)
         unweighted_classes = []
         for i, c in enumerate(classes):
             try:
