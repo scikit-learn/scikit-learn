@@ -701,11 +701,9 @@ def load_iris(*, return_X_y=False, as_frame=False):
     know their class name.
 
     >>> from sklearn.datasets import load_iris
-    >>> data = load_iris()
-    >>> data.target[[10, 25, 50]]
+    >>> X, y = load_iris(return_X_y=True)
+    >>> y[[10, 25, 50]]
     array([0, 0, 1])
-    >>> list(data.target_names)
-    [np.str_('setosa'), np.str_('versicolor'), np.str_('virginica')]
 
     See :ref:`sphx_glr_auto_examples_decomposition_plot_pca_iris.py` for a more
     detailed example of how to work with the iris dataset.
