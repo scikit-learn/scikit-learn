@@ -631,7 +631,7 @@ class OneHotEncoder(_BaseEncoder):
 
         If infrequent categories are enabled by setting `min_frequency` or
         `max_categories` to a non-default value and `drop_idx[i]` corresponds
-        to a infrequent category, then the entire infrequent category is
+        to an infrequent category, then the entire infrequent category is
         dropped.
 
         .. versionchanged:: 0.23
