@@ -43,7 +43,7 @@ and how it facilitates interoperability between array libraries:
   by :user:`Thomas Fan <thomasjpfan>` at PyData NYC 2023.
 
 Enabling array API support
-===========================
+==========================
 
 The configuration `array_api_dispatch=True` needs to be set to `True` to enable array
 API support. We recommend setting this configuration globally to ensure consistent
