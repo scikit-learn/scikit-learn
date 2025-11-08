@@ -580,7 +580,6 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
     try:
         classes = xp.asarray(classes, device=device_)
-
     except (ValueError, TypeError) as e:
         # `classes` contains an unsupported dtype for this namespace.
         # For example, attempting to create torch.tensor(["yes", "no"]) will fail.
@@ -623,7 +622,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         y_in_classes = _isin(y, classes, xp=xp)
         y_seen = y[y_in_classes]
         indices = xp.searchsorted(sorted_class, y_seen)
-        # cast `y_in_classes`` to integer dtype for `xp.cumulative_sum`
+        # cast `y_in_classes` to integer dtype for `xp.cumulative_sum`
         y_in_classes = xp.astype(y_in_classes, int_dtype_)
         indptr = xp.concat(
             (
@@ -652,7 +651,6 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
             if pos_label != 1:
                 data = xp.full_like(Y.data, pos_label)
                 Y.data = data
-
         else:
             if sp.issparse(y):
                 y = y.toarray()

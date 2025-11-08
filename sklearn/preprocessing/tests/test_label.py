@@ -782,13 +782,13 @@ def test_label_binarize_array_api_compliance(
         y = xp.asarray(y, device=device_)
 
         if numeric_dtype:
-            # `sparse_output=True` is not allowed for non-NumPy namespace
+            # `sparse_output=True` is not allowed for non-NumPy namespaces
             if not xp_is_numpy:
                 msg = "`sparse_output=True` is not supported for array API "
                 with pytest.raises(ValueError, match=msg):
                     label_binarize(y=y, classes=classes, sparse_output=True)
 
-            # Numeric class labels should not raise any errors for non-NumPy namespace
+            # Numeric class labels should not raise any errors for non-NumPy namespaces
             binarized = label_binarize(y, classes=classes)
             expected = np.asarray(expected, dtype=int)
 
