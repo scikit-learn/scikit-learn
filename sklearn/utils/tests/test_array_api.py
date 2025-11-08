@@ -115,6 +115,7 @@ def test_get_namespace_array_api(monkeypatch):
     "array_input, reference",
     (
         (("cupy", None), ("torch", "cuda")),
+        (("torch", "mps"), ("numpy", None)),
         (("numpy", None), ("torch", "cuda")),
         (("numpy", None), ("torch", "mps")),
         (("array_api_strict", None), ("torch", "mps")),
