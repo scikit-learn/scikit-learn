@@ -373,6 +373,8 @@ def calinski_harabasz_score(X, labels):
     xp, _, device_ = get_namespace_and_device(X, labels)
 
     if _is_numpy_namespace(xp) and not is_numpy_array(X):
+        # This is required to handle the case where `array_api_dispatch` is False but
+        # we are still dealing with `X` as a non-NumPy array e.g. a PyTorch tensor.
         X = _convert_to_numpy(X, xp=xp)
     else:
         X = xp.astype(X, _max_precision_float_dtype(xp, device_), copy=False)
