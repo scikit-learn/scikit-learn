@@ -111,70 +111,36 @@ def test_get_namespace_array_api(monkeypatch):
             get_namespace(X_xp)
 
 
-def test_move_to_array_api_conversions_cupy_to_torch():
-    """Check conversion of CuPy to torch."""
-    xp_torch = _array_api_for_tests("torch", "cuda")
-    xp_cupy = _array_api_for_tests("cupy", None)
-
-    with config_context(array_api_dispatch=True):
-        device_torch = xp_torch.asarray([1], device="cuda").device
-
-        array_cupy = xp_cupy.asarray([1, 2, 3], device=None)
-
-        array_out = move_to(array_cupy, xp=xp_torch, device=device_torch)
-        assert get_namespace(array_out)[0] == xp_torch
-        assert device(array_out) == device_torch
-
-
-def test_move_to_array_api_conversions_numpy_to_torch_cuda():
-    """Check conversion of NumPy to torch."""
-    xp_torch = _array_api_for_tests("torch", "cuda")
-
-    with config_context(array_api_dispatch=True):
-        device_torch = xp_torch.asarray([1], device="cuda").device
-
-        array_np = numpy.asarray([1, 2, 3], device=None)
-
-        array_out = move_to(array_np, xp=xp_torch, device=device_torch)
-
-        assert get_namespace(array_out)[0] == xp_torch
-        assert device(array_out) == device_torch
-
-
-def test_move_to_array_api_conversions_numpy_to_torch_mps():
-    """Check conversion of NumPy to torch mps."""
-    xp_torch = _array_api_for_tests("torch", "mps")
-
-    with config_context(array_api_dispatch=True):
-        device_torch = xp_torch.asarray([1], device="mps").device
-
-        array_np = numpy.asarray([1, 2, 3], device=None)
-
-        array_out = move_to(array_np, xp=xp_torch, device=device_torch)
-
-        assert get_namespace(array_out)[0] == xp_torch
-        assert device(array_out) == device_torch
-
-
-def test_move_to_array_api_conversions_strict_to_torch_mps():
-    """Check conversion of array-api-strict CPU_DEVICE to torch."""
-    array_api_strict = pytest.importorskip(
-        "array_api_strict", reason="array-api-strict not available"
-    )
-    xp_strict = _array_api_for_tests("array_api_strict", None)
-    xp_torch = _array_api_for_tests("torch", "mps")
-
-    with config_context(array_api_dispatch=True):
-        device_torch = xp_torch.asarray([1], device="mps").device
-
-        array_strict = xp_strict.asarray(
-            [1, 2, 3], device=array_api_strict.Device("CPU_DEVICE")
+@pytest.mark.parametrize(
+    "array_input, reference",
+    (
+        (("cupy", None), ("torch", "cuda")),
+        (("numpy", None), ("torch", "cuda")),
+        (("numpy", None), ("torch", "mps")),
+        (("array_api_strict", None), ("torch", "mps")),
+    ),
+)
+def test_move_to_array_api_conversions(array_input, reference):
+    """Check conversion between various namespace and devices."""
+    if array_input == "array_api_strict":
+        array_api_strict = pytest.importorskip(
+            "array_api_strict", reason="array-api-strict not available"
         )
+    xp = _array_api_for_tests(reference[0], reference[1])
+    xp_array = _array_api_for_tests(array_input[0], array_input[1])
 
-        array_1_out = move_to(array_strict, xp=xp_torch, device=device_torch)
+    with config_context(array_api_dispatch=True):
+        device_ = xp.asarray([1], device=reference[1]).device
 
-        assert get_namespace(array_1_out)[0] == xp_torch
-        assert device(array_1_out) == device_torch
+        if array_input == "array_api_strict":
+            array_device = array_api_strict.Device("CPU_DEVICE")
+        else:
+            array_device = array_input[1]
+        array = xp_array.asarray([1, 2, 3], device=array_device)
+
+        array_out = move_to(array, xp=xp, device=device_)
+        assert get_namespace(array_out)[0] == xp
+        assert device(array_out) == device_
 
 
 def test_move_to_sparse():
