@@ -12,7 +12,7 @@ dependencies = [
   "joblib>=1.3.0",
   "threadpoolctl>=3.2.0",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = "BSD-3-Clause"
 license-files = ["COPYING"]
 classifiers=[
@@ -28,7 +28,6 @@ classifiers=[
   "Operating System :: Unix",
   "Operating System :: MacOS",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",

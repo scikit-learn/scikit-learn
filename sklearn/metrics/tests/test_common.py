@@ -212,7 +212,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
     returned by the precision_recall_curve do not match. See
     func:`sklearn.metrics.precision_recall_curve`
 
-    This prevents implicit conversion of return value triple to an higher
+    This prevents implicit conversion of return value triple to a higher
     dimensional np.array of dtype('float64') (it will be of dtype('object)
     instead). This again is needed for assert_array_equal to work correctly.
 
