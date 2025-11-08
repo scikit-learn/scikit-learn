@@ -42,15 +42,24 @@ and how it facilitates interoperability between array libraries:
 - `Scikit-learn on GPUs with Array API <https://www.youtube.com/watch?v=c_s8tr1AizA>`_
   by :user:`Thomas Fan <thomasjpfan>` at PyData NYC 2023.
 
-Example usage
-=============
+Enabling array API support
+===========================
 
 The configuration `array_api_dispatch=True` needs to be set to `True` to enable array
 API support. We recommend setting this configuration globally to ensure consistent
 behaviour and prevent accidental mixing of array namespaces.
-Note that we set it with :func:`config_context` below to avoid having to call
-:func:`set_config(array_api_dispatch=False)` at the end of every code snippet
-that uses the array API.
+Note that in the examples below, we set it within a context (:func:`config_context`)
+to avoid having to reset it to `False` it at the end of every code snippet, so as to
+not affect the rest of the documentation.
+
+If you provide non-NumPy array inputs but have set `array_api_dispatch=False`,
+scikit-learn will try to convert your array input to NumPy via :func:`numpy.asarray`.
+If successful, all outputs will be returned as NumPy arrays. If unsuccessful
+an error will be raised.
+
+Example usage
+=============
+
 The example code snippet below demonstrates how to use `CuPy
 <https://cupy.dev/>`_ to run
 :class:`~discriminant_analysis.LinearDiscriminantAnalysis` on a GPU::
