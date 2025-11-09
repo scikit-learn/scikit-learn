@@ -52,10 +52,12 @@ Note that in the examples below, we set it within a context (:func:`config_conte
 to avoid having to reset it to `False` it at the end of every code snippet, so as to
 not affect the rest of the documentation.
 
-If you provide non-NumPy array inputs but have set `array_api_dispatch=False`,
-scikit-learn will try to convert your array input to NumPy via :func:`numpy.asarray`.
-If successful, all outputs will be returned as NumPy arrays. If unsuccessful
-an error will be raised.
+It is recommended to set `array_api_dispatch=True` when using array API inputs.
+However, if you provide a non-NumPy array input to a :mod:`~sklearn.metric` function
+and set `array_api_dispatch=False`, scikit-learn will try to convert your array
+input to NumPy via :func:`numpy.asarray`. If successful, all outputs will be
+returned as NumPy arrays. This will generally be unsuccessful, and raise an error,
+thus this usage is not recommended.
 
 Example usage
 =============
