@@ -637,7 +637,7 @@ class OneHotEncoder(_BaseEncoder):
 
         If infrequent categories are enabled by setting `min_frequency` or
         `max_categories` to a non-default value and `drop_idx[i]` corresponds
-        to a infrequent category, then the entire infrequent category is
+        to an infrequent category, then the entire infrequent category is
         dropped.
 
         .. versionchanged:: 0.23
@@ -1378,13 +1378,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         suitable for high cardinality categorical variables.
     LabelEncoder : Encodes target labels with values between 0 and
         ``n_classes-1``.
-
-    Notes
-    -----
-    With a high proportion of `nan` values, inferring categories becomes slow with
-    Python versions before 3.10. The handling of `nan` values was improved
-    from Python 3.10 onwards, (c.f.
-    `bpo-43475 <https://github.com/python/cpython/issues/87641>`_).
 
     Examples
     --------
