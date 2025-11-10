@@ -2565,7 +2565,7 @@ def test_liblinear_multiclass_warning(Estimator):
         Estimator(solver="liblinear").fit(iris.data, iris.target)
 
 
-@pytest.mark.parametrize("binary", [False])
+@pytest.mark.parametrize("binary", [False, True])
 @pytest.mark.parametrize("use_str_y", [False, True])
 @pytest.mark.parametrize("class_weight", [None, "balanced", "dict"])
 @pytest.mark.parametrize(

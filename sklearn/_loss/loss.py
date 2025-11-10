@@ -1010,6 +1010,42 @@ class HalfBinomialLoss(BaseLoss):
         proba[:, 0] = 1 - proba[:, 1]
         return proba
 
+    def loss_array_api(self, y_true, raw_prediction, sample_weight=None, xp=None):
+        xp, _ = get_namespace(y_true, raw_prediction, sample_weight, xp=xp)
+        loss = xp.log1p(xp.exp(raw_prediction)) - y_true * raw_prediction
+        if sample_weight is not None:
+            loss *= sample_weight
+        return loss
+
+    def gradient_array_api(self, y_true, raw_prediction, sample_weight=None, xp=None):
+        xp, _ = get_namespace(y_true, raw_prediction, sample_weight, xp=xp)
+        grad = xp.where(
+            raw_prediction > -37,
+            ((1 - y_true) - y_true * xp.exp(-raw_prediction))
+            / (1 + xp.exp(-raw_prediction)),
+            xp.exp(raw_prediction) - y_true,
+        )
+        if sample_weight is not None:
+            grad *= sample_weight
+        return grad
+
+    def loss_gradient_array_api(
+        self, y_true, raw_prediction, sample_weight=None, xp=None
+    ):
+        loss = self.loss_array_api(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+            xp=xp,
+        )
+        gradient = self.gradient_array_api(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+            xp=xp,
+        )
+        return loss, gradient
+
 
 class HalfMultinomialLoss(BaseLoss):
     """Categorical cross-entropy loss, for multiclass classification.
