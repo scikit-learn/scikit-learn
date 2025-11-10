@@ -336,7 +336,7 @@ the required packages.
 Set up pre-commit
 ^^^^^^^^^^^^^^^^^
 
-Additionally, install the `pre-commit hooks<https://pre-commit.com>`__ to automatically
+Additionally, install the `pre-commit hooks <https://pre-commit.com>`__ to automatically
 run code style checks before each commit:
 
 .. prompt::
