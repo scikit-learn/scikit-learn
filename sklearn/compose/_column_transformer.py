@@ -45,12 +45,12 @@ from sklearn.utils.metaestimators import _BaseComposition
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
     _check_feature_names_in,
-    _check_n_features,
     _get_feature_names,
     _is_pandas_df,
     _num_samples,
     check_array,
     check_is_fitted,
+    check_n_features,
     validate_data,
 )
 
@@ -1089,7 +1089,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         else:
             # ndarray was used for fitting or transforming, thus we only
             # check that n_features_in_ is consistent
-            _check_n_features(self, X, reset=False)
+            check_n_features(self, X, reset=False)
 
         if _routing_enabled():
             routed_params = process_routing(self, "transform", **params)
