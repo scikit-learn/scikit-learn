@@ -10,7 +10,7 @@ from tqdm import tqdm
 from sklearn import config_context
 from sklearn.linear_model import LogisticRegression
 
-n_samples, n_features, n_classes = 100000, 500, 50
+n_samples, n_features, n_classes = 100000, 1000, 50
 device = "cuda"
 n_iter = 10
 
