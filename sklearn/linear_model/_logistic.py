@@ -76,6 +76,7 @@ def _check_solver(solver, penalty, dual):
         )
 
     if solver == "liblinear" and penalty is None:
+        # TODO(1.10): update message to remove "as well as penalty=None".
         raise ValueError(
             "C=np.inf as well as penalty=None is not supported for the liblinear solver"
         )
@@ -1238,6 +1239,14 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         if self.penalty == "deprecated":
             if self.l1_ratio == 0 or self.l1_ratio is None:
                 penalty = "l2"
+                if self.l1_ratio is None:
+                    warnings.warn(
+                        (
+                            "'l1_ratio=None' was deprecated in version 1.8 and will "
+                            "trigger an error in 1.10. Use 0<=l1_ratio<=1 instead."
+                        ),
+                        FutureWarning,
+                    )
             elif self.l1_ratio == 1:
                 penalty = "l1"
             else:
@@ -1581,7 +1590,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         .. versionchanged:: 1.10
            The default value for `l1_ratios` will change from None to (0.0,) in version
-           1.10. From then on, only arra-like with non-negative numbers are allowed,
+           1.10. From then on, only array-like with non-negative numbers are allowed,
            None is forbidden.
 
     fit_intercept : bool, default=True
@@ -1943,7 +1952,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             warnings.warn(
                 (
                     "The default value for l1_ratios will change from None to (0.0,) "
-                    "in version 1.10. From then on, only arra-like with non-negative "
+                    "in version 1.10. From then on, only array-like with non-negative "
                     "numbers are allowed, None is forbidden. To avoid this warning, "
                     "explicitly set a value, e.g. l1_ratios=(0,)."
                 ),

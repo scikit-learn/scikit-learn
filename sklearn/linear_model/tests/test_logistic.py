@@ -2565,3 +2565,13 @@ def test_penalty_deprecated(est):
     msg = "'penalty' was deprecated"
     with pytest.warns(FutureWarning, match=msg):
         lr.fit(X, y)
+
+
+# TODO(1.10): remove after deprecation cycle.
+def test_l1_ratio_None_deprecated():
+    """Check that l1_ratio=None in LogisticRegression is deprecated."""
+    X, y = make_classification(n_classes=2, n_samples=20, n_informative=6)
+    lr = LogisticRegression(l1_ratio=None)
+    msg = "'l1_ratio=None' was deprecated"
+    with pytest.warns(FutureWarning, match=msg):
+        lr.fit(X, y)
