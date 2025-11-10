@@ -518,11 +518,13 @@ def move_to(*arrays, xp, device):
                     # Note: copy=None is the default since 2023.12. Namespace libraries
                     # should only trigger a copy automatically if needed.
                     array_converted = xp.from_dlpack(array, device=device)
+                    # `AttributeError` occurs when `__dlpack__` and `__dlpack_device__`
+                    # methods are not present on the input array
                     # `TypeError` and `NotImplementedError` for packages that do not
                     # yet support dlpack 1.0
                     # (i.e. the `device`/`copy` kwargs, e.g., torch <= 2.8.0)
                     # TODO: try removing this once DLPack v1 more widely supported
-                except (AttributeError, TypeError, NotImplementedError):
+                except (AttributeError, TypeError, NotImplementedError, RuntimeError):
                     # Converting to numpy is tricky, handle this via dedicated function
                     if _is_numpy_namespace(xp):
                         array_converted = _convert_to_numpy(array, xp_array)
