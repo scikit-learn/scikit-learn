@@ -1133,6 +1133,12 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                     "estimator in a OneVsRestClassifier to keep applying a "
                     "one-versus-rest scheme."
                 )
+            if np.max(X) > 1e30:
+                raise ValueError(
+                    "Using the 'liblinear' solver while X contains a maximum "
+                    "value > 1e30 results in a frozen fit. Please choose another "
+                    "solver or rescale the input X."
+                )
             if effective_n_jobs(self.n_jobs) != 1:
                 warnings.warn(
                     "'n_jobs' > 1 does not have any effect when"
