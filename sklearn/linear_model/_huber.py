@@ -204,7 +204,6 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         .. versionchanged:: 0.20
 
-            In SciPy <= 1.0.0 the number of lbfgs iterations may exceed
             ``max_iter``. ``n_iter_`` will now report at most ``max_iter``.
 
     outliers_ : array, shape (n_samples,)
