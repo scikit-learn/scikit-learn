@@ -389,12 +389,54 @@ class BaseLoss:
         return gradient_out, hessian_out
 
     def loss_array_api(self, y_true, raw_prediction, sample_weight=None, xp=None):
+        """The array API version of the `loss` method.
+
+        Parameters
+        ----------
+        y_true : array of shape (n_samples,)
+            Observed, true target values.
+        raw_prediction : array of shape (n_samples,) or array of \
+            shape (n_samples, n_classes)
+            Raw prediction values (in link space).
+        sample_weight : None or array of shape (n_samples,)
+            Sample weights.
+        xp : module, default=None
+            Precomputed array namespace module. When passed, typically from a caller
+            that has already performed inspection of its own inputs, skips array
+            namespace inspection.
+
+        Returns
+        -------
+        loss : array of shape (n_samples,)
+            Element-wise loss function.
+        """
         raise NotImplementedError(
             "The array API version of `loss` is not implemented for"
             f" {self.__class__.__name__}."
         )
 
     def gradient_array_api(self, y_true, raw_prediction, sample_weight=None, xp=None):
+        """The array API version of the `gradient` method.
+
+        Parameters
+        ----------
+        y_true : array of shape (n_samples,)
+            Observed, true target values.
+        raw_prediction : array of shape (n_samples,) or array of \
+            shape (n_samples, n_classes)
+            Raw prediction values (in link space).
+        sample_weight : None or array of shape (n_samples,)
+            Sample weights.
+        xp : module, default=None
+            Precomputed array namespace module. When passed, typically from a caller
+            that has already performed inspection of its own inputs, skips array
+            namespace inspection.
+
+        Returns
+        -------
+        gradient : array of shape (n_samples,) or (n_samples, n_classes)
+            Element-wise gradients.
+        """
         raise NotImplementedError(
             "The array API version of `gradient` is not implemented for"
             f" {self.__class__.__name__}."
@@ -403,6 +445,30 @@ class BaseLoss:
     def loss_gradient_array_api(
         self, y_true, raw_prediction, sample_weight=None, xp=None
     ):
+        """The array API version of the `loss_gradient` method.
+
+        Parameters
+        ----------
+        y_true : array of shape (n_samples,)
+            Observed, true target values.
+        raw_prediction : array of shape (n_samples,) or array of \
+            shape (n_samples, n_classes)
+            Raw prediction values (in link space).
+        sample_weight : None or array of shape (n_samples,)
+            Sample weights.
+        xp : module, default=None
+            Precomputed array namespace module. When passed, typically from a caller
+            that has already performed inspection of its own inputs, skips array
+            namespace inspection.
+
+        Returns
+        -------
+        loss : array of shape (n_samples,)
+            Element-wise loss function.
+
+        gradient : array of shape (n_samples,) or (n_samples, n_classes)
+            Element-wise gradients.
+        """
         raise NotImplementedError(
             "The array API version of `loss_gradient` is not implemented for"
             f" {self.__class__.__name__}."
@@ -430,6 +496,10 @@ class BaseLoss:
             Sample weights.
         n_threads : int, default=1
             Might use openmp thread parallelism.
+        is_numpy_namespace : bool, default=True
+            Are we dealing with the NumPy namespace.
+        xp : module, default=None
+            Array namespace module.
 
         Returns
         -------
