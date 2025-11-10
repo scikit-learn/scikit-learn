@@ -1580,7 +1580,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Like in support vector machines, smaller values specify stronger
         regularization.
 
-    l1_ratios : array-like of shape (n_l1_ratios), default=None
+    l1_ratios : array-like of shape (n_l1_ratios), default=(0,)
         Floats between 0 and 1 passed as Elastic-Net mixing parameter (scaling between
         L1 and L2 penalties). For `l1_ratio = 0` the penalty is an L2 penalty. For
         `l1_ratio = 1` it is an L1 penalty. For `0 < l1_ratio < 1`, the penalty is a
@@ -1588,10 +1588,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         All the values of the given array-like are tested by cross-validation and the
         one giving the best prediction score is used.
 
-        .. versionchanged:: 1.10
-           The default value for `l1_ratios` will change from None to (0.0,) in version
-           1.10. From then on, only array-like with non-negative numbers are allowed,
-           None is forbidden.
+        .. versionchanged:: 1.8
+           Default value changed from None to (0.0,), None is deprecated and will be
+           forbidden in version 1.10.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -1786,7 +1785,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         for cross-validation.
 
     l1_ratios_ : ndarray of shape (n_l1_ratios)
-        Array of l1_ratios used for cross-validation. If no l1_ratio is used
+        Array of l1_ratios used for cross-validation. If l1_ratios=None is used
         (i.e. penalty is not 'elasticnet'), this is set to ``[None]``
 
     coefs_paths_ : dict of ndarray of shape (n_folds, n_cs, n_dof) or \
@@ -1868,7 +1867,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     _parameter_constraints.update(
         {
             "Cs": [Interval(Integral, 1, None, closed="left"), "array-like"],
-            "l1_ratios": ["array-like", None, Hidden(StrOptions({"warn"}))],
+            "l1_ratios": ["array-like", None],
             "cv": ["cv_object"],
             "scoring": [StrOptions(set(get_scorer_names())), callable, None],
             "refit": ["boolean"],
@@ -1883,7 +1882,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         self,
         *,
         Cs=10,
-        l1_ratios="warn",
+        l1_ratios=(0,),
         fit_intercept=True,
         cv=None,
         dual=False,
@@ -1947,24 +1946,19 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         """
         _raise_for_params(params, self, "fit")
 
-        if isinstance(self.l1_ratios, str) and self.l1_ratios == "warn":
-            l1_ratios = None
-            warnings.warn(
-                (
-                    "The default value for l1_ratios will change from None to (0.0,) "
-                    "in version 1.10. From then on, only array-like with non-negative "
-                    "numbers are allowed, None is forbidden. To avoid this warning, "
-                    "explicitly set a value, e.g. l1_ratios=(0,)."
-                ),
-                FutureWarning,
-            )
-        else:
-            l1_ratios = self.l1_ratios
-
         if self.penalty == "deprecated":
-            if np.all(np.asarray(l1_ratios) == 0) or l1_ratios is None:
+            if self.l1_ratios is None:
+                warnings.warn(
+                    (
+                        "'l1_ratios=None' was deprecated in version 1.8 and will "
+                        "trigger an error in 1.10. Use an array-like with values"
+                        "in [0, 1] instead."
+                    ),
+                    FutureWarning,
+                )
+            if np.all(np.asarray(self.l1_ratios) == 0) or self.l1_ratios is None:
                 penalty = "l2"
-            elif np.all(np.asarray(l1_ratios) == 1):
+            elif np.all(np.asarray(self.l1_ratios) == 1):
                 penalty = "l1"
             else:
                 penalty = "elasticnet"
@@ -1984,24 +1978,24 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         if penalty == "elasticnet":
             if (
-                l1_ratios is None
-                or len(l1_ratios) == 0
+                self.l1_ratios is None
+                or len(self.l1_ratios) == 0
                 or any(
                     (
                         not isinstance(l1_ratio, numbers.Number)
                         or l1_ratio < 0
                         or l1_ratio > 1
                     )
-                    for l1_ratio in l1_ratios
+                    for l1_ratio in self.l1_ratios
                 )
             ):
                 raise ValueError(
                     "l1_ratios must be an array-like of numbers between "
-                    "0 and 1; got (l1_ratios=%r)" % l1_ratios
+                    "0 and 1; got (l1_ratios=%r)" % self.l1_ratios
                 )
-            l1_ratios_ = l1_ratios
+            l1_ratios_ = self.l1_ratios
         else:
-            if l1_ratios is not None:
+            if self.l1_ratios is None:
                 warnings.warn(
                     "l1_ratios parameter is only used when penalty "
                     "is 'elasticnet'. Got (penalty={})".format(penalty)
@@ -2309,7 +2303,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         self.l1_ratios_ = np.asarray(l1_ratios_)
         # if elasticnet was used, add the l1_ratios dimension to some
         # attributes
-        if l1_ratios is not None:
+        if self.l1_ratios is not None:
             # with n_cs=2 and n_l1_ratios=3
             # the layout of scores is
             # [c1, c2, c1, c2, c1, c2]
