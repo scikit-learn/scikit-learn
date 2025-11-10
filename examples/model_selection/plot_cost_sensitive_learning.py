@@ -137,7 +137,7 @@ scoring = {
 # predictions (correct or wrong) might impact the business value of deploying a
 # given machine learning model in a specific application context. For our
 # credit prediction task, the authors provide a custom cost-matrix which
-# encodes that classifying a a "bad" credit as "good" is 5 times more costly on
+# encodes that classifying a "bad" credit as "good" is 5 times more costly on
 # average than the opposite: it is less costly for the financing institution to
 # not grant a credit to a potential customer that will not default (and
 # therefore miss a good customer that would have otherwise both reimbursed the
