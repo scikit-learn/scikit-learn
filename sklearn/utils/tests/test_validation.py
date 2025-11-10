@@ -1065,7 +1065,7 @@ def test_check_dataframe_fit_attribute():
     # check pandas dataframe with 'fit' column does not raise error
     # https://github.com/scikit-learn/scikit-learn/issues/8415
     try:
-        import pandas as pd
+        pd = pytest.importorskip("pandas")
 
         X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
         X_df = pd.DataFrame(X, columns=["a", "b", "fit"])
@@ -2430,7 +2430,7 @@ def test_check_array_allow_nd_errors(X, estimator, expected_error_message):
 
 def test_check_feature_names_public():
     """Test the public check_feature_names function."""
-    import pandas as pd
+    pd = pytest.importorskip("pandas")
 
     from sklearn.utils.validation import check_feature_names
 
@@ -2482,7 +2482,7 @@ def test_check_n_features_public():
 
 def test_check_feature_names_deprecated():
     """Test that _check_feature_names is deprecated."""
-    import pandas as pd
+    pd = pytest.importorskip("pandas")
 
     from sklearn.utils.validation import _check_feature_names
 
