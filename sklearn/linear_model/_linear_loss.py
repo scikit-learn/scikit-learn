@@ -8,7 +8,11 @@ Loss functions for linear models with raw_prediction = X @ coef
 import numpy as np
 from scipy import sparse
 
-from sklearn.utils._array_api import _convert_to_numpy, get_namespace_and_device
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _is_numpy_namespace,
+    get_namespace_and_device,
+)
 from sklearn.utils.extmath import safe_sparse_dot, squared_norm
 
 
@@ -209,9 +213,7 @@ class LinearModelLoss:
             # weights has shape (n_classes, n_dof)
             raw_prediction = X @ weights_xp.T + intercept_xp
 
-        # TODO: once the loss gradient function itself has been updated to
-        # accept non-NumPy array API inputs, let's remove this conversion.
-        return weights, intercept, _convert_to_numpy(raw_prediction, xp=xp)
+        return weights, intercept, raw_prediction
 
     def l2_penalty(self, weights, l2_reg_strength):
         """Compute L2 penalty term l2_reg_strength/2 *||w||_2^2."""
@@ -323,39 +325,44 @@ class LinearModelLoss:
             weights, intercept = self.weight_intercept(coef)
 
         xp, _, device_ = get_namespace_and_device(X, y, sample_weight)
-        # TODO: implement add array API support to
-        # `HalfMultinomialLoss.loss_gradient` to avoid the NumPy conversions.
-        loss, grad_pointwise = self.base_loss.loss_gradient(
-            y_true=_convert_to_numpy(y, xp=xp),
-            raw_prediction=raw_prediction,
-            sample_weight=_convert_to_numpy(sample_weight, xp=xp)
-            if sample_weight is not None
-            else None,
-            n_threads=n_threads,
-        )
+        if _is_numpy_namespace(xp):
+            loss, grad_pointwise = self.base_loss.loss_gradient(
+                y_true=y,
+                raw_prediction=raw_prediction,
+                sample_weight=sample_weight,
+                n_threads=n_threads,
+            )
+        else:
+            loss, grad_pointwise = self.base_loss.loss_gradient_array_api(
+                y_true=y,
+                raw_prediction=raw_prediction,
+                sample_weight=sample_weight,
+                xp=xp,
+            )
+
         sw_sum = float(n_samples if sample_weight is None else xp.sum(sample_weight))
-        loss = loss.sum() / sw_sum
+        loss = float(xp.sum(loss) / sw_sum)
         loss += self.l2_penalty(weights, l2_reg_strength)
 
         grad_pointwise /= sw_sum
 
         if not self.base_loss.is_multiclass:
             grad = np.empty_like(coef, dtype=weights.dtype)
-            X_grad = X.T @ xp.asarray(grad_pointwise, device=device_)
+            X_grad = X.T @ grad_pointwise
             grad[:n_features] = (
                 _convert_to_numpy(X_grad, xp=xp) + l2_reg_strength * weights
             )
             if self.fit_intercept:
-                grad[-1] = grad_pointwise.sum()
+                grad[-1] = xp.sum(grad_pointwise)
         else:
             grad = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
             # grad_pointwise.shape = (n_samples, n_classes)
-            grad_X = xp.asarray(grad_pointwise, device=device_).T @ X
+            grad_X = grad_pointwise.T @ X
             grad[:, :n_features] = (
                 _convert_to_numpy(grad_X, xp) + l2_reg_strength * weights
             )
             if self.fit_intercept:
-                grad[:, -1] = grad_pointwise.sum(axis=0)
+                grad[:, -1] = _convert_to_numpy(xp.sum(grad_pointwise, axis=0), xp=xp)
             if coef.ndim == 1:
                 grad = grad.ravel(order="F")
 

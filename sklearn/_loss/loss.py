@@ -46,6 +46,14 @@ from sklearn._loss.link import (
     MultinomialLogit,
 )
 from sklearn.utils import check_scalar
+from sklearn.utils._array_api import (
+    _average,
+    _logsumexp,
+    _ravel,
+    get_namespace,
+    get_namespace_and_device,
+)
+from sklearn.utils.extmath import softmax
 from sklearn.utils.stats import _weighted_percentile
 
 
@@ -380,7 +388,35 @@ class BaseLoss:
         )
         return gradient_out, hessian_out
 
-    def __call__(self, y_true, raw_prediction, sample_weight=None, n_threads=1):
+    def loss_array_api(self, y_true, raw_prediction, sample_weight=None, xp=None):
+        raise NotImplementedError(
+            "The array API version of `loss` is not implemented for"
+            f" {self.__class__.__name__}."
+        )
+
+    def gradient_array_api(self, y_true, raw_prediction, sample_weight=None, xp=None):
+        raise NotImplementedError(
+            "The array API version of `gradient` is not implemented for"
+            f" {self.__class__.__name__}."
+        )
+
+    def loss_gradient_array_api(
+        self, y_true, raw_prediction, sample_weight=None, xp=None
+    ):
+        raise NotImplementedError(
+            "The array API version of `loss_gradient` is not implemented for"
+            f" {self.__class__.__name__}."
+        )
+
+    def __call__(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+        n_threads=1,
+        is_numpy_namespace=True,
+        xp=None,
+    ):
         """Compute the weighted average loss.
 
         Parameters
@@ -400,16 +436,22 @@ class BaseLoss:
         loss : float
             Mean or averaged loss function.
         """
-        return np.average(
-            self.loss(
-                y_true=y_true,
-                raw_prediction=raw_prediction,
-                sample_weight=None,
-                loss_out=None,
-                n_threads=n_threads,
-            ),
-            weights=sample_weight,
+        if is_numpy_namespace:
+            return np.average(
+                self.loss(
+                    y_true=y_true,
+                    raw_prediction=raw_prediction,
+                    sample_weight=None,
+                    loss_out=None,
+                    n_threads=n_threads,
+                ),
+                weights=sample_weight,
+            )
+        xp, _ = get_namespace(y_true, raw_prediction, sample_weight, xp=xp)
+        loss_xp = self.loss_array_api(
+            y_true=y_true, raw_prediction=raw_prediction, sample_weight=None, xp=xp
         )
+        return float(_average(loss_xp, weights=sample_weight, xp=xp))
 
     def fit_intercept_only(self, y_true, sample_weight=None):
         """Compute raw_prediction of an intercept-only model.
@@ -1127,6 +1169,57 @@ class HalfMultinomialLoss(BaseLoss):
             n_threads=n_threads,
         )
         return gradient_out, proba_out
+
+    def loss_array_api(self, y_true, raw_prediction, sample_weight=None, xp=None):
+        xp, _, device_ = get_namespace_and_device(
+            y_true, raw_prediction, sample_weight, xp=xp
+        )
+        log_sum_exp = _logsumexp(raw_prediction, axis=1, xp=xp)
+        y_true = xp.asarray(y_true, dtype=xp.int64, device=device_)
+        class_margins = (
+            xp.arange(y_true.shape[0], device=device_) * raw_prediction.shape[1]
+        )
+        label_predictions = xp.take(_ravel(raw_prediction), y_true + class_margins)
+        loss = log_sum_exp - label_predictions
+        if sample_weight is not None:
+            loss *= sample_weight
+        return loss
+
+    def gradient_array_api(self, y_true, raw_prediction, sample_weight=None, xp=None):
+        xp, _, device_ = get_namespace_and_device(
+            y_true, raw_prediction, sample_weight, xp=xp
+        )
+        y_true = xp.asarray(y_true, dtype=xp.int64, device=device_)
+        y_true_one_hot = y_true[:, None] == xp.arange(
+            raw_prediction.shape[1], device=device_
+        )
+        grad = softmax(raw_prediction) - xp.astype(
+            y_true_one_hot, raw_prediction.dtype, copy=False
+        )
+        if sample_weight is not None:
+            grad *= sample_weight[:, None]
+        return grad
+
+    def loss_gradient_array_api(
+        self, y_true, raw_prediction, sample_weight=None, xp=None
+    ):
+        xp, _, device_ = get_namespace_and_device(
+            y_true, raw_prediction, sample_weight, xp=xp
+        )
+        y_true = xp.asarray(y_true, dtype=xp.int64, device=device_)
+        loss = self.loss_array_api(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+            xp=xp,
+        )
+        gradient = self.gradient_array_api(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+            xp=xp,
+        )
+        return loss, gradient
 
 
 class ExponentialLoss(BaseLoss):
