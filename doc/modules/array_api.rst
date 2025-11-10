@@ -114,7 +114,7 @@ Estimators
 
 - :class:`decomposition.PCA` (with `svd_solver="full"`, `svd_solver="covariance_eigh"`, or
   `svd_solver="randomized"` (`svd_solver="randomized"` only if `power_iteration_normalizer="QR"`))
-- :class:`linear_model.LogisticRegression` (with `solver="lbfgs"`, see :ref:`support_for_logistic_regression`)
+- :class:`linear_model.LogisticRegression` (with `solver="lbfgs"`)
 - :class:`linear_model.Ridge` (with `solver="svd"`)
 - :class:`linear_model.RidgeCV` (with `solver="svd"`, see :ref:`device_support_for_float64`)
 - :class:`linear_model.RidgeClassifier` (with `solver="svd"`)
@@ -355,14 +355,3 @@ certain combinations of array namespaces and devices, such as `PyTorch on MPS`
 scikit-learn will revert to using the `float32` data type instead. This can result in
 different behavior (typically numerically unstable results) compared to not using array
 API dispatching or using a device with `float64` support.
-
-.. _support_for_logistic_regression:
-
-Note on support for `LogisticRegression`
-----------------------------------------
-
-The array API support for :class:`linear_model.LogisticRegression` with
-`solver="lbfgs"` is not yet optimal due to several conversions between the
-array API namespace and NumPy. These conversions are needed to ensure
-compatibility with the internal loss module, which is currently only implemented
-in Cython.
