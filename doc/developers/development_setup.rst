@@ -344,10 +344,6 @@ environment to automatically run code style checks before each commit:
   pip install pre-commit
   pre-commit install
 
-This automatically formats your code to standards used in this project when
-you make a commit. If any changes are applied, you need to review them and commit again.
-
-
 .. _install_from_source:
 
 Install editable version of scikit-learn
