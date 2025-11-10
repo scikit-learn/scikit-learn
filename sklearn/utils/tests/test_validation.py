@@ -2450,7 +2450,7 @@ def test_check_feature_names_public():
 
     # Test with different feature names (should raise ValueError)
     X_df2 = pd.DataFrame({"c": [1, 2], "d": [3, 4]})
-    with pytest.raises(ValueError, match="Feature names should match"):
+    with pytest.raises(ValueError, match="The feature names should match"):
         check_feature_names(estimator, X_df2, reset=False)
 
 
