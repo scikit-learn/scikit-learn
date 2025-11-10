@@ -767,7 +767,7 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold, xp=None):
             )
             y.eliminate_zeros()
         else:
-            y = xp.asarray(y.toarray() > threshold, dtype=dtype_, device=device_)
+            y = xp.asarray(y.toarray() > threshold, dtype=int_dtype_, device=device_)
     else:
         y = xp.asarray(
             xp.asarray(y, dtype=dtype_, device=device_) > threshold,
