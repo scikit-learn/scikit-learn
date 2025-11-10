@@ -114,12 +114,13 @@ def test_get_namespace_array_api(monkeypatch):
 @pytest.mark.parametrize(
     "array_input, reference",
     [
-        pytest.param([("cupy", None), ("torch", "cuda")], id="cupy to torch cuda"),
-        pytest.param([("torch", "mps"), ("numpy", None)], id="torch mps to numpy"),
-        pytest.param([("numpy", None), ("torch", "cuda")], id="numpy to torch cuda"),
-        pytest.param([("numpy", None), ("torch", "mps")], id="numpy to torch mps"),
+        pytest.param(("cupy", None), ("torch", "cuda"), id="cupy to torch cuda"),
+        pytest.param(("torch", "mps"), ("numpy", None), id="torch mps to numpy"),
+        pytest.param(("numpy", None), ("torch", "cuda"), id="numpy to torch cuda"),
+        pytest.param(("numpy", None), ("torch", "mps"), id="numpy to torch mps"),
         pytest.param(
-            [("array_api_strict", None), ("torch", "mps")],
+            ("array_api_strict", None),
+            ("torch", "mps"),
             id="array_api_strict to torch mps",
         ),
     ],
