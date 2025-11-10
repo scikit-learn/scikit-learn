@@ -130,7 +130,7 @@ the required packages.
             conda create -n sklearn-dev -c conda-forge ^
               python numpy scipy cython meson-python ninja ^
               pytest pytest-cov ruff==0.11.2 mypy numpydoc ^
-              joblib threadpoolctl
+              joblib threadpoolctl pre-commit
 
           Activate the newly created conda environment:
 
@@ -168,7 +168,7 @@ the required packages.
 
             pip install wheel numpy scipy cython meson-python ninja ^
               pytest pytest-cov ruff==0.11.2 mypy numpydoc ^
-              joblib threadpoolctl
+              joblib threadpoolctl pre-commit
 
 
     .. tab-item:: MacOS
@@ -200,7 +200,7 @@ the required packages.
             conda create -n sklearn-dev -c conda-forge python \
               numpy scipy cython meson-python ninja \
               pytest pytest-cov ruff==0.11.2 mypy numpydoc \
-              joblib threadpoolctl compilers llvm-openmp
+              joblib threadpoolctl compilers llvm-openmp pre-commit
 
           and activate the newly created conda environment:
 
@@ -245,7 +245,7 @@ the required packages.
 
             pip install wheel numpy scipy cython meson-python ninja \
               pytest pytest-cov ruff==0.11.2 mypy numpydoc \
-              joblib threadpoolctl
+              joblib threadpoolctl pre-commit
 
     .. tab-item:: Linux
       :class-label: tab-4
@@ -268,7 +268,7 @@ the required packages.
             conda create -n sklearn-dev -c conda-forge python \
               numpy scipy cython meson-python ninja \
               pytest pytest-cov ruff==0.11.2 mypy numpydoc \
-              joblib threadpoolctl compilers
+              joblib threadpoolctl compilers pre-commit
 
           and activate the newly created environment:
 
@@ -328,7 +328,7 @@ the required packages.
 
             pip install wheel numpy scipy cython meson-python ninja \
               pytest pytest-cov ruff==0.11.2 mypy numpydoc \
-              joblib threadpoolctl
+              joblib threadpoolctl pre-commit
 
 
 .. _pre_commit:
@@ -336,12 +336,11 @@ the required packages.
 Set up pre-commit
 ^^^^^^^^^^^^^^^^^
 
-Additionally, install `pre-commit <https://pre-commit.com/#install>`__ with `pip` in your
-environment to automatically run code style checks before each commit:
+Additionally, install the `pre-commit hooks<https://pre-commit.com>`__ to automatically
+run code style checks before each commit:
 
 .. prompt::
 
-  pip install pre-commit
   pre-commit install
 
 .. _install_from_source:
