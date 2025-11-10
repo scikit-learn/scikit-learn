@@ -150,6 +150,7 @@ Metrics
 - :func:`sklearn.metrics.accuracy_score`
 - :func:`sklearn.metrics.balanced_accuracy_score`
 - :func:`sklearn.metrics.brier_score_loss`
+- :func:`sklearn.metrics.cluster.calinski_harabasz_score`
 - :func:`sklearn.metrics.cohen_kappa_score`
 - :func:`sklearn.metrics.confusion_matrix`
 - :func:`sklearn.metrics.d2_brier_score`

@@ -203,7 +203,7 @@ def _preprocess_data(
         else:
             y_offset = xp.zeros(y.shape[1], dtype=dtype_, device=device_)
 
-    # XXX: X_scale is no longer needed. It is an historic artifact from the
+    # X_scale is no longer needed. It is a historic artifact from the
     # time where linear model exposed the normalize parameter.
     X_scale = xp.ones(n_features, dtype=X.dtype, device=device_)
 

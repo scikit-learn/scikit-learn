@@ -1323,6 +1323,12 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         multi_class = _check_multi_class(multi_class, solver, self.classes_.shape[0])
 
         if solver == "liblinear":
+            if np.max(X) > 1e30:
+                raise ValueError(
+                    "Using the 'liblinear' solver while X contains a maximum "
+                    "value > 1e30 results in a frozen fit. Please choose another "
+                    "solver or rescale the input X."
+                )
             if len(self.classes_) > 2:
                 warnings.warn(
                     "Using the 'liblinear' solver for multiclass classification is "
