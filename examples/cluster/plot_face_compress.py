@@ -19,12 +19,9 @@ to perform vector quantization on a set of toy image, the raccoon face.
 # to store the image.
 #
 # Note that depending of the SciPy version, we have to adapt the import since the
-# function returning the image is not located in the same module. Also, SciPy >= 1.10
+# function returning the image is not located in the same module. Also, SciPy
 # requires the package `pooch` to be installed.
-try:  # Scipy >= 1.10
-    from scipy.datasets import face
-except ImportError:
-    from scipy.misc import face
+from scipy.datasets import face
 
 raccoon_face = face(gray=True)
 
