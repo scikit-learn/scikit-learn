@@ -32,6 +32,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
 from sklearn.utils._tags import get_tags
+from sklearn.utils.deprecation import deprecated
 from sklearn.utils.fixes import (
     ComplexWarning,
     _object_dtype_isnan,
@@ -2675,7 +2676,7 @@ def _to_object_array(sequence):
     return out
 
 
-def _check_feature_names(estimator, X, *, reset):
+def check_feature_names(estimator, X, *, reset):
     """Set or check the `feature_names_in_` attribute of an estimator.
 
     .. versionadded:: 1.0
@@ -2774,7 +2775,7 @@ def _check_feature_names(estimator, X, *, reset):
         raise ValueError(message)
 
 
-def _check_n_features(estimator, X, reset):
+def check_n_features(estimator, X, reset):
     """Set the `n_features_in_` attribute, or check against it on an estimator.
 
     .. note::
@@ -2783,7 +2784,7 @@ def _check_n_features(estimator, X, reset):
 
     .. versionchanged:: 1.6
         Moved from :class:`~sklearn.base.BaseEstimator` to
-        :mod:`~sklearn.utils.validation`.
+        :mod:`~sklearn.utils.validation` and made public.
 
     Parameters
     ----------
@@ -2833,6 +2834,35 @@ def _check_n_features(estimator, X, reset):
             f"X has {n_features} features, but {estimator.__class__.__name__} "
             f"is expecting {estimator.n_features_in_} features as input."
         )
+
+
+# Deprecated aliases for backward compatibility
+@deprecated(
+    "_check_feature_names is deprecated in version 1.7 and will be removed in "
+    "version 1.9. Use check_feature_names instead."
+)
+def _check_feature_names(estimator, X, *, reset):
+    """Deprecated alias for check_feature_names.
+
+    .. deprecated:: 1.7
+        `_check_feature_names` is deprecated in version 1.7 and will be removed
+        in version 1.9. Use :func:`check_feature_names` instead.
+    """
+    return check_feature_names(estimator, X, reset=reset)
+
+
+@deprecated(
+    "_check_n_features is deprecated in version 1.7 and will be removed in "
+    "version 1.9. Use check_n_features instead."
+)
+def _check_n_features(estimator, X, reset):
+    """Deprecated alias for check_n_features.
+
+    .. deprecated:: 1.7
+        `_check_n_features` is deprecated in version 1.7 and will be removed
+        in version 1.9. Use :func:`check_n_features` instead.
+    """
+    return check_n_features(estimator, X, reset)
 
 
 def validate_data(
@@ -2919,7 +2949,7 @@ def validate_data(
         The validated input. A tuple is returned if both `X` and `y` are
         validated.
     """
-    _check_feature_names(_estimator, X, reset=reset)
+    check_feature_names(_estimator, X, reset=reset)
     tags = get_tags(_estimator)
     if y is None and tags.target_tags.required:
         raise ValueError(
@@ -2965,6 +2995,6 @@ def validate_data(
         out = X, y
 
     if not no_val_X and check_params.get("ensure_2d", True):
-        _check_n_features(_estimator, X, reset=reset)
+        check_n_features(_estimator, X, reset=reset)
 
     return out

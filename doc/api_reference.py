@@ -1191,6 +1191,8 @@ API_REFERENCE = {
                     "check_X_y",
                     "check_array",
                     "check_consistent_length",
+                    "check_feature_names",
+                    "check_n_features",
                     "check_random_state",
                     "check_scalar",
                     "validation.check_is_fitted",

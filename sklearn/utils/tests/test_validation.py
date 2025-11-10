@@ -2426,3 +2426,106 @@ def test_check_array_on_sparse_inputs_with_array_api_enabled():
 def test_check_array_allow_nd_errors(X, estimator, expected_error_message):
     with pytest.raises(ValueError, match=expected_error_message):
         check_array(X, estimator=estimator)
+
+
+def test_check_feature_names_public():
+    """Test the public check_feature_names function."""
+    import pandas as pd
+
+    from sklearn.utils.validation import check_feature_names
+
+    class DummyEstimator:
+        pass
+
+    estimator = DummyEstimator()
+
+    # Test with pandas DataFrame - setting feature names
+    X_df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+    check_feature_names(estimator, X_df, reset=True)
+    assert hasattr(estimator, "feature_names_in_")
+    assert list(estimator.feature_names_in_) == ["a", "b"]
+
+    # Test checking feature names with same names (should not warn)
+    check_feature_names(estimator, X_df, reset=False)
+
+    # Test with different feature names (should warn)
+    X_df2 = pd.DataFrame({"c": [1, 2], "d": [3, 4]})
+    with pytest.warns(UserWarning):
+        check_feature_names(estimator, X_df2, reset=False)
+
+
+def test_check_n_features_public():
+    """Test the public check_n_features function."""
+    import numpy as np
+
+    from sklearn.utils.validation import check_n_features
+
+    class DummyEstimator:
+        pass
+
+    estimator = DummyEstimator()
+    X = np.array([[1, 2], [3, 4]])
+
+    # Test setting n_features_in_
+    check_n_features(estimator, X, reset=True)
+    assert hasattr(estimator, "n_features_in_")
+    assert estimator.n_features_in_ == 2
+
+    # Test checking n_features with correct number
+    check_n_features(estimator, X, reset=False)
+
+    # Test with different number of features (should raise)
+    X_wrong = np.array([[1, 2, 3], [4, 5, 6]])
+    with pytest.raises(ValueError, match=r"X has 3 features.*expecting 2 features"):
+        check_n_features(estimator, X_wrong, reset=False)
+
+
+def test_check_feature_names_deprecated():
+    """Test that _check_feature_names is deprecated."""
+    import pandas as pd
+
+    from sklearn.utils.validation import _check_feature_names
+
+    class DummyEstimator:
+        pass
+
+    estimator = DummyEstimator()
+    X_df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+
+    # Test that using the private name raises a deprecation warning
+    with pytest.warns(FutureWarning, match="_check_feature_names is deprecated"):
+        _check_feature_names(estimator, X_df, reset=True)
+
+    # Verify it still works correctly
+    assert hasattr(estimator, "feature_names_in_")
+    assert list(estimator.feature_names_in_) == ["a", "b"]
+
+
+def test_check_n_features_deprecated():
+    """Test that _check_n_features is deprecated."""
+    import numpy as np
+
+    from sklearn.utils.validation import _check_n_features
+
+    class DummyEstimator:
+        pass
+
+    estimator = DummyEstimator()
+    X = np.array([[1, 2], [3, 4]])
+
+    # Test that using the private name raises a deprecation warning
+    with pytest.warns(FutureWarning, match="_check_n_features is deprecated"):
+        _check_n_features(estimator, X, reset=True)
+
+    # Verify it still works correctly
+    assert hasattr(estimator, "n_features_in_")
+    assert estimator.n_features_in_ == 2
+
+
+def test_public_functions_exported():
+    """Test that the new public functions are properly exported."""
+    from sklearn.utils import check_feature_names, check_n_features
+
+    # Simply importing should work without errors
+    assert callable(check_feature_names)
+    assert callable(check_n_features)
