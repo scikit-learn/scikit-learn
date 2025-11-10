@@ -281,9 +281,9 @@ The next steps describe the process of modifying code and submitting a PR:
    .. note::
 
      If :ref:`pre-commit <pre_commit>` detects any issues, your commit will not be
-     executed and you will be notified. Some fixes will be automatically performed
+     performed and you will be notified. Some fixes will be applied automatically
      by pre-commit (e.g., whitespace clean up) while others will require you to
-     manually fix them. Pre-commit will specify where the lint error is and which 
+     manually fix them. Pre-commit will specify where the lint error is and which
      lint rule was broken.
      Please review any changes before adding and committing the changed files again.
      Repeat this step until there are no more requested changes and the commit was
