@@ -2448,9 +2448,9 @@ def test_check_feature_names_public():
     # Test checking feature names with same names (should not warn)
     check_feature_names(estimator, X_df, reset=False)
 
-    # Test with different feature names (should warn)
+    # Test with different feature names (should raise ValueError)
     X_df2 = pd.DataFrame({"c": [1, 2], "d": [3, 4]})
-    with pytest.warns(UserWarning):
+    with pytest.raises(ValueError, match="Feature names should match"):
         check_feature_names(estimator, X_df2, reset=False)
 
 
