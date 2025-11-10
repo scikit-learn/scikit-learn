@@ -331,18 +331,6 @@ the required packages.
               joblib threadpoolctl pre-commit
 
 
-.. _pre_commit:
-
-Set up pre-commit
-^^^^^^^^^^^^^^^^^
-
-Additionally, install the `pre-commit hooks <https://pre-commit.com>`__ to automatically
-run code style checks before each commit:
-
-.. prompt::
-
-  pre-commit install
-
 .. _install_from_source:
 
 Install editable version of scikit-learn
@@ -389,6 +377,18 @@ related to you contribution:
 
 For more information on testing, see also the :ref:`pr_checklist`
 and :ref:`pytest_tips`.
+
+.. _pre_commit:
+
+Set up pre-commit
+^^^^^^^^^^^^^^^^^
+
+Additionally, install the `pre-commit hooks <https://pre-commit.com>`__, which will
+automatically check your code before each commit in the :ref:`development_workflow`:
+
+.. prompt::
+
+  pre-commit install
 
 .. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
 .. _meson-python: https://mesonbuild.com/meson-python
