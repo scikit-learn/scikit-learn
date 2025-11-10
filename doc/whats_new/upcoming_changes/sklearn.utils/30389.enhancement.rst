@@ -1,1 +1,6 @@
- :func:`utils.check_feature_names` and :func:`utils.check_n_features` are now public functions (previously ``_check_feature_names`` and ``_check_n_features``). These functions are useful for custom estimators to validate feature counts and feature names consistently with scikit-learn's conventions. The old private names are deprecated and will be removed in version 1.9. By :user:`Fazeel Usmani <FazeelUsmani>`.
+- :func:`utils.check_feature_names` and :func:`utils.check_n_features` are now
+  public functions (previously ``_check_feature_names`` and ``_check_n_features``).
+  These functions are useful for custom estimators to validate feature counts
+  and feature names consistently with scikit-learn's conventions. The old private
+  names are deprecated and will be removed in version 1.9.
+  By :user:`Fazeel Usmani <FazeelUsmani>`.
