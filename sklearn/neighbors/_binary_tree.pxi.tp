@@ -253,15 +253,18 @@ metric : str or DistanceMetric64 object, default='minkowski'
     Metric to use for distance computation. Default is "minkowski", which
     results in the standard Euclidean distance when p = 2.
     A list of valid metrics for {BinaryTree} is given by the attribute
-    `valid_metrics`.
-    See the documentation of `scipy.spatial.distance
-    <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
-    the metrics listed in :class:`~sklearn.metrics.pairwise.distance_metrics` for
-    more information on any distance metric.
+    `valid_metrics`. See the documentation of `scipy.spatial.distance
+    <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ for
+    more information on any distance metric. Note that the actual valid metrics 
+    for each algorithm can be found using the `valid_metrics` attribute (e.g., 
+    `KDTree.valid_metrics` or `BallTree.valid_metrics`), as different algorithms 
+    support different sets of metrics.
 
 Additional keywords are passed to the distance metric class.
-Note: Callable functions in the metric parameter are NOT supported for KDTree
-and Ball Tree. Function call overhead will result in very poor performance.
+
+.. note::
+    Callable functions in the metric parameter are NOT supported for KDTree
+    and Ball Tree. Function call overhead will result in very poor performance.
 
 Attributes
 ----------
