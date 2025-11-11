@@ -459,7 +459,7 @@ class SpectralBiclustering(BaseSpectral):
     See Also
     --------
     SpectralCoclustering : Clusters rows and columns of an array `X` to solve the
-    relaxed normalized cut of the bipartite graph created from `X`.
+        relaxed normalized cut of the bipartite graph created from `X`.
 
     References
     ----------
