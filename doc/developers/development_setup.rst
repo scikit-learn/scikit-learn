@@ -384,7 +384,8 @@ Set up pre-commit
 ^^^^^^^^^^^^^^^^^
 
 Additionally, install the `pre-commit hooks <https://pre-commit.com>`__, which will
-automatically check your code before each commit in the :ref:`development_workflow`:
+automatically check your code for linting problems before each commit in the
+:ref:`development_workflow`:
 
 .. prompt::
 
