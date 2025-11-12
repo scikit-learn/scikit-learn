@@ -3012,3 +3012,23 @@ def test_absolute_error_accurately_predicts_weighted_median(global_random_seed):
     weighted_median = _weighted_percentile(data, weights, 50, average=True)
 
     assert_allclose(tree_leaf_weighted_median, weighted_median)
+
+
+def test_splitting_with_missing_values():
+    # Non regression test for https://github.com/scikit-learn/scikit-learn/issues/32178
+    X = (
+        np.vstack([[0, 0, 0, 0, 1, 2, 3, 4], [1, 2, 1, 2, 1, 2, 1, 2]])
+        .swapaxes(0, 1)
+        .astype(float)
+    )
+    y = [0, 0, 0, 0, 1, 1, 1, 1]
+    X[X == 0] = np.nan
+
+    # The important thing here is that we try several trees, where each one tries
+    # one of the two features first. The resulting tree should be the same in all
+    # cases. The way to control which feature is tried first is `random_state`.
+    # Twenty trees is a good guess for how many we need to try to make sure we get
+    # both orders of features at least once.
+    for i in range(20):
+        tree = DecisionTreeRegressor(max_depth=1, random_state=i).fit(X, y)
+        assert_array_equal(tree.tree_.impurity, np.array([0.25, 0.0, 0.0]))

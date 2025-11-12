@@ -64,6 +64,7 @@ from sklearn.metrics.pairwise import (
     cosine_distances,
     cosine_similarity,
     euclidean_distances,
+    laplacian_kernel,
     linear_kernel,
     manhattan_distances,
     paired_cosine_distances,
@@ -211,7 +212,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
     returned by the precision_recall_curve do not match. See
     func:`sklearn.metrics.precision_recall_curve`
 
-    This prevents implicit conversion of return value triple to an higher
+    This prevents implicit conversion of return value triple to a higher
     dimensional np.array of dtype('float64') (it will be of dtype('object)
     instead). This again is needed for assert_array_equal to work correctly.
 
@@ -2052,6 +2053,7 @@ def check_array_api_multiclass_classification_metric(
     additional_params = {
         "average": ("micro", "macro", "weighted"),
         "beta": (0.2, 0.5, 0.8),
+        "adjusted": (False, True),
     }
     metric_kwargs_combinations = _get_metric_kwargs_for_array_api_testing(
         metric=metric,
@@ -2249,10 +2251,19 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
+    balanced_accuracy_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+    ],
+    cohen_kappa_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+    ],
     confusion_matrix: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
     ],
+    det_curve: [check_array_api_binary_classification_metric],
     f1_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
@@ -2343,6 +2354,7 @@ array_api_metric_checkers = {
     euclidean_distances: [check_array_api_metric_pairwise],
     manhattan_distances: [check_array_api_metric_pairwise],
     linear_kernel: [check_array_api_metric_pairwise],
+    laplacian_kernel: [check_array_api_metric_pairwise],
     polynomial_kernel: [check_array_api_metric_pairwise],
     rbf_kernel: [check_array_api_metric_pairwise],
     root_mean_squared_error: [

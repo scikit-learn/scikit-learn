@@ -209,7 +209,7 @@ then submit a "pull request" (PR).
 
 To get started, you need to
 
-#. :ref:`install_bleeding_edge`
+#. :ref:`setup_development_environment`
 #. Find an issue to work on (see :ref:`new_contributors`)
 #. Follow the :ref:`development_workflow`
 #. Make sure, you noted the :ref:`pr_checklist`
@@ -610,7 +610,7 @@ using the following guidelines:
 Issues for New Contributors
 ---------------------------
 
-New contributors should look for the following tags when looking for issues.  We
+New contributors should look for the following tags when looking for issues. We
 strongly recommend that new contributors tackle "easy" issues first: this helps
 the contributor become familiar with the contribution workflow, and for the core
 devs to become acquainted with the contributor; besides which, we frequently
@@ -643,7 +643,15 @@ underestimate how easy an issue is to solve!
   found `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_.
   Note that not all issues which need contributors will have this tag.
 
+- **Do not open PRs for issues with 'Needs Triage' tag**
 
+  The `Needs Triage
+  <https://github.com/scikit-learn/scikit-learn/labels/needs%20triage>`_ label means
+  that the issue is not yet confirmed or fully understood. It signals to scikit-learn
+  members to clarify the problem, discuss scope, and decide on the next steps. You are
+  welcome to join the discussion, but as per our `Code of Conduct
+  <https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md>`_ please
+  wait before submitting a PR.
 
 Video resources
 ---------------
@@ -948,7 +956,7 @@ Building the documentation
 **Before submitting a pull request check if your modifications have introduced
 new sphinx warnings by building the documentation locally and try to fix them.**
 
-First, make sure you have :ref:`properly installed <install_bleeding_edge>` the
+First, make sure you have :ref:`properly installed <setup_development_environment>` the
 development version. On top of that, building the documentation requires installing some
 additional packages:
 

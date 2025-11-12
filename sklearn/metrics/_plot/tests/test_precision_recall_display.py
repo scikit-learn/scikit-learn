@@ -238,7 +238,7 @@ def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_meth
     # check that we can provide the positive label and display the proper
     # statistics
     X, y = load_breast_cancer(return_X_y=True)
-    # create an highly imbalanced version of the breast cancer dataset
+    # create a highly imbalanced version of the breast cancer dataset
     idx_positive = np.flatnonzero(y == 1)
     idx_negative = np.flatnonzero(y == 0)
     idx_selected = np.hstack([idx_negative, idx_positive[:25]])
