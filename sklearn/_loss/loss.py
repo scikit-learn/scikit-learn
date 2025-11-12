@@ -1211,6 +1211,7 @@ class HalfMultinomialLoss(BaseLoss):
         # methods to store certain intermediate values in order to avoid
         # having to recompute them repeatedly.
         self.class_margins = None
+        self.y_true_int = None
         self.y_true_one_hot = None
 
     def in_y_true_range(self, y):
@@ -1323,12 +1324,16 @@ class HalfMultinomialLoss(BaseLoss):
             y_true, raw_prediction, sample_weight, xp=xp
         )
         log_sum_exp = _logsumexp(raw_prediction, axis=1, xp=xp)
-        y_true = xp.asarray(y_true, dtype=xp.int64, device=device_)
+        if self.y_true_int is None:
+            self.y_true_int = xp.asarray(y_true, dtype=xp.int64, device=device_)
+
         if self.class_margins is None:
             self.class_margins = (
                 xp.arange(y_true.shape[0], device=device_) * raw_prediction.shape[1]
             )
-        label_predictions = xp.take(_ravel(raw_prediction), y_true + self.class_margins)
+        label_predictions = xp.take(
+            _ravel(raw_prediction), self.y_true_int + self.class_margins
+        )
         loss = log_sum_exp - label_predictions
         if sample_weight is not None:
             loss *= sample_weight
@@ -1338,9 +1343,11 @@ class HalfMultinomialLoss(BaseLoss):
         xp, _, device_ = get_namespace_and_device(
             y_true, raw_prediction, sample_weight, xp=xp
         )
-        y_true = xp.asarray(y_true, dtype=xp.int64, device=device_)
         if self.y_true_one_hot is None:
-            self.y_true_one_hot = y_true[:, None] == xp.arange(
+            if self.y_true_int is None:
+                self.y_true_int = xp.asarray(y_true, dtype=xp.int64, device=device_)
+
+            self.y_true_one_hot = self.y_true_int[:, None] == xp.arange(
                 raw_prediction.shape[1], device=device_
             )
             self.y_true_one_hot = xp.astype(
@@ -1354,10 +1361,6 @@ class HalfMultinomialLoss(BaseLoss):
     def loss_gradient_array_api(
         self, y_true, raw_prediction, sample_weight=None, xp=None
     ):
-        xp, _, device_ = get_namespace_and_device(
-            y_true, raw_prediction, sample_weight, xp=xp
-        )
-        y_true = xp.asarray(y_true, dtype=xp.int64, device=device_)
         loss = self.loss_array_api(
             y_true=y_true,
             raw_prediction=raw_prediction,
