@@ -212,7 +212,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         shuffle=True,
         random_state=None,
     ):
-        # --- existing public params ---
         self.categories = categories
         self.smooth = smooth
         self.target_type = target_type
