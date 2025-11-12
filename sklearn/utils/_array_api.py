@@ -1071,11 +1071,7 @@ def _logsumexp(array, axis=None, xp=None):
     i_max_dt = xp.astype(index_max, array.dtype)
     m = xp.sum(i_max_dt, axis=axis, keepdims=True, dtype=array.dtype)
     # Specifying device explicitly is the fix for https://github.com/scipy/scipy/issues/22680
-    shift = xp.where(
-        xp.isfinite(array_max),
-        array_max,
-        xp.asarray(0, dtype=array_max.dtype, device=device),
-    )
+    shift = xp.where(xp.isfinite(array_max), array_max, 0)
     exp = xp.exp(array - shift)
     s = xp.sum(exp, axis=axis, keepdims=True, dtype=exp.dtype)
     s = xp.where(s == 0, s, s / m)
