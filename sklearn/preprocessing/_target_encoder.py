@@ -408,7 +408,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     def transform(self, X):
         """Encode X using the learned target encodings.
-        
+
         This method internally uses the `encodings_` attribute learnt during
         :meth:`TargetEncoder.fit_transform` to transform test data.
 
