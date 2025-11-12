@@ -1082,39 +1082,76 @@ class HalfBinomialLoss(BaseLoss):
 
     def loss_array_api(self, y_true, raw_prediction, sample_weight=None, xp=None):
         xp, _ = get_namespace(y_true, raw_prediction, sample_weight, xp=xp)
-        loss = xp.log1p(xp.exp(raw_prediction)) - y_true * raw_prediction
-        if sample_weight is not None:
-            loss *= sample_weight
-        return loss
+        return self._compute_loss_array_api(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            raw_prediction_exp=xp.exp(raw_prediction),
+            sample_weight=sample_weight,
+            xp=xp,
+        )
 
     def gradient_array_api(self, y_true, raw_prediction, sample_weight=None, xp=None):
         xp, _ = get_namespace(y_true, raw_prediction, sample_weight, xp=xp)
-        grad = xp.where(
-            raw_prediction > -37,
-            ((1 - y_true) - y_true * xp.exp(-raw_prediction))
-            / (1 + xp.exp(-raw_prediction)),
-            xp.exp(raw_prediction) - y_true,
+        return self._compute_gradient_array_api(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            raw_prediction_exp=xp.exp(raw_prediction),
+            sample_weight=sample_weight,
+            xp=xp,
         )
-        if sample_weight is not None:
-            grad *= sample_weight
-        return grad
 
     def loss_gradient_array_api(
         self, y_true, raw_prediction, sample_weight=None, xp=None
     ):
-        loss = self.loss_array_api(
+        xp, _ = get_namespace(y_true, raw_prediction, sample_weight, xp=xp)
+        raw_prediction_exp = xp.exp(raw_prediction)
+        loss = self._compute_loss_array_api(
             y_true=y_true,
             raw_prediction=raw_prediction,
+            raw_prediction_exp=raw_prediction_exp,
             sample_weight=sample_weight,
             xp=xp,
         )
-        gradient = self.gradient_array_api(
+        gradient = self._compute_gradient_array_api(
             y_true=y_true,
             raw_prediction=raw_prediction,
+            raw_prediction_exp=raw_prediction_exp,
             sample_weight=sample_weight,
             xp=xp,
         )
         return loss, gradient
+
+    def _compute_loss_array_api(
+        self,
+        y_true,
+        raw_prediction,
+        raw_prediction_exp,
+        sample_weight=None,
+        xp=None,
+    ):
+        loss = xp.log1p(raw_prediction_exp) - y_true * raw_prediction
+        if sample_weight is not None:
+            loss *= sample_weight
+        return loss
+
+    def _compute_gradient_array_api(
+        self,
+        y_true,
+        raw_prediction,
+        raw_prediction_exp,
+        sample_weight=None,
+        xp=None,
+    ):
+        neg_raw_prediction_exp = xp.exp(-raw_prediction)
+        grad = xp.where(
+            raw_prediction > -37,
+            ((1 - y_true) - y_true * neg_raw_prediction_exp)
+            / (1 + neg_raw_prediction_exp),
+            raw_prediction_exp,
+        )
+        if sample_weight is not None:
+            grad *= sample_weight
+        return grad
 
 
 class HalfMultinomialLoss(BaseLoss):
@@ -1170,6 +1207,11 @@ class HalfMultinomialLoss(BaseLoss):
         )
         self.interval_y_true = Interval(0, np.inf, True, False)
         self.interval_y_pred = Interval(0, 1, False, False)
+        # These instance variables are specifically used for the array API
+        # methods to store certain intermediate values in order to avoid
+        # having to recompute them repeatedly.
+        self.class_margins = None
+        self.y_true_one_hot = None
 
     def in_y_true_range(self, y):
         """Return True if y is in the valid range of y_true.
@@ -1282,10 +1324,11 @@ class HalfMultinomialLoss(BaseLoss):
         )
         log_sum_exp = _logsumexp(raw_prediction, axis=1, xp=xp)
         y_true = xp.asarray(y_true, dtype=xp.int64, device=device_)
-        class_margins = (
-            xp.arange(y_true.shape[0], device=device_) * raw_prediction.shape[1]
-        )
-        label_predictions = xp.take(_ravel(raw_prediction), y_true + class_margins)
+        if self.class_margins is None:
+            self.class_margins = (
+                xp.arange(y_true.shape[0], device=device_) * raw_prediction.shape[1]
+            )
+        label_predictions = xp.take(_ravel(raw_prediction), y_true + self.class_margins)
         loss = log_sum_exp - label_predictions
         if sample_weight is not None:
             loss *= sample_weight
@@ -1296,12 +1339,14 @@ class HalfMultinomialLoss(BaseLoss):
             y_true, raw_prediction, sample_weight, xp=xp
         )
         y_true = xp.asarray(y_true, dtype=xp.int64, device=device_)
-        y_true_one_hot = y_true[:, None] == xp.arange(
-            raw_prediction.shape[1], device=device_
-        )
-        grad = softmax(raw_prediction) - xp.astype(
-            y_true_one_hot, raw_prediction.dtype, copy=False
-        )
+        if self.y_true_one_hot is None:
+            self.y_true_one_hot = y_true[:, None] == xp.arange(
+                raw_prediction.shape[1], device=device_
+            )
+            self.y_true_one_hot = xp.astype(
+                self.y_true_one_hot, raw_prediction.dtype, copy=False
+            )
+        grad = softmax(raw_prediction) - self.y_true_one_hot
         if sample_weight is not None:
             grad *= sample_weight[:, None]
         return grad

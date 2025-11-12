@@ -1372,8 +1372,8 @@ def test_tweedie_log_identity_consistency(p):
 
 
 @pytest.mark.parametrize(
-    "loss_instance",
-    [HalfBinomialLoss(), HalfMultinomialLoss()],
+    "loss_class",
+    [HalfBinomialLoss, HalfMultinomialLoss],
     ids=["HalfBinomialLoss", "HalfMultinomialLoss"],
 )
 @pytest.mark.parametrize(
@@ -1386,7 +1386,7 @@ def test_tweedie_log_identity_consistency(p):
     ids=_get_namespace_device_dtype_ids,
 )
 def test_loss_array_api(
-    loss_instance, method_name, use_sample_weight, namespace, device_, dtype_name
+    loss_class, method_name, use_sample_weight, namespace, device_, dtype_name
 ):
     def _assert_array_api_result(result_xp, result_np, raw_prediction_xp, xp, atol):
         assert_allclose(_convert_to_numpy(result_xp, xp=xp), result_np, atol=atol)
@@ -1397,6 +1397,7 @@ def test_loss_array_api(
     atol = _atol_for_type(dtype_name)
     random_seed = 42
     n_samples = 100
+    loss_instance = loss_class()
     y_true, raw_prediction = random_y_true_raw_prediction(
         loss=loss_instance,
         n_samples=n_samples,
@@ -1415,6 +1416,7 @@ def test_loss_array_api(
     else:
         sample_weight_np = None
         sample_weight_xp = None
+
     method = getattr(loss_instance, method_name)
     if method_name == "__call__":
         array_api_method = getattr(loss_instance, method_name)
