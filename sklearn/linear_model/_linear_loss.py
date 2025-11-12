@@ -11,6 +11,7 @@ from scipy import sparse
 from sklearn.utils._array_api import (
     _convert_to_numpy,
     _is_numpy_namespace,
+    get_namespace,
     get_namespace_and_device,
 )
 from sklearn.utils.extmath import safe_sparse_dot, squared_norm
@@ -324,7 +325,7 @@ class LinearModelLoss:
         else:
             weights, intercept = self.weight_intercept(coef)
 
-        xp, _, device_ = get_namespace_and_device(X, y, sample_weight)
+        xp, _ = get_namespace(X, y, sample_weight)
         if _is_numpy_namespace(xp):
             loss, grad_pointwise = self.base_loss.loss_gradient(
                 y_true=y,
