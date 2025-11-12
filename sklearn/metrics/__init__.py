@@ -37,6 +37,7 @@ from sklearn.metrics._plot.roc_curve import RocCurveDisplay
 from sklearn.metrics._ranking import (
     auc,
     average_precision_score,
+    confusion_matrix_at_thresholds,
     coverage_error,
     dcg_score,
     det_curve,
@@ -124,6 +125,7 @@ __all__ = [
     "cohen_kappa_score",
     "completeness_score",
     "confusion_matrix",
+    "confusion_matrix_at_thresholds",
     "consensus_score",
     "coverage_error",
     "d2_absolute_error_score",

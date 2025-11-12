@@ -406,7 +406,11 @@ def type_of_target(y, input_name="", raise_unknown=False):
     if xp.isdtype(y.dtype, "real floating"):
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
         data = y.data if issparse(y) else y
-        if xp.any(data != xp.astype(data, int)):
+        integral_data = xp.astype(data, xp.int64)
+        # conversion back to the original float dtype of y is required to
+        # satisfy array-api-strict which does not allow a comparison between
+        # arrays having different dtypes.
+        if xp.any(data != xp.astype(integral_data, y.dtype)):
             _assert_all_finite(data, input_name=input_name)
             return "continuous" + suffix
 
@@ -519,7 +523,7 @@ def class_distribution(y, sample_weight=None):
             if 0 in classes_k:
                 class_prior_k[classes_k == 0] += zeros_samp_weight_sum
 
-            # If an there is an implicit zero and it is not in classes and
+            # If there is an implicit zero and it is not in classes and
             # class_prior, make an entry for it
             if 0 not in classes_k and y_nnz[k] < y.shape[0]:
                 classes_k = np.insert(classes_k, 0, 0)
