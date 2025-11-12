@@ -1192,7 +1192,7 @@ def roc_curve(
     Returns
     -------
     fpr : ndarray of shape (>2,)
-        Increasing false positive rates such that element i is the false
+        Increasing false positive rates such that element `i` is the false
         positive rate of predictions with score >= `thresholds[i]`.
 
     tpr : ndarray of shape (>2,)
