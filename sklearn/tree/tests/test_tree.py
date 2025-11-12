@@ -823,30 +823,32 @@ def test_min_weight_fraction_leaf_with_min_samples_leaf_on_sparse_input(
     )
 
 
-def test_min_impurity_decrease(global_random_seed):
+@pytest.mark.parametrize(
+    "TreeEstimator, criterion",
+    [
+        *product(REG_TREES.values(), REG_CRITERIONS),
+        *product(CLF_TREES.values(), CLF_CRITERIONS),
+    ],
+)
+def test_min_impurity_decrease(TreeEstimator, criterion, global_random_seed):
     # test if min_impurity_decrease ensure that a split is made only if
     # if the impurity decrease is at least that value
     X, y = datasets.make_classification(n_samples=100, random_state=global_random_seed)
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
     # by setting max_leaf_nodes
-    for max_leaf_nodes, name in product((None, 1000), ALL_TREES.keys()):
-        TreeEstimator = ALL_TREES[name]
-
+    for max_leaf_nodes in [None, 1000]:
+        params = dict(
+            criterion=criterion, max_leaf_nodes=max_leaf_nodes, random_state=0
+        )
         # Check default value of min_impurity_decrease, 1e-7
-        est1 = TreeEstimator(max_leaf_nodes=max_leaf_nodes, random_state=0)
+        est1 = TreeEstimator(**params)
         # Check with explicit value of 0.05
-        est2 = TreeEstimator(
-            max_leaf_nodes=max_leaf_nodes, min_impurity_decrease=0.05, random_state=0
-        )
+        est2 = TreeEstimator(**params, min_impurity_decrease=0.05)
         # Check with a much lower value of 0.0001
-        est3 = TreeEstimator(
-            max_leaf_nodes=max_leaf_nodes, min_impurity_decrease=0.0001, random_state=0
-        )
+        est3 = TreeEstimator(**params, min_impurity_decrease=0.0001)
         # Check with a much lower value of 0.1
-        est4 = TreeEstimator(
-            max_leaf_nodes=max_leaf_nodes, min_impurity_decrease=0.1, random_state=0
-        )
+        est4 = TreeEstimator(**params, min_impurity_decrease=0.1)
 
         for est, expected_decrease in (
             (est1, 1e-7),
