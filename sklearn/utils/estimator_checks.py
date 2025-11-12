@@ -1643,10 +1643,16 @@ def check_sample_weights_not_overwritten(name, estimator_orig):
 def check_dtype_object(name, estimator_orig):
     # check that estimators treat dtype object as numeric if possible
     rng = np.random.RandomState(0)
-    X = _enforce_estimator_tags_X(estimator_orig, rng.uniform(size=(40, 10)))
+    n_classes = 4
+    n_samples_per_class = 14
+    n_samples_total = n_classes * n_samples_per_class
+    X = _enforce_estimator_tags_X(
+        estimator_orig, rng.uniform(size=(n_samples_total, 10))
+    )
     X = X.astype(object)
     tags = get_tags(estimator_orig)
-    y = (X[:, 0] * 4).astype(int)
+    y = np.repeat(np.arange(n_classes), n_samples_per_class)
+    y = rng.permutation(y)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -4453,14 +4459,14 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     if "warm_start" in estimator.get_params():
         estimator.set_params(warm_start=False)
 
-    n_samples = 10
+    n_samples = 15
     X = rng.normal(size=(n_samples, 4))
     X = _enforce_estimator_tags_X(estimator, X)
 
     if is_regressor(estimator):
         y = rng.normal(size=n_samples)
     else:
-        y = rng.randint(low=0, high=2, size=n_samples)
+        y = rng.permutation(np.repeat(np.arange(3), 5))
     y = _enforce_estimator_tags_y(estimator, y)
 
     err_msg = (
@@ -4956,7 +4962,7 @@ def check_param_validation(name, estimator_orig):
                     f"{name} does not raise an informative error message when the "
                     f"parameter {param_name} does not have a valid value.\n"
                     "Constraints should be disjoint. For instance "
-                    "[StrOptions({'a_string'}), str] is not a acceptable set of "
+                    "[StrOptions({'a_string'}), str] is not an acceptable set of "
                     "constraint because generating an invalid string for the first "
                     "constraint will always produce a valid string for the second "
                     "constraint."
