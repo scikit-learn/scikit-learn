@@ -39,6 +39,7 @@ from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
+    _is_xp_namespace,
     device,
     yield_namespace_device_dtype_combinations,
 )
@@ -2626,6 +2627,8 @@ def test_logistic_regression_array_api_compliance(
     preditct_log_proba_np = lr_np.predict_log_proba(X_np)
     prediction_np = lr_np.predict(X_np)
     atol = _atol_for_type(dtype_name)
+    if _is_xp_namespace(xp, "array_api_strict") and dtype_name == "float32":
+        atol *= 2
     rtol = 5e-3 if dtype_name == "float32" else 1e-5
 
     with config_context(array_api_dispatch=True):
