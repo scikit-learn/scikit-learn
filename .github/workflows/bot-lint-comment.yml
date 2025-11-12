@@ -23,7 +23,7 @@ jobs:
         run: mkdir -p "$ARTIFACTS_DIR"
 
       - name: Download artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: lint-log
           path: ${{ runner.temp }}/artifacts
