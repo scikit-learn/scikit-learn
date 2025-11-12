@@ -8,7 +8,7 @@ channels:
 dependencies:
   - python
   - numpy
-  - blas
+  - blas[build=mkl]
   - scipy
   - cython
   - joblib
@@ -22,7 +22,7 @@ dependencies:
   - pip
   - ninja
   - meson-python
-  - pytest-cov
+  - pytest-cov<=6.3.0
   - coverage
   - ccache
   - pytorch-gpu

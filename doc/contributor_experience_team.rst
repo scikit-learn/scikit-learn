@@ -14,10 +14,6 @@
     <p>Juan Carlos Alfaro Jiménez</p>
     </div>
     <div>
-    <a href='https://github.com/lucyleeow'><img src='https://avatars.githubusercontent.com/u/23182829?v=4' class='avatar' /></a> <br />
-    <p>Lucy Liu</p>
-    </div>
-    <div>
     <a href='https://github.com/MaxwellLZH'><img src='https://avatars.githubusercontent.com/u/16646940?v=4' class='avatar' /></a> <br />
     <p>Maxwell Liu</p>
     </div>
@@ -26,16 +22,16 @@
     <p>Juan Martin Loyola</p>
     </div>
     <div>
+    <a href='https://github.com/DeaMariaLeon'><img src='https://avatars.githubusercontent.com/u/11835246?v=4' class='avatar' /></a> <br />
+    <p>Dea María Léon</p>
+    </div>
+    <div>
     <a href='https://github.com/smarie'><img src='https://avatars.githubusercontent.com/u/3236794?v=4' class='avatar' /></a> <br />
     <p>Sylvain Marié</p>
     </div>
     <div>
     <a href='https://github.com/norbusan'><img src='https://avatars.githubusercontent.com/u/1735589?v=4' class='avatar' /></a> <br />
     <p>Norbert Preining</p>
-    </div>
-    <div>
-    <a href='https://github.com/StefanieSenger'><img src='https://avatars.githubusercontent.com/u/91849487?v=4' class='avatar' /></a> <br />
-    <p>Stefanie Senger</p>
     </div>
     <div>
     <a href='https://github.com/reshamas'><img src='https://avatars.githubusercontent.com/u/2507232?v=4' class='avatar' /></a> <br />

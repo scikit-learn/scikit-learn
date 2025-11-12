@@ -1,0 +1,5 @@
+- :func:`metrics.pairwise.pairwise_kernels` for any kernel except
+  "laplacian" and
+  :func:`metrics.pairwise_distances` for metrics "cosine",
+  "euclidean" and "l2" now support array API inputs.
+  By :user:`Emily Chen <EmilyXinyi>` and :user:`Lucy Liu <lucyleeow>`

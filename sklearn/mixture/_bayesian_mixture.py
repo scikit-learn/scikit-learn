@@ -9,10 +9,8 @@ from numbers import Real
 import numpy as np
 from scipy.special import betaln, digamma, gammaln
 
-from ..utils import check_array
-from ..utils._param_validation import Interval, StrOptions
-from ._base import BaseMixture, _check_shape
-from ._gaussian_mixture import (
+from sklearn.mixture._base import BaseMixture, _check_shape
+from sklearn.mixture._gaussian_mixture import (
     _check_precision_matrix,
     _check_precision_positivity,
     _compute_log_det_cholesky,
@@ -20,6 +18,8 @@ from ._gaussian_mixture import (
     _estimate_gaussian_parameters,
     _estimate_log_gaussian_prob,
 )
+from sklearn.utils import check_array
+from sklearn.utils._param_validation import Interval, StrOptions
 
 
 def _log_dirichlet_norm(dirichlet_concentration):
@@ -230,7 +230,7 @@ class BayesianGaussianMixture(BaseMixture):
             (n_components, n_features, n_features) if 'full'
 
     precisions_cholesky_ : array-like
-        The cholesky decomposition of the precision matrices of each mixture
+        The Cholesky decomposition of the precision matrices of each mixture
         component. A precision matrix is the inverse of a covariance matrix.
         A covariance matrix is symmetric positive definite so the mixture of
         Gaussian can be equivalently parameterized by the precision matrices.
@@ -329,7 +329,7 @@ class BayesianGaussianMixture(BaseMixture):
     .. [2] `Hagai Attias. (2000). "A Variational Bayesian Framework for
        Graphical Models". In Advances in Neural Information Processing
        Systems 12.
-       <https://citeseerx.ist.psu.edu/doc_view/pid/ee844fd96db7041a9681b5a18bff008912052c7e>`_
+       <https://proceedings.neurips.cc/paper_files/paper/1999/file/74563ba21a90da13dacf2a73e3ddefa7-Paper.pdf>`_
 
     .. [3] `Blei, David M. and Michael I. Jordan. (2006). "Variational
        inference for Dirichlet process mixtures". Bayesian analysis 1.1
@@ -410,7 +410,7 @@ class BayesianGaussianMixture(BaseMixture):
         self.degrees_of_freedom_prior = degrees_of_freedom_prior
         self.covariance_prior = covariance_prior
 
-    def _check_parameters(self, X):
+    def _check_parameters(self, X, xp=None):
         """Check that the parameters are well defined.
 
         Parameters
@@ -722,7 +722,7 @@ class BayesianGaussianMixture(BaseMixture):
         # Contrary to the original bishop book, we normalize the covariances
         self.covariances_ /= self.degrees_of_freedom_
 
-    def _m_step(self, X, log_resp):
+    def _m_step(self, X, log_resp, xp=None):
         """M step.
 
         Parameters
@@ -742,7 +742,7 @@ class BayesianGaussianMixture(BaseMixture):
         self._estimate_means(nk, xk)
         self._estimate_precisions(nk, xk, sk)
 
-    def _estimate_log_weights(self):
+    def _estimate_log_weights(self, xp=None):
         if self.weight_concentration_prior_type == "dirichlet_process":
             digamma_sum = digamma(
                 self.weight_concentration_[0] + self.weight_concentration_[1]
@@ -760,7 +760,7 @@ class BayesianGaussianMixture(BaseMixture):
                 np.sum(self.weight_concentration_)
             )
 
-    def _estimate_log_prob(self, X):
+    def _estimate_log_prob(self, X, xp=None):
         _, n_features = X.shape
         # We remove `n_features * np.log(self.degrees_of_freedom_)` because
         # the precision matrix is normalized
@@ -847,7 +847,7 @@ class BayesianGaussianMixture(BaseMixture):
             self.precisions_cholesky_,
         )
 
-    def _set_parameters(self, params):
+    def _set_parameters(self, params, xp=None):
         (
             self.weight_concentration_,
             self.mean_precision_,

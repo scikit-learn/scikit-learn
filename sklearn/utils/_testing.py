@@ -37,7 +37,7 @@ from numpy.testing import (
     assert_array_less,
 )
 
-import sklearn
+from sklearn import __file__ as sklearn_path
 from sklearn.utils import (
     ClassifierTags,
     RegressorTags,
@@ -52,11 +52,7 @@ from sklearn.utils.fixes import (
     _in_unstable_openblas_configuration,
 )
 from sklearn.utils.multiclass import check_classification_targets
-from sklearn.utils.validation import (
-    check_array,
-    check_is_fitted,
-    check_X_y,
-)
+from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 
 __all__ = [
     "SkipTest",
@@ -927,7 +923,7 @@ def assert_run_python_script_without_output(source_code, pattern=".+", timeout=6
         with open(source_file, "wb") as f:
             f.write(source_code.encode("utf-8"))
         cmd = [sys.executable, source_file]
-        cwd = op.normpath(op.join(op.dirname(sklearn.__file__), ".."))
+        cwd = op.normpath(op.join(op.dirname(sklearn_path), ".."))
         env = os.environ.copy()
         try:
             env["PYTHONPATH"] = os.pathsep.join([cwd, env["PYTHONPATH"]])
@@ -980,12 +976,12 @@ def _convert_container(
     container : array-like
         The container to convert.
     constructor_name : {"list", "tuple", "array", "sparse", "dataframe", \
-            "series", "index", "slice", "sparse_csr", "sparse_csc", \
+            "pandas", "series", "index", "slice", "sparse_csr", "sparse_csc", \
             "sparse_csr_array", "sparse_csc_array", "pyarrow", "polars", \
             "polars_series"}
         The type of the returned container.
     columns_name : index or array-like, default=None
-        For pandas container supporting `columns_names`, it will affect
+        For pandas/polars container supporting `columns_names`, it will affect
         specific names.
     dtype : dtype, default=None
         Force the dtype of the container. Does not apply to `"slice"`
@@ -1343,6 +1339,17 @@ def _array_api_for_tests(array_namespace, device):
                 "MPS is not available because the current PyTorch install was not "
                 "built with MPS enabled."
             )
+    elif array_namespace == "torch" and device == "xpu":  # pragma: nocover
+        if not hasattr(xp, "xpu"):
+            # skip xpu testing for PyTorch <2.4
+            raise SkipTest(
+                "XPU is not available because the current PyTorch install was not "
+                "built with XPU support."
+            )
+        if not xp.xpu.is_available():
+            raise SkipTest(
+                "Skipping XPU device test because no XPU device is available"
+            )
     elif array_namespace == "cupy":  # pragma: nocover
         import cupy
 
@@ -1432,6 +1439,12 @@ def _get_warnings_filters_info_list():
             "ignore",
             message=".+scattermapbox.+deprecated.+scattermap.+instead",
             category=DeprecationWarning,
+        ),
+        # TODO(1.10): remove PassiveAgressive
+        WarningInfo(
+            "ignore",
+            message="Class PassiveAggressive.+is deprecated",
+            category=FutureWarning,
         ),
     ]
 

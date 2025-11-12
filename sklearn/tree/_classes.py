@@ -15,9 +15,7 @@ from numbers import Integral, Real
 import numpy as np
 from scipy.sparse import issparse
 
-from sklearn.utils import metadata_routing
-
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     MultiOutputMixin,
@@ -26,10 +24,26 @@ from ..base import (
     clone,
     is_classifier,
 )
-from ..utils import Bunch, check_random_state, compute_sample_weight
-from ..utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import (
+from sklearn.tree import _criterion, _splitter, _tree
+from sklearn.tree._criterion import Criterion
+from sklearn.tree._splitter import Splitter
+from sklearn.tree._tree import (
+    BestFirstTreeBuilder,
+    DepthFirstTreeBuilder,
+    Tree,
+    _build_pruned_tree_ccp,
+    ccp_pruning_path,
+)
+from sklearn.tree._utils import _any_isnan_axis0
+from sklearn.utils import (
+    Bunch,
+    check_random_state,
+    compute_sample_weight,
+    metadata_routing,
+)
+from sklearn.utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.validation import (
     _assert_all_finite_element_wise,
     _check_n_features,
     _check_sample_weight,
@@ -37,17 +51,6 @@ from ..utils.validation import (
     check_is_fitted,
     validate_data,
 )
-from . import _criterion, _splitter, _tree
-from ._criterion import Criterion
-from ._splitter import Splitter
-from ._tree import (
-    BestFirstTreeBuilder,
-    DepthFirstTreeBuilder,
-    Tree,
-    _build_pruned_tree_ccp,
-    ccp_pruning_path,
-)
-from ._utils import _any_isnan_axis0
 
 __all__ = [
     "DecisionTreeClassifier",
@@ -1096,8 +1099,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # XXX: nan is only support for dense arrays, but we set this for common test to
-        # pass, specifically: check_estimators_nan_inf
+        # XXX: nan is only supported for dense arrays, but we set this for
+        # common test to pass, specifically: check_estimators_nan_inf
         allow_nan = self.splitter in ("best", "random") and self.criterion in {
             "gini",
             "log_loss",
@@ -1439,8 +1442,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # XXX: nan is only support for dense arrays, but we set this for common test to
-        # pass, specifically: check_estimators_nan_inf
+        # XXX: nan is only supported for dense arrays, but we set this for
+        # common test to pass, specifically: check_estimators_nan_inf
         allow_nan = self.splitter in ("best", "random") and self.criterion in {
             "squared_error",
             "friedman_mse",

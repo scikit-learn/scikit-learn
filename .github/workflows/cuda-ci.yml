@@ -15,17 +15,17 @@ jobs:
     runs-on: "ubuntu-latest"
     name: Build wheel for Pull Request
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@faf86a6ed7efa889faf6996aa23820831055001a
+        uses: pypa/cibuildwheel@9c00cb4f6b517705a3794b22395aedc36257242c # v3.2.1
         env:
           CIBW_BUILD: cp313-manylinux_x86_64
-          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_BUILD_VERBOSITY: 1
           CIBW_ARCHS: x86_64
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: cibw-wheels
           path: ./wheelhouse/*.whl
@@ -40,32 +40,25 @@ jobs:
     timeout-minutes: 20
     name: Run Array API unit tests
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           pattern: cibw-wheels
           path: ~/dist
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           # XXX: The 3.12.4 release of Python on GitHub Actions is corrupted:
           # https://github.com/actions/setup-python/issues/886
           python-version: '3.12.3'
       - name: Checkout main repository
-        uses: actions/checkout@v4
-      - name: Cache conda environment
-        id: cache-conda
-        uses: actions/cache@v4
-        with:
-          path: ~/conda
-          key: ${{ runner.os }}-build-${{ hashFiles('build_tools/github/create_gpu_environment.sh') }}-${{ hashFiles('build_tools/github/pylatest_conda_forge_cuda_array-api_linux-64_conda.lock') }}
+        uses: actions/checkout@v5
       - name: Install miniforge
-        if: ${{ steps.cache-conda.outputs.cache-hit != 'true' }}
         run: bash build_tools/github/create_gpu_environment.sh
       - name: Install scikit-learn
         run: |
           source "${HOME}/conda/etc/profile.d/conda.sh"
           conda activate sklearn
-          pip install ~/dist/cibw-wheels/$(ls ~/dist/cibw-wheels)
+          pip install ~/dist/$(ls ~/dist)
 
       - name: Run array API tests
         run: |

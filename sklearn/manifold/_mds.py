@@ -11,13 +11,19 @@ from numbers import Integral, Real
 import numpy as np
 from joblib import effective_n_jobs
 
-from ..base import BaseEstimator, _fit_context
-from ..isotonic import IsotonicRegression
-from ..metrics import euclidean_distances
-from ..utils import check_array, check_random_state, check_symmetric
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import validate_data
+from sklearn.base import BaseEstimator, _fit_context
+from sklearn.isotonic import IsotonicRegression
+from sklearn.manifold import ClassicalMDS
+from sklearn.metrics import euclidean_distances, pairwise_distances
+from sklearn.utils import check_array, check_random_state, check_symmetric
+from sklearn.utils._param_validation import (
+    Hidden,
+    Interval,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import validate_data
 
 
 def _smacof_single(
@@ -178,7 +184,7 @@ def _smacof_single(
             sum_squared_distances = (distances.ravel() ** 2).sum()
             if ((old_stress - stress) / (sum_squared_distances / 2)) < eps:
                 if verbose:  # pragma: no cover
-                    print("Convergence criterion reached.")
+                    print(f"Convergence criterion reached (iteration {it}).")
                 break
         old_stress = stress
 
@@ -428,6 +434,9 @@ def smacof(
 
 
 # TODO(1.9): change default `n_init` to 1, see PR #31117
+# TODO(1.10): change default `init` to "classical_mds", see PR #32229
+# TODO(1.10): drop support for boolean `metric`, see PR #32229
+# TODO(1.10): drop support for `dissimilarity`, see PR #32229
 class MDS(BaseEstimator):
     """Multidimensional scaling.
 
@@ -438,10 +447,13 @@ class MDS(BaseEstimator):
     n_components : int, default=2
         Number of dimensions in which to immerse the dissimilarities.
 
-    metric : bool, default=True
+    metric_mds : bool, default=True
         If ``True``, perform metric MDS; otherwise, perform nonmetric MDS.
         When ``False`` (i.e. non-metric MDS), dissimilarities with 0 are considered as
         missing values.
+
+        .. versionchanged:: 1.8
+           The parameter `metric` was renamed into `metric_mds`.
 
     n_init : int, default=4
         Number of times the SMACOF algorithm will be run with different
@@ -450,6 +462,16 @@ class MDS(BaseEstimator):
 
         .. versionchanged:: 1.9
            The default value for `n_init` will change from 4 to 1 in version 1.9.
+
+    init : {'random', 'classical_mds'}, default='random'
+        The initialization approach. If `random`, random initialization is used.
+        If `classical_mds`, then classical MDS is run and used as initialization
+        for MDS (in this case, the value of `n_init` is ignored).
+
+        .. versionadded:: 1.8
+
+        .. versionchanged:: 1.10
+           The default value for `init` will change to `classical_mds`.
 
     max_iter : int, default=300
         Maximum number of iterations of the SMACOF algorithm for a single run.
@@ -479,7 +501,7 @@ class MDS(BaseEstimator):
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    dissimilarity : {'euclidean', 'precomputed'}, default='euclidean'
+    dissimilarity : {'euclidean', 'precomputed'}
         Dissimilarity measure to use:
 
         - 'euclidean':
@@ -488,6 +510,34 @@ class MDS(BaseEstimator):
         - 'precomputed':
             Pre-computed dissimilarities are passed directly to ``fit`` and
             ``fit_transform``.
+
+        .. deprecated:: 1.8
+           `dissimilarity` was renamed `metric` in 1.8 and will be removed in 1.10.
+
+    metric : str or callable, default='euclidean'
+        Metric to use for dissimilarity computation. Default is "euclidean".
+
+        If metric is a string, it must be one of the options allowed by
+        `scipy.spatial.distance.pdist` for its metric parameter, or a metric
+        listed in :func:`sklearn.metrics.pairwise.distance_metrics`
+
+        If metric is "precomputed", X is assumed to be a distance matrix and
+        must be square during fit.
+
+        If metric is a callable function, it takes two arrays representing 1D
+        vectors as inputs and must return one value indicating the distance
+        between those vectors. This works for Scipy's metrics, but is less
+        efficient than passing the metric name as a string.
+
+        .. versionchanged:: 1.8
+           Prior to 1.8, `metric=True/False` was used to select metric/non-metric
+           MDS, which is now the role of `metric_mds`.  The support for ``True``
+           and ``False`` will be dropped in version 1.10, use `metric_mds` instead.
+
+    metric_params : dict, default=None
+        Additional keyword arguments for the dissimilarity computation.
+
+        .. versionadded:: 1.8
 
     normalized_stress : bool or "auto" default="auto"
         Whether to return normalized stress value (Stress-1) instead of raw
@@ -565,7 +615,7 @@ class MDS(BaseEstimator):
     >>> X, _ = load_digits(return_X_y=True)
     >>> X.shape
     (1797, 64)
-    >>> embedding = MDS(n_components=2, n_init=1)
+    >>> embedding = MDS(n_components=2, n_init=1, init="random")
     >>> X_transformed = embedding.fit_transform(X[:100])
     >>> X_transformed.shape
     (100, 2)
@@ -579,14 +629,23 @@ class MDS(BaseEstimator):
 
     _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
-        "metric": ["boolean"],
-        "n_init": [Interval(Integral, 1, None, closed="left"), StrOptions({"warn"})],
+        "metric_mds": ["boolean"],
+        "n_init": [
+            Interval(Integral, 1, None, closed="left"),
+            Hidden(StrOptions({"warn"})),
+        ],
+        "init": [StrOptions({"random", "classical_mds"}), Hidden(StrOptions({"warn"}))],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "verbose": ["verbose"],
         "eps": [Interval(Real, 0.0, None, closed="left")],
         "n_jobs": [None, Integral],
         "random_state": ["random_state"],
-        "dissimilarity": [StrOptions({"euclidean", "precomputed"})],
+        "dissimilarity": [
+            StrOptions({"euclidean", "precomputed"}),
+            Hidden(StrOptions({"deprecated"})),
+        ],
+        "metric": [str, callable, Hidden("boolean")],
+        "metric_params": [dict, None],
         "normalized_stress": ["boolean", StrOptions({"auto"})],
     }
 
@@ -594,20 +653,26 @@ class MDS(BaseEstimator):
         self,
         n_components=2,
         *,
-        metric=True,
+        metric_mds=True,
         n_init="warn",
+        init="warn",
         max_iter=300,
         verbose=0,
         eps=1e-6,
         n_jobs=None,
         random_state=None,
-        dissimilarity="euclidean",
+        dissimilarity="deprecated",
+        metric="euclidean",
+        metric_params=None,
         normalized_stress="auto",
     ):
         self.n_components = n_components
         self.dissimilarity = dissimilarity
         self.metric = metric
+        self.metric_params = metric_params
+        self.metric_mds = metric_mds
         self.n_init = n_init
+        self.init = init
         self.max_iter = max_iter
         self.eps = eps
         self.verbose = verbose
@@ -617,7 +682,9 @@ class MDS(BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.pairwise = self.dissimilarity == "precomputed"
+        tags.input_tags.pairwise = (self.dissimilarity == "precomputed") | (
+            self.metric == "precomputed"
+        )
         return tags
 
     def fit(self, X, y=None, init=None):
@@ -628,7 +695,7 @@ class MDS(BaseEstimator):
         ----------
         X : array-like of shape (n_samples, n_features) or \
                 (n_samples, n_samples)
-            Input data. If ``dissimilarity=='precomputed'``, the input should
+            Input data. If ``metric=='precomputed'``, the input should
             be the dissimilarity matrix.
 
         y : Ignored
@@ -656,7 +723,7 @@ class MDS(BaseEstimator):
         ----------
         X : array-like of shape (n_samples, n_features) or \
                 (n_samples, n_samples)
-            Input data. If ``dissimilarity=='precomputed'``, the input should
+            Input data. If ``metric=='precomputed'``, the input should
             be the dissimilarity matrix.
 
         y : Ignored
@@ -675,32 +742,87 @@ class MDS(BaseEstimator):
 
         if self.n_init == "warn":
             warnings.warn(
-                "The default value of `n_init` will change from 4 to 1 in 1.9.",
+                "The default value of `n_init` will change from 4 to 1 in 1.9. "
+                "To suppress this warning, provide some value of `n_init`.",
                 FutureWarning,
             )
             self._n_init = 4
         else:
             self._n_init = self.n_init
 
-        X = validate_data(self, X)
-        if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
+        if self.init == "warn":
             warnings.warn(
-                "The MDS API has changed. ``fit`` now constructs a"
-                " dissimilarity matrix from data. To use a custom "
-                "dissimilarity matrix, set "
-                "``dissimilarity='precomputed'``."
+                "The default value of `init` will change from 'random' to "
+                "'classical_mds' in 1.10. To suppress this warning, provide "
+                "some value of `init`.",
+                FutureWarning,
+            )
+            self._init = "random"
+        else:
+            self._init = self.init
+
+        if self.dissimilarity != "deprecated":
+            if not isinstance(self.metric, bool) and self.metric != "euclidean":
+                raise ValueError(
+                    "You provided both `dissimilarity` and `metric`. Please use "
+                    "only `metric`."
+                )
+            else:
+                warnings.warn(
+                    "The `dissimilarity` parameter is deprecated and will be "
+                    "removed in 1.10. Use `metric` instead.",
+                    FutureWarning,
+                )
+                self._metric = self.dissimilarity
+
+        if isinstance(self.metric, bool):
+            warnings.warn(
+                f"Use metric_mds={self.metric} instead of metric={self.metric}. The "
+                "support for metric={True/False} will be dropped in 1.10.",
+                FutureWarning,
+            )
+            if self.dissimilarity == "deprecated":
+                self._metric = "euclidean"
+            self._metric_mds = self.metric
+        else:
+            if self.dissimilarity == "deprecated":
+                self._metric = self.metric
+            self._metric_mds = self.metric_mds
+
+        X = validate_data(self, X)
+        if X.shape[0] == X.shape[1] and self._metric != "precomputed":
+            warnings.warn(
+                "The provided input is a square matrix. Note that ``fit`` constructs "
+                "a dissimilarity matrix from data and will treat rows as samples "
+                "and columns as features. To use a pre-computed dissimilarity matrix, "
+                "set ``metric='precomputed'``."
             )
 
-        if self.dissimilarity == "precomputed":
+        if self._metric == "precomputed":
             self.dissimilarity_matrix_ = X
-        elif self.dissimilarity == "euclidean":
-            self.dissimilarity_matrix_ = euclidean_distances(X)
+            self.dissimilarity_matrix_ = check_symmetric(
+                self.dissimilarity_matrix_, raise_exception=True
+            )
+        else:
+            self.dissimilarity_matrix_ = pairwise_distances(
+                X,
+                metric=self._metric,
+                **(self.metric_params if self.metric_params is not None else {}),
+            )
+
+        if init is not None:
+            init_array = init
+        elif self._init == "classical_mds":
+            cmds = ClassicalMDS(metric="precomputed")
+            init_array = cmds.fit_transform(self.dissimilarity_matrix_)
+        else:
+            init_array = None
 
         self.embedding_, self.stress_, self.n_iter_ = smacof(
             self.dissimilarity_matrix_,
-            metric=self.metric,
+            metric=self._metric_mds,
             n_components=self.n_components,
-            init=init,
+            init=init_array,
             n_init=self._n_init,
             n_jobs=self.n_jobs,
             max_iter=self.max_iter,

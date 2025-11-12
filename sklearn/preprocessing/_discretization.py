@@ -7,18 +7,18 @@ from numbers import Integral
 
 import numpy as np
 
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils import resample
-from ..utils._param_validation import Interval, Options, StrOptions
-from ..utils.stats import _averaged_weighted_percentile, _weighted_percentile
-from ..utils.validation import (
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.preprocessing._encoders import OneHotEncoder
+from sklearn.utils import resample
+from sklearn.utils._param_validation import Interval, Options, StrOptions
+from sklearn.utils.stats import _weighted_percentile
+from sklearn.utils.validation import (
     _check_feature_names_in,
     _check_sample_weight,
     check_array,
     check_is_fitted,
     validate_data,
 )
-from ._encoders import OneHotEncoder
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):
@@ -179,6 +179,14 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [-0.5,  2.5, -2.5, -0.5],
            [ 0.5,  3.5, -1.5,  0.5],
            [ 0.5,  3.5, -1.5,  1.5]])
+
+    While this preprocessing step can be an optimization, it is important
+    to note the array returned by ``inverse_transform`` will have an internal type
+    of ``np.float64`` or ``np.float32``, denoted by the ``dtype`` input argument.
+    This can drastically increase the memory usage of the array. See the
+    :ref:`sphx_glr_auto_examples_cluster_plot_face_compress.py`
+    where `KBinsDescretizer` is used to cluster the image into bins and increases
+    the size of the image by 8x.
     """
 
     _parameter_constraints: dict = {
@@ -357,23 +365,14 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         dtype=np.float64,
                     )
                 else:
-                    # TODO: make _weighted_percentile and
-                    # _averaged_weighted_percentile accept an array of
-                    # quantiles instead of calling it multiple times and
-                    # sorting the column multiple times as a result.
-                    percentile_func = {
-                        "inverted_cdf": _weighted_percentile,
-                        "averaged_inverted_cdf": _averaged_weighted_percentile,
-                    }[quantile_method]
-                    bin_edges[jj] = np.asarray(
-                        [
-                            percentile_func(column, sample_weight, percentile_rank=p)
-                            for p in percentile_levels
-                        ],
-                        dtype=np.float64,
+                    average = (
+                        True if quantile_method == "averaged_inverted_cdf" else False
+                    )
+                    bin_edges[jj] = _weighted_percentile(
+                        column, sample_weight, percentile_levels, average=average
                     )
             elif self.strategy == "kmeans":
-                from ..cluster import KMeans  # fixes import loops
+                from sklearn.cluster import KMeans  # fixes import loops
 
                 # Deterministic initialization with uniform spacing
                 uniform_edges = np.linspace(col_min, col_max, n_bins[jj] + 1)

@@ -8,18 +8,22 @@ from numbers import Integral
 import numpy as np
 from scipy import sparse
 
-from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_context
-from ..utils import _safe_indexing, check_array
-from ..utils._encode import _check_unknown, _encode, _get_counts, _unique
-from ..utils._mask import _get_mask
-from ..utils._missing import is_scalar_nan
-from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils._set_output import _get_output_config
-from ..utils.validation import (
-    _check_feature_names,
+from sklearn.base import (
+    BaseEstimator,
+    OneToOneFeatureMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from sklearn.utils import _safe_indexing, check_array
+from sklearn.utils._encode import _check_unknown, _encode, _get_counts, _unique
+from sklearn.utils._mask import _get_mask
+from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
+from sklearn.utils._set_output import _get_output_config
+from sklearn.utils.validation import (
     _check_feature_names_in,
-    _check_n_features,
     check_is_fitted,
+    validate_data,
 )
 
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
@@ -78,8 +82,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         return_and_ignore_missing_for_infrequent=False,
     ):
         self._check_infrequent_enabled()
-        _check_n_features(self, X, reset=True)
-        _check_feature_names(self, X, reset=True)
+        validate_data(self, X=X, reset=True, skip_check_array=True)
         X_list, n_samples, n_features = self._check_X(
             X, ensure_all_finite=ensure_all_finite
         )
@@ -198,8 +201,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         X_list, n_samples, n_features = self._check_X(
             X, ensure_all_finite=ensure_all_finite
         )
-        _check_feature_names(self, X, reset=False)
-        _check_n_features(self, X, reset=False)
+        validate_data(self, X=X, reset=False, skip_check_array=True)
 
         X_int = np.zeros((n_samples, n_features), dtype=int)
         X_mask = np.ones((n_samples, n_features), dtype=bool)
@@ -629,7 +631,7 @@ class OneHotEncoder(_BaseEncoder):
 
         If infrequent categories are enabled by setting `min_frequency` or
         `max_categories` to a non-default value and `drop_idx[i]` corresponds
-        to a infrequent category, then the entire infrequent category is
+        to an infrequent category, then the entire infrequent category is
         dropped.
 
         .. versionchanged:: 0.23
@@ -1370,13 +1372,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         suitable for high cardinality categorical variables.
     LabelEncoder : Encodes target labels with values between 0 and
         ``n_classes-1``.
-
-    Notes
-    -----
-    With a high proportion of `nan` values, inferring categories becomes slow with
-    Python versions before 3.10. The handling of `nan` values was improved
-    from Python 3.10 onwards, (c.f.
-    `bpo-43475 <https://github.com/python/cpython/issues/87641>`_).
 
     Examples
     --------

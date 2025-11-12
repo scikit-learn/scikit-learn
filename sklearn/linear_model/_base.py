@@ -5,7 +5,6 @@ Generalized Linear Models.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
@@ -16,15 +15,15 @@ from scipy import linalg, optimize, sparse
 from scipy.sparse.linalg import lsqr
 from scipy.special import expit
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     MultiOutputMixin,
     RegressorMixin,
     _fit_context,
 )
-from ..utils import check_array, check_random_state
-from ..utils._array_api import (
+from sklearn.utils import check_array, check_random_state
+from sklearn.utils._array_api import (
     _asarray_with_order,
     _average,
     get_namespace,
@@ -32,17 +31,21 @@ from ..utils._array_api import (
     indexing_dtype,
     supported_float_dtypes,
 )
-from ..utils._param_validation import Interval
-from ..utils._seq_dataset import (
+from sklearn.utils._param_validation import Interval
+from sklearn.utils._seq_dataset import (
     ArrayDataset32,
     ArrayDataset64,
     CSRDataset32,
     CSRDataset64,
 )
-from ..utils.extmath import safe_sparse_dot
-from ..utils.parallel import Parallel, delayed
-from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.sparsefuncs import mean_variance_axis
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
+)
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
 # should be squashed into its respective objects.
@@ -114,12 +117,14 @@ def _preprocess_data(
     copy_y=True,
     sample_weight=None,
     check_input=True,
+    rescale_with_sw=True,
 ):
     """Common data preprocessing for fitting linear models.
 
     This helper is in charge of the following steps:
 
-    - Ensure that `sample_weight` is an array or `None`.
+    - `sample_weight` is assumed to be `None` or a validated array with same dtype as
+      `X`.
     - If `check_input=True`, perform standard input validation of `X`, `y`.
     - Perform copies if requested to avoid side-effects in case of inplace
       modifications of the input.
@@ -138,6 +143,9 @@ def _preprocess_data(
     If `fit_intercept=False`, no centering is performed and `X_offset`, `y_offset`
     are set to zero.
 
+    If `rescale_with_sw` is True, then X and y are rescaled with the square root of
+    sample weights.
+
     Returns
     -------
     X_out : {ndarray, sparse matrix} of shape (n_samples, n_features)
@@ -153,15 +161,12 @@ def _preprocess_data(
     X_scale : ndarray of shape (n_features,)
         Always an array of ones. TODO: refactor the code base to make it
         possible to remove this unused variable.
+    sample_weight_sqrt : ndarray of shape (n_samples, ) or None
+        `np.sqrt(sample_weight)`
     """
     xp, _, device_ = get_namespace_and_device(X, y, sample_weight)
     n_samples, n_features = X.shape
     X_is_sparse = sp.issparse(X)
-
-    if isinstance(sample_weight, numbers.Number):
-        sample_weight = None
-    if sample_weight is not None:
-        sample_weight = xp.asarray(sample_weight)
 
     if check_input:
         X = check_array(
@@ -196,15 +201,19 @@ def _preprocess_data(
         else:
             y_offset = xp.zeros(y.shape[1], dtype=dtype_, device=device_)
 
-    # XXX: X_scale is no longer needed. It is an historic artifact from the
+    # X_scale is no longer needed. It is a historic artifact from the
     # time where linear model exposed the normalize parameter.
     X_scale = xp.ones(n_features, dtype=X.dtype, device=device_)
-    return X, y, X_offset, y_offset, X_scale
 
-
-# TODO: _rescale_data should be factored into _preprocess_data.
-# Currently, the fact that sag implements its own way to deal with
-# sample_weight makes the refactoring tricky.
+    if sample_weight is not None and rescale_with_sw:
+        # Sample weight can be implemented via a simple rescaling.
+        # For sparse X and y, it triggers copies anyway.
+        # For dense X and y that already have been copied, we safely do inplace
+        # rescaling.
+        X, y, sample_weight_sqrt = _rescale_data(X, y, sample_weight, inplace=copy)
+    else:
+        sample_weight_sqrt = None
+    return X, y, X_offset, y_offset, X_scale, sample_weight_sqrt
 
 
 def _rescale_data(X, y, sample_weight, inplace=False):
@@ -223,11 +232,15 @@ def _rescale_data(X, y, sample_weight, inplace=False):
         y_rescaled = sqrt(S) y
         X_rescaled = sqrt(S) X
 
+    The parameter `inplace` only takes effect for dense X and dense y.
+
     Returns
     -------
     X_rescaled : {array-like, sparse matrix}
 
     y_rescaled : {array-like, sparse matrix}
+
+    sample_weight_sqrt : array-like of shape (n_samples,)
     """
     # Assume that _validate_data and _check_sample_weight have been called by
     # the caller.
@@ -297,23 +310,21 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         """
         return self._decision_function(X)
 
-    def _set_intercept(self, X_offset, y_offset, X_scale):
+    def _set_intercept(self, X_offset, y_offset, X_scale=None):
         """Set the intercept_"""
-
         xp, _ = get_namespace(X_offset, y_offset, X_scale)
 
         if self.fit_intercept:
             # We always want coef_.dtype=X.dtype. For instance, X.dtype can differ from
             # coef_.dtype if warm_start=True.
-            coef_ = xp.astype(self.coef_, X_scale.dtype, copy=False)
-            coef_ = self.coef_ = xp.divide(coef_, X_scale)
+            self.coef_ = xp.astype(self.coef_, X_offset.dtype, copy=False)
+            if X_scale is not None:
+                self.coef_ = xp.divide(self.coef_, X_scale)
 
-            if coef_.ndim == 1:
-                intercept_ = y_offset - X_offset @ coef_
+            if self.coef_.ndim == 1:
+                self.intercept_ = y_offset - X_offset @ self.coef_
             else:
-                intercept_ = y_offset - X_offset @ coef_.T
-
-            self.intercept_ = intercept_
+                self.intercept_ = y_offset - X_offset @ self.coef_.T
 
         else:
             self.intercept_ = 0.0
@@ -350,7 +361,8 @@ class LinearClassifierMixin(ClassifierMixin):
         xp, _ = get_namespace(X)
 
         X = validate_data(self, X, accept_sparse="csr", reset=False)
-        scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
+        coef_T = self.coef_.T if self.coef_.ndim == 2 else self.coef_
+        scores = safe_sparse_dot(X, coef_T, dense_output=True) + self.intercept_
         return (
             xp.reshape(scores, (-1,))
             if (scores.ndim > 1 and scores.shape[1] == 1)
@@ -476,7 +488,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     tol : float, default=1e-6
         The precision of the solution (`coef_`) is determined by `tol` which
         specifies a different convergence criterion for the `lsqr` solver.
-        `tol` is set as `atol` and `btol` of `scipy.sparse.linalg.lsqr` when
+        `tol` is set as `atol` and `btol` of :func:`scipy.sparse.linalg.lsqr` when
         fitting on sparse training data. This parameter has no effect when fitting
         on dense data.
 
@@ -543,8 +555,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     Notes
     -----
     From the implementation point of view, this is just plain Ordinary
-    Least Squares (scipy.linalg.lstsq) or Non Negative Least Squares
-    (scipy.optimize.nnls) wrapped as a predictor object.
+    Least Squares (:func:`scipy.linalg.lstsq`) or Non Negative Least Squares
+    (:func:`scipy.optimize.nnls`) wrapped as a predictor object.
 
     Examples
     --------
@@ -636,21 +648,13 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         # sparse matrix. Therefore, let's not copy X when it is sparse.
         copy_X_in_preprocess_data = self.copy_X and not sp.issparse(X)
 
-        X, y, X_offset, y_offset, X_scale = _preprocess_data(
+        X, y, X_offset, y_offset, _, sample_weight_sqrt = _preprocess_data(
             X,
             y,
             fit_intercept=self.fit_intercept,
             copy=copy_X_in_preprocess_data,
             sample_weight=sample_weight,
         )
-
-        if has_sw:
-            # Sample weight can be implemented via a simple rescaling. Note
-            # that we safely do inplace rescaling when _preprocess_data has
-            # already made a copy if requested.
-            X, y, sample_weight_sqrt = _rescale_data(
-                X, y, sample_weight, inplace=copy_X_in_preprocess_data
-            )
 
         if self.positive:
             if y.ndim < 2:
@@ -662,23 +666,21 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
         elif sp.issparse(X):
-            X_offset_scale = X_offset / X_scale
-
             if has_sw:
 
                 def matvec(b):
-                    return X.dot(b) - sample_weight_sqrt * b.dot(X_offset_scale)
+                    return X.dot(b) - sample_weight_sqrt * b.dot(X_offset)
 
                 def rmatvec(b):
-                    return X.T.dot(b) - X_offset_scale * b.dot(sample_weight_sqrt)
+                    return X.T.dot(b) - X_offset * b.dot(sample_weight_sqrt)
 
             else:
 
                 def matvec(b):
-                    return X.dot(b) - b.dot(X_offset_scale)
+                    return X.dot(b) - b.dot(X_offset)
 
                 def rmatvec(b):
-                    return X.T.dot(b) - X_offset_scale * b.sum()
+                    return X.T.dot(b) - X_offset * b.sum()
 
             X_centered = sparse.linalg.LinearOperator(
                 shape=X.shape, matvec=matvec, rmatvec=rmatvec
@@ -703,7 +705,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
         if y.ndim == 1:
             self.coef_ = np.ravel(self.coef_)
-        self._set_intercept(X_offset, y_offset, X_scale)
+        self._set_intercept(X_offset, y_offset)
         return self
 
     def __sklearn_tags__(self):
@@ -783,42 +785,48 @@ def _pre_fit(
     precompute,
     fit_intercept,
     copy,
-    check_input=True,
+    check_gram=True,
     sample_weight=None,
 ):
     """Function used at beginning of fit in linear models with L1 or L0 penalty.
 
     This function applies _preprocess_data and additionally computes the gram matrix
     `precompute` as needed as well as `Xy`.
+
+    It is assumed that X, y and sample_weight are already validated.
+
+    Returns
+    -------
+    X
+    y
+    X_offset
+    y_offset
+    X_scale
+    precompute
+    Xy
     """
     n_samples, n_features = X.shape
 
     if sparse.issparse(X):
         # copy is not needed here as X is not modified inplace when X is sparse
+        copy = False
         precompute = False
-        X, y, X_offset, y_offset, X_scale = _preprocess_data(
-            X,
-            y,
-            fit_intercept=fit_intercept,
-            copy=False,
-            check_input=check_input,
-            sample_weight=sample_weight,
-        )
+        # Rescale X and y only in dense case. Sparse cd solver directly deals with
+        # sample_weight.
+        rescale_with_sw = False
     else:
         # copy was done in fit if necessary
-        X, y, X_offset, y_offset, X_scale = _preprocess_data(
-            X,
-            y,
-            fit_intercept=fit_intercept,
-            copy=copy,
-            check_input=check_input,
-            sample_weight=sample_weight,
-        )
-        # Rescale only in dense case. Sparse cd solver directly deals with
-        # sample_weight.
-        if sample_weight is not None:
-            # This triggers copies anyway.
-            X, y, _ = _rescale_data(X, y, sample_weight=sample_weight)
+        rescale_with_sw = True
+
+    X, y, X_offset, y_offset, X_scale, _ = _preprocess_data(
+        X,
+        y,
+        fit_intercept=fit_intercept,
+        copy=copy,
+        sample_weight=sample_weight,
+        check_input=False,
+        rescale_with_sw=rescale_with_sw,
+    )
 
     if hasattr(precompute, "__array__"):
         if fit_intercept and not np.allclose(X_offset, np.zeros(n_features)):
@@ -835,7 +843,7 @@ def _pre_fit(
             # recompute Gram
             precompute = "auto"
             Xy = None
-        elif check_input:
+        elif check_gram:
             # If we're going to use the user's precomputed gram matrix, we
             # do a quick check to make sure its not totally bogus.
             _check_precomputed_gram_matrix(X, precompute, X_offset, X_scale)
