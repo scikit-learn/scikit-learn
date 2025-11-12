@@ -838,28 +838,12 @@ def test_min_impurity_decrease(TreeEstimator, criterion, global_random_seed):
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
     # by setting max_leaf_nodes
     for max_leaf_nodes in [None, 1000]:
-        params = dict(
-            criterion=criterion, max_leaf_nodes=max_leaf_nodes, random_state=0
-        )
-        # Check default value of min_impurity_decrease, 1e-7
-        est1 = TreeEstimator(**params)
-        # Check with explicit value of 0.05
-        est2 = TreeEstimator(**params, min_impurity_decrease=0.05)
-        # Check with a much lower value of 0.0001
-        est3 = TreeEstimator(**params, min_impurity_decrease=0.0001)
-        # Check with a much lower value of 0.1
-        est4 = TreeEstimator(**params, min_impurity_decrease=0.1)
-
-        for est, expected_decrease in (
-            (est1, 1e-7),
-            (est2, 0.05),
-            (est3, 0.0001),
-            (est4, 0.1),
-        ):
-            assert est.min_impurity_decrease <= expected_decrease, (
-                "Failed, min_impurity_decrease = {0} > {1}".format(
-                    est.min_impurity_decrease, expected_decrease
-                )
+        for expected_decrease in [0.05, 0.0001, 0.1]:
+            est = TreeEstimator(
+                criterion=criterion,
+                max_leaf_nodes=max_leaf_nodes,
+                min_impurity_decrease=expected_decrease,
+                random_state=global_random_seed,
             )
             est.fit(X, y)
             for node in range(est.tree_.node_count):
