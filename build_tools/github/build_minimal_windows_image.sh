@@ -22,6 +22,11 @@ if [[ $FREE_THREADED_BUILD == "False" && "$PLATFORM_ID" != "win_arm64" ]]; then
     # Dot the Python version for identifying the base Docker image
     PYTHON_DOCKER_IMAGE_PART=$(echo ${PYTHON_VERSION:0:1}.${PYTHON_VERSION:1:2})
 
+    # TODO Remove this when Python 3.14 is released and there is a Docker image
+    if [[ "$PYTHON_DOCKER_IMAGE_PART" == "3.14" ]]; then
+        PYTHON_DOCKER_IMAGE_PART="3.14-rc"
+    fi
+
     # We could have all of the following logic in a Dockerfile but it's a lot
     # easier to do it in bash rather than figure out how to do it in Powershell
     # inside the Dockerfile ...
@@ -45,5 +50,5 @@ else
     # TODO When pandas has a release with a Windows free-threaded wheel we can
     # replace the next line with
     # python -m pip install CIBW_TEST_REQUIRES
-    python -m pip install 'pytest<9'
+    python -m pip install pytest
 fi
