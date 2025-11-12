@@ -271,7 +271,7 @@ The next steps describe the process of modifying code and submitting a PR:
 
 #. Develop the feature on your feature branch on your computer, using Git to
    do the version control. When you're done editing, add changed files using
-   ``git add`` and then ``git commit`` to record your changes in Git:
+   ``git add`` and then ``git commit``:
 
    .. prompt:: bash
 
@@ -280,16 +280,11 @@ The next steps describe the process of modifying code and submitting a PR:
 
    .. note::
 
-     If :ref:`pre-commit <pre_commit>` detects any issues, your commit will not be
-     performed and you will be notified. Most fixes will be applied automatically
-     by pre-commit (e.g., whitespace clean up) and you just have to run `git add` and
-     `git commit` again. Only in some cases you will have to fix things manually.
-     Pre-commit will specify where the lint error is and which lint rule was broken.
-     Please review any changes before adding and committing the changed files again.
-     Repeat this step until there are no more requested changes and the commit was
-     successful.
-
-     The pre-commit checks can be disabled for a particular commit with `git commit -n`.
+     :ref:`pre-commit <pre_commit>` may reformat your code automatically when
+     you do `git commit`. When this happens, you need to do `git add` followed
+     by `git commit` again. In some rarer cases, you may need to fix things
+     manually, use the error message to figure out what needs to be changed,
+     and use `git add` followed by `git commit` until the commit is successful.
 
    Then push the changes to your GitHub account with:
 
