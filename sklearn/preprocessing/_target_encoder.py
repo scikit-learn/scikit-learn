@@ -431,12 +431,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                   For binary and continuous targets, one column per input feature is
                   returned. For multiclass targets, one column per (feature, class)
                   pair is returned, with classes ordered as in ``classes_``.
-
-        Notes
-        -----
-        ``fit(X, y).transform(X)`` does not equal ``fit_transform(X, y)`` because
-        :term:`cross fitting` is used in ``fit_transform`` for encoding. See the
-        :ref:`User Guide <target_encoder>` for details.
         """
         check_is_fitted(self)
         # Decide path WITHOUT triggering a full validation first.
