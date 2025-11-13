@@ -159,7 +159,7 @@ class NeighborhoodComponentsAnalysis(
            http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf
 
     .. [2] Wikipedia entry on Neighborhood Components Analysis
-           https://en.wikipedia.org/wiki/Neighbourhood_components_analysis
+           https://www.cs.toronto.edu/~rsalakhu/papers/ncanips.pdf
 
     Examples
     --------
