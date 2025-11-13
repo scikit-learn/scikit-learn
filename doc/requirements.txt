@@ -1,0 +1,13 @@
+For improving the scikit-learn KDTree documentation and contributing to it, here's a matter summary and commands for forking and contributing:
+
+Documentation matters:
+
+Explicitly list the true supported metrics for the metric parameter in KDTree (euclidean, l2, minkowski, p, manhattan, cityblock, l1, chebyshev, infinity).
+
+Correct the formatting of the "Note:" about callable metric functions to proper reStructuredText note or indentation.
+
+For the linked distance_metrics page, group equivalent metrics together (e.g., 'l1', 'cityblock', 'manhattan') for clarity.
+
+Add step-by-step illustrative examples, mathematical references, and descriptive usage notes for better reader intuition.
+
+Maintain clear and consistent documentation style with concise explanations, illustrative figures, and example code snippets.
