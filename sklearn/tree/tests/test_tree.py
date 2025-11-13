@@ -846,39 +846,21 @@ def test_min_impurity_decrease(TreeEstimator, criterion, global_random_seed):
                 random_state=global_random_seed,
             )
             est.fit(X, y)
-            for node in range(est.tree_.node_count):
+            tree = est.tree_
+            weighted_impurity = tree.impurity * tree.n_node_samples / X.shape[0]
+
+            for node in range(tree.node_count):
                 # If current node is a not leaf node, check if the split was
                 # justified w.r.t the min_impurity_decrease
-                if est.tree_.children_left[node] != TREE_LEAF:
-                    imp_parent = est.tree_.impurity[node]
-                    wtd_n_node = est.tree_.weighted_n_node_samples[node]
+                if tree.children_left[node] != TREE_LEAF:
+                    left = tree.children_left[node]
+                    right = tree.children_right[node]
 
-                    left = est.tree_.children_left[node]
-                    wtd_n_left = est.tree_.weighted_n_node_samples[left]
-                    imp_left = est.tree_.impurity[left]
-                    wtd_imp_left = wtd_n_left * imp_left
-
-                    right = est.tree_.children_right[node]
-                    wtd_n_right = est.tree_.weighted_n_node_samples[right]
-                    imp_right = est.tree_.impurity[right]
-                    wtd_imp_right = wtd_n_right * imp_right
-
-                    wtd_avg_left_right_imp = wtd_imp_right + wtd_imp_left
-                    wtd_avg_left_right_imp /= wtd_n_node
-
-                    fractional_node_weight = (
-                        est.tree_.weighted_n_node_samples[node] / X.shape[0]
+                    actual_decrease = weighted_impurity[node] - (
+                        weighted_impurity[left] + weighted_impurity[right]
                     )
 
-                    actual_decrease = fractional_node_weight * (
-                        imp_parent - wtd_avg_left_right_imp
-                    )
-
-                    assert actual_decrease >= expected_decrease, (
-                        "Failed with {0} expected min_impurity_decrease={1}".format(
-                            actual_decrease, expected_decrease
-                        )
-                    )
+                    assert actual_decrease >= expected_decrease
 
 
 def test_pickle():
