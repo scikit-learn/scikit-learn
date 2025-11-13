@@ -692,9 +692,11 @@ def test_sparse_device(csr_container, dispatch):
         raise SkipTest("SCIPY_ARRAY_API is not set: not checking array_api input")
     with config_context(array_api_dispatch=dispatch):
         assert device(a, b) is None
-        assert device(a, numpy.array([1])) is None
+        assert device(a, numpy.array([1])) == ("cpu" if dispatch else None)
         assert get_namespace_and_device(a, b)[2] is None
-        assert get_namespace_and_device(a, numpy.array([1]))[2] is None
+        assert get_namespace_and_device(a, numpy.array([1]))[2] == (
+            "cpu" if dispatch else None
+        )
 
 
 @pytest.mark.parametrize(
