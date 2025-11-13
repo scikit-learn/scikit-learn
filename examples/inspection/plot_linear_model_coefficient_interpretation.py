@@ -393,7 +393,7 @@ plt.xlabel("Experience coefficient")
 plt.grid(True)
 plt.xlim(-0.4, 0.5)
 plt.ylim(-0.4, 0.5)
-plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
+plt.scatter(coefs["EXPERIENCE"], coefs["AGE"])
 _ = plt.title("Co-variations of coefficients for AGE and EXPERIENCE across folds")
 
 # %%
@@ -629,7 +629,7 @@ plt.xlabel("Experience coefficient")
 plt.grid(True)
 plt.xlim(-0.4, 0.5)
 plt.ylim(-0.4, 0.5)
-plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
+plt.scatter(coefs["EXPERIENCE"], coefs["AGE"])
 _ = plt.title("Co-variations of coefficients for AGE and EXPERIENCE across folds")
 
 # %%
