@@ -175,6 +175,8 @@ Reference Steps
         git remote add write git@github.com:scikit-learn/scikit-learn.github.io.git
         # checkout an orphan branch w/o history
         git checkout --orphan temp_branch
+        git add -A
+        git commit -m "Initial commit after purging history"
         git branch -D main
         # rename current branch to main to replace it
         git branch -m main
