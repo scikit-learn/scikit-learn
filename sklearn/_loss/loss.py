@@ -1086,6 +1086,7 @@ class HalfBinomialLoss(BaseLoss):
             y_true=y_true,
             raw_prediction=raw_prediction,
             raw_prediction_exp=xp.exp(raw_prediction),
+            neg_raw_prediction_exp=xp.exp(-raw_prediction),
             sample_weight=sample_weight,
             xp=xp,
         )
@@ -1096,6 +1097,7 @@ class HalfBinomialLoss(BaseLoss):
             y_true=y_true,
             raw_prediction=raw_prediction,
             raw_prediction_exp=xp.exp(raw_prediction),
+            neg_raw_prediction_exp=xp.exp(-raw_prediction),
             sample_weight=sample_weight,
             xp=xp,
         )
@@ -1105,10 +1107,12 @@ class HalfBinomialLoss(BaseLoss):
     ):
         xp, _ = get_namespace(y_true, raw_prediction, sample_weight, xp=xp)
         raw_prediction_exp = xp.exp(raw_prediction)
+        neg_raw_prediction_exp = xp.exp(-raw_prediction)
         loss = self._compute_loss_array_api(
             y_true=y_true,
             raw_prediction=raw_prediction,
             raw_prediction_exp=raw_prediction_exp,
+            neg_raw_prediction_exp=neg_raw_prediction_exp,
             sample_weight=sample_weight,
             xp=xp,
         )
@@ -1116,6 +1120,7 @@ class HalfBinomialLoss(BaseLoss):
             y_true=y_true,
             raw_prediction=raw_prediction,
             raw_prediction_exp=raw_prediction_exp,
+            neg_raw_prediction_exp=neg_raw_prediction_exp,
             sample_weight=sample_weight,
             xp=xp,
         )
@@ -1126,10 +1131,20 @@ class HalfBinomialLoss(BaseLoss):
         y_true,
         raw_prediction,
         raw_prediction_exp,
+        neg_raw_prediction_exp,
         sample_weight=None,
         xp=None,
     ):
-        loss = xp.log1p(raw_prediction_exp) - y_true * raw_prediction
+        log1pexp = xp.where(
+            raw_prediction <= 18,
+            xp.log1p(raw_prediction_exp),
+            xp.where(
+                raw_prediction <= 33.3,
+                raw_prediction + neg_raw_prediction_exp,
+                raw_prediction,
+            ),
+        )
+        loss = log1pexp - y_true * raw_prediction
         if sample_weight is not None:
             loss *= sample_weight
         return loss
@@ -1139,10 +1154,10 @@ class HalfBinomialLoss(BaseLoss):
         y_true,
         raw_prediction,
         raw_prediction_exp,
+        neg_raw_prediction_exp,
         sample_weight=None,
         xp=None,
     ):
-        neg_raw_prediction_exp = xp.exp(-raw_prediction)
         grad = xp.where(
             raw_prediction > -37,
             ((1 - y_true) - y_true * neg_raw_prediction_exp)
