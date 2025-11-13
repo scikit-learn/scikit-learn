@@ -171,13 +171,11 @@ cdef class DensePartitioner:
 
         The missing values are not included when iterating through the feature values.
         """
-        cdef:
-            float32_t[::1] feature_values = self.feature_values
-            intp_t end_non_missing = self.end - self.n_missing
+        cdef intp_t end_non_missing = self.end - self.n_missing
 
         while (
             p[0] + 1 < end_non_missing and
-            feature_values[p[0] + 1] <= feature_values[p[0]] + FEATURE_THRESHOLD
+            self.feature_values[p[0] + 1] <= self.feature_values[p[0]] + FEATURE_THRESHOLD
         ):
             p[0] += 1
 
@@ -237,7 +235,7 @@ cdef class DensePartitioner:
         if best_n_missing != 0:
             # Move samples with missing values to the end while partitioning the
             # non-missing samples
-            while p < partition_end:
+            while p <= partition_end:
                 # Keep samples with missing values at the end
                 if isnan(X[samples[end], best_feature]):
                     end -= 1
@@ -398,9 +396,7 @@ cdef class SparsePartitioner:
 
     cdef inline void next_p(self, intp_t* p_prev, intp_t* p) noexcept nogil:
         """Compute the next p_prev and p for iterating over feature values."""
-        cdef:
-            intp_t p_next
-            float32_t[::1] feature_values = self.feature_values
+        cdef intp_t p_next
 
         if p[0] + 1 != self.end_negative:
             p_next = p[0] + 1
@@ -408,7 +404,7 @@ cdef class SparsePartitioner:
             p_next = self.start_positive
 
         while (p_next < self.end and
-                feature_values[p_next] <= feature_values[p[0]] + FEATURE_THRESHOLD):
+                self.feature_values[p_next] <= self.feature_values[p[0]] + FEATURE_THRESHOLD):
             p[0] = p_next
             if p[0] + 1 != self.end_negative:
                 p_next = p[0] + 1
@@ -489,7 +485,7 @@ cdef class SparsePartitioner:
         """
         cdef intp_t[::1] samples = self.samples
         cdef float32_t[::1] feature_values = self.feature_values
-        cdef intp_t indptr_start = self.X_indptr[feature],
+        cdef intp_t indptr_start = self.X_indptr[feature]
         cdef intp_t indptr_end = self.X_indptr[feature + 1]
         cdef intp_t n_indices = <intp_t>(indptr_end - indptr_start)
         cdef intp_t n_samples = self.end - self.start
@@ -709,24 +705,24 @@ def _py_sort(float32_t[::1] feature_values, intp_t[::1] samples, intp_t n):
 
 # Sort n-element arrays pointed to by feature_values and samples, simultaneously,
 # by the values in feature_values. Algorithm: Introsort (Musser, SP&E, 1997).
-cdef inline void sort(float32_t* feature_values, intp_t* samples, intp_t n) noexcept nogil:
+cdef void sort(floating* feature_values, intp_t* samples, intp_t n) noexcept nogil:
     if n == 0:
         return
     cdef intp_t maxd = 2 * <intp_t>log2(n)
     introsort(feature_values, samples, n, maxd)
 
 
-cdef inline void swap(float32_t* feature_values, intp_t* samples,
+cdef inline void swap(floating* feature_values, intp_t* samples,
                       intp_t i, intp_t j) noexcept nogil:
     # Helper for sort
     feature_values[i], feature_values[j] = feature_values[j], feature_values[i]
     samples[i], samples[j] = samples[j], samples[i]
 
 
-cdef inline float32_t median3(float32_t* feature_values, intp_t n) noexcept nogil:
+cdef inline floating median3(floating* feature_values, intp_t n) noexcept nogil:
     # Median of three pivot selection, after Bentley and McIlroy (1993).
     # Engineering a sort function. SP&E. Requires 8/3 comparisons on average.
-    cdef float32_t a = feature_values[0], b = feature_values[n / 2], c = feature_values[n - 1]
+    cdef floating a = feature_values[0], b = feature_values[n / 2], c = feature_values[n - 1]
     if a < b:
         if b < c:
             return b
@@ -745,9 +741,9 @@ cdef inline float32_t median3(float32_t* feature_values, intp_t n) noexcept nogi
 
 # Introsort with median of 3 pivot selection and 3-way partition function
 # (robust to repeated elements, e.g. lots of zero features).
-cdef void introsort(float32_t* feature_values, intp_t *samples,
+cdef void introsort(floating* feature_values, intp_t *samples,
                     intp_t n, intp_t maxd) noexcept nogil:
-    cdef float32_t pivot
+    cdef floating pivot
     cdef intp_t i, l, r
 
     while n > 1:
@@ -778,7 +774,7 @@ cdef void introsort(float32_t* feature_values, intp_t *samples,
         n -= r
 
 
-cdef inline void sift_down(float32_t* feature_values, intp_t* samples,
+cdef inline void sift_down(floating* feature_values, intp_t* samples,
                            intp_t start, intp_t end) noexcept nogil:
     # Restore heap order in feature_values[start:end] by moving the max element to start.
     cdef intp_t child, maxind, root
@@ -801,7 +797,7 @@ cdef inline void sift_down(float32_t* feature_values, intp_t* samples,
             root = maxind
 
 
-cdef void heapsort(float32_t* feature_values, intp_t* samples, intp_t n) noexcept nogil:
+cdef void heapsort(floating* feature_values, intp_t* samples, intp_t n) noexcept nogil:
     cdef intp_t start, end
 
     # heapify

@@ -881,7 +881,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     C : float, default=1.0
         Inverse of regularization strength; must be a positive float.
         Like in support vector machines, smaller values specify stronger
-        regularization.
+        regularization. For a visual example on the effect of tuning the `C` parameter
+        with an L1 penalty, see:
+        :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -1012,7 +1014,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     n_jobs : int, default=None
         Number of CPU cores used when parallelizing over classes if
-        multi_class='ovr'". This parameter is ignored when the ``solver`` is
+        ``multi_class='ovr'``. This parameter is ignored when the ``solver`` is
         set to 'liblinear' regardless of whether 'multi_class' is specified or
         not. ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
         context. ``-1`` means using all processors.
@@ -1293,6 +1295,12 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         multi_class = _check_multi_class(multi_class, solver, len(self.classes_))
 
         if solver == "liblinear":
+            if np.max(X) > 1e30:
+                raise ValueError(
+                    "Using the 'liblinear' solver while X contains a maximum "
+                    "value > 1e30 results in a frozen fit. Please choose another "
+                    "solver or rescale the input X."
+                )
             if len(self.classes_) > 2:
                 warnings.warn(
                     "Using the 'liblinear' solver for multiclass classification is "
@@ -2305,7 +2313,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         """
 
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
                 splitter=self.cv,

@@ -59,6 +59,7 @@ from sklearn.utils.estimator_checks import (
     check_array_api_input_and_values,
 )
 from sklearn.utils.fixes import (
+    _IS_WASM,
     COO_CONTAINERS,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
@@ -1613,7 +1614,7 @@ def test_quantile_transformer_sorted_quantiles(array_type):
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15733
     # Taken from upstream bug report:
-    # https://github.com/numpy/numpy/issues/14685
+    # https://github.com/numpy/numpy/issues/14685 (which was resolved in numpy 1.20)
     X = np.array([0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 1, 1, 9, 9, 9, 8, 8, 7] * 10)
     X = 0.1 * X.reshape(-1, 1)
     X = _convert_container(X, array_type)
@@ -2760,6 +2761,13 @@ def test_power_transformer_constant_feature(standardize):
             assert_allclose(Xt_, X)
 
 
+@pytest.mark.xfail(
+    _IS_WASM,
+    reason=(
+        "no floating point exceptions, see"
+        " https://github.com/numpy/numpy/pull/21895#issuecomment-1311525881"
+    ),
+)
 def test_yeo_johnson_inverse_transform_warning():
     """Check if a warning is triggered when the inverse transformations of the
     Box-Cox and Yeo-Johnson transformers return NaN values."""

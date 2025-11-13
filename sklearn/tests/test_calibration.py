@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
+from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.calibration import (
     CalibratedClassifierCV,
@@ -16,12 +17,12 @@ from sklearn.calibration import (
     calibration_curve,
 )
 from sklearn.datasets import load_iris, make_blobs, make_classification
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import (
     RandomForestClassifier,
     VotingClassifier,
 )
-from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.frozen import FrozenEstimator
 from sklearn.impute import SimpleImputer
@@ -46,14 +47,21 @@ from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
+    device,
+    get_namespace,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._tags import get_tags
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     _convert_container,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.extmath import softmax
 from sklearn.utils.fixes import CSR_CONTAINERS
@@ -321,12 +329,10 @@ def test_calibration_zero_probability():
     assert_allclose(probas, 1.0 / clf.n_classes_)
 
 
-@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
-def test_calibration_prefit(csr_container, method):
-    """Test calibration for prefitted classifiers"""
-    # TODO(1.8): Remove cv="prefit" options here and the @ignore_warnings of the test
+def test_calibration_frozen(csr_container, method):
+    """Test calibration for frozen classifiers"""
     n_samples = 50
     X, y = make_classification(n_samples=3 * n_samples, n_features=6, random_state=42)
     sample_weight = np.random.RandomState(seed=42).uniform(size=y.size)
@@ -344,11 +350,6 @@ def test_calibration_prefit(csr_container, method):
 
     # Naive-Bayes
     clf = MultinomialNB()
-    # Check error if clf not prefit
-    unfit_clf = CalibratedClassifierCV(clf, method=method, cv="prefit")
-    with pytest.raises(NotFittedError):
-        unfit_clf.fit(X_calib, y_calib)
-
     clf.fit(X_train, y_train, sw_train)
     prob_pos_clf = clf.predict_proba(X_test)[:, 1]
 
@@ -357,21 +358,16 @@ def test_calibration_prefit(csr_container, method):
         (X_calib, X_test),
         (csr_container(X_calib), csr_container(X_test)),
     ]:
-        cal_clf_prefit = CalibratedClassifierCV(clf, method=method, cv="prefit")
         cal_clf_frozen = CalibratedClassifierCV(FrozenEstimator(clf), method=method)
 
         for sw in [sw_calib, None]:
-            cal_clf_prefit.fit(this_X_calib, y_calib, sample_weight=sw)
             cal_clf_frozen.fit(this_X_calib, y_calib, sample_weight=sw)
 
-            y_prob_prefit = cal_clf_prefit.predict_proba(this_X_test)
             y_prob_frozen = cal_clf_frozen.predict_proba(this_X_test)
-            y_pred_prefit = cal_clf_prefit.predict(this_X_test)
             y_pred_frozen = cal_clf_frozen.predict(this_X_test)
             prob_pos_cal_clf_frozen = y_prob_frozen[:, 1]
-            assert_array_equal(y_pred_prefit, y_pred_frozen)
             assert_array_equal(
-                y_pred_prefit, np.array([0, 1])[np.argmax(y_prob_prefit, axis=1)]
+                y_pred_frozen, np.array([0, 1])[np.argmax(y_prob_frozen, axis=1)]
             )
             assert brier_score_loss(y_test, prob_pos_clf) > brier_score_loss(
                 y_test, prob_pos_cal_clf_frozen
@@ -684,32 +680,15 @@ def test_calibration_dict_pipeline(dict_data, dict_data_pipeline):
     calib_clf.predict_proba(X)
 
 
-@pytest.mark.parametrize(
-    "clf, cv",
-    [
-        pytest.param(LinearSVC(C=1), 2),
-        pytest.param(LinearSVC(C=1), "prefit"),
-    ],
-)
-def test_calibration_attributes(clf, cv):
+def test_calibration_attributes():
     # Check that `n_features_in_` and `classes_` attributes created properly
     X, y = make_classification(n_samples=10, n_features=5, n_classes=2, random_state=7)
-    if cv == "prefit":
-        clf = clf.fit(X, y)
-        calib_clf = CalibratedClassifierCV(clf, cv=cv)
-        with pytest.warns(FutureWarning):
-            calib_clf.fit(X, y)
-    else:
-        calib_clf = CalibratedClassifierCV(clf, cv=cv)
-        calib_clf.fit(X, y)
+    calib_clf = CalibratedClassifierCV(LinearSVC(C=1), cv=2)
+    calib_clf.fit(X, y)
 
-    if cv == "prefit":
-        assert_array_equal(calib_clf.classes_, clf.classes_)
-        assert calib_clf.n_features_in_ == clf.n_features_in_
-    else:
-        classes = LabelEncoder().fit(y).classes_
-        assert_array_equal(calib_clf.classes_, classes)
-        assert calib_clf.n_features_in_ == X.shape[1]
+    classes = LabelEncoder().fit(y).classes_
+    assert_array_equal(calib_clf.classes_, classes)
+    assert calib_clf.n_features_in_ == X.shape[1]
 
 
 def test_calibration_inconsistent_prefit_n_features_in():
@@ -1233,14 +1212,6 @@ def test_float32_predict_proba(data, use_sample_weight, method):
     # Does not raise an error.
     calibrator.fit(*data, sample_weight=sample_weight)
 
-    # TODO(1.8): remove me once the deprecation period is over.
-    # Check with prefit model using the deprecated cv="prefit" argument:
-    model = DummyClassifer32().fit(*data, sample_weight=sample_weight)
-    calibrator = CalibratedClassifierCV(model, method=method, cv="prefit")
-    # Does not raise an error.
-    with pytest.warns(FutureWarning):
-        calibrator.fit(*data, sample_weight=sample_weight)
-
 
 def test_error_less_class_samples_than_folds():
     """Check that CalibratedClassifierCV works with string targets.
@@ -1251,3 +1222,146 @@ def test_error_less_class_samples_than_folds():
     y = ["a"] * 10 + ["b"] * 10
 
     CalibratedClassifierCV(cv=3).fit(X, y)
+
+
+@pytest.mark.parametrize("ensemble", [False, True])
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_temperature_scaling_array_api_compliance(
+    ensemble, use_sample_weight, array_namespace, device_, dtype_name
+):
+    """Check that `CalibratedClassifierCV` with temperature scaling is compatible
+    with the array API"""
+
+    xp = _array_api_for_tests(array_namespace, device_)
+    X, y = make_classification(
+        n_samples=1000,
+        n_features=10,
+        n_informative=10,
+        n_redundant=0,
+        n_classes=5,
+        n_clusters_per_class=1,
+        class_sep=2.0,
+        random_state=42,
+    )
+    X_train, X_cal, y_train, y_cal = train_test_split(X, y, random_state=42)
+
+    X_train = X_train.astype(dtype_name)
+    y_train = y_train.astype(dtype_name)
+    X_train_xp = xp.asarray(X_train, device=device_)
+    y_train_xp = xp.asarray(y_train, device=device_)
+
+    X_cal = X_cal.astype(dtype_name)
+    y_cal = y_cal.astype(dtype_name)
+    X_cal_xp = xp.asarray(X_cal, device=device_)
+    y_cal_xp = xp.asarray(y_cal, device=device_)
+
+    if use_sample_weight:
+        sample_weight = np.ones_like(y_cal)
+        sample_weight[1::2] = 2
+    else:
+        sample_weight = None
+
+    clf_np = LinearDiscriminantAnalysis()
+    clf_np.fit(X_train, y_train)
+    cal_clf_np = CalibratedClassifierCV(
+        FrozenEstimator(clf_np), cv=3, method="temperature", ensemble=ensemble
+    ).fit(X_cal, y_cal, sample_weight=sample_weight)
+
+    calibrator_np = cal_clf_np.calibrated_classifiers_[0].calibrators[0]
+    pred_np = cal_clf_np.predict(X_train)
+    with config_context(array_api_dispatch=True):
+        clf_xp = LinearDiscriminantAnalysis()
+        clf_xp.fit(X_train_xp, y_train_xp)
+        cal_clf_xp = CalibratedClassifierCV(
+            FrozenEstimator(clf_xp), cv=3, method="temperature", ensemble=ensemble
+        ).fit(X_cal_xp, y_cal_xp, sample_weight=sample_weight)
+
+        calibrator_xp = cal_clf_xp.calibrated_classifiers_[0].calibrators[0]
+        rtol = 1e-3 if dtype_name == "float32" else 1e-7
+        assert get_namespace(calibrator_xp.beta_)[0].__name__ == xp.__name__
+        assert calibrator_xp.beta_.dtype == X_cal_xp.dtype
+        assert device(calibrator_xp.beta_) == device(X_cal_xp)
+        assert_allclose(
+            _convert_to_numpy(calibrator_xp.beta_, xp=xp),
+            calibrator_np.beta_,
+            rtol=rtol,
+        )
+        pred_xp = cal_clf_xp.predict(X_train_xp)
+        assert_allclose(_convert_to_numpy(pred_xp, xp=xp), pred_np)
+
+
+@pytest.mark.parametrize("ensemble", [False, True])
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
+    ensemble, use_sample_weight, array_namespace, device_, dtype_name
+):
+    """Check that `CalibratedClassifierCV` with temperature scaling is compatible
+    with the array API when `y` is an ndarray of strings and the estimator is not
+    fit beforehand (i.e. it is fit within `CalibratedClassifierCV`).
+    """
+
+    # TODO: Also ensure that `CalibratedClassifierCV` works appropriately with
+    #  the array API when `y` is an ndarray of strings and we fit
+    #  `LinearDiscriminantAnalysis` beforehand. In this regard
+    #  `LinearDiscriminantAnalysis` will also need modifications.
+    xp = _array_api_for_tests(array_namespace, device_)
+    X, y = make_classification(
+        n_samples=500,
+        n_features=10,
+        n_informative=10,
+        n_redundant=0,
+        n_classes=5,
+        n_clusters_per_class=1,
+        class_sep=2.0,
+        random_state=42,
+    )
+    str_mapping = np.asarray(["a", "b", "c", "d", "e"])
+    X = X.astype(dtype_name)
+    y_str = str_mapping[y]
+    X_xp = xp.asarray(X, device=device_)
+
+    if use_sample_weight:
+        sample_weight = np.ones_like(y)
+        sample_weight[1::2] = 2
+    else:
+        sample_weight = None
+
+    cal_clf_np = CalibratedClassifierCV(
+        estimator=LinearDiscriminantAnalysis(),
+        cv=3,
+        method="temperature",
+        ensemble=ensemble,
+    ).fit(X, y_str, sample_weight=sample_weight)
+
+    calibrator_np = cal_clf_np.calibrated_classifiers_[0].calibrators[0]
+    pred_np = cal_clf_np.predict(X)
+    with config_context(array_api_dispatch=True):
+        cal_clf_xp = CalibratedClassifierCV(
+            estimator=LinearDiscriminantAnalysis(),
+            cv=3,
+            method="temperature",
+            ensemble=ensemble,
+        ).fit(X_xp, y_str, sample_weight=sample_weight)
+
+        calibrator_xp = cal_clf_xp.calibrated_classifiers_[0].calibrators[0]
+        rtol = 1e-3 if dtype_name == "float32" else 1e-7
+        assert get_namespace(calibrator_xp.beta_)[0].__name__ == xp.__name__
+        assert calibrator_xp.beta_.dtype == X_xp.dtype
+        assert device(calibrator_xp.beta_) == device(X_xp)
+        assert_allclose(
+            _convert_to_numpy(calibrator_xp.beta_, xp=xp),
+            calibrator_np.beta_,
+            rtol=rtol,
+        )
+        pred_xp = cal_clf_xp.predict(X_xp)
+        assert_array_equal(pred_xp, pred_np)

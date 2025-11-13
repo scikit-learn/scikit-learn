@@ -14,6 +14,7 @@ import joblib
 import numpy as np
 import pytest
 from _pytest.doctest import DoctestItem
+from scipy.datasets import face
 from threadpoolctl import threadpool_limits
 
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
@@ -38,6 +39,14 @@ from sklearn.utils.fixes import (
 )
 
 try:
+    import pytest_run_parallel  # noqa:F401
+
+    PARALLEL_RUN_AVAILABLE = True
+except ImportError:
+    PARALLEL_RUN_AVAILABLE = False
+
+
+try:
     from scipy_doctest.conftest import dt_config
 except ModuleNotFoundError:
     dt_config = None
@@ -48,24 +57,16 @@ if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
         f" should have pytest >= {PYTEST_MIN_VERSION} installed."
     )
 
-scipy_datasets_require_network = sp_version >= parse_version("1.10")
-
 
 def raccoon_face_or_skip():
-    # SciPy >= 1.10 requires network to access to get data
-    if scipy_datasets_require_network:
-        run_network_tests = environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "0"
-        if not run_network_tests:
-            raise SkipTest("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
-
-        try:
-            import pooch  # noqa: F401
-        except ImportError:
-            raise SkipTest("test requires pooch to be installed")
-
-        from scipy.datasets import face
-    else:
-        from scipy.misc import face
+    # SciPy requires network access to get data
+    run_network_tests = environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "0"
+    if not run_network_tests:
+        raise SkipTest("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
+    try:
+        import pooch  # noqa: F401
+    except ImportError:
+        raise SkipTest("test requires pooch to be installed")
 
     return face(gray=True)
 
@@ -83,8 +84,7 @@ dataset_fetchers = {
     "fetch_species_distributions_fxt": fetch_species_distributions,
 }
 
-if scipy_datasets_require_network:
-    dataset_fetchers["raccoon_face_fxt"] = raccoon_face_or_skip
+dataset_fetchers["raccoon_face_fxt"] = raccoon_face_or_skip
 
 _SKIP32_MARK = pytest.mark.skipif(
     environ.get("SKLEARN_RUN_FLOAT32_TESTS", "0") != "1",
@@ -317,6 +317,11 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("global_random_seed", random_seeds)
 
 
+def pytest_addoption(parser, pluginmanager):
+    if not PARALLEL_RUN_AVAILABLE:
+        parser.addini("thread_unsafe_fixtures", "list of stuff")
+
+
 def pytest_configure(config):
     # Use matplotlib agg backend during the tests including doctests
     try:
@@ -345,6 +350,25 @@ def pytest_configure(config):
     if faulthandler_timeout > 0:
         faulthandler.enable()
         faulthandler.dump_traceback_later(faulthandler_timeout, exit=True)
+
+    if not PARALLEL_RUN_AVAILABLE:
+        config.addinivalue_line(
+            "markers",
+            "parallel_threads(n): run the given test function in parallel "
+            "using `n` threads.",
+        )
+        config.addinivalue_line(
+            "markers",
+            "thread_unsafe: mark the test function as single-threaded",
+        )
+        config.addinivalue_line(
+            "markers",
+            "iterations(n): run the given test function `n` times in each thread",
+        )
+        config.addinivalue_line(
+            "markers",
+            "iterations(n): run the given test function `n` times in each thread",
+        )
 
 
 @pytest.fixture
