@@ -1086,53 +1086,31 @@ cdef class MSE(RegressionCriterion):
 
         This method is used to speed up the search for the best split.
         It is a proxy quantity such that the split that maximizes this value
-        also maximizes the impurity improvement. It neglects scale/absolute weightening.
+        also maximizes the impurity improvement. It neglects all constant terms
+        of the impurity decrease for a given split.
 
         The absolute impurity improvement is only computed by the
         impurity_improvement method once the best split has been found.
 
-        The MSE proxy uses the formula (35) in Friedman's original Gradient Boosting paper.
+        The MSE proxy is derived from
 
-        It's derived from:
+            sum_{i left}(y_i - y_pred_L)^2 + sum_{i right}(y_i - y_pred_R)^2
+            = sum(y_i^2) - n_L * mean_{i left}(y_i)^2 - n_R * mean_{i right}(y_i)^2
 
-            improvement =
-            = sum_{i}(y_i - y_pred)^2
-              - sum_{i left}(y_i - y_pred_L)^2 + sum_{i right}(y_i - y_pred_R)^2
-            = (S_L + S_R)^2 / w_P - S_L^2 / w_L + S_R^2 / w_R
+        Neglecting constant terms, this gives:
 
-        where S_L, S_R are weighted sums of targets and w_L, w_R, w_P = w_L + w_R
-        are weights sums. Using that:
-            sum_{i} (y_i - y_pred)^2 = sum_{i}(y_i^2) - (sum_{i} y_i)^2
-
-        Expanding (S_L + S_R)**2 and grouping terms:
-
-            improvement = S_L**2 * (1/w_L - 1/w_P) + S_R**2 * (1/w_R - 1/w_P)
-                          - 2 * S_L * S_R / w_P
-
-        Replacing (1/w_L - 1/w_P) = w_R / (w_L * w_P)
-              and (1/w_R - 1/w_P) = w_L / (w_R * w_P):
-
-            improvement = (w_R * S_L**2) / (w_L * w_P) + (w_L * S_R**2) / (w_R * w_P)
-                          - 2 * S_L * S_R / w_P
-
-        Combining over a common denominator gives:
-
-            improvement = (w_R * S_L - w_L * S_R)**2 / (w_L * w_R * w_P)
+            - 1/n_L * sum_{i left}(y_i)^2 - 1/n_R * sum_{i right}(y_i)^2
         """
-        cdef float64_t total_sum_left = 0.0
-        cdef float64_t total_sum_right = 0.0
-
         cdef intp_t k
-        cdef float64_t diff = 0.0
+        cdef float64_t proxy_impurity_left = 0.0
+        cdef float64_t proxy_impurity_right = 0.0
 
         for k in range(self.n_outputs):
-            total_sum_left += self.sum_left[k]
-            total_sum_right += self.sum_right[k]
+            proxy_impurity_left += self.sum_left[k] * self.sum_left[k]
+            proxy_impurity_right += self.sum_right[k] * self.sum_right[k]
 
-        diff = (self.weighted_n_right * total_sum_left -
-                self.weighted_n_left * total_sum_right)
-
-        return diff * diff / (self.weighted_n_left * self.weighted_n_right)
+        return (proxy_impurity_left / self.weighted_n_left +
+                proxy_impurity_right / self.weighted_n_right)
 
     cdef void children_impurity(self, float64_t* impurity_left,
                                 float64_t* impurity_right) noexcept nogil:
