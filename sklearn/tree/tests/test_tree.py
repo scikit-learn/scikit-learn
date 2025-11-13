@@ -847,7 +847,9 @@ def test_min_impurity_decrease(TreeEstimator, criterion, global_random_seed):
             )
             est.fit(X, y)
             tree = est.tree_
-            weighted_impurity = tree.impurity * tree.weighted_n_node_samples / X.shape[0]
+            weighted_impurity = (
+                tree.impurity * tree.weighted_n_node_samples / X.shape[0]
+            )
 
             for node in range(tree.node_count):
                 # If current node is a not leaf node, check if the split was
