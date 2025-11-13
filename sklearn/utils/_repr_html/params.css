@@ -17,21 +17,21 @@
     padding-bottom: 0.3rem;
 }
 
-.estimator-table .body-table {
+.estimator-table .parameters-table {
     margin-left: auto !important;
     margin-right: auto !important;
     margin-top: 0;
 }
 
-.estimator-table .body-table tr:nth-child(odd) {
+.estimator-table .parameters-table tr:nth-child(odd) {
     background-color: #fff;
 }
 
-.estimator-table .body-table tr:nth-child(even) {
+.estimator-table .parameters-table tr:nth-child(even) {
     background-color: #f6f6f6;
 }
 
-.estimator-table .body-table tr:hover {
+.estimator-table .parameters-table tr:hover {
     background-color: #e0e0e0;
 }
 

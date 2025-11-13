@@ -22,7 +22,8 @@ from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import validate_parameter_constraints
 from sklearn.utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
 from sklearn.utils._repr_html.estimator import estimator_html_repr
-from sklearn.utils._repr_html.params import AttrsDict, ParamsDict
+from sklearn.utils._repr_html.fitted_attributes import AttrsDict
+from sklearn.utils._repr_html.params import ParamsDict
 from sklearn.utils._set_output import _SetOutputMixin
 from sklearn.utils._tags import (
     ClassifierTags,
