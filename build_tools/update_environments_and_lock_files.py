@@ -114,6 +114,9 @@ build_metadata_list = [
             "cupy",
             "array-api-strict",
         ],
+        "package_constraints": {
+            "blas": "[build=mkl]",
+        },
     },
     {
         "name": "pylatest_conda_forge_mkl_linux-64",
@@ -131,6 +134,7 @@ build_metadata_list = [
             "pyarrow",
             "array-api-strict",
             "scipy-doctest",
+            "pytest-playwright",
         ],
         "package_constraints": {
             "blas": "[build=mkl]",
@@ -219,7 +223,7 @@ build_metadata_list = [
         "channels": ["conda-forge"],
         "conda_dependencies": ["python", "ccache"],
         "package_constraints": {
-            # TODO: remove this constraint once scikit-image and pyamg provide binary
+            # TODO: remove this constraint once pyamg provide binary
             # wheels for Python 3.14 (or later) on PyPI.
             "python": "3.13",
         },
@@ -227,7 +231,7 @@ build_metadata_list = [
             remove_from(common_dependencies, ["python", "blas", "pip"])
             + docstring_test_dependencies
             # Test with some optional dependencies
-            + ["lightgbm", "scikit-image"]
+            + ["lightgbm"]
             # Test array API on CPU without PyTorch
             + ["array-api-strict"]
             # doctests dependencies
@@ -459,7 +463,7 @@ build_metadata_list = [
             "threadpoolctl": "min",
             "cython": "min",
         },
-        "python_version": "3.10.4",
+        "python_version": "3.12.3",
     },
 ]
 
