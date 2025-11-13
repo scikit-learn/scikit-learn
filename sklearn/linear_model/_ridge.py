@@ -1356,6 +1356,9 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         """
         check_is_fitted(self, attributes=["_label_binarizer"])
         if self._label_binarizer.y_type_.startswith("multilabel"):
+            # Threshold such that the negative label is -1 and positive label
+            # is 1 to use the inverse transform of the label binarizer fitted
+            # during fit.
             decision = self.decision_function(X)
             xp, _ = get_namespace(decision)
             scores = 2.0 * xp.astype(decision > 0, decision.dtype) - 1.0
