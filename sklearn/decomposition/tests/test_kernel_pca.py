@@ -234,7 +234,7 @@ def test_leave_zero_eig():
         # There might be warnings about the kernel being badly conditioned,
         # but there should not be warnings about division by zero.
         # (Numpy division by zero warning can have many message variants, but
-        # at least we know that it is a RuntimeWarning so lets check only this)
+        # at least we know that it is a RuntimeWarning so let's check only this)
         warnings.simplefilter("error", RuntimeWarning)
         with np.errstate(all="warn"):
             k = KernelPCA(n_components=2, remove_zero_eig=False, eigen_solver="dense")
