@@ -1,4 +1,7 @@
 - `criterion="friedman_mse"` is now deprecated as it is a duplicate of
-  `criterion="squared_error"`, both in theory and in practice.
-  (classes :class:`tree.DecisionTreeRegressor` and :class:`tree.ExtraTreeRegressor`)
+  `criterion="squared_error"`, both in theory and in practice. This affects:
+  - :class:`tree.DecisionTreeRegressor`
+  - :class:`tree.ExtraTreeRegressor`
+  - :class:`ensemble.RandomForestRegressor`
+  - :class:`ensemble.ExtraTreesRegressor`
   By :user:`Arthur Lacote <cakedev0>`
