@@ -209,7 +209,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
 
     _html_repr = estimator_html_repr
 
-    def _get_fitted_attr_html(self):
+    def _get_fitted_attr_html(self, doc_link=""):
         """Get fitted attributes of the estimator."""
         # fetch the constructor or the original constructor before
         # deprecation wrapping if any
@@ -248,9 +248,13 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         fitted_attributes = {
             key: type(value).__name__ for key, value in fitted_attributes.items()
         }
-        out = fitted_attributes | cleaned_fitted_attr | arrays_attr
+        fitted_attr = fitted_attributes | cleaned_fitted_attr | arrays_attr
 
-        return AttrsDict(out)
+        return AttrsDict(
+            fitted_attrs=fitted_attr,
+            estimator_class=self.__class__,
+            doc_link=doc_link,
+        )
 
     @classmethod
     def _get_param_names(cls):

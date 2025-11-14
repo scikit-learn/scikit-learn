@@ -338,7 +338,7 @@ def _write_estimator_html(
                 hasattr(estimator, "_get_fitted_attr_html")
                 and is_fitted_css_class == "fitted"
             ):
-                attrs = estimator._get_fitted_attr_html()._repr_html_inner()
+                attrs = estimator._get_fitted_attr_html(doc_link)._repr_html_inner()
             else:
                 attrs = ""
 
@@ -403,7 +403,7 @@ def _write_estimator_html(
             hasattr(estimator, "_get_fitted_attr_html")
             and is_fitted_css_class == "fitted"
         ):
-            attrs = estimator._get_fitted_attr_html()._repr_html_inner()
+            attrs = estimator._get_fitted_attr_html(doc_link)._repr_html_inner()
         else:
             attrs = ""
 
