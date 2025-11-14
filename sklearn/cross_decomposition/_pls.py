@@ -343,7 +343,7 @@ class _PLS(
                 y_ss = np.dot(y_weights, y_weights)
             y_scores = np.dot(yk, y_weights) / y_ss
 
-            # Calculate variance in Xk and yk before defleating
+            # Calculate variance before deflation to measure component contribution
             X_var_before, y_var_before, _, _ = _calculate_variance_xy(Xk, yk)
 
             # Deflation: subtract rank-one approx to obtain Xk+1 and yk+1
