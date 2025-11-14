@@ -1227,10 +1227,10 @@ def test_scorer_metadata_request(name):
     # Make sure they expose the routing methods.
     scorer = get_scorer(name)
     assert hasattr(scorer, "set_score_request")
-    assert hasattr(scorer, "get_metadata_routing")
+    assert hasattr(scorer, "_get_metadata_request")
 
     # Check that by default no metadata is requested.
-    assert_request_is_empty(scorer.get_metadata_routing())
+    assert_request_is_empty(scorer._get_metadata_request())
 
     weighted_scorer = scorer.set_score_request(sample_weight=True)
     # set_score_request should mutate the instance, rather than returning a
@@ -1239,9 +1239,9 @@ def test_scorer_metadata_request(name):
 
     # make sure the scorer doesn't request anything on methods other than
     # `score`, and that the requested value on `score` is correct.
-    assert_request_is_empty(weighted_scorer.get_metadata_routing(), exclude="score")
+    assert_request_is_empty(weighted_scorer._get_metadata_request(), exclude="score")
     assert (
-        weighted_scorer.get_metadata_routing().score.requests["sample_weight"] is True
+        weighted_scorer._get_metadata_request().score.requests["sample_weight"] is True
     )
 
     # make sure putting the scorer in a router doesn't request anything by

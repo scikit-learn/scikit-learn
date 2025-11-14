@@ -29,7 +29,12 @@ from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import SVC, SVR
+from sklearn.tests.metadata_routing_common import (
+    MetadataRouter,
+    MethodMapping,
+)
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils._metadata_requests import process_routing
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._set_output import _get_output_config
 from sklearn.utils._testing import (
@@ -947,27 +952,63 @@ def test_dataframe_protocol(constructor_name, minversion):
 
 @config_context(enable_metadata_routing=True)
 def test_transformer_fit_transform_with_metadata_in_transform():
-    """Test that having a transformer with metadata for transform raises a
-    warning when calling fit_transform."""
+    """Test that a transformer that does not implement its own `fit_transform` raises a
+    warning when metadata is requested by `transform` and `fit_transform` is called."""
 
     class CustomTransformer(BaseEstimator, TransformerMixin):
-        def fit(self, X, y=None, prop=None):
+        def fit(self, X, y=None, metadata=None):
             return self
 
-        def transform(self, X, prop=None):
+        def transform(self, X, metadata=None):
             return X
 
-    # passing the metadata to `fit_transform` should raise a warning since it
-    # could potentially be consumed by `transform`
+    class RoutingCustomTransformer(BaseEstimator, TransformerMixin):
+        def __init__(self, estimator):
+            self.estimator = estimator
+
+        def get_metadata_routing(self):
+            router = MetadataRouter(owner=self.__class__.__name__).add(
+                estimator=self.estimator,
+                method_mapping=MethodMapping()
+                .add(caller="fit", callee="fit")
+                .add(caller="transform", callee="transform"),
+            )
+            return router
+
+        def fit(self, X, y=None, **fit_params):
+            routed_params = process_routing(self, "fit", **fit_params)
+            self.estimator_ = clone(self.estimator).fit(
+                X, y, **routed_params.estimator.fit
+            )
+            return self
+
+        def transform(self, X, y=None, **transform_params):
+            routed_params = process_routing(self, "transform", **transform_params)
+            self.estimator_ = clone(self.estimator).transform(
+                X, y, **routed_params.estimator.transform
+            )
+            return X
+
+    # passing the metadata to `fit_transform` should raise a warning that
+    # `fit_transform` does not forward metadata to `transform`, since it is not
+    # implemented
     with pytest.warns(UserWarning, match="`transform` method which consumes metadata"):
-        CustomTransformer().set_transform_request(prop=True).fit_transform(
-            [[1]], [1], prop=1
+        ct = CustomTransformer().set_transform_request(metadata=True)
+        ct.fit_transform(X=[[1]], metadata="metadata")
+
+    with pytest.warns(UserWarning, match="`transform` method which consumes metadata"):
+        rct = RoutingCustomTransformer(
+            estimator=CustomTransformer()
+            .set_fit_request(metadata=True)
+            .set_transform_request(metadata=True)
         )
+        rct.fit_transform(X=[[1]], metadata="metadata")
 
     # not passing a metadata which can potentially be consumed by `transform` should
     # not raise a warning
     with warnings.catch_warnings(record=True) as record:
-        CustomTransformer().set_transform_request(prop=True).fit_transform([[1]], [1])
+        ct = CustomTransformer().set_transform_request(metadata=True)
+        ct.fit_transform(X=[[1]])
         assert len(record) == 0
 
 
