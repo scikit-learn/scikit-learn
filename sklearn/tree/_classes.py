@@ -8,6 +8,7 @@ randomized trees. Single and multi-output problems are both handled.
 
 import copy
 import numbers
+import warnings
 from abc import ABCMeta, abstractmethod
 from math import ceil
 from numbers import Integral, Real
@@ -1360,9 +1361,15 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         ccp_alpha=0.0,
         monotonic_cst=None,
     ):
-        if criterion == "friedman_mse":
+        if isinstance(criterion, str) and criterion == "friedman_mse":
             criterion = "squared_error"
-            # TODO: raise deprec warning
+            warnings.warn(
+                'Value `"friedman_mse"` for `criterion` is deprecated and will be '
+                'removed in 1.10. It maps to `"squared_error"` as both '
+                'were always equivalent. Use `criterion="squared_error"` '
+                " to remove this warning.",
+                FutureWarning,
+            )
         super().__init__(
             criterion=criterion,
             splitter=splitter,
