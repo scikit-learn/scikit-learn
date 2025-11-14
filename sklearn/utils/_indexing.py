@@ -68,7 +68,7 @@ def _list_indexing(X, key, key_dtype):
     if key_dtype == "bool":
         # key is a boolean array-like
         return list(compress(X, key))
-    # key is a integer array-like of key
+    # key is an integer array-like of key
     return [X[idx] for idx in key]
 
 

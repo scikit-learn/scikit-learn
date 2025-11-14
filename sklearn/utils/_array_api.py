@@ -153,8 +153,7 @@ def _check_array_api_dispatch(array_api_dispatch):
 def _single_array_device(array):
     """Hardware device where the array data resides on."""
     if (
-        isinstance(array, (numpy.ndarray, numpy.generic))
-        or not hasattr(array, "device")
+        not hasattr(array, "device")
         # When array API dispatch is disabled, we expect the scikit-learn code
         # to use np.asarray so that the resulting NumPy array will implicitly use the
         # CPU. In this case, scikit-learn should stay as device neutral as possible,
