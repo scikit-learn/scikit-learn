@@ -2,9 +2,6 @@
 
 set -e
 
-# early exit
-exit 0
-
 # Defines the show_installed_libraries and activate_environment functions.
 source build_tools/shared.sh
 
@@ -90,6 +87,9 @@ if [[ "$DISTRIB" == "conda-free-threaded" ]]; then
 fi
 
 TEST_CMD="$TEST_CMD --pyargs sklearn"
+
+# early exit
+exit 0
 
 set -x
 eval "$TEST_CMD"
