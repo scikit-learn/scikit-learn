@@ -184,7 +184,8 @@ def _write_label_html(
                 f'<a class="sk-estimator-doc-link {is_fitted_css_class}"'
                 f' rel="noreferrer" target="_blank" href="{doc_link}">?{doc_label}</a>'
             )
-
+        if name == "passthrough":
+            name_caption = ""
         name_caption_div = (
             ""
             if name_caption is None
@@ -196,10 +197,13 @@ def _write_label_html(
             if doc_link or is_fitted_icon
             else ""
         )
+        label_arrow_class = (
+            "" if name == "passthrough" else "sk-toggleable__label-arrow"
+        )
 
         label_html = (
             f'<label for="{est_id}" class="sk-toggleable__label {is_fitted_css_class} '
-            f'sk-toggleable__label-arrow">{name_caption_div}{links_div}</label>'
+            f'{label_arrow_class}">{name_caption_div}{links_div}</label>'
         )
 
         fmt_str = (
@@ -212,6 +216,8 @@ def _write_label_html(
         if params:
             fmt_str = "".join([fmt_str, f"{params}</div>"])
         elif name_details and ("Pipeline" not in name):
+            if name == "passthrough":
+                name_details = ""
             fmt_str = "".join([fmt_str, f"<pre>{name_details}</pre></div>"])
 
         out.write(fmt_str)
@@ -382,7 +388,10 @@ def _write_estimator_html(
 
         out.write("</div></div>")
     elif est_block.kind == "single":
-        if hasattr(estimator, "_get_params_html"):
+        if (
+            hasattr(estimator, "_get_params_html")
+            and not est_block.names == "passthrough"
+        ):
             params = estimator._get_params_html(doc_link=doc_link)._repr_html_inner()
         else:
             params = ""
