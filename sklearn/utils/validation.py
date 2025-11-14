@@ -1464,8 +1464,8 @@ def check_random_state(seed):
         return np.random.RandomState(seed)
     if isinstance(seed, str):
         raise ValueError(
-        "seed must be None, an int, a numpy RandomState instance, or a numpy Generator; got a string instead."
-    )
+            "seed must be None, an int, a numpy RandomState instance, or a numpy Generator; got a string instead."
+        )
     if isinstance(seed, str):
         raise ValueError("seed must be None, int, np.random.RandomState, or Generator")
     if isinstance(seed, np.random.RandomState):
