@@ -1,22 +1,21 @@
 """GaussianMixtureIC"""
 
-# Authors: Tingshan Liu <tliu68@jhmi.edu>
-#          Thomas Athey <tathey1@jhmi.edu>
-#          Benjamin Pedigo <bpedigo@jhu.edu>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import numpy as np
 
-from ..base import BaseEstimator, ClusterMixin
-from ..model_selection import GridSearchCV
-from ..utils._param_validation import (
+from sklearn.base import BaseEstimator, ClusterMixin
+from sklearn.mixture import GaussianMixture
+from sklearn.model_selection import GridSearchCV
+from sklearn.utils._param_validation import (
     Integral,
     Interval,
     InvalidParameterError,
     StrOptions,
 )
-from ..utils.validation import check_is_fitted
-from . import GaussianMixture
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 def _check_multi_comp_inputs(input, name, default):
@@ -362,7 +361,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         """
         self._validate_params()
         covariance_type = self._check_parameters()
-        X = self._validate_data(X, dtype=[np.float64, np.float32], ensure_min_samples=1)
+        X = validate_data(self, X, dtype=[np.float64, np.float32], ensure_min_samples=1)
 
         # check n_components against sample size
         if self.max_components > X.shape[0]:
@@ -422,7 +421,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             Component labels.
         """
         check_is_fitted(self, ["best_estimator_"], all_or_any=all)
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         labels = self.best_estimator_.predict(X)
 
         return labels
