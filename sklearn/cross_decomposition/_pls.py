@@ -364,7 +364,7 @@ class _PLS(
                 y_loadings = np.dot(x_scores, yk) / np.dot(x_scores, x_scores)
                 yk -= np.outer(x_scores, y_loadings)
 
-            # Calculate the variance after defleating
+            # Calculate the variance after deflating
             X_var_after, y_var_after, _, _ = _calculate_variance_xy(Xk, yk)
 
             # Calculate explained variance ratio
