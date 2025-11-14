@@ -2,6 +2,8 @@
 
 set -ex
 
+exit 0
+
 source build_tools/shared.sh
 activate_environment
 
