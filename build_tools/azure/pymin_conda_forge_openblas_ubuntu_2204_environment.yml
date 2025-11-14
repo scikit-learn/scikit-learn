@@ -4,7 +4,7 @@
 channels:
   - conda-forge
 dependencies:
-  - python=3.10
+  - python=3.11
   - numpy
   - blas[build=openblas]
   - scipy
@@ -20,5 +20,5 @@ dependencies:
   - ninja
   - meson-python
   - sphinx
-  - numpydoc
+  - numpydoc<1.9.0
   - ccache

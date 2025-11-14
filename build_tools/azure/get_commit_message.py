@@ -5,6 +5,13 @@ import subprocess
 
 def get_commit_message():
     """Retrieve the commit message."""
+
+    if "COMMIT_MESSAGE" in os.environ or "BUILD_SOURCEVERSIONMESSAGE" not in os.environ:
+        raise RuntimeError(
+            "This legacy script should only be used on Azure. "
+            "On GitHub actions, use the 'COMMIT_MESSAGE' environment variable"
+        )
+
     build_source_version_message = os.environ["BUILD_SOURCEVERSIONMESSAGE"]
 
     if os.environ["BUILD_REASON"] == "PullRequest":

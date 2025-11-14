@@ -4,18 +4,24 @@
 import numpy as np
 import scipy as sp
 
-from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
-from .._ranking import det_curve
+from sklearn.metrics._ranking import det_curve
+from sklearn.utils._plotting import (
+    _BinaryClassifierCurveDisplayMixin,
+    _deprecate_y_pred_parameter,
+)
 
 
 class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     """Detection Error Tradeoff (DET) curve visualization.
 
-    It is recommend to use :func:`~sklearn.metrics.DetCurveDisplay.from_estimator`
+    It is recommended to use :func:`~sklearn.metrics.DetCurveDisplay.from_estimator`
     or :func:`~sklearn.metrics.DetCurveDisplay.from_predictions` to create a
     visualizer. All parameters are stored as attributes.
 
-    Read more in the :ref:`User Guide <det_curve>`.
+    For general information regarding `scikit-learn` visualization tools, see
+    the :ref:`Visualization Guide <visualizations>`.
+    For guidance on interpreting these plots, refer to the
+    :ref:`Model Evaluation Guide <det_curve>`.
 
     .. versionadded:: 0.24
 
@@ -31,7 +37,8 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         Name of estimator. If None, the estimator name is not shown.
 
     pos_label : int, float, bool or str, default=None
-        The label of the positive class.
+        The label of the positive class. If not `None`, this value is displayed in
+        the x- and y-axes labels.
 
     Attributes
     ----------
@@ -63,8 +70,8 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X, y, test_size=0.4, random_state=0)
     >>> clf = SVC(random_state=0).fit(X_train, y_train)
-    >>> y_pred = clf.decision_function(X_test)
-    >>> fpr, fnr, _ = det_curve(y_test, y_pred)
+    >>> y_score = clf.decision_function(X_test)
+    >>> fpr, fnr, _ = det_curve(y_test, y_score)
     >>> display = DetCurveDisplay(
     ...     fpr=fpr, fnr=fnr, estimator_name="SVC"
     ... )
@@ -96,7 +103,10 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Plot DET curve given an estimator and data.
 
-        Read more in the :ref:`User Guide <det_curve>`.
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the
+        :ref:`Model Evaluation Guide <det_curve>`.
 
         .. versionadded:: 1.0
 
@@ -130,9 +140,8 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             exist :term:`decision_function` is tried next.
 
         pos_label : int, float, bool or str, default=None
-            The label of the positive class. When `pos_label=None`, if `y_true`
-            is in {-1, 1} or {0, 1}, `pos_label` is set to 1, otherwise an
-            error will be raised.
+            The label of the positive class. By default, `estimators.classes_[1]`
+            is considered as the positive class.
 
         name : str, default=None
             Name of DET curve for labeling. If `None`, use the name of the
@@ -172,7 +181,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        y_pred, pos_label, name = cls._validate_and_get_response_values(
+        y_score, pos_label, name = cls._validate_and_get_response_values(
             estimator,
             X,
             y,
@@ -183,7 +192,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         return cls.from_predictions(
             y_true=y,
-            y_pred=y_pred,
+            y_score=y_score,
             sample_weight=sample_weight,
             drop_intermediate=drop_intermediate,
             name=name,
@@ -196,18 +205,22 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     def from_predictions(
         cls,
         y_true,
-        y_pred,
+        y_score=None,
         *,
         sample_weight=None,
         drop_intermediate=True,
         pos_label=None,
         name=None,
         ax=None,
+        y_pred="deprecated",
         **kwargs,
     ):
         """Plot the DET curve given the true and predicted labels.
 
-        Read more in the :ref:`User Guide <det_curve>`.
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the
+        :ref:`Model Evaluation Guide <det_curve>`.
 
         .. versionadded:: 1.0
 
@@ -216,10 +229,13 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         y_true : array-like of shape (n_samples,)
             True labels.
 
-        y_pred : array-like of shape (n_samples,)
+        y_score : array-like of shape (n_samples,)
             Target scores, can either be probability estimates of the positive
             class, confidence values, or non-thresholded measure of decisions
             (as returned by `decision_function` on some classifiers).
+
+            .. versionadded:: 1.8
+                `y_pred` has been renamed to `y_score`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
@@ -243,6 +259,15 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
             created.
+
+        y_pred : array-like of shape (n_samples,)
+            Target scores, can either be probability estimates of the positive
+            class, confidence values, or non-thresholded measure of decisions
+            (as returned by “decision_function” on some classifiers).
+
+            .. deprecated:: 1.8
+                `y_pred` is deprecated and will be removed in 1.10. Use
+                `y_score` instead.
 
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
@@ -269,19 +294,20 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> X_train, X_test, y_train, y_test = train_test_split(
         ...     X, y, test_size=0.4, random_state=0)
         >>> clf = SVC(random_state=0).fit(X_train, y_train)
-        >>> y_pred = clf.decision_function(X_test)
+        >>> y_score = clf.decision_function(X_test)
         >>> DetCurveDisplay.from_predictions(
-        ...    y_test, y_pred)
+        ...    y_test, y_score)
         <...>
         >>> plt.show()
         """
+        y_score = _deprecate_y_pred_parameter(y_score, y_pred, "1.8")
         pos_label_validated, name = cls._validate_from_predictions_params(
-            y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
+            y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
 
         fpr, fnr, _ = det_curve(
             y_true,
-            y_pred,
+            y_score,
             pos_label=pos_label,
             sample_weight=sample_weight,
             drop_intermediate=drop_intermediate,

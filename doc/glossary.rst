@@ -940,8 +940,11 @@ Class APIs and Estimator Types
         :class:`ensemble.BaggingClassifier`.
 
         In a meta-estimator's :term:`fit` method, any contained estimators
-        should be :term:`cloned` before they are fit (although FIXME: Pipeline
-        and FeatureUnion do not do this currently). An exception to this is
+        should be :term:`cloned` before they are fit.
+
+        .. FIXME: Pipeline and FeatureUnion do not do this currently
+
+        An exception to this is
         that an estimator may explicitly document that it accepts a pre-fitted
         estimator (e.g. using ``prefit=True`` in
         :class:`feature_selection.SelectFromModel`). One known issue with this
@@ -1188,7 +1191,7 @@ Target Types
         :term:`multiclass` targets, horizontally stacked into an array
         of shape ``(n_samples, n_outputs)``.
 
-        XXX: For simplicity, we may not always support string class labels
+        Note: For simplicity, we may not always support string class labels
         for multiclass multioutput, and integer class labels should be used.
 
         :mod:`~sklearn.multioutput` provides estimators which estimate multi-output
@@ -1338,7 +1341,7 @@ Methods
     ``get_n_splits``
         On a :term:`CV splitter` (not an estimator), returns the number of
         elements one would get if iterating through the return value of
-        :term:`split` given the same parameters.  Takes the same parameters as
+        :term:`split` given the same parameters. Takes the same parameters as
         split.
 
     ``get_params``
@@ -1381,7 +1384,7 @@ Methods
         To clear the model, a new estimator should be constructed, for instance
         with :func:`base.clone`.
 
-        NOTE: Using ``partial_fit`` after ``fit`` results in undefined behavior.
+        Note: Using ``partial_fit`` after ``fit`` results in undefined behavior.
 
     ``predict``
         Makes a prediction for each sample, usually only taking :term:`X` as
@@ -1590,8 +1593,7 @@ functions or non-estimator constructors.
         estimators: some, but not all, use it to mean a single epoch (i.e. a
         pass over every sample in the data).
 
-        FIXME perhaps we should have some common tests about the relationship
-        between ConvergenceWarning and max_iter.
+        .. FIXME: perhaps we should have some common tests about the relationship between ConvergenceWarning and max_iter.
 
     ``memory``
         Some estimators make use of :class:`joblib.Memory` to
@@ -1611,7 +1613,7 @@ functions or non-estimator constructors.
         for some algorithms, an improper distance metric (one that does not
         obey the triangle inequality, such as Cosine Distance) may be used.
 
-        XXX: hierarchical clustering uses ``affinity`` with this meaning.
+        Note: Hierarchical clustering uses ``affinity`` with this meaning.
 
         We also use *metric* to refer to :term:`evaluation metrics`, but avoid
         using this sense as a parameter name.
@@ -1853,26 +1855,53 @@ See concept :term:`sample property`.
         See :ref:`group_cv`.
 
     ``sample_weight``
-        A relative weight for each sample.  Intuitively, if all weights are
-        integers, a weighted model or score should be equivalent to that
-        calculated when repeating the sample the number of times specified in
-        the weight.  Weights may be specified as floats, so that sample weights
-        are usually equivalent up to a constant positive scaling factor.
+        A weight for each data point. Intuitively, if all weights are integers,
+        using them in an estimator or a :term:`scorer` is like duplicating each
+        data point as many times as the weight value. Weights can also be
+        specified as floats, and can have the same effect as above, as many
+        estimators and scorers are scale invariant. For example, weights ``[1,
+        2, 3]`` would be equivalent to weights ``[0.1, 0.2, 0.3]`` as they
+        differ by a constant factor of 10. Note however that several estimators
+        are not invariant to the scale of weights.
 
-        FIXME  Is this interpretation always the case in practice? We have no
-        common tests.
+        `sample_weight` can be both an argument of the estimator's :term:`fit` method
+        for model training or a parameter of a :term:`scorer` for model
+        evaluation. These callables are said to *consume* the sample weights
+        while other components of scikit-learn can *route*  the weights to the
+        underlying estimators or scorers (see
+        :ref:`glossary_metadata_routing`).
 
-        Some estimators, such as decision trees, support negative weights.
-        FIXME: This feature or its absence may not be tested or documented in
-        many estimators.
+        Weighting samples can be useful in several contexts. For instance, if
+        the training data is not uniformly sampled from the target population,
+        it can be corrected by weighting the training data points based on the
+        `inverse probability
+        <https://en.wikipedia.org/wiki/Inverse_probability_weighting>`_ of
+        their selection for training (e.g. inverse propensity weighting).
 
-        This is not entirely the case where other parameters of the model
-        consider the number of samples in a region, as with ``min_samples`` in
-        :class:`cluster.DBSCAN`.  In this case, a count of samples becomes
-        to a sum of their weights.
+        Some model hyper-parameters are expressed in terms of a discrete number
+        of data points in a region of the feature space. When fitting with
+        sample weights, a count of data points is often automatically converted
+        to a sum of their weights, but this is not always the case. Please
+        refer to the model docstring for details.
 
-        In classification, sample weights can also be specified as a function
-        of class with the :term:`class_weight` estimator :term:`parameter`.
+        In classification, weights can also be specified for all samples
+        belonging to a given target class with the :term:`class_weight`
+        estimator :term:`parameter`. If both ``sample_weight`` and
+        ``class_weight`` are provided, the final weight assigned to a sample is
+        the product of the two.
+
+        At the time of writing (version 1.8), not all scikit-learn estimators
+        correctly implement the weight-repetition equivalence property. The
+        `#16298 meta issue
+        <https://github.com/scikit-learn/scikit-learn/issues/16298>`_ tracks
+        ongoing work to detect and fix remaining discrepancies.
+
+        Furthermore, some estimators have a stochastic fit method. For
+        instance, :class:`cluster.KMeans` depends on a random initialization,
+        bagging models randomly resample from the training data, etc. In this
+        case, the sample weight-repetition equivalence property described above
+        does not hold exactly. However, it should hold at least in expectation
+        over the randomness of the fitting procedure.
 
     ``X``
         Denotes data that is observed at training and prediction time, used as

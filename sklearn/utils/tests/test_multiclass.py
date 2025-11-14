@@ -1,3 +1,4 @@
+import warnings
 from itertools import product
 
 import numpy as np
@@ -292,6 +293,37 @@ def test_unique_labels():
         unique_labels(np.ones((5, 4)), np.ones((5, 5)))
 
     assert_array_equal(unique_labels(np.ones((4, 5)), np.ones((5, 5))), np.arange(5))
+
+
+def test_type_of_target_too_many_unique_classes():
+    """Check that we raise a warning when the number of unique classes is greater than
+    50% of the number of samples.
+
+    We need to check that we don't raise if we have less than 20 samples.
+    """
+
+    # Create array of unique labels, except '0', which appears twice.
+    # This does raise a warning.
+    # Note warning would not be raised if we passed only unique
+    # labels, which happens when `type_of_target` is passed `classes_`.
+    y = np.hstack((np.arange(20), [0]))
+    msg = r"The number of unique classes is greater than 50% of the number of samples."
+    with pytest.warns(UserWarning, match=msg):
+        type_of_target(y)
+
+    # less than 20 samples, no warning should be raised
+    y = np.arange(10)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        type_of_target(y)
+
+    # More than 20 samples but only unique classes, simulating passing
+    # `classes_` to `type_of_target` (when number of classes is large).
+    # No warning should be raised
+    y = np.arange(25)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        type_of_target(y)
 
 
 def test_unique_labels_non_specific():
@@ -602,16 +634,12 @@ def test_ovr_decision_function():
     assert_allclose(dec_values, dec_values_one, atol=1e-6)
 
 
-# TODO(1.7): Change to ValueError when byte labels is deprecated.
 @pytest.mark.parametrize("input_type", ["list", "array"])
-def test_labels_in_bytes_format(input_type):
+def test_labels_in_bytes_format_error(input_type):
     # check that we raise an error with bytes encoded labels
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/16980
     target = _convert_container([b"a", b"b"], input_type)
-    err_msg = (
-        "Support for labels represented as bytes is deprecated in v1.5 and will"
-        " error in v1.7. Convert the labels to a string or integer format."
-    )
-    with pytest.warns(FutureWarning, match=err_msg):
+    err_msg = "Support for labels represented as bytes is not supported"
+    with pytest.raises(TypeError, match=err_msg):
         type_of_target(target)

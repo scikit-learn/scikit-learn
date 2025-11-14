@@ -9,8 +9,8 @@ agglomeration.
 import numpy as np
 from scipy.sparse import issparse
 
-from ..base import TransformerMixin
-from ..utils.validation import check_is_fitted, validate_data
+from sklearn.base import TransformerMixin
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 ###############################################################################
 # Mixin class for feature agglomeration.
@@ -29,7 +29,7 @@ class AgglomerationTransform(TransformerMixin):
         ----------
         X : array-like of shape (n_samples, n_features) or \
                 (n_samples, n_samples)
-            A M by N array of M observations in N dimensions or a length
+            An M by N array of M observations in N dimensions or a length
             M array of M one-dimensional observations.
 
         Returns
@@ -66,8 +66,8 @@ class AgglomerationTransform(TransformerMixin):
 
         Returns
         -------
-        X : ndarray of shape (n_samples, n_features) or (n_features,)
-            A vector of size `n_samples` with the values of `Xred` assigned to
+        X_original : ndarray of shape (n_samples, n_features) or (n_features,)
+            A vector of size `n_samples` with the values of `X` assigned to
             each of the cluster of samples.
         """
         check_is_fitted(self)

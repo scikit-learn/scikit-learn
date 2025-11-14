@@ -17,6 +17,6 @@ to ensure they are not using functionality outside of the standard, but prefer
 this implementation for the default when working with NumPy arrays.
 
 """
-__version__ = '1.11.2'
+__version__ = '1.12.0'
 
 from .common import *  # noqa: F401, F403

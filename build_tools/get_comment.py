@@ -3,6 +3,7 @@
 # This script fails if there are not comments to be posted.
 
 import os
+import re
 
 import requests
 
@@ -20,7 +21,7 @@ def get_versions(versions_file):
     versions : dict
         A dictionary with the versions of the packages.
     """
-    with open("versions.txt", "r") as f:
+    with open(versions_file, "r") as f:
         return dict(line.strip().split("=") for line in f)
 
 
@@ -212,7 +213,7 @@ def get_message(log_file, repo, pr_number, sha, run_id, details, versions):
         + "This PR is introducing linting issues. Here's a summary of the issues. "
         + "Note that you can avoid having linting issues by enabling `pre-commit` "
         + "hooks. Instructions to enable them can be found [here]("
-        + "https://scikit-learn.org/dev/developers/contributing.html#how-to-contribute)"
+        + "https://scikit-learn.org/dev/developers/development_setup.html#set-up-pre-commit)"
         + ".\n\n"
         + "You can see the details of the linting issues under the `lint` job [here]"
         + f"(https://github.com/{repo}/actions/runs/{run_id})\n\n"
@@ -304,6 +305,9 @@ if __name__ == "__main__":
             "One of the following environment variables is not set: "
             "GITHUB_REPOSITORY, GITHUB_TOKEN, PR_NUMBER, LOG_FILE, RUN_ID"
         )
+
+    if not re.match(r"\d+$", pr_number):
+        raise ValueError(f"PR_NUMBER should be a number, got {pr_number!r} instead")
 
     try:
         comment = find_lint_bot_comments(repo, token, pr_number)
