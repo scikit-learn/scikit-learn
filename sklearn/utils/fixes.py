@@ -9,6 +9,8 @@ at which the fix is no longer needed.
 
 import platform
 import struct
+from builtins import Warning
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import scipy
@@ -40,6 +42,7 @@ LIL_CONTAINERS = [scipy.sparse.lil_matrix, scipy.sparse.lil_array]
 DOK_CONTAINERS = [scipy.sparse.dok_matrix, scipy.sparse.dok_array]
 BSR_CONTAINERS = [scipy.sparse.bsr_matrix, scipy.sparse.bsr_array]
 DIA_CONTAINERS = [scipy.sparse.dia_matrix, scipy.sparse.dia_array]
+
 
 # Remove when minimum scipy version is 1.11.0
 try:
@@ -175,15 +178,21 @@ else:
         )
 
 
-# For +1.25 NumPy versions exceptions and warnings are being moved
-# to a dedicated submodule.
+# For +1.25 NumPy versions exceptions and warnings are being moved.
+# Provide names to type checkers, and use numpy attributes at runtime.
+
+if TYPE_CHECKING:
+    ComplexWarning: Any
+    VisibleDeprecationWarning: Any
+
 if np_version >= parse_version("1.25.0"):
-    from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
-else:
-    from numpy import (  # noqa: F401
+    from numpy.exceptions import (  # type: ignore[attr-defined]
         ComplexWarning,
         VisibleDeprecationWarning,
     )
+else:
+    ComplexWarning = getattr(np, "ComplexWarning", Warning)
+    VisibleDeprecationWarning = getattr(np, "VisibleDeprecationWarning", Warning)
 
 
 # TODO: Adapt when Pandas > 2.2 is the minimum supported version
