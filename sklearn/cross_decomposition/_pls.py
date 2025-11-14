@@ -287,8 +287,8 @@ class _PLS(
         self._y_scores = np.zeros((n, n_components))  # Omega
         self.x_loadings_ = np.zeros((p, n_components))  # Gamma
         self.y_loadings_ = np.zeros((q, n_components))  # Delta
-        self.explained_variance_ratio_x_ = []
-        self.explained_variance_ratio_y_ = []
+        self.explained_variance_ratio_x_ = np.zeros(n_components)
+        self.explained_variance_ratio_y_ = np.zeros(n_components)
         self.n_iter_ = []
 
         # Calculate variance in X and y matrices
@@ -364,10 +364,10 @@ class _PLS(
             X_var_after, y_var_after, _, _ = _calculate_variance_xy(Xk, yk)
 
             # Calculate explained variance ratio
-            self.explained_variance_ratio_x_.append(
+            self.explained_variance_ratio_x_[k] = (
                 (X_var_before - X_var_after) / X_total_var if has_x_variance else 0.0
             )
-            self.explained_variance_ratio_y_.append(
+            self.explained_variance_ratio_y_[k] = (
                 (y_var_before - y_var_after) / y_total_var if has_y_variance else 0.0
             )
 
@@ -624,6 +624,14 @@ class PLSRegression(_PLS):
 
         .. versionadded:: 1.0
 
+    explained_variance_ratio_x_ : ndarray of shape (n_components,)
+        Percentage of variance explained by each of the selected components
+        in `X`.
+
+    explained_variance_ratio_y_ : ndarray of shape (n_components,)
+        Percentage of variance explained by each of the selected components
+        in `y`.
+
     See Also
     --------
     PLSCanonical : Partial Least Squares transformer and regressor.
@@ -774,6 +782,15 @@ class PLSCanonical(_PLS):
 
         .. versionadded:: 1.0
 
+    explained_variance_ratio_x_ : ndarray of shape (n_components,)
+        Percentage of variance explained by each of the selected components
+        in `X`.
+
+    explained_variance_ratio_y_ : ndarray of shape (n_components,)
+        Percentage of variance explained by each of the selected components
+        in `y`.
+
+
     See Also
     --------
     CCA : Canonical Correlation Analysis.
@@ -898,6 +915,15 @@ class CCA(_PLS):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    explained_variance_ratio_x_ : ndarray of shape (n_components,)
+        Percentage of variance explained by each of the selected components
+        in `X`.
+
+    explained_variance_ratio_y_ : ndarray of shape (n_components,)
+        Percentage of variance explained by each of the selected components
+        in `y`.
+
 
     See Also
     --------
