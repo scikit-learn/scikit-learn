@@ -112,6 +112,7 @@ def test_make_rng():
     with pytest.raises(ValueError):
         check_random_state("some invalid seed")
 
+
 def test_check_random_state_string_error_message():
     """Ensure check_random_state raises a clear message for string seeds."""
     from sklearn.utils.validation import check_random_state
