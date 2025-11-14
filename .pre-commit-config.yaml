@@ -12,12 +12,19 @@ repos:
     -   id: ruff-check
         args: ["--fix", "--output-format=full"]
     -   id: ruff-format
--   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
+#-   repo: https://github.com/pre-commit/mirrors-mypy
+#    rev: v1.15.0
+#    hooks:
+#     -  id: mypy
+#        files: sklearn/
+#        additional_dependencies: [pytest==6.2.4]
+-   repo: https://github.com/facebook/pyrefly-pre-commit
+    # Configuration for pyrefly is in pyproject.toml
+    rev: 0.0.1
     hooks:
-     -  id: mypy
-        files: sklearn/
-        additional_dependencies: [pytest==6.2.4]
+    -   id: pyrefly-typecheck-specific-version
+        name: pyrefly (type checking)
+        additional_dependencies: ["pyrefly==0.41.0"]
 -   repo: https://github.com/MarcoGorelli/cython-lint
     rev: v0.18.0
     hooks:
