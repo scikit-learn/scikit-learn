@@ -1058,6 +1058,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         """
         return self._transform(X)
 
+    # pyrefly: ignore [bad-override]
     def fit_transform(self, X, y, **fit_params):
         """Fit the estimators and return the predictions for X for each estimator.
 

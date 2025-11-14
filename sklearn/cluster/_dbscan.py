@@ -473,6 +473,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
             self.components_ = np.empty((0, X.shape[1]))
         return self
 
+    # pyrefly: ignore [bad-override]
     def fit_predict(self, X, y=None, sample_weight=None):
         """Compute clusters from a data or distance matrix and predict labels.
 

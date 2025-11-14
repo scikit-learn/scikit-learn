@@ -749,6 +749,7 @@ class LatentDirichletAllocation(
             doc_topic_distr /= doc_topic_distr.sum(axis=1)[:, np.newaxis]
         return doc_topic_distr
 
+    # pyrefly: ignore [bad-override]
     def fit_transform(self, X, y=None, *, normalize=True):
         """
         Fit to data, then transform it.

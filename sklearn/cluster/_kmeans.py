@@ -1044,6 +1044,7 @@ class _BaseKMeans(
 
         return centers
 
+    # pyrefly: ignore [bad-override]
     def fit_predict(self, X, y=None, sample_weight=None):
         """Compute cluster centers and predict cluster index for each sample.
 
@@ -1103,6 +1104,7 @@ class _BaseKMeans(
 
         return labels
 
+    # pyrefly: ignore [bad-override]
     def fit_transform(self, X, y=None, sample_weight=None):
         """Compute clustering and transform X to cluster-distance space.
 
@@ -1406,6 +1408,7 @@ class KMeans(_BaseKMeans):
         self.copy_x = copy_x
         self.algorithm = algorithm
 
+    # pyrefly: ignore [bad-override]
     def _check_params_vs_input(self, X):
         super()._check_params_vs_input(X, default_n_init=10)
 
@@ -1926,6 +1929,7 @@ class MiniBatchKMeans(_BaseKMeans):
         self.init_size = init_size
         self.reassignment_ratio = reassignment_ratio
 
+    # pyrefly: ignore [bad-override]
     def _check_params_vs_input(self, X):
         super()._check_params_vs_input(X, default_n_init=3)
 

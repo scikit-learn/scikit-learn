@@ -583,6 +583,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         results = [estimator.predict_proba(X) for estimator in self.estimators_]
         return results
 
+    # pyrefly: ignore [bad-override]
     def score(self, X, y):
         """Return the mean accuracy on the given test data and labels.
 

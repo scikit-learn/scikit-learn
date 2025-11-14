@@ -1282,6 +1282,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
 
 # TODO: remove when scipy min version >= 1.11
 if sp_base_version < parse_version("1.11"):
+    # pyrefly: ignore [unsupported-operation]
     PER_ESTIMATOR_XFAIL_CHECKS[SplineTransformer] = {
         "check_estimators_pickle": (
             "scipy < 1.11 implementation of _bsplines does not"

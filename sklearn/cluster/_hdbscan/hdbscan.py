@@ -899,6 +899,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             self._weighted_cluster_center(X)
         return self
 
+    # pyrefly: ignore [bad-override]
     def fit_predict(self, X, y=None):
         """Cluster X and return the associated cluster labels.
 

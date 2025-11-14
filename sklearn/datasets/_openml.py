@@ -185,6 +185,7 @@ def _open_openml_url(
                     else:
                         opener = gzip.GzipFile
                     with opener(os.path.join(tmpdir, file_name), "wb") as fdst:
+                        # pyrefly: ignore [bad-specialization]
                         shutil.copyfileobj(fsrc, fdst)
                 shutil.move(fdst.name, local_path)
         except Exception:
@@ -687,7 +688,11 @@ def _download_data_to_bunch(
         no_retry_exception = ParserError
 
     X, y, frame, categories = _retry_with_clean_cache(
-        url, data_home, no_retry_exception
+        # pyrefly: ignore [bad-argument-type]
+        url,
+        data_home,
+        # pyrefly: ignore [bad-argument-type]
+        no_retry_exception,
     )(_load_arff_response)(
         url,
         data_home,

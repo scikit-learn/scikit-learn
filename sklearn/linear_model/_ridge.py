@@ -1646,6 +1646,7 @@ def _find_smallest_angle(query, vectors):
     return index
 
 
+# pyrefly: ignore [implicit-import]
 class _X_CenterStackOp(sparse.linalg.LinearOperator):
     """Behaves as centered and scaled X with an added intercept column.
 
@@ -1660,6 +1661,7 @@ class _X_CenterStackOp(sparse.linalg.LinearOperator):
         self.X_mean = X_mean
         self.sqrt_sw = sqrt_sw
 
+    # pyrefly: ignore [bad-param-name-override]
     def _matvec(self, v):
         v = v.ravel()
         return (
@@ -1679,6 +1681,7 @@ class _X_CenterStackOp(sparse.linalg.LinearOperator):
         return _XT_CenterStackOp(self.X, self.X_mean, self.sqrt_sw)
 
 
+# pyrefly: ignore [implicit-import]
 class _XT_CenterStackOp(sparse.linalg.LinearOperator):
     """Behaves as transposed centered and scaled X with an intercept column.
 
@@ -1693,6 +1696,7 @@ class _XT_CenterStackOp(sparse.linalg.LinearOperator):
         self.X_mean = X_mean
         self.sqrt_sw = sqrt_sw
 
+    # pyrefly: ignore [bad-param-name-override]
     def _matvec(self, v):
         v = v.ravel()
         n_features = self.shape[0]
@@ -1733,6 +1737,7 @@ class _IdentityClassifier(LinearClassifierMixin, BaseEstimator):
     def __init__(self, classes):
         self.classes_ = classes
 
+    # pyrefly: ignore [bad-param-name-override]
     def decision_function(self, y_predict):
         return y_predict
 

@@ -168,6 +168,7 @@ class FitParamT(BaseEstimator):
 class DummyTransf(Transf):
     """Transformer which store the column means"""
 
+    # pyrefly: ignore [bad-override]
     def fit(self, X, y):
         self.means_ = np.mean(X, axis=0)
         # store timestamp to figure out whether the result of 'fit' has been

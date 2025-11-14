@@ -1844,6 +1844,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         for raw_predictions in self._staged_raw_predict(X):
             yield self._loss.link.inverse(raw_predictions.ravel())
 
+    # pyrefly: ignore [bad-override]
     def _encode_y(self, y):
         # Just convert y to the expected dtype
         self.n_trees_per_iteration_ = 1
@@ -2341,6 +2342,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
                 staged_decision = staged_decision.ravel()
             yield staged_decision
 
+    # pyrefly: ignore [bad-override]
     def _encode_y(self, y):
         """Create self._label_encoder and encode y correspondingly."""
         # encode classes into 0 ... n_classes - 1 and sets attributes classes_
@@ -2359,6 +2361,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         encoded_y = encoded_y.astype(Y_DTYPE, copy=False)
         return encoded_y
 
+    # pyrefly: ignore [bad-override]
     def _encode_y_val(self, y):
         encoded_y = self._label_encoder.transform(y)
         return encoded_y.astype(Y_DTYPE, copy=False)

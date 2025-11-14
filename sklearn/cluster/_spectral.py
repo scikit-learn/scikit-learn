@@ -771,6 +771,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
         return self
 
+    # pyrefly: ignore [bad-override]
     def fit_predict(self, X, y=None):
         """Perform spectral clustering on `X` and return cluster labels.
 

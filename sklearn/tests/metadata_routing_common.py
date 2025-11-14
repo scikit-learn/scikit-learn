@@ -333,6 +333,7 @@ class ConsumingClassifierWithoutPredictProba(ConsumingClassifier):
     """
 
     @property
+    # pyrefly: ignore [bad-override]
     def predict_proba(self):
         raise AttributeError("This estimator does not support predict_proba")
 
@@ -345,6 +346,7 @@ class ConsumingClassifierWithoutPredictLogProba(ConsumingClassifier):
     """
 
     @property
+    # pyrefly: ignore [bad-override]
     def predict_log_proba(self):
         raise AttributeError("This estimator does not support predict_log_proba")
 
@@ -357,10 +359,12 @@ class ConsumingClassifierWithOnlyPredict(ConsumingClassifier):
     """
 
     @property
+    # pyrefly: ignore [bad-override]
     def predict_proba(self):
         raise AttributeError("This estimator does not support predict_proba")
 
     @property
+    # pyrefly: ignore [bad-override]
     def predict_log_proba(self):
         raise AttributeError("This estimator does not support predict_log_proba")
 
@@ -396,6 +400,7 @@ class ConsumingTransformer(TransformerMixin, BaseEstimator):
         )
         return X + 1
 
+    # pyrefly: ignore [bad-override]
     def fit_transform(self, X, y, sample_weight="default", metadata="default"):
         # implementing ``fit_transform`` is necessary since
         # ``TransformerMixin.fit_transform`` doesn't route any metadata to
@@ -443,6 +448,7 @@ class ConsumingScorer(_Scorer):
         )
         self.registry = registry
 
+    # pyrefly: ignore [bad-param-name-override]
     def _score(self, method_caller, clf, X, y, **kwargs):
         if self.registry is not None:
             self.registry.append(self)

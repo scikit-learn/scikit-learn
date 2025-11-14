@@ -146,6 +146,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         self.name = _deprecate_estimator_name(estimator_name, name, "1.7")
         self.pos_label = pos_label
 
+    # pyrefly: ignore [bad-override]
     def _validate_plot_params(self, *, ax, name):
         self.ax_, self.figure_, name = super()._validate_plot_params(ax=ax, name=name)
 
