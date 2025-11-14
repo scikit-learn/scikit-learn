@@ -613,7 +613,7 @@ non-missing values, see the :ref:`Forest section <forest>`.
 
 The criterion supported when there are missing values are
 `'gini'`, `'entropy'`, or `'log_loss'`, for classification or
-`'squared_error'`, `'friedman_mse'`, or `'poisson'` for regression.
+`'squared_error'` or `'poisson'` for regression.
 
 First we will describe how :class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor`
 handle missing-values in the data.

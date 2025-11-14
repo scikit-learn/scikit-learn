@@ -74,7 +74,6 @@ CRITERIA_CLF = {
 }
 CRITERIA_REG = {
     "squared_error": _criterion.MSE,
-    "friedman_mse": _criterion.FriedmanMSE,
     "absolute_error": _criterion.MAE,
     "poisson": _criterion.Poisson,
 }
@@ -1118,22 +1117,24 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : {"squared_error", "friedman_mse", "absolute_error", \
-            "poisson"}, default="squared_error"
+    criterion : {"squared_error", "absolute_error", "poisson"}, default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
-        loss using the mean of each terminal node, "friedman_mse", which uses
-        mean squared error with Friedman's improvement score for potential
-        splits, "absolute_error" for the mean absolute error, which minimizes
-        the L1 loss using the median of each terminal node, and "poisson" which
-        uses reduction in the half mean Poisson deviance to find splits.
+        loss using the mean of each terminal node, "absolute_error" for the mean
+        absolute error, which minimizes the L1 loss using the median of each terminal
+        node, and "poisson" which uses reduction in Poisson deviance to find splits.
+        Training using "absolute_error" is significantly slower
+        than when using "squared_error".
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
         .. versionadded:: 0.24
             Poisson deviance criterion.
+
+        .. versionchanged:: 1.8
+            Criterion `"friedman_mse"` was deprecated.
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
@@ -1338,7 +1339,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
         "criterion": [
-            StrOptions({"squared_error", "friedman_mse", "absolute_error", "poisson"}),
+            StrOptions({"squared_error", "absolute_error", "poisson"}),
             Hidden(Criterion),
         ],
     }
@@ -1359,6 +1360,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         ccp_alpha=0.0,
         monotonic_cst=None,
     ):
+        if criterion == "friedman_mse":
+            criterion = "squared_error"
+            # TODO: raise deprec warning
         super().__init__(
             criterion=criterion,
             splitter=splitter,
@@ -1446,7 +1450,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         # common test to pass, specifically: check_estimators_nan_inf
         allow_nan = self.splitter in ("best", "random") and self.criterion in {
             "squared_error",
-            "friedman_mse",
             "poisson",
         }
         tags.input_tags.allow_nan = allow_nan
@@ -1758,22 +1761,24 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Parameters
     ----------
-    criterion : {"squared_error", "friedman_mse", "absolute_error", "poisson"}, \
-            default="squared_error"
+    criterion : {"squared_error", "absolute_error", "poisson"}, default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
-        loss using the mean of each terminal node, "friedman_mse", which uses
-        mean squared error with Friedman's improvement score for potential
-        splits, "absolute_error" for the mean absolute error, which minimizes
-        the L1 loss using the median of each terminal node, and "poisson" which
-        uses reduction in Poisson deviance to find splits.
+        loss using the mean of each terminal node, "absolute_error" for the mean
+        absolute error, which minimizes the L1 loss using the median of each terminal
+        node, and "poisson" which uses reduction in Poisson deviance to find splits.
+        Training using "absolute_error" is significantly slower
+        than when using "squared_error".
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
         .. versionadded:: 0.24
             Poisson deviance criterion.
+
+        .. versionchanged:: 1.8
+            Criterion `"friedman_mse"` was deprecated.
 
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
@@ -1993,7 +1998,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         # common test to pass, specifically: check_estimators_nan_inf
         allow_nan = self.splitter == "random" and self.criterion in {
             "squared_error",
-            "friedman_mse",
             "poisson",
         }
         tags.input_tags.allow_nan = allow_nan

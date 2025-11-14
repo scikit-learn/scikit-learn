@@ -11,7 +11,6 @@ import pytest
 from numpy.random import RandomState
 
 from sklearn.base import is_classifier
-from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.tree import (
     DecisionTreeClassifier,
@@ -389,21 +388,6 @@ def test_graphviz_errors():
         export_graphviz(clf, out, class_names=[])
 
 
-def test_friedman_mse_in_graphviz():
-    clf = DecisionTreeRegressor(criterion="friedman_mse", random_state=0)
-    clf.fit(X, y)
-    dot_data = StringIO()
-    export_graphviz(clf, out_file=dot_data)
-
-    clf = GradientBoostingClassifier(n_estimators=2, random_state=0)
-    clf.fit(X, y)
-    for estimator in clf.estimators_:
-        export_graphviz(estimator[0], out_file=dot_data)
-
-    for finding in finditer(r"\[.*?samples.*?\]", dot_data.getvalue()):
-        assert "friedman_mse" in finding.group()
-
-
 def test_precision():
     rng_reg = RandomState(2)
     rng_clf = RandomState(8)
@@ -411,9 +395,7 @@ def test_precision():
         (rng_reg.random_sample((5, 2)), rng_clf.random_sample((1000, 4))),
         (rng_reg.random_sample((5,)), rng_clf.randint(2, size=(1000,))),
         (
-            DecisionTreeRegressor(
-                criterion="friedman_mse", random_state=0, max_depth=1
-            ),
+            DecisionTreeRegressor(random_state=0, max_depth=1),
             DecisionTreeClassifier(max_depth=1, random_state=0),
         ),
     ):
@@ -436,7 +418,7 @@ def test_precision():
             if is_classifier(clf):
                 pattern = r"gini = \d+\.\d+"
             else:
-                pattern = r"friedman_mse = \d+\.\d+"
+                pattern = r"squared_error = \d+\.\d+"
 
             # check impurity
             for finding in finditer(pattern, dot_data):

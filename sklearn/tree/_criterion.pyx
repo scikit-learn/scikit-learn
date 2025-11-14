@@ -1687,10 +1687,6 @@ cdef class MAE(Criterion):
             dest[0] = upper_bound
 
 
-cdef class FriedmanMSE(MSE):
-    """Just a copy of MSE present for historical reasons, will be removed."""
-
-
 cdef class Poisson(RegressionCriterion):
     """Half Poisson deviance as impurity criterion.
 
