@@ -29,7 +29,7 @@ pygments==2.19.2
     # via pytest
 pyproject-metadata==0.9.1
     # via meson-python
-pytest==8.4.2
+pytest==9.0.0
     # via
     #   -r build_tools/azure/ubuntu_atlas_requirements.txt
     #   pytest-xdist
