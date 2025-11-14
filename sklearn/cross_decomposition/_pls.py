@@ -152,8 +152,12 @@ def _svd_flip_1d(u, v):
     v *= sign
 
 
-def _calculate_variance_xy(X, y):
-    """Calculates the variance of the X and y matrices"""
+def _calculate_variance_xy(
+    X: np.ndarray, y: np.ndarray
+) -> tuple[float, float, bool, bool]:
+    """Calculates the variance of the X and y matrices
+    The flags has_x_variance and has_y_variance i
+    """
     # Calculate variance
     X_total_var = np.var(X, axis=0, ddof=1).sum()
     y_total_var = np.var(y, axis=0, ddof=1).sum()
