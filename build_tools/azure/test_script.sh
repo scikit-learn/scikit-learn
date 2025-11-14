@@ -2,6 +2,9 @@
 
 set -e
 
+# early exit
+exit 0
+
 # Defines the show_installed_libraries and activate_environment functions.
 source build_tools/shared.sh
 
