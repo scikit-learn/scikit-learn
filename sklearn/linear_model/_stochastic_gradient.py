@@ -2252,9 +2252,9 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
     >>> import numpy as np
     >>> from sklearn import linear_model
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
-    >>> clf = linear_model.SGDOneClassSVM(random_state=42)
+    >>> clf = linear_model.SGDOneClassSVM(random_state=42, tol=None)
     >>> clf.fit(X)
-    SGDOneClassSVM(random_state=42)
+    SGDOneClassSVM(random_state=42, tol=None)
 
     >>> print(clf.predict([[4, 4]]))
     [1]

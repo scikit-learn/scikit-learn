@@ -20,8 +20,8 @@ endif
 # Python interpreter can be tricky in cross-compilation settings. For more
 # details, see https://docs.scipy.org/doc/scipy/building/cross_compilation.html
 if not meson.is_cross_build()
-  if not py.version().version_compare('>=3.10')
-    error('scikit-learn requires Python>=3.10, got ' + py.version() + ' instead')
+  if not py.version().version_compare('>=3.11')
+    error('scikit-learn requires Python>=3.11, got ' + py.version() + ' instead')
   endif
 
   cython_min_version = run_command(py, ['_min_dependencies.py', 'cython'], check: true).stdout().strip()
@@ -182,6 +182,7 @@ cython_args = []
 cython_program = find_program(cython.cmd_array()[0])
 
 scikit_learn_cython_args = [
+  '--depfile',
   '-X language_level=3', '-X boundscheck=' + boundscheck, '-X wraparound=False',
   '-X initializedcheck=False', '-X nonecheck=False', '-X cdivision=True',
   '-X profile=False',
@@ -215,11 +216,13 @@ endif
 cython_gen = generator(cython_program,
   arguments : cython_args + ['@INPUT@', '--output-file', '@OUTPUT@'],
   output : '@BASENAME@.c',
+  depfile: '@BASENAME@.c.dep',
 )
 
 cython_gen_cpp = generator(cython_program,
   arguments : cython_args + ['--cplus', '@INPUT@', '--output-file', '@OUTPUT@'],
   output : '@BASENAME@.cpp',
+  depfile: '@BASENAME@.cpp.dep'
 )
 
 extensions = ['_isotonic']

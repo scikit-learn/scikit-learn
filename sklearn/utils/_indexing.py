@@ -10,7 +10,11 @@ from itertools import compress, islice
 import numpy as np
 from scipy.sparse import issparse
 
-from sklearn.utils._array_api import _is_numpy_namespace, get_namespace
+from sklearn.utils._array_api import (
+    _is_numpy_namespace,
+    ensure_common_namespace_device,
+    get_namespace,
+)
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.extmath import _approximate_mode
 from sklearn.utils.fixes import PYARROW_VERSION_BELOW_17
@@ -31,6 +35,7 @@ def _array_indexing(array, key, key_dtype, axis):
     """Index an array or scipy.sparse consistently across NumPy version."""
     xp, is_array_api = get_namespace(array)
     if is_array_api:
+        key = ensure_common_namespace_device(array, key)[0]
         return xp.take(array, key, axis=axis)
     if issparse(array) and key_dtype == "bool":
         key = np.asarray(key)
@@ -62,7 +67,7 @@ def _list_indexing(X, key, key_dtype):
     if key_dtype == "bool":
         # key is a boolean array-like
         return list(compress(X, key))
-    # key is a integer array-like of key
+    # key is an integer array-like of key
     return [X[idx] for idx in key]
 
 

@@ -14,7 +14,6 @@ import numpy as np
 import scipy
 import scipy.sparse.linalg
 import scipy.stats
-from scipy import optimize
 
 try:
     import pandas as pd
@@ -57,18 +56,16 @@ def _object_dtype_isnan(X):
 
 # TODO: Remove when SciPy 1.11 is the minimum supported version
 def _mode(a, axis=0):
-    if sp_version >= parse_version("1.9.0"):
-        mode = scipy.stats.mode(a, axis=axis, keepdims=True)
-        if sp_version >= parse_version("1.10.999"):
-            # scipy.stats.mode has changed returned array shape with axis=None
-            # and keepdims=True, see https://github.com/scipy/scipy/pull/17561
-            if axis is None:
-                mode = np.ravel(mode)
-        return mode
-    return scipy.stats.mode(a, axis=axis)
+    mode = scipy.stats.mode(a, axis=axis, keepdims=True)
+    if sp_version >= parse_version("1.10.999"):
+        # scipy.stats.mode has changed returned array shape with axis=None
+        # and keepdims=True, see https://github.com/scipy/scipy/pull/17561
+        if axis is None:
+            mode = np.ravel(mode)
+    return mode
 
 
-# TODO: Remove when Scipy 1.12 is the minimum supported version
+# TODO: Remove when SciPy 1.12 is the minimum supported version
 if sp_base_version >= parse_version("1.12.0"):
     _sparse_linalg_cg = scipy.sparse.linalg.cg
 else:
@@ -81,40 +78,8 @@ else:
         return scipy.sparse.linalg.cg(A, b, **kwargs)
 
 
-# TODO : remove this when required minimum version of scipy >= 1.9.0
-def _yeojohnson_lambda(_neg_log_likelihood, x):
-    """Estimate the optimal Yeo-Johnson transformation parameter (lambda).
-
-    This function provides a compatibility workaround for versions of SciPy
-    older than 1.9.0, where `scipy.stats.yeojohnson` did not return
-    the estimated lambda directly.
-
-    Parameters
-    ----------
-    _neg_log_likelihood : callable
-        A function that computes the negative log-likelihood of the Yeo-Johnson
-        transformation for a given lambda. Used only for SciPy versions < 1.9.0.
-
-    x : array-like
-        Input data to estimate the Yeo-Johnson transformation parameter.
-
-    Returns
-    -------
-    lmbda : float
-        The estimated lambda parameter for the Yeo-Johnson transformation.
-    """
-    min_scipy_version = "1.9.0"
-
-    if sp_version < parse_version(min_scipy_version):
-        # choosing bracket -2, 2 like for boxcox
-        return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
-
-    _, lmbda = scipy.stats.yeojohnson(x, lmbda=None)
-    return lmbda
-
-
 # TODO: Fuse the modern implementations of _sparse_min_max and _sparse_nan_min_max
-# into the public min_max_axis function when Scipy 1.11 is the minimum supported
+# into the public min_max_axis function when SciPy 1.11 is the minimum supported
 # version and delete the backport in the else branch below.
 if sp_base_version >= parse_version("1.11.0"):
 
@@ -230,7 +195,10 @@ def pd_fillna(pd, frame):
         infer_objects_kwargs = (
             {} if parse_version(pd_version) >= parse_version("3") else {"copy": False}
         )
-        with pd.option_context("future.no_silent_downcasting", True):
+        if parse_version(pd_version) < parse_version("3.0"):
+            with pd.option_context("future.no_silent_downcasting", True):
+                frame = frame.fillna(value=np.nan).infer_objects(**infer_objects_kwargs)
+        else:
             frame = frame.fillna(value=np.nan).infer_objects(**infer_objects_kwargs)
     return frame
 
@@ -352,7 +320,7 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
     return np.int32
 
 
-# TODO: Remove when Scipy 1.12 is the minimum supported version
+# TODO: Remove when SciPy 1.12 is the minimum supported version
 if sp_version < parse_version("1.12"):
     from sklearn.externals._scipy.sparse.csgraph import laplacian
 else:

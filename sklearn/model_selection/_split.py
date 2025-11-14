@@ -892,9 +892,9 @@ class StratifiedKFold(_BaseKFold):
 class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     """Class-wise stratified K-Fold iterator variant with non-overlapping groups.
 
-    This cross-validation object is a variation of StratifiedKFold attempts to
-    return stratified folds with non-overlapping groups. The folds are made by
-    preserving the percentage of samples for each class in `y` in a binary or
+    This cross-validation object is a variation of :class:`StratifiedKFold` that
+    attempts to return stratified folds with non-overlapping groups. The folds are made
+    by preserving the percentage of samples for each class in `y` in a binary or
     multiclass classification setting.
 
     Each group will appear exactly once in the test set across all folds (the
@@ -905,7 +905,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     the former attempts to create balanced folds such that the number of
     distinct groups is approximately the same in each fold, whereas
     `StratifiedGroupKFold` attempts to create folds which preserve the
-    percentage of samples for each class as much as possible given the
+    percentage of samples from each class as much as possible given the
     constraint of non-overlapping groups between splits.
 
     Read more in the :ref:`User Guide <stratified_group_k_fold>`.
@@ -928,7 +928,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
         Whether to shuffle each class's samples before splitting into batches.
         Note that the samples within each split will not be shuffled.
         This implementation can only shuffle groups that have approximately the
-        same y distribution, no global shuffle will be performed.
+        same `y` class distribution, no global shuffle will be performed.
 
     random_state : int or RandomState instance, default=None
         When `shuffle` is True, `random_state` affects the ordering of the
@@ -975,7 +975,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     -----
     The implementation is designed to:
 
-    * Mimic the behavior of StratifiedKFold as much as possible for trivial
+    * Mimic the behavior of :class:`StratifiedKFold` as much as possible for trivial
       groups (e.g. when each group contains only one sample).
     * Be invariant to class label: relabelling ``y = ["Happy", "Sad"]`` to
       ``y = [1, 0]`` should not change the indices generated.
@@ -983,7 +983,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
       non-overlapping groups constraint. That means that in some cases when
       there is a small number of groups containing a large number of samples
       the stratification will not be possible and the behavior will be close
-      to GroupKFold.
+      to :class:`GroupKFold`.
 
     See also
     --------
@@ -1052,7 +1052,12 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
         groups_per_fold = defaultdict(set)
 
         if self.shuffle:
-            rng.shuffle(y_counts_per_group)
+            perm = np.arange(len(groups_cnt))
+            rng.shuffle(perm)
+            y_counts_per_group = y_counts_per_group[perm]
+            inv_perm = np.empty_like(perm)
+            inv_perm[perm] = np.arange(perm.size)
+            groups_inv = inv_perm[groups_inv]
 
         # Stable sort to keep shuffled order for groups with the same
         # class distribution variance
@@ -2330,16 +2335,19 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             # using join because str(row) uses an ellipsis if len(row) > 1000
             y = np.array([" ".join(row.astype("str")) for row in y])
 
-        classes, y_indices = np.unique(y, return_inverse=True)
+        classes, y_indices, class_counts = np.unique(
+            y, return_inverse=True, return_counts=True
+        )
         n_classes = classes.shape[0]
 
-        class_counts = np.bincount(y_indices)
         if np.min(class_counts) < 2:
+            too_few_classes = classes[class_counts < 2].tolist()
             raise ValueError(
-                "The least populated class in y has only 1"
+                "The least populated classes in y have only 1"
                 " member, which is too few. The minimum"
                 " number of groups for any class cannot"
-                " be less than 2."
+                " be less than 2. Classes with too few"
+                " members are: %s" % (too_few_classes)
             )
 
         if n_train < n_classes:

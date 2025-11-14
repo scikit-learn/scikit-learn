@@ -4,9 +4,9 @@
 # See _utils.pyx for details.
 
 cimport numpy as cnp
-from ._tree cimport Node
-from ..neighbors._quad_tree cimport Cell
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, int32_t, uint32_t
+from sklearn.tree._tree cimport Node
+from sklearn.neighbors._quad_tree cimport Cell
+from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, int32_t, uint32_t
 
 
 cdef enum:
@@ -28,7 +28,6 @@ ctypedef fused realloc_ptr:
     (float32_t*)
     (intp_t*)
     (uint8_t*)
-    (WeightedPQueueRecord*)
     (float64_t*)
     (float64_t**)
     (Node*)
@@ -51,50 +50,21 @@ cdef float64_t rand_uniform(float64_t low, float64_t high,
 
 cdef float64_t log(float64_t x) noexcept nogil
 
-# =============================================================================
-# WeightedPQueue data structure
-# =============================================================================
 
-# A record stored in the WeightedPQueue
-cdef struct WeightedPQueueRecord:
-    float64_t data
-    float64_t weight
+cdef class WeightedFenwickTree:
+    cdef intp_t size         # number of leaves (ranks)
+    cdef float64_t* tree_w   # BIT for weights
+    cdef float64_t* tree_wy  # BIT for weighted targets
+    cdef intp_t max_pow2     # highest power of two <= n
+    cdef float64_t total_w   # running total weight
+    cdef float64_t total_wy  # running total weighted target
 
-cdef class WeightedPQueue:
-    cdef intp_t capacity
-    cdef intp_t array_ptr
-    cdef WeightedPQueueRecord* array_
-
-    cdef bint is_empty(self) noexcept nogil
-    cdef int reset(self) except -1 nogil
-    cdef intp_t size(self) noexcept nogil
-    cdef int push(self, float64_t data, float64_t weight) except -1 nogil
-    cdef int remove(self, float64_t data, float64_t weight) noexcept nogil
-    cdef int pop(self, float64_t* data, float64_t* weight) noexcept nogil
-    cdef int peek(self, float64_t* data, float64_t* weight) noexcept nogil
-    cdef float64_t get_weight_from_index(self, intp_t index) noexcept nogil
-    cdef float64_t get_value_from_index(self, intp_t index) noexcept nogil
-
-
-# =============================================================================
-# WeightedMedianCalculator data structure
-# =============================================================================
-
-cdef class WeightedMedianCalculator:
-    cdef intp_t initial_capacity
-    cdef WeightedPQueue samples
-    cdef float64_t total_weight
-    cdef intp_t k
-    cdef float64_t sum_w_0_k  # represents sum(weights[0:k]) = w[0] + w[1] + ... + w[k-1]
-    cdef intp_t size(self) noexcept nogil
-    cdef int push(self, float64_t data, float64_t weight) except -1 nogil
-    cdef int reset(self) except -1 nogil
-    cdef int update_median_parameters_post_push(
-        self, float64_t data, float64_t weight,
-        float64_t original_median) noexcept nogil
-    cdef int remove(self, float64_t data, float64_t weight) noexcept nogil
-    cdef int pop(self, float64_t* data, float64_t* weight) noexcept nogil
-    cdef int update_median_parameters_post_remove(
-        self, float64_t data, float64_t weight,
-        float64_t original_median) noexcept nogil
-    cdef float64_t get_median(self) noexcept nogil
+    cdef void reset(self, intp_t size) noexcept nogil
+    cdef void add(self, intp_t idx, float64_t y, float64_t w) noexcept nogil
+    cdef intp_t search(
+        self,
+        float64_t t,
+        float64_t* cw_out,
+        float64_t* cwy_out,
+        intp_t* prev_idx_out,
+    ) noexcept nogil

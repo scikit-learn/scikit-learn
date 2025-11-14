@@ -51,9 +51,9 @@ See :ref:`new_contributors` to get started.
     issues, organizing and teaching tutorials, working on the website,
     improving the documentation, are all priceless contributions.
 
-    We abide by the principles of openness, respect, and consideration of
-    others of the Python Software Foundation:
-    https://www.python.org/psf/codeofconduct/
+    Communications on all channels should respect our `Code of Conduct
+    <https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md>`_.
+
 
 
 In case you experience issues using this package, do not hesitate to submit a
@@ -200,8 +200,22 @@ feedback:
 
 If you want to help curate issues, read about :ref:`bug_triaging`.
 
-Contributing code
-=================
+Contributing code and documentation
+===================================
+
+The preferred way to contribute to scikit-learn is to fork the `main
+repository <https://github.com/scikit-learn/scikit-learn/>`__ on GitHub,
+then submit a "pull request" (PR).
+
+To get started, you need to
+
+#. :ref:`setup_development_environment`
+#. Find an issue to work on (see :ref:`new_contributors`)
+#. Follow the :ref:`development_workflow`
+#. Make sure, you noted the :ref:`pr_checklist`
+
+If you want to contribute :ref:`contribute_documentation`,
+make sure you are able to :ref:`build it locally <building_documentation>`, before submitting a PR.
 
 .. note::
 
@@ -230,160 +244,60 @@ contribution must conform to the project's :ref:`coding guidelines
   the "why" rather than the "what".
 - **Most importantly**: Do not contribute code that you don't understand.
 
-Video resources
----------------
-These videos are step-by-step introductions on how to contribute to
-scikit-learn, and are a great companion to the following text guidelines.
-Please make sure to still check our guidelines below, since they describe our
-latest up-to-date workflow.
+.. _development_workflow:
 
-- Crash Course in Contributing to Scikit-Learn & Open Source Projects:
-  `Video <https://youtu.be/5OL8XoMMOfA>`__,
-  `Transcript
-  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/05-andreas-mueller-contributing.md>`__
+Development workflow
+--------------------
 
-- Example of Submitting a Pull Request to scikit-learn:
-  `Video <https://youtu.be/PU1WyDPGePI>`__,
-  `Transcript
-  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/06-reshama-shaikh-sklearn-pr.md>`__
+The next steps describe the process of modifying code and submitting a PR:
 
-- Sprint-specific instructions and practical tips:
-  `Video <https://youtu.be/p_2Uw2BxdhA>`__,
-  `Transcript
-  <https://github.com/data-umbrella/data-umbrella-scikit-learn-sprint/blob/master/3_transcript_ACM_video_vol2.md>`__
-
-- 3 Components of Reviewing a Pull Request:
-  `Video <https://youtu.be/dyxS9KKCNzA>`__,
-  `Transcript
-  <https://github.com/data-umbrella/event-transcripts/blob/main/2021/27-thomas-pr.md>`__
-
-.. note::
-  In January 2021, the default branch name changed from ``master`` to ``main``
-  for the scikit-learn GitHub repository to use more inclusive terms.
-  These videos were created prior to the renaming of the branch.
-  For contributors who are viewing these videos to set up their
-  working environment and submitting a PR, ``master`` should be replaced to ``main``.
-
-How to contribute
------------------
-
-The preferred way to contribute to scikit-learn is to fork the `main
-repository <https://github.com/scikit-learn/scikit-learn/>`__ on GitHub,
-then submit a "pull request" (PR).
-
-In the first few steps, we explain how to locally install scikit-learn, and
-how to set up your git repository:
-
-1. `Create an account <https://github.com/join>`_ on
-   GitHub if you do not already have one.
-
-2. Fork the `project repository
-   <https://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
-   button near the top of the page. This creates a copy of the code under your
-   account on the GitHub user account. For more details on how to fork a
-   repository see `this guide <https://help.github.com/articles/fork-a-repo/>`_.
-
-3. Clone your fork of the scikit-learn repo from your GitHub account to your
-   local disk:
-
-   .. prompt:: bash
-
-      git clone git@github.com:YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
-      cd scikit-learn
-
-4. Follow steps 2-6 in :ref:`install_bleeding_edge` to build scikit-learn in
-   development mode and return to this document.
-
-5. Install the development dependencies:
-
-   .. prompt:: bash
-
-        pip install pytest pytest-cov ruff==0.11.2 mypy numpydoc
-
-.. _upstream:
-
-6. Add the ``upstream`` remote. This saves a reference to the main
-   scikit-learn repository, which you can use to keep your repository
-   synchronized with the latest changes:
-
-   .. prompt:: bash
-
-        git remote add upstream git@github.com:scikit-learn/scikit-learn.git
-
-7. Check that the `upstream` and `origin` remote aliases are configured correctly
-   by running:
-
-   .. prompt:: bash
-
-        git remote -v
-
-   This should display:
-
-   .. code-block:: text
-
-        origin    git@github.com:YourLogin/scikit-learn.git (fetch)
-        origin    git@github.com:YourLogin/scikit-learn.git (push)
-        upstream  git@github.com:scikit-learn/scikit-learn.git (fetch)
-        upstream  git@github.com:scikit-learn/scikit-learn.git (push)
-
-You should now have a working installation of scikit-learn, and your git repository
-properly configured. It could be useful to run some test to verify your installation.
-Please refer to :ref:`pytest_tips` for examples.
-
-The next steps now describe the process of modifying code and submitting a PR:
-
-8. Synchronize your ``main`` branch with the ``upstream/main`` branch,
+#. Synchronize your ``main`` branch with the ``upstream/main`` branch,
    more details on `GitHub Docs <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork>`_:
 
    .. prompt:: bash
 
-        git checkout main
-        git fetch upstream
-        git merge upstream/main
+      git checkout main
+      git fetch upstream
+      git merge upstream/main
 
-9. Create a feature branch to hold your development changes:
+#. Create a feature branch to hold your development changes:
 
    .. prompt:: bash
 
-        git checkout -b my_feature
+      git checkout -b my_feature
 
    and start making changes. Always use a feature branch. It's good
    practice to never work on the ``main`` branch!
 
-10. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
-    run code style checks before each commit:
+#. Develop the feature on your feature branch on your computer, using Git to
+   do the version control. When you're done editing, add changed files using
+   ``git add`` and then ``git commit``:
 
-    .. prompt:: bash
+   .. prompt:: bash
 
-          pip install pre-commit
-          pre-commit install
+      git add modified_files
+      git commit
 
-    pre-commit checks can be disabled for a particular commit with
-    `git commit -n`.
+   .. note::
 
-11. Develop the feature on your feature branch on your computer, using Git to
-    do the version control. When you're done editing, add changed files using
-    ``git add`` and then ``git commit``:
+     :ref:`pre-commit <pre_commit>` may reformat your code automatically when
+     you do `git commit`. When this happens, you need to do `git add` followed
+     by `git commit` again. In some rarer cases, you may need to fix things
+     manually, use the error message to figure out what needs to be changed,
+     and use `git add` followed by `git commit` until the commit is successful.
 
-    .. prompt:: bash
+   Then push the changes to your GitHub account with:
 
-        git add modified_files
-        git commit
+   .. prompt:: bash
 
-    to record your changes in Git, then push the changes to your GitHub
-    account with:
+      git push -u origin my_feature
 
-    .. prompt:: bash
-
-       git push -u origin my_feature
-
-12. Follow `these
-    <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
-    instructions to create a pull request from your fork. This will send a
-    notification to potential reviewers. You may want to consider sending a message to
-    the `discord <https://discord.com/invite/h9qyrK8Jc8>`_ in the development
-    channel for more visibility if your pull request does not receive attention after
-    a couple of days (instant replies are not guaranteed though).
+#. Follow `these <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
+   instructions to create a pull request from your fork. This will send a
+   notification to potential reviewers. You may want to consider sending a message to
+   the `discord <https://discord.com/invite/h9qyrK8Jc8>`_ in the development
+   channel for more visibility if your pull request does not receive attention after
+   a couple of days (instant replies are not guaranteed though).
 
 It is often helpful to keep your local feature branch synchronized with the
 latest changes of the main scikit-learn repository:
@@ -459,11 +373,9 @@ complies with the following rules before marking a PR as "ready for review". The
    build the docs: please refer to :ref:`generated_doc_CI`.
 
 4. **Tests are necessary for enhancements to be
-   accepted**. Bug-fixes or new features should be provided with
-   `non-regression tests
-   <https://en.wikipedia.org/wiki/Non-regression_testing>`_. These tests
-   verify the correct behavior of the fix or feature. In this manner, further
-   modifications on the code base are granted to be consistent with the
+   accepted**. Bug-fixes or new features should be provided with non-regression tests.
+   These tests verify the correct behavior of the fix or feature. In this manner,
+   further modifications on the code base are granted to be consistent with the
    desired behavior. In the case of bug fixes, at the time of the PR, the
    non-regression tests should fail for the code base in the ``main`` branch
    and pass for the PR code.
@@ -586,6 +498,9 @@ Commit Message Marker  Action Taken by CI
 [pyodide]              Build & test with Pyodide
 [azure parallel]       Run Azure CI jobs in parallel
 [float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
+[all random seeds]     Run tests using the `global_random_seed` fixture with all random seeds.
+                       See `this <https://github.com/scikit-learn/scikit-learn/issues/28959>`_
+                       for more details about the commit message format
 [doc skip]             Docs are not built
 [doc quick]            Docs built, but excludes example gallery plots
 [doc build]            Docs built including example gallery plots (very long)
@@ -691,7 +606,7 @@ using the following guidelines:
 Issues for New Contributors
 ---------------------------
 
-New contributors should look for the following tags when looking for issues.  We
+New contributors should look for the following tags when looking for issues. We
 strongly recommend that new contributors tackle "easy" issues first: this helps
 the contributor become familiar with the contribution workflow, and for the core
 devs to become acquainted with the contributor; besides which, we frequently
@@ -723,6 +638,50 @@ underestimate how easy an issue is to solve!
   the original contributor left off. The list of issues with the help wanted tag can be
   found `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_.
   Note that not all issues which need contributors will have this tag.
+
+- **Do not open PRs for issues with 'Needs Triage' tag**
+
+  The `Needs Triage
+  <https://github.com/scikit-learn/scikit-learn/labels/needs%20triage>`_ label means
+  that the issue is not yet confirmed or fully understood. It signals to scikit-learn
+  members to clarify the problem, discuss scope, and decide on the next steps. You are
+  welcome to join the discussion, but as per our `Code of Conduct
+  <https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md>`_ please
+  wait before submitting a PR.
+
+Video resources
+---------------
+These videos are step-by-step introductions on how to contribute to
+scikit-learn, and are a great companion to the text guidelines.
+Please make sure to still check our guidelines, since they describe our
+latest up-to-date workflow.
+
+- Crash Course in Contributing to Scikit-Learn & Open Source Projects:
+  `Video <https://youtu.be/5OL8XoMMOfA>`__,
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/05-andreas-mueller-contributing.md>`__
+
+- Example of Submitting a Pull Request to scikit-learn:
+  `Video <https://youtu.be/PU1WyDPGePI>`__,
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2020/06-reshama-shaikh-sklearn-pr.md>`__
+
+- Sprint-specific instructions and practical tips:
+  `Video <https://youtu.be/p_2Uw2BxdhA>`__,
+  `Transcript
+  <https://github.com/data-umbrella/data-umbrella-scikit-learn-sprint/blob/master/3_transcript_ACM_video_vol2.md>`__
+
+- 3 Components of Reviewing a Pull Request:
+  `Video <https://youtu.be/dyxS9KKCNzA>`__,
+  `Transcript
+  <https://github.com/data-umbrella/event-transcripts/blob/main/2021/27-thomas-pr.md>`__
+
+.. note::
+  In January 2021, the default branch name changed from ``master`` to ``main``
+  for the scikit-learn GitHub repository to use more inclusive terms.
+  These videos were created prior to the renaming of the branch.
+  For contributors who are viewing these videos to set up their
+  working environment and submitting a PR, ``master`` should be replaced to ``main``.
 
 .. _contribute_documentation:
 
@@ -993,7 +952,7 @@ Building the documentation
 **Before submitting a pull request check if your modifications have introduced
 new sphinx warnings by building the documentation locally and try to fix them.**
 
-First, make sure you have :ref:`properly installed <install_bleeding_edge>` the
+First, make sure you have :ref:`properly installed <setup_development_environment>` the
 development version. On top of that, building the documentation requires installing some
 additional packages:
 
@@ -1495,9 +1454,11 @@ up this process by providing your feedback.
     parameters, their values, value types, and combinations tested? Do
     the tests validate that the code is correct, i.e. doing what the
     documentation says it does? If the change is a bug-fix, is a
-    non-regression test included? Look at `this
-    <https://jeffknupp.com/blog/2013/12/09/improve-your-python-understanding-unit-testing>`__
-    to get started with testing in Python.
+    non-regression test included? These tests verify the correct behavior of the fix
+    or feature. In this manner, further modifications on the code base are granted to
+    be consistent with the desired behavior. In the case of bug fixes, at the time of
+    the PR, the non-regression tests should fail for the code base in the ``main``
+    branch and pass for the PR code.
 
   - Do the tests pass in the continuous integration build? If
     appropriate, help the contributor understand why tests failed.
