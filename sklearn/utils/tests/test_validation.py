@@ -112,6 +112,18 @@ def test_make_rng():
     with pytest.raises(ValueError):
         check_random_state("some invalid seed")
 
+def test_check_random_state_string_error_message():
+    """Ensure check_random_state raises a clear message for string seeds."""
+    from sklearn.utils.validation import check_random_state
+
+    # Match the new descriptive error message about accepted seed types
+    msg = (
+        r"seed must be None, an int, a numpy RandomState instance, "
+        r"or a numpy Generator"
+    )
+    with pytest.raises(ValueError, match=msg):
+        check_random_state("hello")
+
 
 def test_as_float_array():
     # Test function for as_float_array
