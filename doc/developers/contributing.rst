@@ -62,6 +62,8 @@ ticket to the
 <https://github.com/scikit-learn/scikit-learn/issues>`_. You are also
 welcome to post feature requests or pull requests.
 
+.. _ways_to_contribute:
+
 Ways to contribute
 ==================
 
@@ -572,6 +574,8 @@ them over is a great service for the project. A good etiquette to take over is:
   new PR to the old one. The new PR should be created by pulling from the
   old one.
 
+.. _stalled_unclaimed_issues:
+
 Stalled and Unclaimed Issues
 ----------------------------
 
@@ -601,53 +605,42 @@ using the following guidelines:
   described in the :ref:`stalled_pull_request`
   section rather than working directly on the issue.
 
+.. _issues_tagged_needs_triage:
+
+Issues tagged 'Needs Triage'
+----------------------------
+
+The `Needs Triage
+<https://github.com/scikit-learn/scikit-learn/labels/needs%20triage>`_ label means
+that the issue is not yet confirmed or fully understood. It signals to scikit-learn
+members to clarify the problem, discuss scope, and decide on the next steps. You are
+welcome to join the discussion, but as per our `Code of Conduct
+<https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md>`_ please
+do not a PR until the tag is removed and there is clear consensus on how to address
+the issue.
+
 .. _new_contributors:
 
-Issues for New Contributors
----------------------------
+New Contributors
+----------------
 
-New contributors should look for the following tags when looking for issues. We
-strongly recommend that new contributors tackle "easy" issues first: this helps
-the contributor become familiar with the contribution workflow, and for the core
-devs to become acquainted with the contributor; besides which, we frequently
-underestimate how easy an issue is to solve!
+We recommend new contributors to start by reading this contributing guide, in
+particular :ref:`ways_to_contribute`, :ref:`automated_contributions_policy`
+and :ref:`pr_checklist`. For expected etiquette around which issues and stalled PRs
+to work on, please read :ref:`stalled_pull_request`, :ref:`stalled_unclaimed_issues`
+and :ref:`issues_tagged_needs_triage`.
 
-- **Good first issue tag**
+We understand that everyone has different interests and backgrounds, thus we recommend
+you start by looking for an issue that is of interest to you, in an area you are
+already familiar with as a user or have background knowledge of.
 
-  A great way to start contributing to scikit-learn is to pick an item from
-  the list of `good first issues
-  <https://github.com/scikit-learn/scikit-learn/labels/good%20first%20issue>`_
-  in the issue tracker. Resolving these issues allows you to start contributing
-  to the project without much prior knowledge. If you have already contributed
-  to scikit-learn, you should look at Easy issues instead.
+We rarely use the "Good first issue" label because because it is difficult to make
+assumptions about new contributors and these issues often prove more complex
+than originally anticipated.
 
-- **Easy tag**
-
-  If you have already contributed to scikit-learn, another great way to contribute
-  to scikit-learn is to pick an item from the list of `Easy issues
-  <https://github.com/scikit-learn/scikit-learn/labels/Easy>`_ in the issue
-  tracker. Your assistance in this area will be greatly appreciated by the
-  more experienced developers as it helps free up their time to concentrate on
-  other issues.
-
-- **Help wanted tag**
-
-  We often use the help wanted tag to mark issues regardless of difficulty.
-  Additionally, we use the help wanted tag to mark Pull Requests which have been
-  abandoned by their original contributor and are available for someone to pick up where
-  the original contributor left off. The list of issues with the help wanted tag can be
-  found `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_.
-  Note that not all issues which need contributors will have this tag.
-
-- **Do not open PRs for issues with 'Needs Triage' tag**
-
-  The `Needs Triage
-  <https://github.com/scikit-learn/scikit-learn/labels/needs%20triage>`_ label means
-  that the issue is not yet confirmed or fully understood. It signals to scikit-learn
-  members to clarify the problem, discuss scope, and decide on the next steps. You are
-  welcome to join the discussion, but as per our `Code of Conduct
-  <https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md>`_ please
-  wait before submitting a PR.
+For more experienced scikit-learn contributors, issues labeled `'Easy'
+<https://github.com/scikit-learn/scikit-learn/labels/Easy>`_ may be a good place to
+look.
 
 Video resources
 ---------------
