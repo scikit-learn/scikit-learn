@@ -14,6 +14,7 @@ import pytest
 
 from sklearn import config_context
 from sklearn.base import BaseEstimator
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import (
@@ -125,8 +126,18 @@ def test_classification():
 )
 def test_sparse_classification(sparse_container, params, method):
     # Check classification for various parameter settings on sparse input.
+    if method in ["predict", "decision_function"]:
+        params_svm = dict(kernel="linear", decision_function_shape="ovr")
+        svm = SVC
+    else:
+        svm = CalibratedClassifierCV
+        params_svm = dict(
+            estimator=SVC(kernel="linear", decision_function_shape="ovr"),
+            ensemble=False,
+            cv=3,
+        )
 
-    class CustomSVC(SVC):
+    class CustomSVC(svm):
         """SVC variant that records the nature of the training set"""
 
         def fit(self, X, y):
@@ -141,17 +152,19 @@ def test_sparse_classification(sparse_container, params, method):
 
     X_train_sparse = sparse_container(X_train)
     X_test_sparse = sparse_container(X_test)
+
     # Trained on sparse format
     sparse_classifier = BaggingClassifier(
-        estimator=CustomSVC(kernel="linear", decision_function_shape="ovr"),
+        estimator=CustomSVC(**params_svm),
         random_state=1,
         **params,
     ).fit(X_train_sparse, y_train)
+    print(sparse_classifier, method)
     sparse_results = getattr(sparse_classifier, method)(X_test_sparse)
 
     # Trained on dense format
     dense_classifier = BaggingClassifier(
-        estimator=CustomSVC(kernel="linear", decision_function_shape="ovr"),
+        estimator=CustomSVC(**params_svm),
         random_state=1,
         **params,
     ).fit(X_train, y_train)
@@ -371,7 +384,10 @@ def test_oob_score_classification():
         iris.data, iris.target, random_state=rng
     )
 
-    for estimator in [DecisionTreeClassifier(), SVC()]:
+    for estimator in [
+        DecisionTreeClassifier(),
+        CalibratedClassifierCV(SVC(), ensemble=False),
+    ]:
         clf = BaggingClassifier(
             estimator=estimator,
             n_estimators=100,
