@@ -28,7 +28,7 @@ class Apriori(TransformerMixin, BaseEstimator):
     # Parameter constraints required by estimator checks
     _parameter_constraints = {
         "min_support": ["numeric"],
-        "max_len": ["no_validation"],
+        "max_len": ["integer", "none"],
         "use_colnames": ["boolean"],
     }
 
