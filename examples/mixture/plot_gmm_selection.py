@@ -154,9 +154,8 @@ plt.title(
 plt.axis("equal")
 plt.show()
 
-
-from sklearn.mixture import GaussianMixture
 from sklearn.metrics import adjusted_rand_score
+from sklearn.mixture import GaussianMixture
 
 # %%
 # Comparison on a "double-cigar" dataset

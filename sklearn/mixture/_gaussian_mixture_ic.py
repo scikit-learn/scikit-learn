@@ -5,8 +5,10 @@
 
 import numpy as np
 from scipy import linalg
-from scipy.cluster.hierarchy import fcluster, linkage as scipy_linkage
+from scipy.cluster.hierarchy import fcluster
+from scipy.cluster.hierarchy import linkage as scipy_linkage
 from scipy.spatial.distance import pdist
+
 from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.covariance import OAS
 from sklearn.decomposition import PCA
@@ -138,6 +140,25 @@ def _mahalanobis_ward_init(X, n_components, covariance_type, reg_covar):
         precisions_init = 1.0 / covs
 
     return weights, means, precisions_init
+
+
+class _GaussianMixtureMahalanobisWard(GaussianMixture):
+    """GaussianMixture with Mahalanobis–Ward initialization.
+
+    This class is used internally by GaussianMixtureIC inside GridSearchCV.
+    """
+
+    def fit(self, X, y=None):
+        weights_init, means_init, precisions_init = _mahalanobis_ward_init(
+            X,
+            n_components=self.n_components,
+            covariance_type=self.covariance_type,
+            reg_covar=self.reg_covar,
+        )
+        self.weights_init = weights_init
+        self.means_init = means_init
+        self.precisions_init = precisions_init
+        return super().fit(X, y)
 
 
 class GaussianMixtureIC(ClusterMixin, BaseEstimator):
@@ -473,34 +494,27 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         if self.random_state is not None:
             np.random.seed(self.random_state)
 
-        class _GaussianMixtureMahalanobisWard(GaussianMixture):
-            """GaussianMixture with Ward-Mahalanobis initialization."""
-
-            def fit(self, X, y=None):
-                # Compute initialization on the X seen in this call,
-                # which may be a CV fold subset.
-                weights_init, means_init, precisions_init = _mahalanobis_ward_init(
-                    X,
-                    n_components=self.n_components,
-                    covariance_type=self.covariance_type,
-                    reg_covar=self.reg_covar,
-                )
-                self.weights_init = weights_init
-                self.means_init = means_init
-                self.precisions_init = precisions_init
-                return super().fit(X, y)
-
         param_grid = {
             "covariance_type": covariance_type,
             "n_components": range(self.min_components, self.max_components + 1),
         }
 
+        base_estimator = _GaussianMixtureMahalanobisWard(
+            init_params=self.init_params,
+            max_iter=self.max_iter,
+            n_init=self.n_init,
+            reg_covar=self.reg_covar,
+            random_state=self.random_state,
+            warm_start=self.warm_start,
+            verbose=self.verbose,
+            verbose_interval=self.verbose_interval,
+        )
+
         grid_search = GridSearchCV(
-            _GaussianMixtureMahalanobisWard(
-                init_params=self.init_params, max_iter=self.max_iter, n_init=self.n_init
-            ),
+            base_estimator,
             param_grid=param_grid,
             scoring=self.criterion_score,
+            n_jobs=self.n_jobs,
         )
         grid_search.fit(X)
 
