@@ -113,6 +113,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     RocCurveDisplay.from_cv_results : Plot multi-fold ROC curves given
         cross-validation results.
     roc_auc_score : Compute the area under the ROC curve.
+    PrecisionRecallDisplay : Precision-Recall curve.
+    CAPCurveDisplay : Cumulative Accuracy Profile (CAP) curve.
+    DetCurveDisplay : Detection Error Tradeoff (DET) curve.
 
     Examples
     --------
