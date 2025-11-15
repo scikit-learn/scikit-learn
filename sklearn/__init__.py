@@ -71,6 +71,7 @@ from sklearn.base import clone  # noqa: E402
 from sklearn.utils._show_versions import show_versions  # noqa: E402
 
 _submodules = [
+    "association",
     "calibration",
     "cluster",
     "covariance",

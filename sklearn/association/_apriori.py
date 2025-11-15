@@ -20,7 +20,7 @@ from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
 from sklearn.utils.validation import check_array
 
 
-class Apriori(BaseEstimator, TransformerMixin):
+class Apriori(TransformerMixin, BaseEstimator):
     """
     Simple Apriori implementation for frequent itemsets and rules.
     """
@@ -28,7 +28,7 @@ class Apriori(BaseEstimator, TransformerMixin):
     # Parameter constraints required by estimator checks
     _parameter_constraints = {
         "min_support": ["numeric"],
-        "max_len": ["nullable_integer"],
+        "max_len": ["no_validation"],
         "use_colnames": ["boolean"],
     }
 
@@ -75,18 +75,17 @@ class Apriori(BaseEstimator, TransformerMixin):
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Mine all frequent itemsets using Apriori."""
+        # Validate common array-like inputs. For sparse matrices we intentionally
+        # call check_array(..., accept_sparse=False) and allow it to raise so the
+        # error message clearly states that sparse input is not supported.
         if pd is not None and isinstance(X, pd.DataFrame):
             check_array(X.to_numpy(), dtype=None, accept_sparse=False)
         elif isinstance(X, np.ndarray):
             check_array(X, dtype=None, accept_sparse=False)
         else:
-            # If X is a scipy sparse matrix, ensure we raise the informative error.
-            try:
-                if issparse(X):
-                    check_array(X, dtype=None, accept_sparse=False)
-            except Exception:
-                # For other iterable transaction formats, skip numeric validation here.
-                pass
+            # If X is a scipy sparse matrix, raise the informative error.
+            if issparse(X):
+                check_array(X, dtype=None, accept_sparse=False)
 
         # Normalize transactions
         transactions = self._transactions_from_X(X)
