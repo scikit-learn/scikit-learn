@@ -841,10 +841,10 @@ class LocallyLinearEmbedding(
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
-            Returns the instance itself.
+            Feature space coordinates of training points.
         """
         self._fit_transform(X)
-        return self.embedding_
+        return self.transform(X)
 
     def transform(self, X):
         """
@@ -852,13 +852,13 @@ class LocallyLinearEmbedding(
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            Training set.
+        X : array-like of shape (n_queries, n_features)
+            Input space coordinates of query points.
 
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
-            Returns the instance itself.
+            Feature space coordinates of query points.
 
         Notes
         -----
