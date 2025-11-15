@@ -488,7 +488,7 @@ class LearningCurveDisplay(_BaseCurveDisplay):
             random_state=random_state,
             error_score=error_score,
             return_times=False,
-            fit_params=fit_params,
+            params=fit_params,
         )
 
         viz = cls(
@@ -864,7 +864,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             pre_dispatch=pre_dispatch,
             verbose=verbose,
             error_score=error_score,
-            fit_params=fit_params,
+            params=fit_params,
         )
 
         viz = cls(

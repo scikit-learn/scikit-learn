@@ -472,15 +472,32 @@ Select the parameters that minimises the impurity
 
     \theta^* = \operatorname{argmin}_\theta  G(Q_m, \theta)
 
-Recurse for subsets :math:`Q_m^{left}(\theta^*)` and :math:`Q_m^{right}(\theta^*)`
-until a stopping condition is reached, for instance some examples include
-(for others see the docstring of the estimators):
+The strategy to choose the split at each node is controlled by the `splitter`
+parameter:
 
-* the maximum allowable depth is reached (`max_depth`)
+* With the **best splitter** (default, ``splitter='best'``), :math:`\theta^*` is
+  found by performing a **greedy exhaustive search** over all available features
+  and all possible thresholds :math:`t_m` (i.e. midpoints between sorted,
+  distinct feature values), selecting the pair that exactly minimizes
+  :math:`G(Q_m, \theta)`.
 
-* :math:`n_m` is smaller than `min_samples_split`
+* With the **random splitter** (``splitter='random'``), :math:`\theta^*` is
+  found by sampling a **single random candidate threshold** for each available
+  feature. This performs a stochastic approximation of the greedy search,
+  effectively reducing computation time (see :ref:`tree_complexity`).
 
-* the impurity decrease for this split is smaller than `min_impurity_decrease`
+After choosing the optimal split :math:`\theta^*` at node :math:`m`, the same
+splitting procedure is then applied recursively to each partition
+:math:`Q_m^{left}(\theta^*)` and :math:`Q_m^{right}(\theta^*)` until a stopping
+condition is reached, such as:
+
+* the maximum allowable depth is reached (`max_depth`);
+
+* :math:`n_m` is smaller than `min_samples_split`;
+
+* the impurity decrease for this split is smaller than `min_impurity_decrease`.
+
+See the respective estimator docstring for other stopping conditions.
 
 
 Classification criteria
@@ -579,7 +596,7 @@ Mean Absolute Error:
 
     H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} |y - median(y)_m|
 
-Note that it fits much slower than the MSE criterion.
+Note that it is 3–6× slower to fit than the MSE criterion as of version 1.8.
 
 .. _tree_missing_value_support:
 
