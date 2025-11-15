@@ -1,0 +1,46 @@
+name: Needs Decision
+# Post a comment on Issues to explain what the "Needs Decision" label means.
+
+permissions:
+  contents: read
+  issues: write
+
+on:
+  issues:
+    types:
+      - labeled
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GH_REPO: ${{ github.repository }}
+  ISSUE_NUMBER: ${{ github.event.issue.number }}
+
+jobs:
+
+  post_comment:
+    name: Add 'Needs Decision' comment
+    if: github.event.label.name == 'Needs Decision'
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: add 'Needs decision' comment
+        run: |
+          gh api \
+          --method POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          /repos/$GH_REPO/issues/$ISSUE_NUMBER/comments \
+          -f "body=$BODY"
+        env:
+          BODY: |
+            Thanks for the work you've done so far. The goal of this comment
+            is to set expectations.
+
+            Deciding on new features or substantial changes is a lengthy
+            process. It frequently happens that no maintainer is available
+            to take on this task right now.
+
+            Please do not create a Pull Request before a decision has been
+            made regarding the proposed work. Making this decision can
+            often take a significant amount of time and effort.
