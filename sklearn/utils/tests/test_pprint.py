@@ -283,7 +283,7 @@ LogisticRegression(C=99, class_weight=0.4, fit_intercept=False, tol=1234,
     assert imputer.__repr__() == expected
 
     # make sure array parameters don't throw error (see #13583)
-    repr(LogisticRegressionCV(Cs=np.array([0.1, 1])))
+    repr(LogisticRegressionCV(Cs=np.array([0.1, 1]), use_legacy_attributes=False))
 
 
 @config_context(print_changed_only=False)
