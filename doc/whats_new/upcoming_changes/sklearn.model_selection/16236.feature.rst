@@ -1,0 +1,5 @@
+Added group-aware functionality to :class:`~sklearn.model_selection.TimeSeriesSplit`.
+The ``groups`` parameter now allows for proper cross-validation of time series data 
+with multiple groups, ensuring temporal order is preserved within each group while 
+maintaining the time-based splitting behavior.
+By :user:`Gaurav Chwla <getgaurav2>`
