@@ -1,0 +1,5 @@
+- :class:`preprocessing.TargetEncoder` now performs :meth:`transform` much
+  faster on small batches by using lightweight per-feature index maps for
+  dictionary lookups, while preserving behavior for missing and unseen
+  categories and multiclass targets. By :user:`Gautam Varma Datla
+  <gautamvarmadatla>`.

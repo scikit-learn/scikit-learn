@@ -1,6 +1,7 @@
 import re
 
 import numpy as np
+import numpy.testing as npt
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 
@@ -20,6 +21,7 @@ from sklearn.preprocessing import (
     LabelEncoder,
     TargetEncoder,
 )
+from sklearn.utils.validation import _normalize_na_key as _norm_key
 
 
 def _encode_target(X_ordinal, y_numeric, n_categories, smooth):
@@ -712,3 +714,216 @@ def test_pandas_copy_on_write():
     with pd.option_context("mode.copy_on_write", True):
         df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
         TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
+
+
+# ---------------------------------------------------------------------------
+# Small batch Target encoder tests
+# ---------------------------------------------------------------------------
+
+
+def _fit_pair_numpy():
+    """
+    Fit two encoders on the same tiny dataset:
+    - te_fast uses the small-batch fast-path (threshold >= 1024),
+    - te_vec forces the baseline vectorized path (threshold < 0).
+    """
+    X_fit = np.array(
+        [
+            ["u", "x"],
+            ["v", "y"],
+            ["u", "x"],
+            ["w", "y"],
+        ],
+        dtype=object,
+    )
+    y = np.array([0.0, 1.0, 1.0, 0.0])
+    te_fast = TargetEncoder(smooth=5.0).fit(X_fit, y)
+    # White-box: enable small-batch fast path deterministically.
+    te_fast._small_batch_threshold = 1024
+    te_vec = TargetEncoder(smooth=5.0).fit(X_fit, y)
+    # White-box: force always-vectorized path for reference.
+    te_vec._small_batch_threshold = -1
+    return te_fast, te_vec
+
+
+def _force_slow_transform(enc: TargetEncoder, X):
+    """Force the reference (vectorized) transform path by disabling small-batch"""
+    old_thresh = enc._small_batch_threshold
+    enc._small_batch_threshold = -1
+    try:
+        return enc.transform(X)
+    finally:
+        enc._small_batch_threshold = old_thresh
+
+
+# ------------------------------
+# Tests: NA/NAT normalization
+# ------------------------------
+
+
+def test_norm_key_real_values_cover_nan_nat_and_strings():
+    """
+    `_norm_key` should:
+    - map None, float NaN, and NumPy NaT to *distinct* sentinels,
+    - return ordinary strings unchanged.
+    """
+    k_none = _norm_key(None)
+
+    k_nan1 = _norm_key(float("nan"))
+    k_nan2 = _norm_key(np.float64(np.nan))
+    assert k_nan1 is k_nan2
+
+    k_str = _norm_key("x")
+    assert k_str == "x"
+
+    k_nat_dt = _norm_key(np.datetime64("NaT"))
+    k_nat_td = _norm_key(np.timedelta64("NaT"))
+    assert k_nat_dt is k_nat_td
+
+    assert k_none is not k_nan1 and k_none is not k_nat_dt
+    assert k_nan1 is not k_nat_dt and k_nan1 != "x"
+    assert k_nat_dt != "x"
+
+
+# ------------------------------
+# Tests: fast path vs vectorized parity
+# ------------------------------
+
+
+def test_small_batch_fastpath_matches_vectorized_with_nans_and_nats():
+    """
+    For tiny inputs, small-batch dict-lookup path should match the reference
+    vectorized path exactly (within tight numerical tolerance).
+
+    Important detail:
+    Do NOT mix datetime64 NaT and timedelta64 NaT in the *same column*, because
+    the vectorized unknown-check cannot compare them together.
+    """
+    te_fast, te_vec = _fit_pair_numpy()
+
+    X = np.empty((5, 2), dtype=object)
+    X[0] = ["u", "x"]  # seen
+    X[1] = [float("nan"), "x"]  # float NaN branch
+    X[2] = [None, "x"]  # None branch
+    X[3] = ["u", np.datetime64("NaT")]  # datetime NaT branch
+    X[4] = ["new_unseen", "x"]  # unseen → default
+
+    npt.assert_allclose(te_fast.transform(X), te_vec.transform(X), rtol=0, atol=1e-9)
+
+
+def test_large_batch_vectorized_consistency():
+    """
+    For large inputs, both encoders choose the vectorized path; results must
+    match exactly (within tight tolerance).
+    """
+    te_fast, te_vec = _fit_pair_numpy()
+
+    base = np.array(
+        [["u", "x"], ["v", "y"], ["u", "x"], ["w", "y"], [None, "x"], ["new", "y"]],
+        dtype=object,
+    )
+    X_big = np.tile(base, (300, 1))
+
+    Z_fast = te_fast.transform(X_big)  # chooses vectorized due to size
+    Z_vec = te_vec.transform(X_big)  # always vectorized
+    npt.assert_allclose(Z_fast, Z_vec, rtol=0, atol=1e-9)
+
+
+@pytest.mark.parametrize("n_small", [1, 2, 8, 32])
+@pytest.mark.parametrize("n_cats", [10_000, 50_000])
+def test_small_batch_binary_parity_and_missing(n_small, n_cats):
+    rng = np.random.default_rng(0)
+    X_fit = rng.integers(0, n_cats, size=(150_000, 1)).astype(object)
+    # sprinkle missing during fit to learn its encoding too
+    X_fit[:100, 0] = None
+    y_fit = rng.integers(0, 2, size=(150_000,))
+    enc = TargetEncoder(random_state=0).fit(X_fit, y_fit)
+
+    X_small = rng.integers(0, n_cats * 2, size=(n_small, 1)).astype(object)
+    # add missing/unseen explicitly
+    if n_small >= 2:
+        X_small[0, 0] = None
+        X_small[-1, 0] = np.nan
+
+    ref = _force_slow_transform(enc, X_small)
+    fast = enc.transform(X_small)
+    assert_allclose(fast, ref, rtol=0, atol=0)
+
+
+def test_small_batch_multiclass_parity_and_order():
+    rng = np.random.default_rng(1)
+    n_cats = 30_000
+    n_classes = 5
+    X_fit = rng.integers(0, n_cats, size=(200_000, 1)).astype(object)
+    y_fit = rng.integers(0, n_classes, size=(200_000,))
+    enc = TargetEncoder(random_state=0).fit(X_fit, y_fit)
+
+    X_small = np.array([[0], [n_cats + 123], [42], [None], [np.nan]], dtype=object)
+    ref = _force_slow_transform(enc, X_small)
+    fast = enc.transform(X_small)
+
+    # 1) numerical parity
+    assert_allclose(fast, ref, rtol=0, atol=0)
+    # 2) shape and class-order parity
+    assert fast.shape[1] % n_classes == 0
+    assert ref.shape == fast.shape
+
+
+# ------------------------------
+# Tests: feature names via real DataFrames
+# ------------------------------
+
+
+def test_fit_dataframe_sets_feature_names_pandas():
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame(
+        [["a", "x"], ["b", "y"], ["a", "x"]],
+        columns=["feat_a", "feat_b"],
+        dtype=object,
+    )
+    y = np.array([0, 1, 1], dtype=float)
+
+    te = TargetEncoder(smooth=5.0).fit(X, y)
+    names = te.get_feature_names_out()
+
+    # With string column names, sklearn sets feature_names_in_
+    assert hasattr(te, "feature_names_in_")
+    npt.assert_array_equal(names, np.array(["feat_a", "feat_b"], dtype=object))
+
+
+def test_fit_dataframe_sets_feature_names_polars():
+    pl = pytest.importorskip("polars")
+    # Build a polars DataFrame; TargetEncoder should accept it as array-like
+    X = pl.DataFrame(
+        {
+            "feat_a": ["a", "b", "a"],
+            "feat_b": ["x", "y", "x"],
+        }
+    )
+    y = np.array([0, 1, 1], dtype=float)
+
+    te = TargetEncoder(smooth=5.0).fit(X, y)
+    # In current sklearn behavior, polars may or may not set feature_names_in_
+    names = te.get_feature_names_out()
+    expected = np.array(["feat_a", "feat_b"], dtype=object)
+    # If feature_names_in_ is present, it must match the polars column names.
+    if hasattr(te, "feature_names_in_"):
+        npt.assert_array_equal(names, expected)
+    else:
+        # Fall back to x0, x1 names if feature names were not captured
+        npt.assert_array_equal(names, np.array(["x0", "x1"], dtype=object))
+
+
+# ------------------------------
+# Tests: internal caches existence after fit
+# ------------------------------
+
+
+def test_smallbatch_index_maps_exist_after_fit():
+    """Index maps (lightweight caches) are built during fit."""
+    X = np.array([["a"], ["b"]], dtype=object)
+    y = np.array([0.0, 1.0])
+    te = TargetEncoder(smooth=5.0).fit(X, y)
+    assert getattr(te, "_index_maps_", None) is not None
+    assert isinstance(te._index_maps_, list) and len(te._index_maps_) == 1
+    assert isinstance(te._index_maps_[0], dict) and len(te._index_maps_[0]) >= 2
