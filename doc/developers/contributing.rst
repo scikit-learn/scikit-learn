@@ -634,9 +634,13 @@ We understand that everyone has different interests and backgrounds, thus we rec
 you start by looking for an issue that is of interest to you, in an area you are
 already familiar with as a user or have background knowledge of.
 
-We rarely use the "Good first issue" label because because it is difficult to make
+We rarely use the "good first issue" label because because it is difficult to make
 assumptions about new contributors and these issues often prove more complex
-than originally anticipated.
+than originally anticipated. It is still useful to check if there are
+`good first issues
+<https://github.com/scikit-learn/scikit-learn/labels/good%20first%20issue>`_,
+though note that these may still be time consuming to solve, depending on your prior
+experience.
 
 For more experienced scikit-learn contributors, issues labeled `'Easy'
 <https://github.com/scikit-learn/scikit-learn/labels/Easy>`_ may be a good place to
