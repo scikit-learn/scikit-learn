@@ -2,6 +2,8 @@
 
 set -e
 
+exit 0
+
 # Do not upload to codecov on forks
 if [[ "$BUILD_REPOSITORY_NAME" != "scikit-learn/scikit-learn" ]]; then
     exit 0
