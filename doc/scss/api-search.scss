@@ -2,6 +2,9 @@
  * This is the styling for the API index page (`api/index`), in particular for the API
  * search table. It involves overriding the style sheet of DataTables which does not
  * fit well into the theme, especially in dark theme; see https://datatables.net/
+ *
+ * This file is compiled into styles/api-search.css by sphinxcontrib.sass, see:
+ * https://sass-lang.com/guide/
  */
 
 .dt-container {
