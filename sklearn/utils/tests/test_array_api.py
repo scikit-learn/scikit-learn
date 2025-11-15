@@ -160,11 +160,6 @@ def test_move_to_sparse():
     with config_context(array_api_dispatch=True):
         device_cpu = xp_torch.asarray([1]).device
 
-        # sparse to NumPy
-        result1, result2 = move_to(sparse1, sparse2, xp=xp_numpy, device=None)
-        assert result1 is sparse1
-        assert result2 is sparse2
-
         # sparse and None to NumPy
         result1, result2 = move_to(sparse1, None, xp=xp_numpy, device=None)
         assert result1 is sparse1

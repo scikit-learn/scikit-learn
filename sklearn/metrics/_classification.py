@@ -3395,7 +3395,7 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
 
 def _log_loss(transformed_labels, y_pred, *, normalize=True, sample_weight=None):
     """Log loss for transformed labels and validated probabilistic predictions."""
-    xp, _, device_ = get_namespace_and_device(y_pred, transformed_labels)
+    xp, _, device_ = get_namespace_and_device(y_pred)
     if sample_weight is not None:
         sample_weight = move_to(sample_weight, xp=xp, device=device_)
     eps = xp.finfo(y_pred.dtype).eps

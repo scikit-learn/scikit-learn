@@ -514,8 +514,8 @@ def move_to(*arrays, xp, device):
                     # method to transfer arrays across namespace and device boundaries
                     # hence this method is attempted first and going through NumPy is
                     # only used as fallback in case of failure.
-                    # Note: copy=None is the default since 2023.12. Namespace libraries
-                    # should only trigger a copy automatically if needed.
+                    # Note: copy=None is the default since array-api 2023.12. Namespace
+                    # libraries should only trigger a copy automatically if needed.
                     array_converted = xp.from_dlpack(array, device=device)
                     # `AttributeError` occurs when `__dlpack__` and `__dlpack_device__`
                     # methods are not present on the input array
