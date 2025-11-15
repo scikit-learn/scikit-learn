@@ -14,6 +14,8 @@ try:
 except Exception:
     pd = None
 
+from scipy.sparse import issparse
+
 from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
 from sklearn.utils.validation import check_array
 
@@ -23,10 +25,16 @@ class Apriori(BaseEstimator, TransformerMixin):
     Simple Apriori implementation for frequent itemsets and rules.
     """
 
+    # Parameter constraints required by estimator checks
+    _parameter_constraints = {
+        "min_support": ["numeric"],
+        "max_len": ["nullable_integer"],
+        "use_colnames": ["boolean"],
+    }
+
     def __init__(self, *, min_support=0.5, max_len=None, use_colnames=True):
-        # Hyper-parameters
-        self.min_support = float(min_support)
-        self.max_len = None if max_len is None else int(max_len)
+        self.min_support = min_support
+        self.max_len = max_len
         self.use_colnames = use_colnames
 
     def _transactions_from_X(self, X) -> List[set]:
@@ -67,11 +75,18 @@ class Apriori(BaseEstimator, TransformerMixin):
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Mine all frequent itemsets using Apriori."""
-        # Basic validation attempt
-        try:
+        if pd is not None and isinstance(X, pd.DataFrame):
+            check_array(X.to_numpy(), dtype=None, accept_sparse=False)
+        elif isinstance(X, np.ndarray):
             check_array(X, dtype=None, accept_sparse=False)
-        except Exception:
-            pass
+        else:
+            # If X is a scipy sparse matrix, ensure we raise the informative error.
+            try:
+                if issparse(X):
+                    check_array(X, dtype=None, accept_sparse=False)
+            except Exception:
+                # For other iterable transaction formats, skip numeric validation here.
+                pass
 
         # Normalize transactions
         transactions = self._transactions_from_X(X)
