@@ -126,6 +126,8 @@ class _BinaryClassifierCurveDisplayMixin:
         legend_metric,
         legend_metric_name,
         curve_kwargs,
+        default_curve_kwargs=None,
+        removed_version="1.9",
         **kwargs,
     ):
         """Get validated line kwargs for each curve.
@@ -152,20 +154,28 @@ class _BinaryClassifierCurveDisplayMixin:
             dictionary is provided, the same parameters are applied to all
             curves.
 
+        default_curve_kwargs : dict, default=None
+            Default curve kwargs, to be added to all curves. Individual kwargs
+            over-ridden by `curve_kwargs`, if kwarg also set in `curve_kwargs`.
+
+        removed_version : str
+            Version in which `kwargs` will be removed.
+
         **kwargs : dict
             Deprecated. Keyword arguments to be passed to matplotlib's `plot`.
         """
-        # TODO(1.9): Remove deprecated **kwargs
+        # TODO: Remove once kwargs deprecated on all displays
         if curve_kwargs and kwargs:
             raise ValueError(
                 "Cannot provide both `curve_kwargs` and `kwargs`. `**kwargs` is "
-                "deprecated in 1.7 and will be removed in 1.9. Pass all matplotlib "
-                "arguments to `curve_kwargs` as a dictionary."
+                f"deprecated and will be removed in {removed_version}. Pass all "
+                "matplotlib arguments to `curve_kwargs` as a dictionary."
             )
         if kwargs:
             warnings.warn(
-                "`**kwargs` is deprecated and will be removed in 1.9. Pass all "
-                "matplotlib arguments to `curve_kwargs` as a dictionary instead.",
+                f"`**kwargs` is deprecated and will be removed in {removed_version}. "
+                "Pass all matplotlib arguments to `curve_kwargs` as a dictionary "
+                "instead.",
                 FutureWarning,
             )
             curve_kwargs = kwargs
@@ -186,7 +196,7 @@ class _BinaryClassifierCurveDisplayMixin:
                 "To avoid labeling individual curves that have the same appearance, "
                 f"`curve_kwargs` should be a list of {n_curves} dictionaries. "
                 "Alternatively, set `name` to `None` or a single string to label "
-                "a single legend entry with mean ROC AUC score of all curves."
+                "a single legend entry for all curves."
             )
 
         # Ensure `name` is of the correct length
@@ -199,13 +209,19 @@ class _BinaryClassifierCurveDisplayMixin:
         # Ensure `curve_kwargs` is of correct length
         if isinstance(curve_kwargs, Mapping):
             curve_kwargs = [curve_kwargs] * n_curves
-
-        default_multi_curve_kwargs = {"alpha": 0.5, "linestyle": "--", "color": "blue"}
         if curve_kwargs is None:
-            if n_curves > 1:
-                curve_kwargs = [default_multi_curve_kwargs] * n_curves
-            else:
-                curve_kwargs = [{}]
+            curve_kwargs = [{}] * n_curves
+
+        if default_curve_kwargs is None:
+            default_curve_kwargs = {}
+        default_multi_curve_kwargs = {"alpha": 0.5, "linestyle": "--", "color": "blue"}
+        if n_curves > 1:
+            default_curve_kwargs_ = {
+                **default_multi_curve_kwargs,
+                **default_curve_kwargs,
+            }
+        else:
+            default_curve_kwargs_ = default_curve_kwargs
 
         labels = []
         if "mean" in legend_metric:
@@ -235,7 +251,9 @@ class _BinaryClassifierCurveDisplayMixin:
                 )
 
         curve_kwargs_ = [
-            _validate_style_kwargs({"label": label}, curve_kwargs[fold_idx])
+            _validate_style_kwargs(
+                {"label": label, **default_curve_kwargs_}, curve_kwargs[fold_idx]
+            )
             for fold_idx, label in enumerate(labels)
         ]
         return curve_kwargs_
