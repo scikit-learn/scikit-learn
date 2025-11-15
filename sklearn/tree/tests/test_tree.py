@@ -3032,3 +3032,13 @@ def test_splitting_with_missing_values():
     for i in range(20):
         tree = DecisionTreeRegressor(max_depth=1, random_state=i).fit(X, y)
         assert_array_equal(tree.tree_.impurity, np.array([0.25, 0.0, 0.0]))
+
+
+def test_missing_values_and_constant_toy():
+    # Non regression test for https://github.com/scikit-learn/scikit-learn/issues/32272
+    X = [0, 0, 0, np.nan, np.nan]
+    y = [0, 0, 0, 1, 1]
+    X = np.array(X).reshape(-1, 1)
+    tree = DecisionTreeClassifier().fit(X, y)
+    assert_array_equal(tree.predict(X), y)
+    assert tree.tree_.node_count == 3
