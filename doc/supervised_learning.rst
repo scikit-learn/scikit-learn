@@ -23,3 +23,4 @@ Supervised learning
     modules/isotonic.rst
     modules/calibration.rst
     modules/neural_networks_supervised
+    modules/polynomial_chaos
