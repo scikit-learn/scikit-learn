@@ -4,8 +4,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
-
+from scipy import linalg
+from scipy.cluster.hierarchy import fcluster, linkage as scipy_linkage
+from scipy.spatial.distance import pdist
 from sklearn.base import BaseEstimator, ClusterMixin
+from sklearn.covariance import OAS
+from sklearn.decomposition import PCA
 from sklearn.mixture import GaussianMixture
 from sklearn.model_selection import GridSearchCV
 from sklearn.utils._param_validation import (
@@ -37,6 +41,103 @@ def _check_multi_comp_inputs(input, name, default):
             f"Got {input} instead."
         )
     return input
+
+
+def _ward_mahalanobis_linkage(X):
+    """Compute a Ward linkage on Mahalanobis distances.
+
+    The data are first centered, reduced with PCA to preserve 99% of the
+    variance, and then equipped with an OAS-shrinkage covariance to define
+    the Mahalanobis metric.
+    """
+    X = np.asarray(X)
+    Xc = X - np.mean(X, axis=0)
+
+    # PCA reduction to a well-conditioned subspace
+    pca = PCA(n_components=0.99, svd_solver="full")
+    Xp = pca.fit_transform(Xc)
+
+    # OAS shrinkage covariance and its inverse for the Mahalanobis metric
+    cov_oas = OAS(assume_centered=True).fit(Xp).covariance_
+    VI = linalg.pinvh(cov_oas)
+
+    # Pairwise Mahalanobis distances + Ward linkage
+    D = pdist(Xp, metric="mahalanobis", VI=VI)
+    return scipy_linkage(D, method="ward")
+
+
+def _mahalanobis_ward_init(X, n_components, covariance_type, reg_covar):
+    """Initialize GMM parameters from a Ward-Mahalanobis hierarchy.
+
+    The linkage is computed on the provided X, so it is safe to use under
+    cross-validation where each fold sees a different subset of rows.
+    """
+    X = np.asarray(X)
+    n_samples, n_features = X.shape
+
+    # Compute the Ward–Mahalanobis linkage for this specific X
+    linkage = _ward_mahalanobis_linkage(X)
+
+    # Cut the hierarchy to obtain ``n_components`` flat clusters.
+    labels = fcluster(linkage, n_components, criterion="maxclust")
+    # Ensure labels are contiguous integers starting at 0
+    _, labels = np.unique(labels, return_inverse=True)
+    n_components = int(labels.max()) + 1
+
+    weights = np.bincount(labels, minlength=n_components).astype(float)
+    weights /= float(n_samples)
+
+    means = np.zeros((n_components, n_features), dtype=float)
+    covariances_full = np.zeros((n_components, n_features, n_features), dtype=float)
+
+    X_mean = X.mean(axis=0)
+    global_cov = np.cov(X, rowvar=False)
+    if global_cov.ndim == 0:
+        global_cov = np.array([[global_cov]])
+    if global_cov.shape == (n_features,):
+        global_cov = np.diag(global_cov)
+
+    for k in range(n_components):
+        mask = labels == k
+        Xk = X[mask]
+        if Xk.shape[0] <= 1:
+            # For very small clusters, fall back to global statistics to
+            # avoid singular covariances.
+            means[k] = X_mean if Xk.shape[0] == 0 else Xk[0]
+            Ck = global_cov.copy()
+        else:
+            means[k] = Xk.mean(axis=0)
+            Ck = np.cov(Xk, rowvar=False)
+
+        Ck = np.atleast_2d(Ck)
+        # Regularize on the diagonal to ensure positive definiteness
+        Ck.flat[:: n_features + 1] += reg_covar
+        covariances_full[k] = Ck
+
+    # Convert full covariances to the requested parameterization
+    if covariance_type == "full":
+        covs = covariances_full
+    elif covariance_type == "tied":
+        covs = np.average(covariances_full, axis=0, weights=weights)
+    elif covariance_type == "diag":
+        covs = np.array([np.diag(Ck) for Ck in covariances_full])
+    elif covariance_type == "spherical":
+        covs = np.array([np.trace(Ck) / n_features for Ck in covariances_full])
+    else:
+        raise ValueError(f"Invalid value for 'covariance_type': {covariance_type!r}")
+
+    # Compute precisions (inverse covariances) in the required shape
+    if covariance_type == "full":
+        precisions_init = np.empty_like(covs)
+        for k in range(n_components):
+            precisions_init[k] = linalg.pinvh(covs[k])
+    elif covariance_type == "tied":
+        precisions_init = linalg.pinvh(covs)
+    else:
+        # diag and spherical
+        precisions_init = 1.0 / covs
+
+    return weights, means, precisions_init
 
 
 class GaussianMixtureIC(ClusterMixin, BaseEstimator):
@@ -372,13 +473,30 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         if self.random_state is not None:
             np.random.seed(self.random_state)
 
+        class _GaussianMixtureMahalanobisWard(GaussianMixture):
+            """GaussianMixture with Ward-Mahalanobis initialization."""
+
+            def fit(self, X, y=None):
+                # Compute initialization on the X seen in this call,
+                # which may be a CV fold subset.
+                weights_init, means_init, precisions_init = _mahalanobis_ward_init(
+                    X,
+                    n_components=self.n_components,
+                    covariance_type=self.covariance_type,
+                    reg_covar=self.reg_covar,
+                )
+                self.weights_init = weights_init
+                self.means_init = means_init
+                self.precisions_init = precisions_init
+                return super().fit(X, y)
+
         param_grid = {
             "covariance_type": covariance_type,
             "n_components": range(self.min_components, self.max_components + 1),
         }
 
         grid_search = GridSearchCV(
-            GaussianMixture(
+            _GaussianMixtureMahalanobisWard(
                 init_params=self.init_params, max_iter=self.max_iter, n_init=self.n_init
             ),
             param_grid=param_grid,

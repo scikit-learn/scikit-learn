@@ -153,3 +153,145 @@ plt.title(
 )
 plt.axis("equal")
 plt.show()
+
+
+from sklearn.mixture import GaussianMixture
+from sklearn.metrics import adjusted_rand_score
+
+# %%
+# Comparison on a "double-cigar" dataset
+# ---------------------------------------
+
+# We now illustrate the behavior of
+# :class:`~sklearn.mixture.GaussianMixtureIC` on a challenging
+# anisotropic dataset consisting of two long, thin Gaussian
+# components oriented at ±45° ("crossing double cigar"). In this
+# configuration, EM with a single random initialization can
+# converge to a poor partition, while the Mahalanobis–Ward
+# hierarchical initialization used inside GaussianMixtureIC
+# provides a more stable clustering. We quantify this with the
+# Adjusted Rand Index (ARI) against the known ground truth.
+
+
+def make_crossing_double_cigar(
+    n_samples=600,
+    sep=3.0,
+    var_long=4.0,
+    var_short=0.05,
+    random_state=1,
+):
+    """Two long, thin Gaussians crossing at ±45 degrees.
+
+    The first component is elongated along +45°, the second along
+    -45°. The means are placed at (-sep/2, 0) and (sep/2, 0).
+    """
+    rng = np.random.RandomState(random_state)
+    n1 = n_samples // 2
+    n2 = n_samples - n1
+
+    base_cov = np.array([[var_long, 0.0], [0.0, var_short]])
+
+    def rotation(theta):
+        c, s = np.cos(theta), np.sin(theta)
+        return np.array([[c, -s], [s, c]])
+
+    R1 = rotation(np.deg2rad(45.0))
+    R2 = rotation(np.deg2rad(-45.0))
+
+    cov1 = R1 @ base_cov @ R1.T
+    cov2 = R2 @ base_cov @ R2.T
+
+    mean1 = np.array([-sep / 2.0, 0.0])
+    mean2 = np.array([sep / 2.0, 0.0])
+
+    X1 = rng.multivariate_normal(mean1, cov1, size=n1)
+    X2 = rng.multivariate_normal(mean2, cov2, size=n2)
+    X = np.vstack([X1, X2])
+    y = np.array([0] * n1 + [1] * n2)
+
+    return X, y
+
+
+def plot_selected_gmm(model, X, ax, title, ari):
+    """Reuse the ellipse plotting style from the main example."""
+    n_components = len(model.means_)
+    color_iter = sns.color_palette("tab10", n_components)[::-1]
+
+    Y_ = model.predict(X)
+    for i, (mean, cov, color) in enumerate(
+        zip(model.means_, model.covariances_, color_iter)
+    ):
+        if not np.any(Y_ == i):
+            continue
+
+        ax.scatter(X[Y_ == i, 0], X[Y_ == i, 1], 0.8, color=color)
+
+        # same eigen-decomposition logic as in the original example
+        v, w = linalg.eigh(cov)
+        angle = np.arctan2(w[0][1], w[0][0])
+        angle = 180.0 * angle / np.pi  # convert to degrees
+        v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
+
+        ellipse = Ellipse(mean, v[0], v[1], angle=180.0 + angle, color=color)
+        ellipse.set_clip_box(ax.figure.bbox)
+        ellipse.set_alpha(0.5)
+        ax.add_artist(ellipse)
+
+    ax.set_title(f"{title}\n(ARI = {ari:.2f})")
+    ax.set_xlabel("Feature 1")
+    ax.set_ylabel("Feature 2")
+    ax.axis("equal")
+
+
+# Generate the crossing double-cigar data
+X_dc, y_true = make_crossing_double_cigar(
+    n_samples=600,
+    sep=3.0,
+    var_long=4.0,
+    var_short=0.05,
+    random_state=1,
+)
+
+# Plain GaussianMixture with a single random initialization
+gm_plain = GaussianMixture(
+    n_components=2,
+    covariance_type="full",
+    init_params="random",
+    n_init=1,
+    random_state=0,
+)
+gm_plain.fit(X_dc)
+labels_plain = gm_plain.predict(X_dc)
+ari_plain = adjusted_rand_score(y_true, labels_plain)
+
+# GaussianMixtureIC uses Mahalanobis–Ward hierarchical initialization
+# internally before running EM and selecting the best model by BIC.
+gm_ic = GaussianMixtureIC(
+    min_components=2,
+    max_components=2,
+    covariance_type="full",
+    random_state=0,
+)
+labels_ic = gm_ic.fit_predict(X_dc)
+ari_ic = adjusted_rand_score(y_true, labels_ic)
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+
+plot_selected_gmm(
+    gm_plain,
+    X_dc,
+    ax=axes[0],
+    title="GaussianMixture",
+    ari=ari_plain,
+)
+
+plot_selected_gmm(
+    gm_ic,
+    X_dc,
+    ax=axes[1],
+    title="GaussianMixtureIC",
+    ari=ari_ic,
+)
+
+plt.tight_layout()
+plt.show()

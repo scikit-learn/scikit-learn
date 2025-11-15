@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose, assert_equal
+from numpy.testing import assert_allclose, assert_equal, assert_array_equal
 
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics import adjusted_rand_score
@@ -139,3 +139,44 @@ def test_two_class_sequential_v_parallel():
     # Results obtained with sequential and parallel executions
     # must be identical
     assert_equal(preds_parallel, preds_sequential)
+
+
+def test_fitted_attribute_shapes():
+    X = np.random.normal(0, 1, size=(120, 4))
+    gmIC = GaussianMixtureIC(min_components=2, max_components=4, covariance_type="full")
+    gmIC.fit(X)
+
+    n, d = X.shape
+    k = gmIC.n_components_
+
+    assert gmIC.means_.shape == (k, d)
+    assert gmIC.weights_.shape == (k,)
+    assert gmIC.covariances_.shape == (k, d, d)
+    assert gmIC.precisions_.shape == (k, d, d)
+    assert gmIC.precisions_cholesky_.shape == (k, d, d)
+    # length of criterion_ matches size of the grid
+    assert gmIC.criterion_.shape[0] == (gmIC.max_components - gmIC.min_components + 1)
+
+
+def test_random_state_reproducibility():
+    X = np.random.normal(0, 1, size=(150, 3))
+
+    gm1 = GaussianMixtureIC(max_components=5, random_state=0)
+    gm2 = GaussianMixtureIC(max_components=5, random_state=0)
+
+    labels1 = gm1.fit_predict(X)
+    labels2 = gm2.fit_predict(X)
+
+    assert_array_equal(labels1, labels2)
+
+
+def test_covariance_type_list_runs():
+    X = np.random.normal(0, 1, size=(200, 2))
+    gmIC = GaussianMixtureIC(
+        min_components=1,
+        max_components=3,
+        covariance_type=["spherical", "diag", "tied", "full"],
+        random_state=0,
+    )
+    gmIC.fit(X)
+    assert gmIC.covariance_type_ in {"spherical", "diag", "tied", "full"}
