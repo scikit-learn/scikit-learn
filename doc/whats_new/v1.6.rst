@@ -302,6 +302,16 @@ By :user:`Loïc Estève <lesteve>` and many other people in the wider Scientific
 Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
 :user:`Ralf Gommers <rgommers>`, :user:`Edgar Andrés Margffoy Tuay <andfoy>`. :pr:`30360`
 
+:mod:`sklearn.metrics`
+......................
+
+- |Enhancement| The `classification_report` function now includes a new parameter
+  `separate_avg` (default: `True`). This allows for the separation of class-wise
+  metrics from average metrics in the output dictionary when `output_dict=True`,
+  preventing potential conflicts between class names and average metrics such as
+  "accuracy" or "macro avg". Backward compatibility is maintained by setting
+  `separate_avg=False`. :pr:`29668` by :user:`Anuraag Pandhi <Anumon6395>`.
+
 :mod:`sklearn.base`
 -------------------
 
