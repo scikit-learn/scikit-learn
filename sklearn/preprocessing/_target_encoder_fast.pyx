@@ -16,10 +16,17 @@ ctypedef fused Y_DTYPE:
     float64_t
     float32_t
 
+ctypedef fused WEIGHT_DTYPE:
+    int64_t
+    int32_t
+    float64_t
+    float32_t
+
 
 def _fit_encoding_fast(
     INT_DTYPE[:, ::1] X_int,
     const Y_DTYPE[:] y,
+    const WEIGHT_DTYPE[:] sample_weight,
     int64_t[::1] n_categories,
     double smooth,
     double y_mean,
@@ -65,8 +72,8 @@ def _fit_encoding_fast(
                 # -1 are unknown categories, which are not counted
                 if X_int_tmp == -1:
                     continue
-                sums[X_int_tmp] += y[sample_idx]
-                counts[X_int_tmp] += 1.0
+                sums[X_int_tmp] += y[sample_idx] * sample_weight[sample_idx]
+                counts[X_int_tmp] += sample_weight[sample_idx]
 
             for cat_idx in range(n_cats):
                 if counts[cat_idx] == 0:
@@ -80,6 +87,7 @@ def _fit_encoding_fast(
 def _fit_encoding_fast_auto_smooth(
     INT_DTYPE[:, ::1] X_int,
     const Y_DTYPE[:] y,
+    const WEIGHT_DTYPE[:] sample_weight,
     int64_t[::1] n_categories,
     double y_mean,
     double y_variance,
@@ -99,7 +107,7 @@ def _fit_encoding_fast_auto_smooth(
         int n_features = X_int.shape[1]
         int64_t max_n_cats = np.max(n_categories)
         double[::1] means = np.empty(max_n_cats, dtype=np.float64)
-        int64_t[::1] counts = np.empty(max_n_cats, dtype=np.int64)
+        double[::1] weighed_counts = np.empty(max_n_cats, dtype=np.float64)
         double[::1] sum_of_squared_diffs = np.empty(max_n_cats, dtype=np.float64)
         double lambda_
         list encodings = []
@@ -124,21 +132,21 @@ def _fit_encoding_fast_auto_smooth(
 
             for cat_idx in range(n_cats):
                 means[cat_idx] = 0.0
-                counts[cat_idx] = 0
+                weighed_counts[cat_idx] = 0.0
                 sum_of_squared_diffs[cat_idx] = 0.0
 
-            # first pass to compute the mean
+            # first pass to compute the weighted mean
             for sample_idx in range(n_samples):
                 X_int_tmp = X_int[sample_idx, feat_idx]
 
                 # -1 are unknown categories, which are not counted
                 if X_int_tmp == -1:
                     continue
-                counts[X_int_tmp] += 1
-                means[X_int_tmp] += y[sample_idx]
+                weighed_counts[X_int_tmp] += sample_weight[sample_idx]
+                means[X_int_tmp] += y[sample_idx] * sample_weight[sample_idx]
 
             for cat_idx in range(n_cats):
-                means[cat_idx] /= counts[cat_idx]
+                means[cat_idx] /= weighed_counts[cat_idx]
 
             # second pass to compute the sum of squared differences
             for sample_idx in range(n_samples):
@@ -146,13 +154,13 @@ def _fit_encoding_fast_auto_smooth(
                 if X_int_tmp == -1:
                     continue
                 diff = y[sample_idx] - means[X_int_tmp]
-                sum_of_squared_diffs[X_int_tmp] += diff * diff
+                sum_of_squared_diffs[X_int_tmp] += diff * diff * sample_weight[sample_idx]
 
             for cat_idx in range(n_cats):
                 lambda_ = (
-                    y_variance * counts[cat_idx] /
-                    (y_variance * counts[cat_idx] + sum_of_squared_diffs[cat_idx] /
-                     counts[cat_idx])
+                    y_variance * weighed_counts[cat_idx] /
+                    (y_variance * weighed_counts[cat_idx] + sum_of_squared_diffs[cat_idx] /
+                     weighed_counts[cat_idx])
                 )
                 if isnan(lambda_):
                     # A nan can happen when:
