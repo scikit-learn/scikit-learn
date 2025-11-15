@@ -1,0 +1,3 @@
+- Fix the numerical instability of :class:`RidgeCV` with `gcv_mode="svd"` for
+  small `alpha` values by using the full SVD.
+  By :user:`Antoine Baker <antoinebaker>`
