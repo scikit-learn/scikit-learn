@@ -3,6 +3,8 @@
 
 # See _partitioner.pyx for details.
 
+from cython cimport floating
+
 from sklearn.utils._typedefs cimport (
     float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t
 )
@@ -176,3 +178,6 @@ cdef void shift_missing_values_to_left_if_required(
     intp_t[::1] samples,
     intp_t end,
 ) noexcept nogil
+
+
+cdef void sort(floating* feature_values, intp_t* samples, intp_t n) noexcept nogil
