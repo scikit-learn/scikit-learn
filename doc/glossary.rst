@@ -63,6 +63,11 @@ General Concepts
         * a :class:`pandas.DataFrame` with all columns numeric
         * a numeric :class:`pandas.Series`
 
+        Some array API inputs see (:ref:`array_api` for details):
+
+        * a `PyTorch <https://pytorch.org/>`_ tensor on 'cpu' device
+        * a `JAX <https://docs.jax.dev/en/latest/index.html>`_ array
+
         It excludes:
 
         * a :term:`sparse matrix`
