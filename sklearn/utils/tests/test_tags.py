@@ -32,6 +32,16 @@ class EmptyRegressor(RegressorMixin, BaseEstimator):
     pass
 
 
+def test_type_error_is_thrown_for_class_vs_instance():
+    """Test that clearer error is raised if class is passed to get_tags() instead of an
+    estimator instance (related to the discussion in
+    https://github.com/scikit-learn/scikit-learn/issues/32394#issuecomment-3375647854)
+    """
+    est = BaseEstimator
+    with pytest.raises(TypeError, match="It seems that you passed an estimator class"):
+        get_tags(est)
+
+
 @pytest.mark.parametrize(
     "estimator, value",
     [
