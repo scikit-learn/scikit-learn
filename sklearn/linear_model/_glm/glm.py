@@ -201,16 +201,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             y_numeric=True,
             multi_output=False,
         )
-
-        # required by losses
-        if self.solver == "lbfgs":
-            # lbfgs will force coef and therefore raw_prediction to be float64. The
-            # base_loss needs y, X @ coef and sample_weight all of same dtype
-            # (and contiguous).
-            loss_dtype = np.float64
-        else:
-            loss_dtype = min(max(y.dtype, X.dtype), np.float64)
-        y = check_array(y, dtype=loss_dtype, order="C", ensure_2d=False)
+        loss_dtype = X.dtype
+        y = check_array(y, dtype=X.dtype, order="C", ensure_2d=False)
 
         if sample_weight is not None:
             # Note that _check_sample_weight calls check_array(order="C") required by
