@@ -189,10 +189,9 @@ def _update_terminal_regions(
         # different version (factor 2) of "F" with proba=expit(raw_prediction).
         # Our node estimate is given by:
         #    sum(w * neg_gradient) / sum(w * hessian)
-        weighted_neg_grad = neg_gradient
-        if sample_weight is not None:
-            weighted_neg_grad = neg_gradient * sample_weight
-
+        weighted_neg_grad = (
+            neg_gradient if sample_weight is None else neg_gradient * sample_weight
+        )
         numerator = np.bincount(idx, weights=weighted_neg_grad, minlength=n_nodes)
 
         if isinstance(loss, HalfMultinomialLoss):
