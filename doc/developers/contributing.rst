@@ -269,28 +269,24 @@ The next steps describe the process of modifying code and submitting a PR:
    and start making changes. Always use a feature branch. It's good
    practice to never work on the ``main`` branch!
 
-#. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
-   run code style checks before each commit:
-
-   .. prompt:: bash
-
-      pip install pre-commit
-      pre-commit install
-
-    pre-commit checks can be disabled for a particular commit with
-    `git commit -n`.
-
 #. Develop the feature on your feature branch on your computer, using Git to
    do the version control. When you're done editing, add changed files using
    ``git add`` and then ``git commit``:
 
-    .. prompt:: bash
+   .. prompt:: bash
 
       git add modified_files
       git commit
 
-   to record your changes in Git, then push the changes to your GitHub
-   account with:
+   .. note::
+
+     :ref:`pre-commit <pre_commit>` may reformat your code automatically when
+     you do `git commit`. When this happens, you need to do `git add` followed
+     by `git commit` again. In some rarer cases, you may need to fix things
+     manually, use the error message to figure out what needs to be changed,
+     and use `git add` followed by `git commit` until the commit is successful.
+
+   Then push the changes to your GitHub account with:
 
    .. prompt:: bash
 
