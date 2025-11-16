@@ -1377,6 +1377,22 @@ def test_step_name_validation():
                 est.fit_transform([[1]], [1])
 
 
+def test_pipeline_step_class_instead_of_instance():
+    """Test that passing a class instead of an instance raises a clear error."""
+    import numpy as np
+    import pytest
+
+    from sklearn.decomposition import PCA
+
+    # Create dummy data
+    X = np.random.rand(10, 5)
+
+    # Should raise error because PCA is a class, not an instance
+    pipeline = Pipeline([("pca", PCA)])
+
+    with pytest.raises(TypeError, match="All steps should be estimator instances"):
+        pipeline.fit(X)  # Error happens during fit, not during __init__
+
 def test_set_params_nested_pipeline():
     estimator = Pipeline([("a", Pipeline([("b", DummyRegressor())]))])
     estimator.set_params(a__b__alpha=0.001, a__b=Lasso())

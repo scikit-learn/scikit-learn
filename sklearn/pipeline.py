@@ -299,6 +299,20 @@ class Pipeline(_BaseComposition):
         transformers = estimators[:-1]
         estimator = estimators[-1]
 
+        # check if any estimator is a class instead of an instance
+        import inspect
+
+        for name, est in self.steps:
+            if est is None or est == "passthrough":
+                continue
+            if inspect.isclass(est):
+                raise TypeError(
+                    f"All steps should be estimator instances (objects), not classes. "
+                    f"Step '{name}' is a class: ({est.__name__}). "
+                    f"Did you forget parentheses? "
+                    f"Use {est.__name__}() instead of {est.__name__}."
+                )
+
         for t in transformers:
             if t is None or t == "passthrough":
                 continue
