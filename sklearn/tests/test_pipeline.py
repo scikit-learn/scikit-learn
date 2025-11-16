@@ -1393,6 +1393,7 @@ def test_pipeline_step_class_instead_of_instance():
     with pytest.raises(TypeError, match="All steps should be estimator instances"):
         pipeline.fit(X)  # Error happens during fit, not during __init__
 
+
 def test_set_params_nested_pipeline():
     estimator = Pipeline([("a", Pipeline([("b", DummyRegressor())]))])
     estimator.set_params(a__b__alpha=0.001, a__b=Lasso())
