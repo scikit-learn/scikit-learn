@@ -375,12 +375,13 @@ class SpectralBiclustering(BaseSpectral):
         The number of row and column clusters in the checkerboard
         structure.
 
-    method : {'bistochastic', 'scale', 'log'}, default='bistochastic'
+    method : {'bistochastic', 'scale', 'log'} or callable, default='bistochastic'
         Method of normalizing and converting singular vectors into
         biclusters. May be one of 'scale', 'bistochastic', or 'log'.
         The authors recommend using 'log'. If the data is sparse,
         however, log normalization will not work, which is why the
         default is 'bistochastic'.
+        Callable must take a 2D array and return a 2D array.
 
         .. warning::
            if `method='log'`, the data must not be sparse.
@@ -489,7 +490,7 @@ class SpectralBiclustering(BaseSpectral):
     _parameter_constraints: dict = {
         **BaseSpectral._parameter_constraints,
         "n_clusters": [Interval(Integral, 1, None, closed="left"), tuple],
-        "method": [StrOptions({"bistochastic", "scale", "log"})],
+        "method": [StrOptions({"bistochastic", "scale", "log"}), callable],
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "n_best": [Interval(Integral, 1, None, closed="left")],
     }
@@ -556,7 +557,10 @@ class SpectralBiclustering(BaseSpectral):
 
     def _fit(self, X):
         n_sv = self.n_components
-        if self.method == "bistochastic":
+        if callable(self.method):
+            normalized_data = self.method(X)
+            n_sv += 1
+        elif self.method == "bistochastic":
             normalized_data = _bistochastic_normalize(X)
             n_sv += 1
         elif self.method == "scale":
