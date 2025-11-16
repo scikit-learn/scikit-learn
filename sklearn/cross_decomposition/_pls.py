@@ -156,7 +156,8 @@ def _calculate_variance_xy(
     X: np.ndarray, y: np.ndarray
 ) -> tuple[float, float, bool, bool]:
     """Calculates the variance of the X and y matrices
-    The flags has_x_variance and has_y_variance i
+    The flags has_x_variance and has_y_variance are included
+    as guards to prevent crashes on constant data
     """
     # Calculate variance
     X_total_var = np.var(X, axis=0, ddof=1).sum()
