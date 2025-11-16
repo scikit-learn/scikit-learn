@@ -795,7 +795,6 @@ class PLSCanonical(_PLS):
         Percentage of variance explained by each of the selected components
         in `y`.
 
-
     See Also
     --------
     CCA : Canonical Correlation Analysis.
@@ -928,7 +927,6 @@ class CCA(_PLS):
     explained_variance_ratio_y_ : ndarray of shape (n_components,)
         Percentage of variance explained by each of the selected components
         in `y`.
-
 
     See Also
     --------
