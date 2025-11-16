@@ -19,7 +19,6 @@ The module structure is the following:
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import math
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
@@ -68,27 +67,6 @@ _LOSSES.update(
         "huber": HuberLoss,
     }
 )
-
-
-def _safe_divide(numerator, denominator):
-    """Prevents overflow and division by zero."""
-    # This is used for classifiers where the denominator might become zero exactly.
-    # For instance for log loss, HalfBinomialLoss, if proba=0 or proba=1 exactly, then
-    # denominator = hessian = 0, and we should set the node value in the line search to
-    # zero as there is no improvement of the loss possible.
-    # For numerical safety, we do this already for extremely tiny values.
-    if abs(denominator) < 1e-150:
-        return 0.0
-    else:
-        # Cast to Python float to trigger Python errors, e.g. ZeroDivisionError,
-        # without relying on `np.errstate` that is not supported by Pyodide.
-        result = float(numerator) / float(denominator)
-        # Cast to Python float to trigger a ZeroDivisionError without relying
-        # on `np.errstate` that is not supported by Pyodide.
-        result = float(numerator) / float(denominator)
-        if math.isinf(result):
-            warnings.warn("overflow encountered in _safe_divide", RuntimeWarning)
-        return result
 
 
 def _init_raw_predictions(X, estimator, loss, use_predict_proba):
@@ -190,79 +168,80 @@ def _update_terminal_regions(
     # compute leaf for each sample in ``X``.
     terminal_regions = tree.apply(X)
 
-    if not isinstance(loss, HalfSquaredError):
-        # mask all which are not in sample mask.
-        masked_terminal_regions = terminal_regions.copy()
-        masked_terminal_regions[~sample_mask] = -1
-
-        if isinstance(loss, HalfBinomialLoss):
-
-            def compute_update(y_, indices, neg_gradient, raw_prediction, k):
-                # Make a single Newton-Raphson step, see "Additive Logistic Regression:
-                # A Statistical View of Boosting" FHT00 and note that we use a slightly
-                # different version (factor 2) of "F" with proba=expit(raw_prediction).
-                # Our node estimate is given by:
-                #    sum(w * (y - prob)) / sum(w * prob * (1 - prob))
-                # we take advantage that: y - prob = neg_gradient
-                neg_g = neg_gradient.take(indices, axis=0)
-                prob = y_ - neg_g
-                # numerator = negative gradient = y - prob
-                numerator = np.average(neg_g, weights=sw)
-                # denominator = hessian = prob * (1 - prob)
-                denominator = np.average(prob * (1 - prob), weights=sw)
-                return _safe_divide(numerator, denominator)
-
-        elif isinstance(loss, HalfMultinomialLoss):
-
-            def compute_update(y_, indices, neg_gradient, raw_prediction, k):
-                # we take advantage that: y - prob = neg_gradient
-                neg_g = neg_gradient.take(indices, axis=0)
-                prob = y_ - neg_g
-                K = loss.n_classes
-                # numerator = negative gradient * (k - 1) / k
-                # Note: The factor (k - 1)/k appears in the original papers "Greedy
-                # Function Approximation" by Friedman and "Additive Logistic
-                # Regression" by Friedman, Hastie, Tibshirani. This factor is, however,
-                # wrong or at least arbitrary as it directly multiplies the
-                # learning_rate. We keep it for backward compatibility.
-                numerator = np.average(neg_g, weights=sw)
-                numerator *= (K - 1) / K
-                # denominator = (diagonal) hessian = prob * (1 - prob)
-                denominator = np.average(prob * (1 - prob), weights=sw)
-                return _safe_divide(numerator, denominator)
-
-        elif isinstance(loss, ExponentialLoss):
-
-            def compute_update(y_, indices, neg_gradient, raw_prediction, k):
-                neg_g = neg_gradient.take(indices, axis=0)
-                # numerator = negative gradient = y * exp(-raw) - (1-y) * exp(raw)
-                numerator = np.average(neg_g, weights=sw)
-                # denominator = hessian = y * exp(-raw) + (1-y) * exp(raw)
-                # if y=0: hessian = exp(raw) = -neg_g
-                #    y=1: hessian = exp(-raw) = neg_g
-                hessian = neg_g.copy()
-                hessian[y_ == 0] *= -1
-                denominator = np.average(hessian, weights=sw)
-                return _safe_divide(numerator, denominator)
-
+    if isinstance(loss, HalfSquaredError):
+        # the leaf values don't need an update for the squared error.
+        pass
+    elif isinstance(loss, (HalfBinomialLoss, HalfMultinomialLoss, ExponentialLoss)):
+        if sample_mask.all():
+            idx = terminal_regions
         else:
+            neg_gradient = neg_gradient[sample_mask]
+            sample_weight = (
+                None if sample_weight is None else sample_weight[sample_mask]
+            )
+            y = y[sample_mask]
+            idx = terminal_regions[sample_mask]
 
-            def compute_update(y_, indices, neg_gradient, raw_prediction, k):
-                return loss.fit_intercept_only(
-                    y_true=y_ - raw_prediction[indices, k],
-                    sample_weight=sw,
-                )
+        n_nodes = tree.node_count
 
-        # update each leaf (= perform line search)
-        for leaf in np.nonzero(tree.children_left == TREE_LEAF)[0]:
-            indices = np.nonzero(masked_terminal_regions == leaf)[
-                0
-            ]  # of terminal regions
-            y_ = y.take(indices, axis=0)
+        # Make a single Newton-Raphson step, see "Additive Logistic Regression:
+        # A Statistical View of Boosting" FHT00 and note that we use a slightly
+        # different version (factor 2) of "F" with proba=expit(raw_prediction).
+        # Our node estimate is given by:
+        #    sum(w * neg_gradient) / sum(w * hessian)
+        weighted_neg_grad = neg_gradient
+        if sample_weight is not None:
+            weighted_neg_grad = neg_gradient * sample_weight
+
+        numerator = np.bincount(idx, weights=weighted_neg_grad, minlength=n_nodes)
+
+        if isinstance(loss, HalfMultinomialLoss):
+            K = loss.n_classes
+            # numerator = negative gradient * (k - 1) / k
+            # Note: The factor (k - 1)/k appears in the original papers "Greedy
+            # Function Approximation" by Friedman and "Additive Logistic
+            # Regression" by Friedman, Hastie, Tibshirani. This factor is, however,
+            # wrong or at least arbitrary as it directly multiplies the
+            # learning_rate. We keep it for backward compatibility.
+            numerator *= (K - 1) / K
+
+        if isinstance(loss, ExponentialLoss):
+            # denominator = hessian = y * exp(-raw) + (1-y) * exp(raw)
+            # if y=0: hessian = exp(raw) = -neg_g
+            #    y=1: hessian = exp(-raw) = neg_g
+            hessian = weighted_neg_grad.copy()
+            hessian[y == 0] *= -1
+        else:
+            # denominator = hessian = w * prob * (1 - prob)
+            # with prob = y - neg_gradient
+            prob = y - neg_gradient
+            hessian = prob * (1 - prob)
+            if sample_weight is not None:
+                hessian *= sample_weight
+
+        denominator = np.bincount(idx, weights=hessian, minlength=n_nodes)
+
+        nz = denominator > 1e-150
+        tree.value[:, 0, 0] = 0
+        tree.value[nz, 0, 0] = numerator[nz] / denominator[nz]
+    else:  # regression losses other than the squared error.
+        n_samples = terminal_regions.size
+        indices = np.arange(n_samples)
+        indices = indices[sample_mask]
+        y_per_leaf = csr_matrix(
+            (y[sample_mask], (terminal_regions[sample_mask], indices)),
+            shape=(tree.node_count, n_samples),
+        )
+
+        (leaves,) = np.nonzero(tree.children_left == TREE_LEAF)
+        for leaf in leaves:
+            y_leaf = y_per_leaf[leaf]
+            indices = y_leaf.indices
             sw = None if sample_weight is None else sample_weight[indices]
-            update = compute_update(y_, indices, neg_gradient, raw_prediction, k)
-
-            # TODO: Multiply here by learning rate instead of everywhere else.
+            update = loss.fit_intercept_only(
+                y_true=y_leaf.data - raw_prediction[indices, k],
+                sample_weight=sw,
+            )
             tree.value[leaf, 0, 0] = update
 
     # update predictions (both in-bag and out-of-bag)
