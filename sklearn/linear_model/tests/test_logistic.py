@@ -1,5 +1,6 @@
 import itertools
 import os
+import re
 import warnings
 
 import numpy as np
@@ -2023,6 +2024,80 @@ def test_logistic_regression_path_coefs_multinomial():
         assert_array_almost_equal(coefs[0], coefs[2], decimal=1)
     with pytest.raises(AssertionError):
         assert_array_almost_equal(coefs[1], coefs[2], decimal=1)
+
+
+def test_logistic_regression_path_init_coefs():
+    X, y = make_classification(
+        n_samples=200,
+        n_classes=3,
+        n_informative=2,
+        n_redundant=0,
+        n_clusters_per_class=1,
+        random_state=0,
+        n_features=2,
+    )
+    classes = np.unique(y)
+
+    # For n_class >= 3, coef should be of shape
+    # (n_classes, features + int(fit_intercept))
+    coef = np.ones((3, 3))
+    _logistic_regression_path(
+        X,
+        y,
+        classes=classes,
+        coef=coef,
+        random_state=0,
+    )
+
+    msg = (
+        rf"Initialization coef is of shape {re.escape(str(coef.shape))}"
+        r".+expected.+\(3, 2\)"
+    )
+    with pytest.raises(ValueError, match=msg):
+        _logistic_regression_path(
+            X, y, classes=classes, coef=coef, random_state=0, fit_intercept=False
+        )
+
+    X, y = make_classification(
+        n_samples=200,
+        n_classes=2,
+        n_informative=1,
+        n_redundant=0,
+        n_clusters_per_class=1,
+        random_state=0,
+        n_features=2,
+    )
+    classes = np.unique(y)
+
+    # For the binary case, coef should be of shape
+    # (1, features + int(fit_intercept)) or
+    # (features + int(fit_intercept))
+    coef = np.ones(3)
+    _logistic_regression_path(
+        X,
+        y,
+        classes=classes,
+        coef=coef,
+        random_state=0,
+    )
+
+    coef = np.ones((1, 3))
+    _logistic_regression_path(
+        X,
+        y,
+        classes=classes,
+        coef=coef,
+        random_state=0,
+    )
+
+    msg = (
+        rf"Initialization coef is of shape {re.escape(str(coef.shape))}"
+        r".+expected.+\(2,\) or \(1, 2\)"
+    )
+    with pytest.raises(ValueError, match=msg):
+        _logistic_regression_path(
+            X, y, classes=classes, coef=coef, random_state=0, fit_intercept=False
+        )
 
 
 @pytest.mark.parametrize("solver", sorted(set(SOLVERS) - set(["liblinear"])))

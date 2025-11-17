@@ -84,6 +84,7 @@ def _check_solver(solver, penalty, dual):
 def _logistic_regression_path(
     X,
     y,
+    *,
     classes,
     Cs=10,
     fit_intercept=True,
@@ -294,10 +295,9 @@ def _logistic_regression_path(
             # of in [-1, 1].
             y_bin[~mask] = 0.0
     else:
-        # All solvers capable of a multinomial need
-        # LabelEncoder, not LabelBinarizer, i.e. y as a 1d-array of integers.
-        # LabelEncoder also saves memory compared to LabelBinarizer, especially
-        # when n_classes is large.
+        # All solvers capable of a multinomial need LabelEncoder, not LabelBinarizer,
+        # i.e. y as a 1d-array of integers. LabelEncoder also saves memory
+        # compared to LabelBinarizer, especially when n_classes is large.
         Y_multi = le.fit_transform(y).astype(X.dtype, copy=False)
         # It is important that w0 is F-contiguous.
         w0 = np.zeros(
@@ -330,7 +330,7 @@ def _logistic_regression_path(
             else:
                 msg = (
                     f"Initialization coef is of shape {coef.shape}, expected shape "
-                    f"{w0.shape} or (1, {w0.shape})"
+                    f"{w0.shape} or (1, {w0.shape[0]})"
                 )
                 raise ValueError(msg)
         else:
