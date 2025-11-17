@@ -7,6 +7,7 @@ import scipy
 from numpy.testing import assert_allclose
 
 from sklearn._config import config_context
+from sklearn._loss import HalfMultinomialLoss
 from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import (
     _add_to_diagonal,
@@ -18,6 +19,7 @@ from sklearn.utils._array_api import (
     _estimator_with_converted_arrays,
     _fill_diagonal,
     _get_namespace_device_dtype_ids,
+    _half_multinomial_loss,
     _is_numpy_namespace,
     _isin,
     _logsumexp,
@@ -685,14 +687,17 @@ def test_add_to_diagonal(array_namespace, device_, dtype_name):
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("dispatch", [True, False])
 def test_sparse_device(csr_container, dispatch):
+    np_arr = numpy.array([1])
+    # For numpy < 2, the device attribute is not available on numpy arrays
+    expected_numpy_array_device = getattr(np_arr, "device", None) if dispatch else None
     a, b = csr_container(numpy.array([[1]])), csr_container(numpy.array([[2]]))
     if dispatch and os.environ.get("SCIPY_ARRAY_API") is None:
         raise SkipTest("SCIPY_ARRAY_API is not set: not checking array_api input")
     with config_context(array_api_dispatch=dispatch):
         assert device(a, b) is None
-        assert device(a, numpy.array([1])) is None
+        assert device(a, np_arr) == expected_numpy_array_device
         assert get_namespace_and_device(a, b)[2] is None
-        assert get_namespace_and_device(a, numpy.array([1]))[2] is None
+        assert get_namespace_and_device(a, np_arr)[2] == expected_numpy_array_device
 
 
 @pytest.mark.parametrize(
@@ -795,3 +800,38 @@ def test_supported_float_types(namespace, device_, expected_types):
     float_types = supported_float_dtypes(xp, device=device_)
     expected = tuple(getattr(xp, dtype_name) for dtype_name in expected_types)
     assert float_types == expected
+
+
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize(
+    "namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_half_multinomial_loss(use_sample_weight, namespace, device_, dtype_name):
+    """Check that the array API version of :func:`_half_multinomial_loss` works
+    correctly and matches the results produced by :class:`HalfMultinomialLoss`
+    of the private `_loss` module.
+    """
+    n_samples = 5
+    n_classes = 3
+    rng = numpy.random.RandomState(42)
+    y = rng.randint(0, n_classes, n_samples).astype(dtype_name)
+    pred = rng.rand(n_samples, n_classes).astype(dtype_name)
+    xp = _array_api_for_tests(namespace, device_)
+    y_xp = xp.asarray(y, device=device_)
+    pred_xp = xp.asarray(pred, device=device_)
+    if use_sample_weight:
+        sample_weight = numpy.ones_like(y)
+        sample_weight[1::2] = 2
+        sample_weight_xp = xp.asarray(sample_weight, device=device_)
+    else:
+        sample_weight, sample_weight_xp = None, None
+
+    np_loss = HalfMultinomialLoss(n_classes=n_classes)(
+        y_true=y, raw_prediction=pred, sample_weight=sample_weight
+    )
+    with config_context(array_api_dispatch=True):
+        xp_loss = _half_multinomial_loss(
+            y=y_xp, pred=pred_xp, sample_weight=sample_weight_xp, xp=xp
+        )
+
+    assert numpy.isclose(np_loss, xp_loss)

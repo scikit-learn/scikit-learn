@@ -153,8 +153,7 @@ def _check_array_api_dispatch(array_api_dispatch):
 def _single_array_device(array):
     """Hardware device where the array data resides on."""
     if (
-        isinstance(array, (numpy.ndarray, numpy.generic))
-        or not hasattr(array, "device")
+        not hasattr(array, "device")
         # When array API dispatch is disabled, we expect the scikit-learn code
         # to use np.asarray so that the resulting NumPy array will implicitly use the
         # CPU. In this case, scikit-learn should stay as device neutral as possible,
@@ -691,7 +690,7 @@ def _median(x, axis=None, keepdims=False, xp=None):
     # in most array libraries, and all that we support (as of May 2025).
     # TODO: consider simplifying this code to use scipy instead once the oldest
     # supported SciPy version provides `scipy.stats.quantile` with native array API
-    # support (likely scipy 1.6 at the time of writing). Proper benchmarking of
+    # support (likely scipy 1.16 at the time of writing). Proper benchmarking of
     # either option with popular array namespaces is required to evaluate the
     # impact of this choice.
     xp, _, device = get_namespace_and_device(x, xp=xp)
@@ -906,21 +905,6 @@ def indexing_dtype(xp):
     return xp.asarray(0).dtype
 
 
-def _searchsorted(a, v, *, side="left", sorter=None, xp=None):
-    # Temporary workaround needed as long as searchsorted is not widely
-    # adopted by implementers of the Array API spec. This is a quite
-    # recent addition to the spec:
-    # https://data-apis.org/array-api/latest/API_specification/generated/array_api.searchsorted.html
-    xp, _ = get_namespace(a, v, xp=xp)
-    if hasattr(xp, "searchsorted"):
-        return xp.searchsorted(a, v, side=side, sorter=sorter)
-
-    a_np = _convert_to_numpy(a, xp=xp)
-    v_np = _convert_to_numpy(v, xp=xp)
-    indices = numpy.searchsorted(a_np, v_np, side=side, sorter=sorter)
-    return xp.asarray(indices, device=device(a))
-
-
 def _isin(element, test_elements, xp, assume_unique=False, invert=False):
     """Calculates ``element in test_elements``, broadcasting over `element`
     only.
@@ -1107,3 +1091,15 @@ def _linalg_solve(cov_chol, eye_matrix, xp):
         return scipy.linalg.solve_triangular(cov_chol, eye_matrix, lower=True)
     else:
         return xp.linalg.solve(cov_chol, eye_matrix)
+
+
+def _half_multinomial_loss(y, pred, sample_weight=None, xp=None):
+    """A version of the multinomial loss that is compatible with the array API"""
+    xp, _, device_ = get_namespace_and_device(y, pred, sample_weight)
+    log_sum_exp = _logsumexp(pred, axis=1, xp=xp)
+    y = xp.asarray(y, dtype=xp.int64, device=device_)
+    class_margins = xp.arange(y.shape[0], device=device_) * pred.shape[1]
+    label_predictions = xp.take(_ravel(pred), y + class_margins)
+    return float(
+        _average(log_sum_exp - label_predictions, weights=sample_weight, xp=xp)
+    )

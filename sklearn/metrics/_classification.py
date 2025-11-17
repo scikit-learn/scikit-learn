@@ -11,6 +11,7 @@ the lower the better.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
+from contextlib import nullcontext
 from math import sqrt
 from numbers import Integral, Real
 
@@ -32,10 +33,11 @@ from sklearn.utils._array_api import (
     _bincount,
     _convert_to_numpy,
     _count_nonzero,
+    _fill_diagonal,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
+    _is_xp_namespace,
     _max_precision_float_dtype,
-    _searchsorted,
     _tolist,
     _union1d,
     ensure_common_namespace_device,
@@ -491,6 +493,8 @@ def confusion_matrix(
     ConfusionMatrixDisplay.from_predictions : Plot the confusion matrix
         given the true and predicted labels.
     ConfusionMatrixDisplay : Confusion Matrix visualization.
+    confusion_matrix_at_thresholds : For binary classification, compute true negative,
+        false positive, false negative and true positive counts per threshold.
 
     References
     ----------
@@ -804,7 +808,7 @@ def multilabel_confusion_matrix(
             )
 
         # Retain only selected labels
-        indices = _searchsorted(sorted_labels, labels[:n_labels], xp=xp)
+        indices = xp.searchsorted(sorted_labels, labels[:n_labels])
         tp_sum = xp.take(tp_sum, indices, axis=0)
         true_sum = xp.take(true_sum, indices, axis=0)
         pred_sum = xp.take(pred_sum, indices, axis=0)
@@ -995,36 +999,44 @@ def cohen_kappa_score(
             raise ValueError(msg) from e
         raise
 
+    xp, _, device_ = get_namespace_and_device(y1, y2)
     n_classes = confusion.shape[0]
-    sum0 = np.sum(confusion, axis=0)
-    sum1 = np.sum(confusion, axis=1)
-
-    numerator = np.outer(sum0, sum1)
-    denominator = np.sum(sum0)
+    # array_api_strict only supports floating point dtypes for __truediv__
+    # which is used below to compute `expected` as well as `k`. Therefore
+    # we use the maximum floating point dtype available for relevant arrays
+    # to avoid running into this problem.
+    max_float_dtype = _max_precision_float_dtype(xp, device=device_)
+    confusion = xp.astype(confusion, max_float_dtype, copy=False)
+    sum0 = xp.sum(confusion, axis=0)
+    sum1 = xp.sum(confusion, axis=1)
+    #expected = xp.linalg.outer(sum0, sum1) / xp.sum(sum0)
+    
+    numerator = xp.linalg.outer(sum0, sum1) 
+    denominator = xp.sum(sum0)
     msg_zero_division = (
         "`y2` contains no labels that are presented in both `y1` and `labels`."
         "`cohen_kappa_score` is undefined and set to the value defined by "
         "the `replace_undefined_by` param, which defaults to `np.nan`."
     )
-    if np.isclose(denominator, 0):
+    if xp.isclose(denominator, 0):
         warnings.warn(msg_zero_division, UndefinedMetricWarning, stacklevel=2)
         return replace_undefined_by
 
     expected = numerator / denominator
 
     if weights is None:
-        w_mat = np.ones([n_classes, n_classes], dtype=int)
-        w_mat.flat[:: n_classes + 1] = 0
+        w_mat = xp.ones([n_classes, n_classes], dtype=max_float_dtype, device=device_)
+        _fill_diagonal(w_mat, 0, xp=xp)
     else:  # "linear" or "quadratic"
-        w_mat = np.zeros([n_classes, n_classes], dtype=int)
-        w_mat += np.arange(n_classes)
+        w_mat = xp.zeros([n_classes, n_classes], dtype=max_float_dtype, device=device_)
+        w_mat += xp.arange(n_classes)
         if weights == "linear":
-            w_mat = np.abs(w_mat - w_mat.T)
+            w_mat = xp.abs(w_mat - w_mat.T)
         else:
             w_mat = (w_mat - w_mat.T) ** 2
 
-    numerator = np.sum(w_mat * confusion)
-    denominator = np.sum(w_mat * expected)
+    numerator = xp.sum(w_mat * confusion)
+    denominator = xp.sum(w_mat * expected)
     msg_zero_division = (
         "`y1`, `y2` and `labels` have only one label in common. "
         "`cohen_kappa_score` is undefined and set to the value defined by the "
@@ -1035,7 +1047,6 @@ def cohen_kappa_score(
         return replace_undefined_by
 
     k = numerator / denominator
-
     return float(1 - k)
 
 
@@ -2955,14 +2966,25 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     0.625
     """
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
-    with np.errstate(divide="ignore", invalid="ignore"):
-        per_class = np.diag(C) / C.sum(axis=1)
-    if np.any(np.isnan(per_class)):
+    xp, _, device_ = get_namespace_and_device(y_pred, y_true)
+    if _is_xp_namespace(xp, "array_api_strict"):
+        # array_api_strict only supports floating point dtypes for __truediv__
+        # which is used below to compute `per_class`.
+        C = xp.astype(C, _max_precision_float_dtype(xp, device=device_), copy=False)
+
+    context_manager = (
+        np.errstate(divide="ignore", invalid="ignore")
+        if _is_numpy_namespace(xp)
+        else nullcontext()
+    )
+    with context_manager:
+        per_class = xp.linalg.diagonal(C) / xp.sum(C, axis=1)
+    if xp.any(xp.isnan(per_class)):
         warnings.warn("y_pred contains classes not in y_true")
-        per_class = per_class[~np.isnan(per_class)]
-    score = np.mean(per_class)
+        per_class = per_class[~xp.isnan(per_class)]
+    score = xp.mean(per_class)
     if adjusted:
-        n_classes = len(per_class)
+        n_classes = per_class.shape[0]
         chance = 1 / n_classes
         score -= chance
         score /= 1 - chance
