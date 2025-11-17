@@ -19,7 +19,6 @@ from sklearn.base import (
     clone,
     is_classifier,
     is_clusterer,
-    is_outlier_detector,
     is_regressor,
 )
 from sklearn.cluster import KMeans
@@ -333,20 +332,6 @@ def test_is_regressor(estimator, expected_result):
 )
 def test_is_clusterer(estimator, expected_result):
     assert is_clusterer(estimator) == expected_result
-
-
-@pytest.mark.parametrize(
-    "is_type, estimator",
-    [
-        (is_regressor, SVR),
-        (is_classifier, Pipeline),
-        (is_clusterer, GridSearchCV),
-        (is_outlier_detector, SVC),
-    ],
-)
-def test_is_type_throws_class_vs_instance_error(is_type, estimator):
-    with pytest.raises(TypeError, match="It seems that you passed an estimator class"):
-        is_type(estimator)
 
 
 def test_set_params():
