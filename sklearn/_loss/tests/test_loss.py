@@ -1402,7 +1402,7 @@ def test_loss_array_api(
         loss=loss_instance,
         n_samples=n_samples,
         y_bound=(-100, 100),
-        raw_bound=(-5, 5),
+        raw_bound=(-50, 50),
         seed=random_seed,
     )
     y_true = y_true.astype(dtype_name)
@@ -1411,7 +1411,9 @@ def test_loss_array_api(
     raw_prediction_xp = xp.asarray(raw_prediction, device=device_)
     if use_sample_weight:
         rng = np.random.RandomState(random_seed)
-        sample_weight_np = rng.normal(size=n_samples).astype(dtype_name)
+        sample_weight_np = (
+            rng.uniform(-1, 5, size=n_samples).clip(0, None).astype(dtype_name)
+        )
         sample_weight_xp = xp.asarray(sample_weight_np, device=device_)
     else:
         sample_weight_np = None

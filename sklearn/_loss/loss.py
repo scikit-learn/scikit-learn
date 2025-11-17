@@ -1162,7 +1162,7 @@ class HalfBinomialLoss(BaseLoss):
             raw_prediction > -37,
             ((1 - y_true) - y_true * neg_raw_prediction_exp)
             / (1 + neg_raw_prediction_exp),
-            raw_prediction_exp,
+            raw_prediction_exp - y_true,
         )
         if sample_weight is not None:
             grad *= sample_weight
@@ -1225,7 +1225,7 @@ class HalfMultinomialLoss(BaseLoss):
         # These instance variables are specifically used for the array API
         # methods to store certain intermediate values in order to avoid
         # having to recompute them repeatedly.
-        self.class_margins = None
+        self.class_indexing_offsets = None
         self.y_true_int = None
         self.y_true_one_hot = None
 
@@ -1342,12 +1342,12 @@ class HalfMultinomialLoss(BaseLoss):
         if self.y_true_int is None:
             self.y_true_int = xp.asarray(y_true, dtype=xp.int64, device=device_)
 
-        if self.class_margins is None:
-            self.class_margins = (
+        if self.class_indexing_offsets is None:
+            self.class_indexing_offsets = (
                 xp.arange(y_true.shape[0], device=device_) * raw_prediction.shape[1]
             )
         label_predictions = xp.take(
-            _ravel(raw_prediction), self.y_true_int + self.class_margins
+            _ravel(raw_prediction), self.y_true_int + self.class_indexing_offsets
         )
         loss = log_sum_exp - label_predictions
         if sample_weight is not None:
@@ -1368,7 +1368,17 @@ class HalfMultinomialLoss(BaseLoss):
             self.y_true_one_hot = xp.astype(
                 self.y_true_one_hot, raw_prediction.dtype, copy=False
             )
-        grad = softmax(raw_prediction) - self.y_true_one_hot
+        grad = softmax(raw_prediction)
+        # XXX: once incremental assignment for multiple integer array
+        # indices is part of a released version of the array API
+        # spec and array-api-strict has been updated accordingly,
+        # we can further avoid allocating a big (n_samples, n_classes)
+        # array for the one-hot encoded y_true and instead use one of the
+        # following (the latter should allow for JAX support):
+        # grad[xp.arange(y_true.shape[0]), y_true_int] -= 1
+        # xpx.at(grad)[xp.arange(y_true.shape[0]), y_true_int].add(-1)
+        # See: https://github.com/data-apis/array-api/issues/864
+        grad -= self.y_true_one_hot
         if sample_weight is not None:
             grad *= sample_weight[:, None]
         return grad

@@ -2567,6 +2567,7 @@ def test_liblinear_multiclass_warning(Estimator):
 
 @pytest.mark.parametrize("binary", [False, True])
 @pytest.mark.parametrize("use_str_y", [False, True])
+@pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize("class_weight", [None, "balanced", "dict"])
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype_name",
@@ -2574,10 +2575,17 @@ def test_liblinear_multiclass_warning(Estimator):
     ids=_get_namespace_device_dtype_ids,
 )
 def test_logistic_regression_array_api_compliance(
-    binary, use_str_y, class_weight, array_namespace, device_, dtype_name
+    binary,
+    use_str_y,
+    use_sample_weight,
+    class_weight,
+    array_namespace,
+    device_,
+    dtype_name,
 ):
     xp = _array_api_for_tests(array_namespace, device_)
     X_np = iris.data.astype(dtype_name)
+    n_samples, _ = X_np.shape
     X_np = StandardScaler().fit_transform(X_np)
     X_xp = xp.asarray(X_np, device=device_)
     if use_str_y:
@@ -2604,6 +2612,13 @@ def test_logistic_regression_array_api_compliance(
         y_np = target.astype(dtype_name)
         y_xp_or_np = xp.asarray(y_np, device=device_)
 
+    if use_sample_weight:
+        sample_weight = (
+            np.random.default_rng(0).uniform(-1, 5, size=n_samples).clip(0, None)
+        )
+    else:
+        sample_weight = None
+
     # Use a strong regularization to ensure coef_ can be identified to a higher
     # precision even when taking into account the iterated discrepancies when
     # the gradient is computed in float32.
@@ -2613,7 +2628,9 @@ def test_logistic_regression_array_api_compliance(
     with warnings.catch_warnings():
         # Make sure that we converge in the reference fit.
         warnings.simplefilter("error", ConvergenceWarning)
-        lr_np = LogisticRegression(**lr_params).fit(X_np, y_np)
+        lr_np = LogisticRegression(**lr_params).fit(
+            X_np, y_np, sample_weight=sample_weight
+        )
         assert lr_np.n_iter_ < lr_np.max_iter
 
     # We selected a low value of C (high coef_ regularization) to be able
@@ -2627,14 +2644,16 @@ def test_logistic_regression_array_api_compliance(
     preditct_log_proba_np = lr_np.predict_log_proba(X_np)
     prediction_np = lr_np.predict(X_np)
     atol = _atol_for_type(dtype_name)
-    rtol = 5e-3 if dtype_name == "float32" else 1e-5
+    rtol = 9e-3 if dtype_name == "float32" else 1e-5
 
     with config_context(array_api_dispatch=True):
         with warnings.catch_warnings():
             # Make sure that we converge when using the namespace/device
             # specific fit.
             warnings.simplefilter("error", ConvergenceWarning)
-            lr_xp = LogisticRegression(**lr_params).fit(X_xp, y_xp_or_np)
+            lr_xp = LogisticRegression(**lr_params).fit(
+                X_xp, y_xp_or_np, sample_weight=sample_weight
+            )
 
         assert lr_xp.n_iter_.shape == lr_np.n_iter_.shape
         assert int(lr_xp.n_iter_[0]) < lr_xp.max_iter
