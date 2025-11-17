@@ -1835,16 +1835,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             l1_ratio_ = l1_ratios_[best_index[1]]
             self.l1_ratio_.append(l1_ratio_)
 
-            # TODO(python 3.11): Use star expression in index with Python>=3.11
-            # for instance: coefs_paths[0, :, *best_index, :]
             if is_binary:
-                coef_init = np.mean(
-                    coefs_paths[0, :, best_index[0], best_index[1], :], axis=0
-                )
+                coef_init = np.mean(coefs_paths[0, :, *best_index, :], axis=0)
             else:
-                coef_init = np.mean(
-                    coefs_paths[:, :, best_index[0], best_index[1], :], axis=1
-                )
+                coef_init = np.mean(coefs_paths[:, :, *best_index, :], axis=1)
 
             # Note that y is label encoded
             w, _, _ = _logistic_regression_path(

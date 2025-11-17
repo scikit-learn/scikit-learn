@@ -165,7 +165,7 @@ def test_predict_iris(clf, global_random_seed):
     n_samples, _ = iris.data.shape
     target = iris.target_names[iris.target]
 
-    if hasattr(clf, "solver") and clf.solver in ("sag", "saga", "liblinear"):
+    if getattr(clf, "solver", None) in ("sag", "saga", "liblinear"):
         clf.set_params(random_state=global_random_seed)
     clf.fit(iris.data, target)
     assert_array_equal(np.unique(target), clf.classes_)
@@ -610,7 +610,7 @@ def test_multinomial_logistic_regression_string_inputs():
     # CV does not necessarily predict all labels
     assert set(np.unique(lr_cv_str.predict(X_ref))) <= {"bar", "baz", "foo"}
 
-    # We restruct CV variant so that it predicts all labels.
+    # We use explicit Cs parameter to make sure all labels are predicted for each C.
     lr_cv_str = LogisticRegressionCV(Cs=[1, 2, 10]).fit(X_ref, y_str)
     assert sorted(np.unique(lr_cv_str.predict(X_ref))) == ["bar", "baz", "foo"]
 
