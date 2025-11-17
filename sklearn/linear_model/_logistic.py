@@ -1694,7 +1694,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         label_encoder = LabelEncoder().fit(y)
 
         # The original class labels
-        classes_ = self.classes_ = label_encoder.classes_
+        classes_only_pos_if_binary = self.classes_ = label_encoder.classes_
         n_classes = len(self.classes_)
         is_binary = n_classes == 2
 
@@ -1747,7 +1747,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         if is_binary:
             n_classes = 1
-            classes_ = classes_[1:]
+            classes_only_pos_if_binary = classes_only_pos_if_binary[1:]
 
         path_func = delayed(_log_reg_scoring_path)
 
@@ -1813,8 +1813,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         scores = np.swapaxes(scores, 1, 2)[None, ...]
         # repeat same scores across all classes
         scores = np.tile(scores, (n_classes, 1, 1, 1))
-        self.scores_ = dict(zip(classes_, scores))
-        self.coefs_paths_ = dict(zip(classes_, coefs_paths))
+        self.scores_ = dict(zip(classes_only_pos_if_binary, scores))
+        self.coefs_paths_ = dict(zip(classes_only_pos_if_binary, coefs_paths))
 
         self.C_ = list()
         self.l1_ratio_ = list()
@@ -1822,7 +1822,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         self.intercept_ = np.zeros(n_classes)
 
         # All scores are the same across classes
-        scores = self.scores_[classes_[0]]
+        scores = self.scores_[classes_only_pos_if_binary[0]]
 
         if self.refit:
             # best_index over folds
