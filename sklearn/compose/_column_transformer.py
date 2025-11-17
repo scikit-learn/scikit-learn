@@ -1223,6 +1223,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return np.hstack(Xs)
 
     def _sk_visual_block_(self):
+        breakpoint()
         transformers = [
             transformer
             for transformer in getattr(self, "transformers_", self.transformers)
@@ -1241,7 +1242,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 self.transformers, [("remainder", self.remainder, remainder_columns)]
             )
         else:
-            remainder_columns = ""
+            transformers = chain(self.transformers, [("remainder", self.remainder, "")])
+            # remainder_columns = ""
 
         names, transformers, name_details = zip(*transformers)
         return _VisualBlock(
