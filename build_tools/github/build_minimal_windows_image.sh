@@ -45,5 +45,5 @@ else
     # TODO When pandas has a release with a Windows free-threaded wheel we can
     # replace the next line with
     # python -m pip install CIBW_TEST_REQUIRES
-    python -m pip install pytest
+    python -m pip install 'pytest<9'
 fi

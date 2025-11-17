@@ -746,11 +746,7 @@ class GaussianMixture(BaseMixture):
     array([1, 0])
 
     For a comparison of Gaussian Mixture with other clustering algorithms, see
-    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`.
-
-    For an illustration of the negative log-likelihood surface of a
-    :class:`~sklearn.mixture.GaussianMixture` Model,
-    see :ref:`sphx_glr_auto_examples_mixture_plot_gmm_pdf.py`.
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {
