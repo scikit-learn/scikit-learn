@@ -224,23 +224,18 @@ def _update_terminal_regions(
         tree.value[:, 0, 0] = 0
         tree.value[nz, 0, 0] = numerator[nz] / denominator[nz]
     else:  # regression losses other than the squared error.
-        n_samples = terminal_regions.size
-        indices = np.arange(n_samples)
-        indices = indices[sample_mask]
-        y_per_leaf = csr_matrix(
-            (y[sample_mask], (terminal_regions[sample_mask], indices)),
-            shape=(tree.node_count, n_samples),
-        )
-
-        (leaves,) = np.nonzero(tree.children_left == TREE_LEAF)
-        for leaf in leaves:
-            y_leaf = y_per_leaf[leaf]
-            indices = y_leaf.indices
+        # mask all which are not in sample mask.
+        masked_terminal_regions = terminal_regions.copy()
+        masked_terminal_regions[~sample_mask] = -1
+        # update each leaf (= perform line search)
+        for leaf in np.nonzero(tree.children_left == TREE_LEAF)[0]:
+            (indices,) = np.nonzero(masked_terminal_regions == leaf)
             sw = None if sample_weight is None else sample_weight[indices]
             update = loss.fit_intercept_only(
-                y_true=y_leaf.data - raw_prediction[indices, k],
+                y_true=y[indices] - raw_prediction[indices, k],
                 sample_weight=sw,
             )
+
             tree.value[leaf, 0, 0] = update
 
     # update predictions (both in-bag and out-of-bag)
