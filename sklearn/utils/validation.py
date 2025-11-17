@@ -2151,11 +2151,7 @@ def _check_sample_weight(
         if force_float_dtype and dtype is None:
             dtype = float_dtypes
         if is_array_api and ensure_same_device:
-            dtype_param = {}
-            # We need to force `float32` with the `mps` device.
-            if str(device).startswith("mps"):
-                dtype_param["dtype"] = max_float_type
-            sample_weight = xp.asarray(sample_weight, device=device, **dtype_param)
+            sample_weight = xp.asarray(sample_weight, device=device)
         sample_weight = check_array(
             sample_weight,
             accept_sparse=False,

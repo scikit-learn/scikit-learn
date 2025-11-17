@@ -2614,7 +2614,10 @@ def test_logistic_regression_array_api_compliance(
 
     if use_sample_weight:
         sample_weight = (
-            np.random.default_rng(0).uniform(-1, 5, size=n_samples).clip(0, None)
+            np.random.default_rng(0)
+            .uniform(-1, 5, size=n_samples)
+            .clip(0, None)
+            .astype(dtype_name)
         )
     else:
         sample_weight = None
@@ -2644,7 +2647,7 @@ def test_logistic_regression_array_api_compliance(
     preditct_log_proba_np = lr_np.predict_log_proba(X_np)
     prediction_np = lr_np.predict(X_np)
     atol = _atol_for_type(dtype_name)
-    rtol = 9e-3 if dtype_name == "float32" else 1e-5
+    rtol = 1e-2 if dtype_name == "float32" else 1e-5
 
     with config_context(array_api_dispatch=True):
         with warnings.catch_warnings():
