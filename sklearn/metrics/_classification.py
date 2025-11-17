@@ -1010,16 +1010,16 @@ def cohen_kappa_score(
     confusion = xp.astype(confusion, max_float_dtype, copy=False)
     sum0 = xp.sum(confusion, axis=0)
     sum1 = xp.sum(confusion, axis=1)
-    #expected = xp.linalg.outer(sum0, sum1) / xp.sum(sum0)
-    
-    numerator = xp.linalg.outer(sum0, sum1) 
+    # expected = xp.linalg.outer(sum0, sum1) / xp.sum(sum0)
+
+    numerator = xp.linalg.outer(sum0, sum1)
     denominator = xp.sum(sum0)
     msg_zero_division = (
         "`y2` contains no labels that are presented in both `y1` and `labels`."
         "`cohen_kappa_score` is undefined and set to the value defined by "
         "the `replace_undefined_by` param, which defaults to `np.nan`."
     )
-    if xp.isclose(denominator, 0):
+    if np.isclose(_convert_to_numpy(denominator, xp), 0):
         warnings.warn(msg_zero_division, UndefinedMetricWarning, stacklevel=2)
         return replace_undefined_by
 
@@ -1043,7 +1043,7 @@ def cohen_kappa_score(
         "`cohen_kappa_score` is undefined and set to the value defined by the "
         "`replace_undefined_by` param, which defaults to `np.nan`."
     )
-    if np.isclose(denominator, 0):
+    if np.isclose(_convert_to_numpy(denominator, xp), 0):
         warnings.warn(msg_zero_division, UndefinedMetricWarning, stacklevel=2)
         return replace_undefined_by
 
