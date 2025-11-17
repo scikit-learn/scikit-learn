@@ -52,6 +52,8 @@ def _calculate_threshold(estimator, importances, threshold):
             or is_lasso
             or is_elasticnet_l1_penalized
             or is_elasticnetcv_l1_penalized
+            or is_logreg_l1_penalized
+            or is_logregcv_l1_penalized
         ):
             # the natural default threshold is 0 when l1 penalty was used
             threshold = 1e-5
