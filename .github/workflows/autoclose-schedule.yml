@@ -41,11 +41,11 @@ jobs:
         env:
           BODY: |
             Thank you for your interest in contributing to scikit-learn, but we cannot \
-            accept your contribution as this pull request doesn't meet the development \
+            accept your contribution as this pull request does not meet the development \
             standards.
 
             Following our autoclose policy, we are closing this PR after two weeks \
             time for improvements.
 
             We apologise for the inconvenience. If you think your PR has been closed \
-            by mistake, please contact a maintainer.
+            by mistake, please comment below.

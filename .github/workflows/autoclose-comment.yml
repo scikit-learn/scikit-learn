@@ -34,34 +34,31 @@ jobs:
           -f "body=$BODY"
         env:
           BODY: |
-            This pull request has been labeled for potential autoclose.
+            This pull request might be automatically closed in two weeks from now.
 
-            Thank you for your contribution to scikit-learn and for the effort you've \
-            put into this PR. This pull request does not yet meet the quality and \
-            clarity needed for an effective review. Reviewing time is extremely \
-            limited, and PRs in this state are difficult to review effectively, which \
-            can slow down progress on other contributions and ongoing work. Unless \
-            this PR is improved, it will be automatically closed after two weeks.
+            Thank you for your contribution to scikit-learn and for the effort you \
+            have put into this PR. This pull request does not yet meet the quality and \
+            clarity needed for an effective review. Reviewing time is limited, and PRs \
+            in this state are difficult to review, which can slow down progress on \
+            other contributions and ongoing work. Unless this PR is improved, it will \
+            be automatically closed after two weeks.
 
             To avoid autoclose and increase the chance of a productive review, please:
             - Ensure your contribution aligns with our \
             [contribution guide](https://scikit-learn.org/dev/developers/contributing.html).
-            - Include a clear motivation and concise explanation of what the PR does \
-            in the pull request description.
+            - Include a clear motivation and concise explanation in the pull request \
+            description of why you chose this solution.
             - Make sure the code runs and passes tests locally (`pytest`) and in the CI.
-            - Only submit code you understand and can maintain. We will likely request \
-            changes or explanations.
+            - Submit only code you can explain and maintain; reviewers will ask for \
+            clarifications and changes. Disclose any AI assistance per our \
+            [Automated Contributions Policy](https://scikit-learn.org/dev/developers/contributing.html#automated-contributions-policy).
             - Keep the changes minimal and directly relevant to the described issue or \
             enhancement.
 
-            If you have carefully reviewed these points but are still stuck on a \
-            specific problem, please describe it in your own words. This helps \
-            maintainers see that you have designed your contribution and understand \
-            how it fits into the codebase, rather than submitting AI-generated or \
-            copied content. We especially encourage beginners to ask focused questions \
-            that show you've tried to explore the problem  and are interested to engage \
-            with the project. We may be able to provide guidance if your explanation of \
-            the problem is clear and reflects your own reasoning.
+            If you are stuck, we encourage you to ask focused questions that show you \
+            have tried to explore the problem and are interested to engage with the \
+            project. We may be able to provide guidance if your explanation of the \
+            problem is clear and reflects your own reasoning.
 
             We understand it can be frustrating that we cannot provide individual \
             guidance on every PR. Reviewer capacity is very limited and our goal is to \
