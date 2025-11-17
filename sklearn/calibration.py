@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
+from functools import partial
 from inspect import signature
 from math import log
 from numbers import Integral, Real
@@ -21,12 +22,21 @@ from sklearn.base import (
     _fit_context,
     clone,
 )
+from sklearn.externals import array_api_extra as xpx
 from sklearn.frozen import FrozenEstimator
 from sklearn.isotonic import IsotonicRegression
 from sklearn.model_selection import LeaveOneOut, check_cv, cross_val_predict
 from sklearn.preprocessing import LabelEncoder, label_binarize
 from sklearn.svm import LinearSVC
 from sklearn.utils import Bunch, _safe_indexing, column_or_1d, get_tags, indexable
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _half_multinomial_loss,
+    _is_numpy_namespace,
+    get_namespace,
+    get_namespace_and_device,
+    move_to,
+)
 from sklearn.utils._param_validation import (
     HasMethods,
     Interval,
@@ -218,22 +228,31 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
     References
     ----------
-    .. [1] Obtaining calibrated probability estimates from decision trees
-           and naive Bayesian classifiers, B. Zadrozny & C. Elkan, ICML 2001
+    .. [1] B. Zadrozny & C. Elkan.
+       `Obtaining calibrated probability estimates from decision trees
+       and naive Bayesian classifiers
+       <https://cseweb.ucsd.edu/~elkan/calibrated.pdf>`_, ICML 2001.
 
-    .. [2] Transforming Classifier Scores into Accurate Multiclass
-           Probability Estimates, B. Zadrozny & C. Elkan, (KDD 2002)
+    .. [2] B. Zadrozny & C. Elkan.
+       `Transforming Classifier Scores into Accurate Multiclass
+       Probability Estimates
+       <https://web.archive.org/web/20060720141520id_/http://www.research.ibm.com:80/people/z/zadrozny/kdd2002-Transf.pdf>`_,
+       KDD 2002.
 
-    .. [3] Probabilistic Outputs for Support Vector Machines and Comparisons to
-           Regularized Likelihood Methods, J. Platt, (1999)
+    .. [3] J. Platt. `Probabilistic Outputs for Support Vector Machines
+       and Comparisons to Regularized Likelihood Methods
+       <https://www.researchgate.net/profile/John-Platt-2/publication/2594015_Probabilistic_Outputs_for_Support_Vector_Machines_and_Comparisons_to_Regularized_Likelihood_Methods/links/004635154cff5262d6000000/Probabilistic-Outputs-for-Support-Vector-Machines-and-Comparisons-to-Regularized-Likelihood-Methods.pdf>`_,
+       1999.
 
-    .. [4] Predicting Good Probabilities with Supervised Learning,
-           A. Niculescu-Mizil & R. Caruana, ICML 2005
+    .. [4] A. Niculescu-Mizil & R. Caruana.
+       `Predicting Good Probabilities with Supervised Learning
+       <https://www.cs.cornell.edu/~alexn/papers/calibration.icml05.crc.rev3.pdf>`_,
+       ICML 2005.
 
-    .. [5] Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger. 2017.
+    .. [5] Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger.
        :doi:`On Calibration of Modern Neural Networks<10.48550/arXiv.1706.04599>`.
        Proceedings of the 34th International Conference on Machine Learning,
-       PMLR 70:1321-1330, 2017
+       PMLR 70:1321-1330, 2017.
 
     Examples
     --------
@@ -353,6 +372,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         # Set `classes_` using all `y`
         label_encoder_ = LabelEncoder().fit(y)
         self.classes_ = label_encoder_.classes_
+        if self.method == "temperature" and isinstance(y[0], str):
+            # for temperature scaling if `y` contains strings then encode it
+            # right here to avoid fitting LabelEncoder again within the
+            # `_fit_calibrator` function.
+            y = label_encoder_.transform(y=y)
 
         if _routing_enabled():
             routed_params = process_routing(
@@ -383,6 +407,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             if sample_weight is not None and supports_sw:
                 routed_params.estimator.fit["sample_weight"] = sample_weight
 
+        xp, is_array_api, device_ = get_namespace_and_device(X)
+        if is_array_api:
+            y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
         # Check that each cross-validation fold can have at least one
         # example per class
         if isinstance(self.cv, int):
@@ -391,7 +418,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             n_folds = self.cv.n_splits
         else:
             n_folds = None
-        if n_folds and np.any(np.unique(y, return_counts=True)[1] < n_folds):
+        if n_folds and xp.any(xp.unique_counts(y)[1] < n_folds):
             raise ValueError(
                 f"Requesting {n_folds}-fold "
                 "cross-validation but provided less than "
@@ -417,6 +444,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     test=test,
                     method=self.method,
                     classes=self.classes_,
+                    xp=xp,
                     sample_weight=sample_weight,
                     fit_params=routed_params.estimator.fit,
                 )
@@ -437,7 +465,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 n_jobs=self.n_jobs,
                 params=routed_params.estimator.fit,
             )
-            if len(self.classes_) == 2:
+            if self.classes_.shape[0] == 2:
                 # Ensure shape (n_samples, 1) in the binary case
                 if method_name == "predict_proba":
                     # Select the probability column of the positive class
@@ -465,7 +493,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 y,
                 self.classes_,
                 self.method,
-                sample_weight,
+                xp=xp,
+                sample_weight=sample_weight,
             )
             self.calibrated_classifiers_.append(calibrated_classifier)
 
@@ -495,7 +524,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         check_is_fitted(self)
         # Compute the arithmetic mean of the predictions of the calibrated
         # classifiers
-        mean_proba = np.zeros((_num_samples(X), len(self.classes_)))
+        xp, _, device_ = get_namespace_and_device(X)
+        mean_proba = xp.zeros((_num_samples(X), self.classes_.shape[0]), device=device_)
         for calibrated_classifier in self.calibrated_classifiers_:
             proba = calibrated_classifier.predict_proba(X)
             mean_proba += proba
@@ -520,8 +550,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         C : ndarray of shape (n_samples,)
             The predicted class.
         """
+        xp, _ = get_namespace(X)
         check_is_fitted(self)
-        return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
+        class_indices = xp.argmax(self.predict_proba(X), axis=1)
+        if isinstance(self.classes_[0], str):
+            class_indices = _convert_to_numpy(class_indices, xp=xp)
+
+        return self.classes_[class_indices]
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
@@ -551,7 +586,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = get_tags(self._get_estimator()).input_tags.sparse
+        estimator_tags = get_tags(self._get_estimator())
+        tags.input_tags.sparse = estimator_tags.input_tags.sparse
+        tags.array_api_support = (
+            estimator_tags.array_api_support and self.method == "temperature"
+        )
         return tags
 
 
@@ -563,6 +602,7 @@ def _fit_classifier_calibrator_pair(
     test,
     method,
     classes,
+    xp,
     sample_weight=None,
     fit_params=None,
 ):
@@ -629,12 +669,18 @@ def _fit_classifier_calibrator_pair(
     else:
         sw_test = None
     calibrated_classifier = _fit_calibrator(
-        estimator, predictions, y_test, classes, method, sample_weight=sw_test
+        estimator,
+        predictions,
+        y_test,
+        classes,
+        method,
+        xp=xp,
+        sample_weight=sw_test,
     )
     return calibrated_classifier
 
 
-def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
+def _fit_calibrator(clf, predictions, y, classes, method, xp, sample_weight=None):
     """Fit calibrator(s) and return a `_CalibratedClassifier`
     instance.
 
@@ -652,7 +698,7 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
         Raw predictions returned by the un-calibrated base classifier.
 
     y : array-like, shape (n_samples,)
-        The targets.
+        The targets. For `method="temperature"`, `y` needs to be label encoded.
 
     classes : ndarray, shape (n_classes,)
         All the prediction classes.
@@ -667,12 +713,12 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
     -------
     pipeline : _CalibratedClassifier instance
     """
-    Y = label_binarize(y, classes=classes)
-    label_encoder = LabelEncoder().fit(classes)
-    pos_class_indices = label_encoder.transform(clf.classes_)
     calibrators = []
 
     if method in ("isotonic", "sigmoid"):
+        Y = label_binarize(y, classes=classes)
+        label_encoder = LabelEncoder().fit(classes)
+        pos_class_indices = label_encoder.transform(clf.classes_)
         for class_idx, this_pred in zip(pos_class_indices, predictions.T):
             if method == "isotonic":
                 calibrator = IsotonicRegression(out_of_bounds="clip")
@@ -681,13 +727,13 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
             calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
             calibrators.append(calibrator)
     elif method == "temperature":
-        if len(classes) == 2 and predictions.shape[-1] == 1:
+        if classes.shape[0] == 2 and predictions.shape[-1] == 1:
             response_method_name = _check_response_method(
                 clf,
                 ["decision_function", "predict_proba"],
             ).__name__
             if response_method_name == "predict_proba":
-                predictions = np.hstack([1 - predictions, predictions])
+                predictions = xp.concat([1 - predictions, predictions], axis=1)
         calibrator = _TemperatureScaling()
         calibrator.fit(predictions, y, sample_weight)
         calibrators.append(calibrator)
@@ -750,14 +796,13 @@ class _CalibratedClassifier:
             # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
             predictions = predictions.reshape(-1, 1)
 
-        n_classes = len(self.classes)
-
-        label_encoder = LabelEncoder().fit(self.classes)
-        pos_class_indices = label_encoder.transform(self.estimator.classes_)
+        n_classes = self.classes.shape[0]
 
         proba = np.zeros((_num_samples(X), n_classes))
 
         if self.method in ("sigmoid", "isotonic"):
+            label_encoder = LabelEncoder().fit(self.classes)
+            pos_class_indices = label_encoder.transform(self.estimator.classes_)
             for class_idx, this_pred, calibrator in zip(
                 pos_class_indices, predictions.T, self.calibrators
             ):
@@ -779,13 +824,14 @@ class _CalibratedClassifier:
                     proba, denominator, out=uniform_proba, where=denominator != 0
                 )
         elif self.method == "temperature":
+            xp, _ = get_namespace(predictions)
             if n_classes == 2 and predictions.shape[-1] == 1:
                 response_method_name = _check_response_method(
                     self.estimator,
                     ["decision_function", "predict_proba"],
                 ).__name__
                 if response_method_name == "predict_proba":
-                    predictions = np.hstack([1 - predictions, predictions])
+                    predictions = xp.concat([1 - predictions, predictions], axis=1)
             proba = self.calibrators[0].predict(predictions)
 
         # Deal with cases where the predicted probability minimally exceeds 1.0
@@ -898,7 +944,7 @@ def _sigmoid_calibration(
     return AB_[0] / scale_constant, AB_[1]
 
 
-def _convert_to_logits(decision_values, eps=1e-12):
+def _convert_to_logits(decision_values, eps=1e-12, xp=None):
     """Convert decision_function values to 2D and predict_proba values to logits.
 
     This function ensures that the output of `decision_function` is
@@ -926,25 +972,33 @@ def _convert_to_logits(decision_values, eps=1e-12):
     -------
     logits : ndarray of shape (n_samples, n_classes)
     """
+    xp, _, device_ = get_namespace_and_device(decision_values, xp=xp)
     decision_values = check_array(
-        decision_values, dtype=[np.float64, np.float32], ensure_2d=False
+        decision_values, dtype=[xp.float64, xp.float32], ensure_2d=False
     )
     if (decision_values.ndim == 2) and (decision_values.shape[1] > 1):
         # Check if it is the output of predict_proba
-        entries_zero_to_one = np.all((decision_values >= 0) & (decision_values <= 1))
-        row_sums_to_one = np.all(np.isclose(np.sum(decision_values, axis=1), 1.0))
+        entries_zero_to_one = xp.all((decision_values >= 0) & (decision_values <= 1))
+        # TODO: simplify once upstream issue is addressed
+        # https://github.com/data-apis/array-api-extra/issues/478
+        row_sums_to_one = xp.all(
+            xpx.isclose(
+                xp.sum(decision_values, axis=1),
+                xp.asarray(1.0, device=device_, dtype=decision_values.dtype),
+            )
+        )
 
         if entries_zero_to_one and row_sums_to_one:
-            logits = np.log(decision_values + eps)
+            logits = xp.log(decision_values + eps)
         else:
             logits = decision_values
 
     elif (decision_values.ndim == 2) and (decision_values.shape[1] == 1):
-        logits = np.hstack([-decision_values, decision_values])
+        logits = xp.concat([-decision_values, decision_values], axis=1)
 
     elif decision_values.ndim == 1:
-        decision_values = decision_values.reshape(-1, 1)
-        logits = np.hstack([-decision_values, decision_values])
+        decision_values = xp.reshape(decision_values, (-1, 1))
+        logits = xp.concat([-decision_values, decision_values], axis=1)
 
     return logits
 
@@ -1041,9 +1095,10 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         self : object
             Returns an instance of self.
         """
+        xp, _, xp_device = get_namespace_and_device(X, y)
         X, y = indexable(X, y)
         check_consistent_length(X, y)
-        logits = _convert_to_logits(X)  # guarantees np.float64 or np.float32
+        logits = _convert_to_logits(X)  # guarantees xp.float64 or xp.float32
 
         dtype_ = logits.dtype
         labels = column_or_1d(y, dtype=dtype_)
@@ -1051,9 +1106,10 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, labels, dtype=dtype_)
 
-        halfmulti_loss = HalfMultinomialLoss(
-            sample_weight=sample_weight, n_classes=logits.shape[1]
-        )
+        if _is_numpy_namespace(xp):
+            multinomial_loss = HalfMultinomialLoss(n_classes=logits.shape[1])
+        else:
+            multinomial_loss = partial(_half_multinomial_loss, xp=xp)
 
         def log_loss(log_beta=0.0):
             """Compute the log loss as a parameter of the inverse temperature
@@ -1083,14 +1139,16 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
             #   - NumPy 2+:  result.dtype is float64
             #
             #  This can cause dtype mismatch errors downstream (e.g., buffer dtype).
-            raw_prediction = (np.exp(log_beta) * logits).astype(dtype_)
-            return halfmulti_loss(y_true=labels, raw_prediction=raw_prediction)
+            log_beta = xp.asarray(log_beta, dtype=dtype_, device=xp_device)
+            raw_prediction = xp.exp(log_beta) * logits
+            return multinomial_loss(labels, raw_prediction, sample_weight)
 
+        xatol = 64 * xp.finfo(dtype_).eps
         log_beta_minimizer = minimize_scalar(
             log_loss,
             bounds=(-10.0, 10.0),
             options={
-                "xatol": 64 * np.finfo(float).eps,
+                "xatol": xatol,
             },
         )
 
@@ -1101,7 +1159,9 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
                 f"{log_beta_minimizer.message}"
             )
 
-        self.beta_ = np.exp(log_beta_minimizer.x)
+        self.beta_ = xp.exp(
+            xp.asarray(log_beta_minimizer.x, dtype=dtype_, device=xp_device)
+        )
 
         return self
 

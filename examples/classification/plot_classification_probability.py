@@ -17,7 +17,6 @@ with the highest predicted probability at each point is plotted. The round
 markers show the test data and are colored by their true label.
 """
 
-# %%
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
