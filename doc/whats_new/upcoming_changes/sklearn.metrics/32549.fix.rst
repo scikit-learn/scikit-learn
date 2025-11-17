@@ -1,2 +1,3 @@
-- All classification metrics now raise a `ValueError` when empty input is provided.
+- All classification metrics now raise a `ValueError` when any required input array
+  (`y_pred`, `y_true`, `y1`, `y2`, `pred_decision` or `y_proba`) is provided empty.
   By :user:`Stefanie Senger <StefanieSenger>`.
