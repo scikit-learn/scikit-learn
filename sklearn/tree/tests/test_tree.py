@@ -41,6 +41,7 @@ from sklearn.tree._classes import (
     DENSE_SPLITTERS,
     SPARSE_SPLITTERS,
 )
+from sklearn.tree._criterion import _py_precompute_absolute_errors
 from sklearn.tree._partitioner import _py_sort
 from sklearn.tree._tree import (
     NODE_DTYPE,
@@ -67,6 +68,7 @@ from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
 )
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_random_state
 
 CLF_CRITERIONS = ("gini", "log_loss")
@@ -1714,8 +1716,9 @@ def test_no_sparse_y_support(name, csr_container):
 
 
 def test_mae():
-    """Check MAE criterion produces correct results on small toy dataset:
+    """Check MAE criterion produces correct results on small toy datasets:
 
+    ## First toy dataset
     ------------------
     | X | y | weight |
     ------------------
@@ -1786,6 +1789,31 @@ def test_mae():
             = 1.2 / 1.6
             = 0.75
             ------
+
+    ## Second toy dataset:
+    ------------------
+    | X | y | weight |
+    ------------------
+    | 1 | 1 |   3    |
+    | 2 | 1 |   3    |
+    | 3 | 3 |   2    |
+    | 4 | 1 |   1    |
+    | 5 | 2 |   2    |
+    ------------------
+    |sum wt:|   11   |
+    ------------------
+
+    The weighted median is 1
+    Total error = Absolute(1 - 3) * 2 + Absolute(1 - 2) * 2 = 6
+
+    The best split is between X values of 2 and 3, with:
+    - left node being the first 2 data points, both with y=1
+      => AE and impurity is 0
+    - right node being the last 3 data points, weighted median is 2.
+      Total error = (Absolute(2 - 3) * 2)
+                  + (Absolute(2 - 1) * 1)
+                  + (Absolute(2 - 2) * 2)
+                  = 3
     """
     dt_mae = DecisionTreeRegressor(
         random_state=0, criterion="absolute_error", max_leaf_nodes=2
@@ -1811,6 +1839,21 @@ def test_mae():
     dt_mae.fit(X=[[3], [5], [3], [8], [5]], y=[6, 7, 3, 4, 3])
     assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0 / 3.0])
     assert_array_equal(dt_mae.tree_.value.flat, [4, 4.5, 4.0])
+
+    dt_mae = DecisionTreeRegressor(
+        random_state=0,
+        criterion="absolute_error",
+        max_depth=1,  # stop after one split
+    )
+    X = [[1], [2], [3], [4], [5]]
+    dt_mae.fit(
+        X=X,
+        y=[1, 1, 3, 1, 2],
+        sample_weight=[3, 3, 2, 1, 2],
+    )
+    assert_allclose(dt_mae.predict(X), [1, 1, 2, 2, 2])
+    assert_allclose(dt_mae.tree_.impurity, [6 / 11, 0, 3 / 5])
+    assert_array_equal(dt_mae.tree_.value.flat, [1, 1, 2])
 
 
 def test_criterion_copy():
@@ -2893,3 +2936,99 @@ def test_sort_log2_build():
     ]
     # fmt: on
     assert_array_equal(samples, expected_samples)
+
+
+def test_absolute_errors_precomputation_function(global_random_seed):
+    """
+    Test the main bit of logic of the MAE(RegressionCriterion) class
+    (used by DecisionTreeRegressor(criterion="absolute_error")).
+
+    The implementation of the criterion relies on an efficient precomputation
+    of left/right children absolute error for each split. This test verifies this
+    part of the computation, in case of major refactor of the MAE class,
+    it can be safely removed.
+    """
+
+    def compute_prefix_abs_errors_naive(y, w):
+        y = y.ravel().copy()
+        medians = [
+            _weighted_percentile(y[:i], w[:i], 50, average=True)
+            for i in range(1, y.size + 1)
+        ]
+        errors = [
+            (np.abs(y[:i] - m) * w[:i]).sum()
+            for i, m in zip(range(1, y.size + 1), medians)
+        ]
+        return np.array(errors), np.array(medians)
+
+    def assert_same_results(y, w, indices, reverse=False):
+        n = y.shape[0]
+        args = (n - 1, -1) if reverse else (0, n)
+        abs_errors, medians = _py_precompute_absolute_errors(y, w, indices, *args, n)
+        y_sorted = y[indices]
+        w_sorted = w[indices]
+        if reverse:
+            y_sorted = y_sorted[::-1]
+            w_sorted = w_sorted[::-1]
+        abs_errors_, medians_ = compute_prefix_abs_errors_naive(y_sorted, w_sorted)
+        if reverse:
+            abs_errors_ = abs_errors_[::-1]
+            medians_ = medians_[::-1]
+        assert_allclose(abs_errors, abs_errors_, atol=1e-12)
+        assert_allclose(medians, medians_, atol=1e-12)
+
+    rng = np.random.default_rng(global_random_seed)
+
+    for n in [3, 5, 10, 20, 50, 100]:
+        y = rng.uniform(size=(n, 1))
+        w = rng.random(n)
+        w *= 10.0 ** rng.uniform(-5, 5)
+        indices = np.arange(n)
+        assert_same_results(y, w, indices)
+        assert_same_results(y, np.ones(n), indices)
+        assert_same_results(y, w.round() + 1, indices)
+        assert_same_results(y, w, indices, reverse=True)
+        indices = rng.permutation(n)
+        assert_same_results(y, w, indices)
+        assert_same_results(y, w, indices, reverse=True)
+
+
+def test_absolute_error_accurately_predicts_weighted_median(global_random_seed):
+    """
+    Test that the weighted-median computed under-the-hood when
+    building a tree with criterion="absolute_error" is correct.
+    """
+    rng = np.random.default_rng(global_random_seed)
+    n = int(1e5)
+    data = rng.lognormal(size=n)
+    # Large number of zeros and otherwise continuous weights:
+    weights = rng.integers(0, 3, size=n) * rng.uniform(0, 1, size=n)
+
+    tree_leaf_weighted_median = (
+        DecisionTreeRegressor(criterion="absolute_error", max_depth=1)
+        .fit(np.ones(shape=(data.shape[0], 1)), data, sample_weight=weights)
+        .tree_.value.ravel()[0]
+    )
+    weighted_median = _weighted_percentile(data, weights, 50, average=True)
+
+    assert_allclose(tree_leaf_weighted_median, weighted_median)
+
+
+def test_splitting_with_missing_values():
+    # Non regression test for https://github.com/scikit-learn/scikit-learn/issues/32178
+    X = (
+        np.vstack([[0, 0, 0, 0, 1, 2, 3, 4], [1, 2, 1, 2, 1, 2, 1, 2]])
+        .swapaxes(0, 1)
+        .astype(float)
+    )
+    y = [0, 0, 0, 0, 1, 1, 1, 1]
+    X[X == 0] = np.nan
+
+    # The important thing here is that we try several trees, where each one tries
+    # one of the two features first. The resulting tree should be the same in all
+    # cases. The way to control which feature is tried first is `random_state`.
+    # Twenty trees is a good guess for how many we need to try to make sure we get
+    # both orders of features at least once.
+    for i in range(20):
+        tree = DecisionTreeRegressor(max_depth=1, random_state=i).fit(X, y)
+        assert_array_equal(tree.tree_.impurity, np.array([0.25, 0.0, 0.0]))
