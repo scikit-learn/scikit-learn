@@ -276,8 +276,7 @@ def get_tags(estimator) -> Tags:
     except TypeError as exc:
         error_msg = "__sklearn_tags__() missing 1 required positional argument: 'self'"
         if error_msg in str(exc):
-            # Happens when a class is passed to is_regressor() and the like,
-            # instead of an instance.
+            # Happens when a class is passed instead of an instance.
 
             raise TypeError(
                 f"It seems that you passed an estimator class ({estimator.__name__}) "
