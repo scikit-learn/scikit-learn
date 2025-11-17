@@ -1872,13 +1872,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             best_indices = list(zip(*best_indices))  # (n_folds, 2)
             # each row of best_indices has the 2 indices for Cs and l1_ratios
             if is_binary:
-                # TODO(python 3.11): Use star expression in index with Python>=3.11
-                # for instance: coefs_paths[0, *best_indices[i], :]
                 w = np.mean(
-                    [
-                        coefs_paths[0, i, best_indices[i][0], best_indices[i][1], :]
-                        for i in range(len(folds))
-                    ],
+                    [coefs_paths[0, i, *best_indices[i], :] for i in range(len(folds))],
                     axis=0,
                 )
             else:
