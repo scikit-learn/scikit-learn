@@ -270,6 +270,11 @@ def _safe_indexing(X, indices, *, axis=0):
               these containers can be one of the following: `int`, 'bool' and
               `str`. However, `str` is only supported when `X` is a dataframe.
               The selected subset will be 2D.
+
+        .. deprecated:: 1.8
+           Slices for `indices` was deprecated in version 1.8 and will be removed in
+           1.8. From then on, it will raise an error.
+
     axis : int, default=0
         The axis along which `X` will be subsampled. `axis=0` will select
         rows while `axis=1` will select columns.
@@ -296,6 +301,15 @@ def _safe_indexing(X, indices, *, axis=0):
     """
     if indices is None:
         return X
+    elif isinstance(indices, slice):
+        warnings.warn(
+            (
+                "Slices as indices _safe_indexing are deprecated in version 1.8 and "
+                "will be removed in 1.10. From then on, using them will raise an "
+                "error."
+            ),
+            FutureWarning,
+        )
 
     if axis not in (0, 1):
         raise ValueError(
