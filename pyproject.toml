@@ -205,13 +205,22 @@ ban-relative-imports = "all"
 "sklearn/utils/_metadata_requests.py"=["CPY001"]
 
 [tool.pyrefly]
-project-includes = ["sklearn/"]
+project-includes = ["sklearn"]
 project-excludes = ["sklearn/externals"]
 # mimics mypy's ignore-missing-imports:
 ignore-missing-imports = ["*"]
 # By default, mypy does not check unannotated function bodies.
 # The following flag will configure Pyrefly to match mypy's behavior:
 untyped_def_behavior = "skip-and-infer-return-any" #"check-and-infer-return-type"
+
+[tool.mypy]
+ignore_missing_imports = true
+allow_redefinition = true
+exclude = "^sklearn/externals"
+
+[[tool.mypy.overrides]]
+module = ["joblib.*", "sklearn.externals.*"]
+follow_imports = "skip"
 
 [tool.cython-lint]
 # Ignore the same error codes as ruff
