@@ -522,6 +522,10 @@ def move_to(*arrays, xp, device):
                     # `TypeError` and `NotImplementedError` for packages that do not
                     # yet support dlpack 1.0
                     # (i.e. the `device`/`copy` kwargs, e.g., torch <= 2.8.0)
+                    # See https://github.com/data-apis/array-api/pull/741 for
+                    # more details about the introduction of the `copy` and `device`
+                    # kwargs in the from_dlpack method and their expected
+                    # meaning by namespaces implementing the array API spec.
                     # TODO: try removing this once DLPack v1 more widely supported
                 except (AttributeError, TypeError, NotImplementedError):
                     # Converting to numpy is tricky, handle this via dedicated function
