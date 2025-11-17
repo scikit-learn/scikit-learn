@@ -887,11 +887,15 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`.
 
     l1_ratio : float, default=0.0
-        The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
-        used if ``penalty='elasticnet'``. Setting ``l1_ratio=0`` is equivalent
-        to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
-        to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
-        combination of L1 and L2.
+        The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Setting
+        `l1_ratio=1` gives a pure L1-penalty, setting `l1_ratio=0` a pure L2-penalty.
+        Any value between 0 and 1 gives an Elastic-Net penalty of the form
+        `l1_ratio * L1 + (1 - l1_ratio) * L2`.
+
+        .. warning::
+           Certain values of `l1_ratio`, i.e. some penalties, may not work with some
+           solvers. See the parameter `solver` below, to know the compatibility between
+           the penalty and solver.
 
         .. versionadded:: 1.8
            Default value changed from None to 0.0, None is deprecated and will be
@@ -963,19 +967,20 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
           because it explicitly computes the full Hessian matrix.
 
         .. warning::
-           The choice of the algorithm depends on the penalty chosen and on
-           (multinomial) multiclass support:
+           The choice of the algorithm depends on the penalty (`l1_ratio=0` for
+           L2-penalty, `l1_ratio=1` for L1-penalty and `0 < l1_ratio < 1` for
+           Elastic-Net) chosen and on (multinomial) multiclass support:
 
-           ================= ============================== ======================
-           solver            penalty                        multinomial multiclass
-           ================= ============================== ======================
-           'lbfgs'           'l2', None                     yes
-           'liblinear'       'l1', 'l2'                     no
-           'newton-cg'       'l2', None                     yes
-           'newton-cholesky' 'l2', None                     yes
-           'sag'             'l2', None                     yes
-           'saga'            'elasticnet', 'l1', 'l2', None yes
-           ================= ============================== ======================
+           ================= ======================== ======================
+           solver            l1_ratio                 multinomial multiclass
+           ================= ======================== ======================
+           'lbfgs'           l1_ratio=0               yes
+           'liblinear'       l1_ratio=1 or l1_ratio=0 no
+           'newton-cg'       l1_ratio=0               yes
+           'newton-cholesky' l1_ratio=0               yes
+           'sag'             l1_ratio=0               yes
+           'saga'            0<=l1_ratio<=0           yes
+           ================= ======================== ======================
 
         .. note::
            'sag' and 'saga' fast convergence is only guaranteed on features
@@ -1588,6 +1593,11 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         All the values of the given array-like are tested by cross-validation and the
         one giving the best prediction score is used.
 
+        .. warning::
+           Certain values of `l1_ratios`, i.e. some penalties, may not work with some
+           solvers. See the parameter `solver` below, to know the compatibility between
+           the penalty and solver.
+
         .. versionchanged:: 1.8
            Default value changed from None to (0.0,), None is deprecated and will be
            forbidden in version 1.10.
@@ -1659,19 +1669,20 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
           because it explicitly computes the full Hessian matrix.
 
         .. warning::
-           The choice of the algorithm depends on the penalty chosen and on
-           (multinomial) multiclass support:
+           The choice of the algorithm depends on the penalty (`l1_ratio=0` for
+           L2-penalty, `l1_ratio=1` for L1-penalty and `0 < l1_ratio < 1` for
+           Elastic-Net) chosen and on (multinomial) multiclass support:
 
-           ================= ============================== ======================
-           solver            penalty                        multinomial multiclass
-           ================= ============================== ======================
-           'lbfgs'           'l2'                           yes
-           'liblinear'       'l1', 'l2'                     no
-           'newton-cg'       'l2'                           yes
-           'newton-cholesky' 'l2',                          yes
-           'sag'             'l2',                          yes
-           'saga'            'elasticnet', 'l1', 'l2'       yes
-           ================= ============================== ======================
+           ================= ======================== ======================
+           solver            l1_ratio                 multinomial multiclass
+           ================= ======================== ======================
+           'lbfgs'           l1_ratio=0               yes
+           'liblinear'       l1_ratio=1 or l1_ratio=0 no
+           'newton-cg'       l1_ratio=0               yes
+           'newton-cholesky' l1_ratio=0               yes
+           'sag'             l1_ratio=0               yes
+           'saga'            0<=l1_ratio<=0           yes
+           ================= ======================== ======================
 
         .. note::
            'sag' and 'saga' fast convergence is only guaranteed on features
