@@ -31,9 +31,9 @@ from sklearn.utils import Bunch, _safe_indexing, column_or_1d, get_tags, indexab
 from sklearn.utils._array_api import (
     _convert_to_numpy,
     _is_numpy_namespace,
-    ensure_common_namespace_device,
     get_namespace,
     get_namespace_and_device,
+    move_to,
 )
 from sklearn.utils._param_validation import (
     HasMethods,
@@ -405,9 +405,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             if sample_weight is not None and supports_sw:
                 routed_params.estimator.fit["sample_weight"] = sample_weight
 
-        xp, is_array_api = get_namespace(X)
+        xp, is_array_api, device_ = get_namespace_and_device(X)
         if is_array_api:
-            y, sample_weight = ensure_common_namespace_device(X, y, sample_weight)
+            y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
         # Check that each cross-validation fold can have at least one
         # example per class
         if isinstance(self.cv, int):
