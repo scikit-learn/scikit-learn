@@ -572,6 +572,8 @@ them over is a great service for the project. A good etiquette to take over is:
   new PR to the old one. The new PR should be created by pulling from the
   old one.
 
+.. _stalled_unclaimed_issues:
+
 Stalled and Unclaimed Issues
 ----------------------------
 
