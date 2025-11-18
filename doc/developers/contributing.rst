@@ -632,9 +632,10 @@ and :ref:`issues_tagged_needs_triage`.
 
 We understand that everyone has different interests and backgrounds, thus we recommend
 you start by looking for an issue that is of interest to you, in an area you are
-already familiar with as a user or have background knowledge of.
+already familiar with as a user or have background knowledge of. We recommend starting
+with smaller pull requests, to get used to the contribution process.
 
-We rarely use the "good first issue" label because because it is difficult to make
+We rarely use the "good first issue" label because it is difficult to make
 assumptions about new contributors and these issues often prove more complex
 than originally anticipated. It is still useful to check if there are
 `good first issues
