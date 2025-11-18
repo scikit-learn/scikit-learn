@@ -23,7 +23,7 @@ from sklearn.utils._param_validation import validate_params
     },
     prefer_skip_nested_validation=True,
 )
-def metric_threshold_curve(
+def decision_threshold_curve(
     metric_func,
     y_true,
     y_score,
@@ -72,10 +72,10 @@ def metric_threshold_curve(
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.metrics import accuracy_score, metric_threshold_curve
+    >>> from sklearn.metrics import accuracy_score, decision_threshold_curve
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> scores, thresholds = metric_threshold_curve(
+    >>> scores, thresholds = decision_threshold_curve(
     ...     accuracy_score, y_true, y_score)
     >>> thresholds
     array([0.8 , 0.4 , 0.35, 0.1 ])
