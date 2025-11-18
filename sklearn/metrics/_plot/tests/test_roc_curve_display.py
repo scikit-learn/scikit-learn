@@ -320,6 +320,10 @@ def test_roc_curve_display_from_cv_results_curve_kwargs(
             line.get_alpha() == curve_kwargs[i]["alpha"]
             for i, line in enumerate(display.line_)
         )
+    # Other default kwargs should be the same
+    for line in display.line_:
+        assert line.get_linestyle() == "--"
+        assert line.get_color() == "blue"
 
 
 # TODO(1.9): Remove in 1.9

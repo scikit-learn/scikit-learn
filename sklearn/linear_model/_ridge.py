@@ -46,9 +46,9 @@ from sklearn.utils._array_api import (
     _max_precision_float_dtype,
     _ravel,
     device,
-    ensure_common_namespace_device,
     get_namespace,
     get_namespace_and_device,
+    move_to,
 )
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.extmath import row_norms, safe_sparse_dot
@@ -1306,8 +1306,8 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             The binarized version of `y`.
         """
         accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
-        sample_weight = ensure_common_namespace_device(X, sample_weight)[0]
-        original_X = X
+        xp, _, device_ = get_namespace_and_device(X)
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
         X, y = validate_data(
             self,
             X,
@@ -1321,11 +1321,11 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         xp_y, y_is_array_api = get_namespace(y)
         Y = self._label_binarizer.fit_transform(y)
-        Y = ensure_common_namespace_device(original_X, Y)[0]
+        Y = move_to(Y, xp=xp, device=device_)
         if y_is_array_api and xp_y.isdtype(y.dtype, "numeric"):
-            self.classes_ = ensure_common_namespace_device(
-                original_X, self._label_binarizer.classes_
-            )[0]
+            self.classes_ = move_to(
+                self._label_binarizer.classes_, xp=xp, device=device_
+            )
         else:
             self.classes_ = self._label_binarizer.classes_
         if not self._label_binarizer.y_type_.startswith("multilabel"):
@@ -1334,7 +1334,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         if self.class_weight:
             reweighting = compute_sample_weight(self.class_weight, y)
-            reweighting = ensure_common_namespace_device(original_X, reweighting)[0]
+            reweighting = move_to(reweighting, xp=xp, device=device_)
             sample_weight = sample_weight * reweighting
         return X, y, sample_weight, Y
 
@@ -2159,7 +2159,7 @@ class _RidgeGCV(LinearModel):
         self : object
         """
         xp, is_array_api, device_ = get_namespace_and_device(X)
-        y, sample_weight = ensure_common_namespace_device(X, y, sample_weight)
+        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
         if is_array_api or hasattr(getattr(X, "dtype", None), "kind"):
             original_dtype = X.dtype
         else:
