@@ -242,6 +242,7 @@ def make_classification(
 
     n_random = n_features - n_informative - n_redundant - n_repeated
     n_clusters = n_classes * n_clusters_per_class
+    n_base = n_informative + n_redundant
 
     # Build the polytope whose vertices become cluster centroids
     # This is independent of n_samples
@@ -267,12 +268,10 @@ def make_classification(
         redundant_matrix = 2 * generator.uniform(size=(n_informative, n_redundant)) - 1
 
     # Pre-generate indices for repeated features
-    # This is independent of n_samples
-    n = n_informative + n_redundant
     if n_repeated > 0:
-        repeated_indices = ((n - 1) * generator.uniform(size=n_repeated) + 0.5).astype(
-            np.intp
-        )
+        repeated_indices = (
+            (n_base - 1) * generator.uniform(size=n_repeated) + 0.5
+        ).astype(np.intp)
 
     # Pre-calculate shift and scale if they are not provided
     # These define the distribution and should be independent of n_samples
@@ -330,13 +329,11 @@ def make_classification(
 
     # Create redundant features using pre-generated B
     if n_redundant > 0:
-        X[:, n_informative : n_informative + n_redundant] = np.dot(
-            X[:, :n_informative], redundant_matrix
-        )
+        X[:, n_informative:n_base] = np.dot(X[:, :n_informative], redundant_matrix)
 
     # Repeat some features using pre-generated indices
     if n_repeated > 0:
-        X[:, n : n + n_repeated] = X[:, repeated_indices]
+        X[:, n_base : n_base + n_repeated] = X[:, repeated_indices]
 
     # Fill useless features
     if n_random > 0:
@@ -370,7 +367,7 @@ def make_classification(
             feat_desc[i] = "informative"
         elif n_informative <= index < n_informative + n_redundant:
             feat_desc[i] = "redundant"
-        elif n <= index < n + n_repeated:
+        elif n_base <= index < n_base + n_repeated:
             feat_desc[i] = "repeated"
 
     parameters = {
