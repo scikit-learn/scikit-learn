@@ -308,8 +308,8 @@ reviewed quickly, see :ref:`improve_issue_pr`.
 How do I improve my issue or pull request?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To help your issue receive attention or your pull request be more likely to
-be reviewed, you can try:
+To help your issue receive attention or improve the likelihood of your pull request
+being reviewed, you can try:
 
 * follow our :ref:`contribution guidelines <contributing>`, in particular
   :ref:`automated_contributions_policy`, :ref:`filing_bugs`,

@@ -29,7 +29,9 @@ is merged. See https://github.com/blog/1506-closing-issues-via-pull-requests
 
 
 <!--
-Please be aware that we are a team of volunteers and we appreciate your patience during the review process.
+Thank you for your patience. Changes to scikit-learn require careful
+attention, but with limited maintainer time, not every contribution can be reviewed
+quickly.
 For more information and tips on improving your pull request, see:
 https://scikit-learn.org/dev/faq.html#why-is-my-pull-request-not-getting-any-attention.
 
