@@ -366,8 +366,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         "learning_rate": [Interval(Real, 0.0, None, closed="left")],
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "criterion": [
-            StrOptions({"friedman_mse", "squared_error"}),
-            Hidden(StrOptions({"deprecated"})),
+            StrOptions({"squared_error"}),
+            Hidden(StrOptions({"deprecated", "friedman_mse"})),
         ],
         "subsample": [Interval(Real, 0.0, 1.0, closed="right")],
         "verbose": ["verbose"],
