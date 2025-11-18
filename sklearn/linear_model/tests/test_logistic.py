@@ -719,8 +719,12 @@ def test_multinomial_cv_iris(use_legacy_attributes):
             assert scores.shape == (3, n_cv, 10)
 
             # Norm of coefficients should increase with increasing C.
-            # Note that we have to exclude the intercept.
             for fold in range(clf_multi.coefs_paths_[0].shape[0]):
+                # with use_legacy_attributes=True, coefs_paths_ is a dict whose keys
+                # are classes and each value has shape
+                # (n_folds, n_l1_ratios, n_cs, n_features)
+                # Note that we have to exclude the intercept, hence the ':-1'
+                # on the last dimension
                 coefs = [
                     clf_multi.coefs_paths_[c][fold, :, :-1] for c in clf_multi.classes_
                 ]
@@ -740,7 +744,16 @@ def test_multinomial_cv_iris(use_legacy_attributes):
             assert isinstance(clf_multi.l1_ratio_, float)
             assert clf_multi.scores_.shape == (n_folds, n_l1_ratios, n_cs)
 
-            # TODO check coefficients increase with increasing C
+            # Norm of coefficients should increase with increasing C.
+            for fold in range(clf_multi.coefs_paths_.shape[0]):
+                # with use_legacy_attributes=False, coefs_paths_ has shape
+                # (n_folds, n_l1_ratios, n_Cs, n_classes, n_features + 1)
+                # Note that we have to exclude the intercept, hence the ':-1'
+                # on the last dimension
+                coefs = clf_multi.coefs_paths_[fold, 0, :, :, :-1]
+                coefs = coefs.reshape(len(clf_multi.Cs_), -1)
+                norms = np.sum(coefs * coefs, axis=1)  # L2 norm for each C
+                assert np.all(np.diff(norms) >= 0)
 
 
 def test_logistic_regression_solvers(global_random_seed):
