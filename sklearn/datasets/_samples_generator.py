@@ -312,15 +312,10 @@ def make_classification(
     sample_positions = (np.arange(n_samples) + 0.5) / n_samples
     cluster_boundaries = np.cumsum(cluster_proportions)
     cluster_ids = np.searchsorted(cluster_boundaries, sample_positions)
-    ]
-
-    for i in range(n_samples - sum(n_samples_per_cluster)):
-        n_samples_per_cluster[i % n_clusters] += 1
 
     # Initialize X and y
     X = np.zeros((n_samples, n_features))
     y = np.zeros(n_samples, dtype=int)
-
 
     # Create each cluster using pre-generated transformations
     for i in range(n_samples):
@@ -328,11 +323,10 @@ def make_classification(
         y[i] = cluster_id % n_classes
 
         # Draw random values for THIS sample's informative features
-        sample_randoms = generator.standard_normal(size=n_informative)
+        sample_random = generator.standard_normal(size=n_informative)
         X[i, :n_informative] = (
-            np.dot(sample_randoms, A_matrices[cluster_id]) + centroids[cluster_id]
+            np.dot(sample_random, A_matrices[cluster_id]) + centroids[cluster_id]
         )
-
 
     # Create redundant features using pre-generated B
     if n_redundant > 0:
