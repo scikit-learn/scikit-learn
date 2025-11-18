@@ -688,7 +688,6 @@ def _download_data_to_bunch(
         no_retry_exception = ParserError
 
     X, y, frame, categories = _retry_with_clean_cache(
-        # pyrefly: ignore [bad-argument-type]
         url,
         data_home,
         # pyrefly: ignore [bad-argument-type]

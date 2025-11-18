@@ -1670,6 +1670,7 @@ class _X_CenterStackOp(sparse.linalg.LinearOperator):
             + v[-1] * self.sqrt_sw
         )
 
+    # pyrefly: ignore [bad-param-name-override]
     def _matmat(self, v):
         return (
             safe_sparse_dot(self.X, v[:-1], dense_output=True)
@@ -1707,6 +1708,7 @@ class _XT_CenterStackOp(sparse.linalg.LinearOperator):
         res[-1] = np.dot(v, self.sqrt_sw)
         return res
 
+    # pyrefly: ignore [bad-param-name-override]
     def _matmat(self, v):
         n_features = self.shape[0]
         res = np.empty((n_features, v.shape[1]), dtype=self.X.dtype)
