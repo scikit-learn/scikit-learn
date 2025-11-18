@@ -1136,12 +1136,20 @@ class HalfBinomialLoss(BaseLoss):
         xp=None,
     ):
         log1pexp = xp.where(
-            raw_prediction <= 18,
-            xp.log1p(raw_prediction_exp),
+            raw_prediction <= -37,
+            raw_prediction_exp,
             xp.where(
-                raw_prediction <= 33.3,
-                raw_prediction + neg_raw_prediction_exp,
-                raw_prediction,
+                raw_prediction <= -2,
+                xp.log1p(raw_prediction_exp),
+                xp.where(
+                    raw_prediction <= 18,
+                    xp.log(1.0 + raw_prediction_exp),
+                    xp.where(
+                        raw_prediction <= 33.3,
+                        raw_prediction + neg_raw_prediction_exp,
+                        raw_prediction,
+                    ),
+                ),
             ),
         )
         loss = log1pexp - y_true * raw_prediction

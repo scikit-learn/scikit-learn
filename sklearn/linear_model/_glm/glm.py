@@ -202,7 +202,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             multi_output=False,
         )
         loss_dtype = X.dtype
-        y = check_array(y, dtype=X.dtype, order="C", ensure_2d=False)
+        y = check_array(y, dtype=loss_dtype, order="C", ensure_2d=False)
 
         if sample_weight is not None:
             # Note that _check_sample_weight calls check_array(order="C") required by
