@@ -1,0 +1,5 @@
+- Scorers now correctly request for metadata, and their `set_score_request` methods
+  correctly detects metadata available in the signature of their `score_func`. Also,
+  :class:`sklearn.linear_model.LogisticRegressionCV` now correctly routes metadata
+  to the underlying scorer when its ``.score(...)`` method is called.
+  By `Adrin Jalali`_
