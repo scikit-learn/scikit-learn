@@ -624,7 +624,7 @@ the issue.
 New Contributors
 ----------------
 
-We recommend new contributors to start by reading this contributing guide, in
+We recommend new contributors start by reading this contributing guide, in
 particular :ref:`ways_to_contribute`, :ref:`automated_contributions_policy`
 and :ref:`pr_checklist`. For expected etiquette around which issues and stalled PRs
 to work on, please read :ref:`stalled_pull_request`, :ref:`stalled_unclaimed_issues`
