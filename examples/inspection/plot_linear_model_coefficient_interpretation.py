@@ -388,12 +388,12 @@ plt.subplots_adjust(left=0.3)
 #
 # .. _covariation:
 
-plt.ylabel("Age coefficient")
-plt.xlabel("Experience coefficient")
+plt.xlabel("Age coefficient")
+plt.ylabel("Experience coefficient")
 plt.grid(True)
 plt.xlim(-0.4, 0.5)
 plt.ylim(-0.4, 0.5)
-plt.scatter(coefs["EXPERIENCE"], coefs["AGE"])
+plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
 _ = plt.title("Co-variations of coefficients for AGE and EXPERIENCE across folds")
 
 # %%
@@ -624,12 +624,12 @@ coefs = pd.DataFrame(
 )
 
 # %%
-plt.ylabel("Age coefficient")
-plt.xlabel("Experience coefficient")
+plt.xlabel("Age coefficient")
+plt.ylabel("Experience coefficient")
 plt.grid(True)
 plt.xlim(-0.4, 0.5)
 plt.ylim(-0.4, 0.5)
-plt.scatter(coefs["EXPERIENCE"], coefs["AGE"])
+plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
 _ = plt.title("Co-variations of coefficients for AGE and EXPERIENCE across folds")
 
 # %%
