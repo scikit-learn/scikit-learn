@@ -240,23 +240,6 @@ def make_classification(
             msg.format(n_classes, n_clusters_per_class, n_informative, 2**n_informative)
         )
 
-    if weights is not None:
-        # we define new variable, weight_, instead of modifying user defined parameter.
-        if len(weights) not in [n_classes, n_classes - 1]:
-            raise ValueError(
-                "Weights specified but incompatible with number of classes."
-            )
-        if len(weights) == n_classes - 1:
-            if isinstance(weights, list):
-                weights_ = weights + [1.0 - sum(weights)]
-            else:
-                weights_ = np.resize(weights, n_classes)
-                weights_[-1] = 1.0 - sum(weights_[:-1])
-        else:
-            weights_ = weights.copy()
-    else:
-        weights_ = [1.0 / n_classes] * n_classes
-
     n_random = n_features - n_informative - n_redundant - n_repeated
     n_clusters = n_classes * n_clusters_per_class
 
@@ -273,15 +256,15 @@ def make_classification(
 
     # Pre-generate transformation matrices A for each cluster
     # These define the distribution and should be independent of n_samples
-    A_matrices = []
+    cov_matrices = []
     for k in range(n_clusters):
-        A = 2 * generator.uniform(size=(n_informative, n_informative)) - 1
-        A_matrices.append(A)
+        cov_matrix = 2 * generator.uniform(size=(n_informative, n_informative)) - 1
+        cov_matrices.append(cov_matrix)
 
     # Pre-generate redundant feature transformation matrix B
     # This is also independent of n_samples
     if n_redundant > 0:
-        B = 2 * generator.uniform(size=(n_informative, n_redundant)) - 1
+        redundant_matrix = 2 * generator.uniform(size=(n_informative, n_redundant)) - 1
 
     # Pre-generate indices for repeated features
     # This is independent of n_samples
@@ -302,6 +285,23 @@ def make_classification(
         scale_val = 1 + 100 * generator.uniform(size=n_features)
     else:
         scale_val = scale
+
+    if weights is not None:
+        # we define new variable, weight_, instead of modifying user defined parameter.
+        if len(weights) not in [n_classes, n_classes - 1]:
+            raise ValueError(
+                "Weights specified but incompatible with number of classes."
+            )
+        if len(weights) == n_classes - 1:
+            if isinstance(weights, list):
+                weights_ = weights + [1.0 - sum(weights)]
+            else:
+                weights_ = np.resize(weights, n_classes)
+                weights_[-1] = 1.0 - sum(weights_[:-1])
+        else:
+            weights_ = weights.copy()
+    else:
+        weights_ = [1.0 / n_classes] * n_classes
 
     cluster_proportions = np.array(
         [weights_[k % n_classes] / n_clusters_per_class for k in range(n_clusters)]
@@ -325,13 +325,13 @@ def make_classification(
         # Draw random values for THIS sample's informative features
         sample_random = generator.standard_normal(size=n_informative)
         X[i, :n_informative] = (
-            np.dot(sample_random, A_matrices[cluster_id]) + centroids[cluster_id]
+            np.dot(sample_random, cov_matrices[cluster_id]) + centroids[cluster_id]
         )
 
     # Create redundant features using pre-generated B
     if n_redundant > 0:
         X[:, n_informative : n_informative + n_redundant] = np.dot(
-            X[:, :n_informative], B
+            X[:, :n_informative], redundant_matrix
         )
 
     # Repeat some features using pre-generated indices
