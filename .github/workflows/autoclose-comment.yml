@@ -33,36 +33,42 @@ jobs:
           /repos/$GH_REPO/issues/$PULL_REQUEST_NUMBER/comments \
           -f "body=$BODY"
         env:
-          BODY: |
-            This pull request might be automatically closed in two weeks from now.
+          BODY: >
+            ⏰ This pull request might be automatically closed in two weeks from now.
 
-            Thank you for your contribution to scikit-learn and for the effort you \
-            have put into this PR. This pull request does not yet meet the quality and \
-            clarity needed for an effective review. Reviewing time is limited, and PRs \
-            in this state are difficult to review, which can slow down progress on \
-            other contributions and ongoing work. Unless this PR is improved, it will \
-            be automatically closed after two weeks.
+
+            Thank you for your contribution to scikit-learn and for the effort you have
+            put into this PR. This pull request does not yet meet the quality and
+            clarity needed for an effective review. Reviewing time is limited, and our
+            goal is to prioritize well-prepared contributions to keep scikit-learn
+            maintainable. Unless this PR is improved, it will be automatically closed
+            after two weeks.
+
 
             To avoid autoclose and increase the chance of a productive review, please:
-            - Ensure your contribution aligns with our \
+
+            - Ensure your contribution aligns with our
             [contribution guide](https://scikit-learn.org/dev/developers/contributing.html).
-            - Include a clear motivation and concise explanation in the pull request \
+
+            - Include a clear motivation and concise explanation in the pull request
             description of why you chose this solution.
+
             - Make sure the code runs and passes tests locally (`pytest`) and in the CI.
-            - Submit only code you can explain and maintain; reviewers will ask for \
-            clarifications and changes. Disclose any AI assistance per our \
+
+            - Submit only code you can explain and maintain; reviewers will ask for
+            clarifications and changes. Disclose any AI assistance per our
             [Automated Contributions Policy](https://scikit-learn.org/dev/developers/contributing.html#automated-contributions-policy).
-            - Keep the changes minimal and directly relevant to the described issue or \
+
+            - Keep the changes minimal and directly relevant to the described issue or
             enhancement.
 
-            If you are stuck, we encourage you to ask focused questions that show you \
-            have tried to explore the problem and are interested to engage with the \
-            project. We may be able to provide guidance if your explanation of the \
-            problem is clear and reflects your own reasoning.
 
-            We understand it can be frustrating that we cannot provide individual \
-            guidance on every PR. Reviewer capacity is very limited and our goal is to \
-            prioritize well-prepared contributions to keep scikit-learn maintainable.
+            We recognize we cannot provide one-to-one guidance on every PR. Though we
+            encourage you to ask focused, actionable questions that show you have tried
+            to explore the problem and are interested to engage with the project. 💬
+            Sometimes a maintainer or someone else from the community might be able to
+            offer pointers.
 
-            If you improve your PR within the two-week window, the `autoclose` label \
-            can be removed by maintainers.
+
+            If you improve your PR within the two-week window, the `autoclose` label can
+            be removed by maintainers.
