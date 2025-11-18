@@ -158,7 +158,7 @@ jobs:
           COVERAGE: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
         run: bash -l build_tools/azure/test_script.sh
 
-      - name: Run doc tests
+      - name: Run doctests in .py and .rst files
         run: bash -l build_tools/azure/test_docs.sh
 
       - name: Combine coverage reports from parallel test runners
