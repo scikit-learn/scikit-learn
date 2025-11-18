@@ -161,6 +161,10 @@ jobs:
       - name: Run doctests in .py and .rst files
         run: bash -l build_tools/azure/test_docs.sh
 
+      - name: Run pytest soft dependency test
+        run: bash -l build_tools/azure/test_pytest_soft_dependency.sh
+        if: ${{ env.CHECK_PYTEST_SOFT_DEPENDENCY == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
+
       - name: Combine coverage reports from parallel test runners
         run: bash -l build_tools/azure/combine_coverage_reports.sh
         if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
