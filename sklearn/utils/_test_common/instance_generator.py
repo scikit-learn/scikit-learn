@@ -345,7 +345,7 @@ INIT_PARAMS = {
     LinearSVC: dict(max_iter=20),
     LinearSVR: dict(max_iter=20),
     LocallyLinearEmbedding: dict(max_iter=5),
-    LogisticRegressionCV: dict(max_iter=5, cv=3),
+    LogisticRegressionCV: dict(max_iter=5, cv=3, use_legacy_attributes=False),
     LogisticRegression: dict(max_iter=5),
     MDS: dict(n_init=2, max_iter=5),
     # In the case of check_fit2d_1sample, bandwidth is set to None and
@@ -630,9 +630,13 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     },
     LogisticRegressionCV: {
         "check_sample_weight_equivalence": [
-            dict(solver="lbfgs"),
-            dict(solver="newton-cholesky"),
-            dict(solver="newton-cholesky", class_weight="balanced"),
+            dict(solver="lbfgs", use_legacy_attributes=False),
+            dict(solver="newton-cholesky", use_legacy_attributes=False),
+            dict(
+                solver="newton-cholesky",
+                class_weight="balanced",
+                use_legacy_attributes=False,
+            ),
         ],
         "check_sample_weight_equivalence_on_sparse_data": [
             dict(solver="liblinear"),
