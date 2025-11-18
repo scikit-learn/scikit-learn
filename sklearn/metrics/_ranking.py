@@ -289,7 +289,7 @@ def det_curve(
 
     Note: this implementation is restricted to the :term:`binary` classification task.
 
-    DET curve is used for evaluation of ranking and error tradeoffs of binary
+    The DET curve is used for evaluation of ranking and error tradeoffs in binary
     classification tasks.
 
     Read more in the :ref:`User Guide <det_curve>`.
