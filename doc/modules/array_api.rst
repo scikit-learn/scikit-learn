@@ -52,12 +52,12 @@ Note that in the examples below, we use a context manager (:func:`config_context
 to avoid having to reset it to `False` at the end of every code snippet, so as to
 not affect the rest of the documentation.
 
-Scikit-learn accepts :term:`array-like` inputs for all :mod:`~sklearn.metrics`
+Scikit-learn accepts :term:`array-like` inputs for all :mod:`metrics`
 and some estimators. When `array_api_dispatch=False`, these inputs are converted
 into NumPy arrays using :func:`numpy.asarray` (or :func:`numpy.array`).
 While this will successfully convert some array API inputs (e.g., JAX array),
 we generally recommend setting `array_api_dispatch=True` when using array API inputs.
-Note when `array_api_dispatch=False`, array outputs will be NumPy arrays.
+This is because NumPy conversion can often fail, e.g., torch tensor allocated on GPU.
 
 Example usage
 =============
