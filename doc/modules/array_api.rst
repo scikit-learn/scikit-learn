@@ -48,8 +48,8 @@ Enabling array API support
 The configuration `array_api_dispatch=True` needs to be set to `True` to enable array
 API support. We recommend setting this configuration globally to ensure consistent
 behaviour and prevent accidental mixing of array namespaces.
-Note that in the examples below, we set it within a context (:func:`config_context`)
-to avoid having to reset it to `False` it at the end of every code snippet, so as to
+Note that in the examples below, we use a context manager (:func:`config_context`)
+to avoid having to reset it to `False` at the end of every code snippet, so as to
 not affect the rest of the documentation.
 
 Scikit-learn accepts :term:`array-like` inputs for all :mod:`~sklearn.metrics`
