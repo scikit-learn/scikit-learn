@@ -303,11 +303,15 @@ def make_classification(
     else:
         scale_val = scale
 
-    # NOW we distribute samples among clusters by weight
-    # This depends on n_samples but comes after distribution definition
-    n_samples_per_cluster = [
-        int(n_samples * weights_[k % n_classes] / n_clusters_per_class)
-        for k in range(n_clusters)
+    cluster_proportions = np.array(
+        [weights_[k % n_classes] / n_clusters_per_class for k in range(n_clusters)]
+    )
+    cluster_proportions = cluster_proportions / cluster_proportions.sum()
+
+    # Assign each sample index to a cluster based on its relative position
+    sample_positions = (np.arange(n_samples) + 0.5) / n_samples
+    cluster_boundaries = np.cumsum(cluster_proportions)
+    cluster_ids = np.searchsorted(cluster_boundaries, sample_positions)
     ]
 
     for i in range(n_samples - sum(n_samples_per_cluster)):
@@ -317,20 +321,18 @@ def make_classification(
     X = np.zeros((n_samples, n_features))
     y = np.zeros(n_samples, dtype=int)
 
-    # Draw informative features from the standard normal
-    # This is the main n_samples-dependent draw
-    X[:, :n_informative] = generator.standard_normal(size=(n_samples, n_informative))
 
     # Create each cluster using pre-generated transformations
-    stop = 0
-    for k, (centroid, A) in enumerate(zip(centroids, A_matrices)):
-        start, stop = stop, stop + n_samples_per_cluster[k]
-        y[start:stop] = k % n_classes  # assign labels
-        X_k = X[start:stop, :n_informative]  # slice a view of the cluster
+    for i in range(n_samples):
+        cluster_id = cluster_ids[i]
+        y[i] = cluster_id % n_classes
 
-        X_k[...] = np.dot(X_k, A)  # introduce random covariance
+        # Draw random values for THIS sample's informative features
+        sample_randoms = generator.standard_normal(size=n_informative)
+        X[i, :n_informative] = (
+            np.dot(sample_randoms, A_matrices[cluster_id]) + centroids[cluster_id]
+        )
 
-        X_k += centroid  # shift the cluster to a vertex
 
     # Create redundant features using pre-generated B
     if n_redundant > 0:
