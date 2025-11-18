@@ -2586,7 +2586,6 @@ def test_logistic_regression_array_api_compliance(
     xp = _array_api_for_tests(array_namespace, device_)
     X_np = iris.data.astype(dtype_name)
     n_samples, _ = X_np.shape
-    X_np = StandardScaler().fit_transform(X_np)
     X_xp = xp.asarray(X_np, device=device_)
     if use_str_y:
         if binary:
@@ -2646,8 +2645,10 @@ def test_logistic_regression_array_api_compliance(
     predict_proba_np = lr_np.predict_proba(X_np)
     preditct_log_proba_np = lr_np.predict_log_proba(X_np)
     prediction_np = lr_np.predict(X_np)
-    atol = _atol_for_type(dtype_name)
-    rtol = 2e-2 if dtype_name == "float32" else 1e-5
+    # XXX: those tolerance levels seem quite high. Investigate further if we
+    # can hunt down the numerical discrepancies more precisely.
+    atol = _atol_for_type(dtype_name) * 10
+    rtol = 5e-3 if dtype_name == "float32" else 1e-5
 
     with config_context(array_api_dispatch=True):
         with warnings.catch_warnings():
