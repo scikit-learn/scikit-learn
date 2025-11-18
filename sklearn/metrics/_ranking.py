@@ -839,6 +839,56 @@ def _multiclass_roc_auc_score(
         )
 
 
+def _validate_inputs_for_classification_thresholds(
+    y_true, y_score, pos_label=None, sample_weight=None
+):
+    """Validate and sort inputs for calculations at classification thresholds."""
+    xp, _, device = get_namespace_and_device(y_true, y_score, sample_weight)
+
+    # Check to make sure y_true is valid
+    y_type = type_of_target(y_true, input_name="y_true")
+    if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
+        raise ValueError("{0} format is not supported".format(y_type))
+
+    check_consistent_length(y_true, y_score, sample_weight)
+    y_true = column_or_1d(y_true)
+    y_score = column_or_1d(y_score)
+    assert_all_finite(y_true)
+    assert_all_finite(y_score)
+
+    # Filter out zero-weighted samples, as they should not impact the result
+    if sample_weight is not None:
+        sample_weight = column_or_1d(sample_weight)
+        sample_weight = _check_sample_weight(sample_weight, y_true)
+        nonzero_weight_mask = sample_weight != 0
+        y_true = y_true[nonzero_weight_mask]
+        y_score = y_score[nonzero_weight_mask]
+        sample_weight = sample_weight[nonzero_weight_mask]
+
+    pos_label = _check_pos_label_consistency(pos_label, y_true)
+
+    # make y_true a boolean vector
+    y_true = y_true == pos_label
+
+    # sort scores and corresponding truth values
+    desc_score_indices = xp.argsort(y_score, stable=True, descending=True)
+    y_score = y_score[desc_score_indices]
+    y_true = y_true[desc_score_indices]
+    if sample_weight is not None:
+        weight = sample_weight[desc_score_indices]
+    else:
+        weight = 1.0
+
+    # y_score typically has many tied values. Here we extract
+    # the indices associated with the distinct values. We also
+    # concatenate a value for the end of the curve.
+    distinct_value_indices = xp.nonzero(xp.diff(y_score))[0]
+    threshold_idxs = xp.concat(
+        [distinct_value_indices, xp.asarray([size(y_true) - 1], device=device)]
+    )
+    return y_true, y_score, threshold_idxs, weight
+
+
 @validate_params(
     {
         "y_true": ["array-like"],
@@ -918,48 +968,12 @@ def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weigh
     >>> thresholds
     array([0.8 , 0.4 , 0.35, 0.1 ])
     """
-    # Check to make sure y_true is valid
-    y_type = type_of_target(y_true, input_name="y_true")
-    if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
-        raise ValueError("{0} format is not supported".format(y_type))
-
     xp, _, device = get_namespace_and_device(y_true, y_score, sample_weight)
 
-    check_consistent_length(y_true, y_score, sample_weight)
-    y_true = column_or_1d(y_true)
-    y_score = column_or_1d(y_score)
-    assert_all_finite(y_true)
-    assert_all_finite(y_score)
-
-    # Filter out zero-weighted samples, as they should not impact the result
-    if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight)
-        sample_weight = _check_sample_weight(sample_weight, y_true)
-        nonzero_weight_mask = sample_weight != 0
-        y_true = y_true[nonzero_weight_mask]
-        y_score = y_score[nonzero_weight_mask]
-        sample_weight = sample_weight[nonzero_weight_mask]
-
-    pos_label = _check_pos_label_consistency(pos_label, y_true)
-
-    # make y_true a boolean vector
-    y_true = y_true == pos_label
-
-    # sort scores and corresponding truth values
-    desc_score_indices = xp.argsort(y_score, stable=True, descending=True)
-    y_score = y_score[desc_score_indices]
-    y_true = y_true[desc_score_indices]
-    if sample_weight is not None:
-        weight = sample_weight[desc_score_indices]
-    else:
-        weight = 1.0
-
-    # y_score typically has many tied values. Here we extract
-    # the indices associated with the distinct values. We also
-    # concatenate a value for the end of the curve.
-    distinct_value_indices = xp.nonzero(xp.diff(y_score))[0]
-    threshold_idxs = xp.concat(
-        [distinct_value_indices, xp.asarray([size(y_true) - 1], device=device)]
+    y_true, y_score, threshold_idxs, weight = (
+        _validate_inputs_for_classification_thresholds(
+            y_true, y_score, pos_label, sample_weight
+        )
     )
 
     # accumulate the true positives with decreasing threshold
