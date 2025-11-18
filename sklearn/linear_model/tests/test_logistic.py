@@ -627,7 +627,9 @@ def test_multinomial_logistic_regression_string_inputs():
     assert set(np.unique(lr_cv_str.predict(X_ref))) <= {"bar", "baz", "foo"}
 
     # We use explicit Cs parameter to make sure all labels are predicted for each C.
-    lr_cv_str = LogisticRegressionCV(Cs=[1, 2, 10]).fit(X_ref, y_str)
+    lr_cv_str = LogisticRegressionCV(Cs=[1, 2, 10], use_legacy_attributes=False).fit(
+        X_ref, y_str
+    )
     assert sorted(np.unique(lr_cv_str.predict(X_ref))) == ["bar", "baz", "foo"]
 
     # Make sure class weights can be given with string labels
@@ -1974,7 +1976,9 @@ def test_LogisticRegressionCV_elasticnet_attribute_shapes(n_classes):
 def test_LogisticRegressionCV_on_folds():
     """Test that LogisticRegressionCV produces the correct result on a fold."""
     X, y = iris.data, iris.target
-    lrcv = LogisticRegressionCV(solver="newton-cholesky", tol=1e-8).fit(X, y)
+    lrcv = LogisticRegressionCV(
+        solver="newton-cholesky", tol=1e-8, use_legacy_attributes=True
+    ).fit(X, y)
 
     # Reproduce the exact same split as default LogisticRegressionCV.
     cv = StratifiedKFold(5)
@@ -2585,8 +2589,8 @@ def test_newton_cholesky_fallback_to_lbfgs(global_random_seed):
     assert n_iter_nc_limited == lr_nc_limited.max_iter - 1
 
 
-# TODO(1.8): check for an error instead
 # TODO(1.10): remove filterwarnings with deprecation period of use_legacy_attributes
+@pytest.mark.filterwarnings("ignore:.*use_legacy_attributes.*:FutureWarning")
 @pytest.mark.parametrize("Estimator", [LogisticRegression, LogisticRegressionCV])
 def test_liblinear_multiclass_raises(Estimator):
     """Check that liblinear raises an error on multiclass problems."""
