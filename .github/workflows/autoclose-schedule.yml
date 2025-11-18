@@ -27,7 +27,7 @@ jobs:
       - name: detect labeled PRs and filter for older than 14 days
         run: |
           set -e
-          python build_tools/github/filter_autoclose_events.py
+          python build_tools/github/filter_autoclose.py
 
       - name: close labeled PRs and post comment
         if: env.PULL_REQUESTS != ''
