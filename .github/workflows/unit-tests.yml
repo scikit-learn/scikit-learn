@@ -161,7 +161,7 @@ jobs:
 
       - name: Run doctests in .py and .rst files
         run: bash -l build_tools/azure/test_docs.sh
-        if: ${{needs.retrieve-selected-tests.outputs.tests == ''}}
+        if: ${{ needs.retrieve-selected-tests.outputs.tests == ''}}
 
       - name: Run pytest soft dependency test
         run: bash -l build_tools/azure/test_pytest_soft_dependency.sh
