@@ -321,9 +321,10 @@ be reviewed, you can try:
 
 For your pull requests specifically, the following will make it easier to review:
 
-* ensure your PR satisfies all items in the :ref:`Pull request checklist <pr_checklist>`
-* ensure your PR addresses an issue for which there is clear consensus on the solution
-* ensure the changes are minimal and directly relevant to the described issue
+* ensure your PR satisfies all items in the
+  :ref:`Pull request checklist <pr_checklist>`.
+* ensure your PR addresses an issue for which there is clear consensus on the solution.
+* ensure the changes are minimal and directly relevant to the described issue.
 
 What does the "spam" label for issues or pull requests mean?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -339,7 +340,8 @@ issue that is still under discussion. Please wait for the discussion to
 converge before opening a PR.
 
 If your issue or PR was labeled as spam and not closed, see :ref:`improve_issue_pr`
-for tips on improving your issue or pull request.
+for tips on improving your issue or pull request and increasing the likelihood
+of the label being removed.
 
 .. _new_algorithms_inclusion_criteria:
 
