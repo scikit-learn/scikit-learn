@@ -99,12 +99,14 @@ def test_logistic_cv_mock_scorer():
     Cs = [1, 2, 3, 4]
     cv = 2
 
-    lr = LogisticRegressionCV(Cs=Cs, scoring=mock_scorer, cv=cv)
+    lr = LogisticRegressionCV(
+        Cs=Cs, scoring=mock_scorer, cv=cv, use_legacy_attributes=False
+    )
     X, y = make_classification(random_state=0)
     lr.fit(X, y)
 
     # Cs[2] has the highest score (0.8) from MockScorer
-    assert lr.C_[0] == Cs[2]
+    assert lr.C_ == Cs[2]
 
     # scorer called 8 times (cv*len(Cs))
     assert mock_scorer.calls == cv * len(Cs)
@@ -252,6 +254,8 @@ def test_logistic_glmnet(solver):
     )
 
 
+# TODO(1.10): remove filterwarnings with deprecation period of use_legacy_attributes
+@pytest.mark.filterwarnings("ignore:.*use_legacy_attributes.*:FutureWarning")
 @pytest.mark.parametrize("LR", [LogisticRegression, LogisticRegressionCV])
 def test_check_solver_option(LR):
     X, y = iris.data, iris.target
@@ -293,6 +297,8 @@ def test_check_solver_option(LR):
             lr.fit(X, y)
 
 
+# TODO(1.10): remove filterwarnings with deprecation period of use_legacy_attributes
+@pytest.mark.filterwarnings("ignore:.*use_legacy_attributes.*:FutureWarning")
 @pytest.mark.parametrize("LR", [LogisticRegression, LogisticRegressionCV])
 def test_elasticnet_l1_ratio_err_helpful(LR):
     # Check that an informative error message is raised when penalty="elasticnet"
@@ -489,7 +495,9 @@ def test_liblinear_dual_random_state(global_random_seed):
         assert_array_almost_equal(lr1.coef_, lr3.coef_)
 
 
-def test_logistic_cv(global_random_seed):
+# TODO(1.12): remove deprecated use_legacy_attributes
+@pytest.mark.parametrize("use_legacy_attributes", [True, False])
+def test_logistic_cv(global_random_seed, use_legacy_attributes):
     # test for LogisticRegressionCV object
     n_samples, n_features = 50, 5
     rng = np.random.RandomState(global_random_seed)
@@ -503,6 +511,7 @@ def test_logistic_cv(global_random_seed):
         random_state=global_random_seed,
         solver="liblinear",
         cv=3,
+        use_legacy_attributes=use_legacy_attributes,
     )
     lr_cv.fit(X_ref, y)
     lr = LogisticRegression(
@@ -511,15 +520,21 @@ def test_logistic_cv(global_random_seed):
     lr.fit(X_ref, y)
     assert_array_almost_equal(lr.coef_, lr_cv.coef_)
 
-    assert_array_equal(lr_cv.coef_.shape, (1, n_features))
+    assert lr_cv.coef_.shape == (1, n_features)
     assert_array_equal(lr_cv.classes_, [-1, 1])
     assert len(lr_cv.classes_) == 2
+    assert lr_cv.Cs_.shape == (1,)
 
-    coefs_paths = np.asarray(list(lr_cv.coefs_paths_.values()))
-    assert_array_equal(coefs_paths.shape, (1, 3, 1, n_features))
-    assert_array_equal(lr_cv.Cs_.shape, (1,))
-    scores = np.asarray(list(lr_cv.scores_.values()))
-    assert_array_equal(scores.shape, (1, 3, 1))
+    if use_legacy_attributes:
+        coefs_paths = np.asarray(list(lr_cv.coefs_paths_.values()))
+        assert coefs_paths.shape == (1, 3, 1, n_features)
+        scores = np.asarray(list(lr_cv.scores_.values()))
+        assert scores.shape == (1, 3, 1)
+    else:
+        assert lr_cv.coefs_paths_.shape == (3, 1, 1, 1, n_features)
+        assert isinstance(lr_cv.C_, float)
+        assert isinstance(lr_cv.l1_ratio_, float)
+        assert lr_cv.scores_.shape == (3, 1, 1)
 
 
 @pytest.mark.parametrize(
@@ -589,9 +604,9 @@ def test_multinomial_logistic_regression_string_inputs():
     y = np.array(y) - 1
     # Test for string labels
     lr = LogisticRegression()
-    lr_cv = LogisticRegressionCV(Cs=3)
+    lr_cv = LogisticRegressionCV(Cs=3, use_legacy_attributes=False)
     lr_str = LogisticRegression()
-    lr_cv_str = LogisticRegressionCV(Cs=3)
+    lr_cv_str = LogisticRegressionCV(Cs=3, use_legacy_attributes=False)
 
     lr.fit(X_ref, y)
     lr_cv.fit(X_ref, y)
@@ -631,16 +646,18 @@ def test_logistic_cv_sparse(global_random_seed, csr_container):
     X[X < 1.0] = 0.0
     csr = csr_container(X)
 
-    clf = LogisticRegressionCV()
+    clf = LogisticRegressionCV(use_legacy_attributes=False)
     clf.fit(X, y)
-    clfs = LogisticRegressionCV()
+    clfs = LogisticRegressionCV(use_legacy_attributes=False)
     clfs.fit(csr, y)
     assert_array_almost_equal(clfs.coef_, clf.coef_)
     assert_array_almost_equal(clfs.intercept_, clf.intercept_)
     assert clfs.C_ == clf.C_
 
 
-def test_multinomial_cv_iris():
+# TODO(1.12): remove deprecated use_legacy_attributes
+@pytest.mark.parametrize("use_legacy_attributes", [True, False])
+def test_multinomial_cv_iris(use_legacy_attributes):
     # Test that multinomial LogisticRegressionCV is correct using the iris dataset.
     train, target = iris.data, iris.target
     n_samples, n_features = train.shape
@@ -651,7 +668,9 @@ def test_multinomial_cv_iris():
     precomputed_folds = list(cv.split(train, target))
 
     # Train clf on the original dataset
-    clf = LogisticRegressionCV(cv=precomputed_folds, solver="newton-cholesky")
+    clf = LogisticRegressionCV(
+        cv=precomputed_folds, solver="newton-cholesky", use_legacy_attributes=True
+    )
     clf.fit(train, target)
 
     # Test the shape of various attributes.
@@ -676,6 +695,7 @@ def test_multinomial_cv_iris():
             random_state=42,
             tol=1e-3 if solver in ["sag", "saga"] else 1e-2,
             cv=2,
+            use_legacy_attributes=use_legacy_attributes,
         )
         if solver == "lbfgs":
             # lbfgs requires scaling to avoid convergence warnings
@@ -686,24 +706,39 @@ def test_multinomial_cv_iris():
         ovr_score = clf_ovr.score(train, target)
         assert multi_score > ovr_score
 
-        # Norm of coefficients should increase with increasing C.
-        # Note that we have to exclude the intercept.
-        for fold in range(clf_multi.coefs_paths_[0].shape[0]):
-            coefs = [
-                clf_multi.coefs_paths_[c][fold, :, :-1] for c in clf_multi.classes_
-            ]
-            coefs = np.swapaxes(coefs, 1, 0).reshape(len(clf_multi.Cs_), -1)
-            norms = np.sum(coefs * coefs, axis=1)  # L2 norm for each C
-            assert np.all(np.diff(norms) >= 0)
-
         # Test attributes of LogisticRegressionCV
         assert clf.coef_.shape == clf_multi.coef_.shape
         assert_array_equal(clf_multi.classes_, [0, 1, 2])
-        coefs_paths = np.asarray(list(clf_multi.coefs_paths_.values()))
-        assert coefs_paths.shape == (3, n_cv, 10, n_features + 1)
-        assert clf_multi.Cs_.shape == (10,)
-        scores = np.asarray(list(clf_multi.scores_.values()))
-        assert scores.shape == (3, n_cv, 10)
+        if use_legacy_attributes:
+            coefs_paths = np.asarray(list(clf_multi.coefs_paths_.values()))
+            assert coefs_paths.shape == (3, n_cv, 10, n_features + 1)
+            assert clf_multi.Cs_.shape == (10,)
+            scores = np.asarray(list(clf_multi.scores_.values()))
+            assert scores.shape == (3, n_cv, 10)
+
+            # Norm of coefficients should increase with increasing C.
+            # Note that we have to exclude the intercept.
+            for fold in range(clf_multi.coefs_paths_[0].shape[0]):
+                coefs = [
+                    clf_multi.coefs_paths_[c][fold, :, :-1] for c in clf_multi.classes_
+                ]
+                coefs = np.swapaxes(coefs, 1, 0).reshape(len(clf_multi.Cs_), -1)
+                norms = np.sum(coefs * coefs, axis=1)  # L2 norm for each C
+                assert np.all(np.diff(norms) >= 0)
+        else:
+            n_folds, n_cs, n_l1_ratios, n_classes, n_dof = 2, 10, 1, 3, n_features + 1
+            assert clf_multi.coefs_paths_.shape == (
+                n_folds,
+                n_l1_ratios,
+                n_cs,
+                n_classes,
+                n_dof,
+            )
+            assert isinstance(clf_multi.C_, float)
+            assert isinstance(clf_multi.l1_ratio_, float)
+            assert clf_multi.scores_.shape == (n_folds, n_l1_ratios, n_cs)
+
+            # TODO check coefficients increase with increasing C
 
 
 def test_logistic_regression_solvers(global_random_seed):
@@ -864,6 +899,7 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
         fit_intercept=False,
         class_weight=class_weight,
         tol=1e-8,
+        use_legacy_attributes=False,
     )
     clf_lbfgs = LogisticRegressionCV(solver="lbfgs", **params)
 
@@ -890,6 +926,8 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
         )
 
 
+# TODO(1.10): remove filterwarnings with deprecation period of use_legacy_attributes
+@pytest.mark.filterwarnings("ignore:.*use_legacy_attributes.*:FutureWarning")
 @pytest.mark.parametrize("problem", ("single", "cv"))
 @pytest.mark.parametrize(
     "solver", ("lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga")
@@ -1157,6 +1195,7 @@ def test_logistic_regression_multinomial(global_random_seed):
             max_iter=2000,
             tol=1e-10,
             Cs=[1.0],
+            use_legacy_attributes=False,
         )
         clf_path.fit(X, y)
         assert_allclose(clf_path.coef_, ref_i.coef_, rtol=1e-2)
@@ -1189,7 +1228,7 @@ def test_liblinear_logregcv_sparse(csr_container, global_random_seed):
     X, y = make_classification(
         n_samples=10, n_features=5, random_state=global_random_seed
     )
-    clf = LogisticRegressionCV(solver="liblinear")
+    clf = LogisticRegressionCV(solver="liblinear", use_legacy_attributes=False)
     clf.fit(csr_container(X), y)
 
 
@@ -1200,7 +1239,12 @@ def test_saga_sparse(csr_container, global_random_seed):
     X, y = make_classification(
         n_samples=10, n_features=5, random_state=global_random_seed
     )
-    clf = LogisticRegressionCV(solver="saga", tol=1e-2, random_state=global_random_seed)
+    clf = LogisticRegressionCV(
+        solver="saga",
+        tol=1e-2,
+        random_state=global_random_seed,
+        use_legacy_attributes=False,
+    )
     clf.fit(csr_container(X), y)
 
 
@@ -1326,7 +1370,9 @@ def test_logistic_regression_cv_refit(global_random_seed, penalty):
         max_iter=10000,
         tol=1e-12,
     )
-    lr_cv = LogisticRegressionCV(Cs=[1.0], refit=True, **common_params)
+    lr_cv = LogisticRegressionCV(
+        Cs=[1.0], refit=True, use_legacy_attributes=False, **common_params
+    )
     lr_cv.fit(X, y)
     lr = LogisticRegression(C=1.0, **common_params)
     lr.fit(X, y)
@@ -1398,7 +1444,8 @@ def test_max_iter(global_random_seed, max_iter, solver, message):
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
-def test_n_iter(solver):
+@pytest.mark.parametrize("use_legacy_attributes", [True, False])
+def test_n_iter(solver, use_legacy_attributes):
     # Test that self.n_iter_ has the correct format.
     X, y = iris.data, iris.target
     if solver == "lbfgs":
@@ -1421,10 +1468,18 @@ def test_n_iter(solver):
     assert clf.n_iter_.shape == (1,)
 
     clf_cv = LogisticRegressionCV(
-        tol=1e-2, solver=solver, Cs=n_Cs, cv=n_cv_fold, random_state=42
+        tol=1e-2,
+        solver=solver,
+        Cs=n_Cs,
+        cv=n_cv_fold,
+        random_state=42,
+        use_legacy_attributes=use_legacy_attributes,
     )
     clf_cv.fit(X, y_bin)
-    assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs)
+    if use_legacy_attributes:
+        assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs)
+    else:
+        assert clf_cv.n_iter_.shape == (n_cv_fold, 1, n_Cs)
 
     # multinomial case
     if solver in ("liblinear",):
@@ -1437,7 +1492,10 @@ def test_n_iter(solver):
     assert clf.n_iter_.shape == (1,)
 
     clf_cv.fit(X, y)
-    assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs)
+    if use_legacy_attributes:
+        assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs)
+    else:
+        assert clf_cv.n_iter_.shape == (n_cv_fold, 1, n_Cs)
 
 
 @pytest.mark.parametrize("solver", sorted(set(SOLVERS) - set(["liblinear"])))
@@ -1804,6 +1862,7 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net(n_classes):
         l1_ratios=l1_ratios,
         random_state=0,
         tol=1e-2,
+        use_legacy_attributes=False,
     )
     lrcv.fit(X, y)
 
@@ -1817,8 +1876,8 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net(n_classes):
     gs = GridSearchCV(lr, param_grid, cv=cv)
     gs.fit(X, y)
 
-    assert gs.best_params_["l1_ratio"] == lrcv.l1_ratio_[0]
-    assert gs.best_params_["C"] == lrcv.C_[0]
+    assert gs.best_params_["l1_ratio"] == lrcv.l1_ratio_
+    assert gs.best_params_["C"] == lrcv.C_
 
 
 @pytest.mark.parametrize("penalty", ("l2", "elasticnet"))
@@ -1849,6 +1908,7 @@ def test_LogisticRegressionCV_no_refit(penalty, n_classes):
         random_state=0,
         tol=1e-2,
         refit=False,
+        use_legacy_attributes=True,
     )
     lrcv.fit(X, y)
 
@@ -1888,6 +1948,7 @@ def test_LogisticRegressionCV_elasticnet_attribute_shapes(n_classes):
         l1_ratios=l1_ratios,
         random_state=0,
         tol=1e-2,
+        use_legacy_attributes=True,
     )
     lrcv.fit(X, y)
     coefs_paths = np.asarray(list(lrcv.coefs_paths_.values()))
@@ -2037,7 +2098,6 @@ def test_logistic_regression_path_init_coefs():
         n_features=2,
     )
     classes = np.unique(y)
-
     # For n_class >= 3, coef should be of shape
     # (n_classes, features + int(fit_intercept))
     coef = np.ones((3, 3))
@@ -2210,6 +2270,7 @@ def test_scores_attribute_layout_elasticnet():
         random_state=0,
         max_iter=250,
         tol=1e-3,
+        use_legacy_attributes=True,
     )
     lrcv.fit(X, y)
 
@@ -2380,12 +2441,20 @@ def test_lr_cv_scores_differ_when_sample_weight_is_requested(global_random_seed)
     kwargs = {"sample_weight": sample_weight}
 
     scorer1 = get_scorer("accuracy")
-    lr_cv1 = LogisticRegressionCV(scoring=scorer1, tol=3e-6)
+    lr_cv1 = LogisticRegressionCV(
+        scoring=scorer1,
+        tol=3e-6,
+        use_legacy_attributes=True,
+    )
     lr_cv1.fit(X, y, **kwargs)
 
     scorer2 = get_scorer("accuracy")
     scorer2.set_score_request(sample_weight=True)
-    lr_cv2 = LogisticRegressionCV(scoring=scorer2, tol=3e-6)
+    lr_cv2 = LogisticRegressionCV(
+        scoring=scorer2,
+        tol=3e-6,
+        use_legacy_attributes=True,
+    )
     lr_cv2.fit(X, y, **kwargs)
 
     assert not np.allclose(lr_cv1.scores_[1], lr_cv2.scores_[1])
@@ -2410,14 +2479,20 @@ def test_lr_cv_scores_without_enabling_metadata_routing():
 
     with config_context(enable_metadata_routing=False):
         scorer1 = get_scorer("accuracy")
-        lr_cv1 = LogisticRegressionCV(scoring=scorer1)
+        lr_cv1 = LogisticRegressionCV(
+            scoring=scorer1,
+            use_legacy_attributes=False,
+        )
         lr_cv1.fit(X, y, **kwargs)
         score_1 = lr_cv1.score(X_t, y_t, **kwargs)
 
     with config_context(enable_metadata_routing=True):
         scorer2 = get_scorer("accuracy")
         scorer2.set_score_request(sample_weight=True)
-        lr_cv2 = LogisticRegressionCV(scoring=scorer2)
+        lr_cv2 = LogisticRegressionCV(
+            scoring=scorer2,
+            use_legacy_attributes=False,
+        )
         lr_cv2.fit(X, y, **kwargs)
         score_2 = lr_cv2.score(X_t, y_t, **kwargs)
 
@@ -2455,7 +2530,7 @@ def test_passing_params_without_enabling_metadata_routing():
     """Test that the right error message is raised when metadata params
     are passed while not supported when `enable_metadata_routing=False`."""
     X, y = make_classification(n_samples=10, random_state=0)
-    lr_cv = LogisticRegressionCV()
+    lr_cv = LogisticRegressionCV(use_legacy_attributes=False)
     msg = "is only supported if enable_metadata_routing=True"
 
     with config_context(enable_metadata_routing=False):
@@ -2510,9 +2585,20 @@ def test_newton_cholesky_fallback_to_lbfgs(global_random_seed):
     assert n_iter_nc_limited == lr_nc_limited.max_iter - 1
 
 
+# TODO(1.8): check for an error instead
+# TODO(1.10): remove filterwarnings with deprecation period of use_legacy_attributes
 @pytest.mark.parametrize("Estimator", [LogisticRegression, LogisticRegressionCV])
 def test_liblinear_multiclass_raises(Estimator):
     """Check that liblinear raises an error on multiclass problems."""
     msg = "The 'liblinear' solver does not support multiclass classification"
     with pytest.raises(ValueError, match=msg):
         Estimator(solver="liblinear").fit(iris.data, iris.target)
+
+
+# TODO(1.10): use_legacy_attributes gets deprecated
+def test_logisticregressioncv_warns_with_use_legacy_attributes():
+    X, y = make_classification(n_classes=3, n_samples=50, n_informative=6)
+    lr = LogisticRegressionCV()
+    msg = "The default value of use_legacy_attributes will change from True"
+    with pytest.warns(FutureWarning, match=msg):
+        lr.fit(X, y)
