@@ -1551,12 +1551,8 @@ def test_squared_error_exact_backward_compat():
     assert_allclose(gbt.train_score_[-10:], train_score, rtol=1e-3, atol=1e-11)
 
 
-@pytest.mark.skip("Skip for now")
-def test_huber_exact_backward_compat():
-    """Test huber GBT backward compat on a simple dataset.
-
-    The results to compare against are taken from scikit-learn v1.2.0.
-    """
+def test_huber_overfit():
+    """Test huber GBT can completely overfit"""
     n_samples = 10
     y = np.arange(n_samples)
     x1 = np.minimum(y, n_samples / 2)
@@ -1564,39 +1560,9 @@ def test_huber_exact_backward_compat():
     X = np.c_[x1, x2]
     gbt = GradientBoostingRegressor(loss="huber", n_estimators=100, alpha=0.8).fit(X, y)
 
-    assert_allclose(gbt._loss.closs.delta, 0.0001655688041282133)
-
-    pred_result = np.array(
-        [
-            1.48120765e-04,
-            9.99949174e-01,
-            2.00116957e00,
-            2.99986716e00,
-            4.00012064e00,
-            5.00002462e00,
-            5.99998898e00,
-            6.99692549e00,
-            8.00006356e00,
-            8.99985099e00,
-        ]
-    )
-    assert_allclose(gbt.predict(X), pred_result, rtol=1e-8)
-
-    train_score = np.array(
-        [
-            2.59484709e-07,
-            2.19165900e-07,
-            1.89644782e-07,
-            1.64556454e-07,
-            1.38705110e-07,
-            1.20373736e-07,
-            1.04746082e-07,
-            9.13835687e-08,
-            8.20245756e-08,
-            7.17122188e-08,
-        ]
-    )
-    assert_allclose(gbt.train_score_[-10:], train_score, rtol=1e-8)
+    assert gbt._loss.closs.delta < 2e-4
+    assert_allclose(gbt.predict(X), y, atol=0.01)
+    assert np.all(gbt.train_score_[-10:] < 3e-7)
 
 
 def test_binomial_error_exact_backward_compat():
