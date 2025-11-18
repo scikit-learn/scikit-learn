@@ -245,7 +245,6 @@ def make_classification(
     n_base = n_informative + n_redundant
 
     # Build the polytope whose vertices become cluster centroids
-    # This is independent of n_samples
     centroids = _generate_hypercube(n_clusters, n_informative, generator).astype(
         float, copy=False
     )
@@ -255,15 +254,14 @@ def make_classification(
         centroids *= generator.uniform(size=(n_clusters, 1))
         centroids *= generator.uniform(size=(1, n_informative))
 
-    # Pre-generate transformation matrices A for each cluster
-    # These define the distribution and should be independent of n_samples
+    # Pre-generate covariance transformation matrices for each cluster
+    # They define the cluster distribution
     cov_matrices = []
     for k in range(n_clusters):
         cov_matrix = 2 * generator.uniform(size=(n_informative, n_informative)) - 1
         cov_matrices.append(cov_matrix)
 
-    # Pre-generate redundant feature transformation matrix B
-    # This is also independent of n_samples
+    # Pre-generate redundant feature transformation matrix
     if n_redundant > 0:
         redundant_matrix = 2 * generator.uniform(size=(n_informative, n_redundant)) - 1
 
@@ -274,7 +272,6 @@ def make_classification(
         ).astype(np.intp)
 
     # Pre-calculate shift and scale if they are not provided
-    # These define the distribution and should be independent of n_samples
     if shift is None:
         shift_val = (2 * generator.uniform(size=n_features) - 1) * class_sep
     else:
@@ -321,13 +318,13 @@ def make_classification(
         cluster_id = cluster_ids[i]
         y[i] = cluster_id % n_classes
 
-        # Draw random values for THIS sample's informative features
+        # Draw random values for this sample's informative features and transform
         sample_random = generator.standard_normal(size=n_informative)
         X[i, :n_informative] = (
             np.dot(sample_random, cov_matrices[cluster_id]) + centroids[cluster_id]
         )
 
-    # Create redundant features using pre-generated B
+    # Create redundant features using pre-generated redundant transformation matrix
     if n_redundant > 0:
         X[:, n_informative:n_base] = np.dot(X[:, :n_informative], redundant_matrix)
 
