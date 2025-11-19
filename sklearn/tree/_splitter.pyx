@@ -53,7 +53,6 @@ cdef inline void _init_split(SplitRecord* self, intp_t start_pos) noexcept nogil
     self.threshold = 0.
     self.improvement = -INFINITY
     self.missing_go_to_left = False
-    self.n_missing = 0
 
 cdef class Splitter:
     """Abstract splitter class.
@@ -461,8 +460,6 @@ cdef inline int node_split_best(
                         ):
                             current_split.threshold = feature_values[p_prev]
 
-                    current_split.n_missing = n_missing
-
                     # if there are no missing values in the training data, during
                     # test time, we send missing values to the branch that contains
                     # the most samples during training time.
@@ -697,8 +694,6 @@ cdef inline int node_split_random(
         current_proxy_improvement = criterion.proxy_impurity_improvement()
 
         if current_proxy_improvement > best_proxy_improvement:
-            current_split.n_missing = n_missing
-
             # if there are no missing values in the training data, during
             # test time, we send missing values to the branch that contains
             # the most samples during training time.
