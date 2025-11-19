@@ -590,9 +590,10 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
     n_samples = y.shape[0] if hasattr(y, "shape") else len(y)
     n_classes = classes.shape[0]
-    int_dtype_ = (
-        y.dtype if hasattr(y, "dtype") and "int" in str(y.dtype) else indexing_dtype(xp)
-    )
+    if hasattr(y, "dtype") and xp.isdtype(y.dtype, "integral"):
+        int_dtype_ = y.dtype
+    else:
+        int_dtype_ = indexing_dtype(xp)
 
     if y_type == "binary":
         if n_classes == 1:
@@ -751,9 +752,10 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold, xp=None):
         )
 
     dtype_ = _find_matching_floating_dtype(y, xp=xp)
-    int_dtype_ = (
-        y.dtype if hasattr(y, "dtype") and "int" in str(y.dtype) else indexing_dtype(xp)
-    )
+    if hasattr(y, "dtype") and xp.isdtype(y.dtype, "integral"):
+        int_dtype_ = y.dtype
+    else:
+        int_dtype_ = indexing_dtype(xp)
 
     # Perform thresholding
     if sp.issparse(y):
