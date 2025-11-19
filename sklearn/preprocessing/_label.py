@@ -584,7 +584,8 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         # `classes` contains an unsupported dtype for this namespace.
         # For example, attempting to create torch.tensor(["yes", "no"]) will fail.
         raise ValueError(
-            f"`classes` contains unsupported dtype for array API '{xp.__name__}'."
+            f"`classes` contains unsupported dtype for array API namespace "
+            f"'{xp.__name__}'."
         ) from e
 
     n_samples = y.shape[0] if hasattr(y, "shape") else len(y)
@@ -631,7 +632,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         )
         data = xp.full_like(indices, pos_label)
 
-        # Fall back to NumPy namespace to construct the sparse matrix of one-hot labels
+        # Use NumPy to construct the sparse matrix of one-hot labels
         Y = sp.csr_matrix(
             (
                 _convert_to_numpy(data, xp=xp),
