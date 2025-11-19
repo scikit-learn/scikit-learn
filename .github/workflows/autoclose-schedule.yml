@@ -12,7 +12,6 @@ on:
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  GH_REPO: ${{ github.repository }}
 
 jobs:
 
@@ -20,34 +19,16 @@ jobs:
     name: autoclose labeled PRs
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install PyGithub
+        run: pip install -Uq PyGithub
 
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: detect labeled PRs and filter for older than 14 days
+      - name: Close PRs labeled more than 14 days ago
         run: |
-          set -e
-          python build_tools/github/filter_autoclose.py
-
-      - name: close labeled PRs and post comment
-        if: env.PULL_REQUESTS != ''
-        run: |
-          for PR in $PULL_REQUESTS; do
-            echo "Autoclosing PR #$PR"
-            gh pr close "$PR" \
-              --repo "$GH_REPO" \
-              --comment "$BODY"
-          done
-        env:
-          BODY: >
-            Thank you for your interest in contributing to scikit-learn, but we cannot
-            accept your contribution as this pull request does not meet the development
-            standards.
-
-
-            Following our autoclose policy, we are closing this PR after allowing two
-            weeks time for improvements.
-
-
-            We apologise for the inconvenience. If you think your PR has been closed
-            by mistake, please comment below.
+          python build_tools/github/autoclose_prs.py
