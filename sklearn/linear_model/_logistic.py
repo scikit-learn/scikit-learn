@@ -1013,7 +1013,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            *warm_start* to support *lbfgs*, *newton-cg*, *sag*, *saga* solvers.
 
     n_jobs : int, default=None
-    n_jobs : int, default=None
         .. deprecated:: 1.8
            ``n_jobs`` was deprecated in version 1.8 and will be removed in a
            future release. Use :mod:`joblib`'s ``parallel_backend`` context or
@@ -1191,7 +1190,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.multi_class = multi_class
         self.verbose = verbose
         self.warm_start = warm_start
-        # Deprecation: n_jobs is deprecated for LogisticRegression
         if n_jobs is not None:
             warnings.warn(
                 (
@@ -1663,7 +1661,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            class_weight == 'balanced'
 
     n_jobs : int, default=None
-    n_jobs : int, default=None
         .. deprecated:: 1.8
            ``n_jobs`` was deprecated in version 1.8 and will be removed in a
            future release. Use :mod:`joblib`'s ``parallel_backend`` context or
@@ -1908,7 +1905,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         self.tol = tol
         self.max_iter = max_iter
         self.class_weight = class_weight
-        # Deprecation: n_jobs is deprecated for LogisticRegressionCV
         if n_jobs is not None:
             warnings.warn(
                 (
