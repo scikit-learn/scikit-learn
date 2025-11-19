@@ -8,7 +8,6 @@ import math
 import os
 
 import numpy
-import pytest  # noqa: F401
 import scipy
 import scipy.sparse as sp
 import scipy.special as special
