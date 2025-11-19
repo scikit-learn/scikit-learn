@@ -425,83 +425,75 @@ def single_linkage_label(L):
     return _single_linkage_label(L)
 
 
-# Implements MST-LINKAGE-CORE from https://arxiv.org/abs/1109.2378
+import numpy as np
+cimport cython
+from ..metrics._dist_metrics cimport DistanceMetric64
+
+# Define constants
+from libc.math cimport INFINITY
+
+@cython.wraparound(True)
 def mst_linkage_core(
-        const float64_t [:, ::1] raw_data,
+        const float64_t[:, ::1] raw_data,
         DistanceMetric64 dist_metric):
     """
     Compute the necessary elements of a minimum spanning
-    tree for computation of single linkage clustering. This
-    represents the MST-LINKAGE-CORE algorithm (Figure 6) from
-    :arxiv:`Daniel Mullner, "Modern hierarchical, agglomerative clustering
-    algorithms" <1109.2378>`.
-
-    In contrast to the scipy implementation is never computes
-    a full distance matrix, generating distances only as they
-    are needed and releasing them when no longer needed.
+    tree for computation of single linkage clustering.
 
     Parameters
     ----------
     raw_data: array of shape (n_samples, n_features)
-        The array of feature data to be clustered. Must be C-aligned
+        The array of feature data to be clustered.
 
     dist_metric: DistanceMetric64
         A DistanceMetric64 object conforming to the API from
-        ``sklearn.metrics._dist_metrics.pxd`` that will be
+        `sklearn.metrics._dist_metrics` that will be
         used to compute distances.
 
     Returns
     -------
-    mst_core_data: array of shape (n_samples, 3)
+    mst_core_data: array of shape (n_samples - 1, 3)
         An array providing information from which one
-        can either compute an MST, or the linkage hierarchy
-        very efficiently. See :arxiv:`Daniel Mullner, "Modern hierarchical,
-        agglomerative clustering algorithms" <1109.2378>` algorithm
-        MST-LINKAGE-CORE for more details.
+        can compute an MST or the linkage hierarchy efficiently.
     """
     cdef:
-        intp_t n_samples = raw_data.shape[0]
-        uint8_t[:] in_tree = np.zeros(n_samples, dtype=bool)
-        float64_t[:, ::1] result = np.zeros((n_samples - 1, 3))
-
+        int n_samples = raw_data.shape[0]
         intp_t current_node = 0
         intp_t new_node
-        intp_t i
-        intp_t j
+        intp_t i, j
         intp_t num_features = raw_data.shape[1]
 
-        float64_t right_value
-        float64_t left_value
         float64_t new_distance
-
-        float64_t[:] current_distances = np.full(n_samples, INFINITY)
+        float64_t[:, ::1] result = np.zeros((n_samples - 1, 3), dtype=np.float64)
+        float64_t[:] current_distances = np.full(n_samples, INFINITY, dtype=np.float64)
+        uint8_t[:] in_tree = np.zeros(n_samples, dtype=np.uint8)
 
     for i in range(n_samples - 1):
-
         in_tree[current_node] = 1
-
         new_distance = INFINITY
-        new_node = 0
+        new_node = -1  # Initialize new_node to an invalid value
 
         for j in range(n_samples):
             if in_tree[j]:
                 continue
 
-            right_value = current_distances[j]
-            left_value = dist_metric.dist(&raw_data[current_node, 0],
-                                          &raw_data[j, 0],
-                                          num_features)
-
-            if left_value < right_value:
+            float64_t left_value = dist_metric.dist(&raw_data[current_node, 0],
+                                                   &raw_data[j, 0],
+                                                   num_features)
+            if left_value < current_distances[j]:
                 current_distances[j] = left_value
 
             if current_distances[j] < new_distance:
                 new_distance = current_distances[j]
                 new_node = j
 
+        if new_node == -1:
+            raise ValueError("No new node found, algorithm cannot continue.")
+
         result[i, 0] = current_node
         result[i, 1] = new_node
         result[i, 2] = new_distance
         current_node = new_node
 
-    return np.array(result)
+    return np.asarray(result)
+
