@@ -287,7 +287,8 @@ def det_curve(
 ):
     """Compute Detection Error Tradeoff (DET) for different probability thresholds.
 
-    Note: this implementation is restricted to the :term:`binary` classification task.
+    Note: Support beyond :term:`binary` classification tasks, via one-vs-rest or
+    one-vs-one, is not implemented.
 
     The DET curve is used for evaluation of ranking and error tradeoffs in binary
     classification tasks.
@@ -1004,7 +1005,8 @@ def precision_recall_curve(
 ):
     """Compute precision-recall pairs for different probability thresholds.
 
-    Note: this implementation is restricted to the :term:`binary` classification task.
+    Note: Support beyond :term:`binary` classification tasks, via one-vs-rest or
+    one-vs-one, is not implemented.
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
     true positives and ``fp`` the number of false positives. The precision is
@@ -1157,7 +1159,8 @@ def roc_curve(
 ):
     """Compute Receiver operating characteristic (ROC).
 
-    Note: this implementation is restricted to the :term:`binary` classification task.
+    Note: Support beyond :term:`binary` classification tasks, via one-vs-rest or
+    one-vs-one, is not implemented.
 
     Read more in the :ref:`User Guide <roc_metrics>`.
 
