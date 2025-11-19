@@ -119,6 +119,34 @@ and follows the decision-making process outlined in :ref:`governance`.
   Look for issues marked "help wanted" or similar. Helping these projects may help
   scikit-learn too. See also :ref:`related_projects`.
 
+.. _new_contributors:
+
+New Contributors
+----------------
+
+We recommend new contributors start by reading this contributing guide, in
+particular :ref:`ways_to_contribute`, :ref:`automated_contributions_policy`
+and :ref:`pr_checklist`. For expected etiquette around which issues and stalled PRs
+to work on, please read :ref:`stalled_pull_request`, :ref:`stalled_unclaimed_issues`
+and :ref:`issues_tagged_needs_triage`.
+
+We understand that everyone has different interests and backgrounds, thus we recommend
+you start by looking for an issue that is of interest to you, in an area you are
+already familiar with as a user or have background knowledge of. We recommend starting
+with smaller pull requests, to get used to the contribution process.
+
+We rarely use the "good first issue" label because it is difficult to make
+assumptions about new contributors and these issues often prove more complex
+than originally anticipated. It is still useful to check if there are
+`good first issues
+<https://github.com/scikit-learn/scikit-learn/labels/good%20first%20issue>`_,
+though note that these may still be time consuming to solve, depending on your prior
+experience.
+
+For more experienced scikit-learn contributors, issues labeled `'Easy'
+<https://github.com/scikit-learn/scikit-learn/labels/Easy>`_ may be a good place to
+look.
+
 .. _automated_contributions_policy:
 
 Automated Contributions Policy
@@ -618,34 +646,6 @@ welcome to join the discussion, but as per our `Code of Conduct
 <https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md>`_ please
 do not open a PR until the tag is removed and there is clear consensus on how to
 address the issue.
-
-.. _new_contributors:
-
-New Contributors
-----------------
-
-We recommend new contributors start by reading this contributing guide, in
-particular :ref:`ways_to_contribute`, :ref:`automated_contributions_policy`
-and :ref:`pr_checklist`. For expected etiquette around which issues and stalled PRs
-to work on, please read :ref:`stalled_pull_request`, :ref:`stalled_unclaimed_issues`
-and :ref:`issues_tagged_needs_triage`.
-
-We understand that everyone has different interests and backgrounds, thus we recommend
-you start by looking for an issue that is of interest to you, in an area you are
-already familiar with as a user or have background knowledge of. We recommend starting
-with smaller pull requests, to get used to the contribution process.
-
-We rarely use the "good first issue" label because it is difficult to make
-assumptions about new contributors and these issues often prove more complex
-than originally anticipated. It is still useful to check if there are
-`good first issues
-<https://github.com/scikit-learn/scikit-learn/labels/good%20first%20issue>`_,
-though note that these may still be time consuming to solve, depending on your prior
-experience.
-
-For more experienced scikit-learn contributors, issues labeled `'Easy'
-<https://github.com/scikit-learn/scikit-learn/labels/Easy>`_ may be a good place to
-look.
 
 Video resources
 ---------------
