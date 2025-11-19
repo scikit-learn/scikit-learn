@@ -164,6 +164,8 @@ jobs:
         if: ${{ needs.retrieve-selected-tests.outputs.tests == ''}}
 
       - name: Run pytest soft dependency test
+        env:
+          BUILD_SOURCESDIRECTORY: ${{ env.PWD }}
         run: bash -l build_tools/azure/test_pytest_soft_dependency.sh
         if: ${{ env.CHECK_PYTEST_SOFT_DEPENDENCY == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
 
