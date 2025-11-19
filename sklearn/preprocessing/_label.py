@@ -309,9 +309,9 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
                 f"pos_label={self.pos_label} and neg_label={self.neg_label}"
             )
 
-        xp, _ = get_namespace(y)
+        xp, is_array_api = get_namespace(y)
 
-        if self.sparse_output and not _is_numpy_namespace(xp):
+        if is_array_api and self.sparse_output and not _is_numpy_namespace(xp):
             raise ValueError(
                 "`sparse_output=True` is not supported for array API "
                 f"namespace {xp.__name__}. "
@@ -375,9 +375,9 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
         """
         check_is_fitted(self)
 
-        xp, _ = get_namespace(y)
+        xp, is_array_api = get_namespace(y)
 
-        if self.sparse_output and not _is_numpy_namespace(xp):
+        if is_array_api and self.sparse_output and not _is_numpy_namespace(xp):
             raise ValueError(
                 "`sparse_output=True` is not supported for array API "
                 f"namespace {xp.__name__}. "
@@ -430,9 +430,9 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
         """
         check_is_fitted(self)
 
-        xp, _ = get_namespace(Y)
+        xp, is_array_api = get_namespace(Y)
 
-        if self.sparse_input_ and not _is_numpy_namespace(xp):
+        if is_array_api and self.sparse_input_ and not _is_numpy_namespace(xp):
             raise ValueError(
                 "`LabelBinarizer` was fitted on a sparse matrix, and therefore cannot "
                 f"inverse transform a {xp.__name__} array back to a sparse matrix."
@@ -569,9 +569,9 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
     if y_type == "unknown":
         raise ValueError("The type of target data is not known")
 
-    xp, _, device_ = get_namespace_and_device(y)
+    xp, is_array_api, device_ = get_namespace_and_device(y)
 
-    if sparse_output and not _is_numpy_namespace(xp):
+    if is_array_api and sparse_output and not _is_numpy_namespace(xp):
         raise ValueError(
             "`sparse_output=True` is not supported for array API "
             f"'namespace {xp.__name__}'. "
