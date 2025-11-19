@@ -311,6 +311,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             "AP",
             curve_kwargs=curve_kwargs,
             default_curve_kwargs={"drawstyle": "steps-post"},
+            default_multi_curve_kwargs={
+                "alpha": 0.5,
+                "linestyle": "--",
+                "color": "blue",
+            },
             removed_version="1.10",
             **kwargs,
         )
