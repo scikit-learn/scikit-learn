@@ -131,9 +131,12 @@ fully-automated tools. Maintainers reserve the right, at their sole discretion,
 to **close such submissions and to block any account responsible for them**.
 
 If you use AI tools, please state so in your PR description.
-When you use AI to generate text for Issue or PR descriptions or comments, make sure
-that it makes sense and represents your ideas concisely.
-Please review all code or documentation changes made by AI tools and
+
+Please do not paste AI generated text in the description of issues, PRs or in comments
+as this makes it harder for reviewers to assess your contribution. We are happy for it
+to be used to improve grammar or if you are not a native English speaker.
+
+Also review all code or documentation changes made by AI tools and
 make sure you understand **all** changes and can explain them on request, before
 submitting them under your name. Do not submit any AI-generated code that you haven't
 personally **reviewed, understood and tested**, as this wastes maintainers' time.
