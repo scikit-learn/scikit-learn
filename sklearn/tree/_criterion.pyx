@@ -1739,7 +1739,7 @@ cdef class FriedmanMSE(MSE):
                 self.weighted_n_left * total_sum_right) / self.n_outputs
 
         return (diff * diff / (self.weighted_n_left * self.weighted_n_right *
-                               self.weighted_n_node_samples))
+                               self.weighted_n_samples * self.weighted_n_node_samples))
 
 
 cdef class Poisson(RegressionCriterion):
