@@ -2543,8 +2543,8 @@ def test__check_targets():
 
 
 def test__check_targets_raises_on_empty_inputs():
-    msg = "Found empty input array while a minimum of 1 sample is required."
-    with pytest.raises(ValueError, match=msg):
+    msg = "Found empty input array (e.g., `y_true` or `y_pred`) while a minimum of 1"
+    with pytest.raises(ValueError, match=re.escape(msg)):
         _check_targets(np.array([]), np.array([]))
 
 

@@ -110,7 +110,8 @@ def _check_targets(y_true, y_pred, sample_weight=None):
     for array in [y_true, y_pred]:
         if _num_samples(array) < 1:
             raise ValueError(
-                "Found empty input array while a minimum of 1 sample is required."
+                "Found empty input array (e.g., `y_true` or `y_pred`) while a minimum "
+                "of 1 sample is required."
             )
     if sample_weight is not None:
         sample_weight = _check_sample_weight(
