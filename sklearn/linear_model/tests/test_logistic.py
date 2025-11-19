@@ -737,8 +737,7 @@ def test_multinomial_cv_iris(use_legacy_attributes):
                 # Note that we have to exclude the intercept, hence the ':-1'
                 # on the last dimension
                 coefs = clf_multi.coefs_paths_[fold, 0, :, :, :-1]
-                coefs = coefs.reshape(len(clf_multi.Cs_), -1)
-                norms = np.sum(coefs * coefs, axis=1)  # L2 norm for each C
+                norms = np.sum(coefs * coefs, axis=(-2, -1))  # L2 norm for each C
                 assert np.all(np.diff(norms) >= 0)
 
 
