@@ -10,7 +10,6 @@ import warnings
 from numbers import Integral, Real
 
 import numpy as np
-from joblib import effective_n_jobs
 from scipy import optimize
 
 from sklearn._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
@@ -1148,13 +1147,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                     "Using the 'liblinear' solver while X contains a maximum "
                     "value > 1e30 results in a frozen fit. Please choose another "
                     "solver or rescale the input X."
-                )
-            # TODO(lesteve)
-            if effective_n_jobs(self.n_jobs) != 1:
-                warnings.warn(
-                    "'n_jobs' > 1 does not have any effect when"
-                    " 'solver' is set to 'liblinear'. Got 'n_jobs'"
-                    " = {}.".format(effective_n_jobs(self.n_jobs))
                 )
             self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
                 X,
