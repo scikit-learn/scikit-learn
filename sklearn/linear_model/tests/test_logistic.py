@@ -23,9 +23,10 @@ from sklearn.linear_model._logistic import (
     _log_reg_scoring_path,
     _logistic_regression_path,
 )
-from sklearn.metrics import get_scorer, log_loss
+from sklearn.metrics import brier_score_loss, get_scorer, log_loss
 from sklearn.model_selection import (
     GridSearchCV,
+    KFold,
     LeaveOneGroupOut,
     StratifiedKFold,
     cross_val_score,
@@ -647,19 +648,19 @@ def test_logistic_cv_sparse(global_random_seed, csr_container):
 @pytest.mark.parametrize("use_legacy_attributes", [True, False])
 def test_multinomial_cv_iris(use_legacy_attributes):
     # Test that multinomial LogisticRegressionCV is correct using the iris dataset.
-    train, target = iris.data, iris.target
-    n_samples, n_features = train.shape
+    X, y = iris.data, iris.target
+    n_samples, n_features = X.shape
 
     # The cv indices from stratified kfold
     n_cv = 2
     cv = StratifiedKFold(n_cv)
-    precomputed_folds = list(cv.split(train, target))
+    precomputed_folds = list(cv.split(X, y))
 
     # Train clf on the original dataset
     clf = LogisticRegressionCV(
         cv=precomputed_folds, solver="newton-cholesky", use_legacy_attributes=True
     )
-    clf.fit(train, target)
+    clf.fit(X, y)
 
     # Test the shape of various attributes.
     assert clf.coef_.shape == (3, n_features)
@@ -674,7 +675,7 @@ def test_multinomial_cv_iris(use_legacy_attributes):
     clf_ovr = GridSearchCV(
         OneVsRestClassifier(LogisticRegression(solver="newton-cholesky")),
         {"estimator__C": np.logspace(-4, 4, num=10)},
-    ).fit(train, target)
+    ).fit(X, y)
     for solver in ["lbfgs", "newton-cg", "sag", "saga"]:
         max_iter = 500 if solver in ["sag", "saga"] else 30
         clf_multi = LogisticRegressionCV(
@@ -687,11 +688,11 @@ def test_multinomial_cv_iris(use_legacy_attributes):
         )
         if solver == "lbfgs":
             # lbfgs requires scaling to avoid convergence warnings
-            train = scale(train)
+            X = scale(X)
 
-        clf_multi.fit(train, target)
-        multi_score = clf_multi.score(train, target)
-        ovr_score = clf_ovr.score(train, target)
+        clf_multi.fit(X, y)
+        multi_score = clf_multi.score(X, y)
+        ovr_score = clf_ovr.score(X, y)
         assert multi_score > ovr_score
 
         # Test attributes of LogisticRegressionCV
@@ -739,6 +740,28 @@ def test_multinomial_cv_iris(use_legacy_attributes):
                 coefs = clf_multi.coefs_paths_[fold, 0, :, :, :-1]
                 norms = np.sum(coefs * coefs, axis=(-2, -1))  # L2 norm for each C
                 assert np.all(np.diff(norms) >= 0)
+
+    # Test CV folds with missing class labels:
+    # It is well known that the iris target variable has 3 classes and is ordered such
+    # that a simple CV split with 3 folds separates the classes.
+    cv = KFold(n_splits=3)
+    # Check this assumption.
+    classes = np.unique(y)
+    assert len(classes) == 3
+    for train, test in cv.split(X, y):
+        assert len(np.unique(y[train])) == 2
+        assert len(np.unique(y[test])) == 1
+        assert set(y[train]) & set(y[test]) == set()
+    clf = LogisticRegressionCV(cv=cv, use_legacy_attributes=False).fit(X, y)
+    # We use Brier score as metric. Accuracy, e.g. via clf.scores_, is a bad metric as
+    # it uses the stupid fixed threshold of 50%. Instead we choose a proper scoring
+    # rule, i.e. Brier score. Log loss could be problematic with values at the border,
+    # i.e. probabilities of 0 or 1.
+    for train, test in cv.split(X, y):
+        bs = brier_score_loss(
+            y[test], clf.predict_proba(X[test]), labels=classes, scale_by_half=True
+        )
+        assert np.all(bs > 0.3)
 
 
 def test_logistic_regression_solvers(global_random_seed):
