@@ -276,12 +276,12 @@ def _logistic_regression_path(
 
     random_state = check_random_state(random_state)
 
-    le = LabelEncoder()
+    le = LabelEncoder().fit(classes)
     if class_weight is not None:
         class_weight_ = compute_class_weight(
             class_weight, classes=classes, y=y, sample_weight=sample_weight
         )
-        sample_weight *= class_weight_[le.fit_transform(y)]
+        sample_weight *= class_weight_[le.transform(y)]
 
     if is_binary:
         w0 = np.zeros(n_features + int(fit_intercept), dtype=X.dtype)
@@ -297,7 +297,7 @@ def _logistic_regression_path(
         # All solvers capable of a multinomial need LabelEncoder, not LabelBinarizer,
         # i.e. y as a 1d-array of integers. LabelEncoder also saves memory
         # compared to LabelBinarizer, especially when n_classes is large.
-        Y_multi = le.fit_transform(y).astype(X.dtype, copy=False)
+        Y_multi = le.transform(y).astype(X.dtype, copy=False)
         # It is important that w0 is F-contiguous.
         w0 = np.zeros(
             (classes.size, n_features + int(fit_intercept)), order="F", dtype=X.dtype
@@ -721,6 +721,9 @@ def _log_reg_scoring_path(
         else:
             score_params = score_params or {}
             score_params = _check_method_params(X=X, params=score_params, indices=test)
+            # FIXME: If scoring = "neg_brier_score" and if not all class labels
+            # are present in y_test, the following fails. Maybe we can pass
+            # "labels=classes" to the call of scoring.
             scores.append(scoring(log_reg, X_test, y_test, **score_params))
     return coefs, Cs, np.array(scores), n_iter
 
