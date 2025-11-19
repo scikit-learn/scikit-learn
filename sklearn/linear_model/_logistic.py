@@ -1013,6 +1013,12 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            *warm_start* to support *lbfgs*, *newton-cg*, *sag*, *saga* solvers.
 
     n_jobs : int, default=None
+    n_jobs : int, default=None
+        .. deprecated:: 1.8
+           ``n_jobs`` was deprecated in version 1.8 and will be removed in a
+           future release. Use :mod:`joblib`'s ``parallel_backend`` context or
+           other higher-level parallelization mechanisms instead.
+
         Number of CPU cores used when parallelizing over classes if
         ``multi_class='ovr'``. This parameter is ignored when the ``solver`` is
         set to 'liblinear' regardless of whether 'multi_class' is specified or
@@ -1185,6 +1191,16 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.multi_class = multi_class
         self.verbose = verbose
         self.warm_start = warm_start
+        # Deprecation: n_jobs is deprecated for LogisticRegression
+        if n_jobs is not None:
+            warnings.warn(
+                (
+                    "'n_jobs' was deprecated in version 1.8 and will be removed in "
+                    "a future release. Use joblib.parallel_backend or higher-level "
+                    "APIs for parallelism instead."
+                ),
+                FutureWarning,
+            )
         self.n_jobs = n_jobs
         self.l1_ratio = l1_ratio
 
@@ -1647,6 +1663,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            class_weight == 'balanced'
 
     n_jobs : int, default=None
+    n_jobs : int, default=None
+        .. deprecated:: 1.8
+           ``n_jobs`` was deprecated in version 1.8 and will be removed in a
+           future release. Use :mod:`joblib`'s ``parallel_backend`` context or
+           other higher-level parallelization mechanisms instead.
+
         Number of CPU cores used during the cross-validation loop.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -1886,6 +1908,16 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         self.tol = tol
         self.max_iter = max_iter
         self.class_weight = class_weight
+        # Deprecation: n_jobs is deprecated for LogisticRegressionCV
+        if n_jobs is not None:
+            warnings.warn(
+                (
+                    "'n_jobs' was deprecated in version 1.8 and will be removed in "
+                    "a future release. Use joblib.parallel_backend or higher-level "
+                    "APIs for parallelism instead."
+                ),
+                FutureWarning,
+            )
         self.n_jobs = n_jobs
         self.verbose = verbose
         self.solver = solver
