@@ -12,5 +12,5 @@
   - ``n_iter_`` is an ndarray of shape (n_folds, n_l1_ratios, n_cs).
 
   In version 1.10, the default will change to `False` and `use_legacy_attributes` will
-  be deprecated. In 1.12 `use_legacy_attributes` will be remove.
-  By :user:`Christian Lorentzen <lorentzenchr>
+  be deprecated. In 1.12 `use_legacy_attributes` will be removed.
+  By :user:`Christian Lorentzen <lorentzenchr>`.
