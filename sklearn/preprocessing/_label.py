@@ -762,11 +762,7 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold, xp=None):
         if threshold > 0:
             if y.format not in ("csr", "csc"):
                 y = y.tocsr()
-            y.data = xp.asarray(
-                xp.asarray(y.data, dtype=dtype_, device=device_) > threshold,
-                dtype=int_dtype_,
-                device=device_,
-            )
+            y.data = np.array(y.data > threshold, dtype=int)
             y.eliminate_zeros()
         else:
             y = xp.asarray(y.toarray() > threshold, dtype=int_dtype_, device=device_)
