@@ -672,7 +672,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         if pos_switch:
             Y[Y == pos_label] = 0
 
-        Y = xp.astype(Y, int_dtype_)
+        Y = xp.astype(Y, int_dtype_, copy=False)
     else:
         Y.data = Y.data.astype(int, copy=False)
 
