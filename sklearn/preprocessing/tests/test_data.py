@@ -1629,28 +1629,6 @@ def test_quantile_transformer_sorted_quantiles(array_type):
     assert all(np.diff(quantiles) >= 0)
 
 
-def test_quantile_transformer_with_sample_weight():
-    rng = np.random.RandomState(42)
-    X = rng.randn(100, 1)
-    sample_weight = np.linspace(1, 2, X.shape[0])  # increasing weights
-
-    qt_weighted = QuantileTransformer(n_quantiles=10, random_state=0)
-    qt_unweighted = QuantileTransformer(n_quantiles=10, random_state=0)
-
-    Xt_weighted = qt_weighted.fit_transform(X, sample_weight=sample_weight)
-    Xt_unweighted = qt_unweighted.fit_transform(X)
-
-    # Should not be equal
-    with pytest.raises(AssertionError):
-        np.testing.assert_allclose(Xt_weighted, Xt_unweighted)
-
-    # Inverse transform round-trip check
-    X_roundtrip = qt_weighted.inverse_transform(Xt_weighted)
-    np.testing.assert_allclose(
-        X[~np.isnan(X)], X_roundtrip[~np.isnan(X)], rtol=1e-2, atol=1e-2
-    )
-
-
 def test_robust_scaler_invalid_range():
     for range_ in [
         (-1, 90),

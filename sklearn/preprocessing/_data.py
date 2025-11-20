@@ -2816,24 +2816,25 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
         self.quantiles_ = np.zeros((len(references), n_features))
 
-        for i in range(n_features):
-            col = X[:, i]
-            mask = ~np.isnan(col)
-            col_clean = col[mask]
-
-            if col_clean.size == 0:
-                self.quantiles_[:, i] = np.nan
-                continue
+        for feature_idx in range(n_features):
+            col = X[:, feature_idx]
 
             if sample_weight is not None:
+<<<<<<< HEAD
                 weights_clean = sample_weight[mask]
                 self.quantiles_[:, i] = _weighted_percentile(
                     col_clean, sample_weight=weights_clean, quantile=references / 100.0,
+=======
+                self.quantiles_[:, feature_idx] = _weighted_percentile(
+                    col,
+                    sample_weight=sample_weight,
+                    quantile=references / 100.0,
+>>>>>>> 06c6ffc19a (add review)
                     average=True,
                 )
             else:
-                self.quantiles_[:, i] = np.nanquantile(
-                    col_clean, references / 100.0, method="averaged_inverted_cdf"
+                self.quantiles_[:, feature_idx] = np.nanquantile(
+                    col, references / 100.0, method="averaged_inverted_cdf"
                 )
 
         self.quantiles_ = np.nanpercentile(X, references, axis=0)
@@ -2922,7 +2923,9 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         self.references_ = np.linspace(0, 1, self.n_quantiles_, endpoint=True)
         if sparse.issparse(X):
             if sample_weight is not None:
-                raise ValueError("sample_weight is not supported for sparse input.")
+                raise NotImplementedError(
+                    "sample_weight is not supported for sparse input."
+                )
             self._sparse_fit(X, rng)
         else:
             self._dense_fit(X, rng, sample_weight=sample_weight)
