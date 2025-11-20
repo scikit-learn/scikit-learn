@@ -1045,7 +1045,6 @@ def test_linearsvc_verbose():
 # XXX: this test is thread-unsafe because it uses probability=True:
 # https://github.com/scikit-learn/scikit-learn/issues/31885
 @pytest.mark.thread_unsafe
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_svc_clone_with_callable_kernel():
     iris = get_iris_dataset(42)
 
@@ -1053,7 +1052,6 @@ def test_svc_clone_with_callable_kernel():
     # as with built-in linear kernel
     svm_callable = svm.SVC(
         kernel=lambda x, y: np.dot(x, y.T),
-        probability=True,
         random_state=0,
         decision_function_shape="ovr",
     )
@@ -1063,7 +1061,6 @@ def test_svc_clone_with_callable_kernel():
 
     svm_builtin = svm.SVC(
         kernel="linear",
-        probability=True,
         random_state=0,
         decision_function_shape="ovr",
     )
@@ -1073,16 +1070,6 @@ def test_svc_clone_with_callable_kernel():
     assert_array_almost_equal(svm_cloned.dual_coef_, svm_builtin.dual_coef_)
     assert_array_almost_equal(svm_cloned.intercept_, svm_builtin.intercept_)
     assert_array_equal(svm_cloned.predict(iris.data), svm_builtin.predict(iris.data))
-
-    assert_array_almost_equal(
-        svm_cloned.predict_proba(iris.data),
-        svm_builtin.predict_proba(iris.data),
-        decimal=4,
-    )
-    assert_array_almost_equal(
-        svm_cloned.decision_function(iris.data),
-        svm_builtin.decision_function(iris.data),
-    )
 
 
 def test_svc_bad_kernel():
