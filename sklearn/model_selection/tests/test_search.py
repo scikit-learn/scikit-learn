@@ -395,7 +395,7 @@ def test_trivial_cv_results_attr():
 
     random_search = RandomizedSearchCV(clf, {"foo_param": [0]}, n_iter=1, cv=2)
     random_search.fit(X, y)
-    assert hasattr(grid_search, "cv_results_")
+    assert hasattr(random_search, "cv_results_")
 
 
 def test_no_refit():
