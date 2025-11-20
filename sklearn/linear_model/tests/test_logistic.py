@@ -758,8 +758,9 @@ def test_multinomial_cv_iris(use_legacy_attributes):
     # non-overlapping labels
     assert np.all(clf.scores_ == 0.0)
 
-    # Because of a LogisticRegressionCV bug, we need to create our own scoring
-    # function to pass explicitly the labels
+    # We use a proper scoring rule, i.e. the Brier score, to evaluate our classifier.
+    # Because of a bug in LogisticRegressionCV, we need to create our own scoring
+    # function to pass explicitly the labels.
     scoring = make_scorer(
         brier_score_loss,
         greater_is_better=False,
@@ -767,13 +768,17 @@ def test_multinomial_cv_iris(use_legacy_attributes):
         scale_by_half=True,
         labels=classes,
     )
-    clf = LogisticRegressionCV(cv=cv, scoring=scoring, use_legacy_attributes=False).fit(
-        X, y
-    )
+    # We set small Cs, that is strong penalty as the best C is likely the smallest one.
+    clf = LogisticRegressionCV(
+        cv=cv, scoring=scoring, Cs=np.logspace(-6, 3, 10), use_legacy_attributes=False
+    ).fit(X, y)
+    assert clf.C_ == 1e-6  # smallest value of provided Cs
     brier_scores = -clf.scores_
     # We expect the scores to be bad because train and test sets have
     # non-overlapping labels
     assert np.all(brier_scores > 0.7)
+    # But the best score should be better than the worst value of 1.
+    assert np.min(brier_scores) < 0.8
 
 
 def test_logistic_regression_solvers(global_random_seed):
