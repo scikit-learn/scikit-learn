@@ -49,9 +49,7 @@ kernels = [
     RBF(length_scale=0.1),
     fixed_kernel,
     RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
-    Product(
-        C(1.0, (1e-2, 1e2)), RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3))
-    ),
+    C(1.0, (1e-2, 1e2)) * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
 ]
 non_fixed_kernels = [kernel for kernel in kernels if kernel != fixed_kernel]
 

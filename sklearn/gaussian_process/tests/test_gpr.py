@@ -134,7 +134,6 @@ def test_converged_to_local_maximum(kernel):
     )
 
 
-@pytest.mark.xfail(raises=AssertionError)
 @pytest.mark.parametrize("kernel", non_fixed_kernels)
 def test_solution_inside_bounds(kernel):
     # Test that hyperparameter-optimization remains in bounds#
