@@ -9,10 +9,7 @@ import numpy as np
 from scipy import sparse, stats
 from scipy.special import boxcox, inv_boxcox
 
-from sklearn.utils import metadata_routing
-from sklearn.utils.stats import _weighted_percentile
-
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     OneToOneFeatureMixin,
@@ -48,6 +45,7 @@ from sklearn.utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
     inplace_csr_row_normalize_l2,
 )
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_sample_weight,
@@ -2820,16 +2818,10 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             col = X[:, feature_idx]
 
             if sample_weight is not None:
-<<<<<<< HEAD
-                weights_clean = sample_weight[mask]
-                self.quantiles_[:, i] = _weighted_percentile(
-                    col_clean, sample_weight=weights_clean, quantile=references / 100.0,
-=======
                 self.quantiles_[:, feature_idx] = _weighted_percentile(
                     col,
                     sample_weight=sample_weight,
                     quantile=references / 100.0,
->>>>>>> 06c6ffc19a (add review)
                     average=True,
                 )
             else:
