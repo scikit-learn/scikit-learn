@@ -84,34 +84,34 @@ jobs:
           key: v1-doc-datasets-{{ .Branch }}
           paths:
             - ~/scikit_learn_data
-      - store_artifacts:
-          path: doc/_build/html/stable
-          destination: doc
-      - store_artifacts:
-          path: ~/log.txt
-          destination: log.txt
-      # Persists generated documentation so that it can be attached and deployed
-      # in the 'deploy' step.
-      - persist_to_workspace:
-          root: doc/_build/html
-          paths: .
+      # - store_artifacts:
+      #     path: doc/_build/html/stable
+      #     destination: doc
+      # - store_artifacts:
+      #     path: ~/log.txt
+      #     destination: log.txt
+      # # Persists generated documentation so that it can be attached and deployed
+      # # in the 'deploy' step.
+      # - persist_to_workspace:
+      #     root: doc/_build/html
+      #     paths: .
 
-  deploy:
-    docker:
-      - image: cimg/base:current-22.04
-    steps:
-      - checkout
-      - run: ./build_tools/circle/checkout_merge_commit.sh
-      # Attach documentation generated in the 'doc' step so that it can be
-      # deployed.
-      - attach_workspace:
-          at: doc/_build/html
-      - run: ls -ltrh doc/_build/html/stable
-      - run:
-          command: |
-            if [[ "${CIRCLE_BRANCH}" =~ ^main$|^[0-9]+\.[0-9]+\.X$ ]]; then
-              bash build_tools/circle/push_doc.sh doc/_build/html/stable
-            fi
+  # deploy:
+  #   docker:
+  #     - image: cimg/base:current-22.04
+  #   steps:
+  #     - checkout
+  #     - run: ./build_tools/circle/checkout_merge_commit.sh
+  #     # Attach documentation generated in the 'doc' step so that it can be
+  #     # deployed.
+  #     - attach_workspace:
+  #         at: doc/_build/html
+  #     - run: ls -ltrh doc/_build/html/stable
+  #     - run:
+  #         command: |
+  #           if [[ "${CIRCLE_BRANCH}" =~ ^main$|^[0-9]+\.[0-9]+\.X$ ]]; then
+  #             bash build_tools/circle/push_doc.sh doc/_build/html/stable
+  #           fi
 
 workflows:
   version: 2
