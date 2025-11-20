@@ -654,29 +654,40 @@ The criterion supported when there are missing values are
 First we will describe how :class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor`
 handle missing-values in the data.
 
-During training, for each potential threshold on the non-missing data,
-the splitter will evaluate the split with all the missing values going to the left
-node or the right node. Hence all missing values always end up in the same node
-(sometimes with only missing values).
+For each potential threshold on the non-missing data, the splitter will evaluate
+the split with all the missing values going to the left node or the right node.
 
-During prediction, the treatment of missing-values is the following:
+Decisions are made as follows:
 
-- Missing values follow the path determined for missing values at training time::
+- By default when predicting, the samples with missing values are classified
+  with the class used in the split found during training::
 
-    >>> from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+    >>> from sklearn.tree import DecisionTreeClassifier
     >>> import numpy as np
 
     >>> X = np.array([0, 1, 6, np.nan]).reshape(-1, 1)
-    >>> y = [0, 0, 1, 0]
+    >>> y = [0, 0, 1, 1]
 
     >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
     >>> tree.predict(X)
-    array([0, 0, 1, 0])
+    array([0, 0, 1, 1])
 
-    >>> y = [0, 0, 1, 1.4]
-    >>> tree = DecisionTreeRegressor(random_state=0, max_depth=1).fit(X, y)
-    >>> tree.predict(X)
-    array([0. , 0. , 1.2, 1.2])
+- If the criterion evaluation is the same for both nodes,
+  then the tie for missing value at predict time is broken by going to the
+  right node. The splitter also checks the split where all the missing
+  values go to one child and non-missing values go to the other::
+
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> import numpy as np
+
+    >>> X = np.array([np.nan, -1, np.nan, 1]).reshape(-1, 1)
+    >>> y = [0, 0, 1, 1]
+
+    >>> tree = DecisionTreeClassifier(random_state=0, max_depth=1).fit(X, y)
+
+    >>> X_test = np.array([np.nan]).reshape(-1, 1)
+    >>> tree.predict(X_test)
+    array([1])
 
 - If no missing values are seen during training for a given feature, then during
   prediction missing values are mapped to the child with the most samples::
