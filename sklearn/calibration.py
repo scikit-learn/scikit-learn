@@ -33,9 +33,9 @@ from sklearn.utils._array_api import (
     _convert_to_numpy,
     _half_multinomial_loss,
     _is_numpy_namespace,
-    ensure_common_namespace_device,
     get_namespace,
     get_namespace_and_device,
+    move_to,
 )
 from sklearn.utils._param_validation import (
     HasMethods,
@@ -228,22 +228,31 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
     References
     ----------
-    .. [1] Obtaining calibrated probability estimates from decision trees
-           and naive Bayesian classifiers, B. Zadrozny & C. Elkan, ICML 2001
+    .. [1] B. Zadrozny & C. Elkan.
+       `Obtaining calibrated probability estimates from decision trees
+       and naive Bayesian classifiers
+       <https://cseweb.ucsd.edu/~elkan/calibrated.pdf>`_, ICML 2001.
 
-    .. [2] Transforming Classifier Scores into Accurate Multiclass
-           Probability Estimates, B. Zadrozny & C. Elkan, (KDD 2002)
+    .. [2] B. Zadrozny & C. Elkan.
+       `Transforming Classifier Scores into Accurate Multiclass
+       Probability Estimates
+       <https://web.archive.org/web/20060720141520id_/http://www.research.ibm.com:80/people/z/zadrozny/kdd2002-Transf.pdf>`_,
+       KDD 2002.
 
-    .. [3] Probabilistic Outputs for Support Vector Machines and Comparisons to
-           Regularized Likelihood Methods, J. Platt, (1999)
+    .. [3] J. Platt. `Probabilistic Outputs for Support Vector Machines
+       and Comparisons to Regularized Likelihood Methods
+       <https://www.researchgate.net/profile/John-Platt-2/publication/2594015_Probabilistic_Outputs_for_Support_Vector_Machines_and_Comparisons_to_Regularized_Likelihood_Methods/links/004635154cff5262d6000000/Probabilistic-Outputs-for-Support-Vector-Machines-and-Comparisons-to-Regularized-Likelihood-Methods.pdf>`_,
+       1999.
 
-    .. [4] Predicting Good Probabilities with Supervised Learning,
-           A. Niculescu-Mizil & R. Caruana, ICML 2005
+    .. [4] A. Niculescu-Mizil & R. Caruana.
+       `Predicting Good Probabilities with Supervised Learning
+       <https://www.cs.cornell.edu/~alexn/papers/calibration.icml05.crc.rev3.pdf>`_,
+       ICML 2005.
 
-    .. [5] Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger. 2017.
+    .. [5] Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger.
        :doi:`On Calibration of Modern Neural Networks<10.48550/arXiv.1706.04599>`.
        Proceedings of the 34th International Conference on Machine Learning,
-       PMLR 70:1321-1330, 2017
+       PMLR 70:1321-1330, 2017.
 
     Examples
     --------
@@ -398,9 +407,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             if sample_weight is not None and supports_sw:
                 routed_params.estimator.fit["sample_weight"] = sample_weight
 
-        xp, is_array_api = get_namespace(X)
+        xp, is_array_api, device_ = get_namespace_and_device(X)
         if is_array_api:
-            y, sample_weight = ensure_common_namespace_device(X, y, sample_weight)
+            y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
         # Check that each cross-validation fold can have at least one
         # example per class
         if isinstance(self.cv, int):
@@ -626,6 +635,9 @@ def _fit_classifier_calibrator_pair(
     classes : ndarray, shape (n_classes,)
         The target classes.
 
+    xp : namespace
+        Array API namespace.
+
     sample_weight : array-like, default=None
         Sample weights for `X`.
 
@@ -696,6 +708,9 @@ def _fit_calibrator(clf, predictions, y, classes, method, xp, sample_weight=None
 
     method : {'sigmoid', 'isotonic', 'temperature'}
         The method to use for calibration.
+
+    xp : namespace
+        Array API namespace.
 
     sample_weight : ndarray, shape (n_samples,), default=None
         Sample weights. If None, then samples are equally weighted.
