@@ -127,6 +127,7 @@ jobs:
             SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 5  # non-default seed
             SCIPY_ARRAY_API: 1
             PYTORCH_ENABLE_MPS_FALLBACK: 1
+            CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
 
     env: ${{ matrix }}
 
@@ -159,7 +160,12 @@ jobs:
         run: bash -l build_tools/azure/test_script.sh
 
       # - name: Run doctests in .py and .rst files
-      #  run: bash -l build_tools/azure/test_docs.sh
+      #   run: bash -l build_tools/azure/test_docs.sh
+      #   if: ${{ needs.retrieve-selected-tests.outputs.tests == ''}}
+
+      # - name: Run pytest soft dependency test
+      #   run: bash -l build_tools/azure/test_pytest_soft_dependency.sh
+      #   if: ${{ env.CHECK_PYTEST_SOFT_DEPENDENCY == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
 
       # - name: Combine coverage reports from parallel test runners
       #   run: bash -l build_tools/azure/combine_coverage_reports.sh
