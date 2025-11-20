@@ -118,20 +118,20 @@ def test_get_namespace_array_api(monkeypatch):
 )
 def test_move_to_array_api_conversions(array_input, reference):
     """Check conversion between various namespace and devices."""
-    if array_input[0] == "array_api_strict":
+    if array_input.xp == "array_api_strict":
         array_api_strict = pytest.importorskip(
             "array_api_strict", reason="array-api-strict not available"
         )
-    xp = _array_api_for_tests(reference[0], reference[1])
+    xp = _array_api_for_tests(reference.xp, reference.device)
     xp_array = _array_api_for_tests(array_input[0], array_input[1])
 
     with config_context(array_api_dispatch=True):
-        device_ = device(xp.asarray([1], device=reference[1]))
+        device_ = device(xp.asarray([1], device=reference.device))
 
-        if array_input[0] == "array_api_strict":
+        if array_input.xp == "array_api_strict":
             array_device = array_api_strict.Device("CPU_DEVICE")
         else:
-            array_device = array_input[1]
+            array_device = array_input.device
         array = xp_array.asarray([1, 2, 3], device=array_device)
 
         array_out = move_to(array, xp=xp, device=device_)

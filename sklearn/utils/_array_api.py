@@ -6,6 +6,7 @@
 import itertools
 import math
 import os
+from collections import namedtuple
 
 import numpy
 import scipy
@@ -23,14 +24,17 @@ __all__ = ["xpx"]  # we import xpx here just to re-export it, need this to appea
 
 _NUMPY_NAMESPACE_NAMES = {"numpy", "sklearn.externals.array_api_compat.numpy"}
 
+Reference = namedtuple('Reference', ['xp', 'device'])
+Input_array = namedtuple('Input_array', ['xp', 'device'])
+
 MIXED_NAMESPACE_COMBINATIONS = [
-    (("cupy", None), ("torch", "cuda"), "cupy to torch cuda"),
-    (("torch", "mps"), ("numpy", None), "torch mps to numpy"),
-    (("numpy", None), ("torch", "cuda"), "numpy to torch cuda"),
-    (("numpy", None), ("torch", "mps"), "numpy to torch mps"),
+    (Input_array("cupy", None), Reference("torch", "cuda"), "cupy to torch cuda"),
+    (Input_array("torch", "mps"), Reference("numpy", None), "torch mps to numpy"),
+    (Input_array("numpy", None), Reference("torch", "cuda"), "numpy to torch cuda"),
+    (Input_array("numpy", None), Reference("torch", "mps"), "numpy to torch mps"),
     (
-        ("array_api_strict", None),
-        ("torch", "mps"),
+        Input_array("array_api_strict", None),
+        Reference("torch", "mps"),
         "array_api_strict to torch mps",
     ),
 ]
