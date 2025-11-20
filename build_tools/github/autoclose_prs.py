@@ -6,7 +6,7 @@ import os
 from datetime import datetime, timedelta, timezone
 from pprint import pprint
 
-from github import Github
+from github import Auth, Github
 
 
 def get_labeled_last_time(pr, label):
@@ -24,7 +24,8 @@ cutoff_days = 14
 gh_repo = "scikit-learn/scikit-learn"
 github_token = os.getenv("GITHUB_TOKEN")
 
-gh = Github(github_token)
+auth = Auth.Token(github_token)
+gh = Github(auth=auth)
 repo = gh.get_repo(gh_repo)
 
 
