@@ -1,0 +1,7 @@
+- Introduced a new config key: `sparse_interface` to control whether functions
+  return sparse objects using SciPy sparse matrix or SciPy sparse array. See more at
+  `the SciPy Sparse Migration Guide.<https://docs.scipy.org/doc/scipy/reference/sparse.migration_to_sparray.html>`_
+  The scikit-learn config `sparse_interface` initially defaults
+  to sparse matrix ("spmatrix"). The plan is to have the default change to
+  sparse array ("sparray") in a few releases.
+  By :user:`Dan Schult <dschult>`
