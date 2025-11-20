@@ -24,22 +24,6 @@ __all__ = ["xpx"]  # we import xpx here just to re-export it, need this to appea
 
 _NUMPY_NAMESPACE_NAMES = {"numpy", "sklearn.externals.array_api_compat.numpy"}
 
-Reference = namedtuple('Reference', ['xp', 'device'])
-Input_array = namedtuple('Input_array', ['xp', 'device'])
-
-MIXED_NAMESPACE_COMBINATIONS = [
-    (Input_array("cupy", None), Reference("torch", "cuda"), "cupy to torch cuda"),
-    (Input_array("torch", "mps"), Reference("numpy", None), "torch mps to numpy"),
-    (Input_array("numpy", None), Reference("torch", "cuda"), "numpy to torch cuda"),
-    (Input_array("numpy", None), Reference("torch", "mps"), "numpy to torch mps"),
-    (
-        Input_array("array_api_strict", None),
-        Reference("torch", "mps"),
-        "array_api_strict to torch mps",
-    ),
-]
-
-
 def yield_namespaces(include_numpy_namespaces=True):
     """Yield supported namespace.
 
@@ -137,6 +121,39 @@ def _get_namespace_device_dtype_ids(param):
             return "device1"
         if param == array_api_strict.Device("device2"):
             return "device2"
+
+
+# could also put with `_array_api_for_tests`, and use pytest param
+def yield_mixed_namespace_input_combinations():
+    """Yield mixed namespace and device inputs for testing."""
+
+    Reference = namedtuple("Reference", ["xp", "device"])
+    Input_array = namedtuple("Input_array", ["xp", "device"])
+
+    yield Input_array("cupy", None), Reference("torch", "cuda"), "cupy to torch cuda"
+    yield Input_array("torch", "mps"), Reference("numpy", None), "torch mps to numpy"
+    yield Input_array("numpy", None), Reference("torch", "cuda"), "numpy to torch cuda"
+    yield Input_array("numpy", None), Reference("torch", "mps"), "numpy to torch mps"
+
+    try:
+        import array_api_strict
+        device = array_api_strict.Device("CPU_DEVICE")
+    except ImportError:
+        # This case will generally be skipped when `array_api_strict` is not installed
+        # but we still include it so it shows in the test output.
+        device = None
+
+    yield (
+        Input_array("array_api_strict", device),
+        Reference("torch", "mps"),
+        "array_api_strict to torch mps",
+    )
+
+    yield (
+        Input_array("array_api_strict", device),
+        Reference("torch", "cpu"),
+        "array_api_strict to torch mps",
+    )
 
 
 def _check_array_api_dispatch(array_api_dispatch):
