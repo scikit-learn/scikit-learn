@@ -435,7 +435,6 @@ def test_score_samples_on_pipeline_without_score_samples():
     assert inner_msg in str(exec_info.value.__cause__)
 
 
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_pipeline_methods_preprocessing_svm():
     # Test the various methods of the pipeline (preprocessing + svm).
     X = iris.data
@@ -444,7 +443,7 @@ def test_pipeline_methods_preprocessing_svm():
     n_classes = len(np.unique(y))
     scaler = StandardScaler()
     pca = PCA(n_components=2, svd_solver="randomized", whiten=True)
-    clf = SVC(random_state=0, probability=True, decision_function_shape="ovr")
+    clf = LogisticRegression()
 
     for preprocessing in [scaler, pca]:
         pipe = Pipeline([("preprocess", preprocessing), ("svc", clf)])

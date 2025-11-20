@@ -291,7 +291,6 @@ def test_ovr_multiclass():
         assert_array_equal(y_pred, [0, 0, 1])
 
 
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_ovr_binary():
     # Toy dataset where features correspond directly to labels.
     X = np.array([[0, 0, 5], [0, 5, 0], [3, 0, 0], [0, 0, 6], [6, 0, 0]])
