@@ -452,6 +452,7 @@ class SparseTransformer(TransformerMixin, BaseEstimator):
         validate_data(self, X)
         return self
 
+    # pyrefly: ignore [bad-override]
     def fit_transform(self, X, y=None):
         return self.fit(X, y).transform(X)
 
@@ -499,6 +500,7 @@ class UntaggedBinaryClassifier(SGDClassifier):
 
 
 class TaggedBinaryClassifier(UntaggedBinaryClassifier):
+    # pyrefly: ignore [bad-override]
     def fit(self, X, y):
         y_type = type_of_target(y, input_name="y", raise_unknown=True)
         if y_type != "binary":

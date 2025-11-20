@@ -477,6 +477,7 @@ class _PLS(
         y_pred = X @ self.coef_.T + self.intercept_
         return y_pred.ravel() if self._predict_1d else y_pred
 
+    # pyrefly: ignore [bad-override]
     def fit_transform(self, X, y=None):
         """Learn and apply the dimension reduction on the train data.
 
@@ -1076,6 +1077,7 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             return x_scores, y_scores
         return x_scores
 
+    # pyrefly: ignore [bad-override]
     def fit_transform(self, X, y=None):
         """Learn and apply the dimensionality reduction.
 

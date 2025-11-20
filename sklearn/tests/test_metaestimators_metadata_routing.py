@@ -81,7 +81,7 @@ rng = np.random.RandomState(42)
 N, M = 100, 4
 X = rng.rand(N, M)
 y = rng.randint(0, 3, size=N)
-y_binary = (y >= 1).astype(int)
+y_binary = y >= 1
 classes = np.unique(y)
 y_multi = rng.randint(0, 3, size=(N, 3))
 classes_multi = [np.unique(y_multi[:, i]) for i in range(y_multi.shape[1])]

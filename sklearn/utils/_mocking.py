@@ -308,6 +308,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         else:
             return rng.randn(_num_samples(X), len(self.classes_))
 
+    # pyrefly: ignore [bad-param-name-override]
     def score(self, X=None, Y=None):
         """Fake score.
 
