@@ -23,6 +23,18 @@ __all__ = ["xpx"]  # we import xpx here just to re-export it, need this to appea
 
 _NUMPY_NAMESPACE_NAMES = {"numpy", "sklearn.externals.array_api_compat.numpy"}
 
+MIXED_NAMESPACE_COMBINATIONS = [
+    (("cupy", None), ("torch", "cuda"), "cupy to torch cuda"),
+    (("torch", "mps"), ("numpy", None), "torch mps to numpy"),
+    (("numpy", None), ("torch", "cuda"), "numpy to torch cuda"),
+    (("numpy", None), ("torch", "mps"), "numpy to torch mps"),
+    (
+        ("array_api_strict", None),
+        ("torch", "mps"),
+        "array_api_strict to torch mps",
+    ),
+]
+
 
 def yield_namespaces(include_numpy_namespaces=True):
     """Yield supported namespace.

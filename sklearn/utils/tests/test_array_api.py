@@ -11,6 +11,7 @@ from sklearn._config import config_context
 from sklearn._loss import HalfMultinomialLoss
 from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import (
+    MIXED_NAMESPACE_COMBINATIONS,
     _add_to_diagonal,
     _asarray_with_order,
     _atol_for_type,
@@ -113,17 +114,7 @@ def test_get_namespace_array_api(monkeypatch):
 
 @pytest.mark.parametrize(
     "array_input, reference",
-    [
-        pytest.param(("cupy", None), ("torch", "cuda"), id="cupy to torch cuda"),
-        pytest.param(("torch", "mps"), ("numpy", None), id="torch mps to numpy"),
-        pytest.param(("numpy", None), ("torch", "cuda"), id="numpy to torch cuda"),
-        pytest.param(("numpy", None), ("torch", "mps"), id="numpy to torch mps"),
-        pytest.param(
-            ("array_api_strict", None),
-            ("torch", "mps"),
-            id="array_api_strict to torch mps",
-        ),
-    ],
+    [pytest.param(*args[:2], id=args[2]) for args in MIXED_NAMESPACE_COMBINATIONS],
 )
 def test_move_to_array_api_conversions(array_input, reference):
     """Check conversion between various namespace and devices."""
