@@ -1539,3 +1539,5 @@ def test_probability_raises_futurewarning(Estimator, name):
     X, y = make_classification()
     with pytest.warns(FutureWarning):
         Estimator(probability=True).fit(X, y)
+    with pytest.warns(FutureWarning):
+        Estimator(probability=False).fit(X, y)

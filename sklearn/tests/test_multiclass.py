@@ -329,7 +329,6 @@ def test_ovr_binary():
 
     for base_clf in (
         MultinomialNB(),
-        SVC(probability=True),
         LogisticRegression(),
     ):
         conduct_test(base_clf, test_predict_proba=True)
@@ -409,20 +408,11 @@ def test_ovr_multilabel_predict_proba():
         assert not hasattr(decision_only, "predict_proba")
 
         # Estimator with predict_proba disabled, depending on parameters.
-        decision_only = OneVsRestClassifier(svm.SVC(probability=False))
+        decision_only = OneVsRestClassifier(svm.SVC())
         assert not hasattr(decision_only, "predict_proba")
         decision_only.fit(X_train, Y_train)
         assert not hasattr(decision_only, "predict_proba")
         assert hasattr(decision_only, "decision_function")
-
-        # Estimator which can get predict_proba enabled after fitting
-        gs = GridSearchCV(
-            svm.SVC(probability=False), param_grid={"probability": [True]}
-        )
-        proba_after_fit = OneVsRestClassifier(gs)
-        assert not hasattr(proba_after_fit, "predict_proba")
-        proba_after_fit.fit(X_train, Y_train)
-        assert hasattr(proba_after_fit, "predict_proba")
 
         Y_pred = clf.predict(X_test)
         Y_proba = clf.predict_proba(X_test)
