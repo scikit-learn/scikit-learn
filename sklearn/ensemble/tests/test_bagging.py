@@ -126,18 +126,8 @@ def test_classification():
 )
 def test_sparse_classification(sparse_container, params, method):
     # Check classification for various parameter settings on sparse input.
-    if method in ["predict", "decision_function"]:
-        params_svm = dict(kernel="linear", decision_function_shape="ovr")
-        svm = SVC
-    else:
-        svm = CalibratedClassifierCV
-        params_svm = dict(
-            estimator=SVC(kernel="linear", decision_function_shape="ovr"),
-            ensemble=False,
-            cv=3,
-        )
 
-    class CustomSVC(svm):
+    class CustomClassifier(LogisticRegression):
         """SVC variant that records the nature of the training set"""
 
         def fit(self, X, y):
@@ -155,7 +145,7 @@ def test_sparse_classification(sparse_container, params, method):
 
     # Trained on sparse format
     sparse_classifier = BaggingClassifier(
-        estimator=CustomSVC(**params_svm),
+        estimator=CustomClassifier(),
         random_state=1,
         **params,
     ).fit(X_train_sparse, y_train)
@@ -164,7 +154,7 @@ def test_sparse_classification(sparse_container, params, method):
 
     # Trained on dense format
     dense_classifier = BaggingClassifier(
-        estimator=CustomSVC(**params_svm),
+        estimator=CustomClassifier(),
         random_state=1,
         **params,
     ).fit(X_train, y_train)
