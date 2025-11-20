@@ -1423,7 +1423,6 @@ def test_xfail_count_with_no_fast_fail():
             on_fail="warn",
         )
     xfail_warns = [w for w in records if w.category != SkipTestWarning]
-
     assert all([rec.category == EstimatorCheckFailedWarning for rec in xfail_warns])
     assert len(xfail_warns) == len(expected_failed_checks)
 
