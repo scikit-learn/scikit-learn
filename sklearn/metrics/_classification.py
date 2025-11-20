@@ -11,6 +11,8 @@ the lower the better.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
+from contextlib import nullcontext
+from math import sqrt
 from numbers import Integral, Real
 
 import numpy as np
@@ -32,14 +34,17 @@ from sklearn.utils._array_api import (
     _bincount,
     _convert_to_numpy,
     _count_nonzero,
+    _fill_diagonal,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
+    _is_xp_namespace,
     _max_precision_float_dtype,
-    _searchsorted,
     _tolist,
     _union1d,
     get_namespace,
     get_namespace_and_device,
+    move_to,
+    supported_float_dtypes,
     xpx,
 )
 from sklearn.utils._param_validation import (
@@ -170,6 +175,69 @@ def _check_targets(y_true, y_pred, sample_weight=None):
     return y_type, y_true, y_pred, sample_weight
 
 
+def _one_hot_encoding_multiclass_target(y_true, labels, target_xp, target_device):
+    """Convert multi-class `y_true` into a one-hot encoded array and also ensure
+    that the encoded array is placed on the target API namespace and device.
+    Also return the classes provided by `LabelBinarizer` in additional to the
+    integer encoded array.
+    """
+    xp_y_true, is_y_true_array_api = get_namespace(y_true)
+
+    # For classification metrics both array API compatible and non array API
+    # compatible inputs are allowed for `y_true`. This is because arrays that
+    # store class labels as strings cannot be represented in namespaces other
+    # than Numpy. Thus to avoid unnecessary complexity, we always convert
+    # `y_true` to a Numpy array so that it can be processed appropriately by
+    # `LabelBinarizer` and then transfer the integer encoded output back to the
+    # target namespace and device.
+    if is_y_true_array_api:
+        y_true = _convert_to_numpy(y_true, xp=xp_y_true)
+
+    lb = LabelBinarizer()
+    if labels is not None:
+        lb = lb.fit(labels)
+        # LabelBinarizer does not respect the order implied by labels, which
+        # can be misleading.
+        if not np.all(lb.classes_ == labels):
+            warnings.warn(
+                f"Labels passed were {labels}. But this function "
+                "assumes labels are ordered lexicographically. "
+                f"Pass the ordered labels={lb.classes_.tolist()} and ensure that "
+                "the columns of y_prob correspond to this ordering.",
+                UserWarning,
+            )
+        if not np.isin(y_true, labels).all():
+            undeclared_labels = set(y_true) - set(labels)
+            raise ValueError(
+                f"y_true contains values {undeclared_labels} not belonging "
+                f"to the passed labels {labels}."
+            )
+
+    else:
+        lb = lb.fit(y_true)
+
+    if len(lb.classes_) == 1:
+        if labels is None:
+            raise ValueError(
+                "y_true contains only one label ({0}). Please "
+                "provide the list of all expected class labels explicitly through the "
+                "labels argument.".format(lb.classes_[0])
+            )
+        else:
+            raise ValueError(
+                "The labels array needs to contain at least two "
+                "labels, got {0}.".format(lb.classes_)
+            )
+
+    transformed_labels = lb.transform(y_true)
+    transformed_labels = target_xp.asarray(transformed_labels, device=target_device)
+    if transformed_labels.shape[1] == 1:
+        transformed_labels = target_xp.concat(
+            (1 - transformed_labels, transformed_labels), axis=1
+        )
+    return transformed_labels, lb.classes_
+
+
 def _validate_multiclass_probabilistic_prediction(
     y_true, y_prob, sample_weight, labels
 ):
@@ -209,75 +277,44 @@ def _validate_multiclass_probabilistic_prediction(
 
     y_prob : array of shape (n_samples, n_classes)
     """
+    xp, _, device_ = get_namespace_and_device(y_prob)
+
     y_prob = check_array(
-        y_prob, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
+        y_prob, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
     )
 
-    if y_prob.max() > 1:
-        raise ValueError(f"y_prob contains values greater than 1: {y_prob.max()}")
-    if y_prob.min() < 0:
-        raise ValueError(f"y_prob contains values lower than 0: {y_prob.min()}")
+    if xp.max(y_prob) > 1:
+        raise ValueError(f"y_prob contains values greater than 1: {xp.max(y_prob)}")
+    if xp.min(y_prob) < 0:
+        raise ValueError(f"y_prob contains values lower than 0: {xp.min(y_prob)}")
 
     check_consistent_length(y_prob, y_true, sample_weight)
     if sample_weight is not None:
-        _check_sample_weight(sample_weight, y_true, force_float_dtype=False)
+        _check_sample_weight(sample_weight, y_prob, force_float_dtype=False)
 
-    lb = LabelBinarizer()
-
-    if labels is not None:
-        lb = lb.fit(labels)
-        # LabelBinarizer does not respect the order implied by labels, which
-        # can be misleading.
-        if not np.all(lb.classes_ == labels):
-            warnings.warn(
-                f"Labels passed were {labels}. But this function "
-                "assumes labels are ordered lexicographically. "
-                f"Pass the ordered labels={lb.classes_.tolist()} and ensure that "
-                "the columns of y_prob correspond to this ordering.",
-                UserWarning,
-            )
-        if not np.isin(y_true, labels).all():
-            undeclared_labels = set(y_true) - set(labels)
-            raise ValueError(
-                f"y_true contains values {undeclared_labels} not belonging "
-                f"to the passed labels {labels}."
-            )
-
-    else:
-        lb = lb.fit(y_true)
-
-    if len(lb.classes_) == 1:
-        if labels is None:
-            raise ValueError(
-                "y_true contains only one label ({0}). Please "
-                "provide the list of all expected class labels explicitly through the "
-                "labels argument.".format(lb.classes_[0])
-            )
-        else:
-            raise ValueError(
-                "The labels array needs to contain at least two "
-                "labels, got {0}.".format(lb.classes_)
-            )
-
-    transformed_labels = lb.transform(y_true)
-
-    if transformed_labels.shape[1] == 1:
-        transformed_labels = np.append(
-            1 - transformed_labels, transformed_labels, axis=1
-        )
+    transformed_labels, lb_classes = _one_hot_encoding_multiclass_target(
+        y_true=y_true, labels=labels, target_xp=xp, target_device=device_
+    )
 
     # If y_prob is of single dimension, assume y_true to be binary
     # and then check.
     if y_prob.ndim == 1:
-        y_prob = y_prob[:, np.newaxis]
+        y_prob = y_prob[:, xp.newaxis]
     if y_prob.shape[1] == 1:
-        y_prob = np.append(1 - y_prob, y_prob, axis=1)
+        y_prob = xp.concat([1 - y_prob, y_prob], axis=1)
 
-    eps = np.finfo(y_prob.dtype).eps
+    eps = xp.finfo(y_prob.dtype).eps
 
     # Make sure y_prob is normalized
-    y_prob_sum = y_prob.sum(axis=1)
-    if not np.allclose(y_prob_sum, 1, rtol=np.sqrt(eps)):
+    y_prob_sum = xp.sum(y_prob, axis=1)
+
+    if not xp.all(
+        xpx.isclose(
+            y_prob_sum,
+            xp.asarray(1, dtype=y_prob_sum.dtype, device=device_),
+            rtol=sqrt(eps),
+        )
+    ):
         warnings.warn(
             "The y_prob values do not sum to one. Make sure to pass probabilities.",
             UserWarning,
@@ -285,7 +322,7 @@ def _validate_multiclass_probabilistic_prediction(
 
     # Check if dimensions are consistent.
     transformed_labels = check_array(transformed_labels)
-    if len(lb.classes_) != y_prob.shape[1]:
+    if len(lb_classes) != y_prob.shape[1]:
         if labels is None:
             raise ValueError(
                 "y_true and y_prob contain different number of "
@@ -293,14 +330,14 @@ def _validate_multiclass_probabilistic_prediction(
                 "labels explicitly through the labels argument. "
                 "Classes found in "
                 "y_true: {2}".format(
-                    transformed_labels.shape[1], y_prob.shape[1], lb.classes_
+                    transformed_labels.shape[1], y_prob.shape[1], lb_classes
                 )
             )
         else:
             raise ValueError(
                 "The number of classes in labels is different "
                 "from that in y_prob. Classes found in "
-                "labels: {0}".format(lb.classes_)
+                "labels: {0}".format(lb_classes)
             )
 
     return transformed_labels, y_prob
@@ -377,7 +414,8 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
     """
-    xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
     # Compute accuracy for each possible representation
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred, sample_weight = _check_targets(
@@ -457,6 +495,8 @@ def confusion_matrix(
     ConfusionMatrixDisplay.from_predictions : Plot the confusion matrix
         given the true and predicted labels.
     ConfusionMatrixDisplay : Confusion Matrix visualization.
+    confusion_matrix_at_thresholds : For binary classification, compute true negative,
+        false positive, false negative and true positive counts per threshold.
 
     References
     ----------
@@ -770,7 +810,7 @@ def multilabel_confusion_matrix(
             )
 
         # Retain only selected labels
-        indices = _searchsorted(sorted_labels, labels[:n_labels], xp=xp)
+        indices = xp.searchsorted(sorted_labels, labels[:n_labels])
         tp_sum = xp.take(tp_sum, indices, axis=0)
         true_sum = xp.take(true_sum, indices, axis=0)
         pred_sum = xp.take(pred_sum, indices, axis=0)
@@ -935,23 +975,30 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
             raise ValueError(msg) from e
         raise
 
+    xp, _, device_ = get_namespace_and_device(y1, y2)
     n_classes = confusion.shape[0]
-    sum0 = np.sum(confusion, axis=0)
-    sum1 = np.sum(confusion, axis=1)
-    expected = np.outer(sum0, sum1) / np.sum(sum0)
+    # array_api_strict only supports floating point dtypes for __truediv__
+    # which is used below to compute `expected` as well as `k`. Therefore
+    # we use the maximum floating point dtype available for relevant arrays
+    # to avoid running into this problem.
+    max_float_dtype = _max_precision_float_dtype(xp, device=device_)
+    confusion = xp.astype(confusion, max_float_dtype, copy=False)
+    sum0 = xp.sum(confusion, axis=0)
+    sum1 = xp.sum(confusion, axis=1)
+    expected = xp.linalg.outer(sum0, sum1) / xp.sum(sum0)
 
     if weights is None:
-        w_mat = np.ones([n_classes, n_classes], dtype=int)
-        w_mat.flat[:: n_classes + 1] = 0
+        w_mat = xp.ones([n_classes, n_classes], dtype=max_float_dtype, device=device_)
+        _fill_diagonal(w_mat, 0, xp=xp)
     else:  # "linear" or "quadratic"
-        w_mat = np.zeros([n_classes, n_classes], dtype=int)
-        w_mat += np.arange(n_classes)
+        w_mat = xp.zeros([n_classes, n_classes], dtype=max_float_dtype, device=device_)
+        w_mat += xp.arange(n_classes)
         if weights == "linear":
-            w_mat = np.abs(w_mat - w_mat.T)
+            w_mat = xp.abs(w_mat - w_mat.T)
         else:
             w_mat = (w_mat - w_mat.T) ** 2
 
-    k = np.sum(w_mat * confusion) / np.sum(w_mat * expected)
+    k = xp.sum(w_mat * confusion) / xp.sum(w_mat * expected)
     return float(1 - k)
 
 
@@ -990,7 +1037,7 @@ def jaccard_score(
     sets, is used to compare set of predicted labels for a sample to the
     corresponding set of labels in ``y_true``.
 
-    Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
+    Support beyond :term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return the
     Jaccard similarity coefficient for `pos_label`. If `average` is not `'binary'`,
@@ -1591,7 +1638,7 @@ def fbeta_score(
     Where :math:`\\text{tp}` is the number of true positives, :math:`\\text{fp}` is the
     number of false positives, and :math:`\\text{fn}` is the number of false negatives.
 
-    Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
+    Support beyond :term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return
     F-beta score for `pos_label`. If `average` is not `'binary'`, `pos_label` is
@@ -1910,7 +1957,7 @@ def precision_recall_fscore_support(
 
     The support is the number of occurrences of each class in ``y_true``.
 
-    Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
+    Support beyond :term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return
     metrics for `pos_label`. If `average` is not `'binary'`, `pos_label` is ignored
@@ -2463,7 +2510,7 @@ def precision_score(
 
     The best value is 1 and the worst value is 0.
 
-    Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
+    Support beyond :term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return
     precision for `pos_label`. If `average` is not `'binary'`, `pos_label` is ignored
@@ -2645,7 +2692,7 @@ def recall_score(
 
     The best value is 1 and the worst value is 0.
 
-    Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
+    Support beyond :term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return
     recall for `pos_label`. If `average` is not `'binary'`, `pos_label` is ignored
@@ -2871,14 +2918,25 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     0.625
     """
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
-    with np.errstate(divide="ignore", invalid="ignore"):
-        per_class = np.diag(C) / C.sum(axis=1)
-    if np.any(np.isnan(per_class)):
+    xp, _, device_ = get_namespace_and_device(y_pred, y_true)
+    if _is_xp_namespace(xp, "array_api_strict"):
+        # array_api_strict only supports floating point dtypes for __truediv__
+        # which is used below to compute `per_class`.
+        C = xp.astype(C, _max_precision_float_dtype(xp, device=device_), copy=False)
+
+    context_manager = (
+        np.errstate(divide="ignore", invalid="ignore")
+        if _is_numpy_namespace(xp)
+        else nullcontext()
+    )
+    with context_manager:
+        per_class = xp.linalg.diagonal(C) / xp.sum(C, axis=1)
+    if xp.any(xp.isnan(per_class)):
         warnings.warn("y_pred contains classes not in y_true")
-        per_class = per_class[~np.isnan(per_class)]
-    score = np.mean(per_class)
+        per_class = per_class[~xp.isnan(per_class)]
+    score = xp.mean(per_class)
     if adjusted:
-        n_classes = len(per_class)
+        n_classes = per_class.shape[0]
         chance = 1 / n_classes
         score -= chance
         score /= 1 - chance
@@ -3321,6 +3379,10 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616
     """
+    if sample_weight is not None:
+        xp, _, device_ = get_namespace_and_device(y_pred)
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
+
     transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
         y_true, y_pred, sample_weight, labels
     )
@@ -3334,9 +3396,12 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
 
 def _log_loss(transformed_labels, y_pred, *, normalize=True, sample_weight=None):
     """Log loss for transformed labels and validated probabilistic predictions."""
-    eps = np.finfo(y_pred.dtype).eps
-    y_pred = np.clip(y_pred, eps, 1 - eps)
-    loss = -xlogy(transformed_labels, y_pred).sum(axis=1)
+    xp, _, device_ = get_namespace_and_device(y_pred)
+    if sample_weight is not None:
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
+    eps = xp.finfo(y_pred.dtype).eps
+    y_pred = xp.clip(y_pred, eps, 1 - eps)
+    loss = -xp.sum(xlogy(transformed_labels, y_pred), axis=1)
     return float(_average(loss, weights=sample_weight, normalize=normalize))
 
 
@@ -3492,6 +3557,16 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     return float(np.average(losses, weights=sample_weight))
 
 
+def _one_hot_encoding_binary_target(y_true, pos_label, target_xp, target_device):
+    """Convert binary `y_true` into a one-hot encoded array and also ensure that
+    the encoded array is placed on the target API namespace and device.
+    """
+    xp_y_true, _ = get_namespace(y_true)
+    y_true_pos = xp_y_true.asarray(y_true == pos_label, dtype=xp_y_true.int64)
+    y_true_pos = target_xp.asarray(y_true_pos, device=target_device)
+    return target_xp.stack((1 - y_true_pos, y_true_pos), axis=1)
+
+
 def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos_label):
     r"""Convert y_true and y_prob in binary classification to shape (n_samples, 2)
 
@@ -3531,7 +3606,7 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
 
     check_consistent_length(y_prob, y_true, sample_weight)
     if sample_weight is not None:
-        _check_sample_weight(sample_weight, y_true, force_float_dtype=False)
+        _check_sample_weight(sample_weight, y_prob, force_float_dtype=False)
 
     y_type = type_of_target(y_true, input_name="y_true")
     if y_type != "binary":
@@ -3540,10 +3615,11 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
             "binary according to the shape of y_prob."
         )
 
-    if y_prob.max() > 1:
-        raise ValueError(f"y_prob contains values greater than 1: {y_prob.max()}")
-    if y_prob.min() < 0:
-        raise ValueError(f"y_prob contains values less than 0: {y_prob.min()}")
+    xp, _, device_ = get_namespace_and_device(y_prob)
+    if xp.max(y_prob) > 1:
+        raise ValueError(f"y_prob contains values greater than 1: {xp.max(y_prob)}")
+    if xp.min(y_prob) < 0:
+        raise ValueError(f"y_prob contains values less than 0: {xp.min(y_prob)}")
 
     # check that pos_label is consistent with y_true
     try:
@@ -3558,9 +3634,10 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
             raise
 
     # convert (n_samples,) to (n_samples, 2) shape
-    y_true = np.array(y_true == pos_label, int)
-    transformed_labels = np.column_stack((1 - y_true, y_true))
-    y_prob = np.column_stack((1 - y_prob, y_prob))
+    transformed_labels = _one_hot_encoding_binary_target(
+        y_true=y_true, pos_label=pos_label, target_xp=xp, target_device=device_
+    )
+    y_prob = xp.stack((1 - y_prob, y_prob), axis=1)
 
     return transformed_labels, y_prob
 
@@ -3693,9 +3770,12 @@ def brier_score_loss(
     ... )
     0.146
     """
+    xp, _, device_ = get_namespace_and_device(y_proba)
     y_proba = check_array(
-        y_proba, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
+        y_proba, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
     )
+    if sample_weight is not None:
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
     if y_proba.ndim == 1 or y_proba.shape[1] == 1:
         transformed_labels, y_proba = _validate_binary_probabilistic_prediction(
@@ -3706,8 +3786,9 @@ def brier_score_loss(
             y_true, y_proba, sample_weight, labels
         )
 
-    brier_score = np.average(
-        np.sum((transformed_labels - y_proba) ** 2, axis=1), weights=sample_weight
+    transformed_labels = xp.astype(transformed_labels, y_proba.dtype, copy=False)
+    brier_score = _average(
+        xp.sum((transformed_labels - y_proba) ** 2, axis=1), weights=sample_weight
     )
 
     if scale_by_half == "auto":
@@ -3782,11 +3863,16 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
         return float("nan")
 
     y_pred = check_array(y_pred, ensure_2d=False, dtype="numeric")
+    if sample_weight is not None:
+        xp, _, device_ = get_namespace_and_device(y_pred)
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
+
     transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
         y_true, y_pred, sample_weight, labels
     )
-    y_pred_null = np.average(transformed_labels, axis=0, weights=sample_weight)
-    y_pred_null = np.tile(y_pred_null, (len(y_true), 1))
+    xp, _ = get_namespace(y_pred, transformed_labels)
+    y_pred_null = _average(transformed_labels, axis=0, weights=sample_weight)
+    y_pred_null = xp.tile(y_pred_null, (y_pred.shape[0], 1))
 
     numerator = _log_loss(
         transformed_labels,
@@ -3877,9 +3963,13 @@ def d2_brier_score(
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
 
+    xp, _, device_ = get_namespace_and_device(y_proba)
     y_proba = check_array(
-        y_proba, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
+        y_proba, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
     )
+    if sample_weight is not None:
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
+
     if y_proba.ndim == 1 or y_proba.shape[1] == 1:
         transformed_labels, y_proba = _validate_binary_probabilistic_prediction(
             y_true, y_proba, sample_weight, pos_label
@@ -3888,16 +3978,17 @@ def d2_brier_score(
         transformed_labels, y_proba = _validate_multiclass_probabilistic_prediction(
             y_true, y_proba, sample_weight, labels
         )
-    y_proba_null = np.average(transformed_labels, axis=0, weights=sample_weight)
-    y_proba_null = np.tile(y_proba_null, (len(y_true), 1))
+    transformed_labels = xp.astype(transformed_labels, y_proba.dtype, copy=False)
+    y_proba_null = _average(transformed_labels, axis=0, weights=sample_weight)
+    y_proba_null = xp.tile(y_proba_null, (y_proba.shape[0], 1))
 
     # Scaling does not matter in D^2 score as it cancels out by taking the ratio.
-    brier_score = np.average(
-        np.sum((transformed_labels - y_proba) ** 2, axis=1),
+    brier_score = _average(
+        xp.sum((transformed_labels - y_proba) ** 2, axis=1),
         weights=sample_weight,
     )
-    brier_score_null = np.average(
-        np.sum((transformed_labels - y_proba_null) ** 2, axis=1),
+    brier_score_null = _average(
+        xp.sum((transformed_labels - y_proba_null) ** 2, axis=1),
         weights=sample_weight,
     )
     return float(1 - brier_score / brier_score_null)

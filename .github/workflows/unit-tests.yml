@@ -41,11 +41,76 @@ jobs:
           pip install ninja meson scipy
           python build_tools/check-meson-openmp-dependencies.py
 
+  retrieve-commit-message:
+    name: Retrieve the latest commit message
+    runs-on: ubuntu-latest
+    if: github.repository == 'scikit-learn/scikit-learn'
+    outputs:
+      message: ${{ steps.git-log.outputs.message }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - id: git-log
+        name: Retrieve the latest commit message
+        shell: bash
+        run: |
+          set -eu
+
+          message=$(git log --format=%B -n 1)
+
+          {
+            echo 'message<<EOF'
+            echo "${message}"
+            echo EOF
+          } >> "${GITHUB_OUTPUT}"
+
+  retrieve-selected-tests:
+    # Parse the commit message to check if `build_tools/azure/test_script.sh` should run
+    # only specific tests.
+    #
+    # If so, selected tests will be run with SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all".
+    #
+    # The commit message must take the form:
+    #     <title> [all random seeds]
+    #     <test_name_1>
+    #     <test_name_2>
+    #     ...
+    name: Retrieve the selected tests
+    runs-on: ubuntu-latest
+    if: github.repository == 'scikit-learn/scikit-learn'
+    outputs:
+      tests: ${{ steps.selected-tests.outputs.tests }}
+    needs: [retrieve-commit-message]
+    steps:
+      - id: selected-tests
+        name: Retrieve the selected tests
+        shell: python
+        env:
+          COMMIT_MESSAGE: ${{ needs.retrieve-commit-message.outputs.message }}
+        run: |
+          import os
+
+          commit_message = os.environ["COMMIT_MESSAGE"]
+
+          # Retrieve selected tests from commit message
+          if "[all random seeds]" in commit_message:
+              selected_tests = commit_message.split("[all random seeds]")[1].strip()
+              selected_tests = selected_tests.replace("\n", " or ")
+              # quote 'selected_tests' to cover the case of multiple selected tests
+              selected_tests = f"{selected_tests!r}"
+          else:
+              selected_tests = ""
+
+          # Write selected tests to `GITHUB_OUTPUT`
+          with open(os.environ["GITHUB_OUTPUT"], "a") as file:
+              file.write(f"tests={selected_tests}\n")
+
   unit-tests:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     if: github.repository == 'scikit-learn/scikit-learn'
-    needs: [lint]
+    needs: [lint, retrieve-commit-message, retrieve-selected-tests]
     strategy:
       # Ensures that all builds run to completion even if one of them fails
       fail-fast: false
@@ -62,6 +127,7 @@ jobs:
             SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 5  # non-default seed
             SCIPY_ARRAY_API: 1
             PYTORCH_ENABLE_MPS_FALLBACK: 1
+            CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
 
     env: ${{ matrix }}
 
@@ -87,19 +153,27 @@ jobs:
         run: bash -l build_tools/azure/install.sh
 
       - name: Run tests
+        env:
+          COMMIT_MESSAGE: ${{ needs.retrieve-commit-message.outputs.message }}
+          SELECTED_TESTS: ${{ needs.retrieve-selected-tests.outputs.tests }}
+          COVERAGE: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
         run: bash -l build_tools/azure/test_script.sh
+
+      - name: Run doctests in .py and .rst files
+        run: bash -l build_tools/azure/test_docs.sh
+        if: ${{ needs.retrieve-selected-tests.outputs.tests == ''}}
+
+      - name: Run pytest soft dependency test
+        run: bash -l build_tools/azure/test_pytest_soft_dependency.sh
+        if: ${{ env.CHECK_PYTEST_SOFT_DEPENDENCY == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
 
       - name: Combine coverage reports from parallel test runners
         run: bash -l build_tools/azure/combine_coverage_reports.sh
-        if: ${{ env.COVERAGE == 'true' }}
+        if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
 
       - name: Upload coverage report to Codecov
         uses: codecov/codecov-action@v5
-        # TODO: should depend on whether we run the whole test suite (could be by adding
-        # && env.SELECTED_TESTS == '' as in build_tools/azure/posix.yml, or setting
-        # env.COVERAGE == 'false' before the "Run tests" step, so reports are not
-        # generated at all)
-        if: ${{ env.COVERAGE == 'true' }}
+        if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
         with:
           files: ./coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}

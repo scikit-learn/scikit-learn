@@ -35,7 +35,6 @@ from sklearn.utils._param_validation import (
     validate_params,
 )
 from sklearn.utils.extmath import _incremental_mean_and_var, row_norms
-from sklearn.utils.fixes import _yeojohnson_lambda
 from sklearn.utils.sparsefuncs import (
     incr_mean_variance_axis,
     inplace_column_scale,
@@ -2810,11 +2809,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             )
 
         self.quantiles_ = np.nanpercentile(X, references, axis=0)
-        # Due to floating-point precision error in `np.nanpercentile`,
-        # make sure that quantiles are monotonically increasing.
-        # Upstream issue in numpy:
-        # https://github.com/numpy/numpy/issues/14685
-        self.quantiles_ = np.maximum.accumulate(self.quantiles_)
 
     def _sparse_fit(self, X, random_state):
         """Compute percentiles for sparse matrices.
@@ -2855,11 +2849,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             else:
                 self.quantiles_.append(np.nanpercentile(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
-        # due to floating-point precision error in `np.nanpercentile`,
-        # make sure the quantiles are monotonically increasing
-        # Upstream issue in numpy:
-        # https://github.com/numpy/numpy/issues/14685
-        self.quantiles_ = np.maximum.accumulate(self.quantiles_)
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
@@ -3604,8 +3593,8 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         # the computation of lambda is influenced by NaNs so we need to
         # get rid of them
         x = x[~np.isnan(x)]
-
-        return _yeojohnson_lambda(_neg_log_likelihood, x)
+        _, lmbda = stats.yeojohnson(x, lmbda=None)
+        return lmbda
 
     def _check_input(self, X, in_fit, check_positive=False, check_shape=False):
         """Validate the input before fit and transform.

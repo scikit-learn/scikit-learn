@@ -438,7 +438,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
     def predict(self, X):
         """Perform regression on samples in X.
 
-        For an one-class model, +1 (inlier) or -1 (outlier) is returned.
+        For a one-class model, +1 (inlier) or -1 (outlier) is returned.
 
         Parameters
         ----------
@@ -810,7 +810,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     def predict(self, X):
         """Perform classification on samples in X.
 
-        For an one-class model, +1 or -1 is returned.
+        For a one-class model, +1 or -1 is returned.
 
         Parameters
         ----------
@@ -1167,7 +1167,7 @@ def _fit_liblinear(
     multi_class : {'ovr', 'crammer_singer'}, default='ovr'
         `ovr` trains n_classes one-vs-rest classifiers, while `crammer_singer`
         optimizes a joint objective over all classes.
-        While `crammer_singer` is interesting from an theoretical perspective
+        While `crammer_singer` is interesting from a theoretical perspective
         as it is consistent it is seldom used in practice and rarely leads to
         better accuracy and is more expensive to compute.
         If `crammer_singer` is chosen, the options loss, penalty and dual will

@@ -40,7 +40,6 @@ from sklearn.utils._param_validation import (
     StrOptions,
     validate_params,
 )
-from sklearn.utils.deprecation import _deprecate_force_all_finite
 from sklearn.utils.extmath import row_norms, safe_sparse_dot
 from sklearn.utils.fixes import parse_version, sp_base_version
 from sklearn.utils.parallel import Parallel, delayed
@@ -88,8 +87,7 @@ def check_pairwise_arrays(
     precomputed=False,
     dtype="infer_float",
     accept_sparse="csr",
-    force_all_finite="deprecated",
-    ensure_all_finite=None,
+    ensure_all_finite=True,
     ensure_2d=True,
     copy=False,
 ):
@@ -130,25 +128,6 @@ def check_pairwise_arrays(
         to be any format. False means that a sparse matrix input will
         raise an error.
 
-    force_all_finite : bool or 'allow-nan', default=True
-        Whether to raise an error on np.inf, np.nan, pd.NA in array. The
-        possibilities are:
-
-        - True: Force all values of array to be finite.
-        - False: accepts np.inf, np.nan, pd.NA in array.
-        - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
-          cannot be infinite.
-
-        .. versionadded:: 0.22
-           ``force_all_finite`` accepts the string ``'allow-nan'``.
-
-        .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`.
-
-        .. deprecated:: 1.6
-           `force_all_finite` was renamed to `ensure_all_finite` and will be removed
-           in 1.8.
-
     ensure_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in array. The
         possibilities are:
@@ -183,8 +162,6 @@ def check_pairwise_arrays(
         An array equal to Y if Y was not None, guaranteed to be a numpy array.
         If Y was None, safe_Y will be a pointer to X.
     """
-    ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
-
     xp, _ = get_namespace(X, Y)
     X, Y, dtype_float = _find_floating_dtype_allow_sparse(X, Y, xp=xp)
 
@@ -1112,17 +1089,38 @@ def manhattan_distances(X, Y=None):
            [4., 4.]])
     """
     X, Y = check_pairwise_arrays(X, Y)
+    n_x, n_y = X.shape[0], Y.shape[0]
 
     if issparse(X) or issparse(Y):
         X = csr_array(X, copy=False)
         Y = csr_array(Y, copy=False)
         X.sum_duplicates()  # this also sorts indices in-place
         Y.sum_duplicates()
-        D = np.zeros((X.shape[0], Y.shape[0]))
+        D = np.zeros((n_x, n_y))
         _sparse_manhattan(X.data, X.indices, X.indptr, Y.data, Y.indices, Y.indptr, D)
         return D
 
-    return distance.cdist(X, Y, "cityblock")
+    xp, _, device_ = get_namespace_and_device(X, Y)
+
+    if _is_numpy_namespace(xp):
+        return distance.cdist(X, Y, "cityblock")
+
+    # array API support
+    float_dtype = _find_matching_floating_dtype(X, Y, xp=xp)
+    out = xp.empty((n_x, n_y), dtype=float_dtype, device=device_)
+    batch_size = 1024
+    for i in range(0, n_x, batch_size):
+        i_end = min(i + batch_size, n_x)
+        batch_X = X[i:i_end, ...]
+        for j in range(0, n_y, batch_size):
+            j_end = min(j + batch_size, n_y)
+            batch_Y = Y[j:j_end, ...]
+            block_dist = xp.sum(
+                xp.abs(batch_X[:, None, :] - batch_Y[None, :, :]), axis=2
+            )
+            out[i:i_end, j:j_end] = block_dist
+
+    return out
 
 
 @validate_params(
@@ -1674,7 +1672,11 @@ def laplacian_kernel(X, Y=None, gamma=None):
         gamma = 1.0 / X.shape[1]
 
     K = -gamma * manhattan_distances(X, Y)
-    np.exp(K, K)  # exponentiate K in-place
+    xp, _ = get_namespace(X, Y)
+    if _is_numpy_namespace(xp):
+        np.exp(K, K)  # exponentiate K in-place
+    else:
+        K = xp.exp(K)
     return K
 
 
@@ -2279,12 +2281,7 @@ def pairwise_distances_chunked(
         "Y": ["array-like", "sparse matrix", None],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
         "n_jobs": [Integral, None],
-        "force_all_finite": [
-            "boolean",
-            StrOptions({"allow-nan"}),
-            Hidden(StrOptions({"deprecated"})),
-        ],
-        "ensure_all_finite": ["boolean", StrOptions({"allow-nan"}), Hidden(None)],
+        "ensure_all_finite": ["boolean", StrOptions({"allow-nan"})],
     },
     prefer_skip_nested_validation=True,
 )
@@ -2294,8 +2291,7 @@ def pairwise_distances(
     metric="euclidean",
     *,
     n_jobs=None,
-    force_all_finite="deprecated",
-    ensure_all_finite=None,
+    ensure_all_finite=True,
     **kwds,
 ):
     """Compute the distance matrix from a feature array X and optional Y.
@@ -2383,26 +2379,6 @@ def pairwise_distances(
         multithreaded. So, increasing `n_jobs` would likely cause oversubscription
         and quickly degrade performance.
 
-    force_all_finite : bool or 'allow-nan', default=True
-        Whether to raise an error on np.inf, np.nan, pd.NA in array. Ignored
-        for a metric listed in ``pairwise.PAIRWISE_DISTANCE_FUNCTIONS``. The
-        possibilities are:
-
-        - True: Force all values of array to be finite.
-        - False: accepts np.inf, np.nan, pd.NA in array.
-        - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
-          cannot be infinite.
-
-        .. versionadded:: 0.22
-           ``force_all_finite`` accepts the string ``'allow-nan'``.
-
-        .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`.
-
-        .. deprecated:: 1.6
-           `force_all_finite` was renamed to `ensure_all_finite` and will be removed
-           in 1.8.
-
     ensure_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in array. Ignored
         for a metric listed in ``pairwise.PAIRWISE_DISTANCE_FUNCTIONS``. The
@@ -2451,7 +2427,6 @@ def pairwise_distances(
     array([[1., 2.],
            [2., 1.]])
     """
-    ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
 
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(

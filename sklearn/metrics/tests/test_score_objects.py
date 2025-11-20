@@ -1,7 +1,6 @@
 import numbers
 import pickle
 import re
-import warnings
 from copy import deepcopy
 from functools import partial
 
@@ -1018,7 +1017,7 @@ def string_labeled_classification_problem():
     from sklearn.utils import shuffle
 
     X, y = load_breast_cancer(return_X_y=True)
-    # create an highly imbalanced classification task
+    # create a highly imbalanced classification task
     idx_positive = np.flatnonzero(y == 1)
     idx_negative = np.flatnonzero(y == 0)
     idx_selected = np.hstack([idx_negative, idx_positive[:25]])
@@ -1643,18 +1642,6 @@ def test_curve_scorer_pos_label(global_random_seed):
     assert 0.0 < scores_pos_label_0.min() < scores_pos_label_1.min()
     assert scores_pos_label_0.max() == pytest.approx(1.0)
     assert scores_pos_label_1.max() == pytest.approx(1.0)
-
-
-# TODO(1.8): remove
-def test_make_scorer_reponse_method_default_warning():
-    with pytest.warns(FutureWarning, match="response_method=None is deprecated"):
-        make_scorer(accuracy_score, response_method=None)
-
-    # No warning is raised if response_method is left to its default value
-    # because the future default value has the same effect as the current one.
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        make_scorer(accuracy_score)
 
 
 @config_context(enable_metadata_routing=True)
