@@ -42,10 +42,7 @@ from sklearn.utils._array_api import (
     device,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._testing import (
-    _array_api_for_tests,
-    ignore_warnings,
-)
+from sklearn.utils._testing import _array_api_for_tests, ignore_warnings
 from sklearn.utils.fixes import _IS_32BIT, COO_CONTAINERS, CSR_CONTAINERS
 
 pytestmark = pytest.mark.filterwarnings(
