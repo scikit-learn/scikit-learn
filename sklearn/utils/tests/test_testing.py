@@ -996,7 +996,7 @@ def test_raises():
             raise ValueError("this will be raised")
     assert not cm.raised_and_matched
 
-    # Bad type, no match, with a err_msg
+    # Bad type, no match, with an err_msg
     with pytest.raises(AssertionError, match="the failure message"):
         with raises(TypeError, err_msg="the failure message") as cm:
             raise ValueError()

@@ -118,7 +118,7 @@ def _check_function_param_validation(
                 f"{func_name} does not raise an informative error message when the "
                 f"parameter {param_name} does not have a valid value.\n"
                 "Constraints should be disjoint. For instance "
-                "[StrOptions({'a_string'}), str] is not a acceptable set of "
+                "[StrOptions({'a_string'}), str] is not an acceptable set of "
                 "constraint because generating an invalid string for the first "
                 "constraint will always produce a valid string for the second "
                 "constraint."

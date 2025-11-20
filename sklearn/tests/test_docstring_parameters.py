@@ -226,7 +226,7 @@ def test_fit_docstring_attributes(name, Estimator):
         est.set_params(perplexity=2)
     # TODO(1.9) remove
     elif Estimator.__name__ == "KBinsDiscretizer":
-        # default raises an FutureWarning if quantile method is at default "warn"
+        # default raises a FutureWarning if quantile method is at default "warn"
         est.set_params(quantile_method="averaged_inverted_cdf")
     # TODO(1.10) remove
     elif Estimator.__name__ == "MDS":
