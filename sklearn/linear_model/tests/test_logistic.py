@@ -45,7 +45,6 @@ from sklearn.utils._array_api import (
 from sklearn.utils._testing import (
     _array_api_for_tests,
     ignore_warnings,
-    skip_if_no_parallel,
 )
 from sklearn.utils.fixes import _IS_32BIT, COO_CONTAINERS, CSR_CONTAINERS
 
@@ -128,20 +127,6 @@ def test_logistic_cv_mock_scorer():
 
     assert custom_score == mock_scorer.scores[0]
     assert mock_scorer.calls == 1
-
-
-@skip_if_no_parallel
-def test_lr_liblinear_warning():
-    X, y = make_classification(random_state=0)
-
-    lr = LogisticRegression(solver="liblinear", n_jobs=2)
-    warning_message = (
-        "'n_jobs' > 1 does not have any effect when"
-        " 'solver' is set to 'liblinear'. Got 'n_jobs'"
-        " = 2."
-    )
-    with pytest.warns(UserWarning, match=warning_message):
-        lr.fit(X, y)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -2626,6 +2611,15 @@ def test_logisticregressioncv_warns_with_use_legacy_attributes():
     X, y = make_classification(n_classes=3, n_samples=50, n_informative=6)
     lr = LogisticRegressionCV()
     msg = "The default value of use_legacy_attributes will change from True"
+    with pytest.warns(FutureWarning, match=msg):
+        lr.fit(X, y)
+
+
+# TODO(1.10): remove this test when n_jobs gets removed
+def test_logisticregression_warns_with_n_jobs():
+    X, y = make_classification(n_classes=3, n_samples=50, n_informative=6)
+    lr = LogisticRegression(n_jobs=1)
+    msg = "'n_jobs' has no effect"
     with pytest.warns(FutureWarning, match=msg):
         lr.fit(X, y)
 

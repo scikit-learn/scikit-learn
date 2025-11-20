@@ -1,2 +1,2 @@
-- :func:`sklearn.metrics.cluster.calinski_harabasz_score` now supports Array API compliant inputs.
+- :func:`sklearn.metrics.calinski_harabasz_score` now supports Array API compliant inputs.
   By :user:`Josef Affourtit <jaffourt>`.

@@ -10,7 +10,6 @@ import warnings
 from numbers import Integral, Real
 
 import numpy as np
-from joblib import effective_n_jobs
 from scipy import optimize
 
 from sklearn._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
@@ -921,7 +920,10 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            *warm_start* to support *lbfgs*, *newton-cg*, *sag*, *saga* solvers.
 
     n_jobs : int, default=None
-        Not used at the moment.
+        Does not have any effect.
+
+        .. deprecated:: 1.8
+           `n_jobs` is deprecated in version 1.8 and will be removed in 1.10.
 
     l1_ratio : float, default=None
         The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
@@ -1117,6 +1119,13 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 "(penalty={})".format(self.penalty)
             )
 
+        msg = (
+            "'n_jobs' has no effect since 1.8 and will be removed in 1.10. "
+            f"You provided 'n_jobs={self.n_jobs}', please leave it unspecified."
+        )
+        if self.n_jobs is not None:
+            warnings.warn(msg, category=FutureWarning)
+
         if self.penalty == "elasticnet" and self.l1_ratio is None:
             raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
 
@@ -1164,12 +1173,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                     "value > 1e30 results in a frozen fit. Please choose another "
                     "solver or rescale the input X."
                 )
-            if effective_n_jobs(self.n_jobs) != 1:
-                warnings.warn(
-                    "'n_jobs' > 1 does not have any effect when"
-                    " 'solver' is set to 'liblinear'. Got 'n_jobs'"
-                    " = {}.".format(effective_n_jobs(self.n_jobs))
-                )
             self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
                 X,
                 y,
@@ -1208,8 +1211,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 [warm_start_coef, self.intercept_[:, xp.newaxis]], axis=1
             )
 
-        # TODO: deprecate n_jobs since it's not used anymore and enable multi-threading
-        # if benchmarks show a positive effect.
+        # TODO: enable multi-threading if benchmarks show a positive effect,
+        # see https://github.com/scikit-learn/scikit-learn/issues/32162
         n_threads = 1
 
         coefs, _, n_iter = _logistic_regression_path(
