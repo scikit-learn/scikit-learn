@@ -67,7 +67,10 @@ create_conda_environment_from_lock_file() {
         python -m pip install "$(get_dep conda-lock min)"
         # hack to change --quiet from conda-lock 'mamba create' command
         file=$(python -c 'from pathlib import Path; import conda_lock; p = Path(conda_lock.__file__).parent / "conda_lock.py"; print(p)')
+        # make conda verbose
         sed -i 's@--quiet@-vvv@' $file
+        # make pip verbose
+        sed -i 's@"--no-deps"@"--no-deps", "-vvv"@' $file
         conda-lock install --log-level DEBUG --name $ENV_NAME $LOCK_FILE
     fi
 }
