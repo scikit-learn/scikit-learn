@@ -124,6 +124,6 @@ workflows:
       - doc-min-dependencies:
           requires:
             - lint
-      - deploy:
-          requires:
-            - doc
+      # - deploy:
+      #     requires:
+      #       - doc
