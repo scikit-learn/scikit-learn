@@ -676,9 +676,10 @@ def _log_reg_scoring_path(
         sw_train = sample_weight[train]
         sw_test = sample_weight[test]
 
-    # Note: We pass classes for the whole dataset to avoid inconsistencies, i.e.
-    # different number of classes in different folds. This way, if a class is empty
-    # in a fold, _logistic_regression_path will initialize it to zero and not change.
+    # Note: We pass classes for the whole dataset to avoid inconsistencies,
+    # i.e. different number of classes in different folds. This way, if a class
+    # is not present in a fold, _logistic_regression_path will still return
+    # coefficients associated to this class.
     coefs, Cs, n_iter = _logistic_regression_path(
         X_train,
         y_train,
