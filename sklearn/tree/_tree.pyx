@@ -23,7 +23,7 @@ cnp.import_array()
 from scipy.sparse import issparse
 from scipy.sparse import csr_array
 
-from ..utils import _align_api_if_sparse
+from sklearn.utils import _align_api_if_sparse
 
 from sklearn.tree._utils cimport safe_realloc
 from sklearn.tree._utils cimport sizet_ptr_to_ndarray
