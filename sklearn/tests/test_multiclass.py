@@ -386,7 +386,6 @@ def test_ovr_multilabel_dataset():
         )
 
 
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_ovr_multilabel_predict_proba():
     base_clf = MultinomialNB(alpha=1)
     for au in (False, True):

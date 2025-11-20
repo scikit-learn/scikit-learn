@@ -325,7 +325,6 @@ def test_estimator_meta_estimator():
         clf.fit(X_train, y_train_missing_labels)
 
 
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_self_training_estimator_attribute_error():
     """Check that we raise the proper AttributeErrors when the `estimator`
     does not implement the `predict_proba` method, which is called from within
@@ -337,7 +336,7 @@ def test_self_training_estimator_attribute_error():
     # `SVC` with `probability=False` does not implement 'predict_proba' that
     # is required internally in `fit` of `SelfTrainingClassifier`. We expect
     # an AttributeError to be raised.
-    estimator = SVC(probability=False, gamma="scale")
+    estimator = SVC(gamma="scale")
     self_training = SelfTrainingClassifier(estimator)
 
     with pytest.raises(AttributeError, match="has no attribute 'predict_proba'"):
