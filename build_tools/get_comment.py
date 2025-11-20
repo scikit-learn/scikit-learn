@@ -309,7 +309,9 @@ def update_linter_fails_label(message, repo, pr_number, token):
             response.raise_for_status()
         except requests.HTTPError as e:
             # TODO: differentiate the 404 of no label to remove from other errors
-            pass
+            print(response)
+            print("------")
+            print(e)
 
 
 if __name__ == "__main__":
