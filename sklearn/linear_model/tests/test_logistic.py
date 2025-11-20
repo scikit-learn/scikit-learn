@@ -23,7 +23,7 @@ from sklearn.linear_model._logistic import (
     _log_reg_scoring_path,
     _logistic_regression_path,
 )
-from sklearn.metrics import brier_score_loss, get_scorer, log_loss
+from sklearn.metrics import brier_score_loss, get_scorer, log_loss, make_scorer
 from sklearn.model_selection import (
     GridSearchCV,
     KFold,
@@ -742,8 +742,8 @@ def test_multinomial_cv_iris(use_legacy_attributes):
                 assert np.all(np.diff(norms) >= 0)
 
     # Test CV folds with missing class labels:
-    # It is well known that the iris target variable has 3 classes and is ordered such
-    # that a simple CV split with 3 folds separates the classes.
+    # The iris target variable has 3 classes and is ordered such that a simple
+    # CV split with 3 folds separates the classes.
     cv = KFold(n_splits=3)
     # Check this assumption.
     classes = np.unique(y)
@@ -752,16 +752,28 @@ def test_multinomial_cv_iris(use_legacy_attributes):
         assert len(np.unique(y[train])) == 2
         assert len(np.unique(y[test])) == 1
         assert set(y[train]) & set(y[test]) == set()
+
     clf = LogisticRegressionCV(cv=cv, use_legacy_attributes=False).fit(X, y)
-    # We use Brier score as metric. Accuracy, e.g. via clf.scores_, is a bad metric as
-    # it uses the stupid fixed threshold of 50%. Instead we choose a proper scoring
-    # rule, i.e. Brier score. Log loss could be problematic with values at the border,
-    # i.e. probabilities of 0 or 1.
-    for train, test in cv.split(X, y):
-        bs = brier_score_loss(
-            y[test], clf.predict_proba(X[test]), labels=classes, scale_by_half=True
-        )
-        assert np.all(bs > 0.3)
+    # We expect accuracy to be exactly 0 because train and test sets have
+    # non-overlapping labels
+    assert np.all(clf.scores_ == 0.0)
+
+    # Because of a LogisticRegressionCV bug, we need to create our own scoring
+    # function to pass explicitly the labels
+    scoring = make_scorer(
+        brier_score_loss,
+        greater_is_better=False,
+        response_method="predict_proba",
+        scale_by_half=True,
+        labels=classes,
+    )
+    clf = LogisticRegressionCV(cv=cv, scoring=scoring, use_legacy_attributes=False).fit(
+        X, y
+    )
+    brier_scores = -clf.scores_
+    # We expect the scores to be bad because train and test sets have
+    # non-overlapping labels
+    assert np.all(brier_scores > 0.7)
 
 
 def test_logistic_regression_solvers(global_random_seed):
