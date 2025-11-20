@@ -126,7 +126,6 @@ def test_classification():
 )
 def test_sparse_classification(sparse_container, params, method):
     # Check classification for various parameter settings on sparse input.
-
     class CustomClassifier(LogisticRegression):
         """SVC variant that records the nature of the training set"""
 
