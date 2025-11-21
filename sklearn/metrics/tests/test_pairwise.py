@@ -1819,3 +1819,38 @@ def test_sparse_manhattan_readonly_dataset(csr_container):
     Parallel(n_jobs=2, max_nbytes=0)(
         delayed(manhattan_distances)(m1, m2) for m1, m2 in zip(matrices1, matrices2)
     )
+
+
+# Some deprecated scipy metrics raise DeprecationWarning warning, filter here
+@pytest.mark.filterwarnings("ignore:The .* metric is deprecated since SciPy .*")
+@pytest.mark.parametrize("metric", PAIRWISE_BOOLEAN_FUNCTIONS)
+@pytest.mark.parametrize(
+    "pairwise_fn", [pairwise_distances_argmin, pairwise_distances_argmin_min]
+)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_pairwise_argmin_correct_warnings_for_bool_and_nonbool(
+    metric, pairwise_fn, csr_container
+):
+    """Check `DataConversionWarning` is not raised with bool data and bool metrics."""
+    X = [[True, True, False, True], [True, False, True, True]]
+    Y = [[False, True, False, True], [True, False, True, True]]
+    X_arr = np.asarray(X)
+    Y_arr = np.asarray(Y)
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always", category=DataConversionWarning)
+        pairwise_fn(X, Y, metric=metric)
+        msg = f"DataConversionWarning should not occur for boolean data for {metric}"
+        assert not any(w.category is DataConversionWarning for w in record), msg
+        pairwise_fn(X_arr, Y_arr, metric=metric)
+        assert not any(w.category is DataConversionWarning for w in record), msg
+
+    with pytest.warns(DataConversionWarning):
+        pairwise_fn(X_arr.astype(np.float32), Y_arr, metric=metric)
+
+    X_sparse = csr_container(X_arr)
+    Y_sparse = csr_container(Y_arr)
+    with pytest.raises(
+        TypeError,
+        match="scipy distance metrics, such as .*, do not support sparse matrices.",
+    ):
+        pairwise_fn(X_sparse, Y_sparse, metric=metric)
