@@ -2457,44 +2457,47 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
     }
     metric = all_metrics_include_pairwise[metric_name]
 
-    if metric_name in CLASSIFICATION_METRICS:
-        # These should all accept binary label input as there are no
-        # `CLASSIFICATION_METRICS` that are in `METRIC_UNDEFINED_BINARY` and are NOT
-        # `partial`s (which we do not test for in array API)
-        y1 = xp_input.asarray([0, 0, 1, 1], device=array_input.device)
-        y2 = xp_ref.asarray([0, 1, 0, 1], device=reference.device)
-    elif metric_name in {**CONTINUOUS_CLASSIFICATION_METRICS, **CURVE_METRICS}:
-        if metric_name not in METRIC_UNDEFINED_BINARY:
-            # Continuous binary input
-            y1 = xp_input.asarray([0.5, 0.2, 0.7, 0.6], device=array_input.device)
-            y2 = xp_ref.asarray([1, 0, 1, 0], device=reference.device)
+    with config_context(array_api_dispatch=True):
+        if metric_name in CLASSIFICATION_METRICS:
+            # These should all accept binary label input as there are no
+            # `CLASSIFICATION_METRICS` that are in `METRIC_UNDEFINED_BINARY` and are NOT
+            # `partial`s (which we do not test for in array API)
+            y1 = xp_input.asarray([0, 0, 1, 1], device=array_input.device)
+            y2 = xp_ref.asarray([0, 1, 0, 1], device=reference.device)
+        elif metric_name in {**CONTINUOUS_CLASSIFICATION_METRICS, **CURVE_METRICS}:
+            if metric_name not in METRIC_UNDEFINED_BINARY:
+                # Continuous binary input
+                y1 = xp_input.asarray([0.5, 0.2, 0.7, 0.6], device=array_input.device)
+                y2 = xp_ref.asarray([1, 0, 1, 0], device=reference.device)
+            else:
+                # Continuous but shape (n_samples, n_labels)
+                y1 = xp_input.asarray([[0.5, 0.2, 0.7, 0.6]], device=array_input.device)
+                y2 = xp_ref.asarray([[1, 0, 1, 0]], device=reference.device)
+        elif metric_name in REGRESSION_METRICS:
+            y1 = xp_input.asarray([2.0, 0.1, 1.0, 4.0], device=array_input.device)
+            y2 = xp_ref.asarray([0.5, 0.5, 2, 2], device=reference.device)
+        elif metric_name in PAIRWISE_METRICS:
+            y1 = xp_input.asarray(
+                [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], device=array_input.devicee
+            )
+            y2 = xp_ref.asarray(
+                [[0.2, 0.3, 0.4], [0.5, 0.6, 0.7]], device=reference.device
+            )
+
+        metric_out = metric(y1, y2)
+
+        def _check_array_namespace_device(array):
+            if hasattr(array, "shape"):
+                assert get_namespace(array)[0] == xp_ref
+                assert device(array) == device(y2)
+
+        # If output is an array (instead of float), check namespace and device is as
+        # expected
+        if isinstance(metric_out, Tuple):
+            for out in metric_out:
+                _check_array_namespace_device(out)
         else:
-            # Continuous but shape (n_samples, n_labels)
-            y1 = xp_input.asarray([[0.5, 0.2, 0.7, 0.6]], device=array_input.device)
-            y2 = xp_ref.asarray([[1, 0, 1, 0]], device=reference.device)
-    elif metric_name in REGRESSION_METRICS:
-        y1 = xp_input.asarray([2.0, 0.1, 1.0, 4.0], device=array_input.device)
-        y2 = xp_ref.asarray([0.5, 0.5, 2, 2], device=reference.device)
-    elif metric_name in PAIRWISE_METRICS:
-        y1 = xp_input.asarray(
-            [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], device=array_input.devicee
-        )
-        y2 = xp_ref.asarray([[0.2, 0.3, 0.4], [0.5, 0.6, 0.7]], device=reference.device)
-
-    metric_out = metric(y1, y2)
-
-    def _check_array_namespace_device(array):
-        if hasattr(array, "shape"):
-            assert get_namespace(array)[0] == xp_ref
-            assert device(array) == device(y2)
-
-    # If output is an array (instead of float), check namespace and device is as
-    # expected
-    if isinstance(metric_out, Tuple):
-        for out in metric_out:
-            _check_array_namespace_device(out)
-    else:
-        _check_array_namespace_device(metric_out)
+            _check_array_namespace_device(metric_out)
 
 
 @pytest.mark.parametrize("df_lib_name", ["pandas", "polars"])
