@@ -16,10 +16,10 @@ from sklearn.utils._pprint import _EstimatorPrettyPrinter
 class LogisticRegression(BaseEstimator):
     def __init__(
         self,
-        penalty="l2",
+        C=1.0,
+        l1_ratio=0,
         dual=False,
         tol=1e-4,
-        C=1.0,
         fit_intercept=True,
         intercept_scaling=1,
         class_weight=None,
@@ -30,12 +30,11 @@ class LogisticRegression(BaseEstimator):
         verbose=0,
         warm_start=False,
         n_jobs=None,
-        l1_ratio=None,
     ):
-        self.penalty = penalty
+        self.C = C
+        self.l1_ratio = l1_ratio
         self.dual = dual
         self.tol = tol
-        self.C = C
         self.fit_intercept = fit_intercept
         self.intercept_scaling = intercept_scaling
         self.class_weight = class_weight
@@ -46,7 +45,6 @@ class LogisticRegression(BaseEstimator):
         self.verbose = verbose
         self.warm_start = warm_start
         self.n_jobs = n_jobs
-        self.l1_ratio = l1_ratio
 
     def fit(self, X, y):
         return self
@@ -248,10 +246,9 @@ def test_basic():
     lr = LogisticRegression()
     expected = """
 LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
-                   intercept_scaling=1, l1_ratio=None, max_iter=100,
-                   multi_class='warn', n_jobs=None, penalty='l2',
-                   random_state=None, solver='warn', tol=0.0001, verbose=0,
-                   warm_start=False)"""
+                   intercept_scaling=1, l1_ratio=0, max_iter=100,
+                   multi_class='warn', n_jobs=None, random_state=None,
+                   solver='warn', tol=0.0001, verbose=0, warm_start=False)"""
 
     expected = expected[1:]  # remove first \n
     assert lr.__repr__() == expected
@@ -297,11 +294,10 @@ Pipeline(memory=None,
                 ('logisticregression',
                  LogisticRegression(C=999, class_weight=None, dual=False,
                                     fit_intercept=True, intercept_scaling=1,
-                                    l1_ratio=None, max_iter=100,
+                                    l1_ratio=0, max_iter=100,
                                     multi_class='warn', n_jobs=None,
-                                    penalty='l2', random_state=None,
-                                    solver='warn', tol=0.0001, verbose=0,
-                                    warm_start=False))],
+                                    random_state=None, solver='warn',
+                                    tol=0.0001, verbose=0, warm_start=False))],
          transform_input=None, verbose=False)"""
 
     expected = expected[1:]  # remove first \n
@@ -318,11 +314,10 @@ RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estima
                                                                                                                      dual=False,
                                                                                                                      fit_intercept=True,
                                                                                                                      intercept_scaling=1,
-                                                                                                                     l1_ratio=None,
+                                                                                                                     l1_ratio=0,
                                                                                                                      max_iter=100,
                                                                                                                      multi_class='warn',
                                                                                                                      n_jobs=None,
-                                                                                                                     penalty='l2',
                                                                                                                      random_state=None,
                                                                                                                      solver='warn',
                                                                                                                      tol=0.0001,
@@ -561,12 +556,11 @@ def test_bruteforce_ellipsis():
     expected = """
 LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
                    in...
-                   multi_class='warn', n_jobs=None, penalty='l2',
-                   random_state=None, solver='warn', tol=0.0001, verbose=0,
-                   warm_start=False)"""
+                   multi_class='warn', n_jobs=None, random_state=None,
+                   solver='warn', tol=0.0001, verbose=0, warm_start=False)"""
 
     expected = expected[1:]  # remove first \n
-    assert expected == lr.__repr__(N_CHAR_MAX=150)
+    assert lr.__repr__(N_CHAR_MAX=150) == expected
 
     # test with very small N_CHAR_MAX
     # Note that N_CHAR_MAX is not strictly enforced, but it's normal: to avoid
@@ -574,10 +568,10 @@ LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
     # ellipsis).
     expected = """
 Lo...
-                   warm_start=False)"""
+                   solver='warn', tol=0.0001, verbose=0, warm_start=False)"""
 
     expected = expected[1:]  # remove first \n
-    assert expected == lr.__repr__(N_CHAR_MAX=4)
+    assert lr.__repr__(N_CHAR_MAX=4) == expected
 
     # test with N_CHAR_MAX == number of non-blank characters: In this case we
     # don't want ellipsis
@@ -591,12 +585,11 @@ Lo...
     # want to expend the whole line of the right side
     expected = """
 LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
-                   intercept_scaling=1, l1_ratio=None, max_i...
-                   multi_class='warn', n_jobs=None, penalty='l2',
-                   random_state=None, solver='warn', tol=0.0001, verbose=0,
-                   warm_start=False)"""
+                   intercept_scaling=1, l1_ratio=0,...00,
+                   multi_class='warn', n_jobs=None, random_state=None,
+                   solver='warn', tol=0.0001, verbose=0, warm_start=False)"""
     expected = expected[1:]  # remove first \n
-    assert expected == lr.__repr__(N_CHAR_MAX=n_nonblank - 10)
+    assert lr.__repr__(N_CHAR_MAX=n_nonblank - 10) == expected
 
     # test with N_CHAR_MAX == number of non-blank characters - 10: the left and
     # right side of the ellispsis are on the same line. In this case we don't
@@ -604,24 +597,22 @@ LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
     # between the 2 sides.
     expected = """
 LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
-                   intercept_scaling=1, l1_ratio=None, max_iter...,
-                   multi_class='warn', n_jobs=None, penalty='l2',
-                   random_state=None, solver='warn', tol=0.0001, verbose=0,
-                   warm_start=False)"""
+                   intercept_scaling=1, l1_ratio=0, max...r=100,
+                   multi_class='warn', n_jobs=None, random_state=None,
+                   solver='warn', tol=0.0001, verbose=0, warm_start=False)"""
     expected = expected[1:]  # remove first \n
-    assert expected == lr.__repr__(N_CHAR_MAX=n_nonblank - 4)
+    assert lr.__repr__(N_CHAR_MAX=n_nonblank - 4) == expected
 
     # test with N_CHAR_MAX == number of non-blank characters - 2: the left and
     # right side of the ellispsis are on the same line, but adding the ellipsis
     # would actually make the repr longer. So we don't add the ellipsis.
     expected = """
 LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
-                   intercept_scaling=1, l1_ratio=None, max_iter=100,
-                   multi_class='warn', n_jobs=None, penalty='l2',
-                   random_state=None, solver='warn', tol=0.0001, verbose=0,
-                   warm_start=False)"""
+                   intercept_scaling=1, l1_ratio=0, max_iter=100,
+                   multi_class='warn', n_jobs=None, random_state=None,
+                   solver='warn', tol=0.0001, verbose=0, warm_start=False)"""
     expected = expected[1:]  # remove first \n
-    assert expected == lr.__repr__(N_CHAR_MAX=n_nonblank - 2)
+    assert lr.__repr__(N_CHAR_MAX=n_nonblank - 2) == expected
 
 
 def test_builtin_prettyprinter():
@@ -661,11 +652,11 @@ def test_kwargs_in_init():
     est = WithKWargs(a="something", c="abcd", d=None)
 
     expected = "WithKWargs(a='something', c='abcd', d=None)"
-    assert expected == est.__repr__()
+    assert est.__repr__() == expected
 
     with config_context(print_changed_only=False):
         expected = "WithKWargs(a='something', b='unchanged', c='abcd', d=None)"
-        assert expected == est.__repr__()
+        assert est.__repr__() == expected
 
 
 def test_complexity_print_changed_only():
