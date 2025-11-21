@@ -45,6 +45,7 @@ from sklearn.utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
     inplace_csr_row_normalize_l2,
 )
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_sample_weight,
@@ -2786,7 +2787,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         self.random_state = random_state
         self.copy = copy
 
-    def _dense_fit(self, X, random_state):
+    def _dense_fit(self, X, random_state, sample_weight=None):
         """Compute percentiles for dense matrices.
 
         Parameters
@@ -2808,6 +2809,25 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             X = resample(
                 X, replace=False, n_samples=self.subsample, random_state=random_state
             )
+            if sample_weight is not None:
+                sample_weight = sample_weight[: X.shape[0]]
+
+        self.quantiles_ = np.zeros((len(references), n_features))
+
+        for feature_idx in range(n_features):
+            col = X[:, feature_idx]
+
+            if sample_weight is not None:
+                self.quantiles_[:, feature_idx] = _weighted_percentile(
+                    col,
+                    sample_weight=sample_weight,
+                    percentile_rank=references,
+                    average=True,
+                )
+            else:
+                self.quantiles_[:, feature_idx] = np.nanquantile(
+                    col, references / 100.0, method="averaged_inverted_cdf"
+                )
 
         self.quantiles_ = np.nanpercentile(X, references, axis=0)
 
@@ -2852,7 +2872,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         self.quantiles_ = np.transpose(self.quantiles_)
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Compute the quantiles used for transforming.
 
         Parameters
@@ -2894,9 +2914,13 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         # Create the quantiles of reference
         self.references_ = np.linspace(0, 1, self.n_quantiles_, endpoint=True)
         if sparse.issparse(X):
+            if sample_weight is not None:
+                raise NotImplementedError(
+                    "sample_weight is not supported for sparse input."
+                )
             self._sparse_fit(X, rng)
         else:
-            self._dense_fit(X, rng)
+            self._dense_fit(X, rng, sample_weight=sample_weight)
 
         return self
 
