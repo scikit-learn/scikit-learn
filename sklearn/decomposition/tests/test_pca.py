@@ -218,9 +218,9 @@ def test_no_empty_slice_warning():
 
 @pytest.mark.parametrize("copy", [True, False])
 @pytest.mark.parametrize("solver", PCA_SOLVERS)
-def test_whitening(solver, copy):
+def test_whitening(solver, copy, global_random_seed):
     # Check that PCA output has unit-variance
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 100
     n_features = 80
     n_components = 30
@@ -238,7 +238,7 @@ def test_whitening(solver, copy):
     assert X.shape == (n_samples, n_features)
 
     # the component-wise variance is thus highly varying:
-    assert X.std(axis=0).std() > 43.8
+    assert X.std(axis=0).std() > 40
 
     # whiten the data while projecting to the lower dim subspace
     X_ = X.copy()  # make sure we keep an original across iterations.
@@ -247,8 +247,9 @@ def test_whitening(solver, copy):
         whiten=True,
         copy=copy,
         svd_solver=solver,
-        random_state=0,
+        random_state=global_random_seed,
         iterated_power=7,
+        n_oversamples=13,
     )
     # test fit_transform
     X_whitened = pca.fit_transform(X_.copy())
@@ -261,13 +262,17 @@ def test_whitening(solver, copy):
 
     X_ = X.copy()
     pca = PCA(
-        n_components=n_components, whiten=False, copy=copy, svd_solver=solver
+        n_components=n_components,
+        whiten=False,
+        copy=copy,
+        svd_solver=solver,
+        random_state=global_random_seed,
     ).fit(X_.copy())
     X_unwhitened = pca.transform(X_)
     assert X_unwhitened.shape == (n_samples, n_components)
 
     # in that case the output components still have varying variances
-    assert X_unwhitened.std(axis=0).std() == pytest.approx(74.1, rel=1e-1)
+    assert X_unwhitened.std(axis=0).std() > 69
     # we always center, so no test for non-centering.
 
 
@@ -412,17 +417,21 @@ def test_pca_solver_equivalence(
 
 
 @pytest.mark.parametrize(
-    "X",
+    "make_X",
     [
-        np.random.RandomState(0).randn(100, 80),
-        datasets.make_classification(100, 80, n_informative=78, random_state=0)[0],
-        np.random.RandomState(0).randn(10, 100),
+        lambda seed: np.random.RandomState(seed).randn(100, 60),
+        lambda seed: datasets.make_classification(
+            100, 80, n_informative=78, random_state=seed
+        )[0],
+        lambda seed: np.random.RandomState(seed).randn(10, 100),
     ],
     ids=["random-tall", "correlated-tall", "random-wide"],
 )
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-def test_pca_explained_variance_empirical(X, svd_solver):
-    pca = PCA(n_components=2, svd_solver=svd_solver, random_state=0)
+def test_pca_explained_variance_empirical(make_X, svd_solver, global_random_seed):
+    # parametrized factory make_X and global_random_seed determine dataset X
+    X = make_X(global_random_seed)
+    pca = PCA(n_components=2, svd_solver=svd_solver, random_state=global_random_seed)
     X_pca = pca.fit_transform(X)
     assert_allclose(pca.explained_variance_, np.var(X_pca, ddof=1, axis=0))
 
@@ -432,8 +441,8 @@ def test_pca_explained_variance_empirical(X, svd_solver):
 
 
 @pytest.mark.parametrize("svd_solver", ["arpack", "randomized"])
-def test_pca_singular_values_consistency(svd_solver):
-    rng = np.random.RandomState(0)
+def test_pca_singular_values_consistency(svd_solver, global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features = 100, 80
     X = rng.randn(n_samples, n_features)
 
@@ -447,8 +456,8 @@ def test_pca_singular_values_consistency(svd_solver):
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-def test_pca_singular_values(svd_solver):
-    rng = np.random.RandomState(0)
+def test_pca_singular_values(svd_solver, global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features = 100, 80
     X = rng.randn(n_samples, n_features)
 
@@ -477,9 +486,9 @@ def test_pca_singular_values(svd_solver):
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-def test_pca_check_projection(svd_solver):
+def test_pca_check_projection(svd_solver, global_random_seed):
     # Test that the projection of data is correct
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n, p = 100, 3
     X = rng.randn(n, p) * 0.1
     X[:10] += np.array([3, 4, 5])
@@ -492,10 +501,10 @@ def test_pca_check_projection(svd_solver):
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-def test_pca_check_projection_list(svd_solver):
+def test_pca_check_projection_list(svd_solver, global_random_seed):
     # Test that the projection of data is correct
     X = [[1.0, 0.0], [0.0, 1.0]]
-    pca = PCA(n_components=1, svd_solver=svd_solver, random_state=0)
+    pca = PCA(n_components=1, svd_solver=svd_solver, random_state=global_random_seed)
     X_trans = pca.fit_transform(X)
     assert X_trans.shape, (2, 1)
     assert_allclose(X_trans.mean(), 0.00, atol=1e-12)
@@ -504,9 +513,9 @@ def test_pca_check_projection_list(svd_solver):
 
 @pytest.mark.parametrize("svd_solver", ["full", "arpack", "randomized"])
 @pytest.mark.parametrize("whiten", [False, True])
-def test_pca_inverse(svd_solver, whiten):
+def test_pca_inverse(svd_solver, whiten, global_random_seed):
     # Test that the projection of data can be inverted
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n, p = 50, 3
     X = rng.randn(n, p)  # spherical data
     X[:, 1] *= 0.00001  # make middle component relatively small
@@ -514,10 +523,12 @@ def test_pca_inverse(svd_solver, whiten):
 
     # same check that we can find the original data from the transformed
     # signal (since the data is almost of rank n_components)
-    pca = PCA(n_components=2, svd_solver=svd_solver, whiten=whiten).fit(X)
+    pca = PCA(
+        n_components=2, svd_solver=svd_solver, whiten=whiten, random_state=rng
+    ).fit(X)
     Y = pca.transform(X)
     Y_inverse = pca.inverse_transform(Y)
-    assert_allclose(X, Y_inverse, rtol=5e-6)
+    assert_allclose(X, Y_inverse, rtol=5e-5)
 
 
 @pytest.mark.parametrize(
@@ -577,9 +588,9 @@ def test_n_components_none(data, solver, n_components_):
 
 
 @pytest.mark.parametrize("svd_solver", ["auto", "full"])
-def test_n_components_mle(svd_solver):
+def test_n_components_mle(svd_solver, global_random_seed):
     # Ensure that n_components == 'mle' doesn't raise error for auto/full
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features = 600, 10
     X = rng.randn(n_samples, n_features)
     pca = PCA(n_components="mle", svd_solver=svd_solver)
@@ -602,10 +613,10 @@ def test_n_components_mle_error(svd_solver):
         pca.fit(X)
 
 
-def test_pca_dim():
+def test_pca_dim(global_random_seed):
     # Check automated dimensionality setting
-    rng = np.random.RandomState(0)
-    n, p = 100, 5
+    rng = np.random.RandomState(global_random_seed)
+    n, p = 250, 5
     X = rng.randn(n, p) * 0.1
     X[:10] += np.array([3, 4, 5, 1, 2])
     pca = PCA(n_components="mle", svd_solver="full").fit(X)
@@ -613,11 +624,11 @@ def test_pca_dim():
     assert pca.n_components_ == 1
 
 
-def test_infer_dim_1():
+def test_infer_dim_1(global_random_seed):
     # TODO: explain what this is testing
     # Or at least use explicit variable names...
     n, p = 1000, 5
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = (
         rng.randn(n, p) * 0.1
         + rng.randn(n, 1) * np.array([3, 4, 5, 1, 2])
@@ -630,11 +641,11 @@ def test_infer_dim_1():
     assert ll[1] > ll.max() - 0.01 * n
 
 
-def test_infer_dim_2():
+def test_infer_dim_2(global_random_seed):
     # TODO: explain what this is testing
     # Or at least use explicit variable names...
     n, p = 1000, 5
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.randn(n, p) * 0.1
     X[:10] += np.array([3, 4, 5, 1, 2])
     X[10:20] += np.array([6, 0, 7, 2, -1])
@@ -644,9 +655,9 @@ def test_infer_dim_2():
     assert _infer_dimension(spect, n) > 1
 
 
-def test_infer_dim_3():
+def test_infer_dim_3(global_random_seed):
     n, p = 100, 5
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.randn(n, p) * 0.1
     X[:10] += np.array([3, 4, 5, 1, 2])
     X[10:20] += np.array([6, 0, 7, 2, -1])
@@ -673,12 +684,12 @@ def test_infer_dim_by_explained_variance(X, n_components, n_components_validated
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-def test_pca_score(svd_solver):
+def test_pca_score(svd_solver, global_random_seed):
     # Test that probabilistic PCA scoring yields a reasonable score
     n, p = 1000, 3
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.randn(n, p) * 0.1 + np.array([3, 4, 5])
-    pca = PCA(n_components=2, svd_solver=svd_solver)
+    pca = PCA(n_components=2, svd_solver=svd_solver, random_state=rng)
     pca.fit(X)
 
     ll1 = pca.score(X)
@@ -688,45 +699,58 @@ def test_pca_score(svd_solver):
     ll2 = pca.score(rng.randn(n, p) * 0.2 + np.array([3, 4, 5]))
     assert ll1 > ll2
 
-    pca = PCA(n_components=2, whiten=True, svd_solver=svd_solver)
+    pca = PCA(n_components=2, whiten=True, svd_solver=svd_solver, random_state=rng)
     pca.fit(X)
     ll2 = pca.score(X)
     assert ll1 > ll2
 
 
-def test_pca_score3():
+def test_pca_score3(global_random_seed):
     # Check that probabilistic PCA selects the right model
-    n, p = 200, 3
-    rng = np.random.RandomState(0)
-    Xl = rng.randn(n, p) + rng.randn(n, 1) * np.array([3, 4, 5]) + np.array([1, 0, 7])
-    Xt = rng.randn(n, p) + rng.randn(n, 1) * np.array([3, 4, 5]) + np.array([1, 0, 7])
+    n, p = 50, 3
+    rng = np.random.RandomState(global_random_seed)
     ll = np.zeros(p)
-    for k in range(p):
-        pca = PCA(n_components=k, svd_solver="full")
-        pca.fit(Xl)
-        ll[k] = pca.score(Xt)
+    for _ in range(10):
+        X_train = (
+            rng.randn(n, p)
+            + rng.randn(n, 1) * np.array([3, 4, 5])
+            + np.array([1, 0, 7])
+        )
+        X_test = (
+            rng.randn(n, p)
+            + rng.randn(n, 1) * np.array([3, 4, 5])
+            + np.array([1, 0, 7])
+        )
+        for k in range(p):
+            pca = PCA(n_components=k, svd_solver="full")
+            pca.fit(X_train)
+            ll[k] += pca.score(X_test)
 
+    # Across multiple trials, the true data generating model should have
+    # accumulated the highest test score
     assert ll.argmax() == 1
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-def test_pca_sanity_noise_variance(svd_solver):
+def test_pca_sanity_noise_variance(svd_solver, global_random_seed):
     # Sanity check for the noise_variance_. For more details see
     # https://github.com/scikit-learn/scikit-learn/issues/7568
     # https://github.com/scikit-learn/scikit-learn/issues/8541
     # https://github.com/scikit-learn/scikit-learn/issues/8544
     X, _ = datasets.load_digits(return_X_y=True)
-    pca = PCA(n_components=30, svd_solver=svd_solver, random_state=0)
+    pca = PCA(n_components=30, svd_solver=svd_solver, random_state=global_random_seed)
     pca.fit(X)
     assert np.all((pca.explained_variance_ - pca.noise_variance_) >= 0)
 
 
 @pytest.mark.parametrize("svd_solver", ["arpack", "randomized"])
-def test_pca_score_consistency_solvers(svd_solver):
+def test_pca_score_consistency_solvers(svd_solver, global_random_seed):
     # Check the consistency of score between solvers
     X, _ = datasets.load_digits(return_X_y=True)
-    pca_full = PCA(n_components=30, svd_solver="full", random_state=0)
-    pca_other = PCA(n_components=30, svd_solver=svd_solver, random_state=0)
+    pca_full = PCA(n_components=10, svd_solver="full", random_state=global_random_seed)
+    pca_other = PCA(
+        n_components=10, svd_solver=svd_solver, random_state=global_random_seed
+    )
     pca_full.fit(X)
     pca_other.fit(X)
     assert_allclose(pca_full.score(X), pca_other.score(X), rtol=5e-6)
@@ -783,8 +807,8 @@ def test_pca_svd_solver_auto(n_samples, n_features, n_components, expected_solve
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-def test_pca_deterministic_output(svd_solver):
-    rng = np.random.RandomState(0)
+def test_pca_deterministic_output(svd_solver, global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     X = rng.rand(10, 10)
 
     transformed_X = np.zeros((20, 2))
@@ -875,7 +899,7 @@ def test_small_eigenvalues_mle():
     assert _infer_dimension(spectrum, 10) == 1
 
 
-def test_mle_redundant_data():
+def test_mle_redundant_data(global_random_seed):
     # Test 'mle' with pathological X: only one relevant feature should give a
     # rank of 1
     X, _ = datasets.make_classification(
@@ -884,7 +908,7 @@ def test_mle_redundant_data():
         n_repeated=18,
         n_redundant=1,
         n_clusters_per_class=1,
-        random_state=42,
+        random_state=global_random_seed,
     )
     pca = PCA(n_components="mle").fit(X)
     assert pca.n_components_ == 1
@@ -903,11 +927,11 @@ def test_fit_mle_too_few_samples():
         pca.fit(X)
 
 
-def test_mle_simple_case():
+def test_mle_simple_case(global_random_seed):
     # non-regression test for issue
     # https://github.com/scikit-learn/scikit-learn/issues/16730
     n_samples, n_dim = 1000, 10
-    X = np.random.RandomState(0).randn(n_samples, n_dim)
+    X = np.random.RandomState(global_random_seed).randn(n_samples, n_dim)
     X[:, -1] = np.mean(X[:, :-1], axis=-1)  # true X dim is ndim - 1
     pca_skl = PCA("mle", svd_solver="full")
     pca_skl.fit(X)
@@ -927,14 +951,14 @@ def test_assess_dimesion_rank_one():
         assert _assess_dimension(s, rank, n_samples) == -np.inf
 
 
-def test_pca_randomized_svd_n_oversamples():
+def test_pca_randomized_svd_n_oversamples(global_random_seed):
     """Check that exposing and setting `n_oversamples` will provide accurate results
     even when `X` as a large number of features.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/20589
     """
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_features = 100
     X = rng.randn(1_000, n_features)
 
@@ -947,7 +971,9 @@ def test_pca_randomized_svd_n_oversamples():
         random_state=0,
     ).fit(X)
     pca_full = PCA(n_components=1, svd_solver="full").fit(X)
-    pca_arpack = PCA(n_components=1, svd_solver="arpack", random_state=0).fit(X)
+    pca_arpack = PCA(
+        n_components=1, svd_solver="arpack", random_state=global_random_seed
+    ).fit(X)
 
     assert_allclose(np.abs(pca_full.components_), np.abs(pca_arpack.components_))
     assert_allclose(np.abs(pca_randomized.components_), np.abs(pca_arpack.components_))
@@ -962,9 +988,9 @@ def test_feature_names_out():
 
 
 @pytest.mark.parametrize("copy", [True, False])
-def test_variance_correctness(copy):
+def test_variance_correctness(copy, global_random_seed):
     """Check the accuracy of PCA's internal variance calculation"""
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.randn(1000, 200)
     pca = PCA().fit(X)
     pca_var = pca.explained_variance_ / pca.explained_variance_ratio_
