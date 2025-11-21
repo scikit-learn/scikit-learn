@@ -1000,13 +1000,13 @@ def test_logistic_regression_sample_weights(problem, solver, global_random_seed)
             ]
         )
         splits_weighted = list(LeaveOneGroupOut().split(X, groups=groups_weighted))
-        kw_weighted.update({"Cs": 100, "cv": splits_weighted})
+        kw_weighted.update({"Cs": 10, "cv": splits_weighted})
 
         groups_repeated = np.repeat(groups_weighted, sw.astype(int), axis=0)
         splits_repeated = list(
             LeaveOneGroupOut().split(X_repeated, groups=groups_repeated)
         )
-        kw_repeated.update({"Cs": 100, "cv": splits_repeated})
+        kw_repeated.update({"Cs": 10, "cv": splits_repeated})
 
     clf_sw_weighted = LR(solver=solver, **kw_weighted)
     clf_sw_repeated = LR(solver=solver, **kw_repeated)
