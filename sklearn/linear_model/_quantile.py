@@ -13,6 +13,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model._base import LinearModel
 from sklearn.utils import _safe_indexing
 from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils._sparse import _sparse_eye
 from sklearn.utils.fixes import parse_version, sp_version
 from sklearn.utils.validation import _check_sample_weight, validate_data
 
@@ -240,9 +241,9 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             # even for optimization problems parametrized using dense numpy arrays.
             # Therefore, we work with CSC matrices as early as possible to limit
             # unnecessary repeated memory copies.
-            eye = sparse.eye(n_indices, dtype=X.dtype, format="csc")
+            eye = _sparse_eye(n_indices, dtype=X.dtype, format="csc")
             if self.fit_intercept:
-                ones = sparse.csc_matrix(np.ones(shape=(n_indices, 1), dtype=X.dtype))
+                ones = sparse.csc_array(np.ones(shape=(n_indices, 1), dtype=X.dtype))
                 A_eq = sparse.hstack([ones, X, -ones, -X, eye, -eye], format="csc")
             else:
                 A_eq = sparse.hstack([X, -X, eye, -eye], format="csc")

@@ -323,18 +323,21 @@ def test_make_multilabel_classification_return_indicator():
 
 
 def test_make_multilabel_classification_return_indicator_sparse():
-    for allow_unlabeled, min_length in zip((True, False), (0, 1)):
-        X, Y = make_multilabel_classification(
-            n_samples=25,
-            n_features=20,
-            n_classes=3,
-            random_state=0,
-            return_indicator="sparse",
-            allow_unlabeled=allow_unlabeled,
-        )
-        assert X.shape == (25, 20), "X shape mismatch"
-        assert Y.shape == (25, 3), "Y shape mismatch"
-        assert sp.issparse(Y)
+    for allow_unlabeled in (True, False):
+        for sparse_feature in (True, False):
+            X, Y = make_multilabel_classification(
+                n_samples=25,
+                n_features=20,
+                n_classes=3,
+                random_state=0,
+                sparse=sparse_feature,
+                return_indicator="sparse",
+                allow_unlabeled=allow_unlabeled,
+            )
+            assert X.shape == (25, 20), "X shape mismatch"
+            assert Y.shape == (25, 3), "Y shape mismatch"
+            assert sp.issparse(Y)
+            assert sp.issparse(X) if sparse_feature else not sp.issparse(X)
 
 
 def test_make_hastie_10_2():
