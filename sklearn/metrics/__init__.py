@@ -27,6 +27,7 @@ from sklearn.metrics._classification import (
     recall_score,
     zero_one_loss,
 )
+from sklearn.metrics._decision_threshold import decision_threshold_curve
 from sklearn.metrics._dist_metrics import DistanceMetric
 from sklearn.metrics._plot.confusion_matrix import ConfusionMatrixDisplay
 from sklearn.metrics._plot.det_curve import DetCurveDisplay
@@ -133,6 +134,7 @@ __all__ = [
     "d2_tweedie_score",
     "davies_bouldin_score",
     "dcg_score",
+    "decision_threshold_curve",
     "det_curve",
     "euclidean_distances",
     "explained_variance_score",

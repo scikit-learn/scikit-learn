@@ -1644,6 +1644,21 @@ def test_curve_scorer_pos_label(global_random_seed):
     assert scores_pos_label_1.max() == pytest.approx(1.0)
 
 
+def test_curve_scorer_scores_from_predictions():
+    """Check behavior of `_CurveScorer._scores_from_predictions`."""
+    X, y = make_classification(random_state=0)
+    lr = LogisticRegression().fit(X, y)
+    y_score = lr.predict_proba(X)
+
+    curve_scorer = _CurveScorer(
+        balanced_accuracy_score, sign=1, kwargs={}, thresholds=10
+    )
+    score_thresholds, potential_thresholds = curve_scorer._scores_from_predictions(
+        y_true=y,
+        y_score=y_score[:, 1],
+    )
+
+
 @config_context(enable_metadata_routing=True)
 def test_Pipeline_in_PassthroughScorer():
     """Non-regression test for
