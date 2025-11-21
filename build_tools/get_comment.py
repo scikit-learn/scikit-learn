@@ -289,6 +289,29 @@ def create_or_update_comment(comment, message, repo, pr_number, token):
     response.raise_for_status()
 
 
+def update_linter_fails_label(message, repo, pr_number, token):
+    """ "Add or remove the label indicating that the linting has failed."""
+
+    if "❌ Linting issues" in message:
+        # API doc: https://docs.github.com/en/rest/issues/labels?apiVersion=2022-11-28#add-labels-to-an-issue
+        response = requests.post(
+            f"https://api.github.com/repos/{repo}/issues/{pr_number}/labels",
+            headers=get_headers(token),
+            json={"labels": ["CI:Linter failure"]},
+        )
+        response.raise_for_status()
+    else:
+        # API doc: https://docs.github.com/en/rest/issues/labels?apiVersion=2022-11-28#remove-a-label-from-an-issue
+        response = requests.delete(
+            f"https://api.github.com/repos/{repo}/issues/{pr_number}/labels/CI:Linter"
+            " failure",
+            headers=get_headers(token),
+        )
+        # If the label was not set, trying to remove it returns a 404 error
+        if response.status_code != 404:
+            response.raise_for_status()
+
+
 if __name__ == "__main__":
     repo = os.environ["GITHUB_REPOSITORY"]
     token = os.environ["GITHUB_TOKEN"]
@@ -353,3 +376,5 @@ if __name__ == "__main__":
             token=token,
         )
         print(message)
+
+    update_linter_fails_label(message, repo, pr_number, token)
