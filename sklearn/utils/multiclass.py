@@ -13,7 +13,7 @@ from scipy.sparse import issparse
 from sklearn.utils._array_api import get_namespace
 from sklearn.utils._unique import attach_unique, cached_unique
 from sklearn.utils.fixes import VisibleDeprecationWarning
-from sklearn.utils.validation import _assert_all_finite, check_array
+from sklearn.utils.validation import _assert_all_finite, _num_samples, check_array
 
 
 def _unique_multiclass(y, xp=None):
@@ -224,6 +224,18 @@ def check_classification_targets(y):
             "regression target with continuous values."
         )
 
+    if "multiclass" in y_type:
+        n_samples = _num_samples(y)
+        if n_samples > 20 and cached_unique(y).shape[0] > round(0.5 * n_samples):
+            # Only raise the warning when we have at least 20 samples.
+            warnings.warn(
+                "The number of unique classes is greater than 50% of the number "
+                "of samples. `y` could represent a regression problem, not a "
+                "classification problem.",
+                UserWarning,
+                stacklevel=2,
+            )
+
 
 def type_of_target(y, input_name="", raise_unknown=False):
     """Determine the type of data indicated by the target.
@@ -417,17 +429,7 @@ def type_of_target(y, input_name="", raise_unknown=False):
     # Check multiclass
     if issparse(first_row_or_val):
         first_row_or_val = first_row_or_val.data
-    classes = cached_unique(y)
-    if y.shape[0] > 20 and y.shape[0] > classes.shape[0] > round(0.5 * y.shape[0]):
-        # Only raise the warning when we have at least 20 samples.
-        warnings.warn(
-            "The number of unique classes is greater than 50% of the number "
-            "of samples. `y` could represent a regression problem, not a "
-            "classification problem.",
-            UserWarning,
-            stacklevel=2,
-        )
-    if classes.shape[0] > 2 or (y.ndim == 2 and len(first_row_or_val) > 1):
+    if cached_unique(y).shape[0] > 2 or (y.ndim == 2 and len(first_row_or_val) > 1):
         # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
         return "multiclass" + suffix
     else:
@@ -523,7 +525,7 @@ def class_distribution(y, sample_weight=None):
             if 0 in classes_k:
                 class_prior_k[classes_k == 0] += zeros_samp_weight_sum
 
-            # If an there is an implicit zero and it is not in classes and
+            # If there is an implicit zero and it is not in classes and
             # class_prior, make an entry for it
             if 0 not in classes_k and y_nnz[k] < y.shape[0]:
                 classes_k = np.insert(classes_k, 0, 0)
