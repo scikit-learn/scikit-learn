@@ -4,6 +4,7 @@ import scipy as sp
 from scipy.sparse import csc_array, csc_matrix, csr_array, csr_matrix
 
 import sklearn
+from sklearn.utils._sparse import _ensure_sparse_index_int32
 
 
 @pytest.mark.parametrize(
@@ -103,7 +104,7 @@ SPARSE_CONSTRUCTORS = INDEX_CONSTRUCTORS + NO_INDEX_TEST_CONSTRUCTORS
 @pytest.mark.parametrize("constructor", SPARSE_CONSTRUCTORS)
 def test_ensure_sparse_index_int32(constructor):
     A = constructor(np.array([[1.0, 2.0, 3.0], [3.0, 2.0, 1.0]]))
-    sklearn.utils._sparse._ensure_sparse_index_int32(A)
+    _ensure_sparse_index_int32(A)
 
 
 @pytest.mark.parametrize("constructor", INDEX_CONSTRUCTORS)
@@ -113,4 +114,4 @@ def test_ensure_int32_raises(constructor):
         if "csc" in constructor.__name__:
             rows, cols = cols, rows
         A = sp.sparse.coo_array(([1.0, 2.0], (rows, cols)))
-        sklearn.utils._sparse._ensure_sparse_index_int32(constructor(A))
+        _ensure_sparse_index_int32(constructor(A))
