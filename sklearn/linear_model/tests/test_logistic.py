@@ -751,11 +751,12 @@ def test_logistic_regression_solvers(global_random_seed):
 @pytest.mark.parametrize("fit_intercept", [False, True])
 def test_logistic_regression_solvers_multiclass(fit_intercept):
     """Test solvers converge to the same result for multiclass problems."""
+    n_samples, n_features, n_classes = 20, 20, 3
     X, y = make_classification(
-        n_samples=20,
-        n_features=20,
+        n_samples=n_samples,
+        n_features=n_features,
         n_informative=10,
-        n_classes=3,
+        n_classes=n_classes,
         random_state=0,
     )
     tol = 1e-8
@@ -763,7 +764,7 @@ def test_logistic_regression_solvers_multiclass(fit_intercept):
 
     # Override max iteration count for specific solvers to allow for
     # proper convergence.
-    solver_max_iter = {"lbfgs": 200, "sag": 10_000, "saga": 10_000}
+    solver_max_iter = {"lbfgs": 200, "sag": 20_000, "saga": 20_000}
 
     classifiers = {
         solver: LogisticRegression(
@@ -771,6 +772,10 @@ def test_logistic_regression_solvers_multiclass(fit_intercept):
         ).fit(X, y)
         for solver in set(SOLVERS) - set(["liblinear"])
     }
+    for solver, clf in classifiers.items():
+        assert clf.coef_.shape == (n_classes, n_features), (
+            f"Solver {solver} generates coef_ with wrong shape."
+        )
 
     for solver_1, solver_2 in itertools.combinations(classifiers, r=2):
         assert_allclose(
@@ -785,6 +790,30 @@ def test_logistic_regression_solvers_multiclass(fit_intercept):
                 classifiers[solver_2].intercept_,
                 rtol=5e-3 if (solver_1 == "saga" or solver_2 == "saga") else 1e-3,
                 err_msg=f"{solver_1} vs {solver_2}",
+            )
+
+    # Test that LogisticRegressionCV gives almost the same results for the same C.
+    # However, since in this case we take the average of the coefs after fitting across
+    # all the folds, it need not be exactly the same.
+    classifiers_cv = {
+        solver: LogisticRegressionCV(
+            Cs=[1.0],
+            solver=solver,
+            max_iter=solver_max_iter.get(solver, 100),
+            use_legacy_attributes=False,
+            **params,
+        ).fit(X, y)
+        for solver in set(SOLVERS) - set(["liblinear"])
+    }
+    for solver in classifiers_cv:
+        assert_allclose(
+            classifiers_cv[solver].coef_, classifiers[solver].coef_, rtol=1e-2
+        )
+        if fit_intercept:
+            assert_allclose(
+                classifiers_cv[solver].intercept_,
+                classifiers[solver].intercept_,
+                rtol=1e-2,
             )
 
 
@@ -1136,69 +1165,6 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
         clf1.fit(X, y)
         clf2.fit(X, y)
         assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=6)
-
-
-def test_logistic_regression_multinomial(global_random_seed):
-    # Tests for the multinomial option in logistic regression
-
-    # Some basic attributes of Logistic Regression
-    n_samples, n_features, n_classes = 200, 20, 3
-    X, y = make_classification(
-        n_samples=n_samples,
-        n_features=n_features,
-        n_informative=10,
-        n_classes=n_classes,
-        random_state=global_random_seed,
-    )
-
-    X = StandardScaler(with_mean=False).fit_transform(X)
-
-    # 'lbfgs' solver is used as a reference - it's the default
-    ref_i = LogisticRegression(tol=1e-10)
-    ref_w = LogisticRegression(fit_intercept=False, tol=1e-10)
-    ref_i.fit(X, y)
-    ref_w.fit(X, y)
-    assert ref_i.coef_.shape == (n_classes, n_features)
-    assert ref_w.coef_.shape == (n_classes, n_features)
-    for solver in ["sag", "saga", "newton-cg"]:
-        clf_i = LogisticRegression(
-            solver=solver,
-            random_state=global_random_seed,
-            max_iter=2000,
-            tol=1e-10,
-        )
-        clf_w = LogisticRegression(
-            solver=solver,
-            random_state=global_random_seed,
-            max_iter=2000,
-            tol=1e-10,
-            fit_intercept=False,
-        )
-        clf_i.fit(X, y)
-        clf_w.fit(X, y)
-        assert clf_i.coef_.shape == (n_classes, n_features)
-        assert clf_w.coef_.shape == (n_classes, n_features)
-
-        # Compare solutions between lbfgs and the other solvers
-        assert_allclose(ref_i.coef_, clf_i.coef_, rtol=3e-3)
-        assert_allclose(ref_w.coef_, clf_w.coef_, rtol=1e-2)
-        assert_allclose(ref_i.intercept_, clf_i.intercept_, rtol=1e-3)
-
-    # Test that the path give almost the same results. However since in this
-    # case we take the average of the coefs after fitting across all the
-    # folds, it need not be exactly the same.
-    for solver in ["lbfgs", "newton-cg", "sag", "saga"]:
-        clf_path = LogisticRegressionCV(
-            solver=solver,
-            random_state=global_random_seed,
-            max_iter=2000,
-            tol=1e-10,
-            Cs=[1.0],
-            use_legacy_attributes=False,
-        )
-        clf_path.fit(X, y)
-        assert_allclose(clf_path.coef_, ref_i.coef_, rtol=1e-2)
-        assert_allclose(clf_path.intercept_, ref_i.intercept_, rtol=1e-2)
 
 
 def test_liblinear_decision_function_zero(global_random_seed):
