@@ -256,7 +256,10 @@ def check_array_api_unsupervised_metric(metric, array_namespace, device, dtype_n
 array_api_metric_checkers = {
     calinski_harabasz_score: [
         check_array_api_unsupervised_metric,
-    ]
+    ],
+    davies_bouldin_score: [
+        check_array_api_unsupervised_metric,
+    ],
 }
 
 
