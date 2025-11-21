@@ -585,28 +585,6 @@ def test_multinomial_logistic_regression_string_inputs():
     assert sorted(np.unique(lr_cv_str.predict(X_ref))) == ["bar", "baz"]
 
 
-@pytest.mark.parametrize("solver", SOLVERS)
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_logistic_cv_sparse(global_random_seed, solver, csr_container):
-    """Test that sparse and dense X gives same result for each solver."""
-    X, y = make_classification(
-        n_samples=100, n_features=5, random_state=global_random_seed
-    )
-    X[X < 1.0] = 0.0
-    csr = csr_container(X)
-    params = dict(max_iter=10_000, tol=1e-5)
-
-    clf = LogisticRegressionCV(solver=solver, use_legacy_attributes=False, **params)
-    clf.fit(X, y)
-    clfs = LogisticRegressionCV(solver=solver, use_legacy_attributes=False, **params)
-    clfs.fit(csr, y)
-
-    rtol = 5e-2 if solver in ("sag", "saga") else 1e-4
-    assert_allclose(clfs.coef_, clf.coef_, rtol=rtol)
-    assert_allclose(clfs.intercept_, clf.intercept_, rtol=rtol)
-    assert clfs.C_ == clf.C_
-
-
 # TODO(1.12): remove deprecated use_legacy_attributes
 @pytest.mark.parametrize("use_legacy_attributes", [True, False])
 def test_multinomial_cv_iris(use_legacy_attributes):
@@ -878,6 +856,28 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
                 rtol=5e-3 if (solver_1 == "saga" or solver_2 == "saga") else 1e-3,
                 err_msg=f"{solver_1} vs {solver_2}",
             )
+
+
+@pytest.mark.parametrize("solver", SOLVERS)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_logistic_cv_sparse(global_random_seed, solver, csr_container):
+    """Test that sparse and dense X gives same result for each solver."""
+    X, y = make_classification(
+        n_samples=100, n_features=5, random_state=global_random_seed
+    )
+    X[X < 1.0] = 0.0
+    csr = csr_container(X)
+    params = dict(max_iter=10_000, tol=1e-5)
+
+    clf = LogisticRegressionCV(solver=solver, use_legacy_attributes=False, **params)
+    clf.fit(X, y)
+    clfs = LogisticRegressionCV(solver=solver, use_legacy_attributes=False, **params)
+    clfs.fit(csr, y)
+
+    rtol = 5e-2 if solver in ("sag", "saga") else 1e-4
+    assert_allclose(clfs.coef_, clf.coef_, rtol=rtol)
+    assert_allclose(clfs.intercept_, clf.intercept_, rtol=rtol)
+    assert clfs.C_ == clf.C_
 
 
 @pytest.mark.parametrize("weight", [{0: 0.1, 1: 0.2}, {0: 0.1, 1: 0.2, 2: 0.5}])
