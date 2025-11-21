@@ -152,6 +152,23 @@ def _svd_flip_1d(u, v):
     v *= sign
 
 
+def _calculate_variance_xy(
+    X: np.ndarray, y: np.ndarray
+) -> tuple[float, float, bool, bool]:
+    """Calculates the variance of the X and y matrices
+    The flags has_x_variance and has_y_variance are included
+    as guards to prevent crashes on constant data
+    """
+    # Calculate variance
+    X_total_var = np.var(X, axis=0, ddof=1).sum()
+    y_total_var = np.var(y, axis=0, ddof=1).sum()
+
+    # Assertion for numerical stability
+    has_x_variance = not np.isclose(X_total_var, 0.0)
+    has_y_variance = not np.isclose(y_total_var, 0.0)
+    return X_total_var, y_total_var, has_x_variance, has_y_variance
+
+
 class _PLS(
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
@@ -275,7 +292,14 @@ class _PLS(
         self._y_scores = np.zeros((n, n_components))  # Omega
         self.x_loadings_ = np.zeros((p, n_components))  # Gamma
         self.y_loadings_ = np.zeros((q, n_components))  # Delta
+        self.explained_variance_ratio_x_ = np.zeros(n_components)
+        self.explained_variance_ratio_y_ = np.zeros(n_components)
         self.n_iter_ = []
+
+        # Calculate variance in X and y matrices
+        X_total_var, y_total_var, has_x_variance, has_y_variance = (
+            _calculate_variance_xy(Xk, yk)
+        )
 
         # This whole thing corresponds to the algorithm in section 4.1 of the
         # review from Wegelin. See above for a notation mapping from code to
@@ -324,6 +348,9 @@ class _PLS(
                 y_ss = np.dot(y_weights, y_weights)
             y_scores = np.dot(yk, y_weights) / y_ss
 
+            # Calculate variance before deflation to measure component contribution
+            X_var_before, y_var_before, _, _ = _calculate_variance_xy(Xk, yk)
+
             # Deflation: subtract rank-one approx to obtain Xk+1 and yk+1
             x_loadings = np.dot(x_scores, Xk) / np.dot(x_scores, x_scores)
             Xk -= np.outer(x_scores, x_loadings)
@@ -332,10 +359,22 @@ class _PLS(
                 # regress yk on y_score
                 y_loadings = np.dot(y_scores, yk) / np.dot(y_scores, y_scores)
                 yk -= np.outer(y_scores, y_loadings)
+
             if self.deflation_mode == "regression":
                 # regress yk on x_score
                 y_loadings = np.dot(x_scores, yk) / np.dot(x_scores, x_scores)
                 yk -= np.outer(x_scores, y_loadings)
+
+            # Calculate the variance after deflating
+            X_var_after, y_var_after, _, _ = _calculate_variance_xy(Xk, yk)
+
+            # Calculate explained variance ratio
+            self.explained_variance_ratio_x_[k] = (
+                (X_var_before - X_var_after) / X_total_var if has_x_variance else 0.0
+            )
+            self.explained_variance_ratio_y_[k] = (
+                (y_var_before - y_var_after) / y_total_var if has_y_variance else 0.0
+            )
 
             self.x_weights_[:, k] = x_weights
             self.y_weights_[:, k] = y_weights
@@ -590,6 +629,14 @@ class PLSRegression(_PLS):
 
         .. versionadded:: 1.0
 
+    explained_variance_ratio_x_ : ndarray of shape (n_components,)
+        Percentage of variance explained by each of the selected components
+        in `X`.
+
+    explained_variance_ratio_y_ : ndarray of shape (n_components,)
+        Percentage of variance explained by each of the selected components
+        in `y`.
+
     See Also
     --------
     PLSCanonical : Partial Least Squares transformer and regressor.
@@ -740,6 +787,14 @@ class PLSCanonical(_PLS):
 
         .. versionadded:: 1.0
 
+    explained_variance_ratio_x_ : ndarray of shape (n_components,)
+        Percentage of variance explained by each of the selected components
+        in `X`.
+
+    explained_variance_ratio_y_ : ndarray of shape (n_components,)
+        Percentage of variance explained by each of the selected components
+        in `y`.
+
     See Also
     --------
     CCA : Canonical Correlation Analysis.
@@ -864,6 +919,14 @@ class CCA(_PLS):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    explained_variance_ratio_x_ : ndarray of shape (n_components,)
+        Percentage of variance explained by each of the selected components
+        in `X`.
+
+    explained_variance_ratio_y_ : ndarray of shape (n_components,)
+        Percentage of variance explained by each of the selected components
+        in `y`.
 
     See Also
     --------
