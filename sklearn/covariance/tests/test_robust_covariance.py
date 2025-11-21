@@ -182,7 +182,8 @@ def test_mincovdet_bias_on_normal(n_samples, n_features, global_random_seed):
     https://github.com/scikit-learn/scikit-learn/issues/23162
     """
     threshold = 0.985  # threshold for variance underesitmation
-    x = np.random.randn(n_features, n_samples)
+    rng = np.random.default_rng(global_random_seed)
+    x = rng.normal(size=(n_features, n_samples))
     # Assume centered data, to reduce test complexity
     var_emp = empirical_covariance(x.T, assume_centered=True).diagonal()
     cov_mcd = (
