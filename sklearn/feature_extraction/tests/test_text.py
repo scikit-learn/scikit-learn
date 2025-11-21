@@ -28,7 +28,6 @@ from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_sp
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 from sklearn.utils import _align_api_if_sparse
-from sklearn.utils._sparse import SCIPY_VERSION_BELOW_1_12
 from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
     assert_almost_equal,
@@ -659,13 +658,9 @@ def test_hashing_vectorizer():
     assert np.max(X.data) > 0
     assert np.max(X.data) < 1
 
-    # Check that the rows are normalized
-    if SCIPY_VERSION_BELOW_1_12:
-        for i in range(X.shape[0]):
-            assert_almost_equal(np.linalg.norm(X[[0]].data, 2), 1.0)
-    else:
-        for i in range(X.shape[0]):
-            assert_almost_equal(np.linalg.norm(X[0].data, 2), 1.0)
+    # Check that the rows are normalized (l2 norm)
+    for row in X:
+        assert_almost_equal(np.linalg.norm(row.data, 2), 1.0)
 
     # Check vectorization with some non-default parameters
     v = HashingVectorizer(ngram_range=(1, 2), norm="l1")
@@ -682,13 +677,9 @@ def test_hashing_vectorizer():
     assert np.min(X.data) > -1
     assert np.max(X.data) < 1
 
-    # Check that the rows are normalized
-    if SCIPY_VERSION_BELOW_1_12:
-        for i in range(X.shape[0]):
-            assert_almost_equal(np.linalg.norm(X[[0]].data, 1), 1.0)
-    else:
-        for i in range(X.shape[0]):
-            assert_almost_equal(np.linalg.norm(X[0].data, 1), 1.0)
+    # Check that the rows are normalized (l1 norm)
+    for row in X:
+        assert_almost_equal(np.linalg.norm(row.data, 1), 1.0)
 
 
 def test_feature_names():
