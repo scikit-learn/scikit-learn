@@ -160,6 +160,7 @@ from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.preprocessing import (
     KBinsDiscretizer,
     OneHotEncoder,
+    QuantileTransformer,
     SplineTransformer,
     StandardScaler,
     TargetEncoder,
