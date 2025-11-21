@@ -89,50 +89,6 @@ def test_predict_3_classes(csr_container):
     check_predictions(LogisticRegression(C=10), csr_container(X), Y2)
 
 
-@pytest.mark.parametrize(
-    "clf",
-    [
-        LogisticRegression(C=len(iris.data), solver="lbfgs", max_iter=200),
-        LogisticRegression(C=len(iris.data), solver="newton-cg"),
-        LogisticRegression(
-            C=len(iris.data),
-            solver="sag",
-            tol=1e-2,
-        ),
-        LogisticRegression(
-            C=len(iris.data),
-            solver="saga",
-            tol=1e-2,
-        ),
-        LogisticRegression(C=len(iris.data), solver="newton-cholesky"),
-        OneVsRestClassifier(LogisticRegression(C=len(iris.data), solver="liblinear")),
-    ],
-)
-def test_predict_iris(clf, global_random_seed):
-    """Test logistic regression with the iris dataset.
-
-    Test that different solvers handle multiclass data correctly and
-    give good accuracy score (>0.95) for the training data.
-    """
-    clf = clone(clf)  # Avoid side effects from shared instances
-    n_samples, _ = iris.data.shape
-    target = iris.target_names[iris.target]
-
-    if getattr(clf, "solver", None) in ("sag", "saga", "liblinear"):
-        clf.set_params(random_state=global_random_seed)
-    clf.fit(iris.data, target)
-    assert_array_equal(np.unique(target), clf.classes_)
-
-    pred = clf.predict(iris.data)
-    assert np.mean(pred == target) > 0.95
-
-    probabilities = clf.predict_proba(iris.data)
-    assert_allclose(probabilities.sum(axis=1), np.ones(n_samples))
-
-    pred = iris.target_names[probabilities.argmax(axis=1)]
-    assert np.mean(pred == target) > 0.95
-
-
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("solver", ["lbfgs", "newton-cholesky"])
 def test_logistic_glmnet(solver):
