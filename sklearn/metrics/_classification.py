@@ -10,6 +10,7 @@ the lower the better.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import math
 import warnings
 from contextlib import nullcontext
 from math import sqrt
@@ -348,10 +349,13 @@ def _validate_multiclass_probabilistic_prediction(
         "y_pred": ["array-like", "sparse matrix"],
         "normalize": ["boolean"],
         "sample_weight": ["array-like", None],
+        "replace_undefined_by": [Interval(Real, 0.0, 1.0, closed="both"), np.nan],
     },
     prefer_skip_nested_validation=True,
 )
-def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
+def accuracy_score(
+    y_true, y_pred, *, normalize=True, sample_weight=None, replace_undefined_by=0.0
+):
     """Accuracy classification score.
 
     In multilabel classification, this function computes subset accuracy:
@@ -377,14 +381,26 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+    replace_undefined_by : np.nan, int 0, float in `[0.0, 1.0]`, default=0.0
+        Sets the return value when `y_true` and `y_pred` are empty and the metric is
+        thus ill-defined. Can take the following values:
+
+        - `np.nan` to return `np.nan`
+        - a floating point value in the range of `[0.0, 1.0]`
+
+        Note that with `normalize=False` only `np.nan` or `0.0` can be returned
+        regardless of the value set, since `0.0 ≤ accuracy_score ≤ number of samples`
+        and here, `y_true` and `y_pred` are empty.
+
+        .. versionadded:: 1.7
+
     Returns
     -------
-    score : float or int
-        If ``normalize == True``, return the fraction of correctly
-        classified samples (float), else returns the number of correctly
-        classified samples (int).
+    score : float
+        If ``normalize == True``, return the fraction of correctly classified samples,
+        else returns the number of correctly classified samples.
 
-        The best performance is 1 with ``normalize == True`` and the number
+        The best performance is 1.0 with ``normalize == True`` and the number
         of samples with ``normalize == False``.
 
     See Also
@@ -420,6 +436,18 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     y_type, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
+
+    if _num_samples(y_true) == 0:
+        msg = (
+            "`y_true` and `y_pred` are empty. `accuracy_score` is undefined and "
+            "set to the value defined in the `replace_undefined_by` param, which "
+            "defaults to 0.0."
+        )
+        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+        if normalize:
+            return replace_undefined_by
+        else:
+            return replace_undefined_by if math.isnan(replace_undefined_by) else 0.0
 
     if y_type.startswith("multilabel"):
         differing_labels = _count_nonzero(y_true - y_pred, xp=xp, device=device, axis=1)
@@ -1315,9 +1343,8 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
 def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
     """Zero-one classification loss.
 
-    If normalize is ``True``, return the fraction of misclassifications
-    (float), else it returns the number of misclassifications (int). The best
-    performance is 0.
+    If normalize is ``True``, returns the fraction of misclassifications, else returns
+    the number of misclassifications. The best performance is 0.
 
     Read more in the :ref:`User Guide <zero_one_loss>`.
 
@@ -1340,9 +1367,9 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
 
     Returns
     -------
-    loss : float or int,
-        If ``normalize == True``, return the fraction of misclassifications
-        (float), else it returns the number of misclassifications (int).
+    loss : float,
+        If ``normalize == True``, returns the fraction of misclassifications, else
+        returns the number of misclassifications.
 
     See Also
     --------
@@ -3219,7 +3246,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
 
     Returns
     -------
-    loss : float or int
+    loss : float
         Return the average Hamming loss between element of ``y_true`` and
         ``y_pred``.
 
