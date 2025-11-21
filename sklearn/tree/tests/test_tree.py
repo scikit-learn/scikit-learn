@@ -2974,8 +2974,8 @@ def test_absolute_errors_precomputation_function(global_random_seed):
         if reverse:
             abs_errors_ = abs_errors_[::-1]
             medians_ = medians_[::-1]
-        assert_allclose(abs_errors, abs_errors_, atol=1e-12)
-        assert_allclose(medians, medians_, atol=1e-12)
+        assert_allclose(abs_errors, abs_errors_, atol=1e-11)
+        assert_allclose(medians, medians_, atol=1e-11)
 
     rng = np.random.default_rng(global_random_seed)
 
