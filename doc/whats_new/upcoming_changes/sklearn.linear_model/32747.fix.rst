@@ -1,0 +1,4 @@
+- :class:`linear_model.LogisticRegressionCV` is able to handle CV splits where
+  some class labels are missing in some folds. Before, it raised an error whenever a
+  class label were missing in a fold.
+  By :user:`Christian Lorentzen <lorentzenchr>
