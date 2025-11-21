@@ -6,6 +6,7 @@
 import itertools
 import math
 import os
+from collections import namedtuple
 
 import numpy
 import scipy
@@ -121,6 +122,40 @@ def _get_namespace_device_dtype_ids(param):
             return "device1"
         if param == array_api_strict.Device("device2"):
             return "device2"
+
+
+# could also put with `_array_api_for_tests`, and use pytest param
+def yield_mixed_namespace_input_combinations():
+    """Yield mixed namespace and device inputs for testing."""
+
+    Reference = namedtuple("Reference", ["xp", "device"])
+    Input_array = namedtuple("Input_array", ["xp", "device"])
+
+    yield Input_array("cupy", None), Reference("torch", "cuda"), "cupy to torch cuda"
+    yield Input_array("torch", "mps"), Reference("numpy", None), "torch mps to numpy"
+    yield Input_array("numpy", None), Reference("torch", "cuda"), "numpy to torch cuda"
+    yield Input_array("numpy", None), Reference("torch", "mps"), "numpy to torch mps"
+
+    try:
+        import array_api_strict
+
+        device = array_api_strict.Device("CPU_DEVICE")
+    except ImportError:
+        # This case will generally be skipped when `array_api_strict` is not installed
+        # but we still include it so it shows in the test output.
+        device = None
+
+    yield (
+        Input_array("array_api_strict", device),
+        Reference("torch", "mps"),
+        "array_api_strict to torch mps",
+    )
+    # XXX to delete, just here to allow local testing
+    yield (
+        Input_array("array_api_strict", device),
+        Reference("torch", "cpu"),
+        "array_api_strict to torch mps",
+    )
 
 
 def _check_array_api_dispatch(array_api_dispatch):
