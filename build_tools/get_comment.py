@@ -303,8 +303,8 @@ def update_linter_fails_label(message, repo, pr_number, token):
     else:
         # API doc: https://docs.github.com/en/rest/issues/labels?apiVersion=2022-11-28#remove-a-label-from-an-issue
         response = requests.delete(
-            f"https://api.github.com/repos/{repo}/issues/{pr_number}/labels/CI : linter"
-            " fails",
+            f"https://api.github.com/repos/{repo}/issues/{pr_number}/labels/CI:Linter"
+            " failure",
             headers=get_headers(token),
         )
         # If the label was not set, trying to remove it returns a 404 error
