@@ -2,6 +2,7 @@ import math
 from functools import partial
 from inspect import signature
 from itertools import chain, permutations, product
+from typing import Tuple
 
 import numpy as np
 import pytest
@@ -63,13 +64,22 @@ from sklearn.metrics.pairwise import (
     chi2_kernel,
     cosine_distances,
     cosine_similarity,
+    distance_metrics,
     euclidean_distances,
+    haversine_distances,
+    kernel_metrics,
     laplacian_kernel,
     linear_kernel,
     manhattan_distances,
+    nan_euclidean_distances,
     paired_cosine_distances,
+    paired_distances,
     paired_euclidean_distances,
+    paired_manhattan_distances,
     pairwise_distances,
+    pairwise_distances_argmin,
+    pairwise_distances_argmin_min,
+    pairwise_distances_chunked,
     pairwise_kernels,
     polynomial_kernel,
     rbf_kernel,
@@ -81,6 +91,9 @@ from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
+    device,
+    get_namespace,
+    yield_mixed_namespace_input_combinations,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -2245,6 +2258,37 @@ def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name)
     )
 
 
+PAIRWISE_METRICS = {
+    "additive_chi2_kernel": additive_chi2_kernel,
+    "chi2_kernel": chi2_kernel,
+    "cosine_distances": cosine_distances,
+    "cosine_similarity": cosine_similarity,
+    "distance_metrics": distance_metrics,
+    "euclidean_distances": euclidean_distances,
+    "haversine_distances": haversine_distances,
+    "kernel_metrics": kernel_metrics,
+    "laplacian_kernel": laplacian_kernel,
+    "linear_kernel": linear_kernel,
+    "manhattan_distances": manhattan_distances,
+    "nan_euclidean_distances": nan_euclidean_distances,
+    "paired_cosine_distances": paired_cosine_distances,
+    "paired_distances": paired_distances,
+    "paired_euclidean_distances": paired_euclidean_distances,
+    "paired_manhattan_distances": paired_manhattan_distances,
+    "pairwise_kernels": pairwise_kernels,
+    "polynomial_kernel": polynomial_kernel,
+    "rbf_kernel": rbf_kernel,
+    "sigmoid_kernel": sigmoid_kernel,
+    "pairwise_distances": pairwise_distances,
+    "pairwise_distances_argmin": pairwise_distances_argmin,
+    "pairwise_distances_argmin_min": pairwise_distances_argmin_min,
+    "pairwise_distances_chunked": pairwise_distances_chunked,
+}
+
+METRICS_SUPPORTING_MIXED_NAMESPACE = [
+    "accuracy_score",
+]
+
 array_api_metric_checkers = {
     accuracy_score: [
         check_array_api_binary_classification_metric,
@@ -2388,6 +2432,69 @@ def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers)
 @pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
 def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):
     check_func(metric, array_namespace, device, dtype_name)
+
+
+@pytest.mark.parametrize(
+    "array_input, reference",
+    [
+        pytest.param(*args[:2], id=args[2])
+        for args in yield_mixed_namespace_input_combinations()
+    ],
+)
+@pytest.mark.parametrize("metric_name", sorted(METRICS_SUPPORTING_MIXED_NAMESPACE))
+def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
+    """Check 'everything' follows `y_pred` for mixed namespace inputs.
+
+    If output is array, checks it is of the same namespace and device as `y_pred`
+    (`reference`).
+    Note `sample_weight` not set.
+    """
+    xp_ref = _array_api_for_tests(reference.xp, reference.device)
+    xp_input = _array_api_for_tests(array_input.xp, array_input.device)
+    all_metrics_include_pairwise = {
+        **ALL_METRICS,
+        **PAIRWISE_METRICS,
+    }
+    metric = all_metrics_include_pairwise[metric_name]
+
+    if metric_name in CLASSIFICATION_METRICS:
+        # These should all accept binary label input as there are no
+        # `CLASSIFICATION_METRICS` that are in `METRIC_UNDEFINED_BINARY` and are NOT
+        # `partial`s (which we do not test for in array API)
+        y1 = xp_input.asarray([0, 0, 1, 1], device=array_input.device)
+        y2 = xp_ref.asarray([0, 1, 0, 1], device=reference.device)
+    elif metric_name in {**CONTINUOUS_CLASSIFICATION_METRICS, **CURVE_METRICS}:
+        if metric_name not in METRIC_UNDEFINED_BINARY:
+            # Continuous binary input
+            y1 = xp_input.asarray([0.5, 0.2, 0.7, 0.6], device=array_input.device)
+            y2 = xp_ref.asarray([1, 0, 1, 0], device=reference.device)
+        else:
+            # Continuous but shape (n_samples, n_labels)
+            y1 = xp_input.asarray([[0.5, 0.2, 0.7, 0.6]], device=array_input.device)
+            y2 = xp_ref.asarray([[1, 0, 1, 0]], device=reference.device)
+    elif metric_name in REGRESSION_METRICS:
+        y1 = xp_input.asarray([2.0, 0.1, 1.0, 4.0], device=array_input.device)
+        y2 = xp_ref.asarray([0.5, 0.5, 2, 2], device=reference.device)
+    elif metric_name in PAIRWISE_METRICS:
+        y1 = xp_input.asarray(
+            [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], device=array_input.devicee
+        )
+        y2 = xp_ref.asarray([[0.2, 0.3, 0.4], [0.5, 0.6, 0.7]], device=reference.device)
+
+    metric_out = metric(y1, y2)
+
+    def _check_array_namespace_device(array):
+        if hasattr(array, "shape"):
+            assert get_namespace(array)[0] == xp_ref
+            assert device(array) == device(y2)
+
+    # If output is an array (instead of float), check namespace and device is as
+    # expected
+    if isinstance(metric_out, Tuple):
+        for out in metric_out:
+            _check_array_namespace_device(out)
+    else:
+        _check_array_namespace_device(metric_out)
 
 
 @pytest.mark.parametrize("df_lib_name", ["pandas", "polars"])

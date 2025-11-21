@@ -114,7 +114,10 @@ def test_get_namespace_array_api(monkeypatch):
 
 @pytest.mark.parametrize(
     "array_input, reference",
-    [pytest.param(*args[:2], id=args[2]) for args in yield_mixed_namespace_input_combinations()],
+    [
+        pytest.param(*args[:2], id=args[2])
+        for args in yield_mixed_namespace_input_combinations()
+    ],
 )
 def test_move_to_array_api_conversions(array_input, reference):
     """Check conversion between various namespace and devices."""

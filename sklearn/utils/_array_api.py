@@ -24,6 +24,7 @@ __all__ = ["xpx"]  # we import xpx here just to re-export it, need this to appea
 
 _NUMPY_NAMESPACE_NAMES = {"numpy", "sklearn.externals.array_api_compat.numpy"}
 
+
 def yield_namespaces(include_numpy_namespaces=True):
     """Yield supported namespace.
 
@@ -137,6 +138,7 @@ def yield_mixed_namespace_input_combinations():
 
     try:
         import array_api_strict
+
         device = array_api_strict.Device("CPU_DEVICE")
     except ImportError:
         # This case will generally be skipped when `array_api_strict` is not installed
@@ -148,7 +150,7 @@ def yield_mixed_namespace_input_combinations():
         Reference("torch", "mps"),
         "array_api_strict to torch mps",
     )
-
+    # XXX to delete, just here to allow local testing
     yield (
         Input_array("array_api_strict", device),
         Reference("torch", "cpu"),
