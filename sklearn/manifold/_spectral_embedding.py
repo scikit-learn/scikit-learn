@@ -307,14 +307,12 @@ def _spectral_embedding(
 
     if eigen_solver == "amg":
         try:
-            import pyamg
-
-            smoothed_aggregation_solver = pyamg.smoothed_aggregation_solver
-            pyamg_supports_sparray = hasattr(pyamg.aggregation.aggregation, "csr_array")
+            from pyamg import aggregation, smoothed_aggregation_solver
         except ImportError as e:
             raise ValueError(
                 "The eigen_solver was set to 'amg', but pyamg is not available."
             ) from e
+        pyamg_supports_sparray = hasattr(aggregation.aggregation, "csr_array")
 
     if eigen_solver is None:
         eigen_solver = "arpack"
