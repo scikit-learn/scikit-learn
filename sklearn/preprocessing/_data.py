@@ -2821,7 +2821,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 self.quantiles_[:, feature_idx] = _weighted_percentile(
                     col,
                     sample_weight=sample_weight,
-                    quantile=references / 100.0,
+                    percentile_rank=references,
                     average=True,
                 )
             else:
