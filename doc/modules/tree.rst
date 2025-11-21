@@ -683,7 +683,7 @@ Decisions are made as follows:
     >>> X = np.array([np.nan, -1, np.nan, 1]).reshape(-1, 1)
     >>> y = [0, 0, 1, 1]
 
-    >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
+    >>> tree = DecisionTreeClassifier(random_state=0, max_depth=1).fit(X, y)
 
     >>> X_test = np.array([np.nan]).reshape(-1, 1)
     >>> tree.predict(X_test)
