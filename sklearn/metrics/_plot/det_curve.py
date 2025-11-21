@@ -58,6 +58,9 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         some data.
     DetCurveDisplay.from_predictions : Plot DET curve given the true and
         predicted labels.
+    RocCurveDisplay : Receiver Operating Characteristic (ROC) curve.
+    PrecisionRecallDisplay : Precision-Recall curve.
+    CAPCurveDisplay : Cumulative Accuracy Profile (CAP) curve.
 
     Examples
     --------

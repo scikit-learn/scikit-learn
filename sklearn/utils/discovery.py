@@ -164,7 +164,7 @@ def all_displays():
     >>> from sklearn.utils.discovery import all_displays
     >>> displays = all_displays()
     >>> displays[0]
-    ('CalibrationDisplay', <class 'sklearn.calibration.CalibrationDisplay'>)
+    ('CAPCurveDisplay', <class 'sklearn.metrics._plot.cap_curve.CAPCurveDisplay'>)
     """
     # lazy import to avoid circular imports from sklearn.base
     from sklearn.utils._testing import ignore_warnings
