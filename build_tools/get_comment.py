@@ -297,7 +297,7 @@ def update_linter_fails_label(message, repo, pr_number, token):
         response = requests.post(
             f"https://api.github.com/repos/{repo}/issues/{pr_number}/labels",
             headers=get_headers(token),
-            json={"labels": ["CI : linter fails"]},
+            json={"labels": ["CI:Linter failure"]},
         )
         response.raise_for_status()
     else:
