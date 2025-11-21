@@ -29,13 +29,10 @@ is merged. See https://github.com/blog/1506-closing-issues-via-pull-requests
 
 
 <!--
-Please be aware that we are a loose team of volunteers so patience is
-necessary; assistance handling other issues is very welcome. We value
-all user contributions, no matter how minor they are. If we are slow to
-review, either the pull request needs some benchmarking, tinkering,
-convincing, etc. or more likely the reviewers are simply busy. In either
-case, we ask for your understanding during the review process.
-For more information, see our FAQ on this topic:
+Thank you for your patience. Changes to scikit-learn require careful
+attention, but with limited maintainer time, not every contribution can be reviewed
+quickly.
+For more information and tips on improving your pull request, see:
 https://scikit-learn.org/dev/faq.html#why-is-my-pull-request-not-getting-any-attention.
 
 Thanks for contributing!
