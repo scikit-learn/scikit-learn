@@ -1620,6 +1620,8 @@ def test_tfidf_transformer_copy(csr_container):
     else:
         assert X_transform is not X_csr
         assert X_transform.indptr is X_csr.indptr
+        assert X_transform.indices.base is X_csr.indices.base
+        assert X_transform.data.base is X_csr.data.base
 
     with pytest.raises(AssertionError):
         assert_allclose_dense_sparse(X_csr, X_csr_original)
