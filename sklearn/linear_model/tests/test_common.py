@@ -72,7 +72,7 @@ from sklearn.utils.fixes import CSR_CONTAINERS
             LogisticRegression(l1_ratio=0.5, solver="saga", tol=1e-15),
             marks=pytest.mark.xfail(reason="Missing importance sampling scheme"),
         ),
-        LogisticRegressionCV(tol=1e-6, l1_ratios=(0,)),  # TODO(1.10): remove l1_ratios
+        LogisticRegressionCV(tol=1e-6, use_legacy_attributes=False),
         MultiTaskElasticNet(),
         MultiTaskElasticNetCV(),
         MultiTaskLasso(),
@@ -212,8 +212,10 @@ def test_linear_model_regressor_coef_shape(Regressor, ndim):
     [
         (LinearSVC, {}),
         (LogisticRegression, {}),
-        # TODO(1.10): remove l1_ratios as it as become the default
-        (LogisticRegressionCV, {"solver": "newton-cholesky", "l1_ratios": (0,)}),
+        (
+            LogisticRegressionCV,
+            {"solver": "newton-cholesky", "use_legacy_attributes": False},
+        ),
         (PassiveAggressiveClassifier, {}),
         (Perceptron, {}),
         (RidgeClassifier, {}),
