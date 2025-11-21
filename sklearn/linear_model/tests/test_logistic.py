@@ -89,43 +89,6 @@ def test_predict_3_classes(csr_container):
     check_predictions(LogisticRegression(C=10), csr_container(X), Y2)
 
 
-def test_logistic_cv_mock_scorer():
-    """Test that LogisticRegressionCV calls the scorer."""
-
-    class MockScorer:
-        def __init__(self):
-            self.calls = 0
-            self.scores = [0.1, 0.4, 0.8, 0.5]
-
-        def __call__(self, model, X, y, sample_weight=None):
-            score = self.scores[self.calls % len(self.scores)]
-            self.calls += 1
-            return score
-
-    mock_scorer = MockScorer()
-    Cs = [1, 2, 3, 4]
-    cv = 2
-
-    lr = LogisticRegressionCV(
-        Cs=Cs, scoring=mock_scorer, cv=cv, use_legacy_attributes=False
-    )
-    X, y = make_classification(random_state=0)
-    lr.fit(X, y)
-
-    # Cs[2] has the highest score (0.8) from MockScorer
-    assert lr.C_ == Cs[2]
-
-    # scorer called 8 times (cv*len(Cs))
-    assert mock_scorer.calls == cv * len(Cs)
-
-    # reset mock_scorer
-    mock_scorer.calls = 0
-    custom_score = lr.score(X, lr.predict(X))
-
-    assert custom_score == mock_scorer.scores[0]
-    assert mock_scorer.calls == 1
-
-
 @pytest.mark.parametrize(
     "clf",
     [
@@ -524,6 +487,43 @@ def test_logistic_cv(global_random_seed, use_legacy_attributes):
         assert isinstance(lr_cv.C_, float)
         assert isinstance(lr_cv.l1_ratio_, float)
         assert lr_cv.scores_.shape == (3, 1, 1)
+
+
+def test_logistic_cv_mock_scorer():
+    """Test that LogisticRegressionCV calls the scorer."""
+
+    class MockScorer:
+        def __init__(self):
+            self.calls = 0
+            self.scores = [0.1, 0.4, 0.8, 0.5]
+
+        def __call__(self, model, X, y, sample_weight=None):
+            score = self.scores[self.calls % len(self.scores)]
+            self.calls += 1
+            return score
+
+    mock_scorer = MockScorer()
+    Cs = [1, 2, 3, 4]
+    cv = 2
+
+    lr = LogisticRegressionCV(
+        Cs=Cs, scoring=mock_scorer, cv=cv, use_legacy_attributes=False
+    )
+    X, y = make_classification(random_state=0)
+    lr.fit(X, y)
+
+    # Cs[2] has the highest score (0.8) from MockScorer
+    assert lr.C_ == Cs[2]
+
+    # scorer called 8 times (cv*len(Cs))
+    assert mock_scorer.calls == cv * len(Cs)
+
+    # reset mock_scorer
+    mock_scorer.calls = 0
+    custom_score = lr.score(X, lr.predict(X))
+
+    assert custom_score == mock_scorer.scores[0]
+    assert mock_scorer.calls == 1
 
 
 @pytest.mark.parametrize(
