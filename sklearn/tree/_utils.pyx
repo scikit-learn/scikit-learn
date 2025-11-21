@@ -237,6 +237,8 @@ cdef class WeightedFenwickTree:
         if search_bit == 0:
             cumul_weight_out[0] = cumul_weight
             cumul_weighted_y_out[0] = cumul_weighted_y
+            if current_idx >= self.size:
+                current_idx = self.size - 1
             prev_idx_out[0] = current_idx
             return current_idx
 
@@ -271,7 +273,11 @@ cdef class WeightedFenwickTree:
         # Output results
         cumul_weight_out[0] = cumul_weight
         cumul_weighted_y_out[0] = cumul_weighted_y
+        if prev_idx >= self.size:
+            prev_idx = self.size - 1
         prev_idx_out[0] = prev_idx
+        if current_idx >= self.size:
+            current_idx = self.size - 1
         return current_idx
 
 
