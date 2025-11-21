@@ -2956,6 +2956,7 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
             "nan",
             StrOptions({"warn"}),
         ],
+        "separate_avg": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
@@ -2969,6 +2970,7 @@ def classification_report(
     digits=2,
     output_dict=False,
     zero_division="warn",
+    separate_avg=True,
 ):
     """Build a text report showing the main classification metrics.
 
@@ -3010,6 +3012,14 @@ def classification_report(
         .. versionadded:: 1.3
            `np.nan` option was added.
 
+    separate_avg : bool, default=True
+        If True, average metrics (such as "macro avg", "weighted avg", etc.)
+        will be separated from the class-wise metrics and placed under a new
+        key "averages" in the output dictionary.
+
+        .. versionadded:: 1.4
+           `separate_avg` option was added.
+
     Returns
     -------
     report : str or dict
@@ -3022,7 +3032,9 @@ def classification_report(
                          'f1-score':0.67,
                          'support':1},
              'label 2': { ... },
-              ...
+              ...,
+              'averages': {'macro avg': {...},
+                           'weighted avg': {...}}
             }
 
         The reported averages include macro average (averaging the unweighted
@@ -3145,6 +3157,7 @@ def classification_report(
             report += row_fmt.format(*row, width=width, digits=digits)
         report += "\n"
 
+    averages = {}
     # compute all applicable averages
     for average in average_options:
         if average.startswith("micro") and micro_is_accuracy:
@@ -3163,23 +3176,30 @@ def classification_report(
         )
         avg = [avg_p, avg_r, avg_f1, np.sum(s)]
 
-        if output_dict:
-            report_dict[line_heading] = dict(zip(headers, [float(i) for i in avg]))
+    if output_dict:
+        if separate_avg:
+            averages[line_heading] = dict(zip(headers, [float(i) for i in avg]))
         else:
-            if line_heading == "accuracy":
-                row_fmt_accuracy = (
-                    "{:>{width}s} "
-                    + " {:>9.{digits}}" * 2
-                    + " {:>9.{digits}f}"
-                    + " {:>9}\n"
-                )
-                report += row_fmt_accuracy.format(
-                    line_heading, "", "", *avg[2:], width=width, digits=digits
-                )
-            else:
-                report += row_fmt.format(line_heading, *avg, width=width, digits=digits)
+            report_dict[line_heading] = dict(zip(headers, [float(i) for i in avg]))
+    else:
+        if line_heading == "accuracy":
+            row_fmt_accuracy = (
+                "{:>{width}s} "
+                + " {:>9.{digits}}" * 2
+                + " {:>9.{digits}f}"
+                + " {:>9}\n"
+            )
+            report += row_fmt_accuracy.format(
+                line_heading, "", "", *avg[2:], width=width, digits=digits
+            )
+        else:
+            report += row_fmt.format(line_heading, *avg, width=width, digits=digits)
 
     if output_dict:
+        if separate_avg:
+            report_dict["averages"] = averages
+        else:
+            report_dict.update(averages)
         if "accuracy" in report_dict.keys():
             report_dict["accuracy"] = report_dict["accuracy"]["precision"]
         return report_dict
