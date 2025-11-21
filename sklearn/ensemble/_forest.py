@@ -1603,16 +1603,13 @@ class RandomForestRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "absolute_error", "friedman_mse", "poisson"}, \
-            default="squared_error"
+    criterion : {"squared_error", "absolute_error", "poisson"}, default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
-        loss using the mean of each terminal node, "friedman_mse", which uses
-        mean squared error with Friedman's improvement score for potential
-        splits, "absolute_error" for the mean absolute error, which minimizes
-        the L1 loss using the median of each terminal node, and "poisson" which
-        uses reduction in Poisson deviance to find splits.
+        loss using the mean of each terminal node, "absolute_error" for the mean
+        absolute error, which minimizes the L1 loss using the median of each terminal
+        node, and "poisson" which uses reduction in Poisson deviance to find splits.
         Training using "absolute_error" is significantly slower
         than when using "squared_error".
 
@@ -1621,6 +1618,9 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionadded:: 1.0
            Poisson criterion.
+
+        .. versionchanged:: 1.8
+            Criterion `"friedman_mse"` was deprecated.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -2353,21 +2353,21 @@ class ExtraTreesRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "absolute_error", "friedman_mse", "poisson"}, \
-            default="squared_error"
+    criterion : {"squared_error", "absolute_error", "poisson"}, default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
-        loss using the mean of each terminal node, "friedman_mse", which uses
-        mean squared error with Friedman's improvement score for potential
-        splits, "absolute_error" for the mean absolute error, which minimizes
-        the L1 loss using the median of each terminal node, and "poisson" which
-        uses reduction in Poisson deviance to find splits.
+        loss using the mean of each terminal node, "absolute_error" for the mean
+        absolute error, which minimizes the L1 loss using the median of each terminal
+        node, and "poisson" which uses reduction in Poisson deviance to find splits.
         Training using "absolute_error" is significantly slower
         than when using "squared_error".
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
+
+        .. versionchanged:: 1.8
+            Criterion `"friedman_mse"` was deprecated.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until

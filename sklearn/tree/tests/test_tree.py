@@ -72,7 +72,7 @@ from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_random_state
 
 CLF_CRITERIONS = ("gini", "log_loss")
-REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
+REG_CRITERIONS = ("squared_error", "absolute_error", "poisson")
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
@@ -348,7 +348,6 @@ def test_diabetes_overfit(name, Tree, criterion):
     [
         ("squared_error", mean_squared_error),
         ("absolute_error", mean_absolute_error),
-        ("friedman_mse", mean_squared_error),
         ("poisson", mean_poisson_deviance),
     ],
 )
@@ -2034,7 +2033,7 @@ def test_apply_path_readonly_all_trees(name, splitter, sparse_container):
     )
 
 
-@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse", "poisson"])
+@pytest.mark.parametrize("criterion", ["squared_error", "poisson"])
 @pytest.mark.parametrize("Tree", REG_TREES.values())
 def test_balance_property(criterion, Tree):
     # Test that sum(y_pred)=sum(y_true) on training set.
@@ -2456,13 +2455,12 @@ def test_min_sample_split_1_error(Tree):
         tree.fit(X, y)
 
 
-@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
-def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
+def test_missing_values_best_splitter_on_equal_nodes_no_missing():
     """Check missing values goes to correct node during predictions."""
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
 
-    dtc = DecisionTreeRegressor(random_state=42, max_depth=1, criterion=criterion)
+    dtc = DecisionTreeRegressor(random_state=42, max_depth=1)
     dtc.fit(X, y)
 
     # Goes to right node because it has the most data points
@@ -2473,7 +2471,7 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
     X_equal = X[:-1]
     y_equal = y[:-1]
 
-    dtc = DecisionTreeRegressor(random_state=42, max_depth=1, criterion=criterion)
+    dtc = DecisionTreeRegressor(random_state=42, max_depth=1)
     dtc.fit(X_equal, y_equal)
 
     # Goes to right node because the implementation sets:
@@ -2483,8 +2481,7 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
 
 
 @pytest.mark.parametrize("seed", range(3))
-@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
-def test_missing_values_random_splitter_on_equal_nodes_no_missing(criterion, seed):
+def test_missing_values_random_splitter_on_equal_nodes_no_missing(seed):
     """Check missing values go to the correct node during predictions for ExtraTree.
 
     Since ETC use random splits, we use different seeds to verify that the
@@ -2493,7 +2490,7 @@ def test_missing_values_random_splitter_on_equal_nodes_no_missing(criterion, see
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
 
-    etr = ExtraTreeRegressor(random_state=seed, max_depth=1, criterion=criterion)
+    etr = ExtraTreeRegressor(random_state=seed, max_depth=1)
     etr.fit(X, y)
 
     # Get the left and right children of the root node
@@ -2769,8 +2766,7 @@ def test_deterministic_pickle():
         np.array([1, 2, 3, np.nan, 6, np.nan]),
     ],
 )
-@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
-def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_seed):
+def test_regression_tree_missing_values_toy(Tree, X, global_random_seed):
     """Check that we properly handle missing values in regression trees using a toy
     dataset.
 
@@ -2787,7 +2783,7 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_se
     X = X.reshape(-1, 1)
     y = np.arange(6)
 
-    tree = Tree(criterion=criterion, random_state=global_random_seed).fit(X, y)
+    tree = Tree(random_state=global_random_seed).fit(X, y)
     tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
 
     impurity = tree.tree_.impurity
