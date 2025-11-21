@@ -170,6 +170,7 @@ def test_lml_gradient(kernel):
             kernel.set_params(**{length_scale_param_name: length_scale})
             if type(kernel) == Product or len(kernel.theta) == 1:
                 result.append(gpr.log_marginal_likelihood(kernel.theta))
+
             else:
                 result.append(
                     [gpr.log_marginal_likelihood([theta]) for theta in kernel.theta]
