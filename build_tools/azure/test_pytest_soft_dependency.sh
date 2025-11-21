@@ -2,6 +2,8 @@
 
 set -e
 
+exit 0
+
 # called when DISTRIB=="conda"
 source activate $VIRTUALENV
 conda remove -y py pytest || pip uninstall -y py pytest

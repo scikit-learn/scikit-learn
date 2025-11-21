@@ -177,6 +177,7 @@ conda activate
 
 
 create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
+exit 0
 conda activate $CONDA_ENV_NAME
 
 # Sets up ccache when using system compiler

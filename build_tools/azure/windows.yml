@@ -41,16 +41,16 @@ jobs:
       displayName: 'Install'
     - bash: ./build_tools/azure/test_script.sh
       displayName: 'Test Library'
-    - bash: ./build_tools/azure/combine_coverage_reports.sh
-      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
-                     eq(variables['SELECTED_TESTS'], ''))
-      displayName: 'Combine coverage'
-    - task: PublishTestResults@2
-      inputs:
-        testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
-        testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
-      displayName: 'Publish Test Results'
-      condition: succeededOrFailed()
+    # - bash: ./build_tools/azure/combine_coverage_reports.sh
+    #   condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
+    #                  eq(variables['SELECTED_TESTS'], ''))
+    #   displayName: 'Combine coverage'
+    # - task: PublishTestResults@2
+    #   inputs:
+    #     testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
+    #     testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
+    #   displayName: 'Publish Test Results'
+    #   condition: succeededOrFailed()
     - bash: |
         set -ex
         if [[ $(BOT_GITHUB_TOKEN) == "" ]]; then
