@@ -26,7 +26,7 @@ from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.utils._testing import assert_almost_equal, assert_array_equal
 
 sp_version = parse_version(scipy.__version__)
-if not sp_version < parse_version("1.15.0"):
+if sp_version >= parse_version("1.15.0"):
     from scipy.differentiate import derivative
 
 
@@ -136,16 +136,12 @@ def test_lml_gradient(kernel):
         result = []
         for i, length_scale in enumerate(length_scales.flatten()):
             kernel.set_params(**{length_scale_param_name: length_scale})
-            if type(kernel) != Product:
+            if type(kernel) == Product or len(kernel.theta) == 1:
                 result.append(
                     gpc.log_marginal_likelihood(kernel.theta)
-                    if len(kernel.theta) == 1
-                    else [
-                        gpc.log_marginal_likelihood([theta]) for theta in kernel.theta
-                    ]
                 )
             else:
-                result.append(gpc.log_marginal_likelihood(kernel.theta))
+                result.append([gpc.log_marginal_likelihood([theta]) for theta in kernel.theta])
         if length_scales.ndim == 1:
             return np.stack(result)
         elif length_scales.ndim == 2:
