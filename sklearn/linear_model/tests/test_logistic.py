@@ -65,7 +65,7 @@ def check_predictions(clf, X, y):
 
     probabilities = clf.predict_proba(X)
     assert probabilities.shape == (n_samples, n_classes)
-    assert_array_almost_equal(probabilities.sum(axis=1), np.ones(n_samples))
+    assert_allclose(probabilities.sum(axis=1), np.ones(n_samples))
     assert_array_equal(probabilities.argmax(axis=1), y)
 
 
@@ -332,11 +332,13 @@ def test_inconsistent_input():
     # Wrong dimensions for training data
     y_wrong = y_[:-1]
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="Found input variables with inconsistent number"
+    ):
         clf.fit(X, y_wrong)
 
     # Wrong dimensions for test data
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="X has 12 features, but"):
         clf.fit(X_, y_).predict(rng.random_sample((3, 12)))
 
 
@@ -354,10 +356,10 @@ def test_nan():
     # Regression test for Issue #252: fit used to go into an infinite loop.
     Xnan = np.array(X, dtype=np.float64)
     Xnan[0, 1] = np.nan
-    logistic = LogisticRegression()
+    clf = LogisticRegression()
 
-    with pytest.raises(ValueError):
-        logistic.fit(Xnan, Y1)
+    with pytest.raises(ValueError, match="Input X contains NaN."):
+        clf.fit(Xnan, Y1)
 
 
 def test_consistency_path(global_random_seed):
@@ -974,9 +976,7 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
 # TODO(1.10): remove filterwarnings with deprecation period of use_legacy_attributes
 @pytest.mark.filterwarnings("ignore:.*use_legacy_attributes.*:FutureWarning")
 @pytest.mark.parametrize("problem", ("single", "cv"))
-@pytest.mark.parametrize(
-    "solver", ("lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga")
-)
+@pytest.mark.parametrize("solver", SOLVERS)
 def test_logistic_regression_sample_weights(problem, solver, global_random_seed):
     n_samples_per_cv_group = 200
     n_cv_groups = 3
@@ -1044,9 +1044,7 @@ def test_logistic_regression_sample_weights(problem, solver, global_random_seed)
     assert_allclose(clf_sw_weighted.coef_, clf_sw_repeated.coef_, atol=1e-5)
 
 
-@pytest.mark.parametrize(
-    "solver", ("lbfgs", "newton-cg", "newton-cholesky", "sag", "saga")
-)
+@pytest.mark.parametrize("solver", SOLVERS)
 def test_logistic_regression_solver_class_weights(solver, global_random_seed):
     # Test that passing class_weight as [1, 2] is the same as
     # passing class weight = [1,1] but adjusting sample weights
