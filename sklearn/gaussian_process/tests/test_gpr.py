@@ -9,7 +9,6 @@ import warnings
 
 import numpy as np
 import pytest
-import scipy
 
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
@@ -20,7 +19,6 @@ from sklearn.gaussian_process.kernels import (
     DotProduct,
     ExpSineSquared,
     Product,
-    Sum,
     WhiteKernel,
 )
 from sklearn.gaussian_process.kernels import (
@@ -33,9 +31,9 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_less,
 )
+from sklearn.utils.fixes import sp_version
 
-sp_version = parse_version(scipy.__version__)
-if not sp_version < parse_version("1.15.0"):
+if sp_version >= parse_version("1.15.0"):
     from scipy.differentiate import derivative
 
 
@@ -170,16 +168,12 @@ def test_lml_gradient(kernel):
         )
         for i, length_scale in enumerate(length_scales.flatten()):
             kernel.set_params(**{length_scale_param_name: length_scale})
-            if type(kernel) not in [Sum, Product]:
-                result.append(
-                    gpr.log_marginal_likelihood(kernel.theta)
-                    if len(kernel.theta) == 1
-                    else [
-                        gpr.log_marginal_likelihood([theta]) for theta in kernel.theta
-                    ]
-                )
-            else:
+            if type(kernel) == Product or len(kernel.theta) == 1:
                 result.append(gpr.log_marginal_likelihood(kernel.theta))
+            else:
+                result.append(
+                    [gpr.log_marginal_likelihood([theta]) for theta in kernel.theta]
+                )
         if length_scales.ndim == 1:
             return np.stack(result)
         elif length_scales.ndim == 2:

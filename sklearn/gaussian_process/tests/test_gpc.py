@@ -7,7 +7,6 @@ import warnings
 
 import numpy as np
 import pytest
-import scipy
 
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
@@ -24,6 +23,7 @@ from sklearn.gaussian_process.kernels import (
 )
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.utils._testing import assert_almost_equal, assert_array_equal
+from sklearn.utils.fixes import sp_version
 
 sp_version = parse_version(scipy.__version__)
 if sp_version >= parse_version("1.15.0"):
