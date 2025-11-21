@@ -2607,6 +2607,7 @@ def test_liblinear_multiclass_raises(Estimator):
 
 
 # TODO(1.10): remove after deprecation cycle of penalty.
+@pytest.mark.filterwarnings("ignore:.*default.*use_legacy_attributes.*:FutureWarning")
 @pytest.mark.parametrize("est", [LogisticRegression, LogisticRegressionCV])
 def test_penalty_deprecated(est):
     """Check that penalty in LogisticRegression and *CV is deprecated."""
@@ -2628,6 +2629,7 @@ def test_logisticregressioncv_warns_with_use_legacy_attributes():
 
 # TODO(1.10): remove after deprecation cycle.
 @pytest.mark.filterwarnings("ignore:l1_ratios parameter is only us.*:UserWarning")
+@pytest.mark.filterwarnings("ignore:.*default.*use_legacy_attributes.*:FutureWarning")
 def test_l1_ratio_None_deprecated():
     """Check that l1_ratio=None in LogisticRegression is deprecated."""
     X, y = make_classification(n_classes=2, n_samples=20, n_informative=6)
