@@ -187,7 +187,12 @@ def test_mincovdet_bias_on_normal(n_samples, n_features, global_random_seed):
     # Assume centered data, to reduce test complexity
     var_emp = empirical_covariance(x.T, assume_centered=True).diagonal()
     cov_mcd = (
-        MinCovDet(support_fraction=1.0, store_precision=False, assume_centered=True)
+        MinCovDet(
+            support_fraction=1.0,
+            store_precision=False,
+            assume_centered=True,
+            random_state=global_random_seed,
+        )
         .fit(x.T)
         .covariance_
     )
