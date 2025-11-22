@@ -1,0 +1,115 @@
+/**
+ * This is the styling for the Algolia search page, corresponding to
+ * `doc/templates/algolia-search.html`.
+ *
+ * This file is compiled into styles/algolia-search.css by sphinxcontrib.sass, see:
+ * https://sass-lang.com/guide/
+ */
+
+#docsearch-powered-by-light,
+#docsearch-powered-by-dark {
+  margin: 1.5rem 0;
+
+  svg {
+    height: var(--pst-font-size-h3);
+  }
+}
+
+html[data-theme="dark"] #docsearch-powered-by-light {
+  display: none;
+}
+
+html[data-theme="light"] #docsearch-powered-by-dark {
+  display: none;
+}
+
+#docsearch-container .ais-SearchBox-form {
+  border: 1px solid var(--pst-color-border);
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-right: 1rem;
+
+  .ais-SearchBox-input {
+    width: 100%;
+    border: none;
+    border-radius: 0.25rem;
+    padding: 0.3rem 0.5rem;
+    background: transparent;
+  }
+
+  .ais-SearchBox-submit,
+  .ais-SearchBox-reset,
+  .ais-SearchBox-loadingIndicator {
+    display: flex;
+    align-items: center;
+  }
+
+  .ais-SearchBox-submitIcon,
+  .ais-SearchBox-resetIcon,
+  .ais-SearchBox-loadingIcon {
+    fill: var(--pst-color-text-base);
+    height: 0.8rem;
+    width: 0.8rem;
+  }
+}
+
+#docsearch-stats {
+  .sk-search-stats-heading {
+    font-size: var(--pst-font-size-h4);
+    margin-top: 1rem;
+  }
+
+  .sk-search-stats {
+    color: var(--pst-color-text-muted);
+  }
+}
+
+#docsearch-hits {
+  li.ais-InfiniteHits-item {
+    border-top: 1px solid var(--pst-color-text-muted);
+    margin: 1rem 0;
+    padding: 1rem 0;
+
+    .sk-search-item-header {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    .sk-search-item-path {
+      font-size: var(--pst-font-size-milli);
+      color: var(--pst-color-text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      .sk-search-item-path-divider {
+        font-weight: bold;
+      }
+    }
+
+    .sk-search-item-context {
+      margin: 1rem 0 0;
+    }
+
+    mark {
+      background-color: var(--pst-color-target);
+      color: inherit;
+      padding: 0;
+    }
+  }
+
+  .ais-InfiniteHits-loadMore {
+    &:disabled {
+      display: none;
+    }
+
+    &:not(:disabled) {
+      color: var(--pst-color-link);
+      font-weight: bold;
+      text-decoration: underline;
+      margin-top: 0.8rem;
+    }
+  }
+}
