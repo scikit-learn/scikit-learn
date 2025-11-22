@@ -2803,14 +2803,19 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
         n_samples, n_features = X.shape
         references = self.references_ * 100
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         if self.subsample is not None and self.subsample < n_samples:
             # Take a subsample of `X`
             X = resample(
-                X, replace=False, n_samples=self.subsample, random_state=random_state
+                X,
+                replace=True,
+                n_samples=self.subsample,
+                random_state=self.random_state,
+                sample_weight=sample_weight,
             )
-            if sample_weight is not None:
-                sample_weight = sample_weight[: X.shape[0]]
+            sample_weight = None
 
         self.quantiles_ = np.zeros((len(references), n_features))
 
@@ -2824,12 +2829,11 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                     percentile_rank=references,
                     average=True,
                 )
+
             else:
                 self.quantiles_[:, feature_idx] = np.nanquantile(
                     col, references / 100.0, method="averaged_inverted_cdf"
                 )
-
-        self.quantiles_ = np.nanpercentile(X, references, axis=0)
 
     def _sparse_fit(self, X, random_state):
         """Compute percentiles for sparse matrices.
@@ -2899,7 +2903,10 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             )
 
         X = self._check_inputs(X, in_fit=True, copy=False)
-        n_samples = X.shape[0]
+        if sample_weight is None:
+            n_samples = X.shape[0]
+        else:
+            n_samples = sample_weight.sum()
 
         if self.n_quantiles > n_samples:
             warnings.warn(
