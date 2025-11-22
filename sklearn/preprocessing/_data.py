@@ -2803,14 +2803,12 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
         n_samples, n_features = X.shape
         references = self.references_ * 100
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         if self.subsample is not None and self.subsample < n_samples:
             # Take a subsample of `X`
             X = resample(
                 X,
-                replace=True,
+                replace=False if sample_weight is None else True,
                 n_samples=self.subsample,
                 random_state=self.random_state,
                 sample_weight=sample_weight,
@@ -2872,7 +2870,11 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 # quantiles. Force the quantiles to be zeros.
                 self.quantiles_.append([0] * len(references))
             else:
-                self.quantiles_.append(np.nanpercentile(column_data, references))
+                self.quantiles_.append(
+                    np.nanquantile(
+                        column_data, references / 100, method="averaged_inverted_cdf"
+                    )
+                )
         self.quantiles_ = np.transpose(self.quantiles_)
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -2906,7 +2908,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         if sample_weight is None:
             n_samples = X.shape[0]
         else:
-            n_samples = sample_weight.sum()
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+            n_samples = np.sum(sample_weight)
 
         if self.n_quantiles > n_samples:
             warnings.warn(
@@ -2914,7 +2917,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 "of samples (%s). n_quantiles is set to "
                 "n_samples." % (self.n_quantiles, n_samples)
             )
-        self.n_quantiles_ = max(1, min(self.n_quantiles, n_samples))
+        self.n_quantiles_ = int(max(1, min(self.n_quantiles, n_samples)))
 
         rng = check_random_state(self.random_state)
 
