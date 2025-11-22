@@ -2810,7 +2810,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 X,
                 replace=False if sample_weight is None else True,
                 n_samples=self.subsample,
-                random_state=self.random_state,
+                random_state=random_state,
                 sample_weight=sample_weight,
             )
             sample_weight = None
@@ -2891,6 +2891,13 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
         y : None
             Ignored.
+
+        sample_weight: array-like of shape (n_samples,), default=None
+            Individual weights for each sample.
+
+            .. versionadded:: 1.8
+               parameter *sample_weight* support for dense_fit in
+               QuantileTranformer.
 
         Returns
         -------
