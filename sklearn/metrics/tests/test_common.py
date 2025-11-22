@@ -2044,6 +2044,54 @@ def check_array_api_binary_classification_metric(
     )
 
 
+def check_array_api_binary_continuous_classification_metric(
+    metric, array_namespace, device, dtype_name
+):
+    y_true_np = np.array([1, 0, 1, 0])
+    y_prob_np = np.array([0.5, 0.2, 0.7, 0.6], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_prob_np,
+        sample_weight=None,
+    )
+
+    # Check with string `y_true`
+    y_true_np = np.array(["yes", "no", "yes", "no"])
+    metric_kwargs = {}
+    if "brier" in metric.__name__:
+        # `brier_score_loss` and `d2_brier_score` require specifying the
+        # `pos_label`
+        metric_kwargs["pos_label"] = "yes"
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_prob_np,
+        sample_weight=None,
+        **metric_kwargs,
+    )
+
+    sample_weight = np.array([1, 2, 3, 1], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_prob_np,
+        sample_weight=sample_weight,
+    )
+
+
 def check_array_api_multiclass_classification_metric(
     metric, array_namespace, device, dtype_name
 ):
