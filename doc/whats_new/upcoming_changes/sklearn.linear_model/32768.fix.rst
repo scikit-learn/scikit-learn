@@ -1,0 +1,4 @@
+- :class:`linear_model.LassoCV` and :class:`linear_model.ElasticNetCV` now
+  take the `positive` parameter into account to define the search grid for the
+  internally tuned `alpha` hyper-parameter.
+  By :user:`Junteng Li <JasonLiJT>`
