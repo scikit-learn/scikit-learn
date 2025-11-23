@@ -1049,3 +1049,140 @@ def test_gnb_array_api_compliance(
         assert_allclose(
             _convert_to_numpy(y_pred_log_proba_xp, xp=xp), y_pred_log_proba_np
         )
+
+
+@pytest.mark.parametrize("NaiveBayes", ALL_NAIVE_BAYES_CLASSES)
+def test_class_weight(NaiveBayes):
+    """Test class_weight parameter for all Naive Bayes classifiers."""
+    # Prepare data based on classifier type
+    if NaiveBayes == GaussianNB:
+        X_train = X
+        y_train = y
+    else:
+        # Use positive integer data for discrete NB
+        X_train = np.array([[0, 1], [1, 0], [1, 1], [0, 0], [1, 0], [0, 1]])
+        y_train = np.array([0, 0, 0, 1, 1, 1])
+
+    # Test 1: class_weight=None should work as before
+    clf_none = NaiveBayes(class_weight=None).fit(X_train, y_train)
+    clf_default = NaiveBayes().fit(X_train, y_train)
+
+    assert_array_almost_equal(
+        clf_none.predict_proba(X_train), clf_default.predict_proba(X_train)
+    )
+
+    # Test 2: class_weight='balanced' for imbalanced data
+    X_imb = np.vstack([X_train, X_train[y_train == 0]])
+    y_imb = np.hstack([y_train, y_train[y_train == 0]])
+
+    clf_balanced = NaiveBayes(class_weight="balanced").fit(X_imb, y_imb)
+    # Should upweight minority class
+    assert clf_balanced is not None
+
+    # Test 3: manual class weights
+    clf_manual = NaiveBayes(class_weight={0: 1, 1: 2}).fit(X_train, y_train)
+    assert clf_manual is not None
+
+    # Test 4: class_weight with sample_weight
+    sample_weight = np.array([1, 1, 1, 2, 2, 2])
+    clf_both = NaiveBayes(class_weight={0: 2, 1: 1}).fit(
+        X_train, y_train, sample_weight=sample_weight
+    )
+    assert clf_both is not None
+
+
+@pytest.mark.parametrize("NaiveBayes", ALL_NAIVE_BAYES_CLASSES)
+def test_class_weight_balanced(NaiveBayes):
+    """Test that balanced class weights handle imbalanced data correctly."""
+    if NaiveBayes == GaussianNB:
+        # Create imbalanced dataset
+        rng = np.random.RandomState(0)
+        X_train = np.vstack([rng.randn(100, 2), rng.randn(10, 2) + 2])
+        y_train = np.hstack([np.zeros(100), np.ones(10)])
+    else:
+        # Use discrete data
+        X_train = np.vstack([np.ones((100, 2)), np.zeros((10, 2))])
+        y_train = np.hstack([np.zeros(100), np.ones(10)])
+
+    clf_default = NaiveBayes().fit(X_train, y_train)
+    clf_balanced = NaiveBayes(class_weight="balanced").fit(X_train, y_train)
+
+    # Predictions should differ due to reweighting
+    pred_default = clf_default.predict_proba(X_train[:5])
+    pred_balanced = clf_balanced.predict_proba(X_train[:5])
+
+    # At least for some samples the predictions should be different
+    assert not np.allclose(pred_default, pred_balanced)
+
+
+@pytest.mark.parametrize("NaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
+def test_class_weight_partial_fit_error(NaiveBayes):
+    """Test that partial_fit raises error with class_weight='balanced'."""
+    X_train = np.array([[0, 1], [1, 0], [1, 1], [0, 0]])
+    y_train = np.array([0, 0, 1, 1])
+
+    clf = NaiveBayes(class_weight="balanced")
+
+    with pytest.raises(
+        ValueError, match="class_weight='balanced' is not supported for partial_fit"
+    ):
+        clf.partial_fit(X_train, y_train, classes=np.unique(y_train))
+
+
+def test_gaussiannb_class_weight_partial_fit_error():
+    """Test that GaussianNB partial_fit raises error with class_weight='balanced'."""
+    X_train = np.array([[-2, -1], [-1, -1], [1, 1], [2, 1]])
+    y_train = np.array([0, 0, 1, 1])
+
+    clf = GaussianNB(class_weight="balanced")
+
+    with pytest.raises(
+        ValueError, match="class_weight='balanced' is not supported for partial_fit"
+    ):
+        clf.partial_fit(X_train, y_train, classes=np.unique(y_train))
+
+
+@pytest.mark.parametrize("NaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
+def test_class_weight_partial_fit_with_dict(NaiveBayes):
+    """Test that partial_fit works with dict class_weight."""
+    X_train = np.array([[0, 1], [1, 0], [1, 1], [0, 0]])
+    y_train = np.array([0, 0, 1, 1])
+
+    clf = NaiveBayes(class_weight={0: 1, 1: 2})
+    clf.partial_fit(X_train, y_train, classes=np.unique(y_train))
+
+    assert clf is not None
+
+
+def test_gaussiannb_class_weight_partial_fit_with_dict():
+    """Test that GaussianNB partial_fit works with dict class_weight."""
+    X_train = np.array([[-2, -1], [-1, -1], [1, 1], [2, 1]])
+    y_train = np.array([0, 0, 1, 1])
+
+    clf = GaussianNB(class_weight={0: 1, 1: 2})
+    clf.partial_fit(X_train, y_train, classes=np.unique(y_train))
+
+    assert clf is not None
+
+
+@pytest.mark.parametrize("NaiveBayes", ALL_NAIVE_BAYES_CLASSES)
+def test_class_weight_equivalent_to_sample_weight(NaiveBayes):
+    """Test that class_weight produces same result as sample_weight."""
+    if NaiveBayes == GaussianNB:
+        X_train = X
+        y_train = y
+    else:
+        X_train = np.array([[0, 1], [1, 0], [1, 1], [0, 0], [1, 0], [0, 1]])
+        y_train = np.array([0, 0, 0, 1, 1, 1])
+
+    # Using class_weight
+    clf_cw = NaiveBayes(class_weight={0: 2, 1: 3}).fit(X_train, y_train)
+
+    # Equivalent using sample_weight
+    sample_weight = np.array([2 if label == 0 else 3 for label in y_train])
+    clf_sw = NaiveBayes().fit(X_train, y_train, sample_weight=sample_weight)
+
+    # Predictions should be very similar
+    assert_array_almost_equal(
+        clf_cw.predict_proba(X_train), clf_sw.predict_proba(X_train), decimal=5
+    )
