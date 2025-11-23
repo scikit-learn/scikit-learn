@@ -196,8 +196,8 @@ def _alpha_grid(
         Xyw = np.maximum(0, Xyw)
 
     # Compute np.max(np.sqrt(np.sum(Xyw**2, axis=1))). We switch sqrt and max to avoid
-    # many computations of sqrt. This, however, needs an additional np.abs.
-    alpha_max = np.sqrt(np.max(np.abs(np.sum(Xyw**2, axis=1)))) / (n_samples * l1_ratio)
+    # many computations of sqrt.
+    alpha_max = np.sqrt(np.max(np.sum(Xyw**2, axis=1))) / (n_samples * l1_ratio)
 
     if alpha_max <= np.finfo(np.float64).resolution:
         return np.full(n_alphas, np.finfo(np.float64).resolution)
