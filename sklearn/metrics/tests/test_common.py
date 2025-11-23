@@ -146,7 +146,7 @@ REGRESSION_METRICS = {
     "mean_compound_poisson_deviance": partial(mean_tweedie_deviance, power=1.4),
     "d2_tweedie_score": partial(d2_tweedie_score, power=1.4),
     "d2_pinball_score": d2_pinball_score,
-    "d2_pinball_score_01": partial(d2_pinball_score, alpha=0.1),
+    "d2_pinball_score_02": partial(d2_pinball_score, alpha=0.2),
     "d2_pinball_score_09": partial(d2_pinball_score, alpha=0.9),
     "d2_absolute_error_score": d2_absolute_error_score,
 }
@@ -492,7 +492,7 @@ MULTIOUTPUT_METRICS = {
     "mean_absolute_percentage_error",
     "mean_pinball_loss",
     "d2_pinball_score",
-    "d2_pinball_score_01",
+    "d2_pinball_score_02",
     "d2_pinball_score_09",
     "d2_absolute_error_score",
 }
@@ -565,7 +565,7 @@ NOT_SYMMETRIC_METRICS = {
     "mean_compound_poisson_deviance",
     "d2_tweedie_score",
     "d2_pinball_score",
-    "d2_pinball_score_01",
+    "d2_pinball_score_02",
     "d2_pinball_score_09",
     "d2_absolute_error_score",
     "mean_absolute_percentage_error",
