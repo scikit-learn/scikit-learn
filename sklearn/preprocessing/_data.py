@@ -2892,7 +2892,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         y : None
             Ignored.
 
-        sample_weight: array-like of shape (n_samples,), default=None
+        sample_weight : array-like of shape (n_samples,), default=None
             Individual weights for each sample.
 
             .. versionadded:: 1.8
