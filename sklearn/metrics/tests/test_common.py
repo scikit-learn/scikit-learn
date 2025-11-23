@@ -2365,7 +2365,7 @@ array_api_metric_checkers = {
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
     ],
-    partial(d2_pinball_score, alpha=0.1): [
+    partial(d2_pinball_score, alpha=0.2): [
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
     ],
