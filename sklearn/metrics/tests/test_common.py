@@ -1,4 +1,5 @@
 import math
+import re
 from functools import partial
 from inspect import signature
 from itertools import chain, permutations, product
@@ -14,6 +15,7 @@ from sklearn.metrics import (
     average_precision_score,
     balanced_accuracy_score,
     brier_score_loss,
+    classification_report,
     cohen_kappa_score,
     confusion_matrix,
     coverage_error,
@@ -890,6 +892,19 @@ def test_format_invariance_with_1d_vectors(name):
             else:
                 with pytest.raises(ValueError):
                     metric(y1_row, y2_row)
+
+
+CLASSIFICATION_METRICS_REPORT = {
+    **CLASSIFICATION_METRICS,
+    "classification_report": classification_report,
+}
+
+
+@pytest.mark.parametrize("metric", CLASSIFICATION_METRICS_REPORT.values())
+def test_classification_metrics_raise_on_empty_input(metric):
+    msg = "Found empty input array (e.g., `y_true` or `y_pred`) while a minimum of 1"
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        metric(np.array([]), np.array([]))
 
 
 @pytest.mark.parametrize("metric", CLASSIFICATION_METRICS.values())
