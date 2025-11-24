@@ -883,7 +883,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            'newton-cg'       l1_ratio=0               yes
            'newton-cholesky' l1_ratio=0               yes
            'sag'             l1_ratio=0               yes
-           'saga'            0<=l1_ratio<=0           yes
+           'saga'            0<=l1_ratio<=1           yes
            ================= ======================== ======================
 
         .. note::
@@ -1479,7 +1479,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            'newton-cg'       l1_ratio=0               yes
            'newton-cholesky' l1_ratio=0               yes
            'sag'             l1_ratio=0               yes
-           'saga'            0<=l1_ratio<=0           yes
+           'saga'            0<=l1_ratio<=1           yes
            ================= ======================== ======================
 
         .. note::
