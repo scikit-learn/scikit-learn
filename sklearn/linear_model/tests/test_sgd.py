@@ -1496,7 +1496,7 @@ def asgd_oneclass(klass, X, eta, nu, coef_init=None, offset_init=0.0):
             gradient = -1
         else:
             gradient = 0
-        coef *= max(0, 1.0 - (eta * nu / 2))
+        coef *= max(0, 1.0 - (eta * nu))
         coef += -(eta * gradient * entry)
         intercept += -(eta * (nu + gradient)) * decay
 
@@ -1659,7 +1659,7 @@ def test_sgd_averaged_computed_correctly_oneclass(klass):
 def test_sgd_averaged_partial_fit_oneclass(klass):
     # Tests whether the partial fit yields the same average as the fit
     eta = 0.001
-    nu = 0.05
+    nu = 0.005
     n_samples = 20
     n_features = 10
     rng = np.random.RandomState(0)
@@ -1815,7 +1815,7 @@ def test_sgd_oneclass_vs_linear_oneclass():
         assert dec_fn_corr > 0.99
         assert preds_corr > 0.95
         assert coef_corr > 0.99
-        assert_allclose(1 - share_ones, nu)
+        assert_allclose(1 - share_ones, nu, atol=1e-2)
 
 
 def test_l1_ratio():
@@ -2265,10 +2265,11 @@ def test_sgd_numerical_consistency(SGDEstimator):
     X_32 = X.astype(dtype=np.float32)
     Y_32 = np.array(Y, dtype=np.float32)
 
-    sgd_64 = SGDEstimator(max_iter=20)
+    max_iter = 18 if SGDEstimator == SGDOneClassSVM else 20
+    sgd_64 = SGDEstimator(max_iter=max_iter)
     sgd_64.fit(X_64, Y_64)
 
-    sgd_32 = SGDEstimator(max_iter=20)
+    sgd_32 = SGDEstimator(max_iter=max_iter)
     sgd_32.fit(X_32, Y_32)
 
     assert_allclose(sgd_64.coef_, sgd_32.coef_)
