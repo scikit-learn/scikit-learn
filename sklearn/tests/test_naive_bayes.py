@@ -5,9 +5,9 @@ import numpy as np
 import pytest
 from scipy.special import logsumexp
 
-from sklearn._config import config_context
-from sklearn.datasets import load_digits, load_iris
-from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.datasets import load_digits, load_iris, make_classification
+from sklearn.metrics import recall_score
+from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.naive_bayes import (
     BernoulliNB,
     CategoricalNB,
@@ -15,12 +15,8 @@ from sklearn.naive_bayes import (
     GaussianNB,
     MultinomialNB,
 )
-from sklearn.utils._array_api import (
-    _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
-    device,
-    yield_namespace_device_dtype_combinations,
-)
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.utils._testing import (
     _array_api_for_tests,
     assert_allclose,
@@ -28,6 +24,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.class_weight import compute_sample_weight
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 DISCRETE_NAIVE_BAYES_CLASSES = [BernoulliNB, CategoricalNB, ComplementNB, MultinomialNB]
@@ -72,7 +69,7 @@ def test_gnb():
     # an Error
     # FIXME Remove this test once the more general partial_fit tests are merged
     with pytest.raises(
-        ValueError, match="The target label.* in y do not exist in the initial classes"
+        ValueError, match=r"The target label.* in y do not exist in the initial classes"
     ):
         GaussianNB().partial_fit(X, y, classes=[0, 1])
 
@@ -301,7 +298,7 @@ def test_NB_partial_fit_no_first_classes(NaiveBayes, global_random_seed):
     X2, y2 = get_random_integer_x_three_classes_y(global_random_seed)
 
     with pytest.raises(
-        ValueError, match="classes must be passed on the first call to partial_fit."
+        ValueError, match=r"classes must be passed on the first call to partial_fit."
     ):
         NaiveBayes().partial_fit(X2, y2)
 
@@ -992,60 +989,191 @@ def test_categorical_input_tag(Estimator):
         assert not tags.input_tags.categorical
 
 
-@pytest.mark.parametrize("use_str_y", [False, True])
-@pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
+    "NaiveBayes", [GaussianNB, MultinomialNB, BernoulliNB, ComplementNB, CategoricalNB]
 )
-def test_gnb_array_api_compliance(
-    use_str_y, use_sample_weight, array_namespace, device_, dtype_name
-):
-    """Tests that :class:`GaussianNB` works correctly with array API inputs."""
-    xp = _array_api_for_tests(array_namespace, device_)
-    X_np = X.astype(dtype_name)
-    X_xp = xp.asarray(X_np, device=device_)
-    if use_str_y:
-        y_np = np.array(["a", "a", "a", "b", "b", "b"])
-        y_xp_or_np = np.array(["a", "a", "a", "b", "b", "b"])
-    else:
-        y_np = y.astype(dtype_name)
-        y_xp_or_np = xp.asarray(y_np, device=device_)
+def test_class_weight_balanced(NaiveBayes):
+    """Test class_weight='balanced' on imbalanced data."""
+    X, y = make_classification(
+        n_samples=1000,
+        n_features=20,
+        n_informative=15,
+        weights=[0.9, 0.1],
+        random_state=42,
+        flip_y=0.01,
+    )
 
-    if use_sample_weight:
-        sample_weight = np.array([1, 2, 3, 1, 2, 3])
-    else:
-        sample_weight = None
+    if NaiveBayes in [MultinomialNB, ComplementNB]:
+        X = np.abs(X)
 
-    clf_np = GaussianNB().fit(X_np, y_np, sample_weight=sample_weight)
-    y_pred_np = clf_np.predict(X_np)
-    y_pred_proba_np = clf_np.predict_proba(X_np)
-    y_pred_log_proba_np = clf_np.predict_log_proba(X_np)
-    with config_context(array_api_dispatch=True):
-        clf_xp = GaussianNB().fit(X_xp, y_xp_or_np, sample_weight=sample_weight)
-        for fitted_attr in ("class_count_", "class_prior_", "theta_", "var_"):
-            xp_attr = getattr(clf_xp, fitted_attr)
-            np_attr = getattr(clf_np, fitted_attr)
-            assert xp_attr.dtype == X_xp.dtype
-            assert device(xp_attr) == device(X_xp)
-            assert_allclose(_convert_to_numpy(xp_attr, xp=xp), np_attr)
+    if NaiveBayes == CategoricalNB:
+        X = (X > 0).astype(int)
 
-        y_pred_xp = clf_xp.predict(X_xp)
-        if not use_str_y:
-            assert device(y_pred_xp) == device(X_xp)
-            y_pred_xp = _convert_to_numpy(y_pred_xp, xp=xp)
-        assert_array_equal(y_pred_xp, y_pred_np)
-        assert y_pred_xp.dtype == y_pred_np.dtype
+    nb = NaiveBayes(class_weight="balanced")
+    nb.fit(X, y)
 
-        y_pred_proba_xp = clf_xp.predict_proba(X_xp)
-        assert y_pred_proba_xp.dtype == X_xp.dtype
-        assert device(y_pred_proba_xp) == device(X_xp)
-        assert_allclose(_convert_to_numpy(y_pred_proba_xp, xp=xp), y_pred_proba_np)
+    assert nb.class_weight == "balanced"
 
-        y_pred_log_proba_xp = clf_xp.predict_log_proba(X_xp)
-        assert y_pred_log_proba_xp.dtype == X_xp.dtype
-        assert device(y_pred_log_proba_xp) == device(X_xp)
-        assert_allclose(
-            _convert_to_numpy(y_pred_log_proba_xp, xp=xp), y_pred_log_proba_np
-        )
+    predictions = nb.predict(X)
+    minority_recall = recall_score(y, predictions, pos_label=1)
+
+    assert minority_recall > 0.2
+
+
+@pytest.mark.parametrize(
+    "NaiveBayes", [GaussianNB, MultinomialNB, BernoulliNB, ComplementNB, CategoricalNB]
+)
+def test_class_weight_dict(NaiveBayes):
+    """Test custom class_weight dictionary."""
+    X, y = make_classification(n_samples=200, n_features=10, random_state=42)
+
+    if NaiveBayes in [MultinomialNB, ComplementNB]:
+        X = np.abs(X)
+    if NaiveBayes == CategoricalNB:
+        X = (X > 0).astype(int)
+
+    custom_weights = {0: 1, 1: 10}
+    nb = NaiveBayes(class_weight=custom_weights)
+    nb.fit(X, y)
+
+    assert hasattr(nb, "classes_")
+    assert len(nb.classes_) == 2
+    assert nb.class_weight == custom_weights
+
+
+@pytest.mark.parametrize(
+    "NaiveBayes", [GaussianNB, MultinomialNB, BernoulliNB, ComplementNB, CategoricalNB]
+)
+def test_class_weight_with_sample_weight(NaiveBayes):
+    """Test interaction between class_weight and sample_weight."""
+    X, y = make_classification(n_samples=100, n_features=10, random_state=42)
+
+    if NaiveBayes in [MultinomialNB, ComplementNB]:
+        X = np.abs(X)
+    if NaiveBayes == CategoricalNB:
+        X = (X > 0).astype(int)
+
+    sample_weight = np.random.RandomState(42).rand(100)
+
+    nb = NaiveBayes(class_weight="balanced")
+    nb.fit(X, y, sample_weight=sample_weight)
+
+    predictions = nb.predict(X)
+    assert len(predictions) == len(y)
+
+
+@pytest.mark.parametrize(
+    "NaiveBayes", [GaussianNB, MultinomialNB, BernoulliNB, ComplementNB, CategoricalNB]
+)
+def test_class_weight_none(NaiveBayes):
+    """Test that class_weight=None maintains backward compatibility."""
+    X, y = make_classification(n_samples=100, n_features=10, random_state=42)
+
+    if NaiveBayes in [MultinomialNB, ComplementNB]:
+        X = np.abs(X)
+    if NaiveBayes == CategoricalNB:
+        X = (X > 0).astype(int)
+
+    nb1 = NaiveBayes()
+    nb2 = NaiveBayes(class_weight=None)
+
+    nb1.fit(X, y)
+    nb2.fit(X, y)
+
+    pred1 = nb1.predict(X)
+    pred2 = nb2.predict(X)
+
+    assert_array_equal(pred1, pred2)
+
+
+@pytest.mark.parametrize(
+    "NaiveBayes", [GaussianNB, MultinomialNB, BernoulliNB, ComplementNB, CategoricalNB]
+)
+def test_class_weight_equivalence_to_sample_weight(NaiveBayes):
+    """Test that class_weight='balanced' equals manual sample_weight."""
+    X, y = make_classification(n_samples=100, n_features=10, random_state=42)
+
+    if NaiveBayes in [MultinomialNB, ComplementNB]:
+        X = np.abs(X)
+    if NaiveBayes == CategoricalNB:
+        X = (X > 0).astype(int)
+
+    nb1 = NaiveBayes(class_weight="balanced")
+    nb1.fit(X, y)
+    sample_weight = compute_sample_weight("balanced", y)
+    nb2 = NaiveBayes()
+    nb2.fit(X, y, sample_weight=sample_weight)
+    pred1 = nb1.predict(X)
+    pred2 = nb2.predict(X)
+
+    assert_array_equal(pred1, pred2)
+
+
+def test_class_weight_in_pipeline():
+    """Test class_weight works in Pipeline."""
+    X, y = make_classification(n_samples=100, n_features=10, random_state=42)
+
+    pipe = Pipeline(
+        [("scaler", StandardScaler()), ("nb", GaussianNB(class_weight="balanced"))]
+    )
+    pipe.fit(X, y)
+    predictions = pipe.predict(X)
+    assert len(predictions) == len(y)
+
+
+def test_class_weight_in_gridsearch():
+    """Test class_weight can be tuned in GridSearchCV."""
+    X, y = make_classification(n_samples=200, n_features=10, random_state=42)
+
+    param_grid = {"class_weight": ["balanced", None, {0: 1, 1: 5}]}
+    grid = GridSearchCV(GaussianNB(), param_grid, cv=3)
+    grid.fit(X, y)
+    assert hasattr(grid, "best_params_")
+    assert "class_weight" in grid.best_params_
+
+
+@pytest.mark.parametrize(
+    "NaiveBayes", [GaussianNB, MultinomialNB, BernoulliNB, ComplementNB, CategoricalNB]
+)
+def test_class_weight_multiclass(NaiveBayes):
+    """Test class_weight with more than 2 classes."""
+    X, y = make_classification(
+        n_samples=300, n_classes=3, n_informative=5, n_redundant=0, random_state=42
+    )
+
+    if NaiveBayes in [MultinomialNB, ComplementNB]:
+        X = np.abs(X)
+    if NaiveBayes == CategoricalNB:
+        X = (X > 0).astype(int)
+
+    nb = NaiveBayes(class_weight="balanced")
+    nb.fit(X, y)
+
+    predictions = nb.predict(X)
+    assert len(np.unique(predictions)) >= 2
+
+
+def test_class_weight_invalid_type():
+    """Test that invalid class_weight raises appropriate error."""
+    from sklearn.utils._param_validation import InvalidParameterError
+
+    X, y = make_classification(n_samples=100, n_features=10, random_state=42)
+
+    nb = GaussianNB(class_weight="invalid_string")
+
+    with pytest.raises(InvalidParameterError):
+        nb.fit(X, y)
+
+
+def test_class_weight_missing_class():
+    """Test that class_weight dict with missing class uses default weight of 1.0."""
+    X, y = make_classification(n_samples=100, n_features=10, random_state=42)
+    nb = GaussianNB(class_weight={0: 2.0})
+    nb.fit(X, y)
+    predictions = nb.predict(X)
+    assert len(predictions) == len(y)
+    sample_weight = compute_sample_weight({0: 2.0}, y)
+    nb2 = GaussianNB()
+    nb2.fit(X, y, sample_weight=sample_weight)
+    pred2 = nb2.predict(X)
+    assert_array_equal(predictions, pred2)

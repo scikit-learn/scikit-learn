@@ -12,24 +12,20 @@ from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 
 import numpy as np
+from scipy.special import logsumexp
 
-import sklearn.externals.array_api_extra as xpx
-from sklearn.base import BaseEstimator, ClassifierMixin, _fit_context
-from sklearn.preprocessing import LabelBinarizer, binarize, label_binarize
-from sklearn.utils._array_api import (
-    _average,
-    _convert_to_numpy,
-    _find_matching_floating_dtype,
-    _isin,
-    _logsumexp,
-    get_namespace,
-    get_namespace_and_device,
-    size,
+from sklearn.utils.class_weight import compute_sample_weight
+
+from .base import (
+    BaseEstimator,
+    ClassifierMixin,
+    _fit_context,
 )
-from sklearn.utils._param_validation import Interval
-from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.utils.multiclass import _check_partial_fit_first_call
-from sklearn.utils.validation import (
+from .preprocessing import LabelBinarizer, binarize, label_binarize
+from .utils._param_validation import Interval, StrOptions
+from .utils.extmath import safe_sparse_dot
+from .utils.multiclass import _check_partial_fit_first_call
+from .utils.validation import (
     _check_n_features,
     _check_sample_weight,
     check_is_fitted,
@@ -183,6 +179,19 @@ class GaussianNB(_BaseNB):
 
         .. versionadded:: 0.20
 
+    class_weight : dict, 'balanced' or None, default=None
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one.
+
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``.
+
+        Note that these weights will be multiplied with sample_weight (passed
+        through the fit method) if sample_weight is specified.
+
+        .. versionadded:: 1.7
+
     Attributes
     ----------
     class_count_ : ndarray of shape (n_classes,)
@@ -244,11 +253,13 @@ class GaussianNB(_BaseNB):
     _parameter_constraints: dict = {
         "priors": ["array-like", None],
         "var_smoothing": [Interval(Real, 0, None, closed="left")],
+        "class_weight": [dict, StrOptions({"balanced"}), None],
     }
 
-    def __init__(self, *, priors=None, var_smoothing=1e-9):
+    def __init__(self, *, priors=None, var_smoothing=1e-9, class_weight=None):
         self.priors = priors
         self.var_smoothing = var_smoothing
+        self.class_weight = class_weight
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
@@ -275,7 +286,14 @@ class GaussianNB(_BaseNB):
             Returns the instance itself.
         """
         y = validate_data(self, y=y)
-        xp_y, _ = get_namespace(y)
+
+        if self.class_weight is not None:
+            class_sample_weight = compute_sample_weight(self.class_weight, y)
+            if sample_weight is not None:
+                sample_weight = sample_weight * class_sample_weight
+            else:
+                sample_weight = class_sample_weight
+
         return self._partial_fit(
             X, y, xp_y.unique_values(y), _refit=True, sample_weight=sample_weight
         )
@@ -566,13 +584,22 @@ class _BaseDiscreteNB(_BaseNB):
         "fit_prior": ["boolean"],
         "class_prior": ["array-like", None],
         "force_alpha": ["boolean"],
+        "class_weight": [dict, StrOptions({"balanced"}), None],
     }
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None, force_alpha=True):
+    def __init__(
+        self,
+        alpha=1.0,
+        fit_prior=True,
+        class_prior=None,
+        force_alpha=True,
+        class_weight=None,
+    ):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
         self.force_alpha = force_alpha
+        self.class_weight = class_weight
 
     @abstractmethod
     def _count(self, X, Y):
@@ -779,6 +806,14 @@ class _BaseDiscreteNB(_BaseNB):
         # LabelBinarizer().fit_transform() returns arrays with dtype=np.int64.
         # We convert it to np.float64 to support sample_weight consistently;
         # this means we also don't have to cast X to floating point
+
+        if self.class_weight is not None:
+            class_sample_weight = compute_sample_weight(self.class_weight, y)
+            if sample_weight is not None:
+                sample_weight = sample_weight * class_sample_weight
+            else:
+                sample_weight = class_sample_weight
+
         if sample_weight is not None:
             Y = Y.astype(np.float64, copy=False)
             sample_weight = _check_sample_weight(sample_weight, X)
@@ -842,6 +877,19 @@ class MultinomialNB(_BaseDiscreteNB):
         Prior probabilities of the classes. If specified, the priors are not
         adjusted according to the data.
 
+    class_weight : dict, 'balanced' or None, default=None
+    Weights associated with classes in the form ``{class_label: weight}``.
+    If not given, all classes are supposed to have weight one.
+
+    The "balanced" mode uses the values of y to automatically adjust
+    weights inversely proportional to class frequencies in the input data
+    as ``n_samples / (n_classes * np.bincount(y))``.
+
+    Note that these weights will be multiplied with sample_weight (passed
+    through the fit method) if sample_weight is specified.
+
+    .. versionadded:: 1.7
+
     Attributes
     ----------
     class_count_ : ndarray of shape (n_classes,)
@@ -902,13 +950,20 @@ class MultinomialNB(_BaseDiscreteNB):
     """
 
     def __init__(
-        self, *, alpha=1.0, force_alpha=True, fit_prior=True, class_prior=None
+        self,
+        *,
+        alpha=1.0,
+        force_alpha=True,
+        fit_prior=True,
+        class_prior=None,
+        class_weight=None,
     ):
         super().__init__(
             alpha=alpha,
             fit_prior=fit_prior,
             class_prior=class_prior,
             force_alpha=force_alpha,
+            class_weight=class_weight,
         )
 
     def __sklearn_tags__(self):
@@ -973,6 +1028,19 @@ class ComplementNB(_BaseDiscreteNB):
         default behavior mirrors the implementations found in Mahout and Weka,
         which do not follow the full algorithm described in Table 9 of the
         paper.
+
+    class_weight : dict, 'balanced' or None, default=None
+    Weights associated with classes in the form ``{class_label: weight}``.
+    If not given, all classes are supposed to have weight one.
+
+    The "balanced" mode uses the values of y to automatically adjust
+    weights inversely proportional to class frequencies in the input data
+    as ``n_samples / (n_classes * np.bincount(y))``.
+
+    Note that these weights will be multiplied with sample_weight (passed
+    through the fit method) if sample_weight is specified.
+
+    .. versionadded:: 1.7
 
     Attributes
     ----------
@@ -1050,12 +1118,14 @@ class ComplementNB(_BaseDiscreteNB):
         fit_prior=True,
         class_prior=None,
         norm=False,
+        class_weight=None,
     ):
         super().__init__(
             alpha=alpha,
             force_alpha=force_alpha,
             fit_prior=fit_prior,
             class_prior=class_prior,
+            class_weight=class_weight,
         )
         self.norm = norm
 
@@ -1126,6 +1196,19 @@ class BernoulliNB(_BaseDiscreteNB):
     class_prior : array-like of shape (n_classes,), default=None
         Prior probabilities of the classes. If specified, the priors are not
         adjusted according to the data.
+
+    class_weight : dict, 'balanced' or None, default=None
+    Weights associated with classes in the form ``{class_label: weight}``.
+    If not given, all classes are supposed to have weight one.
+
+    The "balanced" mode uses the values of y to automatically adjust
+    weights inversely proportional to class frequencies in the input data
+    as ``n_samples / (n_classes * np.bincount(y))``.
+
+    Note that these weights will be multiplied with sample_weight (passed
+    through the fit method) if sample_weight is specified.
+
+    .. versionadded:: 1.7
 
     Attributes
     ----------
@@ -1206,12 +1289,14 @@ class BernoulliNB(_BaseDiscreteNB):
         binarize=0.0,
         fit_prior=True,
         class_prior=None,
+        class_weight=None,
     ):
         super().__init__(
             alpha=alpha,
             fit_prior=fit_prior,
             class_prior=class_prior,
             force_alpha=force_alpha,
+            class_weight=class_weight,
         )
         self.binarize = binarize
 
@@ -1305,6 +1390,19 @@ class CategoricalNB(_BaseDiscreteNB):
 
         .. versionadded:: 0.24
 
+    class_weight : dict, 'balanced' or None, default=None
+    Weights associated with classes in the form ``{class_label: weight}``.
+    If not given, all classes are supposed to have weight one.
+
+    The "balanced" mode uses the values of y to automatically adjust
+    weights inversely proportional to class frequencies in the input data
+    as ``n_samples / (n_classes * np.bincount(y))``.
+
+    Note that these weights will be multiplied with sample_weight (passed
+    through the fit method) if sample_weight is specified.
+
+    .. versionadded:: 1.7
+
     Attributes
     ----------
     category_count_ : list of arrays of shape (n_features,)
@@ -1383,12 +1481,14 @@ class CategoricalNB(_BaseDiscreteNB):
         fit_prior=True,
         class_prior=None,
         min_categories=None,
+        class_weight=None,
     ):
         super().__init__(
             alpha=alpha,
             force_alpha=force_alpha,
             fit_prior=fit_prior,
             class_prior=class_prior,
+            class_weight=class_weight,
         )
         self.min_categories = min_categories
 
