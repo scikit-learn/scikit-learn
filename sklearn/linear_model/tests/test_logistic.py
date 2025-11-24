@@ -42,6 +42,10 @@ from sklearn.utils.fixes import _IS_32BIT, COO_CONTAINERS, CSR_CONTAINERS
 pytestmark = pytest.mark.filterwarnings(
     "error::sklearn.exceptions.ConvergenceWarning:sklearn.*"
 )
+# TODO(1.10): remove filterwarnings for l1_ratios after default changed.
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:The default value for l1_ratios.*:FutureWarning"
+)
 
 SOLVERS = ("lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga")
 X = [[-1, 0], [0, 1], [1, 1]]
@@ -502,6 +506,7 @@ def test_logistic_cv(global_random_seed, use_legacy_attributes):
     X_ref /= X_ref.std()
     lr_cv = LogisticRegressionCV(
         Cs=[1.0],
+        l1_ratios=(0.0,),  # TODO(1.10): remove because it is default now.
         fit_intercept=False,
         random_state=global_random_seed,
         solver="liblinear",
@@ -677,10 +682,10 @@ def test_multinomial_cv_iris(use_legacy_attributes):
     assert clf.coef_.shape == (3, n_features)
     assert_array_equal(clf.classes_, [0, 1, 2])
     coefs_paths = np.asarray(list(clf.coefs_paths_.values()))
-    assert coefs_paths.shape == (3, n_cv, 10, 1, n_features + 1)
+    assert coefs_paths.shape == (3, n_cv, 10, n_features + 1)
     assert clf.Cs_.shape == (10,)
     scores = np.asarray(list(clf.scores_.values()))
-    assert scores.shape == (3, n_cv, 10, 1)
+    assert scores.shape == (3, n_cv, 10)
 
     # Test that for the iris data multinomial gives a better accuracy than OvR
     clf_ovr = GridSearchCV(
@@ -711,10 +716,10 @@ def test_multinomial_cv_iris(use_legacy_attributes):
         assert_array_equal(clf_multi.classes_, [0, 1, 2])
         if use_legacy_attributes:
             coefs_paths = np.asarray(list(clf_multi.coefs_paths_.values()))
-            assert coefs_paths.shape == (3, n_cv, 10, 1, n_features + 1)
+            assert coefs_paths.shape == (3, n_cv, 10, n_features + 1)
             assert clf_multi.Cs_.shape == (10,)
             scores = np.asarray(list(clf_multi.scores_.values()))
-            assert scores.shape == (3, n_cv, 10, 1)
+            assert scores.shape == (3, n_cv, 10)
 
             # Norm of coefficients should increase with increasing C.
             for fold in range(clf_multi.coefs_paths_[0].shape[0]):
@@ -1526,6 +1531,7 @@ def test_n_iter(solver, use_legacy_attributes):
         tol=1e-2,
         solver=solver,
         Cs=n_Cs,
+        l1_ratios=(0.0,),  # TODO(1.10): remove l1_ratios because it is default now.
         cv=n_cv_fold,
         random_state=42,
         use_legacy_attributes=use_legacy_attributes,
@@ -2039,14 +2045,14 @@ def test_LogisticRegressionCV_on_folds():
         for cl in np.unique(y):
             # Coefficients without intecept
             assert_allclose(
-                lrcv.coefs_paths_[cl][idx_fold, idx_C, 0, :-1],
+                lrcv.coefs_paths_[cl][idx_fold, idx_C, :-1],
                 lr.coef_[cl],
                 rtol=1e-5,
             )
 
             # Intercepts
             assert_allclose(
-                lrcv.coefs_paths_[cl][idx_fold, idx_C, 0, -1],
+                lrcv.coefs_paths_[cl][idx_fold, idx_C, -1],
                 lr.intercept_[cl],
                 rtol=1e-5,
             )
@@ -2672,10 +2678,17 @@ def test_logisticregressioncv_warns_with_use_legacy_attributes():
 def test_l1_ratio_None_deprecated():
     """Check that l1_ratio=None in LogisticRegression is deprecated."""
     X, y = make_classification(n_classes=2, n_samples=20, n_informative=6)
+
     lr = LogisticRegression(l1_ratio=None)
     msg = "'l1_ratio=None' was deprecated"
     with pytest.warns(FutureWarning, match=msg):
         lr.fit(X, y)
+
+    lr = LogisticRegressionCV()
+    msg = "The default value for l1_ratios will change"
+    with pytest.warns(FutureWarning, match=msg):
+        lr.fit(X, y)
+
     lr = LogisticRegressionCV(l1_ratios=None)
     msg = "'l1_ratios=None' was deprecated"
     with pytest.warns(FutureWarning, match=msg):
