@@ -302,7 +302,7 @@ https://pkgsrc.se/math/py-scikit-learn
 MacPorts for Mac OSX
 --------------------
 
-The MacPorts package is named ``py<XY>-scikits-learn``,
+The MacPorts package is named ``py<XY>-scikit-learn``,
 where ``XY`` denotes the Python version.
 It can be installed by typing the following
 command:
