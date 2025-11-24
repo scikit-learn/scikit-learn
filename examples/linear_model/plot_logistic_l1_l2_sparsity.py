@@ -41,7 +41,7 @@ for i, (C, axes_row) in enumerate(zip((1, 0.1, 0.01), axes)):
     # Increase tolerance for short training time
     clf_l1_LR = LogisticRegression(C=C, l1_ratio=1, tol=0.01, solver="saga")
     clf_l2_LR = LogisticRegression(C=C, l1_ratio=0, tol=0.01, solver="saga")
-    clf_en_LR = LogisticRegression(C=C, l1_ratio=l1_ratio, solver="saga", tol=0.01)
+    clf_en_LR = LogisticRegression(C=C, l1_ratio=l1_ratio, tol=0.01, solver="saga")
     clf_l1_LR.fit(X, y)
     clf_l2_LR.fit(X, y)
     clf_en_LR.fit(X, y)
