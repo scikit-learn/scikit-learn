@@ -2675,14 +2675,11 @@ def _to_object_array(sequence):
     return out
 
 
-def _check_feature_names(estimator, X, *, reset):
+def check_feature_names(estimator, X, *, reset):
     """Set or check the `feature_names_in_` attribute of an estimator.
 
-    .. versionadded:: 1.0
+    .. versionadded:: 1.6
 
-    .. versionchanged:: 1.6
-        Moved from :class:`~sklearn.base.BaseEstimator` to
-        :mod:`sklearn.utils.validation`.
 
     .. note::
         To only check feature names without conducting a full data validation, prefer
@@ -2774,16 +2771,14 @@ def _check_feature_names(estimator, X, *, reset):
         raise ValueError(message)
 
 
-def _check_n_features(estimator, X, reset):
+def check_n_features(estimator, X, reset):
     """Set the `n_features_in_` attribute, or check against it on an estimator.
+
+    .. versionadded:: 1.6
 
     .. note::
         To only check n_features without conducting a full data validation, prefer
         using `validate_data(..., skip_check_array=True)` if possible.
-
-    .. versionchanged:: 1.6
-        Moved from :class:`~sklearn.base.BaseEstimator` to
-        :mod:`~sklearn.utils.validation`.
 
     Parameters
     ----------
@@ -2919,7 +2914,7 @@ def validate_data(
         The validated input. A tuple is returned if both `X` and `y` are
         validated.
     """
-    _check_feature_names(_estimator, X, reset=reset)
+    check_feature_names(_estimator, X, reset=reset)
     tags = get_tags(_estimator)
     if y is None and tags.target_tags.required:
         raise ValueError(
@@ -2965,6 +2960,24 @@ def validate_data(
         out = X, y
 
     if not no_val_X and check_params.get("ensure_2d", True):
-        _check_n_features(_estimator, X, reset=reset)
+        check_n_features(_estimator, X, reset=reset)
 
     return out
+
+
+def _check_feature_names(estimator, X, *, reset):
+    warnings.warn(
+        "_check_feature_names is deprecated in 1.6 and will be removed in 1.8. "
+        "Use check_feature_names instead.",
+        FutureWarning,
+    )
+    return check_feature_names(estimator, X, reset=reset)
+
+
+def _check_n_features(estimator, X, reset):
+    warnings.warn(
+        "_check_n_features is deprecated in 1.6 and will be removed in 1.8. "
+        "Use check_n_features instead.",
+        FutureWarning,
+    )
+    return check_n_features(estimator, X, reset=reset)
