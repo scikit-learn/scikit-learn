@@ -720,6 +720,19 @@ decision tree:
 - If no missing values are seen during training for a given feature, then during
   prediction missing values are mapped to the child with the most samples.
 
+.. note:: **Tie-breaking Policy**
+
+      When multiple optimal splits provide the same improvement (i.e., the same impurity
+      decrease), the algorithm is deterministic and selects the first split
+      encountered during the search. This is due to the implementation using strict ordering
+      to update the best split.
+
+      In the presence of the missing values, the search evaluates splits where
+      the missing values are assigned to the right child first. Consequently, if there
+      is a tie in improvement between a split sending missing values to the
+      left and one sending them to the right, the split sending missing values to the 
+      right is chosen, because it is evaluated first.
+
 .. _minimal_cost_complexity_pruning:
 
 Minimal Cost-Complexity Pruning
