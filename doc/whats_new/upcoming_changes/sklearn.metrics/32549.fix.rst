@@ -1,0 +1,7 @@
+- All classification metrics now raise a `ValueError` when required input arrays
+  (`y_pred`, `y_true`, `y1`, `y2`, `pred_decision`, or `y_proba`) are empty.
+  Previously, `accuracy_score`, `class_likelihood_ratios`, `classification_report`,
+  `confusion_matrix`, `hamming_loss`, `jaccard_score`, `matthews_corrcoef`,
+  `multilabel_confusion_matrix`, and `precision_recall_fscore_support` did not raise
+  this error consistently.
+  By :user:`Stefanie Senger <StefanieSenger>`.
