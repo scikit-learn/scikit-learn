@@ -290,7 +290,7 @@ class GaussianNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
-        X, y = validate_data(self, X=X, y=y, dtype=[np.float64, np.float32], reset=True)
+        self._validate_params()
 
         xp_y, _ = get_namespace(y)
 
