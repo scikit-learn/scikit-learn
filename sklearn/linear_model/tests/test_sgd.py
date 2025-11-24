@@ -1659,7 +1659,7 @@ def test_sgd_averaged_computed_correctly_oneclass(klass):
 def test_sgd_averaged_partial_fit_oneclass(klass):
     # Tests whether the partial fit yields the same average as the fit
     eta = 0.001
-    nu = 0.005
+    nu = 0.05
     n_samples = 20
     n_features = 10
     rng = np.random.RandomState(0)
