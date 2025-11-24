@@ -6,7 +6,7 @@
 #
 cython==3.1.2
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-execnet==2.1.1
+execnet==2.1.2
     # via pytest-xdist
 iniconfig==2.3.0
     # via pytest
@@ -27,9 +27,9 @@ pluggy==1.6.0
     # via pytest
 pygments==2.19.2
     # via pytest
-pyproject-metadata==0.9.1
+pyproject-metadata==0.10.0
     # via meson-python
-pytest==8.4.2
+pytest==9.0.1
     # via
     #   -r build_tools/azure/ubuntu_atlas_requirements.txt
     #   pytest-xdist

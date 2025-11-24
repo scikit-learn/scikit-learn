@@ -13,7 +13,7 @@ if [[ "$COVERAGE" == "true" ]]; then
     # running the tests. Make sure to reuse the same coverage
     # configuration as the one used by the main pytest run to be
     # able to combine the results.
-    CMD="coverage run --rcfile=$BUILD_SOURCESDIRECTORY/.coveragerc"
+    CMD="coverage run --rcfile=$PWD/.coveragerc"
 else
     CMD="python"
 fi
