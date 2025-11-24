@@ -12,9 +12,8 @@ from numbers import Integral, Real
 import numpy as np
 
 from sklearn._loss._loss import CyHalfBinomialLoss, CyHalfSquaredError, CyHuberLoss
-
+from ._base import _LinearPredictMixin
 from sklearn.base import (
-    _LinearPredictMixin,
     BaseEstimator,
     OutlierMixin,
     RegressorMixin,
