@@ -1,0 +1,3 @@
+- :func:`utils.validation.check_feature_names` and :func:`utils.validation.check_n_features`
+  are now public APIs. They replace the private ``_check_feature_names`` and ``_check_n_features``
+  which are now deprecated.
