@@ -276,6 +276,29 @@ def _rescale_data(X, y, sample_weight, inplace=False):
                 y = y * sample_weight_sqrt[:, None]
     return X, y, sample_weight_sqrt
 
+class _LinearPredictMixin:
+    """Small mixin that provides a shared `_linear_predict` helper.
+
+    The method implements the common validate + dot + intercept logic used
+    by several linear-like estimators and SGD implementations. We keep it
+    private and conservative to avoid changing behavior of other estimators.
+    """
+
+    def _linear_predict(self, X):
+        """Shared low-level linear prediction helper.
+
+        Validates X with the same accept_sparse used by many linear models,
+        computes X @ coef_.T + intercept_ and returns a 1d array for
+        single-output and raveling for consistent shapes.
+        """
+        check_is_fitted(self)
+
+        # Use the same validate_data contract as many other linear functions.
+        X = validate_data(self, X, accept_sparse="csr", reset=False)
+
+        scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
+        # For regressors we return ravel() to match historical behaviour.
+        return scores.ravel()
 
 class LinearModel(BaseEstimator, metaclass=ABCMeta):
     """Base class for Linear Models"""
@@ -332,7 +355,8 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
 # XXX Should this derive from LinearModel? It should be a mixin, not an ABC.
 # Maybe the n_features checking can be moved to LinearModel.
-class LinearClassifierMixin(ClassifierMixin):
+class LinearClassifierMixin(_LinearPredictMixin, ClassifierMixin):
+
     """Mixin for linear classifiers.
 
     Handles prediction for sparse and dense X.

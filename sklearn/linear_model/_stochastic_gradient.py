@@ -12,7 +12,9 @@ from numbers import Integral, Real
 import numpy as np
 
 from sklearn._loss._loss import CyHalfBinomialLoss, CyHalfSquaredError, CyHuberLoss
+
 from sklearn.base import (
+    _LinearPredictMixin,
     BaseEstimator,
     OutlierMixin,
     RegressorMixin,
@@ -84,7 +86,7 @@ class _ValidationScoreCallback:
         return est.score(self.X_val, self.y_val, self.sample_weight_val)
 
 
-class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
+class BaseSGD(_LinearPredictMixin, SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for SGD classification and regression."""
 
     _parameter_constraints: dict = {
@@ -1668,23 +1670,11 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         )
 
     def _decision_function(self, X):
-        """Predict using the linear model
+        """Predict using the linear model (SGD-specific).
 
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-
-        Returns
-        -------
-        ndarray of shape (n_samples,)
-           Predicted target values per element in X.
+        Delegate to the shared `_linear_predict` helper provided by the mixin.
         """
-        check_is_fitted(self)
-
-        X = validate_data(self, X, accept_sparse="csr", reset=False)
-
-        scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
-        return scores.ravel()
+        return self._linear_predict(X)
 
     def predict(self, X):
         """Predict using the linear model.
