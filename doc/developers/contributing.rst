@@ -644,8 +644,8 @@ that the issue is not yet confirmed or fully understood. It signals to scikit-le
 members to clarify the problem, discuss scope, and decide on the next steps. You are
 welcome to join the discussion, but as per our `Code of Conduct
 <https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md>`_ please
-do not open a PR until the tag is removed and there is clear consensus on how to
-address the issue.
+do not open a PR until the "Needs Triage" label is removed, there is a clear consensus
+on addressing the issue and some directions on how to address it.
 
 Video resources
 ---------------
