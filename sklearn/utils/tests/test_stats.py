@@ -38,7 +38,7 @@ def test_weighted_percentile_matches_median(size, average):
 
 
 @pytest.mark.parametrize("average", [True, False])
-@pytest.mark.parametrize("percentile_rank", [20, 35, 61])
+@pytest.mark.parametrize("percentile_rank", [20, 35, 61, [5, 47]])
 @pytest.mark.parametrize("size", [10, 15])
 def test_weighted_percentile_matches_numpy(
     global_random_seed, size, percentile_rank, average
@@ -157,7 +157,7 @@ def test_weighted_percentile_frequency_weight_semantics(
 
 @pytest.mark.parametrize("constant", [5, 8])
 @pytest.mark.parametrize("average", [True, False])
-@pytest.mark.parametrize("percentile_rank", [20, 35, 50, 61])
+@pytest.mark.parametrize("percentile_rank", [20, 35, 50, 61, [20, 35, 50, 61]])
 def test_weighted_percentile_constant_multiplier(
     global_random_seed, percentile_rank, average, constant
 ):
@@ -178,8 +178,9 @@ def test_weighted_percentile_constant_multiplier(
     assert percentile == approx(percentile_multiplier)
 
 
+@pytest.mark.parametrize("percentile_rank", [50, [20, 35, 50]])
 @pytest.mark.parametrize("average", [True, False])
-def test_weighted_percentile_2d(global_random_seed, average):
+def test_weighted_percentile_2d(global_random_seed, percentile_rank, average):
     """Check `_weighted_percentile` behaviour is correct when `array` is 2D."""
     # Check for when array 2D and sample_weight 1D
     rng = np.random.RandomState(global_random_seed)
@@ -189,23 +190,67 @@ def test_weighted_percentile_2d(global_random_seed, average):
     x2 = rng.randint(20, size=10)
     x_2d = np.vstack((x1, x2)).T
 
-    w_median = _weighted_percentile(x_2d, w1, average=average)
-    p_axis_0 = [
-        _weighted_percentile(x_2d[:, i], w1, average=average)
-        for i in range(x_2d.shape[1])
-    ]
-    assert_allclose(w_median, p_axis_0)
+    wp = _weighted_percentile(
+        x_2d, w1, percentile_rank=percentile_rank, average=average
+    )
+
+    if isinstance(percentile_rank, list):
+        p_list = []
+        for pr in percentile_rank:
+            p_list.append(
+                [
+                    _weighted_percentile(
+                        x_2d[:, i], w1, percentile_rank=pr, average=average
+                    )
+                    for i in range(x_2d.shape[1])
+                ]
+            )
+        p_axis_0 = np.stack(p_list, axis=-1)
+        assert wp.shape == (x_2d.shape[1], len(percentile_rank))
+    else:
+        # percentile_rank is scalar
+        p_axis_0 = [
+            _weighted_percentile(
+                x_2d[:, i], w1, percentile_rank=percentile_rank, average=average
+            )
+            for i in range(x_2d.shape[1])
+        ]
+        assert wp.shape == (x_2d.shape[1],)
+
+    assert_allclose(wp, p_axis_0)
 
     # Check when array and sample_weight both 2D
     w2 = rng.choice(5, size=10)
     w_2d = np.vstack((w1, w2)).T
 
-    w_median = _weighted_percentile(x_2d, w_2d, average=average)
-    p_axis_0 = [
-        _weighted_percentile(x_2d[:, i], w_2d[:, i], average=average)
-        for i in range(x_2d.shape[1])
-    ]
-    assert_allclose(w_median, p_axis_0)
+    wp = _weighted_percentile(
+        x_2d, w_2d, percentile_rank=percentile_rank, average=average
+    )
+
+    if isinstance(percentile_rank, list):
+        p_list = []
+        for pr in percentile_rank:
+            p_list.append(
+                [
+                    _weighted_percentile(
+                        x_2d[:, i], w_2d[:, i], percentile_rank=pr, average=average
+                    )
+                    for i in range(x_2d.shape[1])
+                ]
+            )
+        p_axis_0 = np.stack(p_list, axis=-1)
+        assert wp.shape == (x_2d.shape[1], len(percentile_rank))
+    else:
+        # percentile_rank is scalar
+        p_axis_0 = [
+            _weighted_percentile(
+                x_2d[:, i], w_2d[:, i], percentile_rank=percentile_rank, average=average
+            )
+            for i in range(x_2d.shape[1])
+        ]
+        assert wp.shape == (x_2d.shape[1],)
+
+    assert_allclose(wp, p_axis_0)
 
 
 @pytest.mark.parametrize(
@@ -224,7 +269,7 @@ def test_weighted_percentile_2d(global_random_seed, average):
         (
             lambda rng: rng.rand(20, 3),
             lambda rng: rng.rand(20, 3).astype(np.float32),
-            25,
+            [25, 75],
         ),
         # zero-weights and `rank_percentile=0` (#20528) (`sample_weight` dtype: int64)
         (np.array([0, 1, 2, 3, 4, 5]), np.array([0, 0, 1, 1, 1, 0]), 0),
@@ -234,7 +279,7 @@ def test_weighted_percentile_2d(global_random_seed, average):
         (
             np.array([0, 1, 2, 3, 4, 5]),
             np.array([0, 1, 1, 1, 1, 0], dtype=np.int32),
-            25,
+            [25, 75],
         ),
     ],
 )
@@ -331,7 +376,14 @@ def test_weighted_percentile_nan_filtered(
     assert_array_equal(expected_results, results)
 
 
-def test_weighted_percentile_all_nan_column():
+@pytest.mark.parametrize(
+    "percentile_rank, expected",
+    [
+        (90, [np.nan, 5]),
+        ([50, 90], [[np.nan, np.nan], [2.0, 5.0]]),
+    ],
+)
+def test_weighted_percentile_all_nan_column(percentile_rank, expected):
     """Check that nans are ignored in general, except for all NaN columns."""
 
     array = np.array(
@@ -345,14 +397,12 @@ def test_weighted_percentile_all_nan_column():
         ]
     )
     weights = np.ones_like(array)
-    percentile_rank = 90
-
     values = _weighted_percentile(array, weights, percentile_rank)
 
     # The percentile of the second column should be `5` even though there are many nan
     # values present; the percentile of the first column can only be nan, since there
     # are no other possible values:
-    assert np.array_equal(values, np.array([np.nan, 5]), equal_nan=True)
+    assert np.array_equal(values, expected, equal_nan=True)
 
 
 @pytest.mark.skipif(

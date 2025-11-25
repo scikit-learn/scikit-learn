@@ -9,7 +9,8 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "ms-python.python"
+        "ms-python.python",
+        "ms-toolsai.jupyter"
       ],
       "settings": {}
     }

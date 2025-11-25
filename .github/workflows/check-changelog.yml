@@ -30,7 +30,7 @@ jobs:
 
       - name: Check changelog entry
         if: steps.tests_changed.outputs.check_changelog == 'true'
-        uses: scientific-python/action-towncrier-changelog@v1
+        uses: scientific-python/action-towncrier-changelog@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BOT_USERNAME: changelog-bot

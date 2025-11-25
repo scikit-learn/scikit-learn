@@ -560,7 +560,7 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
         pickle.loads(tree_pickle_noversion)
 
 
-# The test modifies global state by changing the the TreeNoVersion class
+# The test modifies global state by changing the TreeNoVersion class
 @pytest.mark.thread_unsafe
 def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
     iris = datasets.load_iris()

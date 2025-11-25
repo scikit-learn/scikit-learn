@@ -443,7 +443,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     is_categorical[feature_names.index(feature_name)] = True
                 except ValueError as e:
                     raise ValueError(
-                        f"categorical_features has a item value '{feature_name}' "
+                        f"categorical_features has an item value '{feature_name}' "
                         "which is not a valid feature name of the training "
                         f"data. Observed feature names: {feature_names}"
                     ) from e
