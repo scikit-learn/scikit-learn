@@ -1432,8 +1432,8 @@ class RandomForestClassifier(ForestClassifier):
         .. versionadded:: 0.22
 
         .. versionchanged:: 1.8
-            The default `max_samples=None` draws `sample_weight.sum()` instead of
-            `X.shape[0]` weighted samples.
+            Float `max_samples` is relative to `sample_weight.sum()` instead of
+            `X.shape[0]` for weighted samples.
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonicity constraint to enforce on each feature.
@@ -1825,8 +1825,8 @@ class RandomForestRegressor(ForestRegressor):
         .. versionadded:: 0.22
 
         .. versionchanged:: 1.8
-            The default `max_samples=None` draws `sample_weight.sum()` instead of
-            `X.shape[0]` weighted samples.
+            Float `max_samples` is relative to `sample_weight.sum()` instead of
+            `X.shape[0]` for weighted samples.
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonicity constraint to enforce on each feature.
@@ -2208,8 +2208,8 @@ class ExtraTreesClassifier(ForestClassifier):
         .. versionadded:: 0.22
 
         .. versionchanged:: 1.8
-            The default `max_samples=None` draws `sample_weight.sum()` instead of
-            `X.shape[0]` weighted samples.
+            Float `max_samples` is relative to `sample_weight.sum()` instead of
+            `X.shape[0]` for weighted samples.
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonicity constraint to enforce on each feature.
@@ -2584,8 +2584,8 @@ class ExtraTreesRegressor(ForestRegressor):
         .. versionadded:: 0.22
 
         .. versionchanged:: 1.8
-            The default `max_samples=None` draws `sample_weight.sum()` instead of
-            `X.shape[0]` weighted samples.
+            Float `max_samples` is relative to `sample_weight.sum()` instead of
+            `X.shape[0]` for weighted samples.
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonicity constraint to enforce on each feature.
