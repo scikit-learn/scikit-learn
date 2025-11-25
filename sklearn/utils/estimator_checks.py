@@ -3526,6 +3526,10 @@ def check_class_weight_classifiers(name, classifier_orig):
             X_test = rbf_kernel(X_test, X_train)
             X_train = rbf_kernel(X_train, X_train)
 
+        if get_tags(classifier_orig).input_tags.positive_only:
+            X_train -= X_train.min()
+            X_test -= X_test.min()
+
         n_centers = len(np.unique(y_train))
 
         if n_centers == 2:

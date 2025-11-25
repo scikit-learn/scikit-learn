@@ -292,6 +292,11 @@ class GaussianNB(_BaseNB):
         """
         self._validate_params()
 
+        if y is None:
+            raise ValueError("requires y to be passed, but the target y is None")
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X)
+
         xp_y, _ = get_namespace(y)
 
         if self.class_weight is not None:
