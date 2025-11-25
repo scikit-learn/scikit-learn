@@ -296,8 +296,9 @@ class GaussianNB(_BaseNB):
             raise ValueError("requires y to be passed, but the target y is None")
 
         y = validate_data(self, y=y, reset=False)
+
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X)
+            sample_weight = _check_sample_weight(sample_weight, y)
 
         xp_y, _ = get_namespace(y)
 
@@ -892,17 +893,17 @@ class MultinomialNB(_BaseDiscreteNB):
         adjusted according to the data.
 
     class_weight : dict, 'balanced' or None, default=None
-    Weights associated with classes in the form ``{class_label: weight}``.
-    If not given, all classes are supposed to have weight one.
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one.
 
-    The "balanced" mode uses the values of y to automatically adjust
-    weights inversely proportional to class frequencies in the input data
-    as ``n_samples / (n_classes * np.bincount(y))``.
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``.
 
-    Note that these weights will be multiplied with sample_weight (passed
-    through the fit method) if sample_weight is specified.
+        Note that these weights will be multiplied with sample_weight (passed
+        through the fit method) if sample_weight is specified.
 
-    .. versionadded:: 1.7
+        .. versionadded:: 1.7
 
     Attributes
     ----------
@@ -1044,17 +1045,17 @@ class ComplementNB(_BaseDiscreteNB):
         paper.
 
     class_weight : dict, 'balanced' or None, default=None
-    Weights associated with classes in the form ``{class_label: weight}``.
-    If not given, all classes are supposed to have weight one.
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one.
 
-    The "balanced" mode uses the values of y to automatically adjust
-    weights inversely proportional to class frequencies in the input data
-    as ``n_samples / (n_classes * np.bincount(y))``.
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``.
 
-    Note that these weights will be multiplied with sample_weight (passed
-    through the fit method) if sample_weight is specified.
+        Note that these weights will be multiplied with sample_weight (passed
+        through the fit method) if sample_weight is specified.
 
-    .. versionadded:: 1.7
+        .. versionadded:: 1.7
 
     Attributes
     ----------
@@ -1212,17 +1213,17 @@ class BernoulliNB(_BaseDiscreteNB):
         adjusted according to the data.
 
     class_weight : dict, 'balanced' or None, default=None
-    Weights associated with classes in the form ``{class_label: weight}``.
-    If not given, all classes are supposed to have weight one.
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one.
 
-    The "balanced" mode uses the values of y to automatically adjust
-    weights inversely proportional to class frequencies in the input data
-    as ``n_samples / (n_classes * np.bincount(y))``.
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``.
 
-    Note that these weights will be multiplied with sample_weight (passed
-    through the fit method) if sample_weight is specified.
+        Note that these weights will be multiplied with sample_weight (passed
+        through the fit method) if sample_weight is specified.
 
-    .. versionadded:: 1.7
+        .. versionadded:: 1.7
 
     Attributes
     ----------
@@ -1405,17 +1406,17 @@ class CategoricalNB(_BaseDiscreteNB):
         .. versionadded:: 0.24
 
     class_weight : dict, 'balanced' or None, default=None
-    Weights associated with classes in the form ``{class_label: weight}``.
-    If not given, all classes are supposed to have weight one.
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one.
 
-    The "balanced" mode uses the values of y to automatically adjust
-    weights inversely proportional to class frequencies in the input data
-    as ``n_samples / (n_classes * np.bincount(y))``.
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``.
 
-    Note that these weights will be multiplied with sample_weight (passed
-    through the fit method) if sample_weight is specified.
+        Note that these weights will be multiplied with sample_weight (passed
+        through the fit method) if sample_weight is specified.
 
-    .. versionadded:: 1.7
+        .. versionadded:: 1.7
 
     Attributes
     ----------
