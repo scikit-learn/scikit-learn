@@ -798,9 +798,12 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            solvers. See the parameter `solver` below, to know the compatibility between
            the penalty and solver.
 
-        .. versionadded:: 1.8
-           Default value changed from None to 0.0, None is deprecated and will be
-           forbidden in version 1.10.
+        .. versionchanged:: 1.8
+            Default value changed from None to 0.0.
+           
+        .. deprecated:: 1.8
+            `None` is deprecated and will be removed in version 1.10. Always use `l1_ratio`
+            to specify the penalty type.
 
     dual : bool, default=False
         Dual (constrained) or primal (regularized, see also
