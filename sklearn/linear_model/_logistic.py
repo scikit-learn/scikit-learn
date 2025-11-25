@@ -1398,10 +1398,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            solvers. See the parameter `solver` below, to know the compatibility between
            the penalty and solver.
 
-        .. versionchanged:: 1.8
-           `l1_ratios=None` is deprecated in 1.8 and will raise an error
-           in version 1.10. Default value will change from `None` to `(0.0,)`
-           in version 1.10.
+        .. deprecated:: 1.8
+            `l1_ratios=None` is deprecated in 1.8 and will raise an error
+            in version 1.10. Default value will change from `None` to `(0.0,)`
+            in version 1.10.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
