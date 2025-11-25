@@ -35,7 +35,6 @@ from sklearn.utils.validation import (
     check_n_features,
     check_non_negative,
     validate_data,
-
 )
 
 __all__ = [
