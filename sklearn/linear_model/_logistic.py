@@ -1154,7 +1154,15 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 "'elasticnet'. Got "
                 "(penalty={})".format(penalty)
             )
-
+        if (
+            (self.penalty == "l2" and self.l1_ratio != 0) or
+            (self.penalty == "l1" and self.l1_ratio != 1)
+        ):
+            warnings.warn(
+                f"Inconsistent values: penalty={self.penalty} with "
+                f"l1_ratio={self.l1_ratio}. penalty is deprecated. Please use "
+                f"l1_ratio only."
+            )
         if penalty == "elasticnet" and self.l1_ratio is None:
             raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
 

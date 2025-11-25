@@ -2711,3 +2711,14 @@ def test_logisticregression_warns_with_n_jobs():
     msg = "'n_jobs' has no effect"
     with pytest.warns(FutureWarning, match=msg):
         lr.fit(X, y)
+
+
+# TODO(1.10): remove when penalty is removed
+@pytest.mark.parametrize("penalty, l1_ratio", [("l1", 0.0), ("l2", 1.0)])
+def test_lr_penalty_l1ratio_incompatible(penalty, l1_ratio):
+    """Check that incompatible penalty and l1_ratio raise a warning."""
+    X, y = make_classification(n_samples=20)
+    lr = LogisticRegression(solver="saga", penalty=penalty, l1_ratio=l1_ratio)
+    msg = f"Inconsistent values: penalty={penalty} with l1_ratio={l1_ratio}"
+    with pytest.warns(UserWarning, match=msg):
+        lr.fit(X, y)
