@@ -1131,10 +1131,12 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             penalty = self.penalty
             warnings.warn(
                 (
-                    "'penalty' was deprecated in version 1.8 and will be removed in "
-                    "1.10. Use l1_ratio instead, i.e. l1_ratio=0 for penalty='l2' and "
-                    "l1_ratio=1 for penalty='l1'. Use C=np.inf for penalty=None. "
-                    "Leave it to its default value to avoid this warning."
+                    "'penalty' was deprecated in version 1.8 and will be removed in"
+                    " 1.10. To avoid this warning, leave 'penalty' set to its default"
+                    " value and use 'l1_ratio' or 'C' instead."
+                    " Use l1_ratio=0 instead of penalty='l2',"
+                    " l1_ratio=1 instead of penalty='l1', and "
+                    "C=np.inf instead of penalty=None."
                 ),
                 FutureWarning,
             )
@@ -1796,10 +1798,11 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             penalty = self.penalty
             warnings.warn(
                 (
-                    "'penalty' was deprecated in version 1.8 and will be removed in "
-                    "1.10. Use l1_ratios instead, i.e. l1_ratios=(0,) for penalty='l2' "
-                    "and l1_ratios=(1,) for penalty='l1'."
-                    " Leave it to its default value to avoid this warning."
+                    "'penalty' was deprecated in version 1.8 and will be removed in"
+                    " 1.10. To avoid this warning, leave 'penalty' set to its default"
+                    " value and use 'l1_ratios' instead."
+                    " Use l1_ratios=(0,) instead of penalty='l2' "
+                    " and l1_ratios=(1,) instead of penalty='l1'."
                 ),
                 FutureWarning,
             )
