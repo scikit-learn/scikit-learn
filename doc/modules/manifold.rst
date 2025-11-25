@@ -501,7 +501,7 @@ Classical MDS, also known as
 *principal coordinates analysis (PCoA)* or *Torgerson's scaling*, is implemented
 in the separate :class:`ClassicalMDS` class. Classical MDS replaces the stress
 loss function with a different loss function called *strain*, which has an
-exact solution in terms of eigendecomposition. 
+exact solution in terms of eigendecomposition.
 If the dissimilarity matrix consists of the pairwise
 Euclidean distances between some vectors, then classical MDS is equivalent
 to PCA applied to this set of vectors.
