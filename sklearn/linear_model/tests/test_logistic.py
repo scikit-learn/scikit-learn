@@ -104,7 +104,11 @@ def test_logistic_cv_mock_scorer():
     cv = 2
 
     lr = LogisticRegressionCV(
-        Cs=Cs, scoring=mock_scorer, cv=cv, use_legacy_attributes=False
+        Cs=Cs,
+        l1_ratios=(0,),  # TODO(1.10): remove with new default of l1_ratios
+        scoring=mock_scorer,
+        cv=cv,
+        use_legacy_attributes=False,
     )
     X, y = make_classification(random_state=0)
     lr.fit(X, y)

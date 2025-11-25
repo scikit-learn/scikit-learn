@@ -1777,7 +1777,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             l1_ratios = self.l1_ratios
 
         if self.penalty == "deprecated":
-            if l1_ratios is None:
+            if self.l1_ratios is None:
                 warnings.warn(
                     (
                         "'l1_ratios=None' was deprecated in version 1.8 and will "
@@ -1837,7 +1837,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 )
             l1_ratios_ = l1_ratios
         else:
-            if l1_ratios is not None:
+            if l1_ratios is not None and self.penalty != "deprecated":
                 warnings.warn(
                     "l1_ratios parameter is only used when penalty "
                     "is 'elasticnet'. Got (penalty={})".format(penalty)
