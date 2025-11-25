@@ -6,6 +6,7 @@
 # * Fast Optimization for t-SNE:
 #   https://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
+import warnings
 from numbers import Integral, Real
 from time import time
 
@@ -1011,8 +1012,13 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             # the default value for random initialization. See issue #18018.
             std_pc1 = np.std(X_embedded[:, 0])
             if std_pc1 < 1e-12:
-                # Avoid division by zero when the dataset is constant (zero variance)
-                X_embedded = X_embedded * 1e-4
+                warnings.warn(
+                    "Input data is (near) constant."
+                    "PCA initialization is not meaningful."
+                    "Falling back to random initialization.",
+                    RuntimeWarning
+                )
+                self.init = "random"
             else:
                 X_embedded = X_embedded / std_pc1 * 1e-4
         elif self.init == "random":

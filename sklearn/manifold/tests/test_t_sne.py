@@ -453,7 +453,7 @@ def test_non_positive_computed_distances():
     # Negative computed distances should be caught even if result is squared
     tsne = TSNE(metric=metric, method="exact", perplexity=1)
     X = np.array([[0.0, 0.0], [1.0, 1.0]])
-    with pytest.raises(ValueError, match="All distances .*metric given.*"):
+    with pytest.raises(ValueError, match=r"All distances .*metric given.*"):
         tsne.fit_transform(X)
 
 
@@ -480,7 +480,7 @@ def test_pca_initialization_not_compatible_with_precomputed_kernel():
     tsne = TSNE(metric="precomputed", init="pca", perplexity=1)
     with pytest.raises(
         ValueError,
-        match='The parameter init="pca" cannot be used with metric="precomputed".',
+        match=r'The parameter init="pca" cannot be used with metric="precomputed".',
     ):
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
@@ -488,7 +488,7 @@ def test_pca_initialization_not_compatible_with_precomputed_kernel():
 def test_n_components_range():
     # barnes_hut method should only be used with n_components <= 3
     tsne = TSNE(n_components=4, method="barnes_hut", perplexity=1)
-    with pytest.raises(ValueError, match="'n_components' should be .*"):
+    with pytest.raises(ValueError, match=r"'n_components' should be .*"):
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
@@ -1140,14 +1140,18 @@ def test_tsne_works_with_pandas_output():
 
 
 def test_tsne_pca_init_constant_data():
-    # Regression test for #32788: TSNE with init="pca" should not segfault
-    # on constant data (zero variance).
+    # PCA init on constant data (zero variance) must trigger a warning,
+    # fall back to random initialization, and not crash.
+
     X = np.ones((10, 5))
-    # Removed n_iter to avoid argument errors
     tsne = TSNE(init="pca", perplexity=5, random_state=42)
 
-    # This should not raise an error or crash
-    X_embedded = tsne.fit_transform(X)
+    # PCA std will be near-zero → warning → fallback to random init
+    with pytest.warns(RuntimeWarning, match="PCA initialization is not meaningful"):
+        X_embedded = tsne.fit_transform(X)
 
-    # Ensure we didn't get NaNs
+    # Result must be finite
     assert np.all(np.isfinite(X_embedded))
+
+    # Shape must remain correct
+    assert X_embedded.shape == (10, 2)
