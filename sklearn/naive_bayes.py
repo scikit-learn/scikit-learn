@@ -32,8 +32,10 @@ from sklearn.utils.multiclass import _check_partial_fit_first_call
 from sklearn.utils.validation import (
     _check_sample_weight,
     check_is_fitted,
+    check_n_features,
     check_non_negative,
     validate_data,
+
 )
 
 __all__ = [
@@ -1562,7 +1564,7 @@ class CategoricalNB(_BaseDiscreteNB):
         self.feature_log_prob_ = feature_log_prob
 
     def _joint_log_likelihood(self, X):
-        validate_data(self, X, reset=False, skip_check_array=True)
+        check_n_features(self, X, reset=False)
         jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
         for i in range(self.n_features_in_):
             indices = X[:, i]
