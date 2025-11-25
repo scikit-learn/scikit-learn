@@ -1016,7 +1016,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                     "Input data is (near) constant."
                     "PCA initialization is not meaningful."
                     "Falling back to random initialization.",
-                    RuntimeWarning
+                    RuntimeWarning,
                 )
                 self.init = "random"
             else:
