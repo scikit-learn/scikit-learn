@@ -1419,7 +1419,7 @@ def test_logistic_regression_cv_refit(global_random_seed, l1_ratio):
     # the full data model with the optimal C found by CV. As the penalized
     # logistic regression loss is convex, we should still recover exactly
     # the same solution as long as the stopping criterion is strict enough (and
-    # that there are no exactly duplicated features when l1_ratio=1 / pure L1).
+    # that there are no exactly duplicated features when l1_ratio=1).
     X, y = make_classification(
         n_samples=100, n_features=20, random_state=global_random_seed
     )

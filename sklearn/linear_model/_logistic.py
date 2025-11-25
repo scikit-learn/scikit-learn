@@ -871,9 +871,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
           :class:`~sklearn.multiclass.OneVsRestClassifier`.
 
         .. warning::
-           The choice of the algorithm depends on the penalty (`l1_ratio=0` for
-           L2-penalty, `l1_ratio=1` for L1-penalty and `0 < l1_ratio < 1` for
-           Elastic-Net) chosen and on (multinomial) multiclass support:
+           The choice of the algorithm depends on the penalty chosen (`l1_ratio=0`
+           for L2-penalty, `l1_ratio=1` for L1-penalty and `0 < l1_ratio < 1` for
+           Elastic-Net) and on (multinomial) multiclass support:
 
            ================= ======================== ======================
            solver            l1_ratio                 multinomial multiclass
