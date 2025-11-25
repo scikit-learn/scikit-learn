@@ -1691,10 +1691,14 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         if self.use_legacy_attributes == "warn":
             warnings.warn(
-                "The default value of use_legacy_attributes will change from True "
-                "to False in version 1.10. "
-                "To silence this warning, explicitly set use_legacy_attributes to "
-                "either True or False.",
+                f"The fitted attributes of {self.__class__.__name__} will be "
+                "simplified in scikit-learn 1.10 to remove redundancy. Set"
+                "`use_legacy_attributes=False` to enable the new behavior now, or "
+                "set it to `True` to silence this warning during the transition period "
+                "while keeping the deprecated behavior for the time being. The default "
+                "value of use_legacy_attributes will change from True to False in "
+                f"scikit-learn 1.10. See the docstring of {self.__class__.__name__} "
+                "for more details.",
                 FutureWarning,
             )
             use_legacy_attributes = True
