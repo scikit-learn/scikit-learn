@@ -234,7 +234,7 @@ def test_fit_docstring_attributes(name, Estimator):
         est.set_params(n_init=1, init="random")
     # TODO(1.10) remove
     elif Estimator.__name__ == "LogisticRegressionCV":
-        # default raises a FutureWarning
+        # default 'l1_ratios' value creates a FutureWarning
         est.set_params(l1_ratios=(0,))
 
     # Low max iter to speed up tests: we are only interested in checking the existence
