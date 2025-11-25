@@ -95,10 +95,10 @@ maintenance = ["conda-lock==3.0.1"]
 build-backend = "mesonpy"
 # Minimum requirements for the build system to execute.
 requires = [
-    "meson-python>=0.17.1",
-    "cython>=3.1.2",
-    "numpy>=2",
-    "scipy>=1.10.0",
+    "meson-python>=0.17.1,<0.19.0",
+    "cython>=3.1.2,<3.3.0",
+    "numpy>=2,<2.4.0",
+    "scipy>=1.10.0,<1.17.0",
 ]
 
 [tool.pytest.ini_options]
