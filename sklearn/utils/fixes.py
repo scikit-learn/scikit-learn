@@ -178,11 +178,14 @@ else:
 # For +1.25 NumPy versions exceptions and warnings are being moved
 # to a dedicated submodule.
 if np_version >= parse_version("1.25.0"):
-    from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
-else:
-    from numpy import (  # noqa: F401
+    from numpy.exceptions import (  # type: ignore[attr-defined,no-redef]
         ComplexWarning,
         VisibleDeprecationWarning,
+    )
+else:
+    from numpy import (  # type: ignore[attr-defined,no-redef]
+        ComplexWarning,  # noqa: F401
+        VisibleDeprecationWarning,  # noqa: F401
     )
 
 
