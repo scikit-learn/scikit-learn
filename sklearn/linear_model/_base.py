@@ -38,7 +38,6 @@ from sklearn.utils._seq_dataset import (
     CSRDataset32,
     CSRDataset64,
 )
-from sklearn.utils.validation import validate_data
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.sparsefuncs import mean_variance_axis
@@ -277,11 +276,11 @@ def _rescale_data(X, y, sample_weight, inplace=False):
                 y = y * sample_weight_sqrt[:, None]
     return X, y, sample_weight_sqrt
 
+
 class _LinearPredictMixin:
     """Shared prediction logic for SGD linear models."""
 
     def _linear_predict(self, X):
-
         # SGD historically does NOT validate or compare feature names.
         # So we intentionally avoid calling _check_feature_names_in.
 
@@ -295,6 +294,7 @@ class _LinearPredictMixin:
 
         scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
         return scores.ravel()
+
 
 class LinearModel(BaseEstimator, metaclass=ABCMeta):
     """Base class for Linear Models"""
