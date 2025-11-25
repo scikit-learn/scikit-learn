@@ -13,5 +13,14 @@
       `Cs` parameter
     - the default value of `l1_ratios` changes from `None` to `"warn"`, it will
       change to `(0,)` in version 1.10
-    - setting `l1_ratios=None` is deprecated and will raise an error in version 1.10.
+
+  The default value of `l1_ratio` of :class:`linear_model.LogisticRegression`
+  has changed from `None` to `0.0`. Setting `l1_ratio=None` is deprecated and
+  will raise an error in version 1.10
+
+  The default value of `l1_ratios` of :class:`linear_model.LogisticRegressionCV`
+  has changed from None to `"warn"`. It will be changed to `(0,)` in version
+  1.10. Setting `l1_ratios=None` is deprecated and will raise an error in
+  version 1.10.
+
   By :user:`Christian Lorentzen <lorentzenchr>`.
