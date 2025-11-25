@@ -1,6 +1,6 @@
 - Parameter `penalty` of :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` is deprecated and will be removed in
-  version 1.10. The equivalent behaviour can be done as follow:
+  version 1.10. The equivalent behaviour can be obtained as follows:
 
   - for :class:`linear_model.LogisticRegression`
 
@@ -20,7 +20,7 @@
   will raise an error in version 1.10
 
   For :class:`linear_model.LogisticRegressionCV`, the default value of `l1_ratios`
-  has changed from None to `"warn"`. It will be changed to `(0,)` in version
+  has changed from `None` to `"warn"`. It will be changed to `(0,)` in version
   1.10. Setting `l1_ratios=None` is deprecated and will raise an error in
   version 1.10.
 
