@@ -1664,7 +1664,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     >>> from sklearn.linear_model import LogisticRegressionCV
     >>> X, y = load_iris(return_X_y=True)
     >>> clf = LogisticRegressionCV(
-    ...     cv=5, random_state=0, use_legacy_attributes=False
+    ...     cv=5, random_state=0, use_legacy_attributes=False, l1_ratios=(0,)
     ... ).fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])
