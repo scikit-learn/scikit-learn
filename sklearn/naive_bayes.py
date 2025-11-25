@@ -295,7 +295,7 @@ class GaussianNB(_BaseNB):
         if y is None:
             raise ValueError("requires y to be passed, but the target y is None")
 
-        y = validate_data(self, y=y, ensure_all_finite=True, reset=False)
+        y = validate_data(self, y=y, reset=False)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
