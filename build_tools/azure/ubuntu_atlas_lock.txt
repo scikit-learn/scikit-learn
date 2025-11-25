@@ -27,7 +27,7 @@ pluggy==1.6.0
     # via pytest
 pygments==2.19.2
     # via pytest
-pyproject-metadata==0.9.1
+pyproject-metadata==0.10.0
     # via meson-python
 pytest==9.0.1
     # via
