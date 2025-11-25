@@ -3517,6 +3517,13 @@ def check_class_weight_classifiers(name, classifier_orig):
     for n_centers in problems:
         # create a very noisy dataset
         X, y = make_blobs(centers=n_centers, random_state=0, cluster_std=20)
+        tags = get_tags(classifier_orig)
+        if tags.input_tags.positive_only:
+            X -= X.min()
+
+        if tags.input_tags.categorical:
+            X = np.abs(np.round(X)).astype(int) % 10
+
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.5, random_state=0
         )
