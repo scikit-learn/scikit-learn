@@ -1009,7 +1009,12 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             X_embedded = pca.fit_transform(X).astype(np.float32, copy=False)
             # PCA is rescaled so that PC1 has standard deviation 1e-4 which is
             # the default value for random initialization. See issue #18018.
-            X_embedded = X_embedded / np.std(X_embedded[:, 0]) * 1e-4
+            std_pc1 = np.std(X_embedded[:, 0])
+            if std_pc1 < 1e-12:
+                # Avoid division by zero when the dataset is constant (zero variance)
+                X_embedded = X_embedded * 1e-4
+            else:
+                X_embedded = X_embedded / std_pc1 * 1e-4
         elif self.init == "random":
             # The embedding is initialized with iid samples from Gaussians with
             # standard deviation 1e-4.

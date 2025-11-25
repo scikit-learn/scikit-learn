@@ -1137,3 +1137,16 @@ def test_tsne_works_with_pandas_output():
     with config_context(transform_output="pandas"):
         arr = np.arange(35 * 4).reshape(35, 4)
         TSNE(n_components=2).fit_transform(arr)
+
+def test_tsne_pca_init_constant_data():
+    # Regression test for #32788: TSNE with init="pca" should not segfault
+    # on constant data (zero variance).
+    X = np.ones((10, 5))
+    # Removed n_iter to avoid argument errors
+    tsne = TSNE(init="pca", perplexity=5, random_state=42)
+    
+    # This should not raise an error or crash
+    X_embedded = tsne.fit_transform(X)
+    
+    # Ensure we didn't get NaNs
+    assert np.all(np.isfinite(X_embedded))
