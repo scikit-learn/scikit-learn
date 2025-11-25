@@ -1396,8 +1396,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            the penalty and solver.
 
         .. versionchanged:: 1.8
-           Default value None is deprecated in will be changed to (0.0,) in version
-           1.10. The value None is deprecated and will be forbidden in version 1.10.
+           `l1_ratios=None` is deprecated in 1.8 and will raise an error
+           in version 1.10. Default value will change from `None` to `(0.0,)`
+           in version 1.10.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -1769,9 +1770,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             warnings.warn(
                 (
                     "The default value for l1_ratios will change from None to (0.0,) "
-                    "in version 1.10. From then on, only array-like with non-negative "
-                    "numbers are allowed, None is forbidden. To avoid this warning, "
-                    "explicitly set a value, e.g. l1_ratios=(0,)."
+                    "in version 1.10. From version 1.10 onwards, only array-like "
+                    "with values in [0, 1] will be allowed, None will be forbidden. "
+                    "To avoid this warning, explicitly set a value, "
+                    "e.g. l1_ratios=(0,)."
                 ),
                 FutureWarning,
             )
