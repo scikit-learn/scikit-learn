@@ -22,7 +22,6 @@ from sklearn.base import (
     RegressorMixin,
     _fit_context,
 )
-
 from sklearn.utils import check_array, check_random_state
 from sklearn.utils._array_api import (
     _asarray_with_order,
@@ -46,7 +45,6 @@ from sklearn.utils.validation import (
     _check_sample_weight,
     check_is_fitted,
     validate_data,
-    check_array
 )
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
@@ -289,6 +287,7 @@ class _LinearPredictMixin:
         X = check_array(X, accept_sparse="csr")
         scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
         return scores.ravel()
+
 
 class LinearModel(BaseEstimator, metaclass=ABCMeta):
     """Base class for Linear Models"""
