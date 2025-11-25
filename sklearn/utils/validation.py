@@ -2680,7 +2680,6 @@ def check_feature_names(estimator, X, *, reset):
 
     .. versionadded:: 1.6
 
-
     .. note::
         To only check feature names without conducting a full data validation, prefer
         using `validate_data(..., skip_check_array=True)` if possible.
