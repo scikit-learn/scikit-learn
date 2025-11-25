@@ -2714,6 +2714,7 @@ def test_logisticregression_warns_with_n_jobs():
 
 
 # TODO(1.10): remove when penalty is removed
+@pytest.mark.filterwarnings("ignore:'penalty' was deprecated")
 @pytest.mark.parametrize("penalty, l1_ratio", [("l1", 0.0), ("l2", 1.0)])
 def test_lr_penalty_l1ratio_incompatible(penalty, l1_ratio):
     """Check that incompatible penalty and l1_ratio raise a warning."""
