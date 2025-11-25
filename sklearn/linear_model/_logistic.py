@@ -1154,9 +1154,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 "'elasticnet'. Got "
                 "(penalty={})".format(penalty)
             )
-        if (
-            (self.penalty == "l2" and self.l1_ratio != 0) or
-            (self.penalty == "l1" and self.l1_ratio != 1)
+        if (self.penalty == "l2" and self.l1_ratio != 0) or (
+            self.penalty == "l1" and self.l1_ratio != 1
         ):
             warnings.warn(
                 f"Inconsistent values: penalty={self.penalty} with "
