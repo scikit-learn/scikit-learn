@@ -1019,8 +1019,8 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                     RuntimeWarning,
                 )
                 X_embedded = 1e-4 * random_state.standard_normal(
-                                size=(n_samples, self.n_components)
-                            ).astype(np.float32)
+                    size=(n_samples, self.n_components)
+                ).astype(np.float32)
             else:
                 X_embedded = X_embedded / std_pc1 * 1e-4
         elif self.init == "random":
