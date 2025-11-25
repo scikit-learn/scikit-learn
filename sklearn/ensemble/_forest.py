@@ -104,8 +104,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
     max_samples : int or float
         The maximum number of samples to draw.
 
-        - If None, then draw `n_samples` unweighted samples or
-          `sample_weight.sum()` weighted samples.
+        - If None, then draw `n_samples` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * n_samples` unweighted samples or
           `max_samples * sample_weight.sum()` weighted samples.
@@ -118,32 +117,33 @@ def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
     n_samples_bootstrap : int
         The total number of samples to draw for the bootstrap sample.
     """
-    if isinstance(max_samples, Integral):
-        if max_samples > n_samples:
-            msg = "`max_samples` must be <= n_samples={} but got value {}"
-            raise ValueError(msg.format(n_samples, max_samples))
-        return max_samples
-
     if max_samples is None:
-        fraction = 1.0
-    elif isinstance(max_samples, Real):
-        fraction = max_samples
-    else:
+        return n_samples
+    elif isinstance(max_samples, Integral):
+        return max_samples
+    elif not isinstance(max_samples, Real):
         raise ValueError(
             f"max_samples must be None, int or float got {type(max_samples)}"
         )
 
     if sample_weight is None:
-        return max(int(fraction * n_samples), 1)
+        n_samples_total = n_samples
+        n_samples_total_msg = f"the number of samples is {n_samples_total} "
     else:
-        sw_sum = np.sum(sample_weight)
-        if sw_sum <= 1:
-            raise ValueError(
-                f"The total sum of sample weights is {sw_sum}, which prevents "
-                f"resampling with a fractional value for {max_samples=}. Either"
-                " pass max_samples as an integer or use a larger sample_weight."
-            )
-        return max(int(fraction * sw_sum), 1)
+        n_samples_total = sample_weight.sum()
+        n_samples_total_msg = f"the total sum of sample weights is {n_samples_total} "
+
+    # max_samples Real fractional value relative to n_samples_total
+    n_samples_bootstrap = max(int(max_samples * n_samples_total), 1)
+    # raise warning if n_samples_bootstrap small
+    n_samples_warning = 10
+    if n_samples_bootstrap < n_samples_warning:
+        warn(
+            f"Using the fractional value {max_samples=} when {n_samples_total_msg}"
+            f"results in a low number ({n_samples_bootstrap}) of bootstrap samples. "
+            "We recommend passing `max_samples` as an integer."
+        )
+    return n_samples_bootstrap
 
 
 def _generate_sample_indices(
@@ -1424,8 +1424,7 @@ class RandomForestClassifier(ForestClassifier):
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
 
-        - If None (default), then draw `X.shape[0]` unweighted samples
-          or `sample_weight.sum()` weighted samples.
+        - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` unweighted samples
           or `max_samples * sample_weight.sum()` weighted samples.
@@ -1818,8 +1817,7 @@ class RandomForestRegressor(ForestRegressor):
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
 
-        - If None (default), then draw `X.shape[0]` unweighted samples
-          or `sample_weight.sum()` weighted samples.
+        - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` unweighted samples
           or `max_samples * sample_weight.sum()` weighted samples.
@@ -2202,8 +2200,7 @@ class ExtraTreesClassifier(ForestClassifier):
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
 
-        - If None (default), then draw `X.shape[0]` unweighted samples
-          or `sample_weight.sum()` weighted samples.
+        - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` unweighted samples
           or `max_samples * sample_weight.sum()` weighted samples.
@@ -2579,8 +2576,7 @@ class ExtraTreesRegressor(ForestRegressor):
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
 
-        - If None (default), then draw `X.shape[0]` unweighted samples
-          or `sample_weight.sum()` weighted samples.
+        - If None (default), then draw `X.shape[0]` samples.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` unweighted samples
           or `max_samples * sample_weight.sum()` weighted samples.

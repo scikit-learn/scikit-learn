@@ -125,10 +125,11 @@ def test_get_n_samples_bootstrap():
     # relative max_samples (float)
     assert _get_n_samples_bootstrap(100, 1.0, None) == 100
     assert _get_n_samples_bootstrap(100, 0.5, None) == 50
-    # None equivalent to relative max_samples=1.0
+    # max_samples=None returns n_samples
     assert _get_n_samples_bootstrap(100, None, None) == 100
     # case max_samples * n_samples < 1
-    assert _get_n_samples_bootstrap(100, 0.9 / 100, None) == 1
+    with pytest.warns(UserWarning, match="Using the fractional value"):
+        assert _get_n_samples_bootstrap(100, 0.9 / 100, None) == 1
     # error raised for unexpected max_samples type
     msg = "max_samples must be None, int or float"
     with pytest.raises(ValueError, match=msg):
@@ -141,15 +142,11 @@ def test_get_n_samples_bootstrap():
     # relative max_samples (float)
     assert _get_n_samples_bootstrap(100, 1.0, sw) == int(sw.sum())
     assert _get_n_samples_bootstrap(100, 0.5, sw) == int(0.5 * sw.sum())
-    # None equivalent to relative max_samples=1.0
-    assert _get_n_samples_bootstrap(100, None, sw) == int(sw.sum())
+    # max_samples=None returns n_samples
+    assert _get_n_samples_bootstrap(100, None, sw) == 100
     # case max_samples * sw_sum < 1
-    assert _get_n_samples_bootstrap(100, 0.9 / sw.sum(), sw) == 1
-    # error raised for sw_sum < 1
-    sw_small = np.full(100, fill_value=0.001)
-    msg = f"The total sum of sample weights is {sw_small.sum()}, which"
-    with pytest.raises(ValueError, match=msg):
-        _get_n_samples_bootstrap(100, 1.0, sw_small)
+    with pytest.warns(UserWarning, match="Using the fractional value"):
+        assert _get_n_samples_bootstrap(100, 0.9 / sw.sum(), sw) == 1
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
@@ -1627,24 +1624,6 @@ def test_max_samples_bootstrap(name):
         r"`max_sample=None`."
     )
     with pytest.raises(ValueError, match=err_msg):
-        est.fit(X, y)
-    est.set_params(bootstrap=True)
-    n_samples = len(y)
-    sample_weight = np.full(n_samples, 0.1 / n_samples)
-    err_msg = (
-        f"The total sum of sample weights is {sample_weight.sum()}, which prevents "
-        "resampling with a fractional value for max_samples"
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        est.fit(X, y, sample_weight)
-
-
-@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
-def test_large_max_samples_exception(name):
-    # Check invalid `max_samples`
-    est = FOREST_CLASSIFIERS_REGRESSORS[name](bootstrap=True, max_samples=int(1e9))
-    match = "`max_samples` must be <= n_samples=6 but got value 1000000000"
-    with pytest.raises(ValueError, match=match):
         est.fit(X, y)
 
 
