@@ -754,7 +754,7 @@ def test_barnes_hut_angle():
         distances = pairwise_distances(data)
         params = random_state.randn(n_samples, n_components)
         P = _joint_probabilities(distances, perplexity, verbose=0)
-        kl_exact, grad_exact = _kl_divergence(
+        kl_exact, _grad_exact = _kl_divergence(
             params, P, degrees_of_freedom, n_samples, n_components
         )
 
@@ -765,7 +765,7 @@ def test_barnes_hut_angle():
             .kneighbors_graph(n_neighbors=n_neighbors, mode="distance")
         )
         P_bh = _joint_probabilities_nn(distances_csr, perplexity, verbose=0)
-        kl_bh, grad_bh = _kl_divergence_bh(
+        kl_bh, _grad_bh = _kl_divergence_bh(
             params,
             P_bh,
             degrees_of_freedom,
@@ -973,7 +973,7 @@ def test_gradient_bh_multithread_match_sequential():
         .kneighbors_graph(n_neighbors=n_neighbors, mode="distance")
     )
     P_bh = _joint_probabilities_nn(distances_csr, perplexity, verbose=0)
-    kl_sequential, grad_sequential = _kl_divergence_bh(
+    kl_sequential, _grad_sequential = _kl_divergence_bh(
         params,
         P_bh,
         degrees_of_freedom,
@@ -1138,15 +1138,16 @@ def test_tsne_works_with_pandas_output():
         arr = np.arange(35 * 4).reshape(35, 4)
         TSNE(n_components=2).fit_transform(arr)
 
+
 def test_tsne_pca_init_constant_data():
     # Regression test for #32788: TSNE with init="pca" should not segfault
     # on constant data (zero variance).
     X = np.ones((10, 5))
     # Removed n_iter to avoid argument errors
     tsne = TSNE(init="pca", perplexity=5, random_state=42)
-    
+
     # This should not raise an error or crash
     X_embedded = tsne.fit_transform(X)
-    
+
     # Ensure we didn't get NaNs
     assert np.all(np.isfinite(X_embedded))
