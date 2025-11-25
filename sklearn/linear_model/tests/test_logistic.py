@@ -306,7 +306,7 @@ def test_check_solver_option(LR):
 def test_elasticnet_l1_ratio_err_helpful(LR, arg):
     # Check that an informative error message is raised when penalty="elasticnet"
     # but l1_ratio is not specified.
-    model = LR(penalty="elasticnet", **{arg: None}, solver="saga")
+    model = LR(penalty="elasticnet", solver="saga", **{arg: None})
     with pytest.raises(ValueError, match=r".*l1_ratio.*"):
         model.fit(np.array([[1, 2], [3, 4]]), np.array([0, 1]))
 
@@ -571,10 +571,15 @@ def test_logistic_cv_multinomial_score(
     lr = LogisticRegression(C=1.0)
     # we use lbfgs to support multinomial
     params = lr.get_params()
+    # Replace default penalty='deprecated' in 1.8 by the equivalent value that
+    # can be used by _log_reg_scoring_path
+    # TODO(1.10) for consistency we may want to adapt _log_reg_scoring_path to
+    # use only l1_ratio rather than penalty + l1_ratio
+    params["penalty"] = "l2"
+
     # we store the params to set them further in _log_reg_scoring_path
     for key in ["C", "n_jobs", "warm_start"]:
         del params[key]
-    params["penalty"] = "l2"
     lr.fit(X[train], y[train])
     for averaging in multiclass_agg_list:
         scorer = get_scorer(scoring + averaging)
