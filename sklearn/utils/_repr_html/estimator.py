@@ -184,11 +184,11 @@ def _write_label_html(
                 f'<a class="sk-estimator-doc-link {is_fitted_css_class}"'
                 f' rel="noreferrer" target="_blank" href="{doc_link}">?{doc_label}</a>'
             )
-        if name == "passthrough":
+        if name == "passthrough" or name_details == "[]":
             name_caption = ""
         name_caption_div = (
             ""
-            if name_caption is None
+            if name_caption is None or name_caption == ""
             else f'<div class="caption">{html.escape(name_caption)}</div>'
         )
         name_caption_div = f"<div><div>{name}</div>{name_caption_div}</div>"
@@ -216,7 +216,7 @@ def _write_label_html(
         if params:
             fmt_str = "".join([fmt_str, f"{params}</div>"])
         elif name_details and ("Pipeline" not in name):
-            if name == "passthrough":
+            if name == "passthrough" or name_details == "[]":
                 name_details = ""
             fmt_str = "".join([fmt_str, f"<pre>{name_details}</pre></div>"])
 
