@@ -11,8 +11,6 @@
     - use `l1_ratios=(1,)` instead of `penalty="l1"`
     - the equivalent of `penalty=None` is to have `np.inf` as an element of the
       `Cs` parameter
-    - the default value of `l1_ratios` changes from `None` to `"warn"`, it will
-      change to `(0,)` in version 1.10
 
   The default value of `l1_ratio` of :class:`linear_model.LogisticRegression`
   has changed from `None` to `0.0`. Setting `l1_ratio=None` is deprecated and
