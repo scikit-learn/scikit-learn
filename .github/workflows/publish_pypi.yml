@@ -43,6 +43,7 @@ jobs:
       with:
         repository-url: https://test.pypi.org/legacy/
         print-hash: true
+        verbose: true
       if: ${{ github.event.inputs.pypi_repo == 'testpypi' }}
     - name: Publish package to PyPI
       uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
