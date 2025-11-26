@@ -1,0 +1,6 @@
+- Fixed splitting logic during training in :class:`tree.DecisionTree*`
+  (and consequently in :class:`ensemble.RandomForest*`)
+  for nodes containing near-constant feature values and missing values.
+  Beforehand, trees were cut short if a constant feature was found,
+  even if there was more splitting that could be done on the basis of missing values.
+  By :user:`Arthur Lacote <cakedev0>`
