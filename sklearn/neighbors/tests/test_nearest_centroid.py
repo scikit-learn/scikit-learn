@@ -13,7 +13,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
-
+from sklearn.datasets import make_blobs
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
@@ -163,20 +163,22 @@ def test_predict_translated_data():
     y_translate = clf.predict(X_noise)
     assert_array_equal(y_init, y_translate)
 
+
 def test_partial_fit_consistency():
     X, y = make_blobs(n_samples=100, centers=3, random_state=42)
-    
+
     # Batch 1
     nc = NearestCentroid()
     nc.partial_fit(X[:50], y[:50], classes=[0, 1, 2])
-    
+
     # Batch 2
     nc.partial_fit(X[50:], y[50:])
-    
+
     # Full fit
     nc_full = NearestCentroid().fit(X, y)
-    
+
     assert_allclose(nc.centroids_, nc_full.centroids_)
+
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_manhattan_metric(csr_container):
