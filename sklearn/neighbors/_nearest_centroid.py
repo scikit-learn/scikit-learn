@@ -147,6 +147,48 @@ class NearestCentroid(
         self.priors = priors
 
     @_fit_context(prefer_skip_nested_validation=True)
+        def partial_fit(self, X, y, classes=None):
+        """
+        Incremental fit on a batch of samples.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training data.
+
+        y : array-like of shape (n_samples,)
+            Target values.
+
+        classes : array-like of shape (n_classes,), default=None
+            List of all the classes that can possibly appear in the y vector.
+            Must be provided at the first call to partial_fit.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
+        # 1. Validate input (X, y) using _validate_data or validate_data
+        # 2. Handle 'classes' argument (standard in partial_fit implementations)
+        #    - If first call, 'classes' must be provided or inferred.
+        #    - Initialize self.classes_
+
+        # 3. Check metric constraints
+        if self.metric == "manhattan":
+            raise ValueError(
+                "partial_fit does not support the 'manhattan' metric "
+                "because the median cannot be updated efficiently online."
+            )
+
+        # 4. Loop through unique classes in batch 'y'
+        #    - Update self._dataset_counts (old count + new occurrences)
+        #    - Update self._dataset_sums (old sum + sum of new samples)
+
+        # 5. Update self.centroids_
+        #    self.centroids_ = self._dataset_sums / self._dataset_counts[:, None]
+
+        return self
+
     def fit(self, X, y):
         """
         Fit the NearestCentroid model according to the given training data.
