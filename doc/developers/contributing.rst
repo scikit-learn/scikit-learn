@@ -76,10 +76,10 @@ There are many ways to contribute to scikit-learn. These include:
 * making a code contribution
 
 There are many ways to help and non-code contributions are just as valuable as
-code contributions. If ys ou are interested in making a code contribution, please
-note that scikit-learn ia very mature project, which has evolved a lot since starting
-in 2007. Contributing to the project code can generally require advanced skills, and it
-may not be the best place to begin for new contributors.
+code contributions. If you are interested in making a code contribution, please
+keep in mind that scikit-learn has evolved a mature and complex project since its
+start in 2007. Contributing to the project code can generally require advanced skills,
+and it may not be the best place to begin for new contributors.
 
 .. dropdown:: Contributing to related projects
 
