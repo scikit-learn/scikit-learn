@@ -135,10 +135,10 @@ you start by looking for an issue that is of interest to you, in an area you are
 already familiar with as a user or have background knowledge of. We recommend starting
 with smaller pull requests, to get used to the contribution process.
 
-We rarely use the "good first issue" label because it is difficult to make
+We rarely use the 'good first issue' label because it is difficult to make
 assumptions about new contributors and these issues often prove more complex
 than originally anticipated. It is still useful to check if there are
-`good first issues
+`'good first issues'
 <https://github.com/scikit-learn/scikit-learn/labels/good%20first%20issue>`_,
 though note that these may still be time consuming to solve, depending on your prior
 experience.
