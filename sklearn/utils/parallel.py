@@ -8,36 +8,36 @@ usage.
 import functools
 import warnings
 from functools import update_wrapper
-
+import threading
 import joblib
+import warnings
 from threadpoolctl import ThreadpoolController
+import warnings
 
 from sklearn._config import config_context, get_config
 
-# Global threadpool controller instance that can be used to locally limit the number of
-# threads without looping through all shared libraries every time.
-# It should not be accessed directly and _get_threadpool_controller should be used
-# instead.
-_threadpool_controller = None
-
-
+# Acquire the warnings lock early to avoid thread-safety issues in cp313t
+# See: https://github.com/scikit-learn/scikit-learn/issues/32303
+_warnings_lock = warnings._filters_lock if hasattr(warnings, '_filters_lock') else None
+# Acquire the warnings lock early to avoid thread-safety issues in Python 3.13t
+# See: https://github.com/scikit-learn/scikit-learn/issues/32303
 def _with_config_and_warning_filters(delayed_func, config, warning_filters):
     """Helper function that intends to attach a config to a delayed function."""
     if hasattr(delayed_func, "with_config_and_warning_filters"):
         return delayed_func.with_config_and_warning_filters(config, warning_filters)
     else:
-        warnings.warn(
-            (
-                "`sklearn.utils.parallel.Parallel` needs to be used in "
-                "conjunction with `sklearn.utils.parallel.delayed` instead of "
-                "`joblib.delayed` to correctly propagate the scikit-learn "
-                "configuration to the joblib workers."
-            ),
-            UserWarning,
-        )
-        return delayed_func
-
-
+        import threading
+        
+        # Use a lock to make the warning thread-safe in cp313t
+        if not hasattr(_with_config_and_warning_filters, "_warning_lock"):
+            _with_config_and_warning_filters._warning_lock = threading.Lock()
+        
+        with _with_config_and_warning_filters._warning_lock:
+            warnings.warn(
+                (
+                    "`sklearn.utils.parallel.Parallel` needs to be used in "
+                    "conjunction with `sklearn.utils.parallel.delayed` instead of "
+                    "`joblib.delayed` to correctly propagate the scikit-learn "
 class Parallel(joblib.Parallel):
     """Tweak of :class:`joblib.Parallel` that propagates the scikit-learn configuration.
 
@@ -51,7 +51,7 @@ class Parallel(joblib.Parallel):
     .. versionadded:: 1.3
     """
 
-    def __call__(self, iterable):
+def __call__(self, iterable):
         """Dispatch the tasks and return the results.
 
         Parameters
@@ -76,9 +76,14 @@ class Parallel(joblib.Parallel):
         # For more details, see
         # https://docs.python.org/3.14/whatsnew/3.14.html#concurrent-safe-warnings-control
         filters_func = getattr(warnings, "_get_filters", None)
-        warning_filters = (
-            filters_func() if filters_func is not None else warnings.filters
-        )
+        try:
+            warning_filters = (
+                filters_func() if filters_func is not None else warnings.filters.copy()
+            )
+        except Exception:
+            # In cp313t, warnings.filters can be thread-unsafe. Fall back to empty list
+            # if we can't safely access it.
+            warning_filters = []
 
         iterable_with_config_and_warning_filters = (
             (
@@ -87,11 +92,6 @@ class Parallel(joblib.Parallel):
                 kwargs,
             )
             for delayed_func, args, kwargs in iterable
-        )
-        return super().__call__(iterable_with_config_and_warning_filters)
-
-
-# remove when https://github.com/joblib/joblib/issues/1071 is fixed
 def delayed(function):
     """Decorator used to capture the arguments of a function.
 
@@ -117,39 +117,43 @@ def delayed(function):
         Tuple containing the delayed function, the positional arguments, and the
         keyword arguments.
     """
-
-    @functools.wraps(function)
-    def delayed_function(*args, **kwargs):
-        return _FuncWrapper(function), args, kwargs
-
-    return delayed_function
-
-
+    import threading
+    _warning_lock = threading.Lock()
+def delayed_function(*args, **kwargs):
+        import threading
+        _warned = getattr(delayed_function, '_warned', set())
+        thread_id = threading.get_ident()
+        if thread_id not in _warned:
+            _warned.add(thread_id)
 class _FuncWrapper:
     """Load the global configuration before calling the function."""
 
-    def __init__(self, function):
+def __init__(self, function):
         self.function = function
-        update_wrapper(self, self.function)
-
-    def with_config_and_warning_filters(self, config, warning_filters):
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=UserWarning)
+def with_config_and_warning_filters(self, config, warning_filters):
         self.config = config
-        self.warning_filters = warning_filters
+        # Create a copy of warning_filters to avoid thread-safety issues in cp313t
+        self.warning_filters = warning_filters.copy() if warning_filters else warning_filters
+        return self
         return self
 
     def __call__(self, *args, **kwargs):
         config = getattr(self, "config", {})
         warning_filters = getattr(self, "warning_filters", [])
         if not config or not warning_filters:
-            warnings.warn(
-                (
-                    "`sklearn.utils.parallel.delayed` should be used with"
-                    " `sklearn.utils.parallel.Parallel` to make it possible to"
-                    " propagate the scikit-learn configuration of the current thread to"
-                    " the joblib workers."
-                ),
-                UserWarning,
-            )
+            if not self._warning_issued:
+                self._warning_issued = True
+                warnings.warn(
+                    (
+                        "`sklearn.utils.parallel.delayed` should be used with"
+                        " `sklearn.utils.parallel.Parallel` to make it possible to"
+                        " propagate the scikit-learn configuration of the current thread to"
+                        " the joblib workers."
+                    ),
+                    UserWarning,
+                )
 
         with config_context(**config), warnings.catch_warnings():
             # TODO is there a simpler way that resetwarnings+ filterwarnings?
@@ -166,6 +170,56 @@ class _FuncWrapper:
                 # filterwarnings expect. simplefilter is more lenient, e.g.
                 # accepts a tuple as category. We try simplefilter first and
                 # use filterwarnings in more complicated cases
+                if (
+                    "message" not in this_warning_filter_dict
+                    and "module" not in this_warning_filter_dict
+                ):
+                    warnings.simplefilter(**this_warning_filter_dict, append=True)
+                else:
+                    # 'message' and 'module' are most of the time regex.Pattern but
+                    # can be str as well and filterwarnings wants a str
+                    for special_key in ["message", "module"]:
+                        this_value = this_warning_filter_dict.get(special_key)
+                        if this_value is not None and not isinstance(this_value, str):
+                            this_warning_filter_dict[special_key] = this_value.pattern
+
+                    warnings.filterwarnings(**this_warning_filter_dict, append=True)
+def _get_threadpool_controller():
+    """Return the global threadpool controller instance."""
+    global _threadpool_controller
+
+    if _threadpool_controller is None:
+        with _get_threadpool_controller_lock:
+            if _threadpool_controller is None:
+                _threadpool_controller = ThreadpoolController()
+
+    return _threadpool_controller
+def _threadpool_controller_decorator(limits=1, user_api="blas"):
+    """Decorator to limit the number of threads used at the function level.
+
+    It should be preferred over `threadpoolctl.ThreadpoolController.wrap` because this
+    one only loads the shared libraries when the function is called while the latter
+    loads them at import time.
+    """
+
+def decorator(func):
+        @functools.wraps(func)
+def wrapper(*args, **kwargs):
+            controller = _get_threadpool_controller()
+            with controller.limit(limits=limits, user_api=user_api):
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", message=".*sklearn.utils.parallel.delayed.*", category=UserWarning)
+                    return func(*args, **kwargs)
+                        "ignore",
+                        message=r".*sklearn\.utils\.parallel\.delayed.*",
+                        category=UserWarning,
+                    )
+                    return func(*args, **kwargs)
+
+        return wrapper
+        return wrapper
+
+    return decorator
                 if (
                     "message" not in this_warning_filter_dict
                     and "module" not in this_warning_filter_dict
