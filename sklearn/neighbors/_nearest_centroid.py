@@ -200,7 +200,10 @@ class NearestCentroid(
             mu_new = X[mask].mean(axis=0)
             n_old = self.nk_[idx]
             mu_old = self.true_centroids_[idx]
-            self.true_centroids_[idx] = (n_old * mu_old + n_new * mu_new) / (n_old + n_new)
+            self.true_centroids_[idx] = (n_old * mu_old + n_new * mu_new) / (
+                n_old + n_new
+            )
+
             self.nk_[idx] += n_new
 
         self.centroids_ = self.true_centroids_.copy()

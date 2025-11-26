@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from sklearn import datasets
+from sklearn.datasets import make_blobs
 from sklearn.neighbors import NearestCentroid
 from sklearn.utils._testing import (
     assert_allclose,
@@ -13,7 +14,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
-from sklearn.datasets import make_blobs
+
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
