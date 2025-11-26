@@ -136,7 +136,7 @@ Please do not paste AI generated text in the description of issues, PRs or in co
 as this makes it harder for reviewers to assess your contribution. We are happy for it
 to be used to improve grammar or if you are not a native English speaker.
 
-Also review all code or documentation changes made by AI tools and
+Review all code or documentation changes made by AI tools and
 make sure you understand **all** changes and can explain them on request, before
 submitting them under your name. Do not submit any AI-generated code that you haven't
 personally **reviewed, understood and tested**, as this wastes maintainers' time.
