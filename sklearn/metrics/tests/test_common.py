@@ -2050,18 +2050,6 @@ def check_array_api_binary_continuous_classification_metric(
     y_true_np = np.array([1, 0, 1, 0])
     y_prob_np = np.array([0.5, 0.2, 0.7, 0.6], dtype=dtype_name)
 
-    check_array_api_metric(
-        metric,
-        array_namespace,
-        device,
-        dtype_name,
-        a_np=y_true_np,
-        b_np=y_prob_np,
-        sample_weight=None,
-    )
-
-    # Check with string `y_true`
-    y_true_np = np.array(["yes", "no", "yes", "no"])
     metric_kwargs = {}
     if "brier" in metric.__name__:
         # `brier_score_loss` and `d2_brier_score` require specifying the
@@ -2077,6 +2065,125 @@ def check_array_api_binary_continuous_classification_metric(
         b_np=y_prob_np,
         sample_weight=None,
         **metric_kwargs,
+    )
+
+    sample_weight = np.array([1, 2, 3, 1], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_prob_np,
+        sample_weight=sample_weight,
+        **metric_kwargs,
+    )
+
+    # Check with string `y_true`
+    y_true_np = np.array(["yes", "no", "yes", "no"])
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_prob_np,
+        sample_weight=None,
+        **metric_kwargs,
+    )
+
+
+def check_array_api_multiclass_continuous_classification_metric(
+    metric, array_namespace, device, dtype_name
+):
+    y_true_np = np.array([0, 1, 2, 3])
+    y_prob_np = np.array(
+        [
+            [0.5, 0.2, 0.2, 0.1],
+            [0.4, 0.4, 0.1, 0.1],
+            [0.1, 0.1, 0.7, 0.1],
+            [0.1, 0.2, 0.6, 0.1],
+        ],
+        dtype=dtype_name,
+    )
+
+    metric_kwargs = {}
+    if "brier" in metric.__name__:
+        # `brier_score_loss` and `d2_brier_score` require specifying the
+        # `pos_label`
+        metric_kwargs["pos_label"] = "yes"
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_prob_np,
+        sample_weight=None,
+        **metric_kwargs,
+    )
+
+    sample_weight = np.array([1, 2, 3, 1], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_prob_np,
+        sample_weight=sample_weight,
+        **metric_kwargs,
+    )
+
+    # Check with string `y_true`
+    y_true_np = np.array(["a", "b", "c", "d"])
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_prob_np,
+        sample_weight=None,
+        **metric_kwargs,
+    )
+
+
+def check_array_api_multilabel_continuous_classification_metric(
+    metric, array_namespace, device, dtype_name
+):
+    y_true_np = np.array(
+        [
+            [0, 0, 1, 1],
+            [1, 0, 1, 0],
+            [0, 1, 0, 0],
+            [1, 1, 0, 1],
+        ],
+        dtype=dtype_name,
+    )
+    y_prob_np = np.array(
+        [
+            [0.15, 0.27, 0.46, 0.12],
+            [0.33, 0.38, 0.06, 0.23],
+            [0.06, 0.28, 0.03, 0.63],
+            [0.14, 0.31, 0.26, 0.29],
+        ],
+        dtype=dtype_name,
+    )
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_prob_np,
+        sample_weight=None,
     )
 
     sample_weight = np.array([1, 2, 3, 1], dtype=dtype_name)
@@ -2419,6 +2526,26 @@ array_api_metric_checkers = {
         check_array_api_binary_classification_metric,
     ],
     pairwise_distances: [check_array_api_metric_pairwise],
+    brier_score_loss: [
+        check_array_api_binary_continuous_classification_metric,
+        check_array_api_multiclass_continuous_classification_metric,
+        check_array_api_multilabel_continuous_classification_metric,
+    ],
+    log_loss: [
+        check_array_api_binary_continuous_classification_metric,
+        check_array_api_multiclass_continuous_classification_metric,
+        check_array_api_multilabel_continuous_classification_metric,
+    ],
+    d2_brier_score: [
+        check_array_api_binary_continuous_classification_metric,
+        check_array_api_multiclass_continuous_classification_metric,
+        check_array_api_multilabel_continuous_classification_metric,
+    ],
+    d2_log_loss_score: [
+        check_array_api_binary_continuous_classification_metric,
+        check_array_api_multiclass_continuous_classification_metric,
+        check_array_api_multilabel_continuous_classification_metric,
+    ],
 }
 
 
