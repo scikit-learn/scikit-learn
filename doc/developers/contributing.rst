@@ -635,7 +635,7 @@ using the following guidelines:
 
 .. _issues_tagged_needs_triage:
 
-Issues tagged 'Needs Triage'
+Issues tagged "Needs Triage"
 ----------------------------
 
 The `"Needs Triage"
