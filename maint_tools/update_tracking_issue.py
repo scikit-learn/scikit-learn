@@ -67,6 +67,7 @@ def get_issue():
     login = gh.get_user().login
     issues = gh.search_issues(
         f"repo:{args.issue_repo} {title_query} in:title state:open author:{login}"
+        " is:issue"
     )
     first_page = issues.get_page(0)
     # Return issue if it exist
