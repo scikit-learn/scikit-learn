@@ -96,9 +96,9 @@ def check_pyproject_section(
         info = info[key]
 
     pyproject_build_min_versions = {}
-    # Assuming pyproject.toml build section has something like my-package>=<min_version>
+    # Assuming pyproject.toml build section has something like "my-package>=min_version"
     # Warning: if you try to modify this regex, bear in mind that there can be upper
-    # bounds in release branches so my-package>=<min_version>,<max_version>
+    # bounds in release branches so "my-package>=min_version,<max_version"
     pattern = r"([\w-]+)\s*[>=]=\s*([\d\w.]+)"
     for requirement in info:
         match = re.search(pattern, requirement)
