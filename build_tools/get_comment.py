@@ -4,7 +4,7 @@
 import os
 import re
 
-from github import Auth, Github, GithubException, UnknownObjectException
+from github import Auth, Github, GithubException
 
 
 def get_versions(versions_file):
@@ -254,9 +254,11 @@ def update_linter_fails_label(linting_failed, issue):
     else:
         try:
             issue.remove_from_labels(label)
-        except UnknownObjectException:
-            # raised if the issue did not have the label already
-            pass
+        except GithubException as exception:
+            # The exception is ignored if raised because the issue did not have the
+            # label already
+            if not exception.message == "Label does not exist":
+                raise exception
 
 
 if __name__ == "__main__":
