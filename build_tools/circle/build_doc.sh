@@ -177,7 +177,6 @@ conda activate
 
 
 create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
-exit 0
 conda activate $CONDA_ENV_NAME
 
 # Sets up ccache when using system compiler
@@ -192,6 +191,8 @@ export CCACHE_COMPRESS=1
 ccache -z
 
 show_installed_libraries
+
+exit 0
 
 # Specify explicitly ninja -j argument because ninja does not handle cgroups v2 and
 # use the same default rule as ninja (-j3 since we have 2 cores on CircleCI), see

@@ -88,6 +88,7 @@ scikit_learn_install() {
     setup_ccache
     show_installed_libraries
 
+    exit 0
     if [[ "$UNAMESTR" == "Darwin" && "$SKLEARN_TEST_NO_OPENMP" == "true" ]]; then
         # Without openmp, we use the system clang. Here we use /usr/bin/ar
         # instead because llvm-ar errors
@@ -138,7 +139,7 @@ setup_playwright_if_installed() {
 main() {
     pre_python_environment_install
     python_environment_install_and_activate
-    # scikit_learn_install
+    scikit_learn_install
     # setup_playwright_if_installed
 }
 
