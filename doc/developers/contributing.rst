@@ -69,7 +69,7 @@ There are many ways to contribute to scikit-learn. These include:
 * :ref:`improve, triage, and investigate issues <bug_triaging>`
 * :ref:`reviewing other developers' pull requests <code_review>`
 * report issues using this package by submitting an
-  `issue <https://github.com/scikit-learn/scikit-learn/issues>`, and giving a
+  `issue <https://github.com/scikit-learn/scikit-learn/issues>`__, and giving a
   "thumbs up" on issues that others reported and that are relevant to you (see
   :ref:`submitting_bug_feature` for details)
 * improving the :ref:`contribute_documentation`
