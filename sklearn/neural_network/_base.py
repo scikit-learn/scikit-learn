@@ -283,5 +283,4 @@ LOSS_FUNCTIONS = {
     "squared_error": squared_loss,
     "poisson": poisson_loss,
     "log_loss": log_loss,
-    "binary_log_loss": binary_log_loss,
-}
+    "binary_log_loss": binary_log_loss}
