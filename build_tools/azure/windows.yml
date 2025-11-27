@@ -8,6 +8,7 @@ parameters:
 
 jobs:
 - job: ${{ parameters.name }}
+  timeOutInMinutes: 15
   dependsOn: ${{ parameters.dependsOn }}
   condition: ${{ parameters.condition }}
   pool:
