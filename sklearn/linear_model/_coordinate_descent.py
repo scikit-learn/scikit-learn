@@ -124,9 +124,8 @@ def _alpha_grid(
 
     l1_ratio : float, default=1.0
         The elastic net mixing parameter, with ``0 < l1_ratio <= 1``.
-        For ``l1_ratio = 0`` the penalty is an L2 penalty. (currently not
-        supported) ``For l1_ratio = 1`` it is an L1 penalty. For
-        ``0 < l1_ratio <1``, the penalty is a combination of L1 and L2.
+        For ``l1_ratio = 0``, there would be no L1 penalty which is not supported
+        for the generation of alphas.
 
     eps : float, default=1e-3
         Length of the path. ``eps=1e-3`` means that
@@ -439,7 +438,7 @@ def enet_path(
 
     For multi-output tasks it is::
 
-        (1 / (2 * n_samples)) * ||Y - XW||_Fro^2
+        1 / (2 * n_samples) * ||Y - XW||_Fro^2
         + alpha * l1_ratio * ||W||_21
         + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
 
@@ -447,7 +446,7 @@ def enet_path(
 
         ||W||_21 = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
 
-    i.e. the sum of norm of each row.
+    i.e. the sum of L2-norm of each row (task) (i=feature, j=task)
 
     Read more in the :ref:`User Guide <elastic_net>`.
 
