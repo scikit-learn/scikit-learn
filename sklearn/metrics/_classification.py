@@ -284,10 +284,6 @@ def _validate_multiclass_probabilistic_prediction(
     """
     xp, _, device_ = get_namespace_and_device(y_prob)
 
-    y_prob = check_array(
-        y_prob, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
-    )
-
     if xp.max(y_prob) > 1:
         raise ValueError(f"y_prob contains values greater than 1: {xp.max(y_prob)}")
     if xp.min(y_prob) < 0:
@@ -326,7 +322,6 @@ def _validate_multiclass_probabilistic_prediction(
         )
 
     # Check if dimensions are consistent.
-    transformed_labels = check_array(transformed_labels)
     if len(lb_classes) != y_prob.shape[1]:
         if labels is None:
             raise ValueError(
@@ -3382,8 +3377,11 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616
     """
+    xp, _, device_ = get_namespace_and_device(y_pred)
+    y_pred = check_array(
+        y_pred, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
+    )
     if sample_weight is not None:
-        xp, _, device_ = get_namespace_and_device(y_pred)
         sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
     transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
@@ -3865,9 +3863,11 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
 
-    y_pred = check_array(y_pred, ensure_2d=False, dtype="numeric")
+    xp, _, device_ = get_namespace_and_device(y_pred)
+    y_pred = check_array(
+        y_pred, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
+    )
     if sample_weight is not None:
-        xp, _, device_ = get_namespace_and_device(y_pred)
         sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
     transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
