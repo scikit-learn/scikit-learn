@@ -8,6 +8,7 @@ from scipy import sparse
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils._sparse import _sparse_diags, _sparse_random
 from sklearn.utils._testing import (
     TempMemmap,
     _convert_container,
@@ -57,7 +58,7 @@ def test_assert_allclose_dense_sparse(csr_container):
     with pytest.raises(ValueError, match="Can only compare two sparse"):
         assert_allclose_dense_sparse(x, y)
 
-    A = sparse.diags(np.ones(5), offsets=0).tocsr()
+    A = _sparse_diags(np.ones(5), offsets=0, format="csr")
     B = csr_container(np.ones((1, 5)))
     with pytest.raises(AssertionError, match="Arrays are not equal"):
         assert_allclose_dense_sparse(B, A)
@@ -1102,7 +1103,7 @@ def test_convert_container_sparse_to_sparse(constructor_name):
     """Non-regression test to check that we can still convert a sparse container
     from a given format to another format.
     """
-    X_sparse = sparse.random(10, 10, density=0.1, format="csr")
+    X_sparse = _sparse_random((10, 10), density=0.1, format="csr")
     _convert_container(X_sparse, constructor_name)
 
 

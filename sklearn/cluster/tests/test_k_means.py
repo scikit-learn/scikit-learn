@@ -6,7 +6,6 @@ from io import StringIO
 
 import numpy as np
 import pytest
-from scipy import sparse as sp
 from threadpoolctl import threadpool_info
 
 from sklearn.base import clone
@@ -26,6 +25,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import pairwise_distances, pairwise_distances_argmin
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.utils._sparse import _sparse_random
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
@@ -1043,9 +1043,7 @@ def test_euclidean_distance(dtype, squared, global_random_seed):
     # Check that the _euclidean_(dense/sparse)_dense helpers produce correct
     # results
     rng = np.random.RandomState(global_random_seed)
-    a_sparse = sp.random(
-        1, 100, density=0.5, format="csr", random_state=rng, dtype=dtype
-    )
+    a_sparse = _sparse_random((1, 100), density=0.5, format="csr", rng=rng, dtype=dtype)
     a_dense = a_sparse.toarray().reshape(-1)
     b = rng.randn(100).astype(dtype, copy=False)
     b_squared_norm = (b**2).sum()
@@ -1068,8 +1066,8 @@ def test_euclidean_distance(dtype, squared, global_random_seed):
 def test_inertia(dtype, global_random_seed):
     # Check that the _inertia_(dense/sparse) helpers produce correct results.
     rng = np.random.RandomState(global_random_seed)
-    X_sparse = sp.random(
-        100, 10, density=0.5, format="csr", random_state=rng, dtype=dtype
+    X_sparse = _sparse_random(
+        (100, 10), density=0.5, format="csr", rng=rng, dtype=dtype
     )
     X_dense = X_sparse.toarray()
     sample_weight = rng.randn(100).astype(dtype, copy=False)

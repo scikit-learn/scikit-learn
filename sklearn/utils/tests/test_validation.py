@@ -44,6 +44,7 @@ from sklearn.utils._mocking import (
     MockDataFrame,
     _MockEstimatorOnOffPrediction,
 )
+from sklearn.utils._sparse import _sparse_random
 from sklearn.utils._testing import (
     SkipTest,
     TempMemmap,
@@ -147,6 +148,7 @@ def test_as_float_array():
     # Test the copy parameter with some matrices
     matrices = [
         sp.csc_matrix(np.arange(5)).toarray(),
+        sp.csc_array([np.arange(5)]).toarray(),
         _sparse_random_matrix(10, 10, density=0.10).toarray(),
     ]
     for M in matrices:
@@ -156,7 +158,7 @@ def test_as_float_array():
 
 
 @pytest.mark.parametrize(
-    "X", [np.random.random((10, 2)), sp.random(10, 2, format="csr")]
+    "X", [np.random.random((10, 2)), _sparse_random((10, 2), format="csr")]
 )
 def test_as_float_array_nan(X):
     X = X.copy()
@@ -172,6 +174,7 @@ def test_np_matrix():
 
     assert not isinstance(as_float_array(X), np.matrix)
     assert not isinstance(as_float_array(sp.csc_matrix(X)), np.matrix)
+    assert not isinstance(as_float_array(sp.csc_array(X)), np.matrix)
 
 
 def test_memmap():
@@ -204,7 +207,7 @@ def test_ordering():
             if copy:
                 assert A is not B
 
-    X = sp.csr_matrix(X)
+    X = sp.csr_array(X)
     X.data = X.data[::-1]
     assert not X.data.flags["C_CONTIGUOUS"]
 
@@ -213,7 +216,7 @@ def test_ordering():
     "value, ensure_all_finite",
     [(np.inf, False), (np.nan, "allow-nan"), (np.nan, False)],
 )
-@pytest.mark.parametrize("retype", [np.asarray, sp.csr_matrix])
+@pytest.mark.parametrize("retype", [np.asarray, sp.csr_array, sp.csr_matrix])
 def test_check_array_ensure_all_finite_valid(value, ensure_all_finite, retype):
     X = retype(np.arange(4).reshape(2, 2).astype(float))
     X[0, 0] = value
@@ -240,7 +243,7 @@ def test_check_array_ensure_all_finite_valid(value, ensure_all_finite, retype):
         (np.nan, "", 1, "Input contains NaN"),
     ],
 )
-@pytest.mark.parametrize("retype", [np.asarray, sp.csr_matrix])
+@pytest.mark.parametrize("retype", [np.asarray, sp.csr_array, sp.csr_matrix])
 def test_check_array_ensure_all_finite_invalid(
     value, input_name, ensure_all_finite, match_msg, retype
 ):
@@ -256,7 +259,7 @@ def test_check_array_ensure_all_finite_invalid(
 
 
 @pytest.mark.parametrize("input_name", ["X", "y", "sample_weight"])
-@pytest.mark.parametrize("retype", [np.asarray, sp.csr_matrix])
+@pytest.mark.parametrize("retype", [np.asarray, sp.csr_array, sp.csr_matrix])
 def test_check_array_links_to_imputer_doc_only_for_X(input_name, retype):
     data = retype(np.arange(4).reshape(2, 2).astype(np.float64))
     data[0, 0] = np.nan
@@ -358,7 +361,7 @@ def test_check_array():
     # accept_sparse == False
     # raise error on sparse inputs
     X = [[1, 2], [3, 4]]
-    X_csr = sp.csr_matrix(X)
+    X_csr = sp.csr_array(X)
     with pytest.raises(TypeError):
         check_array(X_csr)
 
@@ -622,9 +625,9 @@ def test_check_array_dtype_warning():
     X_int_list = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
     X_float32 = np.asarray(X_int_list, dtype=np.float32)
     X_int64 = np.asarray(X_int_list, dtype=np.int64)
-    X_csr_float32 = sp.csr_matrix(X_float32)
-    X_csc_float32 = sp.csc_matrix(X_float32)
-    X_csc_int32 = sp.csc_matrix(X_int64, dtype=np.int32)
+    X_csr_float32 = sp.csr_array(X_float32)
+    X_csc_float32 = sp.csc_array(X_float32)
+    X_csc_int32 = sp.csc_array(X_int64, dtype=np.int32)
     integer_data = [X_int64, X_csc_int32]
     float32_data = [X_float32, X_csr_float32, X_csc_float32]
     with warnings.catch_warnings():
@@ -663,7 +666,7 @@ def test_check_array_dtype_warning():
 
 def test_check_array_accept_sparse_type_exception():
     X = [[1, 2], [3, 4]]
-    X_csr = sp.csr_matrix(X)
+    X_csr = sp.csr_array(X)
     invalid_type = SVR()
 
     msg = (
@@ -694,7 +697,7 @@ def test_check_array_accept_sparse_type_exception():
 
 def test_check_array_accept_sparse_no_exception():
     X = [[1, 2], [3, 4]]
-    X_csr = sp.csr_matrix(X)
+    X_csr = sp.csr_array(X)
 
     check_array(X_csr, accept_sparse=True)
     check_array(X_csr, accept_sparse="csr")
@@ -704,7 +707,7 @@ def test_check_array_accept_sparse_no_exception():
 
 @pytest.fixture(params=["csr", "csc", "coo", "bsr"])
 def X_64bit(request):
-    X = sp.random(20, 10, format=request.param)
+    X = _sparse_random((20, 10), format=request.param)
 
     if request.param == "coo":
         if hasattr(X, "coords"):
@@ -834,7 +837,7 @@ def test_check_array_complex_data_error():
         check_array(X)
 
     # sparse matrix
-    X = sp.coo_matrix([[0, 1 + 2j], [0, 0]])
+    X = sp.coo_array([[0, 1 + 2j], [0, 0]])
     with pytest.raises(ValueError, match="Complex data not supported"):
         check_array(X)
 
@@ -868,12 +871,12 @@ def test_check_symmetric():
 
     test_arrays = {
         "dense": arr_asym,
-        "dok": sp.dok_matrix(arr_asym),
-        "csr": sp.csr_matrix(arr_asym),
-        "csc": sp.csc_matrix(arr_asym),
-        "coo": sp.coo_matrix(arr_asym),
-        "lil": sp.lil_matrix(arr_asym),
-        "bsr": sp.bsr_matrix(arr_asym),
+        "dok": sp.dok_array(arr_asym),
+        "csr": sp.csr_array(arr_asym),
+        "csc": sp.csc_array(arr_asym),
+        "coo": sp.coo_array(arr_asym),
+        "lil": sp.lil_array(arr_asym),
+        "bsr": sp.bsr_array(arr_asym),
     }
 
     # check error for bad inputs
@@ -1021,7 +1024,7 @@ def test_check_consistent_length():
     input types trigger TypeErrors."""
     check_consistent_length([1], [2], [3], [4], [5])
     check_consistent_length([[1, 2], [[1, 2]]], [1, 2], ["a", "b"])
-    check_consistent_length([1], (2,), np.array([3]), sp.csr_matrix((1, 2)))
+    check_consistent_length([1], (2,), np.array([3]), sp.csr_array((1, 2)))
     with pytest.raises(ValueError, match="inconsistent numbers of samples"):
         check_consistent_length([1, 2], [1])
     with pytest.raises(TypeError, match=r"got <\w+ 'int'>"):
@@ -1299,6 +1302,13 @@ def test_estimator_has(
         sp.bsr_matrix,
         sp.dok_matrix,
         sp.dia_matrix,
+        sp.csr_array,
+        sp.csc_array,
+        sp.coo_array,
+        sp.lil_array,
+        sp.bsr_array,
+        sp.dok_array,
+        sp.dia_array,
     ],
 )
 def test_check_non_negative(retype):
@@ -1708,21 +1718,24 @@ def test_check_pos_label_consistency_invalid_array_api(
         assert _check_pos_label_consistency("a", arr) == "a"
 
 
-@pytest.mark.parametrize("toarray", [np.array, sp.csr_matrix, sp.csc_matrix])
+CS_SPARSE = [sp.csr_array, sp.csr_matrix, sp.csc_array, sp.csc_matrix]
+
+
+@pytest.mark.parametrize("toarray", [np.array] + CS_SPARSE)
 def test_allclose_dense_sparse_equals(toarray):
     base = np.arange(9).reshape(3, 3)
     x, y = toarray(base), toarray(base)
     assert _allclose_dense_sparse(x, y)
 
 
-@pytest.mark.parametrize("toarray", [np.array, sp.csr_matrix, sp.csc_matrix])
+@pytest.mark.parametrize("toarray", [np.array] + CS_SPARSE)
 def test_allclose_dense_sparse_not_equals(toarray):
     base = np.arange(9).reshape(3, 3)
     x, y = toarray(base), toarray(base + 1)
     assert not _allclose_dense_sparse(x, y)
 
 
-@pytest.mark.parametrize("toarray", [sp.csr_matrix, sp.csc_matrix])
+@pytest.mark.parametrize("toarray", CS_SPARSE)
 def test_allclose_dense_sparse_raise(toarray):
     x = np.arange(9).reshape(3, 3)
     y = toarray(x + 1)
@@ -1800,8 +1813,10 @@ def test_check_method_params(indices):
     _params = {
         "list": [1, 2, 3, 4],
         "array": np.array([1, 2, 3, 4]),
-        "sparse-col": sp.csc_matrix([1, 2, 3, 4]).T,
-        "sparse-row": sp.csc_matrix([1, 2, 3, 4]),
+        "sparse-col2": sp.csc_matrix([[1, 2, 3, 4]]).T,
+        "sparse-row2": sp.csc_matrix([[1, 2, 3, 4]]),
+        "sparse-col": sp.csc_array([[1, 2, 3, 4]]).T,
+        "sparse-row": sp.csc_array([[1, 2, 3, 4]]),
         "scalar-int": 1,
         "scalar-str": "xxx",
         "None": None,
@@ -1809,13 +1824,16 @@ def test_check_method_params(indices):
     result = _check_method_params(X, params=_params, indices=indices)
     indices_ = indices if indices is not None else list(range(X.shape[0]))
 
-    for key in ["sparse-row", "scalar-int", "scalar-str", "None"]:
+    for key in ["sparse-row", "sparse-row2", "scalar-int", "scalar-str", "None"]:
         assert result[key] is _params[key]
 
     assert result["list"] == _safe_indexing(_params["list"], indices_)
     assert_array_equal(result["array"], _safe_indexing(_params["array"], indices_))
     assert_allclose_dense_sparse(
         result["sparse-col"], _safe_indexing(_params["sparse-col"], indices_)
+    )
+    assert_allclose_dense_sparse(
+        result["sparse-col2"], _safe_indexing(_params["sparse-col2"], indices_)
     )
 
 

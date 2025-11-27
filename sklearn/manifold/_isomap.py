@@ -21,6 +21,7 @@ from sklearn.metrics.pairwise import _VALID_METRICS
 from sklearn.neighbors import NearestNeighbors, kneighbors_graph, radius_neighbors_graph
 from sklearn.preprocessing import KernelCenterer
 from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils._sparse import _ensure_sparse_index_int32
 from sklearn.utils.graph import _fix_connected_components
 from sklearn.utils.validation import check_is_fitted
 
@@ -297,6 +298,7 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                 **self.nbrs_.effective_metric_params_,
             )
 
+        _ensure_sparse_index_int32(nbg)
         self.dist_matrix_ = shortest_path(nbg, method=self.path_method, directed=False)
 
         if self.nbrs_._fit_X.dtype == np.float32:

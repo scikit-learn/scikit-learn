@@ -17,6 +17,7 @@ from sklearn.manifold._spectral_embedding import (
 from sklearn.metrics import normalized_mutual_info_score, pairwise_distances
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.neighbors import NearestNeighbors
+from sklearn.utils._sparse import _sparse_diags, _sparse_random
 from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.fixes import (
@@ -311,9 +312,9 @@ def test_spectral_embedding_amg_solver(dtype, coo_container, seed=36):
 def test_spectral_embedding_amg_solver_failure(dtype, seed=36):
     # Non-regression test for amg solver failure (issue #13393 on github)
     num_nodes = 100
-    X = sparse.rand(num_nodes, num_nodes, density=0.1, random_state=seed)
+    X = _sparse_random((num_nodes, num_nodes), density=0.1, random_state=seed)
     X = X.astype(dtype)
-    upper = sparse.triu(X) - sparse.diags(X.diagonal())
+    upper = sparse.triu(X) - _sparse_diags(X.diagonal())
     sym_matrix = upper + upper.T
     embedding = spectral_embedding(
         sym_matrix, n_components=10, eigen_solver="amg", random_state=0

@@ -169,9 +169,9 @@ Valid :term:`multiclass` representations for
      [1 0 0]
      [0 1 0]]
     >>> from scipy import sparse
-    >>> y_sparse = sparse.csr_matrix(y_dense)
+    >>> y_sparse = sparse.csr_array(y_dense)
     >>> print(y_sparse)
-    <Compressed Sparse Row sparse matrix of dtype 'int64'
+    <Compressed Sparse Row sparse array of dtype 'int64'
       with 4 stored elements and shape (4, 3)>
       Coords Values
       (0, 0) 1
@@ -379,9 +379,9 @@ refer to :ref:`preprocessing_targets`.
 
 An example of the same ``y`` in sparse matrix form:
 
-  >>> y_sparse = sparse.csr_matrix(y)
+  >>> y_sparse = sparse.csr_array(y)
   >>> print(y_sparse)
-  <Compressed Sparse Row sparse matrix of dtype 'int64'
+  <Compressed Sparse Row sparse array of dtype 'int64'
     with 4 stored elements and shape (3, 4)>
     Coords Values
     (0, 0) 1
