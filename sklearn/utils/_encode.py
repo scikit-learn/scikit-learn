@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from collections import Counter
-from contextlib import suppress
 from typing import NamedTuple
 
 import numpy as np
