@@ -260,7 +260,7 @@ def _validate_multiclass_probabilistic_prediction(
     y_true : array-like or label indicator matrix
         Ground truth (correct) labels for n_samples samples.
 
-    y_prob : array-like of float, shape=(n_samples, n_classes) or (n_samples,)
+    y_prob : array of float, shape=(n_samples, n_classes) or (n_samples,)
         Predicted probabilities, as returned by a classifier's
         predict_proba method. If `y_prob.shape = (n_samples,)`
         the probabilities provided are assumed to be that of the
