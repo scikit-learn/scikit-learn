@@ -504,7 +504,7 @@ def _plain_sgd{{name_suffix}}(
                             )
                         if one_class:  # specific to One-Class SVM
                             # nu is alpha
-                            objective_sum += (intercept - 1) * alpha
+                            objective_sum += intercept * alpha
 
                 if y > 0.0:
                     class_weight = weight_pos
