@@ -1,6 +1,5 @@
 # This script is used to generate a comment for a PR when linting issues are
 # detected. It is used by the `Comment on failed linting` GitHub Action.
-# This script fails if there are not comments to be posted.
 
 import os
 import re
@@ -280,7 +279,7 @@ if __name__ == "__main__":
         ("RUN_ID", run_id),
     ]:
         if not val:
-            raise ValueError(f"The following environment variables is not set: {var}")
+            raise ValueError(f"The following environment variable is not set: {var}")
 
     if not re.match(r"\d+$", pr_number):
         raise ValueError(f"PR_NUMBER should be a number, got {pr_number!r} instead")
@@ -289,12 +288,6 @@ if __name__ == "__main__":
     gh = Github(auth=Auth.Token(token))
     repo = gh.get_repo(repo_str)
     issue = repo.get_issue(number=pr_number)
-
-    try:
-        comment = find_lint_bot_comments(issue)
-    except GithubException as exc:
-        print(f"Could not fetch comments: {exc}")
-        exit(0)
 
     message = get_message(
         log_file,
@@ -305,6 +298,11 @@ if __name__ == "__main__":
         details=True,
         versions=versions,
     )
+
+    update_linter_fails_label(message, issue)
+
+    comment = find_lint_bot_comments(issue)
+
     if message is None:  # linting succeeded
         if comment is not None:
             print("Deleting existing comment.")
@@ -327,5 +325,3 @@ if __name__ == "__main__":
             )
             create_or_update_comment(comment, message, issue)
             print(message)
-
-    update_linter_fails_label(message, issue)
