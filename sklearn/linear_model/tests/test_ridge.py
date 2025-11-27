@@ -1337,7 +1337,7 @@ def test_ridge_classifier_multilabel_array_api(
         ridge_xp = estimator.fit(X_xp, y_xp)
         pred_xp = ridge_xp.predict(X_xp)
         assert pred_xp.shape == pred_np.shape == y.shape
-        assert_allclose(pred_xp, pred_np)
+        assert_allclose(_convert_to_numpy(pred_xp, xp=xp), pred_np)
 
 
 @pytest.mark.parametrize(
