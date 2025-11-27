@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
+import sys
 import warnings
 from collections import UserList
 from itertools import compress, islice
@@ -17,11 +18,11 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.extmath import _approximate_mode
-from sklearn.utils.fixes import PYARROW_VERSION_BELOW_17
 from sklearn.utils.validation import (
     _check_sample_weight,
     _is_arraylike_not_scalar,
     _is_pandas_df,
+    _is_pyarrow_array,
     _use_interchange_protocol,
     check_array,
     check_consistent_length,
@@ -58,6 +59,9 @@ def _narwhals_indexing(X, key, key_dtype, axis):
         key = key.tolist()
 
     if axis == 1:
+        if key_dtype == "bool":
+            subset = X.select(col for (col, select) in zip(X.columns, key) if select)
+            return subset.to_native()
         return X[:, key].to_native()
 
     # From here on axis == 0:
@@ -73,7 +77,7 @@ def _narwhals_indexing(X, key, key_dtype, axis):
         # consistent with pandas
         # Christian Lorentzen really dislikes this behaviour and favours to return a
         # dataframe.
-        return np.array(X_indexed.row(0))
+        return np.array([col.item(0) for col in X_indexed.iter_columns()])
     return X_indexed.to_native()
 
 
@@ -284,6 +288,15 @@ def _safe_indexing(X, indices, *, axis=0):
         return _pandas_indexing(X, indices, indices_dtype, axis=axis)
     elif nw.dependencies.is_into_dataframe(X) or nw.dependencies.is_into_series(X):
         return _narwhals_indexing(X, indices, indices_dtype, axis=axis)
+    elif _is_pyarrow_array(X):
+        # Narwhals Series are backed by ChunkedArray, not Array.
+        # To re-use `_narwhals_indexing`, we temporarily convert to `ChunkedArray`.
+        pa = sys.modules["pyarrow"]
+        X = pa.chunked_array(X)
+        ret = _narwhals_indexing(X, indices, indices_dtype, axis=axis)
+        if isinstance(ret, pa.ChunkedArray):
+            return ret.combine_chunks()
+        return ret
     elif hasattr(X, "shape"):
         return _array_indexing(X, indices, indices_dtype, axis=axis)
     else:
