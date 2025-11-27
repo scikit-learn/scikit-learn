@@ -4,7 +4,7 @@
 import os
 import re
 
-from github import Auth, Github, GithubException
+from github import Auth, Github, GithubException, UnknownObjectException
 
 
 def get_versions(versions_file):
@@ -249,15 +249,14 @@ def update_linter_fails_label(linting_failed, issue):
     label = "CI:Linter failure"
 
     if linting_failed:
-        if not any(l.name == label for l in issue.get_labels()):
-            print("Adding CI:Linter failure label")
-            issue.add_to_labels(label)
+        issue.add_to_labels(label)
+
     else:
-        for l in issue.get_labels():
-            if l.name == label:
-                print("Removing CI:Linter failure label")
-                issue.remove_from_labels(label)
-                break
+        try:
+            issue.remove_from_labels(label)
+        except UnknownObjectException:
+            # raised if the issue did not have the label already
+            pass
 
 
 if __name__ == "__main__":
@@ -299,7 +298,10 @@ if __name__ == "__main__":
         versions=versions,
     )
 
-    update_linter_fails_label(message, issue)
+    update_linter_fails_label(
+        linting_failed=message is not None,
+        issue=issue,
+    )
 
     comment = find_lint_bot_comments(issue)
 
