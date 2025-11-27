@@ -67,13 +67,13 @@ create_conda_environment_from_lock_file() {
         python -m pip install "$(get_dep conda-lock min)"
         # Just in case having stdout/stderr unbuffered helps getting more info ...
         # export PYTHONUNBUFFERED=1
-        file=$(python -c 'from pathlib import Path; import conda_lock; p = Path(conda_lock.__file__).parent / "conda_lock.py"; print(p)')
-        sed -i '1s@^@import faulthandler; faulthandler.dump_traceback_later(10, repeat=True)\n@' $file
+        # file=$(python -c 'from pathlib import Path; import conda_lock; p = Path(conda_lock.__file__).parent / "conda_lock.py"; print(p)')
+        # sed -i '1s@^@import faulthandler; faulthandler.dump_traceback_later(10, repeat=True)\n@' $file
         # hack to change --quiet from conda-lock 'mamba create' command
         # sed -i 's@--quiet@-vvv@' $file
         # hack to make pip verbose
         # sed -i 's@"--no-deps"@"--no-deps", "-vvv"@' $file
         # conda-lock install --log-level DEBUG --name $ENV_NAME $LOCK_FILE
-        conda-lock install --log-level WARNING --name $ENV_NAME $LOCK_FILE
+        conda-lock install --name $ENV_NAME $LOCK_FILE
     fi
 }
