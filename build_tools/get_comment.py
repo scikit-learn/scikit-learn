@@ -291,7 +291,7 @@ if __name__ == "__main__":
     issue = repo.get_issue(number=pr_number)
 
     try:
-        comment = find_lint_bot_comments(issue, pr_number)
+        comment = find_lint_bot_comments(issue)
     except GithubException as exc:
         print(f"Could not fetch comments: {exc}")
         exit(0)
