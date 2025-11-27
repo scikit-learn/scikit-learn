@@ -58,7 +58,7 @@ jobs:
           python-version: 3.11
 
       - name: Install dependencies
-        run: python -m pip install requests
+        run: python -m pip install github
 
       - name: Create/update GitHub comment
         env:
