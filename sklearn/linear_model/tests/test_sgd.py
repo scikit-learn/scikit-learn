@@ -1785,12 +1785,13 @@ def test_sgd_oneclass_convergence():
         assert model.n_iter_ > 6
 
 
-def test_sgd_oneclass_vs_linear_oneclass():
+@pytest.mark.parametrize("eta0, max_iter", [(1e-3, 10000), (3e-4, 20000)])
+def test_sgd_oneclass_vs_linear_oneclass(eta0, max_iter):
     # Test convergence vs. liblinear `OneClassSVM` with kernel="linear"
     for nu in [0.1, 0.5, 0.9]:
         # allow enough iterations, small dataset
         model = SGDOneClassSVM(
-            nu=nu, max_iter=20000, tol=None, learning_rate="constant", eta0=1e-3
+            nu=nu, max_iter=max_iter, tol=None, learning_rate="constant", eta0=eta0
         )
         model_ref = OneClassSVM(kernel="linear", nu=nu, tol=1e-6)  # reference model
         model.fit(iris.data)
