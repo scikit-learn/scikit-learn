@@ -13,14 +13,14 @@
 }
 
 .features summary {
-cursor: pointer;
-display: flex;
-margin-bottom: 0;
-text-align: center;
-align-items: center;
-justify-content: center;
-gap: 0.5em;
-padding: .25em;
+  cursor: pointer;
+  display: flex;
+  margin-bottom: 0;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  padding: .25em;
 }
 
 .features details[open] > summary {
@@ -58,7 +58,7 @@ padding: .25em;
   max-height: 10em;
   overflow: auto;
   scrollbar-width: thin;
-  padding: .25em .5em;
+  padding: .25em 0.1rem;
   background-color: var(--sklearn-color-unfitted-level-0);
   border-radius: 0 0 .5em .5em;
 }
@@ -86,19 +86,19 @@ padding: .25em;
 
 .features .features-container table {
   width: 100%;
-  margin: .5;
+  margin: 0.01em;
 }
 
 .features .features-container table tr:nth-child(odd) {
-    background-color: #fff;
+  background-color: #fff;
 }
 
 .features .features-container table tr:nth-child(even) {
-    background-color: #f6f6f6;
+  background-color: #f6f6f6;
 }
 
 .features .features-container table tr:hover {
-    background-color: #e0e0e0;
+  background-color: #e0e0e0;
 }
 
 .features .features-container table {
@@ -107,7 +107,7 @@ padding: .25em;
 
 .features .features-container table td {
   text-align: left;
-  padding: 0;
+  padding: 0 0.5em;
   border: 1px solid rgba(106, 105, 104, 0.232);
   white-space: nowrap;
   color: var(--sklearn-color-text);

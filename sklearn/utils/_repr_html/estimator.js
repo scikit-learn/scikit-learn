@@ -1,3 +1,7 @@
+/*  Authors: The scikit-learn developers
+ SPDX-License-Identifier: BSD-3-Clause
+*/
+
 function copyToClipboard(text, element) {
     // Get the parameter prefix from the closest toggleable content
     const toggleableContent = element.closest('.sk-toggleable__content');
@@ -63,14 +67,13 @@ function copyFeatureNamesToClipboard(element) {
     var content = element.closest('.features').querySelector('tbody')
                   .innerText.trim();
     if (!wasOpen) detailsElem.open = false;
-
     const rows = content.split('\n').map(row => `    "${row}"`);
-    const formattedText = `[\n${rows.join(',\n ')},\n]`;
+    const formattedText = `[\n${rows.join(',\n')},\n]`;
     const originalHTML = element.innerHTML.replace('✔', '');
     const originalStyle = element.style;
     const copyMark = document.createElement('span');
     copyMark.innerHTML = '✔';
-    copyMark.style.color = 'gray';
+    copyMark.style.color = 'blue';
     copyMark.style.fontSize = '1em';
 
     navigator.clipboard.writeText(formattedText)
@@ -86,7 +89,7 @@ function copyFeatureNamesToClipboard(element) {
         })
         .catch(err => {
             console.error('Failed to copy:', err);
-            element.style.color = 'red';
+            element.style.color = 'orange';
             element.innerHTML = "Failed!";
             setTimeout(() => {
                 element.innerHTML = originalHTML;

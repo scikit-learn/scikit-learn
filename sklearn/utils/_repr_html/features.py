@@ -29,6 +29,7 @@ def _features_html(features, is_fitted_css_class=""):
                   </tbody>
                 </table>
             </div>
+          </details>
           </div>
     """
 
