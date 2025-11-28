@@ -1,0 +1,5 @@
+- A small bug in the coordinate descent solver of
+  :class:`linear_model.MultiTaskElasticNetCV` and
+  :class:`linear_model.MultiTaskLassoCV` was fixed. The algorithm now correctly uses
+  the "exclude set" for the (gap safe) screened features.
+  By :user:`Christian Lorentzen <lorentzenchr>`.
