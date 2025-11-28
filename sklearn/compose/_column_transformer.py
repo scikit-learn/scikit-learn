@@ -1537,13 +1537,13 @@ class make_column_selector:
         A selection of dtypes to include. For pandas DataFrames, see
         :meth:`pandas.DataFrame.select_dtypes`. For Polars DataFrames, see `Polars data
         types <https://docs.pola.rs/api/python/stable/reference/datatypes.html>`_,
-        or, on newer Polars versions, use Python types (e.g., `int`, `str`).
+        or, on polars>=1.19.0, use Python data types (e.g., `int`, `str`).
 
     dtype_exclude : column dtype or list of column dtypes, default=None
         A selection of dtypes to exclude. For pandas DataFrames, see
         :meth:`pandas.DataFrame.select_dtypes`. For Polars DataFrames, see `Polars data
         types <https://docs.pola.rs/api/python/stable/reference/datatypes.html>`_,
-        or, on newer Polars versions, use Python types (e.g., `int`, `str`).
+        or, on polars>=1.19.0, use Python data types (e.g., `int`, `str`).
 
     Returns
     -------
@@ -1579,7 +1579,7 @@ class make_column_selector:
 
     `make_column_selector` works with Polars DataFrames. When passing `dtype_include`
     & `dtype_exclude`, you can either pass Polars data types (e.g. `pl.Int64`,
-    `pl.String`) or, on newer versions of polars, pass Python types (e.g. `int`, `str`):
+    `pl.String`) or, on polars>=1.19.0, pass Python data types (e.g. `int`, `str`):
 
     >>> import polars as pl  # doctest: +SKIP
     >>> X_polars = pl.DataFrame({
