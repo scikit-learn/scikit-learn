@@ -120,11 +120,13 @@ and open source contributing by making
 :ref:`non-code contributions <ways_to_contribute>`:
 
 * :ref:`improving and investigating issues <bug_triaging>`
+
   * confirming that a problem reported can be reproduced and providing a
     :ref:`minimal reproducible code <minimal_reproducer>` (if missing), can help you
     learn about different use cases and user needs
   * investigating the root cause of an issue will aid you in familiarising yourself
     with the scikit-learn codebase
+
 * :ref:`reviewing other developers' pull requests <code_review>` will help you
   develop an understanding of requirements and quality expected of contributions
 * improving the :ref:`contribute_documentation` can help deepen your knowledge
