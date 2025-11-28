@@ -18,7 +18,6 @@ import numpy as np
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.utils._array_api import (
     _average,
-    _convert_to_numpy,
     _find_matching_floating_dtype,
     _median,
     get_namespace,
@@ -1827,22 +1826,18 @@ def d2_pinball_score(
     )
 
     if sample_weight is None:
-        percentile = np.percentile(
-            _convert_to_numpy(y_true, xp=xp), q=alpha * 100, axis=0
-        )
-        percentile = xp.asarray(percentile, device=device_)
-        y_quantile = xp.tile(percentile, (y_true.shape[0], 1))
-    else:
-        y_quantile = xp.tile(
-            _weighted_percentile(
-                y_true,
-                sample_weight=sample_weight,
-                percentile_rank=alpha * 100,
-                average=True,
-                xp=xp,
-            ),
-            (y_true.shape[0], 1),
-        )
+        sample_weight = xp.ones([y_true.shape[0]], dtype=y_true.dtype, device=device_)
+
+    y_quantile = xp.tile(
+        _weighted_percentile(
+            y_true,
+            sample_weight=sample_weight,
+            percentile_rank=alpha * 100,
+            average=True,
+            xp=xp,
+        ),
+        (y_true.shape[0], 1),
+    )
 
     denominator = mean_pinball_loss(
         y_true,
