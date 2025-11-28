@@ -300,6 +300,36 @@ ALL_METRICS.update(CLASSIFICATION_METRICS)
 ALL_METRICS.update(REGRESSION_METRICS)
 ALL_METRICS.update(CURVE_METRICS)
 
+
+# Pairwise metrics are only used for array API tests, further down in this file
+# They are not added to `ALL_METRICS` because they are tested in `test_pairwise.py`
+PAIRWISE_METRICS = {
+    "additive_chi2_kernel": additive_chi2_kernel,
+    "chi2_kernel": chi2_kernel,
+    "cosine_distances": cosine_distances,
+    "cosine_similarity": cosine_similarity,
+    "distance_metrics": distance_metrics,
+    "euclidean_distances": euclidean_distances,
+    "haversine_distances": haversine_distances,
+    "kernel_metrics": kernel_metrics,
+    "laplacian_kernel": laplacian_kernel,
+    "linear_kernel": linear_kernel,
+    "manhattan_distances": manhattan_distances,
+    "nan_euclidean_distances": nan_euclidean_distances,
+    "paired_cosine_distances": paired_cosine_distances,
+    "paired_distances": paired_distances,
+    "paired_euclidean_distances": paired_euclidean_distances,
+    "paired_manhattan_distances": paired_manhattan_distances,
+    "pairwise_kernels": pairwise_kernels,
+    "polynomial_kernel": polynomial_kernel,
+    "rbf_kernel": rbf_kernel,
+    "sigmoid_kernel": sigmoid_kernel,
+    "pairwise_distances": pairwise_distances,
+    "pairwise_distances_argmin": pairwise_distances_argmin,
+    "pairwise_distances_argmin_min": pairwise_distances_argmin_min,
+    "pairwise_distances_chunked": pairwise_distances_chunked,
+}
+
 # Lists of metrics with common properties
 # ---------------------------------------
 # Lists of metrics with common properties are used to test systematically some
@@ -600,6 +630,11 @@ METRICS_WITH_LOG1P_Y = {
     "mean_squared_log_error",
     "root_mean_squared_log_error",
 }
+
+# Metrics that support mixed array API inputs
+METRICS_SUPPORTING_MIXED_NAMESPACE = [
+    "accuracy_score",
+]
 
 
 def _require_positive_targets(y1, y2):
@@ -2278,37 +2313,6 @@ def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name)
         **metric_kwargs,
     )
 
-
-PAIRWISE_METRICS = {
-    "additive_chi2_kernel": additive_chi2_kernel,
-    "chi2_kernel": chi2_kernel,
-    "cosine_distances": cosine_distances,
-    "cosine_similarity": cosine_similarity,
-    "distance_metrics": distance_metrics,
-    "euclidean_distances": euclidean_distances,
-    "haversine_distances": haversine_distances,
-    "kernel_metrics": kernel_metrics,
-    "laplacian_kernel": laplacian_kernel,
-    "linear_kernel": linear_kernel,
-    "manhattan_distances": manhattan_distances,
-    "nan_euclidean_distances": nan_euclidean_distances,
-    "paired_cosine_distances": paired_cosine_distances,
-    "paired_distances": paired_distances,
-    "paired_euclidean_distances": paired_euclidean_distances,
-    "paired_manhattan_distances": paired_manhattan_distances,
-    "pairwise_kernels": pairwise_kernels,
-    "polynomial_kernel": polynomial_kernel,
-    "rbf_kernel": rbf_kernel,
-    "sigmoid_kernel": sigmoid_kernel,
-    "pairwise_distances": pairwise_distances,
-    "pairwise_distances_argmin": pairwise_distances_argmin,
-    "pairwise_distances_argmin_min": pairwise_distances_argmin_min,
-    "pairwise_distances_chunked": pairwise_distances_chunked,
-}
-
-METRICS_SUPPORTING_MIXED_NAMESPACE = [
-    "accuracy_score",
-]
 
 array_api_metric_checkers = {
     accuracy_score: [
