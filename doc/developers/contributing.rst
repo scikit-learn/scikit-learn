@@ -62,13 +62,13 @@ Ways to contribute
 
 There are many ways to contribute to scikit-learn. These include:
 
-* referencing scikit-learn from your blog and articles, link to it from your website,
+* referencing scikit-learn from your blog and articles, linking to it from your website,
   or simply
-  `star it <https://docs.github.com/en/get-started/exploring-projects-on-github/saving-repositories-with-stars>`__
+  `staring it <https://docs.github.com/en/get-started/exploring-projects-on-github/saving-repositories-with-stars>`__
   to say "I use it"; this helps us promote the project
 * :ref:`improving and investigating issues <bug_triaging>`
 * :ref:`reviewing other developers' pull requests <code_review>`
-* reporting issues using this package by submitting an
+* reporting issues when using this package by submitting an
   `issue <https://github.com/scikit-learn/scikit-learn/issues>`__, and giving a
   "thumbs up" on issues that others reported and that are relevant to you (see
   :ref:`submitting_bug_feature` for details)
