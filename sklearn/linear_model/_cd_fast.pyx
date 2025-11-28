@@ -239,8 +239,8 @@ def enet_coordinate_descent(
         X -> (           X)    y -> (y)
              (sqrt(beta) I)         (0)
 
-    Note that the residual y - X w is an important ingredient for the estimation of a
-    dual feasible point v.
+    Note that the residual R = y - X w is an important ingredient for the estimation of
+    a dual feasible point v.
     At optimum of primal w* and dual v*, one has
 
         v* = y - X w*
@@ -250,6 +250,11 @@ def enet_coordinate_descent(
         G(w, v) = P(w) - D(v) <= P(w) - P(w*)
 
     Strong duality holds: G(w*, v*) = 0.
+    For testing convergence, one uses G(w, v) with current w and uses
+
+        v = R                            if ||X^T R||_inf <= alpha
+        v = R * alpha / ||X^T R||_inf    else
+
     The final stopping criterion is based on the duality gap
 
         tol ||y||_2^2 <= G(w, v)
