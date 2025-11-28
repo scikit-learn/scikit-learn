@@ -16,7 +16,7 @@ def _features_html(features, is_fitted_css_class=""):
                   onclick="
                   event.stopPropagation();
                   event.preventDefault();
-                  copyRowsToClipboard(this);
+                  copyFeatureNamesToClipboard(this);
                   "
                 >
                 </i>
