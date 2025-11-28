@@ -1240,10 +1240,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     remainder_columns = self.feature_names_in_[
                         remainder_columns
                     ].tolist()
-                # transformers = chain(
-                #    self.transformers,
-                #    [("remainder", self.remainder, remainder_columns)],
-                # )
         else:
             if self.remainder != "drop":
                 transformers = chain(
