@@ -65,7 +65,60 @@ or with conda::
 # %%
 # Linear models improvements
 # --------------------------
-# TODO
+# There are two main developments going on for linear models: efficiency and API
+# changes.
+#
+# Efficiency of squared error based models with L1 penalty
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# The first one is a massive improvement of efficiency, in particular a reduced fit
+# time, for squared error based estimators with L1 penalty: `ElasticNet`, `Lasso`,
+# `MultiTaskElasticNet`, `MultiTaskLasso` and their CV variants. The fit time
+# improvement is mainly achieved by **gap safe screening rules**. They enable the
+# coordinate descent solver to set feature coefficients early to 0 and not look at them
+# again. The stronger the L1 penalty the earlier features can be excluded from further
+# updates.
+
+from time import time
+
+from sklearn.datasets import make_regression
+from sklearn.linear_model import ElasticNetCV
+
+X, y = make_regression(n_features=5000)
+model = ElasticNetCV()
+tic = time()
+model.fit(X, y)
+toc = time()
+print(f"Fitting ElasticNetCV took {toc - tic:.3} seconds.")
+
+# %%
+# API changes in logistic regression
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# After the deprecation (version 1.5) and removal (now in 1.8) of the `multi_class`
+# parameter in `LogisticRegression` and `LogisticRegressionCV`, the bookkeeping goes
+# on. The goal for `LogisticRegressionCV` is to fix types and shapes of a few fitted
+# attributes: `C_`, `l1_ratio_`, `coefs_paths_`, `scores_`, `n_iter_`. To ease the
+# transition, you can choose between new and old types and shapes with the new and
+# temporary parameter `use_legacy_attributes`.
+
+from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegressionCV
+
+X, y = make_classification(n_classes=3, n_informative=4)
+model = LogisticRegressionCV(use_legacy_attributes=True, solver="newton-cholesky").fit(
+    X, y
+)
+model.C_  # ndarray of shape (3,), 3 times the same value
+model = LogisticRegressionCV(use_legacy_attributes=False, solver="newton-cholesky").fit(
+    X, y
+)
+model.C_  # single float
+
+# %%
+# A further deprecation is going on for the `penalty` parameter in both
+# `LogisticRegression` and `LogisticRegressionCV`. It is redundant because `C` together
+# with `l1_ratio` for `LogisticRegression` and `l1_ratios` for `LogisticRegressionCV`
+# contains the same information. Removing `penalty` can ease specifying grid search
+# parameter spaces and provides a tidier API.
 
 # %%
 # HTML representation of estimators
