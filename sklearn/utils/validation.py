@@ -2334,6 +2334,24 @@ def _is_polars_df(X):
     return isinstance(X, pl.DataFrame)
 
 
+def _is_pyarrow_chunked_array(X):
+    """Return True if the X is a PyArrow ChunkedArray."""
+    try:
+        pa = sys.modules["pyarrow"]
+    except KeyError:
+        return False
+    return isinstance(X, pa.ChunkedArray)
+
+
+def _is_pyarrow_array(X):
+    """Return True if the X is a PyArrow Array."""
+    try:
+        pa = sys.modules["pyarrow"]
+    except KeyError:
+        return False
+    return isinstance(X, pa.Array)
+
+
 def _get_feature_names(X):
     """Get feature names from X.
 
