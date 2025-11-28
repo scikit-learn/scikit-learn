@@ -1,0 +1,5 @@
+- kwargs specified in the `curve_kwargs` parameter of
+  :meth:`metrics.RocCurveDisplay.from_cv_results` now only overwrite their corresponding
+  default value before being passed to Matplotlib's `plot`. Previously, passing any
+  `curve_kwargs` would overwrite all default kwargs.
+  By :user:`Lucy Liu <lucyleeow>`.

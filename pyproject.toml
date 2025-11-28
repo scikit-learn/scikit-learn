@@ -97,7 +97,7 @@ build-backend = "mesonpy"
 # Minimum requirements for the build system to execute.
 requires = [
     "meson-python>=0.17.1",
-    "Cython>=3.1.2",
+    "cython>=3.1.2",
     "numpy>=2",
     "scipy>=1.10.0",
 ]
@@ -291,7 +291,7 @@ ignore-words = "build_tools/codespell_ignore_words.txt"
 
 [tool.towncrier]
     package = "sklearn"
-    filename = "doc/whats_new/v1.8.rst"
+    filename = "doc/whats_new/v1.9.rst"
     single_file = true
     directory = "doc/whats_new/upcoming_changes"
     issue_format = ":pr:`{issue}`"

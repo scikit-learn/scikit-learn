@@ -13,8 +13,9 @@ from scipy.sparse import issparse
 
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
-    ensure_common_namespace_device,
     get_namespace,
+    get_namespace_and_device,
+    move_to,
 )
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.extmath import _approximate_mode
@@ -32,9 +33,9 @@ from sklearn.utils.validation import (
 
 def _array_indexing(array, key, key_dtype, axis):
     """Index an array or scipy.sparse consistently across NumPy version."""
-    xp, is_array_api = get_namespace(array)
+    xp, is_array_api, device_ = get_namespace_and_device(array)
     if is_array_api:
-        key = ensure_common_namespace_device(array, key)[0]
+        key = move_to(key, xp=xp, device=device_)
         return xp.take(array, key, axis=axis)
     if issparse(array) and key_dtype == "bool":
         key = np.asarray(key)
@@ -52,7 +53,7 @@ def _narwhals_indexing(X, key, key_dtype, axis):
         and key is not None
     ):
         # Note that at least tuples should be converted to either list or ndarray as
-        # tupes in __getitem__ are special: x[(1, 2)] is equal to x[1, 2].
+        # tuples in __getitem__ are special: x[(1, 2)] is equal to x[1, 2].
         key = np.asarray(key)
 
     if key_dtype in ("bool", "str") and not isinstance(key, (list, slice)):
@@ -290,7 +291,7 @@ def _safe_indexing(X, indices, *, axis=0):
         return _narwhals_indexing(X, indices, indices_dtype, axis=axis)
     elif _is_pyarrow_array(X):
         # Narwhals Series are backed by ChunkedArray, not Array.
-        # To re-use `_narwhals_indexing`, we temporarily convert to `ChunkedArray`.
+        # To reuse `_narwhals_indexing`, we temporarily convert to `ChunkedArray`.
         pa = sys.modules["pyarrow"]
         X = pa.chunked_array(X)
         ret = _narwhals_indexing(X, indices, indices_dtype, axis=axis)

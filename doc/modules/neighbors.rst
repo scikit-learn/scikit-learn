@@ -114,6 +114,8 @@ unsupervised learning: in particular, see :class:`~sklearn.manifold.Isomap`,
 :class:`~sklearn.manifold.LocallyLinearEmbedding`, and
 :class:`~sklearn.cluster.SpectralClustering`.
 
+.. _kdtree_and_balltree_classes:
+
 KDTree and BallTree Classes
 ---------------------------
 Alternatively, one can use the :class:`KDTree` or :class:`BallTree` classes
