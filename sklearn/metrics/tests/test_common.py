@@ -93,6 +93,7 @@ from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
+    _is_numpy_namespace,
     device,
     get_namespace,
     yield_mixed_namespace_input_combinations,
@@ -2473,7 +2474,6 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
 
     If output is array, checks it is of the same namespace and device as `y_pred`
     (`reference`).
-    Note `sample_weight` not set.
     """
     xp_ref = _array_api_for_tests(reference.xp, reference.device)
     xp_input = _array_api_for_tests(array_input.xp, array_input.device)
@@ -2483,47 +2483,70 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
     }
     metric = all_metrics_include_pairwise[metric_name]
 
+    data_all = {
+        "binary_class": ([0, 0, 1, 1], [0, 1, 0, 1]),
+        "continuous_binary": ([1, 0, 1, 0], [0.5, 0.2, 0.7, 0.6]),
+        "continuous_binary_indicator": ([[1, 0, 1, 0]], [[0.5, 0.2, 0.7, 0.6]]),
+        "regression": ([2.0, 0.1, 1.0, 4.0], [0.5, 0.5, 2, 2]),
+        "pairwise": (
+            [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]],
+            [[0.2, 0.3, 0.4], [0.5, 0.6, 0.7]],
+        ),
+    }
     with config_context(array_api_dispatch=True):
+        use_string = False
         if metric_name in CLASSIFICATION_METRICS:
             # These should all accept binary label input as there are no
-            # `CLASSIFICATION_METRICS` that are in `METRIC_UNDEFINED_BINARY` and are NOT
-            # `partial`s (which we do not test for in array API)
-            y1 = xp_input.asarray([0, 0, 1, 1], device=array_input.device)
-            y2 = xp_ref.asarray([0, 1, 0, 1], device=reference.device)
+            # `CLASSIFICATION_METRICS` that are in `METRIC_UNDEFINED_BINARY` and are
+            # NOT `partial`s (which we do not test for in array API)
+            data = data_all["binary_class"]
+            use_string = True
         elif metric_name in {**CONTINUOUS_CLASSIFICATION_METRICS, **CURVE_METRICS}:
             if metric_name not in METRIC_UNDEFINED_BINARY:
-                # Continuous binary input
-                y1 = xp_input.asarray([0.5, 0.2, 0.7, 0.6], device=array_input.device)
-                y2 = xp_ref.asarray([1, 0, 1, 0], device=reference.device)
+                data = data_all["continuous_binary"]
+                use_string = True
             else:
-                # Continuous but shape (n_samples, n_labels)
-                y1 = xp_input.asarray([[0.5, 0.2, 0.7, 0.6]], device=array_input.device)
-                y2 = xp_ref.asarray([[1, 0, 1, 0]], device=reference.device)
+                data = data_all["continuous_binary_indicator"]
         elif metric_name in REGRESSION_METRICS:
-            y1 = xp_input.asarray([2.0, 0.1, 1.0, 4.0], device=array_input.device)
-            y2 = xp_ref.asarray([0.5, 0.5, 2, 2], device=reference.device)
+            data = data_all["regression"]
         elif metric_name in PAIRWISE_METRICS:
-            y1 = xp_input.asarray(
-                [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], device=array_input.devicee
-            )
-            y2 = xp_ref.asarray(
-                [[0.2, 0.3, 0.4], [0.5, 0.6, 0.7]], device=reference.device
-            )
+            data = data_all["pairwise"]
 
-        metric_out = metric(y1, y2)
+        string_labels = np.array(["a", "b"])
+        metric_kwargs = {}
 
-        def _check_array_namespace_device(array):
-            if hasattr(array, "shape"):
-                assert get_namespace(array)[0] == xp_ref
-                assert device(array) == device(y2)
-
-        # If output is an array (instead of float), check namespace and device is as
-        # expected
-        if isinstance(metric_out, Tuple):
-            for out in metric_out:
-                _check_array_namespace_device(out)
+        y1, y2 = data
+        y1_np = np.array(y1)
+        if use_string and _is_numpy_namespace(xp_input):
+            y1_np = y1_xp = string_labels[y1_np]
+            # `brier_score_loss` and `d2_brier_score` require specifying the
+            # `pos_label`
+            if "brier" in metric.__name__:
+                metric_kwargs["pos_label"] = "b"
         else:
-            _check_array_namespace_device(metric_out)
+            y1_xp = xp_input.asarray(y1_np, device=array_input.device)
+
+        y2_np = np.asarray(y2)
+        y2_xp = xp_ref.asarray(y2_np, device=reference.device)
+
+        metric_xp = metric(y1_xp, y2_xp)
+        metric_np = metric(y1_np, y2_np)
+
+        # If output with all numpy inputs is float, ensure mixed input gives float
+        # If output is an array, ensure namespace and device is the same as `reference`
+        def _check_output_type(out_np, out_xp):
+            if isinstance(out_np, float):
+                assert isinstance(out_xp, float)
+            elif hasattr(out_np, "shape"):
+                assert hasattr(out_xp, "shape")
+                assert get_namespace(out_xp)[0] == xp_ref
+                assert device(out_xp) == device(y2)
+
+        if isinstance(metric_np, Tuple):
+            for out_np, out_xp in zip(metric_np, metric_xp):
+                _check_output_type(out_np, out_xp)
+        else:
+            _check_output_type(metric_np, metric_xp)
 
 
 @pytest.mark.parametrize("df_lib_name", ["pandas", "polars"])
