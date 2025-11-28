@@ -2042,6 +2042,10 @@ def check_array_api_binary_classification_metric(
     y_true_np = np.array([0, 0, 1, 1])
     y_pred_np = np.array([0, 1, 0, 1])
 
+    metric_kwargs = {}
+    if metric.__name__ == "fbeta_score":
+        metric_kwargs = {"beta": 0.5}
+
     check_array_api_metric(
         metric,
         array_namespace,
@@ -2050,6 +2054,7 @@ def check_array_api_binary_classification_metric(
         a_np=y_true_np,
         b_np=y_pred_np,
         sample_weight=None,
+        **metric_kwargs,
     )
 
     sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
@@ -2062,6 +2067,7 @@ def check_array_api_binary_classification_metric(
         a_np=y_true_np,
         b_np=y_pred_np,
         sample_weight=sample_weight,
+        **metric_kwargs,
     )
 
 
@@ -2291,6 +2297,7 @@ array_api_metric_checkers = {
         check_array_api_multilabel_classification_metric,
     ],
     fbeta_score: [
+        check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],

@@ -5,6 +5,11 @@ permissions:
 on:
   push:
   pull_request:
+  schedule:
+    # Nightly build at 02:30 UTC
+    - cron: "30 2 * * *"
+  # Manual run
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -152,6 +157,10 @@ jobs:
       - name: Build scikit-learn
         run: bash -l build_tools/azure/install.sh
 
+      - name: Set random seed for nightly/manual runs
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: echo "SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$((RANDOM % 100))" >> $GITHUB_ENV
+
       - name: Run tests
         env:
           COMMIT_MESSAGE: ${{ needs.retrieve-commit-message.outputs.message }}
@@ -178,3 +187,12 @@ jobs:
           files: ./coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
           disable_search: true
+
+  update-tracker:
+    uses: ./.github/workflows/update_tracking_issue.yml
+    if: ${{ always() }}
+    needs: [unit-tests]
+    with:
+      job_status: ${{ needs.unit-tests.result }}
+    secrets:
+      BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
