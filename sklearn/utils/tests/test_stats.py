@@ -99,8 +99,6 @@ def test_weighted_percentile_equal():
     assert approx(score) == 0
 
 
-# XXX: is this really what we want? Shouldn't we raise instead?
-# https://github.com/scikit-learn/scikit-learn/issues/31032
 def test_weighted_percentile_all_zero_weights():
     """Check `weighted_percentile` with all weights equal to 0 returns `np.nan`."""
     y = np.arange(10)

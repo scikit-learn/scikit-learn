@@ -1494,16 +1494,13 @@ def check_all_zero_sample_weights_error(name, estimator_orig):
 
     sample_weight = np.zeros(_num_samples(X))
 
-    """The following estimators have custom error messages:
-
-    NuSVC: Invalid input - all samples have zero or negative weights.
-
-    Perceptron: The sample weights for validation set are all zero, consider using a
-    different random state.
-
-    SGDClassifier: The sample weights for validation set are all zero, consider using a
-    different random state.
-    """
+    # The following estimators have custom error messages:
+    # - NuSVC: Invalid input - all samples have zero or negative weights.
+    # - Perceptron: The sample weights for validation set are all zero, consider using
+    #   a different random state.
+    # - SGDClassifier: The sample weights for validation set are all zero, consider
+    #   using a different random state.
+    # All other estimators: Sample weights must contain at least one non-zero number.
     with raises(ValueError, match=r"(.*weight.*zero.*)|(.*zero.*weight.*)"):
         estimator.fit(X, y, sample_weight=sample_weight)
 
