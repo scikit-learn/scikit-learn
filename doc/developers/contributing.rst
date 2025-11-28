@@ -137,12 +137,12 @@ starting with smaller pull requests, to get used to the contribution process.
 We rarely use the "good first issue" label because it is difficult to make
 assumptions about new contributors and these issues often prove more complex
 than originally anticipated. It is still useful to check if there are
-`good first issues
+`"good first issues"
 <https://github.com/scikit-learn/scikit-learn/labels/good%20first%20issue>`_,
 though note that these may still be time consuming to solve, depending on your prior
 experience.
 
-For more experienced scikit-learn contributors, issues labeled `'Easy'
+For more experienced scikit-learn contributors, issues labeled `"Easy"
 <https://github.com/scikit-learn/scikit-learn/labels/Easy>`_ may be a good place to
 look.
 
@@ -643,10 +643,10 @@ using the following guidelines:
 
 .. _issues_tagged_needs_triage:
 
-Issues tagged 'Needs Triage'
+Issues tagged "Needs Triage"
 ----------------------------
 
-The `Needs Triage
+The `"Needs Triage"
 <https://github.com/scikit-learn/scikit-learn/labels/needs%20triage>`_ label means
 that the issue is not yet confirmed or fully understood. It signals to scikit-learn
 members to clarify the problem, discuss scope, and decide on the next steps. You are
