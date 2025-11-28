@@ -64,14 +64,13 @@ function copyFeatureNamesToClipboard(element) {
                   .innerText.trim();
     if (!wasOpen) detailsElem.open = false;
 
-    const rows = content.split('\n').map(row => `"${row}"`);
-    const formattedText = `[${rows.join(',\n ')}\n]`;
-
+    const rows = content.split('\n').map(row => `    "${row}"`);
+    const formattedText = `[\n${rows.join(',\n ')},\n]`;
     const originalHTML = element.innerHTML.replace('✔', '');
     const originalStyle = element.style;
     const copyMark = document.createElement('span');
     copyMark.innerHTML = '✔';
-    copyMark.style.color = 'green';
+    copyMark.style.color = 'gray';
     copyMark.style.fontSize = '1em';
 
     navigator.clipboard.writeText(formattedText)
