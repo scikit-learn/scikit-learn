@@ -2529,8 +2529,8 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
         y2_np = np.asarray(y2)
         y2_xp = xp_ref.asarray(y2_np, device=reference.device)
 
-        metric_xp = metric(y1_xp, y2_xp)
-        metric_np = metric(y1_np, y2_np)
+        metric_xp = metric(y1_xp, y2_xp, **metric_kwargs)
+        metric_np = metric(y1_np, y2_np, **metric_kwargs)
 
         # If output with all numpy inputs is float, ensure mixed input gives float
         # If output is an array, ensure namespace and device is the same as `reference`
