@@ -62,13 +62,13 @@ Ways to contribute
 
 There are many ways to contribute to scikit-learn. These include:
 
-* reference scikit-learn from your blog and articles, link to it from your website,
+* referencing scikit-learn from your blog and articles, link to it from your website,
   or simply
   `star it <https://docs.github.com/en/get-started/exploring-projects-on-github/saving-repositories-with-stars>`__
   to say "I use it"; this helps us promote the project
-* :ref:`improve, triage, and investigate issues <bug_triaging>`
+* :ref:`improving and investigating issues <bug_triaging>`
 * :ref:`reviewing other developers' pull requests <code_review>`
-* report issues using this package by submitting an
+* reporting issues using this package by submitting an
   `issue <https://github.com/scikit-learn/scikit-learn/issues>`__, and giving a
   "thumbs up" on issues that others reported and that are relevant to you (see
   :ref:`submitting_bug_feature` for details)
@@ -77,9 +77,10 @@ There are many ways to contribute to scikit-learn. These include:
 
 There are many ways to help and non-code contributions are just as valuable as
 code contributions. If you are interested in making a code contribution, please
-keep in mind that scikit-learn has evolved a mature and complex project since its
-start in 2007. Contributing to the project code can generally require advanced skills,
-and it may not be the best place to begin for new contributors.
+keep in mind that scikit-learn has evolved into a mature and complex project since its
+inception in 2007. Contributing to the project code generally requires advanced skills,
+and it may not be the best place to begin for new contributors. We suggest
+new contributors follow the suggestions in :ref:`new_contributors`.
 
 .. dropdown:: Contributing to related projects
 
@@ -113,10 +114,25 @@ and :ref:`pr_checklist`. For expected etiquette around which issues and stalled 
 to work on, please read :ref:`stalled_pull_request`, :ref:`stalled_unclaimed_issues`
 and :ref:`issues_tagged_needs_triage`.
 
-We understand that everyone has different interests and backgrounds, thus we recommend
-you start by looking for an issue that is of interest to you, in an area you are
-already familiar with as a user or have background knowledge of. We recommend starting
-with smaller pull requests, to get used to the contribution process.
+We recommend that new contributors first gaining foundational knowledge on scikit-learn
+and open source contributing by making
+:ref:`non-code contributions <ways_to_contribute>`:
+
+* :ref:`improving and investigating issues <bug_triaging>`
+  * confirming that a problem reported can be reproduced and providing a
+    :ref:`minimal reproducible code <minimal_reproducer>` (if missing), can help you
+    learn about different use cases and user needs
+  * investigating the root cause of an issue will aid you in familiarising yourself
+    with the scikit-learn codebase
+* :ref:`reviewing other developers' pull requests <code_review>` will help you
+  develop an understanding of requirements and quality expected of contributions
+* improving the :ref:`contribute_documentation` can help deepen your knowledge
+  of the statistical concepts behind models and functions and scikit-learn API
+
+If you wish to make code contributions after building your foundational knowledge, we
+recommend you start by looking for an issue that is of interest to you, in an area you
+are already familiar with as a user or have background knowledge of. We recommend
+starting with smaller pull requests, to get used to the contribution process.
 
 We rarely use the "good first issue" label because it is difficult to make
 assumptions about new contributors and these issues often prove more complex
