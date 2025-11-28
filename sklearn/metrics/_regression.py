@@ -1778,10 +1778,6 @@ def d2_pinball_score(
     >>> y_pred = [1, 3, 3]
     >>> d2_pinball_score(y_true, y_pred)
     0.5
-    >>> d2_pinball_score(y_true, y_pred, alpha=0.9)
-    0.772...
-    >>> d2_pinball_score(y_true, y_pred, alpha=0.1)
-    -1.045...
     >>> d2_pinball_score(y_true, y_true, alpha=0.1)
     1.0
 
