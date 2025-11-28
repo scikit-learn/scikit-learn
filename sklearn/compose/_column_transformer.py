@@ -1535,17 +1535,15 @@ class make_column_selector:
 
     dtype_include : column dtype or list of column dtypes, default=None
         A selection of dtypes to include. For pandas DataFrames, see
-        :meth:`pandas.DataFrame.select_dtypes`. For Polars DataFrames, see
-        `Polars data types
-        <https://docs.pola.rs/api/python/stable/reference/datatypes.html>`_,
-        or use Python datatypes (e.g., `int`, `float`, `str`).
+        :meth:`pandas.DataFrame.select_dtypes`. For Polars DataFrames, see `Polars data
+        types <https://docs.pola.rs/api/python/stable/reference/datatypes.html>`_,
+        or, on newer Polars versions, use Python types (e.g., `int`, `str`).
 
     dtype_exclude : column dtype or list of column dtypes, default=None
         A selection of dtypes to exclude. For pandas DataFrames, see
-        :meth:`pandas.DataFrame.select_dtypes`. For Polars DataFrames, see
-        `Polars data types
-        <https://docs.pola.rs/api/python/stable/reference/datatypes.html>`_,
-        or use Python datatypes (e.g., `int`, `float`, `str`).
+        :meth:`pandas.DataFrame.select_dtypes`. For Polars DataFrames, see `Polars data
+        types <https://docs.pola.rs/api/python/stable/reference/datatypes.html>`_,
+        or, on newer Polars versions, use Python types (e.g., `int`, `str`).
 
     Returns
     -------
@@ -1579,9 +1577,9 @@ class make_column_selector:
            [-0.30151134,  0.        ,  1.        ,  0.        ],
            [ 0.90453403,  0.        ,  0.        ,  1.        ]])
 
-    `make_column_selector` also works with Polars DataFrames. When using Polars,
-    you can pass Polars data types (e.g., `pl.Int64`, `pl.String`) or use Python
-    datatypes (e.g., `int`, `float`, `str`) for `dtype_include` or `dtype_exclude`:
+    `make_column_selector` works with Polars DataFrames. When passing `dtype_include`
+    & `dtype_exclude`, you can either pass Polars data types (e.g. `pl.Int64`,
+    `pl.String`) or, on newer versions of polars, pass Python types (e.g. `int`, `str`):
 
     >>> import polars as pl  # doctest: +SKIP
     >>> X_polars = pl.DataFrame({
@@ -1592,7 +1590,7 @@ class make_column_selector:
     ...     (StandardScaler(),
     ...      make_column_selector(dtype_include=[pl.Int64, float])),  # rating
     ...     (OneHotEncoder(),
-    ...      make_column_selector(dtype_include=pl.String)))  # city
+    ...      make_column_selector(dtype_include=pl.String)))  # doctest: +SKIP
     >>> ct_polars.fit_transform(X_polars)  # doctest: +SKIP
     array([[ 0.90453403,  1.        ,  0.        ,  0.        ],
            [-1.50755672,  1.        ,  0.        ,  0.        ],

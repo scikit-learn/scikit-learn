@@ -1488,13 +1488,15 @@ def test_make_column_selector_polars_with_select_dtypes():
     selector = make_column_selector(dtype_include=[pl.Int64, pl.String])
     assert_array_equal(selector(X_df), ["col_int", "col_str"])
 
-    selector = make_column_selector(dtype_include=[int, str])
-    assert_array_equal(selector(X_df), ["col_int", "col_str"])
-
     selector = make_column_selector(dtype_exclude=[pl.String])
     assert_array_equal(selector(X_df), ["col_int", "col_float"])
 
     selector = make_column_selector(pattern="oa", dtype_include=[pl.Int64, pl.Float64])
+    assert_array_equal(selector(X_df), ["col_float"])
+
+    selector = make_column_selector(
+        dtype_include=[pl.Int64, pl.Float64], dtype_exclude=[pl.Int64]
+    )
     assert_array_equal(selector(X_df), ["col_float"])
 
     selector = make_column_selector(pattern="oa|st")
@@ -1503,23 +1505,8 @@ def test_make_column_selector_polars_with_select_dtypes():
     selector = make_column_selector(pattern="t", dtype_exclude=[pl.Int64])
     assert_array_equal(selector(X_df), ["col_float", "col_str"])
 
-    selector = make_column_selector(pattern="t", dtype_exclude=[int])
-    assert_array_equal(selector(X_df), ["col_float", "col_str"])
-
     selector = make_column_selector()
     assert_array_equal(selector(X_df), ["col_int", "col_float", "col_str"])
-
-
-def test_make_column_selector_polars_include_and_exclude():
-    pl = pytest.importorskip("polars")
-
-    X_df = pl.DataFrame(
-        {"col_float32": [0.0, 1.0, 2.0], "col_float64": [0.0, 1.0, 2.0]},
-        schema={"col_float32": pl.Float32, "col_float64": pl.Float64},
-    )
-
-    selector = make_column_selector(dtype_include=[float], dtype_exclude=[pl.Float64])
-    assert_array_equal(selector(X_df), ["col_float32"])
 
 
 def test_column_transformer_with_make_column_selector_polars():
@@ -1540,7 +1527,7 @@ def test_column_transformer_with_make_column_selector_polars():
     )
 
     cat_selector = make_column_selector(dtype_include=[pl.String])
-    num_selector = make_column_selector(dtype_include=[pl.Int64, float])
+    num_selector = make_column_selector(dtype_include=[pl.Int64, pl.Float64])
 
     ohe = OneHotEncoder()
     scaler = StandardScaler()
