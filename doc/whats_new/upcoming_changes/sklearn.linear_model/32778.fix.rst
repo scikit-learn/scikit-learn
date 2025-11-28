@@ -1,0 +1,4 @@
+- Correct the formulation of `alpha` within :class:`linear_model.SGDOneClassSVM`.
+  Note: This might result in changed values for the fitted attributes like
+  `coef_` and `offset_` as well as the predictions made using this class.
+  By :user:`Omar Salman <OmarManzoor>`.
