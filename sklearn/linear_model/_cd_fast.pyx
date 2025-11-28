@@ -429,7 +429,7 @@ def enet_coordinate_descent(
             with gil:
                 message = (
                     message_conv +
-                    f" Duality gap: {gap:.3e}, tolerance: {tol:.3e}"
+                    f" Duality gap: {gap:.6e}, tolerance: {tol:.3e}"
                 )
                 if alpha < np.finfo(np.float64).eps:
                     message += "\n" + message_ridge
@@ -916,7 +916,7 @@ def sparse_enet_coordinate_descent(
             with gil:
                 message = (
                     message_conv +
-                    f" Duality gap: {gap:.3e}, tolerance: {tol:.3e}"
+                    f" Duality gap: {gap:.6e}, tolerance: {tol:.3e}"
                 )
                 if alpha < np.finfo(np.float64).eps:
                     message += "\n" + message_ridge
@@ -1227,8 +1227,10 @@ def enet_coordinate_descent_gram(
             with gil:
                 message = (
                     message_conv +
-                    f" Duality gap: {gap:.3e}, tolerance: {tol:.3e}"
+                    f" Duality gap: {gap:.6e}, tolerance: {tol:.3e}"
                 )
+                if alpha < np.finfo(np.float64).eps:
+                    message += "\n" + message_ridge
                 warnings.warn(message, ConvergenceWarning)
 
     return np.asarray(w), gap, tol, n_iter + 1
@@ -1548,8 +1550,10 @@ def enet_coordinate_descent_multi_task(
             with gil:
                 message = (
                     message_conv +
-                    f" Duality gap: {gap:.3e}, tolerance: {tol:.3e}"
+                    f" Duality gap: {gap:.6e}, tolerance: {tol:.3e}"
                 )
+                if l1_reg < np.finfo(np.float64).eps:
+                    message += "\n" + message_ridge
                 warnings.warn(message, ConvergenceWarning)
 
     return np.asarray(W), gap, tol, n_iter + 1
