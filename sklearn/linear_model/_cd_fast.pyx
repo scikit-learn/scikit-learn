@@ -98,6 +98,35 @@ message_ridge = (
 )
 
 
+cdef inline floating dual_gap_formulation_A(
+    floating alpha,  # L1 penalty
+    floating beta,  # L1 penalty
+    floating w_l1_norm,
+    floating w_l2_norm2,
+    floating R_norm2,  # R @ R
+    floating Ry,  # R @ y
+    floating dual_norm_XtA,
+) noexcept nogil:
+    """Compute dual gap according to formulation A."""
+    cdef floating gap = 0.0
+    cdef floating A_norm2
+    cdef floating const_
+
+    if (dual_norm_XtA > alpha):
+        const_ = alpha / dual_norm_XtA
+        A_norm2 = R_norm2 * (const_ ** 2)
+        gap = 0.5 * (R_norm2 + A_norm2)
+    else:
+        const_ = 1.0
+        gap = R_norm2
+
+    gap += (
+        alpha * w_l1_norm - const_ * Ry
+        + 0.5 * beta * (1 + const_ ** 2) * w_l2_norm2
+    )
+    return gap
+
+
 cdef (floating, floating) gap_enet(
     int n_samples,
     int n_features,
@@ -119,16 +148,18 @@ cdef (floating, floating) gap_enet(
     cdef floating gap = 0.0
     cdef floating dual_norm_XtA
     cdef floating R_norm2
-    cdef floating w_norm2 = 0.0
-    cdef floating l1_norm
-    cdef floating A_norm2
-    cdef floating const_
+    cdef floating Ry
+    cdef floating w_l1_norm
+    cdef floating w_l2_norm2 = 0.0
 
+    # w_l2_norm2 = w @ w
+    if beta > 0:
+        w_l2_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
     # R_norm2 = R @ R
     R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
-    # w_norm2 = w @ w
-    if beta > 0:
-        w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
+    # Ry = R @ y
+    if not (alpha == 0 and beta == 0):
+        Ry = _dot(n_samples, &R[0], 1, &y[0], 1)
 
     if alpha == 0:
         # XtA = X.T @ R
@@ -146,7 +177,7 @@ cdef (floating, floating) gap_enet(
             gap = dual_norm_XtA
             return gap, dual_norm_XtA
         # This is Ridge regression, we use formulation B for the dual gap.
-        gap = R_norm2 + 0.5 * beta * w_norm2 - _dot(n_samples, &R[0], 1, &y[0], 1)
+        gap = R_norm2 + 0.5 * beta * w_l2_norm2 - Ry
         gap += 1 / (2 * beta) * dual_norm_XtA
         return gap, dual_norm_XtA
 
@@ -156,25 +187,23 @@ cdef (floating, floating) gap_enet(
           n_samples, &R[0], 1,
           -beta, &XtA[0], 1)
 
+    # dual_norm_XtA
     if positive:
         dual_norm_XtA = max(n_features, &XtA[0])
     else:
         dual_norm_XtA = abs_max(n_features, &XtA[0])
 
-    if (dual_norm_XtA > alpha):
-        const_ = alpha / dual_norm_XtA
-        A_norm2 = R_norm2 * (const_ ** 2)
-        gap = 0.5 * (R_norm2 + A_norm2)
-    else:
-        const_ = 1.0
-        gap = R_norm2
+    # w_l1_norm = np.sum(np.abs(w))
+    w_l1_norm = _asum(n_features, &w[0], 1)
 
-    l1_norm = _asum(n_features, &w[0], 1)
-
-    gap += (
-        alpha * l1_norm
-        - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # R @ y
-        + 0.5 * beta * (1 + const_ ** 2) * w_norm2
+    gap = dual_gap_formulation_A(
+        alpha=alpha,
+        beta=beta,
+        w_l1_norm=w_l1_norm,
+        w_l2_norm2=w_l2_norm2,
+        R_norm2=R_norm2,
+        Ry=Ry,
+        dual_norm_XtA=dual_norm_XtA,
     )
     return gap, dual_norm_XtA
 
@@ -499,15 +528,14 @@ cdef (floating, floating) gap_enet_sparse(
     cdef floating gap = 0.0
     cdef floating dual_norm_XtA
     cdef floating R_norm2
-    cdef floating w_norm2 = 0.0
-    cdef floating l1_norm
-    cdef floating A_norm2
-    cdef floating const_
+    cdef floating Ry
+    cdef floating w_l1_norm
+    cdef floating w_l2_norm2 = 0.0
     cdef unsigned int i, j
 
-    # w_norm2 = w @ w
+    # w_l2_norm2 = w @ w
     if beta > 0:
-        w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
+        w_l2_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
     # R_norm2 = R @ R
     if no_sample_weights:
         R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
@@ -517,6 +545,11 @@ cdef (floating, floating) gap_enet_sparse(
             # R is already multiplied by sample_weight
             if sample_weight[i] != 0:
                 R_norm2 += (R[i] ** 2) / sample_weight[i]
+    # Ry = R @ y
+    if not (alpha == 0 and beta == 0):
+        # Note that with sample_weight, R equals R*sw and y is just y, such that
+        # Ry = (sw * R) @ y, as it should be.
+        Ry = _dot(n_samples, &R[0], 1, &y[0], 1)
 
     if alpha == 0:
         # XtA = X.T @ R
@@ -537,7 +570,7 @@ cdef (floating, floating) gap_enet_sparse(
             gap = dual_norm_XtA
             return gap, dual_norm_XtA
         # This is Ridge regression, we use formulation B for the dual gap.
-        gap = R_norm2 + 0.5 * beta * w_norm2 - _dot(n_samples, &R[0], 1, &y[0], 1)
+        gap = R_norm2 + 0.5 * beta * w_l2_norm2 - Ry
         gap += 1 / (2 * beta) * dual_norm_XtA
         return gap, dual_norm_XtA
 
@@ -552,25 +585,23 @@ cdef (floating, floating) gap_enet_sparse(
             XtA[j] -= X_mean[j] * R_sum
         XtA[j] -= beta * w[j]
 
+    # dual_norm_XtA
     if positive:
         dual_norm_XtA = max(n_features, &XtA[0])
     else:
         dual_norm_XtA = abs_max(n_features, &XtA[0])
 
-    if (dual_norm_XtA > alpha):
-        const_ = alpha / dual_norm_XtA
-        A_norm2 = R_norm2 * const_**2
-        gap = 0.5 * (R_norm2 + A_norm2)
-    else:
-        const_ = 1.0
-        gap = R_norm2
+    # w_l1_norm = np.sum(np.abs(w))
+    w_l1_norm = _asum(n_features, &w[0], 1)
 
-    l1_norm = _asum(n_features, &w[0], 1)
-
-    gap += (
-        alpha * l1_norm
-        - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # R @ y
-        + 0.5 * beta * (1 + const_ ** 2) * w_norm2
+    gap = dual_gap_formulation_A(
+        alpha=alpha,
+        beta=beta,
+        w_l1_norm=w_l1_norm,
+        w_l2_norm2=w_l2_norm2,
+        R_norm2=R_norm2,
+        Ry=Ry,
+        dual_norm_XtA=dual_norm_XtA,
     )
     return gap, dual_norm_XtA
 
@@ -945,23 +976,26 @@ cdef (floating, floating) gap_enet_gram(
     cdef floating gap = 0.0
     cdef floating dual_norm_XtA
     cdef floating R_norm2
-    cdef floating w_norm2 = 0.0
-    cdef floating l1_norm
-    cdef floating A_norm2
-    cdef floating const_
+    cdef floating Ry
+    cdef floating w_l1_norm
+    cdef floating w_l2_norm2 = 0.0
     cdef floating q_dot_w
     cdef floating wQw
     cdef unsigned int j
 
+    # w_l2_norm2 = w @ w
+    if beta > 0:
+        w_l2_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
     # q_dot_w = w @ q
     q_dot_w = _dot(n_features, &w[0], 1, &q[0], 1)
     # wQw = w @ Q @ w
     wQw = _dot(n_features, &w[0], 1, &Qw[0], 1)
     # R_norm2 = R @ R, residual R = y - Xw
     R_norm2 = y_norm2 + wQw - 2.0 * q_dot_w
-    # w_norm2 = w @ w
-    if beta > 0:
-        w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
+    # Ry = R @ y
+    if not (alpha == 0 and beta == 0):
+        # Note that R'y = (y - Xw)' y = ||y||_2^2 - w'X'y = y_norm2 - q_dot_w
+        Ry = y_norm2 - q_dot_w
 
     if alpha == 0:
         # XtA = X'R
@@ -977,8 +1011,7 @@ cdef (floating, floating) gap_enet_gram(
             gap = dual_norm_XtA
             return gap, dual_norm_XtA
         # This is Ridge regression, we use formulation B for the dual gap.
-        # Note that R'y = (y - Xw)' y = ||y||_2^2 - w'X'y = y_norm2 - q_dot_w
-        gap = R_norm2 + 0.5 * beta * w_norm2 - (y_norm2 - q_dot_w)
+        gap = R_norm2 + 0.5 * beta * w_l2_norm2 - Ry
         gap += 1 / (2 * beta) * dual_norm_XtA
         return gap, dual_norm_XtA
 
@@ -986,25 +1019,23 @@ cdef (floating, floating) gap_enet_gram(
     for j in range(n_features):
         XtA[j] = q[j] - Qw[j] - beta * w[j]
 
+    # dual_norm_XtA
     if positive:
         dual_norm_XtA = max(n_features, &XtA[0])
     else:
         dual_norm_XtA = abs_max(n_features, &XtA[0])
 
-    if (dual_norm_XtA > alpha):
-        const_ = alpha / dual_norm_XtA
-        A_norm2 = R_norm2 * (const_ ** 2)
-        gap = 0.5 * (R_norm2 + A_norm2)
-    else:
-        const_ = 1.0
-        gap = R_norm2
+    # w_l1_norm = np.sum(np.abs(w))
+    w_l1_norm = _asum(n_features, &w[0], 1)
 
-    l1_norm = _asum(n_features, &w[0], 1)
-
-    gap += (
-        alpha * l1_norm
-        - const_ * (y_norm2 - q_dot_w)  # -const_ * R @ y
-        + 0.5 * beta * (1 + const_ ** 2) * w_norm2
+    gap = dual_gap_formulation_A(
+        alpha=alpha,
+        beta=beta,
+        w_l1_norm=w_l1_norm,
+        w_l2_norm2=w_l2_norm2,
+        R_norm2=R_norm2,
+        Ry=Ry,
+        dual_norm_XtA=dual_norm_XtA,
     )
     return gap, dual_norm_XtA
 
@@ -1266,13 +1297,20 @@ cdef (floating, floating) gap_enet_multi_task(
     cdef floating gap = 0.0
     cdef floating dual_norm_XtA
     cdef floating R_norm2
-    cdef floating w_norm2 = 0.0
-    cdef floating l21_norm
-    cdef floating A_norm2
-    cdef floating const_
+    cdef floating Ry
+    cdef floating w_l2_norm2 = 0.0
+    cdef floating w_l21_norm
     cdef unsigned int t, j
 
     # TODO: Dual gap for l1_reg=0, i.e. formulation B.
+
+    # w_l2_norm2 = linalg.norm(W, ord="fro") ** 2
+    if l2_reg > 0:
+        w_l2_norm2 = _dot(n_features * n_tasks, &W[0, 0], 1, &W[0, 0], 1)
+    # R_norm2 = linalg.norm(R, ord="fro") ** 2
+    R_norm2 = _dot(n_samples * n_tasks, &R[0, 0], 1, &R[0, 0], 1)
+    # Ry = np.sum(R * Y)
+    Ry = _dot(n_samples * n_tasks, &R[0, 0], 1, &Y[0, 0], 1)
 
     # XtA = X.T @ R - l2_reg * W.T
     for j in range(n_features):
@@ -1287,30 +1325,19 @@ cdef (floating, floating) gap_enet_multi_task(
         if XtA_row_norms[j] > dual_norm_XtA:
             dual_norm_XtA = XtA_row_norms[j]
 
-    # R_norm2 = linalg.norm(R, ord="fro") ** 2
-    R_norm2 = _dot(n_samples * n_tasks, &R[0, 0], 1, &R[0, 0], 1)
-
-    # w_norm2 = linalg.norm(W, ord="fro") ** 2
-    if l2_reg > 0:
-        w_norm2 = _dot(n_features * n_tasks, &W[0, 0], 1, &W[0, 0], 1)
-
-    if (dual_norm_XtA > l1_reg):
-        const_ = l1_reg / dual_norm_XtA
-        A_norm2 = R_norm2 * (const_ ** 2)
-        gap = 0.5 * (R_norm2 + A_norm2)
-    else:
-        const_ = 1.0
-        gap = R_norm2
-
-    # l21_norm = np.sqrt(np.sum(W ** 2, axis=0)).sum()
-    l21_norm = 0.0
+    # w_l21_norm = np.sqrt(np.sum(W ** 2, axis=0)).sum()
+    w_l21_norm = 0.0
     for ii in range(n_features):
-        l21_norm += _nrm2(n_tasks, &W[0, ii], 1)
+        w_l21_norm += _nrm2(n_tasks, &W[0, ii], 1)
 
-    gap += (
-        l1_reg * l21_norm
-        - const_ * _dot(n_samples * n_tasks, &R[0, 0], 1, &Y[0, 0], 1)  # np.sum(R * Y)
-        + 0.5 * l2_reg * (1 + const_ ** 2) * w_norm2
+    gap = dual_gap_formulation_A(
+        alpha=l1_reg,
+        beta=l2_reg,
+        w_l1_norm=w_l21_norm,
+        w_l2_norm2=w_l2_norm2,
+        R_norm2=R_norm2,
+        Ry=Ry,
+        dual_norm_XtA=dual_norm_XtA,
     )
     return gap, dual_norm_XtA
 
