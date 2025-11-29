@@ -1,4 +1,5 @@
-- :func:`sklearn.metrics.d2_pinball_score` now uses `_weighted_percentile(average=True)` with constant sample weights 1 to compute quantiles
-  when `sample_weight` is `None`, instead of using :class:`numpy.percentile`. This is equivalent to using the `"averaged_inverted_cdf"` instead of
-  the `"linear"` percentile method.
+- :func:`sklearn.metrics.d2_pinball_score` now uses `_weighted_percentile(average=True)`
+  with constant sample weights 1 to compute quantiles when `sample_weight` is `None`,
+  instead of using :class:`numpy.percentile`. This is equivalent
+  to using the `"averaged_inverted_cdf"` instead of the `"linear"` percentile method.
   By :user:`Virgil Chan <virchan>`.
