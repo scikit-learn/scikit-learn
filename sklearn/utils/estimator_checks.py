@@ -1484,6 +1484,7 @@ def check_sample_weights_list(name, estimator_orig):
     estimator.fit(X, y, sample_weight=sample_weight)
 
 
+@ignore_warnings(category=FutureWarning)
 def check_all_zero_sample_weights_error(name, estimator_orig):
     """Check that estimator raises error when all sample weights are 0."""
     estimator = clone(estimator_orig)
