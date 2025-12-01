@@ -104,13 +104,13 @@ from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegressionCV
 
 X, y = make_classification(n_classes=3, n_informative=4)
-model = LogisticRegressionCV(use_legacy_attributes=True, solver="newton-cholesky").fit(
-    X, y
-)
+model = LogisticRegressionCV(
+    use_legacy_attributes=True, l1_ratios=(0,), solver="newton-cholesky"
+).fit(X, y)
 model.C_  # ndarray of shape (3,), 3 times the same value
-model = LogisticRegressionCV(use_legacy_attributes=False, solver="newton-cholesky").fit(
-    X, y
-)
+model = LogisticRegressionCV(
+    use_legacy_attributes=False, l1_ratios=(0,), solver="newton-cholesky"
+).fit(X, y)
 model.C_  # single float
 
 # %%
