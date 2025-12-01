@@ -21,11 +21,10 @@ from sklearn.metrics.cluster import (
 )
 from sklearn.metrics.tests.test_common import check_array_api_metric
 from sklearn.utils._array_api import (
+    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._testing import (
-    assert_allclose,
-)
+from sklearn.utils._testing import assert_allclose
 
 # Dictionaries of metrics
 # ------------------------
@@ -241,6 +240,20 @@ def test_returned_value_consistency(name):
     assert not isinstance(score, (np.float64, np.float32))
 
 
+def check_array_api_unsupervised_metric(metric, array_namespace, device, dtype_name):
+    y_pred = np.array([1, 0, 1, 0, 1, 1, 0])
+    X = np.random.randint(10, size=(7, 10))
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=X,
+        b_np=y_pred,
+    )
+
+
 def check_array_api_metric_supervised(metric, array_namespace, device, int_dtype):
     labels_true = np.array([0, 0, 1, 1, 2, 2], dtype=int_dtype)
     labels_pred = np.array([1, 0, 2, 1, 0, 2], dtype=int_dtype)
@@ -255,21 +268,44 @@ def check_array_api_metric_supervised(metric, array_namespace, device, int_dtype
     )
 
 
-array_api_metric_checkers = {contingency_matrix: [check_array_api_metric_supervised]}
+array_api_metric_checkers = {
+    calinski_harabasz_score: [
+        check_array_api_unsupervised_metric,
+    ],
+    davies_bouldin_score: [
+        check_array_api_unsupervised_metric,
+    ],
+}
+array_api_metric_checkers_supervised = {
+    contingency_matrix: [check_array_api_metric_supervised]
+}
 
 
-def yield_metric_checker_combinations(metric_checkers):
+def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers):
     for metric, checkers in metric_checkers.items():
         for checker in checkers:
             yield metric, checker
 
 
 @pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
+def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):
+    check_func(metric, array_namespace, device, dtype_name)
+
+
+@pytest.mark.parametrize(
     "array_namespace, device, _", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
-    "metric, check_func", yield_metric_checker_combinations(array_api_metric_checkers)
+    "metric, check_func",
+    yield_metric_checker_combinations(array_api_metric_checkers_supervised),
 )
-def test_array_api_compliance(metric, array_namespace, device, _, check_func):
+def test_array_api_compliance_supervised(
+    metric, array_namespace, device, _, check_func
+):
     for int_dtype in ["int32", "int64"]:
         check_func(metric, array_namespace, device, int_dtype)
