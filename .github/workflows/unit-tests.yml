@@ -119,7 +119,7 @@ jobs:
     strategy:
       # Ensures that all builds run to completion even if one of them fails
       fail-fast: false
-      matrix:
+      matrix: &build_matrix
         include:
           - name: Linux pymin_conda_forge_arm
             os: ubuntu-24.04-arm
@@ -150,18 +150,10 @@ jobs:
             SCIPY_ARRAY_API: 1
             PYTORCH_ENABLE_MPS_FALLBACK: 1
             CHECK_PYTEST_SOFT_DEPENDENCY: true
-    # Output the list of matrix names for the update tracking job
-    outputs:
-      entries: ${{ steps.collect_matrix_names.outputs.entries }}
 
     env: ${{ matrix }}
 
     steps:
-      - name: Collect matrix name
-        id: collect_matrix_names
-        run: |
-          echo "entries=$(jq -n --argjson m '${{ toJSON(matrix.include) }}' '$m | map({name: .name})')" >> $GITHUB_OUTPUT
-
       - name: Checkout
         uses: actions/checkout@v5
 
@@ -218,9 +210,8 @@ jobs:
     if: ${{ always() }}
     needs: [unit-tests]
     strategy:
-      matrix:
-        entry: ${{ fromJSON(needs.unit-tests.outputs.entries) }}
+      matrix: *build_matrix
     with:
-      job_status: ${{ needs[matrix.entry.name].result }}
+      job_status: ${{ needs[matrix.name].result }}
     secrets:
       BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
