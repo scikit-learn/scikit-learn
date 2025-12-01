@@ -243,11 +243,10 @@ subtle parameter.
 
 .. note:: Recommendation summary
 
-    For an optimal robustness of cross-validation (CV) results, pass
-    `RandomState` instances when creating estimators, or leave `random_state`
-    to `None`. Passing integers to CV splitters is usually the safest option
-    and is preferable; passing `RandomState` instances to splitters may
-    sometimes be useful to achieve very specific use-cases.
+    For an optimal robustness of cross-validation (CV) results, leave `random_state`
+    to `None` when creating estimators. Passing integers to CV splitters is usually
+    the safest optionand is preferable; passing `RandomState` instances to splitters
+    may sometimes be useful to achieve very specific use-cases.
     For both estimators and splitters, passing an integer vs passing an
     instance (or `None`) leads to subtle but significant differences,
     especially for CV procedures. These differences are important to
@@ -273,11 +272,11 @@ results, according to these rules:
 We here illustrate these rules for both estimators and CV splitters.
 
 .. note::
-    Since passing `random_state=None` is equivalent to passing the global
+    Passing `random_state=None` is equivalent to passing the global
     `RandomState` instance from `numpy`
-    (`random_state=np.random.mtrand._rand`), we will not explicitly mention
-    `None` here. Everything that applies to instances also applies to using
-    `None`.
+    (`random_state=np.random.mtrand._rand`). Most of what that applies to
+    instances also applies to using `None`, with the notable exception of cloning,
+    as will be discussed later.
 
 Estimators
 ..........
@@ -307,8 +306,8 @@ when `fit` is called, and this mutated RNG will be used in the subsequent
 calls to `fit`. In addition, the `rng` object is shared across all objects
 that use it, and as a consequence, these objects become somewhat
 inter-dependent. For example, two estimators that share the same
-`RandomState` instance will influence each other, as we will see later when
-we discuss cloning. This point is important to keep in mind when debugging.
+`RandomState` instance will influence each other. This point is important to
+keep in mind when debugging.
 
 If we had passed an integer to the `random_state` parameter of the
 :class:`~sklearn.linear_model.SGDClassifier`, we would have obtained the
@@ -374,11 +373,11 @@ following snippet::
     >>> cross_val_score(rf_123, X, y)
     array([0.85, 0.95, 0.95, 0.9 , 0.9 ])
 
-    >>> rf_inst = RandomForestClassifier(random_state=np.random.RandomState(0))
+    >>> rf_none = RandomForestClassifier(random_state=None)
     >>> cross_val_score(rf_inst, X, y)
     array([0.9 , 0.95, 0.95, 0.9 , 0.9 ])
 
-We see that the cross-validated scores of `rf_123` and `rf_inst` are
+We see that the cross-validated scores of `rf_123` and `rf_none` are
 different, as should be expected since we didn't pass the same `random_state`
 parameter. However, the difference between these scores is more subtle than
 it looks, and **the cross-validation procedures that were performed by**
@@ -390,13 +389,14 @@ each case**:
   will be the same for each of the 5 folds of the CV procedure. In
   particular, the (randomly chosen) subset of features of the estimator will
   be the same across all folds.
-- Since `rf_inst` was passed a `RandomState` instance, each call to `fit`
+- Since `rf_none` was passed `None`, which corresponds to using the global
+  `RandomState` instance from `numpy`. Each call to `fit`
   starts from a different RNG. As a result, the random subset of features
   will be different for each fold.
 
 While having a constant estimator RNG across folds isn't inherently wrong, we
 usually want CV results that are robust w.r.t. the estimator's randomness. As
-a result, passing an instance instead of an integer may be preferable, since
+a result, passing `None` instead of an integer may be preferable, since
 it will allow the estimator RNG to vary for each fold.
 
 .. note::
@@ -408,8 +408,18 @@ it will allow the estimator RNG to vary for each fold.
     illustration purpose: what matters is what we pass to the
     :class:`~sklearn.ensemble.RandomForestClassifier` estimator.
 
-.. dropdown:: Cloning
+.. note::
+    Passing a `RandomState` instance should result in the behaviour described for the
+    `random_state=None` case with the advantage of allowing reproducibility across
+    executions. However due to the current implementation of cloning, the current
+    behaviour when using `RandomState` instances is similar to using integers,
+    as in each fold the estimator will have an identically initialised `RandomState`
+    object. Therefore there is currently no way to introduce variability of the
+    randomness across folds in a reproducible manner. This issue is actively being
+    discussed and worked on by maintainers [ref issue/SLEP].
 
+.. dropdown:: Cloning
+    #TODO
     Another subtle side effect of passing `RandomState` instances is how
     :func:`~sklearn.base.clone` will work::
 
