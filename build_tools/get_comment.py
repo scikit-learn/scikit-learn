@@ -258,7 +258,7 @@ def update_linter_fails_label(linting_failed, issue):
             # The exception is ignored if raised because the issue did not have the
             # label already
             if not exception.message == "Label does not exist":
-                raise exception
+                raise
 
 
 if __name__ == "__main__":
