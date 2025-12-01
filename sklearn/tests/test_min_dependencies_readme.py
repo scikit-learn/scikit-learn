@@ -11,18 +11,22 @@ import sklearn
 from sklearn._min_dependencies import dependent_packages
 from sklearn.utils.fixes import parse_version
 
-min_depencies_tag_to_packages_without_version = defaultdict(list)
-for package, (min_version, extras) in dependent_packages.items():
-    for extra in extras.split(", "):
-        min_depencies_tag_to_packages_without_version[extra].append(package)
+# minimal dependencies and pyproject definitions for testing the pyproject tests
 
-pyproject_section_to_min_dependencies_tag = {
-    "build-system.requires": "build",
-    "project.dependencies": "install",
+MIN_DEPENDENT_PACKAGES = {
+    "joblib": ("1.3.0", "install"),
+    "scipy": ("1.10.0", "build, install"),
 }
-for tag in min_depencies_tag_to_packages_without_version:
-    section = f"project.optional-dependencies.{tag}"
-    pyproject_section_to_min_dependencies_tag[section] = tag
+
+MATCHING_PYPROJECT_SECTIONS_WITH_UPPER_BOUND = """
+[project]
+dependencies = ["joblib>=1.3.0,<2.0", "scipy==1.10.0"]
+[project.optional-dependencies]
+build = ["scipy>=1.10.0,<1.19.0"]
+install = ["joblib>=1.3.0,<2.0", "scipy==1.10.0"]
+[build-system]
+requires = ["scipy>=1.10.0,<1.19.0"]
+"""
 
 
 def test_min_dependencies_readme():
@@ -66,19 +70,78 @@ def test_min_dependencies_readme():
                 assert version == min_version, message
 
 
-def check_pyproject_section(
-    pyproject_section, min_dependencies_tag, skip_version_check_for=None
-):
+def extract_packages_and_pyproject_tags(dependencies):
+    min_depencies_tag_to_packages = defaultdict(dict)
+    for package, (min_version, tags) in dependencies.items():
+        for t in tags.split(", "):
+            min_depencies_tag_to_packages[t][package] = min_version
+
+    pyproject_section_to_min_dependencies_tag = {
+        "build-system.requires": "build",
+        "project.dependencies": "install",
+    }
+    for tag in min_depencies_tag_to_packages:
+        section = f"project.optional-dependencies.{tag}"
+        pyproject_section_to_min_dependencies_tag[section] = tag
+
+    return min_depencies_tag_to_packages, pyproject_section_to_min_dependencies_tag
+
+
+def check_pyproject_sections(pyproject_toml, dependent_packages):
+    packages, pyproject_tags = extract_packages_and_pyproject_tags(dependent_packages)
+    for pyproject_section, min_dependencies_tag in pyproject_tags.items():
+        # NumPy is more complex because build-time (>=1.25) and run-time (>=1.19.5)
+        # requirement currently don't match
+        skip_version_check_for = ["numpy"] if min_dependencies_tag == "build" else []
+
+        expected_packages = packages[min_dependencies_tag]
+
+        pyproject_section_keys = pyproject_section.split(".")
+        info = pyproject_toml
+        # iterate through nested keys to get packages and version
+        for key in pyproject_section_keys:
+            info = info[key]
+
+        pyproject_packages = []
+        # Assuming pyproject.toml build section has something like "my-package>=2.3.0"
+        # Warning: if you try to modify this regex, bear in mind that there can be upper
+        # bounds in release branches so "my-package>=2.3.0,<2.5.0"
+        pattern = r"([\w-]+)\s*[>=]=\s*([\d\w.]+)"
+        for requirement in info:
+            match = re.search(pattern, requirement)
+            if match is None:
+                raise NotImplementedError(
+                    f"{requirement} does not match expected regex {pattern!r}. "
+                    "Only >= and == are supported for version requirements"
+                )
+
+            package, version = match.group(1), match.group(2)
+            pyproject_packages.append(package)
+
+            msg = f"Package {package} from {pyproject_section} not found \
+                    in _min_depencies.py"
+            assert package in expected_packages, msg
+
+            if package in skip_version_check_for:
+                continue
+
+            msg = (
+                f"{package} has inconsistent minimum versions in pyproject.toml and"
+                f" _min_depencies.py: {version} != {expected_packages[package]}"
+            )
+            assert parse_version(version) == parse_version(
+                expected_packages[package]
+            ), msg
+
+        msg = f"Packages in {pyproject_section} differ from _min_depencies.py"
+        assert sorted(expected_packages.keys()) == sorted(pyproject_packages), msg
+
+
+def test_min_dependencies_pyproject_toml():
+    """Check versions in pyproject.toml is consistent with _min_dependencies."""
+
     # tomllib is available in Python 3.11
     tomllib = pytest.importorskip("tomllib")
-
-    if skip_version_check_for is None:
-        skip_version_check_for = []
-
-    expected_packages = min_depencies_tag_to_packages_without_version[
-        min_dependencies_tag
-    ]
-
     root_directory = Path(sklearn.__file__).parent.parent
     pyproject_toml_path = root_directory / "pyproject.toml"
 
@@ -90,54 +153,12 @@ def check_pyproject_section(
     with pyproject_toml_path.open("rb") as f:
         pyproject_toml = tomllib.load(f)
 
-    pyproject_section_keys = pyproject_section.split(".")
-    info = pyproject_toml
-    for key in pyproject_section_keys:
-        info = info[key]
-
-    pyproject_build_min_versions = {}
-    # Assuming pyproject.toml build section has something like "my-package>=2.3.0"
-    # Warning: if you try to modify this regex, bear in mind that there can be upper
-    # bounds in release branches so "my-package>=2.3.0,<2.5.0"
-    pattern = r"([\w-]+)\s*[>=]=\s*([\d\w.]+)"
-    for requirement in info:
-        match = re.search(pattern, requirement)
-        if match is None:
-            raise NotImplementedError(
-                f"{requirement} does not match expected regex {pattern!r}. "
-                "Only >= and == are supported for version requirements"
-            )
-
-        package, version = match.group(1), match.group(2)
-
-        pyproject_build_min_versions[package] = version
-
-    assert sorted(pyproject_build_min_versions) == sorted(expected_packages)
-
-    for package, version in pyproject_build_min_versions.items():
-        version = parse_version(version)
-        expected_min_version = parse_version(dependent_packages[package][0])
-        if package in skip_version_check_for:
-            continue
-
-        message = (
-            f"{package} has inconsistent minimum versions in pyproject.toml and"
-            f" _min_depencies.py: {version} != {expected_min_version}"
-        )
-        assert version == expected_min_version, message
+    check_pyproject_sections(pyproject_toml, dependent_packages)
 
 
-@pytest.mark.parametrize(
-    "pyproject_section, min_dependencies_tag",
-    pyproject_section_to_min_dependencies_tag.items(),
-)
-def test_min_dependencies_pyproject_toml(pyproject_section, min_dependencies_tag):
-    """Check versions in pyproject.toml is consistent with _min_dependencies."""
-    # NumPy is more complex because build-time (>=1.25) and run-time (>=1.19.5)
-    # requirement currently don't match
-    skip_version_check_for = ["numpy"] if min_dependencies_tag == "build" else None
-    check_pyproject_section(
-        pyproject_section,
-        min_dependencies_tag,
-        skip_version_check_for=skip_version_check_for,
-    )
+def test_check_pyproject_section_with_upper_bounds():
+    """Test the version check for packages when upper bound is given."""
+    tomllib = pytest.importorskip("tomllib")
+    pyproject_toml = tomllib.loads(MATCHING_PYPROJECT_SECTIONS_WITH_UPPER_BOUND)
+
+    check_pyproject_sections(pyproject_toml, MIN_DEPENDENT_PACKAGES)
