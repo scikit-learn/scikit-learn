@@ -31,7 +31,7 @@ If AI tools were involved in creating this PR, please check all boxes that apply
 and make sure that you adhere to our Automated Contributions Policy:
 https://scikit-learn.org/dev/developers/contributing.html#automated-contributions-policy
 -->
-I used AI assistance for
+I used AI assistance for:
 - [ ] Code generation (e.g., when writing an implementation or fixing a bug)
 - [ ] Test/benchmark generation
 - [ ] Documentation (including examples)
