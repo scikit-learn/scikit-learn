@@ -94,10 +94,21 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         more weight on the global target mean.
         If `"auto"`, then `smooth` is set to an empirical Bayes estimate.
 
-    cv : int, default=5
-        Determines the number of folds in the :term:`cross fitting` strategy used in
-        :meth:`fit_transform`. For classification targets, `StratifiedKFold` is used
-        and for continuous targets, `KFold` is used.
+    cv : int, cross-validation generator or an iterable, default=None
+        Determines the cross-validation splitting strategy used in the internal
+        :term:`cross fitting` during :meth:`fit_transform`. Splitters that produce
+        overlapping folds raise a `ValueError`.
+        Possible inputs for cv are:
+
+        - None, to use the default 5-fold `K-Fold` cross-validation for regression
+          targets
+        - integer, to specify the number of folds.
+        - :term:`CV splitter` (that does not repeat samples across folds),
+        - an iterable yielding (train, test) splits as arrays of indices.
+
+        # old: this will be changed:
+        # For classification targets, `StratifiedKFold` is used and for continuous
+        # targets, `KFold` is used.
 
     shuffle : bool, default=True
         Whether to shuffle the data in :meth:`fit_transform` before splitting into
