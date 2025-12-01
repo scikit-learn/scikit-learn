@@ -1071,6 +1071,11 @@ def test_svc_clone_with_callable_kernel():
     assert_array_almost_equal(svm_cloned.intercept_, svm_builtin.intercept_)
     assert_array_equal(svm_cloned.predict(iris.data), svm_builtin.predict(iris.data))
 
+    assert_array_almost_equal(
+        svm_cloned.decision_function(iris.data),
+        svm_builtin.decision_function(iris.data),
+    )
+
 
 def test_svc_bad_kernel():
     svc = svm.SVC(kernel=lambda x, y: x)
