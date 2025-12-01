@@ -125,9 +125,9 @@ scikit-learn and open source by making
     with the scikit-learn codebase
 
 * :ref:`reviewing other developers' pull requests <code_review>` will help you
-  develop an understanding of requirements and quality expected of contributions
+  develop an understanding of the requirements and quality expected of contributions
 * improving the :ref:`contribute_documentation` can help deepen your knowledge
-  of the statistical concepts behind models and functions and scikit-learn API
+  of the statistical concepts behind models and functions, and scikit-learn API
 
 If you wish to make code contributions after building your foundational knowledge, we
 recommend you start by looking for an issue that is of interest to you, in an area you
