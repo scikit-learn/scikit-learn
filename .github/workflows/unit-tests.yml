@@ -130,7 +130,7 @@ jobs:
           # It runs tests requiring lightgbm, pandas and PyAMG.
           - name: Linux pylatest_pip_openblas_pandas
             os: ubuntu-24.04
-            DISTRIB: 'conda-pip-latest'
+            DISTRIB: 'conda'
             LOCK_FILE: './build_tools/azure/pylatest_pip_openblas_pandas_linux-64_conda.lock'
             SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 3  # non-default seed
             SCIPY_ARRAY_API: '1'
