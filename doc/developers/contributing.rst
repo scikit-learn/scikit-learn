@@ -113,8 +113,7 @@ We recommend new contributors start by reading this contributing guide, in
 particular :ref:`ways_to_contribute`, :ref:`automated_contributions_policy`.
 
 Next, we advise new contributors gain foundational knowledge on
-scikit-learn and open source by making
-:ref:`non-code contributions <ways_to_contribute>`:
+scikit-learn and open source by:
 
 * :ref:`improving and investigating issues <bug_triaging>`
 
