@@ -212,6 +212,6 @@ jobs:
     strategy:
       matrix: *build_matrix
     with:
-      job_status: ${{ needs[matrix.name].result }}
+      job_status: ${{ needs.unit-tests.result }}
     secrets:
       BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
