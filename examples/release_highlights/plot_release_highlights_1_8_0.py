@@ -24,18 +24,24 @@ or with conda::
 # %%
 # Array API stuff
 # ---------------
-# TODO copy and paste from 1.7 highlights needs tweaking
-# Several functions have been updated to support array API compatible inputs since
-# version 1.7, especially TODO from the :mod:`sklearn.metrics` module.
+# Several estimators and functions have been updated to support array API
+# compatible inputs since version 1.7. Please refer the :ref:`array API
+# support<array_api>` page for instructions to use scikit-learn with array API
+# compatible libraries such as PyTorch or CuPy.
 #
-# Please refer to the :ref:`array API support<array_api>` page for instructions to use
-# scikit-learn with array API compatible libraries such as PyTorch or CuPy.
+# Array API support was added in 1.8 to :class:`preprocessing.StandardScaler`,
+# :class:`preprocessing.PolynomialFeatures`, :class:`linear_model.RidgeCV`,
+# :class:`mixture.GaussianMixture`, :class:`calibration.CalibratedClassifierCV`.
+# Array API support was also added to several metrics in :mod:`sklearn.metrics`
+# module, see :ref:`array_api_supported` for more details.
 #
-# TODO are there more "important ones"? could be in the example see point below
-# TODO Only show highlighted code without executing it since we don't have a
-# GPU in the doc build? We could also show snippet PyTorch CPU with
-# commented out device='cuda' if you want to run on GPU you only have to
-# uncomment it. Alternative idea link to Colab notebook?
+# TODO do we want to write a snippet?
+# - which estimators would we feature?
+# - we don't have PyTorch in doc build for now ...
+# - we don't have GPU in the doc build but we could show a snippet with numpy
+#   and commented out code to switch to PyToch on GPU
+# - alternative: show only highlighted code without executing it?
+# - alternative: add link to Colab notebook?
 
 # %%
 # Free-threaded CPython 3.14 support
