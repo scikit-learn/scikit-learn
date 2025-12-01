@@ -219,7 +219,7 @@ jobs:
     needs: [unit-tests]
     strategy:
       matrix:
-        entry: ${{ fromJSON(needs.build.outputs.entries) }}
+        entry: ${{ fromJSON(needs.unit-tests.outputs.entries) }}
     with:
       job_status: ${{ needs[matrix.entry.name].result }}
     secrets:
