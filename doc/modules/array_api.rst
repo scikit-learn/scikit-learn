@@ -161,11 +161,8 @@ Metrics
 - :func:`sklearn.metrics.accuracy_score`
 - :func:`sklearn.metrics.balanced_accuracy_score`
 - :func:`sklearn.metrics.brier_score_loss`
-<<<<<<< HEAD
-- :func:`sklearn.metrics.cluster.contingency_matrix`
-=======
 - :func:`sklearn.metrics.cluster.calinski_harabasz_score`
->>>>>>> 3eecca6d1ed8a038eb9de5821eb26ba11de564b5
+- :func:`sklearn.metrics.cluster.contingency_matrix`
 - :func:`sklearn.metrics.cohen_kappa_score`
 - :func:`sklearn.metrics.confusion_matrix`
 - :func:`sklearn.metrics.d2_brier_score`
