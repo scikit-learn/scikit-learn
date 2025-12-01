@@ -340,7 +340,7 @@ tutorials and documentation on the `valgrind web site <https://valgrind.org>`_.
 .. _arm64_dev_env:
 
 Building and testing for the ARM64 platform on an x86_64 machine
-===============================================================
+================================================================
 
 ARM-based machines are a popular target for mobile, edge or other low-energy
 deployments (including in the cloud, for instance on Scaleway or AWS Graviton).
