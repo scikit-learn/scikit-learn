@@ -1,0 +1,4 @@
+- In :class:`ensemble.BaggingClassifier` and :class:`ensemble.BaggingRegressor`
+  the new default `max_samples=None` draws `X.shape[0]` samples, irrespective of
+  `sample_weight`.
+  By :user:`Antoine Baker <antoinebaker>`.
