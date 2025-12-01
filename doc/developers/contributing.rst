@@ -79,9 +79,9 @@ There are many ways to contribute without writing code, and we value these
 contributions just as highly as code contributions. If you are interested in making
 a code contribution, please keep in mind that scikit-learn has evolved into a mature
 and complex project since its inception in 2007. Contributing to the project code
-generally requires advanced skills, and it may not be the best place to begin for new
-contributors. We suggest new contributors follow the suggestions in
-:ref:`new_contributors`.
+generally requires advanced skills, and it may not be the best place to begin if you
+are new to open source contribution. In this case we suggest you follow the suggestions
+in :ref:`new_contributors`.
 
 .. dropdown:: Contributing to related projects
 
