@@ -110,13 +110,10 @@ New Contributors
 ----------------
 
 We recommend new contributors start by reading this contributing guide, in
-particular :ref:`ways_to_contribute`, :ref:`automated_contributions_policy`
-and :ref:`pr_checklist`. For expected etiquette around which issues and stalled PRs
-to work on, please read :ref:`stalled_pull_request`, :ref:`stalled_unclaimed_issues`
-and :ref:`issues_tagged_needs_triage`.
+particular :ref:`ways_to_contribute`, :ref:`automated_contributions_policy`.
 
-We recommend that new contributors first gaining foundational knowledge on scikit-learn
-and open source contributing by making
+Next, we advise new contributors gain foundational knowledge on
+scikit-learn and open source by making
 :ref:`non-code contributions <ways_to_contribute>`:
 
 * :ref:`improving and investigating issues <bug_triaging>`
@@ -135,7 +132,10 @@ and open source contributing by making
 If you wish to make code contributions after building your foundational knowledge, we
 recommend you start by looking for an issue that is of interest to you, in an area you
 are already familiar with as a user or have background knowledge of. We recommend
-starting with smaller pull requests, to get used to the contribution process.
+starting with smaller pull requests and following our :ref:`pr_checklist`.
+For expected etiquette around which issues and stalled PRs
+to work on, please read :ref:`stalled_pull_request`, :ref:`stalled_unclaimed_issues`
+and :ref:`issues_tagged_needs_triage`.
 
 We rarely use the "good first issue" label because it is difficult to make
 assumptions about new contributors and these issues often prove more complex
