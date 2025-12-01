@@ -1484,7 +1484,7 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     y_min_relevant = xp.reshape(xp.min(y_score_masked, axis=1), (-1, 1))
     coverage = xp.count_nonzero(y_score >= y_min_relevant, axis=1)
 
-    return _average(coverage, weights=sample_weight)
+    return float(_average(coverage, weights=sample_weight, xp=xp))
 
 
 @validate_params(
