@@ -22,18 +22,21 @@ or with conda::
 """
 
 # %%
-# Array API stuff
-# ---------------
-# Several estimators and functions have been updated to support array API
-# compatible inputs since version 1.7. Please refer the :ref:`array API
-# support<array_api>` page for instructions to use scikit-learn with array API
-# compatible libraries such as PyTorch or CuPy.
+# Array API support
+# -----------------
+# In scikit-learn 1.8, several estimators and functions have been updated to
+# support array API compatible inputs, for example PyTorch tensors and CuPy arrays.
 #
-# Array API support was added in 1.8 to :class:`preprocessing.StandardScaler`,
-# :class:`preprocessing.PolynomialFeatures`, :class:`linear_model.RidgeCV`,
-# :class:`mixture.GaussianMixture`, :class:`calibration.CalibratedClassifierCV`.
+# Array API support was added to the following estimators:
+# :class:`preprocessing.StandardScaler`, :class:`preprocessing.PolynomialFeatures`,
+# :class:`linear_model.RidgeCV`, :class:`mixture.GaussianMixture` and
+# :class:`calibration.CalibratedClassifierCV`.
+#
 # Array API support was also added to several metrics in :mod:`sklearn.metrics`
 # module, see :ref:`array_api_supported` for more details.
+#
+# Please refer the :ref:`array API support<array_api>` page for instructions
+# to use scikit-learn with array API compatible libraries such as PyTorch or CuPy.
 #
 # TODO do we want to write a snippet?
 # - which estimators would we feature?
