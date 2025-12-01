@@ -133,10 +133,18 @@ jobs:
             SCIPY_ARRAY_API: 1
             PYTORCH_ENABLE_MPS_FALLBACK: 1
             CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
+    # Output the list of matrix names for the update tracking job
+    outputs:
+      entries: ${{ steps.collect_matrix_names.outputs.entries }}
 
     env: ${{ matrix }}
 
     steps:
+      - name: Collect matrix name
+        id: collect_matrix_names
+        run: |
+          echo "entries=$(jq -n --argjson m '${{ toJSON(matrix.include) }}' '$m | map({name: .name})')" >> $GITHUB_OUTPUT
+
       - name: Checkout
         uses: actions/checkout@v5
 
@@ -192,7 +200,10 @@ jobs:
     uses: ./.github/workflows/update_tracking_issue.yml
     if: ${{ always() }}
     needs: [unit-tests]
+    strategy:
+      matrix:
+        entry: ${{ fromJSON(needs.build.outputs.entries) }}
     with:
-      job_status: ${{ needs.unit-tests.result }}
+      job_status: ${{ needs[matrix.entry.name].result }}
     secrets:
       BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
