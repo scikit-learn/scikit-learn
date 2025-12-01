@@ -1,4 +1,5 @@
 import math
+import re
 from functools import partial
 from inspect import signature
 from itertools import chain, permutations, product
@@ -14,6 +15,7 @@ from sklearn.metrics import (
     average_precision_score,
     balanced_accuracy_score,
     brier_score_loss,
+    classification_report,
     cohen_kappa_score,
     confusion_matrix,
     coverage_error,
@@ -64,7 +66,9 @@ from sklearn.metrics.pairwise import (
     cosine_distances,
     cosine_similarity,
     euclidean_distances,
+    laplacian_kernel,
     linear_kernel,
+    manhattan_distances,
     paired_cosine_distances,
     paired_euclidean_distances,
     pairwise_distances,
@@ -210,7 +214,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
     returned by the precision_recall_curve do not match. See
     func:`sklearn.metrics.precision_recall_curve`
 
-    This prevents implicit conversion of return value triple to an higher
+    This prevents implicit conversion of return value triple to a higher
     dimensional np.array of dtype('float64') (it will be of dtype('object)
     instead). This again is needed for assert_array_equal to work correctly.
 
@@ -888,6 +892,19 @@ def test_format_invariance_with_1d_vectors(name):
             else:
                 with pytest.raises(ValueError):
                     metric(y1_row, y2_row)
+
+
+CLASSIFICATION_METRICS_REPORT = {
+    **CLASSIFICATION_METRICS,
+    "classification_report": classification_report,
+}
+
+
+@pytest.mark.parametrize("metric", CLASSIFICATION_METRICS_REPORT.values())
+def test_classification_metrics_raise_on_empty_input(metric):
+    msg = "Found empty input array (e.g., `y_true` or `y_pred`) while a minimum of 1"
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        metric(np.array([]), np.array([]))
 
 
 @pytest.mark.parametrize("metric", CLASSIFICATION_METRICS.values())
@@ -2019,6 +2036,10 @@ def check_array_api_binary_classification_metric(
     y_true_np = np.array([0, 0, 1, 1])
     y_pred_np = np.array([0, 1, 0, 1])
 
+    metric_kwargs = {}
+    if metric.__name__ == "fbeta_score":
+        metric_kwargs = {"beta": 0.5}
+
     check_array_api_metric(
         metric,
         array_namespace,
@@ -2027,6 +2048,7 @@ def check_array_api_binary_classification_metric(
         a_np=y_true_np,
         b_np=y_pred_np,
         sample_weight=None,
+        **metric_kwargs,
     )
 
     sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
@@ -2039,6 +2061,7 @@ def check_array_api_binary_classification_metric(
         a_np=y_true_np,
         b_np=y_pred_np,
         sample_weight=sample_weight,
+        **metric_kwargs,
     )
 
 
@@ -2051,6 +2074,7 @@ def check_array_api_multiclass_classification_metric(
     additional_params = {
         "average": ("micro", "macro", "weighted"),
         "beta": (0.2, 0.5, 0.8),
+        "adjusted": (False, True),
     }
     metric_kwargs_combinations = _get_metric_kwargs_for_array_api_testing(
         metric=metric,
@@ -2248,16 +2272,26 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
+    balanced_accuracy_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+    ],
+    cohen_kappa_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+    ],
     confusion_matrix: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
     ],
+    det_curve: [check_array_api_binary_classification_metric],
     f1_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
     fbeta_score: [
+        check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
@@ -2340,7 +2374,9 @@ array_api_metric_checkers = {
     paired_euclidean_distances: [check_array_api_metric_pairwise],
     cosine_distances: [check_array_api_metric_pairwise],
     euclidean_distances: [check_array_api_metric_pairwise],
+    manhattan_distances: [check_array_api_metric_pairwise],
     linear_kernel: [check_array_api_metric_pairwise],
+    laplacian_kernel: [check_array_api_metric_pairwise],
     polynomial_kernel: [check_array_api_metric_pairwise],
     rbf_kernel: [check_array_api_metric_pairwise],
     root_mean_squared_error: [

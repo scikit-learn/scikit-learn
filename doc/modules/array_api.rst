@@ -42,15 +42,26 @@ and how it facilitates interoperability between array libraries:
 - `Scikit-learn on GPUs with Array API <https://www.youtube.com/watch?v=c_s8tr1AizA>`_
   by :user:`Thomas Fan <thomasjpfan>` at PyData NYC 2023.
 
-Example usage
-=============
+Enabling array API support
+==========================
 
 The configuration `array_api_dispatch=True` needs to be set to `True` to enable array
 API support. We recommend setting this configuration globally to ensure consistent
 behaviour and prevent accidental mixing of array namespaces.
-Note that we set it with :func:`config_context` below to avoid having to call
-:func:`set_config(array_api_dispatch=False)` at the end of every code snippet
-that uses the array API.
+Note that in the examples below, we use a context manager (:func:`config_context`)
+to avoid having to reset it to `False` at the end of every code snippet, so as to
+not affect the rest of the documentation.
+
+Scikit-learn accepts :term:`array-like` inputs for all :mod:`metrics`
+and some estimators. When `array_api_dispatch=False`, these inputs are converted
+into NumPy arrays using :func:`numpy.asarray` (or :func:`numpy.array`).
+While this will successfully convert some array API inputs (e.g., JAX array),
+we generally recommend setting `array_api_dispatch=True` when using array API inputs.
+This is because NumPy conversion can often fail, e.g., torch tensor allocated on GPU.
+
+Example usage
+=============
+
 The example code snippet below demonstrates how to use `CuPy
 <https://cupy.dev/>`_ to run
 :class:`~discriminant_analysis.LinearDiscriminantAnalysis` on a GPU::
@@ -119,8 +130,10 @@ Estimators
 - :class:`linear_model.RidgeClassifier` (with `solver="svd"`)
 - :class:`linear_model.RidgeClassifierCV` (with `solver="svd"`, see :ref:`device_support_for_float64`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
+- :class:`naive_bayes.GaussianNB`
 - :class:`preprocessing.Binarizer`
 - :class:`preprocessing.KernelCenterer`
+- :class:`preprocessing.LabelBinarizer` (with `sparse_output=False`)
 - :class:`preprocessing.LabelEncoder`
 - :class:`preprocessing.MaxAbsScaler`
 - :class:`preprocessing.MinMaxScaler`
@@ -136,6 +149,7 @@ Meta-estimators
 Meta-estimators that accept Array API inputs conditioned on the fact that the
 base estimator also does:
 
+- :class:`calibration.CalibratedClassifierCV` (with `method="temperature"`)
 - :class:`model_selection.GridSearchCV`
 - :class:`model_selection.RandomizedSearchCV`
 - :class:`model_selection.HalvingGridSearchCV`
@@ -145,11 +159,15 @@ Metrics
 -------
 
 - :func:`sklearn.metrics.accuracy_score`
+- :func:`sklearn.metrics.balanced_accuracy_score`
 - :func:`sklearn.metrics.brier_score_loss`
+- :func:`sklearn.metrics.cluster.calinski_harabasz_score`
+- :func:`sklearn.metrics.cohen_kappa_score`
 - :func:`sklearn.metrics.confusion_matrix`
 - :func:`sklearn.metrics.d2_brier_score`
 - :func:`sklearn.metrics.d2_log_loss_score`
 - :func:`sklearn.metrics.d2_tweedie_score`
+- :func:`sklearn.metrics.det_curve`
 - :func:`sklearn.metrics.explained_variance_score`
 - :func:`sklearn.metrics.f1_score`
 - :func:`sklearn.metrics.fbeta_score`
@@ -171,12 +189,14 @@ Metrics
 - :func:`sklearn.metrics.pairwise.chi2_kernel`
 - :func:`sklearn.metrics.pairwise.cosine_similarity`
 - :func:`sklearn.metrics.pairwise.cosine_distances`
-- :func:`sklearn.metrics.pairwise.pairwise_distances` (only supports "cosine", "euclidean" and "l2" metrics)
+- :func:`sklearn.metrics.pairwise.pairwise_distances` (only supports "cosine", "euclidean", "manhattan" and "l2" metrics)
 - :func:`sklearn.metrics.pairwise.euclidean_distances` (see :ref:`device_support_for_float64`)
+- :func:`sklearn.metrics.pairwise.laplacian_kernel`
 - :func:`sklearn.metrics.pairwise.linear_kernel`
+- :func:`sklearn.metrics.pairwise.manhattan_distances`
 - :func:`sklearn.metrics.pairwise.paired_cosine_distances`
 - :func:`sklearn.metrics.pairwise.paired_euclidean_distances`
-- :func:`sklearn.metrics.pairwise.pairwise_kernels` (supports all `sklearn.pairwise.PAIRWISE_KERNEL_FUNCTIONS` except :func:`sklearn.metrics.pairwise.laplacian_kernel`)
+- :func:`sklearn.metrics.pairwise.pairwise_kernels`
 - :func:`sklearn.metrics.pairwise.polynomial_kernel`
 - :func:`sklearn.metrics.pairwise.rbf_kernel` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.pairwise.sigmoid_kernel`
@@ -193,6 +213,7 @@ Metrics
 Tools
 -----
 
+- :func:`preprocessing.label_binarize` (with `sparse_output=False`)
 - :func:`model_selection.cross_val_predict`
 - :func:`model_selection.train_test_split`
 - :func:`utils.check_consistent_length`

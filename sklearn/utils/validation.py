@@ -2083,6 +2083,7 @@ def _check_sample_weight(
     dtype=None,
     force_float_dtype=True,
     ensure_non_negative=False,
+    ensure_same_device=True,
     copy=False,
 ):
     """Validate sample weights.
@@ -2120,6 +2121,9 @@ def _check_sample_weight(
 
         .. versionadded:: 1.0
 
+    ensure_same_device : bool, default=True
+        Whether `sample_weight` should be forced to be on the same device as `X`.
+
     copy : bool, default=False
         If True, a copy of sample_weight will be created.
 
@@ -2128,9 +2132,7 @@ def _check_sample_weight(
     sample_weight : ndarray of shape (n_samples,)
         Validated sample weight. It is guaranteed to be "C" contiguous.
     """
-    xp, _, device = get_namespace_and_device(
-        sample_weight, X, remove_types=(int, float)
-    )
+    xp, is_array_api, device = get_namespace_and_device(X, remove_types=(int, float))
 
     n_samples = _num_samples(X)
 
@@ -2148,6 +2150,8 @@ def _check_sample_weight(
     else:
         if force_float_dtype and dtype is None:
             dtype = float_dtypes
+        if is_array_api and ensure_same_device:
+            sample_weight = xp.asarray(sample_weight, device=device)
         sample_weight = check_array(
             sample_weight,
             accept_sparse=False,

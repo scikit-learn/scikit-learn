@@ -1492,7 +1492,7 @@ Bad (e.g. independent labelings) have non-positive scores::
 
 .. topic:: Advantages:
 
-  - **Random (uniform) label assignments have a AMI score close to 0.0** for any
+  - **Random (uniform) label assignments have an AMI score close to 0.0** for any
     value of ``n_clusters`` and ``n_samples`` (which is not the case for raw
     Mutual Information or the V-measure for instance).
 

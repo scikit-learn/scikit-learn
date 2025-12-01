@@ -4,9 +4,11 @@ from functools import partial
 import numpy
 import pytest
 import scipy
+import scipy.sparse as sp
 from numpy.testing import assert_allclose
 
 from sklearn._config import config_context
+from sklearn._loss import HalfMultinomialLoss
 from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import (
     _add_to_diagonal,
@@ -18,6 +20,7 @@ from sklearn.utils._array_api import (
     _estimator_with_converted_arrays,
     _fill_diagonal,
     _get_namespace_device_dtype_ids,
+    _half_multinomial_loss,
     _is_numpy_namespace,
     _isin,
     _logsumexp,
@@ -32,6 +35,7 @@ from sklearn.utils._array_api import (
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
+    move_to,
     np_compat,
     supported_float_dtypes,
     yield_namespace_device_dtype_combinations,
@@ -105,6 +109,68 @@ def test_get_namespace_array_api(monkeypatch):
             match="scipy's own support is not enabled.",
         ):
             get_namespace(X_xp)
+
+
+@pytest.mark.parametrize(
+    "array_input, reference",
+    [
+        pytest.param(("cupy", None), ("torch", "cuda"), id="cupy to torch cuda"),
+        pytest.param(("torch", "mps"), ("numpy", None), id="torch mps to numpy"),
+        pytest.param(("numpy", None), ("torch", "cuda"), id="numpy to torch cuda"),
+        pytest.param(("numpy", None), ("torch", "mps"), id="numpy to torch mps"),
+        pytest.param(
+            ("array_api_strict", None),
+            ("torch", "mps"),
+            id="array_api_strict to torch mps",
+        ),
+    ],
+)
+def test_move_to_array_api_conversions(array_input, reference):
+    """Check conversion between various namespace and devices."""
+    if array_input[0] == "array_api_strict":
+        array_api_strict = pytest.importorskip(
+            "array_api_strict", reason="array-api-strict not available"
+        )
+    xp = _array_api_for_tests(reference[0], reference[1])
+    xp_array = _array_api_for_tests(array_input[0], array_input[1])
+
+    with config_context(array_api_dispatch=True):
+        device_ = device(xp.asarray([1], device=reference[1]))
+
+        if array_input[0] == "array_api_strict":
+            array_device = array_api_strict.Device("CPU_DEVICE")
+        else:
+            array_device = array_input[1]
+        array = xp_array.asarray([1, 2, 3], device=array_device)
+
+        array_out = move_to(array, xp=xp, device=device_)
+        assert get_namespace(array_out)[0] == xp
+        assert device(array_out) == device_
+
+
+def test_move_to_sparse():
+    """Check sparse inputs are handled correctly."""
+    xp_numpy = _array_api_for_tests("numpy", None)
+    xp_torch = _array_api_for_tests("torch", "cpu")
+
+    sparse1 = sp.csr_array([0, 1, 2, 3])
+    sparse2 = sp.csr_array([0, 1, 0, 1])
+    numpy_array = numpy.array([1, 2, 3])
+
+    with config_context(array_api_dispatch=True):
+        device_cpu = xp_torch.asarray([1]).device
+
+        # sparse and None to NumPy
+        result1, result2 = move_to(sparse1, None, xp=xp_numpy, device=None)
+        assert result1 is sparse1
+        assert result2 is None
+
+        # sparse to non-NumPy
+        msg = r"Sparse arrays are only accepted \(and passed through\)"
+        with pytest.raises(TypeError, match=msg):
+            move_to(sparse1, numpy_array, xp=xp_torch, device=device_cpu)
+        with pytest.raises(TypeError, match=msg):
+            move_to(sparse1, None, xp=xp_torch, device=device_cpu)
 
 
 @pytest.mark.parametrize("array_api", ["numpy", "array_api_strict"])
@@ -685,14 +751,17 @@ def test_add_to_diagonal(array_namespace, device_, dtype_name):
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("dispatch", [True, False])
 def test_sparse_device(csr_container, dispatch):
+    np_arr = numpy.array([1])
+    # For numpy < 2, the device attribute is not available on numpy arrays
+    expected_numpy_array_device = getattr(np_arr, "device", None) if dispatch else None
     a, b = csr_container(numpy.array([[1]])), csr_container(numpy.array([[2]]))
     if dispatch and os.environ.get("SCIPY_ARRAY_API") is None:
         raise SkipTest("SCIPY_ARRAY_API is not set: not checking array_api input")
     with config_context(array_api_dispatch=dispatch):
         assert device(a, b) is None
-        assert device(a, numpy.array([1])) is None
+        assert device(a, np_arr) == expected_numpy_array_device
         assert get_namespace_and_device(a, b)[2] is None
-        assert get_namespace_and_device(a, numpy.array([1]))[2] is None
+        assert get_namespace_and_device(a, np_arr)[2] == expected_numpy_array_device
 
 
 @pytest.mark.parametrize(
@@ -795,3 +864,38 @@ def test_supported_float_types(namespace, device_, expected_types):
     float_types = supported_float_dtypes(xp, device=device_)
     expected = tuple(getattr(xp, dtype_name) for dtype_name in expected_types)
     assert float_types == expected
+
+
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize(
+    "namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_half_multinomial_loss(use_sample_weight, namespace, device_, dtype_name):
+    """Check that the array API version of :func:`_half_multinomial_loss` works
+    correctly and matches the results produced by :class:`HalfMultinomialLoss`
+    of the private `_loss` module.
+    """
+    n_samples = 5
+    n_classes = 3
+    rng = numpy.random.RandomState(42)
+    y = rng.randint(0, n_classes, n_samples).astype(dtype_name)
+    pred = rng.rand(n_samples, n_classes).astype(dtype_name)
+    xp = _array_api_for_tests(namespace, device_)
+    y_xp = xp.asarray(y, device=device_)
+    pred_xp = xp.asarray(pred, device=device_)
+    if use_sample_weight:
+        sample_weight = numpy.ones_like(y)
+        sample_weight[1::2] = 2
+        sample_weight_xp = xp.asarray(sample_weight, device=device_)
+    else:
+        sample_weight, sample_weight_xp = None, None
+
+    np_loss = HalfMultinomialLoss(n_classes=n_classes)(
+        y_true=y, raw_prediction=pred, sample_weight=sample_weight
+    )
+    with config_context(array_api_dispatch=True):
+        xp_loss = _half_multinomial_loss(
+            y=y_xp, pred=pred_xp, sample_weight=sample_weight_xp, xp=xp
+        )
+
+    assert numpy.isclose(np_loss, xp_loss)
