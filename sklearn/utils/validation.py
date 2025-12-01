@@ -2325,24 +2325,6 @@ def _is_pandas_df(X):
     return isinstance(X, pd.DataFrame)
 
 
-def _is_pyarrow_data(X):
-    """Return True if the X is a pyarrow Table, RecordBatch, Array or ChunkedArray."""
-    try:
-        pa = sys.modules["pyarrow"]
-    except KeyError:
-        return False
-    return isinstance(X, (pa.Table, pa.RecordBatch, pa.Array, pa.ChunkedArray))
-
-
-def _is_polars_df_or_series(X):
-    """Return True if the X is a polars dataframe or series."""
-    try:
-        pl = sys.modules["polars"]
-    except KeyError:
-        return False
-    return isinstance(X, (pl.DataFrame, pl.Series))
-
-
 def _is_polars_df(X):
     """Return True if the X is a polars dataframe."""
     try:
@@ -2350,6 +2332,24 @@ def _is_polars_df(X):
     except KeyError:
         return False
     return isinstance(X, pl.DataFrame)
+
+
+def _is_pyarrow_chunked_array(X):
+    """Return True if the X is a PyArrow ChunkedArray."""
+    try:
+        pa = sys.modules["pyarrow"]
+    except KeyError:
+        return False
+    return isinstance(X, pa.ChunkedArray)
+
+
+def _is_pyarrow_array(X):
+    """Return True if the X is a PyArrow Array."""
+    try:
+        pa = sys.modules["pyarrow"]
+    except KeyError:
+        return False
+    return isinstance(X, pa.Array)
 
 
 def _get_feature_names(X):

@@ -471,7 +471,7 @@ def test_get_column_indices_interchange():
     pl = pytest.importorskip("polars")
 
     # Polars dataframes go down the interchange path.
-    df = pl.DataFrame([[1, 2, 3], [4, 5, 6]], schema=["a", "b", "c"])
+    df = pl.DataFrame([[1, 2, 3], [4, 5, 6]], schema=["a", "b", "c"], orient="row")
 
     key_results = [
         (slice(1, None), [1, 2]),
