@@ -28,7 +28,7 @@ is merged. See https://github.com/blog/1506-closing-issues-via-pull-requests
 #### AI usage disclosure
 <!--
 If AI tools were involved in creating this PR, please check all boxes that apply
-and make sure that you adhere to our Automated Contributions Policy:
+below and make sure that you adhere to our Automated Contributions Policy:
 https://scikit-learn.org/dev/developers/contributing.html#automated-contributions-policy
 -->
 I used AI assistance for:
