@@ -207,6 +207,8 @@ jobs:
 
       - name: Get job id
         uses: austenstone/job-id@v1
+        with:
+          github-token: ${{ secrets.BOT_GITHUB_TOKEN }}
         id: job-id
 
       - name: Update tracking issue
