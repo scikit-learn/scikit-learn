@@ -527,7 +527,15 @@ def move_to(*arrays, xp, device):
                     # kwargs in the from_dlpack method and their expected
                     # meaning by namespaces implementing the array API spec.
                     # TODO: try removing this once DLPack v1 more widely supported
-                except (AttributeError, TypeError, NotImplementedError):
+                    # TODO: ValueError should not be needed but is in practice:
+                    # https://github.com/numpy/numpy/issues/30341
+                except (
+                    AttributeError,
+                    TypeError,
+                    NotImplementedError,
+                    BufferError,
+                    ValueError,
+                ):
                     # Converting to numpy is tricky, handle this via dedicated function
                     if _is_numpy_namespace(xp):
                         array_converted = _convert_to_numpy(array, xp_array)
