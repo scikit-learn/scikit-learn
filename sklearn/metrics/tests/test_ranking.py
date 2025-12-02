@@ -56,7 +56,7 @@ CURVE_FUNCS = [
 
 
 def make_prediction(dataset=None, binary=False):
-    """Make some classification predictions on a toy dataset using a SVC
+    """Make some classification predictions on a toy dataset using an SVC
 
     If binary is True restrict to a binary classification problem instead of a
     multiclass classification problem

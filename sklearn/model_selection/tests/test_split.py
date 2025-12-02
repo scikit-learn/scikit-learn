@@ -249,7 +249,7 @@ def check_valid_split(train, test, n_samples=None):
     assert train.intersection(test) == set()
 
     if n_samples is not None:
-        # Check that the union of train an test split cover all the indices
+        # Check that the union of train and test split cover all the indices
         assert train.union(test) == set(range(n_samples))
 
 
