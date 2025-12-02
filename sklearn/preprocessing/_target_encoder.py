@@ -6,11 +6,13 @@ from numbers import Integral, Real
 import numpy as np
 
 from sklearn.base import OneToOneFeatureMixin, _fit_context
+from sklearn.model_selection._validation import _check_groups_routing_disabled
 from sklearn.preprocessing._encoders import _BaseEncoder
 from sklearn.preprocessing._target_encoder_fast import (
     _fit_encoding_fast,
     _fit_encoding_fast_auto_smooth,
 )
+from sklearn.utils._metadata_requests import MetadataRouter, MethodMapping
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import (
@@ -158,6 +160,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         If `target_type_` is 'binary' or 'multiclass', holds the label for each class,
         otherwise `None`.
 
+    cv_ : str
+        Class name of the cv splitter used in `fit_transform` for cross-fitting.
+
     See Also
     --------
     OrdinalEncoder : Performs an ordinal (integer) encoding of the categorical features.
@@ -227,7 +232,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.random_state = random_state
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y, groups=None):
+    def fit(self, X, y, groups=None, **fit_params):
         """Fit the :class:`TargetEncoder` to X and y.
 
         It is discouraged to use this method because it can introduce data leakage.
@@ -251,6 +256,11 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
             .. versionadded:: 1.9
 
+        **fit_params : dict
+            Always ignored, exists for API compatibility.
+
+            .. versionadded:: 1.9
+
         Returns
         -------
         self : object
@@ -260,7 +270,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit_transform(self, X, y, groups=None):
+    def fit_transform(self, X, y, groups=None, **fit_params):
         """Fit :class:`TargetEncoder` and transform `X` with the target encoding.
 
         This method uses a :term:`cross fitting` scheme to prevent target leakage
@@ -282,12 +292,28 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         groups : array-like of shape (n_samples,), default=None
             Group labels for the samples used in the internal :term:`cross fitting`.
-            If `cv` is None or an integer or a cross-validation generator, passing
-            `groups` modifies the :term:`cv` splitter to use :class:`GroupKFold` instead
-            of :class:`KFold` and :class:`StratifiedGroupKFold` instead of
-            :class:`StratifiedKFold`. `groups` is ignored if `cv` is an iterable.
+            If `cv` is `None` or an integer, passing `groups` modifies the
+            :term:`cv` splitter to use :class:`GroupKFold` instead of :class:`KFold` and
+            :class:`StratifiedGroupKFold` instead of :class:`StratifiedKFold`. If `cv`
+            is a cross-validation generator that needs `groups`, `groups` must be
+            passed, otherwise a `ValueError` is raised. `groups` is ignored if `cv` is
+            an iterable.
 
             .. versionadded:: 1.9
+                ``groups`` can only be passed if metadata routing is not enabled
+                via ``sklearn.set_config(enable_metadata_routing=True)``. When routing
+                is enabled, pass ``groups`` alongside other metadata via the ``params``
+                argument instead. E.g.:
+                ``TargetEncoder().fit_transform(..., fit_params={'groups': groups})``.
+
+        **fit_params : dict
+            Parameters to route to the internal CV object.
+
+            .. versionadded:: 1.9
+                Only available if `enable_metadata_routing=True`, which can be
+                set by using ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
@@ -296,21 +322,55 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             Transformed input.
         """
         from sklearn.model_selection import (  # avoid circular import
+            GroupKFold,
             KFold,
+            StratifiedGroupKFold,
             StratifiedKFold,
         )
 
+        _check_groups_routing_disabled(groups)
+
         X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
 
-        # The cv splitter is voluntarily restricted to *KFold to enforce non
-        # overlapping validation folds, otherwise the fit_transform output will
-        # not be well-specified.
+        # The cv splitter is voluntarily restricted to a pre-specified subset to enforce
+        # non overlapping validation folds, otherwise the fit_transform output will not
+        # be well-specified.
+        # TODO: check if `PredefinedSplit` can be / needs to be in
+        # `non_overlapping_splitters`:
+        non_overlapping_splitters = (
+            GroupKFold,
+            KFold,
+            StratifiedKFold,
+            StratifiedGroupKFold,
+        )
+        # if cv is a cross-validation generator:
+        #    check if in predefined list + if groups are passed if its a group splitter
+        #    raise otherwise
+
+        # if cv is an integer:
+        #     check if groups is passed
+        #     determine cv strategy depending on target type
         if self.target_type_ == "continuous":
             cv = KFold(self.cv, shuffle=self.shuffle, random_state=self.random_state)
         else:
             cv = StratifiedKFold(
                 self.cv, shuffle=self.shuffle, random_state=self.random_state
             )
+
+        # if cv is an iterable:
+        #     get the cv indices, and check for overlap
+        #     raise if overlap
+        #     define a cv-splitter if no overlap
+
+        # TODO: investigate: check_cv is doing just what we need (and would be great
+        # for adding groups input), but without shuffleling before(?) which causes
+        # differences:
+        # if self.target_type_ == "continuous":
+        #     cv = check_cv(self.cv, y, classifier=False)
+        # else:
+        #     cv = check_cv(self.cv, y, classifier=True)
+
+        self.cv_ = cv.__class__.__name__
 
         # If 'multiclass' multiply axis=1 by num classes else keep shape the same
         if self.target_type_ == "multiclass":
@@ -321,7 +381,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         else:
             X_out = np.empty_like(X_ordinal, dtype=np.float64)
 
-        for train_idx, test_idx in cv.split(X, y):
+        for train_idx, test_idx in cv.split(X, y, groups):
             X_train, y_train = X_ordinal[train_idx, :], y_encoded[train_idx]
             y_train_mean = np.mean(y_train, axis=0)
 
@@ -571,6 +631,29 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             return np.asarray(feature_names, dtype=object)
         else:
             return feature_names
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.9
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self)
+
+        router.add(
+            splitter=self.cv,
+            method_mapping=MethodMapping().add(caller="fit_transform", callee="split"),
+        )
+
+        return router
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
