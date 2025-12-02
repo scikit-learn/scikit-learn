@@ -116,8 +116,6 @@ jobs:
     runs-on: ${{ matrix.os }}
 #    if: github.repository == 'scikit-learn/scikit-learn'
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
-    secrets:
-      BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
     strategy:
       # Ensures that all builds run to completion even if one of them fails
       fail-fast: false
@@ -207,8 +205,21 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           disable_search: true
 
-      - name: update-tracker
-        uses: ./.github/workflows/update_tracking_issue.yml
-        if: ${{ always() }}
-        with:
-          job_status: ${{ job.status }}
+      - name: Update tracking issue
+        if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
+        run: |
+          set -ex
+          if [[ ${{ job.status }} == "success" ]]; then
+            TESTS_PASSED=true
+          else
+            TESTS_PASSED=false
+          fi
+
+          pip install defusedxml PyGithub
+          python maint_tools/update_tracking_issue.py \
+            ${{ secrets.BOT_GITHUB_TOKEN }} \
+            "$GITHUB_WORKFLOW" \
+            "$GITHUB_REPOSITORY" \
+            https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/job/$GITHUB_JOB_ID \
+            --tests-passed $TESTS_PASSED \
+            --auto-close false
