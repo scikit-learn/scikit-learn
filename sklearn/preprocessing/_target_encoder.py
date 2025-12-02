@@ -95,20 +95,21 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         If `"auto"`, then `smooth` is set to an empirical Bayes estimate.
 
     cv : int, cross-validation generator or an iterable, default=None
-        Determines the cross-validation splitting strategy used in the internal
-        :term:`cross fitting` during :meth:`fit_transform`. Splitters that produce
-        overlapping folds raise a `ValueError`.
+        Determines the splitting strategy used in the internal :term:`cross fitting`
+        during :meth:`fit_transform`. Splitters that produce overlapping folds raise a
+        `ValueError`.
         Possible inputs for cv are:
 
-        - None, to use the default 5-fold `K-Fold` cross-validation for regression
-          targets
-        - integer, to specify the number of folds.
+        - None, to use the default 5-fold cross-validation
+        - integer, to specify the number of folds,
         - :term:`CV splitter` (that does not repeat samples across folds),
         - an iterable yielding (train, test) splits as arrays of indices.
 
-        # old: this will be changed:
-        # For classification targets, `StratifiedKFold` is used and for continuous
-        # targets, `KFold` is used.
+        For integer/None inputs, if `target_type` is `"continuous"` :class:`KFold` is
+        used, in all other cases, :class:`StratifiedKFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various cross-validation
+        strategies that can be used here.
 
     shuffle : bool, default=True
         Whether to shuffle the data in :meth:`fit_transform` before splitting into
@@ -226,7 +227,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.random_state = random_state
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y):
+    def fit(self, X, y, groups=None):
         """Fit the :class:`TargetEncoder` to X and y.
 
         It is discouraged to use this method because it can introduce data leakage.
@@ -245,6 +246,11 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         y : array-like of shape (n_samples,)
             The target data used to encode the categories.
 
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
+
+            .. versionadded:: 1.9
+
         Returns
         -------
         self : object
@@ -254,7 +260,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit_transform(self, X, y):
+    def fit_transform(self, X, y, groups=None):
         """Fit :class:`TargetEncoder` and transform `X` with the target encoding.
 
         This method uses a :term:`cross fitting` scheme to prevent target leakage
@@ -273,6 +279,15 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         y : array-like of shape (n_samples,)
             The target data used to encode the categories.
+
+        groups : array-like of shape (n_samples,), default=None
+            Group labels for the samples used in the internal :term:`cross fitting`.
+            If `cv` is None or an integer or a cross-validation generator, passing
+            `groups` modifies the :term:`cv` splitter to use :class:`GroupKFold` instead
+            of :class:`KFold` and :class:`StratifiedGroupKFold` instead of
+            :class:`StratifiedKFold`. `groups` is ignored if `cv` is an iterable.
+
+            .. versionadded:: 1.9
 
         Returns
         -------
