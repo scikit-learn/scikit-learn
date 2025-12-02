@@ -116,6 +116,8 @@ jobs:
     runs-on: ${{ matrix.os }}
 #    if: github.repository == 'scikit-learn/scikit-learn'
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
+    secrets:
+      BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
     strategy:
       # Ensures that all builds run to completion even if one of them fails
       fail-fast: false
@@ -208,9 +210,5 @@ jobs:
       - name: update-tracker
         uses: ./.github/workflows/update_tracking_issue.yml
         if: ${{ always() }}
-        strategy:
-          matrix: *build_matrix
         with:
           job_status: ${{ job.status }}
-        secrets:
-          BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
