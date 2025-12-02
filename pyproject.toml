@@ -115,6 +115,12 @@ thread_unsafe_fixtures = [
   "tmp_path",  # does not isolate temporary directories across threads
   "pyplot",  # some tests might mutate some shared state of pyplot.
 ]
+# 10 min timeout per test: in case of timeout, dump the tracebacks of all
+# threads and terminate the whole test session if a test hangs for more than 10
+# min (likely due to a deadlock).
+# The second option requires pytest 9.0+ to be active.
+faulthandler_timeout = 600
+faulthandler_exit_on_timeout = true
 
 
 [tool.ruff]
