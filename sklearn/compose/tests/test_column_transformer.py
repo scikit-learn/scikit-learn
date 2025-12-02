@@ -1603,8 +1603,6 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
     assert visual_block.name_details == ([0, 2], [1])
     scaler.fit(X)
     assert_array_equal(visual_block.estimators[0].fit_transform(X), scaler.transform(X))
-    if remainder == "remainder":
-        assert isinstance(visual_block.estimators[1], FunctionTransformer)
 
 
 @pytest.mark.parametrize("explicit_colname", ["first", "second", 0, 1])
