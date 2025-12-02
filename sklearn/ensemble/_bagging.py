@@ -81,18 +81,20 @@ def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
         )
 
     if sample_weight is None:
-        n_samples_total = n_samples
-        n_samples_total_msg = f"the number of samples is {n_samples_total} "
+        weighted_n_samples = n_samples
+        weighted_n_samples_msg = f"the number of samples is {weighted_n_samples} "
     else:
-        n_samples_total = sample_weight.sum()
-        n_samples_total_msg = f"the total sum of sample weights is {n_samples_total} "
+        weighted_n_samples = sample_weight.sum()
+        weighted_n_samples_msg = (
+            f"the total sum of sample weights is {weighted_n_samples} "
+        )
 
-    # max_samples Real fractional value relative to n_samples_total
-    n_samples_bootstrap = max(int(max_samples * n_samples_total), 1)
+    # max_samples Real fractional value relative to weighted_n_samples
+    n_samples_bootstrap = max(int(max_samples * weighted_n_samples), 1)
     # raise warning if n_samples_bootstrap small (< 10)
     if n_samples_bootstrap < 10:
         warn(
-            f"Using the fractional value {max_samples=} when {n_samples_total_msg}"
+            f"Using the fractional value {max_samples=} when {weighted_n_samples_msg}"
             f"results in a low number ({n_samples_bootstrap}) of bootstrap samples. "
             "We recommend passing `max_samples` as an integer."
         )
