@@ -89,7 +89,6 @@ jobs:
         COVERAGE: 'false'
         # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
         PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
 
 # Will run all the time regardless of linting outcome.
 - template: build_tools/azure/posix.yml
