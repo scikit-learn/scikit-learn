@@ -1579,7 +1579,11 @@ def test_sk_visual_block_remainder_fitted_pandas(remainder):
         visual_block.estimators[0].transform(df[["col1", "col2"]]).toarray()
     )
     assert_array_equal(visual_block_result, ohe_result)
-    assert visual_block.estimators[1] == remainder
+
+    if remainder == "passthrough":
+        assert isinstance(visual_block.estimators[1], FunctionTransformer)
+    else:
+        assert isinstance(visual_block.estimators[1], StandardScaler)
 
     remainder = ct._remainder[2]
     assert remainder == ["col3", "col4"]
@@ -1599,7 +1603,8 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
     assert visual_block.name_details == ([0, 2], [1])
     scaler.fit(X)
     assert_array_equal(visual_block.estimators[0].fit_transform(X), scaler.transform(X))
-    assert visual_block.estimators[1] == remainder
+    if remainder == "remainder":
+        assert isinstance(visual_block.estimators[1], FunctionTransformer)
 
 
 @pytest.mark.parametrize("explicit_colname", ["first", "second", 0, 1])
