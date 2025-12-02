@@ -211,6 +211,8 @@ jobs:
 
       - name: Update tracking issue
         if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
+        env:
+          GITHUB_JOB_ID: ${{ steps.job-id.outputs.job-id }}
         run: |
           set -ex
           if [[ ${{ job.status }} == "success" ]]; then
@@ -222,8 +224,8 @@ jobs:
           pip install defusedxml PyGithub
           python maint_tools/update_tracking_issue.py \
             ${{ secrets.BOT_GITHUB_TOKEN }} \
-            "$GITHUB_WORKFLOW" \
+            "$GITHUB_WORKFLOW ${{ matrix.name }}" \
             "$GITHUB_REPOSITORY" \
-            https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/job/${{ steps.job-id.outputs.job-id }} \
+            https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/job/$GITHUB_JOB_ID \
             --tests-passed $TESTS_PASSED \
             --auto-close false
