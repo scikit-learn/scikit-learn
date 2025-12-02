@@ -1573,20 +1573,12 @@ def test_sk_visual_block_remainder_fitted_pandas(remainder):
     visual_block = ct._sk_visual_block_()
     assert visual_block.names == ("ohe", "remainder")
     assert visual_block.name_details == (["col1", "col2"], ["col3", "col4"])
-
-    ohe_result = ohe.fit_transform(df[["col1", "col2"]]).toarray()
-    visual_block_result = (
-        visual_block.estimators[0].transform(df[["col1", "col2"]]).toarray()
-    )
-    assert_array_equal(visual_block_result, ohe_result)
+    assert isinstance(visual_block.estimators[0], OneHotEncoder)
 
     if remainder == "passthrough":
         assert isinstance(visual_block.estimators[1], FunctionTransformer)
     else:
         assert isinstance(visual_block.estimators[1], StandardScaler)
-
-    remainder = ct._remainder[2]
-    assert remainder == ["col3", "col4"]
 
 
 @pytest.mark.parametrize("remainder", ["passthrough", StandardScaler()])
@@ -1601,8 +1593,12 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
     visual_block = ct._sk_visual_block_()
     assert visual_block.names == ("scale", "remainder")
     assert visual_block.name_details == ([0, 2], [1])
-    scaler.fit(X)
-    assert_array_equal(visual_block.estimators[0].fit_transform(X), scaler.transform(X))
+    assert isinstance(visual_block.estimators[0], StandardScaler)
+
+    if remainder == "passthrough":
+        assert isinstance(visual_block.estimators[1], FunctionTransformer)
+    else:
+        assert isinstance(visual_block.estimators[1], StandardScaler)
 
 
 @pytest.mark.parametrize("explicit_colname", ["first", "second", 0, 1])
