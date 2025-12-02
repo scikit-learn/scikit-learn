@@ -21,7 +21,7 @@ There are different ways to install scikit-learn:
   feature from a pull-request that was recently merged to the main branch); or to check
   whether a bug you encountered has been fixed since the last release.
 
-* :ref:`Building the package from source <install_bleeding_edge>`.
+* :ref:`Building the package from source <setup_development_environment>`.
   This is mainly needed by users who wish to contribute to the project, as this allows
   to install an editable version of the project.
 
@@ -302,7 +302,7 @@ https://pkgsrc.se/math/py-scikit-learn
 MacPorts for Mac OSX
 --------------------
 
-The MacPorts package is named ``py<XY>-scikits-learn``,
+The MacPorts package is named ``py<XY>-scikit-learn``,
 where ``XY`` denotes the Python version.
 It can be installed by typing the following
 command:

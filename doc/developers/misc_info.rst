@@ -6,7 +6,7 @@ Miscellaneous information / Troubleshooting
 ==================================================
 
 Here, you find some more advanced notes and troubleshooting tips related to
-:ref:`install_bleeding_edge`.
+:ref:`setup_development_environment`.
 
 .. _openMP_notes:
 

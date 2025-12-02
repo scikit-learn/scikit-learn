@@ -401,6 +401,7 @@ def test_pairwise_parallel(func, metric, kwds, dtype):
         (pairwise_distances, "manhattan", {}),
         (pairwise_kernels, "polynomial", {"degree": 1}),
         (pairwise_kernels, callable_rbf_kernel, {"gamma": 0.1}),
+        (pairwise_kernels, "laplacian", {"gamma": 0.1}),
     ],
 )
 def test_pairwise_parallel_array_api(
@@ -487,7 +488,7 @@ def test_pairwise_kernels(metric, csr_container):
 )
 @pytest.mark.parametrize(
     "metric",
-    ["rbf", "sigmoid", "polynomial", "linear", "chi2", "additive_chi2"],
+    ["rbf", "sigmoid", "polynomial", "linear", "laplacian", "chi2", "additive_chi2"],
 )
 def test_pairwise_kernels_array_api(metric, array_namespace, device, dtype_name):
     # Test array API support in pairwise_kernels.

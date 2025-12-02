@@ -1,0 +1,4 @@
+- :class:`tree.DecisionTreeRegressor` with `criterion="absolute_error"`
+  now runs much faster: O(n log n) complexity against previous O(n^2)
+  allowing to scale to millions of data points, even hundred of millions.
+  By :user:`Arthur Lacote <cakedev0>`

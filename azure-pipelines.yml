@@ -89,7 +89,6 @@ jobs:
         COVERAGE: 'false'
         # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
         PYTEST_XDIST_VERSION: 'none'
-        SKLEARN_FAULTHANDLER_TIMEOUT: '1800'  # 30 * 60 seconds
 
 # Will run all the time regardless of linting outcome.
 - template: build_tools/azure/posix.yml
@@ -183,20 +182,6 @@ jobs:
         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
         SKLEARN_RUN_FLOAT32_TESTS: '1'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '2'  # non-default seed
-      # Linux environment to test the latest available dependencies.
-      # It runs tests requiring lightgbm, pandas and PyAMG.
-      pylatest_pip_openblas_pandas:
-        DISTRIB: 'conda-pip-latest'
-        LOCK_FILE: './build_tools/azure/pylatest_pip_openblas_pandas_linux-64_conda.lock'
-        CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
-        SKLEARN_WARNINGS_AS_ERRORS: '1'
-        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '3'  # non-default seed
-        # disable pytest-xdist to have 1 job where OpenMP and BLAS are not single
-        # threaded because by default the tests configuration (sklearn/conftest.py)
-        # makes sure that they are single threaded in each xdist subprocess.
-        PYTEST_XDIST_VERSION: 'none'
-        PIP_BUILD_ISOLATION: 'true'
-        SCIPY_ARRAY_API: '1'
 
 - template: build_tools/azure/posix-docker.yml
   parameters:
@@ -220,7 +205,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: macOS
-    vmImage: macOS-13
+    vmImage: macOS-15
     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
     # Runs when dependencies succeeded or skipped
     condition: |

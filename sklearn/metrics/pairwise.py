@@ -973,7 +973,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         with config_context(assume_finite=True):
             indices = np.concatenate(
                 list(
-                    # This returns a np.ndarray generator whose arrays we need
+                    # This returns an np.ndarray generator whose arrays we need
                     # to flatten into one.
                     pairwise_distances_chunked(
                         X, Y, reduce_func=_argmin_reduce, metric=metric, **metric_kwargs
@@ -1672,7 +1672,11 @@ def laplacian_kernel(X, Y=None, gamma=None):
         gamma = 1.0 / X.shape[1]
 
     K = -gamma * manhattan_distances(X, Y)
-    np.exp(K, K)  # exponentiate K in-place
+    xp, _ = get_namespace(X, Y)
+    if _is_numpy_namespace(xp):
+        np.exp(K, K)  # exponentiate K in-place
+    else:
+        K = xp.exp(K)
     return K
 
 

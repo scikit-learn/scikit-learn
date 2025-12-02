@@ -35,7 +35,6 @@ from sklearn.utils._param_validation import (
     validate_params,
 )
 from sklearn.utils.extmath import _incremental_mean_and_var, row_norms
-from sklearn.utils.fixes import _yeojohnson_lambda
 from sklearn.utils.sparsefuncs import (
     incr_mean_variance_axis,
     inplace_column_scale,
@@ -3595,8 +3594,8 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         # the computation of lambda is influenced by NaNs so we need to
         # get rid of them
         x = x[~np.isnan(x)]
-
-        return _yeojohnson_lambda(_neg_log_likelihood, x)
+        _, lmbda = stats.yeojohnson(x, lmbda=None)
+        return lmbda
 
     def _check_input(self, X, in_fit, check_positive=False, check_shape=False):
         """Validate the input before fit and transform.

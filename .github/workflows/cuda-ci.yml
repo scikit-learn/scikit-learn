@@ -18,14 +18,14 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@7c619efba910c04005a835b110b057fc28fd6e93 # v3.2.0
+        uses: pypa/cibuildwheel@9c00cb4f6b517705a3794b22395aedc36257242c # v3.2.1
         env:
           CIBW_BUILD: cp313-manylinux_x86_64
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_BUILD_VERBOSITY: 1
           CIBW_ARCHS: x86_64
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: cibw-wheels
           path: ./wheelhouse/*.whl
@@ -40,7 +40,7 @@ jobs:
     timeout-minutes: 20
     name: Run Array API unit tests
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           pattern: cibw-wheels
           path: ~/dist

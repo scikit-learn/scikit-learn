@@ -320,6 +320,10 @@ def test_roc_curve_display_from_cv_results_curve_kwargs(
             line.get_alpha() == curve_kwargs[i]["alpha"]
             for i, line in enumerate(display.line_)
         )
+    # Other default kwargs should be the same
+    for line in display.line_:
+        assert line.get_linestyle() == "--"
+        assert line.get_color() == "blue"
 
 
 # TODO(1.9): Remove in 1.9
@@ -838,7 +842,7 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
     # check that we can provide the positive label and display the proper
     # statistics
     X, y = load_breast_cancer(return_X_y=True)
-    # create an highly imbalanced
+    # create a highly imbalanced version of the breast cancer dataset
     idx_positive = np.flatnonzero(y == 1)
     idx_negative = np.flatnonzero(y == 0)
     idx_selected = np.hstack([idx_negative, idx_positive[:25]])

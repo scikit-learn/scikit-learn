@@ -24,15 +24,16 @@ Contributing
 
 .. currentmodule:: sklearn
 
-This project is a community effort, and everyone is welcome to
-contribute. It is hosted on https://github.com/scikit-learn/scikit-learn.
+This project is a community effort, shaped by a large number of contributors from
+across the world. For more information on the history and people behind scikit-learn
+see :ref:`about`. It is hosted on https://github.com/scikit-learn/scikit-learn.
 The decision making process and governance structure of scikit-learn is laid
 out in :ref:`governance`.
 
 Scikit-learn is :ref:`selective <selectiveness>` when it comes to
 adding new algorithms and features. This means the best way to contribute
 and help the project is to start working on known issues.
-See :ref:`new_contributors` to get started.
+See :ref:`ways_to_contribute` to learn how to make meaningful contributions.
 
 .. topic:: **Our community, our values**
 
@@ -54,47 +55,33 @@ See :ref:`new_contributors` to get started.
     Communications on all channels should respect our `Code of Conduct
     <https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md>`_.
 
-
-
-In case you experience issues using this package, do not hesitate to submit a
-ticket to the
-`GitHub issue tracker
-<https://github.com/scikit-learn/scikit-learn/issues>`_. You are also
-welcome to post feature requests or pull requests.
+.. _ways_to_contribute:
 
 Ways to contribute
 ==================
 
-There are many ways to contribute to scikit-learn. Improving the
-documentation is no less important than improving the code of the library
-itself. If you find a typo in the documentation, or have made improvements, do
-not hesitate to create a GitHub issue or preferably submit a GitHub pull request.
+There are many ways to contribute to scikit-learn. These include:
 
-There are many ways to help. In particular helping to
-:ref:`improve, triage, and investigate issues <bug_triaging>` and
-:ref:`reviewing other developers' pull requests <code_review>` are very
-valuable contributions that move the project forward.
+* referencing scikit-learn from your blog and articles, linking to it from your website,
+  or simply
+  `staring it <https://docs.github.com/en/get-started/exploring-projects-on-github/saving-repositories-with-stars>`__
+  to say "I use it"; this helps us promote the project
+* :ref:`improving and investigating issues <bug_triaging>`
+* :ref:`reviewing other developers' pull requests <code_review>`
+* reporting difficulties when using this package by submitting an
+  `issue <https://github.com/scikit-learn/scikit-learn/issues>`__, and giving a
+  "thumbs up" on issues that others reported and that are relevant to you (see
+  :ref:`submitting_bug_feature` for details)
+* improving the :ref:`contribute_documentation`
+* making a code contribution
 
-Another way to contribute is to report issues you are facing, and give a "thumbs
-up" on issues that others reported and that are relevant to you.  It also helps
-us if you spread the word: reference the project from your blog and articles,
-link to it from your website, or simply star to say "I use it":
-
-.. raw:: html
-
-  <p>
-    <object
-      data="https://img.shields.io/github/stars/scikit-learn/scikit-learn?style=for-the-badge&logo=github"
-      type="image/svg+xml">
-    </object>
-  </p>
-
-In case a contribution/issue involves changes to the API principles
-or changes to dependencies or supported versions, it must be backed by a
-:ref:`slep`, where a SLEP must be submitted as a pull-request to
-`enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_
-using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_
-and follows the decision-making process outlined in :ref:`governance`.
+There are many ways to contribute without writing code, and we value these
+contributions just as highly as code contributions. If you are interested in making
+a code contribution, please keep in mind that scikit-learn has evolved into a mature
+and complex project since its inception in 2007. Contributing to the project code
+generally requires advanced skills, and it may not be the best place to begin if you
+are new to open source contribution. In this case we suggest you follow the suggestions
+in :ref:`new_contributors`.
 
 .. dropdown:: Contributing to related projects
 
@@ -117,27 +104,77 @@ and follows the decision-making process outlined in :ref:`governance`.
   Look for issues marked "help wanted" or similar. Helping these projects may help
   scikit-learn too. See also :ref:`related_projects`.
 
+.. _new_contributors:
+
+New Contributors
+----------------
+
+We recommend new contributors start by reading this contributing guide, in
+particular :ref:`ways_to_contribute`, :ref:`automated_contributions_policy`.
+
+Next, we advise new contributors gain foundational knowledge on
+scikit-learn and open source by:
+
+* :ref:`improving and investigating issues <bug_triaging>`
+
+  * confirming that a problem reported can be reproduced and providing a
+    :ref:`minimal reproducible code <minimal_reproducer>` (if missing), can help you
+    learn about different use cases and user needs
+  * investigating the root cause of an issue will aid you in familiarising yourself
+    with the scikit-learn codebase
+
+* :ref:`reviewing other developers' pull requests <code_review>` will help you
+  develop an understanding of the requirements and quality expected of contributions
+* improving the :ref:`contribute_documentation` can help deepen your knowledge
+  of the statistical concepts behind models and functions, and scikit-learn API
+
+If you wish to make code contributions after building your foundational knowledge, we
+recommend you start by looking for an issue that is of interest to you, in an area you
+are already familiar with as a user or have background knowledge of. We recommend
+starting with smaller pull requests and following our :ref:`pr_checklist`.
+For expected etiquette around which issues and stalled PRs
+to work on, please read :ref:`stalled_pull_request`, :ref:`stalled_unclaimed_issues`
+and :ref:`issues_tagged_needs_triage`.
+
+We rarely use the "good first issue" label because it is difficult to make
+assumptions about new contributors and these issues often prove more complex
+than originally anticipated. It is still useful to check if there are
+`"good first issues"
+<https://github.com/scikit-learn/scikit-learn/labels/good%20first%20issue>`_,
+though note that these may still be time consuming to solve, depending on your prior
+experience.
+
+For more experienced scikit-learn contributors, issues labeled `"Easy"
+<https://github.com/scikit-learn/scikit-learn/labels/Easy>`_ may be a good place to
+look.
+
 .. _automated_contributions_policy:
 
 Automated Contributions Policy
 ==============================
 
+Contributing to scikit-learn requires human judgment, contextual understanding, and
+familiarity with scikit-learn's structure and goals. It is not suitable for
+automatic processing by AI tools.
+
 Please refrain from submitting issues or pull requests generated by
 fully-automated tools. Maintainers reserve the right, at their sole discretion,
 to close such submissions and to block any account responsible for them.
 
-Ideally, contributions should follow from a human-to-human discussion in the
-form of an issue. In particular, please do not paste AI generated text in the
-description of issues, PRs or in comments as it makes it significantly harder for
-reviewers to assess the relevance of your contribution and the potential value it
-brings to future end-users of the library. Note that it's fine to use AI tools
-to proofread or improve your draft text if you are not a native English speaker,
-but reviewers are not interested in unknowingly interacting back and forth with
-automated chatbots that fundamentally do not care about the value of our open
-source project.
+Review all code or documentation changes made by AI tools and
+make sure you understand all changes and can explain them on request, before
+submitting them under your name. Do not submit any AI-generated code that you haven't
+personally reviewed, understood and tested, as this wastes maintainers' time.
 
-Please self review all code or documentation changes made by AI tools before
-submitting them under your name.
+Please do not paste AI generated text in the description of issues, PRs or in comments
+as this makes it harder for reviewers to assess your contribution. We are happy for it
+to be used to improve grammar or if you are not a native English speaker.
+
+If you used AI tools, please state so in your PR description.
+
+PRs that appear to violate this policy will be closed without review.
+
+.. _submitting_bug_feature:
 
 Submitting a bug report or a feature request
 ============================================
@@ -164,6 +201,13 @@ following rules before submitting:
 
 -  If you are submitting a bug report, we strongly encourage you to follow the guidelines in
    :ref:`filing_bugs`.
+
+When a feature request involves changes to the API principles
+or changes to dependencies or supported versions, it must be backed by a
+:ref:`SLEP <slep>`, which must be submitted as a pull-request to
+`enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_
+using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_
+and follows the decision-making process outlined in :ref:`governance`.
 
 .. _filing_bugs:
 
@@ -209,7 +253,7 @@ then submit a "pull request" (PR).
 
 To get started, you need to
 
-#. :ref:`install_bleeding_edge`
+#. :ref:`setup_development_environment`
 #. Find an issue to work on (see :ref:`new_contributors`)
 #. Follow the :ref:`development_workflow`
 #. Make sure, you noted the :ref:`pr_checklist`
@@ -269,28 +313,24 @@ The next steps describe the process of modifying code and submitting a PR:
    and start making changes. Always use a feature branch. It's good
    practice to never work on the ``main`` branch!
 
-#. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
-   run code style checks before each commit:
-
-   .. prompt:: bash
-
-      pip install pre-commit
-      pre-commit install
-
-    pre-commit checks can be disabled for a particular commit with
-    `git commit -n`.
-
 #. Develop the feature on your feature branch on your computer, using Git to
    do the version control. When you're done editing, add changed files using
    ``git add`` and then ``git commit``:
 
-    .. prompt:: bash
+   .. prompt:: bash
 
       git add modified_files
       git commit
 
-   to record your changes in Git, then push the changes to your GitHub
-   account with:
+   .. note::
+
+     :ref:`pre-commit <pre_commit>` may reformat your code automatically when
+     you do `git commit`. When this happens, you need to do `git add` followed
+     by `git commit` again. In some rarer cases, you may need to fix things
+     manually, use the error message to figure out what needs to be changed,
+     and use `git add` followed by `git commit` until the commit is successful.
+
+   Then push the changes to your GitHub account with:
 
    .. prompt:: bash
 
@@ -576,6 +616,8 @@ them over is a great service for the project. A good etiquette to take over is:
   new PR to the old one. The new PR should be created by pulling from the
   old one.
 
+.. _stalled_unclaimed_issues:
+
 Stalled and Unclaimed Issues
 ----------------------------
 
@@ -605,45 +647,19 @@ using the following guidelines:
   described in the :ref:`stalled_pull_request`
   section rather than working directly on the issue.
 
-.. _new_contributors:
+.. _issues_tagged_needs_triage:
 
-Issues for New Contributors
----------------------------
+Issues tagged "Needs Triage"
+----------------------------
 
-New contributors should look for the following tags when looking for issues.  We
-strongly recommend that new contributors tackle "easy" issues first: this helps
-the contributor become familiar with the contribution workflow, and for the core
-devs to become acquainted with the contributor; besides which, we frequently
-underestimate how easy an issue is to solve!
-
-- **Good first issue tag**
-
-  A great way to start contributing to scikit-learn is to pick an item from
-  the list of `good first issues
-  <https://github.com/scikit-learn/scikit-learn/labels/good%20first%20issue>`_
-  in the issue tracker. Resolving these issues allows you to start contributing
-  to the project without much prior knowledge. If you have already contributed
-  to scikit-learn, you should look at Easy issues instead.
-
-- **Easy tag**
-
-  If you have already contributed to scikit-learn, another great way to contribute
-  to scikit-learn is to pick an item from the list of `Easy issues
-  <https://github.com/scikit-learn/scikit-learn/labels/Easy>`_ in the issue
-  tracker. Your assistance in this area will be greatly appreciated by the
-  more experienced developers as it helps free up their time to concentrate on
-  other issues.
-
-- **Help wanted tag**
-
-  We often use the help wanted tag to mark issues regardless of difficulty.
-  Additionally, we use the help wanted tag to mark Pull Requests which have been
-  abandoned by their original contributor and are available for someone to pick up where
-  the original contributor left off. The list of issues with the help wanted tag can be
-  found `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_.
-  Note that not all issues which need contributors will have this tag.
-
-
+The `"Needs Triage"
+<https://github.com/scikit-learn/scikit-learn/labels/needs%20triage>`_ label means
+that the issue is not yet confirmed or fully understood. It signals to scikit-learn
+members to clarify the problem, discuss scope, and decide on the next steps. You are
+welcome to join the discussion, but as per our `Code of Conduct
+<https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md>`_ please
+do not open a PR until the "Needs Triage" label is removed, there is a clear consensus
+on addressing the issue and some directions on how to address it.
 
 Video resources
 ---------------
@@ -948,7 +964,7 @@ Building the documentation
 **Before submitting a pull request check if your modifications have introduced
 new sphinx warnings by building the documentation locally and try to fix them.**
 
-First, make sure you have :ref:`properly installed <install_bleeding_edge>` the
+First, make sure you have :ref:`properly installed <setup_development_environment>` the
 development version. On top of that, building the documentation requires installing some
 additional packages:
 

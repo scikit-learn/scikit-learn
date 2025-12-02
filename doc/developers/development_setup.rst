@@ -1,4 +1,4 @@
-.. _install_bleeding_edge:
+.. _setup_development_environment:
 
 Set up your development environment
 -----------------------------------
@@ -64,7 +64,7 @@ Set up a dedicated environment and install dependencies
 ..
    TODO Add |PythonMinVersion| to min_dependency_substitutions.rst one day.
    Probably would need to change a bit sklearn/_min_dependencies.py since Python is not really a package ...
-.. |PythonMinVersion| replace:: 3.10
+.. |PythonMinVersion| replace:: 3.11
 
 Using an isolated environment such as venv_ or conda_ makes it possible to
 install a specific version of scikit-learn with pip or conda and its dependencies,
@@ -130,7 +130,7 @@ the required packages.
             conda create -n sklearn-dev -c conda-forge ^
               python numpy scipy cython meson-python ninja ^
               pytest pytest-cov ruff==0.11.2 mypy numpydoc ^
-              joblib threadpoolctl
+              joblib threadpoolctl pre-commit
 
           Activate the newly created conda environment:
 
@@ -168,7 +168,7 @@ the required packages.
 
             pip install wheel numpy scipy cython meson-python ninja ^
               pytest pytest-cov ruff==0.11.2 mypy numpydoc ^
-              joblib threadpoolctl
+              joblib threadpoolctl pre-commit
 
 
     .. tab-item:: MacOS
@@ -200,7 +200,7 @@ the required packages.
             conda create -n sklearn-dev -c conda-forge python \
               numpy scipy cython meson-python ninja \
               pytest pytest-cov ruff==0.11.2 mypy numpydoc \
-              joblib threadpoolctl compilers llvm-openmp
+              joblib threadpoolctl compilers llvm-openmp pre-commit
 
           and activate the newly created conda environment:
 
@@ -245,7 +245,7 @@ the required packages.
 
             pip install wheel numpy scipy cython meson-python ninja \
               pytest pytest-cov ruff==0.11.2 mypy numpydoc \
-              joblib threadpoolctl
+              joblib threadpoolctl pre-commit
 
     .. tab-item:: Linux
       :class-label: tab-4
@@ -268,7 +268,7 @@ the required packages.
             conda create -n sklearn-dev -c conda-forge python \
               numpy scipy cython meson-python ninja \
               pytest pytest-cov ruff==0.11.2 mypy numpydoc \
-              joblib threadpoolctl compilers
+              joblib threadpoolctl compilers pre-commit
 
           and activate the newly created environment:
 
@@ -328,7 +328,8 @@ the required packages.
 
             pip install wheel numpy scipy cython meson-python ninja \
               pytest pytest-cov ruff==0.11.2 mypy numpydoc \
-              joblib threadpoolctl
+              joblib threadpoolctl pre-commit
+
 
 .. _install_from_source:
 
@@ -376,6 +377,19 @@ related to you contribution:
 
 For more information on testing, see also the :ref:`pr_checklist`
 and :ref:`pytest_tips`.
+
+.. _pre_commit:
+
+Set up pre-commit
+^^^^^^^^^^^^^^^^^
+
+Additionally, install the `pre-commit hooks <https://pre-commit.com>`__, which will
+automatically check your code for linting problems before each commit in the
+:ref:`development_workflow`:
+
+.. prompt::
+
+  pre-commit install
 
 .. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
 .. _meson-python: https://mesonbuild.com/meson-python
