@@ -208,6 +208,29 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           disable_search: true
 
+      - name: Get job ID from API
+        id: jobid
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Pull the current run id and job name from the context
+            const runId = context.runId;
+            const jobName = context.job;
+
+            // List all jobs for the run
+            const { data } = await github.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: runId
+            });
+
+            // Find the job that matches our name
+            const job = data.jobs.find(j => j.name === jobName);
+            if (!job) throw new Error(`Could not find job ${jobName}`);
+
+            // Expose the id so later steps can use it
+            core.setOutput('id', job.id);
+
       - name: Update tracking issue
         if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
         run: |
@@ -223,6 +246,6 @@ jobs:
             ${{ secrets.BOT_GITHUB_TOKEN }} \
             "$GITHUB_WORKFLOW ${{ matrix.name }}" \
             "$GITHUB_REPOSITORY" \
-            https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID \
+            https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/job/${{ steps.jobid.outputs.id }} \
             --tests-passed $TESTS_PASSED \
             --auto-close false
