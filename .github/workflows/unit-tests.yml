@@ -223,6 +223,7 @@ jobs:
           job_id=$(echo "$json" | jq -r ".jobs[] | select(.name == \"$job_name\") | .id")
 
           echo "job_id=$job_id" >> $GITHUB_OUTPUT
+          echo "job_id:" $job_id
 
       - name: Update tracking issue
         if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
