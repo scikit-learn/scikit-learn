@@ -22,5 +22,3 @@ fi
 pushd $TEST_DIR
 $CMD -m sklearn.utils.tests.test_estimator_checks
 popd
-
-exit 1
