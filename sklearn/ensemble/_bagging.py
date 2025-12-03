@@ -64,7 +64,11 @@ def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
           `max_samples * sample_weight.sum()` weighted samples.
 
     sample_weight : array of shape (n_samples,) or None
-        Sample weights.
+        Sample weights with frequency semantics when `max_features` is explicitly
+        set to a float or integer value. When keeping the `max_features=None` default
+        value, the equivalence between fitting with integer weighted data points or
+        integer repeated data points is no longer guaranteed because the effective
+        bootstrap size is no longer guaranteed to be equivalent.
 
     Returns
     -------
@@ -96,7 +100,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
         warn(
             f"Using the fractional value {max_samples=} when {weighted_n_samples_msg}"
             f"results in a low number ({n_samples_bootstrap}) of bootstrap samples. "
-            "We recommend passing `max_samples` as an integer."
+            "We recommend passing `max_samples` as an integer instead."
         )
     return n_samples_bootstrap
 
@@ -775,7 +779,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         The number of samples to draw from X to train each base estimator (with
         replacement by default, see `bootstrap` for more details).
 
-        - If None, then draw `X.shape[0]` samples.
+        - If None, then draw `X.shape[0]` samples irrespective of `sample_weight`.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` unweighted samples or
           `max_samples * sample_weight.sum()` weighted samples.
