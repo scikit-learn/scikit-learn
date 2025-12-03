@@ -175,9 +175,7 @@ jobs:
           activate-environment: ""
 
       - name: Build scikit-learn
-        run: |
-          bash -l build_tools/azure/install.sh
-          exit 143
+        run: bash -l build_tools/azure/install.sh
 
       - name: Set random seed for nightly/manual runs
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -228,7 +226,6 @@ jobs:
           echo "job_id:" $job_id
 
       - name: Update tracking issue
-      # Note: skipped when 'build scikit-learn' failed
         if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
         run: |
           set -ex
