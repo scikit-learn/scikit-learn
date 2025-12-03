@@ -12,6 +12,27 @@ import sklearn
 from sklearn._min_dependencies import dependent_packages
 from sklearn.utils.fixes import parse_version
 
+
+def extract_packages_and_pyproject_tags(dependencies):
+    min_depencies_tag_to_packages_without_version = defaultdict(list)
+    for package, (min_version, tags) in dependencies.items():
+        for t in tags.split(", "):
+            min_depencies_tag_to_packages_without_version[t].append(package)
+
+    pyproject_section_to_min_dependencies_tag = {
+        "build-system.requires": "build",
+        "project.dependencies": "install",
+    }
+    for tag in min_depencies_tag_to_packages_without_version:
+        section = f"project.optional-dependencies.{tag}"
+        pyproject_section_to_min_dependencies_tag[section] = tag
+
+    return (
+        min_depencies_tag_to_packages_without_version,
+        pyproject_section_to_min_dependencies_tag,
+    )
+
+
 # minimal dependencies and pyproject definitions for testing the pyproject tests
 
 MIN_DEPENDENT_PACKAGES = {
@@ -71,25 +92,9 @@ def test_min_dependencies_readme():
                 assert version == min_version, message
 
 
-def extract_packages_and_pyproject_tags(dependencies):
-    min_depencies_tag_to_packages = defaultdict(dict)
-    for package, (min_version, tags) in dependencies.items():
-        for t in tags.split(", "):
-            min_depencies_tag_to_packages[t][package] = min_version
-
-    pyproject_section_to_min_dependencies_tag = {
-        "build-system.requires": "build",
-        "project.dependencies": "install",
-    }
-    for tag in min_depencies_tag_to_packages:
-        section = f"project.optional-dependencies.{tag}"
-        pyproject_section_to_min_dependencies_tag[section] = tag
-
-    return min_depencies_tag_to_packages, pyproject_section_to_min_dependencies_tag
-
-
 def check_pyproject_sections(pyproject_toml, dependent_packages):
     packages, pyproject_tags = extract_packages_and_pyproject_tags(dependent_packages)
+
     for pyproject_section, min_dependencies_tag in pyproject_tags.items():
         # NumPy is more complex because build-time (>=1.25) and run-time (>=1.19.5)
         # requirement currently don't match
@@ -103,7 +108,7 @@ def check_pyproject_sections(pyproject_toml, dependent_packages):
         for key in pyproject_section_keys:
             info = info[key]
 
-        pyproject_packages = []
+        pyproject_build_min_versions = {}
         # Assuming pyproject.toml build section has something like "my-package>=2.3.0"
         # Warning: if you try to modify this regex, bear in mind that there can be upper
         # bounds in release branches so "my-package>=2.3.0,<2.5.0"
@@ -117,25 +122,22 @@ def check_pyproject_sections(pyproject_toml, dependent_packages):
                 )
 
             package, version = match.group(1), match.group(2)
-            pyproject_packages.append(package)
 
-            msg = f"Package {package} from {pyproject_section} not found \
-                    in _min_depencies.py"
-            assert package in expected_packages, msg
+            pyproject_build_min_versions[package] = version
 
+        assert sorted(pyproject_build_min_versions) == sorted(expected_packages)
+
+        for package, version in pyproject_build_min_versions.items():
+            version = parse_version(version)
+            expected_min_version = parse_version(dependent_packages[package][0])
             if package in skip_version_check_for:
                 continue
 
-            msg = (
+            message = (
                 f"{package} has inconsistent minimum versions in pyproject.toml and"
-                f" _min_depencies.py: {version} != {expected_packages[package]}"
+                f" _min_depencies.py: {version} != {expected_min_version}"
             )
-            assert parse_version(version) == parse_version(
-                expected_packages[package]
-            ), msg
-
-        msg = f"Packages in {pyproject_section} differ from _min_depencies.py"
-        assert sorted(expected_packages.keys()) == sorted(pyproject_packages), msg
+            assert version == expected_min_version, message
 
 
 def test_min_dependencies_pyproject_toml():
