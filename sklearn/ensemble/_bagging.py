@@ -400,7 +400,9 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             Sample weights. If None, then samples are equally weighted. Used as
             probabilities to sample the training set. Note that the expected
             frequency semantics for the `sample_weight` parameter are only
-            fulfilled when sampling with replacement `bootstrap=True`.
+            fulfilled when sampling with replacement `bootstrap=True` and using
+            a float or integer `max_samples` (instead of the default
+            `max_samples=None`).
 
         **fit_params : dict
             Parameters to pass to the underlying estimators.
