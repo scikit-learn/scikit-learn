@@ -29,7 +29,7 @@ or with conda::
 # libraries to scikit-learn estimators and functions and let them
 # use those libraries and possibly non-CPU devices such as GPUs to perform
 # the computation instead of attempting to convert all inputs to NumPy.
-# 
+#
 # In scikit-learn 1.8, several estimators and functions have been updated to
 # support array API compatible inputs, for example PyTorch tensors and CuPy
 # arrays.
@@ -44,7 +44,7 @@ or with conda::
 #
 # Please refer the :ref:`array API support<array_api>` page for instructions
 # to use scikit-learn with array API compatible libraries such as PyTorch or CuPy.
-# Note that array API support is still experimental and must be 
+# Note that array API support is still experimental and must be
 # explicitly be enabled both in SciPy and scikit-learn to work properly.
 #
 # TODO do we want to write a snippet?
