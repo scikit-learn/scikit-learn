@@ -1,0 +1,74 @@
+name: autoclose comment
+# Post comment on PRs when labeled with "autoclose".
+
+permissions:
+  contents: read
+  pull-requests: write
+
+on:
+  pull_request_target:
+    types:
+      - labeled
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GH_REPO: ${{ github.repository }}
+  PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
+
+jobs:
+
+  post_comment:
+    name: post_comment
+    if: github.event.label.name == 'autoclose'
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: comment on potential autoclose
+        run: |
+          gh api \
+          --method POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          /repos/$GH_REPO/issues/$PULL_REQUEST_NUMBER/comments \
+          -f "body=$BODY"
+        env:
+          BODY: >
+            ⏰ This pull request might be automatically closed in two weeks from now.
+
+
+            Thank you for your contribution to scikit-learn and for the effort you have
+            put into this PR. This pull request does not yet meet the quality and
+            clarity needed for an effective review. Reviewing time is limited, and our
+            goal is to prioritize well-prepared contributions to keep scikit-learn
+            maintainable. Unless this PR is improved, it will be automatically closed
+            after two weeks.
+
+
+            To avoid autoclose and increase the chance of a productive review, please:
+
+            - Ensure your contribution aligns with our
+            [contribution guide](https://scikit-learn.org/dev/developers/contributing.html).
+
+            - Include a clear motivation and concise explanation in the pull request
+            description of why you chose this solution.
+
+            - Make sure the code runs and passes tests locally (`pytest`) and in the CI.
+
+            - Submit only code you can explain and maintain; reviewers will ask for
+            clarifications and changes. Disclose any AI assistance per our
+            [Automated Contributions Policy](https://scikit-learn.org/dev/developers/contributing.html#automated-contributions-policy).
+
+            - Keep the changes minimal and directly relevant to the described issue or
+            enhancement.
+
+
+            We cannot provide one-to-one guidance on every PR, though we
+            encourage you to ask focused, actionable questions that show you have tried
+            to explore the problem and are interested to engage with the project. 💬
+            Sometimes a maintainer or someone else from the community might be able to
+            offer pointers.
+
+
+            If you improve your PR within the two-week window, the `autoclose` label can
+            be removed by maintainers.
