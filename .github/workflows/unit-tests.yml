@@ -122,7 +122,6 @@ jobs:
       matrix:
         include:
           - name: Linux pymin_conda_forge_arm
-            id: linux_pymin_conda_forge_arm
             os: ubuntu-24.04-arm
             DISTRIB: conda
             LOCK_FILE: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
@@ -130,7 +129,6 @@ jobs:
           # Linux environment to test the latest available dependencies.
           # It runs tests requiring lightgbm, pandas and PyAMG.
           - name: Linux pylatest_pip_openblas_pandas
-            id: lniux_pylatest_pip_openblas_pandas
             os: ubuntu-24.04
             DISTRIB: conda
             LOCK_FILE: build_tools/azure/pylatest_pip_openblas_pandas_linux-64_conda.lock
@@ -145,7 +143,6 @@ jobs:
             PIP_BUILD_ISOLATION: true
 
           - name: macOS pylatest_conda_forge_arm
-            id: macOS_pylatest_conda_forge_arm
             os: macOS-15
             DISTRIB: conda
             LOCK_FILE: build_tools/azure/pylatest_conda_forge_osx-arm64_conda.lock
