@@ -212,13 +212,15 @@ jobs:
         id: jobid
         if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
         run: |
+          job_name='${{ github.job }}'
+
           # Get job list for this run
           json=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
                         -H "Accept: application/vnd.github+json" \
                         "https://api.github.com/repos/${{ github.repository }}/actions/runs/$GITHUB_RUN_ID/jobs")
 
           # Extract the job ID matching the current job name
-          job_id=$(echo "$json" | jq -r ".jobs[] | select(.name == \"${{ github.job }}\") | .id")
+          job_id=$(echo "$json" | jq -r ".jobs[] | select(.name == \"$job_name\") | .id")
 
           echo "job_id=$job_id" >> $GITHUB_OUTPUT
 
@@ -232,11 +234,13 @@ jobs:
             TESTS_PASSED=false
           fi
 
+          job_id=${{ steps.jobid.outputs.job_id }}
+
           pip install defusedxml PyGithub
           python maint_tools/update_tracking_issue.py \
             ${{ secrets.BOT_GITHUB_TOKEN }} \
             "$GITHUB_WORKFLOW ${{ matrix.name }}" \
             "$GITHUB_REPOSITORY" \
-            https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/job/${{ steps.jobid.outputs.job_id }} \
+            https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/job/$job_id \
             --tests-passed $TESTS_PASSED \
             --auto-close false
