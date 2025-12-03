@@ -137,6 +137,28 @@ def test_force_theme(page, local_server, color, expected_theme):
     )
 
 
+FEATURE_NAMES_HTML = """
+                        <div class="features">
+                            <details>
+                                <summary>
+                                    <div class="image-container"
+                                         title="Copy all output features">
+                                        <i class="copy-paste-icon"></i>
+                                    </div>
+                                </summary>
+                                <div class="features-container">
+                                    <table class="features-table">
+                                        <tbody>
+                                            <tr><td>feature1</td></tr>
+                                            <tr><td>feature2</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </details>
+                        </div>
+                     """
+
+
 def test_copy_paste_feature_names(page, local_server):
     """Test that copyFeatureNamesToClipboard copies the right text to the clipboard.
 
@@ -148,14 +170,14 @@ def test_copy_paste_feature_names(page, local_server):
     """
     url, set_html_response = local_server
 
-    copy_paste_html = _make_page('<table class="features"/>')
+    copy_paste_html = _make_page(FEATURE_NAMES_HTML)
 
     set_html_response(copy_paste_html)
     page.context.grant_permissions(["clipboard-read", "clipboard-write"])
     page.goto(url)
     page.evaluate(
-        "copyFeatureNamesToClipboard('test', document.querySelector('.tbody'))"
+        "copyFeatureNamesToClipboard(document.querySelector('.copy-paste-icon'))"
     )
     clipboard_content = page.evaluate("navigator.clipboard.readText()")
 
-    assert clipboard_content == "test"
+    assert clipboard_content == '[\n    "feature1",\n    "feature2",\n]'
