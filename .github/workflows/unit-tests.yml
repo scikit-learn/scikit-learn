@@ -212,7 +212,7 @@ jobs:
         id: jobid
         if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
         run: |
-          job_name='${{ github.job }}'
+          job_name='${{ matrix.name }}'
 
           # Get job list for this run
           json=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
