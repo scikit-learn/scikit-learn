@@ -189,4 +189,18 @@ model.C_  # single float
 # %%
 # ClassicalMDS
 # ------------
-# TODO
+# Classical MDS, also known as "Principal Coordinates Analysis (PCoA)"
+# or "Torgerson's scaling" is now available within the `sklearn.manifold`
+# module. Classical MDS is close to PCA and instead of of approximating
+# distances, it approximates pairwise scalar products, which has an exact
+# analytic solution in terms of eigendecomposition.
+
+from sklearn.datasets import load_digits
+from sklearn.manifold import ClassicalMDS
+
+X, _ = load_digits(return_X_y=True)
+print(X.shape)
+
+cmds = ClassicalMDS(n_components=2)
+X_emb = cmds.fit_transform(X[:100])
+print(X_emb.shape)
