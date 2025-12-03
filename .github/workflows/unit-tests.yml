@@ -119,7 +119,7 @@ jobs:
     strategy:
       # Ensures that all builds run to completion even if one of them fails
       fail-fast: false
-      matrix: &build_matrix
+      matrix:
         include:
           - name: Linux pymin_conda_forge_arm
             id: linux_pymin_conda_forge_arm
