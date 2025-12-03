@@ -5,4 +5,4 @@
   fraction of `sample_weight.sum()` instead of `X.shape[0]` when passed as a
   float. The new default `max_samples=None` draws `X.shape[0]` samples,
   irrespective of `sample_weight`.
-  By :user:`Antoine Baker <antoinebaker>`.
+  By :user:`Antoine Baker <antoinebaker>`. :pr:`31414` and
