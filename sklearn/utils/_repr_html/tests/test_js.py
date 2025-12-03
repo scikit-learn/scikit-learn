@@ -135,3 +135,27 @@ def test_force_theme(page, local_server, color, expected_theme):
     assert page.locator("#test").evaluate(
         f"el => el.classList.contains('{expected_theme}')"
     )
+
+
+def test_copy_paste_feature_names(page, local_server):
+    """Test that copyFeatureNamesToClipboard copies the right text to the clipboard.
+
+    Test requires clipboard permissions, which are granted through page's context.
+    Assertion is done by reading back the clipboard content from the browser.
+    This is easier than writing a cross platform clipboard reader.
+
+    Test adapted from test_copy_paste
+    """
+    url, set_html_response = local_server
+
+    copy_paste_html = _make_page('<table class="features"/>')
+
+    set_html_response(copy_paste_html)
+    page.context.grant_permissions(["clipboard-read", "clipboard-write"])
+    page.goto(url)
+    page.evaluate(
+        "copyFeatureNamesToClipboard('test', document.querySelector('.tbody'))"
+    )
+    clipboard_content = page.evaluate("navigator.clipboard.readText()")
+
+    assert clipboard_content == "test"
