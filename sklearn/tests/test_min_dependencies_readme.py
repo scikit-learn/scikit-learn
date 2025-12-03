@@ -2,6 +2,7 @@
 
 import os
 import re
+import tomllib
 from collections import defaultdict
 from pathlib import Path
 
@@ -140,8 +141,6 @@ def check_pyproject_sections(pyproject_toml, dependent_packages):
 def test_min_dependencies_pyproject_toml():
     """Check versions in pyproject.toml is consistent with _min_dependencies."""
 
-    # tomllib is available in Python 3.11
-    tomllib = pytest.importorskip("tomllib")
     root_directory = Path(sklearn.__file__).parent.parent
     pyproject_toml_path = root_directory / "pyproject.toml"
 
@@ -158,7 +157,7 @@ def test_min_dependencies_pyproject_toml():
 
 def test_check_pyproject_section_with_upper_bounds():
     """Test the version check for packages when upper bound is given."""
-    tomllib = pytest.importorskip("tomllib")
+
     pyproject_toml = tomllib.loads(MATCHING_PYPROJECT_SECTIONS_WITH_UPPER_BOUND)
 
     check_pyproject_sections(pyproject_toml, MIN_DEPENDENT_PACKAGES)
