@@ -27,8 +27,7 @@ on:
 jobs:
   update_tracking_issue:
     runs-on: ubuntu-latest
-#    if: github.repository == 'scikit-learn/scikit-learn' && github.event_name == 'schedule'
-    if: github.event_name == 'workflow_dispatch'
+    if: github.repository == 'scikit-learn/scikit-learn' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
