@@ -302,8 +302,9 @@ ALL_METRICS.update(REGRESSION_METRICS)
 ALL_METRICS.update(CURVE_METRICS)
 
 
-# Pairwise metrics are only used for array API tests, further down in this file
-# They are not added to `ALL_METRICS` because they are tested in `test_pairwise.py`
+# Pairwise metrics are only used for array API support tests (end of this file).
+# They are not added to `ALL_METRICS` as functionality testing is done in
+# `test_pairwise.py` and not here.
 PAIRWISE_METRICS = {
     "additive_chi2_kernel": additive_chi2_kernel,
     "chi2_kernel": chi2_kernel,
@@ -634,7 +635,10 @@ METRICS_WITH_LOG1P_Y = {
 
 # Metrics that support mixed array API inputs
 METRICS_SUPPORTING_MIXED_NAMESPACE = [
-    "accuracy_score",
+    "brier_score_loss",
+    "d2_brier_score",
+    "d2_log_loss_score",
+    "log_loss",
 ]
 
 
@@ -2470,10 +2474,12 @@ def test_array_api_compliance(metric, array_namespace, device, dtype_name, check
 )
 @pytest.mark.parametrize("metric_name", sorted(METRICS_SUPPORTING_MIXED_NAMESPACE))
 def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
-    """Check 'everything' follows `y_pred` for mixed namespace inputs.
+    """Check 'y_true' follows `y_pred` for mixed namespace inputs.
 
-    If output is array, checks it is of the same namespace and device as `y_pred`
-    (`reference`).
+    If output is an array with all numpy inputs, checks that the output is also
+    a float with mixed inputs.
+    If output is arraywith all numpy inputs,, checks it is of the same namespace and
+    device as `y_pred` (`reference`).
     """
     xp_ref = _array_api_for_tests(reference.xp, reference.device)
     xp_input = _array_api_for_tests(array_input.xp, array_input.device)
