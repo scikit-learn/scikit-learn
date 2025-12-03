@@ -210,26 +210,17 @@ jobs:
 
       - name: Get job ID from API
         id: jobid
-        uses: actions/github-script@v7
-        with:
-          script: |
-            // Pull the current run id and job name from the context
-            const runId = context.runId;
-            const jobName = context.job;
+        if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
+        run: |
+          # Get job list for this run
+          json=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+                        -H "Accept: application/vnd.github+json" \
+                        "https://api.github.com/repos/${{ github.repository }}/actions/runs/$GITHUB_RUN_ID/jobs")
 
-            // List all jobs for the run
-            const { data } = await github.actions.listJobsForWorkflowRun({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: runId
-            });
+          # Extract the job ID matching the current job name
+          job_id=$(echo "$json" | jq -r ".jobs[] | select(.name == \"${{ github.job }}\") | .id")
 
-            // Find the job that matches our name
-            const job = data.jobs.find(j => j.name === jobName);
-            if (!job) throw new Error(`Could not find job ${jobName}`);
-
-            // Expose the id so later steps can use it
-            core.setOutput('id', job.id);
+          echo "job_id=$job_id" >> $GITHUB_OUTPUT
 
       - name: Update tracking issue
         if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
@@ -246,6 +237,6 @@ jobs:
             ${{ secrets.BOT_GITHUB_TOKEN }} \
             "$GITHUB_WORKFLOW ${{ matrix.name }}" \
             "$GITHUB_REPOSITORY" \
-            https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/job/${{ steps.jobid.outputs.id }} \
+            https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/job/${{ steps.jobid.outputs.job_id }} \
             --tests-passed $TESTS_PASSED \
             --auto-close false
