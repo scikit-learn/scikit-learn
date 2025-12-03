@@ -12,27 +12,6 @@ import sklearn
 from sklearn._min_dependencies import dependent_packages
 from sklearn.utils.fixes import parse_version
 
-
-def extract_packages_and_pyproject_tags(dependencies):
-    min_depencies_tag_to_packages_without_version = defaultdict(list)
-    for package, (min_version, tags) in dependencies.items():
-        for t in tags.split(", "):
-            min_depencies_tag_to_packages_without_version[t].append(package)
-
-    pyproject_section_to_min_dependencies_tag = {
-        "build-system.requires": "build",
-        "project.dependencies": "install",
-    }
-    for tag in min_depencies_tag_to_packages_without_version:
-        section = f"project.optional-dependencies.{tag}"
-        pyproject_section_to_min_dependencies_tag[section] = tag
-
-    return (
-        min_depencies_tag_to_packages_without_version,
-        pyproject_section_to_min_dependencies_tag,
-    )
-
-
 # minimal dependencies and pyproject definitions for testing the pyproject tests
 
 MIN_DEPENDENT_PACKAGES = {
@@ -92,8 +71,28 @@ def test_min_dependencies_readme():
                 assert version == min_version, message
 
 
-def check_pyproject_sections(pyproject_toml, dependent_packages):
-    packages, pyproject_tags = extract_packages_and_pyproject_tags(dependent_packages)
+def extract_packages_and_pyproject_tags(dependencies):
+    min_depencies_tag_to_packages_without_version = defaultdict(list)
+    for package, (min_version, tags) in dependencies.items():
+        for t in tags.split(", "):
+            min_depencies_tag_to_packages_without_version[t].append(package)
+
+    pyproject_section_to_min_dependencies_tag = {
+        "build-system.requires": "build",
+        "project.dependencies": "install",
+    }
+    for tag in min_depencies_tag_to_packages_without_version:
+        section = f"project.optional-dependencies.{tag}"
+        pyproject_section_to_min_dependencies_tag[section] = tag
+
+    return (
+        min_depencies_tag_to_packages_without_version,
+        pyproject_section_to_min_dependencies_tag,
+    )
+
+
+def check_pyproject_sections(pyproject_toml, min_dependencies):
+    packages, pyproject_tags = extract_packages_and_pyproject_tags(min_dependencies)
 
     for pyproject_section, min_dependencies_tag in pyproject_tags.items():
         # NumPy is more complex because build-time (>=1.25) and run-time (>=1.19.5)
@@ -129,7 +128,7 @@ def check_pyproject_sections(pyproject_toml, dependent_packages):
 
         for package, version in pyproject_build_min_versions.items():
             version = parse_version(version)
-            expected_min_version = parse_version(dependent_packages[package][0])
+            expected_min_version = parse_version(min_dependencies[package][0])
             if package in skip_version_check_for:
                 continue
 
