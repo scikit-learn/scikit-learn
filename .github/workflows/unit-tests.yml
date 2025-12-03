@@ -212,7 +212,7 @@ jobs:
           job_name='${{ matrix.name }}'
 
           # Get job list for this run
-          json=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          json=$(curl -s -H "Authorization: Bearer ${{ secrets.BOT_GITHUB_TOKEN }}" \
                         -H "Accept: application/vnd.github+json" \
                         "https://api.github.com/repos/${{ github.repository }}/actions/runs/$GITHUB_RUN_ID/jobs")
 
