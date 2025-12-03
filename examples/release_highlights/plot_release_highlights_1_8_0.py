@@ -88,11 +88,11 @@ or with conda::
 # %%
 # Temperature scaling in `CalibratedClassifierCV`
 # -----------------------------------------------
-# Probability calibration with temperature scaling is available in
+# Probability calibration of classifiers with temperature scaling is available in
 # :class:`calibration.CalibratedClassifierCV` by setting `method = "temperature"`.
-# This method offers a natural way to obtain (better-)calibrated multi-class
+# This method is particularly well suited for multiclass problems because it it provides (better-) calibrated
 # probabilities with just one free parameter, in contrast to using a
-# "One-vs-Rest" scheme that adds more parameters for each single class.
+# "One-vs-Rest" scheme that adds more parameters for each class.
 
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import make_classification
