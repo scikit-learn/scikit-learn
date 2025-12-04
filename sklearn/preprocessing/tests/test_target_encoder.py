@@ -716,7 +716,27 @@ def test_pandas_copy_on_write():
         TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
 
 
-def test_target_encoder_auto_cv_groups():
+def test_target_encoder_raises_bad_cv_generator():
+    """
+    Test that `TargetEncoder` raises when `cv` is a cross-validation generator and
+    `groups` are passed into `fit_transform`.
+    """
+    X, y = make_classification(random_state=0)
+    groups = np.repeat(np.arange(5), X.shape[0] / 5)
+    encoder = TargetEncoder(target_type="binary", cv=ShuffleSplit)
+    msg = "The `cv` object needs to be one in {`GroupKFold`, `KFold`, "
+    with pytest.raises(ValueError, match=msg):
+        encoder.fit_transform(X, y)
+
+    X, y = make_regression(n_samples=100, n_features=3, random_state=0)
+    groups = np.repeat(np.arange(5), X.shape[0] / 5)
+    encoder = TargetEncoder(target_type="continuous", cv=KFold)
+    msg = "Expected `cv` from {`GroupKFold`, `StratifiedGroupKFold`]} "
+    with pytest.raises(ValueError, match=msg):
+        encoder.fit_transform(X, y, groups)
+
+
+def test_target_encoder_cv_auto_groups():
     """
     Test that `TargetEncoder` uses the correct splitter when `cv` is an integer and
     `groups` are passed into `fit_transform`.
@@ -724,22 +744,14 @@ def test_target_encoder_auto_cv_groups():
     X, y = make_regression(n_samples=100, n_features=3, random_state=0)
     groups = np.repeat(np.arange(5), X.shape[0] / 5)
     encoder = TargetEncoder(target_type="continuous")
-    Xt = encoder.fit_transform(X, y, groups)
+    encoder.fit_transform(X, y, groups)
     assert encoder.cv_ == "GroupKFold"
 
     X, y = make_classification(random_state=0)
     groups = np.repeat(np.arange(5), X.shape[0] / 5)
     encoder = TargetEncoder(target_type="binary")
-    Xt = encoder.fit_transform(X, y, groups)
+    encoder.fit_transform(X, y, groups)
     assert encoder.cv_ == "StratifiedGroupKFold"
-
-
-def test_target_encoder_cv_groups():
-    """
-    Test that `TargetEncoder` uses the correct splitter when `cv` is an cross-validation
-    generator and `groups` are passed into `fit_transform`.
-    """
-    pass
 
 
 def test_target_encoder_raises_cv_overlap():
@@ -751,4 +763,4 @@ def test_target_encoder_raises_cv_overlap():
 
     non_overlapping_iterable = KFold().split(X, y)
     encoder = TargetEncoder(cv=non_overlapping_iterable)
-    Xt = encoder.fit_transform(X, y)
+    encoder.fit_transform(X, y)

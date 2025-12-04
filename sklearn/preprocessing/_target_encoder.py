@@ -381,19 +381,19 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         elif hasattr(self.cv, "split"):  # cv is a cross-validation generator:
             if self.cv in non_overlapping_splitters and groups is not None:
-                if cv not in [GroupKFold, StratifiedGroupKFold]:
-                    msg = "Expected `cv` from {`GroupKFold`, `StratifiedGroupKFold`]} "
-                    f"since `groups` were passed. Instead got {self.cv}."
-                    raise ValueError(msg=msg)
+                if self.cv not in [GroupKFold, StratifiedGroupKFold]:
+                    raise ValueError(
+                        "Expected `cv` from {`GroupKFold`, `StratifiedGroupKFold`]} "
+                        f"since `groups` were passed. Got {self.cv}."
+                    )
             if self.cv not in non_overlapping_splitters:
-                msg = "The `cv` object needs to be one in {`GroupKFold`, `KFold`, "
-                "`StratifiedKFold`, `StratifiedGroupKFold`}."
-                raise ValueError(msg=msg)
+                raise ValueError(
+                    "The `cv` object needs to be one in {`GroupKFold`, `KFold`, "
+                    "`StratifiedKFold`, `StratifiedGroupKFold`}. Got {self.cv}."
+                )
 
-        else:
-            if not hasattr(self.cv, "split") or isinstance(
-                self.cv, str
-            ):  # cv is an Iterable
+        else:  # cv is an Iterable
+            if not hasattr(self.cv, "split") or isinstance(self.cv, str):
                 if not isinstance(self.cv, Iterable) or isinstance(self.cv, str):
                     raise ValueError(
                         "Expected `cv` as an integer, cross-validation "
@@ -401,8 +401,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                         f"or an iterable. Got {self.cv}."
                     )
                 for fold in self.cv:
-                    test_idx, train_idx = fold
-                    if any(test_idx) in train_idx:
+                    train_idx, test_idx = fold
+                    if any(np.isin(test_idx, train_idx)):
                         raise ValueError(
                             "Found overlapping indices of train and validation set. "
                             "`TargetEncoder`'s internal cross-fitting relies on "
