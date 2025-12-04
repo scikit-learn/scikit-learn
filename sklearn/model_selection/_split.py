@@ -2687,7 +2687,9 @@ class _CVIterableWrapper(BaseCrossValidator):
             yield train, test
 
 
-def check_cv(cv=5, y=None, *, classifier=False):
+def check_cv(
+    cv=5, y=None, *, classifier=False, groups=None, shuffle=False, random_state=0
+):
     """Input checker utility for building a cross-validator.
 
     Parameters
@@ -2738,9 +2740,11 @@ def check_cv(cv=5, y=None, *, classifier=False):
             and (y is not None)
             and (type_of_target(y, input_name="y") in ("binary", "multiclass"))
         ):
-            return StratifiedKFold(cv)
+            # return StratifiedKFold(cv)
+            return StratifiedKFold(cv, shuffle=shuffle, random_state=random_state)
         else:
-            return KFold(cv)
+            # return KFold(cv)
+            return KFold(cv, shuffle=shuffle, random_state=random_state)
 
     if not hasattr(cv, "split") or isinstance(cv, str):
         if not isinstance(cv, Iterable) or isinstance(cv, str):

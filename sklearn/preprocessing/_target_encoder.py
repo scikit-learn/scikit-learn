@@ -6,6 +6,7 @@ from numbers import Integral, Real
 import numpy as np
 
 from sklearn.base import OneToOneFeatureMixin, _fit_context
+from sklearn.model_selection import check_cv
 from sklearn.model_selection._validation import _check_groups_routing_disabled
 from sklearn.preprocessing._encoders import _BaseEncoder
 from sklearn.preprocessing._target_encoder_fast import (
@@ -112,6 +113,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         Refer :ref:`User Guide <cross_validation>` for the various cross-validation
         strategies that can be used here.
+
+        .. versionchanged:: 1.9
+            `cv` accepts cross-validation generators and iterables as input.
 
     shuffle : bool, default=True
         Whether to shuffle the data in :meth:`fit_transform` before splitting into
@@ -350,25 +354,34 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         # if cv is an integer:
         #     check if groups is passed
         #     determine cv strategy depending on target type
-        if self.target_type_ == "continuous":
-            cv = KFold(self.cv, shuffle=self.shuffle, random_state=self.random_state)
-        else:
-            cv = StratifiedKFold(
-                self.cv, shuffle=self.shuffle, random_state=self.random_state
-            )
+        # if self.target_type_ == "continuous":
+        #     cv = KFold(self.cv, shuffle=self.shuffle, random_state=self.random_state)
+        # else:
+        #     cv = StratifiedKFold(
+        #         self.cv, shuffle=self.shuffle, random_state=self.random_state
+        #     )
 
         # if cv is an iterable:
         #     get the cv indices, and check for overlap
         #     raise if overlap
         #     define a cv-splitter if no overlap
 
-        # TODO: investigate: check_cv is doing just what we need (and would be great
-        # for adding groups input), but without shuffleling before(?) which causes
-        # differences:
-        # if self.target_type_ == "continuous":
-        #     cv = check_cv(self.cv, y, classifier=False)
-        # else:
-        #     cv = check_cv(self.cv, y, classifier=True)
+        if self.target_type_ == "continuous":
+            cv = check_cv(
+                self.cv,
+                y,
+                classifier=False,
+                shuffle=self.shuffle,
+                random_state=self.random_state,
+            )
+        else:
+            cv = check_cv(
+                self.cv,
+                y,
+                classifier=True,
+                shuffle=self.shuffle,
+                random_state=self.random_state,
+            )
 
         self.cv_ = cv.__class__.__name__
 
