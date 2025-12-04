@@ -249,7 +249,7 @@ def check_valid_split(train, test, n_samples=None):
     assert train.intersection(test) == set()
 
     if n_samples is not None:
-        # Check that the union of train an test split cover all the indices
+        # Check that the union of train and test split cover all the indices
         assert train.union(test) == set(range(n_samples))
 
 
@@ -1953,7 +1953,7 @@ def test_nested_cv():
         LeaveOneOut(),
         GroupKFold(n_splits=3),
         StratifiedKFold(),
-        StratifiedGroupKFold(),
+        StratifiedGroupKFold(n_splits=3),
         StratifiedShuffleSplit(n_splits=3, random_state=0),
     ]
 

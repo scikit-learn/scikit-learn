@@ -1437,7 +1437,7 @@ def column_or_1d(y, *, dtype=None, input_name="y", warn=False, device=None):
 
 
 def check_random_state(seed):
-    """Turn seed into a np.random.RandomState instance.
+    """Turn seed into an np.random.RandomState instance.
 
     Parameters
     ----------
