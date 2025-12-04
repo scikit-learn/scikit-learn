@@ -814,6 +814,22 @@ def test_draw_indices_using_sample_weight(
                 assert_allclose(estimator.y_, y[samples])
 
 
+@pytest.mark.parametrize("bagging_class", [BaggingRegressor, BaggingClassifier])
+@pytest.mark.parametrize(
+    "invalid_max_samples", [object(), 0, 3.2, [1, 2, 3], "invalid"]
+)
+def test_invalid_max_samples(bagging_class, invalid_max_samples):
+    X = np.arange(100).reshape(-1, 1)
+    y = np.repeat([0, 1], 50)
+
+    bagging = bagging_class(max_samples=invalid_max_samples)
+
+    with pytest.raises(
+        ValueError, match=rf"max_samples.+must be.+{invalid_max_samples}"
+    ):
+        bagging.fit(X, y)
+
+
 def test_oob_score_removed_on_warm_start():
     X, y = make_hastie_10_2(n_samples=100, random_state=1)
 
