@@ -6,7 +6,6 @@
 import itertools
 import math
 import os
-import sys
 
 import numpy
 import scipy
@@ -17,6 +16,7 @@ from sklearn._config import get_config
 from sklearn.externals import array_api_compat
 from sklearn.externals import array_api_extra as xpx
 from sklearn.externals.array_api_compat import numpy as np_compat
+from sklearn.utils._dataframe import is_pandas_df_or_series
 from sklearn.utils.fixes import parse_version
 
 # TODO: complete __all__
@@ -290,16 +290,6 @@ def supported_float_dtypes(xp, device=None):
     return tuple(valid_float_dtypes)
 
 
-# XXX Copied from sklearn.utils.validation.py to avoid circular import
-def _is_pandas_df_or_series(X):
-    """Return True if the X is a pandas dataframe or series."""
-    try:
-        pd = sys.modules["pandas"]
-    except KeyError:
-        return False
-    return isinstance(X, (pd.DataFrame, pd.Series))
-
-
 def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
     """Filter arrays to exclude None and/or specific types.
 
@@ -331,7 +321,7 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
             continue
         if sp.issparse(array):
             continue
-        if _is_pandas_df_or_series(array):
+        if is_pandas_df_or_series(array):
             continue
         filtered_arrays.append(array)
 

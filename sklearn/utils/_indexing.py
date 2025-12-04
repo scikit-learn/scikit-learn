@@ -16,15 +16,17 @@ from sklearn.utils._array_api import (
     get_namespace_and_device,
     move_to,
 )
+from sklearn.utils._dataframe import (
+    is_pandas_df,
+    is_polars_df_or_series,
+    is_pyarrow_data,
+)
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.extmath import _approximate_mode
 from sklearn.utils.fixes import PYARROW_VERSION_BELOW_17
 from sklearn.utils.validation import (
     _check_sample_weight,
     _is_arraylike_not_scalar,
-    _is_pandas_df,
-    _is_polars_df_or_series,
-    _is_pyarrow_data,
     _use_interchange_protocol,
     check_array,
     check_consistent_length,
@@ -325,21 +327,21 @@ def _safe_indexing(X, indices, *, axis=0):
     if (
         axis == 1
         and indices_dtype == "str"
-        and not (_is_pandas_df(X) or _use_interchange_protocol(X))
+        and not (is_pandas_df(X) or _use_interchange_protocol(X))
     ):
         raise ValueError(
             "Specifying the columns using strings is only supported for dataframes."
         )
 
     if hasattr(X, "iloc"):
-        # TODO: we should probably use _is_pandas_df_or_series(X) instead but:
+        # TODO: we should probably use is_pandas_df_or_series(X) instead but:
         # 1) Currently, it (probably) works for dataframes compliant to pandas' API.
         # 2) Updating would require updating some tests such as
         #    test_train_test_split_mock_pandas.
         return _pandas_indexing(X, indices, indices_dtype, axis=axis)
-    elif _is_polars_df_or_series(X):
+    elif is_polars_df_or_series(X):
         return _polars_indexing(X, indices, indices_dtype, axis=axis)
-    elif _is_pyarrow_data(X):
+    elif is_pyarrow_data(X):
         return _pyarrow_indexing(X, indices, indices_dtype, axis=axis)
     elif _use_interchange_protocol(X):  # pragma: no cover
         # Once the dataframe X is converted into its dataframe interchange protocol
