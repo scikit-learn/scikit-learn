@@ -95,7 +95,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
 
     # max_samples Real fractional value relative to weighted_n_samples
     n_samples_bootstrap = max(int(max_samples * weighted_n_samples), 1)
-    # raise warning if n_samples_bootstrap small (< 10)
+    # Heuristic to warn when number of bootstrap samples is too low
     if n_samples_bootstrap < max(10, n_samples ** (1 / 3)):
         warn(
             f"Using the fractional value {max_samples=} when {weighted_n_samples_msg}"
