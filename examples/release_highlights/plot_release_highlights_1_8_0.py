@@ -171,7 +171,22 @@ model.C_  # single float
 # %%
 # HTML representation of estimators
 # ---------------------------------
-# TODO
+# The hyperparameters of estimators have been added to the HTML representation of
+# estimators as a dropdown table. Non-default hyperparameters are highlighted in orange
+# and hovering over the hyperparameter name shows its docstring description as a
+# tooltip.
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+
+clf = make_pipeline(StandardScaler(), LogisticRegression(random_state=0, C=10))
+clf
+
+# In addition a copy button has been added to be able to easily copy the fully
+# qualified name of each hyperparameter (as returned by `get_params`) which is
+# particularly useful to set the parameter grid of `GridSearchCV` for instance
+# for nested pipelines and column transformers.
 
 # %%
 # DecisionTreeRegressor with MAE
