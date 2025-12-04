@@ -101,16 +101,7 @@ from sklearn.frozen import FrozenEstimator
 from sklearn.model_selection import train_test_split
 from sklearn.svm import LinearSVC
 
-X, y = make_classification(
-    n_samples=1000,
-    n_features=10,
-    n_informative=10,
-    n_redundant=0,
-    n_classes=5,
-    n_clusters_per_class=1,
-    class_sep=2.0,
-    random_state=42,
-)
+X, y = make_classification(random_state=42)
 X_train, X_calib, y_train, y_calib = train_test_split(X, y, random_state=42)
 clf = LinearSVC(random_state=42)
 clf.fit(X_train, y_train)
