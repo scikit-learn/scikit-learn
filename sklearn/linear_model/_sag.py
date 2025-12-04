@@ -265,15 +265,16 @@ def sag_solver(
         y = check_array(y, dtype=_dtype, ensure_2d=False, order="C")
 
     n_samples, n_features = X.shape[0], X.shape[1]
-    # As in SGD, the alpha is scaled by n_samples.
-    alpha_scaled = float(alpha) / n_samples
-    beta_scaled = float(beta) / n_samples
 
     # if loss == 'multinomial', y should be label encoded.
     n_classes = int(y.max()) + 1 if loss == "multinomial" else 1
 
     # initialization
     sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+    # As in SGD, the alpha is scaled by n_samples.
+    alpha_scaled = float(alpha) / sample_weight.sum()
+    beta_scaled = float(beta) / sample_weight.sum()
 
     if "coef" in warm_start_mem.keys():
         coef_init = warm_start_mem["coef"]
@@ -325,7 +326,7 @@ def sag_solver(
         alpha_scaled,
         loss,
         fit_intercept,
-        n_samples=n_samples,
+        n_samples=sample_weight.sum(),
         is_saga=is_saga,
         sample_weight=sample_weight,
     )
