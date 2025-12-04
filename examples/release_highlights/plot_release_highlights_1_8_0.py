@@ -176,9 +176,9 @@ model.C_  # single float
 # and hovering over the hyperparameter name shows its docstring description as a
 # tooltip.
 
-from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 clf = make_pipeline(StandardScaler(), LogisticRegression(random_state=0, C=10))
 clf
