@@ -94,6 +94,7 @@ from sklearn.utils._array_api import (
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
     _is_numpy_namespace,
+    _max_precision_float_dtype,
     device,
     get_namespace,
     yield_mixed_namespace_input_combinations,
@@ -2499,6 +2500,15 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
             [[0.2, 0.3, 0.4], [0.5, 0.6, 0.7]],
         ),
     }
+
+    # Deal with max mps float being float32
+    def _get_dtype(np_array, xp, device):
+        if np.issubdtype(np_array, np.floating):
+            dtype = _max_precision_float_dtype(xp, device)
+        else:
+            dtype = xp.int64
+        return dtype
+
     with config_context(array_api_dispatch=True):
         use_string = False
         if metric_name in CLASSIFICATION_METRICS:
@@ -2530,15 +2540,17 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
             if "brier" in metric.__name__:
                 metric_kwargs["pos_label"] = "b"
         else:
-            y1_xp = xp_input.asarray(y1_np, device=array_input.device)
+            dtype = _get_dtype(y1_np, xp_input, array_input.device)
+            y1_xp = xp_input.asarray(y1_np, device=array_input.device, dtype=dtype)
 
         y2_np = np.asarray(y2)
-        y2_xp = xp_ref.asarray(y2_np, device=reference.device)
+        dtype = _get_dtype(y2_np, xp_ref, reference.device)
+        y2_xp = xp_ref.asarray(y2_np, device=reference.device, dtype=dtype)
 
         metric_xp = metric(y1_xp, y2_xp, **metric_kwargs)
         metric_np = metric(y1_np, y2_np, **metric_kwargs)
 
-        # If output with all numpy inputs is float, ensure mixed input gives float
+        # If output with all numpy inputs is float, ensure mixed input also gives float
         # If output is an array, ensure namespace and device is the same as `reference`
         def _check_output_type(out_np, out_xp):
             if isinstance(out_np, float):
