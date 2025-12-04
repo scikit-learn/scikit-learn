@@ -24,11 +24,12 @@ or with conda::
 # %%
 # Array API support
 # -----------------
-# The progressive adoption of the Python array API standard in SciPy and
-# scikit-learn allows the user to pass input arrays from conforming
-# libraries to scikit-learn estimators and functions and let them
-# use those libraries and possibly non-CPU devices such as GPUs to perform
-# the computation instead of attempting to convert all inputs to NumPy.
+# The progressive adoption of the Python array API standard in 
+# scikit-learn means that PyTorch and CuPy input arrays
+# are used directly. This means that in scikit-learn estimators
+# and functions non-CPU devices, such as GPUs, can be used
+# to perform the computation. As a result performance is improved
+# and integration with these libraries is easier.
 #
 # In scikit-learn 1.8, several estimators and functions have been updated to
 # support array API compatible inputs, for example PyTorch tensors and CuPy
@@ -44,8 +45,8 @@ or with conda::
 #
 # Please refer the :ref:`array API support<array_api>` page for instructions
 # to use scikit-learn with array API compatible libraries such as PyTorch or CuPy.
-# Note that array API support is still experimental and must be
-# explicitly be enabled both in SciPy and scikit-learn to work properly.
+# Note: Array API support is experimental and must be
+# explicitly enabled both in SciPy and scikit-learn.
 #
 # TODO do we want to write a snippet?
 # - which estimators would we feature?
@@ -63,13 +64,12 @@ or with conda::
 # free-threaded wheels are available for all of our supported platforms on Python
 # 3.14.
 #
-# Free-threaded (also known as nogil) CPython is a version of CPython that aims at
+# Free-threaded (also known as nogil) CPython is a version of CPython that aims to enable
 # enabling efficient multi-threaded use cases by removing the Global Interpreter
 # Lock (GIL).
 #
-# If you want to try out free-threaded Python, the recommendation is to use
-# Python 3.14, that has fixed a number of issues compared to Python 3.13. Feel
-# free to try free-threaded on your use case and report any issues!
+# To try out scikit-learn's support for free-threading use Python 3.14.
+#  Try your use cases and please `report your issues <https://github.com/scikit-learn/scikit-learn/issues/new/choose>`_!
 #
 # For more details about free-threaded CPython see `py-free-threading doc <https://py-free-threading.github.io>`_,
 # in particular `how to install a free-threaded CPython <https://py-free-threading.github.io/installing_cpython/>`_
@@ -130,7 +130,7 @@ print(f"Optimal temperature = {1 / beta:.3}")
 # time, for squared error based estimators with L1 penalty: `ElasticNet`, `Lasso`,
 # `MultiTaskElasticNet`, `MultiTaskLasso` and their CV variants. The fit time
 # improvement is mainly achieved by **gap safe screening rules**. They enable the
-# coordinate descent solver to set feature coefficients early to 0 and not look at them
+# coordinate descent solver to set feature coefficients to 0 early and not look at them
 # again. The stronger the L1 penalty the earlier features can be excluded from further
 # updates.
 
@@ -170,7 +170,7 @@ model = LogisticRegressionCV(
 model.C_  # single float
 
 # %%
-# A further deprecation is going on for the `penalty` parameter in both
+# A further deprecation is related to the `penalty` parameter in both
 # `LogisticRegression` and `LogisticRegressionCV`. It is redundant because `C` together
 # with `l1_ratio` for `LogisticRegression` and `l1_ratios` for `LogisticRegressionCV`
 # contains the same information. Removing `penalty` can ease specifying grid search
