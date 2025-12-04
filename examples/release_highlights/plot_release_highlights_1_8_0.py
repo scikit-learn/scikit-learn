@@ -24,7 +24,7 @@ or with conda::
 # %%
 # Array API support
 # -----------------
-# The progressive adoption of the Python array API standard in 
+# The progressive adoption of the Python array API standard in
 # scikit-learn means that PyTorch and CuPy input arrays
 # are used directly. This means that in scikit-learn estimators
 # and functions non-CPU devices, such as GPUs, can be used
@@ -64,15 +64,16 @@ or with conda::
 # free-threaded wheels are available for all of our supported platforms on Python
 # 3.14.
 #
-# Free-threaded (also known as nogil) CPython is a version of CPython that aims to enable
-# enabling efficient multi-threaded use cases by removing the Global Interpreter
-# Lock (GIL).
+# Free-threaded (also known as nogil) CPython is a version of CPython that aims to
+# enable efficient multi-threaded use cases by removing the Global Interpreter Lock
+# (GIL).
 #
-# To try out scikit-learn's support for free-threading use Python 3.14.
-#  Try your use cases and please `report your issues <https://github.com/scikit-learn/scikit-learn/issues/new/choose>`_!
+# Please try your use cases with free-threaded CPython and `report issues
+# <https://github.com/scikit-learn/scikit-learn/issues/new/choose>`_!
 #
-# For more details about free-threaded CPython see `py-free-threading doc <https://py-free-threading.github.io>`_,
-# in particular `how to install a free-threaded CPython <https://py-free-threading.github.io/installing_cpython/>`_
+# For more details about free-threaded CPython see `py-free-threading doc
+# <https://py-free-threading.github.io>`_, in particular `how to install a
+# free-threaded CPython # <https://py-free-threading.github.io/installing_cpython/>`_
 # and `Ecosystem compatibility tracking <https://py-free-threading.github.io/tracking/>`_.
 #
 # The long term goal of free-threaded Python is to more efficiently leverage
