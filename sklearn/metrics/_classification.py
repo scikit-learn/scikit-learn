@@ -226,7 +226,7 @@ def _one_hot_encoding_multiclass_target(y_true, labels, target_xp, target_device
             )
 
     transformed_labels = lb.transform(y_true)
-    transformed_labels = target_xp.asarray(transformed_labels, device=target_device)
+    transformed_labels = move_to(transformed_labels, xp=target_xp, device=target_device)
     if transformed_labels.shape[1] == 1:
         transformed_labels = target_xp.concat(
             (1 - transformed_labels, transformed_labels), axis=1
@@ -3555,7 +3555,7 @@ def _one_hot_encoding_binary_target(y_true, pos_label, target_xp, target_device)
     """
     xp_y_true, _ = get_namespace(y_true)
     y_true_pos = xp_y_true.asarray(y_true == pos_label, dtype=xp_y_true.int64)
-    y_true_pos = target_xp.asarray(y_true_pos, device=target_device)
+    y_true_pos = move_to(y_true_pos, xp=target_xp, device=target_device)
     return target_xp.stack((1 - y_true_pos, y_true_pos), axis=1)
 
 
