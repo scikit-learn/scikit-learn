@@ -1,18 +1,20 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from numbers import Integral, Real
+from collections.abc import Iterable
+from numbers import Real
 
 import numpy as np
 
 from sklearn.base import OneToOneFeatureMixin, _fit_context
-from sklearn.model_selection import check_cv
+from sklearn.model_selection._split import _CVIterableWrapper
 from sklearn.model_selection._validation import _check_groups_routing_disabled
 from sklearn.preprocessing._encoders import _BaseEncoder
 from sklearn.preprocessing._target_encoder_fast import (
     _fit_encoding_fast,
     _fit_encoding_fast_auto_smooth,
 )
+from sklearn.utils import indexable
 from sklearn.utils._metadata_requests import MetadataRouter, MethodMapping
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import type_of_target
@@ -103,23 +105,33 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         `ValueError`.
         Possible inputs for cv are:
 
-        - None, to use the default 5-fold cross-validation
-        - integer, to specify the number of folds,
-        - :term:`CV splitter` (that does not repeat samples across folds),
+        - None, to use a 5-fold cross-validation chosen internally based on
+            `target_type` and `groups`,
+        - integer, to specify the number of folds for the cross-validation chosen
+            internally based on  `target_type` and `groups`,
+        - :term:`CV splitter` from :class:`GroupKFold`, :class:`KFold`,
+            :class:`StratifiedKFold`, or :class:`StratifiedGroupKFold` (which do not
+            repeat samples across folds),
         - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if `target_type` is `"continuous"` :class:`KFold` is
-        used, in all other cases, :class:`StratifiedKFold` is used.
+        used, in all other cases, :class:`StratifiedKFold` is used. If `groups` are
+        passed into :meth:`fit_transform`, :class:`GroupKFold` or
+        :class:`StratifiedGroupKFold` are used for cross fitting instead. After calling
+        :meth:`fit_transform`, the `cv_` attribute stores the name of the
+        cross-validation strategy used.
 
         Refer :ref:`User Guide <cross_validation>` for the various cross-validation
         strategies that can be used here.
 
         .. versionchanged:: 1.9
-            `cv` accepts cross-validation generators and iterables as input.
+            `cv` can also be cross-validation generators and iterables.
 
     shuffle : bool, default=True
         Whether to shuffle the data in :meth:`fit_transform` before splitting into
-        folds. Note that the samples within each split will not be shuffled.
+        folds. Note that the samples within each split will not be shuffled. Only
+        applies if `cv` is an int or `None`. If `cv` is a cross-validation generator or
+        an iterable, `shuffle` is ignored.
 
     random_state : int, RandomState instance or None, default=None
         When `shuffle` is True, `random_state` affects the ordering of the
@@ -214,7 +226,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         "categories": [StrOptions({"auto"}), list],
         "target_type": [StrOptions({"auto", "continuous", "binary", "multiclass"})],
         "smooth": [StrOptions({"auto"}), Interval(Real, 0, None, closed="left")],
-        "cv": [Interval(Integral, 2, None, closed="left")],
+        "cv": ["cv_object"],
         "shuffle": ["boolean"],
         "random_state": ["random_state"],
     }
@@ -339,49 +351,66 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         # The cv splitter is voluntarily restricted to a pre-specified subset to enforce
         # non overlapping validation folds, otherwise the fit_transform output will not
         # be well-specified.
-        # TODO: check if `PredefinedSplit` can be / needs to be in
-        # `non_overlapping_splitters`:
         non_overlapping_splitters = (
             GroupKFold,
             KFold,
             StratifiedKFold,
             StratifiedGroupKFold,
         )
-        # if cv is a cross-validation generator:
-        #    check if in predefined list + if groups are passed if its a group splitter
-        #    raise otherwise
+        X, y, groups = indexable(X, y, groups)
 
-        # if cv is an integer:
-        #     check if groups is passed
-        #     determine cv strategy depending on target type
-        # if self.target_type_ == "continuous":
-        #     cv = KFold(self.cv, shuffle=self.shuffle, random_state=self.random_state)
-        # else:
-        #     cv = StratifiedKFold(
-        #         self.cv, shuffle=self.shuffle, random_state=self.random_state
-        #     )
+        if type(self.cv) is int:
+            if groups is None:
+                if self.target_type_ == "continuous":
+                    cv = KFold(
+                        self.cv, shuffle=self.shuffle, random_state=self.random_state
+                    )
+                else:
+                    cv = StratifiedKFold(
+                        self.cv, shuffle=self.shuffle, random_state=self.random_state
+                    )
+            else:
+                if self.target_type_ == "continuous":
+                    cv = GroupKFold(
+                        self.cv, shuffle=self.shuffle, random_state=self.random_state
+                    )
+                else:
+                    cv = StratifiedGroupKFold(
+                        self.cv, shuffle=self.shuffle, random_state=self.random_state
+                    )
 
-        # if cv is an iterable:
-        #     get the cv indices, and check for overlap
-        #     raise if overlap
-        #     define a cv-splitter if no overlap
+        elif hasattr(self.cv, "split"):  # cv is a cross-validation generator:
+            if self.cv in non_overlapping_splitters and groups is not None:
+                if cv not in [GroupKFold, StratifiedGroupKFold]:
+                    msg = "Expected `cv` from {`GroupKFold`, `StratifiedGroupKFold`]} "
+                    f"since `groups` were passed. Instead got {self.cv}."
+                    raise ValueError(msg=msg)
+            if self.cv not in non_overlapping_splitters:
+                msg = "The `cv` object needs to be one in {`GroupKFold`, `KFold`, "
+                "`StratifiedKFold`, `StratifiedGroupKFold`}."
+                raise ValueError(msg=msg)
 
-        if self.target_type_ == "continuous":
-            cv = check_cv(
-                self.cv,
-                y,
-                classifier=False,
-                shuffle=self.shuffle,
-                random_state=self.random_state,
-            )
         else:
-            cv = check_cv(
-                self.cv,
-                y,
-                classifier=True,
-                shuffle=self.shuffle,
-                random_state=self.random_state,
-            )
+            if not hasattr(self.cv, "split") or isinstance(
+                self.cv, str
+            ):  # cv is an Iterable
+                if not isinstance(self.cv, Iterable) or isinstance(self.cv, str):
+                    raise ValueError(
+                        "Expected `cv` as an integer, cross-validation "
+                        "object (from sklearn.model_selection) "
+                        f"or an iterable. Got {self.cv}."
+                    )
+                for fold in self.cv:
+                    test_idx, train_idx = fold
+                    if any(test_idx) in train_idx:
+                        raise ValueError(
+                            "Found overlapping indices of train and validation set. "
+                            "`TargetEncoder`'s internal cross-fitting relies on "
+                            "non-overlapping splits. Pass an iterator with "
+                            "non-overlapping indices as `cv` or refer to the docs for "
+                            "other options."
+                        )
+                cv = _CVIterableWrapper(self.cv)
 
         self.cv_ = cv.__class__.__name__
 

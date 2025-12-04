@@ -716,19 +716,39 @@ def test_pandas_copy_on_write():
         TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
 
 
-def test_target_encoder_groups_split():
+def test_target_encoder_auto_cv_groups():
     """
-    Test that `TargetEncoder` uses the correct splitter when `groups` are passed into
-    `fit_transform`.
+    Test that `TargetEncoder` uses the correct splitter when `cv` is an integer and
+    `groups` are passed into `fit_transform`.
     """
     X, y = make_regression(n_samples=100, n_features=3, random_state=0)
-    groups = np.repeat(np.arange(4), X.shape[0] / 4)
+    groups = np.repeat(np.arange(5), X.shape[0] / 5)
     encoder = TargetEncoder(target_type="continuous")
     Xt = encoder.fit_transform(X, y, groups)
     assert encoder.cv_ == "GroupKFold"
 
     X, y = make_classification(random_state=0)
-    groups = np.repeat(np.arange(4), X.shape[0] / 4)
+    groups = np.repeat(np.arange(5), X.shape[0] / 5)
     encoder = TargetEncoder(target_type="binary")
     Xt = encoder.fit_transform(X, y, groups)
     assert encoder.cv_ == "StratifiedGroupKFold"
+
+
+def test_target_encoder_cv_groups():
+    """
+    Test that `TargetEncoder` uses the correct splitter when `cv` is an cross-validation
+    generator and `groups` are passed into `fit_transform`.
+    """
+    pass
+
+
+def test_target_encoder_raises_cv_overlap():
+    """
+    Test that `TargetEncoder` raises if a `cv` object (iterable or unsuitable
+    cross-validation generator are passed.
+    """
+    X, y = make_regression(n_samples=100, n_features=3, random_state=0)
+
+    non_overlapping_iterable = KFold().split(X, y)
+    encoder = TargetEncoder(cv=non_overlapping_iterable)
+    Xt = encoder.fit_transform(X, y)
