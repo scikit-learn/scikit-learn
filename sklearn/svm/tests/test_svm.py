@@ -1042,7 +1042,7 @@ def test_linearsvc_verbose():
     os.dup2(stdout, 1)  # restore original stdout
 
 
-# XXX: this test is thread-unsafe because it uses probability=True:
+# XXX: this test is thread-unsafe because it uses probability=True
 # https://github.com/scikit-learn/scikit-learn/issues/31885
 @pytest.mark.thread_unsafe
 def test_svc_clone_with_callable_kernel():
