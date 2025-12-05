@@ -401,13 +401,15 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     def transform(self, X):
         """Encode X using the learned target encodings.
 
-        This method internally uses the `encodings_` attribute learnt during
+        This method internally uses the ``encodings_`` attribute learned during
         :meth:`TargetEncoder.fit_transform` to transform test data.
 
-        .. note::
-            `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
-            :term:`cross fitting` scheme is used in `fit_transform` for encoding.
-            See the :ref:`User Guide <target_encoder>` for details.
+        Notes
+        -----
+        ``fit(X, y).transform(X)`` does not equal :meth:`fit_transform(X, y)`
+        because a :term:`cross fitting` scheme is used in
+        :meth:`fit_transform` for encoding. See the
+        :ref:`User Guide <target_encoder>` for details.
 
         Parameters
         ----------
