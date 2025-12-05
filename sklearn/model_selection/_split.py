@@ -2696,7 +2696,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
         - None, to use the default 5-fold cross validation,
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
         - An iterable that generates (train, test) splits as arrays of indices.
 
@@ -2715,7 +2715,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
 
     classifier : bool, default=False
         Whether the task is a classification task, in which case
-        stratified KFold will be used.
+        `StratifiedKFold` will be used.
 
     Returns
     -------
@@ -2747,7 +2747,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
             raise ValueError(
                 "Expected cv as an integer, cross-validation "
                 "object (from sklearn.model_selection) "
-                "or an iterable. Got %s." % cv
+                f"or an iterable. Got {cv}."
             )
         return _CVIterableWrapper(cv)
 
