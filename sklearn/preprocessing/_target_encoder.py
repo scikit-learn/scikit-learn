@@ -8,14 +8,19 @@ import numpy as np
 
 from sklearn.base import OneToOneFeatureMixin, _fit_context
 from sklearn.model_selection._split import _CVIterableWrapper
-from sklearn.model_selection._validation import _check_groups_routing_disabled
 from sklearn.preprocessing._encoders import _BaseEncoder
 from sklearn.preprocessing._target_encoder_fast import (
     _fit_encoding_fast,
     _fit_encoding_fast_auto_smooth,
 )
-from sklearn.utils import indexable
-from sklearn.utils._metadata_requests import MetadataRouter, MethodMapping
+from sklearn.utils import Bunch, indexable
+from sklearn.utils._metadata_requests import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import (
@@ -101,31 +106,31 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the splitting strategy used in the internal :term:`cross fitting`
-        during :meth:`fit_transform`. Splitters that produce overlapping folds raise a
-        `ValueError`.
+        during :meth:`fit_transform`. Splitters where each sample index doesn't appear
+        in a validation fold exactly once, raise a `ValueError`.
         Possible inputs for cv are:
 
         - None, to use a 5-fold cross-validation chosen internally based on
             `target_type` and `groups`,
         - integer, to specify the number of folds for the cross-validation chosen
-            internally based on  `target_type` and `groups`,
+            internally based on `target_type` and `groups`,
         - :term:`CV splitter` from :class:`GroupKFold`, :class:`KFold`,
             :class:`StratifiedKFold`, or :class:`StratifiedGroupKFold` (which do not
-            repeat samples across folds),
+            repeat samples across test folds),
         - an iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs, if `target_type` is `"continuous"` :class:`KFold` is
-        used, in all other cases, :class:`StratifiedKFold` is used. If `groups` are
-        passed into :meth:`fit_transform`, :class:`GroupKFold` or
+        For integer/None inputs, if `target_type` is `"continuous"` and `groups` is
+        None, :class:`KFold` is used, in all other cases, :class:`StratifiedKFold` is
+        used. If `groups` are passed into :meth:`fit_transform`, :class:`GroupKFold` or
         :class:`StratifiedGroupKFold` are used for cross fitting instead. After calling
         :meth:`fit_transform`, the `cv_` attribute stores the name of the
         cross-validation strategy used.
 
-        Refer :ref:`User Guide <cross_validation>` for the various cross-validation
-        strategies that can be used here.
+        Refer :ref:`User Guide <cross_validation>` for mor information on
+        cross-validation strategies.
 
         .. versionchanged:: 1.9
-            `cv` can also be cross-validation generators and iterables.
+            Cross-validation generators and iterables can also be passed as `cv`.
 
     shuffle : bool, default=True
         Whether to shuffle the data in :meth:`fit_transform` before splitting into
@@ -308,6 +313,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         groups : array-like of shape (n_samples,), default=None
             Group labels for the samples used in the internal :term:`cross fitting`.
+            Only used in conjunction with a "Group" :term:`cv` instance (e.g.,
+            :class:`GroupKFold`).
+
             If `cv` is `None` or an integer, passing `groups` modifies the
             :term:`cv` splitter to use :class:`GroupKFold` instead of :class:`KFold` and
             :class:`StratifiedGroupKFold` instead of :class:`StratifiedKFold`. If `cv`
@@ -337,13 +345,16 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                     (n_samples, (n_features * n_classes))
             Transformed input.
         """
-        from sklearn.model_selection import (  # avoid circular import
+        # avoid circular imports
+        from sklearn.model_selection import (
             GroupKFold,
             KFold,
             StratifiedGroupKFold,
             StratifiedKFold,
         )
+        from sklearn.model_selection._validation import _check_groups_routing_disabled
 
+        _raise_for_params(fit_params, self, "fit_transform")
         _check_groups_routing_disabled(groups)
 
         X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
@@ -415,6 +426,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         self.cv_ = cv.__class__.__name__
 
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit_transform", **fit_params)
+        else:
+            if groups is not None:
+                routed_params = Bunch(splitter=Bunch(split=Bunch(groups=groups)))
+            else:
+                routed_params = Bunch(splitter=Bunch(split={}))
+
         # If 'multiclass' multiply axis=1 by num classes else keep shape the same
         if self.target_type_ == "multiclass":
             X_out = np.empty(
@@ -424,7 +443,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         else:
             X_out = np.empty_like(X_ordinal, dtype=np.float64)
 
-        for train_idx, test_idx in cv.split(X, y, groups):
+        for train_idx, test_idx in cv.split(X, y, **routed_params.splitter.split):
             X_train, y_train = X_ordinal[train_idx, :], y_encoded[train_idx]
             y_train_mean = np.mean(y_train, axis=0)
 
