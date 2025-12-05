@@ -447,7 +447,6 @@ def estimator_html_repr(estimator):
     )
     with closing(StringIO()) as out:
         container_id = _CONTAINER_ID_COUNTER.get_id()
-        style_with_id = _CSS_STYLE
         estimator_str = str(estimator)
 
         # The fallback message is shown by default and loading the CSS sets
@@ -466,7 +465,7 @@ def estimator_html_repr(estimator):
             " with nbviewer.org."
         )
         html_template = (
-            f"<style>{style_with_id}</style>"
+            f"<style>{_CSS_STYLE}</style>"
             f"<body>"
             f'<div id="{container_id}" class="sk-top-container css-selector">'
             '<div class="sk-text-repr-fallback">'
