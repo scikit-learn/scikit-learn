@@ -189,9 +189,27 @@ clf
 
 
 # %%
-# DecisionTreeRegressor with MAE
-# ------------------------------
-# TODO
+# DecisionTreeRegressor with `criterion="absolute_error"`
+# ------------------------------------------------------
+# :class:`tree.DecisionTreeRegressor` with `criterion="absolute_error"`
+# now runs much faster. It has now `O(n * log(n))` complexity compared to
+# `O(n**2)` previously, which allows to scale to millions of data points.
+#
+# As an illustration, on a dataset with 100_000 samples and 1 feature, doing a
+# single split takes of the order of 100ms, compared to ~20 seconds before.
+
+import time
+
+from sklearn.datasets import make_regression
+from sklearn.tree import DecisionTreeRegressor
+
+X, y = make_regression(n_samples=100_000, n_features=1)
+tree = DecisionTreeRegressor(criterion="absolute_error", max_depth=1)
+
+tic = time.time()
+tree.fit(X, y)
+elapsed = time.time() - tic
+print(f"Fit took {elapsed:.2f} seconds")
 
 # %%
 # ClassicalMDS
