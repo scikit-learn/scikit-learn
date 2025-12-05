@@ -2146,6 +2146,35 @@ def check_array_api_multilabel_classification_metric(
         )
 
 
+def check_array_api_continuous_classification_metric(
+    metric, array_namespace, device, dtype_name
+):
+    y_true_np = np.array([[0, 1, 0], [1, 1, 0]], dtype=dtype_name)
+    y_score_np = np.array([[0.1, 10.0, -3.0], [0.0, 1.0, 3.0]], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_score_np,
+        sample_weight=None,
+    )
+
+    sample_weight = np.array([0.1, 2.0], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_score_np,
+        sample_weight=sample_weight,
+    )
+
+
 def check_array_api_regression_metric(metric, array_namespace, device, dtype_name):
     func_name = metric.func.__name__ if isinstance(metric, partial) else metric.__name__
     if func_name == "mean_poisson_deviance" and sp_version < parse_version("1.14.0"):
@@ -2283,6 +2312,10 @@ array_api_metric_checkers = {
     confusion_matrix: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
+    ],
+    coverage_error: [
+        check_array_api_continuous_classification_metric,
+        check_array_api_multilabel_classification_metric,
     ],
     det_curve: [check_array_api_binary_classification_metric],
     f1_score: [
