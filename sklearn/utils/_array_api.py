@@ -401,7 +401,19 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
 
     _check_array_api_dispatch(array_api_dispatch)
 
-    namespace, is_array_api_compliant = array_api_compat.get_namespace(*arrays), True
+    try:
+        namespace = array_api_compat.get_namespace(*arrays)
+        is_array_api_compliant = True
+    except TypeError:
+        # Since get_namespace can be used by helper functions that are called
+        # in estimators or function that do not necessarily support array API
+        # (yet), anything not supported by array_api_compat falls back to numpy
+        # to preserve backward compatibility when enabling array_api_dispatch.
+        # The most common such case are "_cyutility._memoryviewslice"
+        # instances passed to array-api compatible helper functions from Cython
+        # code.
+        namespace = np_compat
+        is_array_api_compliant = False
 
     if namespace.__name__ == "array_api_strict" and hasattr(
         namespace, "set_array_api_strict_flags"
