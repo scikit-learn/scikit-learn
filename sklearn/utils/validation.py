@@ -5,7 +5,6 @@
 
 import numbers
 import operator
-import sys
 import warnings
 from collections.abc import Sequence
 from contextlib import suppress
@@ -31,6 +30,7 @@ from sklearn.utils._array_api import (
     get_namespace,
     get_namespace_and_device,
 )
+from sklearn.utils._dataframe import is_pandas_df, is_pandas_df_or_series
 from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
 from sklearn.utils._missing import is_pandas_na, is_pandas_nat, is_scalar_nan
 from sklearn.utils._tags import get_tags
@@ -314,7 +314,7 @@ def _use_interchange_protocol(X):
     to ensure strict behavioral backward compatibility with older versions of
     scikit-learn.
     """
-    return not _is_pandas_df(X) and hasattr(X, "__dataframe__")
+    return not is_pandas_df(X) and hasattr(X, "__dataframe__")
 
 
 def _num_features(X):
@@ -1131,7 +1131,7 @@ def check_array(
             # ensure that the output is writeable, even if avoidable, to not overwrite
             # the user's data by surprise.
 
-            if _is_pandas_df_or_series(array_orig):
+            if is_pandas_df_or_series(array_orig):
                 try:
                     # In pandas >= 3, np.asarray(df), called earlier in check_array,
                     # returns a read-only intermediate array. It can be made writeable
@@ -2309,51 +2309,6 @@ def _check_method_params(X, params, indices=None):
     return method_params_validated
 
 
-def _is_pandas_df_or_series(X):
-    """Return True if the X is a pandas dataframe or series."""
-    try:
-        pd = sys.modules["pandas"]
-    except KeyError:
-        return False
-    return isinstance(X, (pd.DataFrame, pd.Series))
-
-
-def _is_pandas_df(X):
-    """Return True if the X is a pandas dataframe."""
-    try:
-        pd = sys.modules["pandas"]
-    except KeyError:
-        return False
-    return isinstance(X, pd.DataFrame)
-
-
-def _is_pyarrow_data(X):
-    """Return True if the X is a pyarrow Table, RecordBatch, Array or ChunkedArray."""
-    try:
-        pa = sys.modules["pyarrow"]
-    except KeyError:
-        return False
-    return isinstance(X, (pa.Table, pa.RecordBatch, pa.Array, pa.ChunkedArray))
-
-
-def _is_polars_df_or_series(X):
-    """Return True if the X is a polars dataframe or series."""
-    try:
-        pl = sys.modules["polars"]
-    except KeyError:
-        return False
-    return isinstance(X, (pl.DataFrame, pl.Series))
-
-
-def _is_polars_df(X):
-    """Return True if the X is a polars dataframe."""
-    try:
-        pl = sys.modules["polars"]
-    except KeyError:
-        return False
-    return isinstance(X, pl.DataFrame)
-
-
 def _get_feature_names(X):
     """Get feature names from X.
 
@@ -2377,7 +2332,7 @@ def _get_feature_names(X):
     feature_names = None
 
     # extract feature names for support array containers
-    if _is_pandas_df(X):
+    if is_pandas_df(X):
         # Make sure we can inspect columns names from pandas, even with
         # versions too old to expose a working implementation of
         # __dataframe__.column_names() and avoid introducing any
