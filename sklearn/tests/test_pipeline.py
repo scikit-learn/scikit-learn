@@ -58,7 +58,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
-from sklearn.utils.validation import _check_feature_names, check_is_fitted
+from sklearn.utils.validation import check_feature_names, check_is_fitted
 
 # Load a shared tests data sets for the tests in this module. Mark them
 # read-only to avoid unintentional in-place modifications that would introduce
@@ -1460,7 +1460,7 @@ def test_make_pipeline_memory():
 
 class FeatureNameSaver(BaseEstimator):
     def fit(self, X, y=None):
-        _check_feature_names(self, X, reset=True)
+        check_feature_names(self, X, reset=True)
         return self
 
     def transform(self, X, y=None):
