@@ -128,6 +128,7 @@ class _BinaryClassifierCurveDisplayMixin:
         curve_kwargs,
         default_curve_kwargs=None,
         default_multi_curve_kwargs=None,
+        removed_version="1.9",
         **kwargs,
     ):
         """Get validated line kwargs for each curve.
@@ -162,20 +163,24 @@ class _BinaryClassifierCurveDisplayMixin:
             Default curve kwargs for multi-curve plots. Individual kwargs
             are over-ridden by `curve_kwargs`, if kwarg also set in `curve_kwargs`.
 
+        removed_version : str, default="1.9"
+            Version in which `kwargs` will be removed.
+
         **kwargs : dict
             Deprecated. Keyword arguments to be passed to matplotlib's `plot`.
         """
-        # TODO(1.9): Remove deprecated **kwargs
+        # TODO: Remove once kwargs deprecated on all displays
         if curve_kwargs and kwargs:
             raise ValueError(
                 "Cannot provide both `curve_kwargs` and `kwargs`. `**kwargs` is "
-                "deprecated in 1.7 and will be removed in 1.9. Pass all matplotlib "
-                "arguments to `curve_kwargs` as a dictionary."
+                f"deprecated and will be removed in {removed_version}. Pass all "
+                "matplotlib arguments to `curve_kwargs` as a dictionary."
             )
         if kwargs:
             warnings.warn(
-                "`**kwargs` is deprecated and will be removed in 1.9. Pass all "
-                "matplotlib arguments to `curve_kwargs` as a dictionary instead.",
+                f"`**kwargs` is deprecated and will be removed in {removed_version}. "
+                "Pass all matplotlib arguments to `curve_kwargs` as a dictionary "
+                "instead.",
                 FutureWarning,
             )
             curve_kwargs = kwargs
@@ -196,7 +201,7 @@ class _BinaryClassifierCurveDisplayMixin:
                 "To avoid labeling individual curves that have the same appearance, "
                 f"`curve_kwargs` should be a list of {n_curves} dictionaries. "
                 "Alternatively, set `name` to `None` or a single string to label "
-                "a single legend entry with mean ROC AUC score of all curves."
+                "a single legend entry for all curves."
             )
 
         # Ensure `name` is of the correct length
