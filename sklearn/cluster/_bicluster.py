@@ -133,6 +133,14 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         """
         X = validate_data(self, X, accept_sparse="csr", dtype=np.float64)
         self._check_parameters(X.shape[0])
+
+        if self.n_clusters == 1:
+            self.row_labels_ = np.zeros(shape=(1, X.shape[0]))
+            self.column_labels_ = np.zeros(shape=(1, X.shape[1]))
+            self.rows_ = np.zeros(shape=X.shape[0])
+            self.columns_ = np.zeros(shape=X.shape[1])
+            return self
+
         self._fit(X)
         return self
 
