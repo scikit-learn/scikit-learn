@@ -6,6 +6,11 @@
 import sys
 
 
+def is_df_or_series(X):
+    """Return True if the X is a dataframe or series."""
+    return is_pandas_df_or_series(X) or is_polars_df_or_series(X) or is_pyarrow_data(X)
+
+
 def is_pandas_df_or_series(X):
     """Return True if the X is a pandas dataframe or series."""
     try:
