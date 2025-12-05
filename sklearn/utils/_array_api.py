@@ -124,7 +124,6 @@ def _get_namespace_device_dtype_ids(param):
             return "device2"
 
 
-# could also put with `_array_api_for_tests`, and use pytest param
 def yield_mixed_namespace_input_combinations():
     """Yield mixed namespace and device inputs for testing."""
 
