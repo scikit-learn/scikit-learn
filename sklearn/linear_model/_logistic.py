@@ -213,12 +213,12 @@ def _logistic_regression_path(
         If not provided, then each sample is given unit weight.
 
     l1_ratio : float, default=None
-        The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
-        used if ``penalty='elasticnet'``. Setting ``l1_ratio=0`` is equivalent
-        to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
-        to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
-        combination of L1 and L2.
-
+    The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
+    used if ``penalty='elasticnet'``. Setting ``l1_ratio=0`` is equivalent
+    to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
+    to using ``penalty='l1'``. For ``0 < l1_ratio < 1``, the penalty is a
+    combination of L1 and L2.
+    
     n_threads : int, default=1
        Number of OpenMP threads to use.
 
