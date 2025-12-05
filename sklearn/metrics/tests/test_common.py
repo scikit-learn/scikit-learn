@@ -2503,7 +2503,7 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
 
     # Deal with max mps float being float32
     def _get_dtype(np_array, xp, device):
-        if np.issubdtype(np_array, np.floating):
+        if np.issubdtype(np_array.dtype, np.floating):
             dtype = _max_precision_float_dtype(xp, device)
         else:
             dtype = xp.int64
