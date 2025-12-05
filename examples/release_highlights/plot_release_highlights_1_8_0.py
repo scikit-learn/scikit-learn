@@ -201,13 +201,34 @@ clf
 # module. Classical MDS is close to PCA and instead of of approximating
 # distances, it approximates pairwise scalar products, which has an exact
 # analytic solution in terms of eigendecomposition.
+#
+# Let's illustrate this new addition by using it on a S-curve dataset to
+# get a low-dimensional representation of the data.
 
-from sklearn.datasets import load_digits
-from sklearn.manifold import ClassicalMDS
+import matplotlib.pyplot as plt
+from matplotlib import ticker
 
-X, _ = load_digits(return_X_y=True)
-print(X.shape)
+from sklearn import datasets, manifold
 
-cmds = ClassicalMDS(n_components=2)
-X_emb = cmds.fit_transform(X[:100])
-print(X_emb.shape)
+n_samples = 1500
+S_points, S_color = datasets.make_s_curve(n_samples, random_state=0)
+md_classical = manifold.ClassicalMDS(n_components=2)
+S_scaling = md_classical.fit_transform(S_points)
+
+fig = plt.figure(figsize=(8, 4))
+ax1 = fig.add_subplot(1, 2, 1, projection="3d")
+x, y, z = S_points.T
+ax1.scatter(x, y, z, c=S_color, s=50, alpha=0.8)
+ax1.set_title("Original S-curve samples", size=16)
+ax1.view_init(azim=-60, elev=9)
+for axis in (ax1.xaxis, ax1.yaxis, ax1.zaxis):
+    axis.set_major_locator(ticker.MultipleLocator(1))
+
+ax2 = fig.add_subplot(1, 2, 2)
+x2, y2 = S_scaling.T
+ax2.scatter(x2, y2, c=S_color, s=50, alpha=0.8)
+ax2.set_title("Classical MDS", size=16)
+for axis in (ax2.xaxis, ax2.yaxis):
+    axis.set_major_formatter(ticker.NullFormatter())
+
+plt.show()
