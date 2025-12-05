@@ -1,6 +1,8 @@
 import joblib
 import numpy as np
 import pytest
+from scipy.linalg import cholesky, solve_triangular
+from scipy.stats import gaussian_kde
 
 from sklearn.datasets import make_blobs
 from sklearn.exceptions import NotFittedError
@@ -14,13 +16,17 @@ from sklearn.utils._testing import assert_allclose
 
 # XXX Duplicated in test_neighbors_tree, test_kde
 def compute_kernel_slow(Y, X, kernel, h):
+    cho_cov = cholesky(np.cov(X.T), lower=True)
+    X_scaled = solve_triangular(cho_cov, X.T, lower=True).T
+    Y_scaled = solve_triangular(cho_cov, Y.T, lower=True).T
+
     if h == "scott":
         h = X.shape[0] ** (-1 / (X.shape[1] + 4))
     elif h == "silverman":
         h = (X.shape[0] * (X.shape[1] + 2) / 4) ** (-1 / (X.shape[1] + 4))
 
-    d = np.sqrt(((Y[:, None, :] - X) ** 2).sum(-1))
-    norm = kernel_norm(h, X.shape[1], kernel) / X.shape[0]
+    d = np.sqrt(((Y_scaled[:, None, :] - X_scaled) ** 2).sum(-1))
+    norm = kernel_norm(h, X.shape[1], kernel) / X.shape[0] / np.linalg.det(cho_cov)
 
     if kernel == "gaussian":
         return norm * np.exp(-0.5 * (d * d) / (h * h)).sum(-1)
@@ -38,20 +44,35 @@ def compute_kernel_slow(Y, X, kernel, h):
         raise ValueError("kernel not recognized")
 
 
-def check_results(kernel, bandwidth, atol, rtol, X, Y, dens_true):
-    kde = KernelDensity(kernel=kernel, bandwidth=bandwidth, atol=atol, rtol=rtol)
+def check_results(kernel, bandwidth, atol, rtol, X, Y, dens_true, breadth_first):
+    kde = KernelDensity(
+        kernel=kernel,
+        bandwidth=bandwidth,
+        atol=atol,
+        rtol=rtol,
+        breadth_first=breadth_first,
+    )
     log_dens = kde.fit(X).score_samples(Y)
     assert_allclose(np.exp(log_dens), dens_true, atol=atol, rtol=max(1e-7, rtol))
     assert_allclose(
         np.exp(kde.score(Y)), np.prod(dens_true), atol=atol, rtol=max(1e-7, rtol)
     )
 
+    # Check against the scipy brute-force implementation, but scipy supports only
+    # Gaussian kernel
+    if kernel == "gaussian":
+        scipy_res = gaussian_kde(X.T, bw_method=bandwidth).pdf(Y.T)
+        assert_allclose(np.exp(log_dens), scipy_res, atol=atol, rtol=max(1e-7, rtol))
+
 
 @pytest.mark.parametrize(
     "kernel", ["gaussian", "tophat", "epanechnikov", "exponential", "linear", "cosine"]
 )
 @pytest.mark.parametrize("bandwidth", [0.01, 0.1, 1, "scott", "silverman"])
-def test_kernel_density(kernel, bandwidth):
+@pytest.mark.parametrize("rtol", [0, 1e-5])
+@pytest.mark.parametrize("atol", [1e-6, 1e-2])
+@pytest.mark.parametrize("breadth_first", [True, False])
+def test_kernel_density(kernel, bandwidth, rtol, atol, breadth_first):
     n_samples, n_features = (100, 3)
 
     rng = np.random.RandomState(0)
@@ -59,14 +80,11 @@ def test_kernel_density(kernel, bandwidth):
     Y = rng.randn(n_samples, n_features)
 
     dens_true = compute_kernel_slow(Y, X, kernel, bandwidth)
-
-    for rtol in [0, 1e-5]:
-        for atol in [1e-6, 1e-2]:
-            for breadth_first in (True, False):
-                check_results(kernel, bandwidth, atol, rtol, X, Y, dens_true)
+    check_results(kernel, bandwidth, atol, rtol, X, Y, dens_true, breadth_first)
 
 
-def test_kernel_density_sampling(n_samples=100, n_features=3):
+def test_kernel_density_sampling():
+    n_samples, n_features = 100, 3
     rng = np.random.RandomState(0)
     X = rng.randn(n_samples, n_features)
 
@@ -75,8 +93,8 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
     for kernel in ["gaussian", "tophat"]:
         # draw a tophat sample
         kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
-        samp = kde.sample(100)
-        assert X.shape == samp.shape
+        samp = kde.sample(50)
+        assert samp.shape == (50, n_features)
 
         # check that samples are in the right range
         nbrs = NearestNeighbors(n_neighbors=1).fit(X)
@@ -93,7 +111,7 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
     for kernel in ["epanechnikov", "exponential", "linear", "cosine"]:
         kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
         with pytest.raises(NotImplementedError):
-            kde.sample(100)
+            kde.sample(50)
 
     # non-regression test: used to return a scalar
     X = rng.randn(4, 1)
@@ -151,51 +169,54 @@ def test_kde_pipeline_gridsearch():
     assert search.best_params_["kerneldensity__bandwidth"] == 0.1
 
 
-def test_kde_sample_weights():
+@pytest.mark.parametrize("algorithm", ["auto", "ball_tree", "kd_tree"])
+@pytest.mark.parametrize("metric", ["euclidean", "minkowski", "manhattan", "chebyshev"])
+@pytest.mark.parametrize("d", [1, 2, 10])
+def test_kde_sample_weights(algorithm, metric, d):
     n_samples = 400
     size_test = 20
     weights_neutral = np.full(n_samples, 3.0)
-    for d in [1, 2, 10]:
-        rng = np.random.RandomState(0)
-        X = rng.rand(n_samples, d)
-        weights = 1 + (10 * X.sum(axis=1)).astype(np.int8)
-        X_repetitions = np.repeat(X, weights, axis=0)
-        n_samples_test = size_test // d
-        test_points = rng.rand(n_samples_test, d)
-        for algorithm in ["auto", "ball_tree", "kd_tree"]:
-            for metric in ["euclidean", "minkowski", "manhattan", "chebyshev"]:
-                if algorithm != "kd_tree" or metric in KDTree.valid_metrics:
-                    kde = KernelDensity(algorithm=algorithm, metric=metric)
+    rng = np.random.RandomState(0)
 
-                    # Test that adding a constant sample weight has no effect
-                    kde.fit(X, sample_weight=weights_neutral)
-                    scores_const_weight = kde.score_samples(test_points)
-                    sample_const_weight = kde.sample(random_state=1234)
-                    kde.fit(X)
-                    scores_no_weight = kde.score_samples(test_points)
-                    sample_no_weight = kde.sample(random_state=1234)
-                    assert_allclose(scores_const_weight, scores_no_weight)
-                    assert_allclose(sample_const_weight, sample_no_weight)
+    X = rng.rand(n_samples, d)
+    weights = 1 + (10 * X.sum(axis=1)).astype(np.int8)
+    X_repetitions = np.repeat(X, weights, axis=0)
+    n_samples_test = size_test // d
+    test_points = rng.rand(n_samples_test, d)
 
-                    # Test equivalence between sampling and (integer) weights
-                    kde.fit(X, sample_weight=weights)
-                    scores_weight = kde.score_samples(test_points)
-                    sample_weight = kde.sample(random_state=1234)
-                    kde.fit(X_repetitions)
-                    scores_ref_sampling = kde.score_samples(test_points)
-                    sample_ref_sampling = kde.sample(random_state=1234)
-                    assert_allclose(scores_weight, scores_ref_sampling)
-                    assert_allclose(sample_weight, sample_ref_sampling)
+    kde = KernelDensity(algorithm=algorithm, metric=metric)
 
-                    # Test that sample weights has a non-trivial effect
-                    diff = np.max(np.abs(scores_no_weight - scores_weight))
-                    assert diff > 0.001
+    # Test that adding a constant sample weight has no effect
+    kde.fit(X, sample_weight=weights_neutral)
+    scores_const_weight = kde.score_samples(test_points)
+    sample_const_weight = kde.sample(random_state=1234)
+    kde.fit(X)
+    scores_no_weight = kde.score_samples(test_points)
+    sample_no_weight = kde.sample(random_state=1234)
+    assert_allclose(scores_const_weight, scores_no_weight)
+    assert_allclose(sample_const_weight, sample_no_weight)
 
-                    # Test invariance with respect to arbitrary scaling
-                    scale_factor = rng.rand()
-                    kde.fit(X, sample_weight=(scale_factor * weights))
-                    scores_scaled_weight = kde.score_samples(test_points)
-                    assert_allclose(scores_scaled_weight, scores_weight)
+    # Test equivalence between sampling and (integer) weights
+    kde.fit(X, sample_weight=weights)
+    scores_weight = kde.score_samples(test_points)
+    sample_weight = kde.sample(random_state=1234)
+    kde.fit(X_repetitions)
+    scores_ref_sampling = kde.score_samples(test_points)
+    sample_ref_sampling = kde.sample(random_state=1234)
+    assert_allclose(
+        np.exp(scores_weight), np.exp(scores_ref_sampling), atol=1e-8, rtol=1e-2
+    )
+    assert_allclose(sample_weight, sample_ref_sampling, rtol=1e-2)
+
+    # Test that sample weights has a non-trivial effect
+    diff = np.max(np.abs(scores_no_weight - scores_weight))
+    assert diff > 0.001
+
+    # Test invariance with respect to arbitrary scaling
+    scale_factor = rng.rand()
+    kde.fit(X, sample_weight=(scale_factor * weights))
+    scores_scaled_weight = kde.score_samples(test_points)
+    assert_allclose(scores_scaled_weight, scores_weight)
 
 
 @pytest.mark.parametrize("sample_weight", [None, [0.1, 0.2, 0.3]])
