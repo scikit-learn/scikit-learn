@@ -2150,6 +2150,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
     array([-79.4755331])
     """
 
+    # pyrefly: ignore [bad-override]
     path = staticmethod(lasso_path)
 
     def __init__(
@@ -2441,6 +2442,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         "l1_ratio": [Interval(Real, 0, 1, closed="both"), "array-like"],
     }
 
+    # pyrefly: ignore [bad-override]
     path = staticmethod(enet_path)
 
     def __init__(
@@ -3116,6 +3118,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     _parameter_constraints.pop("precompute")
     _parameter_constraints.pop("positive")
 
+    # pyrefly: ignore [bad-override]
     path = staticmethod(enet_path)
 
     def __init__(
@@ -3368,6 +3371,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     _parameter_constraints.pop("precompute")
     _parameter_constraints.pop("positive")
 
+    # pyrefly: ignore [bad-override]
     path = staticmethod(lasso_path)
 
     def __init__(

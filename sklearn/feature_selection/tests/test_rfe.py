@@ -49,6 +49,7 @@ class MockClassifier(ClassifierMixin, BaseEstimator):
     decision_function = predict
     transform = predict
 
+    # pyrefly: ignore [bad-override]
     def score(self, X=None, y=None):
         return 0.0
 

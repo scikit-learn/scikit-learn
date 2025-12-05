@@ -647,6 +647,7 @@ class RANSACRegressor(
 
         return self.estimator_.predict(X, **predict_params)
 
+    # pyrefly: ignore [bad-override]
     def score(self, X, y, **params):
         """Return the score of the prediction.
 
