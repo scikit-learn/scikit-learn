@@ -133,6 +133,8 @@ def test_determine_key_type_array_api(array_namespace, device, dtype_name):
                 _determine_key_type(complex_array_key)
 
 
+# TODO(1.10): remove filterwarnings
+@pytest.mark.filterwarnings("ignore:Slices.*deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "array_type", ["list", "array", "sparse", "dataframe", "polars", "pyarrow"]
 )
@@ -149,6 +151,8 @@ def test_safe_indexing_2d_container_axis_0(array_type, indices_type):
     )
 
 
+# TODO(1.10): remove filterwarnings
+@pytest.mark.filterwarnings("ignore:Slices.*deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "array_type", ["list", "array", "series", "polars_series", "pyarrow_array"]
 )
@@ -163,6 +167,8 @@ def test_safe_indexing_1d_container(array_type, indices_type):
     assert_allclose_dense_sparse(subset, _convert_container([2, 3], array_type))
 
 
+# TODO(1.10): remove filterwarnings
+@pytest.mark.filterwarnings("ignore:Slices.*deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "array_type", ["array", "sparse", "dataframe", "polars", "pyarrow"]
 )
@@ -392,6 +398,8 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
     assert X.iloc[0, 0] == 1
 
 
+# TODO(1.10): remove filterwarnings
+@pytest.mark.filterwarnings("ignore:Slices.*deprecated.*:FutureWarning")
 @pytest.mark.parametrize("indices", [0, [0, 1], slice(0, 2), np.array([0, 1])])
 def test_safe_indexing_list_axis_1_unsupported(indices):
     """Check that we raise a ValueError when axis=1 with input as list."""
@@ -661,3 +669,11 @@ def test_shuffle_dont_convert_to_array(csc_container):
     assert type(d_s) == MockDataFrame
 
     assert_array_equal(e_s.toarray(), np.array([[4, 5], [2, 3], [0, 1]]))
+
+
+# TODO(1.10): remove test
+def test_safe_indexing_raises_deprecation_warning():
+    X = np.arange(6).reshape(3, 2)
+    msg = "Slices as indices _safe_indexing"
+    with pytest.warns(FutureWarning, match=msg):
+        _safe_indexing(X, slice(0, 1))
