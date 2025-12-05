@@ -68,3 +68,27 @@ def is_pandas_na(x):
         return x is NA
 
     return False
+
+
+def is_pandas_nat(x):
+    """Test if x is pandas.NaT.
+
+    We intentionally do not make this function return `True` for NumPy NaT
+    values (e.g., `np.datetime64("NaT")` or `np.timedelta64("NaT")`). Estimators
+    that handle NumPy NaT should use `numpy.isnat` instead.
+
+    Parameters
+    ----------
+    x : any type
+        The input value to test.
+
+    Returns
+    -------
+    boolean
+        True if `x` is `pandas.NaT`, False otherwise.
+    """
+    with suppress(ImportError):
+        from pandas import NaT
+
+        return x is NaT
+    return False
