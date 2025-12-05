@@ -690,6 +690,11 @@ class SVC(BaseSVC):
         5-fold cross-validation, and `predict_proba` may be inconsistent with
         `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
 
+        ..deprecated:: 1.8
+          Parameter `probability` will be removed in 1.10.
+          Use `CalibratedClassifierCV(SVC(), ensemble=False)` instead of
+          `SVC(probability=True)`.
+
     tol : float, default=1e-3
         Tolerance for stopping criterion.
 
@@ -867,7 +872,7 @@ class SVC(BaseSVC):
         gamma="scale",
         coef0=0.0,
         shrinking=True,
-        probability=False,
+        probability="deprecated",
         tol=1e-3,
         cache_size=200,
         class_weight=None,
@@ -950,6 +955,11 @@ class NuSVC(BaseSVC):
         to calling `fit`, will slow down that method as it internally uses
         5-fold cross-validation, and `predict_proba` may be inconsistent with
         `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
+
+        ..deprecated:: 1.8
+          Parameter `probability` will be removed in version 1.10, use
+          `CalibratedClassifierCV(NuSVC(), ensemble=False)`
+          instead of `NuSVC(probability=True)`.
 
     tol : float, default=1e-3
         Tolerance for stopping criterion.
@@ -1130,7 +1140,7 @@ class NuSVC(BaseSVC):
         gamma="scale",
         coef0=0.0,
         shrinking=True,
-        probability=False,
+        probability="deprecated",
         tol=1e-3,
         cache_size=200,
         class_weight=None,
