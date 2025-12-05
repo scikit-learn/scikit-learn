@@ -7,12 +7,34 @@ import sys
 
 
 def is_df_or_series(X):
-    """Return True if the X is a dataframe or series."""
+    """Return True if the X is a dataframe or series.
+
+    Parameters
+    ----------
+    X : {array-like, dataframe}
+        The array-like or dataframe object to check.
+
+    Returns
+    -------
+    bool
+        True if the X is a dataframe or series, False otherwise.
+    """
     return is_pandas_df_or_series(X) or is_polars_df_or_series(X) or is_pyarrow_data(X)
 
 
 def is_pandas_df_or_series(X):
-    """Return True if the X is a pandas dataframe or series."""
+    """Return True if the X is a pandas dataframe or series.
+
+    Parameters
+    ----------
+    X : {array-like, dataframe}
+        The array-like or dataframe object to check.
+
+    Returns
+    -------
+    bool
+        True if the X is a pandas dataframe or series, False otherwise.
+    """
     try:
         pd = sys.modules["pandas"]
     except KeyError:
@@ -21,7 +43,18 @@ def is_pandas_df_or_series(X):
 
 
 def is_pandas_df(X):
-    """Return True if the X is a pandas dataframe."""
+    """Return True if the X is a pandas dataframe.
+
+    Parameters
+    ----------
+    X : {array-like, dataframe}
+        The array-like or dataframe object to check.
+
+    Returns
+    -------
+    bool
+        True if the X is a pandas dataframe, False otherwise.
+    """
     try:
         pd = sys.modules["pandas"]
     except KeyError:
@@ -30,7 +63,19 @@ def is_pandas_df(X):
 
 
 def is_pyarrow_data(X):
-    """Return True if the X is a pyarrow Table, RecordBatch, Array or ChunkedArray."""
+    """Return True if the X is a pyarrow Table, RecordBatch, Array or ChunkedArray.
+
+    Parameters
+    ----------
+    X : {array-like, dataframe}
+        The array-like or dataframe object to check.
+
+    Returns
+    -------
+    bool
+        True if the X is a pyarrow Table, RecordBatch, Array or ChunkedArray,
+        False otherwise.
+    """
     try:
         pa = sys.modules["pyarrow"]
     except KeyError:
@@ -39,7 +84,18 @@ def is_pyarrow_data(X):
 
 
 def is_polars_df_or_series(X):
-    """Return True if the X is a polars dataframe or series."""
+    """Return True if the X is a polars dataframe or series.
+
+    Parameters
+    ----------
+    X : {array-like, dataframe}
+        The array-like or dataframe object to check.
+
+    Returns
+    -------
+    bool
+        True if the X is a polars dataframe or series, False otherwise.
+    """
     try:
         pl = sys.modules["polars"]
     except KeyError:
@@ -48,7 +104,18 @@ def is_polars_df_or_series(X):
 
 
 def is_polars_df(X):
-    """Return True if the X is a polars dataframe."""
+    """Return True if the X is a polars dataframe.
+
+    Parameters
+    ----------
+    X : {array-like, dataframe}
+        The array-like or dataframe object to check.
+
+    Returns
+    -------
+    bool
+        True if the X is a polarsdataframe, False otherwise.
+    """
     try:
         pl = sys.modules["polars"]
     except KeyError:
