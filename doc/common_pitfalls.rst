@@ -389,8 +389,8 @@ each case**:
   will be the same for each of the 5 folds of the CV procedure. In
   particular, the (randomly chosen) subset of features of the estimator will
   be the same across all folds.
-- Since `rf_none` was passed `None`, which corresponds to using the global
-  `RandomState` instance from `numpy`. Each call to `fit`
+- Since `rf_none` was passed `None` (which corresponds to using the global
+  `RandomState` instance from `numpy`), each call to `fit`
   starts from a different RNG. As a result, the random subset of features
   will be different for each fold.
 
@@ -408,17 +408,17 @@ it will allow the estimator RNG to vary for each fold.
     illustration purpose: what matters is what we pass to the
     :class:`~sklearn.ensemble.RandomForestClassifier` estimator.
 
-.. note::
-    Passing a `RandomState` instance would be expected result in the behaviour
-    described for the `random_state=None` case with the advantage of allowing
-    reproducibility across executions. However, because of the current
-    implementation of cloning, the current behaviour when using `RandomState`
-    instances is similar to the one when using integers.
-    In each fold the estimator will have an identically initialised `RandomState`
-    object, thus producing the same RNG. Therefore there is currently no way to
-    introduce variability of the randomness across folds in a reproducible manner.
-    This issue is actively being discussed and worked on by maintainers. More details
-    `in this issue <https://github.com/scikit-learn/scikit-learn/issues/26148>`_.
+.. warning::
+    Passing a `RandomState` instance should, in principle, behave like passing
+    random_state=None while enabling reproducibility across executions.
+    However, because of the current implementation of cloning, using `RandomState`
+    instances inside a CV is similar to using integers.
+    In each fold the estimator is cloned and thus will have an identically initialised
+    `RandomState` object, thus producing the same RNG. As a result, there is currently
+    no way to introduce variability of the randomness across folds in a reproducible
+    manner. This issue is actively being discussed and worked on by maintainers.
+    More details in
+    `this issue <https://github.com/scikit-learn/scikit-learn/issues/26148>`_.
 
 .. _cloning:
 
