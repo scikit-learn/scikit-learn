@@ -4,9 +4,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import argparse
+import re
 from collections import defaultdict
 
-# scipy and cython should by in sync with pyproject.toml
+# scipy and cython should be in sync with pyproject.toml
 NUMPY_MIN_VERSION = "1.24.1"
 SCIPY_MIN_VERSION = "1.10.0"
 JOBLIB_MIN_VERSION = "1.3.0"
@@ -14,6 +15,11 @@ THREADPOOLCTL_MIN_VERSION = "3.2.0"
 PYTEST_MIN_VERSION = "7.1.2"
 CYTHON_MIN_VERSION = "3.1.2"
 
+# Allowed tags for sanity checking
+VALID_TAGS = {
+    "build", "install", "benchmark", "docs",
+    "examples", "tests", "maintenance"
+}
 
 # 'build' and 'install' is included to have structured metadata for CI.
 # It will NOT be included in setup's extras_require
@@ -51,24 +57,42 @@ dependent_packages = {
     "sphinx-design": ("0.6.0", "docs"),
     "pydata-sphinx-theme": ("0.15.3", "docs"),
     "towncrier": ("24.8.0", "docs"),
-    # XXX: Pin conda-lock to the latest released version (needs manual update
-    # from time to time)
     "conda-lock": ("3.0.1", "maintenance"),
 }
 
+# version sanity checking
+_VERSION_PATTERN = re.compile(r"^\d+(\.\d+){1,2}(\.\w+)?$")
 
-# create inverse mapping for setuptools
+def _validate_version_format():
+    """Ensure all dependency versions use valid semantic versioning."""
+    for pkg, (version, _) in dependent_packages.items():
+        if not _VERSION_PATTERN.match(version):
+            raise ValueError(f"Invalid version format for {pkg}: {version}")
+
+# tag sanity checking
+def _validate_tags():
+    for pkg, (_, tags) in dependent_packages.items():
+        for tag in tags.split(", "):
+            if tag not in VALID_TAGS:
+                raise ValueError(f"Unknown tag '{tag}' in {pkg}")
+
+_validate_version_format()
+_validate_tags()
+
+# Inverse mapping for setuptools
 tag_to_packages: dict = defaultdict(list)
 for package, (min_version, extras) in dependent_packages.items():
     for extra in extras.split(", "):
-        tag_to_packages[extra].append("{}>={}".format(package, min_version))
+        tag_to_packages[extra].append(f"{package}>={min_version}")
+
+# reusable helper
+def get_min_version(package: str) -> str:
+    return dependent_packages[package][0]
 
 
 # Used by CI to get the min dependencies
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Get min dependencies for a package")
-
     parser.add_argument("package", choices=dependent_packages)
     args = parser.parse_args()
-    min_version = dependent_packages[args.package][0]
-    print(min_version)
+    print(get_min_version(args.package))
