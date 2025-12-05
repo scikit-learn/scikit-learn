@@ -16,6 +16,7 @@ from sklearn._config import get_config
 from sklearn.externals import array_api_compat
 from sklearn.externals import array_api_extra as xpx
 from sklearn.externals.array_api_compat import numpy as np_compat
+from sklearn.utils._dataframe import is_df_or_series
 from sklearn.utils.fixes import parse_version
 
 # TODO: complete __all__
@@ -319,6 +320,8 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
         if isinstance(array, remove_types):
             continue
         if sp.issparse(array):
+            continue
+        if is_df_or_series(array):
             continue
         filtered_arrays.append(array)
 
