@@ -22,6 +22,11 @@ from sklearn.utils.fixes import parse_version
 __all__ = ["xpx"]  # we import xpx here just to re-export it, need this to appease ruff
 
 _NUMPY_NAMESPACE_NAMES = {"numpy", "sklearn.externals.array_api_compat.numpy"}
+REMOVE_TYPES_DEFAULT = (
+    str,
+    list,
+    tuple,
+)
 
 
 def yield_namespaces(include_numpy_namespaces=True):
@@ -166,7 +171,7 @@ def _single_array_device(array):
         return array.device
 
 
-def device(*array_list, remove_none=True, remove_types=(str,)):
+def device(*array_list, remove_none=True, remove_types=REMOVE_TYPES_DEFAULT):
     """Hardware device where the array data resides on.
 
     If the hardware device is not the same for all arrays, an error is raised.
@@ -179,7 +184,7 @@ def device(*array_list, remove_none=True, remove_types=(str,)):
     remove_none : bool, default=True
         Whether to ignore None objects passed in array_list.
 
-    remove_types : tuple or list, default=(str,)
+    remove_types : tuple or list, default=(str, list, tuple)
         Types to ignore in array_list.
 
     Returns
@@ -289,7 +294,7 @@ def supported_float_dtypes(xp, device=None):
     return tuple(valid_float_dtypes)
 
 
-def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
+def _remove_non_arrays(*arrays, remove_none=True, remove_types=REMOVE_TYPES_DEFAULT):
     """Filter arrays to exclude None and/or specific types.
 
     Sparse arrays are always filtered out.
@@ -302,7 +307,7 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
     remove_none : bool, default=True
         Whether to ignore None objects passed in arrays.
 
-    remove_types : tuple or list, default=(str,)
+    remove_types : tuple or list, (str, list, tuple)
         Types to ignore in the arrays.
 
     Returns
@@ -325,7 +330,23 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
     return filtered_arrays
 
 
-def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
+def _unwrap_memoryviewslices(*arrays):
+    unwrapped = []
+    for a in arrays:
+        a_type = type(a)
+        if (
+            a_type.__module__ == "_cyutility"
+            and a_type.__name__ == "_memoryviewslice"
+            and hasattr(a, "base")
+        ):
+            a = a.base
+        unwrapped.append(a)
+    return unwrapped
+
+
+def get_namespace(
+    *arrays, remove_none=True, remove_types=REMOVE_TYPES_DEFAULT, xp=None
+):
     """Get namespace of arrays.
 
     Introspect `arrays` arguments and return their common Array API compatible
@@ -361,7 +382,7 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     remove_none : bool, default=True
         Whether to ignore None objects passed in arrays.
 
-    remove_types : tuple or list, default=(str,)
+    remove_types : tuple or list, (str, list, tuple)
         Types to ignore in the arrays.
 
     xp : module, default=None
@@ -396,24 +417,19 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
         remove_types=remove_types,
     )
 
+    # get_namespace can be called by helper functions that are used both in
+    # array API compatible code and non-array API Cython related code. To
+    # support the latter on NumPy inputs without raising a TypeError, we
+    # unwrap potential Cython memoryview slices here.j
+    arrays = _unwrap_memoryviewslices(*arrays)
+
     if not arrays:
         return np_compat, False
 
     _check_array_api_dispatch(array_api_dispatch)
 
-    try:
-        namespace = array_api_compat.get_namespace(*arrays)
-        is_array_api_compliant = True
-    except TypeError:
-        # Since get_namespace can be used by helper functions that are called
-        # in estimators or function that do not necessarily support array API
-        # (yet), anything not supported by array_api_compat falls back to numpy
-        # to preserve backward compatibility when enabling array_api_dispatch.
-        # The most common such case are "_cyutility._memoryviewslice"
-        # instances passed to array-api compatible helper functions from Cython
-        # code.
-        namespace = np_compat
-        is_array_api_compliant = False
+    namespace = array_api_compat.get_namespace(*arrays)
+    is_array_api_compliant = True
 
     if namespace.__name__ == "array_api_strict" and hasattr(
         namespace, "set_array_api_strict_flags"
@@ -424,7 +440,7 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
 
 
 def get_namespace_and_device(
-    *array_list, remove_none=True, remove_types=(str,), xp=None
+    *array_list, remove_none=True, remove_types=REMOVE_TYPES_DEFAULT, xp=None
 ):
     """Combination into one single function of `get_namespace` and `device`.
 
@@ -434,7 +450,7 @@ def get_namespace_and_device(
         Array objects.
     remove_none : bool, default=True
         Whether to ignore None objects passed in arrays.
-    remove_types : tuple or list, default=(str,)
+    remove_types : tuple or list, (str, list, tuple)
         Types to ignore in the arrays.
     xp : module, default=None
         Precomputed array namespace module. When passed, typically from a caller
