@@ -421,11 +421,11 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         Returns
         -------
         X_trans : ndarray of shape (n_samples, n_features) or
-                  (n_samples, n_features * n_classes)
-            Encoded representation of X. For binary and continuous targets, one column
-            per input feature is returned. For multiclass targets, one column
-            per (feature, class) pair is returned, with classes ordered
-            as in ``classes_``.
+                (n_samples, n_features * n_classes)
+                Encoded representation of X. For binary and continuous targets,
+                one column per input feature is returned. For multiclass
+                targets, one column per (feature, class) pair is returned,
+                with classes ordered as in ``classes_``.
         """
         check_is_fitted(self)
         n_samples = _num_samples(X)
