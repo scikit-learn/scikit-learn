@@ -716,15 +716,10 @@ def test_pandas_copy_on_write():
         TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
 
 
-# ---------------------------------------------------------------------------
-# Small batch Target encoder tests
-# ---------------------------------------------------------------------------
-
-
 def _fit_pair_numpy():
     """
     Fit two encoders on the same tiny dataset:
-    - te_fast uses the small-batch fast-path (threshold >= 1024),
+    - te_fast uses the small-batch fast-path (threshold = 1024),
     - te_vec forces the baseline vectorized path (threshold < 0).
     """
     X_fit = np.array(
@@ -738,10 +733,8 @@ def _fit_pair_numpy():
     )
     y = np.array([0.0, 1.0, 1.0, 0.0])
     te_fast = TargetEncoder(smooth=5.0).fit(X_fit, y)
-    # White-box: enable small-batch fast path deterministically.
     te_fast._small_batch_threshold = 1024
     te_vec = TargetEncoder(smooth=5.0).fit(X_fit, y)
-    # White-box: force always-vectorized path for reference.
     te_vec._small_batch_threshold = -1
     return te_fast, te_vec
 
@@ -756,16 +749,11 @@ def _force_slow_transform(enc: TargetEncoder, X):
         enc._small_batch_threshold = old_thresh
 
 
-# ------------------------------
-# Tests: NA/NAT normalization
-# ------------------------------
-
-
 def test_norm_key_real_values_cover_nan_nat_and_strings():
     """
-    `_norm_key` should:
-    - map None, float NaN, and NumPy NaT to *distinct* sentinels,
-    - return ordinary strings unchanged.
+    Check that `_norm_key` maps NA-like values (None, float NaN, datetime/timedelta
+    NaT) to stable sentinel objects while leaving ordinary strings unchanged, and
+    that the sentinels for each NA family are distinct from one another.
     """
     k_none = _norm_key(None)
 
@@ -785,28 +773,19 @@ def test_norm_key_real_values_cover_nan_nat_and_strings():
     assert k_nat_dt != "x"
 
 
-# ------------------------------
-# Tests: fast path vs vectorized parity
-# ------------------------------
-
-
 def test_small_batch_fastpath_matches_vectorized_with_nans_and_nats():
     """
     For tiny inputs, small-batch dict-lookup path should match the reference
     vectorized path exactly (within tight numerical tolerance).
-
-    Important detail:
-    Do NOT mix datetime64 NaT and timedelta64 NaT in the *same column*, because
-    the vectorized unknown-check cannot compare them together.
     """
     te_fast, te_vec = _fit_pair_numpy()
 
     X = np.empty((5, 2), dtype=object)
-    X[0] = ["u", "x"]  # seen
-    X[1] = [float("nan"), "x"]  # float NaN branch
-    X[2] = [None, "x"]  # None branch
-    X[3] = ["u", np.datetime64("NaT")]  # datetime NaT branch
-    X[4] = ["new_unseen", "x"]  # unseen → default
+    X[0] = ["u", "x"]
+    X[1] = [float("nan"), "x"]
+    X[2] = [None, "x"]
+    X[3] = ["u", np.datetime64("NaT")]
+    X[4] = ["new_unseen", "x"]
 
     npt.assert_allclose(te_fast.transform(X), te_vec.transform(X), rtol=0, atol=1e-9)
 
@@ -869,11 +848,6 @@ def test_small_batch_multiclass_parity_and_order():
     assert ref.shape == fast.shape
 
 
-# ------------------------------
-# Tests: feature names via real DataFrames
-# ------------------------------
-
-
 def test_fit_dataframe_sets_feature_names_pandas():
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame(
@@ -912,11 +886,6 @@ def test_fit_dataframe_sets_feature_names_polars():
     else:
         # Fall back to x0, x1 names if feature names were not captured
         npt.assert_array_equal(names, np.array(["x0", "x1"], dtype=object))
-
-
-# ------------------------------
-# Tests: internal caches existence after fit
-# ------------------------------
 
 
 def test_smallbatch_index_maps_exist_after_fit():

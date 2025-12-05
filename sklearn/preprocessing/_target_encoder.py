@@ -346,22 +346,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             self._index_maps_[j] = idx_map
 
     def _transform_small_batch(self, X):
-        """Fast-path transform for tiny inputs.
-
-        Notes
-        -----
-        - Called only when n_samples <= _small_batch_threshold.
-        - Performs input validation because we bypass _transform(...) here.
-        - Uses precomputed per-feature {category -> index} maps to do O(1) lookups.
+        """Fast-path transform for small inputs.
+        This is called only when n_samples <= _small_batch_threshold.
         """
-        # Validate here (large-batch path validates inside _transform)
         _, n_samples, n_features = self._check_X(X, ensure_all_finite="allow-nan")
 
-        # 2) feature-name & n_features checks on the original X (keeps pandas names)
         _check_feature_names(self, X, reset=False)
         _check_n_features(self, X, reset=False)
 
-        # 3) build an object array for the tiny fast path
         X_arr = np.asarray(X, dtype=object)
         n_samples, n_features = X_arr.shape
         is_multi = self.target_type_ == "multiclass"
@@ -376,7 +368,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         norm_key = _norm_key
 
         for j in range(n_features):
-            get = index_maps[j].get
+            # get = index_maps[j].get
             col = X_arr[:, j]
 
             if not is_multi:
@@ -384,7 +376,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 default = float(np.asarray(self.target_mean_))
                 out_col = np.empty(n_samples, dtype=float)
                 for i in range(n_samples):
-                    idx = get(norm_key(col[i]), -1)
+                    idx = index_maps[j].get(norm_key(col[i]), -1)
                     out_col[i] = enc_vec[idx] if idx >= 0 else default
                 X_out[:, j] = out_col
             else:
@@ -398,7 +390,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
                 out_block = np.empty((n_samples, n_classes), dtype=float)
                 for i in range(n_samples):
-                    idx = get(norm_key(col[i]), -1)
+                    idx = index_maps[j].get(norm_key(col[i]), -1)
                     out_block[i, :] = enc_block[:, idx] if idx >= 0 else default_v
 
                 start = j * n_classes
@@ -427,23 +419,21 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         Returns
         -------
         X_trans : ndarray of shape (n_samples, n_features) or
-                  (n_samples, n_features * n_classes) Encoded representation of X.
-                  For binary and continuous targets, one column per input feature is
-                  returned. For multiclass targets, one column per (feature, class)
-                  pair is returned, with classes ordered as in ``classes_``.
+                  (n_samples, n_features * n_classes)
+            Encoded representation of X. For binary and continuous targets, one column
+            per input feature is returned. For multiclass targets, one column
+            per (feature, class) pair is returned, with classes ordered
+            as in ``classes_``.
         """
         check_is_fitted(self)
-        # Decide path WITHOUT triggering a full validation first.
         n_samples = _num_samples(X)
         use_small_batch = n_samples <= self._small_batch_threshold and hasattr(
             self, "_index_maps_"
         )
 
-        # ---- Small-batch path (tiny inputs only) ---------------------------------
         if use_small_batch:
             return self._transform_small_batch(X)
 
-        # ---- Large/normal batches: baseline vectorized path ----------------------
         X_ordinal, X_known_mask = self._transform(
             X, handle_unknown="ignore", ensure_all_finite="allow-nan"
         )

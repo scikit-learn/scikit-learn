@@ -9,7 +9,6 @@ import sys
 import warnings
 from collections.abc import Sequence
 from contextlib import suppress
-from enum import Enum, unique
 from functools import reduce, wraps
 from inspect import Parameter, isclass, signature
 
@@ -2972,24 +2971,22 @@ def validate_data(
     return out
 
 
-@unique
-class _NAKey(Enum):
-    NONE = 0
-    NAN = 1
-    PD_NA = 2
-    PD_NAT = 3
-    NAT = 4
+_NA_NONE = object()
+_NA_NAN = object()
+_NA_PD_NA = object()
+_NA_PD_NAT = object()
+_NA_NAT = object()
 
 
 def _normalize_na_key(x):
     if x is None:
-        return _NAKey.NONE
+        return _NA_NONE
     if is_scalar_nan(x):
-        return _NAKey.NAN
+        return _NA_NAN
     if is_pandas_na(x):
-        return _NAKey.PD_NA
-    if is_pandas_nat(x):  # new helper, same style as is_pandas_na
-        return _NAKey.PD_NAT
+        return _NA_PD_NA
+    if is_pandas_nat(x):
+        return _NA_PD_NAT
     if isinstance(x, (np.datetime64, np.timedelta64)) and np.isnat(x):
-        return _NAKey.NAT
+        return _NA_NAT
     return x
