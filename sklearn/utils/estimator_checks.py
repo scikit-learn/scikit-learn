@@ -346,7 +346,7 @@ def _yield_array_api_checks(estimator, only_numpy=False):
         yield partial(
             check_array_api_input,
             array_namespace="numpy",
-            only_expect_array_output=False,
+            expect_only_array_outputs=False,
         )
     else:
         # These extended checks should pass for all estimators that declare
@@ -1062,7 +1062,7 @@ def check_array_api_input(
     dtype_name="float64",
     check_values=False,
     check_sample_weight=False,
-    only_expect_array_output=True,
+    expect_only_array_outputs=True,
 ):
     """Check that the estimator can work consistently with the Array API
 
@@ -1072,7 +1072,13 @@ def check_array_api_input(
     When check_values is True, it also checks that calling the estimator on the
     array_api Array gives the same results as ndarrays.
 
-    When sample_weight is True, dummy sample weights are passed to the fit call.
+    When check_sample_weight is True, dummy sample weights are passed to the
+    fit call.
+
+    When expect_only_array_outputs is False, the check accepts non-array
+    outputs from estimator methods (e.g., sparse data structures). This is
+    useful to test that enabling array API dispatch does not break the
+    estimator, even if the estimator does not support array API.
     """
     xp = _array_api_for_tests(array_namespace, device)
 
@@ -1209,7 +1215,7 @@ def check_array_api_input(
             f"got {result_ns}."
         )
 
-        if only_expect_array_output:
+        if expect_only_array_outputs:
             with config_context(array_api_dispatch=True):
                 assert array_device(result_xp) == array_device(X_xp)
 
