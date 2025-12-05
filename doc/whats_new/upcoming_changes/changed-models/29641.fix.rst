@@ -1,0 +1,9 @@
+- :class:`HistGradientBoostingClassifier` and `HistGradientBoostingRegressor`
+   now calculate bin edges differently when sample_weights=None. When the
+   number of distinct feature values is less than the specified max_bins,
+   the edges are calculated using a sliding window of shape 2. Otherwise,
+   percentile values calculated using averaged inverted cdf are used as
+   the bin edges. N evenly spaced percentiles are selected going from
+   0-100, where N=max_bins. Percentiles are then reduced to their distinct
+   values to avoid repeated bin edge values.
+   By :user:`Shruti Nath <snath-xoc>` and :user:`Olivier Grisel <ogrisel>`
