@@ -1034,7 +1034,7 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
         "logistic_regression": {"l1": {False: 6}, "l2": {False: 0, True: 7}},
         "hinge": {"l2": {True: 3}},
         "squared_hinge": {"l1": {False: 5}, "l2": {False: 2, True: 1}},
-        "epsilon_insensitive": {"l2": {True: 13}},
+        "epsilon_insensitive": {"l2": {True: 12}},
         "squared_epsilon_insensitive": {"l2": {False: 11, True: 12}},
         "crammer_singer": 4,
     }
