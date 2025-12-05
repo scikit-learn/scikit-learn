@@ -6,7 +6,8 @@ different columns.
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
-
+import re
+import sys
 import warnings
 from collections import Counter
 from functools import partial
@@ -48,6 +49,7 @@ from sklearn.utils.validation import (
     _check_n_features,
     _get_feature_names,
     _is_pandas_df,
+    _is_polars_df,
     _num_samples,
     check_array,
     check_is_fitted,
@@ -1532,12 +1534,16 @@ class make_column_selector:
         None, column selection will not be selected based on pattern.
 
     dtype_include : column dtype or list of column dtypes, default=None
-        A selection of dtypes to include. For more details, see
-        :meth:`pandas.DataFrame.select_dtypes`.
+        A selection of dtypes to include. For pandas DataFrames, see
+        :meth:`pandas.DataFrame.select_dtypes`. For Polars DataFrames, see `Polars data
+        types <https://docs.pola.rs/api/python/stable/reference/datatypes.html>`_,
+        or, on polars>=1.19.0, use Python data types (e.g., `int`, `str`).
 
     dtype_exclude : column dtype or list of column dtypes, default=None
-        A selection of dtypes to exclude. For more details, see
-        :meth:`pandas.DataFrame.select_dtypes`.
+        A selection of dtypes to exclude. For pandas DataFrames, see
+        :meth:`pandas.DataFrame.select_dtypes`. For Polars DataFrames, see `Polars data
+        types <https://docs.pola.rs/api/python/stable/reference/datatypes.html>`_,
+        or, on polars>=1.19.0, use Python data types (e.g., `int`, `str`).
 
     Returns
     -------
@@ -1570,6 +1576,26 @@ class make_column_selector:
            [-1.50755672,  1.        ,  0.        ,  0.        ],
            [-0.30151134,  0.        ,  1.        ,  0.        ],
            [ 0.90453403,  0.        ,  0.        ,  1.        ]])
+
+    `make_column_selector` works with Polars DataFrames. When passing `dtype_include`
+    & `dtype_exclude`, you can either pass Polars data types (e.g. `pl.Int64`,
+    `pl.String`) or, on polars>=1.19.0, pass Python data types (e.g. `int`, `str`):
+
+    >>> import polars as pl  # doctest: +SKIP
+    >>> X_polars = pl.DataFrame({
+    ...     'city': ['London', 'London', 'Paris', 'Sallisaw'],
+    ...     'rating': [5, 3, 4, 5]
+    ... })  # doctest: +SKIP
+    >>> ct_polars = make_column_transformer(
+    ...     (StandardScaler(),
+    ...      make_column_selector(dtype_include=[pl.Int64, float])),  # rating
+    ...     (OneHotEncoder(),
+    ...      make_column_selector(dtype_include=pl.String)))  # doctest: +SKIP
+    >>> ct_polars.fit_transform(X_polars)  # doctest: +SKIP
+    array([[ 0.90453403,  1.        ,  0.        ,  0.        ],
+           [-1.50755672,  1.        ,  0.        ,  0.        ],
+           [-0.30151134,  0.        ,  1.        ,  0.        ],
+           [ 0.90453403,  0.        ,  0.        ,  1.        ]])
     """
 
     def __init__(self, pattern=None, *, dtype_include=None, dtype_exclude=None):
@@ -1586,19 +1612,34 @@ class make_column_selector:
         df : dataframe of shape (n_features, n_samples)
             DataFrame to select columns from.
         """
-        if not hasattr(df, "iloc"):
+        if _is_pandas_df(df):
+            df_row = df.iloc[:1]
+            if self.dtype_include is not None or self.dtype_exclude is not None:
+                df_row = df_row.select_dtypes(
+                    include=self.dtype_include, exclude=self.dtype_exclude
+                )
+            cols = df_row.columns
+            if self.pattern is not None:
+                cols = cols[cols.str.contains(self.pattern, regex=True)]
+            return cols.tolist()
+        elif _is_polars_df(df):
+            pl = sys.modules["polars"]
+            cols = df.columns
+            if self.dtype_include:
+                cols = df.select(pl.selectors.by_dtype(self.dtype_include)).columns
+
+            if self.dtype_exclude:
+                excl_cols = df.select(pl.selectors.by_dtype(self.dtype_exclude)).columns
+                cols = [c for c in cols if c not in excl_cols]
+
+            if self.pattern is not None:
+                regex = re.compile(self.pattern)
+                cols = [c for c in cols if regex.search(c)]
+            return cols
+        else:
             raise ValueError(
-                "make_column_selector can only be applied to pandas dataframes"
+                "make_column_selector can only be applied to pandas/polars dataframes"
             )
-        df_row = df.iloc[:1]
-        if self.dtype_include is not None or self.dtype_exclude is not None:
-            df_row = df_row.select_dtypes(
-                include=self.dtype_include, exclude=self.dtype_exclude
-            )
-        cols = df_row.columns
-        if self.pattern is not None:
-            cols = cols[cols.str.contains(self.pattern, regex=True)]
-        return cols.tolist()
 
 
 def _feature_names_out_with_str_format(

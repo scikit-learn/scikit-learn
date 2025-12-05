@@ -1451,7 +1451,7 @@ def test_column_transformer_with_make_column_selector():
 def test_make_column_selector_error():
     selector = make_column_selector(dtype_include=np.number)
     X = np.array([[0.1, 0.2]])
-    msg = "make_column_selector can only be applied to pandas dataframes"
+    msg = "make_column_selector can only be applied to pandas/polars dataframes"
     with pytest.raises(ValueError, match=msg):
         selector(X)
 
@@ -1468,6 +1468,93 @@ def test_make_column_selector_pickle():
         columns=["col_int", "col_float", "col_str"],
     )
     selector = make_column_selector(dtype_include=[object, "string"])
+    selector_picked = pickle.loads(pickle.dumps(selector))
+
+    assert_array_equal(selector(X_df), selector_picked(X_df))
+
+
+def test_make_column_selector_polars_with_select_dtypes():
+    pl = pytest.importorskip("polars")
+
+    X_df = pl.DataFrame(
+        {
+            "col_int": [0, 1, 2],
+            "col_float": [0.0, 1.0, 2.0],
+            "col_str": ["one", "two", "three"],
+        },
+        schema={"col_int": pl.Int64, "col_float": pl.Float64, "col_str": pl.String},
+    )
+
+    selector = make_column_selector(dtype_include=[pl.Int64, pl.String])
+    assert_array_equal(selector(X_df), ["col_int", "col_str"])
+
+    selector = make_column_selector(dtype_exclude=[pl.String])
+    assert_array_equal(selector(X_df), ["col_int", "col_float"])
+
+    selector = make_column_selector(pattern="oa", dtype_include=[pl.Int64, pl.Float64])
+    assert_array_equal(selector(X_df), ["col_float"])
+
+    selector = make_column_selector(
+        dtype_include=[pl.Int64, pl.Float64], dtype_exclude=[pl.Int64]
+    )
+    assert_array_equal(selector(X_df), ["col_float"])
+
+    selector = make_column_selector(pattern="oa|st")
+    assert_array_equal(selector(X_df), ["col_float", "col_str"])
+
+    selector = make_column_selector(pattern="t", dtype_exclude=[pl.Int64])
+    assert_array_equal(selector(X_df), ["col_float", "col_str"])
+
+    selector = make_column_selector()
+    assert_array_equal(selector(X_df), ["col_int", "col_float", "col_str"])
+
+
+def test_column_transformer_with_make_column_selector_polars():
+    pl = pytest.importorskip("polars")
+    X_df = pl.DataFrame(
+        {
+            "col_int": [0, 1, 2],
+            "col_float": [0.0, 1.0, 2.0],
+            "col_cat": ["one", "two", "one"],
+            "col_str": ["low", "middle", "high"],
+        },
+        schema={
+            "col_int": pl.Int64,
+            "col_float": pl.Float64,
+            "col_cat": pl.String,
+            "col_str": pl.String,
+        },
+    )
+
+    cat_selector = make_column_selector(dtype_include=[pl.String])
+    num_selector = make_column_selector(dtype_include=[pl.Int64, pl.Float64])
+
+    ohe = OneHotEncoder()
+    scaler = StandardScaler()
+
+    ct_selector = make_column_transformer((ohe, cat_selector), (scaler, num_selector))
+    ct_direct = make_column_transformer(
+        (ohe, ["col_cat", "col_str"]), (scaler, ["col_float", "col_int"])
+    )
+
+    X_selector = ct_selector.fit_transform(X_df)
+    X_direct = ct_direct.fit_transform(X_df)
+
+    assert_allclose(X_selector, X_direct)
+
+
+def test_make_column_selector_polars_pickle():
+    pl = pytest.importorskip("polars")
+
+    X_df = pl.DataFrame(
+        {
+            "col_int": [0, 1, 2],
+            "col_float": [0.0, 1.0, 2.0],
+            "col_str": ["one", "two", "three"],
+        },
+        schema={"col_int": pl.Int64, "col_float": pl.Float64, "col_str": pl.String},
+    )
+    selector = make_column_selector(dtype_include=[pl.String])
     selector_picked = pickle.loads(pickle.dumps(selector))
 
     assert_array_equal(selector(X_df), selector_picked(X_df))

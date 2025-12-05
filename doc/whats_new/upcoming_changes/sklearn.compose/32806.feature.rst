@@ -1,0 +1,5 @@
+- :func:`compose.make_column_selector` now supports `polars.DataFrame` inputs. When
+  using Polars, `dtype_include` and `dtype_exclude` parameters can either be Polars data
+  types (e.g., `pl.Int64`, `pl.Float64`, `pl.String`) or, on polars>=1.19.0, Python
+  data types (e.g., `int`, `float`, `str`).
+  By :user:`Asher Wright <AsherWright>`.
