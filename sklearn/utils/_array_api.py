@@ -469,7 +469,7 @@ def move_to(*arrays, xp, device):
     `array` may contain `None` entries, these are left unchanged.
 
     Sparse arrays are accepted (as pass through) if the reference namespace is
-    Numpy, in which case they are returned unchanged. Otherwise a `TypeError`
+    NumPy, in which case they are returned unchanged. Otherwise a `TypeError`
     is raised.
 
     Parameters
