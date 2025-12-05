@@ -495,7 +495,7 @@ def test_timeout(lil_container):
 
 
 # TODO(1.10): remove this test. 
-XXX: probability=True is not thread-safe
+# XXX: probability=True is not thread-safe
 @pytest.mark.thread_unsafe
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_consistent_proba():
