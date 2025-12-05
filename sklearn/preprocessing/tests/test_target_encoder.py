@@ -718,11 +718,10 @@ def test_pandas_copy_on_write():
 
 def test_target_encoder_raises_bad_cv_generator():
     """
-    Test that `TargetEncoder` raises when `cv` is a cross-validation generator and
-    `groups` are passed into `fit_transform`.
+    Test that `TargetEncoder` raises when a non-accepted cross-validation generator is
+    passed as `cv` object.
     """
     X, y = make_classification(random_state=0)
-    groups = np.repeat(np.arange(5), X.shape[0] / 5)
     encoder = TargetEncoder(target_type="binary", cv=ShuffleSplit)
     msg = "The `cv` object needs to be one in {`GroupKFold`, `KFold`, "
     with pytest.raises(ValueError, match=msg):
@@ -754,13 +753,20 @@ def test_target_encoder_cv_auto_groups():
     assert encoder.cv_ == "StratifiedGroupKFold"
 
 
-def test_target_encoder_raises_cv_overlap():
+def test_target_encoder_raises_cv_overlap(global_random_seed):
     """
-    Test that `TargetEncoder` raises if a `cv` object (iterable or unsuitable
-    cross-validation generator are passed.
+    Test that `TargetEncoder` raises if `cv` is an  iterable with overlapping splits.
     """
     X, y = make_regression(n_samples=100, n_features=3, random_state=0)
 
     non_overlapping_iterable = KFold().split(X, y)
     encoder = TargetEncoder(cv=non_overlapping_iterable)
     encoder.fit_transform(X, y)
+
+    overlapping_iterable = ShuffleSplit(
+        n_splits=5, random_state=global_random_seed
+    ).split(X, y)
+    encoder = TargetEncoder(cv=overlapping_iterable)
+    msg = "Validation indices from the iterable `cv` must cover each sample index"
+    with pytest.raises(ValueError, match=msg):
+        encoder.fit_transform(X, y)

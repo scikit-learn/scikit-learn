@@ -348,9 +348,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
 
-        # The cv splitter is voluntarily restricted to a pre-specified subset to enforce
-        # non overlapping validation folds, otherwise the fit_transform output will not
-        # be well-specified.
+        # The CV splitter is restricted to splitters where each sample index appears in
+        # exactly one validation fold; otherwise the `fit_transform` output would be
+        # ill-defined.
         non_overlapping_splitters = (
             GroupKFold,
             KFold,
@@ -400,16 +400,17 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                         "object (from sklearn.model_selection) "
                         f"or an iterable. Got {self.cv}."
                     )
+                _test_indices = np.array([])
                 for fold in self.cv:
                     train_idx, test_idx = fold
-                    if any(np.isin(test_idx, train_idx)):
-                        raise ValueError(
-                            "Found overlapping indices of train and validation set. "
-                            "`TargetEncoder`'s internal cross-fitting relies on "
-                            "non-overlapping splits. Pass an iterator with "
-                            "non-overlapping indices as `cv` or refer to the docs for "
-                            "other options."
-                        )
+                    _test_indices = np.concatenate([_test_indices, test_idx])
+                if not np.isin(np.arange(X.shape[0]), _test_indices).all():
+                    raise ValueError(
+                        "Validation indices from the iterable `cv` must cover each "
+                        "sample index exactly once with no overlap. Pass an iterator "
+                        "with non-overlapping validation folds as `cv` or refer to the "
+                        "docs for other options."
+                    )
                 cv = _CVIterableWrapper(self.cv)
 
         self.cv_ = cv.__class__.__name__
