@@ -53,8 +53,6 @@ def _array_indexing(array, key, key_dtype, axis):
                 # yet hence the need to turn to equivalent integer indexing.
                 indices = xp.arange(array.shape[axis], device=device_)
                 return xp.take(array, indices[key], axis=axis)
-        else:
-            return array[key, ...] if axis == 0 else array[:, key]
 
     if issparse(array) and key_dtype == "bool":
         key = np.asarray(key)
