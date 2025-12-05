@@ -147,6 +147,68 @@ class NearestCentroid(
         self.priors = priors
 
     @_fit_context(prefer_skip_nested_validation=True)
+    def partial_fit(self, X, y, classes=None):
+        """
+        Incremental fit on a batch of samples.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data.
+        y : array-like of shape (n_samples,)
+            Target labels.
+        classes : array-like of shape (n_classes,), default=None
+            Must be provided on first call to `partial_fit`.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
+        X, y = validate_data(self, X, y, reset=not hasattr(self, "classes_"))
+        check_classification_targets(y)
+        n_samples, n_features = X.shape
+
+        if self.metric == "manhattan":
+            raise ValueError("partial_fit does not support the 'manhattan' metric.")
+
+        first_call = not hasattr(self, "classes_")
+
+        if first_call:
+            if classes is None:
+                raise ValueError(
+                    "classes must be provided on the first call to partial_fit."
+                )
+            self.classes_ = np.array(classes)
+            self.n_features_in_ = n_features
+            n_classes = len(self.classes_)
+            self.nk_ = np.zeros(n_classes, dtype=np.int64)
+            self.true_centroids_ = np.zeros((n_classes, n_features), dtype=np.float64)
+        else:
+            n_classes = len(self.classes_)
+            if n_features != self.n_features_in_:
+                raise ValueError("Number of features does not match previous calls.")
+
+        le = LabelEncoder()
+        y_encoded = le.fit_transform(y)
+
+        for idx in range(n_classes):
+            mask = y_encoded == idx
+            n_new = mask.sum()
+            if n_new == 0:
+                continue
+            mu_new = X[mask].mean(axis=0)
+            n_old = self.nk_[idx]
+            mu_old = self.true_centroids_[idx]
+            self.true_centroids_[idx] = (n_old * mu_old + n_new * mu_new) / (
+                n_old + n_new
+            )
+
+            self.nk_[idx] += n_new
+
+        self.centroids_ = self.true_centroids_.copy()
+        return self
+
     def fit(self, X, y):
         """
         Fit the NearestCentroid model according to the given training data.
