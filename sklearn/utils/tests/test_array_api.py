@@ -43,6 +43,7 @@ from sklearn.utils._array_api import (
 from sklearn.utils._testing import (
     SkipTest,
     _array_api_for_tests,
+    _convert_container,
     assert_array_equal,
     skip_if_array_api_compat_not_configured,
 )
@@ -85,23 +86,19 @@ def test_get_namespace_ndarray_with_dispatch():
 
 
 @skip_if_array_api_compat_not_configured
-def test_get_namespace_pandas_with_dispatch():
-    """Test get_namespace on pandas dataframes and series."""
-    pd = pytest.importorskip("pandas")
+@pytest.mark.parametrize(
+    "constructor_name", ["pyarrow", "dataframe", "polars", "series"]
+)
+def test_get_namespace_df_with_dispatch(constructor_name):
+    """Test get_namespace on dataframes and series."""
 
-    X_pd = pd.DataFrame([[1, 2, 3]])
-    X_pd_series = pd.Series([1, 2, 3])
-
+    df = _convert_container([[1, 4, 2], [3, 3, 6]], constructor_name)
     with config_context(array_api_dispatch=True):
-        xp_out, is_array_api_compliant = get_namespace(X_pd)
+        xp_out, is_array_api_compliant = get_namespace(df)
         assert not is_array_api_compliant
 
-        # When operating on pandas dataframes or series the Numpy namespace is
+        # When operating on dataframes or series the Numpy namespace is
         # the right thing to use.
-        assert xp_out is np_compat
-
-        xp_out, is_array_api_compliant = get_namespace(X_pd_series)
-        assert not is_array_api_compliant
         assert xp_out is np_compat
 
 
