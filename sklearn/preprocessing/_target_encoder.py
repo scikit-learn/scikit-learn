@@ -404,13 +404,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         This method internally uses the ``encodings_`` attribute learned during
         :meth:`TargetEncoder.fit_transform` to transform test data.
 
-        Notes
-        -----
-        ``fit(X, y).transform(X)`` does not equal :meth:`fit_transform(X, y)`
-        because a :term:`cross fitting` scheme is used in
-        :meth:`fit_transform` for encoding. See the
-        :ref:`User Guide <target_encoder>` for details.
-
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -420,12 +413,19 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         Returns
         -------
-        X_trans : ndarray of shape (n_samples, n_features) or
+        X_trans : ndarray of shape (n_samples, n_features) or \
                 (n_samples, n_features * n_classes)
                 Encoded representation of X. For binary and continuous targets,
-                one column per input feature is returned. For multiclass
-                targets, one column per (feature, class) pair is returned,
-                with classes ordered as in ``classes_``.
+                one column per input feature is returned. For multiclass targets,
+                one column per (feature, class) pair is returned, with classes
+                ordered as in ``classes_``.
+
+        Notes
+        -----
+        ``fit(X, y).transform(X)`` does not equal :meth:`fit_transform(X, y)`
+        because a :term:`cross fitting` scheme is used in
+        :meth:`fit_transform` for encoding. See the
+        :ref:`User Guide <target_encoder>` for details.
         """
         check_is_fitted(self)
         n_samples = _num_samples(X)
