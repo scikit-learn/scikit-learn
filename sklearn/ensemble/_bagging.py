@@ -7,7 +7,7 @@ import itertools
 import numbers
 from abc import ABCMeta, abstractmethod
 from functools import partial
-from numbers import Integral, Real
+from numbers import Integral
 from warnings import warn
 
 import numpy as np
@@ -79,10 +79,6 @@ def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
         return n_samples
     elif isinstance(max_samples, Integral):
         return max_samples
-    elif not isinstance(max_samples, Real):
-        raise ValueError(
-            f"max_samples must be None, int or float got {type(max_samples)}"
-        )
 
     if sample_weight is None:
         weighted_n_samples = n_samples
