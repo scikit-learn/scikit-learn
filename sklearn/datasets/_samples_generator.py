@@ -1685,11 +1685,12 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, *, random_state=None)
     {
         "n_dim": [Interval(Integral, 1, None, closed="left")],
         "random_state": ["random_state"],
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
     },
     prefer_skip_nested_validation=True,
 )
-def make_spd_matrix(n_dim, *, random_state=None):
-    """Generate a random symmetric, positive-definite matrix.
+def make_spd_matrix(n_dim, *, random_state=None, n_samples=1):
+    """Generate random symmetric, positive-definite matrices.
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
@@ -1703,10 +1704,16 @@ def make_spd_matrix(n_dim, *, random_state=None):
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    n_samples : int, default=1
+        The number of samples.
+
+        .. versionadded:: 1.4
+
     Returns
     -------
-    X : ndarray of shape (n_dim, n_dim)
-        The random symmetric, positive-definite matrix.
+    X : ndarray of shape (n_dim, n_dim) or (n_samples, n_dim, n_dim) when \
+        n_samples > 1.
+        The random symmetric, positive-definite matrices.
 
     See Also
     --------
@@ -1721,10 +1728,13 @@ def make_spd_matrix(n_dim, *, random_state=None):
     """
     generator = check_random_state(random_state)
 
-    A = generator.uniform(size=(n_dim, n_dim))
-    U, _, Vt = linalg.svd(np.dot(A.T, A), check_finite=False)
-    X = np.dot(np.dot(U, 1.0 + np.diag(generator.uniform(size=n_dim))), Vt)
+    A = generator.uniform(size=(n_samples, n_dim, n_dim))
+    U, _, Vt = np.linalg.svd(A.transpose((0, 2, 1)) @ A)
+    D = generator.uniform(size=(n_samples, n_dim))
+    X = U @ (1.0 + np.eye(n_dim) * D[:, None, :]) @ Vt
 
+    if n_samples == 1:
+        X = X[0]
     return X
 
 

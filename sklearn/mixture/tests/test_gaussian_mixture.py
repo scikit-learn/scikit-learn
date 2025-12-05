@@ -110,11 +110,13 @@ class RandomData:
             "spherical": 0.5 + rng.rand(n_components).astype(dtype),
             "diag": (0.5 + rng.rand(n_components, n_features).astype(dtype)) ** 2,
             "tied": make_spd_matrix(n_features, random_state=rng).astype(dtype),
-            "full": np.array(
-                [
-                    make_spd_matrix(n_features, random_state=rng).astype(dtype) * 0.5
-                    for _ in range(n_components)
-                ]
+            "full": (
+                make_spd_matrix(
+                    n_features,
+                    random_state=rng,
+                    n_samples=n_components,
+                ).astype(dtype)
+                * 0.5
             ),
         }
         self.precisions = {
