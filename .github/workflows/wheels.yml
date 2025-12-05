@@ -204,12 +204,37 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.11" # update once build dependencies are available
+          python-version: "3.12" # update once build dependencies are available
 
       - uses: conda-incubator/setup-miniconda@v3
         if: ${{ startsWith(matrix.platform_id, 'macosx') }}
         with:
           miniforge-version: latest
+
+      - name: Set CIBW_CONFIG_SETTINGS to use limited API when relevant
+        env:
+          PYTHON_VERSION: ${{ matrix.python }}
+          PLATFORM_ID: ${{ matrix.platform_id }}
+        run: |
+          set -xe
+
+          # Only use abi3 wheels for non free-threaded Python >= 3.12
+          if [[ "$PYTHON_VERSION" != "311" && ! "$PYTHON_VERSION" =~ t ]]; then
+              CIBW_CONFIG_SETTINGS='setup-args=-Dpython.allow_limited_api=true'
+
+              # TODO this is necessary for the wheel to be named correctly, is there a better way?
+              echo -ne '\n[tool.meson-python]\nlimited-api = true\n' >> pyproject.toml
+          fi
+
+          # Needed on Windows CI to compile with Visual Studio compiler
+          # otherwise Meson detects a MINGW64 platform and use MINGW64
+          # toolchain
+          if [[ "$PLATFORM_ID" =~ win ]]; then
+              CIBW_CONFIG_SETTINGS="$CIBW_CONFIG_SETTINGS setup-args=--vsenv"
+          fi
+
+          # export it to the GITHUB_ENV so that it can be used by cibuildwheel later
+          echo "CIBW_CONFIG_SETTINGS=$CIBW_CONFIG_SETTINGS" >> "$GITHUB_ENV"
 
       - name: Build and test wheels
         env:
@@ -219,10 +244,7 @@ jobs:
           CIBW_ARCHS: all
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_image }}
-          # Needed on Windows CI to compile with Visual Studio compiler
-          # otherwise Meson detects a MINGW64 platform and use MINGW64
-          # toolchain
-          CIBW_CONFIG_SETTINGS_WINDOWS: "setup-args=--vsenv"
+          CIBW_CONFIG_SETTINGS: ${{ env.CIBW_CONFIG_SETTINGS }}
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir}
           CIBW_BEFORE_BUILD: bash {project}/build_tools/wheels/cibw_before_build.sh {project}
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }} ${{matrix.platform_id}}
