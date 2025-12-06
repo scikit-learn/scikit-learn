@@ -337,6 +337,7 @@ class _PLS(
             # Deflation: subtract rank-one approx to obtain Xk+1 and yk+1
             x_loadings = np.dot(x_scores, Xk) / x_scores_ss
             Xk -= np.outer(x_scores, x_loadings)
+            x_var = x_scores_ss * np.dot(x_loadings, x_loadings)
 
             if self.deflation_mode == "canonical":
                 # regress yk on y_score
@@ -349,9 +350,6 @@ class _PLS(
                 y_loadings = np.dot(x_scores, yk) / x_scores_ss
                 yk -= np.outer(x_scores, y_loadings)
                 y_var = x_scores_ss * np.dot(y_loadings, y_loadings)
-
-            # Calculate X variance
-            x_var = x_scores_ss * np.dot(x_loadings, x_loadings)
 
             self.explained_variance_ratio_x_[k] = x_var / total_ss_x
             self.explained_variance_ratio_y_[k] = y_var / total_ss_y
