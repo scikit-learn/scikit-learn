@@ -84,7 +84,7 @@ def get_auto_step_size(
         )
     if sample_weight is not None:
         L *= sample_weight
-        L = L.max()
+    L = L.max()
 
     if is_saga:
         # SAGA theoretical step size is 1/3L or 1 / (2 * (L + mu n))

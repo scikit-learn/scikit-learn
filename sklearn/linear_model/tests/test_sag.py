@@ -286,10 +286,9 @@ def get_step_size(
         L *= sample_weight
     L = L.max()
     if is_saga:
-        # SAGA theoretical step size is 1/3L or 1 / (2 * (L + mu n))
+        # SAGA theoretical step size is 1/3L
         # See Defazio et al. 2014
-        mun = min(2 * X.shape[0] * alpha, L)
-        step = 1.0 / (2 * L + mun)
+        step = 1.0 / (3 * L)
     else:
         step = 1 / L
     # Recommended step_size = 1 / max L_i
