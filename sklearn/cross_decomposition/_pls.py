@@ -152,23 +152,6 @@ def _svd_flip_1d(u, v):
     v *= sign
 
 
-def _calculate_variance_xy(
-    X: np.ndarray, y: np.ndarray
-) -> tuple[float, float, bool, bool]:
-    """Calculates the variance of the X and y matrices
-    The flags has_x_variance and has_y_variance are included
-    as guards to prevent crashes on constant data
-    """
-    # Calculate variance
-    X_total_var = np.var(X, axis=0, ddof=1).sum()
-    y_total_var = np.var(y, axis=0, ddof=1).sum()
-
-    # Assertion for numerical stability
-    has_x_variance = not np.isclose(X_total_var, 0.0)
-    has_y_variance = not np.isclose(y_total_var, 0.0)
-    return X_total_var, y_total_var, has_x_variance, has_y_variance
-
-
 class _PLS(
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
@@ -296,10 +279,9 @@ class _PLS(
         self.explained_variance_ratio_y_ = np.zeros(n_components)
         self.n_iter_ = []
 
-        # Calculate variance in X and y matrices
-        X_total_var, y_total_var, has_x_variance, has_y_variance = (
-            _calculate_variance_xy(Xk, yk)
-        )
+        # Calculate Total SS for X and Y
+        total_ss_x = np.sum(Xk**2)
+        total_ss_y = np.sum(yk**2)
 
         # This whole thing corresponds to the algorithm in section 4.1 of the
         # review from Wegelin. See above for a notation mapping from code to
@@ -348,34 +330,31 @@ class _PLS(
                 y_ss = np.dot(y_weights, y_weights)
             y_scores = np.dot(yk, y_weights) / y_ss
 
-            # Calculate variance before deflation to measure component contribution
-            X_var_before, y_var_before, _, _ = _calculate_variance_xy(Xk, yk)
+            # Calculate X and y scores sum of squares
+            x_scores_ss = np.dot(x_scores, x_scores)
+            y_scores_ss = np.dot(y_scores, y_scores)
 
             # Deflation: subtract rank-one approx to obtain Xk+1 and yk+1
-            x_loadings = np.dot(x_scores, Xk) / np.dot(x_scores, x_scores)
+            x_loadings = np.dot(x_scores, Xk) / x_scores_ss
             Xk -= np.outer(x_scores, x_loadings)
 
             if self.deflation_mode == "canonical":
                 # regress yk on y_score
-                y_loadings = np.dot(y_scores, yk) / np.dot(y_scores, y_scores)
+                y_loadings = np.dot(y_scores, yk) / y_scores_ss
                 yk -= np.outer(y_scores, y_loadings)
+                y_var = y_scores_ss * np.dot(y_loadings, y_loadings)
 
             if self.deflation_mode == "regression":
                 # regress yk on x_score
-                y_loadings = np.dot(x_scores, yk) / np.dot(x_scores, x_scores)
+                y_loadings = np.dot(x_scores, yk) / x_scores_ss
                 yk -= np.outer(x_scores, y_loadings)
+                y_var = x_scores_ss * np.dot(y_loadings, y_loadings)
 
-            # Calculate the variance after deflating
-            X_var_after, y_var_after, _, _ = _calculate_variance_xy(Xk, yk)
+            # Calculate X variance
+            x_var = x_scores_ss * np.dot(x_loadings, x_loadings)
 
-            # Calculate explained variance ratio
-            self.explained_variance_ratio_x_[k] = (
-                (X_var_before - X_var_after) / X_total_var if has_x_variance else 0.0
-            )
-            self.explained_variance_ratio_y_[k] = (
-                (y_var_before - y_var_after) / y_total_var if has_y_variance else 0.0
-            )
-
+            self.explained_variance_ratio_x_[k] = x_var / total_ss_x
+            self.explained_variance_ratio_y_[k] = y_var / total_ss_y
             self.x_weights_[:, k] = x_weights
             self.y_weights_[:, k] = y_weights
             self._x_scores[:, k] = x_scores
