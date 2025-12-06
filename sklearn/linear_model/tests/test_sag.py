@@ -929,7 +929,7 @@ def test_sag_weighted_classification_convergence(solver, decay, saga, fit_interc
 
     X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0, cluster_std=0.1)
     y = 1 * (y >= 1)
-    sample_weights = np.random.randint(1, 3, size=n_samples)
+    sample_weights = np.random.randint(0, 3, size=n_samples)
 
     est = LogisticRegression(
         max_iter=max_iter,
