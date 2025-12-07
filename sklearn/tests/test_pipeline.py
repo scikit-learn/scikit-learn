@@ -1841,6 +1841,13 @@ def test_feature_union_set_output():
     assert_array_equal(X_trans.columns, union.get_feature_names_out())
     assert_array_equal(X_trans.index, X_test.index)
 
+    # Test with polars
+    pl = pytest.importorskip("polars")
+    union.set_output(transform="polars")
+    X_trans_pl = union.transform(X_test)
+    assert isinstance(X_trans_pl, pl.DataFrame)
+    assert_array_equal(X_trans_pl.columns, union.get_feature_names_out())
+
 
 def test_feature_union_getitem():
     """Check FeatureUnion.__getitem__ returns expected results."""
