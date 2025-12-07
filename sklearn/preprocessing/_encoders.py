@@ -559,9 +559,8 @@ class OneHotEncoder(_BaseEncoder):
 
         - 'error' : Raise an error if an unknown category is present during transform.
         - 'ignore' : When an unknown category is encountered during
-          transform, the resulting one-hot encoded columns for this feature
-          will be all zeros. In the inverse transform, an unknown category
-          will be denoted as None.
+          transform, it will be encoded as an additional category. In the 
+          inverse transform, an unknown category will be denoted as None.
         - 'infrequent_if_exist' : When an unknown category is encountered
           during transform, the resulting one-hot encoded columns for this
           feature will map to the infrequent category if it exists. The
