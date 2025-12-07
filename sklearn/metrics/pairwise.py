@@ -558,6 +558,10 @@ def nan_euclidean_distances(
 
     if not squared:
         np.sqrt(distances, out=distances)
+        # FIX: Ensure symmetry when computing distance to self
+    if Y is None or Y is X:
+        distances = (distances + distances.T) / 2
+        np.fill_diagonal(distances, 0)
 
     return distances
 
