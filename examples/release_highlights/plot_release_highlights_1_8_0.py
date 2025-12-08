@@ -73,9 +73,9 @@ or with conda::
 #         cv_results = cross_validate(ridge_pipeline_gpu, features, target)
 #
 #
-# Here is a [full notebook of this example on Google
+# A [full notebook of this example on Google
 # Colab](https://colab.research.google.com/drive/1ztH8gUPv31hSjEeR_8pw20qShTwViGRx?usp=sharing).
-# For this example, using the colab GPU vs using a single CPU core lead to a
+# For this example, using the colab GPU vs using a single CPU core leads to a
 # 10x speedup which is quite typical for such workloads.
 
 # %%
