@@ -22,8 +22,8 @@ or with conda::
 """
 
 # %%
-# Array API support
-# -----------------
+# Array API support (enables GPU computations)
+# --------------------------------------------
 # The progressive adoption of the Python array API standard in
 # scikit-learn means that PyTorch and CuPy input arrays
 # are used directly. This means that in scikit-learn estimators
