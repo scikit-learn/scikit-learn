@@ -37,12 +37,13 @@ from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
     _is_numpy_namespace,
     _is_xp_namespace,
+    _isin,
     _max_precision_float_dtype,
     _tolist,
     _union1d,
-    ensure_common_namespace_device,
     get_namespace,
     get_namespace_and_device,
+    move_to,
     supported_float_dtypes,
     xpx,
 )
@@ -107,6 +108,12 @@ def _check_targets(y_true, y_pred, sample_weight=None):
     check_consistent_length(y_true, y_pred, sample_weight)
     type_true = type_of_target(y_true, input_name="y_true")
     type_pred = type_of_target(y_pred, input_name="y_pred")
+    for array in [y_true, y_pred]:
+        if _num_samples(array) < 1:
+            raise ValueError(
+                "Found empty input array (e.g., `y_true` or `y_pred`) while a minimum "
+                "of 1 sample is required."
+            )
     if sample_weight is not None:
         sample_weight = _check_sample_weight(
             sample_weight, y_true, force_float_dtype=False
@@ -180,24 +187,14 @@ def _one_hot_encoding_multiclass_target(y_true, labels, target_xp, target_device
     Also return the classes provided by `LabelBinarizer` in additional to the
     integer encoded array.
     """
-    xp_y_true, is_y_true_array_api = get_namespace(y_true)
-
-    # For classification metrics both array API compatible and non array API
-    # compatible inputs are allowed for `y_true`. This is because arrays that
-    # store class labels as strings cannot be represented in namespaces other
-    # than Numpy. Thus to avoid unnecessary complexity, we always convert
-    # `y_true` to a Numpy array so that it can be processed appropriately by
-    # `LabelBinarizer` and then transfer the integer encoded output back to the
-    # target namespace and device.
-    if is_y_true_array_api:
-        y_true = _convert_to_numpy(y_true, xp=xp_y_true)
+    xp, _ = get_namespace(y_true)
 
     lb = LabelBinarizer()
     if labels is not None:
         lb = lb.fit(labels)
         # LabelBinarizer does not respect the order implied by labels, which
         # can be misleading.
-        if not np.all(lb.classes_ == labels):
+        if not xp.all(lb.classes_ == labels):
             warnings.warn(
                 f"Labels passed were {labels}. But this function "
                 "assumes labels are ordered lexicographically. "
@@ -205,7 +202,7 @@ def _one_hot_encoding_multiclass_target(y_true, labels, target_xp, target_device
                 "the columns of y_prob correspond to this ordering.",
                 UserWarning,
             )
-        if not np.isin(y_true, labels).all():
+        if not xp.all(_isin(y_true, labels, xp=xp)):
             undeclared_labels = set(y_true) - set(labels)
             raise ValueError(
                 f"y_true contains values {undeclared_labels} not belonging "
@@ -215,7 +212,7 @@ def _one_hot_encoding_multiclass_target(y_true, labels, target_xp, target_device
     else:
         lb = lb.fit(y_true)
 
-    if len(lb.classes_) == 1:
+    if lb.classes_.shape[0] == 1:
         if labels is None:
             raise ValueError(
                 "y_true contains only one label ({0}). Please "
@@ -254,7 +251,7 @@ def _validate_multiclass_probabilistic_prediction(
     y_true : array-like or label indicator matrix
         Ground truth (correct) labels for n_samples samples.
 
-    y_prob : array-like of float, shape=(n_samples, n_classes) or (n_samples,)
+    y_prob : array of floats, shape=(n_samples, n_classes) or (n_samples,)
         Predicted probabilities, as returned by a classifier's
         predict_proba method. If `y_prob.shape = (n_samples,)`
         the probabilities provided are assumed to be that of the
@@ -277,10 +274,6 @@ def _validate_multiclass_probabilistic_prediction(
     y_prob : array of shape (n_samples, n_classes)
     """
     xp, _, device_ = get_namespace_and_device(y_prob)
-
-    y_prob = check_array(
-        y_prob, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
-    )
 
     if xp.max(y_prob) > 1:
         raise ValueError(f"y_prob contains values greater than 1: {xp.max(y_prob)}")
@@ -320,8 +313,7 @@ def _validate_multiclass_probabilistic_prediction(
         )
 
     # Check if dimensions are consistent.
-    transformed_labels = check_array(transformed_labels)
-    if len(lb_classes) != y_prob.shape[1]:
+    if lb_classes.shape[0] != y_prob.shape[1]:
         if labels is None:
             raise ValueError(
                 "y_true and y_prob contain different number of "
@@ -379,12 +371,11 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
     Returns
     -------
-    score : float or int
-        If ``normalize == True``, return the fraction of correctly
-        classified samples (float), else returns the number of correctly
-        classified samples (int).
+    score : float
+        If ``normalize == True``, returns the fraction of correctly classified samples,
+        else returns the number of correctly classified samples.
 
-        The best performance is 1 with ``normalize == True`` and the number
+        The best performance is 1.0 with ``normalize == True`` and the number
         of samples with ``normalize == False``.
 
     See Also
@@ -413,7 +404,8 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
     """
-    xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
     # Compute accuracy for each possible representation
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred, sample_weight = _check_targets(
@@ -1035,7 +1027,7 @@ def jaccard_score(
     sets, is used to compare set of predicted labels for a sample to the
     corresponding set of labels in ``y_true``.
 
-    Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
+    Support beyond :term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return the
     Jaccard similarity coefficient for `pos_label`. If `average` is not `'binary'`,
@@ -1314,9 +1306,8 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
 def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
     """Zero-one classification loss.
 
-    If normalize is ``True``, return the fraction of misclassifications
-    (float), else it returns the number of misclassifications (int). The best
-    performance is 0.
+    If normalize is ``True``, returns the fraction of misclassifications, else returns
+    the number of misclassifications. The best performance is 0.
 
     Read more in the :ref:`User Guide <zero_one_loss>`.
 
@@ -1339,9 +1330,9 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
 
     Returns
     -------
-    loss : float or int,
-        If ``normalize == True``, return the fraction of misclassifications
-        (float), else it returns the number of misclassifications (int).
+    loss : float
+        If ``normalize == True``, returns the fraction of misclassifications, else
+        returns the number of misclassifications.
 
     See Also
     --------
@@ -1636,7 +1627,7 @@ def fbeta_score(
     Where :math:`\\text{tp}` is the number of true positives, :math:`\\text{fp}` is the
     number of false positives, and :math:`\\text{fn}` is the number of false negatives.
 
-    Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
+    Support beyond :term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return
     F-beta score for `pos_label`. If `average` is not `'binary'`, `pos_label` is
@@ -1955,7 +1946,7 @@ def precision_recall_fscore_support(
 
     The support is the number of occurrences of each class in ``y_true``.
 
-    Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
+    Support beyond :term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return
     metrics for `pos_label`. If `average` is not `'binary'`, `pos_label` is ignored
@@ -2290,7 +2281,7 @@ def class_likelihood_ratios(
 
     Returns
     -------
-    (positive_likelihood_ratio, negative_likelihood_ratio) : tuple
+    (positive_likelihood_ratio, negative_likelihood_ratio) : tuple of float
         A tuple of two floats, the first containing the positive likelihood ratio (LR+)
         and the second the negative likelihood ratio (LR-).
 
@@ -2508,7 +2499,7 @@ def precision_score(
 
     The best value is 1 and the worst value is 0.
 
-    Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
+    Support beyond :term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return
     precision for `pos_label`. If `average` is not `'binary'`, `pos_label` is ignored
@@ -2690,7 +2681,7 @@ def recall_score(
 
     The best value is 1 and the worst value is 0.
 
-    Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
+    Support beyond :term:`binary` targets is achieved by treating :term:`multiclass`
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return
     recall for `pos_label`. If `average` is not `'binary'`, `pos_label` is ignored
@@ -3218,8 +3209,8 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
 
     Returns
     -------
-    loss : float or int
-        Return the average Hamming loss between element of ``y_true`` and
+    loss : float
+        Returns the average Hamming loss between element of ``y_true`` and
         ``y_pred``.
 
     See Also
@@ -3377,8 +3368,12 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616
     """
+    xp, _, device_ = get_namespace_and_device(y_pred)
+    y_pred = check_array(
+        y_pred, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
+    )
     if sample_weight is not None:
-        sample_weight = ensure_common_namespace_device(y_pred, sample_weight)[0]
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
     transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
         y_true, y_pred, sample_weight, labels
@@ -3393,9 +3388,9 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
 
 def _log_loss(transformed_labels, y_pred, *, normalize=True, sample_weight=None):
     """Log loss for transformed labels and validated probabilistic predictions."""
-    xp, _ = get_namespace(y_pred, transformed_labels)
+    xp, _, device_ = get_namespace_and_device(y_pred)
     if sample_weight is not None:
-        sample_weight = ensure_common_namespace_device(y_pred, sample_weight)[0]
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
     eps = xp.finfo(y_pred.dtype).eps
     y_pred = xp.clip(y_pred, eps, 1 - eps)
     loss = -xp.sum(xlogy(transformed_labels, y_pred), axis=1)
@@ -3772,7 +3767,7 @@ def brier_score_loss(
         y_proba, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
     )
     if sample_weight is not None:
-        sample_weight = ensure_common_namespace_device(y_proba, sample_weight)[0]
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
     if y_proba.ndim == 1 or y_proba.shape[1] == 1:
         transformed_labels, y_proba = _validate_binary_probabilistic_prediction(
@@ -3859,9 +3854,12 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
 
-    y_pred = check_array(y_pred, ensure_2d=False, dtype="numeric")
+    xp, _, device_ = get_namespace_and_device(y_pred)
+    y_pred = check_array(
+        y_pred, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
+    )
     if sample_weight is not None:
-        sample_weight = ensure_common_namespace_device(y_pred, sample_weight)[0]
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
     transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
         y_true, y_pred, sample_weight, labels
@@ -3964,7 +3962,7 @@ def d2_brier_score(
         y_proba, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
     )
     if sample_weight is not None:
-        sample_weight = ensure_common_namespace_device(y_proba, sample_weight)[0]
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
     if y_proba.ndim == 1 or y_proba.shape[1] == 1:
         transformed_labels, y_proba = _validate_binary_probabilistic_prediction(
