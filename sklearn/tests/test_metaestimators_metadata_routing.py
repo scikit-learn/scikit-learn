@@ -63,6 +63,7 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
+from sklearn.preprocessing import TargetEncoder
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
@@ -447,6 +448,13 @@ METAESTIMATORS: list = [
         "scorer_routing_methods": ["fit", "score"],
         "X": X,
         "y": y,
+    },
+    {
+        "metaestimator": TargetEncoder,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit_transform"],
     },
 ]
 """List containing all metaestimators to be tested and their settings

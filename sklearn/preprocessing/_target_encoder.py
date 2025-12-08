@@ -7,7 +7,6 @@ from numbers import Real
 import numpy as np
 
 from sklearn.base import OneToOneFeatureMixin, _fit_context
-from sklearn.model_selection._split import _CVIterableWrapper
 from sklearn.preprocessing._encoders import _BaseEncoder
 from sklearn.preprocessing._target_encoder_fast import (
     _fit_encoding_fast,
@@ -352,6 +351,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             StratifiedGroupKFold,
             StratifiedKFold,
         )
+        from sklearn.model_selection._split import _CVIterableWrapper
         from sklearn.model_selection._validation import _check_groups_routing_disabled
 
         _raise_for_params(fit_params, self, "fit_transform")
@@ -413,7 +413,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                     )
                 _test_indices = np.array([])
                 for fold in self.cv:
-                    train_idx, test_idx = fold
+                    _, test_idx = fold
                     _test_indices = np.concatenate([_test_indices, test_idx])
                 if not np.isin(np.arange(X.shape[0]), _test_indices).all():
                     raise ValueError(
