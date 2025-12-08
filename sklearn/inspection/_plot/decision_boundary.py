@@ -224,7 +224,9 @@ class DecisionBoundaryDisplay:
             ):
                 unique_levels = np.unique(self.response)
                 if plot_method == "contourf":
-                    levels = np.concatenate([unique_levels - 0.5, [unique_levels.max() + 0.5]])
+                    levels = np.concatenate(
+                        [unique_levels - 0.5, [unique_levels.max() + 0.5]]
+                    )
                 else:
                     levels = unique_levels
                 kwargs.setdefault("levels", levels)

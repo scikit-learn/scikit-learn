@@ -718,9 +718,21 @@ def test_decision_boundary_display_many_classes(pyplot, plot_method):
     https://github.com/scikit-learn/scikit-learn/issues/32866
     """
     # Create a dataset with 11 classes
-    pts = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1],
-                    [2, 2], [3, 2], [3, 3], [4, 3],
-                    [4, 4], [5, 4], [5, 5]])
+    pts = np.array(
+        [
+            [-1, -1],
+            [-2, -1],
+            [1, 1],
+            [2, 1],
+            [2, 2],
+            [3, 2],
+            [3, 3],
+            [4, 3],
+            [4, 4],
+            [5, 4],
+            [5, 5],
+        ]
+    )
     y = np.arange(11)
     clf = LogisticRegression().fit(pts, y)
 
