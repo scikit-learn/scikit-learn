@@ -97,18 +97,49 @@ or with conda::
 
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import make_classification
-from sklearn.frozen import FrozenEstimator
-from sklearn.model_selection import train_test_split
-from sklearn.svm import LinearSVC
+from sklearn.naive_bayes import GaussianNB
 
-X, y = make_classification(random_state=42)
-X_train, X_calib, y_train, y_calib = train_test_split(X, y, random_state=42)
-clf = LinearSVC(random_state=42)
-clf.fit(X_train, y_train)
-ts = CalibratedClassifierCV(FrozenEstimator(clf), method="temperature", ensemble=False)
-ts.fit(X_calib, y_calib)
-beta = ts.calibrated_classifiers_[0].calibrators[0].beta_
-print(f"Optimal temperature = {1 / beta:.3}")
+X, y = make_classification(n_classes=3, n_informative=8, random_state=42)
+clf = GaussianNB()
+sig = CalibratedClassifierCV(clf, method="sigmoid", ensemble=False).fit(X, y)  # old
+ts = CalibratedClassifierCV(clf, method="temperature", ensemble=False).fit(X, y)  # new
+
+# %%
+# The following example shows that temperature scaling can produce better-calibrated
+# probabilities than sigmoid calibration in multi-class classification problem
+# (3 classes).
+
+import matplotlib.pyplot as plt
+from sklearn.calibration import CalibrationDisplay
+
+fig, axes = plt.subplots(
+    figsize=(8, 4.5),
+    ncols=3,
+    sharey=True,
+)
+for i, c in enumerate(ts.classes_):
+    CalibrationDisplay.from_predictions(
+        y == c,
+        ts.predict_proba(X)[:, i],
+        name="Temperature scaling",
+        ax=axes[i],
+    )
+    CalibrationDisplay.from_predictions(
+        y == c,
+        sig.predict_proba(X)[:, i],
+        name="Sigmoid",
+        ax=axes[i],
+    )
+    axes[i].set_title(f"Class {c}")
+    axes[i].set_xlabel(None)
+    axes[i].set_ylabel(None)
+    axes[i].get_legend().remove()
+fig.suptitle("Reliability Diagrams per Class")
+fig.supxlabel("Mean Predicted Probability")
+fig.supylabel("Fraction of Class")
+fig.legend(*axes[0].get_legend_handles_labels(), loc=(0.72, 0.5))
+plt.subplots_adjust(right=0.7)
+_ = fig.show()
 
 # %%
 # Linear models improvements
