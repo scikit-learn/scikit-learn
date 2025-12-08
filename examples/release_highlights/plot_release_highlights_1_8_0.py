@@ -62,6 +62,7 @@ or with conda::
 #             ),
 #             high_cardinality=TargetEncoder(cv=5),
 #         ),
+#         # Move the results to the GPU and perform computations there
 #         FunctionTransformer(
 #             lambda x: torch.tensor(x.to_numpy().astype(np.float32), device="cuda"))
 #         ,
