@@ -926,6 +926,7 @@ cdef inline uint32_t screen_features_enet_gram(
     floating gap,
     floating dual_norm_XtA,
     uint32_t n_features,
+    bint excluded_set_computed=0,
 ) noexcept nogil:
     """Apply gap safe screening for all features within enet_coordinate_descent_gram"""
     cdef floating d_j
@@ -935,7 +936,9 @@ cdef inline uint32_t screen_features_enet_gram(
     cdef floating radius = sqrt(2 * fabs(gap)) / alpha
 
     for j in range(n_features):
-        if Q[j, j] == 0:
+        if excluded_set_computed and excluded_set[j]:
+            continue
+        elif not excluded_set_computed and Q[j, j] == 0:
             w[j] = 0
             excluded_set[j] = 1
             continue
@@ -1128,6 +1131,7 @@ def enet_coordinate_descent_gram(
                         gap=gap,
                         dual_norm_XtA=dual_norm_XtA,
                         n_features=n_features,
+                        excluded_set_computed=1,
                     )
 
         else:
