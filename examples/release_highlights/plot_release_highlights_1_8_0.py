@@ -88,12 +88,31 @@ or with conda::
 # free-threaded wheels are available for all of our supported platforms on Python
 # 3.14.
 #
-# Free-threaded (also known as nogil) CPython is a version of CPython that aims to
-# enable efficient multi-threaded use cases by removing the Global Interpreter Lock
-# (GIL).
+# We would be very interested by user feed-back, here are a few things you can
+# try:
 #
-# Please try your use cases with free-threaded CPython and `report issues
-# <https://github.com/scikit-learn/scikit-learn/issues/new/choose>`_!
+# - install free-threaded CPython *3.14*, run your favourite
+#   scikit-learn script and check that nothing breaks unexpectedly.
+#   Note that CPython 3.14 is strongly advised because a number of
+#   free-threaded bugs have been fixed since CPython 3.13.
+# - if you use some estimators with a `n_jobs` parameter, try switching the
+#   default backend to threading with `joblib.parallel_config` as in the
+#   snippet below. This could potentially speed-up your code because the
+#   default joblib backend is process-based which incurs more overhead than
+#   threads.
+#
+#   .. code-block:: python
+#
+#       grid_search = GridSearchCV(clf, param_grid=param_grid)
+#       with joblib.parallel_config(backend="threading"):
+#           grid_search.fit(X, y)
+#
+# - don't hesitate to report any issue or unexpected performance behaviour by
+#   opening an `GitHub issue <https://github.com/scikit-learn/scikit-learn/issues/new/choose>`_!
+#
+# Free-threaded (also known as nogil) CPython is a version of CPython that aims
+# to enable efficient multi-threaded use cases by removing the Global
+# Interpreter Lock (GIL).
 #
 # For more details about free-threaded CPython see `py-free-threading doc
 # <https://py-free-threading.github.io>`_, in particular `how to install a
@@ -101,14 +120,11 @@ or with conda::
 # and `Ecosystem compatibility tracking <https://py-free-threading.github.io/tracking/>`_.
 #
 # The long term goal of free-threaded Python is to more efficiently leverage
-# multi-core CPUs by using thread workers instead of subprocess workers for parallel
-# computation when passing `n_jobs>1` in functions or estimators.
-# Efficiency gains are expected by removing the need for inter-process communication.
-# Note however that process-based parallelism is still the default joblib backend at
-# the time of writing. You can call `joblib.parallel_config(backend="threading")` to
-# change the default backend to "threading". Be aware that properly testing that
-# everything is running smoothly when doing so is still an ongoing effort and that
-# there are open issues to fix before considering making this the default.
+# multi-core CPUs by using thread workers instead of subprocess workers for
+# parallel computation when passing `n_jobs>1` in functions or estimators.
+# Efficiency gains are expected by removing the need for inter-process
+# communication. Be aware that switching the default joblib backend and testing
+# that everything works well with free-threaded is a long-term ongoing effort.
 
 # %%
 # Temperature scaling in `CalibratedClassifierCV`
@@ -239,7 +255,7 @@ clf = make_pipeline(StandardScaler(), LogisticRegression(random_state=0, C=10))
 
 # %%
 # Expand the estimator diagram below by clicking on "LogisticRegression" and then on
-# "Parameters" below.
+# "Parameters".
 
 clf
 
