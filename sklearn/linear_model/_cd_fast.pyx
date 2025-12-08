@@ -926,7 +926,6 @@ cdef inline uint32_t screen_features_enet_gram(
     floating gap,
     floating dual_norm_XtA,
     uint32_t n_features,
-    bint excluded_set_computed=0,
 ) noexcept nogil:
     """Apply gap safe screening for all features within enet_coordinate_descent_gram"""
     cdef floating d_j
@@ -936,11 +935,7 @@ cdef inline uint32_t screen_features_enet_gram(
     cdef floating radius = sqrt(2 * fabs(gap)) / alpha
 
     for j in range(n_features):
-        if excluded_set_computed and excluded_set[j]:
-            continue
-        elif not excluded_set_computed and Q[j, j] == 0:
-            w[j] = 0
-            excluded_set[j] = 1
+        if excluded_set[j]:
             continue
 
         Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X[:,j] @ dual_theta
@@ -948,7 +943,6 @@ cdef inline uint32_t screen_features_enet_gram(
         if d_j <= radius:
             # include feature j
             active_set[n_active] = j
-            excluded_set[j] = 0
             n_active += 1
         else:
             # Qw -= w[j] * Q[j]  # Update Qw = Q @ w
@@ -1038,6 +1032,13 @@ def enet_coordinate_descent_gram(
     if do_screening:
         active_set = np.empty(n_features, dtype=np.uint32)  # map [:n_active] -> j
         excluded_set = np.empty(n_features, dtype=np.uint8)
+        with nogil:
+            for j in range(n_features):
+                if Q[j, j] == 0:
+                    w[j] = 0
+                    excluded_set[j] = 1
+                else:
+                    excluded_set[j] = 0
 
     with nogil:
         tol *= y_norm2
@@ -1131,7 +1132,6 @@ def enet_coordinate_descent_gram(
                         gap=gap,
                         dual_norm_XtA=dual_norm_XtA,
                         n_features=n_features,
-                        excluded_set_computed=1,
                     )
 
         else:
