@@ -95,7 +95,7 @@ or with conda::
 #
 # For more details about free-threaded CPython see `py-free-threading doc
 # <https://py-free-threading.github.io>`_, in particular `how to install a
-# free-threaded CPython # <https://py-free-threading.github.io/installing_cpython/>`_
+# free-threaded CPython <https://py-free-threading.github.io/installing_cpython/>`_
 # and `Ecosystem compatibility tracking <https://py-free-threading.github.io/tracking/>`_.
 #
 # The long term goal of free-threaded Python is to more efficiently leverage
@@ -250,7 +250,7 @@ clf
 # `O(n**2)` previously, which allows to scale to millions of data points.
 #
 # As an illustration, on a dataset with 100_000 samples and 1 feature, doing a
-# single split takes of the order of 100ms, compared to ~20 seconds before.
+# single split takes of the order of 100 ms, compared to ~20 seconds before.
 
 import time
 
