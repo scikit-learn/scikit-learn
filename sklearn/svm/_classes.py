@@ -1160,6 +1160,7 @@ class NuSVC(BaseSVC):
         )
 
 
+
 class SVR(RegressorMixin, BaseLibSVM):
     """Epsilon-Support Vector Regression.
 
