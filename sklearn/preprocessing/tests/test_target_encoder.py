@@ -1,6 +1,5 @@
 import re
 import warnings
-from importlib.metadata import version
 
 import numpy as np
 import pytest
@@ -22,6 +21,7 @@ from sklearn.preprocessing import (
     LabelEncoder,
     TargetEncoder,
 )
+from sklearn.utils.fixes import parse_version
 
 
 def _encode_target(X_ordinal, y_numeric, n_categories, smooth):
@@ -715,7 +715,7 @@ def test_pandas_copy_on_write():
     # (and copy-on-write will always be enabled).
     # see https://github.com/scikit-learn/scikit-learn/issues/32829
     # TODO: remove this workaround when pandas 4 is our minimum version
-    if int(version("pandas").split(".")[0]) >= 4:
+    if parse_version(pd.__version__) >= parse_version("4.0"):
         df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
         TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
     else:
