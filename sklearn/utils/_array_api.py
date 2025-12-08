@@ -331,6 +331,10 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=REMOVE_TYPES_DEFA
 
 
 def _unwrap_memoryviewslices(*arrays):
+    # Since _cyutility._memoryviewslice is an implementation detail of the
+    # Cython runtime, we would rather not introduce a possibly brittle
+    # import statement to run `isinstance`-based filtering, hence the
+    # attribute-based type inspection.
     unwrapped = []
     for a in arrays:
         a_type = type(a)
