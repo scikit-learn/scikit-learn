@@ -76,7 +76,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.calibration import CalibrationDisplay
 
-fig, axes = plt.subplots(figsize=(16, 9), ncols=3, sharey=True, constrained_layout=True)
+fig, axes = plt.subplots(figsize=(16, 9), ncols=3, sharey=True)
 for i, c in enumerate(ts.classes_):
     CalibrationDisplay.from_predictions(
         y == c,
@@ -109,12 +109,14 @@ for i, c in enumerate(ts.classes_):
     axes[i].set_title(f"Class {c}")
     axes[i].set_xlabel(None)
     axes[i].set_ylabel(None)
-    axes[i].get_legend().remove()
+    if i == 2:
+        axes[i].legend(loc="lower right")
+    else:
+        axes[i].get_legend().remove()
 
 fig.suptitle("Reliability Diagrams per Class")
 fig.supxlabel("Mean Predicted Probability")
 fig.supylabel("Fraction of Class")
-fig.legend(*axes[0].get_legend_handles_labels(), loc="outside lower right")
 _ = fig.show()
 
 # %%
