@@ -1,0 +1,4 @@
+- :class:`preprocessing.TargetEncoder.fit_transform` now routes `groups` to the
+  :term:`CV splitter` internally used for :term:`cross fitting`.
+  By :user:`Samruddhi Baviskar <samruddhibaviskar11>` and
+  :user:`Stefanie Senger <StefanieSenger>`.

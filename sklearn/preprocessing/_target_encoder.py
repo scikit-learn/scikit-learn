@@ -50,7 +50,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     that are not seen during :meth:`fit` are encoded with the target mean, i.e.
     `target_mean_`.
 
-    For a demo on the importance of the `TargetEncoder` internal cross-fitting,
+    For a demo on the importance of the `TargetEncoder` internal :term:`cross fitting`,
     see
     :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder_cross_val.py`.
     For a comparison of different encoders, refer to
@@ -181,7 +181,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         otherwise `None`.
 
     cv_ : str
-        Class name of the cv splitter used in `fit_transform` for cross-fitting.
+        Class name of the cv splitter used in `fit_transform` for :term:`cross fitting`.
 
     See Also
     --------
