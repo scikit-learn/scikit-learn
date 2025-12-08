@@ -96,9 +96,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     Read more in the :ref:`User Guide <calibration>`.
     In order to learn more on the CalibratedClassifierCV class, see the
     following calibration examples:
-    :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`,
-    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`, and
-    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`.
+
+    - :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`,
+    - :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`,
+    - :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`, and
+    - :ref:`sphx_glr_auto_examples_calibration_plot_temperature_scaling.py`
 
     Parameters
     ----------
