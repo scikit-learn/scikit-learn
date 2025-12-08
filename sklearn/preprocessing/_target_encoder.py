@@ -399,8 +399,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                     )
             if self.cv not in non_overlapping_splitters:
                 raise ValueError(
-                    "The `cv` object needs to be one in {`GroupKFold`, `KFold`, "
-                    "`StratifiedKFold`, `StratifiedGroupKFold`}. Got {self.cv}."
+                    "The `cv` object needs to be one in [`GroupKFold`, `KFold`, "
+                    f"`StratifiedKFold`, `StratifiedGroupKFold`]. Got {self.cv}."
                 )
 
         else:  # cv is an Iterable
