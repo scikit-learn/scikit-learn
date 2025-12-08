@@ -103,7 +103,7 @@ or with conda::
 #
 #   .. code-block:: python
 #
-#       grid_search = GridSearchCV(clf, param_grid=param_grid)
+#       grid_search = GridSearchCV(clf, param_grid=param_grid, n_jobs=4)
 #       with joblib.parallel_config(backend="threading"):
 #           grid_search.fit(X, y)
 #
