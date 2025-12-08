@@ -1,4 +1,6 @@
 import re
+import warnings
+from importlib.metadata import version
 
 import numpy as np
 import pytest
@@ -709,6 +711,22 @@ def test_pandas_copy_on_write():
     Non-regression test for gh-27879.
     """
     pd = pytest.importorskip("pandas", minversion="2.0")
-    with pd.option_context("mode.copy_on_write", True):
+    # Pandas currently warns that setting copy_on_write will be removed in pandas 4
+    # (and copy-on-write will always be enabled).
+    # see https://github.com/scikit-learn/scikit-learn/issues/32829
+    # TODO: remove this workaround when pandas 4 is our minimum version
+    if int(version("pandas").split(".")[0]) >= 4:
         df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
         TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
+    else:
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message="Copy-on-Write can no longer be disabled, "
+                "setting to False has no impact. This option will "
+                "be removed in pandas 4.0.",
+                category=pd.errors.Pandas4Warning,
+            )
+            with pd.option_context("mode.copy_on_write", True):
+                df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
+                TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
