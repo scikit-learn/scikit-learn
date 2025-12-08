@@ -551,6 +551,19 @@ def nan_euclidean_distances(
     present_Y = present_X if Y is X else ~missing_Y
     present_count = np.dot(present_X, present_Y.T)
     distances[present_count == 0] = np.nan
+    is_self_distance = Y is None or Y is X
+
+    # Identify vectors that are entirely NaNs (no present features)
+    all_nan_X = (present_X.sum(axis=1) == 0)
+    all_nan_Y = (present_Y.sum(axis=1) == 0)
+
+    # Determine pairs where BOTH vectors are all-NaNs (distance must be 0)
+    both_nan = all_nan_X[:, None] & all_nan_Y[None, :]
+    
+    # Create the final mask for corruption: overlap is 0 AND it's NOT the case both are all-NaNs
+    mask_to_nan = (present_count == 0) & ~both_nan
+
+    distances[mask_to_nan] = np.nan 
     # avoid divide by zero
     np.maximum(1, present_count, out=present_count)
     distances /= present_count
@@ -558,13 +571,8 @@ def nan_euclidean_distances(
 
     if not squared:
         np.sqrt(distances, out=distances)
-        # FIX: Ensure symmetry when computing distance to self
-    if Y is None or Y is X:
-        distances = (distances + distances.T) / 2
-        np.fill_diagonal(distances, 0)
 
     return distances
-
 
 def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
     """Euclidean distances between X and Y.
