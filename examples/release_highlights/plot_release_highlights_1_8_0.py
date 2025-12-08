@@ -110,6 +110,7 @@ ts = CalibratedClassifierCV(clf, method="temperature", ensemble=False).fit(X, y)
 # (3 classes).
 
 import matplotlib.pyplot as plt
+
 from sklearn.calibration import CalibrationDisplay
 
 fig, axes = plt.subplots(
