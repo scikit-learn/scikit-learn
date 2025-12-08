@@ -1,0 +1,3 @@
+- Avoid redundant input validation in :func:`metrics.d2_log_loss_score`
+  leading to a 1.2x speedup in large scale benchmarks.
+  By :user:`Olivier Grisel <ogrisel>` and :user:`Omar Salman <OmarManzoor>`

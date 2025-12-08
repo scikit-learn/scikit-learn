@@ -35,7 +35,6 @@ from sklearn.utils.metaestimators import _safe_split, available_if
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
     _check_method_params,
-    _deprecate_positional_args,
     _estimator_has,
     check_is_fitted,
     validate_data,
@@ -794,13 +793,11 @@ class RFECV(RFE):
         self.n_jobs = n_jobs
         self.min_features_to_select = min_features_to_select
 
-    # TODO(1.8): remove `groups` from the signature after deprecation cycle.
-    @_deprecate_positional_args(version="1.8")
     @_fit_context(
         # RFECV.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y, *, groups=None, **params):
+    def fit(self, X, y, **params):
         """Fit the RFE model and automatically tune the number of selected features.
 
         Parameters
@@ -812,13 +809,6 @@ class RFECV(RFE):
         y : array-like of shape (n_samples,)
             Target values (integers for classification, real numbers for
             regression).
-
-        groups : array-like of shape (n_samples,) or None, default=None
-            Group labels for the samples used while splitting the dataset into
-            train/test set. Only used in conjunction with a "Group" :term:`cv`
-            instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
-
-            .. versionadded:: 0.20
 
         **params : dict of str -> object
             Parameters passed to the ``fit`` method of the estimator,
@@ -836,7 +826,7 @@ class RFECV(RFE):
         self : object
             Fitted estimator.
         """
-        _raise_for_params(params, self, "fit")
+        _raise_for_params(params, self, "fit", allow=["groups"])
         X, y = validate_data(
             self,
             X,
@@ -848,13 +838,11 @@ class RFECV(RFE):
         )
 
         if _routing_enabled():
-            if groups is not None:
-                params.update({"groups": groups})
             routed_params = process_routing(self, "fit", **params)
         else:
             routed_params = Bunch(
                 estimator=Bunch(fit={}),
-                splitter=Bunch(split={"groups": groups}),
+                splitter=Bunch(split={"groups": params.pop("groups", None)}),
                 scorer=Bunch(score={}),
             )
 

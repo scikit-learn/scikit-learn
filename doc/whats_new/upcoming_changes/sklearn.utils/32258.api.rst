@@ -1,3 +1,3 @@
-- :function:`utils.extmath.stable_cumsum` is deprecated and will be removed
+- :func:`utils.extmath.stable_cumsum` is deprecated and will be removed
   in v1.10. Use `np.cumulative_sum` with the desired dtype directly instead.
-  By :user:`Tiziano Zito <opossumnano>` :pr:`32258`.
+  By :user:`Tiziano Zito <opossumnano>`.

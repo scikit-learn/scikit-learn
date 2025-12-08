@@ -112,7 +112,7 @@ plt.axis("tight")
 
 # Perform Multi-dimensional scaling.
 t0 = time()
-mds = manifold.MDS(2, n_init=1, random_state=42)
+mds = manifold.MDS(2, n_init=1, random_state=42, init="classical_mds")
 trans_data = mds.fit_transform(sphere_data).T
 t1 = time()
 print("MDS: %.2g sec" % (t1 - t0))
@@ -125,7 +125,7 @@ ax.yaxis.set_major_formatter(NullFormatter())
 plt.axis("tight")
 
 t0 = time()
-mds = manifold.MDS(2, n_init=1, random_state=42, metric=False)
+mds = manifold.MDS(2, n_init=1, random_state=42, metric_mds=False, init="classical_mds")
 trans_data = mds.fit_transform(sphere_data).T
 t1 = time()
 print("Non-metric MDS: %.2g sec" % (t1 - t0))

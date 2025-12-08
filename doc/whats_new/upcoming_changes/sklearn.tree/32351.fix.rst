@@ -1,0 +1,3 @@
+- Fix decision tree splitting with missing values present in some features. In some cases the last
+  non-missing sample would not be partitioned correctly.
+  By :user:`Tim Head <betatim>` and :user:`Arthur Lacote <cakedev0>`.

@@ -1,0 +1,16 @@
+- :class:`linear_model.LogisticRegressionCV` got a new parameter
+  `use_legacy_attributes` to control the types and shapes of the fitted attributes
+  `C_`, `l1_ratio_`, `coefs_paths_`, `scores_` and `n_iter_`.
+  The current default value `True` keeps the legacy behaviour. If `False` then:
+
+  - ``C_`` is a float.
+  - ``l1_ratio_`` is a float.
+  - ``coefs_paths_`` is an ndarray of shape
+    (n_folds, n_l1_ratios, n_cs, n_classes, n_features).
+    For binary problems (n_classes=2), the 2nd last dimension is 1.
+  - ``scores_`` is an ndarray of shape (n_folds, n_l1_ratios, n_cs).
+  - ``n_iter_`` is an ndarray of shape (n_folds, n_l1_ratios, n_cs).
+
+  In version 1.10, the default will change to `False` and `use_legacy_attributes` will
+  be deprecated. In 1.12 `use_legacy_attributes` will be removed.
+  By :user:`Christian Lorentzen <lorentzenchr>`.

@@ -1,0 +1,6 @@
+- :class:`manifold.MDS` now supports arbitrary distance metrics
+  (via `metric` and `metric_params` parameters) and
+  initialization via classical MDS (via `init` parameter).
+  The `dissimilarity` parameter was deprecated. The old `metric` parameter
+  was renamed into `metric_mds`.
+  By :user:`Dmitry Kobak <dkobak>`

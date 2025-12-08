@@ -4,7 +4,7 @@ import numpy as np
 from cython cimport floating
 from libc.math cimport exp, fabs, log
 
-from ..utils._typedefs cimport float64_t, intp_t
+from sklearn.utils._typedefs cimport float64_t, intp_t
 
 
 def mean_change(const floating[:] arr_1, const floating[:] arr_2):

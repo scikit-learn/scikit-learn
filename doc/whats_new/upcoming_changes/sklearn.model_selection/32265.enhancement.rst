@@ -1,0 +1,4 @@
+- :class:`model_selection.StratifiedShuffleSplit` will now specify which classes
+   have too few members when raising a ``ValueError`` if any class has less than 2 members.
+   This is useful to identify which classes are causing the error.
+   By :user:`Marc Bresson <MarcBresson>`

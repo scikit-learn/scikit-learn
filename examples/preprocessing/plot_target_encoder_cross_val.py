@@ -11,7 +11,7 @@ in cases where there is a strong relationship between the categorical feature
 and the target. To prevent overfitting, :meth:`TargetEncoder.fit_transform` uses
 an internal :term:`cross fitting` scheme to encode the training data to be used
 by a downstream model. This scheme involves splitting the data into *k* folds
-and encoding each fold using the encodings learnt using the other *k-1* folds.
+and encoding each fold using the encodings learnt using the *other k-1* folds.
 In this example, we demonstrate the importance of the cross
 fitting procedure to prevent overfitting.
 """
@@ -140,7 +140,7 @@ _ = ax.set(
 # %%
 # While :meth:`TargetEncoder.fit_transform` uses an internal
 # :term:`cross fitting` scheme to learn encodings for the training set,
-# :meth:`TargetEncoder.transform` itself does not.
+# :meth:`TargetEncoder.fit` followed by :meth:`TargetEncoder.transform` does not.
 # It uses the complete training set to learn encodings and to transform the
 # categorical features. Thus, we can use :meth:`TargetEncoder.fit` followed by
 # :meth:`TargetEncoder.transform` to disable the :term:`cross fitting`. This

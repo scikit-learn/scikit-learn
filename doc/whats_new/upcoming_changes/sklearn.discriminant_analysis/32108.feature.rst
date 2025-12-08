@@ -1,0 +1,6 @@
+- Added `solver`, `covariance_estimator` and `shrinkage` in
+  :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
+  The resulting class is more similar to
+  :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+  and allows for more flexibility in the estimation of the covariance matrices.
+  By :user:`Daniel Herrera-Esposito <dherrera1911>`.
