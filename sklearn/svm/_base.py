@@ -41,7 +41,31 @@ from sklearn.utils.validation import (
 
 LIBSVM_IMPL = ["c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr"]
 
+def _warn_for_unused_kernel_params(kernel, *, degree, gamma, coef0):
+    if callable(kernel):
+        return
 
+    # gamma used by rbf, poly, sigmoid only
+    if kernel not in ("rbf", "poly", "sigmoid") and gamma != "scale":
+        warnings.warn(
+            f"gamma is set to {gamma!r} but unused for kernel={kernel!r}.",
+            UserWarning,
+        )
+
+    # degree used by poly only
+    if kernel != "poly" and degree != 3:
+        warnings.warn(
+            f"degree is set to {degree!r} but unused for kernel={kernel!r}.",
+            UserWarning,
+        )
+
+    # coef0 used by poly and sigmoid only
+    if kernel not in ("poly", "sigmoid") and coef0 != 0.0:
+        warnings.warn(
+            f"coef0 is set to {coef0!r} but unused for kernel={kernel!r}.",
+            UserWarning,
+        )
+    
 def _one_vs_one_coef(dual_coef, n_support, support_vectors):
     """Generate primal coefficients from dual coefficients
     for the one-vs-one multi class LibSVM in the case
@@ -214,6 +238,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         y = self._validate_targets(y)
 
+        _warn_for_unused_kernel_params(
+            self.kernel, degree=self.degree, gamma=self.gamma, coef0=self.coef0
+        )
         sample_weight = np.asarray(
             [] if sample_weight is None else sample_weight, dtype=np.float64
         )
