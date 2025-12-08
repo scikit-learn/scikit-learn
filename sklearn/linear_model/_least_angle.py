@@ -2178,6 +2178,9 @@ class LassoLarsIC(LassoLars):
     LassoLarsIC(criterion='bic')
     >>> print(reg.coef_)
     [ 0.  -1.11]
+
+    For a detailed example of using this class, see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lars_ic.py`.
     """
 
     _parameter_constraints: dict = {

@@ -125,7 +125,7 @@ def test_tags_no_sklearn_tags_concrete_implementation():
     with pytest.raises(AttributeError, match="The following error was raised"):
         my_pipeline.fit(X, y).predict(X)
 
-    # check that we still raise an error if it is not a AttributeError or related to
+    # check that we still raise an error if it is not an AttributeError or related to
     # __sklearn_tags__
     class MyEstimator3(MyEstimator, BaseEstimator):
         def __init__(self, *, param=1, error_type=AttributeError):

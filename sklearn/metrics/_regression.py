@@ -26,7 +26,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._array_api import _xlogy as xlogy
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
-from sklearn.utils.stats import _averaged_weighted_percentile, _weighted_percentile
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
     _check_sample_weight,
     _num_samples,
@@ -300,7 +300,7 @@ def mean_absolute_error(
     # a scalar array that we convert to a Python float to
     # consistently return the same eager evaluated value.
     # Therefore, `axis=None`.
-    mean_absolute_error = _average(output_errors, weights=multioutput)
+    mean_absolute_error = _average(output_errors, weights=multioutput, xp=xp)
 
     return float(mean_absolute_error)
 
@@ -387,7 +387,7 @@ def mean_pinball_loss(
     diff = y_true - y_pred
     sign = xp.astype(diff >= 0, diff.dtype)
     loss = alpha * sign * diff - (1 - alpha) * (1 - sign) * diff
-    output_errors = _average(loss, weights=sample_weight, axis=0)
+    output_errors = _average(loss, weights=sample_weight, axis=0, xp=xp)
 
     if isinstance(multioutput, str) and multioutput == "raw_values":
         return output_errors
@@ -401,7 +401,7 @@ def mean_pinball_loss(
     # a scalar array that we convert to a Python float to
     # consistently return the same eager evaluated value.
     # Therefore, `axis=None`.
-    return float(_average(output_errors, weights=multioutput))
+    return float(_average(output_errors, weights=multioutput, xp=xp))
 
 
 @validate_params(
@@ -492,7 +492,7 @@ def mean_absolute_percentage_error(
     epsilon = xp.asarray(xp.finfo(xp.float64).eps, dtype=y_true.dtype, device=device_)
     y_true_abs = xp.abs(y_true)
     mape = xp.abs(y_pred - y_true) / xp.maximum(y_true_abs, epsilon)
-    output_errors = _average(mape, weights=sample_weight, axis=0)
+    output_errors = _average(mape, weights=sample_weight, axis=0, xp=xp)
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
             return output_errors
@@ -505,7 +505,7 @@ def mean_absolute_percentage_error(
     # a scalar array that we convert to a Python float to
     # consistently return the same eager evaluated value.
     # Therefore, `axis=None`.
-    mean_absolute_percentage_error = _average(output_errors, weights=multioutput)
+    mean_absolute_percentage_error = _average(output_errors, weights=multioutput, xp=xp)
 
     return float(mean_absolute_percentage_error)
 
@@ -580,7 +580,9 @@ def mean_squared_error(
             y_true, y_pred, sample_weight, multioutput, xp=xp
         )
     )
-    output_errors = _average((y_true - y_pred) ** 2, axis=0, weights=sample_weight)
+    output_errors = _average(
+        (y_true - y_pred) ** 2, axis=0, weights=sample_weight, xp=xp
+    )
 
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -594,7 +596,7 @@ def mean_squared_error(
     # a scalar array that we convert to a Python float to
     # consistently return the same eager evaluated value.
     # Therefore, `axis=None`.
-    mean_squared_error = _average(output_errors, weights=multioutput)
+    mean_squared_error = _average(output_errors, weights=multioutput, xp=xp)
 
     return float(mean_squared_error)
 
@@ -678,7 +680,7 @@ def root_mean_squared_error(
     # a scalar array that we convert to a Python float to
     # consistently return the same eager evaluated value.
     # Therefore, `axis=None`.
-    root_mean_squared_error = _average(output_errors, weights=multioutput)
+    root_mean_squared_error = _average(output_errors, weights=multioutput, xp=xp)
 
     return float(root_mean_squared_error)
 
@@ -921,8 +923,8 @@ def median_absolute_error(
     if sample_weight is None:
         output_errors = _median(xp.abs(y_pred - y_true), axis=0)
     else:
-        output_errors = _averaged_weighted_percentile(
-            xp.abs(y_pred - y_true), sample_weight=sample_weight
+        output_errors = _weighted_percentile(
+            xp.abs(y_pred - y_true), sample_weight=sample_weight, average=True
         )
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -931,7 +933,7 @@ def median_absolute_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return float(_average(output_errors, weights=multioutput))
+    return float(_average(output_errors, weights=multioutput, xp=xp))
 
 
 def _assemble_r2_explained_variance(
@@ -978,7 +980,7 @@ def _assemble_r2_explained_variance(
     else:
         avg_weights = multioutput
 
-    result = _average(output_scores, weights=avg_weights)
+    result = _average(output_scores, weights=avg_weights, xp=xp)
     if size(result) == 1:
         return float(result)
     return result
@@ -1109,13 +1111,15 @@ def explained_variance_score(
         )
     )
 
-    y_diff_avg = _average(y_true - y_pred, weights=sample_weight, axis=0)
+    y_diff_avg = _average(y_true - y_pred, weights=sample_weight, axis=0, xp=xp)
     numerator = _average(
-        (y_true - y_pred - y_diff_avg) ** 2, weights=sample_weight, axis=0
+        (y_true - y_pred - y_diff_avg) ** 2, weights=sample_weight, axis=0, xp=xp
     )
 
-    y_true_avg = _average(y_true, weights=sample_weight, axis=0)
-    denominator = _average((y_true - y_true_avg) ** 2, weights=sample_weight, axis=0)
+    y_true_avg = _average(y_true, weights=sample_weight, axis=0, xp=xp)
+    denominator = _average(
+        (y_true - y_true_avg) ** 2, weights=sample_weight, axis=0, xp=xp
+    )
 
     return _assemble_r2_explained_variance(
         numerator=numerator,
@@ -1352,7 +1356,7 @@ def max_error(y_true, y_pred):
 
 def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
     """Mean Tweedie deviance regression loss."""
-    xp, _, device_ = get_namespace_and_device(y_true, y_pred)
+    xp, _ = get_namespace(y_true, y_pred)
     p = power
     if p < 0:
         # 'Extreme stable', y any real number, y_pred > 0
@@ -1380,7 +1384,7 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
             - y_true * xp.pow(y_pred, 1 - p) / (1 - p)
             + xp.pow(y_pred, 2 - p) / (2 - p)
         )
-    return float(_average(dev, weights=sample_weight))
+    return float(_average(dev, weights=sample_weight, xp=xp))
 
 
 @validate_params(
@@ -1750,6 +1754,14 @@ def d2_pinball_score(
     This metric is not well-defined for a single point and will return a NaN
     value if n_samples is less than two.
 
+    This metric is not a built-in :ref:`string name scorer
+    <scoring_string_names>` to use along with tools such as
+    :class:`~sklearn.model_selection.GridSearchCV` or
+    :class:`~sklearn.model_selection.RandomizedSearchCV`.
+    Instead, you can :ref:`create a scorer object <scoring_adapt_metric>` using
+    :func:`~sklearn.metrics.make_scorer`, with any desired parameter settings.
+    See the `Examples` section for details.
+
      References
     ----------
     .. [1] Eq. (7) of `Koenker, Roger; Machado, José A. F. (1999).
@@ -1772,6 +1784,24 @@ def d2_pinball_score(
     -1.045...
     >>> d2_pinball_score(y_true, y_true, alpha=0.1)
     1.0
+
+    Creating a scorer object with :func:`~sklearn.metrics.make_scorer`:
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import make_scorer
+    >>> from sklearn.model_selection import GridSearchCV
+    >>> from sklearn.linear_model import QuantileRegressor
+    >>> X = np.array([[1], [2], [3], [4]])
+    >>> y = np.array([2.5, 0.0, 2, 8])
+    >>> pinball_95_scorer = make_scorer(d2_pinball_score, alpha=0.95)
+    >>> grid = GridSearchCV(
+    ...     QuantileRegressor(quantile=0.95),
+    ...     param_grid={"fit_intercept": [True, False]},
+    ...     scoring=pinball_95_scorer,
+    ...     cv=2,
+    ... ).fit(X, y)
+    >>> grid.best_params_
+    {'fit_intercept': True}
     """
     _, y_true, y_pred, sample_weight, multioutput = _check_reg_targets(
         y_true, y_pred, sample_weight, multioutput

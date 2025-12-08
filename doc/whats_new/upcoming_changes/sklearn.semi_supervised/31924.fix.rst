@@ -1,0 +1,4 @@
+- User written kernel results are now normalized in
+  :class:`semi_supervised.LabelPropagation`
+  so all row sums equal 1 even if kernel gives asymmetric or non-uniform row sums.
+  By :user:`Dan Schult <dschult>`.

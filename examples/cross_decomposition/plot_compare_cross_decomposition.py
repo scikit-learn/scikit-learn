@@ -30,19 +30,20 @@ weak: the point cloud is very spherical.
 
 import numpy as np
 
+from sklearn.model_selection import train_test_split
+
+rng = np.random.default_rng(42)
+
 n = 500
 # 2 latents vars:
-l1 = np.random.normal(size=n)
-l2 = np.random.normal(size=n)
+l1 = rng.normal(size=n)
+l2 = rng.normal(size=n)
 
 latents = np.array([l1, l1, l2, l2]).T
-X = latents + np.random.normal(size=4 * n).reshape((n, 4))
-Y = latents + np.random.normal(size=4 * n).reshape((n, 4))
+X = latents + rng.normal(size=(n, 4))
+Y = latents + rng.normal(size=(n, 4))
 
-X_train = X[: n // 2]
-Y_train = Y[: n // 2]
-X_test = X[n // 2 :]
-Y_test = Y[n // 2 :]
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.5, shuffle=False)
 
 print("Corr(X)")
 print(np.round(np.corrcoef(X.T), 2))
@@ -134,10 +135,10 @@ from sklearn.cross_decomposition import PLSRegression
 n = 1000
 q = 3
 p = 10
-X = np.random.normal(size=n * p).reshape((n, p))
+X = rng.normal(size=(n, p))
 B = np.array([[1, 2] + [0] * (p - 2)] * q).T
 # each Yj = 1*X1 + 2*X2 + noize
-Y = np.dot(X, B) + np.random.normal(size=n * q).reshape((n, q)) + 5
+Y = np.dot(X, B) + rng.normal(size=(n, q)) + 5
 
 pls2 = PLSRegression(n_components=3)
 pls2.fit(X, Y)
@@ -154,8 +155,8 @@ pls2.predict(X)
 
 n = 1000
 p = 10
-X = np.random.normal(size=n * p).reshape((n, p))
-y = X[:, 0] + 2 * X[:, 1] + np.random.normal(size=n * 1) + 5
+X = rng.normal(size=(n, p))
+y = X[:, 0] + 2 * X[:, 1] + rng.normal(size=n) + 5
 pls1 = PLSRegression(n_components=3)
 pls1.fit(X, y)
 # note that the number of components exceeds 1 (the dimension of y)

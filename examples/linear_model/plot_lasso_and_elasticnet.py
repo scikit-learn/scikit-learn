@@ -5,7 +5,7 @@ L1-based models for Sparse Signals
 
 The present example compares three l1-based regression models on a synthetic
 signal obtained from sparse and correlated features that are further corrupted
-with additive gaussian noise:
+with additive Gaussian noise:
 
 - a :ref:`lasso`;
 - an :ref:`automatic_relevance_determination`;
@@ -65,7 +65,7 @@ freqs[:n_informative]
 
 # %%
 # A random phase is introduced using :func:`numpy.random.random_sample`
-# and some gaussian noise (implemented by :func:`numpy.random.normal`)
+# and some Gaussian noise (implemented by :func:`numpy.random.normal`)
 # is added to both the features and the target.
 
 for i in range(n_features):
@@ -130,9 +130,9 @@ print(f"Lasso r^2 on test data : {r2_score_lasso:.3f}")
 # Automatic Relevance Determination (ARD)
 # ---------------------------------------
 #
-# An ARD regression is the bayesian version of the Lasso. It can produce
+# An ARD regression is the Bayesian version of the Lasso. It can produce
 # interval estimates for all of the parameters, including the error variance, if
-# required. It is a suitable option when the signals have gaussian noise. See
+# required. It is a suitable option when the signals have Gaussian noise. See
 # the example :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py` for a
 # comparison of :class:`~sklearn.linear_model.ARDRegression` and
 # :class:`~sklearn.linear_model.BayesianRidge` regressors.
@@ -237,7 +237,7 @@ plt.tight_layout()
 # less sparse model than a pure :class:`~sklearn.linear_model.Lasso` and may
 # capture non-predictive features as well.
 #
-# :class:`~sklearn.linear_model.ARDRegression` is better when handling gaussian
+# :class:`~sklearn.linear_model.ARDRegression` is better when handling Gaussian
 # noise, but is still unable to handle correlated features and requires a larger
 # amount of time due to fitting a prior.
 #
