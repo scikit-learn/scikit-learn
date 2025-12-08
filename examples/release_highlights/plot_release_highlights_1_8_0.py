@@ -36,25 +36,47 @@ or with conda::
 # arrays.
 #
 # Array API support was added to the following estimators:
-# :class:`preprocessing.StandardScaler`, :class:`preprocessing.PolynomialFeatures`,
-# :class:`linear_model.RidgeCV`, :class:`mixture.GaussianMixture` and
+# :class:`preprocessing.StandardScaler`,
+# :class:`preprocessing.PolynomialFeatures`, :class:`linear_model.RidgeCV`,
+# :class:`linear_model.RidgeClassifierCV`, :class:`mixture.GaussianMixture` and
 # :class:`calibration.CalibratedClassifierCV`.
 #
 # Array API support was also added to several metrics in :mod:`sklearn.metrics`
 # module, see :ref:`array_api_supported` for more details.
 #
-# Please refer the :ref:`array API support<array_api>` page for instructions
+# Please refer to the :ref:`array API support<array_api>` page for instructions
 # to use scikit-learn with array API compatible libraries such as PyTorch or CuPy.
-# Note: Array API support is experimental and must be
-# explicitly enabled both in SciPy and scikit-learn.
+# Note: Array API support is experimental and must be explicitly enabled both
+# in SciPy and scikit-learn.
 #
-# TODO do we want to write a snippet?
-# - which estimators would we feature?
-# - we don't have PyTorch in doc build for now ...
-# - we don't have GPU in the doc build but we could show a snippet with numpy
-#   and commented out code to switch to PyToch on GPU
-# - alternative: show only highlighted code without executing it?
-# - alternative: add link to Colab notebook?
+# Here an excerpt of using :class:`calibration.CalibratedClassifierCV` and
+# :class:`linear_model.RidgeCV` together on a GPU with the help of PyTorch:
+#
+# .. code-block:: python
+#
+#     ridge_pipeline_gpu = make_pipeline(
+#         TableVectorizer(
+#             numeric=make_pipeline(
+#                 QuantileTransformer(),
+#                 SplineTransformer(n_knots=10),
+#             ),
+#             high_cardinality=TargetEncoder(cv=5),
+#         ),
+#         FunctionTransformer(
+#             lambda x: torch.tensor(x.to_numpy().astype(np.float32), device="cuda"))
+#         ,
+#         CalibratedClassifierCV(
+#             RidgeClassifierCV(alphas=alphas), method="temperature"
+#         ),
+#     )
+#     with sklearn.config_context(array_api_dispatch=True):
+#         cv_results = cross_validate(ridge_pipeline_gpu, features, target)
+#
+#
+# Here is a [full notebook of this example on Google
+# Colab](https://colab.research.google.com/drive/1ztH8gUPv31hSjEeR_8pw20qShTwViGRx?usp=sharing).
+# For this example, using the colab GPU vs using a single CPU core lead to a
+# 10x speedup which is quite typical for such workloads.
 
 # %%
 # Free-threaded CPython 3.14 support
