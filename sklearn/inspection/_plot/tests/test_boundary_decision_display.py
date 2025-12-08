@@ -708,3 +708,28 @@ def test_subclass_named_constructors_return_type_is_subclass(pyplot):
     curve = SubclassOfDisplay.from_estimator(estimator=clf, X=X)
 
     assert isinstance(curve, SubclassOfDisplay)
+
+
+@pytest.mark.parametrize("plot_method", ["contourf", "contour"])
+def test_decision_boundary_display_many_classes(pyplot, plot_method):
+    """Check that contour plots use all levels for classifiers with many classes.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/32866
+    """
+    # Create a dataset with 11 classes
+    pts = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1],
+                    [2, 2], [3, 2], [3, 3], [4, 3],
+                    [4, 4], [5, 4], [5, 5]])
+    y = np.arange(11)
+    clf = LogisticRegression().fit(pts, y)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        clf, pts, response_method="predict", plot_method=plot_method
+    )
+
+    # Check that the surface has levels for all classes
+    if plot_method in ("contourf", "contour"):
+        assert hasattr(disp.surface_, "levels")
+        expected_levels = 12 if plot_method == "contourf" else 11
+        assert len(disp.surface_.levels) == expected_levels

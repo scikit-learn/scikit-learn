@@ -217,6 +217,17 @@ class DecisionBoundaryDisplay:
 
         plot_func = getattr(ax, plot_method)
         if self.response.ndim == 2:
+            # For discrete responses (e.g., from predict), ensure all levels are used
+            # to display distinct colors for each class
+            if plot_method in ("contour", "contourf") and np.issubdtype(
+                self.response.dtype, np.integer
+            ):
+                unique_levels = np.unique(self.response)
+                if plot_method == "contourf":
+                    levels = np.concatenate([unique_levels - 0.5, [unique_levels.max() + 0.5]])
+                else:
+                    levels = unique_levels
+                kwargs.setdefault("levels", levels)
             self.surface_ = plot_func(self.xx0, self.xx1, self.response, **kwargs)
         else:  # self.response.ndim == 3
             n_responses = self.response.shape[-1]
@@ -260,6 +271,8 @@ class DecisionBoundaryDisplay:
             if plot_method == "contour":
                 # Plot only argmax map for contour
                 class_map = self.response.argmax(axis=2)
+                # Ensure levels match the number of classes for distinct colors
+                kwargs.setdefault("levels", np.unique(class_map))
                 self.surface_ = plot_func(
                     self.xx0, self.xx1, class_map, colors=colors, **kwargs
                 )
