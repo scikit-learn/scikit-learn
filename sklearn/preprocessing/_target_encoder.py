@@ -356,6 +356,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         _raise_for_params(fit_params, self, "fit_transform")
         _check_groups_routing_disabled(groups)
+        _has_groups = groups is not None or fit_params.get("groups") is not None
 
         X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
 
@@ -369,12 +370,12 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             KFold,
             StratifiedKFold,
             StratifiedGroupKFold,
-            ConsumingSplitter,
+            ConsumingSplitter,  #  experimental
         )
         X, y, groups = indexable(X, y, groups)
 
         if type(self.cv) is int:
-            if groups is None:
+            if not _has_groups:
                 if self.target_type_ == "continuous":
                     cv = KFold(
                         self.cv, shuffle=self.shuffle, random_state=self.random_state
@@ -393,11 +394,11 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                         self.cv, shuffle=self.shuffle, random_state=self.random_state
                     )
 
-        # TODO: for metadata routing: check fit_params instead of groups:
-        elif hasattr(self.cv, "split"):  # cv is a cross-validation generator:
+        elif hasattr(self.cv, "split"):  # cv is a cross-validation generator
+            cv = self.cv
             if isinstance(self.cv, non_overlapping_splitters):
-                if groups is not None and not isinstance(
-                    self.cv, (GroupKFold, StratifiedGroupKFold)
+                if _has_groups is not None and not isinstance(
+                    self.cv, (GroupKFold, StratifiedGroupKFold, ConsumingSplitter)
                 ):
                     raise ValueError(
                         "Expected `cv` from [`GroupKFold()`, `StratifiedGroupKFold()`] "
