@@ -424,7 +424,7 @@ def get_namespace(
     # get_namespace can be called by helper functions that are used both in
     # array API compatible code and non-array API Cython related code. To
     # support the latter on NumPy inputs without raising a TypeError, we
-    # unwrap potential Cython memoryview slices here.j
+    # unwrap potential Cython memoryview slices here.
     arrays = _unwrap_memoryviewslices(*arrays)
 
     if not arrays:
