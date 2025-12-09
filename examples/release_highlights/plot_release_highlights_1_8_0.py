@@ -49,9 +49,8 @@ or with conda::
 # Note: Array API support is experimental and must be explicitly enabled both
 # in SciPy and scikit-learn.
 #
-# Here is an excerpt of using `skrub.TableVectorizer
-# <https://skrub-data.org/stable/reference/generated/skrub.TableVectorizer.html>`_
-# for preprocessing (on CPU) followed by :class:`calibration.CalibratedClassifierCV`
+# Here is an excerpt of using a feature engineering preprocessor on the CPU,
+# followed by :class:`calibration.CalibratedClassifierCV`
 # and :class:`linear_model.RidgeCV` together on a GPU with the help of PyTorch:
 #
 # .. code-block:: python
