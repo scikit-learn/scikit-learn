@@ -205,7 +205,7 @@ from time import time
 from sklearn.datasets import make_regression
 from sklearn.linear_model import ElasticNetCV
 
-X, y = make_regression(n_features=5000)
+X, y = make_regression(n_features=10_000, random_state=0)
 model = ElasticNetCV()
 tic = time()
 model.fit(X, y)
