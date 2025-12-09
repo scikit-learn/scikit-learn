@@ -9,7 +9,12 @@ from numpy.testing import assert_allclose
 
 from sklearn._config import config_context
 from sklearn._loss import HalfMultinomialLoss
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, is_classifier
+from sklearn.datasets import make_classification, make_regression
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.linear_model import Ridge
+from sklearn.model_selection import cross_validate
+from sklearn.pipeline import FunctionTransformer, make_pipeline
 from sklearn.utils._array_api import (
     _add_to_diagonal,
     _asarray_with_order,
@@ -929,3 +934,88 @@ def test_half_multinomial_loss(use_sample_weight, namespace, device_, dtype_name
         )
 
     assert numpy.isclose(np_loss, xp_loss)
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [Ridge(), LinearDiscriminantAnalysis()],
+    ids=["Ridge", "LinearDiscriminantAnalysis"],
+)
+@pytest.mark.parametrize("cv", [None, 3, 5])
+@pytest.mark.parametrize(
+    "namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_cross_validate_array_api_pipeline(
+    estimator, cv, namespace, device_, dtype_name
+):
+    """Integration test for `cross_validate` with array API arrays.
+
+    The goal of this test is to ensure that `cross_validate` works as expected
+    when using array API compatible estimators and multiple scorers at once.
+
+    It is a bit redundant with individual tests for array API compliance of
+    estimators and scorers but the purpose is to check that array API
+    compatibility is preserved when composing these building blocks together,
+    in particular when only X is moved to the array API namespace via the
+    pipeline usage pattern.
+    """
+
+    xp = _array_api_for_tests(namespace, device_)
+    if is_classifier(estimator):
+        X, y = make_classification(
+            n_samples=1000, n_features=5, n_classes=3, n_informative=3, random_state=42
+        )
+    else:
+        X, y = make_regression(
+            n_samples=1000, n_features=5, n_informative=3, random_state=42
+        )
+
+    X_np = X.astype(dtype_name)
+    y_np = y.astype(dtype_name)
+
+    xp_pipeline = make_pipeline(
+        FunctionTransformer(lambda X: xp.asarray(X, device=device_)),
+        estimator,
+    )
+
+    cv_params = dict(
+        cv=cv, return_estimator=True, return_train_score=True, error_score="raise"
+    )
+    if is_classifier(estimator):
+        cv_params["scoring"] = ["d2_brier_score", "d2_log_loss_score", "accuracy"]
+    else:
+        cv_params["scoring"] = ["r2", "neg_mean_absolute_error"]
+
+    cv_results_np = cross_validate(estimator, X_np, y_np, **cv_params)
+    with config_context(array_api_dispatch=True):
+        cv_results_xp = cross_validate(xp_pipeline, X_np, y_np, **cv_params)
+        expected_device = device(xp.asarray([0], device=device_))
+        expected_dtype = xp.dtype(dtype_name)
+
+    for est_xp in cv_results_xp["estimator"]:
+        # Ensure that the estimators returned can predict when fed with the
+        # same kind of array API inputs they were trained on and that their
+        # predictions are consistent.
+        with config_context(array_api_dispatch=True):
+            preds_xp = est_xp.predict(X_np)
+            assert device(preds_xp) == expected_device
+            if is_classifier(est_xp):
+                proba_xp = est_xp.predict_proba(X_np)
+                assert device(proba_xp) == expected_device
+                assert proba_xp.dtype == expected_dtype
+            else:
+                # For regressors, also check that the prediction dtype is
+                # preserved.
+                assert preds_xp.dtype == expected_dtype
+
+    for scoring in cv_params["scoring"]:
+        for key in [f"test_{scoring}", f"train_{scoring}"]:
+            assert_allclose(
+                cv_results_xp[key],
+                cv_results_np[key],
+                rtol=1e-4 if dtype_name == "float32" else 1e-6,
+                atol=_atol_for_type(dtype_name),
+                err_msg=key,
+            )
