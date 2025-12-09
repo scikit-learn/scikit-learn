@@ -112,7 +112,7 @@ or with conda::
 #
 # For more details about free-threaded CPython see `py-free-threading doc
 # <https://py-free-threading.github.io>`_, in particular `how to install a
-# free-threaded CPython <https://py-free-threading.github.io/installing_cpython/>`_
+# free-threaded CPython <https://py-free-threading.github.io/installing-cpython/>`_
 # and `Ecosystem compatibility tracking <https://py-free-threading.github.io/tracking/>`_.
 #
 # In scikit-learn, one hope with free-threaded Python is to more efficiently
