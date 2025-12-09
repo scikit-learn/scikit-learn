@@ -57,13 +57,9 @@ or with conda::
 # .. code-block:: python
 #
 #     ridge_pipeline_gpu = make_pipeline(
-#         skrub.TableVectorizer(
-#             numeric=make_pipeline(
-#                 QuantileTransformer(),
-#                 SplineTransformer(n_knots=10),
-#             ),
-#             high_cardinality=TargetEncoder(cv=5),
-#         ),
+#         # Ensure that all features (including categorical features) are preprocessed
+#         # on the CPU and mapped to a numerical representation.
+#         feature_preprocessor,
 #         # Move the results to the GPU and perform computations there
 #         FunctionTransformer(
 #             lambda x: torch.tensor(x.to_numpy().astype(np.float32), device="cuda"))
