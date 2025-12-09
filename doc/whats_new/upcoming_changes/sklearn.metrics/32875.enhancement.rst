@@ -1,0 +1,4 @@
+:func:`metrics.pairwise.manhattan_distances`, :func:`metrics.pairwise.chi2_kernel`
+and :func:`metrics.pairwise.additive_chi2_kernel` now support ``float32`` data natively
+(dense and sparse), reducing memory usage by 50% for single-precision inputs.
+By :user:`23Tarandeep57`
