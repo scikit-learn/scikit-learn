@@ -136,8 +136,8 @@ or with conda::
 # :class:`calibration.CalibratedClassifierCV` by setting `method="temperature"`.
 # This method is particularly well suited for multiclass problems because it provides
 # (better) calibrated probabilities with a single free parameter. This is in
-# contrast to all the other available calibration `method`s which use a
-# "One-vs-Rest" scheme that adds more parameters for each class.
+# contrast to all the other available calibration `method` parameter values
+# which use a "One-vs-Rest" scheme that adds more parameters for each class.
 
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import make_classification
