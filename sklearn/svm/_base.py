@@ -194,7 +194,27 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         """
         rnd = check_random_state(self.random_state)
 
-        sparse = sp.issparse(X)
+            # Parameter sanity checks: ensure that gamma, degree, and coef0 are only used with appropriate kernels
+        # If gamma is explicitly set (not default 'scale' or 'auto'), it must be used with 'rbf', 'poly', or 'sigmoid'
+        if self.gamma not in ("scale", "auto"):
+            if self.kernel not in ("rbf", "poly", "sigmoid"):
+                raise ValueError(
+                    f"gamma must be 'scale', 'auto', or a real number when kernel is 'rbf', 'poly', or 'sigmoid'; got gamma={self.gamma!r} for kernel={self.kernel!r}"
+                )
+        # If degree is modified from default (3), ensure kernel is 'poly'
+        if self.degree != 3:
+            if self.kernel != "poly":
+                raise ValueError(
+                    f"degree is only used for 'poly' kernel; got degree={self.degree!r} for kernel={self.kernel!r}"
+                )
+        # If coef0 is modified from default (0.0), ensure kernel is 'poly' or 'sigmoid'
+        if self.coef0 != 0.0:
+            if self.kernel not in ("poly", "sigmoid"):
+                raise ValueError(
+                    f"coef0 is only used for 'poly' and 'sigmoid' kernels; got coef0={self.coef0!r} for kernel={self.kernel!r}"
+                )
+
+    sparse = sp.issparse(X)
         if sparse and self.kernel == "precomputed":
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
