@@ -110,9 +110,8 @@ cdef class DensePartitioner:
         """
         assert not self.missing_on_the_left
         cdef intp_t n_non_missing = self.end - self.start - self.n_missing
-        # TODO? handle except?
-        swap_array_slices(&self.samples[0], self.start, self.end, n_non_missing, sizeof(intp_t))
-        swap_array_slices(&self.feature_values[0], self.start, self.end, n_non_missing, sizeof(float32_t))
+        swap_array_slices(self.samples, self.start, self.end, n_non_missing)
+        swap_array_slices(self.feature_values, self.start, self.end, n_non_missing)
         self.missing_on_the_left = True
 
     cdef inline void find_min_max(

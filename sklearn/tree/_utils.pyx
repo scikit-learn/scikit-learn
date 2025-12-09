@@ -70,13 +70,16 @@ cdef inline float64_t log(float64_t x) noexcept nogil:
 
 
 cdef int swap_array_slices(
-    void* array, intp_t start, intp_t end, intp_t n, size_t itemsize
+    array_data_type[::1] array, intp_t start, intp_t end, intp_t n
 ) except -1 nogil:
     """
     Swaps the order of the slices array[start:start + n]
     and array[start + n:end] while preserving the order
     in the slices. Works for any itemsize.
     """
+    if start >= end:
+        return 0
+    cdef size_t itemsize = sizeof(array[0])
     cdef intp_t n_rev = end - start - n
     cdef size_t nbytes = n * itemsize
     cdef size_t nbytes_rev = n_rev * itemsize
@@ -84,7 +87,7 @@ cdef int swap_array_slices(
     cdef char* tmp = <char*> malloc(nbytes_tmp)
     if tmp == NULL:
         raise MemoryError(f"could not allocate {nbytes_tmp} bytes")
-    cdef char* arr = <char*> array
+    cdef char* arr = <char*> &array[0]
     if n <= n_rev:
         # Copy array[start : start + n] to temporary buffer
         memcpy(tmp, arr + start * itemsize, nbytes)
@@ -111,13 +114,14 @@ def _py_swap_array_slices(cnp.ndarray array, intp_t start, intp_t end, intp_t n)
     """
     if not array.flags['C_CONTIGUOUS']:
         raise ValueError("Input array must be C-contiguous")
-    swap_array_slices(
-        <void*> array.data,
-        start,
-        end,
-        n,
-        array.itemsize
-    )
+
+    # Dispatch to the appropriate specialized version based on dtype
+    if array.dtype == np.intp:
+        swap_array_slices[intp_t](array, start, end, n)
+    elif array.dtype == np.float32:
+        swap_array_slices[float32_t](array, start, end, n)
+    else:
+        raise ValueError(f"Unsupported dtype: {array.dtype}. Expected np.intp or np.float32")
 
 
 def _any_isnan_axis0(const float32_t[:, :] X):
