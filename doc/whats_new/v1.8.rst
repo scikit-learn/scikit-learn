@@ -31,7 +31,7 @@ Version 1.8
 Version 1.8.0
 =============
 
-**November 2025**
+**December 2025**
 
 Changes impacting many modules
 ------------------------------
@@ -98,6 +98,10 @@ See :ref:`array_api` for more details.
 - |Feature| :class:`naive_bayes.GaussianNB` now supports array API compatible inputs.
   By :user:`Omar Salman <OmarManzoor>` :pr:`32497`
 
+- |Feature| :class:`preprocessing.LabelBinarizer` and :func:`preprocessing.label_binarize` now
+  support numeric array API compatible inputs with `sparse_output=False`.
+  By :user:`Virgil Chan <virchan>`. :pr:`32582`
+
 - |Feature| :func:`sklearn.metrics.det_curve` now supports Array API compliant inputs.
   By :user:`Josef Affourtit <jaffourt>`. :pr:`32586`
 
@@ -115,6 +119,12 @@ See :ref:`array_api` for more details.
 
 - |Feature| :func:`sklearn.metrics.cohen_kappa_score` now supports array API compatible inputs.
   By :user:`Omar Salman <OmarManzoor>`. :pr:`32619`
+
+- |Feature| :func:`sklearn.metrics.cluster.davies_bouldin_score` now supports Array API compliant inputs.
+  By :user:`Josef Affourtit <jaffourt>`. :pr:`32693`
+
+- |Fix| Estimators with array API support no longer reject dataframe inputs when array API support is enabled.
+  By :user:`Tim Head <betatim>` :pr:`32838`
 
 Metadata routing
 ----------------
@@ -148,7 +158,7 @@ and `Ecosystem compatibility tracking <https://py-free-threading.github.io/track
 By :user:`Loïc Estève <lesteve>` and :user:`Olivier Grisel <ogrisel>` and many
 other people in the wider Scientific Python and CPython ecosystem, for example
 :user:`Nathan Goldbaum <ngoldbaum>`, :user:`Ralf Gommers <rgommers>`,
-:user:`Edgar Andrés Margffoy Tuay <andfoy>`. :pr:`custom-top-level-32079`
+:user:`Edgar Andrés Margffoy Tuay <andfoy>`. :pr:`32079`
 
 :mod:`sklearn.base`
 -------------------
@@ -157,7 +167,7 @@ other people in the wider Scientific Python and CPython ecosystem, for example
   By :user:`John Hendricks <j-hendricks>` and :user:`Miguel Parece <MiguelParece>`. :pr:`31928`
 
 - |Fix| Fixed the handling of pandas missing values in HTML display of all estimators.
-  By :user: `Dea María Léon <deamarialeon>`. :pr:`32341`
+  By :user:`Dea María Léon <deamarialeon>`. :pr:`32341`
 
 :mod:`sklearn.calibration`
 --------------------------
@@ -172,7 +182,7 @@ other people in the wider Scientific Python and CPython ecosystem, for example
   numerical stability checks and without casting to `np.float64`.
   By :user:`Tiziano Zito <otizonaizit>` :pr:`31991`
 
-- |Fix| The default value of the `copy` parameter in :class:`cluster.HDBSCAN` 
+- |Fix| The default value of the `copy` parameter in :class:`cluster.HDBSCAN`
   will change from `False` to `True` in 1.10 to avoid data modification
   and maintain consistency with other estimators.
   By :user:`Sarthak Puri <sarthakpurii>`. :pr:`31973`
@@ -242,13 +252,14 @@ other people in the wider Scientific Python and CPython ecosystem, for example
 :mod:`sklearn.ensemble`
 -----------------------
 
-- |Fix| :class:`ensemble.BaggingClassifier`, :class:`ensemble.BaggingRegressor`
-  and :class:`ensemble.IsolationForest` now use `sample_weight` to draw
-  the samples instead of forwarding them multiplied by a uniformly sampled
-  mask to the underlying estimators. Furthermore, `max_samples` is now
-  interpreted as a fraction of `sample_weight.sum()` instead of `X.shape[0]`
-  when passed as a float.
-  By :user:`Antoine Baker <antoinebaker>`. :pr:`31414`
+- |Fix| :class:`ensemble.BaggingClassifier`, :class:`ensemble.BaggingRegressor` and
+  :class:`ensemble.IsolationForest` now use `sample_weight` to draw the samples
+  instead of forwarding them multiplied by a uniformly sampled mask to the
+  underlying estimators. Furthermore, when `max_samples` is a float, it is now
+  interpreted as a fraction of `sample_weight.sum()` instead of `X.shape[0]`.
+  The new default `max_samples=None` draws `X.shape[0]` samples, irrespective
+  of `sample_weight`.
+  By :user:`Antoine Baker <antoinebaker>`. :pr:`31414` and :pr:`32825`
 
 :mod:`sklearn.feature_selection`
 --------------------------------
@@ -293,7 +304,8 @@ other people in the wider Scientific Python and CPython ecosystem, for example
 
 - |Efficiency| :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
   :class:`linear_model.Lasso`, :class:`linear_model.LassoCV`,
-  :class:`linear_model.MultiTaskElasticNetCV`, :class:`linear_model.MultiTaskLassoCV`
+  :class:`linear_model.MultiTaskElasticNet`, :class:`linear_model.MultiTaskElasticNetCV`
+  :class:`linear_model.MultiTaskLasso`, :class:`linear_model.MultiTaskLassoCV`
   as well as
   :func:`linear_model.lasso_path` and :func:`linear_model.enet_path` now implement
   gap safe screening rules in the coordinate descent solver for dense and sparse `X`.
@@ -316,7 +328,7 @@ other people in the wider Scientific Python and CPython ecosystem, for example
   By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`31906`
 
 - |Fix| Fix the convergence criteria for SGD models, to avoid premature convergence when
-  `tol != None`. This primarily impacts :class:`SGDOneClassSVM` but also affects 
+  `tol != None`. This primarily impacts :class:`SGDOneClassSVM` but also affects
   :class:`SGDClassifier` and :class:`SGDRegressor`. Before this fix, only the loss
   function without penalty was used as the convergence check, whereas now, the full
   objective with regularization is used.
@@ -334,7 +346,7 @@ other people in the wider Scientific Python and CPython ecosystem, for example
 - |Fix| :class:`linear_model.LogisticRegressionCV` is able to handle CV splits where
   some class labels are missing in some folds. Before, it raised an error whenever a
   class label were missing in a fold.
-  By :user:`Christian Lorentzen <lorentzenchr> :pr:`32747`
+  By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`32747`
 
 - |API| :class:`linear_model.PassiveAggressiveClassifier` and
   :class:`linear_model.PassiveAggressiveRegressor` are deprecated and will be removed
@@ -372,6 +384,34 @@ other people in the wider Scientific Python and CPython ecosystem, for example
   In version 1.10, the default will change to `False` and `use_legacy_attributes` will
   be deprecated. In 1.12 `use_legacy_attributes` will be removed.
   By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`32114`
+
+- |API| Parameter `penalty` of :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` is deprecated and will be removed in
+  version 1.10. The equivalent behaviour can be obtained as follows:
+
+  - for :class:`linear_model.LogisticRegression`
+
+    - use `l1_ratio=0` instead of `penalty="l2"`
+    - use `l1_ratio=1` instead of `penalty="l1"`
+    - use `0<l1_ratio<1` instead of `penalty="elasticnet"`
+    - use `C=np.inf` instead of `penalty=None`
+
+  - for :class:`linear_model.LogisticRegressionCV`
+
+    - use `l1_ratios=(0,)` instead of `penalty="l2"`
+    - use `l1_ratios=(1,)` instead of `penalty="l1"`
+    - the equivalent of `penalty=None` is to have `np.inf` as an element of the `Cs` parameter
+
+  For :class:`linear_model.LogisticRegression`, the default value of `l1_ratio`
+  has changed from `None` to `0.0`. Setting `l1_ratio=None` is deprecated and
+  will raise an error in version 1.10
+
+  For :class:`linear_model.LogisticRegressionCV`, the default value of `l1_ratios`
+  has changed from `None` to `"warn"`. It will be changed to `(0,)` in version
+  1.10. Setting `l1_ratios=None` is deprecated and will raise an error in
+  version 1.10.
+
+  By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`32659`
 
 - |API| The `n_jobs` parameter of :class:`linear_model.LogisticRegression` is deprecated and
   will be removed in 1.10. It has no effect since 1.8.
@@ -523,14 +563,17 @@ other people in the wider Scientific Python and CPython ecosystem, for example
 - |Enhancement| :class:`preprocessing.SplineTransformer` can now handle missing values with the
   parameter `handle_missing`. By :user:`Stefanie Senger <StefanieSenger>`. :pr:`28043`
 
-- |Enhancement| The :class:`preprocessing.PowerTransformer` now returns a warning 
-  when NaN values are encountered in the inverse transform, `inverse_transform`, typically 
+- |Enhancement| The :class:`preprocessing.PowerTransformer` now returns a warning
+  when NaN values are encountered in the inverse transform, `inverse_transform`, typically
   caused by extremely skewed data.
   By :user:`Roberto Mourao <maf-rnmourao>` :pr:`29307`
 
 - |Enhancement| :class:`preprocessing.MaxAbsScaler` can now clip out-of-range values in held-out data
   with the parameter `clip`.
   By :user:`Hleb Levitski <glevv>`. :pr:`31790`
+
+- |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where `handle_unknown='warn'` incorrectly behaved like `'ignore'` instead of `'infrequent_if_exist'`.
+  By :user:`Nithurshen <nithurshen>` :pr:`32592`
 
 :mod:`sklearn.semi_supervised`
 ------------------------------
@@ -565,6 +608,13 @@ other people in the wider Scientific Python and CPython ecosystem, for example
 - |Fix| Fixed a regression in :ref:`decision trees <tree>` where almost constant features were
   not handled properly.
   By :user:`Sercan Turkmen <sercant>`. :pr:`32259`
+
+- |Fix| Fixed splitting logic during training in :class:`tree.DecisionTree*`
+  (and consequently in :class:`ensemble.RandomForest*`)
+  for nodes containing near-constant feature values and missing values.
+  Beforehand, trees were cut short if a constant feature was found,
+  even if there was more splitting that could be done on the basis of missing values.
+  By :user:`Arthur Lacote <cakedev0>` :pr:`32274`
 
 - |Fix| Fix handling of missing values in method :func:`decision_path` of trees
   (:class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
@@ -616,4 +666,40 @@ other people in the wider Scientific Python and CPython ecosystem, for example
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.7, including:
 
-TODO: update at the time of the release.
+$id, 4hm3d, Acciaro Gennaro Daniele, achyuthan.s, Adam J. Stewart, Adriano
+Leão, Adrien Linares, Adrin Jalali, Aitsaid Azzedine Idir, Alexander Fabisch,
+Alexandre Abraham, Andrés H. Zapke, Anne Beyer, Anthony Gitter, AnthonyPrudent,
+antoinebaker, Arpan Mukherjee, Arthur, Arthur Lacote, Arturo Amor,
+ayoub.agouzoul, Ayrat, Ayush, Ayush Tanwar, Basile Jezequel, Bhavya Patwa,
+BRYANT MUSI BABILA, Casey Heath, Chems Ben, Christian Lorentzen, Christian
+Veenhuis, Christine P. Chai, cstec, C. Titus Brown, Daniel Herrera-Esposito,
+Dan Schult, dbXD320, Dea María Léon, Deepyaman Datta, dependabot[bot], Dhyey
+Findoriya, Dimitri Papadopoulos Orfanos, Dipak Dhangar, Dmitry Kobak,
+elenafillo, Elham Babaei, EmilyXinyi, Emily (Xinyi) Chen, Eugen-Bleck, Evgeni
+Burovski, fabarca, Fabrizio Damicelli, Faizan-Ul Huda, François Goupil,
+François Paugam, Gaetan, GaetandeCast, Gesa Loof, Gonçalo Guiomar, Gordon Grey,
+Gowtham Kumar K., Guilherme Peixoto, Guillaume Lemaitre, hakan çanakçı, Harshil
+Sanghvi, Henri Bonamy, Hleb Levitski, HulusiOzy, hvtruong, Ian Faust, Imad
+Saddik, Jérémie du Boisberranger, Jérôme Dockès, John Hendricks, Joris Van den
+Bossche, Josef Affourtit, Josh, jshn9515, Junaid, KALLA GANASEKHAR, Kapil
+Parekh, Kenneth Enevoldsen, Kian Eliasi, kostayScr, Krishnan Vignesh, kryggird,
+Kyle S, Lakshmi Krishnan, Leomax, Loic Esteve, Luca Bittarello, Lucas Colley,
+Lucy Liu, Luigi Giugliano, Luis, Mahdi Abid, Mahi Dhiman, Maitrey Talware,
+Mamduh Zabidi, Manikandan Gobalakrishnan, Marc Bresson, Marco Edward Gorelli,
+Marek Pokropiński, Maren Westermann, Marie Sacksick, Marija Vlajic, Matt J.,
+Mayank Raj, Michael Burkhart, Michael Šimáček, Miguel Fernandes, Miro Hrončok,
+Mohamed DHIFALLAH, Muhammad Waseem, MUHAMMED SINAN D, Natalia Mokeeva, Nicholas
+Farr, Nicolas Bolle, Nicolas Hug, nithish-74, Nithurshen, Nitin Pratap Singh,
+NotAceNinja, Olivier Grisel, omahs, Omar Salman, Patrick Walsh, Peter Holzer,
+pfolch, ph-ll-pp, Prashant Bansal, Quan H. Nguyen, Radovenchyk, Rafael Ayllón
+Gavilán, Raghvender, Ranjodh Singh, Ravichandranayakar, Remi Gau, Reshama
+Shaikh, Richard Harris, RishiP2006, Ritvi Alagusankar, Roberto Mourao, Robert
+Pollak, Roshangoli, roychan, R Sagar Shresti, Sarthak Puri, saskra,
+scikit-learn-bot, Scott Huberty, Sercan Turkmen, Sergio P, Shashank S, Shaurya
+Bisht, Shivam, Shruti Nath, SIKAI ZHANG, sisird864, SiyuJin-1, S. M. Mohiuddin
+Khan Shiam, Somdutta Banerjee, sotagg, Sota Goto, Spencer Bradkin, Stefan,
+Stefanie Senger, Steffen Rehberg, Steven Hur, Success Moses, Sylvain Combettes,
+ThibaultDECO, Thomas J. Fan, Thomas Li, Thomas S., Tim Head, Tingwei Zhu,
+Tiziano Zito, TJ Norred, Username46786, Utsab Dahal, Vasanth K, Veghit,
+VirenPassi, Virgil Chan, Vivaan Nanavati, Xiao Yuan, xuzhang0327, Yaroslav
+Halchenko, Yaswanth Kumar, Zijun yi, zodchi94, Zubair Shakoor
