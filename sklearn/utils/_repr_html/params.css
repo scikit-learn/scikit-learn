@@ -94,7 +94,7 @@ a.param-doc-link::before {
 
 .param-doc-description {
     display: none;
-    position: absolute;
+    position: fixed;
     z-index: 9999;
     left: 0;
     padding: .5ex;
@@ -110,11 +110,12 @@ a.param-doc-link::before {
     background: var(--sklearn-color-unfitted-level-0);
     border: thin solid var(--sklearn-color-unfitted-level-3);
 
+    position-area: right;
     position-anchor: --doc-link;
-    top: anchor(bottom);
 
-    position-try-fallbacks: --bottom;
-    /*right: anchor(right);*/
+    position-try-fallbacks: top, top right, right,
+        bottom right, bottom,
+        bottom left, left;
 }
 
 /* Fitted state for parameter tooltips */
