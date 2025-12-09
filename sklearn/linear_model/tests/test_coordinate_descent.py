@@ -1550,8 +1550,10 @@ def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
 
 
 @pytest.mark.parametrize("ridge_alpha", [1e-6, 1e-1, 1.0, 1e6])
-@pytest.mark.parametrize("precompute", [False, True])
-def test_enet_ridge_consistency(ridge_alpha, precompute):
+@pytest.mark.parametrize(
+    ["precompute", "n_targets"], [(False, 1), (True, 1), (False, 3)]
+)
+def test_enet_ridge_consistency(ridge_alpha, precompute, n_targets):
     # Check that ElasticNet(l1_ratio=0) converges to the same solution as Ridge
     # provided that the value of alpha is adapted.
 
@@ -1560,19 +1562,29 @@ def test_enet_ridge_consistency(ridge_alpha, precompute):
     X, y = make_regression(
         n_samples=n_samples,
         n_features=100,
+        n_targets=n_targets,
         effective_rank=10,
         n_informative=50,
         random_state=rng,
     )
     sw = rng.uniform(low=0.01, high=10, size=X.shape[0])
 
-    ridge = Ridge(alpha=ridge_alpha, solver="svd").fit(X, y, sample_weight=sw)
+    if n_targets == 1:
+        sw_arg = dict(sample_weight=sw)
+    else:
+        # MultiTaskElasticNet does not support sample weights (yet).
+        sw_arg = dict()
 
-    alpha_enet = ridge_alpha / sw.sum()
+    ridge = Ridge(alpha=ridge_alpha, solver="svd").fit(X, y, **sw_arg)
+
     tol = 1e-11 if ridge_alpha >= 1e-2 else 1e-16
-    enet = ElasticNet(alpha=alpha_enet, l1_ratio=0, precompute=precompute, tol=tol).fit(
-        X, y, sample_weight=sw
-    )
+    if n_targets == 1:
+        alpha_enet = ridge_alpha / sw.sum()
+        enet = ElasticNet(alpha=alpha_enet, l1_ratio=0, precompute=precompute, tol=tol)
+    else:
+        alpha_enet = ridge_alpha / n_samples
+        enet = MultiTaskElasticNet(alpha=alpha_enet, l1_ratio=0, tol=tol)
+    enet.fit(X, y, **sw_arg)
 
     # The CD solver using the gram matrix (precompute = True) loses numerical precision
     # by working with the squares of matrices like Q=X'X (=gram) and

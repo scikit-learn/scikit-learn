@@ -1303,11 +1303,9 @@ cdef (floating, floating) gap_enet_multi_task(
     cdef floating dual_norm_XtA
     cdef floating R_norm2
     cdef floating Ry
-    cdef floating w_l2_norm2 = 0.0
     cdef floating w_l21_norm
+    cdef floating w_l2_norm2 = 0.0
     cdef unsigned int t, j
-
-    # TODO: Dual gap for l1_reg=0, i.e. formulation B.
 
     # w_l2_norm2 = linalg.norm(W, ord="fro") ** 2
     if l2_reg > 0:
@@ -1315,7 +1313,27 @@ cdef (floating, floating) gap_enet_multi_task(
     # R_norm2 = linalg.norm(R, ord="fro") ** 2
     R_norm2 = _dot(n_samples * n_tasks, &R[0, 0], 1, &R[0, 0], 1)
     # Ry = np.sum(R * Y)
-    Ry = _dot(n_samples * n_tasks, &R[0, 0], 1, &Y[0, 0], 1)
+    if not (l1_reg == 0 and l2_reg == 0):
+        Ry = _dot(n_samples * n_tasks, &R[0, 0], 1, &Y[0, 0], 1)
+
+    if l1_reg == 0:
+        # XtA = X.T @ R
+        for j in range(n_features):
+            for t in range(n_tasks):
+                XtA[j, t] = _dot(n_samples, &X[0, j], 1, &R[0, t], 1)
+        # ||X'R||_2^2
+        dual_norm_XtA = _dot(n_features * n_tasks, &XtA[0, 0], 1, &XtA[0, 0], 1)
+        if l2_reg == 0:
+            # This is OLS, no dual gap available. Resort to first order condition
+            #     X'R = 0
+            #     gap = ||X'R||_2^2
+            # Compare with stopping criterion of LSQR.
+            gap = dual_norm_XtA
+            return gap, dual_norm_XtA
+        # This is Ridge regression, we use formulation B for the dual gap.
+        gap = R_norm2 + 0.5 * l2_reg * w_l2_norm2 - Ry
+        gap += 1 / (2 * l2_reg) * dual_norm_XtA
+        return gap, dual_norm_XtA
 
     # XtA = X.T @ R - l2_reg * W.T
     for j in range(n_features):
