@@ -91,14 +91,14 @@ or with conda::
 # We would be very interested by user feed-back, here are a few things you can
 # try:
 #
-# - install free-threaded CPython *3.14*, run your favourite
+# - install free-threaded CPython 3.14, run your favourite
 #   scikit-learn script and check that nothing breaks unexpectedly.
 #   Note that CPython 3.14 is strongly advised because a number of
 #   free-threaded bugs have been fixed since CPython 3.13.
-# - if you use some estimators with a `n_jobs` parameter, try switching the
+# - if you use some estimators with a `n_jobs` parameter, try changing the
 #   default backend to threading with `joblib.parallel_config` as in the
 #   snippet below. This could potentially speed-up your code because the
-#   default joblib backend is process-based which incurs more overhead than
+#   default joblib backend is process-based and incurs more overhead than
 #   threads.
 #
 #   .. code-block:: python
@@ -119,12 +119,13 @@ or with conda::
 # free-threaded CPython <https://py-free-threading.github.io/installing_cpython/>`_
 # and `Ecosystem compatibility tracking <https://py-free-threading.github.io/tracking/>`_.
 #
-# The long term goal of free-threaded Python is to more efficiently leverage
-# multi-core CPUs by using thread workers instead of subprocess workers for
-# parallel computation when passing `n_jobs>1` in functions or estimators.
-# Efficiency gains are expected by removing the need for inter-process
-# communication. Be aware that switching the default joblib backend and testing
-# that everything works well with free-threaded is a long-term ongoing effort.
+# In scikit-learn, one hope with free-threaded Python is to more efficiently
+# leverage multi-core CPUs by using thread workers instead of subprocess
+# workers for parallel computation when passing `n_jobs>1` in functions or
+# estimators. Efficiency gains are expected by removing the need for
+# inter-process communication. Be aware that switching the default joblib
+# backend and testing that everything works well with free-threaded is a
+# long-term ongoing effort.
 
 # %%
 # Temperature scaling in `CalibratedClassifierCV`
