@@ -2456,9 +2456,7 @@ def test_min_sample_split_1_error(Tree):
         tree.fit(X, y)
 
 
-@pytest.mark.parametrize(
-    "criterion", ["squared_error", "friedman_mse", "absolute_error"]
-)
+@pytest.mark.parametrize("criterion", REG_CRITERIONS)
 def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
     """Check missing values goes to correct node during predictions."""
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
@@ -2486,9 +2484,7 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
 
 
 @pytest.mark.parametrize("seed", range(3))
-@pytest.mark.parametrize(
-    "criterion", ["squared_error", "friedman_mse", "absolute_error"]
-)
+@pytest.mark.parametrize("criterion", REG_CRITERIONS)
 def test_missing_values_random_splitter_on_equal_nodes_no_missing(criterion, seed):
     """Check missing values go to the correct node during predictions for ExtraTree.
 
@@ -2773,9 +2769,7 @@ def test_deterministic_pickle():
         np.array([1, 2, 3, np.nan, 6, np.nan]),
     ],
 )
-@pytest.mark.parametrize(
-    "criterion", ["squared_error", "friedman_mse", "absolute_error"]
-)
+@pytest.mark.parametrize("criterion", REG_CRITERIONS)
 def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_seed):
     """Check that we properly handle missing values in regression trees using a toy
     dataset.
@@ -2791,17 +2785,17 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_se
     https://github.com/scikit-learn/scikit-learn/issues/28316
     """
     X = X.reshape(-1, 1)
-    y = np.arange(6)
+    y = np.arange(1, 7)
+    # y needs to be > 0 for this test to pass with poisson criterion
+    # if some y[i] is 0, there might be multiple optimal splits, which
+    # makes the impurity check below fail because different splits were
+    # made due to different rounding errors
 
     tree = Tree(criterion=criterion, random_state=global_random_seed).fit(X, y)
     tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
-    # I don't really see why this should work with ExtraTreeRegressor,
-    # the threshold is not in the same range, so even with the same seed
-    # it's different
-    # assert tree.tree_.threshold[0] == tree_ref.tree_.threshold[0]
 
     impurity = tree.tree_.impurity
-    assert all(impurity >= 0), impurity.min()  # MSE should always be positive
+    assert all(impurity >= 0), impurity.min()  # impurity should always be positive
 
     # Note: the impurity matches after the first split only on greedy trees
     # see https://github.com/scikit-learn/scikit-learn/issues/32125
@@ -2809,7 +2803,7 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_se
         # Check the impurity match after the first split
         assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
 
-    # Find the leaves with a single sample where the MSE should be 0
+    # Find the leaves with a single sample where the impurity should be 0
     leaves_idx = np.flatnonzero(
         (tree.tree_.children_left == -1) & (tree.tree_.n_node_samples == 1)
     )
