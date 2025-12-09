@@ -1088,7 +1088,7 @@ def manhattan_distances(X, Y=None):
     array([[0., 2.],
            [4., 4.]])
     """
-    X, Y = check_pairwise_arrays(X, Y, accept_sparse=['csr', 'csc', 'coo'])
+    X, Y = check_pairwise_arrays(X, Y, accept_sparse=["csr", "csc", "coo"])
     n_x, n_y = X.shape[0], Y.shape[0]
 
     if issparse(X) or issparse(Y):
