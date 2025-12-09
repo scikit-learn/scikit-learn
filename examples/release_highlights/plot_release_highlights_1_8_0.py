@@ -124,8 +124,8 @@ or with conda::
 # workers for parallel computation when passing `n_jobs>1` in functions or
 # estimators. Efficiency gains are expected by removing the need for
 # inter-process communication. Be aware that switching the default joblib
-# backend and testing that everything works well with free-threaded is a
-# long-term ongoing effort.
+# backend and testing that everything works well with free-threaded Python is a
+# ongoing long-term effort.
 
 # %%
 # Temperature scaling in `CalibratedClassifierCV`
@@ -133,7 +133,7 @@ or with conda::
 # Probability calibration of classifiers with temperature scaling is available in
 # :class:`calibration.CalibratedClassifierCV` by setting `method="temperature"`.
 # This method is particularly well suited for multiclass problems because it provides
-# (better) calibrated probabilities with a single free parameter, in contrast
+# (better) calibrated probabilities with a single free parameter. This is in contrast to all the other available calibration `method`s which use a "One-vs-Rest" …
 # to using a "One-vs-Rest" scheme that adds more parameters for each class.
 
 from sklearn.calibration import CalibratedClassifierCV
@@ -146,12 +146,11 @@ sig = CalibratedClassifierCV(clf, method="sigmoid", ensemble=False).fit(X, y)
 ts = CalibratedClassifierCV(clf, method="temperature", ensemble=False).fit(X, y)
 
 # %%
-# The following example shows that temperature scaling can produce better-calibrated
+# The following example shows that temperature scaling can produce better calibrated
 # probabilities than sigmoid calibration in multi-class classification problem
-# (3 classes).
+# with 3 classes.
 
 import matplotlib.pyplot as plt
-
 from sklearn.calibration import CalibrationDisplay
 
 fig, axes = plt.subplots(
@@ -196,12 +195,11 @@ _ = fig.show()
 # time, for squared error based estimators with L1 penalty: `ElasticNet`, `Lasso`,
 # `MultiTaskElasticNet`, `MultiTaskLasso` and their CV variants. The fit time
 # improvement is mainly achieved by **gap safe screening rules**. They enable the
-# coordinate descent solver to set feature coefficients to 0 early and not look at them
+# coordinate descent solver to set feature coefficients to 0 early on and not look at them
 # again. The stronger the L1 penalty the earlier features can be excluded from further
 # updates.
 
 from time import time
-
 from sklearn.datasets import make_regression
 from sklearn.linear_model import ElasticNetCV
 
@@ -273,7 +271,6 @@ clf
 # single split takes of the order of 100 ms, compared to ~20 seconds before.
 
 import time
-
 from sklearn.datasets import make_regression
 from sklearn.tree import DecisionTreeRegressor
 
@@ -288,18 +285,17 @@ print(f"Fit took {elapsed:.2f} seconds")
 # %%
 # ClassicalMDS
 # ------------
-# Classical MDS, also known as "Principal Coordinates Analysis (PCoA)"
+# Classical MDS, also known as "Principal Coordinates Analysis" (PCoA)
 # or "Torgerson's scaling" is now available within the `sklearn.manifold`
-# module. Classical MDS is close to PCA and instead of of approximating
+# module. Classical MDS is close to PCA and instead of approximating
 # distances, it approximates pairwise scalar products, which has an exact
 # analytic solution in terms of eigendecomposition.
 #
-# Let's illustrate this new addition by using it on a S-curve dataset to
+# Let's illustrate this new addition by using it on an S-curve dataset to
 # get a low-dimensional representation of the data.
 
 import matplotlib.pyplot as plt
 from matplotlib import ticker
-
 from sklearn import datasets, manifold
 
 n_samples = 1500
