@@ -129,8 +129,8 @@ a.param-doc-link::before {
 }
 
 @position-try --bottom {
-    inset: auto;
-    top: calc(anchor(top) - 20rem);
+    /* inset: auto; */
+    top: anchor(top);
 }
 
 .copy-paste-icon {
