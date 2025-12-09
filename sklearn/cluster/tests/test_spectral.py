@@ -311,7 +311,7 @@ def test_verbose(assign_labels, capsys):
 
 def test_spectral_clustering_np_matrix_raises():
     """Check that spectral_clustering raises an informative error when passed
-    a np.matrix. See #10993"""
+    an np.matrix. See #10993"""
     X = np.matrix([[0.0, 2.0], [2.0, 0.0]])
 
     msg = r"np\.matrix is not supported. Please convert to a numpy array"

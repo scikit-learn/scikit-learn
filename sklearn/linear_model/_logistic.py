@@ -861,7 +861,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
           class of problems.
         - For :term:`multiclass` problems (`n_classes >= 3`), all solvers except
           'liblinear' minimize the full multinomial loss, 'liblinear' will raise an
-           error.
+          error.
         - 'newton-cholesky' is a good choice for
           `n_samples` >> `n_features * n_classes`, especially with one-hot encoded
           categorical features with rare categories. Be aware that the memory usage
@@ -1465,7 +1465,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
           class of problems.
         - For :term:`multiclass` problems (`n_classes >= 3`), all solvers except
           'liblinear' minimize the full multinomial loss, 'liblinear' will raise an
-           error.
+          error.
         - 'newton-cholesky' is a good choice for
           `n_samples` >> `n_features * n_classes`, especially with one-hot encoded
           categorical features with rare categories. Be aware that the memory usage
