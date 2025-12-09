@@ -720,12 +720,15 @@ def test_pandas_copy_on_write():
         TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
     else:
         with warnings.catch_warnings():
+            expected_message = (
+                "Copy-on-Write can no longer be disabled, "
+                "setting to False has no impact. This option will "
+                "be removed in pandas 4.0."
+            )
             warnings.filterwarnings(
                 "ignore",
-                message="Copy-on-Write can no longer be disabled, "
-                "setting to False has no impact. This option will "
-                "be removed in pandas 4.0.",
-                category=pd.errors.Pandas4Warning,
+                message=re.escape(expected_message),
+                category=DeprecationWarning,
             )
             with pd.option_context("mode.copy_on_write", True):
                 df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
