@@ -49,7 +49,7 @@ or with conda::
 # Note: Array API support is experimental and must be explicitly enabled both
 # in SciPy and scikit-learn.
 #
-# Here an excerpt of using :class:`calibration.CalibratedClassifierCV` and
+# Here is an excerpt of using :class:`calibration.CalibratedClassifierCV` and
 # :class:`linear_model.RidgeCV` together on a GPU with the help of PyTorch:
 #
 # .. code-block:: python
@@ -88,7 +88,7 @@ or with conda::
 # free-threaded wheels are available for all of our supported platforms on Python
 # 3.14.
 #
-# We would be very interested by user feed-back, here are a few things you can
+# We would be very interested by user feedback. Here are a few things you can
 # try:
 #
 # - install free-threaded CPython 3.14, run your favourite
