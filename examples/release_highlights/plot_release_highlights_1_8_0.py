@@ -133,7 +133,7 @@ or with conda::
 # Probability calibration of classifiers with temperature scaling is available in
 # :class:`calibration.CalibratedClassifierCV` by setting `method="temperature"`.
 # This method is particularly well suited for multiclass problems because it provides
-# (better-) calibrated probabilities with a single free parameter, in contrast
+# (better) calibrated probabilities with a single free parameter, in contrast
 # to using a "One-vs-Rest" scheme that adds more parameters for each class.
 
 from sklearn.calibration import CalibratedClassifierCV
@@ -141,9 +141,9 @@ from sklearn.datasets import make_classification
 from sklearn.naive_bayes import GaussianNB
 
 X, y = make_classification(n_classes=3, n_informative=8, random_state=42)
-clf = GaussianNB()
-sig = CalibratedClassifierCV(clf, method="sigmoid", ensemble=False).fit(X, y)  # old
-ts = CalibratedClassifierCV(clf, method="temperature", ensemble=False).fit(X, y)  # new
+clf = GaussianNB().fit(X, y)
+sig = CalibratedClassifierCV(clf, method="sigmoid", ensemble=False).fit(X, y)
+ts = CalibratedClassifierCV(clf, method="temperature", ensemble=False).fit(X, y)
 
 # %%
 # The following example shows that temperature scaling can produce better-calibrated
@@ -161,16 +161,17 @@ fig, axes = plt.subplots(
 )
 for i, c in enumerate(ts.classes_):
     CalibrationDisplay.from_predictions(
+        y == c, clf.predict_proba(X)[:, i], name="Uncalibrated", ax=axes[i], marker="s"
+    )
+    CalibrationDisplay.from_predictions(
         y == c,
         ts.predict_proba(X)[:, i],
         name="Temperature scaling",
         ax=axes[i],
+        marker="o",
     )
     CalibrationDisplay.from_predictions(
-        y == c,
-        sig.predict_proba(X)[:, i],
-        name="Sigmoid",
-        ax=axes[i],
+        y == c, sig.predict_proba(X)[:, i], name="Sigmoid", ax=axes[i], marker="v"
     )
     axes[i].set_title(f"Class {c}")
     axes[i].set_xlabel(None)
