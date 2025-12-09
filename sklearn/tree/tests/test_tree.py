@@ -3057,3 +3057,14 @@ def test_missing_values_and_constant_toy():
     assert_array_equal(tree.predict(X), y)
     # with just one split (-> three nodes: the root + 2 leaves)
     assert tree.tree_.node_count == 3
+
+
+def test_missing_values_and_poisson_toy():
+    # Non regression test for https://github.com/scikit-learn/scikit-learn/issues/32870
+    X = np.array([np.nan, 1, 2, 3, np.nan]).reshape(-1, 1)
+    y = [0.49, 0.5, 0.7, 1.5, 0.8]
+
+    tree = DecisionTreeRegressor(criterion="poisson")
+    tree.fit(X, y)
+    # impurity should be non-negative:
+    assert (tree.tree_.impurity >= -1e10).all()
