@@ -133,8 +133,9 @@ or with conda::
 # Probability calibration of classifiers with temperature scaling is available in
 # :class:`calibration.CalibratedClassifierCV` by setting `method="temperature"`.
 # This method is particularly well suited for multiclass problems because it provides
-# (better) calibrated probabilities with a single free parameter. This is in contrast to all the other available calibration `method`s which use a "One-vs-Rest" …
-# to using a "One-vs-Rest" scheme that adds more parameters for each class.
+# (better) calibrated probabilities with a single free parameter. This is in
+# contrast to all the other available calibration `method`s which use a
+# "One-vs-Rest" scheme that adds more parameters for each class.
 
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import make_classification
@@ -151,6 +152,7 @@ ts = CalibratedClassifierCV(clf, method="temperature", ensemble=False).fit(X, y)
 # with 3 classes.
 
 import matplotlib.pyplot as plt
+
 from sklearn.calibration import CalibrationDisplay
 
 fig, axes = plt.subplots(
@@ -195,11 +197,12 @@ _ = fig.show()
 # time, for squared error based estimators with L1 penalty: `ElasticNet`, `Lasso`,
 # `MultiTaskElasticNet`, `MultiTaskLasso` and their CV variants. The fit time
 # improvement is mainly achieved by **gap safe screening rules**. They enable the
-# coordinate descent solver to set feature coefficients to 0 early on and not look at them
-# again. The stronger the L1 penalty the earlier features can be excluded from further
-# updates.
+# coordinate descent solver to set feature coefficients to 0 early on and not
+# look at them again. The stronger the L1 penalty the earlier features can be
+# excluded from further updates.
 
 from time import time
+
 from sklearn.datasets import make_regression
 from sklearn.linear_model import ElasticNetCV
 
@@ -271,6 +274,7 @@ clf
 # single split takes of the order of 100 ms, compared to ~20 seconds before.
 
 import time
+
 from sklearn.datasets import make_regression
 from sklearn.tree import DecisionTreeRegressor
 
@@ -296,6 +300,7 @@ print(f"Fit took {elapsed:.2f} seconds")
 
 import matplotlib.pyplot as plt
 from matplotlib import ticker
+
 from sklearn import datasets, manifold
 
 n_samples = 1500
