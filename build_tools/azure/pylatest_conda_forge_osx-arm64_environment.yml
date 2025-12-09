@@ -6,7 +6,7 @@ channels:
 dependencies:
   - python
   - numpy
-  - blas[build=mkl]
+  - blas
   - scipy
   - cython
   - joblib
@@ -26,3 +26,6 @@ dependencies:
   - ccache
   - compilers
   - llvm-openmp
+  - pytorch
+  - pytorch-cpu
+  - array-api-strict

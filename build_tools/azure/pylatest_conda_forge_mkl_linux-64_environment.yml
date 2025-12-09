@@ -30,3 +30,4 @@ dependencies:
   - pyarrow
   - array-api-strict
   - scipy-doctest
+  - pytest-playwright

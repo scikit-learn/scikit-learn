@@ -8,17 +8,18 @@ using shrinkage. Ledoit and Wolf proposed a close formula to compute
 the asymptotically optimal shrinkage parameter (minimizing a MSE
 criterion), yielding the Ledoit-Wolf covariance estimate.
 
-Chen et al. proposed an improvement of the Ledoit-Wolf shrinkage
+Chen et al. [1]_ proposed an improvement of the Ledoit-Wolf shrinkage
 parameter, the OAS coefficient, whose convergence is significantly
 better under the assumption that the data are Gaussian.
 
-This example, inspired from Chen's publication [1], shows a comparison
+This example, inspired from Chen's publication [1]_, shows a comparison
 of the estimated MSE of the LW and OAS methods, using Gaussian
 distributed data.
 
-[1] "Shrinkage Algorithms for MMSE Covariance Estimation"
-Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
+.. rubric :: References
 
+.. [1] "Shrinkage Algorithms for MMSE Covariance Estimation"
+   Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
 """
 
 # Authors: The scikit-learn developers

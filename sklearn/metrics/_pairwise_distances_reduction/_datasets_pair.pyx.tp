@@ -15,7 +15,7 @@ import numpy as np
 
 from cython cimport final
 
-from ...utils._typedefs cimport float64_t, float32_t, intp_t
+from sklearn.utils._typedefs cimport float64_t, float32_t, intp_t
 
 from scipy.sparse import issparse, csr_matrix
 
@@ -64,12 +64,12 @@ cdef class DatasetsPair{{name_suffix}}:
         ----------
         X : {ndarray, sparse matrix} of shape (n_samples_X, n_features)
             Input data.
-            If provided as a ndarray, it must be C-contiguous.
+            If provided as an ndarray, it must be C-contiguous.
             If provided as a sparse matrix, it must be in CSR format.
 
         Y : {ndarray, sparse matrix} of shape (n_samples_Y, n_features)
             Input data.
-            If provided as a ndarray, it must be C-contiguous.
+            If provided as an ndarray, it must be C-contiguous.
             If provided as a sparse matrix, it must be in CSR format.
 
         metric : str or DistanceMetric object, default='euclidean'
@@ -137,14 +137,14 @@ cdef class DatasetsPair{{name_suffix}}:
 
     cdef intp_t n_samples_X(self) noexcept nogil:
         """Number of samples in X."""
-        # This is a abstract method.
+        # This is an abstract method.
         # This _must_ always be overwritten in subclasses.
         # TODO: add "with gil: raise" here when supporting Cython 3.0
         return -999
 
     cdef intp_t n_samples_Y(self) noexcept nogil:
         """Number of samples in Y."""
-        # This is a abstract method.
+        # This is an abstract method.
         # This _must_ always be overwritten in subclasses.
         # TODO: add "with gil: raise" here when supporting Cython 3.0
         return -999
@@ -153,7 +153,7 @@ cdef class DatasetsPair{{name_suffix}}:
         return self.dist(i, j)
 
     cdef float64_t dist(self, intp_t i, intp_t j) noexcept nogil:
-        # This is a abstract method.
+        # This is an abstract method.
         # This _must_ always be overwritten in subclasses.
         # TODO: add "with gil: raise" here when supporting Cython 3.0
         return -1

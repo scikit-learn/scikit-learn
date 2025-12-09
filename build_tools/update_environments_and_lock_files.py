@@ -115,6 +115,9 @@ build_metadata_list = [
             "cupy",
             "array-api-strict",
         ],
+        "package_constraints": {
+            "blas": "[build=mkl]",
+        },
     },
     {
         "name": "pylatest_conda_forge_mkl_linux-64",
@@ -132,27 +135,28 @@ build_metadata_list = [
             "pyarrow",
             "array-api-strict",
             "scipy-doctest",
+            "pytest-playwright",
         ],
         "package_constraints": {
             "blas": "[build=mkl]",
         },
     },
     {
-        "name": "pylatest_conda_forge_mkl_osx-64",
+        "name": "pylatest_conda_forge_osx-arm64",
         "type": "conda",
         "tag": "main-ci",
         "folder": "build_tools/azure",
-        "platform": "osx-64",
+        "platform": "osx-arm64",
         "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies
         + [
             "ccache",
             "compilers",
             "llvm-openmp",
+            "pytorch",
+            "pytorch-cpu",
+            "array-api-strict",
         ],
-        "package_constraints": {
-            "blas": "[build=mkl]",
-        },
     },
     {
         "name": "pylatest_conda_forge_mkl_no_openmp",
@@ -173,9 +177,13 @@ build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channels": ["conda-forge"],
-        "conda_dependencies": common_dependencies + ["ccache", "polars", "pyarrow"],
+        "conda_dependencies": remove_from(common_dependencies, ["pandas"])
+        + ["ccache", "polars", "pyarrow"],
+        # TODO: move pandas to conda_dependencies when pandas 1.5.1 is the minimum
+        # supported version
+        "pip_dependencies": ["pandas"],
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
             "blas": "[build=openblas]",
             "numpy": "min",
             "scipy": "min",
@@ -203,7 +211,7 @@ build_metadata_list = [
             + ["ccache"]
         ),
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
             "blas": "[build=openblas]",
         },
     },
@@ -215,11 +223,16 @@ build_metadata_list = [
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": ["python", "ccache"],
+        "package_constraints": {
+            # TODO: remove this constraint once pyamg provide binary
+            # wheels for Python 3.14 (or later) on PyPI.
+            "python": "3.13",
+        },
         "pip_dependencies": (
             remove_from(common_dependencies, ["python", "blas", "pip"])
             + docstring_test_dependencies
             # Test with some optional dependencies
-            + ["lightgbm", "scikit-image"]
+            + ["lightgbm"]
             # Test array API on CPU without PyTorch
             + ["array-api-strict"]
             # doctests dependencies
@@ -267,7 +280,7 @@ build_metadata_list = [
         "tag": "free-threaded",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channels": ["conda-forge", "conda-forge/label/python_rc"],
+        "channels": ["conda-forge"],
         "conda_dependencies": [
             "python-freethreading",
             "meson-python",
@@ -297,7 +310,7 @@ build_metadata_list = [
             "pip",
         ],
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
             "blas": "[build=openblas]",
         },
     },
@@ -308,7 +321,9 @@ build_metadata_list = [
         "folder": "build_tools/circle",
         "platform": "linux-64",
         "channels": ["conda-forge"],
-        "conda_dependencies": common_dependencies_without_coverage
+        "conda_dependencies": remove_from(
+            common_dependencies_without_coverage, ["pandas"]
+        )
         + [
             "scikit-image",
             "seaborn",
@@ -330,9 +345,12 @@ build_metadata_list = [
         ],
         "pip_dependencies": [
             "sphinxcontrib-sass",
+            # TODO: move pandas to conda_dependencies when pandas 1.5.1 is the minimum
+            # supported version
+            "pandas",
         ],
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
             "numpy": "min",
             "scipy": "min",
             "matplotlib": "min",
@@ -389,7 +407,10 @@ build_metadata_list = [
             "sphinxcontrib-sass",
         ],
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
+            # Pinned while https://github.com/pola-rs/polars/issues/25039 is
+            # not fixed.
+            "polars": "1.34.0",
         },
     },
     {
@@ -404,7 +425,10 @@ build_metadata_list = [
         )
         + ["pip", "ccache"],
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
+            # The following is needed to avoid getting libnvpl build for blas for some
+            # reason.
+            "blas": "[build=openblas]",
         },
     },
     {
@@ -445,7 +469,7 @@ build_metadata_list = [
             "threadpoolctl": "min",
             "cython": "min",
         },
-        "python_version": "3.10.4",
+        "python_version": "3.12.3",
     },
 ]
 
