@@ -197,7 +197,7 @@ _ = fig.show()
 # time, for squared error based estimators with L1 penalty: `ElasticNet`, `Lasso`,
 # `MultiTaskElasticNet`, `MultiTaskLasso` and their CV variants. The fit time
 # improvement is mainly achieved by **gap safe screening rules**. They enable the
-# coordinate descent solver to set feature coefficients to 0 early on and not
+# coordinate descent solver to set feature coefficients to zero early on and not
 # look at them again. The stronger the L1 penalty the earlier features can be
 # excluded from further updates.
 
