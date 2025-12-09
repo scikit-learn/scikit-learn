@@ -49,13 +49,15 @@ or with conda::
 # Note: Array API support is experimental and must be explicitly enabled both
 # in SciPy and scikit-learn.
 #
-# Here is an excerpt of using :class:`calibration.CalibratedClassifierCV` and
-# :class:`linear_model.RidgeCV` together on a GPU with the help of PyTorch:
+# Here is an excerpt of using `skrub.TableVectorizer
+# <https://skrub-data.org/stable/reference/generated/skrub.TableVectorizer.html>`_
+# for preprocessing (on CPU) followed by :class:`calibration.CalibratedClassifierCV`
+# and :class:`linear_model.RidgeCV` together on a GPU with the help of PyTorch:
 #
 # .. code-block:: python
 #
 #     ridge_pipeline_gpu = make_pipeline(
-#         TableVectorizer(
+#         skrub.TableVectorizer(
 #             numeric=make_pipeline(
 #                 QuantileTransformer(),
 #                 SplineTransformer(n_knots=10),
