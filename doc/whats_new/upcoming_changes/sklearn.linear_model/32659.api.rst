@@ -1,0 +1,27 @@
+- Parameter `penalty` of :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` is deprecated and will be removed in
+  version 1.10. The equivalent behaviour can be obtained as follows:
+
+  - for :class:`linear_model.LogisticRegression`
+
+    - use `l1_ratio=0` instead of `penalty="l2"`
+    - use `l1_ratio=1` instead of `penalty="l1"`
+    - use `0<l1_ratio<1` instead of `penalty="elasticnet"`
+    - use `C=np.inf` instead of `penalty=None`
+
+  - for :class:`linear_model.LogisticRegressionCV`
+
+    - use `l1_ratios=(0,)` instead of `penalty="l2"`
+    - use `l1_ratios=(1,)` instead of `penalty="l1"`
+    - the equivalent of `penalty=None` is to have `np.inf` as an element of the `Cs` parameter
+
+  For :class:`linear_model.LogisticRegression`, the default value of `l1_ratio`
+  has changed from `None` to `0.0`. Setting `l1_ratio=None` is deprecated and
+  will raise an error in version 1.10
+
+  For :class:`linear_model.LogisticRegressionCV`, the default value of `l1_ratios`
+  has changed from `None` to `"warn"`. It will be changed to `(0,)` in version
+  1.10. Setting `l1_ratios=None` is deprecated and will raise an error in
+  version 1.10.
+
+  By :user:`Christian Lorentzen <lorentzenchr>`.

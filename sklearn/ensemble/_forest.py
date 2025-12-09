@@ -616,7 +616,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         n_samples = y.shape[0]
         n_outputs = self.n_outputs_
         if is_classifier(self) and hasattr(self, "n_classes_"):
-            # n_classes_ is a ndarray at this stage
+            # n_classes_ is an ndarray at this stage
             # all the supported type of target will have the same number of
             # classes in all outputs
             oob_pred_shape = (n_samples, self.n_classes_[0], n_outputs)
