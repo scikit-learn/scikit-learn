@@ -8,13 +8,12 @@ import numpy as np
 from sklearn.base import is_regressor
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import _safe_indexing
+from sklearn.utils._dataframe import is_pandas_df, is_polars_df
 from sklearn.utils._optional_dependencies import check_matplotlib_support
 from sklearn.utils._response import _get_response_values
 from sklearn.utils._set_output import _get_adapter_from_container
 from sklearn.utils.validation import (
     _is_arraylike_not_scalar,
-    _is_pandas_df,
-    _is_polars_df,
     _num_features,
     check_is_fitted,
 )
@@ -496,7 +495,7 @@ class DecisionBoundaryDisplay:
         )
 
         X_grid = np.c_[xx0.ravel(), xx1.ravel()]
-        if _is_pandas_df(X) or _is_polars_df(X):
+        if is_pandas_df(X) or is_polars_df(X):
             adapter = _get_adapter_from_container(X)
             X_grid = adapter.create_container(
                 X_grid,
