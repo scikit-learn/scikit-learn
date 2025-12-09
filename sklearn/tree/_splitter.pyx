@@ -375,7 +375,10 @@ cdef inline int node_split_best(
             # All values for this feature are missing, or
             end_non_missing == start or
             # This feature is considered constant (max - min <= FEATURE_THRESHOLD)
-            feature_values[end_non_missing - 1] <= feature_values[start] + FEATURE_THRESHOLD
+            ((
+                feature_values[end_non_missing - 1]
+                <= feature_values[start] + FEATURE_THRESHOLD
+            ) and n_missing == 0)
         ):
             # We consider this feature constant in this case.
             # Since finding a split among constant feature is not valuable,
@@ -617,7 +620,7 @@ cdef inline int node_split_random(
             # All values for this feature are missing, or
             end - start == n_missing or
             # This feature is considered constant (max - min <= FEATURE_THRESHOLD)
-            max_feature_value <= min_feature_value + FEATURE_THRESHOLD
+            (max_feature_value <= min_feature_value + FEATURE_THRESHOLD and n_missing == 0)
         ):
             # We consider this feature constant in this case.
             # Since finding a split with a constant feature is not valuable,
