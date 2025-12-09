@@ -725,7 +725,7 @@ def test_pandas_copy_on_write():
                 message="Copy-on-Write can no longer be disabled, "
                 "setting to False has no impact. This option will "
                 "be removed in pandas 4.0.",
-                category=pd.errors.Pandas4Warning,
+                category=DeprecationWarning,
             )
             with pd.option_context("mode.copy_on_write", True):
                 df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
