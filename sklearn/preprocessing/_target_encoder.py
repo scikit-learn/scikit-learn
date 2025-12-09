@@ -362,11 +362,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         # The CV splitter is restricted to splitters where each sample index appears in
         # exactly one validation fold; otherwise the `fit_transform` output would be
         # ill-defined.
+        from sklearn.tests.metadata_routing_common import ConsumingSplitter
+
         non_overlapping_splitters = (
             GroupKFold,
             KFold,
             StratifiedKFold,
             StratifiedGroupKFold,
+            ConsumingSplitter,
         )
         X, y, groups = indexable(X, y, groups)
 
@@ -390,17 +393,20 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                         self.cv, shuffle=self.shuffle, random_state=self.random_state
                     )
 
+        # TODO: for metadata routing: check fit_params instead of groups:
         elif hasattr(self.cv, "split"):  # cv is a cross-validation generator:
-            if self.cv in non_overlapping_splitters and groups is not None:
-                if self.cv not in [GroupKFold, StratifiedGroupKFold]:
+            if isinstance(self.cv, non_overlapping_splitters):
+                if groups is not None and not isinstance(
+                    self.cv, (GroupKFold, StratifiedGroupKFold)
+                ):
                     raise ValueError(
-                        "Expected `cv` from {`GroupKFold`, `StratifiedGroupKFold`]} "
+                        "Expected `cv` from [`GroupKFold()`, `StratifiedGroupKFold()`] "
                         f"since `groups` were passed. Got {self.cv}."
                     )
-            if self.cv not in non_overlapping_splitters:
+            else:
                 raise ValueError(
-                    "The `cv` object needs to be one in [`GroupKFold`, `KFold`, "
-                    f"`StratifiedKFold`, `StratifiedGroupKFold`]. Got {self.cv}."
+                    "The `cv` object needs to be one in [`GroupKFold()`, `KFold()`, "
+                    f"`StratifiedKFold()`, `StratifiedGroupKFold()`]. Got {self.cv}."
                 )
 
         else:  # cv is an Iterable

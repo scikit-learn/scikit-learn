@@ -9,6 +9,7 @@ from sklearn.datasets._samples_generator import make_classification
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import (
+    GroupKFold,
     KFold,
     ShuffleSplit,
     StratifiedKFold,
@@ -722,15 +723,15 @@ def test_target_encoder_raises_bad_cv_generator():
     passed as `cv` object.
     """
     X, y = make_classification(random_state=0)
-    encoder = TargetEncoder(target_type="binary", cv=ShuffleSplit)
-    msg = "The `cv` object needs to be one in {`GroupKFold`, `KFold`, "
+    encoder = TargetEncoder(target_type="binary", cv=ShuffleSplit())
+    msg = re.escape("The `cv` object needs to be one in [`GroupKFold()`, `KFold()`,")
     with pytest.raises(ValueError, match=msg):
         encoder.fit_transform(X, y)
 
     X, y = make_regression(n_samples=100, n_features=3, random_state=0)
     groups = np.repeat(np.arange(5), X.shape[0] / 5)
-    encoder = TargetEncoder(target_type="continuous", cv=KFold)
-    msg = "Expected `cv` from {`GroupKFold`, `StratifiedGroupKFold`]} "
+    encoder = TargetEncoder(target_type="continuous", cv=KFold())
+    msg = re.escape("Expected `cv` from [`GroupKFold()`, `StratifiedGroupKFold()`]")
     with pytest.raises(ValueError, match=msg):
         encoder.fit_transform(X, y, groups)
 
@@ -755,7 +756,7 @@ def test_target_encoder_cv_auto_groups():
 
 def test_target_encoder_raises_cv_overlap(global_random_seed):
     """
-    Test that `TargetEncoder` raises if `cv` is an  iterable with overlapping splits.
+    Test that `TargetEncoder` raises if `cv` is an iterable with overlapping splits.
     """
     X, y = make_regression(n_samples=100, n_features=3, random_state=0)
 
@@ -770,3 +771,16 @@ def test_target_encoder_raises_cv_overlap(global_random_seed):
     msg = "Validation indices from the iterable `cv` must cover each sample index"
     with pytest.raises(ValueError, match=msg):
         encoder.fit_transform(X, y)
+
+
+def test_target_encoder_inherited_splitters():
+    """Test that `TargetEncoder` accepts cv splitters that inherit from the allowed
+    splitters."""
+
+    class GroupKFoldWithRegistry(GroupKFold):
+        pass
+
+    X, y = make_classification(random_state=0)
+    groups = np.repeat(np.arange(5), X.shape[0] / 5)
+    encoder = TargetEncoder(target_type="binary", cv=GroupKFoldWithRegistry())
+    encoder.fit_transform(X, y, groups)
