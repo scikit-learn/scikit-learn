@@ -108,7 +108,7 @@ or with conda::
 #           grid_search.fit(X, y)
 #
 # - don't hesitate to report any issue or unexpected performance behaviour by
-#   opening an `GitHub issue <https://github.com/scikit-learn/scikit-learn/issues/new/choose>`_!
+#   opening a `GitHub issue <https://github.com/scikit-learn/scikit-learn/issues/new/choose>`_!
 #
 # Free-threaded (also known as nogil) CPython is a version of CPython that aims
 # to enable efficient multi-threaded use cases by removing the Global
