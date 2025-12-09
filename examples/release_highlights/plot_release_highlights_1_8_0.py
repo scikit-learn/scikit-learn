@@ -93,7 +93,7 @@ or with conda::
 #
 # - install free-threaded CPython 3.14, run your favourite
 #   scikit-learn script and check that nothing breaks unexpectedly.
-#   Note that CPython 3.14 is strongly advised because a number of
+#   Note that CPython 3.14 is strongly advised (vs 3.13) because a number of
 #   free-threaded bugs have been fixed since CPython 3.13.
 # - if you use some estimators with a `n_jobs` parameter, try changing the
 #   default backend to threading with `joblib.parallel_config` as in the
