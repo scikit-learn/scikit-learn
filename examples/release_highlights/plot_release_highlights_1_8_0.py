@@ -126,7 +126,7 @@ or with conda::
 # workers for parallel computation when passing `n_jobs>1` in functions or
 # estimators. Efficiency gains are expected by removing the need for
 # inter-process communication. Be aware that switching the default joblib
-# backend and testing that everything works well with free-threaded Python is a
+# backend and testing that everything works well with free-threaded Python is an
 # ongoing long-term effort.
 
 # %%
