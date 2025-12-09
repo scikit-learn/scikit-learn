@@ -560,7 +560,8 @@ def nan_euclidean_distances(
     # Determine pairs where BOTH vectors are all-NaNs (distance must be 0)
     both_nan = all_nan_X[:, None] & all_nan_Y[None, :]
 
-    # Create the final mask for corruption: overlap is 0 AND it's NOT the case both are all-NaNs
+    # Create the final mask for corruption: overlap is
+    #  0 AND it's NOT the case both are all-NaNs
     mask_to_nan = (present_count == 0) & ~both_nan
 
     distances[mask_to_nan] = np.nan
