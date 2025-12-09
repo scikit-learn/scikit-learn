@@ -1,9 +1,11 @@
 import numpy as np
+import pytest
 
 from sklearn.tree._utils import _py_swap_array_slices
 
 
-def test_py_swap_array_slices_random():
+@pytest.mark.parametrize("dtype", [np.float32, np.intp])
+def test_py_swap_array_slices_random(dtype):
     def swap_slices_np(arr, start, end, n):
         """
         Swaps the order of the slices array[start:start + n]
@@ -12,11 +14,13 @@ def test_py_swap_array_slices_random():
         """
         arr[start:end] = np.concatenate([arr[start + n : end], arr[start : start + n]])
 
+    rng = np.random.default_rng(0)
+
     for _ in range(10):
-        arr = np.random.rand(100)
-        start = np.random.randint(40)
-        end = np.random.randint(60, 100)
-        split = np.random.randint(end - start)
+        arr = rng.permutation(100).astype(dtype)
+        start = rng.integers(40)
+        end = rng.integers(60, 100)
+        split = rng.integers(end - start)
 
         expected = arr.copy()
         swap_slices_np(expected, start, end, split)
