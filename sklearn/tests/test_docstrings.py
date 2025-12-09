@@ -4,6 +4,8 @@ from typing import Optional
 
 import pytest
 
+from sklearn.callback import Callback
+
 # make it possible to discover experimental estimators when calling `all_estimators`
 from sklearn.experimental import (
     enable_halving_search_cv,  # noqa: F401
@@ -24,6 +26,13 @@ def get_all_methods():
         methods = []
         for name in dir(Klass):
             if name.startswith("_"):
+                continue
+            # skip callback hooks
+            if isinstance(Klass, Callback) and name in (
+                "on_fit_begin",
+                "on_fit_end",
+                "on_fit_task_end",
+            ):
                 continue
             method_obj = getattr(Klass, name)
             if hasattr(method_obj, "__call__") or isinstance(method_obj, property):

@@ -134,6 +134,12 @@ def _clone_parametrized(estimator, *, safe=True):
 
     params_set = new_object.get_params(deep=False)
 
+    # attach callbacks to the new estimator
+    if hasattr(estimator, "_skl_callbacks"):
+        # TODO(callbacks): Figure out the exact behavior we want when cloning an
+        # estimator with callbacks.
+        new_object._skl_callbacks = clone(estimator._skl_callbacks, safe=False)
+
     # quick sanity check of the parameters of the clone
     for name in new_object_params:
         param1 = new_object_params[name]
@@ -1333,7 +1339,11 @@ def _fit_context(*, prefer_skip_nested_validation):
                     prefer_skip_nested_validation or global_skip_validation
                 )
             ):
-                return fit_method(estimator, *args, **kwargs)
+                try:
+                    return fit_method(estimator, *args, **kwargs)
+                finally:
+                    if hasattr(estimator, "_callback_fit_ctx"):
+                        estimator._callback_fit_ctx.eval_on_fit_end(estimator=estimator)
 
         return wrapper
 
