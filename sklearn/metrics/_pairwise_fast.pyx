@@ -17,7 +17,8 @@ def _chi2_kernel_fast(floating[:, :] X,
     cdef intp_t n_samples_X = X.shape[0]
     cdef intp_t n_samples_Y = Y.shape[0]
     cdef intp_t n_features = X.shape[1]
-    cdef double res, nom, denom
+    # Use 'floating' instead of 'double' for internal math
+    cdef floating res, nom, denom
 
     with nogil:
         for i in range(n_samples_X):
@@ -38,7 +39,8 @@ def _sparse_manhattan(
     const floating[::1] Y_data,
     const int[:] Y_indices,
     const int[:] Y_indptr,
-    double[:, ::1] D,
+    # Output matrix D matches the input type (float or double)
+    floating[:, ::1] D,
 ):
     """Pairwise L1 distances for CSR matrices.
 
@@ -49,7 +51,8 @@ def _sparse_manhattan(
     ...                   D)
     """
     cdef intp_t px, py, i, j, ix, iy
-    cdef double d = 0.0
+    # Accumulator matches the fused type
+    cdef floating d = 0.0
 
     cdef int m = D.shape[0]
     cdef int n = D.shape[1]
@@ -85,6 +88,7 @@ def _sparse_manhattan(
                 iy = Y_indices[j]
 
                 if ix == iy:
+                    # Note: fabs returns double, but Cython handles the cast back to floating
                     d = d + fabs(X_data[i] - Y_data[j])
                     i = i + 1
                     j = j + 1

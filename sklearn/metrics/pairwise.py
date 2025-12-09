@@ -1088,7 +1088,7 @@ def manhattan_distances(X, Y=None):
     array([[0., 2.],
            [4., 4.]])
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    X, Y = check_pairwise_arrays(X, Y, accept_sparse=['csr', 'csc', 'coo'])
     n_x, n_y = X.shape[0], Y.shape[0]
 
     if issparse(X) or issparse(Y):
@@ -1096,7 +1096,7 @@ def manhattan_distances(X, Y=None):
         Y = csr_matrix(Y, copy=False)
         X.sum_duplicates()  # this also sorts indices in-place
         Y.sum_duplicates()
-        D = np.zeros((n_x, n_y))
+        D = np.zeros((n_x, n_y), dtype=X.dtype)
         _sparse_manhattan(X.data, X.indices, X.indptr, Y.data, Y.indices, Y.indptr, D)
         return D
 
