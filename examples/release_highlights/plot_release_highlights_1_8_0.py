@@ -75,8 +75,7 @@ or with conda::
 # See the `full notebook on Google Colab
 # <https://colab.research.google.com/drive/1ztH8gUPv31hSjEeR_8pw20qShTwViGRx?usp=sharing>`_
 # for more details. On this particular example, using the Colab GPU vs using a
-# single CPU core leads to a 7x speedup which is quite typical for such
-# workloads.
+# single CPU core leads to a 10x speedup which is quite typical for such workloads.
 
 # %%
 # Free-threaded CPython 3.14 support
