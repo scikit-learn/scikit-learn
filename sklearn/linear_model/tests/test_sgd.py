@@ -1819,6 +1819,28 @@ def test_sgd_oneclass_vs_linear_oneclass(eta0, max_iter):
         assert_allclose(1 - share_ones, nu, atol=1e-2)
 
 
+def test_sgd_oneclass_vs_linear_oneclass_offsets_match():
+    """Test that the `offset_` of `SGDOneClassSVM` is close to the `offset_`
+    of `OneClassSVM` with `kernel="linear"`, given enough iterations and a
+    suitable value for the `eta0` parameter.
+    """
+    X = iris.data
+    X_scaled = StandardScaler().fit_transform(X)
+    for nu in [0.1, 0.5, 0.9]:
+        model = SGDOneClassSVM(
+            nu=nu,
+            max_iter=80000,
+            tol=None,
+            learning_rate="optimal",
+            eta0=1e-6,
+            random_state=42,
+        )
+        model_ref = OneClassSVM(kernel="linear", nu=nu, tol=1e-6)
+        model.fit(X_scaled)
+        model_ref.fit(X_scaled)
+        assert_allclose(model.offset_, model_ref.offset_, atol=2e-6)
+
+
 def test_l1_ratio():
     # Test if l1 ratio extremes match L1 and L2 penalty settings.
     X, y = datasets.make_classification(
