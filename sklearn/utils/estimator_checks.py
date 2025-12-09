@@ -1220,7 +1220,6 @@ def check_array_api_input(
                 assert array_device(result_xp) == array_device(X_xp)
 
             result_xp_np = _convert_to_numpy(result_xp, xp=xp)
-
             if check_values:
                 assert_allclose(
                     result,
@@ -1228,35 +1227,35 @@ def check_array_api_input(
                     err_msg=f"{method} did not the return the same result",
                     atol=_atol_for_type(X.dtype),
                 )
-            else:
-                if hasattr(result, "shape"):
-                    assert result.shape == result_xp_np.shape
-                    assert result.dtype == result_xp_np.dtype
+            elif hasattr(result, "shape"):
+                assert result.shape == result_xp_np.shape
+                assert result.dtype == result_xp_np.dtype
 
         if method_name == "transform" and hasattr(est, "inverse_transform"):
             inverse_result = est.inverse_transform(result)
             with config_context(array_api_dispatch=True):
                 inverse_result_xp = est_xp.inverse_transform(result_xp)
-                inverse_result_ns = get_namespace(inverse_result_xp)[0].__name__
-            assert inverse_result_ns == input_ns, (
-                "'inverse_transform' output is in wrong namespace, expected"
-                f" {input_ns}, got {inverse_result_ns}."
-            )
 
-            with config_context(array_api_dispatch=True):
+            if expect_only_array_outputs:
+                with config_context(array_api_dispatch=True):
+                    inverse_result_ns = get_namespace(inverse_result_xp)[0].__name__
+                assert inverse_result_ns == input_ns, (
+                    "'inverse_transform' output is in wrong namespace, expected"
+                    f" {input_ns}, got {inverse_result_ns}."
+                )
                 assert array_device(inverse_result_xp) == array_device(X_xp)
 
-            inverse_result_xp_np = _convert_to_numpy(inverse_result_xp, xp=xp)
-            if check_values:
-                assert_allclose(
-                    inverse_result,
-                    inverse_result_xp_np,
-                    err_msg="inverse_transform did not the return the same result",
-                    atol=_atol_for_type(X.dtype),
-                )
-            else:
-                assert inverse_result.shape == inverse_result_xp_np.shape
-                assert inverse_result.dtype == inverse_result_xp_np.dtype
+                inverse_result_xp_np = _convert_to_numpy(inverse_result_xp, xp=xp)
+                if check_values:
+                    assert_allclose(
+                        inverse_result,
+                        inverse_result_xp_np,
+                        err_msg="inverse_transform did not the return the same result",
+                        atol=_atol_for_type(X.dtype),
+                    )
+                elif hasattr(result, "shape"):
+                    assert inverse_result.shape == inverse_result_xp_np.shape
+                    assert inverse_result.dtype == inverse_result_xp_np.dtype
 
 
 def check_array_api_input_and_values(
