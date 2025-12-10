@@ -352,10 +352,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             StratifiedKFold,
         )
         from sklearn.model_selection._split import _CVIterableWrapper
-        from sklearn.model_selection._validation import _check_groups_routing_disabled
 
         _raise_for_params(fit_params, self, "fit_transform")
-        _check_groups_routing_disabled(groups)
         _has_groups = groups is not None or fit_params.get("groups") is not None
 
         X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
@@ -397,7 +395,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         elif hasattr(self.cv, "split"):  # cv is a cross-validation generator
             cv = self.cv
             if isinstance(self.cv, non_overlapping_splitters):
-                if _has_groups is not None and not isinstance(
+                if _has_groups and not isinstance(
                     self.cv, (GroupKFold, StratifiedGroupKFold, ConsumingSplitter)
                 ):
                     raise ValueError(
