@@ -1836,10 +1836,10 @@ def test_sgd_oneclass_vs_linear_oneclass_offsets_match(nu):
         eta0=1e-6,
         random_state=42,
     )
-    model_ref = OneClassSVM(kernel="linear", nu=nu, tol=1e-6)
+    model_ref = OneClassSVM(kernel="linear", nu=nu, tol=5e-6)
     model.fit(X_scaled)
     model_ref.fit(X_scaled)
-    assert_allclose(model.offset_, model_ref.offset_, atol=2.1e-6)
+    assert_allclose(model.offset_, model_ref.offset_, atol=1.3e-6)
 
 
 def test_l1_ratio():
