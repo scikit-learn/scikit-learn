@@ -1000,16 +1000,27 @@ def test_cross_validate_array_api_pipeline(
         # same kind of array API inputs they were trained on and that their
         # predictions are consistent.
         with config_context(array_api_dispatch=True):
-            preds_xp = est_xp.predict(X_np)
-            assert device(preds_xp) == expected_device
             if is_classifier(est_xp):
+                preds_xp = est_xp.predict(X_np)
+                # XXX: which namespace, dtype and device is expected for
+                # preds_xp? If we use string labels, this will be numpy arrays
+                # of object dtype and CPU device. But what about integer
+                # classes? Should this be the namespace/device of X_train or
+                # y_train?
+
                 proba_xp = est_xp.predict_proba(X_np)
                 assert device(proba_xp) == expected_device
                 assert proba_xp.dtype == expected_dtype
+
+                raw_preds_xp = est_xp.decision_function(X_np)
+                assert device(raw_preds_xp) == expected_device
+                assert raw_preds_xp.dtype == expected_dtype
             else:
                 # For regressors, also check that the prediction dtype is
                 # preserved.
+                preds_xp = est_xp.predict(X_np)
                 assert preds_xp.dtype == expected_dtype
+                assert device(preds_xp) == expected_device
 
     for scoring in cv_params["scoring"]:
         for key in [f"test_{scoring}", f"train_{scoring}"]:
