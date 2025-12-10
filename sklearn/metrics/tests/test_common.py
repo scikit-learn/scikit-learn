@@ -2547,9 +2547,9 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
             # `pos_label` needs to be specified when `y_true` is string
             if metric_name in METRICS_WITH_POS_LABEL:
                 metric_kwargs["pos_label"] = "b"
-
-        dtype = _get_dtype(y1_np, xp_input, array_input.device)
-        y1_xp = xp_input.asarray(y1_np, device=array_input.device, dtype=dtype)
+        else:
+            dtype = _get_dtype(y1_np, xp_input, array_input.device)
+            y1_xp = xp_input.asarray(y1_np, device=array_input.device, dtype=dtype)
 
         metric_kwargs_np = metric_kwargs_xp = metric_kwargs
         if metric_name not in (METRICS_WITHOUT_SAMPLE_WEIGHT | PAIRWISE_METRICS.keys()):
