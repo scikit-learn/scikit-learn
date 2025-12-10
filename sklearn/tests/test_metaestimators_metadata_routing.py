@@ -70,6 +70,7 @@ from sklearn.tests.metadata_routing_common import (
     ConsumingRegressor,
     ConsumingScorer,
     ConsumingSplitter,
+    ConsumingSplitterInheritingFromGroupKFold,
     NonConsumingClassifier,
     NonConsumingRegressor,
     _Registry,
@@ -568,7 +569,10 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
     if "cv_name" in metaestimator_info:
         cv_name = metaestimator_info["cv_name"]
         cv_registry = _Registry()
-        cv = ConsumingSplitter(registry=cv_registry)
+        if metaestimator_info["metaestimator"] is TargetEncoder:
+            cv = ConsumingSplitterInheritingFromGroupKFold(registry=cv_registry)
+        else:
+            cv = ConsumingSplitter(registry=cv_registry)
         kwargs[cv_name] = cv
 
     return (

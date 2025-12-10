@@ -363,7 +363,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             KFold,
             StratifiedKFold,
             StratifiedGroupKFold,
-            ConsumingSplitter,  #  experimental
         )
         X, y, groups = indexable(X, y, groups)
 
