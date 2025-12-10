@@ -2548,20 +2548,22 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
             dtype = _get_dtype(y1_np, xp_input, array_input.device)
             y1_xp = xp_input.asarray(y1_np, device=array_input.device, dtype=dtype)
 
-        # use `array_input` for `sample_weight` as well
-        sample_weight_np = np.array(sample_weight)
-        sample_weight_xp = xp_input.asarray(sample_weight_np, device=array_input.device)
+        metric_kwargs_np = metric_kwargs_xp = metric_kwargs
+        if metric_name not in (METRICS_WITHOUT_SAMPLE_WEIGHT | PAIRWISE_METRICS.keys()):
+            # use `array_input` for `sample_weight` as well
+            sample_weight_np = np.array(sample_weight)
+            metric_kwargs_np = {**metric_kwargs, "sample_weight": sample_weight_np}
+            sample_weight_xp = xp_input.asarray(
+                sample_weight_np, device=array_input.device
+            )
+            metric_kwargs_xp = {**metric_kwargs, "sample_weight": sample_weight_xp}
 
         y2_np = np.asarray(y2)
         dtype = _get_dtype(y2_np, xp_ref, reference.device)
         y2_xp = xp_ref.asarray(y2_np, device=reference.device, dtype=dtype)
 
-        metric_xp = metric(
-            y1_xp, y2_xp, sample_weight=sample_weight_xp, **metric_kwargs
-        )
-        metric_np = metric(
-            y1_np, y2_np, sample_weight=sample_weight_np, **metric_kwargs
-        )
+        metric_xp = metric(y1_xp, y2_xp, **metric_kwargs_xp)
+        metric_np = metric(y1_np, y2_np, **metric_kwargs_np)
 
         def _check_output_type(out_np, out_xp):
             if isinstance(out_np, float):
