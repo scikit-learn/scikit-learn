@@ -930,7 +930,10 @@ def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weigh
     xp, _, device = get_namespace_and_device(y_score)
     pos_label = _check_pos_label_consistency(pos_label, y_true)
     xp_y_true, _ = get_namespace(y_true)
-    y_true = xp_y_true.asarray(y_true == pos_label, dtype=xp_y_true.int64)
+    # Make `y_true` a boolean vector. Use `asarray` as `y_true` could be a list
+    y_true = xp_y_true.asarray(
+        xp_y_true.asarray(y_true) == pos_label, dtype=xp_y_true.int64
+    )
     y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     check_consistent_length(y_true, y_score, sample_weight)
@@ -947,9 +950,6 @@ def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weigh
         y_true = y_true[nonzero_weight_mask]
         y_score = y_score[nonzero_weight_mask]
         sample_weight = sample_weight[nonzero_weight_mask]
-
-    # make y_true a boolean vector
-    y_true = y_true == pos_label
 
     # sort scores and corresponding truth values
     desc_score_indices = xp.argsort(y_score, stable=True, descending=True)
