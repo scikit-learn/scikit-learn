@@ -6,9 +6,8 @@ It allows to make uniform checks and validation.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
-
 from sklearn.base import is_classifier
+from sklearn.utils._array_api import get_namespace, get_namespace_and_device
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import _check_response_method, check_is_fitted
 
@@ -49,15 +48,17 @@ def _process_predict_proba(*, y_pred, target_type, classes, pos_label):
             (n_samples, n_output)
         Compressed predictions format as requested by the metrics.
     """
+    xp, _, device = get_namespace_and_device(y_pred)
+    xp_classes, _ = get_namespace(classes)
+
     if target_type == "binary" and y_pred.shape[1] < 2:
         # We don't handle classifiers trained on a single class.
         raise ValueError(
             f"Got predict_proba of shape {y_pred.shape}, but need "
             "classifier with two classes."
         )
-
     if target_type == "binary":
-        col_idx = np.flatnonzero(classes == pos_label)[0]
+        col_idx = xp_classes.nonzero(classes == pos_label)[0][0].item()
         return y_pred[:, col_idx]
     elif target_type == "multilabel-indicator":
         # Use a compress format of shape `(n_samples, n_output)`.
@@ -65,7 +66,7 @@ def _process_predict_proba(*, y_pred, target_type, classes, pos_label):
         # `(n_samples, n_outputs)`.
         if isinstance(y_pred, list):
             # list of arrays of shape `(n_samples, 2)`
-            return np.vstack([p[:, -1] for p in y_pred]).T
+            return xp.concat([p[:, [1]] for p in y_pred], axis=1)
         else:
             # array of shape `(n_samples, n_outputs)`
             return y_pred
@@ -212,7 +213,6 @@ def _get_response_values(
                 pos_label = classes[-1]
 
         y_pred = prediction_method(X)
-
         if prediction_method.__name__ in ("predict_proba", "predict_log_proba"):
             y_pred = _process_predict_proba(
                 y_pred=y_pred,
