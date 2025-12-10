@@ -252,7 +252,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.random_state = random_state
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y, groups=None, **fit_params):
+    def fit(self, X, y, groups=None, **params):
         """Fit the :class:`TargetEncoder` to X and y.
 
         It is discouraged to use this method because it can introduce data leakage.
@@ -276,7 +276,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
             .. versionadded:: 1.9
 
-        **fit_params : dict
+        **params : dict
             Always ignored, exists for API compatibility.
 
             .. versionadded:: 1.9
@@ -290,7 +290,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit_transform(self, X, y, groups=None, **fit_params):
+    def fit_transform(self, X, y, groups=None, **params):
         """Fit :class:`TargetEncoder` and transform `X` with the target encoding.
 
         This method uses a :term:`cross fitting` scheme to prevent target leakage
@@ -323,13 +323,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             an iterable.
 
             .. versionadded:: 1.9
-                ``groups`` can only be passed if metadata routing is not enabled
-                via ``sklearn.set_config(enable_metadata_routing=True)``. When routing
-                is enabled, pass ``groups`` alongside other metadata via the ``params``
-                argument instead. E.g.:
-                ``TargetEncoder().fit_transform(..., fit_params={'groups': groups})``.
 
-        **fit_params : dict
+        **params : dict
             Parameters to route to the internal CV object.
 
             .. versionadded:: 1.9
@@ -353,8 +348,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         )
         from sklearn.model_selection._split import _CVIterableWrapper
 
-        _raise_for_params(fit_params, self, "fit_transform")
-        _has_groups = groups is not None or fit_params.get("groups") is not None
+        _raise_for_params(params, self, "fit_transform")
+        _has_groups = groups is not None or params.get("groups") is not None
 
         X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
 
@@ -432,7 +427,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.cv_ = cv.__class__.__name__
 
         if _routing_enabled():
-            routed_params = process_routing(self, "fit_transform", **fit_params)
+            if groups is not None:
+                params["groups"] = groups
+            routed_params = process_routing(self, "fit_transform", **params)
         else:
             if groups is not None:
                 routed_params = Bunch(splitter=Bunch(split=Bunch(groups=groups)))
