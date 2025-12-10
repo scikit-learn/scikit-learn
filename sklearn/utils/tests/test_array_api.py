@@ -974,6 +974,7 @@ def test_cross_validate_array_api_pipeline(
 
     X_np = X.astype(dtype_name)
     y_np = y.astype(dtype_name)
+    X_xp = xp.asarray(X_np, device=device_)
 
     xp_pipeline = make_pipeline(
         FunctionTransformer(lambda X: xp.asarray(X, device=device_)),
@@ -991,8 +992,8 @@ def test_cross_validate_array_api_pipeline(
     cv_results_np = cross_validate(estimator, X_np, y_np, **cv_params)
     with config_context(array_api_dispatch=True):
         cv_results_xp = cross_validate(xp_pipeline, X_np, y_np, **cv_params)
-        expected_device = device(xp.asarray([0], device=device_))
-        expected_dtype = xp.dtype(dtype_name)
+        expected_device = device(X_xp)
+        expected_dtype = X_xp.dtype
 
     for est_xp in cv_results_xp["estimator"]:
         # Ensure that the estimators returned can predict when fed with the
