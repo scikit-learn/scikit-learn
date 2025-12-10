@@ -2475,12 +2475,16 @@ def test_array_api_compliance(metric, array_namespace, device, dtype_name, check
 )
 @pytest.mark.parametrize("metric_name", sorted(METRICS_SUPPORTING_MIXED_NAMESPACE))
 def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
-    """Check 'y_true' follows `y_pred` for mixed namespace inputs.
+    """Check `y_true` and `sample_weight` follows `y_pred` for mixed namespace inputs.
 
     If output is an array with all numpy inputs, checks that the output is also
     a float with mixed inputs.
-    If output is arraywith all numpy inputs,, checks it is of the same namespace and
+    If output is array with all numpy inputs, checks it is of the same namespace and
     device as `y_pred` (`reference`).
+
+    Classification metrics, excluding multilabel ranking metrics, which require
+    label indicator matrix inputs, are tested using string `y_true` when `array_input`
+    is NumPy.
     """
     xp_ref = _array_api_for_tests(reference.xp, reference.device)
     xp_input = _array_api_for_tests(array_input.xp, array_input.device)
@@ -2493,15 +2497,16 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
     data_all = {
         "binary_class": ([0, 0, 1, 1], [0, 1, 0, 1]),
         "continuous_binary": ([1, 0, 1, 0], [0.5, 0.2, 0.7, 0.6]),
-        "continuous_binary_indicator": ([[1, 0, 1, 0]], [[0.5, 0.2, 0.7, 0.6]]),
+        "continuous_label_indicator": ([[1, 0, 1, 0]], [[0.5, 0.2, 0.7, 0.6]]),
         "regression": ([2.0, 0.1, 1.0, 4.0], [0.5, 0.5, 2, 2]),
         "pairwise": (
-            [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]],
-            [[0.2, 0.3, 0.4], [0.5, 0.6, 0.7]],
+            [[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]],
+            [[0.2, 0.3, 0.4, 0.5], [0.6, 0.7, 0.8, 0.9]],
         ),
     }
+    sample_weight = [1, 1, 2, 2]
 
-    # Deal with max mps float being float32
+    # Deal with max mps float precision being float32
     def _get_dtype(np_array, xp, device):
         if np.issubdtype(np_array.dtype, np.floating):
             dtype = _max_precision_float_dtype(xp, device)
@@ -2522,7 +2527,7 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
                 data = data_all["continuous_binary"]
                 use_string = True
             else:
-                data = data_all["continuous_binary_indicator"]
+                data = data_all["continuous_label_indicator"]
         elif metric_name in REGRESSION_METRICS:
             data = data_all["regression"]
         elif metric_name in PAIRWISE_METRICS:
@@ -2543,12 +2548,19 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
             dtype = _get_dtype(y1_np, xp_input, array_input.device)
             y1_xp = xp_input.asarray(y1_np, device=array_input.device, dtype=dtype)
 
+        sample_weight_np = np.array(sample_weight)
+        sample_weight_xp = xp_input.asarray(sample_weight_np, device=array_input.device)
+
         y2_np = np.asarray(y2)
         dtype = _get_dtype(y2_np, xp_ref, reference.device)
         y2_xp = xp_ref.asarray(y2_np, device=reference.device, dtype=dtype)
 
-        metric_xp = metric(y1_xp, y2_xp, **metric_kwargs)
-        metric_np = metric(y1_np, y2_np, **metric_kwargs)
+        metric_xp = metric(
+            y1_xp, y2_xp, sample_weight=sample_weight_xp, **metric_kwargs
+        )
+        metric_np = metric(
+            y1_np, y2_np, sample_weight=sample_weight_np, **metric_kwargs
+        )
 
         # If output with all numpy inputs is float, ensure mixed input also gives float
         # If output is an array, ensure namespace and device is the same as `reference`
