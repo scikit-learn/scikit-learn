@@ -350,6 +350,9 @@ improvements, if any, with benchmarks and/or plots. It is expected that the
 proposed algorithm should outperform the methods that are already implemented
 in scikit-learn at least in some areas.
 
+Please do not propose algorithms you (your best friend, colleague or boss)
+created. scikit-learn is not a good venue for advertising your own work.
+
 Inclusion of a new algorithm speeding up an existing model is easier if:
 
 - it does not introduce new hyper-parameters (as it makes the library

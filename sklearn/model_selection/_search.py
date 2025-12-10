@@ -718,7 +718,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Only available when `refit=True`.
         """
-        # For consistency with other estimators we raise a AttributeError so
+        # For consistency with other estimators we raise an AttributeError so
         # that hasattr() fails if the search estimator isn't fitted.
         try:
             check_is_fitted(self)

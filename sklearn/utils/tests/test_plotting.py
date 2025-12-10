@@ -128,7 +128,6 @@ def test_validate_from_predictions_params_returns(pyplot, name, pos_label, y_tru
                 "X": np.array([[1, 2], [3, 4]]),
                 "y": np.array([0, 1]),
                 "sample_weight": None,
-                "pos_label": None,
             },
             "`cv_results` does not contain one of the following",
         ),
@@ -142,7 +141,6 @@ def test_validate_from_predictions_params_returns(pyplot, name, pos_label, y_tru
                 "X": np.array([[1, 2]]),
                 "y": np.array([0, 1]),
                 "sample_weight": None,
-                "pos_label": None,
             },
             "`X` does not contain the correct number of",
         ),
@@ -156,7 +154,6 @@ def test_validate_from_predictions_params_returns(pyplot, name, pos_label, y_tru
                 # `y` not binary
                 "y": np.array([0, 2, 1, 3]),
                 "sample_weight": None,
-                "pos_label": None,
             },
             "The target `y` is not binary",
         ),
@@ -170,23 +167,8 @@ def test_validate_from_predictions_params_returns(pyplot, name, pos_label, y_tru
                 "y": np.array([0, 1, 0, 1]),
                 # `sample_weight` wrong length
                 "sample_weight": np.array([0.5]),
-                "pos_label": None,
             },
             "Found input variables with inconsistent",
-        ),
-        (
-            {
-                "cv_results": {
-                    "estimator": "dummy",
-                    "indices": {"test": [[1, 2], [1, 2]], "train": [[3, 4], [3, 4]]},
-                },
-                "X": np.array([1, 2, 3, 4]),
-                "y": np.array([2, 3, 2, 3]),
-                "sample_weight": None,
-                # Not specified when `y` not in {0, 1} or {-1, 1}
-                "pos_label": None,
-            },
-            "y takes value in {2, 3} and pos_label is not specified",
         ),
     ],
 )

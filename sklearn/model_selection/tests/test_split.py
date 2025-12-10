@@ -255,7 +255,7 @@ def check_valid_split(train, test, n_samples=None):
 
 def check_cv_coverage(cv, X, y, groups, expected_n_splits):
     n_samples = _num_samples(X)
-    # Check that a all the samples appear at least once in a test fold
+    # Check that all the samples appear at least once in a test fold
     assert cv.get_n_splits(X, y, groups) == expected_n_splits
 
     collected_test_samples = set()
@@ -722,6 +722,37 @@ def test_stratified_group_kfold_homogeneous_groups(y, groups, expected):
         assert np.intersect1d(groups[train], groups[test]).size == 0
         split_dist = np.bincount(y[test]) / len(test)
         assert_allclose(split_dist, expect_dist, atol=0.001)
+
+
+def test_stratified_group_kfold_shuffle_preserves_stratification():
+    # Check StratifiedGroupKFold with shuffle=True preserves stratification:
+    # shuffling only affects tie-breaking among groups with identical
+    # standard deviation of class distribution (see #32478)
+    y = np.array([0] * 12 + [1] * 6)
+    X = np.ones((len(y), 1))
+    # Groups are arranged so perfect stratification across 3 folds is
+    # achievable
+    groups = np.array([1, 1, 3, 3, 3, 4, 5, 5, 5, 5, 7, 7, 2, 2, 6, 6, 8, 8])
+    expected_class_ratios = np.asarray([2.0 / 3, 1.0 / 3])
+
+    # Run multiple seeds to ensure the property holds regardless of the
+    # tie-breaking order among groups with identical std of class distribution
+    n_iters = 100
+    for seed in range(n_iters):
+        sgkf = StratifiedGroupKFold(n_splits=3, shuffle=True, random_state=seed)
+        test_sizes = []
+        for train, test in sgkf.split(X, y, groups):
+            # check group constraint
+            assert np.intersect1d(groups[train], groups[test]).size == 0
+            # check y distribution
+            assert_allclose(
+                np.bincount(y[train]) / len(train), expected_class_ratios, atol=1e-8
+            )
+            assert_allclose(
+                np.bincount(y[test]) / len(test), expected_class_ratios, atol=1e-8
+            )
+            test_sizes.append(len(test))
+        assert np.ptp(test_sizes) <= 1
 
 
 @pytest.mark.parametrize("cls_distr", [(0.4, 0.6), (0.3, 0.7), (0.2, 0.8), (0.8, 0.2)])

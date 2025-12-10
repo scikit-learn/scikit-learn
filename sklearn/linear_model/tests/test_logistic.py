@@ -1913,7 +1913,7 @@ def test_LogisticRegressionCV_no_refit(penalty, multi_class):
 
 
 # TODO(1.8): remove filterwarnings after the deprecation of multi_class
-# Remove multi_class an change first element of the expected n_iter_.shape from
+# Remove multi_class and change first element of the expected n_iter_.shape from
 # n_classes to 1 (according to the docstring).
 @pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 def test_LogisticRegressionCV_elasticnet_attribute_shapes():
@@ -2317,6 +2317,23 @@ def test_large_sparse_matrix(solver, global_random_seed, csr_container):
             LogisticRegression(solver=solver).fit(X, y)
     else:
         LogisticRegression(solver=solver).fit(X, y)
+
+
+def test_liblinear_with_large_values():
+    # Liblinear freezes when X.max() ~ 1e100, see issue #7486.
+    # We preemptively raise an error when X.max() > 1e30.
+
+    # generate sparse matrix with int64 indices
+    X = np.array([0, 1e100]).reshape(-1, 1)
+    y = np.array([0, 1])
+
+    msg = (
+        "Using the 'liblinear' solver while X contains a maximum "
+        "value > 1e30 results in a frozen fit. Please choose another "
+        "solver or rescale the input X."
+    )
+    with pytest.raises(ValueError, match=msg):
+        LogisticRegression(solver="liblinear").fit(X, y)
 
 
 def test_single_feature_newton_cg():

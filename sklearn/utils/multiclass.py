@@ -523,7 +523,7 @@ def class_distribution(y, sample_weight=None):
             if 0 in classes_k:
                 class_prior_k[classes_k == 0] += zeros_samp_weight_sum
 
-            # If an there is an implicit zero and it is not in classes and
+            # If there is an implicit zero and it is not in classes and
             # class_prior, make an entry for it
             if 0 not in classes_k and y_nnz[k] < y.shape[0]:
                 classes_k = np.insert(classes_k, 0, 0)

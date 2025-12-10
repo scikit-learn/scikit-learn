@@ -11,6 +11,7 @@ the lower the better.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
+from contextlib import nullcontext
 from math import sqrt
 from numbers import Integral, Real
 
@@ -32,14 +33,16 @@ from sklearn.utils._array_api import (
     _bincount,
     _convert_to_numpy,
     _count_nonzero,
+    _fill_diagonal,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
+    _is_xp_namespace,
     _max_precision_float_dtype,
     _tolist,
     _union1d,
-    ensure_common_namespace_device,
     get_namespace,
     get_namespace_and_device,
+    move_to,
     supported_float_dtypes,
     xpx,
 )
@@ -410,7 +413,8 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
     """
-    xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
     # Compute accuracy for each possible representation
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred, sample_weight = _check_targets(
@@ -490,6 +494,8 @@ def confusion_matrix(
     ConfusionMatrixDisplay.from_predictions : Plot the confusion matrix
         given the true and predicted labels.
     ConfusionMatrixDisplay : Confusion Matrix visualization.
+    confusion_matrix_at_thresholds : For binary classification, compute true negative,
+        false positive, false negative and true positive counts per threshold.
 
     References
     ----------
@@ -968,23 +974,30 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
             raise ValueError(msg) from e
         raise
 
+    xp, _, device_ = get_namespace_and_device(y1, y2)
     n_classes = confusion.shape[0]
-    sum0 = np.sum(confusion, axis=0)
-    sum1 = np.sum(confusion, axis=1)
-    expected = np.outer(sum0, sum1) / np.sum(sum0)
+    # array_api_strict only supports floating point dtypes for __truediv__
+    # which is used below to compute `expected` as well as `k`. Therefore
+    # we use the maximum floating point dtype available for relevant arrays
+    # to avoid running into this problem.
+    max_float_dtype = _max_precision_float_dtype(xp, device=device_)
+    confusion = xp.astype(confusion, max_float_dtype, copy=False)
+    sum0 = xp.sum(confusion, axis=0)
+    sum1 = xp.sum(confusion, axis=1)
+    expected = xp.linalg.outer(sum0, sum1) / xp.sum(sum0)
 
     if weights is None:
-        w_mat = np.ones([n_classes, n_classes], dtype=int)
-        w_mat.flat[:: n_classes + 1] = 0
+        w_mat = xp.ones([n_classes, n_classes], dtype=max_float_dtype, device=device_)
+        _fill_diagonal(w_mat, 0, xp=xp)
     else:  # "linear" or "quadratic"
-        w_mat = np.zeros([n_classes, n_classes], dtype=int)
-        w_mat += np.arange(n_classes)
+        w_mat = xp.zeros([n_classes, n_classes], dtype=max_float_dtype, device=device_)
+        w_mat += xp.arange(n_classes)
         if weights == "linear":
-            w_mat = np.abs(w_mat - w_mat.T)
+            w_mat = xp.abs(w_mat - w_mat.T)
         else:
             w_mat = (w_mat - w_mat.T) ** 2
 
-    k = np.sum(w_mat * confusion) / np.sum(w_mat * expected)
+    k = xp.sum(w_mat * confusion) / xp.sum(w_mat * expected)
     return float(1 - k)
 
 
@@ -2904,14 +2917,25 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     0.625
     """
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
-    with np.errstate(divide="ignore", invalid="ignore"):
-        per_class = np.diag(C) / C.sum(axis=1)
-    if np.any(np.isnan(per_class)):
+    xp, _, device_ = get_namespace_and_device(y_pred, y_true)
+    if _is_xp_namespace(xp, "array_api_strict"):
+        # array_api_strict only supports floating point dtypes for __truediv__
+        # which is used below to compute `per_class`.
+        C = xp.astype(C, _max_precision_float_dtype(xp, device=device_), copy=False)
+
+    context_manager = (
+        np.errstate(divide="ignore", invalid="ignore")
+        if _is_numpy_namespace(xp)
+        else nullcontext()
+    )
+    with context_manager:
+        per_class = xp.linalg.diagonal(C) / xp.sum(C, axis=1)
+    if xp.any(xp.isnan(per_class)):
         warnings.warn("y_pred contains classes not in y_true")
-        per_class = per_class[~np.isnan(per_class)]
-    score = np.mean(per_class)
+        per_class = per_class[~xp.isnan(per_class)]
+    score = xp.mean(per_class)
     if adjusted:
-        n_classes = len(per_class)
+        n_classes = per_class.shape[0]
         chance = 1 / n_classes
         score -= chance
         score /= 1 - chance
@@ -3355,7 +3379,8 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
     0.21616
     """
     if sample_weight is not None:
-        sample_weight = ensure_common_namespace_device(y_pred, sample_weight)[0]
+        xp, _, device_ = get_namespace_and_device(y_pred)
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
     transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
         y_true, y_pred, sample_weight, labels
@@ -3370,9 +3395,9 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
 
 def _log_loss(transformed_labels, y_pred, *, normalize=True, sample_weight=None):
     """Log loss for transformed labels and validated probabilistic predictions."""
-    xp, _ = get_namespace(y_pred, transformed_labels)
+    xp, _, device_ = get_namespace_and_device(y_pred)
     if sample_weight is not None:
-        sample_weight = ensure_common_namespace_device(y_pred, sample_weight)[0]
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
     eps = xp.finfo(y_pred.dtype).eps
     y_pred = xp.clip(y_pred, eps, 1 - eps)
     loss = -xp.sum(xlogy(transformed_labels, y_pred), axis=1)
@@ -3749,7 +3774,7 @@ def brier_score_loss(
         y_proba, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
     )
     if sample_weight is not None:
-        sample_weight = ensure_common_namespace_device(y_proba, sample_weight)[0]
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
     if y_proba.ndim == 1 or y_proba.shape[1] == 1:
         transformed_labels, y_proba = _validate_binary_probabilistic_prediction(
@@ -3838,7 +3863,8 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
 
     y_pred = check_array(y_pred, ensure_2d=False, dtype="numeric")
     if sample_weight is not None:
-        sample_weight = ensure_common_namespace_device(y_pred, sample_weight)[0]
+        xp, _, device_ = get_namespace_and_device(y_pred)
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
     transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
         y_true, y_pred, sample_weight, labels
@@ -3941,7 +3967,7 @@ def d2_brier_score(
         y_proba, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
     )
     if sample_weight is not None:
-        sample_weight = ensure_common_namespace_device(y_proba, sample_weight)[0]
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
     if y_proba.ndim == 1 or y_proba.shape[1] == 1:
         transformed_labels, y_proba = _validate_binary_probabilistic_prediction(
