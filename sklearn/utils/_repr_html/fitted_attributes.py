@@ -57,12 +57,27 @@ def _fitted_attr_html_repr(fitted_attributes):
        </tr>
     """
 
-    rows = [
-        ROW_TEMPLATE.format(name=name, value=value)
-        for name, value in fitted_attributes.items()
-    ]
-    # for row in fitted_attributes:
-    # link = _generate_link_to_param_doc(row.estimator_class, row, row.doc_link)
+    ROW_TEMPLATE_TWO_COLUMNS = """
+       <tr class="default">
+           <td>{name}&nbsp;</td>
+           <td>{value_1}</td>
+           <td>{value_2}</td>
+       </tr>
+    """
+
+    rows = []
+    for name, value in fitted_attributes.items():
+        split_value = value.find(",", value.find(",") + 1)
+        if split_value > -1:
+            value_1 = value[:split_value]
+            value_2 = value[(split_value + 2) :]
+            rows.append(
+                ROW_TEMPLATE_TWO_COLUMNS.format(
+                    name=name, value_1=value_1, value_2=value_2
+                )
+            )
+        else:
+            rows.append(ROW_TEMPLATE.format(name=name, value=value))
 
     return HTML_TEMPLATE.format(rows="\n".join(rows))
 
