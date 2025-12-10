@@ -14,12 +14,22 @@ from sklearn.utils.fixes import parse_version
 
 # minimal dependencies and pyproject definitions for testing the pyproject tests
 
-MIN_DEPENDENT_PACKAGES = {
+EXAMPLE_MIN_DEPENDENT_PACKAGES = {
     "joblib": ("1.3.0", "install"),
     "scipy": ("1.10.0", "build, install"),
 }
 
-MATCHING_PYPROJECT_SECTIONS_WITH_UPPER_BOUND = """
+EXAMPLE_MATCHING_PYPROJECT_SECTIONS = """
+[project]
+dependencies = ["joblib>=1.3.0", "scipy==1.10.0"]
+[project.optional-dependencies]
+build = ["scipy>=1.10.0"]
+install = ["joblib>=1.3.0", "scipy==1.10.0"]
+[build-system]
+requires = ["scipy>=1.10.0"]
+"""
+
+EXAMPLE_MATCHING_PYPROJECT_SECTIONS_WITH_UPPER_BOUND = """
 [project]
 dependencies = ["joblib>=1.3.0,<2.0", "scipy==1.10.0"]
 [project.optional-dependencies]
@@ -27,6 +37,36 @@ build = ["scipy>=1.10.0,<1.19.0"]
 install = ["joblib>=1.3.0,<2.0", "scipy==1.10.0"]
 [build-system]
 requires = ["scipy>=1.10.0,<1.19.0"]
+"""
+
+EXAMPLE_MISSING_PACKAGE_PYPROJECT_SECTIONS = """
+[project]
+dependencies = ["scipy>=1.10.0"]
+[project.optional-dependencies]
+build = ["scipy>=1.10.0"]
+install = ["scipy>=1.10.0"]
+[build-system]
+requires = ["scipy>=1.10.0"]
+"""
+
+EXAMPLE_ADDITIONAL_PACKAGE_PYPROJECT_SECTIONS = """
+[project]
+dependencies = ["joblib>=1.3.0", "scipy>=1.10.0"]
+[project.optional-dependencies]
+build = ["scipy>=1.10.0", "foo-bar>=4.2"]
+install = ["joblib>=1.3.0", "scipy>=1.10.0"]
+[build-system]
+requires = ["scipy>=1.10.0"]
+"""
+
+EXAMPLE_NON_MATCHING_VERSION_PYPROJECT_SECTIONS = """
+[project]
+dependencies = ["joblib>=1.42.0", "scipy>=1.10.0"]
+[project.optional-dependencies]
+build = ["scipy>=1.10.0"]
+install = ["joblib>=1.3.0", "scipy>=1.10.0"]
+[build-system]
+requires = ["scipy>=1.10.0"]
 """
 
 
@@ -156,9 +196,33 @@ def test_min_dependencies_pyproject_toml():
     check_pyproject_sections(pyproject_toml, dependent_packages)
 
 
-def test_check_pyproject_section_with_upper_bounds():
-    """Test the version check for packages when upper bound is given."""
+@pytest.mark.parametrize(
+    "example_pyproject",
+    [
+        EXAMPLE_MATCHING_PYPROJECT_SECTIONS,
+        EXAMPLE_MATCHING_PYPROJECT_SECTIONS_WITH_UPPER_BOUND,
+    ],
+)
+def test_check_matching_pyproject_section(example_pyproject):
+    """Test the version check for matching packages."""
 
-    pyproject_toml = tomllib.loads(MATCHING_PYPROJECT_SECTIONS_WITH_UPPER_BOUND)
+    pyproject_toml = tomllib.loads(example_pyproject)
 
-    check_pyproject_sections(pyproject_toml, MIN_DEPENDENT_PACKAGES)
+    check_pyproject_sections(pyproject_toml, EXAMPLE_MIN_DEPENDENT_PACKAGES)
+
+
+@pytest.mark.parametrize(
+    "example_non_matching_pyproject",
+    [
+        EXAMPLE_MISSING_PACKAGE_PYPROJECT_SECTIONS,
+        EXAMPLE_ADDITIONAL_PACKAGE_PYPROJECT_SECTIONS,
+        EXAMPLE_NON_MATCHING_VERSION_PYPROJECT_SECTIONS,
+    ],
+)
+def test_check_non_matching_pyproject_section(example_non_matching_pyproject):
+    """Test the version check for non-matching packages and versions."""
+
+    pyproject_toml = tomllib.loads(example_non_matching_pyproject)
+
+    with pytest.raises(AssertionError):
+        check_pyproject_sections(pyproject_toml, EXAMPLE_MIN_DEPENDENT_PACKAGES)
