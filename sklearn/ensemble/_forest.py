@@ -37,7 +37,7 @@ Single and multi-output problems are both handled.
 
 import threading
 from abc import ABCMeta, abstractmethod
-from numbers import Integral, Real
+from numbers import Integral
 from warnings import warn
 
 import numpy as np
@@ -53,6 +53,7 @@ from sklearn.base import (
     is_classifier,
 )
 from sklearn.ensemble._base import BaseEnsemble, _partition_estimators
+from sklearn.ensemble._bootstrap import _get_n_samples_bootstrap
 from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics import accuracy_score, r2_score
 from sklearn.preprocessing import OneHotEncoder
@@ -90,60 +91,6 @@ __all__ = [
 ]
 
 MAX_INT = np.iinfo(np.int32).max
-
-
-def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
-    """
-    Get the number of samples in a bootstrap sample.
-
-    Parameters
-    ----------
-    n_samples : int
-        Number of samples in the dataset.
-
-    max_samples : int or float
-        The maximum number of samples to draw.
-
-        - If None, then draw `n_samples` samples.
-        - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * n_samples` unweighted samples or
-          `max_samples * sample_weight.sum()` weighted samples.
-
-    sample_weight : array of shape (n_samples,) or None
-        Sample weights.
-
-    Returns
-    -------
-    n_samples_bootstrap : int
-        The total number of samples to draw for the bootstrap sample.
-    """
-    if max_samples is None:
-        return n_samples
-    elif isinstance(max_samples, Integral):
-        return max_samples
-    elif not isinstance(max_samples, Real):
-        raise ValueError(
-            f"max_samples must be None, int or float got {type(max_samples)}"
-        )
-
-    if sample_weight is None:
-        n_samples_total = n_samples
-        n_samples_total_msg = f"the number of samples is {n_samples_total} "
-    else:
-        n_samples_total = sample_weight.sum()
-        n_samples_total_msg = f"the total sum of sample weights is {n_samples_total} "
-
-    # max_samples Real fractional value relative to n_samples_total
-    n_samples_bootstrap = max(int(max_samples * n_samples_total), 1)
-    # raise warning if n_samples_bootstrap small
-    n_samples_warning = 10
-    if n_samples_bootstrap < n_samples_warning:
-        warn(
-            f"Using the fractional value {max_samples=} when {n_samples_total_msg}"
-            f"results in a low number ({n_samples_bootstrap}) of bootstrap samples. "
-            "We recommend passing `max_samples` as an integer."
-        )
-    return n_samples_bootstrap
 
 
 def _generate_sample_indices(

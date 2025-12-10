@@ -31,10 +31,8 @@ from sklearn.ensemble import (
     RandomForestRegressor,
     RandomTreesEmbedding,
 )
-from sklearn.ensemble._forest import (
-    _generate_unsampled_indices,
-    _get_n_samples_bootstrap,
-)
+from sklearn.ensemble._bootstrap import _get_n_samples_bootstrap
+from sklearn.ensemble._forest import _generate_unsampled_indices
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics import (
     explained_variance_score,
@@ -116,37 +114,6 @@ FOREST_ESTIMATORS.update(FOREST_TRANSFORMERS)
 
 FOREST_CLASSIFIERS_REGRESSORS: Dict[str, Any] = FOREST_CLASSIFIERS.copy()
 FOREST_CLASSIFIERS_REGRESSORS.update(FOREST_REGRESSORS)
-
-
-def test_get_n_samples_bootstrap():
-    # Test without sample_weight
-    # absolute max_samples (int)
-    assert _get_n_samples_bootstrap(100, 10, None) == 10
-    # relative max_samples (float)
-    assert _get_n_samples_bootstrap(100, 1.0, None) == 100
-    assert _get_n_samples_bootstrap(100, 0.5, None) == 50
-    # max_samples=None returns n_samples
-    assert _get_n_samples_bootstrap(100, None, None) == 100
-    # case max_samples * n_samples < 1
-    with pytest.warns(UserWarning, match="Using the fractional value"):
-        assert _get_n_samples_bootstrap(100, 0.9 / 100, None) == 1
-    # error raised for unexpected max_samples type
-    msg = "max_samples must be None, int or float"
-    with pytest.raises(ValueError, match=msg):
-        _get_n_samples_bootstrap(100, "b", None)
-
-    # Test with sample_weight
-    sw = np.full(100, fill_value=2)
-    # absolute max_samples (int)
-    assert _get_n_samples_bootstrap(100, 10, sw) == 10
-    # relative max_samples (float)
-    assert _get_n_samples_bootstrap(100, 1.0, sw) == int(sw.sum())
-    assert _get_n_samples_bootstrap(100, 0.5, sw) == int(0.5 * sw.sum())
-    # max_samples=None returns n_samples
-    assert _get_n_samples_bootstrap(100, None, sw) == 100
-    # case max_samples * sw_sum < 1
-    with pytest.warns(UserWarning, match="Using the fractional value"):
-        assert _get_n_samples_bootstrap(100, 0.9 / sw.sum(), sw) == 1
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
