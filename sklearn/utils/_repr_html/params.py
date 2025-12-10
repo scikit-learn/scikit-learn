@@ -92,7 +92,7 @@ def _params_html_repr(params):
         <a class="param-doc-link"
             rel="noreferrer" target="_blank" href="{link}">
             {param_name}
-            <span class="param-doc-description"><div>{param_description}</div></span>
+            <span class="param-doc-description">{param_description}</span>
         </a>
 
     """
