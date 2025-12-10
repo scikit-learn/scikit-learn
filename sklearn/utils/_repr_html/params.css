@@ -110,7 +110,7 @@ a.param-doc-link::before {
     background: var(--sklearn-color-unfitted-level-0);
     border: thin solid var(--sklearn-color-unfitted-level-3);
 
-    position-area: right;
+    position-area: center right;
     position-anchor: --doc-link;
 
     /* position-try-fallbacks:
