@@ -28,6 +28,7 @@ from sklearn.utils._array_api import (
     _modify_in_place_if_numpy,
     get_namespace,
     get_namespace_and_device,
+    move_to,
 )
 from sklearn.utils._chunking import get_chunk_n_rows
 from sklearn.utils._mask import _get_mask
@@ -1165,7 +1166,8 @@ def cosine_distances(X, Y=None):
     array([[1.   , 1.   ],
            [0.422, 0.183]])
     """
-    xp, _ = get_namespace(X, Y)
+    xp, _, device = get_namespace_and_device(X)
+    Y = move_to(Y, xp=xp, device=device)
 
     # 1.0 - cosine_similarity(X, Y) without copy
     S = cosine_similarity(X, Y)

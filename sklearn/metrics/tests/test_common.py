@@ -637,9 +637,12 @@ METRICS_WITH_LOG1P_Y = {
 # Metrics that support mixed array API inputs
 METRICS_SUPPORTING_MIXED_NAMESPACE = [
     "brier_score_loss",
+    "confusion_matrix_at_thresholds",
+    "cosine_distances",
     "d2_brier_score",
     "d2_log_loss_score",
     "log_loss",
+    "max_error",
 ]
 
 
@@ -2519,7 +2522,7 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
         if metric_name in CLASSIFICATION_METRICS:
             # These should all accept binary label input as there are no
             # `CLASSIFICATION_METRICS` that are in `METRIC_UNDEFINED_BINARY` and are
-            # NOT `partial`s (which we do not test for in array API)
+            # NOT `partial`s (which we do not test for in array API compliance)
             data = data_all["binary_class"]
             use_string = True
         elif metric_name in {**CONTINUOUS_CLASSIFICATION_METRICS, **CURVE_METRICS}:
@@ -2538,15 +2541,15 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
 
         y1, y2 = data
         y1_np = np.array(y1)
+        y2_np = np.array(y2)
         if use_string and _is_numpy_namespace(xp_input):
             y1_np = y1_xp = string_labels[y1_np]
-            # `brier_score_loss` and `d2_brier_score` require specifying the
-            # `pos_label`
-            if "brier" in metric.__name__:
+            # `pos_label` needs to be specified when `y_true` is string
+            if metric_name in METRICS_WITH_POS_LABEL:
                 metric_kwargs["pos_label"] = "b"
-        else:
-            dtype = _get_dtype(y1_np, xp_input, array_input.device)
-            y1_xp = xp_input.asarray(y1_np, device=array_input.device, dtype=dtype)
+
+        dtype = _get_dtype(y1_np, xp_input, array_input.device)
+        y1_xp = xp_input.asarray(y1_np, device=array_input.device, dtype=dtype)
 
         metric_kwargs_np = metric_kwargs_xp = metric_kwargs
         if metric_name not in (METRICS_WITHOUT_SAMPLE_WEIGHT | PAIRWISE_METRICS.keys()):
@@ -2558,12 +2561,19 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
             )
             metric_kwargs_xp = {**metric_kwargs, "sample_weight": sample_weight_xp}
 
-        y2_np = np.asarray(y2)
         dtype = _get_dtype(y2_np, xp_ref, reference.device)
         y2_xp = xp_ref.asarray(y2_np, device=reference.device, dtype=dtype)
 
-        metric_xp = metric(y1_xp, y2_xp, **metric_kwargs_xp)
-        metric_np = metric(y1_np, y2_np, **metric_kwargs_np)
+        if metric_name in PAIRWISE_METRICS:
+            # Pairwise metrics have the signature `func(X, Y=None)` and
+            # `Y` should follow `X`, so we reverse the inputs.
+            # `metric_kwargs` not needed as there is no `sample_weight` or
+            # `pos_label` in pairwise metrics
+            metric_xp = metric(y2_xp, y1_xp)
+            metric_np = metric(y2_np, y1_np)
+        else:
+            metric_xp = metric(y1_xp, y2_xp, **metric_kwargs_xp)
+            metric_np = metric(y1_np, y2_np, **metric_kwargs_np)
 
         def _check_output_type(out_np, out_xp):
             if isinstance(out_np, float):

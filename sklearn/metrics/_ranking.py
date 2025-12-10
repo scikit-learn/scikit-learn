@@ -31,6 +31,7 @@ from sklearn.utils import (
 from sklearn.utils._array_api import (
     _max_precision_float_dtype,
     get_namespace_and_device,
+    move_to,
     size,
 )
 from sklearn.utils._encode import _encode, _unique
@@ -925,7 +926,8 @@ def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weigh
     if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
         raise ValueError("{0} format is not supported".format(y_type))
 
-    xp, _, device = get_namespace_and_device(y_true, y_score, sample_weight)
+    xp, _, device = get_namespace_and_device(y_score)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = column_or_1d(y_true)
