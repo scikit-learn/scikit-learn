@@ -12,7 +12,7 @@ from sklearn._loss import HalfMultinomialLoss
 from sklearn.base import BaseEstimator, is_classifier
 from sklearn.datasets import make_classification, make_regression
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, RidgeClassifier
 from sklearn.model_selection import cross_validate
 from sklearn.pipeline import FunctionTransformer, make_pipeline
 from sklearn.utils._array_api import (
@@ -937,9 +937,23 @@ def test_half_multinomial_loss(use_sample_weight, namespace, device_, dtype_name
 
 
 @pytest.mark.parametrize(
-    "estimator",
-    [Ridge(), LinearDiscriminantAnalysis()],
-    ids=["Ridge", "LinearDiscriminantAnalysis"],
+    "estimator, n_classes, scoring, target_dtype",
+    [
+        (Ridge(), None, ["r2", "neg_mean_absolute_error"], numpy.float32),
+        (
+            LinearDiscriminantAnalysis(),
+            2,
+            ["d2_brier_score", "d2_log_loss_score", "accuracy"],
+            numpy.int32,
+        ),
+        (
+            RidgeClassifier(),
+            3,
+            ["accuracy"],
+            str,
+        ),
+    ],
+    ids=["Ridge", "LinearDiscriminantAnalysis", "RidgeClassifier"],
 )
 @pytest.mark.parametrize("cv", [None, 3, 5])
 @pytest.mark.parametrize(
@@ -948,7 +962,7 @@ def test_half_multinomial_loss(use_sample_weight, namespace, device_, dtype_name
     ids=_get_namespace_device_dtype_ids,
 )
 def test_cross_validate_array_api_pipeline(
-    estimator, cv, namespace, device_, dtype_name
+    estimator, n_classes, scoring, target_dtype, cv, namespace, device_, dtype_name
 ):
     """Integration test for `cross_validate` with array API arrays.
 
@@ -964,16 +978,20 @@ def test_cross_validate_array_api_pipeline(
 
     xp = _array_api_for_tests(namespace, device_)
     if is_classifier(estimator):
-        X, y = make_classification(
-            n_samples=1000, n_features=5, n_classes=3, n_informative=3, random_state=42
+        X_np, y_np = make_classification(
+            n_samples=100,
+            n_features=5,
+            n_classes=n_classes,
+            n_informative=3,
+            random_state=42,
         )
     else:
-        X, y = make_regression(
-            n_samples=1000, n_features=5, n_informative=3, random_state=42
+        X_np, y_np = make_regression(
+            n_samples=100, n_features=5, n_informative=3, random_state=42
         )
 
-    X_np = X.astype(dtype_name)
-    y_np = y.astype(dtype_name)
+    X_np = X_np.astype(dtype_name)
+    y_np = y_np.astype(target_dtype)
     X_xp = xp.asarray(X_np, device=device_)
 
     xp_pipeline = make_pipeline(
@@ -984,10 +1002,7 @@ def test_cross_validate_array_api_pipeline(
     cv_params = dict(
         cv=cv, return_estimator=True, return_train_score=True, error_score="raise"
     )
-    if is_classifier(estimator):
-        cv_params["scoring"] = ["d2_brier_score", "d2_log_loss_score", "accuracy"]
-    else:
-        cv_params["scoring"] = ["r2", "neg_mean_absolute_error"]
+    cv_params["scoring"] = scoring
 
     cv_results_np = cross_validate(estimator, X_np, y_np, **cv_params)
     with config_context(array_api_dispatch=True):
@@ -1008,9 +1023,10 @@ def test_cross_validate_array_api_pipeline(
                 # classes? Should this be the namespace/device of X_train or
                 # y_train?
 
-                proba_xp = est_xp.predict_proba(X_np)
-                assert device(proba_xp) == expected_device
-                assert proba_xp.dtype == expected_dtype
+                if hasattr(est_xp, "predict_proba"):
+                    proba_xp = est_xp.predict_proba(X_np)
+                    assert device(proba_xp) == expected_device
+                    assert proba_xp.dtype == expected_dtype
 
                 raw_preds_xp = est_xp.decision_function(X_np)
                 assert device(raw_preds_xp) == expected_device
