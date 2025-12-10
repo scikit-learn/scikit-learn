@@ -1,5 +1,5 @@
-- :class:`preprocessing.TargetEncoder.fit_transform` now accepts `groups` as a param and
-  automatically selects grouped splitters for the internal :term:`cross fitting` if
-  `groups` are passed.
+- :class:`~preprocessing.TargetEncoder` now accepts `groups` as a param in its
+  :meth:`~preprocessing.TargetEncoder.fit_transform` and automatically selects a grouped
+  splitter for the internal :term:`cross fitting` if `groups` are passed.
   By :user:`Samruddhi Baviskar <samruddhibaviskar11>` and
   :user:`Stefanie Senger <StefanieSenger>`.
