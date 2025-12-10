@@ -2548,6 +2548,7 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
             dtype = _get_dtype(y1_np, xp_input, array_input.device)
             y1_xp = xp_input.asarray(y1_np, device=array_input.device, dtype=dtype)
 
+        # use `array_input` for `sample_weight` as well
         sample_weight_np = np.array(sample_weight)
         sample_weight_xp = xp_input.asarray(sample_weight_np, device=array_input.device)
 
@@ -2562,8 +2563,6 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
             y1_np, y2_np, sample_weight=sample_weight_np, **metric_kwargs
         )
 
-        # If output with all numpy inputs is float, ensure mixed input also gives float
-        # If output is an array, ensure namespace and device is the same as `reference`
         def _check_output_type(out_np, out_xp):
             if isinstance(out_np, float):
                 assert isinstance(out_xp, float)
