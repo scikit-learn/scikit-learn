@@ -279,8 +279,8 @@ def get_tags(estimator) -> Tags:
             # Happens when a class is passed instead of an instance.
 
             raise TypeError(
-                f"It seems that you passed an estimator class ({estimator.__name__}) "
-                f"instead of an instance ({estimator.__name__}())."
+                f"get_tags was called on a class ({estimator.__name__}),"
+                f"but it expects an instance ({estimator.__name__}())."
             )
         else:
             raise

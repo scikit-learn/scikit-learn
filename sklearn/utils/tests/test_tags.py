@@ -41,7 +41,7 @@ def test_type_error_is_thrown_for_class_vs_instance():
     to `get_tags()` instead of an instance.
     """
     est = BaseEstimator
-    with pytest.raises(TypeError, match="It seems that you passed an estimator class"):
+    with pytest.raises(TypeError, match="get_tags was called on a class"):
         get_tags(est)
 
 
