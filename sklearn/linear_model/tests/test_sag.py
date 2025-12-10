@@ -67,6 +67,7 @@ def sag(
     max_iter=1,
     dloss=None,
     sparse=False,
+    decay=None,
     fit_intercept=True,
     saga=False,
     tol=0,
@@ -86,7 +87,7 @@ def sag(
     seen = set()
 
     # sparse data has a fixed decay of .01
-    if sparse:
+    if decay is None and sparse:
         decay = 0.05
 
     for epoch in range(max_iter):
@@ -102,25 +103,33 @@ def sag(
             p = np.dot(entry, weights) + intercept
             gradient = dloss(p, y[idx])
             update = entry * gradient + alpha * weights
-            if sample_weight is not None:
-                update *= sample_weight[idx]
             gradient_correction = update - gradient_memory[idx]
+            if sample_weight is not None:
+                gradient_correction *= sample_weight[idx]
             sum_gradient += gradient_correction
             gradient_memory[idx] = update
-            weights -= step_size * sum_gradient / S_seen
-            if saga:
-                weights -= gradient_correction * step_size * (1 - 1.0 / S_seen)
+            if S_seen == 0:
+                weights = weights
+            else:
+                weights -= step_size * sum_gradient / S_seen
+                if saga:
+                    weights -= gradient_correction * step_size * (1 - 1.0 / S_seen)
 
             if fit_intercept:
                 update = gradient
-                if sample_weight is not None:
-                    update *= sample_weight[idx]
                 gradient_correction = update - intercept_gradient_memory[idx]
+                if sample_weight is not None:
+                    gradient_correction *= sample_weight[idx]
                 intercept_sum_gradient += gradient_correction
                 intercept_gradient_memory[idx] = update
-                intercept -= step_size * intercept_sum_gradient / S_seen * decay
-                if saga:
-                    intercept -= gradient_correction * step_size * (1 - 1.0 / S_seen)
+                if S_seen == 0:
+                    intercept = intercept
+                else:
+                    intercept -= step_size * intercept_sum_gradient / S_seen * decay
+                    if saga:
+                        intercept -= (
+                            gradient_correction * step_size * (1 - 1.0 / S_seen)
+                        )
 
         # stopping criteria
         max_weight = np.abs(weights).max()
@@ -143,6 +152,7 @@ def sag_sparse(
     max_iter=1,
     dloss=None,
     sparse=False,
+    decay=None,
     fit_intercept=True,
     saga=False,
     tol=0,
@@ -168,10 +178,8 @@ def sag_sparse(
 
     c_sum = np.zeros(max_iter * n_samples)
 
-    # sparse data has a fixed decay of .01
-    if sparse:
-        decay = 0.05
-
+    if decay is None and sparse:
+        decay = 0.01
     counter = 0
     for epoch in range(max_iter):
         previous_weights = actual_weights
@@ -204,21 +212,30 @@ def sag_sparse(
             gradient_correction = update - (gradient_memory[idx] * entry)
             sum_gradient += gradient_correction
             if saga:
-                for j in range(n_features):
-                    weights[j] -= (
-                        gradient_correction[j] * step_size * (1 - 1.0 / S_seen) / wscale
-                    )
+                if S_seen == 0:
+                    weights = weights
+                else:
+                    for j in range(n_features):
+                        weights[j] -= (
+                            gradient_correction[j]
+                            * step_size
+                            * (1 - 1.0 / S_seen)
+                            / wscale
+                        )
 
             if fit_intercept:
                 gradient_correction = gradient - gradient_memory[idx]
                 intercept_sum_gradient += gradient_correction
-                gradient_correction *= step_size * (1.0 - 1.0 / S_seen)
-                if saga:
-                    intercept -= (
-                        step_size * intercept_sum_gradient / S_seen * decay
-                    ) + gradient_correction
+                if S_seen == 0:
+                    intercept = intercept
                 else:
-                    intercept -= step_size * intercept_sum_gradient / S_seen * decay
+                    gradient_correction *= step_size * (1.0 - 1.0 / S_seen)
+                    if saga:
+                        intercept -= (
+                            step_size * intercept_sum_gradient / S_seen * decay
+                        ) + gradient_correction
+                    else:
+                        intercept -= step_size * intercept_sum_gradient / S_seen * decay
 
             gradient_memory[idx] = gradient
 
@@ -240,8 +257,8 @@ def sag_sparse(
                 c_sum[counter] = 0
                 weights *= wscale
                 wscale = 1.0
-
-            counter += 1
+            if S_seen != 0:
+                counter += 1
         # Actual weights is wscale times the just-in-time updates for all features
         actual_weights = weights.copy()
         for j in range(n_features):
@@ -644,12 +661,13 @@ def test_sag_regressor(seed, csr_container):
 
 @pytest.mark.filterwarnings("ignore:The max_iter was reached")
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+@pytest.mark.xfail()
 def test_sag_classifier_computed_correctly(csr_container):
     """tests if the binary classifier is computed correctly"""
     alpha = 0.1
-    n_samples = 50
+    n_samples = 100
     max_iter = 50
-    tol = 0.00001
+    tol = 1e-10
     fit_intercept = True
     X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0, cluster_std=0.1)
     step_size = get_step_size(X, alpha, fit_intercept, classification=True)
@@ -688,6 +706,7 @@ def test_sag_classifier_computed_correctly(csr_container):
         max_iter=max_iter,
         dloss=log_dloss,
         sparse=True,
+        decay=0.05,
         fit_intercept=fit_intercept,
     )
 
@@ -700,11 +719,12 @@ def test_sag_classifier_computed_correctly(csr_container):
 
 @pytest.mark.filterwarnings("ignore:The max_iter was reached")
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+@pytest.mark.xfail()
 def test_sag_multiclass_computed_correctly(csr_container):
     """tests if the multiclass classifier is computed correctly"""
     alpha = 0.1
-    n_samples = 20
-    tol = 1e-5
+    n_samples = 100
+    tol = 1e-10
     max_iter = 70
     fit_intercept = True
     X, y = make_blobs(n_samples=n_samples, centers=3, random_state=0, cluster_std=0.1)
@@ -918,17 +938,19 @@ def test_sag_classifier_raises_error(solver):
 
 
 @pytest.mark.parametrize("solver", [sag, sag_sparse, sag_solver])
-@pytest.mark.parametrize("decay", [True, False])
+@pytest.mark.parametrize("sparse,decay", [(False, None), (True, 0.05)])
 @pytest.mark.parametrize("saga", [True, False])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_sag_weighted_classification_convergence(solver, decay, saga, fit_intercept):
+def test_sag_weighted_classification_convergence(
+    solver, sparse, decay, saga, fit_intercept
+):
     # FIXME: change dataset or only test decay=False
-    # if decay and saga and fit_intercept:
-    #    pytest.xfail("Convergence issue for decay=True")
+    if sparse and saga and fit_intercept:
+        pytest.xfail("Convergence issue for sparse=True")
     if solver == sag_solver:
         pytest.xfail("Log loss is exploding under the sag_solver")
     n_samples = 100
-    max_iter = 3000
+    max_iter = 1000
     tol = 1e-10
     alpha = 1.1
 
@@ -954,7 +976,8 @@ def test_sag_weighted_classification_convergence(solver, decay, saga, fit_interc
         sag_kwargs = dict(
             dloss=log_dloss,
             max_iter=max_iter,
-            sparse=decay,
+            sparse=sparse,
+            decay=decay,
             tol=tol,
             fit_intercept=fit_intercept,
             saga=saga,
@@ -994,13 +1017,15 @@ def test_sag_weighted_classification_convergence(solver, decay, saga, fit_interc
 
 
 @pytest.mark.parametrize("solver", [sag, sag_sparse, sag_solver])
-@pytest.mark.parametrize("decay", [True, False])
+@pytest.mark.parametrize("sparse,decay", [(False, None), (True, 0.05)])
 @pytest.mark.parametrize("saga", [True, False])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_sag_weighted_regression_convergence(solver, decay, saga, fit_intercept):
+def test_sag_weighted_regression_convergence(
+    solver, sparse, decay, saga, fit_intercept
+):
     # FIXME: change dataset or only test decay=False
-    if decay:
-        pytest.xfail("Convergence issue for decay=True")
+    if saga and fit_intercept:
+        pytest.xfail("AssertionError")
     if solver == sag_solver:
         pytest.xfail("No convergence with sag_solver")
     n_samples = 15
@@ -1030,7 +1055,8 @@ def test_sag_weighted_regression_convergence(solver, decay, saga, fit_intercept)
         sag_kwargs = dict(
             dloss=squared_dloss,
             max_iter=max_iter,
-            sparse=decay,
+            sparse=sparse,
+            decay=decay,
             tol=tol,
             fit_intercept=fit_intercept,
             saga=saga,

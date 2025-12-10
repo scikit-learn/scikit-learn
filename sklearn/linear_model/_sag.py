@@ -82,15 +82,14 @@ def get_auto_step_size(
             "Unknown loss function for SAG solver, got %s instead of 'log' or 'squared'"
             % loss
         )
-    if sample_weight is not None:
-        L *= sample_weight
+    # if sample_weight is not None:
+    #    L *= sample_weight
     L = L.max()
 
     if is_saga:
         # SAGA theoretical step size is 1/3L or 1 / (2 * (L + mu n))
         # See Defazio et al. 2014
-        mun = min(2 * n_samples * alpha_scaled, L)
-        step = 1.0 / (2 * L + mun)
+        step = 1.0 / 3 * L
     else:
         # SAG theoretical step size is 1/16L but it is recommended to use 1 / L
         # see http://www.birs.ca//workshops//2014/14w5003/files/schmidt.pdf,

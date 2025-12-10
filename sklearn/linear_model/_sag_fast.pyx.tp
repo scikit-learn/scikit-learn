@@ -240,22 +240,23 @@ def sag{{name_suffix}}(
 
                 # make the weight updates (just-in-time gradient step, and prox operator)
                 if sample_itr > 0:
-                   status = lagged_update{{name_suffix}}(
-                       weights=weights,
-                       wscale=wscale,
-                       xnnz=xnnz,
-                       n_samples=n_samples,
-                       n_classes=n_classes,
-                       sample_itr=sample_itr,
-                       cumulative_sums=&cumulative_sums[0],
-                       cumulative_sums_prox=cumulative_sums_prox_ptr,
-                       feature_hist=&feature_hist[0],
-                       prox=prox,
-                       sum_gradient=sum_gradient,
-                       x_ind_ptr=x_ind_ptr,
-                       reset=False,
-                       n_iter=n_iter
-                   )
+                   if num_seen!=0:
+                        status = lagged_update{{name_suffix}}(
+                            weights=weights,
+                            wscale=wscale,
+                            xnnz=xnnz,
+                            n_samples=n_samples,
+                            n_classes=n_classes,
+                            sample_itr=sample_itr,
+                            cumulative_sums=&cumulative_sums[0],
+                            cumulative_sums_prox=cumulative_sums_prox_ptr,
+                            feature_hist=&feature_hist[0],
+                            prox=prox,
+                            sum_gradient=sum_gradient,
+                            x_ind_ptr=x_ind_ptr,
+                            reset=False,
+                            n_iter=n_iter
+                        )
                    if status == -1:
                        break
 
@@ -300,9 +301,10 @@ def sag{{name_suffix}}(
                             # This part is done outside the JIT update
                             # as it does not depend on the average gradient.
                             # The prox operator is applied after the JIT update
-                            weights[f_idx + class_ind] -= \
-                                (gradient_correction * step_size
-                                 * (1 - 1. / num_seen) / wscale)
+                            if num_seen!=0:
+                                weights[f_idx + class_ind] -= \
+                                    (gradient_correction * step_size
+                                    * (1 - 1. / num_seen) / wscale)
                         sum_gradient[f_idx + class_ind] += gradient_correction
 
                 # fit the intercept
@@ -311,15 +313,16 @@ def sag{{name_suffix}}(
                         gradient_correction = (gradient[class_ind] -
                                                gradient_memory[s_idx + class_ind])
                         intercept_sum_gradient_init[class_ind] += gradient_correction
-                        gradient_correction *= step_size * (1. - 1. / num_seen)
-                        if saga:
-                            intercept_array[class_ind] -= \
-                                (step_size * intercept_sum_gradient_init[class_ind] /
-                                 num_seen * intercept_decay) + gradient_correction
-                        else:
-                            intercept_array[class_ind] -= \
-                                (step_size * intercept_sum_gradient_init[class_ind] /
-                                 num_seen * intercept_decay)
+                        if num_seen!=0:
+                            gradient_correction *= step_size * (1. - 1. / num_seen)
+                            if saga:
+                                intercept_array[class_ind] -= \
+                                    (step_size * intercept_sum_gradient_init[class_ind] /
+                                    num_seen * intercept_decay) + gradient_correction
+                            else:
+                                intercept_array[class_ind] -= \
+                                    (step_size * intercept_sum_gradient_init[class_ind] /
+                                    num_seen * intercept_decay)
 
                         # check to see that the intercept is not inf or NaN
                         if not isfinite(intercept_array[class_ind]):
