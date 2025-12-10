@@ -39,6 +39,16 @@ install = ["joblib>=1.3.0,<2.0", "scipy==1.10.0"]
 requires = ["scipy>=1.10.0,<1.19.0"]
 """
 
+EXAMPLE_WRONG_SYMBOL_PYPROJECT_SECTIONS = """
+[project]
+dependencies = ["scipy<1.10.0"]
+[project.optional-dependencies]
+build = ["scipy>=1.10.0"]
+install = ["scipy>=1.10.0"]
+[build-system]
+requires = ["scipy>=1.10.0"]
+"""
+
 EXAMPLE_MISSING_PACKAGE_PYPROJECT_SECTIONS = """
 [project]
 dependencies = ["scipy>=1.10.0"]
@@ -164,7 +174,9 @@ def check_pyproject_sections(pyproject_toml, min_dependencies):
 
             pyproject_build_min_versions[package] = version
 
-        assert sorted(pyproject_build_min_versions) == sorted(expected_packages)
+        msg = f"Packages in {pyproject_section} differ from _min_depencies.py"
+
+        assert sorted(pyproject_build_min_versions) == sorted(expected_packages), msg
 
         for package, version in pyproject_build_min_versions.items():
             version = parse_version(version)
@@ -212,17 +224,34 @@ def test_check_matching_pyproject_section(example_pyproject):
 
 
 @pytest.mark.parametrize(
-    "example_non_matching_pyproject",
+    "example_non_matching_pyproject, error_msg",
     [
-        EXAMPLE_MISSING_PACKAGE_PYPROJECT_SECTIONS,
-        EXAMPLE_ADDITIONAL_PACKAGE_PYPROJECT_SECTIONS,
-        EXAMPLE_NON_MATCHING_VERSION_PYPROJECT_SECTIONS,
+        (
+            EXAMPLE_WRONG_SYMBOL_PYPROJECT_SECTIONS,
+            ".* does not match expected regex .*. "
+            "Only >= and == are supported for version requirements",
+        ),
+        (
+            EXAMPLE_MISSING_PACKAGE_PYPROJECT_SECTIONS,
+            "Packages in .* differ from _min_depencies.py",
+        ),
+        (
+            EXAMPLE_ADDITIONAL_PACKAGE_PYPROJECT_SECTIONS,
+            "Packages in .* differ from _min_depencies.py",
+        ),
+        (
+            EXAMPLE_NON_MATCHING_VERSION_PYPROJECT_SECTIONS,
+            ".* has inconsistent minimum versions in pyproject.toml and"
+            " _min_depencies.py: .* != .*",
+        ),
     ],
 )
-def test_check_non_matching_pyproject_section(example_non_matching_pyproject):
+def test_check_non_matching_pyproject_section(
+    example_non_matching_pyproject, error_msg
+):
     """Test the version check for non-matching packages and versions."""
 
     pyproject_toml = tomllib.loads(example_non_matching_pyproject)
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(Exception, match=error_msg):
         check_pyproject_sections(pyproject_toml, EXAMPLE_MIN_DEPENDENT_PACKAGES)
