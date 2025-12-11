@@ -157,17 +157,13 @@ CLASSIFICATION_METRICS = {
     "balanced_accuracy_score": balanced_accuracy_score,
     "adjusted_balanced_accuracy_score": partial(balanced_accuracy_score, adjusted=True),
     "unnormalized_accuracy_score": partial(accuracy_score, normalize=False),
-    # `confusion_matrix` returns absolute values and hence behaves unnormalized
-    # . Naming it with an unnormalized_ prefix is necessary for this module to
-    # skip sample_weight scaling checks which will fail for unnormalized
-    # metrics.
-    "unnormalized_confusion_matrix": confusion_matrix,
+    "confusion_matrix": confusion_matrix,
     "normalized_confusion_matrix": lambda *args, **kwargs: (
         confusion_matrix(*args, **kwargs).astype("float")
         / confusion_matrix(*args, **kwargs).sum(axis=1)[:, np.newaxis]
     ),
-    "unnormalized_multilabel_confusion_matrix": multilabel_confusion_matrix,
-    "unnormalized_multilabel_confusion_matrix_sample": partial(
+    "multilabel_confusion_matrix": multilabel_confusion_matrix,
+    "multilabel_confusion_matrix_sample": partial(
         multilabel_confusion_matrix, samplewise=True
     ),
     "hamming_loss": hamming_loss,
@@ -307,7 +303,7 @@ METRIC_UNDEFINED_BINARY = {
     "samples_recall_score",
     "samples_jaccard_score",
     "coverage_error",
-    "unnormalized_multilabel_confusion_matrix_sample",
+    "multilabel_confusion_matrix_sample",
     "label_ranking_loss",
     "label_ranking_average_precision_score",
     "dcg_score",
@@ -381,7 +377,7 @@ METRICS_WITH_POS_LABEL = {
 # TODO: Handle multi_class metrics that has a labels argument as well as a
 # decision function argument. e.g hinge_loss
 METRICS_WITH_LABELS = {
-    "unnormalized_confusion_matrix",
+    "confusion_matrix",
     "normalized_confusion_matrix",
     "roc_curve",
     "precision_recall_curve",
@@ -410,8 +406,8 @@ METRICS_WITH_LABELS = {
     "macro_precision_score",
     "macro_recall_score",
     "macro_jaccard_score",
-    "unnormalized_multilabel_confusion_matrix",
-    "unnormalized_multilabel_confusion_matrix_sample",
+    "multilabel_confusion_matrix",
+    "multilabel_confusion_matrix_sample",
     "cohen_kappa_score",
     "log_loss",
     "d2_log_loss_score",
@@ -474,7 +470,7 @@ MULTILABELS_METRICS = {
     "micro_precision_score",
     "micro_recall_score",
     "micro_jaccard_score",
-    "unnormalized_multilabel_confusion_matrix",
+    "multilabel_confusion_matrix",
     "samples_f0.5_score",
     "samples_f1_score",
     "samples_f2_score",
@@ -542,7 +538,7 @@ NOT_SYMMETRIC_METRICS = {
     "adjusted_balanced_accuracy_score",
     "explained_variance_score",
     "r2_score",
-    "unnormalized_confusion_matrix",
+    "confusion_matrix",
     "normalized_confusion_matrix",
     "confusion_matrix_at_thresholds",
     "roc_curve",
@@ -557,7 +553,7 @@ NOT_SYMMETRIC_METRICS = {
     "weighted_f2_score",
     "weighted_precision_score",
     "weighted_jaccard_score",
-    "unnormalized_multilabel_confusion_matrix",
+    "multilabel_confusion_matrix",
     "macro_f0.5_score",
     "macro_f2_score",
     "macro_precision_score",
@@ -578,6 +574,19 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = {
     "max_error",
     "ovo_roc_auc",
     "weighted_ovo_roc_auc",
+}
+
+WEIGHT_SCALE_DEPENDENT_METRICS = {
+    # 'confusion_matrix' metrics returns absolute `tps`, `fps` etc values, which
+    # are scaled by weights, so will vary e.g., scaling by 3 will result in 3 * `tps`
+    "confusion_matrix",
+    "confusion_matrix_at_thresholds",
+    "multilabel_confusion_matrix",
+    "multilabel_confusion_matrix_sample",
+    # Metrics where we set `normalize=False`
+    "unnormalized_accuracy_score",
+    "unnormalized_zero_one_loss",
+    "unnormalized_log_loss",
 }
 
 METRICS_REQUIRE_POSITIVE_Y = {
@@ -1618,8 +1627,6 @@ def check_sample_weight_invariance(name, metric, y1, y2, sample_weight=None):
     )
 
     # Check the score is invariant under scaling of weights by a constant factor
-    # `confusion_matrix_at_thresholds` returns raw `tps`, `fps` etc values, which
-    # are scaled by weights, so will vary e.g., scaling by 3 will result in 3 * `tps`
     if not (
         name.startswith("unnormalized") or name == "confusion_matrix_at_thresholds"
     ):
@@ -1828,7 +1835,7 @@ def test_no_averaging_labels():
 
 
 @pytest.mark.parametrize(
-    "name", sorted(MULTILABELS_METRICS - {"unnormalized_multilabel_confusion_matrix"})
+    "name", sorted(MULTILABELS_METRICS - {"multilabel_confusion_matrix"})
 )
 def test_multilabel_label_permutations_invariance(name):
     random_state = check_random_state(0)
