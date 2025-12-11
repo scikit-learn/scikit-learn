@@ -328,7 +328,8 @@ For your pull requests specifically, the following will make it easier to review
   (see :ref:`issues_tagged_needs_triage`),
 * ensure the changes are minimal and directly relevant to the described issue,
 * ensure to only submit code you can explain and maintain, as you'll need to defend and
-  discuss it during review, clarify your reasons and investigate alternatives,
+  discuss it during review, clarify your reasons, understand the use case, do additional
+  research, and investigate alternatives,
 * inspect and solve tests failing locally or in the CI.
 
 What does the "spam" label for issues or pull requests mean?

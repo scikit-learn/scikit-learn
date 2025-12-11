@@ -44,16 +44,24 @@ jobs:
             contributions to keep scikit-learn maintainable.
 
 
-            To avoid autoclose and increase the chance of a productive review, please
-            refer to :ref:`improve_issue_pr`
+            As the author, you are responsible for driving this PR, which entails
+            explaining its context and your approach, fixing test failures, answering
+            questions and doing additional research if requested. If all that sounds
+            demanding, that's because it is, and we encourage you to try other actions
+            for :ref:`new_contributors` like reviewing other contributor's PRs first
+            before attempting a code contribution.
+
+
+            To avoid autoclose on this PR and increase the chance of a productive
+            review, please refer to :ref:`improve_issue_pr`
 
 
             Scikit-learn maintainers cannot provide one-to-one guidance to improve your
-            PR. However, as a community that values helpful discussions, when you are
-            stuck (e.g., on a test failure), we encourage you to ask focused questions
-            in the PR comments that show you have tried to investigate the problem on
-            your own. If you engage genuinely (no pushing AI-generated comments or code
-            without understanding) a community member may offer pointers. 💬
+            PR. However, as a community that values helpful discussions, we encourage
+            you to ask focused questions when you are stuck (e.g., on a test failure)
+            that show you have tried to investigate the problem on your own. If you
+            engage genuinely (no pushing AI-generated comments or code without
+            understanding) a community member may offer pointers. 💬
 
 
             If you substantially improve your PR to address the quality concerns within
