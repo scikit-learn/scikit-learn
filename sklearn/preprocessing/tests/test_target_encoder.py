@@ -1,4 +1,5 @@
 import re
+import warnings
 
 import numpy as np
 import numpy.testing as npt
@@ -22,6 +23,7 @@ from sklearn.preprocessing import (
     TargetEncoder,
 )
 from sklearn.utils.validation import _normalize_na_key as _norm_key
+from sklearn.utils.fixes import parse_version
 
 
 def _encode_target(X_ordinal, y_numeric, n_categories, smooth):
@@ -711,11 +713,29 @@ def test_pandas_copy_on_write():
     Non-regression test for gh-27879.
     """
     pd = pytest.importorskip("pandas", minversion="2.0")
-    with pd.option_context("mode.copy_on_write", True):
+    # Pandas currently warns that setting copy_on_write will be removed in pandas 4
+    # (and copy-on-write will always be enabled).
+    # see https://github.com/scikit-learn/scikit-learn/issues/32829
+    # TODO: remove this workaround when pandas 4 is our minimum version
+    if parse_version(pd.__version__) >= parse_version("4.0"):
         df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
         TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
-
-
+    else:
+        with warnings.catch_warnings():
+            expected_message = (
+                "Copy-on-Write can no longer be disabled, "
+                "setting to False has no impact. This option will "
+                "be removed in pandas 4.0."
+            )
+            warnings.filterwarnings(
+                "ignore",
+                message=re.escape(expected_message),
+                category=DeprecationWarning,
+            )
+            with pd.option_context("mode.copy_on_write", True):
+                df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
+                TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
+                
 def _fit_pair_numpy():
     """
     Fit two encoders on the same tiny dataset:
@@ -896,3 +916,5 @@ def test_smallbatch_index_maps_exist_after_fit():
     assert getattr(te, "_index_maps_", None) is not None
     assert isinstance(te._index_maps_, list) and len(te._index_maps_) == 1
     assert isinstance(te._index_maps_[0], dict) and len(te._index_maps_[0]) >= 2
+
+
