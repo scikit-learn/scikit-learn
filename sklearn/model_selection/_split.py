@@ -2715,7 +2715,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
 
     classifier : bool, default=False
         Whether the task is a classification task, in which case
-        `StratifiedKFold` will be used.
+        :class:`StratifiedKFold` will be used over :class:`KFold`.
 
     Returns
     -------
