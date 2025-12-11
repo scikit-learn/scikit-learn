@@ -282,6 +282,22 @@ def test_pipeline_invalid_parameters():
     assert params == params2
 
 
+@pytest.mark.parametrize(
+    "meta_estimators",
+    [
+        Pipeline([("pca", PCA)]),
+        Pipeline([("scale", StandardScaler), ("pca", PCA())]),
+        FeatureUnion([("pca", PCA), ("svd", TruncatedSVD())]),
+        FeatureUnion([("pca", PCA()), ("svd", TruncatedSVD)]),
+    ],
+)
+def test_meta_estimator_raises_class_not_instance_error(meta_estimators):
+    # non-regression tests for https://github.com/scikit-learn/scikit-learn/issues/32719
+    msg = "Expected an estimator instance (.*()), got estimator class instead (.*)."
+    with pytest.raises(TypeError, match=msg):
+        meta_estimators.fit([[1]])
+
+
 def test_empty_pipeline():
     X = iris.data
     y = iris.target
