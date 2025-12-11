@@ -2745,9 +2745,9 @@ def check_cv(cv=5, y=None, *, classifier=False):
     if not hasattr(cv, "split") or isinstance(cv, str):
         if not isinstance(cv, Iterable) or isinstance(cv, str):
             raise ValueError(
-                "Expected cv as an integer, cross-validation "
-                "object (from sklearn.model_selection) "
-                f"or an iterable. Got {cv}."
+                "Expected `cv` as an integer, a cross-validation object "
+                "(from sklearn.model_selection), or an iterable yielding (train, test) "
+                f"splits as arrays of indices. Got {cv}."
             )
         return _CVIterableWrapper(cv)
 

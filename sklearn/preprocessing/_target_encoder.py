@@ -412,9 +412,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             if not hasattr(self.cv, "split") or isinstance(self.cv, str):
                 if not isinstance(self.cv, Iterable) or isinstance(self.cv, str):
                     raise ValueError(
-                        "Expected `cv` as an integer, cross-validation "
-                        "object (from sklearn.model_selection) "
-                        f"or an iterable. Got {self.cv}."
+                        "Expected `cv` as an integer, a cross-validation object "
+                        "(from sklearn.model_selection), or an iterable yielding "
+                        f"(train, test) splits as arrays of indices. Got {self.cv}."
                     )
                 _test_indices = np.array([])
                 for fold in self.cv:
