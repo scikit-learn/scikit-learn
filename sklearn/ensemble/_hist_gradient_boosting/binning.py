@@ -24,7 +24,7 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
 from sklearn.utils import check_array, check_random_state
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils.parallel import Parallel, delayed
-from sklearn.utils.stats import _averaged_weighted_percentile
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_is_fitted
 
 
@@ -95,7 +95,7 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         percentiles = percentiles[1:-1]
         bin_thresholds = np.array(
             [
-                _averaged_weighted_percentile(col_data, sample_weight, percentile)
+                _weighted_percentile(col_data, sample_weight, percentile, average=True)
                 for percentile in percentiles
             ]
         )
