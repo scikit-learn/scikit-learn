@@ -313,18 +313,23 @@ being reviewed, you can try:
 
 * follow our :ref:`contribution guidelines <contributing>`, in particular
   :ref:`automated_contributions_policy`, :ref:`filing_bugs`,
-  :ref:`stalled_pull_request` and :ref:`stalled_unclaimed_issues`.
-* complete the provided issue and pull request templates, including a clear and
-  concise description of the issue or motivation for the pull request.
+  :ref:`stalled_pull_request` and :ref:`stalled_unclaimed_issues`,
+* fill in all sections of the issue or pull request template provided by GitHub,
+  including a clear description of the problem or motivation, and any relevant code
+  examples,
 * ensure the title clearly describes the issue or pull request and does not include
   an issue number.
 
 For your pull requests specifically, the following will make it easier to review:
 
 * ensure your PR satisfies all items in the
-  :ref:`Pull request checklist <pr_checklist>`.
-* ensure your PR addresses an issue for which there is clear consensus on the solution.
-* ensure the changes are minimal and directly relevant to the described issue.
+  :ref:`Pull request checklist <pr_checklist>`,
+* ensure your PR addresses an issue for which there is clear consensus on the solution
+  (see :ref:`issues_tagged_needs_triage`),
+* ensure the changes are minimal and directly relevant to the described issue,
+* ensure to only submit code you can explain and maintain, as you'll need to defend and
+  discuss it during review, clarify your reasons and investigate alternatives,
+* inspect and solve tests failing locally or in the CI.
 
 What does the "spam" label for issues or pull requests mean?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

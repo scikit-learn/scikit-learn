@@ -39,36 +39,25 @@ jobs:
 
             Thank you for your contribution to scikit-learn and for the effort you have
             put into this PR. This pull request does not yet meet the quality and
-            clarity needed for an effective review. Reviewing time is limited, and our
-            goal is to prioritize well-prepared contributions to keep scikit-learn
-            maintainable. Unless this PR is improved, it will be automatically closed
-            after two weeks.
+            clarity needed for an effective review. Project maintainers have limited
+            time for code reviews, and thus our goal is to prioritize well-prepared
+            contributions to keep scikit-learn maintainable.
 
 
-            To avoid autoclose and increase the chance of a productive review, please:
-
-            - Ensure your contribution aligns with our
-            [contribution guide](https://scikit-learn.org/dev/developers/contributing.html).
-
-            - Include a clear motivation and concise explanation in the pull request
-            description of why you chose this solution.
-
-            - Make sure the code runs and passes tests locally (`pytest`) and in the CI.
-
-            - Submit only code you can explain and maintain; reviewers will ask for
-            clarifications and changes. Disclose any AI assistance per our
-            [Automated Contributions Policy](https://scikit-learn.org/dev/developers/contributing.html#automated-contributions-policy).
-
-            - Keep the changes minimal and directly relevant to the described issue or
-            enhancement.
+            To avoid autoclose and increase the chance of a productive review, please
+            refer to :ref:`improve_issue_pr`
 
 
-            We cannot provide one-to-one guidance on every PR, though we
-            encourage you to ask focused, actionable questions that show you have tried
-            to explore the problem and are interested to engage with the project. 💬
-            Sometimes a maintainer or someone else from the community might be able to
-            offer pointers.
+            Scikit-learn maintainers cannot provide one-to-one guidance to improve your
+            PR. However, as a community that values helpful discussions, when you are
+            stuck (e.g., on a test failure), we encourage you to ask focused questions
+            in the PR comments that show you have tried to investigate the problem on
+            your own. If you engage genuinely (no pushing AI-generated comments or code
+            without understanding) a community member may offer pointers. 💬
 
 
-            If you improve your PR within the two-week window, the `autoclose` label can
-            be removed by maintainers.
+            If you substantially improve your PR to address the quality concerns within
+            two weeks, a maintainer may remove the `autoclose` label during their
+            regular review process. Small edits or incomplete fixes are not sufficient.
+            Maintainers will assess improvements on their own schedule. Please do not
+            request label removal.
