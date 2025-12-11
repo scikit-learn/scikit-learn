@@ -385,13 +385,13 @@ class LinearClassifierMixin(ClassifierMixin):
             Vector containing the class labels for each sample.
         """
         xp, _ = get_namespace(X)
-        xp_classes, _, device_ = get_namespace_and_device(self.classes_)
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
             indices = xp.astype(scores > 0, indexing_dtype(xp))
         else:
             indices = xp.argmax(scores, axis=1)
 
+        xp_classes, _, device_ = get_namespace_and_device(self.classes_)
         return xp_classes.take(
             self.classes_, move_to(indices, xp=xp_classes, device=device_), axis=0
         )
