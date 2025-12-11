@@ -286,9 +286,14 @@ def test_pipeline_invalid_parameters():
     "meta_estimators",
     [
         Pipeline([("pca", PCA)]),
+        Pipeline([("pca", PCA), ("ident", None)]),
+        Pipeline([("passthrough", "passthrough"), ("pca", PCA)]),
+        Pipeline([("passthrough", None), ("pca", PCA)]),
         Pipeline([("scale", StandardScaler), ("pca", PCA())]),
         FeatureUnion([("pca", PCA), ("svd", TruncatedSVD())]),
         FeatureUnion([("pca", PCA()), ("svd", TruncatedSVD)]),
+        FeatureUnion([("drop", "drop"), ("svd", TruncatedSVD)]),
+        FeatureUnion([("pca", PCA), ("passthrough", "passthrough")]),
     ],
 )
 def test_meta_estimator_raises_class_not_instance_error(meta_estimators):
