@@ -494,7 +494,7 @@ def test_timeout(lil_container):
         sp.fit(lil_container(X), Y)
 
 
-# TODO(1.10): remove this test. 
+# TODO(1.10): remove this test.
 # XXX: probability=True is not thread-safe
 @pytest.mark.thread_unsafe
 @pytest.mark.filterwarnings("ignore::FutureWarning")
