@@ -126,15 +126,42 @@ def _get_namespace_device_dtype_ids(param):
 
 
 def yield_mixed_namespace_input_combinations():
-    """Yield mixed namespace and device inputs for testing."""
+    """Yield mixed namespace and device inputs for testing.
 
-    Reference = namedtuple("Reference", ["xp", "device"])
-    Input_array = namedtuple("Input_array", ["xp", "device"])
+    We do not test for all possible combinations of namespace/device from
+    `yield_namespace_device_dtype_combinations` (excluding dtype variations, this is
+    C(8,2)=56), to avoid slow testing and maintenance burden.
 
-    yield Input_array("cupy", None), Reference("torch", "cuda"), "cupy to torch cuda"
-    yield Input_array("torch", "mps"), Reference("numpy", None), "torch mps to numpy"
-    yield Input_array("numpy", None), Reference("torch", "cuda"), "numpy to torch cuda"
-    yield Input_array("numpy", None), Reference("torch", "mps"), "numpy to torch mps"
+    The current combinations ensures the following conversions are tested:
+
+    * non-NumPy to NumPy (including CPU to GPU)
+    * NumPy to non-NumPy (including GPU to CPU)
+    * non-NumPy to non-NumPy (GPU to GPU)
+    * array-api-strict to non-NumPy
+    """
+
+    NamespaceAndDevice = namedtuple("NamespaceAndDevice", ["xp", "device"])
+
+    yield (
+        NamespaceAndDevice("cupy", None),
+        NamespaceAndDevice("torch", "cuda"),
+        "cupy to torch cuda",
+    )
+    yield (
+        NamespaceAndDevice("torch", "mps"),
+        NamespaceAndDevice("numpy", None),
+        "torch mps to numpy",
+    )
+    yield (
+        NamespaceAndDevice("numpy", None),
+        NamespaceAndDevice("torch", "cuda"),
+        "numpy to torch cuda",
+    )
+    yield (
+        NamespaceAndDevice("numpy", None),
+        NamespaceAndDevice("torch", "mps"),
+        "numpy to torch mps",
+    )
 
     try:
         import array_api_strict
@@ -146,14 +173,14 @@ def yield_mixed_namespace_input_combinations():
         device = None
 
     yield (
-        Input_array("array_api_strict", device),
-        Reference("torch", "mps"),
+        NamespaceAndDevice("array_api_strict", device),
+        NamespaceAndDevice("torch", "mps"),
         "array_api_strict to torch mps",
     )
     # XXX to delete, just here to allow local testing
     yield (
-        Input_array("array_api_strict", device),
-        Reference("torch", "cpu"),
+        NamespaceAndDevice("array_api_strict", device),
+        NamespaceAndDevice("torch", "cpu"),
         "array_api_strict to torch mps",
     )
 

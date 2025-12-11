@@ -598,7 +598,6 @@ METRICS_WITH_LOG1P_Y = {
 METRICS_SUPPORTING_MIXED_NAMESPACE = [
     "brier_score_loss",
     "confusion_matrix_at_thresholds",
-    "cosine_distances",
     "d2_brier_score",
     "d2_log_loss_score",
     "log_loss",
@@ -2430,27 +2429,29 @@ def test_array_api_compliance(metric, array_namespace, device, dtype_name, check
 
 
 @pytest.mark.parametrize(
-    "array_input, reference",
+    "from_ns_and_device, to_ns_and_device",
     [
         pytest.param(*args[:2], id=args[2])
         for args in yield_mixed_namespace_input_combinations()
     ],
 )
 @pytest.mark.parametrize("metric_name", sorted(METRICS_SUPPORTING_MIXED_NAMESPACE))
-def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
+def test_mixed_array_api_namespace_input_compliance(
+    metric_name, from_ns_and_device, to_ns_and_device
+):
     """Check `y_true` and `sample_weight` follows `y_pred` for mixed namespace inputs.
 
     If output is an array with all numpy inputs, checks that the output is also
     a float with mixed inputs.
     If output is array with all numpy inputs, checks it is of the same namespace and
-    device as `y_pred` (`reference`).
+    device as `y_pred` (`to_ns_and_device`).
 
     Classification metrics, excluding multilabel ranking metrics, which require
     label indicator matrix inputs, are tested using string `y_true` when `array_input`
     is NumPy.
     """
-    xp_ref = _array_api_for_tests(reference.xp, reference.device)
-    xp_input = _array_api_for_tests(array_input.xp, array_input.device)
+    xp_to = _array_api_for_tests(to_ns_and_device.xp, to_ns_and_device.device)
+    xp_from = _array_api_for_tests(from_ns_and_device.xp, from_ns_and_device.device)
 
     metric = ALL_METRICS[metric_name]
 
@@ -2470,18 +2471,20 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
             dtype = xp.int64
         return dtype
 
+    # We add additional check with string `y_true` for classification metrics
+    # that support string input
+    checks = ["default"]
     with config_context(array_api_dispatch=True):
-        use_string = False
         if metric_name in CLASSIFICATION_METRICS:
             # These should all accept binary label input as there are no
             # `CLASSIFICATION_METRICS` that are in `METRIC_UNDEFINED_BINARY` and are
             # NOT `partial`s (which we do not test for in array API compliance)
             data = data_all["binary_class"]
-            use_string = True
+            checks.append("string")
         elif metric_name in {**CONTINUOUS_CLASSIFICATION_METRICS, **CURVE_METRICS}:
             if metric_name not in METRIC_UNDEFINED_BINARY:
                 data = data_all["continuous_binary"]
-                use_string = True
+                checks.append("string")
             else:
                 data = data_all["continuous_label_indicator"]
         elif metric_name in REGRESSION_METRICS:
@@ -2493,44 +2496,48 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
         y1, y2 = data
         y1_np = np.array(y1)
         y2_np = np.array(y2)
-        if use_string and _is_numpy_namespace(xp_input):
-            y1_np = y1_xp = string_labels[y1_np]
-            # `pos_label` needs to be specified when `y_true` is string
-            if metric_name in METRICS_WITH_POS_LABEL:
-                metric_kwargs["pos_label"] = "b"
-        else:
-            dtype = _get_dtype(y1_np, xp_input, array_input.device)
-            y1_xp = xp_input.asarray(y1_np, device=array_input.device, dtype=dtype)
+        for check in checks:
+            if check == "string" and _is_numpy_namespace(xp_from):
+                y1_np = y1_xp = string_labels[y1_np]
+                # `pos_label` needs to be specified when `y_true` is string
+                if metric_name in METRICS_WITH_POS_LABEL:
+                    metric_kwargs["pos_label"] = "b"
+            else:
+                # Use default input
+                dtype = _get_dtype(y1_np, xp_from, from_ns_and_device.device)
+                y1_xp = xp_from.asarray(
+                    y1_np, device=from_ns_and_device.device, dtype=dtype
+                )
 
-        metric_kwargs_np = metric_kwargs_xp = metric_kwargs
-        if metric_name not in METRICS_WITHOUT_SAMPLE_WEIGHT:
-            # use `array_input` for `sample_weight` as well
-            sample_weight_np = np.array(sample_weight)
-            metric_kwargs_np = {**metric_kwargs, "sample_weight": sample_weight_np}
-            sample_weight_xp = xp_input.asarray(
-                sample_weight_np, device=array_input.device
-            )
-            metric_kwargs_xp = {**metric_kwargs, "sample_weight": sample_weight_xp}
+            metric_kwargs_np = metric_kwargs_xp = metric_kwargs
+            if metric_name not in METRICS_WITHOUT_SAMPLE_WEIGHT:
+                # use `from_ns_and_device` for `sample_weight` as well
+                sample_weight_np = np.array(sample_weight)
+                metric_kwargs_np = {**metric_kwargs, "sample_weight": sample_weight_np}
+                sample_weight_xp = xp_from.asarray(
+                    sample_weight_np, device=from_ns_and_device.device
+                )
+                metric_kwargs_xp = {**metric_kwargs, "sample_weight": sample_weight_xp}
 
-        dtype = _get_dtype(y2_np, xp_ref, reference.device)
-        y2_xp = xp_ref.asarray(y2_np, device=reference.device, dtype=dtype)
+            dtype = _get_dtype(y2_np, xp_to, to_ns_and_device.device)
+            y2_xp = xp_to.asarray(y2_np, device=to_ns_and_device.device, dtype=dtype)
 
-        metric_xp = metric(y1_xp, y2_xp, **metric_kwargs_xp)
-        metric_np = metric(y1_np, y2_np, **metric_kwargs_np)
+            metric_xp = metric(y1_xp, y2_xp, **metric_kwargs_xp)
+            metric_np = metric(y1_np, y2_np, **metric_kwargs_np)
 
-        def _check_output_type(out_np, out_xp):
-            if isinstance(out_np, float):
-                assert isinstance(out_xp, float)
-            elif hasattr(out_np, "shape"):
-                assert hasattr(out_xp, "shape")
-                assert get_namespace(out_xp)[0] == xp_ref
-                assert device(out_xp) == device(y2)
+            def _check_output_type(out_np, out_xp):
+                if isinstance(out_np, float):
+                    assert isinstance(out_xp, float)
+                elif hasattr(out_np, "shape"):
+                    assert hasattr(out_xp, "shape")
+                    assert get_namespace(out_xp)[0] == xp_to
+                    assert device(out_xp) == device(y2)
 
-        if isinstance(metric_np, Tuple):
-            for out_np, out_xp in zip(metric_np, metric_xp):
-                _check_output_type(out_np, out_xp)
-        else:
-            _check_output_type(metric_np, metric_xp)
+            if isinstance(metric_np, Tuple):
+                for out_np, out_xp in zip(metric_np, metric_xp):
+                    _check_output_type(out_np, out_xp)
+            else:
+                _check_output_type(metric_np, metric_xp)
 
 
 @pytest.mark.parametrize("df_lib_name", ["pandas", "polars"])
