@@ -1690,8 +1690,15 @@ def test_Pipeline_in_PassthroughScorer():
         (LinearDiscriminantAnalysis(), "d2_brier_score"),  # has predict_proba
     ],
 )
-def test_binary_classification_scorer_array_api_compliance(
-    namespace, device_, dtype_name, estimator, scoring, target_namespace_dtype
+@pytest.mark.parametrize("n_classes", [2, 3])
+def test_classification_scorer_array_api_compliance(
+    namespace,
+    device_,
+    dtype_name,
+    estimator,
+    scoring,
+    target_namespace_dtype,
+    n_classes,
 ):
     """Test that scorers work with array API compliant arrays.
 
@@ -1709,7 +1716,11 @@ def test_binary_classification_scorer_array_api_compliance(
 
     # Check compliance of the scorer API for binary classification tasks.
     X_np, y_np = make_classification(
-        n_samples=100, n_classes=2, n_features=20, n_informative=10, random_state=0
+        n_samples=100,
+        n_classes=n_classes,
+        n_features=20,
+        n_informative=10,
+        random_state=0,
     )
     X_np = X_np.astype(dtype_name)
     X_xp = xp.asarray(X_np, device=device_)
@@ -1722,7 +1733,7 @@ def test_binary_classification_scorer_array_api_compliance(
         y = y_np
         # XXX: there is no public API to build a classification scoring object
         # from the combination of a scoring name and string labels.
-        if scoring in ["d2_brier_score"]:
+        if n_classes == 2 and scoring in ["d2_brier_score"]:
             scorer._kwargs["labels"] = np.unique(y)
             scorer._kwargs["pos_label"] = "class_1"
     else:
