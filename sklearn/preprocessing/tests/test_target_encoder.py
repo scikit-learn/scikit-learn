@@ -798,10 +798,10 @@ def test_target_encoder_inherited_splitters():
     """Test that `TargetEncoder` accepts cv splitters that inherit from the allowed
     splitters."""
 
-    class GroupKFoldWithRegistry(GroupKFold):
+    class SplitterBasedOnGroupKFold(GroupKFold):
         pass
 
     X, y = make_classification(random_state=0)
     groups = np.repeat(np.arange(5), X.shape[0] / 5)
-    encoder = TargetEncoder(target_type="binary", cv=GroupKFoldWithRegistry())
+    encoder = TargetEncoder(target_type="binary", cv=SplitterBasedOnGroupKFold())
     encoder.fit_transform(X, y, groups)
