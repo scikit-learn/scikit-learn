@@ -88,7 +88,6 @@ def _params_html_repr(params):
     """
 
     PARAM_AVAILABLE_DOC_LINK_TEMPLATE = """
-
         <a class="param-doc-link"
             style="anchor-name: --doc-link-{param_name};"
             rel="noreferrer" target="_blank" href="{link}">
@@ -97,7 +96,6 @@ def _params_html_repr(params):
             style="position-anchor: --doc-link-{param_name};">
             {param_description}</span>
         </a>
-
     """
     estimator_class_docs = inspect.getdoc(params.estimator_class)
     if estimator_class_docs and (

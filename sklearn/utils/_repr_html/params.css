@@ -105,13 +105,11 @@ a.param-doc-link::before {
     text-align: left;
     max-height: 10em;
     overflow-y: auto;
+    position-area: center right;
 
     /* unfitted */
     background: var(--sklearn-color-unfitted-level-0);
     border: thin solid var(--sklearn-color-unfitted-level-3);
-
-    position-area: center right;
-
 }
 
 /* Fitted state for parameter tooltips */
