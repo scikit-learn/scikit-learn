@@ -1686,7 +1686,10 @@ def test_Pipeline_in_PassthroughScorer():
 @pytest.mark.parametrize(
     "estimator, scoring",
     [
-        (RidgeClassifier(), "accuracy"),  # TODO: add "roc_auc" when supported
+        (
+            RidgeClassifier(solver="svd"),
+            "accuracy",
+        ),  # TODO: add "roc_auc" when supported
         (LinearDiscriminantAnalysis(), "d2_brier_score"),  # has predict_proba
     ],
 )
@@ -1742,6 +1745,65 @@ def test_classification_scorer_array_api_compliance(
             y = xp.asarray(y_np, device=device_)
         else:  # np_int32
             y = y_np
+
+    score_np = scorer(estimator.fit(X_np, y_np), X_np, y_np)
+    with config_context(array_api_dispatch=True):
+        score_xp = scorer(estimator.fit(X_xp, y), X_xp, y)
+
+    assert score_np == pytest.approx(
+        score_xp,
+        rel=1e-4 if dtype_name == "float32" else 1e-6,
+        abs=_atol_for_type(dtype_name),
+    )
+
+
+# TODO: use the mixed namespace fixture when it is available instead.
+@pytest.mark.parametrize(
+    "namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize("target_namespace_dtype", ["xp_float64", "np_float64"])
+@pytest.mark.parametrize(
+    "estimator, scoring",
+    [
+        (Ridge(solver="svd"), "r2"),
+    ],
+)
+@pytest.mark.parametrize("n_targets", [1, 3])
+def test_regression_scorer_array_api_compliance(
+    namespace,
+    device_,
+    dtype_name,
+    estimator,
+    scoring,
+    target_namespace_dtype,
+    n_targets,
+):
+    """Test that scorers work with array API compliant arrays.
+
+    Similar comment as in `test_classification_scorer_array_api_compliance`.
+    """
+    estimator = clone(estimator)
+    scorer = check_scoring(estimator=estimator, scoring=scoring)
+
+    xp = _array_api_for_tests(namespace, device_)
+
+    # Check compliance of the scorer API for binary classification tasks.
+    X_np, y_np = make_regression(
+        n_samples=100,
+        n_features=20,
+        n_targets=n_targets,
+        n_informative=10,
+        random_state=0,
+    )
+    X_np = X_np.astype(dtype_name)
+    X_xp = xp.asarray(X_np, device=device_)
+
+    if target_namespace_dtype == "xp_float64":
+        y = xp.asarray(y_np, device=device_)
+    else:  # np_float64
+        y = y_np
 
     score_np = scorer(estimator.fit(X_np, y_np), X_np, y_np)
     with config_context(array_api_dispatch=True):
