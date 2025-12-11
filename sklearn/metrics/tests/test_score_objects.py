@@ -10,7 +10,7 @@ import pytest
 from numpy.testing import assert_allclose
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
     load_diabetes,
@@ -19,7 +19,8 @@ from sklearn.datasets import (
     make_multilabel_classification,
     make_regression,
 )
-from sklearn.linear_model import LogisticRegression, Perceptron, Ridge
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.linear_model import LogisticRegression, Perceptron, Ridge, RidgeClassifier
 from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
@@ -57,7 +58,13 @@ from sklearn.tests.metadata_routing_common import (
     assert_request_is_empty,
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils._array_api import (
+    _atol_for_type,
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_almost_equal,
     assert_array_equal,
     ignore_warnings,
@@ -1665,3 +1672,72 @@ def test_Pipeline_in_PassthroughScorer():
     )
     search = GridSearchCV(pipe, {"logistic__C": [0.1, 1]}, n_jobs=1, cv=3)
     search.fit(X, y, sample_weight=sample_weight)
+
+
+# TODO: use the mixed namespace fixture when it is available instead.
+@pytest.mark.parametrize(
+    "namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize(
+    "target_namespace_dtype", ["xp_int32", "np_int32", "np_str_object"]
+)
+@pytest.mark.parametrize(
+    "estimator, scoring",
+    [
+        (RidgeClassifier(), "accuracy"),  # TODO: add "roc_auc" when supported
+        (LinearDiscriminantAnalysis(), "d2_brier_score"),  # has predict_proba
+    ],
+)
+def test_binary_classification_scorer_array_api_compliance(
+    namespace, device_, dtype_name, estimator, scoring, target_namespace_dtype
+):
+    """Test that scorers work with array API compliant arrays.
+
+    The purpose of this test is to check that the scorer API works with
+    array API compliant arrays from different namespaces.
+
+    We do not exhaustively test all scorers here since the array compliance
+    of the metrics functions are tested in a common test. Similarly, the
+    estimators' array API compliance is also tested in a dedicated test.
+    """
+    estimator = clone(estimator)
+    scorer = check_scoring(estimator=estimator, scoring=scoring)
+
+    xp = _array_api_for_tests(namespace, device_)
+
+    # Check compliance of the scorer API for binary classification tasks.
+    X_np, y_np = make_classification(
+        n_samples=100, n_classes=2, n_features=20, n_informative=10, random_state=0
+    )
+    X_np = X_np.astype(dtype_name)
+    X_xp = xp.asarray(X_np, device=device_)
+
+    if target_namespace_dtype == "np_str_object":
+        y_np = np.array(
+            ["class_" + str(class_idx + 1) for class_idx in y_np],
+            dtype=object,
+        )
+        y = y_np
+        # XXX: there is no public API to build a classification scoring object
+        # from the combination of a scoring name and string labels.
+        if scoring in ["d2_brier_score"]:
+            scorer._kwargs["labels"] = np.unique(y)
+            scorer._kwargs["pos_label"] = "class_1"
+    else:
+        y_np = y_np.astype("int32")
+        if target_namespace_dtype == "xp_int32":
+            y = xp.asarray(y_np, device=device_)
+        else:  # np_int32
+            y = y_np
+
+    score_np = scorer(estimator.fit(X_np, y_np), X_np, y_np)
+    with config_context(array_api_dispatch=True):
+        score_xp = scorer(estimator.fit(X_xp, y), X_xp, y)
+
+    assert score_np == pytest.approx(
+        score_xp,
+        rel=1e-4 if dtype_name == "float32" else 1e-6,
+        abs=_atol_for_type(dtype_name),
+    )

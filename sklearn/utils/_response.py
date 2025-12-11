@@ -58,7 +58,7 @@ def _process_predict_proba(*, y_pred, target_type, classes, pos_label):
             "classifier with two classes."
         )
     if target_type == "binary":
-        col_idx = xp_classes.nonzero(classes == pos_label)[0][0].item()
+        col_idx = int(xp_classes.nonzero(classes == pos_label)[0][0])
         return y_pred[:, col_idx]
     elif target_type == "multilabel-indicator":
         # Use a compress format of shape `(n_samples, n_output)`.
