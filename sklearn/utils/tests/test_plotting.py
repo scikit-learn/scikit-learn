@@ -128,7 +128,6 @@ def test_validate_from_predictions_params_returns(pyplot, name, pos_label, y_tru
                 "X": np.array([[1, 2], [3, 4]]),
                 "y": np.array([0, 1]),
                 "sample_weight": None,
-                "pos_label": None,
             },
             "`cv_results` does not contain one of the following",
         ),
@@ -142,7 +141,6 @@ def test_validate_from_predictions_params_returns(pyplot, name, pos_label, y_tru
                 "X": np.array([[1, 2]]),
                 "y": np.array([0, 1]),
                 "sample_weight": None,
-                "pos_label": None,
             },
             "`X` does not contain the correct number of",
         ),
@@ -156,7 +154,6 @@ def test_validate_from_predictions_params_returns(pyplot, name, pos_label, y_tru
                 # `y` not binary
                 "y": np.array([0, 2, 1, 3]),
                 "sample_weight": None,
-                "pos_label": None,
             },
             "The target `y` is not binary",
         ),
@@ -170,23 +167,8 @@ def test_validate_from_predictions_params_returns(pyplot, name, pos_label, y_tru
                 "y": np.array([0, 1, 0, 1]),
                 # `sample_weight` wrong length
                 "sample_weight": np.array([0.5]),
-                "pos_label": None,
             },
             "Found input variables with inconsistent",
-        ),
-        (
-            {
-                "cv_results": {
-                    "estimator": "dummy",
-                    "indices": {"test": [[1, 2], [1, 2]], "train": [[3, 4], [3, 4]]},
-                },
-                "X": np.array([1, 2, 3, 4]),
-                "y": np.array([2, 3, 2, 3]),
-                "sample_weight": None,
-                # Not specified when `y` not in {0, 1} or {-1, 1}
-                "pos_label": None,
-            },
-            "y takes value in {2, 3} and pos_label is not specified",
         ),
     ],
 )
@@ -285,19 +267,10 @@ def test_validate_curve_kwargs_error():
 @pytest.mark.parametrize("name", [None, "curve_name", ["curve_name"]])
 @pytest.mark.parametrize(
     "legend_metric",
-    [
-        {"mean": 0.8, "std": 0.2},
-        {"mean": None, "std": None},
-    ],
+    [{"mean": 0.8, "std": 0.2}, {"mean": None, "std": None}],
 )
 @pytest.mark.parametrize("legend_metric_name", ["AUC", "AP"])
-@pytest.mark.parametrize(
-    "curve_kwargs",
-    [
-        None,
-        {"color": "red"},
-    ],
-)
+@pytest.mark.parametrize("curve_kwargs", [None, {"color": "red"}])
 def test_validate_curve_kwargs_single_legend(
     name, legend_metric, legend_metric_name, curve_kwargs
 ):
@@ -330,14 +303,9 @@ def test_validate_curve_kwargs_single_legend(
     assert curve_kwargs_out[1]["label"] is None
     assert curve_kwargs_out[2]["label"] is None
 
-    # Default multi-curve kwargs
     if curve_kwargs is None:
-        assert all(len(kwargs) == 4 for kwargs in curve_kwargs_out)
-        assert all(kwargs["alpha"] == 0.5 for kwargs in curve_kwargs_out)
-        assert all(kwargs["linestyle"] == "--" for kwargs in curve_kwargs_out)
-        assert all(kwargs["color"] == "blue" for kwargs in curve_kwargs_out)
+        assert all("color" not in kwargs for kwargs in curve_kwargs_out)
     else:
-        assert all(len(kwargs) == 2 for kwargs in curve_kwargs_out)
         assert all(kwargs["color"] == "red" for kwargs in curve_kwargs_out)
 
 
@@ -380,9 +348,40 @@ def test_validate_curve_kwargs_multi_legend(name, legend_metric, legend_metric_n
     for idx, expected_label in enumerate(expected_labels):
         assert curve_kwargs_out[idx]["label"] == expected_label
 
-    assert all(len(kwargs) == 2 for kwargs in curve_kwargs_out)
     for curve_kwarg, curve_kwarg_out in zip(curve_kwargs, curve_kwargs_out):
         assert curve_kwarg_out["color"] == curve_kwarg["color"]
+
+
+@pytest.mark.parametrize("curve_kwargs", [None, {"color": "red"}])
+@pytest.mark.parametrize("n_curves", [1, 3])
+def test_validate_curve_kwargs_default_kwargs(n_curves, curve_kwargs):
+    """Check default kwargs are incorporated correctly."""
+    curve_kwargs_out = _BinaryClassifierCurveDisplayMixin._validate_curve_kwargs(
+        n_curves=n_curves,
+        name="test",
+        legend_metric={"mean": 0.8, "std": 0.2},
+        legend_metric_name="metric",
+        curve_kwargs=curve_kwargs,
+        default_curve_kwargs={"color": "blue"},
+        default_multi_curve_kwargs={"alpha": 0.7, "linestyle": "--", "color": "green"},
+    )
+    if n_curves > 1:
+        # `default_multi_curve_kwargs` are incorporated
+        assert all(kwarg["alpha"] == 0.7 for kwarg in curve_kwargs_out)
+        assert all(kwarg["linestyle"] == "--" for kwarg in curve_kwargs_out)
+        if curve_kwargs is None:
+            # `default_multi_curve_kwargs` over-rides `default_curve_kwargs`
+            assert all(kwarg["color"] == "green" for kwarg in curve_kwargs_out)
+        else:
+            # `curve_kwargs` over-rides any defaults
+            assert all(kwarg["color"] == "red" for kwarg in curve_kwargs_out)
+    # Single curve
+    elif curve_kwargs is None:
+        # Use `default_curve_kwargs`
+        assert all(kwarg["color"] == "blue" for kwarg in curve_kwargs_out)
+    else:
+        # Use `curve_kwargs`
+        assert all(kwarg["color"] == "red" for kwarg in curve_kwargs_out)
 
 
 def metric():

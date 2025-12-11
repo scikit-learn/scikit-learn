@@ -184,7 +184,8 @@ The project would like to thank the following funders.
 
   .. div:: text-box
 
-    `:probabl. <https://probabl.ai>`_ employs Adrin Jalali, Arturo Amor,
+    `:probabl. <https://probabl.ai>`_ manages the whole sponsorship program
+    and employs the full-time core maintainers Adrin Jalali, Arturo Amor,
     François Goupil, Guillaume Lemaitre, Jérémie du Boisberranger, Loïc Estève,
     Olivier Grisel, and Stefanie Senger.
 
@@ -192,8 +193,82 @@ The project would like to thank the following funders.
 
     .. image:: images/probabl.png
       :target: https://probabl.ai
+      :width: 40%
 
 ..........
+
+Active Sponsors
+===============
+
+Founding sponsors
+-----------------
+
+.. div:: sk-text-image-grid-small
+
+  .. div:: text-box
+
+    `Inria <https://www.inria.fr>`_ supports scikit-learn through their
+    sponsorship.
+
+  .. div:: image-box
+
+    .. image:: images/inria-logo.jpg
+      :target: https://www.inria.fr
+
+..........
+
+Gold sponsors
+-------------
+
+.. div:: sk-text-image-grid-small
+
+  .. div:: text-box
+
+    `Chanel <https://www.chanel.com>`_ supports scikit-learn through their
+    sponsorship.
+
+  .. div:: image-box
+
+    .. image:: images/chanel.png
+      :target: https://www.chanel.com
+
+..........
+
+Silver sponsors
+---------------
+
+.. div:: sk-text-image-grid-small
+
+  .. div:: text-box
+
+    `BNP Paribas Group <https://group.bnpparibas/>`_ supports scikit-learn
+    through their sponsorship.
+
+  .. div:: image-box
+
+    .. image:: images/bnp-paribas.jpg
+      :target: https://group.bnpparibas/
+
+..........
+
+Bronze sponsors
+---------------
+
+.. div:: sk-text-image-grid-small
+
+  .. div:: text-box
+
+    `NVIDIA <https://nvidia.com>`_ supports scikit-learn through their sponsorship and employs full-time core maintainer Tim Head. 
+
+  .. div:: image-box
+
+    .. image:: images/nvidia.png
+      :target: https://nvidia.com
+
+..........
+
+Other contributions
+-------------------
 
 .. |chanel| image:: images/chanel.png
   :target: https://www.chanel.com
@@ -203,6 +278,9 @@ The project would like to thank the following funders.
 
 .. |bnp| image:: images/bnp.png
   :target: https://www.bnpparibascardif.com/
+
+.. |bnpparibasgroup| image:: images/bnp-paribas.jpg
+  :target: https://group.bnpparibas/
 
 .. |dataiku| image:: images/dataiku.png
   :target: https://www.dataiku.com/
@@ -232,270 +310,64 @@ The project would like to thank the following funders.
     }
   </style>
 
-.. div:: sk-text-image-grid-small
 
-  .. div:: text-box
+* `Microsoft <https://microsoft.com/>`_ funds Andreas Müller since 2020.
 
-    The `Members <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ of
-    the `Scikit-learn Consortium at Inria Foundation
-    <https://scikit-learn.fondation-inria.fr/en/home/>`_ help at maintaining and
-    improving the project through their financial support.
 
-  .. div:: image-box
+* `Quansight Labs <https://labs.quansight.org>`_ funds Lucy Liu since 2022.
 
-    .. table::
-      :class: image-subtable
+* `The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ and
+  `Wellcome Trust <https://wellcome.org/>`_ fund scikit-learn through the
+  `Essential Open Source Software for Science (EOSS) <https://chanzuckerberg.com/eoss/>`_
+  cycle 6.
 
-      +----------+-----------+
-      |       |chanel|       |
-      +----------+-----------+
-      |  |axa|   |    |bnp|  |
-      +----------+-----------+
-      |       |nvidia|       |
-      +----------+-----------+
-      |       |dataiku|      |
-      +----------+-----------+
-      |        |inria|       |
-      +----------+-----------+
+  It supports Lucy Liu and diversity & inclusion initiatives that will
+  be announced in the future.
 
-..........
-
-.. div:: sk-text-image-grid-small
-
-  .. div:: text-box
-
-    `NVidia <https://nvidia.com>`_ funds Tim Head since 2022
-    and is part of the scikit-learn consortium at Inria.
-
-  .. div:: image-box
-
-    .. image:: images/nvidia.png
-      :target: https://nvidia.com
-
-..........
-
-.. div:: sk-text-image-grid-small
-
-  .. div:: text-box
-
-    `Microsoft <https://microsoft.com/>`_ funds Andreas Müller since 2020.
-
-  .. div:: image-box
-
-    .. image:: images/microsoft.png
-      :target: https://microsoft.com
-
-...........
-
-.. div:: sk-text-image-grid-small
-
-  .. div:: text-box
-
-    `Quansight Labs <https://labs.quansight.org>`_ funds Lucy Liu since 2022.
-
-  .. div:: image-box
-
-    .. image:: images/quansight-labs.png
-      :target: https://labs.quansight.org
-
-...........
-
-.. |czi| image:: images/czi.png
-  :target: https://chanzuckerberg.com
-
-.. |wellcome| image:: images/wellcome-trust.png
-  :target: https://wellcome.org/
-
-.. div:: sk-text-image-grid-small
-
-  .. div:: text-box
-
-    `The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ and
-    `Wellcome Trust <https://wellcome.org/>`_ fund scikit-learn through the
-    `Essential Open Source Software for Science (EOSS) <https://chanzuckerberg.com/eoss/>`_
-    cycle 6.
-
-    It supports Lucy Liu and diversity & inclusion initiatives that will
-    be announced in the future.
-
-  .. div:: image-box
-
-    .. table::
-      :class: image-subtable
-
-      +----------+----------------+
-      |  |czi|   |    |wellcome|  |
-      +----------+----------------+
-
-...........
-
-.. div:: sk-text-image-grid-small
-
-  .. div:: text-box
-
-    `Tidelift <https://tidelift.com/>`_ supports the project via their service
-    agreement.
-
-  .. div:: image-box
-
-    .. image:: images/Tidelift-logo-on-light.svg
-      :target: https://tidelift.com/
-
-...........
-
+* `Tidelift <https://tidelift.com/>`_ supports the project via their service
+  agreement.
 
 Past Sponsors
--------------
+=============
 
-.. div:: sk-text-image-grid-small
+`Quansight Labs <https://labs.quansight.org>`_ funded Meekail Zain in 2022 and 2023,
+and funded Thomas J. Fan from 2021 to 2023.
 
-  .. div:: text-box
+`Columbia University <https://columbia.edu/>`_ funded Andreas Müller
+(2016-2020).
 
-    `Quansight Labs <https://labs.quansight.org>`_ funded Meekail Zain in 2022 and 2023,
-    and funded Thomas J. Fan from 2021 to 2023.
+`The University of Sydney <https://sydney.edu.au/>`_ funded Joel Nothman
+(2017-2021).
 
-  .. div:: image-box
+Andreas Müller received a grant to improve scikit-learn from the
+`Alfred P. Sloan Foundation <https://sloan.org>`_ .
+This grant supported the position of Nicolas Hug and Thomas J. Fan.
 
-    .. image:: images/quansight-labs.png
-      :target: https://labs.quansight.org
+`INRIA <https://www.inria.fr>`_ has provided funding for Fabian Pedregosa
+(2010-2012), Jaques Grobler (2012-2013) and Olivier Grisel (2013-2017) to
+work on this project full-time. It also hosts coding sprints and other events.
 
-...........
+`Paris-Saclay Center for Data Science <http://www.datascience-paris-saclay.fr/>`_
+funded one year for a developer to work on the project full-time (2014-2015), 50%
+of the time of Guillaume Lemaitre (2016-2017) and 50% of the time of Joris van den
+Bossche (2017-2018).
 
-.. div:: sk-text-image-grid-small
+`NYU Moore-Sloan Data Science Environment <https://cds.nyu.edu/mooresloan/>`_
+funded Andreas Mueller (2014-2016) to work on this project. The Moore-Sloan
+Data Science Environment also funds several students to work on the project
+part-time.
 
-  .. div:: text-box
+`Télécom Paristech <https://www.telecom-paristech.fr/>`_ funded Manoj Kumar
+(2014), Tom Dupré la Tour (2015), Raghav RV (2015-2017), Thierry Guillemot
+(2016-2017) and Albert Thomas (2017) to work on scikit-learn.
 
-    `Columbia University <https://columbia.edu/>`_ funded Andreas Müller
-    (2016-2020).
+`The Labex DigiCosme <https://digicosme.lri.fr>`_ funded Nicolas Goix
+(2015-2016), Tom Dupré la Tour (2015-2016 and 2017-2018), Mathurin Massias
+(2018-2019) to work part time on scikit-learn during their PhDs. It also
+funded a scikit-learn coding sprint in 2015.
 
-  .. div:: image-box
-
-    .. image:: images/columbia.png
-      :target: https://columbia.edu
-
-........
-
-.. div:: sk-text-image-grid-small
-
-  .. div:: text-box
-
-    `The University of Sydney <https://sydney.edu.au/>`_ funded Joel Nothman
-    (2017-2021).
-
-  .. div:: image-box
-
-    .. image:: images/sydney-primary.jpeg
-      :target: https://sydney.edu.au/
-
-...........
-
-.. div:: sk-text-image-grid-small
-
-  .. div:: text-box
-
-    Andreas Müller received a grant to improve scikit-learn from the
-    `Alfred P. Sloan Foundation <https://sloan.org>`_ .
-    This grant supported the position of Nicolas Hug and Thomas J. Fan.
-
-  .. div:: image-box
-
-    .. image:: images/sloan_banner.png
-      :target: https://sloan.org/
-
-.............
-
-.. div:: sk-text-image-grid-small
-
-  .. div:: text-box
-
-    `INRIA <https://www.inria.fr>`_ actively supports this project. It has
-    provided funding for Fabian Pedregosa (2010-2012), Jaques Grobler
-    (2012-2013) and Olivier Grisel (2013-2017) to work on this project
-    full-time. It also hosts coding sprints and other events.
-
-  .. div:: image-box
-
-    .. image:: images/inria-logo.jpg
-      :target: https://www.inria.fr
-
-.....................
-
-.. div:: sk-text-image-grid-small
-
-  .. div:: text-box
-
-    `Paris-Saclay Center for Data Science <http://www.datascience-paris-saclay.fr/>`_
-    funded one year for a developer to work on the project full-time (2014-2015), 50%
-    of the time of Guillaume Lemaitre (2016-2017) and 50% of the time of Joris van den
-    Bossche (2017-2018).
-
-  .. div:: image-box
-
-    .. image:: images/cds-logo.png
-      :target: http://www.datascience-paris-saclay.fr/
-
-..........................
-
-.. div:: sk-text-image-grid-small
-
-  .. div:: text-box
-
-    `NYU Moore-Sloan Data Science Environment <https://cds.nyu.edu/mooresloan/>`_
-    funded Andreas Mueller (2014-2016) to work on this project. The Moore-Sloan
-    Data Science Environment also funds several students to work on the project
-    part-time.
-
-  .. div:: image-box
-
-    .. image:: images/nyu_short_color.png
-      :target: https://cds.nyu.edu/mooresloan/
-
-........................
-
-.. div:: sk-text-image-grid-small
-
-  .. div:: text-box
-
-    `Télécom Paristech <https://www.telecom-paristech.fr/>`_ funded Manoj Kumar
-    (2014), Tom Dupré la Tour (2015), Raghav RV (2015-2017), Thierry Guillemot
-    (2016-2017) and Albert Thomas (2017) to work on scikit-learn.
-
-  .. div:: image-box
-
-    .. image:: images/telecom.png
-      :target: https://www.telecom-paristech.fr/
-
-.....................
-
-.. div:: sk-text-image-grid-small
-
-  .. div:: text-box
-
-    `The Labex DigiCosme <https://digicosme.lri.fr>`_ funded Nicolas Goix
-    (2015-2016), Tom Dupré la Tour (2015-2016 and 2017-2018), Mathurin Massias
-    (2018-2019) to work part time on scikit-learn during their PhDs. It also
-    funded a scikit-learn coding sprint in 2015.
-
-  .. div:: image-box
-
-    .. image:: images/digicosme.png
-      :target: https://digicosme.lri.fr
-
-.....................
-
-.. div:: sk-text-image-grid-small
-
-  .. div:: text-box
-
-    `The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ funded Nicolas
-    Hug to work full-time on scikit-learn in 2020.
-
-  .. div:: image-box
-
-    .. image:: images/czi.png
-      :target: https://chanzuckerberg.com
-
-......................
+`The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ funded Nicolas
+Hug to work full-time on scikit-learn in 2020.
 
 The following students were sponsored by `Google
 <https://opensource.google/>`_ to work on scikit-learn through
@@ -581,6 +453,24 @@ the past:
     :child-align: center
 
     |hf|
+
+  .. grid-item::
+    :class: sd-text-center
+    :child-align: center
+
+    |dataiku|
+
+  .. grid-item::
+    :class: sd-text-center
+    :child-align: center
+
+    |bnp|
+
+  .. grid-item::
+    :class: sd-text-center
+    :child-align: center
+
+    |axa|
 
 
 Donations in Kind
@@ -679,3 +569,5 @@ scikit-learn Swag
 Official scikit-learn swag is available for purchase at the `NumFOCUS online store
 <https://numfocus.myspreadshop.com/scikit-learn+logo?idea=6335cad48f3f5268f5f42559>`_.
 A portion of the proceeds from each sale goes to support the scikit-learn project.
+
+

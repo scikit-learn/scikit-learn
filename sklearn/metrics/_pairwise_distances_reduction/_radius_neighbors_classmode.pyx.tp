@@ -3,17 +3,17 @@ import warnings
 from cython cimport floating, final, integral
 from cython.operator cimport dereference as deref
 from cython.parallel cimport parallel, prange
-from ._classmode cimport WeightingStrategy
-from ...utils._typedefs cimport intp_t, float64_t, uint8_t
+from sklearn.metrics._pairwise_distances_reduction._classmode cimport WeightingStrategy
+from sklearn.utils._typedefs cimport intp_t, float64_t, uint8_t
 
 import numpy as np
 from scipy.sparse import issparse
-from ...utils.parallel import _get_threadpool_controller
+from sklearn.utils.parallel import _get_threadpool_controller
 
 
 {{for name_suffix in ["32", "64"]}}
-from ._radius_neighbors cimport RadiusNeighbors{{name_suffix}}
-from ._datasets_pair cimport DatasetsPair{{name_suffix}}
+from sklearn.metrics._pairwise_distances_reduction._radius_neighbors cimport RadiusNeighbors{{name_suffix}}
+from sklearn.metrics._pairwise_distances_reduction._datasets_pair cimport DatasetsPair{{name_suffix}}
 
 cdef class RadiusNeighborsClassMode{{name_suffix}}(RadiusNeighbors{{name_suffix}}):
     """

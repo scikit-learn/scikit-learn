@@ -6,19 +6,19 @@ from cython.parallel import prange, parallel
 from libc.stdlib cimport calloc, free
 from libc.string cimport memset
 
-from ..utils._openmp_helpers cimport omp_lock_t
-from ..utils._openmp_helpers cimport omp_init_lock
-from ..utils._openmp_helpers cimport omp_destroy_lock
-from ..utils._openmp_helpers cimport omp_set_lock
-from ..utils._openmp_helpers cimport omp_unset_lock
-from ..utils.extmath import row_norms
-from ._k_means_common import CHUNK_SIZE
-from ._k_means_common cimport _relocate_empty_clusters_dense
-from ._k_means_common cimport _relocate_empty_clusters_sparse
-from ._k_means_common cimport _euclidean_dense_dense
-from ._k_means_common cimport _euclidean_sparse_dense
-from ._k_means_common cimport _average_centers
-from ._k_means_common cimport _center_shift
+from sklearn.utils._openmp_helpers cimport omp_lock_t
+from sklearn.utils._openmp_helpers cimport omp_init_lock
+from sklearn.utils._openmp_helpers cimport omp_destroy_lock
+from sklearn.utils._openmp_helpers cimport omp_set_lock
+from sklearn.utils._openmp_helpers cimport omp_unset_lock
+from sklearn.utils.extmath import row_norms
+from sklearn.cluster._k_means_common import CHUNK_SIZE
+from sklearn.cluster._k_means_common cimport _relocate_empty_clusters_dense
+from sklearn.cluster._k_means_common cimport _relocate_empty_clusters_sparse
+from sklearn.cluster._k_means_common cimport _euclidean_dense_dense
+from sklearn.cluster._k_means_common cimport _euclidean_sparse_dense
+from sklearn.cluster._k_means_common cimport _average_centers
+from sklearn.cluster._k_means_common cimport _center_shift
 
 
 def init_bounds_dense(
