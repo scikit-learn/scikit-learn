@@ -1617,12 +1617,19 @@ def check_sample_weight_invariance(name, metric, y1, y2, sample_weight=None):
         % (weighted_score_zeroed, weighted_score_subset, name),
     )
 
-    if not name.startswith("unnormalized"):
-        # check that the score is invariant under scaling of the weights by a
-        # common factor
-        # Due to numerical instability of floating points in `cumulative_sum` in
-        # `median_absolute_error`, it is not always equivalent when scaling by a float.
-        scaling_values = [2] if name == "median_absolute_error" else [2, 0.3]
+    # Check the score is invariant under scaling of weights by a constant factor
+    # `confusion_matrix_at_thresholds` returns raw `tps`, `fps` etc values, which
+    # are scaled by weights, so will vary e.g., scaling by 3 will result in 3 * `tps`
+    if not (
+        name.startswith("unnormalized") or name == "confusion_matrix_at_thresholds"
+    ):
+        # Numerical instability of floating points in `cumulative_sum` in
+        # `median_absolute_error`, and in `diff` when in calculating collinear points
+        # and points in between to drop `roc_curve` means they are not always
+        # equivalent when scaling by a float.
+        scaling_values = (
+            [2] if name in {"median_absolute_error", "roc_curve"} else [2, 0.3]
+        )
         for scaling in scaling_values:
             assert_allclose(
                 weighted_score,
@@ -1720,7 +1727,7 @@ def test_binary_sample_weight_invariance(name):
     y_pred = random_state.randint(0, 2, size=(n_samples,))
     y_score = random_state.random_sample(size=(n_samples,))
     metric = ALL_METRICS[name]
-    if name in CONTINUOUS_CLASSIFICATION_METRICS:
+    if name in (CONTINUOUS_CLASSIFICATION_METRICS | CURVE_METRICS.keys()):
         check_sample_weight_invariance(name, metric, y_true, y_score)
     else:
         check_sample_weight_invariance(name, metric, y_true, y_pred)
