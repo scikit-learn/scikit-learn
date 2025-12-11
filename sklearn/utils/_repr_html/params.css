@@ -112,9 +112,6 @@ a.param-doc-link::before {
 
     position-area: center right;
 
-    /* position-try-fallbacks:
-        top right, right,
-        top left, left; */
 }
 
 /* Fitted state for parameter tooltips */
