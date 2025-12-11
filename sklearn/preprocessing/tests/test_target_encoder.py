@@ -757,6 +757,18 @@ def test_target_encoder_raises_bad_cv_generator():
         encoder.fit_transform(X, y, groups)
 
 
+def test_target_encoder_raises_groups_not_passed_with_group_splitter():
+    """
+    Test that `TargetEncoder` raises when a grouped cross-validation generator is
+    passed as `cv` object and `groups` is `None`.
+    """
+    X, y = make_classification(random_state=0)
+    encoder = TargetEncoder(target_type="continuous", cv=GroupKFold())
+    msg = "`groups` must be passed since `GroupKFold` requires group labels."
+    with pytest.raises(ValueError, match=msg):
+        encoder.fit_transform(X, y)
+
+
 def test_target_encoder_cv_auto_groups():
     """
     Test that `TargetEncoder` uses the correct splitter when `cv` is an integer and
