@@ -111,11 +111,12 @@ a.param-doc-link::before {
     border: thin solid var(--sklearn-color-unfitted-level-3);
 
     position-area: center right;
-    position-anchor: --doc-link;
 
-    position-try-fallbacks: --bottom
-        /*bottom right, bottom,
-        bottom left, left; */
+    position-try-fallbacks: --fallback;
+        /* top right, right,
+
+        top left, left; */
+
 }
 
 /* Fitted state for parameter tooltips */
@@ -129,9 +130,9 @@ a.param-doc-link::before {
     display: block;
 }
 
-@position-try --bottom {
+@position-try --fallback {
     inset: auto;
-    top: anchor(right);
+    top: anchor(top);
 }
 
 
