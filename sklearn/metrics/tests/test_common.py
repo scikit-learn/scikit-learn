@@ -66,22 +66,13 @@ from sklearn.metrics.pairwise import (
     chi2_kernel,
     cosine_distances,
     cosine_similarity,
-    distance_metrics,
     euclidean_distances,
-    haversine_distances,
-    kernel_metrics,
     laplacian_kernel,
     linear_kernel,
     manhattan_distances,
-    nan_euclidean_distances,
     paired_cosine_distances,
-    paired_distances,
     paired_euclidean_distances,
-    paired_manhattan_distances,
     pairwise_distances,
-    pairwise_distances_argmin,
-    pairwise_distances_argmin_min,
-    pairwise_distances_chunked,
     pairwise_kernels,
     polynomial_kernel,
     rbf_kernel,
@@ -301,37 +292,6 @@ ALL_METRICS.update(CONTINUOUS_CLASSIFICATION_METRICS)
 ALL_METRICS.update(CLASSIFICATION_METRICS)
 ALL_METRICS.update(REGRESSION_METRICS)
 ALL_METRICS.update(CURVE_METRICS)
-
-
-# Pairwise metrics are only used for array API support tests (end of this file).
-# They are not added to `ALL_METRICS` as functionality testing is done in
-# `test_pairwise.py` and not here.
-PAIRWISE_METRICS = {
-    "additive_chi2_kernel": additive_chi2_kernel,
-    "chi2_kernel": chi2_kernel,
-    "cosine_distances": cosine_distances,
-    "cosine_similarity": cosine_similarity,
-    "distance_metrics": distance_metrics,
-    "euclidean_distances": euclidean_distances,
-    "haversine_distances": haversine_distances,
-    "kernel_metrics": kernel_metrics,
-    "laplacian_kernel": laplacian_kernel,
-    "linear_kernel": linear_kernel,
-    "manhattan_distances": manhattan_distances,
-    "nan_euclidean_distances": nan_euclidean_distances,
-    "paired_cosine_distances": paired_cosine_distances,
-    "paired_distances": paired_distances,
-    "paired_euclidean_distances": paired_euclidean_distances,
-    "paired_manhattan_distances": paired_manhattan_distances,
-    "pairwise_kernels": pairwise_kernels,
-    "polynomial_kernel": polynomial_kernel,
-    "rbf_kernel": rbf_kernel,
-    "sigmoid_kernel": sigmoid_kernel,
-    "pairwise_distances": pairwise_distances,
-    "pairwise_distances_argmin": pairwise_distances_argmin,
-    "pairwise_distances_argmin_min": pairwise_distances_argmin_min,
-    "pairwise_distances_chunked": pairwise_distances_chunked,
-}
 
 # Lists of metrics with common properties
 # ---------------------------------------
@@ -2491,21 +2451,14 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
     """
     xp_ref = _array_api_for_tests(reference.xp, reference.device)
     xp_input = _array_api_for_tests(array_input.xp, array_input.device)
-    all_metrics_include_pairwise = {
-        **ALL_METRICS,
-        **PAIRWISE_METRICS,
-    }
-    metric = all_metrics_include_pairwise[metric_name]
+
+    metric = ALL_METRICS[metric_name]
 
     data_all = {
         "binary_class": ([0, 0, 1, 1], [0, 1, 0, 1]),
         "continuous_binary": ([1, 0, 1, 0], [0.5, 0.2, 0.7, 0.6]),
         "continuous_label_indicator": ([[1, 0, 1, 0]], [[0.5, 0.2, 0.7, 0.6]]),
         "regression": ([2.0, 0.1, 1.0, 4.0], [0.5, 0.5, 2, 2]),
-        "pairwise": (
-            [[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]],
-            [[0.2, 0.3, 0.4, 0.5], [0.6, 0.7, 0.8, 0.9]],
-        ),
     }
     sample_weight = [1, 1, 2, 2]
 
@@ -2533,8 +2486,6 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
                 data = data_all["continuous_label_indicator"]
         elif metric_name in REGRESSION_METRICS:
             data = data_all["regression"]
-        elif metric_name in PAIRWISE_METRICS:
-            data = data_all["pairwise"]
 
         string_labels = np.array(["a", "b"])
         metric_kwargs = {}
@@ -2552,7 +2503,7 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
             y1_xp = xp_input.asarray(y1_np, device=array_input.device, dtype=dtype)
 
         metric_kwargs_np = metric_kwargs_xp = metric_kwargs
-        if metric_name not in (METRICS_WITHOUT_SAMPLE_WEIGHT | PAIRWISE_METRICS.keys()):
+        if metric_name not in METRICS_WITHOUT_SAMPLE_WEIGHT:
             # use `array_input` for `sample_weight` as well
             sample_weight_np = np.array(sample_weight)
             metric_kwargs_np = {**metric_kwargs, "sample_weight": sample_weight_np}
@@ -2564,16 +2515,8 @@ def test_mixed_namespace_input_compliance(metric_name, array_input, reference):
         dtype = _get_dtype(y2_np, xp_ref, reference.device)
         y2_xp = xp_ref.asarray(y2_np, device=reference.device, dtype=dtype)
 
-        if metric_name in PAIRWISE_METRICS:
-            # Pairwise metrics have the signature `func(X, Y=None)` and
-            # `Y` should follow `X`, so we reverse the inputs.
-            # `metric_kwargs` not needed as there is no `sample_weight` or
-            # `pos_label` in pairwise metrics
-            metric_xp = metric(y2_xp, y1_xp)
-            metric_np = metric(y2_np, y1_np)
-        else:
-            metric_xp = metric(y1_xp, y2_xp, **metric_kwargs_xp)
-            metric_np = metric(y1_np, y2_np, **metric_kwargs_np)
+        metric_xp = metric(y1_xp, y2_xp, **metric_kwargs_xp)
+        metric_np = metric(y1_np, y2_np, **metric_kwargs_np)
 
         def _check_output_type(out_np, out_xp):
             if isinstance(out_np, float):
