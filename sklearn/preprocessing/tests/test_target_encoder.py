@@ -22,8 +22,8 @@ from sklearn.preprocessing import (
     LabelEncoder,
     TargetEncoder,
 )
-from sklearn.utils.validation import _normalize_na_key as _norm_key
 from sklearn.utils.fixes import parse_version
+from sklearn.utils.validation import _normalize_na_key as _norm_key
 
 
 def _encode_target(X_ordinal, y_numeric, n_categories, smooth):
@@ -735,7 +735,8 @@ def test_pandas_copy_on_write():
             with pd.option_context("mode.copy_on_write", True):
                 df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
                 TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
-                
+
+
 def _fit_pair_numpy():
     """
     Fit two encoders on the same tiny dataset:
@@ -916,5 +917,3 @@ def test_smallbatch_index_maps_exist_after_fit():
     assert getattr(te, "_index_maps_", None) is not None
     assert isinstance(te._index_maps_, list) and len(te._index_maps_) == 1
     assert isinstance(te._index_maps_[0], dict) and len(te._index_maps_[0]) >= 2
-
-

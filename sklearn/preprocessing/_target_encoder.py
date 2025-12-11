@@ -201,6 +201,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         "shuffle": ["boolean"],
         "random_state": ["random_state"],
     }
+    # Cutoff (in n_samples) for routing to the small-batch
+    # per-row transform instead of the vectorized path. Tuned from
+    # microbenchmarks and can be adjusted later if needed.
     _small_batch_threshold = 1024
 
     def __init__(
@@ -358,11 +361,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         n_samples, n_features = X_arr.shape
         is_multi = self.target_type_ == "multiclass"
 
-        if is_multi:
-            n_classes = len(self.classes_)
-            X_out = np.empty((n_samples, n_features * n_classes), dtype=np.float64)
-        else:
-            X_out = np.empty((n_samples, n_features), dtype=np.float64)
+        n_classes = len(self.classes_)
+        features_out = n_features * len(self.classes_) if is_multi else n_features
+        X_out = np.empty((n_samples, features_out), dtype=np.float64)
 
         index_maps = self._index_maps_
         norm_key = _norm_key
