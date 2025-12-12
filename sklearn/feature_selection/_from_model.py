@@ -507,6 +507,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         router = MetadataRouter(owner=self).add(
             estimator=self.estimator,
             method_mapping=MethodMapping()
+            .add(caller="fit_transform", callee="fit_transform")
             .add(caller="partial_fit", callee="partial_fit")
             .add(caller="fit", callee="fit"),
         )
