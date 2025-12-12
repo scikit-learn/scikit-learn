@@ -963,7 +963,7 @@ def test_warm_start_sparse(Cls, sparse_container):
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
 def test_warm_start_fortran(Cls, global_random_seed):
-    # Test that feeding a X in Fortran-ordered is giving the same results as
+    # Test that feeding an X in Fortran-ordered is giving the same results as
     # in C-ordered
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=global_random_seed)
     est_c = Cls(n_estimators=1, random_state=global_random_seed, warm_start=True)
