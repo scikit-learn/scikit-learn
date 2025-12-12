@@ -322,14 +322,15 @@ being reviewed, you can try:
 
 For your pull requests specifically, the following will make it easier to review:
 
-* ensure your PR satisfies all items in the
-  :ref:`Pull request checklist <pr_checklist>`,
 * ensure your PR addresses an issue for which there is clear consensus on the solution
   (see :ref:`issues_tagged_needs_triage`),
+* ensure the PR satisfies all items in the :ref:`Pull request checklist <pr_checklist>`,
 * ensure the changes are minimal and directly relevant to the described issue,
-* ensure to only submit code you can explain and maintain, as you'll need to defend and
-  discuss it during review, clarify your reasons, understand the use case, do additional
-  research, and investigate alternatives,
+* ensure your PR complies with scikit-learn's development conventions (which you can
+  learn about from the docs and by going through similar prior PRs),
+* ensure to only submit code you can explain and maintain, as you might need to defend
+  and discuss it during review, clarify your reasons, understand the use case, do
+  additional research, or investigate alternatives,
 * inspect and solve tests failing locally or in the CI.
 
 What does the "spam" label for issues or pull requests mean?

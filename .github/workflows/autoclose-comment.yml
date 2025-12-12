@@ -46,10 +46,9 @@ jobs:
 
             As the author, you are responsible for driving this PR, which entails
             presenting its context and your approach, complying with scikit-learn's
-            development standards (e.g., via the docs and similar issues/PRs), fixing
-            test failures, answering questions, addressing maintainer suggestions, and
-            doing additional research if requested. If all that sounds demanding, that's
-            because it is, and if you are a [new
+            development standards, fixing test failures, answering questions, addressing
+            maintainer suggestions, and doing additional research if requested. If all
+            that sounds demanding, that's because it is, and if you are a [new
             contributor](https://scikit-learn.org/dev/developers/contributing.html#new-contributors),
             we recommend starting with other contribution types (e.g., reviewing PRs) to
             learn our conventions before submitting code.
