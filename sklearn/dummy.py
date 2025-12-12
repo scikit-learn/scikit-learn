@@ -57,7 +57,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     Parameters
     ----------
     strategy : {"most_frequent", "prior", "stratified", "uniform", \
-            "constant"}, default="prior"
+            "uniform-proba", "constant"}, default="prior"
         Strategy to use to generate predictions.
 
         * "most_frequent": the `predict` method always returns the most
@@ -79,6 +79,10 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         * "uniform": generates predictions uniformly at random from the list
           of unique classes observed in `y`, i.e. each class has equal
           probability.
+        * "uniform-proba": generates random probability distributions for each
+          sample using a Dirichlet distribution with all concentration parameters
+          set to 1. This results in uniformly distributed probability vectors
+          that sum to 1 for each sample.
         * "constant": always predicts a constant label that is provided by
           the user. This is useful for metrics that evaluate a non-majority
           class.
@@ -89,7 +93,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     random_state : int, RandomState instance or None, default=None
         Controls the randomness to generate the predictions when
-        ``strategy='stratified'`` or ``strategy='uniform'``.
+        ``strategy='stratified'``, ``strategy='uniform'``, or
+        ``strategy='uniform-proba'``.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
@@ -147,7 +152,16 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     _parameter_constraints: dict = {
         "strategy": [
-            StrOptions({"most_frequent", "prior", "stratified", "uniform", "constant"})
+            StrOptions(
+                {
+                    "most_frequent",
+                    "prior",
+                    "stratified",
+                    "uniform",
+                    "uniform-proba",
+                    "constant",
+                }
+            )
         ],
         "random_state": ["random_state"],
         "constant": [Integral, str, "array-like", None],
@@ -280,7 +294,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             class_prior_ = [class_prior_]
             constant = [constant]
         # Compute probability only once
-        if self._strategy == "stratified":
+        if self._strategy in ("stratified", "uniform-proba"):
             proba = self.predict_proba(X)
             if self.n_outputs_ == 1:
                 proba = [proba]
@@ -293,10 +307,10 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             elif self._strategy == "stratified":
                 class_prob = class_prior_
 
-            elif self._strategy == "uniform":
+            elif self._strategy in ("uniform", "uniform-proba"):
                 raise ValueError(
                     "Sparse target prediction is not "
-                    "supported with the uniform strategy"
+                    f"supported with the {self._strategy} strategy"
                 )
 
             elif self._strategy == "constant":
@@ -313,7 +327,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
                     [n_samples, 1],
                 )
 
-            elif self._strategy == "stratified":
+            elif self._strategy in ("stratified", "uniform-proba"):
                 y = np.vstack(
                     [
                         classes_[k][proba[k].argmax(axis=1)]
@@ -386,6 +400,13 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             elif self._strategy == "uniform":
                 out = np.ones((n_samples, n_classes_[k]), dtype=np.float64)
                 out /= n_classes_[k]
+
+            elif self._strategy == "uniform-proba":
+                # Generate random probability vectors from Dirichlet distribution
+                # with all concentration parameters set to 1 (uniform)
+                alpha = np.ones(n_classes_[k])
+                out = rs.dirichlet(alpha, size=n_samples)
+                out = out.astype(np.float64)
 
             elif self._strategy == "constant":
                 ind = np.where(classes_[k] == constant[k])
