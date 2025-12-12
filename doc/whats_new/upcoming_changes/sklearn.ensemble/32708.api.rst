@@ -1,0 +1,5 @@
+- `criterion` parameter is now deprecated for classes
+  :class:`ensemble.GradientBoostingRegressor`
+  and :class:`ensemble.GradientBoostingRegressor`,
+  as it had no actual effect.
+  By :user:`Arthur Lacote <cakedev0>`
