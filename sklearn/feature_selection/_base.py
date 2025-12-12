@@ -24,7 +24,7 @@ from sklearn.utils.validation import (
 
 class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
     """
-    Transformer mixin that performs feature selection given a support mask
+    Transformer mixin that performs feature selection given a support mask.
 
     This mixin provides a feature selector implementation with `transform` and
     `inverse_transform` functionality given an implementation of
