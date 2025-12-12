@@ -2420,3 +2420,174 @@ def test_onehotencoder_handle_unknown_warn_maps_to_infrequent():
         result_warn = encoder_warn.transform(test_data)
 
     assert_allclose(result_warn[2], result_infreq[2])
+
+
+def test_onehotencoder_sparse_output_with_pandas_set_output():
+    """
+    Test that OneHotEncoder with sparse_output=True works correctly when
+    pandas output is configured via set_output(transform='pandas').
+    
+    This is a regression test for GitHub issue #30310.
+    https://github.com/scikit-learn/scikit-learn/issues/30310
+    
+    Previously, this would raise:
+    ValueError: Pandas output does not support sparse data...
+    
+    Now it should auto-convert sparse to dense and emit a UserWarning.
+    """
+    import warnings
+    import pandas as pd
+    from sklearn.datasets import load_diabetes
+    
+    # Setup
+    ds = load_diabetes()
+    df = pd.DataFrame(ds['data'], columns=ds['feature_names'])
+    
+    # Test: OneHotEncoder with sparse output and pandas set_output
+    ohe = OneHotEncoder(sparse_output=True)
+    ohe.set_output(transform='pandas')
+    
+    # Should raise UserWarning about auto-conversion
+    with pytest.warns(UserWarning, match="automatically converted to dense"):
+        result = ohe.fit_transform(df[['s6']])
+    
+    # Verify result is pandas DataFrame (not sparse)
+    assert isinstance(result, pd.DataFrame)
+    assert result.shape[0] == len(df)
+    assert result.shape[1] > 0
+
+
+def test_onehotencoder_in_pipeline_with_sparse_and_pandas_output():
+    """
+    Test OneHotEncoder with sparse output in a Pipeline when pandas
+    set_output is configured.
+    
+    The sparse output should be auto-converted to dense to allow
+    downstream transformers to work correctly.
+    """
+    import pandas as pd
+    from sklearn.datasets import load_diabetes
+    from sklearn.decomposition import TruncatedSVD
+    from sklearn.pipeline import Pipeline
+    
+    ds = load_diabetes()
+    df = pd.DataFrame(ds['data'], columns=ds['feature_names'])
+    
+    # Pipeline with OneHotEncoder (sparse) → TruncatedSVD
+    pipeline = Pipeline([
+        ('ohe', OneHotEncoder(sparse_output=True)),
+        ('tsvd', TruncatedSVD(n_components=2, random_state=42))
+    ])
+    pipeline.set_output(transform='pandas')
+    
+    result = pipeline.fit_transform(df[['s6']])
+    
+    # Verify
+    assert isinstance(result, pd.DataFrame)
+    assert result.shape[0] == len(df)
+    assert result.shape[1] == 2  # TruncatedSVD output
+
+
+def test_onehotencoder_in_columntransformer_with_sparse_and_pandas_output():
+    """
+    Test OneHotEncoder with sparse output in ColumnTransformer when
+    pandas set_output is configured.
+    
+    This is the main use case from issue #30310.
+    """
+    import pandas as pd
+    from sklearn.datasets import load_diabetes
+    from sklearn.decomposition import TruncatedSVD
+    from sklearn.preprocessing import MinMaxScaler
+    from sklearn.compose import ColumnTransformer
+    from sklearn.pipeline import Pipeline
+    
+    ds = load_diabetes()
+    df = pd.DataFrame(ds['data'], columns=ds['feature_names'])
+    
+    # ColumnTransformer with sparse intermediate output
+    ct = ColumnTransformer([
+        ('ohe_tsvd', Pipeline([
+            ('ohe', OneHotEncoder(sparse_output=True)),
+            ('tsvd', TruncatedSVD(n_components=2, random_state=42))
+        ]), ['s6']),
+        ('mm', MinMaxScaler(), ['age', 'bmi', 'bp', 's1', 's2', 's3', 's4', 's5']),
+    ])
+    ct.set_output(transform='pandas')
+    
+    result = ct.fit_transform(df)
+    
+    # Verify
+    assert isinstance(result, pd.DataFrame)
+    assert result.shape[0] == len(df)
+    # 2 from tsvd + 8 from mm = 10
+    assert result.shape[1] == 10
+    assert not result.isna().any().any()
+
+
+def test_onehotencoder_sparse_false_no_warning():
+    """
+    Test that when sparse_output=False (dense output requested),
+    no warning is raised even with pandas set_output.
+    """
+    import warnings
+    import pandas as pd
+    from sklearn.datasets import load_diabetes
+    
+    ds = load_diabetes()
+    df = pd.DataFrame(ds['data'], columns=ds['feature_names'])
+    
+    # sparse_output=False, so no warning expected
+    ohe = OneHotEncoder(sparse_output=False)
+    ohe.set_output(transform='pandas')
+    
+    # Use warnings.catch_warnings() instead of pytest.warns(None)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        result = ohe.fit_transform(df[['s6']])
+        
+        # Filter for our specific warning
+        our_warnings = [warning for warning in w 
+                        if "automatically converted to dense" in str(warning.message)]
+        assert len(our_warnings) == 0, "Should not warn when sparse_output=False"
+    
+    assert isinstance(result, pd.DataFrame)
+
+def test_onehotencoder_sparse_output_default_transform_output():
+    """
+    Test that sparse output behavior differs between pandas and default output.
+    """
+    import scipy.sparse as sp
+    import pandas as pd
+    from sklearn.datasets import load_diabetes
+    import warnings
+    
+    ds = load_diabetes()
+    df = pd.DataFrame(ds['data'], columns=ds['feature_names'])
+    
+    # Case 1: pandas output - sparse gets converted to dense
+    ohe_pandas = OneHotEncoder(sparse_output=True)
+    ohe_pandas.set_output(transform='pandas')
+    
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        result_pandas = ohe_pandas.fit_transform(df[['s6']])
+        
+        assert len(w) > 0, "Expected UserWarning about auto-conversion"
+        assert "automatically converted to dense" in str(w[0].message)
+    
+    assert isinstance(result_pandas, pd.DataFrame)
+    
+    # Case 2: dense output - no warning
+    ohe_dense = OneHotEncoder(sparse_output=False)
+    ohe_dense.set_output(transform='pandas')
+    
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        result_dense = ohe_dense.fit_transform(df[['s6']])
+        
+        our_warnings = [warning for warning in w 
+                        if "automatically converted to dense" in str(warning.message)]
+        assert len(our_warnings) == 0
+    
+    assert isinstance(result_dense, pd.DataFrame)

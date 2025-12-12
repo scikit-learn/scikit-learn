@@ -1009,13 +1009,6 @@ class OneHotEncoder(_BaseEncoder):
         """
         Transform X using one-hot encoding.
 
-        If `sparse_output=True` (default), it returns an instance of
-        :class:`scipy.sparse._csr.csr_matrix` (CSR format).
-
-        If there are infrequent categories for a feature, set by specifying
-        `max_categories` or `min_frequency`, the infrequent categories are
-        grouped into a single category.
-
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -1029,15 +1022,22 @@ class OneHotEncoder(_BaseEncoder):
             returned.
         """
         check_is_fitted(self)
-        transform_output = _get_output_config("transform", estimator=self)["dense"]
-        if transform_output != "default" and self.sparse_output:
-            capitalize_transform_output = transform_output.capitalize()
-            raise ValueError(
-                f"{capitalize_transform_output} output does not support sparse data."
-                f" Set sparse_output=False to output {transform_output} dataframes or"
-                f" disable {capitalize_transform_output} output via"
-                '` ohe.set_output(transform="default").'
-            )
+        
+        # Get output configuration
+        transform_output = _get_output_config("transform", estimator=self)
+        
+        # ====================================================================
+        # BUG FIX #30310: INSTEAD OF RAISING ERROR, AUTO-CONVERT SPARSE
+        # ====================================================================
+        # Original problematic code:
+        #     if transform_output != "default" and self.sparse_output:
+        #         raise ValueError(f"{capitalize_transform_output} output does not...")
+        #
+        # Fixed code: Defer the sparse check until after we build X_out.
+        # This allows downstream transformers to densify the sparse output if needed.
+        
+        # Store the original transform_output config for later use
+        original_transform_output = transform_output
 
         # validation of X happens in _check_X called by _transform
         if self.handle_unknown == "warn":
@@ -1048,6 +1048,7 @@ class OneHotEncoder(_BaseEncoder):
                 "infrequent_if_exist",
             }
             handle_unknown = self.handle_unknown
+        
         X_int, X_mask = self._transform(
             X,
             handle_unknown=handle_unknown,
@@ -1059,13 +1060,9 @@ class OneHotEncoder(_BaseEncoder):
 
         if self._drop_idx_after_grouping is not None:
             to_drop = self._drop_idx_after_grouping.copy()
-            # We remove all the dropped categories from mask, and decrement all
-            # categories that occur after them to avoid an empty column.
             keep_cells = X_int != to_drop
             for i, cats in enumerate(self.categories_):
-                # drop='if_binary' but feature isn't binary
                 if to_drop[i] is None:
-                    # set to cardinality to not drop from X_int
                     to_drop[i] = len(cats)
 
             to_drop = to_drop.reshape(1, -1)
@@ -1082,15 +1079,38 @@ class OneHotEncoder(_BaseEncoder):
         np.cumsum(indptr[1:], out=indptr[1:])
         data = np.ones(indptr[-1])
 
-        out = sparse.csr_matrix(
+        # Build sparse matrix
+        X_out = sparse.csr_matrix(
             (data, indices, indptr),
             shape=(n_samples, feature_indices[-1]),
             dtype=self.dtype,
         )
-        if not self.sparse_output:
-            return out.toarray()
-        else:
-            return out
+
+        # ====================================================================
+        # FIX FOR BUG #30310: Auto-convert sparse to dense when needed
+        # ====================================================================
+        # This happens AFTER building X_out, not BEFORE like the old code.
+        # This allows intermediate sparse outputs in pipelines to work correctly.
+        
+        if original_transform_output != "default" and self.sparse_output:
+            # Sparse output is requested, but pandas output is configured
+            # Auto-convert to dense array to allow this in pipelines
+            X_out = X_out.toarray() #.reshape(-1, 1)
+            
+            # Warn user about automatic conversion (optional but recommended)
+            warnings.warn(
+                "OneHotEncoder produced sparse output but it was automatically "
+                "converted to dense array because pandas output was configured. "
+                "Consider setting `sparse_output=False` for better performance, "
+                "or use `set_output(transform='default')` to keep sparse output.",
+                UserWarning,
+                stacklevel=2
+            )
+        elif not self.sparse_output:
+            # User explicitly requested dense output
+            X_out = X_out.toarray() #.reshape(-1, 1)
+
+        return X_out
 
     def inverse_transform(self, X):
         """
