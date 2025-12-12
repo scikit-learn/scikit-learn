@@ -1022,9 +1022,9 @@ class OneHotEncoder(_BaseEncoder):
             returned.
         """
         check_is_fitted(self)
-        
+
         transform_output = _get_output_config("transform", estimator=self)
-        
+
         original_transform_output = transform_output
 
         if self.handle_unknown == "warn":
@@ -1035,7 +1035,7 @@ class OneHotEncoder(_BaseEncoder):
                 "infrequent_if_exist",
             }
             handle_unknown = self.handle_unknown
-        
+
         X_int, X_mask = self._transform(
             X,
             handle_unknown=handle_unknown,
@@ -1078,12 +1078,12 @@ class OneHotEncoder(_BaseEncoder):
         # ====================================================================
         # This happens AFTER building X_out, not BEFORE like the old code.
         # This allows intermediate sparse outputs in pipelines to work correctly.
-        
+
         if original_transform_output != "default" and self.sparse_output:
             # Sparse output is requested, but pandas output is configured
             # Auto-convert to dense array to allow this in pipelines
-            X_out = X_out.toarray() #.reshape(-1, 1)
-            
+            X_out = X_out.toarray()  # .reshape(-1, 1)
+
             # Warn user about automatic conversion (optional but recommended)
             warnings.warn(
                 "OneHotEncoder produced sparse output but it was automatically "
@@ -1091,11 +1091,11 @@ class OneHotEncoder(_BaseEncoder):
                 "Consider setting `sparse_output=False` for better performance, "
                 "or use `set_output(transform='default')` to keep sparse output.",
                 UserWarning,
-                stacklevel=2
+                stacklevel=2,
             )
         elif not self.sparse_output:
             # User explicitly requested dense output
-            X_out = X_out.toarray() #.reshape(-1, 1)
+            X_out = X_out.toarray()  # .reshape(-1, 1)
 
         return X_out
 
