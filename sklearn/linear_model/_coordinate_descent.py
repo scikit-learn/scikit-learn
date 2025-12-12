@@ -1812,7 +1812,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                     y,
                     l1_ratio=l1_ratio,
                     fit_intercept=self.fit_intercept,
-                    # TODO: MultiTaskElasticNetCV has no attribute 'positive'
+                    # Note: MultiTaskElasticNetCV has no attribute 'positive'
                     positive=getattr(self, "positive", False),
                     eps=self.eps,
                     n_alphas=self._alphas,
