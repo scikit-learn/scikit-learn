@@ -921,6 +921,10 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         Maximum numbers of iterations to perform, therefore maximum features
         to include. 10% of ``n_features`` but at least 5 if available.
 
+    refit : bool, default=True
+        If ``True``, refit an estimator using the best found parameters
+        on the whole dataset.
+
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -1012,6 +1016,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         "copy": ["boolean"],
         "fit_intercept": ["boolean"],
         "max_iter": [Interval(Integral, 0, None, closed="left"), None],
+        "refit": ["boolean"],
         "cv": ["cv_object"],
         "n_jobs": [Integral, None],
         "verbose": ["verbose"],
@@ -1023,6 +1028,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         copy=True,
         fit_intercept=True,
         max_iter=None,
+        refit=True,
         cv=None,
         n_jobs=None,
         verbose=False,
@@ -1030,6 +1036,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self.copy = copy
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
+        self.refit = refit
         self.cv = cv
         self.n_jobs = n_jobs
         self.verbose = verbose
@@ -1096,6 +1103,10 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         )
         best_n_nonzero_coefs = np.argmin(mse_folds.mean(axis=0)) + 1
         self.n_nonzero_coefs_ = best_n_nonzero_coefs
+
+        if not self.refit:
+            return self
+
         omp = OrthogonalMatchingPursuit(
             n_nonzero_coefs=best_n_nonzero_coefs,
             fit_intercept=self.fit_intercept,
