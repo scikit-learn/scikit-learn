@@ -20,6 +20,7 @@ from sklearn.base import TransformerMixin, _fit_context, clone
 from sklearn.pipeline import _fit_transform_one, _name_estimators, _transform_one
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import Bunch
+from sklearn.utils._dataframe import is_pandas_df
 from sklearn.utils._indexing import (
     _determine_key_type,
     _get_column_indices,
@@ -47,7 +48,6 @@ from sklearn.utils.validation import (
     _check_feature_names_in,
     _check_n_features,
     _get_feature_names,
-    _is_pandas_df,
     _num_samples,
     check_array,
     check_is_fitted,
@@ -773,7 +773,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         except ImportError:
             return
         for Xs, name in zip(result, names):
-            if not _is_pandas_df(Xs):
+            if not is_pandas_df(Xs):
                 continue
             for col_name, dtype in Xs.dtypes.to_dict().items():
                 if getattr(dtype, "na_value", None) is not pd.NA:
@@ -1064,7 +1064,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # were not present in fit time, and the order of the columns doesn't
         # matter.
         fit_dataframe_and_transform_dataframe = hasattr(self, "feature_names_in_") and (
-            _is_pandas_df(X) or hasattr(X, "__dataframe__")
+            is_pandas_df(X) or hasattr(X, "__dataframe__")
         )
 
         n_samples = _num_samples(X)

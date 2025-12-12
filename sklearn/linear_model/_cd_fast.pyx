@@ -1434,7 +1434,7 @@ def enet_coordinate_descent_multi_task(
                 if do_screening:
                     n_active = 0
                     for j in range(n_features):
-                        if norm2_cols_X[j] == 0:
+                        if excluded_set[j]:
                             continue
                         # Xj_theta = ||X[:,j] @ dual_theta||_2
                         Xj_theta = XtA_row_norms[j] / fmax(l1_reg, dual_norm_XtA)

@@ -1,0 +1,34 @@
+name: autoclose schedule
+# Autoclose labeled PR after 2 weeks.
+
+permissions:
+  contents: read
+  pull-requests: write
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # runs daily at 02:00 UTC
+  workflow_dispatch:
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+
+  autoclose:
+    name: autoclose labeled PRs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install PyGithub
+        run: pip install -Uq PyGithub
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Close PRs labeled more than 14 days ago
+        run: |
+          python build_tools/github/autoclose_prs.py
