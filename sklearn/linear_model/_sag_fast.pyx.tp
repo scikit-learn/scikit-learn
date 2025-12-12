@@ -58,6 +58,7 @@ def sag{{name_suffix}}(
     SequentialDataset{{name_suffix}} dataset,
     {{c_type}}[:, ::1] weights_array,
     {{c_type}}[::1] intercept_array,
+    {{c_type}}[::1] sample_weight,
     int n_samples,
     int n_features,
     int n_classes,
@@ -70,7 +71,7 @@ def sag{{name_suffix}}(
     {{c_type}}[:, ::1] sum_gradient_init,
     {{c_type}}[:, ::1] gradient_memory_init,
     bint[::1] seen_init,
-    int num_seen,
+    float num_seen,
     bint fit_intercept,
     {{c_type}}[::1] intercept_sum_gradient_init,
     double intercept_decay,
@@ -125,7 +126,7 @@ def sag{{name_suffix}}(
     # the label value for current sample
     cdef {{c_type}} y
     # the sample weight
-    cdef {{c_type}} sample_weight
+    cdef {{c_type}} sample_weight_dummy
 
     # helper variable for indexes
     cdef int f_idx, s_idx, feature_ind, class_ind, j
@@ -227,34 +228,35 @@ def sag{{name_suffix}}(
         for n_iter in range(max_iter):
             for sample_itr in range(n_samples):
                 # extract a random sample
-                sample_ind = dataset.random(&x_data_ptr, &x_ind_ptr, &xnnz, &y, &sample_weight)
+                sample_ind = dataset.random(&x_data_ptr, &x_ind_ptr, &xnnz, &y, &sample_weight_dummy)
 
                 # cached index for gradient_memory
                 s_idx = sample_ind * n_classes
 
                 # update the number of samples seen and the seen array
                 if seen_init[sample_ind] == 0:
-                    num_seen += 1
+                    num_seen += sample_weight[sample_ind]
                     seen_init[sample_ind] = 1
 
                 # make the weight updates (just-in-time gradient step, and prox operator)
                 if sample_itr > 0:
-                   status = lagged_update{{name_suffix}}(
-                       weights=weights,
-                       wscale=wscale,
-                       xnnz=xnnz,
-                       n_samples=n_samples,
-                       n_classes=n_classes,
-                       sample_itr=sample_itr,
-                       cumulative_sums=&cumulative_sums[0],
-                       cumulative_sums_prox=cumulative_sums_prox_ptr,
-                       feature_hist=&feature_hist[0],
-                       prox=prox,
-                       sum_gradient=sum_gradient,
-                       x_ind_ptr=x_ind_ptr,
-                       reset=False,
-                       n_iter=n_iter
-                   )
+                   if num_seen!=0:
+                        status = lagged_update{{name_suffix}}(
+                            weights=weights,
+                            wscale=wscale,
+                            xnnz=xnnz,
+                            n_samples=n_samples,
+                            n_classes=n_classes,
+                            sample_itr=sample_itr,
+                            cumulative_sums=&cumulative_sums[0],
+                            cumulative_sums_prox=cumulative_sums_prox_ptr,
+                            feature_hist=&feature_hist[0],
+                            prox=prox,
+                            sum_gradient=sum_gradient,
+                            x_ind_ptr=x_ind_ptr,
+                            reset=False,
+                            n_iter=n_iter
+                        )
                    if status == -1:
                        break
 
@@ -275,11 +277,11 @@ def sag{{name_suffix}}(
                     multiloss.cy_gradient(
                         y_true=y,
                         raw_prediction=prediction,
-                        sample_weight=sample_weight,
+                        sample_weight=sample_weight[sample_ind],
                         gradient_out=gradient,
                     )
                 else:
-                    gradient[0] = loss.cy_gradient(y, prediction[0]) * sample_weight
+                    gradient[0] = loss.cy_gradient(y, prediction[0]) * sample_weight[sample_ind]
 
                 # L2 regularization by simply rescaling the weights
                 wscale *= wscale_update
@@ -299,9 +301,10 @@ def sag{{name_suffix}}(
                             # This part is done outside the JIT update
                             # as it does not depend on the average gradient.
                             # The prox operator is applied after the JIT update
-                            weights[f_idx + class_ind] -= \
-                                (gradient_correction * step_size
-                                 * (1 - 1. / num_seen) / wscale)
+                            if num_seen!=0:
+                                weights[f_idx + class_ind] -= \
+                                    (gradient_correction * step_size
+                                    * (1 - 1. / num_seen) / wscale)
                         sum_gradient[f_idx + class_ind] += gradient_correction
 
                 # fit the intercept
@@ -310,15 +313,16 @@ def sag{{name_suffix}}(
                         gradient_correction = (gradient[class_ind] -
                                                gradient_memory[s_idx + class_ind])
                         intercept_sum_gradient_init[class_ind] += gradient_correction
-                        gradient_correction *= step_size * (1. - 1. / num_seen)
-                        if saga:
-                            intercept_array[class_ind] -= \
-                                (step_size * intercept_sum_gradient_init[class_ind] /
-                                 num_seen * intercept_decay) + gradient_correction
-                        else:
-                            intercept_array[class_ind] -= \
-                                (step_size * intercept_sum_gradient_init[class_ind] /
-                                 num_seen * intercept_decay)
+                        if num_seen!=0:
+                            gradient_correction *= step_size * (1. - 1. / num_seen)
+                            if saga:
+                                intercept_array[class_ind] -= \
+                                    (step_size * intercept_sum_gradient_init[class_ind] /
+                                    num_seen * intercept_decay) + gradient_correction
+                            else:
+                                intercept_array[class_ind] -= \
+                                    (step_size * intercept_sum_gradient_init[class_ind] /
+                                    num_seen * intercept_decay)
 
                         # check to see that the intercept is not inf or NaN
                         if not isfinite(intercept_array[class_ind]):
