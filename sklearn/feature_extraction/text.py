@@ -891,6 +891,7 @@ class HashingVectorizer(
             X = normalize(X, norm=self.norm, copy=False)
         return X
 
+    # pyrefly: ignore [bad-override]
     def fit_transform(self, X, y=None):
         """Transform a sequence of documents to a document-term matrix.
 

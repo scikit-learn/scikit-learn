@@ -45,6 +45,7 @@ from sklearn.utils.extmath import (
     row_norms,
     safe_sparse_dot,
     softmax,
+    # pyrefly: ignore [deprecated]
     stable_cumsum,
     svd_flip,
     weighted_mode,

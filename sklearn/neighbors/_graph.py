@@ -461,6 +461,7 @@ class KNeighborsTransformer(
             X, mode=self.mode, n_neighbors=self.n_neighbors + add_one
         )
 
+    # pyrefly: ignore [bad-override]
     def fit_transform(self, X, y=None):
         """Fit to data, then transform it.
 
@@ -684,6 +685,7 @@ class RadiusNeighborsTransformer(
         check_is_fitted(self)
         return self.radius_neighbors_graph(X, mode=self.mode, sort_results=True)
 
+    # pyrefly: ignore [bad-override]
     def fit_transform(self, X, y=None):
         """Fit to data, then transform it.
 

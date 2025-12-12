@@ -40,7 +40,9 @@ from sklearn.linear_model._omp import (
     orthogonal_mp_gram,
 )
 from sklearn.linear_model._passive_aggressive import (
+    # pyrefly: ignore [deprecated]
     PassiveAggressiveClassifier,
+    # pyrefly: ignore [deprecated]
     PassiveAggressiveRegressor,
 )
 from sklearn.linear_model._perceptron import Perceptron

@@ -163,6 +163,7 @@ class IdentityLink(BaseLink):
         else:
             return y_pred
 
+    # pyrefly: ignore [bad-param-name-override]
     inverse = link
 
 
