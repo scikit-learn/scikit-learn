@@ -33,13 +33,15 @@ jobs:
           /repos/$GH_REPO/issues/$ISSUE_NUMBER/comments \
           -f "body=$BODY"
         env:
-          BODY: |
+          BODY: >
             Thanks for the work you've done so far. The goal of this comment
             is to set expectations.
+
 
             Deciding on new features or substantial changes is a lengthy
             process. It frequently happens that no maintainer is available
             to take on this task right now.
+
 
             Please do not create a Pull Request before a decision has been
             made regarding the proposed work. Making this decision can
