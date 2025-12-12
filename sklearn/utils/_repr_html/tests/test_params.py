@@ -104,7 +104,7 @@ def test_params_html_repr_with_doc_links():
         doc_link="mock_module.MockEstimator.html",
     )
     html_output = _params_html_repr(params)
-    print(html_output)
+
     html_param_a = (
         r'<td class="param">'
         r'\s*<a class="param-doc-link"'
