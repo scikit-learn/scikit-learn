@@ -46,6 +46,14 @@ from sklearn._loss.link import (
     MultinomialLogit,
 )
 from sklearn.utils import check_scalar
+from sklearn.utils._array_api import (
+    _average,
+    _logsumexp,
+    _ravel,
+    get_namespace,
+    get_namespace_and_device,
+)
+from sklearn.utils.extmath import softmax
 from sklearn.utils.stats import _weighted_percentile
 
 
@@ -380,7 +388,101 @@ class BaseLoss:
         )
         return gradient_out, hessian_out
 
-    def __call__(self, y_true, raw_prediction, sample_weight=None, n_threads=1):
+    def loss_array_api(self, y_true, raw_prediction, sample_weight=None, xp=None):
+        """The array API version of the `loss` method.
+
+        Parameters
+        ----------
+        y_true : array of shape (n_samples,)
+            Observed, true target values.
+        raw_prediction : array of shape (n_samples,) or array of \
+            shape (n_samples, n_classes)
+            Raw prediction values (in link space).
+        sample_weight : None or array of shape (n_samples,)
+            Sample weights.
+        xp : module, default=None
+            Precomputed array namespace module. When passed, typically from a caller
+            that has already performed inspection of its own inputs, skips array
+            namespace inspection.
+
+        Returns
+        -------
+        loss : array of shape (n_samples,)
+            Element-wise loss function.
+        """
+        raise NotImplementedError(
+            "The array API version of `loss` is not implemented for"
+            f" {self.__class__.__name__}."
+        )
+
+    def gradient_array_api(self, y_true, raw_prediction, sample_weight=None, xp=None):
+        """The array API version of the `gradient` method.
+
+        Parameters
+        ----------
+        y_true : array of shape (n_samples,)
+            Observed, true target values.
+        raw_prediction : array of shape (n_samples,) or array of \
+            shape (n_samples, n_classes)
+            Raw prediction values (in link space).
+        sample_weight : None or array of shape (n_samples,)
+            Sample weights.
+        xp : module, default=None
+            Precomputed array namespace module. When passed, typically from a caller
+            that has already performed inspection of its own inputs, skips array
+            namespace inspection.
+
+        Returns
+        -------
+        gradient : array of shape (n_samples,) or (n_samples, n_classes)
+            Element-wise gradients.
+        """
+        raise NotImplementedError(
+            "The array API version of `gradient` is not implemented for"
+            f" {self.__class__.__name__}."
+        )
+
+    def loss_gradient_array_api(
+        self, y_true, raw_prediction, sample_weight=None, xp=None
+    ):
+        """The array API version of the `loss_gradient` method.
+
+        Parameters
+        ----------
+        y_true : array of shape (n_samples,)
+            Observed, true target values.
+        raw_prediction : array of shape (n_samples,) or array of \
+            shape (n_samples, n_classes)
+            Raw prediction values (in link space).
+        sample_weight : None or array of shape (n_samples,)
+            Sample weights.
+        xp : module, default=None
+            Precomputed array namespace module. When passed, typically from a caller
+            that has already performed inspection of its own inputs, skips array
+            namespace inspection.
+
+        Returns
+        -------
+        loss : array of shape (n_samples,)
+            Element-wise loss function.
+
+        gradient : array of shape (n_samples,) or (n_samples, n_classes)
+            Element-wise gradients.
+        """
+        raise NotImplementedError(
+            "The array API version of `loss_gradient` is not implemented for"
+            f" {self.__class__.__name__}."
+        )
+
+    def __call__(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+        n_threads=1,
+        is_numpy_namespace=True,
+        xp=None,
+    ):
         """Compute the weighted average loss.
 
         Parameters
@@ -394,22 +496,32 @@ class BaseLoss:
             Sample weights.
         n_threads : int, default=1
             Might use openmp thread parallelism.
+        is_numpy_namespace : bool, default=True
+            Are we dealing with the NumPy namespace.
+        xp : module, default=None
+            Array namespace module.
 
         Returns
         -------
         loss : float
             Mean or averaged loss function.
         """
-        return np.average(
-            self.loss(
-                y_true=y_true,
-                raw_prediction=raw_prediction,
-                sample_weight=None,
-                loss_out=None,
-                n_threads=n_threads,
-            ),
-            weights=sample_weight,
+        if is_numpy_namespace:
+            return np.average(
+                self.loss(
+                    y_true=y_true,
+                    raw_prediction=raw_prediction,
+                    sample_weight=None,
+                    loss_out=None,
+                    n_threads=n_threads,
+                ),
+                weights=sample_weight,
+            )
+        xp, _ = get_namespace(y_true, raw_prediction, sample_weight, xp=xp)
+        loss_xp = self.loss_array_api(
+            y_true=y_true, raw_prediction=raw_prediction, sample_weight=None, xp=xp
         )
+        return float(_average(loss_xp, weights=sample_weight, xp=xp))
 
     def fit_intercept_only(self, y_true, sample_weight=None):
         """Compute raw_prediction of an intercept-only model.
@@ -968,6 +1080,102 @@ class HalfBinomialLoss(BaseLoss):
         proba[:, 0] = 1 - proba[:, 1]
         return proba
 
+    def loss_array_api(self, y_true, raw_prediction, sample_weight=None, xp=None):
+        xp, _ = get_namespace(y_true, raw_prediction, sample_weight, xp=xp)
+        return self._compute_loss_array_api(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            raw_prediction_exp=xp.exp(raw_prediction),
+            neg_raw_prediction_exp=xp.exp(-raw_prediction),
+            sample_weight=sample_weight,
+            xp=xp,
+        )
+
+    def gradient_array_api(self, y_true, raw_prediction, sample_weight=None, xp=None):
+        xp, _ = get_namespace(y_true, raw_prediction, sample_weight, xp=xp)
+        return self._compute_gradient_array_api(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            raw_prediction_exp=xp.exp(raw_prediction),
+            neg_raw_prediction_exp=xp.exp(-raw_prediction),
+            sample_weight=sample_weight,
+            xp=xp,
+        )
+
+    def loss_gradient_array_api(
+        self, y_true, raw_prediction, sample_weight=None, xp=None
+    ):
+        xp, _ = get_namespace(y_true, raw_prediction, sample_weight, xp=xp)
+        raw_prediction_exp = xp.exp(raw_prediction)
+        neg_raw_prediction_exp = xp.exp(-raw_prediction)
+        loss = self._compute_loss_array_api(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            raw_prediction_exp=raw_prediction_exp,
+            neg_raw_prediction_exp=neg_raw_prediction_exp,
+            sample_weight=sample_weight,
+            xp=xp,
+        )
+        gradient = self._compute_gradient_array_api(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            raw_prediction_exp=raw_prediction_exp,
+            neg_raw_prediction_exp=neg_raw_prediction_exp,
+            sample_weight=sample_weight,
+            xp=xp,
+        )
+        return loss, gradient
+
+    def _compute_loss_array_api(
+        self,
+        y_true,
+        raw_prediction,
+        raw_prediction_exp,
+        neg_raw_prediction_exp,
+        sample_weight=None,
+        xp=None,
+    ):
+        log1pexp = xp.where(
+            raw_prediction <= -37,
+            raw_prediction_exp,
+            xp.where(
+                raw_prediction <= -2,
+                xp.log1p(raw_prediction_exp),
+                xp.where(
+                    raw_prediction <= 18,
+                    xp.log(1.0 + raw_prediction_exp),
+                    xp.where(
+                        raw_prediction <= 33.3,
+                        raw_prediction + neg_raw_prediction_exp,
+                        raw_prediction,
+                    ),
+                ),
+            ),
+        )
+        loss = log1pexp - y_true * raw_prediction
+        if sample_weight is not None:
+            loss *= sample_weight
+        return loss
+
+    def _compute_gradient_array_api(
+        self,
+        y_true,
+        raw_prediction,
+        raw_prediction_exp,
+        neg_raw_prediction_exp,
+        sample_weight=None,
+        xp=None,
+    ):
+        grad = xp.where(
+            raw_prediction > -37,
+            ((1 - y_true) - y_true * neg_raw_prediction_exp)
+            / (1 + neg_raw_prediction_exp),
+            raw_prediction_exp - y_true,
+        )
+        if sample_weight is not None:
+            grad *= sample_weight
+        return grad
+
 
 class HalfMultinomialLoss(BaseLoss):
     """Categorical cross-entropy loss, for multiclass classification.
@@ -1022,6 +1230,12 @@ class HalfMultinomialLoss(BaseLoss):
         )
         self.interval_y_true = Interval(0, np.inf, True, False)
         self.interval_y_pred = Interval(0, 1, False, False)
+        # These instance variables are specifically used for the array API
+        # methods to store certain intermediate values in order to avoid
+        # having to recompute them repeatedly.
+        self.class_indexing_offsets = None
+        self.y_true_int = None
+        self.y_true_one_hot = None
 
     def in_y_true_range(self, y):
         """Return True if y is in the valid range of y_true.
@@ -1127,6 +1341,72 @@ class HalfMultinomialLoss(BaseLoss):
             n_threads=n_threads,
         )
         return gradient_out, proba_out
+
+    def loss_array_api(self, y_true, raw_prediction, sample_weight=None, xp=None):
+        xp, _, device_ = get_namespace_and_device(
+            y_true, raw_prediction, sample_weight, xp=xp
+        )
+        log_sum_exp = _logsumexp(raw_prediction, axis=1, xp=xp)
+        if self.y_true_int is None:
+            self.y_true_int = xp.asarray(y_true, dtype=xp.int64, device=device_)
+
+        if self.class_indexing_offsets is None:
+            self.class_indexing_offsets = (
+                xp.arange(y_true.shape[0], device=device_) * raw_prediction.shape[1]
+            )
+        label_predictions = xp.take(
+            _ravel(raw_prediction), self.y_true_int + self.class_indexing_offsets
+        )
+        loss = log_sum_exp - label_predictions
+        if sample_weight is not None:
+            loss *= sample_weight
+        return loss
+
+    def gradient_array_api(self, y_true, raw_prediction, sample_weight=None, xp=None):
+        xp, _, device_ = get_namespace_and_device(
+            y_true, raw_prediction, sample_weight, xp=xp
+        )
+        if self.y_true_one_hot is None:
+            if self.y_true_int is None:
+                self.y_true_int = xp.asarray(y_true, dtype=xp.int64, device=device_)
+
+            self.y_true_one_hot = self.y_true_int[:, None] == xp.arange(
+                raw_prediction.shape[1], device=device_
+            )
+            self.y_true_one_hot = xp.astype(
+                self.y_true_one_hot, raw_prediction.dtype, copy=False
+            )
+        grad = softmax(raw_prediction)
+        # XXX: once incremental assignment for multiple integer array
+        # indices is part of a released version of the array API
+        # spec and array-api-strict has been updated accordingly,
+        # we can further avoid allocating a big (n_samples, n_classes)
+        # array for the one-hot encoded y_true and instead use one of the
+        # following (the latter should allow for JAX support):
+        # grad[xp.arange(y_true.shape[0]), y_true_int] -= 1
+        # xpx.at(grad)[xp.arange(y_true.shape[0]), y_true_int].add(-1)
+        # See: https://github.com/data-apis/array-api/issues/864
+        grad -= self.y_true_one_hot
+        if sample_weight is not None:
+            grad *= sample_weight[:, None]
+        return grad
+
+    def loss_gradient_array_api(
+        self, y_true, raw_prediction, sample_weight=None, xp=None
+    ):
+        loss = self.loss_array_api(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+            xp=xp,
+        )
+        gradient = self.gradient_array_api(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+            xp=xp,
+        )
+        return loss, gradient
 
 
 class ExponentialLoss(BaseLoss):
