@@ -108,6 +108,7 @@ class _VisualBlock:
 def _write_label_html(
     out,
     params,
+    attrs,
     name,
     name_details,
     name_caption=None,
@@ -130,6 +131,9 @@ def _write_label_html(
         If estimator has `get_params` method, this is the HTML representation
         of the estimator's parameters and their values. When the estimator
         does not have `get_params`, it is an empty string.
+    attrs: str
+        If estimator is fitted, this is the HTML representation of its
+        the fitted attributes.
     name : str
         The label for the estimator. It corresponds either to the estimator class name
         for a simple estimator or in the case of a `Pipeline` and `ColumnTransformer`,
@@ -210,7 +214,7 @@ def _write_label_html(
         )
 
         if params:
-            fmt_str = "".join([fmt_str, f"{params}</div>"])
+            fmt_str = "".join([fmt_str, f"{params}{attrs}</div>"])
         elif name_details and ("Pipeline" not in name):
             fmt_str = "".join([fmt_str, f"<pre>{name_details}</pre></div>"])
 
@@ -306,6 +310,7 @@ def _write_estimator_html(
         The prefix to prepend to parameter names for nested estimators.
         For example, in a pipeline this might be "pipeline__stepname__".
     """
+
     if first_call:
         est_block = _get_visual_block(estimator)
     else:
@@ -329,10 +334,18 @@ def _write_estimator_html(
                 params = estimator._get_params_html(False, doc_link)._repr_html_inner()
             else:
                 params = ""
+            if (
+                hasattr(estimator, "_get_fitted_attr_html")
+                and is_fitted_css_class == "fitted"
+            ):
+                attrs = estimator._get_fitted_attr_html(doc_link)._repr_html_inner()
+            else:
+                attrs = ""
 
             _write_label_html(
                 out,
                 params,
+                attrs,
                 estimator_label,
                 estimator_label_details,
                 doc_link=doc_link,
@@ -386,10 +399,18 @@ def _write_estimator_html(
             params = estimator._get_params_html(doc_link=doc_link)._repr_html_inner()
         else:
             params = ""
+        if (
+            hasattr(estimator, "_get_fitted_attr_html")
+            and is_fitted_css_class == "fitted"
+        ):
+            attrs = estimator._get_fitted_attr_html(doc_link)._repr_html_inner()
+        else:
+            attrs = ""
 
         _write_label_html(
             out,
             params,
+            attrs,
             est_block.names,
             est_block.name_details,
             est_block.name_caption,
