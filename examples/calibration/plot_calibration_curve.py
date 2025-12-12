@@ -1,6 +1,6 @@
 """
 ==============================
-Probability Calibration curves
+Probability Calibration Curves
 ==============================
 
 When performing classification, one often wants to predict not only the class
