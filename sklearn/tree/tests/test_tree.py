@@ -2456,18 +2456,19 @@ def test_min_sample_split_1_error(Tree):
         tree.fit(X, y)
 
 
-@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
+@pytest.mark.parametrize("criterion", REG_CRITERIONS)
 def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
     """Check missing values goes to correct node during predictions."""
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
+    node_value = np.median if criterion == "absolute_error" else np.mean
 
     dtc = DecisionTreeRegressor(random_state=42, max_depth=1, criterion=criterion)
     dtc.fit(X, y)
 
     # Goes to right node because it has the most data points
     y_pred = dtc.predict([[np.nan]])
-    assert_allclose(y_pred, [np.mean(y[-5:])])
+    assert_allclose(y_pred, [node_value(y[-5:])])
 
     # equal number of elements in both nodes
     X_equal = X[:-1]
@@ -2479,11 +2480,11 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
     # Goes to right node because the implementation sets:
     # missing_go_to_left = n_left > n_right, which is False
     y_pred = dtc.predict([[np.nan]])
-    assert_allclose(y_pred, [np.mean(y_equal[-4:])])
+    assert_allclose(y_pred, [node_value(y_equal[-4:])])
 
 
 @pytest.mark.parametrize("seed", range(3))
-@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
+@pytest.mark.parametrize("criterion", REG_CRITERIONS)
 def test_missing_values_random_splitter_on_equal_nodes_no_missing(criterion, seed):
     """Check missing values go to the correct node during predictions for ExtraTree.
 
@@ -2581,12 +2582,12 @@ def test_missing_values_best_splitter_missing_both_classes_has_nan(criterion):
     assert_array_equal(y_pred, [1, 0, 1])
 
 
-@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS)
 @pytest.mark.parametrize(
     "tree",
     [
-        DecisionTreeRegressor(criterion="absolute_error"),
-        ExtraTreeRegressor(criterion="absolute_error"),
+        DecisionTreeRegressor(),
+        ExtraTreeRegressor(),
     ],
 )
 def test_missing_value_errors(sparse_container, tree):
@@ -2595,8 +2596,7 @@ def test_missing_value_errors(sparse_container, tree):
     X = np.array([[1, 2, 3, 5, np.nan, 10, 20, 30, 60, np.nan]]).T
     y = np.array([0] * 5 + [1] * 5)
 
-    if sparse_container is not None:
-        X = sparse_container(X)
+    X = sparse_container(X)
 
     with pytest.raises(ValueError, match="Input X contains NaN"):
         tree.fit(X, y)
@@ -2769,7 +2769,7 @@ def test_deterministic_pickle():
         np.array([1, 2, 3, np.nan, 6, np.nan]),
     ],
 )
-@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
+@pytest.mark.parametrize("criterion", REG_CRITERIONS)
 def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_seed):
     """Check that we properly handle missing values in regression trees using a toy
     dataset.
@@ -2785,13 +2785,17 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_se
     https://github.com/scikit-learn/scikit-learn/issues/28316
     """
     X = X.reshape(-1, 1)
-    y = np.arange(6)
+    y = np.arange(1, 7)
+    # y needs to be > 0 for this test to pass with poisson criterion
+    # if some y[i] is 0, there might be multiple optimal splits, which
+    # makes the impurity check below fail because different splits were
+    # made due to different rounding errors
 
     tree = Tree(criterion=criterion, random_state=global_random_seed).fit(X, y)
     tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
 
     impurity = tree.tree_.impurity
-    assert all(impurity >= 0), impurity.min()  # MSE should always be positive
+    assert all(impurity >= 0), impurity.min()  # impurity should always be positive
 
     # Note: the impurity matches after the first split only on greedy trees
     # see https://github.com/scikit-learn/scikit-learn/issues/32125
@@ -2799,7 +2803,7 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_se
         # Check the impurity match after the first split
         assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
 
-    # Find the leaves with a single sample where the MSE should be 0
+    # Find the leaves with a single sample where the impurity should be 0
     leaves_idx = np.flatnonzero(
         (tree.tree_.children_left == -1) & (tree.tree_.n_node_samples == 1)
     )
@@ -3047,3 +3051,14 @@ def test_missing_values_and_constant_toy():
     assert_array_equal(tree.predict(X), y)
     # with just one split (-> three nodes: the root + 2 leaves)
     assert tree.tree_.node_count == 3
+
+
+def test_missing_values_and_poisson_toy():
+    # Non regression test for https://github.com/scikit-learn/scikit-learn/issues/32870
+    X = np.array([np.nan, 1, 2, 3, np.nan]).reshape(-1, 1)
+    y = [0.49, 0.5, 0.7, 1.5, 0.8]
+
+    tree = DecisionTreeRegressor(criterion="poisson")
+    tree.fit(X, y)
+    # impurity should be non-negative:
+    assert (tree.tree_.impurity >= -1e10).all()

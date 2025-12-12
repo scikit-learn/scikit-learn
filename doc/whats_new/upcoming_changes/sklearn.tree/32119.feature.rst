@@ -1,0 +1,4 @@
+- In :class:`tree.DecisionTreeRegressor` and :class:`ensemble.RandomForestRegressor`,
+  `criterion="absolute_error"` — and, consequently, all criterion options —
+  now support missing values in the data matrix `X`
+  By :user:`Arthur Lacote <cakedev0>`
