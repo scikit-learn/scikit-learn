@@ -1,6 +1,6 @@
 - :func:`sklearn.metrics.d2_pinball_score` and `d2_absolute_error_score` now always
   use the `"averaged_inverted_cdf"` quantile method, both with and
-  without sample weights. Previously, the `"linear"` qunatile method was used only
+  without sample weights. Previously, the `"linear"` quantile method was used only
   for the unweighted case leading the surprising discrepancies when comparing the
   results with unit weights. Note that all quantile interpolation methods are
   asymptotically equivalent in the large sample limit, but this fix can cause score
