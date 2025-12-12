@@ -1023,23 +1023,10 @@ class OneHotEncoder(_BaseEncoder):
         """
         check_is_fitted(self)
         
-        # Get output configuration
         transform_output = _get_output_config("transform", estimator=self)
         
-        # ====================================================================
-        # BUG FIX #30310: INSTEAD OF RAISING ERROR, AUTO-CONVERT SPARSE
-        # ====================================================================
-        # Original problematic code:
-        #     if transform_output != "default" and self.sparse_output:
-        #         raise ValueError(f"{capitalize_transform_output} output does not...")
-        #
-        # Fixed code: Defer the sparse check until after we build X_out.
-        # This allows downstream transformers to densify the sparse output if needed.
-        
-        # Store the original transform_output config for later use
         original_transform_output = transform_output
 
-        # validation of X happens in _check_X called by _transform
         if self.handle_unknown == "warn":
             warn_on_unknown, handle_unknown = True, "infrequent_if_exist"
         else:
