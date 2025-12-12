@@ -202,8 +202,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         "random_state": ["random_state"],
     }
     # Cutoff (in n_samples) for routing to the small-batch
-    # per-row transform instead of the vectorized path. Tuned from
-    # microbenchmarks and can be adjusted later if needed.
+    # per-row transform instead of the vectorized path.
     _small_batch_threshold = 1024
 
     def __init__(
@@ -361,8 +360,10 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         n_samples, n_features = X_arr.shape
         is_multi = self.target_type_ == "multiclass"
 
-        n_classes = len(self.classes_)
-        features_out = n_features * len(self.classes_) if is_multi else n_features
+        features_out = n_features
+        if is_multi:
+            n_classes = len(self.classes_)
+            features_out *= n_classes
         X_out = np.empty((n_samples, features_out), dtype=np.float64)
 
         index_maps = self._index_maps_
@@ -372,15 +373,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             # get = index_maps[j].get
             col = X_arr[:, j]
 
-            if not is_multi:
-                enc_vec = np.asarray(self.encodings_[j], dtype=float)
-                default = float(np.asarray(self.target_mean_))
-                out_col = np.empty(n_samples, dtype=float)
-                for i in range(n_samples):
-                    idx = index_maps[j].get(norm_key(col[i]), -1)
-                    out_col[i] = enc_vec[idx] if idx >= 0 else default
-                X_out[:, j] = out_col
-            else:
+            if is_multi:
                 base = j * n_classes
                 default_v = np.asarray(self.target_mean_, dtype=float)
 
@@ -394,16 +387,31 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                     idx = index_maps[j].get(norm_key(col[i]), -1)
                     out_block[i, :] = enc_block[:, idx] if idx >= 0 else default_v
 
-                start = j * n_classes
+                start = base
                 X_out[:, start : start + n_classes] = out_block
+
+            else:
+                enc_vec = np.asarray(self.encodings_[j], dtype=float)
+                default = float(np.asarray(self.target_mean_))
+                out_col = np.empty(n_samples, dtype=float)
+                for i in range(n_samples):
+                    idx = index_maps[j].get(norm_key(col[i]), -1)
+                    out_col[i] = enc_vec[idx] if idx >= 0 else default
+                X_out[:, j] = out_col
 
         return X_out
 
     def transform(self, X):
-        """Encode X using the learned target encodings.
+        """Transform X with the target encoding.
 
-        This method internally uses the ``encodings_`` attribute learned during
+        This method internally uses the `encodings_` attribute learnt during
         :meth:`TargetEncoder.fit_transform` to transform test data.
+
+        .. note::
+            ``fit(X, y).transform(X)`` does not equal :meth:`fit_transform(X, y)`
+            because a :term:`cross fitting` scheme is used in
+            :meth:`fit_transform` for encoding. See the
+            :ref:`User Guide <target_encoder>` for details.
 
         Parameters
         ----------
@@ -420,13 +428,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 one column per input feature is returned. For multiclass targets,
                 one column per (feature, class) pair is returned, with classes
                 ordered as in ``classes_``.
-
-        Notes
-        -----
-        ``fit(X, y).transform(X)`` does not equal :meth:`fit_transform(X, y)`
-        because a :term:`cross fitting` scheme is used in
-        :meth:`fit_transform` for encoding. See the
-        :ref:`User Guide <target_encoder>` for details.
         """
         check_is_fitted(self)
         n_samples = _num_samples(X)
