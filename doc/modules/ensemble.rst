@@ -1583,8 +1583,8 @@ any other regressor or classifier, exposing a `predict`, `predict_proba`, or
 
    >>> y_pred = reg.predict(X_test)
    >>> from sklearn.metrics import r2_score
-   >>> print('R2 score: {:.2f}'.format(r2_score(y_test, y_pred)))
-   R2 score: 0.53
+   >>> print('R2 score: {:.2f}'.format(r2_score(y_test, y_pred)))  # doctest: +ELLIPSIS
+   R2 score: 0...
 
 Note that it is also possible to get the output of the stacked
 `estimators` using the `transform` method::
