@@ -1819,3 +1819,21 @@ def test_sparse_manhattan_readonly_dataset(csr_container):
     Parallel(n_jobs=2, max_nbytes=0)(
         delayed(manhattan_distances)(m1, m2) for m1, m2 in zip(matrices1, matrices2)
     )
+
+
+def test_nan_euclidean_distances_is_symmetric():
+    # Non-regression test for #32851
+    # Ensure that self-distances are symmetric even with NaNs
+    import numpy as np
+
+    from sklearn.metrics.pairwise import nan_euclidean_distances
+
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 10)
+    X[0, 0] = np.nan
+
+    # Calculate distance matrix
+    dist = nan_euclidean_distances(X, X)
+
+    # Check if the matrix is symmetric (dist[i, j] should equal dist[j, i])
+    assert np.allclose(dist, dist.T, equal_nan=True)
