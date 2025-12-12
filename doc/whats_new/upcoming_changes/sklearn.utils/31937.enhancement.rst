@@ -1,0 +1,4 @@
+- The parameter table in the HTML representation of all scikit-learn estimators
+  inheriting from :class:`base.BaseEstimator` now displays a new block
+  showing the number and names of the output features.
+  By :user:`Dea María Léon <DeaMariaLeon>`.
