@@ -561,16 +561,16 @@ def move_to(*arrays, xp, device):
             "namespace is Numpy"
         )
 
+    arrays_ = arrays
     # Down cast float64 `arrays` when highest precision of `xp`/`device` is float32
     if _max_precision_float_dtype(xp, device) == xp.float32:
-        arrays = [
-            (
-                xp.astype(array, dtype=xp.float32)
-                if getattr(array, "dtype", None) == xp.float64
-                else array
-            )
-            for array in arrays
-        ]
+        arrays_ = []
+        for array in arrays:
+            if getattr(array, "dtype", None) == xp.float64:
+                xp_array = get_namespace(array)
+                arrays_.append(xp_array.astype(array, dtype=xp.float32))
+            else:
+                arrays_.append(array)
 
     converted_arrays = []
 
