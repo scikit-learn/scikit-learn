@@ -2435,7 +2435,6 @@ def test_onehotencoder_sparse_output_with_pandas_set_output():
 
     Now it should auto-convert sparse to dense and emit a UserWarning.
     """
-    import warnings
     import pandas as pd
     from sklearn.datasets import load_diabetes
 
@@ -2498,11 +2497,11 @@ def test_onehotencoder_in_columntransformer_with_sparse_and_pandas_output():
     This is the main use case from issue #30310.
     """
     import pandas as pd
+    from sklearn.compose import ColumnTransformer
     from sklearn.datasets import load_diabetes
     from sklearn.decomposition import TruncatedSVD
-    from sklearn.preprocessing import MinMaxScaler
-    from sklearn.compose import ColumnTransformer
     from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import MinMaxScaler
 
     ds = load_diabetes()
     df = pd.DataFrame(ds["data"], columns=ds["feature_names"])
@@ -2571,7 +2570,6 @@ def test_onehotencoder_sparse_output_default_transform_output():
     """
     Test that sparse output behavior differs between pandas and default output.
     """
-    import scipy.sparse as sp
     import pandas as pd
     from sklearn.datasets import load_diabetes
     import warnings
