@@ -559,6 +559,15 @@ def nan_euclidean_distances(
     if not squared:
         np.sqrt(distances, out=distances)
 
+    # Ensure perfect symmetry after all operations
+    if X is Y:
+        distances = (distances + distances.T) / 2
+        # Preserve NaN for fully missing rows, zero out others
+        diag_indices = np.arange(len(distances))
+        diag_vals = distances[diag_indices, diag_indices]
+        non_nan_mask = ~np.isnan(diag_vals)
+        distances[diag_indices[non_nan_mask], diag_indices[non_nan_mask]] = 0.0
+
     return distances
 
 
