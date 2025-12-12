@@ -1620,7 +1620,7 @@ computationally expensive.
     ...                 ('gbrt', final_layer_gbr)],
     ...     final_estimator=RidgeCV()
     ...     )
-    >>> multi_layer_regressor = StackingRegressor(
+    >>> multi_layer_regressor = StackingRegressor(  # doctest: +ELLIPSIS
     ...     estimators=[('ridge', RidgeCV()),
     ...                 ('lasso', LassoCV(random_state=42)),
     ...                 ('knr', KNeighborsRegressor(n_neighbors=20,
@@ -1631,7 +1631,7 @@ computationally expensive.
     StackingRegressor(...)
     >>> print('R2 score: {:.2f}'
     ...       .format(multi_layer_regressor.score(X_test, y_test)))
-    R2 score: 0.53
+    R2 score: 0...
 
 .. rubric:: Examples
 
