@@ -3,12 +3,11 @@
 Probability Calibration curves
 ==============================
 
-When performing classification one often wants to predict not only the class
-label, but also the associated probability. This probability gives some
-kind of confidence on the prediction. This example demonstrates how to
-visualize how well calibrated the predicted probabilities are using calibration
-curves, also known as reliability diagrams. Calibration of an uncalibrated
-classifier will also be demonstrated.
+When performing classification, one often wants to predict not only the class
+label, but also the associated probability. This probability gives a sense of confidence
+on the prediction. This example demonstrates how to visualize how well-calibrated the
+predicted probabilities are using calibration curves, also known as reliability
+diagrams. We also show how to calibrate an initially uncalibrated classifier.
 
 """
 
@@ -19,17 +18,22 @@ classifier will also be demonstrated.
 # Dataset
 # -------
 #
-# We will use a synthetic binary classification dataset with 100,000 samples
-# and 20 features. Of the 20 features, only 2 are informative, 10 are
-# redundant (random combinations of the informative features) and the
-# remaining 8 are uninformative (random numbers). Of the 100,000 samples, 1,000
-# will be used for model fitting and the rest for testing.
-
+# We will use a synthetic multi-class classification dataset with 3 classes,
+# 100,000 samples and 20 features. Of these features, 2 are informative, 10 are
+# redundant (random combinations of the informative ones) and the
+# remaining 8 are uninformative (random noise). Of the 100,000 samples, 1,000
+# are used for model fitting and the rest for testing.
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
 
 X, y = make_classification(
-    n_samples=100_000, n_features=20, n_informative=2, n_redundant=10, random_state=42
+    n_samples=100_000,
+    n_features=20,
+    n_informative=2,
+    n_redundant=10,
+    n_classes=3,
+    n_clusters_per_class=1,
+    random_state=42,
 )
 
 X_train, X_test, y_train, y_test = train_test_split(
@@ -37,8 +41,8 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 # %%
-# Calibration curves
-# ------------------
+# Reliability Diagrams
+# --------------------
 #
 # Gaussian Naive Bayes
 # ^^^^^^^^^^^^^^^^^^^^
@@ -49,15 +53,9 @@ X_train, X_test, y_train, y_test = train_test_split(
 #   since very often, properly regularized logistic regression is well
 #   calibrated by default thanks to the use of the log-loss)
 # * Uncalibrated :class:`~sklearn.naive_bayes.GaussianNB`
-# * :class:`~sklearn.naive_bayes.GaussianNB` with isotonic and sigmoid
-#   calibration (see :ref:`User Guide <calibration>`)
-#
-# Calibration curves for all 4 conditions are plotted below, with the average
-# predicted probability for each bin on the x-axis and the fraction of positive
-# classes in each bin on the y-axis.
-
+# * :class:`~sklearn.naive_bayes.GaussianNB` with isotonic calibration, sigmoid
+#   calibration, and temperature scaling (see :ref:`User Guide <calibration>`).
 import matplotlib.pyplot as plt
-from matplotlib.gridspec import GridSpec
 
 from sklearn.calibration import CalibratedClassifierCV, CalibrationDisplay
 from sklearn.linear_model import LogisticRegression
@@ -65,77 +63,136 @@ from sklearn.naive_bayes import GaussianNB
 
 lr = LogisticRegression(C=1.0)
 gnb = GaussianNB()
-gnb_isotonic = CalibratedClassifierCV(gnb, cv=2, method="isotonic")
-gnb_sigmoid = CalibratedClassifierCV(gnb, cv=2, method="sigmoid")
+gnb_isotonic = CalibratedClassifierCV(gnb, cv=2, method="isotonic", ensemble=False)
+gnb_sigmoid = CalibratedClassifierCV(gnb, cv=2, method="sigmoid", ensemble=False)
+gnb_ts = CalibratedClassifierCV(gnb, cv=2, method="temperature", ensemble=False)
 
 clf_list = [
     (lr, "Logistic"),
     (gnb, "Naive Bayes"),
     (gnb_isotonic, "Naive Bayes + Isotonic"),
     (gnb_sigmoid, "Naive Bayes + Sigmoid"),
+    (gnb_ts, "Naive Bayes + Temperature Scaling"),
 ]
 
-# %%
-fig = plt.figure(figsize=(10, 10))
-gs = GridSpec(4, 2)
-colors = plt.get_cmap("Dark2")
-
-ax_calibration_curve = fig.add_subplot(gs[:2, :2])
-calibration_displays = {}
-for i, (clf, name) in enumerate(clf_list):
+for clf, _ in clf_list:
     clf.fit(X_train, y_train)
-    display = CalibrationDisplay.from_estimator(
-        clf,
-        X_test,
-        y_test,
-        n_bins=10,
-        name=name,
-        ax=ax_calibration_curve,
-        color=colors(i),
-    )
-    calibration_displays[name] = display
 
-ax_calibration_curve.grid()
-ax_calibration_curve.set_title("Calibration plots (Naive Bayes)")
-
-# Add histogram
-grid_positions = [(2, 0), (2, 1), (3, 0), (3, 1)]
-for i, (_, name) in enumerate(clf_list):
-    row, col = grid_positions[i]
-    ax = fig.add_subplot(gs[row, col])
-
-    ax.hist(
-        calibration_displays[name].y_prob,
-        range=(0, 1),
-        bins=10,
-        label=name,
-        color=colors(i),
-    )
-    ax.set(title=name, xlabel="Mean predicted probability", ylabel="Count")
-
-plt.tight_layout()
-plt.show()
+classes = clf_list[0][0].classes_
+n_classes = len(classes)
+n_clf = len(clf_list)
 
 # %%
-# Uncalibrated :class:`~sklearn.naive_bayes.GaussianNB` is poorly calibrated
-# because of
-# the redundant features which violate the assumption of feature-independence
-# and result in an overly confident classifier, which is indicated by the
-# typical transposed-sigmoid curve. Calibration of the probabilities of
-# :class:`~sklearn.naive_bayes.GaussianNB` with :ref:`isotonic` can fix
-# this issue as can be seen from the nearly diagonal calibration curve.
-# :ref:`Sigmoid regression <sigmoid_regressor>` also improves calibration
-# slightly,
-# albeit not as strongly as the non-parametric isotonic regression. This can be
-# attributed to the fact that we have plenty of calibration data such that the
-# greater flexibility of the non-parametric model can be exploited.
-#
-# Below we will make a quantitative analysis considering several classification
-# metrics: :ref:`brier_score_loss`, :ref:`log_loss`,
-# :ref:`precision, recall, F1 score <precision_recall_f_measure_metrics>` and
-# :ref:`ROC AUC <roc_metrics>`.
+# Reliability diagrams for each class under all five conditions are plotted below.
+# The x-axis shows the average predicted probability for each bin, and the y-axis
+# shows the fraction of samples belonging to the class in that bin.
+fig, axes = plt.subplots(figsize=(20, 6), ncols=n_classes)
 
+for class_idx, c in enumerate(classes):
+    ax = axes[class_idx]
+
+    for clf, name in clf_list:
+        CalibrationDisplay.from_predictions(
+            y_true=(y_test == c),
+            y_prob=clf.predict_proba(X_test)[:, class_idx],
+            n_bins=10,
+            name=name,
+            ax=ax,
+        )
+    ax.set_title(f"Class {c}")
+    ax.set_xlabel(None)
+    ax.set_ylabel(None)
+    ax.grid(True)
+    if c < n_classes - 1:
+        ax.get_legend().remove()
+    else:
+        ax.legend(loc=(1.05, 0.5))
+
+fig.suptitle("Reliability Diagrams per Class (Gaussian Naive Bayes)", fontsize=18)
+fig.supxlabel("Mean Predicted Probability")
+fig.supylabel("Fraction of Class")
+plt.tight_layout()
+plt.subplots_adjust(left=0.05)
+_ = plt.show()
+
+# %%
+# Uncalibrated :class:`~sklearn.naive_bayes.GaussianNB` is poorly-calibrated
+# because of the redundant features violates the assumption of feature independence,
+# leading to an overly-confident classifier. This is reflected in the typical
+# transposed-sigmoid curve.
+#
+# Calibrating the probabilities of :class:`~sklearn.naive_bayes.GaussianNB` with
+# :ref:`isotonic regression <isotonic_regressor>` can fix this issue, as seen
+# in the nearly diagonal calibration curve.
+#
+# :ref:`Sigmoid regression <sigmoid_regressor>` also improves calibration,
+# but not as strongly as the non-parametric
+# :ref:`isotonic regression <isotonic_regressor>`.
+# This can be attributed to the fact that we have plenty of calibration data,
+# allowing the more flexibile non-parametric model to perform better.
+#
+# :ref:`Temperature scaling <temperature_scaling>` offers a lightweight, parametric
+# alternative that preserves probability rankings via monotone transformation, while
+# pushing them away from 0.0 and 1.0. On this dataset, it has the best calibration
+# improvement among the methods.
+#
+# We also plot the distribution of predicted probabilities below as histograms to
+# illustrate how the calibration methods differ in practice.
+fig, axes = plt.subplots(
+    figsize=(20, 10),
+    nrows=n_clf,
+    ncols=n_classes,
+)
+
+colors = plt.get_cmap("Dark2")
+lines = []
+labels = []
+
+for col in range(n_classes):
+    for row, (clf, name) in enumerate(clf_list):
+        ax = axes[row, col]
+
+        probs = clf.predict_proba(X_test)[:, col]
+
+        ax.hist(
+            probs,
+            range=(0, 1),
+            bins=10,
+            label=name,
+            color=colors(row),
+        )
+
+        ax.set_xlabel(None)
+        ax.set_ylabel(None)
+
+        if col == 0:
+            Line, Label = ax.get_legend_handles_labels()
+            lines.extend(Line)
+            labels.extend(Label)
+
+
+for col, c in enumerate(classes):
+    axes[0, col].set_title(f"Class {c}")
+
+fig.supxlabel("Mean Predicted Probability")
+fig.supylabel("Count")
+fig.suptitle("Predicted Probability Distributions (Gaussian Naive Bayes)", fontsize=18)
+fig.legend(lines, labels, loc="center right")
+plt.subplots_adjust(right=0.82)
+_ = plt.show()
+
+# %%
+# :class:`~sklearn.naive_bayes.GaussianNB` predictions are heavily concentrated near
+# 0.0 and 1.0; whereas the calibrated variants, particularly
+# :ref:`isotonic regression <isotonic_regressor>`, redistribute probability mass,
+# and produce distributions that more closely match empirical frequencies.
+#
+# Below we analyse several classification metrics: :ref:`brier_score_loss`,
+# :ref:`log_loss`,
+# :ref:`precision, recall, F1 score <precision_recall_f_measure_metrics>`, and
+# :ref:`ROC AUC <roc_metrics>`.
 from collections import defaultdict
+from functools import partial
 
 import pandas as pd
 
@@ -155,35 +212,40 @@ for i, (clf, name) in enumerate(clf_list):
     y_pred = clf.predict(X_test)
     scores["Classifier"].append(name)
 
-    for metric in [brier_score_loss, log_loss, roc_auc_score]:
-        score_name = metric.__name__.replace("_", " ").replace("score", "").capitalize()
-        scores[score_name].append(metric(y_test, y_prob[:, 1]))
+    for metric, score_name in [
+        (brier_score_loss, "Brier Score"),
+        (log_loss, "Log Loss"),
+        (partial(roc_auc_score, multi_class="ovr"), "ROC AUC"),
+    ]:
+        scores[score_name].append(metric(y_test, y_prob))
 
-    for metric in [precision_score, recall_score, f1_score]:
-        score_name = metric.__name__.replace("_", " ").replace("score", "").capitalize()
+    for metric, score_name in [
+        (partial(precision_score, average="weighted"), "Precision"),
+        (partial(recall_score, average="weighted"), "Recall"),
+        (partial(f1_score, average="weighted"), "F1"),
+    ]:
         scores[score_name].append(metric(y_test, y_pred))
 
-    score_df = pd.DataFrame(scores).set_index("Classifier")
-    score_df.round(decimals=3)
+score_df = pd.DataFrame(scores).set_index("Classifier")
+score_df = score_df.round(decimals=3)
 
 score_df
 
 # %%
-# Notice that although calibration improves the :ref:`brier_score_loss` (a
-# metric composed
-# of calibration term and refinement term) and :ref:`log_loss`, it does not
-# significantly alter the prediction accuracy measures (precision, recall and
-# F1 score).
+# Note that although calibration improves the :ref:`brier_score_loss` (which includes
+# both a calibration and refinement term) and :ref:`log_loss`,
+# it does not significantly change the prediction accuracy metrics
+# (:ref:`precision, recall, F1 score <precision_recall_f_measure_metrics>`).
 # This is because calibration should not significantly change prediction
-# probabilities at the location of the decision threshold (at x = 0.5 on the
-# graph). Calibration should however, make the predicted probabilities more
-# accurate and thus more useful for making allocation decisions under
+# probabilities at the location of the decision threshold (at x = 0.5).
+# Instead, calibration aims to make the predicted probabilities more
+# accurate and thus, more useful for allocation decisions under
 # uncertainty.
-# Further, ROC AUC, should not change at all because calibration is a
-# monotonic transformation. Indeed, no rank metrics are affected by
-# calibration.
+# Furthermore, :ref:`ROC AUC <roc_metrics>` should remain unchanged, because calibration
+# applies a monotone transformation, and rank-based metrics are unaffected by such
+# transformations.
 #
-# Linear support vector classifier
+# Linear Support Vector Classifier
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # Next, we will compare:
 #
@@ -191,9 +253,8 @@ score_df
 # * Uncalibrated :class:`~sklearn.svm.LinearSVC`. Since SVC does not output
 #   probabilities by default, we naively scale the output of the
 #   :term:`decision_function` into [0, 1] by applying min-max scaling.
-# * :class:`~sklearn.svm.LinearSVC` with isotonic and sigmoid
-#   calibration (see :ref:`User Guide <calibration>`)
-
+# * :class:`~sklearn.svm.LinearSVC` with isotonic calibration, sigmoid
+#   calibration, and temperature scaling (see :ref:`User Guide <calibration>`).
 import numpy as np
 
 from sklearn.svm import LinearSVC
@@ -210,12 +271,19 @@ class NaivelyCalibratedLinearSVC(LinearSVC):
         self.df_max_ = df.max()
 
     def predict_proba(self, X):
-        """Min-max scale output of `decision_function` to [0, 1]."""
         df = self.decision_function(X)
-        calibrated_df = (df - self.df_min_) / (self.df_max_ - self.df_min_)
-        proba_pos_class = np.clip(calibrated_df, 0, 1)
-        proba_neg_class = 1 - proba_pos_class
-        proba = np.c_[proba_neg_class, proba_pos_class]
+        df = np.atleast_2d(df)
+
+        # Min-max scale per class
+        scaled = (df - self.df_min_) / (self.df_max_ - self.df_min_)
+        scaled = np.clip(scaled, 0, 1)
+
+        # Normalise across classes so rows sum to 1
+        row_sums = scaled.sum(axis=1, keepdims=True)
+        # Avoid divide-by-zero (degenerate cases)
+        row_sums[row_sums == 0] = 1
+        proba = scaled / row_sums
+
         return proba
 
 
@@ -225,72 +293,117 @@ lr = LogisticRegression(C=1.0)
 svc = NaivelyCalibratedLinearSVC(max_iter=10_000)
 svc_isotonic = CalibratedClassifierCV(svc, cv=2, method="isotonic")
 svc_sigmoid = CalibratedClassifierCV(svc, cv=2, method="sigmoid")
+svc_ts = CalibratedClassifierCV(svc, cv=2, method="temperature")
 
 clf_list = [
     (lr, "Logistic"),
     (svc, "SVC"),
     (svc_isotonic, "SVC + Isotonic"),
     (svc_sigmoid, "SVC + Sigmoid"),
+    (svc_ts, "SVC + Temperature Scaling"),
 ]
 
-# %%
-fig = plt.figure(figsize=(10, 10))
-gs = GridSpec(4, 2)
-
-ax_calibration_curve = fig.add_subplot(gs[:2, :2])
-calibration_displays = {}
-for i, (clf, name) in enumerate(clf_list):
+for clf, _ in clf_list:
     clf.fit(X_train, y_train)
-    display = CalibrationDisplay.from_estimator(
-        clf,
-        X_test,
-        y_test,
-        n_bins=10,
-        name=name,
-        ax=ax_calibration_curve,
-        color=colors(i),
-    )
-    calibration_displays[name] = display
 
-ax_calibration_curve.grid()
-ax_calibration_curve.set_title("Calibration plots (SVC)")
+classes = clf_list[0][0].classes_
+n_classes = len(classes)
+n_clf = len(clf_list)
 
-# Add histogram
-grid_positions = [(2, 0), (2, 1), (3, 0), (3, 1)]
-for i, (_, name) in enumerate(clf_list):
-    row, col = grid_positions[i]
-    ax = fig.add_subplot(gs[row, col])
+# %%
+# The reliability diagram for each class is given below.
+fig, axes = plt.subplots(figsize=(20, 6), ncols=n_classes)
 
-    ax.hist(
-        calibration_displays[name].y_prob,
-        range=(0, 1),
-        bins=10,
-        label=name,
-        color=colors(i),
-    )
-    ax.set(title=name, xlabel="Mean predicted probability", ylabel="Count")
+for class_idx, c in enumerate(classes):
+    ax = axes[class_idx]
 
+    for clf, name in clf_list:
+        CalibrationDisplay.from_predictions(
+            y_true=(y_test == c),
+            y_prob=clf.predict_proba(X_test)[:, class_idx],
+            n_bins=10,
+            name=name,
+            ax=ax,
+        )
+    ax.set_title(f"Class {c}")
+    ax.set_xlabel(None)
+    ax.set_ylabel(None)
+    ax.grid(True)
+    if c < n_classes - 1:
+        ax.get_legend().remove()
+    else:
+        ax.legend(loc=(1.05, 0.5))
+
+fig.suptitle("Reliability Diagrams per Class (SVC)", fontsize=18)
+fig.supxlabel("Mean Predicted Probability")
+fig.supylabel("Fraction of Class")
 plt.tight_layout()
-plt.show()
+plt.subplots_adjust(left=0.05)
+_ = plt.show()
+
+# %%
+# We also plot the distribution of the predicted probabilities as histograms below,
+# to demonstrate how these calibration methods behave differently.
+fig, axes = plt.subplots(
+    figsize=(20, 10),
+    nrows=n_clf,
+    ncols=n_classes,
+)
+
+colors = plt.get_cmap("Dark2")
+lines = []
+labels = []
+
+for col in range(n_classes):
+    for row, (clf, name) in enumerate(clf_list):
+        ax = axes[row, col]
+
+        probs = clf.predict_proba(X_test)[:, col]
+
+        ax.hist(
+            probs,
+            range=(0, 1),
+            bins=10,
+            label=name,
+            color=colors(row),
+        )
+
+        ax.set_xlabel(None)
+        ax.set_ylabel(None)
+
+        if col == 0:
+            Line, Label = ax.get_legend_handles_labels()
+            lines.extend(Line)
+            labels.extend(Label)
+
+
+for col, c in enumerate(classes):
+    axes[0, col].set_title(f"Class {c}")
+
+fig.supxlabel("Mean Predicted Probability")
+fig.supylabel("Count")
+fig.suptitle("Predicted Probability Distributions (SVC)", fontsize=18)
+fig.legend(lines, labels, loc="center right")
+plt.subplots_adjust(right=0.82)
+_ = plt.show()
 
 # %%
 # :class:`~sklearn.svm.LinearSVC` shows the opposite
-# behavior to :class:`~sklearn.naive_bayes.GaussianNB`; the calibration
-# curve has a sigmoid shape, which is typical for an under-confident
-# classifier. In the case of :class:`~sklearn.svm.LinearSVC`, this is caused
-# by the margin property of the hinge loss, which focuses on samples that are
-# close to the decision boundary (support vectors). Samples that are far
-# away from the decision boundary do not impact the hinge loss. It thus makes
-# sense that :class:`~sklearn.svm.LinearSVC` does not try to separate samples
-# in the high confidence region regions. This leads to flatter calibration
-# curves near 0 and 1 and is empirically shown with a variety of datasets
-# in Niculescu-Mizil & Caruana [1]_.
+# behavior to :class:`~sklearn.naive_bayes.GaussianNB`. Its calibration curves have a
+# sigmoid shape, which is typical for an under-confident classifier. This is caused by
+# the margin property of the :ref:`hinge loss <_hinge_loss>`, which focuses on samples
+# that are close to the decision boundary (support vectors). Samples that are far away
+# from the decision boundary do not influence the :ref:`hinge loss <_hinge_loss>`.
+# Therefore, the model does not attempt to separate samples in the high-confidence
+# regions. This produces flatter calibration curves near 0 and 1, as shown empirically
+# across many datasets in Niculescu-Mizil & Caruana [1]_.
 #
-# Both kinds of calibration (sigmoid and isotonic) can fix this issue and
-# yield similar results.
+# All three calibration methods can fix this and yield similar results.
+# :ref:`Temperature scaling <temperature_scaling>` again produces the most diagonal
+# calibration curves across all classes.
 #
 # As before, we show the :ref:`brier_score_loss`, :ref:`log_loss`,
-# :ref:`precision, recall, F1 score <precision_recall_f_measure_metrics>` and
+# :ref:`precision, recall, F1 score <precision_recall_f_measure_metrics>`, and
 # :ref:`ROC AUC <roc_metrics>`.
 
 scores = defaultdict(list)
@@ -300,33 +413,42 @@ for i, (clf, name) in enumerate(clf_list):
     y_pred = clf.predict(X_test)
     scores["Classifier"].append(name)
 
-    for metric in [brier_score_loss, log_loss, roc_auc_score]:
-        score_name = metric.__name__.replace("_", " ").replace("score", "").capitalize()
-        scores[score_name].append(metric(y_test, y_prob[:, 1]))
+    for metric, score_name in [
+        (brier_score_loss, "Brier Score"),
+        (log_loss, "Log Loss"),
+        (partial(roc_auc_score, multi_class="ovr"), "ROC AUC"),
+    ]:
+        scores[score_name].append(metric(y_test, y_prob))
 
-    for metric in [precision_score, recall_score, f1_score]:
-        score_name = metric.__name__.replace("_", " ").replace("score", "").capitalize()
+    for metric, score_name in [
+        (partial(precision_score, average="weighted"), "Precision"),
+        (partial(recall_score, average="weighted"), "Recall"),
+        (partial(f1_score, average="weighted"), "F1"),
+    ]:
         scores[score_name].append(metric(y_test, y_pred))
 
-    score_df = pd.DataFrame(scores).set_index("Classifier")
-    score_df.round(decimals=3)
+score_df = pd.DataFrame(scores).set_index("Classifier")
+score_df = score_df.round(decimals=3)
 
 score_df
 
 # %%
-# As with :class:`~sklearn.naive_bayes.GaussianNB` above, calibration improves
-# both :ref:`brier_score_loss` and :ref:`log_loss` but does not alter the
-# prediction accuracy measures (precision, recall and F1 score) much.
+# As with :class:`~sklearn.naive_bayes.GaussianNB`, calibration improves
+# both :ref:`brier_score_loss` and :ref:`log_loss` for :class:`~sklearn.svm.LinearSVC`,
+# but does not alter the prediction accuracy measures
+# (:ref:`precision, recall, F1 score <precision_recall_f_measure_metrics>`) much.
 #
 # Summary
 # -------
 #
-# Parametric sigmoid calibration can deal with situations where the calibration
-# curve of the base classifier is sigmoid (e.g., for
-# :class:`~sklearn.svm.LinearSVC`) but not where it is transposed-sigmoid
-# (e.g., :class:`~sklearn.naive_bayes.GaussianNB`). Non-parametric
-# isotonic calibration can deal with both situations but may require more
-# data to produce good results.
+# Parametric :ref:`sigmoid calibration <sigmoid_regressor>` works well when the base
+# classifier's calibration curve is sigmoid (e.g., for :class:`~sklearn.svm.LinearSVC`),
+# but not where it is transposed-sigmoid
+# (e.g., :class:`~sklearn.naive_bayes.GaussianNB`).
+# Non-parametric :ref:`isotonic calibration <isotonic_regressor>` can handle both shapes
+# but may require more data to perform well.
+# :ref:`Temperature scaling <temperature_scaling>` handles both situations even with
+# limited data, and often produce the best-calibrated probabilities.
 #
 # References
 # ----------
