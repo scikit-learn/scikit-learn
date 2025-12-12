@@ -1627,9 +1627,7 @@ def check_sample_weight_invariance(name, metric, y1, y2, sample_weight=None):
     )
 
     # Check the score is invariant under scaling of weights by a constant factor
-    if not (
-        name.startswith("unnormalized") or name == "confusion_matrix_at_thresholds"
-    ):
+    if name not in WEIGHT_SCALE_DEPENDENT_METRICS:
         # Numerical instability of floating points in `cumulative_sum` in
         # `median_absolute_error`, and in `diff` when in calculating collinear points
         # and points in between to drop `roc_curve` means they are not always
