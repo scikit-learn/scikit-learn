@@ -341,7 +341,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
 
         return ParamsDict(
             params=params,
-            non_default=non_default_params,
+            non_default=tuple(non_default_params),
             estimator_class=self.__class__,
             doc_link=doc_link,
         )
