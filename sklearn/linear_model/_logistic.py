@@ -5,6 +5,7 @@ Logistic Regression
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import inspect
 import numbers
 import warnings
 from numbers import Integral, Real
@@ -14,6 +15,7 @@ from scipy import optimize
 
 from sklearn._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
 from sklearn.base import _fit_context
+from sklearn.dummy import DummyClassifier
 from sklearn.linear_model._base import (
     BaseEstimator,
     LinearClassifierMixin,
@@ -22,7 +24,7 @@ from sklearn.linear_model._base import (
 from sklearn.linear_model._glm.glm import NewtonCholeskySolver
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.linear_model._sag import sag_solver
-from sklearn.metrics import get_scorer, get_scorer_names
+from sklearn.metrics import get_scorer, get_scorer_names, make_scorer
 from sklearn.model_selection import check_cv
 from sklearn.preprocessing import LabelEncoder
 from sklearn.svm._base import _fit_liblinear
@@ -288,6 +290,7 @@ def _logistic_regression_path(
 
     if is_binary:
         w0 = np.zeros(n_features + int(fit_intercept), dtype=X.dtype)
+        # classes[1] is the "positive label"
         mask = y == classes[1]
         y_bin = np.ones(y.shape, dtype=X.dtype)
         if solver == "liblinear":
@@ -711,8 +714,72 @@ def _log_reg_scoring_path(
 
     scores = list()
 
+    # Prepare the call the get the score per fold: calc_score
     scoring = get_scorer(scoring)
-    for w in coefs:
+    if scoring is None:
+
+        def calc_score(log_reg):
+            return log_reg.score(X_test, y_test, sample_weight=sw_test)
+
+    else:
+        is_binary = len(classes) <= 2
+        score_params = score_params or {}
+        score_params = _check_method_params(X=X, params=score_params, indices=test)
+        # We need to pass the classes as "labels" argument to scorers that support
+        # it, e.g. scoring = "neg_brier_score", because y_test may not contain all
+        # class labels.
+        # There now 2 routes:
+        #  - metadata routing is enabled: A try except clause is possible with
+        #    adding labels to score_params.
+        # - metadata routing is disabled: We have to reconstruct the scorer and
+        #   pass labels as kwargs explicitly.
+        if hasattr(scoring, "_score_func"):
+            sig = inspect.signature(scoring._score_func).parameters
+        else:
+            sig = []
+
+        if _routing_enabled():
+            dc = DummyClassifier(strategy="prior").fit(None, classes)
+            if "labels" not in score_params:
+                delete_labels = True
+                score_params["labels"] = classes
+            if is_binary and "pos_label" not in score_params:
+                delete_pos_label = True
+                score_params["pos_label"] = classes[-1]
+            try:
+                scoring(dc, X_test, y_test, **score_params)
+            except TypeError:
+                if delete_labels:
+                    del score_params["labels"]
+                if delete_pos_label:
+                    del score_params["pos_label"]
+                # TODO: How about issuing a warning?
+                # The call to scoring will fail if y_test does not contain all
+                # class labels.
+        elif is_binary and "labels" in sig and "pos_label" in sig:
+            # This seems like a hack and indeed it is one.
+            scoring = make_scorer(
+                scoring._score_func,
+                greater_is_better=True if scoring._sign == 1 else False,
+                response_method=scoring._response_method,
+                labels=classes,
+                pos_label=classes[-1],  # see _logistic_regression_path
+                **getattr(scoring, "_kwargs", {}),
+            )
+        elif len(classes) >= 3 and "labels" in sig:
+            scoring = make_scorer(
+                scoring._score_func,
+                greater_is_better=True if scoring._sign == 1 else False,
+                response_method=scoring._response_method,
+                labels=classes,
+                **getattr(scoring, "_kwargs", {}),
+            )
+
+        def calc_score(log_reg):
+            return scoring(log_reg, X_test, y_test, **score_params)
+
+    for w, C in zip(coefs, Cs):
+        log_reg.C = C
         if fit_intercept:
             log_reg.coef_ = w[..., :-1]
             log_reg.intercept_ = w[..., -1]
@@ -720,15 +787,8 @@ def _log_reg_scoring_path(
             log_reg.coef_ = w
             log_reg.intercept_ = 0.0
 
-        if scoring is None:
-            scores.append(log_reg.score(X_test, y_test, sample_weight=sw_test))
-        else:
-            score_params = score_params or {}
-            score_params = _check_method_params(X=X, params=score_params, indices=test)
-            # FIXME: If scoring = "neg_brier_score" and if not all class labels
-            # are present in y_test, the following fails. Maybe we can pass
-            # "labels=classes" to the call of scoring.
-            scores.append(scoring(log_reg, X_test, y_test, **score_params))
+        scores.append(calc_score(log_reg))
+
     return coefs, Cs, np.array(scores), n_iter
 
 
