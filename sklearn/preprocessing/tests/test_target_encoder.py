@@ -721,13 +721,12 @@ def test_pandas_copy_on_write():
     else:
         with warnings.catch_warnings():
             expected_message = (
-                "Copy-on-Write can no longer be disabled, "
-                "setting to False has no impact. This option will "
-                "be removed in pandas 4.0."
+                ".*Copy-on-Write can no longer be disabled.*This option will"
+                r" be removed in pandas 4\.0"
             )
             warnings.filterwarnings(
                 "ignore",
-                message=re.escape(expected_message),
+                message=expected_message,
                 category=DeprecationWarning,
             )
             with pd.option_context("mode.copy_on_write", True):
