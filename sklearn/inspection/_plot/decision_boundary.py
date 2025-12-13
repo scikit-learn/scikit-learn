@@ -229,7 +229,9 @@ class DecisionBoundaryDisplay:
                     )
                 else:
                     levels = unique_levels
-                kwargs.setdefault("levels", levels)
+
+                if "levels" not in kwargs:
+                    kwargs["levels"] = levels
             self.surface_ = plot_func(self.xx0, self.xx1, self.response, **kwargs)
         else:  # self.response.ndim == 3
             n_responses = self.response.shape[-1]
@@ -274,7 +276,8 @@ class DecisionBoundaryDisplay:
                 # Plot only argmax map for contour
                 class_map = self.response.argmax(axis=2)
                 # Ensure levels match the number of classes for distinct colors
-                kwargs.setdefault("levels", np.unique(class_map))
+                if "levels" not in kwargs:
+                    kwargs["levels"] = np.unique(class_map)
                 self.surface_ = plot_func(
                     self.xx0, self.xx1, class_map, colors=colors, **kwargs
                 )
