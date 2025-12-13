@@ -721,7 +721,7 @@ def test_pandas_copy_on_write():
     else:
         with warnings.catch_warnings():
             expected_message = (
-                r".*Copy-on-Write can no longer be disabled.*This option will"
+                ".*Copy-on-Write can no longer be disabled.*This option will"
                 r" be removed in pandas 4\.0"
             )
             warnings.filterwarnings(
