@@ -108,9 +108,7 @@ def sag(
                 gradient_correction *= sample_weight[idx]
             sum_gradient += gradient_correction
             gradient_memory[idx] = update
-            if S_seen == 0:
-                weights = weights
-            else:
+            if S_seen != 0:
                 weights -= step_size * sum_gradient / S_seen
                 if saga:
                     weights -= gradient_correction * step_size * (1 - 1.0 / S_seen)
@@ -122,9 +120,7 @@ def sag(
                     gradient_correction *= sample_weight[idx]
                 intercept_sum_gradient += gradient_correction
                 intercept_gradient_memory[idx] = update
-                if S_seen == 0:
-                    intercept = intercept
-                else:
+                if S_seen != 0:
                     intercept -= step_size * intercept_sum_gradient / S_seen * decay
                     if saga:
                         intercept -= (

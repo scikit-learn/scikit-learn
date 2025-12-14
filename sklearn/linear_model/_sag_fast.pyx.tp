@@ -240,7 +240,7 @@ def sag{{name_suffix}}(
                     seen_init[sample_ind] = 1
 
                 # make the weight updates (just-in-time gradient step, and prox operator)
-                if sample_itr > 0 and num_seen_prev!=0:
+                if sample_itr > 0:
                     status = lagged_update{{name_suffix}}(
                         weights=weights,
                         wscale=wscale,
@@ -277,15 +277,14 @@ def sag{{name_suffix}}(
                     multiloss.cy_gradient(
                         y_true=y,
                         raw_prediction=prediction,
-                        sample_weight=sample_weight[sample_ind],
+                        sample_weight=sample_weight_dummy,
                         gradient_out=gradient,
                     )
                 else:
-                    gradient[0] = loss.cy_gradient(y, prediction[0]) * sample_weight[sample_ind]
+                    gradient[0] = loss.cy_gradient(y, prediction[0])
 
                 # L2 regularization by simply rescaling the weights
                 wscale *= wscale_update
-
                 # make the updates to the sum of gradients
                 for j in range(xnnz):
                     feature_ind = x_ind_ptr[j]
@@ -304,7 +303,7 @@ def sag{{name_suffix}}(
                                 weights[f_idx + class_ind] -= \
                                     (gradient_correction * step_size
                                     * (1 - 1. / num_seen) / wscale)
-                        sum_gradient[f_idx + class_ind] += gradient_correction
+                        sum_gradient[f_idx + class_ind] += gradient_correction  * sample_weight[sample_ind]
 
                 # fit the intercept
                 if fit_intercept:
@@ -342,11 +341,11 @@ def sag{{name_suffix}}(
                 else:
                     cumulative_sums[sample_itr] = \
                         (cumulative_sums[sample_itr - 1] +
-                         step_size / (wscale * num_seen))
+                        step_size / (wscale * num_seen))
                     if prox:
                         cumulative_sums_prox[sample_itr] = \
                         (cumulative_sums_prox[sample_itr - 1] +
-                             step_size * beta / wscale)
+                            step_size * beta / wscale)
                 # If wscale gets too small, we need to reset the scale.
                 # This also resets the just-in-time update system.
                 if wscale < 1e-9:

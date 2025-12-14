@@ -815,7 +815,7 @@ def test_normal_ridge_comparison(
     if n_samples > n_features:
         ridge_params = {"solver": "svd"}
     else:
-        ridge_params = {"solver": "saga", "max_iter": 1000000, "tol": 1e-7}
+        ridge_params = {"solver": "saga", "max_iter": 1000, "tol": 1e-7}
 
     (
         X_train,
@@ -829,7 +829,7 @@ def test_normal_ridge_comparison(
         sw_train = None
         alpha_ridge = alpha * n_samples
     else:
-        sw_train = np.random.RandomState(0).rand(len(y_train))
+        sw_train = np.random.RandomState(0).rand(len(y_train)) * len(y_train)
         alpha_ridge = alpha * sw_train.sum()
 
     # GLM has 1/(2*n) * Loss + 1/2*L2, Ridge has Loss + L2
