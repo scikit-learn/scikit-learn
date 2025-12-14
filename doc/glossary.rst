@@ -63,6 +63,12 @@ General Concepts
         * a :class:`pandas.DataFrame` with all columns numeric
         * a numeric :class:`pandas.Series`
 
+        Other array API inputs, but see :ref:`array_api` for the preferred way of
+        using these:
+
+        * a `PyTorch <https://pytorch.org/>`_ tensor on 'cpu' device
+        * a `JAX <https://docs.jax.dev/en/latest/index.html>`_ array
+
         It excludes:
 
         * a :term:`sparse matrix`
@@ -225,7 +231,7 @@ General Concepts
     cross validation
         A resampling method that iteratively partitions data into mutually
         exclusive 'train' and 'test' subsets so model performance can be
-        evaluated on unseen data. This conserves data as avoids the need to hold
+        evaluated on unseen data. This conserves data as it avoids the need to hold
         out a 'validation' dataset and accounts for variability as multiple
         rounds of cross validation are generally performed.
         See :ref:`User Guide <cross_validation>` for more details.

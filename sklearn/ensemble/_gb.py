@@ -247,7 +247,7 @@ def _update_terminal_regions(
 def set_huber_delta(loss, y_true, raw_prediction, sample_weight=None):
     """Calculate and set self.closs.delta based on self.quantile."""
     abserr = np.abs(y_true - raw_prediction.squeeze())
-    # sample_weight is always a ndarray, never None.
+    # sample_weight is always an ndarray, never None.
     delta = _weighted_percentile(abserr, sample_weight, 100 * loss.quantile)
     loss.closs.delta = float(delta)
 

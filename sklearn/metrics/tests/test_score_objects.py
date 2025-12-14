@@ -1521,7 +1521,7 @@ def test_check_scoring_multimetric_raise_exc():
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf = LogisticRegression().fit(X_train, y_train)
 
-    # "raising_scorer" is raising ValueError and should return an string representation
+    # "raising_scorer" is raising ValueError and should return a string representation
     # of the error of the last scorer:
     scoring = {
         "accuracy": make_scorer(accuracy_score),
