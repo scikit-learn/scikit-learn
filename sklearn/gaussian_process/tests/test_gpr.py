@@ -19,6 +19,7 @@ from sklearn.gaussian_process.kernels import (
     DotProduct,
     ExpSineSquared,
     Product,
+    Sum,
     WhiteKernel,
 )
 from sklearn.gaussian_process.kernels import (
@@ -162,13 +163,13 @@ def test_lml_gradient(kernel):
     length_scales = np.logspace(-3, 3, 100)
 
     def evaluate_grad_at_length_scales(length_scales):
-        result = []
         length_scale_param_name = next(
             name for name in kernel.get_params() if name.endswith("length_scale")
         )
+        result = []
         for i, length_scale in enumerate(length_scales.flatten()):
             kernel.set_params(**{length_scale_param_name: length_scale})
-            if type(kernel) == Product or len(kernel.theta) == 1:
+            if type(kernel) in [Product, Sum] or len(kernel.theta) == 1:
                 result.append(gpr.log_marginal_likelihood(kernel.theta))
 
             else:
