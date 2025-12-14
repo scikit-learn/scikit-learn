@@ -16,11 +16,14 @@ There are different ways to install scikit-learn:
   distributions that distribute scikit-learn.
   It might not provide the latest release version.
 
-* :ref:`Building the package from source
-  <install_bleeding_edge>`. This is best for users who want the
-  latest-and-greatest features and aren't afraid of running
-  brand-new code. This is also needed for users who wish to contribute to the
-  project.
+* :ref:`Install a nightly build <install_nightly_builds>`. This is the quickest way to
+  try a new feature that will be shipped in the next release (that is, a
+  feature from a pull-request that was recently merged to the main branch); or to check
+  whether a bug you encountered has been fixed since the last release.
+
+* :ref:`Building the package from source <setup_development_environment>`.
+  This is mainly needed by users who wish to contribute to the project, as this allows
+  to install an editable version of the project.
 
 
 .. _install_official_release:
@@ -299,7 +302,7 @@ https://pkgsrc.se/math/py-scikit-learn
 MacPorts for Mac OSX
 --------------------
 
-The MacPorts package is named ``py<XY>-scikits-learn``,
+The MacPorts package is named ``py<XY>-scikit-learn``,
 where ``XY`` denotes the Python version.
 It can be installed by typing the following
 command:
@@ -397,3 +400,23 @@ using the ``regedit`` tool:
    .. prompt:: powershell
 
       pip install --exists-action=i scikit-learn
+
+
+.. _install_nightly_builds:
+
+Installing nightly builds
+=========================
+
+The continuous integration servers of the scikit-learn project build, test
+and upload wheel packages for the most recent Python version on a nightly
+basis.
+
+You can install the nightly build of scikit-learn using the `scientific-python-nightly-wheels`
+index from the PyPI registry of `anaconda.org`:
+
+.. prompt:: bash $
+
+  pip install --pre --extra-index https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scikit-learn
+
+Note that first uninstalling scikit-learn might be required to be able to
+install nightly builds of scikit-learn.

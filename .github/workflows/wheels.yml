@@ -34,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -61,9 +61,6 @@ jobs:
         include:
           # Window 64 bit
           - os: windows-latest
-            python: 310
-            platform_id: win_amd64
-          - os: windows-latest
             python: 311
             platform_id: win_amd64
           - os: windows-latest
@@ -84,7 +81,6 @@ jobs:
             platform_id: win_amd64
 
           # Windows on ARM64 (WoA)
-          # python 310 not available for WoA
           - os: windows-11-arm
             python: 311
             platform_id: win_arm64
@@ -105,96 +101,82 @@ jobs:
             python: 314t
             platform_id: win_arm64
 
-          # Linux 64 bit manylinux2014
-          - os: ubuntu-latest
-            python: 310
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
+          # Linux
           - os: ubuntu-latest
             python: 311
             platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
+            manylinux_image: manylinux_2_28
           - os: ubuntu-latest
             python: 312
             platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
+            manylinux_image: manylinux_2_28
           - os: ubuntu-latest
             python: 313
             platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
+            manylinux_image: manylinux_2_28
           - os: ubuntu-latest
             python: 313t
             platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
+            manylinux_image: manylinux_2_28
             cibw_enable: cpython-freethreading
           - os: ubuntu-latest
             python: 314
             platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
+            manylinux_image: manylinux_2_28
           - os: ubuntu-latest
             python: 314t
             platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
+            manylinux_image: manylinux_2_28
 
-          # Linux 64 bit manylinux2014
-          - os: ubuntu-24.04-arm
-            python: 310
-            platform_id: manylinux_aarch64
-            manylinux_image: manylinux2014
+          # Linux arm
           - os: ubuntu-24.04-arm
             python: 311
             platform_id: manylinux_aarch64
-            manylinux_image: manylinux2014
+            manylinux_image: manylinux_2_28
           - os: ubuntu-24.04-arm
             python: 312
             platform_id: manylinux_aarch64
-            manylinux_image: manylinux2014
+            manylinux_image: manylinux_2_28
           - os: ubuntu-24.04-arm
             python: 313
             platform_id: manylinux_aarch64
-            manylinux_image: manylinux2014
+            manylinux_image: manylinux_2_28
           - os: ubuntu-24.04-arm
             python: 313t
             platform_id: manylinux_aarch64
-            manylinux_image: manylinux2014
+            manylinux_image: manylinux_2_28
             cibw_enable: cpython-freethreading
           - os: ubuntu-24.04-arm
             python: 314
             platform_id: manylinux_aarch64
-            manylinux_image: manylinux2014
+            manylinux_image: manylinux_2_28
           - os: ubuntu-24.04-arm
             python: 314t
             platform_id: manylinux_aarch64
-            manylinux_image: manylinux2014
+            manylinux_image: manylinux_2_28
 
           # MacOS x86_64
-          - os: macos-13
-            python: 310
-            platform_id: macosx_x86_64
-          - os: macos-13
+          - os: macos-15-intel
             python: 311
             platform_id: macosx_x86_64
-          - os: macos-13
+          - os: macos-15-intel
             python: 312
             platform_id: macosx_x86_64
-          - os: macos-13
+          - os: macos-15-intel
             python: 313
             platform_id: macosx_x86_64
-          - os: macos-13
+          - os: macos-15-intel
             python: 313t
             platform_id: macosx_x86_64
             cibw_enable: cpython-freethreading
-          - os: macos-13
+          - os: macos-15-intel
             python: 314
             platform_id: macosx_x86_64
-          - os: macos-13
+          - os: macos-15-intel
             python: 314t
             platform_id: macosx_x86_64
 
           # MacOS arm64
-          - os: macos-14
-            python: 310
-            platform_id: macosx_arm64
           - os: macos-14
             python: 311
             platform_id: macosx_arm64
@@ -217,10 +199,10 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11" # update once build dependencies are available
 
@@ -261,7 +243,7 @@ jobs:
         run: bash build_tools/wheels/build_wheels.sh
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: cibw-wheels-cp${{ matrix.python }}-${{ matrix.platform_id }}
           path: wheelhouse/*.whl
@@ -284,10 +266,10 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -300,7 +282,7 @@ jobs:
           SKLEARN_SKIP_NETWORK_TESTS: 1
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: cibw-sdist
           path: dist/*.tar.gz
@@ -316,17 +298,17 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           pattern: cibw-*
           path: dist
           merge-multiple: true
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
 
       - name: Upload artifacts
         env:

@@ -5,14 +5,14 @@ from cython.parallel import prange
 from libc.math cimport isnan
 import numpy as np
 
-from ...utils._typedefs cimport intp_t, uint8_t
-from .common cimport X_DTYPE_C
-from .common cimport Y_DTYPE_C
-from .common import Y_DTYPE
-from .common cimport X_BINNED_DTYPE_C
-from .common cimport BITSET_INNER_DTYPE_C
-from .common cimport node_struct
-from ._bitset cimport in_bitset_2d_memoryview
+from sklearn.utils._typedefs cimport intp_t, uint8_t
+from sklearn.ensemble._hist_gradient_boosting.common cimport X_DTYPE_C
+from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
+from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
+from sklearn.ensemble._hist_gradient_boosting.common cimport BITSET_INNER_DTYPE_C
+from sklearn.ensemble._hist_gradient_boosting.common cimport node_struct
+from sklearn.ensemble._hist_gradient_boosting._bitset cimport in_bitset_2d_memoryview
 
 
 def _predict_from_raw_data(  # raw data = non-binned data

@@ -69,7 +69,7 @@ from sklearn.utils.validation import check_random_state
 
 
 def make_prediction(dataset=None, binary=False):
-    """Make some classification predictions on a toy dataset using a SVC
+    """Make some classification predictions on a toy dataset using an SVC
 
     If binary is True restrict to a binary classification problem instead of a
     multiclass classification problem
@@ -179,36 +179,6 @@ def test_classification_report_dictionary_output():
     assert isinstance(expected_report["macro avg"]["precision"], float)
     assert isinstance(expected_report["setosa"]["support"], int)
     assert isinstance(expected_report["macro avg"]["support"], int)
-
-
-def test_classification_report_output_dict_empty_input():
-    report = classification_report(y_true=[], y_pred=[], output_dict=True)
-    expected_report = {
-        "accuracy": 0.0,
-        "macro avg": {
-            "f1-score": np.nan,
-            "precision": np.nan,
-            "recall": np.nan,
-            "support": 0,
-        },
-        "weighted avg": {
-            "f1-score": np.nan,
-            "precision": np.nan,
-            "recall": np.nan,
-            "support": 0,
-        },
-    }
-    assert isinstance(report, dict)
-    # assert the 2 dicts are equal.
-    assert report.keys() == expected_report.keys()
-    for key in expected_report:
-        if key == "accuracy":
-            assert isinstance(report[key], float)
-            assert report[key] == expected_report[key]
-        else:
-            assert report[key].keys() == expected_report[key].keys()
-            for metric in expected_report[key]:
-                assert_almost_equal(expected_report[key][metric], report[key][metric])
 
 
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
@@ -1291,20 +1261,6 @@ def test_confusion_matrix_error(labels, err_msg):
     y_true, y_pred, _ = make_prediction(binary=False)
     with pytest.raises(ValueError, match=err_msg):
         confusion_matrix(y_true, y_pred, labels=labels)
-
-
-@pytest.mark.parametrize(
-    "labels", (None, [0, 1], [0, 1, 2]), ids=["None", "binary", "multiclass"]
-)
-@pytest.mark.parametrize(
-    "sample_weight",
-    (None, []),
-)
-def test_confusion_matrix_on_zero_length_input(labels, sample_weight):
-    expected_n_classes = len(labels) if labels else 0
-    expected = np.zeros((expected_n_classes, expected_n_classes), dtype=int)
-    cm = confusion_matrix([], [], sample_weight=sample_weight, labels=labels)
-    assert_array_equal(cm, expected)
 
 
 def test_confusion_matrix_dtype():
@@ -2586,6 +2542,12 @@ def test__check_targets():
         _check_targets(y1, y2)
 
 
+def test__check_targets_raises_on_empty_inputs():
+    msg = "Found empty input array (e.g., `y_true` or `y_pred`) while a minimum of 1"
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        _check_targets(np.array([]), np.array([]))
+
+
 def test__check_targets_multiclass_with_both_y_true_and_y_pred_binary():
     # https://github.com/scikit-learn/scikit-learn/issues/8098
     y_true = [0, 1]
@@ -3670,3 +3632,114 @@ def test_confusion_matrix_array_api(array_namespace, device, _):
         result = confusion_matrix(y_true, y_pred, labels=labels)
         assert get_namespace(result)[0] == get_namespace(y_pred)[0]
         assert array_api_device(result) == array_api_device(y_pred)
+
+
+@pytest.mark.parametrize(
+    "prob_metric", [brier_score_loss, log_loss, d2_brier_score, d2_log_loss_score]
+)
+@pytest.mark.parametrize("str_y_true", [False, True])
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_probabilistic_metrics_array_api(
+    prob_metric, str_y_true, use_sample_weight, array_namespace, device_, dtype_name
+):
+    """Test that :func:`brier_score_loss`, :func:`log_loss`, func:`d2_brier_score`
+    and :func:`d2_log_loss_score` work correctly with the array API for binary
+    and mutli-class inputs.
+    """
+    xp = _array_api_for_tests(array_namespace, device_)
+    sample_weight = np.array([1, 2, 3, 1]) if use_sample_weight else None
+
+    # binary case
+    extra_kwargs = {}
+    if str_y_true:
+        y_true_np = np.array(["yes", "no", "yes", "no"])
+        y_true_xp_or_np = np.asarray(y_true_np)
+        if "brier" in prob_metric.__name__:
+            # `brier_score_loss` and `d2_brier_score` require specifying the
+            # `pos_label`
+            extra_kwargs["pos_label"] = "yes"
+    else:
+        y_true_np = np.array([1, 0, 1, 0])
+        y_true_xp_or_np = xp.asarray(y_true_np, device=device_)
+
+    y_prob_np = np.array([0.5, 0.2, 0.7, 0.6], dtype=dtype_name)
+    y_prob_xp = xp.asarray(y_prob_np, device=device_)
+    metric_score_np = prob_metric(
+        y_true_np, y_prob_np, sample_weight=sample_weight, **extra_kwargs
+    )
+    with config_context(array_api_dispatch=True):
+        metric_score_xp = prob_metric(
+            y_true_xp_or_np, y_prob_xp, sample_weight=sample_weight, **extra_kwargs
+        )
+
+    assert metric_score_xp == pytest.approx(metric_score_np)
+
+    # multi-class case
+    if str_y_true:
+        y_true_np = np.array(["a", "b", "c", "d"])
+        y_true_xp_or_np = np.asarray(y_true_np)
+    else:
+        y_true_np = np.array([0, 1, 2, 3])
+        y_true_xp_or_np = xp.asarray(y_true_np, device=device_)
+
+    y_prob_np = np.array(
+        [
+            [0.5, 0.2, 0.2, 0.1],
+            [0.4, 0.4, 0.1, 0.1],
+            [0.1, 0.1, 0.7, 0.1],
+            [0.1, 0.2, 0.6, 0.1],
+        ],
+        dtype=dtype_name,
+    )
+    y_prob_xp = xp.asarray(y_prob_np, device=device_)
+    metric_score_np = prob_metric(y_true_np, y_prob_np)
+    with config_context(array_api_dispatch=True):
+        metric_score_xp = prob_metric(y_true_xp_or_np, y_prob_xp)
+
+    assert metric_score_xp == pytest.approx(metric_score_np)
+
+
+@pytest.mark.parametrize(
+    "prob_metric", [brier_score_loss, log_loss, d2_brier_score, d2_log_loss_score]
+)
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_probabilistic_metrics_multilabel_array_api(
+    prob_metric, use_sample_weight, array_namespace, device_, dtype_name
+):
+    """Test that :func:`brier_score_loss`, :func:`log_loss`, func:`d2_brier_score`
+    and :func:`d2_log_loss_score` work correctly with the array API for
+    multi-label inputs.
+    """
+    xp = _array_api_for_tests(array_namespace, device_)
+    sample_weight = np.array([1, 2, 3, 1]) if use_sample_weight else None
+    y_true_np = np.array(
+        [
+            [0, 0, 1, 1],
+            [1, 0, 1, 0],
+            [0, 1, 0, 0],
+            [1, 1, 0, 1],
+        ],
+        dtype=dtype_name,
+    )
+    y_true_xp = xp.asarray(y_true_np, device=device_)
+    y_prob_np = np.array(
+        [
+            [0.15, 0.27, 0.46, 0.12],
+            [0.33, 0.38, 0.06, 0.23],
+            [0.06, 0.28, 0.03, 0.63],
+            [0.14, 0.31, 0.26, 0.29],
+        ],
+        dtype=dtype_name,
+    )
+    y_prob_xp = xp.asarray(y_prob_np, device=device_)
+    metric_score_np = prob_metric(y_true_np, y_prob_np, sample_weight=sample_weight)
+    with config_context(array_api_dispatch=True):
+        metric_score_xp = prob_metric(y_true_xp, y_prob_xp, sample_weight=sample_weight)
+
+    assert metric_score_xp == pytest.approx(metric_score_np)
