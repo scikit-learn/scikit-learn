@@ -424,7 +424,7 @@ def estimator_html_repr(estimator):
     >>> from sklearn.utils._repr_html.estimator import estimator_html_repr
     >>> from sklearn.linear_model import LogisticRegression
     >>> estimator_html_repr(LogisticRegression())
-    '<style>.sk-sk-css-selector...'
+    '<style>.-sk-css-selector...'
     """
     from sklearn.exceptions import NotFittedError
     from sklearn.utils.validation import check_is_fitted
