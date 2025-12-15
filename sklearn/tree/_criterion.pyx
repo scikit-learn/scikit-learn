@@ -1175,131 +1175,9 @@ cdef class MSE(RegressionCriterion):
         impurity_right[0] /= self.n_outputs
 
 
-# Helper for MAE criterion:
+# Helper for Pinball criterion:
 
 cdef void precompute_pinball_losses(
-    const float64_t[:, ::1] ys,
-    const float64_t[:] sample_weight,
-    const intp_t[:] sample_indices,
-    WeightedHeap above,
-    WeightedHeap below,
-    intp_t k,
-    intp_t start,
-    intp_t end,
-    float64_t q,
-    float64_t[::1] losses,
-    float64_t[::1] quantiles
-) noexcept nogil:
-    """
-    Fill `losses` and `quantiles`.
-
-    If start < end:
-        Computes the "prefix" losses/quantiles, i.e the losses for each set of indices
-        sample_indices[start:start + i] with i in {1, ..., n}
-        where n = end - start
-    Else:
-        Computes the "suffix" losses/quantiles, i.e the losses for each set of indices
-        sample_indices[i:] with i in {0, ..., n-1}
-
-    Parameters
-    ----------
-    ys : const float64_t[:, ::1]
-        Target values. Shape: (n_samples, n_outputs).
-    sample_weight : const float64_t[:]
-        Shape: (n_samples,)
-    sample_indices : const intp_t[:]
-        indices indicating which samples to use. Shape: (n_samples,)
-    above : WeightedHeap
-    below : WeightedHeap
-    k : intp_t
-        Dimension to consider in y. In [0, n_outputs - 1].
-    q : float64_t
-        Probability for the quantile / alpha for the pinball loss
-    losses : float64_t[::1]
-        array to store (increment) the computed absolute errors. Shape: (n,)
-        with n := end - start
-    quantiles : float64_t[::1]
-        array to store (overwrite) the computed quantiles. Shape: (n,)
-
-    Complexity: O(n log n)
-    This algorithm is an adaptation of the two heaps solution of
-    the "find median from a data stream" problem
-    See for instance: https://www.geeksforgeeks.org/dsa/median-of-stream-of-integers-running-integers/
-
-    But here, it's the weighted quantile and we also need to compute the pinball loss, so:
-    - instead of balancing the heaps based on their number of elements,
-      rebalance them based on the summed weights of their elements
-    - rewrite the pinball loss computation by splitting the sum between
-      elements above and below the median, which allow to express it as a simple
-      O(1) computation.
-      See the maths in the PR description: TODO
-      Also this the PR for the initial implementation (weighted median and absolute error):
-      https://github.com/scikit-learn/scikit-learn/pull/32100
-    """
-    cdef intp_t j, p, i, step, n
-    if start < end:
-        j = 0
-    j = n - 1
-
-    above.reset()
-    below.reset()
-    cdef float64_t y
-    cdef float64_t w = 1.0
-    cdef float64_t top_val, top_weight
-    cdef float64_t quantile = 0.0
-    cdef float64_t split_weight
-    cdef float64_t total_weight
-
-    p = start
-    for _ in range(n):
-        i = sample_indices[p]
-        if sample_weight is not None:
-            w = sample_weight[i]
-        y = ys[i, k]
-
-        # Insert into the appropriate heap
-        if below.is_empty():
-            above.push(y, w)
-        elif y > below.top():
-            above.push(y, w)
-        else:
-            below.push(y, w)
-
-        total_weight = above.total_weight + below.total_weight
-        split_weight = total_weight - q * total_weight
-        # ^ doing this instead of total_weight * (1 - q) to align
-        # with the rounding-errors in implementation of
-        # sklearn.utils.stats._weighted_percentile
-
-        # Rebalance heaps
-        while above.total_weight < split_weight and not below.is_empty():
-            below.pop(&top_val, &top_weight)
-            above.push(top_val, top_weight)
-        while (
-            not above.is_empty()
-            and (above.total_weight - above.top_weight()) >= split_weight
-        ):
-            above.pop(&top_val, &top_weight)
-            below.push(top_val, top_weight)
-
-        # Current quantile
-        if above.total_weight == split_weight:
-            # above and below heaps are exactly balanced
-            # we choose the midpoint for determinism to match with
-            # sklearn.utils.stats._weighted_percentile(..., average=True)
-            quantile = 0.5 * (above.top() + below.top())
-        else:
-            quantile = above.top()
-        quantiles[j] = quantile
-        losses[j] += (
-            q * (above.weighted_sum - quantile * above.total_weight)
-            + (1 - q) * (quantile * below.total_weight - below.weighted_sum)
-        )
-        p += step
-        j += step
-
-
-cdef void precompute_absolute_errors(
     const float64_t[::1] sorted_y,
     const intp_t[::1] ranks,
     const float64_t[:] sample_weight,
@@ -1307,19 +1185,20 @@ cdef void precompute_absolute_errors(
     WeightedFenwickTree tree,
     intp_t start,
     intp_t end,
-    float64_t[::1] abs_errors,
-    float64_t[::1] medians,
+    float64_t alpha,
+    float64_t[::1] pinball_losses,
+    float64_t[::1] quantiles,
 ) noexcept nogil:
     """
-    Fill `abs_errors` and `medians`.
+    Fill `pinball_losses` and `quantiles`.
 
     If start < end:
-        Forward pass: Computes the "prefix" AEs/medians
-        i.e the AEs for each set of indices sample_indices[start:start + i]
+        Forward pass: Computes the "prefix" losses/quantiles
+        i.e the losses for each set of indices sample_indices[start:start + i]
         with i in {1, ..., n}, where n = end - start.
     Else:
-        Backward pass: Computes the "suffix" AEs/medians
-        i.e the AEs for each set of indices sample_indices[start - i:start]
+        Backward pass: Computes the "suffix" losses/quantiles
+        i.e the losses for each set of indices sample_indices[start - i:start]
         with i in {1, ..., n}, where n = start - end.
 
     Parameters
@@ -1339,19 +1218,20 @@ cdef void precompute_absolute_errors(
         Start index in `sample_indices`
     end : intp_t
         End index (exclusive) in `sample_indices`
-
-    abs_errors : float64_t[::1]
-        array to store (increment) the computed absolute errors. Shape: (n,)
+    alpha : float64_t
+        Quantile level for the pinball loss (between 0 and 1)
+    pinball_losses : float64_t[::1]
+        array to store (increment) the computed pinball losses. Shape: (n,)
         with n := end - start
-    medians : float64_t[::1]
-        array to store (overwrite) the computed medians. Shape: (n,)
+    quantiles : float64_t[::1]
+        array to store (overwrite) the computed quantiles. Shape: (n,)
 
     Complexity: O(n log n)
     """
     cdef:
-        intp_t p, i, step, n, rank, median_rank, median_prev_rank
+        intp_t p, i, step, n, rank, quantile_rank, quantile_prev_rank
         float64_t w = 1.
-        float64_t half_weight, median
+        float64_t target_weight, quantile
         float64_t w_right, w_left, wy_left, wy_right
 
     if start < end:
@@ -1374,37 +1254,38 @@ cdef void precompute_absolute_errors(
         rank = ranks[p]
         tree.add(rank, sorted_y[rank], w)
 
-        # Weighted median by cumulative weight: the median is where the
-        # cumulative weight crosses half of the total weight.
-        half_weight = 0.5 * tree.total_w
-        # find the smallest activated rank with cumulative weight > half_weight
+        # Weighted quantile by cumulative weight: the quantile is where the
+        # cumulative weight crosses alpha of the total weight.
+        target_weight = alpha * tree.total_w
+        # find the smallest activated rank with cumulative weight > target_weight
         # while returning the prefix sums (`w_left` and `wy_left`)
         # up to (and excluding) that index:
-        median_rank = tree.search(half_weight, &w_left, &wy_left, &median_prev_rank)
+        quantile_rank = tree.search(target_weight, &w_left, &wy_left, &quantile_prev_rank)
 
-        if median_rank != median_prev_rank:
-            # Exact match for half_weight fell between two consecutive ranks:
-            # cumulative weight up to `median_rank` excluded is exactly half_weight.
-            # In that case, `median_prev_rank` is the activated rank such that
-            # the cumulative weight up to it included is exactly half_weight.
-            # In this case we take the mid-point:
-            median = (sorted_y[median_prev_rank] + sorted_y[median_rank]) / 2
+        if quantile_rank != quantile_prev_rank:
+            # Exact match for target_weight fell between two consecutive ranks:
+            # cumulative weight up to `quantile_rank` excluded is exactly target_weight.
+            # In that case, `quantile_prev_rank` is the activated rank such that
+            # the cumulative weight up to it included is exactly target_weight.
+            # In this case we take the mid-point to match with
+            # sklearn.utils.stats._weighted_percentile(..., average=True)
+            quantile = (sorted_y[quantile_prev_rank] + sorted_y[quantile_rank]) / 2
         else:
-            # if there are no exact match for half_weight in the cumulative weights
-            # `median_rank == median_prev_rank` and the median is:
-            median = sorted_y[median_rank]
+            # if there are no exact match for target_weight in the cumulative weights
+            # `quantile_rank == quantile_prev_rank` and the quantile is:
+            quantile = sorted_y[quantile_rank]
 
         # Convert left prefix sums into right-hand complements.
         w_right = tree.total_w - w_left
         wy_right = tree.total_wy - wy_left
 
-        medians[p] = median
-        # Pinball-loss identity for absolute error at the current set:
-        #   sum_{y_i >= m} w_i (y_i - m) = wy_right - m * w_right
-        #   sum_{y_i <  m} w_i (m - y_i) = m * w_left  - wy_left
-        abs_errors[p] += (
-            (wy_right - median * w_right)
-            + (median * w_left - wy_left)
+        quantiles[p] = quantile
+        # Pinball loss identity for the alpha-quantile at the current set:
+        #   sum_{y_i >= q} w_i * alpha * (y_i - q) = alpha * (wy_right - q * w_right)
+        #   sum_{y_i <  q} w_i * (1-alpha) * (q - y_i) = (1-alpha) * (q * w_left - wy_left)
+        pinball_losses[p] += (
+            alpha * (wy_right - quantile * w_right)
+            + (1.0 - alpha) * (quantile * w_left - wy_left)
         )
         p += step
 
@@ -1424,15 +1305,16 @@ cdef inline void compute_ranks(
         ranks[sorted_indices[i]] = i
 
 
-def _py_precompute_absolute_errors(
+def _py_precompute_pinball_losses(
     const float64_t[:, ::1] ys,
     const float64_t[:] sample_weight,
     const intp_t[:] sample_indices,
     const intp_t start,
     const intp_t end,
     const intp_t n,
+    const float64_t alpha,
 ):
-    """Used for testing precompute_absolute_errors."""
+    """Used for testing precompute_pinball_losses."""
     cdef:
         intp_t p, i
         intp_t s = start
@@ -1441,8 +1323,8 @@ def _py_precompute_absolute_errors(
         float64_t[::1] sorted_y = np.empty(n, dtype=np.float64)
         intp_t[::1] sorted_indices = np.empty(n, dtype=np.intp)
         intp_t[::1] ranks = np.empty(n, dtype=np.intp)
-        float64_t[::1] abs_errors = np.zeros(n, dtype=np.float64)
-        float64_t[::1] medians = np.empty(n, dtype=np.float64)
+        float64_t[::1] pinball_losses = np.zeros(n, dtype=np.float64)
+        float64_t[::1] quantiles = np.empty(n, dtype=np.float64)
 
     if start > end:
         s = end + 1
@@ -1452,29 +1334,30 @@ def _py_precompute_absolute_errors(
         sorted_y[p - s] = ys[i, 0]
     compute_ranks(&sorted_y[0], &sorted_indices[0], &ranks[s], n)
 
-    precompute_absolute_errors(
+    precompute_pinball_losses(
         sorted_y, ranks, sample_weight, sample_indices, tree,
-        start, end, abs_errors, medians
+        start, end, alpha, pinball_losses, quantiles
     )
-    return np.asarray(abs_errors)[s:e], np.asarray(medians)[s:e]
+    return np.asarray(pinball_losses)[s:e], np.asarray(quantiles)[s:e]
 
 
 cdef class Pinball(Criterion):
-    # TODO: update the docstring below (MAE -> Pinball)
-    r"""Mean absolute error impurity criterion.
+    r"""Pinball loss impurity criterion.
 
-    It has almost nothing in common with other regression criterions
-    so it doesn't inherit from RegressionCriterion.
+    This criterion generalizes the Mean Absolute Error (MAE) by using
+    quantile regression with a specified quantile level (alpha).
+    MAE corresponds to alpha=0.5 (median).
 
-    MAE = (1 / n)*(\sum_i |y_i - p_i|), where y_i is the true
-    value and p_i is the predicted value.
-    In a decision tree, that prediction is the (weighted) median
+    Pinball loss = (1 / n)*(\sum_i rho_alpha(y_i - q_i)), where y_i is the true
+    value, q_i is the predicted quantile, and rho_alpha is the pinball loss function:
+        rho_alpha(u) = u * (alpha - I(u < 0))
+    In a decision tree, that prediction is the (weighted) alpha-quantile
     of the targets in the node.
 
     How this implementation works
     -----------------------------
     This class precomputes in `reset`, for the current node,
-    the absolute-error values and corresponding medians for all
+    the pinball loss values and corresponding quantiles for all
     potential split positions: every p in [start, end).
 
     For that:
@@ -1484,17 +1367,17 @@ cdef class Pinball(Criterion):
         * "activate" one sample at a time at its rank within a prefix sum tree,
           the `WeightedFenwickTree`: `tree.add(rank, y, weight)`
           The tree maintains cumulative sums of weights and of `weight * y`
-        * search for the half total weight in the tree:
-          `tree.search(current_total_weight / 2)`.
+        * search for the target weight (1 - alpha) * total_weight in the tree:
+          `tree.search((1 - alpha) * current_total_weight)`.
           This allows us to retrieve/compute:
-            * the current weighted median value
-            * the absolute-error contribution via the standard pinball-loss identity:
-              AE = (wy_right - median * w_right) + (median * w_left - wy_left)
+            * the current weighted quantile value
+            * the pinball loss contribution via the standard pinball-loss identity:
+              PL = alpha * (wy_right - quantile * w_right) + (1-alpha) * (quantile * w_left - wy_left)
     - We perform two such passes:
-        * one forward from `start` to `end - 1` to fill `left_abs_errors[p]` and
-          `left_medians[p]` for left children.
+        * one forward from `start` to `end - 1` to fill `left_pinball_losses[p]` and
+          `left_quantiles[p]` for left children.
         * one backward from `end - 1` down to `start` to fill
-          `right_abs_errors[p]` and `right_medians[p]` for right children.
+          `right_pinball_losses[p]` and `right_quantiles[p]` for right children.
 
     Complexity: time complexity is O(n log n), indeed:
     - computing ranks is based on sorting: O(n log n)
@@ -1504,22 +1387,22 @@ cdef class Pinball(Criterion):
     How the other methods use the precomputations
     --------------------------------------------
     - `reset` performs the precomputation described above.
-      It also stores the node weighted median per output in
-      `node_medians` (prediction value of the node).
+      It also stores the node weighted quantile per output in
+      `node_quantiles` (prediction value of the node).
 
     - `update(new_pos)` only updates `weighted_n_left` and `weighted_n_right`;
-      no recomputation of errors is needed.
+      no recomputation of losses is needed.
 
-    - `children_impurity` reads the precomputed absolute errors at
-      `left_abs_errors[pos - 1]` and `right_abs_errors[pos]` and scales
+    - `children_impurity` reads the precomputed pinball losses at
+      `left_pinball_losses[pos - 1]` and `right_pinball_losses[pos]` and scales
       them by the corresponding child weights and `n_outputs` to report the
       impurity of each child.
 
     - `middle_value` and `check_monotonicity` use the precomputed
-      `left_medians[pos - 1]` and `right_medians[pos]` to derive the
+      `left_quantiles[pos - 1]` and `right_quantiles[pos]` to derive the
       mid-point value and to validate monotonic constraints when enabled.
 
-    - Missing values are not supported for MAE: `init_missing` raises.
+    - Missing values are not supported for Pinball: `init_missing` raises.
 
     For a complementary, in-depth discussion of the mathematics and design
     choices, see the external report:
@@ -1632,7 +1515,7 @@ cdef class Pinball(Criterion):
         if n_missing == 0:
             return
         with gil:
-            raise ValueError("missing values is not supported for MAE.")
+            raise ValueError("missing values is not supported for Pinball criterion.")
 
     cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start.
@@ -1655,18 +1538,18 @@ cdef class Pinball(Criterion):
         memset(&self.right_pinball_losses[self.start], 0, n_bytes)
 
         # Multi-output handling:
-        # absolute errors are accumulated across outputs by
-        # incrementing `left_abs_errors` and `right_abs_errors` on each pass.
-        # The per-output medians arrays are overwritten at each output iteration
+        # pinball losses are accumulated across outputs by
+        # incrementing `left_pinball_losses` and `right_pinball_losses` on each pass.
+        # The per-output quantiles arrays are overwritten at each output iteration
         # as they are only used for monotonicity checks when `n_outputs == 1`.
 
-        # Precompute absolute errors (summed over each output)
+        # Precompute pinball losses (summed over each output)
         # and quantiles (used only when n_outputs=1)
         # of the right and left child of all possible splits
         # for the current ordering of `sample_indices`
         # Precomputation is needed here and can't be done step-by-step in the update method
         # like for other criterions. Indeed, we don't have efficient ways to update right child
-        # statistics when removing samples from it. So we compute right child AEs/quantiles by
+        # statistics when removing samples from it. So we compute right child losses/quantiles by
         # traversing from right to left (and hence only adding samples).
         for k in range(self.n_outputs):
 
@@ -1688,28 +1571,28 @@ cdef class Pinball(Criterion):
             )
 
             # 2) Forward pass
-            # from `start` to `end - 1` to fill `left_abs_errors[p]` and
-            # `left_medians[p]` for left children.
-            precompute_absolute_errors(
+            # from `start` to `end - 1` to fill `left_pinball_losses[p]` and
+            # `left_quantiles[p]` for left children.
+            precompute_pinball_losses(
                 self.sorted_y, self.ranks, self.sample_weight, self.sample_indices,
-                self.prefix_sum_tree, self.start, self.end,
-                # left_abs_errors is incremented, left_medians is overwritten
-                self.left_abs_errors, self.left_medians
+                self.prefix_sum_tree, self.start, self.end, self.alpha,
+                # left_pinball_losses is incremented, left_quantiles is overwritten
+                self.left_pinball_losses, self.left_quantiles
             )
             # 3) Backward pass
-            # from `end - 1` down to `start` to fill `right_abs_errors[p]`
-            # and `right_medians[p]` for right children.
-            precompute_absolute_errors(
+            # from `end - 1` down to `start` to fill `right_pinball_losses[p]`
+            # and `right_quantiles[p]` for right children.
+            precompute_pinball_losses(
                 self.sorted_y, self.ranks, self.sample_weight, self.sample_indices,
-                self.prefix_sum_tree, self.end - 1, self.start - 1,
-                # right_abs_errors is incremented, right_medians is overwritten
-                self.right_abs_errors, self.right_medians
+                self.prefix_sum_tree, self.end - 1, self.start - 1, self.alpha,
+                # right_pinball_losses is incremented, right_quantiles is overwritten
+                self.right_pinball_losses, self.right_quantiles
             )
 
-            # Store the median for the current node: when p == self.start all the
+            # Store the quantile for the current node: when p == self.start all the
             # node's data points are sent to the right child, so the current node
-            # median value and the right child median value would be equal.
-            self.node_medians[k] = self.right_medians[self.start]
+            # quantile value and the right child quantile value would be equal.
+            self.node_quantiles[k] = self.right_quantiles[self.start]
 
         return 0
 
@@ -1769,19 +1652,19 @@ cdef class Pinball(Criterion):
         """Check monotonicity constraint is satisfied at the current regression split"""
         return self._check_monotonicity(
             monotonic_cst, lower_bound, upper_bound,
-            self.left_medians[self.pos - 1], self.right_medians[self.pos])
+            self.left_quantiles[self.pos - 1], self.right_quantiles[self.pos])
 
     cdef float64_t node_impurity(self) noexcept nogil:
         """Evaluate the impurity of the current node.
 
-        Evaluate the MAE criterion as impurity of the current node,
+        Evaluate the Pinball criterion as impurity of the current node,
         i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
         better.
 
         Time complexity: O(1) (precomputed in `.reset()`)
         """
         return (
-            self.right_pinball_losses[0]
+            self.right_pinball_losses[self.start]
             / (self.weighted_n_node_samples * self.n_outputs)
         )
 

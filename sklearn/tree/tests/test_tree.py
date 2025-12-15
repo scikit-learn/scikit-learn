@@ -2941,8 +2941,8 @@ def test_sort_log2_build():
     assert_array_equal(samples, expected_samples)
 
 
-@pytest.mark.parametrize("q", [0.5, 0.2, 0.9, 0.4, 0.75])
-def test_pinball_loss_precomputation_function(q, global_random_seed):
+@pytest.mark.parametrize("alpha", [0.5, 0.2, 0.9, 0.4, 0.75])
+def test_pinball_loss_precomputation_function(alpha, global_random_seed):
     """
     Test the main bit of logic of the MAE(RegressionCriterion) class
     (used by DecisionTreeRegressor(criterion="absolute_error")).
@@ -2961,11 +2961,13 @@ def test_pinball_loss_precomputation_function(q, global_random_seed):
         """
         y = y.ravel().copy()
         quantiles = [
-            _weighted_percentile(y[:i], w[:i], q * 100, average=True)
+            _weighted_percentile(y[:i], w[:i], alpha * 100, average=True)
             for i in range(1, y.size + 1)
         ]
         losses = [
-            mean_pinball_loss(y[:i], np.full(i, quantile), sample_weight=w[:i], alpha=q)
+            mean_pinball_loss(
+                y[:i], np.full(i, quantile), sample_weight=w[:i], alpha=alpha
+            )
             * w[:i].sum()
             for i, quantile in zip(range(1, y.size + 1), quantiles)
         ]
@@ -2973,7 +2975,9 @@ def test_pinball_loss_precomputation_function(q, global_random_seed):
 
     def assert_same_results(y, w, indices, reverse=False):
         args = (n - 1, -1) if reverse else (0, n)
-        losses, quantiles = _py_precompute_pinball_losses(y, w, indices, *args, q=q)
+        losses, quantiles = _py_precompute_pinball_losses(
+            y, w, indices, *args, n, alpha=alpha
+        )
         y_sorted = y[indices]
         w_sorted = w[indices]
         if reverse:
