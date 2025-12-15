@@ -2289,11 +2289,10 @@ def test_sgd_numerical_consistency(SGDEstimator):
     X_32 = X.astype(dtype=np.float32)
     Y_32 = np.array(Y, dtype=np.float32)
 
-    max_iter = 18 if SGDEstimator == SGDOneClassSVM else 20
-    sgd_64 = SGDEstimator(max_iter=max_iter)
+    sgd_64 = SGDEstimator(max_iter=22, shuffle=False)
     sgd_64.fit(X_64, Y_64)
 
-    sgd_32 = SGDEstimator(max_iter=max_iter)
+    sgd_32 = SGDEstimator(max_iter=22, shuffle=False)
     sgd_32.fit(X_32, Y_32)
 
     assert_allclose(sgd_64.coef_, sgd_32.coef_)
