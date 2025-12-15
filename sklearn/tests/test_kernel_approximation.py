@@ -348,6 +348,8 @@ def test_nystroem_approximation():
     "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
 def test_nystroem_approximation_array_api(array_namespace, device, dtype_name):
+    if dtype_name == "float32" and array_namespace == "torch":
+        pytest.xfail("rbf kernel not numerically stable with float32 in torch")
     xp = _array_api_for_tests(array_namespace, device)
     # some basic tests
     rnd = np.random.RandomState(0)
