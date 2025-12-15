@@ -1,7 +1,7 @@
 from libc.math cimport isnan
 from libcpp.vector cimport vector
 
-from ..utils._typedefs cimport float32_t, float64_t, int32_t, int64_t
+from sklearn.utils._typedefs cimport float32_t, float64_t, int32_t, int64_t
 
 import numpy as np
 

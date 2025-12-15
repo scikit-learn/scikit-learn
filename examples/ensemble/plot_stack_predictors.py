@@ -91,7 +91,7 @@ X, y = load_ames_housing()
 
 from sklearn.compose import make_column_selector
 
-cat_selector = make_column_selector(dtype_include=object)
+cat_selector = make_column_selector(dtype_include=[object, "string"])
 num_selector = make_column_selector(dtype_include=np.number)
 cat_selector(X)
 

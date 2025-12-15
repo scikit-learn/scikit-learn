@@ -12,7 +12,8 @@ cnp.import_array()
 from scipy.special.cython_special cimport xlogy
 
 from sklearn.tree._utils cimport log
-from sklearn.tree._utils cimport WeightedHeap
+from sklearn.tree._utils cimport WeightedFenwickTree
+from sklearn.tree._partitioner cimport sort
 
 # EPSILON is used in the Poisson criterion
 cdef float64_t EPSILON = 10 * np.finfo('double').eps
@@ -1212,10 +1213,6 @@ cdef void precompute_pinball_losses(
     below : WeightedHeap
     k : intp_t
         Dimension to consider in y. In [0, n_outputs - 1].
-    start : intp_t
-        Start index in `sample_indices`
-    end : intp_t
-        End index (exclusive) in `sample_indices`
     q : float64_t
         Probability for the quantile / alpha for the pinball loss
     losses : float64_t[::1]
@@ -1242,12 +1239,7 @@ cdef void precompute_pinball_losses(
     cdef intp_t j, p, i, step, n
     if start < end:
         j = 0
-        step = 1
-        n = end - start
-    else:
-        n = start - end
-        step = -1
-        j = n - 1
+    j = n - 1
 
     above.reset()
     below.reset()
@@ -1307,38 +1299,231 @@ cdef void precompute_pinball_losses(
         j += step
 
 
-def _py_precompute_pinball_losses(
+cdef void precompute_absolute_errors(
+    const float64_t[::1] sorted_y,
+    const intp_t[::1] ranks,
+    const float64_t[:] sample_weight,
+    const intp_t[:] sample_indices,
+    WeightedFenwickTree tree,
+    intp_t start,
+    intp_t end,
+    float64_t[::1] abs_errors,
+    float64_t[::1] medians,
+) noexcept nogil:
+    """
+    Fill `abs_errors` and `medians`.
+
+    If start < end:
+        Forward pass: Computes the "prefix" AEs/medians
+        i.e the AEs for each set of indices sample_indices[start:start + i]
+        with i in {1, ..., n}, where n = end - start.
+    Else:
+        Backward pass: Computes the "suffix" AEs/medians
+        i.e the AEs for each set of indices sample_indices[start - i:start]
+        with i in {1, ..., n}, where n = start - end.
+
+    Parameters
+    ----------
+    sorted_y : const float64_t[::1]
+        Target values, sorted
+    ranks : const intp_t[::1]
+        Ranks of the node-local values of y for points in sample_indices such that:
+        sorted_y[ranks[p]] == y[sample_indices[p]] for any p in [start, end) or
+        (end, start].
+    sample_weight : const float64_t[:]
+    sample_indices : const intp_t[:]
+        indices indicating which samples to use. Shape: (n_samples,)
+    tree : WeightedFenwickTree
+        pre-instanciated tree
+    start : intp_t
+        Start index in `sample_indices`
+    end : intp_t
+        End index (exclusive) in `sample_indices`
+
+    abs_errors : float64_t[::1]
+        array to store (increment) the computed absolute errors. Shape: (n,)
+        with n := end - start
+    medians : float64_t[::1]
+        array to store (overwrite) the computed medians. Shape: (n,)
+
+    Complexity: O(n log n)
+    """
+    cdef:
+        intp_t p, i, step, n, rank, median_rank, median_prev_rank
+        float64_t w = 1.
+        float64_t half_weight, median
+        float64_t w_right, w_left, wy_left, wy_right
+
+    if start < end:
+        step = 1
+        n = end - start
+    else:
+        n = start - end
+        step = -1
+
+    tree.reset(n)
+
+    p = start
+    # We iterate exactly `n` samples starting at absolute index `start` and
+    # move by `step` (+1 for the forward pass, -1 for the backward pass).
+    for _ in range(n):
+        i = sample_indices[p]
+        if sample_weight is not None:
+            w = sample_weight[i]
+        # Activate sample i at its rank:
+        rank = ranks[p]
+        tree.add(rank, sorted_y[rank], w)
+
+        # Weighted median by cumulative weight: the median is where the
+        # cumulative weight crosses half of the total weight.
+        half_weight = 0.5 * tree.total_w
+        # find the smallest activated rank with cumulative weight > half_weight
+        # while returning the prefix sums (`w_left` and `wy_left`)
+        # up to (and excluding) that index:
+        median_rank = tree.search(half_weight, &w_left, &wy_left, &median_prev_rank)
+
+        if median_rank != median_prev_rank:
+            # Exact match for half_weight fell between two consecutive ranks:
+            # cumulative weight up to `median_rank` excluded is exactly half_weight.
+            # In that case, `median_prev_rank` is the activated rank such that
+            # the cumulative weight up to it included is exactly half_weight.
+            # In this case we take the mid-point:
+            median = (sorted_y[median_prev_rank] + sorted_y[median_rank]) / 2
+        else:
+            # if there are no exact match for half_weight in the cumulative weights
+            # `median_rank == median_prev_rank` and the median is:
+            median = sorted_y[median_rank]
+
+        # Convert left prefix sums into right-hand complements.
+        w_right = tree.total_w - w_left
+        wy_right = tree.total_wy - wy_left
+
+        medians[p] = median
+        # Pinball-loss identity for absolute error at the current set:
+        #   sum_{y_i >= m} w_i (y_i - m) = wy_right - m * w_right
+        #   sum_{y_i <  m} w_i (m - y_i) = m * w_left  - wy_left
+        abs_errors[p] += (
+            (wy_right - median * w_right)
+            + (median * w_left - wy_left)
+        )
+        p += step
+
+
+cdef inline void compute_ranks(
+    float64_t* sorted_y,
+    intp_t* sorted_indices,
+    intp_t* ranks,
+    intp_t n
+) noexcept nogil:
+    """Sort `sorted_y` inplace and fill `ranks` accordingly"""
+    cdef intp_t i
+    for i in range(n):
+        sorted_indices[i] = i
+    sort(sorted_y, sorted_indices, n)
+    for i in range(n):
+        ranks[sorted_indices[i]] = i
+
+
+def _py_precompute_absolute_errors(
     const float64_t[:, ::1] ys,
     const float64_t[:] sample_weight,
     const intp_t[:] sample_indices,
     const intp_t start,
     const intp_t end,
-    float64_t q=0.5,
+    const intp_t n,
 ):
     """Used for testing precompute_absolute_errors."""
     cdef:
-        intp_t n = end - start if start < end else start - end
-        WeightedHeap above = WeightedHeap(n, True)
-        WeightedHeap below = WeightedHeap(n, False)
-        intp_t k = 0
-        float64_t[::1] losses = np.zeros(n, dtype=np.float64)
-        float64_t[::1] quantiles = np.zeros(n, dtype=np.float64)
+        intp_t p, i
+        intp_t s = start
+        intp_t e = end
+        WeightedFenwickTree tree = WeightedFenwickTree(n)
+        float64_t[::1] sorted_y = np.empty(n, dtype=np.float64)
+        intp_t[::1] sorted_indices = np.empty(n, dtype=np.intp)
+        intp_t[::1] ranks = np.empty(n, dtype=np.intp)
+        float64_t[::1] abs_errors = np.zeros(n, dtype=np.float64)
+        float64_t[::1] medians = np.empty(n, dtype=np.float64)
 
-    precompute_pinball_losses(
-        ys, sample_weight, sample_indices, above, below,
-        k, start, end, q, losses, quantiles
+    if start > end:
+        s = end + 1
+        e = start + 1
+    for p in range(s, e):
+        i = sample_indices[p]
+        sorted_y[p - s] = ys[i, 0]
+    compute_ranks(&sorted_y[0], &sorted_indices[0], &ranks[s], n)
+
+    precompute_absolute_errors(
+        sorted_y, ranks, sample_weight, sample_indices, tree,
+        start, end, abs_errors, medians
     )
-    return np.asarray(losses), np.asarray(quantiles)
+    return np.asarray(abs_errors)[s:e], np.asarray(medians)[s:e]
 
 
 cdef class Pinball(Criterion):
+    # TODO: update the docstring below (MAE -> Pinball)
     r"""Mean absolute error impurity criterion.
 
-    MAE = (1 / n)*(\sum_i |y_i - f_i|), where y_i is the true
-    value and f_i is the predicted value.
-
     It has almost nothing in common with other regression criterions
-    so it doesn't inherit from RegressionCriterion
+    so it doesn't inherit from RegressionCriterion.
+
+    MAE = (1 / n)*(\sum_i |y_i - p_i|), where y_i is the true
+    value and p_i is the predicted value.
+    In a decision tree, that prediction is the (weighted) median
+    of the targets in the node.
+
+    How this implementation works
+    -----------------------------
+    This class precomputes in `reset`, for the current node,
+    the absolute-error values and corresponding medians for all
+    potential split positions: every p in [start, end).
+
+    For that:
+    - We first compute the rank of each samples node-local sorted order of target values.
+      `self.ranks[p]` gives the rank of sample p.
+    - While iterating the segment of indices (p in [start, end)), we
+        * "activate" one sample at a time at its rank within a prefix sum tree,
+          the `WeightedFenwickTree`: `tree.add(rank, y, weight)`
+          The tree maintains cumulative sums of weights and of `weight * y`
+        * search for the half total weight in the tree:
+          `tree.search(current_total_weight / 2)`.
+          This allows us to retrieve/compute:
+            * the current weighted median value
+            * the absolute-error contribution via the standard pinball-loss identity:
+              AE = (wy_right - median * w_right) + (median * w_left - wy_left)
+    - We perform two such passes:
+        * one forward from `start` to `end - 1` to fill `left_abs_errors[p]` and
+          `left_medians[p]` for left children.
+        * one backward from `end - 1` down to `start` to fill
+          `right_abs_errors[p]` and `right_medians[p]` for right children.
+
+    Complexity: time complexity is O(n log n), indeed:
+    - computing ranks is based on sorting: O(n log n)
+    - add and search operations in the Fenwick tree are O(log n).
+      => the forward and backward passes are O(n log n).
+
+    How the other methods use the precomputations
+    --------------------------------------------
+    - `reset` performs the precomputation described above.
+      It also stores the node weighted median per output in
+      `node_medians` (prediction value of the node).
+
+    - `update(new_pos)` only updates `weighted_n_left` and `weighted_n_right`;
+      no recomputation of errors is needed.
+
+    - `children_impurity` reads the precomputed absolute errors at
+      `left_abs_errors[pos - 1]` and `right_abs_errors[pos]` and scales
+      them by the corresponding child weights and `n_outputs` to report the
+      impurity of each child.
+
+    - `middle_value` and `check_monotonicity` use the precomputed
+      `left_medians[pos - 1]` and `right_medians[pos]` to derive the
+      mid-point value and to validate monotonic constraints when enabled.
+
+    - Missing values are not supported for MAE: `init_missing` raises.
+
+    For a complementary, in-depth discussion of the mathematics and design
+    choices, see the external report:
+    https://github.com/cakedev0/fast-mae-split/blob/main/report.ipynb
     """
     cdef float64_t alpha
     cdef float64_t[::1] node_quantiles
@@ -1346,8 +1531,10 @@ cdef class Pinball(Criterion):
     cdef float64_t[::1] right_pinball_losses
     cdef float64_t[::1] left_quantiles
     cdef float64_t[::1] right_quantiles
-    cdef WeightedHeap above
-    cdef WeightedHeap below
+    cdef float64_t[::1] sorted_y
+    cdef intp_t [::1] sorted_indices
+    cdef intp_t[::1] ranks
+    cdef WeightedFenwickTree prefix_sum_tree
 
     def __cinit__(self, intp_t n_outputs, intp_t n_samples, float64_t alpha):
         """Initialize parameters for this criterion.
@@ -1382,8 +1569,22 @@ cdef class Pinball(Criterion):
         self.right_pinball_losses = np.empty(n_samples, dtype=np.float64)
         self.left_quantiles = np.empty(n_samples, dtype=np.float64)
         self.right_quantiles = np.empty(n_samples, dtype=np.float64)
-        self.above = WeightedHeap(n_samples, True)   # min-heap
-        self.below = WeightedHeap(n_samples, False)  # max-heap
+        self.ranks = np.empty(n_samples, dtype=np.intp)
+        # Important: The arrays declared above are indexed with
+        # the absolute position `p` in `sample_indices` (not with a 0-based offset).
+        # The forward and backward passes in `reset` method ensure that
+        # for any current split position `pos` we can read:
+        # - left child precomputed values at `p = pos - 1`, and
+        # - right child precomputed values at `p = pos`.
+
+        self.prefix_sum_tree = WeightedFenwickTree(n_samples)
+        # used memory: 2 float64 arrays of size n_samples + 1
+        # we reuse a single `WeightedFenwickTree` instance to build prefix
+        # and suffix aggregates over the node samples.
+
+        # Work buffer arrays, used with 0-based offset:
+        self.sorted_y = np.empty(n_samples, dtype=np.float64)
+        self.sorted_indices = np.empty(n_samples, dtype=np.intp)
 
     cdef int init(
         self,
@@ -1402,15 +1603,17 @@ cdef class Pinball(Criterion):
         WARNING: sample_indices will be modified in-place externally
         after this method is called
         """
-        cdef intp_t i
-        cdef float64_t w = 1.0
+        cdef:
+            intp_t i, p
+            intp_t n = end - start
+            float64_t w = 1.0
         # Initialize fields
         self.y = y
         self.sample_weight = sample_weight
         self.sample_indices = sample_indices
         self.start = start
         self.end = end
-        self.n_node_samples = end - start
+        self.n_node_samples = n
         self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.
 
@@ -1439,16 +1642,23 @@ cdef class Pinball(Criterion):
 
         Reset might be called after an external class has changed
         inplace self.sample_indices[start:end], hence re-computing
-        the absolute errors is needed
+        the pinball loss is needed.
         """
+        cdef intp_t k, p, i
 
         self.weighted_n_left = 0.0
         self.weighted_n_right = self.weighted_n_node_samples
         self.pos = self.start
 
         n_bytes = self.n_node_samples * sizeof(float64_t)
-        memset(&self.left_pinball_losses[0], 0, n_bytes)
-        memset(&self.right_pinball_losses[0], 0, n_bytes)
+        memset(&self.left_pinball_losses[self.start],  0, n_bytes)
+        memset(&self.right_pinball_losses[self.start], 0, n_bytes)
+
+        # Multi-output handling:
+        # absolute errors are accumulated across outputs by
+        # incrementing `left_abs_errors` and `right_abs_errors` on each pass.
+        # The per-output medians arrays are overwritten at each output iteration
+        # as they are only used for monotonicity checks when `n_outputs == 1`.
 
         # Precompute absolute errors (summed over each output)
         # and quantiles (used only when n_outputs=1)
@@ -1459,40 +1669,62 @@ cdef class Pinball(Criterion):
         # statistics when removing samples from it. So we compute right child AEs/quantiles by
         # traversing from right to left (and hence only adding samples).
         for k in range(self.n_outputs):
-            # Note that at each iteration of this loop, we overwrite `self.left_quantiles`
-            # and `self.right_quantiles`. They are used to check for monoticity constraints,
-            # which are allowed only with n_outputs=1.
-            precompute_pinball_losses(
-                self.y, self.sample_weight, self.sample_indices,
-                self.above, self.below, k, self.start, self.end, self.alpha,
-                # left_abs_errors is incremented, left_quantiles is overwritten
-                self.left_pinball_losses, self.left_quantiles
+
+            # 1) Node-local ordering:
+            # for each output k, the values `y[sample_indices[p], k]` for p
+            # in [start, end) are copied into self.sorted_y[0:n_node_samples]`
+            # and ranked with `compute_ranks`.
+            # The resulting `self.ranks[p]` gives the rank of sample p in the
+            # node-local sorted order.
+            for p in range(self.start, self.end):
+                i = self.sample_indices[p]
+                self.sorted_y[p - self.start] = self.y[i, k]
+
+            compute_ranks(
+                &self.sorted_y[0],
+                &self.sorted_indices[0],
+                &self.ranks[self.start],
+                self.n_node_samples,
             )
-            # For the right child, we consider samples from end-1 to start-1
-            # i.e., reversed, and abs error & quantile are filled in reverse order to.
-            precompute_pinball_losses(
-                self.y, self.sample_weight, self.sample_indices,
-                self.above, self.below, k, self.end - 1, self.start - 1, self.alpha,
-                # right_abs_errors is incremented, right_quantiles is overwritten
-                self.right_pinball_losses, self.right_quantiles
+
+            # 2) Forward pass
+            # from `start` to `end - 1` to fill `left_abs_errors[p]` and
+            # `left_medians[p]` for left children.
+            precompute_absolute_errors(
+                self.sorted_y, self.ranks, self.sample_weight, self.sample_indices,
+                self.prefix_sum_tree, self.start, self.end,
+                # left_abs_errors is incremented, left_medians is overwritten
+                self.left_abs_errors, self.left_medians
             )
-            # Store the quantile for the current node
-            self.node_quantiles[k] = self.right_quantiles[0]
+            # 3) Backward pass
+            # from `end - 1` down to `start` to fill `right_abs_errors[p]`
+            # and `right_medians[p]` for right children.
+            precompute_absolute_errors(
+                self.sorted_y, self.ranks, self.sample_weight, self.sample_indices,
+                self.prefix_sum_tree, self.end - 1, self.start - 1,
+                # right_abs_errors is incremented, right_medians is overwritten
+                self.right_abs_errors, self.right_medians
+            )
+
+            # Store the median for the current node: when p == self.start all the
+            # node's data points are sent to the right child, so the current node
+            # median value and the right child median value would be equal.
+            self.node_medians[k] = self.right_medians[self.start]
 
         return 0
 
     cdef int reverse_reset(self) except -1 nogil:
-        """For this class, this method is never called"""
+        """For this class, this method is never called."""
         raise NotImplementedError("This method is not implemented for this subclass")
 
     cdef int update(self, intp_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left.
-        new_pos is guaranteed to be greater than pos
+        new_pos is guaranteed to be greater than pos.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
 
-        Time complexity: O(new_pos - pos) (which usually is O(1), at least for dense data)
+        Time complexity: O(new_pos - pos) (which usually is O(1), at least for dense data).
         """
         cdef intp_t pos = self.pos
         cdef intp_t i, p
@@ -1523,10 +1755,9 @@ cdef class Pinball(Criterion):
         Monotonicity constraints are only supported for single-output trees we can safely assume
         n_outputs == 1.
         """
-        cdef intp_t j = self.pos - self.start
         return (
-            self.left_quantiles[j - 1]
-            + self.right_quantiles[j]
+            self.left_quantiles[self.pos - 1]
+            + self.right_quantiles[self.pos]
         ) / 2
 
     cdef inline bint check_monotonicity(
@@ -1536,11 +1767,9 @@ cdef class Pinball(Criterion):
         float64_t upper_bound,
     ) noexcept nogil:
         """Check monotonicity constraint is satisfied at the current regression split"""
-        cdef intp_t j = self.pos - self.start
-
         return self._check_monotonicity(
             monotonic_cst, lower_bound, upper_bound,
-            self.left_quantiles[j - 1], self.right_quantiles[j])
+            self.left_medians[self.pos - 1], self.right_medians[self.pos])
 
     cdef float64_t node_impurity(self) noexcept nogil:
         """Evaluate the impurity of the current node.
@@ -1565,19 +1794,18 @@ cdef class Pinball(Criterion):
 
         Time complexity: O(1) (precomputed in `.reset()`)
         """
-        cdef intp_t j = self.pos - self.start
         cdef float64_t impurity_left = 0.0
         cdef float64_t impurity_right = 0.0
 
         # if pos == start, left child is empty, hence impurity is 0
         if self.pos > self.start:
-            impurity_left += self.left_pinball_losses[j - 1]
+            impurity_left += self.left_pinball_losses[self.pos - 1]
         p_impurity_left[0] = impurity_left / (self.weighted_n_left *
                                               self.n_outputs)
 
         # if pos == end, right child is empty, hence impurity is 0
         if self.pos < self.end:
-            impurity_right += self.right_pinball_losses[j]
+            impurity_right += self.right_pinball_losses[self.pos]
         p_impurity_right[0] = impurity_right / (self.weighted_n_right *
                                                 self.n_outputs)
 
@@ -1599,7 +1827,7 @@ cdef class MAE(Pinball):
     And the absolute error is twice the pinball_loss (with alpha=0.5)
     """
 
-    # FIXME/XXX: Trust the instanciater to pass alpha=0.5 to the __cinit__...
+    # XXX: Trust the instanciater to pass alpha=0.5 to the __cinit__...
 
     cdef float64_t node_impurity(self) noexcept nogil:
         return 2 * Pinball.node_impurity(self)

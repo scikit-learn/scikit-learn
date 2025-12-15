@@ -14,7 +14,7 @@ jobs:
     name: A reviewer will let you know if it is required or can be bypassed
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: '0'
       - name: Check if tests have changed
@@ -23,14 +23,29 @@ jobs:
           set -xe
           changed_files=$(git diff --name-only origin/main)
           # Changelog should be updated only if tests have been modified
-          if [[ "$changed_files" =~ tests ]]
+          if [[ "$changed_files" =~ sklearn\/.+test_.+\.py ]]
           then
             echo "check_changelog=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Check changelog entry
         if: steps.tests_changed.outputs.check_changelog == 'true'
-        uses: scientific-python/action-towncrier-changelog@v1
+        uses: scientific-python/action-towncrier-changelog@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BOT_USERNAME: changelog-bot
+
+      - name: Link to changelog instructions
+        if: failure()
+        run: |
+
+          cat << EOF
+          - if your PR is likely to affect users, you will need to add a changelog entry describing your PR changes
+          - otherwise you don't need to do anything, a maintainer will set the relevant label to make this CI build pass
+
+          See instructions on how to write a changelog entry:
+          https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md
+
+          EOF
+
+          exit 1

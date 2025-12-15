@@ -35,7 +35,7 @@ jobs:
       build: ${{ steps.check_build_trigger.outputs.build }}
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
@@ -63,11 +63,11 @@ jobs:
     if: needs.check_build_trigger.outputs.build
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
 
-      - uses: pypa/cibuildwheel@9e4e50bd76b3190f55304387e333f6234823ea9b
+      - uses: pypa/cibuildwheel@9c00cb4f6b517705a3794b22395aedc36257242c # v3.2.1
         env:
           CIBW_PLATFORM: pyodide
           SKLEARN_SKIP_OPENMP_TEST: "true"
@@ -77,7 +77,7 @@ jobs:
           CIBW_TEST_COMMAND: "python -m pytest -sra --pyargs sklearn --durations 20 --showlocals"
 
       - name: Upload wheel artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: pyodide_wheel
           path: ./wheelhouse/*.whl
@@ -94,7 +94,7 @@ jobs:
     if: github.repository == 'scikit-learn/scikit-learn' && github.event_name != 'pull_request'
     steps:
       - name: Download wheel artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           path: wheelhouse/
           merge-multiple: true

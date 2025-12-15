@@ -50,7 +50,7 @@ def _sqeuclidean_row_norms_sparse(
 def csr_mean_variance_axis0(X, weights=None, return_sum_weights=False):
     """Compute mean and variance along axis 0 on a CSR matrix
 
-    Uses a np.float64 accumulator.
+    Uses an np.float64 accumulator.
 
     Parameters
     ----------
@@ -184,7 +184,7 @@ def _csr_mean_variance_axis0(
 def csc_mean_variance_axis0(X, weights=None, return_sum_weights=False):
     """Compute mean and variance along axis 0 on a CSC matrix
 
-    Uses a np.float64 accumulator.
+    Uses an np.float64 accumulator.
 
     Parameters
     ----------

@@ -5,7 +5,7 @@ Comparing Linear Bayesian Regressors
 
 This example compares two different bayesian regressors:
 
-- a :ref:`automatic_relevance_determination`
+- an :ref:`automatic_relevance_determination`
 - a :ref:`bayesian_ridge_regression`
 
 In the first part, we use an :ref:`ordinary_least_squares` (OLS) model as a
