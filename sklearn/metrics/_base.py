@@ -11,6 +11,7 @@ from itertools import combinations
 import numpy as np
 
 from sklearn.utils import check_array, check_consistent_length
+from sklearn.utils._array_api import get_namespace
 from sklearn.utils.multiclass import type_of_target
 
 
@@ -19,6 +20,9 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
 
     Parameters
     ----------
+    binary_metric : callable, returns shape [n_classes]
+        The binary metric function to use.
+
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
         True binary labels in binary label indicators.
 
@@ -47,9 +51,6 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    binary_metric : callable, returns shape [n_classes]
-        The binary metric function to use.
-
     Returns
     -------
     score : float or array of shape [n_classes]
@@ -57,6 +58,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         classes.
 
     """
+    xp, _ = get_namespace(y_true, y_score, sample_weight)
     average_options = (None, "micro", "macro", "weighted", "samples")
     if average not in average_options:
         raise ValueError("average has to be one of {0}".format(average_options))
@@ -70,6 +72,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
 
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = check_array(y_true)
+    # TODO: raises here because y_score is not 2D, odd it hadn't raised before...
     y_score = check_array(y_score)
 
     not_average_axis = 1
@@ -78,7 +81,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
 
     if average == "micro":
         if score_weight is not None:
-            score_weight = np.repeat(score_weight, y_true.shape[1])
+            score_weight = xp.repeat(score_weight, y_true.shape[1])
         y_true = y_true.ravel()
         y_score = y_score.ravel()
 

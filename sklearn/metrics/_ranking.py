@@ -21,7 +21,7 @@ from scipy.stats import rankdata
 
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics._base import _average_binary_score, _average_multiclass_ovo_score
-from sklearn.preprocessing import label_binarize
+from sklearn.preprocessing import LabelBinarizer, label_binarize
 from sklearn.utils import (
     assert_all_finite,
     check_array,
@@ -30,6 +30,7 @@ from sklearn.utils import (
 )
 from sklearn.utils._array_api import (
     _max_precision_float_dtype,
+    get_namespace,
     get_namespace_and_device,
     size,
 )
@@ -224,27 +225,32 @@ def average_precision_score(
     >>> average_precision_score(y_true, y_scores)
     0.77
     """
+    xp, _ = get_namespace(y_true, y_score, sample_weight)
 
     def _binary_uninterpolated_average_precision(
-        y_true, y_score, pos_label=1, sample_weight=None
+        y_true,
+        y_score,
+        pos_label=1,
+        sample_weight=None,
+        xp=xp,
     ):
         precision, recall, _ = precision_recall_curve(
-            y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
+            y_true,
+            y_score,
+            pos_label=pos_label,
+            sample_weight=sample_weight,
         )
         # Return the step function integral
         # The following works because the last entry of precision is
         # guaranteed to be 1, as returned by precision_recall_curve.
         # Due to numerical error, we can get `-0.0` and we therefore clip it.
-        return float(max(0.0, -np.sum(np.diff(recall) * np.array(precision)[:-1])))
+        return float(max(0.0, -xp.sum(xp.diff(recall) * xp.asarray(precision)[:-1])))
 
     y_type = type_of_target(y_true, input_name="y_true")
-
-    # Convert to Python primitive type to avoid NumPy type / Python str
-    # comparison. See https://github.com/numpy/numpy/issues/6784
-    present_labels = np.unique(y_true).tolist()
+    present_labels = xp.unique_values(y_true)
 
     if y_type == "binary":
-        if len(present_labels) == 2 and pos_label not in present_labels:
+        if present_labels.shape[0] == 2 and pos_label not in present_labels:
             raise ValueError(
                 f"pos_label={pos_label} is not a valid label. It should be "
                 f"one of {present_labels}"
@@ -262,10 +268,10 @@ def average_precision_score(
                 "Parameter pos_label is fixed to 1 for multiclass y_true. "
                 "Do not set pos_label or set pos_label to 1."
             )
-        y_true = label_binarize(y_true, classes=present_labels)
+        y_true = LabelBinarizer().fit_transform(y_true)
 
     average_precision = partial(
-        _binary_uninterpolated_average_precision, pos_label=pos_label
+        _binary_uninterpolated_average_precision, pos_label=pos_label, xp=xp
     )
     return _average_binary_score(
         average_precision, y_true, y_score, average, sample_weight=sample_weight
