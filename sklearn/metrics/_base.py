@@ -123,7 +123,6 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         if average_weight is not None:
             # Scores with 0 weights are forced to be 0, preventing the average
             # score from being affected by 0-weighted NaN elements.
-            average_weight = xp.asarray(average_weight, xp=xp, device=_device)
             score[average_weight == 0] = 0
         return float(np.average(score, weights=average_weight))
     else:

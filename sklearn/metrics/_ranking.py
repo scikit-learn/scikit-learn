@@ -269,6 +269,8 @@ def average_precision_score(
                 "Do not set pos_label or set pos_label to 1."
             )
         y_true = label_binarize(y_true, classes=present_labels)
+        # convert dtype of y_true to floats, to satisfy array_api_strict error:
+        y_true = xp.astype(xp.asarray(y_true), xp.float64, copy=False)
 
     average_precision = partial(
         _binary_uninterpolated_average_precision, pos_label=pos_label, xp=xp
