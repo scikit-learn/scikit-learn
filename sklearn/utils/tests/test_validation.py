@@ -76,6 +76,7 @@ from sklearn.utils.validation import (
     _estimator_has,
     _get_feature_names,
     _is_fitted,
+    _normalize_na_key,
     _num_features,
     _num_samples,
     _to_object_array,
@@ -2355,3 +2356,28 @@ def test_check_array_on_sparse_inputs_with_array_api_enabled():
 def test_check_array_allow_nd_errors(X, estimator, expected_error_message):
     with pytest.raises(ValueError, match=expected_error_message):
         check_array(X, estimator=estimator)
+
+
+def test_norm_key_real_values_cover_nan_nat_and_strings():
+    """
+    Check that `_normalize_na_key` maps NA-like values (None, float NaN,
+    datetime/timedelta NaT) to stable sentinel objects while leaving
+    ordinary strings unchanged, and that the sentinels for each NA family
+    are distinct from one another.
+    """
+    k_none = _normalize_na_key(None)
+
+    k_nan1 = _normalize_na_key(float("nan"))
+    k_nan2 = _normalize_na_key(np.float64(np.nan))
+    assert k_nan1 is k_nan2
+
+    k_str = _normalize_na_key("x")
+    assert k_str == "x"
+
+    k_nat_dt = _normalize_na_key(np.datetime64("NaT"))
+    k_nat_td = _normalize_na_key(np.timedelta64("NaT"))
+    assert k_nat_dt is k_nat_td
+
+    assert k_none is not k_nan1 and k_none is not k_nat_dt
+    assert k_nan1 is not k_nat_dt and k_nan1 != "x"
+    assert k_nat_dt != "x"

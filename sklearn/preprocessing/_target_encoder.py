@@ -370,7 +370,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         norm_key = _norm_key
 
         for j in range(n_features):
-            # get = index_maps[j].get
             col = X_arr[:, j]
 
             if is_multi:
@@ -408,10 +407,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         :meth:`TargetEncoder.fit_transform` to transform test data.
 
         .. note::
-            ``fit(X, y).transform(X)`` does not equal :meth:`fit_transform(X, y)`
-            because a :term:`cross fitting` scheme is used in
-            :meth:`fit_transform` for encoding. See the
-            :ref:`User Guide <target_encoder>` for details.
+            `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
+            :term:`cross fitting` scheme is used in `fit_transform` for encoding.
+            See the :ref:`User Guide <target_encoder>` for details.
 
         Parameters
         ----------
