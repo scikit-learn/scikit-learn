@@ -205,22 +205,6 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           disable_search: true
 
-      - name: Get job ID from REST API
-        id: jobid
-        if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
-        run: |
-          job_name='${{ matrix.name }}'
-
-          # Get job list for this run
-          json=$(curl -s -H "Authorization: Bearer ${{ secrets.BOT_GITHUB_TOKEN }}" \
-                        -H "Accept: application/vnd.github+json" \
-                        "https://api.github.com/repos/${{ github.repository }}/actions/runs/$GITHUB_RUN_ID/jobs")
-
-          # Extract the job ID matching the current job name
-          job_id=$(echo "$json" | jq -r ".jobs[] | select(.name == \"$job_name\") | .id")
-
-          echo "job_id=$job_id" >> $GITHUB_OUTPUT
-
       - name: Update tracking issue
         if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
         run: |
@@ -238,6 +222,7 @@ jobs:
             ${{ secrets.BOT_GITHUB_TOKEN }} \
             "$GITHUB_WORKFLOW ${{ matrix.name }}" \
             "$GITHUB_REPOSITORY" \
-            https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/job/$job_id \
+            https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID \
             --tests-passed $TESTS_PASSED \
-            --auto-close false
+            --auto-close false \
+            --job-name "${{ matrix.name }}"
