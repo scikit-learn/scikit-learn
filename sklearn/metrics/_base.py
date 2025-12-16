@@ -10,8 +10,9 @@ from itertools import combinations
 
 import numpy as np
 
+import sklearn.externals.array_api_extra as xpx
 from sklearn.utils import check_array, check_consistent_length
-from sklearn.utils._array_api import get_namespace
+from sklearn.utils._array_api import _ravel, get_namespace_and_device
 from sklearn.utils.multiclass import type_of_target
 
 
@@ -58,7 +59,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         classes.
 
     """
-    xp, _ = get_namespace(y_true, y_score, sample_weight)
+    xp, _, _device = get_namespace_and_device(y_true, y_score, sample_weight)
     average_options = (None, "micro", "macro", "weighted", "samples")
     if average not in average_options:
         raise ValueError("average has to be one of {0}".format(average_options))
@@ -72,7 +73,6 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
 
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = check_array(y_true)
-    # TODO: raises here because y_score is not 2D, odd it hadn't raised before...
     y_score = check_array(y_score)
 
     not_average_axis = 1
@@ -82,17 +82,17 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
     if average == "micro":
         if score_weight is not None:
             score_weight = xp.repeat(score_weight, y_true.shape[1])
-        y_true = y_true.ravel()
-        y_score = y_score.ravel()
+        y_true = _ravel(y_true)
+        y_score = _ravel(y_score)
 
     elif average == "weighted":
         if score_weight is not None:
-            average_weight = np.sum(
-                np.multiply(y_true, np.reshape(score_weight, (-1, 1))), axis=0
+            average_weight = xp.sum(
+                xp.multiply(y_true, xp.reshape(score_weight, (-1, 1))), axis=0
             )
         else:
-            average_weight = np.sum(y_true, axis=0)
-        if np.isclose(average_weight.sum(), 0.0):
+            average_weight = xp.sum(y_true, axis=0)
+        if xpx.isclose(xp.sum(average_weight), 0):
             return 0
 
     elif average == "samples":
@@ -102,16 +102,20 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         not_average_axis = 0
 
     if y_true.ndim == 1:
-        y_true = y_true.reshape((-1, 1))
+        y_true = xp.reshape(y_true, (-1, 1))
 
     if y_score.ndim == 1:
-        y_score = y_score.reshape((-1, 1))
+        y_score = xp.reshape(y_score, (-1, 1))
 
     n_classes = y_score.shape[not_average_axis]
-    score = np.zeros((n_classes,))
+    score = xp.zeros((n_classes,))
     for c in range(n_classes):
-        y_true_c = y_true.take([c], axis=not_average_axis).ravel()
-        y_score_c = y_score.take([c], axis=not_average_axis).ravel()
+        y_true_c = _ravel(
+            xp.take(y_true, xp.asarray([c], device=_device), axis=not_average_axis)
+        )
+        y_score_c = _ravel(
+            xp.take(y_score, xp.asarray([c], device=_device), axis=not_average_axis)
+        )
         score[c] = binary_metric(y_true_c, y_score_c, sample_weight=score_weight)
 
     # Average the results
@@ -119,7 +123,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         if average_weight is not None:
             # Scores with 0 weights are forced to be 0, preventing the average
             # score from being affected by 0-weighted NaN elements.
-            average_weight = np.asarray(average_weight)
+            average_weight = xp.asarray(average_weight, xp=xp, device=_device)
             score[average_weight == 0] = 0
         return float(np.average(score, weights=average_weight))
     else:

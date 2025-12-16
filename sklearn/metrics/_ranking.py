@@ -21,7 +21,7 @@ from scipy.stats import rankdata
 
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics._base import _average_binary_score, _average_multiclass_ovo_score
-from sklearn.preprocessing import LabelBinarizer, label_binarize
+from sklearn.preprocessing import label_binarize
 from sklearn.utils import (
     assert_all_finite,
     check_array,
@@ -268,7 +268,7 @@ def average_precision_score(
                 "Parameter pos_label is fixed to 1 for multiclass y_true. "
                 "Do not set pos_label or set pos_label to 1."
             )
-        y_true = LabelBinarizer().fit_transform(y_true)
+        y_true = label_binarize(y_true, classes=present_labels)
 
     average_precision = partial(
         _binary_uninterpolated_average_precision, pos_label=pos_label, xp=xp
