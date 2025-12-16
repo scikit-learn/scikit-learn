@@ -12,10 +12,11 @@ from sklearn.utils.fixes import SCIPY_VERSION_BELOW_1_12
 
 def _align_api_if_sparse(X):
     """
-    Convert to sparse interface as set in config. Input can be dense or sparse.
+    Convert to sparse interface as set in config.
+
+    Input can be dense or sparse.
     If sparse, convert to sparse_interface indicated by get_config.
     Otherwise, return X unchanged.
-
     """
     if not sp.sparse.issparse(X):
         return X
