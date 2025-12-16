@@ -56,6 +56,18 @@ def test_n_features_with_MinimalTransformer():
     estimator_html_repr(model)
 
 
+def test_remainder_passthrough():
+    X = np.array([[0, 1], [1, 1]])
+    y = np.array([[0, 1]])
+
+    ct = ColumnTransformer(
+        [("minimal", MinimalTransformer(), [0])], remainder="passthrough"
+    )
+    model = Pipeline([("transformer", ct)])
+    model.fit(X, y)
+    assert "passthrough" in estimator_html_repr(model)
+
+
 def test_features_html_no_fitted_class():
     """Test that features HTML is generated without fitted CSS class."""
     features = ["feature1", "feature2", "feature3"]
