@@ -6,6 +6,7 @@ import joblib
 import numpy as np
 import pytest
 import scipy.sparse as sp
+from scipy.optimize import minimize
 
 from sklearn import datasets, linear_model, metrics
 from sklearn.base import clone, is_classifier
@@ -2305,3 +2306,61 @@ def test_sgd_one_class_svm_estimator_type():
     """
     sgd_ocsvm = SGDOneClassSVM()
     assert get_tags(sgd_ocsvm).estimator_type == "outlier_detector"
+
+
+def test_sgd_one_class_svm_formulation_with_scipy_minimize():
+    """
+    Test that the objective formulation of `SGDOneClassSVM` is appropriate by
+    checking that the converged parameters are close enough to the ones output
+    by scipy's `minimize` function using "L-BFGS-B".
+    """
+    nu = 0.5
+    hinge_threshold = 1.0
+    n_samples, n_features = 300, 20
+    random_seed = 42
+
+    def objective_and_grad(w, X, y, alpha):
+        weights = w[:-1]
+        intercept = w[-1]
+        p = X @ weights + intercept
+        z = p * y
+        n_samples, n_features = X.shape
+        sum_loss = np.where(z <= hinge_threshold, hinge_threshold - z, 0.0).sum()
+        avg_loss = sum_loss / n_samples
+        reg = 0.5 * alpha * np.dot(weights, weights)
+        obj = avg_loss + reg + (intercept * alpha)
+        grad_pointwise = np.where(z <= hinge_threshold, -y, 0.0)
+        grad_pointwise /= n_samples
+        grad = np.empty_like(w)
+        grad[:n_features] = X.T @ grad_pointwise + alpha * weights
+        grad[-1] = grad_pointwise.sum() + alpha
+        return obj, grad
+
+    rng = np.random.RandomState(random_seed)
+    X = rng.rand(n_samples, n_features)
+    y = np.ones(n_samples, dtype=X.dtype)
+    w0 = np.zeros(n_features + 1)
+    scipy_output = minimize(
+        objective_and_grad,
+        w0,
+        method="L-BFGS-B",
+        jac=True,
+        args=(X, y, nu),
+        options={"maxiter": 100},
+    )
+    w_out = scipy_output.x
+    expected_coef = w_out[:-1]
+    expected_offset = 1 - w_out[-1]
+
+    model = SGDOneClassSVM(
+        nu=nu,
+        learning_rate="constant",
+        max_iter=4000,
+        tol=None,
+        eta0=1e-4,
+        random_state=random_seed,
+    )
+    model.fit(X, y)
+
+    assert_allclose(model.coef_, expected_coef, rtol=3e-3)
+    assert_allclose(model.offset_, expected_offset, rtol=1e-4)
