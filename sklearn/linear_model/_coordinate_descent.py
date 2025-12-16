@@ -2764,6 +2764,7 @@ class MultiTaskElasticNet(Lasso):
             self.tol,
             check_random_state(self.random_state),
             random,
+            do_screening=True,
         )
 
         # account for different objective scaling here and in cd_fast

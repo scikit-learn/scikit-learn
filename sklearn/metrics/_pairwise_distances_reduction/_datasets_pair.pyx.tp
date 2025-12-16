@@ -64,12 +64,12 @@ cdef class DatasetsPair{{name_suffix}}:
         ----------
         X : {ndarray, sparse matrix} of shape (n_samples_X, n_features)
             Input data.
-            If provided as a ndarray, it must be C-contiguous.
+            If provided as an ndarray, it must be C-contiguous.
             If provided as a sparse matrix, it must be in CSR format.
 
         Y : {ndarray, sparse matrix} of shape (n_samples_Y, n_features)
             Input data.
-            If provided as a ndarray, it must be C-contiguous.
+            If provided as an ndarray, it must be C-contiguous.
             If provided as a sparse matrix, it must be in CSR format.
 
         metric : str or DistanceMetric object, default='euclidean'

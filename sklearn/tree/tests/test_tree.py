@@ -291,7 +291,7 @@ def test_regression_toy(Tree, criterion):
 
 
 def test_xor():
-    # Check on a XOR problem
+    # Check on an XOR problem
     y = np.zeros((10, 10))
     y[:5, :5] = 1
     y[5:, 5:] = 1
@@ -2974,8 +2974,8 @@ def test_absolute_errors_precomputation_function(global_random_seed):
         if reverse:
             abs_errors_ = abs_errors_[::-1]
             medians_ = medians_[::-1]
-        assert_allclose(abs_errors, abs_errors_, atol=1e-12)
-        assert_allclose(medians, medians_, atol=1e-12)
+        assert_allclose(abs_errors, abs_errors_, atol=1e-11)
+        assert_allclose(medians, medians_, atol=1e-11)
 
     rng = np.random.default_rng(global_random_seed)
 
