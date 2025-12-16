@@ -1212,7 +1212,7 @@ def test_average_precision_score_multilabel_pos_label_errors():
 def test_average_precision_score_multiclass_pos_label_errors():
     # Raise an error for multiclass y_true with pos_label other than 1
     y_true = np.array([0, 1, 2, 0, 1, 2])
-    y_pred = np.array(
+    y_score = np.array(
         [
             [0.5, 0.2, 0.1],
             [0.4, 0.5, 0.3],
@@ -1227,7 +1227,17 @@ def test_average_precision_score_multiclass_pos_label_errors():
         "Do not set pos_label or set pos_label to 1."
     )
     with pytest.raises(ValueError, match=err_msg):
-        average_precision_score(y_true, y_pred, pos_label=3)
+        average_precision_score(y_true, y_score, pos_label=3)
+
+
+def test_average_precision_score_multiclass_raises_for_incoherent_input_shapes():
+    # Test than an error is raised for multiclass `y_true` if `y_score` is provided as a
+    # 1D array.
+    y_true = np.array([0, 1, 2, 0, 1, 2])
+    y_score = np.array([0.5, 0.4, 0.8, 0.9, 0.8, 0.7])
+    msg = re.escape("`y_score` needs to be of shape `(n_samples, n_classes)`")
+    with pytest.raises(ValueError, match=msg):
+        average_precision_score(y_true, y_score)
 
 
 def test_score_scale_invariance():
