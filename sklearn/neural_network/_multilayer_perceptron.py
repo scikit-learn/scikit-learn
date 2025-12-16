@@ -1772,7 +1772,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             reset=reset,
         )
         if y.ndim == 2 and y.shape[1] == 1:
-            y = column_or_1d(y, warn=True)
+            y = column_or_1d(y, warn=False)
         return X, y
 
     @available_if(lambda est: est._check_solver)

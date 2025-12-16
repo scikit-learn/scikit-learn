@@ -161,7 +161,6 @@ def test_balance_property(model, with_sample_weight, global_random_seed):
 
 @pytest.mark.filterwarnings("ignore:The default of 'normalize'")
 @pytest.mark.filterwarnings("ignore:lbfgs failed to converge")
-@pytest.mark.filterwarnings("ignore:A column-vector y was passed when a 1d array.*")
 @pytest.mark.parametrize(
     "Regressor",
     [

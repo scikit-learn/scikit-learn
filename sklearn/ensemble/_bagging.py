@@ -633,7 +633,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
     def _validate_y(self, y):
         if len(y.shape) == 1 or y.shape[1] == 1:
-            return column_or_1d(y, warn=True)
+            return column_or_1d(y, warn=False)
         return y
 
     def _get_estimators_indices(self):

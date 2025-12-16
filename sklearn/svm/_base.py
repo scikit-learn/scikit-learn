@@ -305,7 +305,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         Default implementation for SVR and one-class; overridden in BaseSVC.
         """
-        return column_or_1d(y, warn=True).astype(np.float64, copy=False)
+        return column_or_1d(y, warn=False).astype(np.float64, copy=False)
 
     def _warn_from_fit_status(self):
         assert self.fit_status_ in (0, 1)

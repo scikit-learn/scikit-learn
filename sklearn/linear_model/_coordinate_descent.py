@@ -1753,7 +1753,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 raise ValueError(
                     "For multi-task outputs, use MultiTask%s" % self.__class__.__name__
                 )
-            y = column_or_1d(y, warn=True)
+            y = column_or_1d(y, warn=False)
         else:
             if sparse.issparse(X):
                 raise TypeError("X should be dense but a sparse matrix was passed.")
