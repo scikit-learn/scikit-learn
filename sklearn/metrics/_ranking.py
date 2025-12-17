@@ -267,7 +267,7 @@ def average_precision_score(
         if not y_score.shape == y_true.shape:
             raise ValueError(
                 "`y_score` needs to be of shape `(n_samples, n_classes)`, since "
-                "`y_true` contains multiple classes. Got {y_score}."
+                f"`y_true` contains multiple classes. Got {y_score}."
             )
 
     average_precision = partial(
