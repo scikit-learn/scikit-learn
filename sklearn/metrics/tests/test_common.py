@@ -2558,7 +2558,7 @@ def test_mixed_array_api_namespace_input_compliance(
                 sample_weight_np = np.array(sample_weight)
                 metric_kwargs_np = {**metric_kwargs, "sample_weight": sample_weight_np}
                 sample_weight_xp = xp_from.asarray(
-                    sample_weight_np, device=from_ns_and_device.device, dtype=dtype
+                    sample_weight_np, device=from_ns_and_device.device
                 )
                 metric_kwargs_xp = {**metric_kwargs, "sample_weight": sample_weight_xp}
 
