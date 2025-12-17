@@ -215,8 +215,6 @@ jobs:
             TESTS_PASSED=false
           fi
 
-          job_id=${{ steps.jobid.outputs.job_id }}
-
           pip install defusedxml PyGithub
           python maint_tools/update_tracking_issue.py \
             ${{ secrets.BOT_GITHUB_TOKEN }} \
