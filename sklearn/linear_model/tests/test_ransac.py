@@ -1,9 +1,11 @@
+import warnings
+
 import numpy as np
 import pytest
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 from sklearn.datasets import make_regression
-from sklearn.exceptions import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning, UndefinedMetricWarning
 from sklearn.linear_model import (
     LinearRegression,
     OrthogonalMatchingPursuit,
@@ -135,6 +137,37 @@ def test_ransac_stop_score():
     ransac_estimator.fit(X, y)
 
     assert ransac_estimator.n_trials_ == 1
+
+
+def test_ransac_no_undefined_metric_warning_when_inlier_subset_too_small(monkeypatch):
+    # Regression test for gh-32908:
+    # ensure we do not call `estimator.score` with a single inlier sample, which
+    # would trigger an UndefinedMetricWarning from R^2.
+    def _fixed_sample_without_replacement(n_population, n_samples, random_state=None):
+        return np.array([next(idxs)])
+
+    X = np.arange(4)[:, None]
+    y = np.array([0.0, 1.0, 0.0, 2.0])
+
+    # First subset uses a unique y -> 1 inlier; second uses duplicated y -> 2 inliers.
+    idxs = iter([3, 0])
+    monkeypatch.setattr(
+        "sklearn.linear_model._ransac.sample_without_replacement",
+        _fixed_sample_without_replacement,
+    )
+
+    ransac_estimator = RANSACRegressor(
+        LinearRegression(),
+        min_samples=1,
+        residual_threshold=0.0,
+        stop_n_inliers=2,
+        max_trials=2,
+        random_state=0,
+    )
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("error", category=UndefinedMetricWarning)
+        ransac_estimator.fit(X, y)
 
 
 def test_ransac_score():
