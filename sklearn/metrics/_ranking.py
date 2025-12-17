@@ -19,6 +19,7 @@ from scipy.integrate import trapezoid
 from scipy.sparse import csr_matrix, issparse
 from scipy.stats import rankdata
 
+from sklearn import get_config
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics._base import _average_binary_score, _average_multiclass_ovo_score
 from sklearn.preprocessing import label_binarize
@@ -29,6 +30,7 @@ from sklearn.utils import (
     column_or_1d,
 )
 from sklearn.utils._array_api import (
+    _convert_to_numpy,
     _max_precision_float_dtype,
     get_namespace,
     get_namespace_and_device,
@@ -226,6 +228,12 @@ def average_precision_score(
     0.77
     """
     xp, _ = get_namespace(y_true, y_score, sample_weight)
+
+    if not get_config().get("array_api_dispatch", False):
+        y_true = _convert_to_numpy(y_true, xp=xp)
+        y_score = _convert_to_numpy(y_score, xp=xp)
+        if sample_weight is not None:
+            sample_weight = _convert_to_numpy(sample_weight, xp=xp)
 
     def _binary_uninterpolated_average_precision(
         y_true,
