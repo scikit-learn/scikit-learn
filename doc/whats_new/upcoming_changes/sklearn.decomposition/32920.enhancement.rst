@@ -1,0 +1,2 @@
+- :class:`decomposition.FastICA` calls vectorized :func:`_logcosh` function.
+  By :user:`Yuria Utsumi <yuriautsumi>`
