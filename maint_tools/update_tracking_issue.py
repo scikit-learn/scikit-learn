@@ -13,6 +13,7 @@ github account that does **not** have commit access to the public repo.
 
 import argparse
 import sys
+import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -41,7 +42,8 @@ parser.add_argument(
     "--tests-passed",
     help=(
         "If --tests-passed is true, then the original issue is closed if the issue "
-        "exists. If tests-passed is false, then the issue is updated or created."
+        "exists, unless --auto-close is set to false. If tests-passed is false, then "
+        "the issue is updated or created."
     ),
 )
 parser.add_argument(
@@ -82,7 +84,7 @@ if args.job_name is not None:
             url = f"{url}/job/{job.id}"
             break
     else:
-        raise UserWarning(
+        warnings.warn(
             f"Job '{args.job_name}' not found, the URL in the issue will link to the"
             " whole workflow's log rather than the job's one."
         )
