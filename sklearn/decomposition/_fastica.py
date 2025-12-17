@@ -141,17 +141,11 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
 
 
 # Some standard non-linear functions.
-# XXX: these should be optimized, as they can be a bottleneck.
-def _logcosh(x, fun_args=None):
+def _logcosh(x, fun_args=dict()):
     alpha = fun_args.get("alpha", 1.0)  # comment it out?
-
-    x *= alpha
-    gx = np.tanh(x, x)  # apply the tanh inplace
-    g_x = np.empty(x.shape[0], dtype=x.dtype)
-    # XXX compute in chunks to avoid extra allocation
-    for i, gx_i in enumerate(gx):  # please don't vectorize.
-        g_x[i] = (alpha * (1 - gx_i**2)).mean()
-    return gx, g_x
+    np.tanh(alpha * x, x)               # apply the tanh(x*alpha) inplace
+    g_x = (alpha * (1 - x**2))
+    return x, g_x.mean(axis=-1)
 
 
 def _exp(x, fun_args):
