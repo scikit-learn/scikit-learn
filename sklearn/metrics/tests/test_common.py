@@ -2573,7 +2573,7 @@ def test_mixed_array_api_namespace_input_compliance(
                 elif hasattr(out_np, "shape"):
                     assert hasattr(out_xp, "shape")
                     assert get_namespace(out_xp)[0] == xp_to
-                    assert device(out_xp) == device(y2)
+                    assert device(out_xp) == device(y2_xp)
 
             if isinstance(metric_np, Tuple):
                 for out_np, out_xp in zip(metric_np, metric_xp):
