@@ -455,3 +455,45 @@ def test_fastica_eigh_low_rank_warning(global_random_seed):
             # random seeds but this happens after the whiten step so this is
             # not want we want to test here.
             ica.fit(X)
+
+
+def test_fastica_float32_no_nan_issue_25038():
+    """Check that FastICA does not produce NaNs for float32 (GH #25038)."""
+    import numpy as np
+    from scipy import stats
+    from sklearn.decomposition import fastica
+
+    global_random_seed = 20
+    n_samples = 1000
+
+    rng = np.random.RandomState(global_random_seed)
+
+    # Generate two sources (same as issue reproducer)
+    s1 = (2 * np.sin(np.linspace(0, 100, n_samples)) > 0) - 1
+    s2 = stats.t.rvs(1, size=n_samples, random_state=global_random_seed)
+    s = np.c_[s1, s2].T
+    s -= s.mean(axis=1, keepdims=True)
+    s /= s.std(axis=1, keepdims=True)
+    s = s.astype(np.float32)
+
+    phi = 0.6
+    mixing = np.array([
+        [np.cos(phi), np.sin(phi)],
+        [np.sin(phi), -np.cos(phi)],
+    ], dtype=np.float32)
+
+    m = mixing @ s
+    m -= m.mean(axis=1, keepdims=True)
+    m /= m.std(axis=1, keepdims=True)
+
+    problematic_seed = 13441
+    # run float32 fastica using deflation / logcosh / arbitrary-variance whitening
+    S = fastica(
+        m.T, fun="logcosh", whiten="arbitrary-variance",
+        algorithm="deflation", random_state=problematic_seed
+    )[2]
+
+    # assert stability
+    assert not np.isnan(S).any(), "FastICA produced NaNs in float32"
+
+

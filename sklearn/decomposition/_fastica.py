@@ -73,7 +73,7 @@ def _sym_decorrelation(W):
     return np.linalg.multi_dot([u * (1.0 / np.sqrt(s)), u.T, W])
 
 
-def _ica_def(X, tol, g, fun_args, max_iter, w_init):
+def _ica_def(X, tol, g, fun_args, max_iter, w_init, random_state):
     """Deflationary FastICA using fun approx to neg-entropy function
 
     Used internally by FastICA.
@@ -86,7 +86,11 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
     # j is the index of the extracted component
     for j in range(n_components):
         w = w_init[j, :].copy()
-        w /= np.sqrt((w**2).sum())
+        norm = np.sqrt((w**2).sum())
+        if norm < 1e-8:  # extremely small
+            w = np.asarray(random_state.normal(size=w.shape), dtype=X.dtype)
+            norm = np.sqrt((w**2).sum())
+        w /= norm
 
         for i in range(max_iter):
             gwtx, g_wtx = g(np.dot(w.T, X), fun_args)
@@ -95,7 +99,12 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
 
             _gs_decorrelation(w1, W, j)
 
-            w1 /= np.sqrt((w1**2).sum())
+            norm = np.sqrt((w1**2).sum())
+            if norm < 1e-8:
+                # reset vector to avoid NaNs
+                w1 = np.asarray(random_state.normal(size=w.shape), dtype=X.dtype)
+                norm = np.sqrt((w1**2).sum())
+            w1 /= norm
 
             lim = np.abs(np.abs((w1 * w).sum()) - 1)
             w = w1
@@ -571,7 +580,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             copy=self.whiten,
             dtype=[np.float64, np.float32],
             ensure_min_samples=2,
-        ).T
+        ).T 
         fun_args = {} if self.fun_args is None else self.fun_args
         random_state = check_random_state(self.random_state)
 
@@ -662,6 +671,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             "fun_args": fun_args,
             "max_iter": self.max_iter,
             "w_init": w_init,
+            "random_state": random_state,
         }
 
         if self.algorithm == "parallel":
