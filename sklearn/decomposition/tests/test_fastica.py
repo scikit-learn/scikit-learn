@@ -11,7 +11,7 @@ import pytest
 from scipy import stats
 
 from sklearn.decomposition import PCA, FastICA, fastica
-from sklearn.decomposition._fastica import _gs_decorrelation
+from sklearn.decomposition._fastica import _gs_decorrelation, _logcosh
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import assert_allclose, ignore_warnings
 
@@ -455,3 +455,26 @@ def test_fastica_eigh_low_rank_warning(global_random_seed):
             # random seeds but this happens after the whiten step so this is
             # not want we want to test here.
             ica.fit(X)
+
+
+def test_logcosh():
+    """Test the _logcosh function."""
+    rng = np.random.RandomState(0)
+    x = rng.randn(5, 10)  # shape (n_features, n_samples)
+
+    # Test with default alpha=1.0
+    gx, g_x = _logcosh(x.copy())
+    expected_gx = np.tanh(x)
+    expected_g_x = np.array([(1 - gx_i**2).mean() for gx_i in gx])
+    assert_allclose(gx, expected_gx)
+    assert_allclose(g_x, expected_g_x)
+    assert gx.shape == x.shape
+    assert g_x.shape == (x.shape[0],)
+
+    # Test with alpha=1.5
+    alpha = 1.5
+    gx, g_x = _logcosh(x.copy(), fun_args={"alpha": alpha})
+    expected_gx = np.tanh(alpha * x)
+    expected_g_x = np.array([alpha * (1 - gx_i**2).mean() for gx_i in gx])
+    assert_allclose(gx, expected_gx)
+    assert_allclose(g_x, expected_g_x)

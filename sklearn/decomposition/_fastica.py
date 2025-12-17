@@ -143,8 +143,8 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
 # Some standard non-linear functions.
 def _logcosh(x, fun_args=dict()):
     alpha = fun_args.get("alpha", 1.0)  # comment it out?
-    np.tanh(alpha * x, x)               # apply the tanh(x*alpha) inplace
-    g_x = (alpha * (1 - x**2))
+    np.tanh(alpha * x, x)  # apply the tanh(x*alpha) inplace
+    g_x = alpha * (1 - x**2)
     return x, g_x.mean(axis=-1)
 
 
