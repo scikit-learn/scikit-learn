@@ -574,7 +574,7 @@ def move_to(*arrays, xp, device):
 
     converted_arrays = []
 
-    for array, is_sparse, is_none in zip(arrays, sparse_mask, none_mask):
+    for array, is_sparse, is_none in zip(arrays_, sparse_mask, none_mask):
         if is_none:
             converted_arrays.append(None)
         elif is_sparse:
