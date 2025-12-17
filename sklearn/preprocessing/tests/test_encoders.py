@@ -1942,7 +1942,7 @@ def test_ordinal_encoder_unknown_missing_interaction():
 @pytest.mark.parametrize("with_pandas", [True, False])
 def test_ordinal_encoder_encoded_missing_value_error(with_pandas):
     """Check OrdinalEncoder errors when encoded_missing_value is used by
-    an known category."""
+    a known category."""
     X = np.array([["a", "dog"], ["b", "cat"], ["c", np.nan]], dtype=object)
 
     # The 0-th feature has no missing values so it is not included in the list of
