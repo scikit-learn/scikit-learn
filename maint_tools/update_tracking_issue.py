@@ -75,7 +75,7 @@ url = args.link_to_ci_run
 if args.job_name is not None:
     run_id = int(args.link_to_ci_run.split("/")[-1])
     workflow_run = issue_repo.get_workflow_run(run_id)
-    jobs = workflow_run.get_jobs()
+    jobs = workflow_run.jobs()
 
     for job in jobs:
         if job.name == args.job_name:
