@@ -1,0 +1,3 @@
+- Fixed :class:`linear_model.RANSACRegressor` to skip scoring consensus sets with fewer than
+  two inliers, avoiding an ``UndefinedMetricWarning`` from the default ``R^2`` score.
+  By :user:`DavidAGInnovation <DavidAGInnovation>`.
