@@ -1,0 +1,4 @@
+- :class:`pipeline.Pipeline`, :class:`pipeline.FeatureUnion` and
+  :class:`compose.ColumnTransformer` now raise a clearer
+  error message when an estimator class is passed instead of an instance.
+  By :user:`Anne Beyer <AnneBeyer>`
