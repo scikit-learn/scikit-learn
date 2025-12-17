@@ -566,7 +566,7 @@ def move_to(*arrays, xp, device):
     if _max_precision_float_dtype(xp, device) == xp.float32:
         arrays_ = []
         for array in arrays:
-            xp_array = get_namespace(array)
+            xp_array, _ = get_namespace(array)
             if getattr(array, "dtype", None) == xp_array.float64:
                 arrays_.append(xp_array.astype(array, dtype=xp_array.float32))
             else:
