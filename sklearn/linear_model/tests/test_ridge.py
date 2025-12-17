@@ -860,11 +860,11 @@ def test_ridge_gcv_noiseless(alpha, gcv_mode, fit_intercept, X_shape, X_containe
     X, y = make_regression(
         n_samples=n_samples, n_features=n_features, noise=0, random_state=42
     )
+    lin_reg = LinearRegression(fit_intercept=fit_intercept)
+    lin_reg.fit(X, y)
     X = X_container(X)
     gcv_ridge = RidgeCV(alphas=alphas, gcv_mode=gcv_mode, fit_intercept=fit_intercept)
     gcv_ridge.fit(X, y)
-    lin_reg = LinearRegression(fit_intercept=fit_intercept)
-    lin_reg.fit(X, y)
     assert_allclose(gcv_ridge.coef_, lin_reg.coef_, atol=1e-10)
     assert_allclose(gcv_ridge.intercept_, lin_reg.intercept_, atol=1e-10)
 
