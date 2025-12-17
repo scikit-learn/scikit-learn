@@ -87,6 +87,10 @@ class DecisionBoundaryDisplay:
             (grid_resolution, grid_resolution, n_classes)
         Values of the response function.
 
+    n_classes : int
+        Number of classes if estimator is a classifier, number of unique values in the
+        response otherwise.
+
     multiclass_colors : list of str or str, default=None
         Specifies how to color each class when plotting all classes of multiclass
         problem. Ignored for binary problems and multiclass problems when plotting a
@@ -151,7 +155,7 @@ class DecisionBoundaryDisplay:
     >>> tree = DecisionTreeClassifier().fit(iris.data[:, :2], iris.target)
     >>> y_pred = np.reshape(tree.predict(grid), feature_1.shape)
     >>> display = DecisionBoundaryDisplay(
-    ...     xx0=feature_1, xx1=feature_2, response=y_pred
+    ...     xx0=feature_1, xx1=feature_2, n_classes=tree.classes_, response=y_pred
     ... )
     >>> display.plot()
     <...>
@@ -163,10 +167,19 @@ class DecisionBoundaryDisplay:
     """
 
     def __init__(
-        self, *, xx0, xx1, response, multiclass_colors=None, xlabel=None, ylabel=None
+        self,
+        *,
+        xx0,
+        xx1,
+        n_classes,
+        response,
+        multiclass_colors=None,
+        xlabel=None,
+        ylabel=None,
     ):
         self.xx0 = xx0
         self.xx1 = xx1
+        self.n_classes = n_classes
         self.response = response
         self.multiclass_colors = multiclass_colors
         self.xlabel = xlabel
@@ -233,22 +246,22 @@ class DecisionBoundaryDisplay:
                 self.multiclass_colors, str
             ):
                 if self.multiclass_colors is None:
-                    cmap = "tab10" if n_responses <= 10 else "gist_rainbow"
+                    cmap = "tab10" if self.n_classes <= 10 else "gist_rainbow"
                 else:
                     cmap = self.multiclass_colors
 
                 # Special case for the tab10 and tab20 colormaps that encode a
                 # discrete set of colors that are easily distinguishable
                 # contrary to other colormaps that are continuous.
-                if cmap == "tab10" and n_responses <= 10:
-                    colors = plt.get_cmap("tab10", 10).colors[:n_responses]
-                elif cmap == "tab20" and n_responses <= 20:
-                    colors = plt.get_cmap("tab20", 20).colors[:n_responses]
+                if cmap == "tab10" and self.n_classes <= 10:
+                    colors = plt.get_cmap("tab10", 10).colors[: self.n_classes]
+                elif cmap == "tab20" and self.n_classes <= 20:
+                    colors = plt.get_cmap("tab20", 20).colors[: self.n_classes]
                 else:
-                    cmap = plt.get_cmap(cmap, n_responses)
+                    cmap = plt.get_cmap(cmap, self.n_classes)
                     if not hasattr(cmap, "colors"):
                         # For LinearSegmentedColormap
-                        colors = cmap(np.linspace(0, 1, n_responses))
+                        colors = cmap(np.linspace(0, 1, self.n_classes))
                     else:
                         colors = cmap.colors
             elif isinstance(self.multiclass_colors, list):
@@ -520,6 +533,8 @@ class DecisionBoundaryDisplay:
                 # to our user when interacting with
                 # `DecisionBoundaryDisplay.from_estimator`
                 raise ValueError(
+                    # Note: it is ok to use estimator.classes_ here, as this error will
+                    # only be thrown if estimator is a classifier
                     f"class_of_interest={class_of_interest} is not a valid label: It "
                     f"should be one of {estimator.classes_}"
                 ) from exc
@@ -546,6 +561,11 @@ class DecisionBoundaryDisplay:
             else:
                 response = response.reshape(*xx0.shape, response.shape[-1])
 
+        if hasattr(estimator, "classes_"):
+            n_classes = len(estimator.classes_)
+        else:
+            n_classes = len(np.unique(response))
+
         if xlabel is None:
             xlabel = X.columns[0] if hasattr(X, "columns") else ""
 
@@ -555,6 +575,7 @@ class DecisionBoundaryDisplay:
         display = cls(
             xx0=xx0,
             xx1=xx1,
+            n_classes=n_classes,
             response=response,
             multiclass_colors=multiclass_colors,
             xlabel=xlabel,
