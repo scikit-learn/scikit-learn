@@ -33,12 +33,6 @@ def test_n_features_with_Transformer():
             return self
 
         def transform(self, X, y=None):
-            # 1D Series -> 2D DataFrame
-            if hasattr(X, "to_frame"):
-                return X.to_frame()
-            # 1D array -> 2D array
-            if getattr(X, "ndim", 2) == 1:
-                return np.atleast_2d(X).T
             return X
 
     X = np.array([[0, 2], [1, 1]])
