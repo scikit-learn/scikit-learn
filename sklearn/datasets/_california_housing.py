@@ -6,7 +6,7 @@ The original database is available from StatLib
 
 The data contains 20,640 observations on 9 variables.
 
-This dataset contains the average house value as target variable
+This dataset contains the median house value as target variable
 and the following input variables (features): average income,
 housing average age, average rooms, average bedrooms, population,
 average occupation, latitude, and longitude in that order.
@@ -25,22 +25,22 @@ Statistics and Probability Letters, 33:291-297, 1997.
 import logging
 import tarfile
 from numbers import Integral, Real
-from os import PathLike, makedirs, remove
+from os import PathLike, remove
 from os.path import exists
 
 import joblib
 import numpy as np
 
-from ..utils import Bunch
-from ..utils._param_validation import Interval, validate_params
-from . import get_data_home
-from ._base import (
+from sklearn.datasets import get_data_home
+from sklearn.datasets._base import (
     RemoteFileMetadata,
     _convert_data_dataframe,
     _fetch_remote,
     _pkl_filepath,
     load_descr,
 )
+from sklearn.utils import Bunch
+from sklearn.utils._param_validation import Interval, validate_params
 
 # The original data can be found at:
 # https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz
@@ -126,7 +126,7 @@ def fetch_california_housing(
             Each row corresponding to the 8 feature values in order.
             If ``as_frame`` is True, ``data`` is a pandas object.
         target : numpy array of shape (20640,)
-            Each value corresponds to the average
+            Each value corresponds to the median
             house value in units of 100,000.
             If ``as_frame`` is True, ``target`` is a pandas object.
         feature_names : list of length 8
@@ -162,8 +162,6 @@ def fetch_california_housing(
     ['MedInc', 'HouseAge', 'AveRooms', 'AveBedrms', 'Population', 'AveOccup']
     """
     data_home = get_data_home(data_home=data_home)
-    if not exists(data_home):
-        makedirs(data_home)
 
     filepath = _pkl_filepath(data_home, "cal_housing.pkz")
     if not exists(filepath):

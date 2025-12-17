@@ -249,13 +249,13 @@ def check_valid_split(train, test, n_samples=None):
     assert train.intersection(test) == set()
 
     if n_samples is not None:
-        # Check that the union of train an test split cover all the indices
+        # Check that the union of train and test split cover all the indices
         assert train.union(test) == set(range(n_samples))
 
 
 def check_cv_coverage(cv, X, y, groups, expected_n_splits):
     n_samples = _num_samples(X)
-    # Check that a all the samples appear at least once in a test fold
+    # Check that all the samples appear at least once in a test fold
     assert cv.get_n_splits(X, y, groups) == expected_n_splits
 
     collected_test_samples = set()
@@ -722,6 +722,37 @@ def test_stratified_group_kfold_homogeneous_groups(y, groups, expected):
         assert np.intersect1d(groups[train], groups[test]).size == 0
         split_dist = np.bincount(y[test]) / len(test)
         assert_allclose(split_dist, expect_dist, atol=0.001)
+
+
+def test_stratified_group_kfold_shuffle_preserves_stratification():
+    # Check StratifiedGroupKFold with shuffle=True preserves stratification:
+    # shuffling only affects tie-breaking among groups with identical
+    # standard deviation of class distribution (see #32478)
+    y = np.array([0] * 12 + [1] * 6)
+    X = np.ones((len(y), 1))
+    # Groups are arranged so perfect stratification across 3 folds is
+    # achievable
+    groups = np.array([1, 1, 3, 3, 3, 4, 5, 5, 5, 5, 7, 7, 2, 2, 6, 6, 8, 8])
+    expected_class_ratios = np.asarray([2.0 / 3, 1.0 / 3])
+
+    # Run multiple seeds to ensure the property holds regardless of the
+    # tie-breaking order among groups with identical std of class distribution
+    n_iters = 100
+    for seed in range(n_iters):
+        sgkf = StratifiedGroupKFold(n_splits=3, shuffle=True, random_state=seed)
+        test_sizes = []
+        for train, test in sgkf.split(X, y, groups):
+            # check group constraint
+            assert np.intersect1d(groups[train], groups[test]).size == 0
+            # check y distribution
+            assert_allclose(
+                np.bincount(y[train]) / len(train), expected_class_ratios, atol=1e-8
+            )
+            assert_allclose(
+                np.bincount(y[test]) / len(test), expected_class_ratios, atol=1e-8
+            )
+            test_sizes.append(len(test))
+        assert np.ptp(test_sizes) <= 1
 
 
 @pytest.mark.parametrize("cls_distr", [(0.4, 0.6), (0.3, 0.7), (0.2, 0.8), (0.8, 0.2)])
@@ -1357,11 +1388,11 @@ def test_array_api_train_test_split(
         assert get_namespace(y_train_xp)[0] == get_namespace(y_xp)[0]
         assert get_namespace(y_test_xp)[0] == get_namespace(y_xp)[0]
 
-    # Check device and dtype is preserved on output
-    assert array_api_device(X_train_xp) == array_api_device(X_xp)
-    assert array_api_device(y_train_xp) == array_api_device(y_xp)
-    assert array_api_device(X_test_xp) == array_api_device(X_xp)
-    assert array_api_device(y_test_xp) == array_api_device(y_xp)
+        # Check device and dtype is preserved on output
+        assert array_api_device(X_train_xp) == array_api_device(X_xp)
+        assert array_api_device(y_train_xp) == array_api_device(y_xp)
+        assert array_api_device(X_test_xp) == array_api_device(X_xp)
+        assert array_api_device(y_test_xp) == array_api_device(y_xp)
 
     assert X_train_xp.dtype == X_xp.dtype
     assert y_train_xp.dtype == y_xp.dtype
@@ -1922,7 +1953,7 @@ def test_nested_cv():
         LeaveOneOut(),
         GroupKFold(n_splits=3),
         StratifiedKFold(),
-        StratifiedGroupKFold(),
+        StratifiedGroupKFold(n_splits=3),
         StratifiedShuffleSplit(n_splits=3, random_state=0),
     ]
 

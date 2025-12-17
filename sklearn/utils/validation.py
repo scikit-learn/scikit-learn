@@ -5,7 +5,6 @@
 
 import numbers
 import operator
-import sys
 import warnings
 from collections.abc import Sequence
 from contextlib import suppress
@@ -16,9 +15,13 @@ import joblib
 import numpy as np
 import scipy.sparse as sp
 
-from .. import get_config as _get_config
-from ..exceptions import DataConversionWarning, NotFittedError, PositiveSpectrumWarning
-from ..utils._array_api import (
+from sklearn import get_config as _get_config
+from sklearn.exceptions import (
+    DataConversionWarning,
+    NotFittedError,
+    PositiveSpectrumWarning,
+)
+from sklearn.utils._array_api import (
     _asarray_with_order,
     _convert_to_numpy,
     _is_numpy_namespace,
@@ -26,11 +29,14 @@ from ..utils._array_api import (
     get_namespace,
     get_namespace_and_device,
 )
-from ..utils.deprecation import _deprecate_force_all_finite
-from ..utils.fixes import ComplexWarning, _preserve_dia_indices_dtype
-from ._isfinite import FiniteStatus, cy_isfinite
-from ._tags import get_tags
-from .fixes import _object_dtype_isnan
+from sklearn.utils._dataframe import is_pandas_df, is_pandas_df_or_series
+from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
+from sklearn.utils._tags import get_tags
+from sklearn.utils.fixes import (
+    ComplexWarning,
+    _object_dtype_isnan,
+    _preserve_dia_indices_dtype,
+)
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -222,9 +228,7 @@ def assert_all_finite(
     )
 
 
-def as_float_array(
-    X, *, copy=True, force_all_finite="deprecated", ensure_all_finite=None
-):
+def as_float_array(X, *, copy=True, ensure_all_finite=True):
     """Convert an array-like to an array of floats.
 
     The new dtype will be np.float32 or np.float64, depending on the original
@@ -239,25 +243,6 @@ def as_float_array(
     copy : bool, default=True
         If True, a copy of X will be created. If False, a copy may still be
         returned if X's dtype is not a floating point type.
-
-    force_all_finite : bool or 'allow-nan', default=True
-        Whether to raise an error on np.inf, np.nan, pd.NA in X. The
-        possibilities are:
-
-        - True: Force all values of X to be finite.
-        - False: accepts np.inf, np.nan, pd.NA in X.
-        - 'allow-nan': accepts only np.nan and pd.NA values in X. Values cannot
-          be infinite.
-
-        .. versionadded:: 0.20
-           ``force_all_finite`` accepts the string ``'allow-nan'``.
-
-        .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`
-
-        .. deprecated:: 1.6
-           `force_all_finite` was renamed to `ensure_all_finite` and will be removed
-           in 1.8.
 
     ensure_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in X. The
@@ -284,8 +269,6 @@ def as_float_array(
     >>> as_float_array(array)
     array([0., 0., 1., 2., 2.])
     """
-    ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
-
     if isinstance(X, np.matrix) or (
         not isinstance(X, np.ndarray) and not sp.issparse(X)
     ):
@@ -329,7 +312,7 @@ def _use_interchange_protocol(X):
     to ensure strict behavioral backward compatibility with older versions of
     scikit-learn.
     """
-    return not _is_pandas_df(X) and hasattr(X, "__dataframe__")
+    return not is_pandas_df(X) and hasattr(X, "__dataframe__")
 
 
 def _num_features(X):
@@ -748,8 +731,7 @@ def check_array(
     order=None,
     copy=False,
     force_writeable=False,
-    force_all_finite="deprecated",
-    ensure_all_finite=None,
+    ensure_all_finite=True,
     ensure_non_negative=False,
     ensure_2d=True,
     allow_nd=False,
@@ -806,25 +788,6 @@ def check_array(
         writeability of the input array is preserved.
 
         .. versionadded:: 1.6
-
-    force_all_finite : bool or 'allow-nan', default=True
-        Whether to raise an error on np.inf, np.nan, pd.NA in array. The
-        possibilities are:
-
-        - True: Force all values of array to be finite.
-        - False: accepts np.inf, np.nan, pd.NA in array.
-        - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
-          cannot be infinite.
-
-        .. versionadded:: 0.20
-           ``force_all_finite`` accepts the string ``'allow-nan'``.
-
-        .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`
-
-        .. deprecated:: 1.6
-           `force_all_finite` was renamed to `ensure_all_finite` and will be removed
-           in 1.8.
 
     ensure_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in array. The
@@ -885,8 +848,6 @@ def check_array(
     >>> X_checked
     array([[1, 2, 3], [4, 5, 6]])
     """
-    ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
-
     if isinstance(array, np.matrix):
         raise TypeError(
             "np.matrix is not supported. Please convert to a numpy array with "
@@ -1168,7 +1129,7 @@ def check_array(
             # ensure that the output is writeable, even if avoidable, to not overwrite
             # the user's data by surprise.
 
-            if _is_pandas_df_or_series(array_orig):
+            if is_pandas_df_or_series(array_orig):
                 try:
                     # In pandas >= 3, np.asarray(df), called earlier in check_array,
                     # returns a read-only intermediate array. It can be made writeable
@@ -1216,8 +1177,7 @@ def check_X_y(
     order=None,
     copy=False,
     force_writeable=False,
-    force_all_finite="deprecated",
-    ensure_all_finite=None,
+    ensure_all_finite=True,
     ensure_2d=True,
     allow_nd=False,
     multi_output=False,
@@ -1277,26 +1237,6 @@ def check_X_y(
         writeability of the input array is preserved.
 
         .. versionadded:: 1.6
-
-    force_all_finite : bool or 'allow-nan', default=True
-        Whether to raise an error on np.inf, np.nan, pd.NA in array. This parameter
-        does not influence whether y can have np.inf, np.nan, pd.NA values.
-        The possibilities are:
-
-        - True: Force all values of X to be finite.
-        - False: accepts np.inf, np.nan, pd.NA in X.
-        - 'allow-nan': accepts only np.nan or pd.NA values in X. Values cannot
-          be infinite.
-
-        .. versionadded:: 0.20
-           ``force_all_finite`` accepts the string ``'allow-nan'``.
-
-        .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`
-
-        .. deprecated:: 1.6
-           `force_all_finite` was renamed to `ensure_all_finite` and will be removed
-           in 1.8.
 
     ensure_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in array. This parameter
@@ -1371,8 +1311,6 @@ def check_X_y(
             f"{estimator_name} requires y to be passed, but the target y is None"
         )
 
-    ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
-
     X = check_array(
         X,
         accept_sparse=accept_sparse,
@@ -1420,7 +1358,7 @@ def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
     return y
 
 
-def column_or_1d(y, *, dtype=None, warn=False, device=None):
+def column_or_1d(y, *, dtype=None, input_name="y", warn=False, device=None):
     """Ravel column or 1d numpy array, else raises an error.
 
     Parameters
@@ -1432,6 +1370,11 @@ def column_or_1d(y, *, dtype=None, warn=False, device=None):
         Data type for `y`.
 
         .. versionadded:: 1.2
+
+    input_name : str, default="y"
+        The data name used to construct the error message.
+
+        .. versionadded:: 1.8
 
     warn : bool, default=False
        To control display of warnings.
@@ -1463,7 +1406,7 @@ def column_or_1d(y, *, dtype=None, warn=False, device=None):
         y,
         ensure_2d=False,
         dtype=dtype,
-        input_name="y",
+        input_name=input_name,
         ensure_all_finite=False,
         ensure_min_samples=0,
     )
@@ -1494,7 +1437,7 @@ def column_or_1d(y, *, dtype=None, warn=False, device=None):
 
 
 def check_random_state(seed):
-    """Turn seed into a np.random.RandomState instance.
+    """Turn seed into an np.random.RandomState instance.
 
     Parameters
     ----------
@@ -2134,7 +2077,14 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
 
 
 def _check_sample_weight(
-    sample_weight, X, *, dtype=None, ensure_non_negative=False, copy=False
+    sample_weight,
+    X,
+    *,
+    dtype=None,
+    force_float_dtype=True,
+    ensure_non_negative=False,
+    ensure_same_device=True,
+    copy=False,
 ):
     """Validate sample weights.
 
@@ -2162,10 +2112,17 @@ def _check_sample_weight(
         If `dtype` is not `{np.float32, np.float64, None}`, then output will
         be `np.float64`.
 
+    force_float_dtype : bool, default=True
+        Whether `X` should be forced to be float dtype, when `dtype` is a non-float
+        dtype or None.
+
     ensure_non_negative : bool, default=False,
         Whether or not the weights are expected to be non-negative.
 
         .. versionadded:: 1.0
+
+    ensure_same_device : bool, default=True
+        Whether `sample_weight` should be forced to be on the same device as `X`.
 
     copy : bool, default=False
         If True, a copy of sample_weight will be created.
@@ -2175,9 +2132,7 @@ def _check_sample_weight(
     sample_weight : ndarray of shape (n_samples,)
         Validated sample weight. It is guaranteed to be "C" contiguous.
     """
-    xp, _, device = get_namespace_and_device(
-        sample_weight, X, remove_types=(int, float)
-    )
+    xp, is_array_api, device = get_namespace_and_device(X, remove_types=(int, float))
 
     n_samples = _num_samples(X)
 
@@ -2185,7 +2140,7 @@ def _check_sample_weight(
     float_dtypes = (
         [xp.float32] if max_float_type == xp.float32 else [xp.float64, xp.float32]
     )
-    if dtype is not None and dtype not in float_dtypes:
+    if force_float_dtype and dtype is not None and dtype not in float_dtypes:
         dtype = max_float_type
 
     if sample_weight is None:
@@ -2193,8 +2148,10 @@ def _check_sample_weight(
     elif isinstance(sample_weight, numbers.Number):
         sample_weight = xp.full(n_samples, sample_weight, dtype=dtype, device=device)
     else:
-        if dtype is None:
+        if force_float_dtype and dtype is None:
             dtype = float_dtypes
+        if is_array_api and ensure_same_device:
+            sample_weight = xp.asarray(sample_weight, device=device)
         sample_weight = check_array(
             sample_weight,
             accept_sparse=False,
@@ -2205,7 +2162,11 @@ def _check_sample_weight(
             input_name="sample_weight",
         )
         if sample_weight.ndim != 1:
-            raise ValueError("Sample weights must be 1D array or scalar")
+            raise ValueError(
+                f"Sample weights must be 1D array or scalar, got "
+                f"{sample_weight.ndim}D array. Expected either a scalar value "
+                f"or a 1D array of length {n_samples}."
+            )
 
         if sample_weight.shape != (n_samples,):
             raise ValueError(
@@ -2325,7 +2286,7 @@ def _check_method_params(X, params, indices=None):
     method_params_validated : dict
         Validated parameters. We ensure that the values support indexing.
     """
-    from . import _safe_indexing
+    from sklearn.utils import _safe_indexing
 
     method_params_validated = {}
     for param_key, param_value in params.items():
@@ -2344,51 +2305,6 @@ def _check_method_params(X, params, indices=None):
             )
 
     return method_params_validated
-
-
-def _is_pandas_df_or_series(X):
-    """Return True if the X is a pandas dataframe or series."""
-    try:
-        pd = sys.modules["pandas"]
-    except KeyError:
-        return False
-    return isinstance(X, (pd.DataFrame, pd.Series))
-
-
-def _is_pandas_df(X):
-    """Return True if the X is a pandas dataframe."""
-    try:
-        pd = sys.modules["pandas"]
-    except KeyError:
-        return False
-    return isinstance(X, pd.DataFrame)
-
-
-def _is_pyarrow_data(X):
-    """Return True if the X is a pyarrow Table, RecordBatch, Array or ChunkedArray."""
-    try:
-        pa = sys.modules["pyarrow"]
-    except KeyError:
-        return False
-    return isinstance(X, (pa.Table, pa.RecordBatch, pa.Array, pa.ChunkedArray))
-
-
-def _is_polars_df_or_series(X):
-    """Return True if the X is a polars dataframe or series."""
-    try:
-        pl = sys.modules["polars"]
-    except KeyError:
-        return False
-    return isinstance(X, (pl.DataFrame, pl.Series))
-
-
-def _is_polars_df(X):
-    """Return True if the X is a polars dataframe."""
-    try:
-        pl = sys.modules["polars"]
-    except KeyError:
-        return False
-    return isinstance(X, pl.DataFrame)
 
 
 def _get_feature_names(X):
@@ -2414,7 +2330,7 @@ def _get_feature_names(X):
     feature_names = None
 
     # extract feature names for support array containers
-    if _is_pandas_df(X):
+    if is_pandas_df(X):
         # Make sure we can inspect columns names from pandas, even with
         # versions too old to expose a working implementation of
         # __dataframe__.column_names() and avoid introducing any
@@ -2723,6 +2639,10 @@ def _check_feature_names(estimator, X, *, reset):
         Moved from :class:`~sklearn.base.BaseEstimator` to
         :mod:`sklearn.utils.validation`.
 
+    .. note::
+        To only check feature names without conducting a full data validation, prefer
+        using `validate_data(..., skip_check_array=True)` if possible.
+
     Parameters
     ----------
     estimator : estimator instance
@@ -2733,8 +2653,10 @@ def _check_feature_names(estimator, X, *, reset):
 
     reset : bool
         Whether to reset the `feature_names_in_` attribute.
+        If True, resets the `feature_names_in_` attribute as inferred from `X`.
         If False, the input will be checked for consistency with
         feature names of data provided when reset was last True.
+
         .. note::
            It is recommended to call `reset=True` in `fit` and in the first
            call to `partial_fit`. All other methods that validate `X`
@@ -2810,6 +2732,10 @@ def _check_feature_names(estimator, X, *, reset):
 def _check_n_features(estimator, X, reset):
     """Set the `n_features_in_` attribute, or check against it on an estimator.
 
+    .. note::
+        To only check n_features without conducting a full data validation, prefer
+        using `validate_data(..., skip_check_array=True)` if possible.
+
     .. versionchanged:: 1.6
         Moved from :class:`~sklearn.base.BaseEstimator` to
         :mod:`~sklearn.utils.validation`.
@@ -2823,12 +2749,14 @@ def _check_n_features(estimator, X, reset):
         The input samples.
 
     reset : bool
+        Whether to reset the `n_features_in_` attribute.
         If True, the `n_features_in_` attribute is set to `X.shape[1]`.
         If False and the attribute exists, then check that it is equal to
         `X.shape[1]`. If False and the attribute does *not* exist, then
         the check is skipped.
+
         .. note::
-           It is recommended to call reset=True in `fit` and in the first
+           It is recommended to call `reset=True` in `fit` and in the first
            call to `partial_fit`. All other methods that validate `X`
            should set `reset=False`.
     """

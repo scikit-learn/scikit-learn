@@ -10,13 +10,13 @@ from operator import attrgetter
 import numpy as np
 from scipy.sparse import csc_matrix, issparse
 
-from ..base import TransformerMixin
-from ..utils import _safe_indexing, check_array, safe_sqr
-from ..utils._set_output import _get_output_config
-from ..utils._tags import get_tags
-from ..utils.validation import (
+from sklearn.base import TransformerMixin
+from sklearn.utils import _safe_indexing, check_array, safe_sqr
+from sklearn.utils._dataframe import is_pandas_df
+from sklearn.utils._set_output import _get_output_config
+from sklearn.utils._tags import get_tags
+from sklearn.utils.validation import (
     _check_feature_names_in,
-    _is_pandas_df,
     check_is_fitted,
     validate_data,
 )
@@ -100,7 +100,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         # Preserve X when X is a dataframe and the output is configured to
         # be pandas.
         output_config_dense = _get_output_config("transform", estimator=self)["dense"]
-        preserve_X = output_config_dense != "default" and _is_pandas_df(X)
+        preserve_X = output_config_dense != "default" and is_pandas_df(X)
 
         # note: we use get_tags instead of __sklearn_tags__ because this is a
         # public Mixin.

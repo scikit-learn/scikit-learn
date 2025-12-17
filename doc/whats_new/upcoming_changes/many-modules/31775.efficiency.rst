@@ -1,0 +1,4 @@
+- Improved CPU and memory usage in estimators and metric functions that rely on
+  weighted percentiles and better match NumPy and Scipy (un-weighted) implementations
+  of percentiles.
+  By :user:`Lucy Liu <lucyleeow>`

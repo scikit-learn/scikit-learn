@@ -44,7 +44,7 @@ import numpy as np
 from scipy.sparse import hstack as sparse_hstack
 from scipy.sparse import issparse
 
-from ..base import (
+from sklearn.base import (
     ClassifierMixin,
     MultiOutputMixin,
     RegressorMixin,
@@ -52,30 +52,30 @@ from ..base import (
     _fit_context,
     is_classifier,
 )
-from ..exceptions import DataConversionWarning
-from ..metrics import accuracy_score, r2_score
-from ..preprocessing import OneHotEncoder
-from ..tree import (
+from sklearn.ensemble._base import BaseEnsemble, _partition_estimators
+from sklearn.exceptions import DataConversionWarning
+from sklearn.metrics import accuracy_score, r2_score
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.tree import (
     BaseDecisionTree,
     DecisionTreeClassifier,
     DecisionTreeRegressor,
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
-from ..tree._tree import DOUBLE, DTYPE
-from ..utils import check_random_state, compute_sample_weight
-from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils._tags import get_tags
-from ..utils.multiclass import check_classification_targets, type_of_target
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (
+from sklearn.tree._tree import DOUBLE, DTYPE
+from sklearn.utils import check_random_state, compute_sample_weight
+from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
+from sklearn.utils._tags import get_tags
+from sklearn.utils.multiclass import check_classification_targets, type_of_target
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_feature_names_in,
     _check_sample_weight,
     _num_samples,
     check_is_fitted,
     validate_data,
 )
-from ._base import BaseEnsemble, _partition_estimators
 
 __all__ = [
     "ExtraTreesClassifier",
@@ -578,7 +578,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         n_samples = y.shape[0]
         n_outputs = self.n_outputs_
         if is_classifier(self) and hasattr(self, "n_classes_"):
-            # n_classes_ is a ndarray at this stage
+            # n_classes_ is an ndarray at this stage
             # all the supported type of target will have the same number of
             # classes in all outputs
             oob_pred_shape = (n_samples, self.n_classes_[0], n_outputs)
@@ -1479,7 +1479,8 @@ class RandomForestClassifier(ForestClassifier):
 
     References
     ----------
-    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+    .. [1] :doi:`L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+           <10.1023/A:1010933404324>`
 
     Examples
     --------
@@ -1852,11 +1853,12 @@ class RandomForestRegressor(ForestRegressor):
 
     The default value ``max_features=1.0`` uses ``n_features``
     rather than ``n_features / 3``. The latter was originally suggested in
-    [1], whereas the former was more recently justified empirically in [2].
+    [1]_, whereas the former was more recently justified empirically in [2]_.
 
     References
     ----------
-    .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+    .. [1] :doi:`L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+           <10.1023/A:1010933404324>`
 
     .. [2] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
            trees", Machine Learning, 63(1), 3-42, 2006.
@@ -2842,7 +2844,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
            Machine Learning, 63(1), 3-42, 2006.
     .. [2] Moosmann, F. and Triggs, B. and Jurie, F.  "Fast discriminative
            visual codebooks using randomized clustering forests"
-           NIPS 2007
+           NIPS 2007.
 
     Examples
     --------

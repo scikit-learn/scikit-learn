@@ -5,13 +5,18 @@
 
 import typing
 
-from ._classification_threshold import (
+from sklearn.model_selection._classification_threshold import (
     FixedThresholdClassifier,
     TunedThresholdClassifierCV,
 )
-from ._plot import LearningCurveDisplay, ValidationCurveDisplay
-from ._search import GridSearchCV, ParameterGrid, ParameterSampler, RandomizedSearchCV
-from ._split import (
+from sklearn.model_selection._plot import LearningCurveDisplay, ValidationCurveDisplay
+from sklearn.model_selection._search import (
+    GridSearchCV,
+    ParameterGrid,
+    ParameterSampler,
+    RandomizedSearchCV,
+)
+from sklearn.model_selection._split import (
     BaseCrossValidator,
     BaseShuffleSplit,
     GroupKFold,
@@ -32,7 +37,7 @@ from ._split import (
     check_cv,
     train_test_split,
 )
-from ._validation import (
+from sklearn.model_selection._validation import (
     cross_val_predict,
     cross_val_score,
     cross_validate,
@@ -44,7 +49,7 @@ from ._validation import (
 if typing.TYPE_CHECKING:
     # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
     # TODO: remove this check once the estimator is no longer experimental.
-    from ._search_successive_halving import (  # noqa: F401
+    from sklearn.model_selection._search_successive_halving import (
         HalvingGridSearchCV,
         HalvingRandomSearchCV,
     )
@@ -57,6 +62,8 @@ __all__ = [
     "GridSearchCV",
     "GroupKFold",
     "GroupShuffleSplit",
+    "HalvingGridSearchCV",
+    "HalvingRandomSearchCV",
     "KFold",
     "LearningCurveDisplay",
     "LeaveOneGroupOut",

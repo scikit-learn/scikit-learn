@@ -8,14 +8,12 @@ from numbers import Integral
 import numpy as np
 from scipy import linalg, sparse
 
-from sklearn.utils import metadata_routing
-
-from ..base import _fit_context
-from ..utils import gen_batches
-from ..utils._param_validation import Interval
-from ..utils.extmath import _incremental_mean_and_var, svd_flip
-from ..utils.validation import validate_data
-from ._base import _BasePCA
+from sklearn.base import _fit_context
+from sklearn.decomposition._base import _BasePCA
+from sklearn.utils import gen_batches, metadata_routing
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.extmath import _incremental_mean_and_var, svd_flip
+from sklearn.utils.validation import validate_data
 
 
 class IncrementalPCA(_BasePCA):
@@ -139,22 +137,15 @@ class IncrementalPCA(_BasePCA):
 
     Notes
     -----
-    Implements the incremental PCA model from:
-    *D. Ross, J. Lim, R. Lin, M. Yang, Incremental Learning for Robust Visual
-    Tracking, International Journal of Computer Vision, Volume 77, Issue 1-3,
-    pp. 125-141, May 2008.*
-    See https://www.cs.toronto.edu/~dross/ivt/RossLimLinYang_ijcv.pdf
-
-    This model is an extension of the Sequential Karhunen-Loeve Transform from:
-    :doi:`A. Levy and M. Lindenbaum, Sequential Karhunen-Loeve Basis Extraction and
-    its Application to Images, IEEE Transactions on Image Processing, Volume 9,
-    Number 8, pp. 1371-1374, August 2000. <10.1109/83.855432>`
+    Implements the incremental PCA model from Ross et al. (2008) [1]_.
+    This model is an extension of the Sequential Karhunen-Loeve Transform
+    from Levy and Lindenbaum (2000) [2]_.
 
     We have specifically abstained from an optimization used by authors of both
     papers, a QR decomposition used in specific situations to reduce the
     algorithmic complexity of the SVD. The source for this technique is
-    *Matrix Computations, Third Edition, G. Holub and C. Van Loan, Chapter 5,
-    section 5.4.4, pp 252-253.*. This technique has been omitted because it is
+    *Matrix Computations* (Golub and Van Loan 1997 [3]_).
+    This technique has been omitted because it is
     advantageous only when decomposing a matrix with ``n_samples`` (rows)
     >= 5/3 * ``n_features`` (columns), and hurts the readability of the
     implemented algorithm. This would be a good opportunity for future
@@ -162,12 +153,18 @@ class IncrementalPCA(_BasePCA):
 
     References
     ----------
-    D. Ross, J. Lim, R. Lin, M. Yang. Incremental Learning for Robust Visual
-    Tracking, International Journal of Computer Vision, Volume 77,
-    Issue 1-3, pp. 125-141, May 2008.
+    .. [1] D. Ross, J. Lim, R. Lin, M. Yang. Incremental Learning for Robust
+       Visual Tracking, International Journal of Computer Vision, Volume 77,
+       Issue 1-3, pp. 125-141, May 2008.
+       https://www.cs.toronto.edu/~dross/ivt/RossLimLinYang_ijcv.pdf
 
-    G. Golub and C. Van Loan. Matrix Computations, Third Edition, Chapter 5,
-    Section 5.4.4, pp. 252-253.
+    .. [2] :doi:`A. Levy and M. Lindenbaum, Sequential Karhunen-Loeve
+       Basis Extraction and its Application to Images,
+       IEEE Transactions on Image Processing, Volume 9,
+       Number 8, pp. 1371-1374, August 2000. <10.1109/83.855432>`
+
+    .. [3] G. Golub and C. Van Loan. Matrix Computations, Third Edition,
+       Chapter 5, Section 5.4.4, pp. 252-253, 1997.
 
     Examples
     --------

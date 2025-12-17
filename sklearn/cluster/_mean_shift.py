@@ -18,14 +18,14 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from .._config import config_context
-from ..base import BaseEstimator, ClusterMixin, _fit_context
-from ..metrics.pairwise import pairwise_distances_argmin
-from ..neighbors import NearestNeighbors
-from ..utils import check_array, check_random_state, gen_batches
-from ..utils._param_validation import Interval, validate_params
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted, validate_data
+from sklearn._config import config_context
+from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
+from sklearn.metrics.pairwise import pairwise_distances_argmin
+from sklearn.neighbors import NearestNeighbors
+from sklearn.utils import check_array, check_random_state, gen_batches
+from sklearn.utils._param_validation import Interval, validate_params
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 @validate_params(

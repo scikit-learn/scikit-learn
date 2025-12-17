@@ -8,7 +8,7 @@ from scipy.integrate import trapezoid
 from sklearn import clone
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_breast_cancer, make_classification
-from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import RocCurveDisplay, auc, roc_curve
 from sklearn.model_selection import cross_validate, train_test_split
@@ -264,7 +264,7 @@ def test_roc_curve_from_cv_results_param_validation(pyplot, data_binary):
 
     # `pos_label` inconsistency
     y_multi[y_multi == 1] = 2
-    with pytest.raises(ValueError, match=r"y takes value in \{0, 2\}"):
+    with pytest.warns(UndefinedMetricWarning, match="No positive samples in y_true"):
         RocCurveDisplay.from_cv_results(cv_results, X, y_multi)
 
     # `name` is list while `curve_kwargs` is None or dict
@@ -320,15 +320,10 @@ def test_roc_curve_display_from_cv_results_curve_kwargs(
             line.get_alpha() == curve_kwargs[i]["alpha"]
             for i, line in enumerate(display.line_)
         )
-
-
-# TODO(1.9): Remove in 1.9
-def test_roc_curve_display_estimator_name_deprecation(pyplot):
-    """Check deprecation of `estimator_name`."""
-    fpr = np.array([0, 0.5, 1])
-    tpr = np.array([0, 0.5, 1])
-    with pytest.warns(FutureWarning, match="`estimator_name` is deprecated in"):
-        RocCurveDisplay(fpr=fpr, tpr=tpr, estimator_name="test")
+    # Other default kwargs should be the same
+    for line in display.line_:
+        assert line.get_linestyle() == "--"
+        assert line.get_color() == "blue"
 
 
 # TODO(1.9): Remove in 1.9
@@ -597,6 +592,18 @@ def test_roc_curve_from_cv_results_curve_kwargs(pyplot, data_binary, curve_kwarg
             assert color == curve_kwargs[idx]["c"]
 
 
+def test_roc_curve_from_cv_results_pos_label_inferred(pyplot, data_binary):
+    """Check `pos_label` inferred correctly by `from_cv_results(pos_label=None)`."""
+    X, y = data_binary
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+
+    disp = RocCurveDisplay.from_cv_results(cv_results, X, y, pos_label=None)
+    # Should be `estimator.classes_[1]`
+    assert disp.pos_label == 1
+
+
 def _check_chance_level(plot_chance_level, chance_level_kw, display):
     """Check chance level line and line styles correct."""
     import matplotlib as mpl
@@ -835,7 +842,7 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
     # check that we can provide the positive label and display the proper
     # statistics
     X, y = load_breast_cancer(return_X_y=True)
-    # create an highly imbalanced
+    # create a highly imbalanced version of the breast cancer dataset
     idx_positive = np.flatnonzero(y == 1)
     idx_negative = np.flatnonzero(y == 0)
     idx_selected = np.hstack([idx_negative, idx_positive[:25]])
@@ -924,8 +931,10 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
 
 
 # TODO(1.9): remove
-def test_y_score_and_y_pred_specified_error():
-    """Check that an error is raised when both y_score and y_pred are specified."""
+def test_y_score_and_y_pred_specified_error(pyplot):
+    """1. Check that an error is raised when both y_score and y_pred are specified.
+    2. Check that a warning is raised when y_pred is specified.
+    """
     y_true = np.array([0, 1, 1, 0])
     y_score = np.array([0.1, 0.4, 0.35, 0.8])
     y_pred = np.array([0.2, 0.3, 0.5, 0.1])
@@ -935,22 +944,15 @@ def test_y_score_and_y_pred_specified_error():
     ):
         RocCurveDisplay.from_predictions(y_true, y_score=y_score, y_pred=y_pred)
 
-
-# TODO(1.9): remove
-def test_y_pred_deprecation_warning(pyplot):
-    """Check that a warning is raised when y_pred is specified."""
-    y_true = np.array([0, 1, 1, 0])
-    y_score = np.array([0.1, 0.4, 0.35, 0.8])
-
-    with pytest.warns(FutureWarning, match="y_pred is deprecated in 1.7"):
+    with pytest.warns(FutureWarning, match="y_pred was deprecated in 1.7"):
         display_y_pred = RocCurveDisplay.from_predictions(y_true, y_pred=y_score)
-
-    assert_allclose(display_y_pred.fpr, [0, 0.5, 0.5, 1])
-    assert_allclose(display_y_pred.tpr, [0, 0, 1, 1])
+    desired_fpr, desired_fnr, _ = roc_curve(y_true, y_score)
+    assert_allclose(display_y_pred.fpr, desired_fpr)
+    assert_allclose(display_y_pred.tpr, desired_fnr)
 
     display_y_score = RocCurveDisplay.from_predictions(y_true, y_score)
-    assert_allclose(display_y_score.fpr, [0, 0.5, 0.5, 1])
-    assert_allclose(display_y_score.tpr, [0, 0, 1, 1])
+    assert_allclose(display_y_score.fpr, desired_fpr)
+    assert_allclose(display_y_score.tpr, desired_fnr)
 
 
 @pytest.mark.parametrize("despine", [True, False])

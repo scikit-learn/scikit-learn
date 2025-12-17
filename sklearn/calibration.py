@@ -4,18 +4,17 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
+from functools import partial
 from inspect import signature
 from math import log
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.optimize import minimize
+from scipy.optimize import minimize, minimize_scalar
 from scipy.special import expit
 
-from sklearn.utils import Bunch
-
-from ._loss import HalfBinomialLoss
-from .base import (
+from sklearn._loss import HalfBinomialLoss, HalfMultinomialLoss
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     MetaEstimatorMixin,
@@ -23,42 +22,55 @@ from .base import (
     _fit_context,
     clone,
 )
-from .frozen import FrozenEstimator
-from .isotonic import IsotonicRegression
-from .model_selection import LeaveOneOut, check_cv, cross_val_predict
-from .preprocessing import LabelEncoder, label_binarize
-from .svm import LinearSVC
-from .utils import _safe_indexing, column_or_1d, get_tags, indexable
-from .utils._param_validation import (
+from sklearn.externals import array_api_extra as xpx
+from sklearn.frozen import FrozenEstimator
+from sklearn.isotonic import IsotonicRegression
+from sklearn.model_selection import LeaveOneOut, check_cv, cross_val_predict
+from sklearn.preprocessing import LabelEncoder, label_binarize
+from sklearn.svm import LinearSVC
+from sklearn.utils import Bunch, _safe_indexing, column_or_1d, get_tags, indexable
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _half_multinomial_loss,
+    _is_numpy_namespace,
+    get_namespace,
+    get_namespace_and_device,
+    move_to,
+)
+from sklearn.utils._param_validation import (
     HasMethods,
-    Hidden,
     Interval,
     StrOptions,
     validate_params,
 )
-from .utils._plotting import _BinaryClassifierCurveDisplayMixin, _validate_style_kwargs
-from .utils._response import _get_response_values, _process_predict_proba
-from .utils.metadata_routing import (
+from sklearn.utils._plotting import (
+    _BinaryClassifierCurveDisplayMixin,
+    _validate_style_kwargs,
+)
+from sklearn.utils._response import _get_response_values, _process_predict_proba
+from sklearn.utils.extmath import softmax
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _routing_enabled,
     process_routing,
 )
-from .utils.multiclass import check_classification_targets
-from .utils.parallel import Parallel, delayed
-from .utils.validation import (
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_method_params,
     _check_pos_label_consistency,
     _check_response_method,
     _check_sample_weight,
     _num_samples,
+    check_array,
     check_consistent_length,
     check_is_fitted,
 )
 
 
 class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
-    """Probability calibration with isotonic regression or logistic regression.
+    """Calibrate probabilities using isotonic, sigmoid, or temperature scaling.
 
     This class uses cross-validation to both estimate the parameters of a
     classifier and subsequently calibrate a classifier. With
@@ -97,12 +109,33 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         .. versionadded:: 1.2
 
-    method : {'sigmoid', 'isotonic'}, default='sigmoid'
-        The method to use for calibration. Can be 'sigmoid' which
-        corresponds to Platt's method (i.e. a logistic regression model) or
-        'isotonic' which is a non-parametric approach. It is not advised to
-        use isotonic calibration with too few calibration samples
-        ``(<<1000)`` since it tends to overfit.
+    method : {'sigmoid', 'isotonic', 'temperature'}, default='sigmoid'
+        The method to use for calibration. Can be:
+
+        - 'sigmoid', which corresponds to Platt's method (i.e. a binary logistic
+          regression model).
+        - 'isotonic', which is a non-parametric approach.
+        - 'temperature', temperature scaling.
+
+        Sigmoid and isotonic calibration methods natively support only binary
+        classifiers and extend to multi-class classification using a One-vs-Rest (OvR)
+        strategy with post-hoc renormalization, i.e., adjusting the probabilities after
+        calibration to ensure they sum up to 1.
+
+        In contrast, temperature scaling naturally supports multi-class calibration by
+        applying `softmax(classifier_logits/T)` with a value of `T` (temperature)
+        that optimizes the log loss.
+
+        For very uncalibrated classifiers on very imbalanced datasets, sigmoid
+        calibration might be preferred because it fits an additional intercept
+        parameter. This helps shift decision boundaries appropriately when the
+        classifier being calibrated is biased towards the majority class.
+
+        Isotonic calibration is not recommended when the number of calibration samples
+        is too low ``(≪1000)`` since it then tends to overfit.
+
+        .. versionchanged:: 1.8
+           Added option 'temperature'.
 
     cv : int, cross-validation generator, or iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -124,17 +157,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-        .. versionchanged:: 1.6
-            `"prefit"` is deprecated. Use :class:`~sklearn.frozen.FrozenEstimator`
-            instead.
-
     n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors.
 
         Base estimator clones are fitted in parallel across cross-validation
-        iterations. Therefore parallelism happens only when `cv != "prefit"`.
+        iterations.
 
         See :term:`Glossary <n_jobs>` for more details.
 
@@ -199,17 +228,31 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
     References
     ----------
-    .. [1] Obtaining calibrated probability estimates from decision trees
-           and naive Bayesian classifiers, B. Zadrozny & C. Elkan, ICML 2001
+    .. [1] B. Zadrozny & C. Elkan.
+       `Obtaining calibrated probability estimates from decision trees
+       and naive Bayesian classifiers
+       <https://cseweb.ucsd.edu/~elkan/calibrated.pdf>`_, ICML 2001.
 
-    .. [2] Transforming Classifier Scores into Accurate Multiclass
-           Probability Estimates, B. Zadrozny & C. Elkan, (KDD 2002)
+    .. [2] B. Zadrozny & C. Elkan.
+       `Transforming Classifier Scores into Accurate Multiclass
+       Probability Estimates
+       <https://web.archive.org/web/20060720141520id_/http://www.research.ibm.com:80/people/z/zadrozny/kdd2002-Transf.pdf>`_,
+       KDD 2002.
 
-    .. [3] Probabilistic Outputs for Support Vector Machines and Comparisons to
-           Regularized Likelihood Methods, J. Platt, (1999)
+    .. [3] J. Platt. `Probabilistic Outputs for Support Vector Machines
+       and Comparisons to Regularized Likelihood Methods
+       <https://www.researchgate.net/profile/John-Platt-2/publication/2594015_Probabilistic_Outputs_for_Support_Vector_Machines_and_Comparisons_to_Regularized_Likelihood_Methods/links/004635154cff5262d6000000/Probabilistic-Outputs-for-Support-Vector-Machines-and-Comparisons-to-Regularized-Likelihood-Methods.pdf>`_,
+       1999.
 
-    .. [4] Predicting Good Probabilities with Supervised Learning,
-           A. Niculescu-Mizil & R. Caruana, ICML 2005
+    .. [4] A. Niculescu-Mizil & R. Caruana.
+       `Predicting Good Probabilities with Supervised Learning
+       <https://www.cs.cornell.edu/~alexn/papers/calibration.icml05.crc.rev3.pdf>`_,
+       ICML 2005.
+
+    .. [5] Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger.
+       :doi:`On Calibration of Modern Neural Networks<10.48550/arXiv.1706.04599>`.
+       Proceedings of the 34th International Conference on Machine Learning,
+       PMLR 70:1321-1330, 2017.
 
     Examples
     --------
@@ -255,8 +298,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             HasMethods(["fit", "decision_function"]),
             None,
         ],
-        "method": [StrOptions({"isotonic", "sigmoid"})],
-        "cv": ["cv_object", Hidden(StrOptions({"prefit"}))],
+        "method": [StrOptions({"isotonic", "sigmoid", "temperature"})],
+        "cv": ["cv_object"],
         "n_jobs": [Integral, None],
         "ensemble": ["boolean", StrOptions({"auto"})],
     }
@@ -325,162 +368,135 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             _ensemble = not isinstance(estimator, FrozenEstimator)
 
         self.calibrated_classifiers_ = []
-        if self.cv == "prefit":
-            # TODO(1.8): Remove this code branch and cv='prefit'
-            warnings.warn(
-                "The `cv='prefit'` option is deprecated in 1.6 and will be removed in"
-                " 1.8. You can use CalibratedClassifierCV(FrozenEstimator(estimator))"
-                " instead.",
-                category=FutureWarning,
-            )
-            # `classes_` should be consistent with that of estimator
-            check_is_fitted(self.estimator, attributes=["classes_"])
-            self.classes_ = self.estimator.classes_
 
-            predictions, _ = _get_response_values(
-                estimator,
-                X,
-                response_method=["decision_function", "predict_proba"],
+        # Set `classes_` using all `y`
+        label_encoder_ = LabelEncoder().fit(y)
+        self.classes_ = label_encoder_.classes_
+        if self.method == "temperature" and isinstance(y[0], str):
+            # for temperature scaling if `y` contains strings then encode it
+            # right here to avoid fitting LabelEncoder again within the
+            # `_fit_calibrator` function.
+            y = label_encoder_.transform(y=y)
+
+        if _routing_enabled():
+            routed_params = process_routing(
+                self,
+                "fit",
+                sample_weight=sample_weight,
+                **fit_params,
             )
-            if predictions.ndim == 1:
-                # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
+        else:
+            # sample_weight checks
+            fit_parameters = signature(estimator.fit).parameters
+            supports_sw = "sample_weight" in fit_parameters
+            if sample_weight is not None and not supports_sw:
+                estimator_name = type(estimator).__name__
+                warnings.warn(
+                    f"Since {estimator_name} does not appear to accept"
+                    " sample_weight, sample weights will only be used for the"
+                    " calibration itself. This can be caused by a limitation of"
+                    " the current scikit-learn API. See the following issue for"
+                    " more details:"
+                    " https://github.com/scikit-learn/scikit-learn/issues/21134."
+                    " Be warned that the result of the calibration is likely to be"
+                    " incorrect."
+                )
+            routed_params = Bunch()
+            routed_params.splitter = Bunch(split={})  # no routing for splitter
+            routed_params.estimator = Bunch(fit=fit_params)
+            if sample_weight is not None and supports_sw:
+                routed_params.estimator.fit["sample_weight"] = sample_weight
+
+        xp, is_array_api, device_ = get_namespace_and_device(X)
+        if is_array_api:
+            y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
+        # Check that each cross-validation fold can have at least one
+        # example per class
+        if isinstance(self.cv, int):
+            n_folds = self.cv
+        elif hasattr(self.cv, "n_splits"):
+            n_folds = self.cv.n_splits
+        else:
+            n_folds = None
+        if n_folds and xp.any(xp.unique_counts(y)[1] < n_folds):
+            raise ValueError(
+                f"Requesting {n_folds}-fold "
+                "cross-validation but provided less than "
+                f"{n_folds} examples for at least one class."
+            )
+        if isinstance(self.cv, LeaveOneOut):
+            raise ValueError(
+                "LeaveOneOut cross-validation does not allow"
+                "all classes to be present in test splits. "
+                "Please use a cross-validation generator that allows "
+                "all classes to appear in every test and train split."
+            )
+        cv = check_cv(self.cv, y, classifier=True)
+
+        if _ensemble:
+            parallel = Parallel(n_jobs=self.n_jobs)
+            self.calibrated_classifiers_ = parallel(
+                delayed(_fit_classifier_calibrator_pair)(
+                    clone(estimator),
+                    X,
+                    y,
+                    train=train,
+                    test=test,
+                    method=self.method,
+                    classes=self.classes_,
+                    xp=xp,
+                    sample_weight=sample_weight,
+                    fit_params=routed_params.estimator.fit,
+                )
+                for train, test in cv.split(X, y, **routed_params.splitter.split)
+            )
+        else:
+            this_estimator = clone(estimator)
+            method_name = _check_response_method(
+                this_estimator,
+                ["decision_function", "predict_proba"],
+            ).__name__
+            predictions = cross_val_predict(
+                estimator=this_estimator,
+                X=X,
+                y=y,
+                cv=cv,
+                method=method_name,
+                n_jobs=self.n_jobs,
+                params=routed_params.estimator.fit,
+            )
+            if self.classes_.shape[0] == 2:
+                # Ensure shape (n_samples, 1) in the binary case
+                if method_name == "predict_proba":
+                    # Select the probability column of the positive class
+                    predictions = _process_predict_proba(
+                        y_pred=predictions,
+                        target_type="binary",
+                        classes=self.classes_,
+                        pos_label=self.classes_[1],
+                    )
                 predictions = predictions.reshape(-1, 1)
 
             if sample_weight is not None:
-                # Check that the sample_weight dtype is consistent with the predictions
-                # to avoid unintentional upcasts.
+                # Check that the sample_weight dtype is consistent with the
+                # predictions to avoid unintentional upcasts.
                 sample_weight = _check_sample_weight(
                     sample_weight, predictions, dtype=predictions.dtype
                 )
 
+            this_estimator.fit(X, y, **routed_params.estimator.fit)
+            # Note: Here we don't pass on fit_params because the supported
+            # calibrators don't support fit_params anyway
             calibrated_classifier = _fit_calibrator(
-                estimator,
+                this_estimator,
                 predictions,
                 y,
                 self.classes_,
                 self.method,
-                sample_weight,
+                xp=xp,
+                sample_weight=sample_weight,
             )
             self.calibrated_classifiers_.append(calibrated_classifier)
-        else:
-            # Set `classes_` using all `y`
-            label_encoder_ = LabelEncoder().fit(y)
-            self.classes_ = label_encoder_.classes_
-
-            if _routing_enabled():
-                routed_params = process_routing(
-                    self,
-                    "fit",
-                    sample_weight=sample_weight,
-                    **fit_params,
-                )
-            else:
-                # sample_weight checks
-                fit_parameters = signature(estimator.fit).parameters
-                supports_sw = "sample_weight" in fit_parameters
-                if sample_weight is not None and not supports_sw:
-                    estimator_name = type(estimator).__name__
-                    warnings.warn(
-                        f"Since {estimator_name} does not appear to accept"
-                        " sample_weight, sample weights will only be used for the"
-                        " calibration itself. This can be caused by a limitation of"
-                        " the current scikit-learn API. See the following issue for"
-                        " more details:"
-                        " https://github.com/scikit-learn/scikit-learn/issues/21134."
-                        " Be warned that the result of the calibration is likely to be"
-                        " incorrect."
-                    )
-                routed_params = Bunch()
-                routed_params.splitter = Bunch(split={})  # no routing for splitter
-                routed_params.estimator = Bunch(fit=fit_params)
-                if sample_weight is not None and supports_sw:
-                    routed_params.estimator.fit["sample_weight"] = sample_weight
-
-            # Check that each cross-validation fold can have at least one
-            # example per class
-            if isinstance(self.cv, int):
-                n_folds = self.cv
-            elif hasattr(self.cv, "n_splits"):
-                n_folds = self.cv.n_splits
-            else:
-                n_folds = None
-            if n_folds and np.any(np.unique(y, return_counts=True)[1] < n_folds):
-                raise ValueError(
-                    f"Requesting {n_folds}-fold "
-                    "cross-validation but provided less than "
-                    f"{n_folds} examples for at least one class."
-                )
-            if isinstance(self.cv, LeaveOneOut):
-                raise ValueError(
-                    "LeaveOneOut cross-validation does not allow"
-                    "all classes to be present in test splits. "
-                    "Please use a cross-validation generator that allows "
-                    "all classes to appear in every test and train split."
-                )
-            cv = check_cv(self.cv, y, classifier=True)
-
-            if _ensemble:
-                parallel = Parallel(n_jobs=self.n_jobs)
-                self.calibrated_classifiers_ = parallel(
-                    delayed(_fit_classifier_calibrator_pair)(
-                        clone(estimator),
-                        X,
-                        y,
-                        train=train,
-                        test=test,
-                        method=self.method,
-                        classes=self.classes_,
-                        sample_weight=sample_weight,
-                        fit_params=routed_params.estimator.fit,
-                    )
-                    for train, test in cv.split(X, y, **routed_params.splitter.split)
-                )
-            else:
-                this_estimator = clone(estimator)
-                method_name = _check_response_method(
-                    this_estimator,
-                    ["decision_function", "predict_proba"],
-                ).__name__
-                predictions = cross_val_predict(
-                    estimator=this_estimator,
-                    X=X,
-                    y=y,
-                    cv=cv,
-                    method=method_name,
-                    n_jobs=self.n_jobs,
-                    params=routed_params.estimator.fit,
-                )
-                if len(self.classes_) == 2:
-                    # Ensure shape (n_samples, 1) in the binary case
-                    if method_name == "predict_proba":
-                        # Select the probability column of the positive class
-                        predictions = _process_predict_proba(
-                            y_pred=predictions,
-                            target_type="binary",
-                            classes=self.classes_,
-                            pos_label=self.classes_[1],
-                        )
-                    predictions = predictions.reshape(-1, 1)
-
-                if sample_weight is not None:
-                    # Check that the sample_weight dtype is consistent with the
-                    # predictions to avoid unintentional upcasts.
-                    sample_weight = _check_sample_weight(
-                        sample_weight, predictions, dtype=predictions.dtype
-                    )
-
-                this_estimator.fit(X, y, **routed_params.estimator.fit)
-                # Note: Here we don't pass on fit_params because the supported
-                # calibrators don't support fit_params anyway
-                calibrated_classifier = _fit_calibrator(
-                    this_estimator,
-                    predictions,
-                    y,
-                    self.classes_,
-                    self.method,
-                    sample_weight,
-                )
-                self.calibrated_classifiers_.append(calibrated_classifier)
 
         first_clf = self.calibrated_classifiers_[0].estimator
         if hasattr(first_clf, "n_features_in_"):
@@ -508,7 +524,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         check_is_fitted(self)
         # Compute the arithmetic mean of the predictions of the calibrated
         # classifiers
-        mean_proba = np.zeros((_num_samples(X), len(self.classes_)))
+        xp, _, device_ = get_namespace_and_device(X)
+        mean_proba = xp.zeros((_num_samples(X), self.classes_.shape[0]), device=device_)
         for calibrated_classifier in self.calibrated_classifiers_:
             proba = calibrated_classifier.predict_proba(X)
             mean_proba += proba
@@ -533,8 +550,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         C : ndarray of shape (n_samples,)
             The predicted class.
         """
+        xp, _ = get_namespace(X)
         check_is_fitted(self)
-        return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
+        class_indices = xp.argmax(self.predict_proba(X), axis=1)
+        if isinstance(self.classes_[0], str):
+            class_indices = _convert_to_numpy(class_indices, xp=xp)
+
+        return self.classes_[class_indices]
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
@@ -549,7 +571,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             routing information.
         """
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
                 estimator=self._get_estimator(),
@@ -564,7 +586,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = get_tags(self._get_estimator()).input_tags.sparse
+        estimator_tags = get_tags(self._get_estimator())
+        tags.input_tags.sparse = estimator_tags.input_tags.sparse
+        tags.array_api_support = (
+            estimator_tags.array_api_support and self.method == "temperature"
+        )
         return tags
 
 
@@ -576,6 +602,7 @@ def _fit_classifier_calibrator_pair(
     test,
     method,
     classes,
+    xp,
     sample_weight=None,
     fit_params=None,
 ):
@@ -602,11 +629,14 @@ def _fit_classifier_calibrator_pair(
     test : ndarray, shape (n_test_indices,)
         Indices of the testing subset.
 
-    method : {'sigmoid', 'isotonic'}
+    method : {'sigmoid', 'isotonic', 'temperature'}
         Method to use for calibration.
 
     classes : ndarray, shape (n_classes,)
         The target classes.
+
+    xp : namespace
+        Array API namespace.
 
     sample_weight : array-like, default=None
         Sample weights for `X`.
@@ -642,17 +672,24 @@ def _fit_classifier_calibrator_pair(
     else:
         sw_test = None
     calibrated_classifier = _fit_calibrator(
-        estimator, predictions, y_test, classes, method, sample_weight=sw_test
+        estimator,
+        predictions,
+        y_test,
+        classes,
+        method,
+        xp=xp,
+        sample_weight=sw_test,
     )
     return calibrated_classifier
 
 
-def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
+def _fit_calibrator(clf, predictions, y, classes, method, xp, sample_weight=None):
     """Fit calibrator(s) and return a `_CalibratedClassifier`
     instance.
 
-    `n_classes` (i.e. `len(clf.classes_)`) calibrators are fitted.
-    However, if `n_classes` equals 2, one calibrator is fitted.
+    A separate calibrator is fitted for each of the `n_classes`
+    (i.e. `len(clf.classes_)`). However, if `n_classes` is 2 or if
+    `method` is 'temperature', only one calibrator is fitted.
 
     Parameters
     ----------
@@ -664,13 +701,16 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
         Raw predictions returned by the un-calibrated base classifier.
 
     y : array-like, shape (n_samples,)
-        The targets.
+        The targets. For `method="temperature"`, `y` needs to be label encoded.
 
     classes : ndarray, shape (n_classes,)
         All the prediction classes.
 
-    method : {'sigmoid', 'isotonic'}
+    method : {'sigmoid', 'isotonic', 'temperature'}
         The method to use for calibration.
+
+    xp : namespace
+        Array API namespace.
 
     sample_weight : ndarray, shape (n_samples,), default=None
         Sample weights. If None, then samples are equally weighted.
@@ -679,16 +719,29 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
     -------
     pipeline : _CalibratedClassifier instance
     """
-    Y = label_binarize(y, classes=classes)
-    label_encoder = LabelEncoder().fit(classes)
-    pos_class_indices = label_encoder.transform(clf.classes_)
     calibrators = []
-    for class_idx, this_pred in zip(pos_class_indices, predictions.T):
-        if method == "isotonic":
-            calibrator = IsotonicRegression(out_of_bounds="clip")
-        else:  # "sigmoid"
-            calibrator = _SigmoidCalibration()
-        calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
+
+    if method in ("isotonic", "sigmoid"):
+        Y = label_binarize(y, classes=classes)
+        label_encoder = LabelEncoder().fit(classes)
+        pos_class_indices = label_encoder.transform(clf.classes_)
+        for class_idx, this_pred in zip(pos_class_indices, predictions.T):
+            if method == "isotonic":
+                calibrator = IsotonicRegression(out_of_bounds="clip")
+            else:  # "sigmoid"
+                calibrator = _SigmoidCalibration()
+            calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
+            calibrators.append(calibrator)
+    elif method == "temperature":
+        if classes.shape[0] == 2 and predictions.shape[-1] == 1:
+            response_method_name = _check_response_method(
+                clf,
+                ["decision_function", "predict_proba"],
+            ).__name__
+            if response_method_name == "predict_proba":
+                predictions = xp.concat([1 - predictions, predictions], axis=1)
+        calibrator = _TemperatureScaling()
+        calibrator.fit(predictions, y, sample_weight)
         calibrators.append(calibrator)
 
     pipeline = _CalibratedClassifier(clf, calibrators, method=method, classes=classes)
@@ -749,33 +802,43 @@ class _CalibratedClassifier:
             # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
             predictions = predictions.reshape(-1, 1)
 
-        n_classes = len(self.classes)
-
-        label_encoder = LabelEncoder().fit(self.classes)
-        pos_class_indices = label_encoder.transform(self.estimator.classes_)
+        n_classes = self.classes.shape[0]
 
         proba = np.zeros((_num_samples(X), n_classes))
-        for class_idx, this_pred, calibrator in zip(
-            pos_class_indices, predictions.T, self.calibrators
-        ):
-            if n_classes == 2:
-                # When binary, `predictions` consists only of predictions for
-                # clf.classes_[1] but `pos_class_indices` = 0
-                class_idx += 1
-            proba[:, class_idx] = calibrator.predict(this_pred)
 
-        # Normalize the probabilities
-        if n_classes == 2:
-            proba[:, 0] = 1.0 - proba[:, 1]
-        else:
-            denominator = np.sum(proba, axis=1)[:, np.newaxis]
-            # In the edge case where for each class calibrator returns a null
-            # probability for a given sample, use the uniform distribution
-            # instead.
-            uniform_proba = np.full_like(proba, 1 / n_classes)
-            proba = np.divide(
-                proba, denominator, out=uniform_proba, where=denominator != 0
-            )
+        if self.method in ("sigmoid", "isotonic"):
+            label_encoder = LabelEncoder().fit(self.classes)
+            pos_class_indices = label_encoder.transform(self.estimator.classes_)
+            for class_idx, this_pred, calibrator in zip(
+                pos_class_indices, predictions.T, self.calibrators
+            ):
+                if n_classes == 2:
+                    # When binary, `predictions` consists only of predictions for
+                    # clf.classes_[1] but `pos_class_indices` = 0
+                    class_idx += 1
+                proba[:, class_idx] = calibrator.predict(this_pred)
+            # Normalize the probabilities
+            if n_classes == 2:
+                proba[:, 0] = 1.0 - proba[:, 1]
+            else:
+                denominator = np.sum(proba, axis=1)[:, np.newaxis]
+                # In the edge case where for each class calibrator returns a zero
+                # probability for a given sample, use the uniform distribution
+                # instead.
+                uniform_proba = np.full_like(proba, 1 / n_classes)
+                proba = np.divide(
+                    proba, denominator, out=uniform_proba, where=denominator != 0
+                )
+        elif self.method == "temperature":
+            xp, _ = get_namespace(predictions)
+            if n_classes == 2 and predictions.shape[-1] == 1:
+                response_method_name = _check_response_method(
+                    self.estimator,
+                    ["decision_function", "predict_proba"],
+                ).__name__
+                if response_method_name == "predict_proba":
+                    predictions = xp.concat([1 - predictions, predictions], axis=1)
+            proba = self.calibrators[0].predict(predictions)
 
         # Deal with cases where the predicted probability minimally exceeds 1.0
         proba[(1.0 < proba) & (proba <= 1.0 + 1e-5)] = 1.0
@@ -887,6 +950,65 @@ def _sigmoid_calibration(
     return AB_[0] / scale_constant, AB_[1]
 
 
+def _convert_to_logits(decision_values, eps=1e-12, xp=None):
+    """Convert decision_function values to 2D and predict_proba values to logits.
+
+    This function ensures that the output of `decision_function` is
+    converted into a (n_samples, n_classes) array. For binary classification,
+    each row contains logits for the negative and positive classes as (-x, x).
+
+    If `predict_proba` is provided instead, it is converted into
+    log-probabilities using `numpy.log`.
+
+    Parameters
+    ----------
+    decision_values : array-like of shape (n_samples,) or (n_samples, 1) \
+        or (n_samples, n_classes).
+
+        The decision function values or probability estimates.
+        - If shape is (n_samples,), converts to (n_samples, 2) with (-x, x).
+        - If shape is (n_samples, 1), converts to (n_samples, 2) with (-x, x).
+        - If shape is (n_samples, n_classes), returns unchanged.
+        - For probability estimates, returns `numpy.log(decision_values + eps)`.
+
+    eps : float
+        Small positive value added to avoid log(0).
+
+    Returns
+    -------
+    logits : ndarray of shape (n_samples, n_classes)
+    """
+    xp, _, device_ = get_namespace_and_device(decision_values, xp=xp)
+    decision_values = check_array(
+        decision_values, dtype=[xp.float64, xp.float32], ensure_2d=False
+    )
+    if (decision_values.ndim == 2) and (decision_values.shape[1] > 1):
+        # Check if it is the output of predict_proba
+        entries_zero_to_one = xp.all((decision_values >= 0) & (decision_values <= 1))
+        # TODO: simplify once upstream issue is addressed
+        # https://github.com/data-apis/array-api-extra/issues/478
+        row_sums_to_one = xp.all(
+            xpx.isclose(
+                xp.sum(decision_values, axis=1),
+                xp.asarray(1.0, device=device_, dtype=decision_values.dtype),
+            )
+        )
+
+        if entries_zero_to_one and row_sums_to_one:
+            logits = xp.log(decision_values + eps)
+        else:
+            logits = decision_values
+
+    elif (decision_values.ndim == 2) and (decision_values.shape[1] == 1):
+        logits = xp.concat([-decision_values, decision_values], axis=1)
+
+    elif decision_values.ndim == 1:
+        decision_values = xp.reshape(decision_values, (-1, 1))
+        logits = xp.concat([-decision_values, decision_values], axis=1)
+
+    return logits
+
+
 class _SigmoidCalibration(RegressorMixin, BaseEstimator):
     """Sigmoid regression model.
 
@@ -940,6 +1062,145 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         """
         T = column_or_1d(T)
         return expit(-(self.a_ * T + self.b_))
+
+
+class _TemperatureScaling(RegressorMixin, BaseEstimator):
+    """Temperature scaling model.
+
+    Attributes
+    ----------
+    beta_ : float
+        The optimized inverse temperature.
+    """
+
+    def fit(self, X, y, sample_weight=None):
+        """Fit the model using X, y as training data.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Training data.
+
+            This should be the output of `decision_function` or `predict_proba`.
+            If the input appears to be probabilities (i.e., values between 0 and 1
+            that sum to 1 across classes), it will be converted to logits using
+            `np.log(p + eps)`.
+
+            Binary decision function outputs (1D) will be converted to two-class
+            logits of the form (-x, x). For shapes of the form (n_samples, 1), the
+            same process applies.
+
+        y : array-like of shape (n_samples,)
+            Training target.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
+
+        Returns
+        -------
+        self : object
+            Returns an instance of self.
+        """
+        xp, _, xp_device = get_namespace_and_device(X, y)
+        X, y = indexable(X, y)
+        check_consistent_length(X, y)
+        logits = _convert_to_logits(X)  # guarantees xp.float64 or xp.float32
+
+        dtype_ = logits.dtype
+        labels = column_or_1d(y, dtype=dtype_)
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, labels, dtype=dtype_)
+
+        if _is_numpy_namespace(xp):
+            multinomial_loss = HalfMultinomialLoss(n_classes=logits.shape[1])
+        else:
+            multinomial_loss = partial(_half_multinomial_loss, xp=xp)
+
+        def log_loss(log_beta=0.0):
+            """Compute the log loss as a parameter of the inverse temperature
+            (beta).
+
+            Parameters
+            ----------
+            log_beta : float
+                The current logarithm of the inverse temperature value during
+                optimisation.
+
+            Returns
+            -------
+            negative_log_likelihood_loss : float
+                The negative log likelihood loss.
+
+            """
+            # TODO: numpy 2.0
+            # Ensure raw_prediction has the same dtype as labels using .astype().
+            # Without this, dtype promotion rules differ across NumPy versions:
+            #
+            #   beta = np.float64(0)
+            #   logits = np.array([1, 2], dtype=np.float32)
+            #
+            #   result = beta * logits
+            #   - NumPy < 2: result.dtype is float32
+            #   - NumPy 2+:  result.dtype is float64
+            #
+            #  This can cause dtype mismatch errors downstream (e.g., buffer dtype).
+            log_beta = xp.asarray(log_beta, dtype=dtype_, device=xp_device)
+            raw_prediction = xp.exp(log_beta) * logits
+            return multinomial_loss(labels, raw_prediction, sample_weight)
+
+        xatol = 64 * xp.finfo(dtype_).eps
+        log_beta_minimizer = minimize_scalar(
+            log_loss,
+            bounds=(-10.0, 10.0),
+            options={
+                "xatol": xatol,
+            },
+        )
+
+        if not log_beta_minimizer.success:  # pragma: no cover
+            raise RuntimeError(
+                "Temperature scaling fails to optimize during calibration. "
+                "Reason from `scipy.optimize.minimize_scalar`: "
+                f"{log_beta_minimizer.message}"
+            )
+
+        self.beta_ = xp.exp(
+            xp.asarray(log_beta_minimizer.x, dtype=dtype_, device=xp_device)
+        )
+
+        return self
+
+    def predict(self, X):
+        """Predict new data by linear interpolation.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Data to predict from.
+
+            This should be the output of `decision_function` or `predict_proba`.
+            If the input appears to be probabilities (i.e., values between 0 and 1
+            that sum to 1 across classes), it will be converted to logits using
+            `np.log(p + eps)`.
+
+            Binary decision function outputs (1D) will be converted to two-class
+            logits of the form (-x, x). For shapes of the form (n_samples, 1), the
+            same process applies.
+
+        Returns
+        -------
+        X_ : ndarray of shape (n_samples, n_classes)
+             The predicted data.
+        """
+        logits = _convert_to_logits(X)
+        return softmax(self.beta_ * logits)
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.one_d_array = True
+        tags.input_tags.two_d_array = False
+        return tags
 
 
 @validate_params(
@@ -1102,9 +1363,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         Name of estimator. If None, the estimator name is not shown.
 
     pos_label : int, float, bool or str, default=None
-        The positive class when computing the calibration curve.
-        By default, `pos_label` is set to `estimators.classes_[1]` when using
-        `from_estimator` and set to 1 when using `from_predictions`.
+        The positive class when calibration curve computed.
+        If not `None`, this value is displayed in the x- and y-axes labels.
 
         .. versionadded:: 1.1
 
@@ -1385,7 +1645,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
 
         pos_label : int, float, bool or str, default=None
             The positive class when computing the calibration curve.
-            By default `pos_label` is set to 1.
+            When `pos_label=None`, if `y_true` is in {-1, 1} or {0, 1},
+            `pos_label` is set to 1, otherwise an error will be raised.
 
             .. versionadded:: 1.1
 

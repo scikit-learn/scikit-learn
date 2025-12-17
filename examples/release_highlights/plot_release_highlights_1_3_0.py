@@ -58,7 +58,7 @@ from sklearn.metrics import v_measure_score
 X, true_labels = load_digits(return_X_y=True)
 print(f"number of digits: {len(np.unique(true_labels))}")
 
-hdbscan = HDBSCAN(min_cluster_size=15).fit(X)
+hdbscan = HDBSCAN(min_cluster_size=15, copy=True).fit(X)
 non_noisy_labels = hdbscan.labels_[hdbscan.labels_ != -1]
 print(f"number of clusters found: {len(np.unique(non_noisy_labels))}")
 

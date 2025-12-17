@@ -90,7 +90,7 @@ Here we have used ``kernel='gaussian'``, as seen above.
 Mathematically, a kernel is a positive function :math:`K(x;h)`
 which is controlled by the bandwidth parameter :math:`h`.
 Given this kernel form, the density estimate at a point :math:`y` within
-a group of points :math:`x_i; i=1\cdots N` is given by:
+a group of points :math:`x_i; i=1, \cdots, N` is given by:
 
 .. math::
     \rho_K(y) = \sum_{i=1}^{N} K(y - x_i; h)

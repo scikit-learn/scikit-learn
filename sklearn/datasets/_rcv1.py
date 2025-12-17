@@ -18,12 +18,17 @@ import joblib
 import numpy as np
 import scipy.sparse as sp
 
-from ..utils import Bunch
-from ..utils import shuffle as shuffle_
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from . import get_data_home
-from ._base import RemoteFileMetadata, _fetch_remote, _pkl_filepath, load_descr
-from ._svmlight_format_io import load_svmlight_files
+from sklearn.datasets import get_data_home
+from sklearn.datasets._base import (
+    RemoteFileMetadata,
+    _fetch_remote,
+    _pkl_filepath,
+    load_descr,
+)
+from sklearn.datasets._svmlight_format_io import load_svmlight_files
+from sklearn.utils import Bunch
+from sklearn.utils import shuffle as shuffle_
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 
 # The original vectorized data can be found at:
 #    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt0.dat.gz

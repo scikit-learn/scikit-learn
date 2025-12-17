@@ -6,8 +6,8 @@
 import numpy as np
 from scipy import sparse
 
-from ._param_validation import StrOptions, validate_params
-from .validation import _check_sample_weight
+from sklearn.utils._param_validation import StrOptions, validate_params
+from sklearn.utils.validation import _check_sample_weight
 
 
 @validate_params(
@@ -62,7 +62,7 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
     array([1.5 , 0.75])
     """
     # Import error caused by circular imports.
-    from ..preprocessing import LabelEncoder
+    from sklearn.preprocessing import LabelEncoder
 
     if set(y) - set(classes):
         raise ValueError("classes should include all valid labels that can be in y")

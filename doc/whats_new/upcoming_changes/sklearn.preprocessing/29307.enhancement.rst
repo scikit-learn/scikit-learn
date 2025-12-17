@@ -1,0 +1,4 @@
+- The :class:`preprocessing.PowerTransformer` now returns a warning 
+  when NaN values are encountered in the inverse transform, `inverse_transform`, typically 
+  caused by extremely skewed data.
+  By :user:`Roberto Mourao <maf-rnmourao>`

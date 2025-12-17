@@ -1,0 +1,3 @@
+- Fixed an issue where passing `sample_weight` to a :class:`Pipeline` inside a
+  :class:`GridSearchCV` would raise an error with metadata routing enabled.
+  By `Adrin Jalali`_.

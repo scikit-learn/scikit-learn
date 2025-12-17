@@ -610,6 +610,21 @@ Again please see the :ref:`reference documentation
   * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
 
 
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`:
+  Feature encoding using a Tf-idf-weighted document-term sparse matrix.
+
+* :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`: Efficiency
+  comparison of the different feature extractors.
+
+* :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
+  and comparison with :class:`HashingVectorizer`.
+
+* :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`:
+  Tuning hyperparamters of :class:`TfidfVectorizer` as part of a pipeline.
+
+
 Decoding text files
 -------------------
 Text is made of characters, but files are made of bytes. These bytes represent
@@ -846,7 +861,7 @@ text classification tasks.
 
 Note that the dimensionality does not affect the CPU training time of
 algorithms which operate on CSR matrices (``LinearSVC(dual=True)``,
-``Perceptron``, ``SGDClassifier``, ``PassiveAggressive``) but it does for
+``Perceptron``, ``SGDClassifier``) but it does for
 algorithms that work with CSC matrices (``LinearSVC(dual=False)``, ``Lasso()``,
 etc.).
 

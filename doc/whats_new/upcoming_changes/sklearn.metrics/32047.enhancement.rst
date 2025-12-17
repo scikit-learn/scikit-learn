@@ -1,0 +1,9 @@
+- Improved the error message for sparse inputs for the following metrics:
+  :func:`metrics.accuracy_score`,
+  :func:`metrics.multilabel_confusion_matrix`, :func:`metrics.jaccard_score`,
+  :func:`metrics.zero_one_loss`, :func:`metrics.f1_score`,
+  :func:`metrics.fbeta_score`, :func:`metrics.precision_recall_fscore_support`,
+  :func:`metrics.class_likelihood_ratios`, :func:`metrics.precision_score`,
+  :func:`metrics.recall_score`, :func:`metrics.classification_report`,
+  :func:`metrics.hamming_loss`.
+  By :user:`Lucy Liu <lucyleeow>`.

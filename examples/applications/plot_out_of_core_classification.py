@@ -33,7 +33,7 @@ from matplotlib import rcParams
 
 from sklearn.datasets import get_data_home
 from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.linear_model import PassiveAggressiveClassifier, Perceptron, SGDClassifier
+from sklearn.linear_model import Perceptron, SGDClassifier
 from sklearn.naive_bayes import MultinomialNB
 
 
@@ -208,7 +208,9 @@ partial_fit_classifiers = {
     "SGD": SGDClassifier(max_iter=5),
     "Perceptron": Perceptron(),
     "NB Multinomial": MultinomialNB(alpha=0.01),
-    "Passive-Aggressive": PassiveAggressiveClassifier(),
+    "Passive-Aggressive": SGDClassifier(
+        loss="hinge", penalty=None, learning_rate="pa1", eta0=1.0
+    ),
 }
 
 

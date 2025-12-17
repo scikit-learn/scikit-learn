@@ -11,15 +11,15 @@ from scipy import linalg
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
 
-from ..base import _fit_context
-from ..utils import check_random_state
-from ..utils._arpack import _init_arpack_v0
-from ..utils._array_api import _convert_to_numpy, get_namespace
-from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils.extmath import _randomized_svd, fast_logdet, stable_cumsum, svd_flip
-from ..utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
-from ..utils.validation import check_is_fitted, validate_data
-from ._base import _BasePCA
+from sklearn.base import _fit_context
+from sklearn.decomposition._base import _BasePCA
+from sklearn.utils import check_random_state
+from sklearn.utils._arpack import _init_arpack_v0
+from sklearn.utils._array_api import device, get_namespace
+from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
+from sklearn.utils.extmath import _randomized_svd, fast_logdet, svd_flip
+from sklearn.utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 def _assess_dimension(spectrum, rank, n_samples):
@@ -655,23 +655,15 @@ class PCA(_BasePCA):
             # side='right' ensures that number of features selected
             # their variance is always greater than n_components float
             # passed. More discussion in issue: #15669
-            if is_array_api_compliant:
-                # Convert to numpy as xp.cumsum and xp.searchsorted are not
-                # part of the Array API standard yet:
-                #
-                # https://github.com/data-apis/array-api/issues/597
-                # https://github.com/data-apis/array-api/issues/688
-                #
-                # Furthermore, it's not always safe to call them for namespaces
-                # that already implement them: for instance as
-                # cupy.searchsorted does not accept a float as second argument.
-                explained_variance_ratio_np = _convert_to_numpy(
-                    explained_variance_ratio_, xp=xp
+            ratio_cumsum = xp.cumulative_sum(explained_variance_ratio_)
+            n_components = (
+                xp.searchsorted(
+                    ratio_cumsum,
+                    xp.asarray(n_components, device=device(ratio_cumsum)),
+                    side="right",
                 )
-            else:
-                explained_variance_ratio_np = explained_variance_ratio_
-            ratio_cumsum = stable_cumsum(explained_variance_ratio_np)
-            n_components = np.searchsorted(ratio_cumsum, n_components, side="right") + 1
+                + 1
+            )
 
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
@@ -848,7 +840,10 @@ class PCA(_BasePCA):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
-        tags.array_api_support = True
+        solver = getattr(self, "_fit_svd_solver", self.svd_solver)
+        tags.array_api_support = solver not in ["arpack", "randomized"] or (
+            solver == "randomized" and self.power_iteration_normalizer == "QR"
+        )
         tags.input_tags.sparse = self.svd_solver in (
             "auto",
             "arpack",

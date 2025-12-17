@@ -16,15 +16,13 @@ from sklearn.covariance import (
     oas,
     shrunk_covariance,
 )
-from sklearn.covariance._shrunk_covariance import _ledoit_wolf
+from sklearn.covariance._shrunk_covariance import _ledoit_wolf, _oas
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
 )
-
-from .._shrunk_covariance import _oas
 
 X, _ = datasets.load_diabetes(return_X_y=True)
 X_1d = X[:, 0]
@@ -257,9 +255,9 @@ def test_ledoit_wolf_small():
     assert_almost_equal(shrinkage_, _naive_ledoit_wolf_shrinkage(X_small))
 
 
-def test_ledoit_wolf_large():
+def test_ledoit_wolf_large(global_random_seed):
     # test that ledoit_wolf doesn't error on data that is wider than block_size
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     # use a number of features that is larger than the block-size
     X = rng.normal(size=(10, 20))
     lw = LedoitWolf(block_size=10).fit(X)

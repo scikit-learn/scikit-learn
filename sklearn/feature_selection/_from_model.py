@@ -6,25 +6,24 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
-from ..exceptions import NotFittedError
-from ..utils._param_validation import HasMethods, Interval, Options
-from ..utils._tags import get_tags
-from ..utils.metadata_routing import (
+from sklearn.base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
+from sklearn.exceptions import NotFittedError
+from sklearn.feature_selection._base import SelectorMixin, _get_feature_importances
+from sklearn.utils._param_validation import HasMethods, Interval, Options
+from sklearn.utils._tags import get_tags
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _routing_enabled,
     process_routing,
 )
-from ..utils.metaestimators import available_if
-from ..utils.validation import (
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.validation import (
     _check_feature_names,
     _estimator_has,
-    _num_features,
     check_is_fitted,
     check_scalar,
 )
-from ._base import SelectorMixin, _get_feature_importances
 
 
 def _calculate_threshold(estimator, importances, threshold):
@@ -41,11 +40,20 @@ def _calculate_threshold(estimator, importances, threshold):
         is_elasticnetcv_l1_penalized = est_name == "ElasticNetCV" and (
             hasattr(estimator, "l1_ratio_") and np.isclose(estimator.l1_ratio_, 1.0)
         )
+        is_logreg_l1_penalized = est_name == "LogisticRegression" and (
+            hasattr(estimator, "l1_ratio") and np.isclose(estimator.l1_ratio, 1.0)
+        )
+        is_logregcv_l1_penalized = est_name == "LogisticRegressionCV" and (
+            hasattr(estimator, "l1_ratio_")
+            and np.all(np.isclose(estimator.l1_ratio_, 1.0))
+        )
         if (
             is_l1_penalized
             or is_lasso
             or is_elasticnet_l1_penalized
             or is_elasticnetcv_l1_penalized
+            or is_logreg_l1_penalized
+            or is_logregcv_l1_penalized
         ):
             # the natural default threshold is 0 when l1 penalty was used
             threshold = 1e-5
@@ -128,7 +136,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         - If an integer, then it specifies the maximum number of features to
           allow.
         - If a callable, then it specifies how to calculate the maximum number of
-          features allowed by using the output of `max_features(X)`.
+          features allowed. The callable will receive `X` as input: `max_features(X)`.
         - If `None`, then all features are kept.
 
         To only select based on ``max_features``, set ``threshold=-np.inf``.
@@ -308,8 +316,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     def _check_max_features(self, X):
         if self.max_features is not None:
-            n_features = _num_features(X)
-
             if callable(self.max_features):
                 max_features = self.max_features(X)
             else:  # int
@@ -320,7 +326,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 "max_features",
                 Integral,
                 min_val=0,
-                max_val=n_features,
+                max_val=None,
             )
             self.max_features_ = max_features
 
@@ -471,7 +477,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     @property
     def n_features_in_(self):
         """Number of features seen during `fit`."""
-        # For consistency with other estimators we raise a AttributeError so
+        # For consistency with other estimators we raise an AttributeError so
         # that hasattr() fails if the estimator isn't fitted.
         try:
             check_is_fitted(self)
@@ -498,7 +504,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             estimator=self.estimator,
             method_mapping=MethodMapping()
             .add(caller="partial_fit", callee="partial_fit")

@@ -1,0 +1,2 @@
+- :func:`metrics.d2_brier_score` has been added which calculates the D^2 for the Brier score.
+  By :user:`Omar Salman <OmarManzoor>`.

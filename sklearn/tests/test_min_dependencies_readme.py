@@ -16,14 +16,13 @@ for package, (min_version, extras) in dependent_packages.items():
     for extra in extras.split(", "):
         min_depencies_tag_to_packages_without_version[extra].append(package)
 
-min_dependencies_tag_to_pyproject_section = {
-    "build": "build-system.requires",
-    "install": "project.dependencies",
+pyproject_section_to_min_dependencies_tag = {
+    "build-system.requires": "build",
+    "project.dependencies": "install",
 }
 for tag in min_depencies_tag_to_packages_without_version:
-    min_dependencies_tag_to_pyproject_section[tag] = (
-        f"project.optional-dependencies.{tag}"
-    )
+    section = f"project.optional-dependencies.{tag}"
+    pyproject_section_to_min_dependencies_tag[section] = tag
 
 
 def test_min_dependencies_readme():
@@ -53,14 +52,18 @@ def test_min_dependencies_readme():
             if not matched:
                 continue
 
-            package, version = matched.group(0), matched.group(1)
+            package, version = matched.group(1), matched.group(2)
             package = package.lower()
 
             if package in dependent_packages:
                 version = parse_version(version)
                 min_version = parse_version(dependent_packages[package][0])
 
-                assert version == min_version, f"{package} has a mismatched version"
+                message = (
+                    f"{package} has inconsistent minimum versions in README.rst and"
+                    f" _min_depencies.py: {version} != {min_version}"
+                )
+                assert version == min_version, message
 
 
 def check_pyproject_section(
@@ -93,16 +96,19 @@ def check_pyproject_section(
         info = info[key]
 
     pyproject_build_min_versions = {}
+    # Assuming pyproject.toml build section has something like "my-package>=2.3.0"
+    # Warning: if you try to modify this regex, bear in mind that there can be upper
+    # bounds in release branches so "my-package>=2.3.0,<2.5.0"
+    pattern = r"([\w-]+)\s*[>=]=\s*([\d\w.]+)"
     for requirement in info:
-        if ">=" in requirement:
-            package, version = requirement.split(">=")
-        elif "==" in requirement:
-            package, version = requirement.split("==")
-        else:
+        match = re.search(pattern, requirement)
+        if match is None:
             raise NotImplementedError(
-                f"{requirement} not supported yet in this test. "
+                f"{requirement} does not match expected regex {pattern!r}. "
                 "Only >= and == are supported for version requirements"
             )
+
+        package, version = match.group(1), match.group(2)
 
         pyproject_build_min_versions[package] = version
 
@@ -114,12 +120,16 @@ def check_pyproject_section(
         if package in skip_version_check_for:
             continue
 
-        assert version == expected_min_version, f"{package} has a mismatched version"
+        message = (
+            f"{package} has inconsistent minimum versions in pyproject.toml and"
+            f" _min_depencies.py: {version} != {expected_min_version}"
+        )
+        assert version == expected_min_version, message
 
 
 @pytest.mark.parametrize(
-    "min_dependencies_tag, pyproject_section",
-    min_dependencies_tag_to_pyproject_section.items(),
+    "pyproject_section, min_dependencies_tag",
+    pyproject_section_to_min_dependencies_tag.items(),
 )
 def test_min_dependencies_pyproject_toml(pyproject_section, min_dependencies_tag):
     """Check versions in pyproject.toml is consistent with _min_dependencies."""

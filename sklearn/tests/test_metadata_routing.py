@@ -102,7 +102,7 @@ class SimplePipeline(BaseEstimator):
         return self.steps_[-1].predict(X_transformed, **params.predictor.predict)
 
     def get_metadata_routing(self):
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
         for i, step in enumerate(self.steps[:-1]):
             router.add(
                 **{f"step_{i}": step},
@@ -217,6 +217,9 @@ def test_default_requests():
             "sample_weight": True
         }  # type: ignore[var-annotated]
 
+        def fit(self, X, y=None):
+            return self  # pragma: no cover
+
     odd_request = get_routing_for_object(OddEstimator())
     assert odd_request.fit.requests == {"sample_weight": True}
 
@@ -250,11 +253,20 @@ def test_default_request_override():
     class Base(BaseEstimator):
         __metadata_request__split = {"groups": True}
 
+        def split(self, X, y=None):
+            pass  # pragma: no cover
+
     class class_1(Base):
         __metadata_request__split = {"groups": "sample_domain"}
 
+        def split(self, X, y=None):
+            pass  # pragma: no cover
+
     class Class_1(Base):
         __metadata_request__split = {"groups": "sample_domain"}
+
+        def split(self, X, y=None):
+            pass  # pragma: no cover
 
     assert_request_equal(
         class_1()._get_metadata_request(), {"split": {"groups": "sample_domain"}}
@@ -457,19 +469,6 @@ def test_invalid_metadata():
 
 @config_context(enable_metadata_routing=True)
 def test_get_metadata_routing():
-    class TestDefaultsBadMethodName(_MetadataRequester):
-        __metadata_request__fit = {
-            "sample_weight": None,
-            "my_param": None,
-        }
-        __metadata_request__score = {
-            "sample_weight": None,
-            "my_param": True,
-            "my_other_param": None,
-        }
-        # this will raise an error since we don't understand "other_method" as a method
-        __metadata_request__other_method = {"my_param": True}
-
     class TestDefaults(_MetadataRequester):
         __metadata_request__fit = {
             "sample_weight": None,
@@ -482,10 +481,14 @@ def test_get_metadata_routing():
         }
         __metadata_request__predict = {"my_param": True}
 
-    with pytest.raises(
-        AttributeError, match="'MetadataRequest' object has no attribute 'other_method'"
-    ):
-        TestDefaultsBadMethodName().get_metadata_routing()
+        def fit(self, X, y=None):
+            return self  # pragma: no cover
+
+        def score(self, X, y=None):
+            pass  # pragma: no cover
+
+        def predict(self, X):
+            pass  # pragma: no cover
 
     expected = {
         "score": {
@@ -621,6 +624,9 @@ def test_get_routing_for_object():
     class Consumer(BaseEstimator):
         __metadata_request__fit = {"prop": None}
 
+        def fit(self, X, y=None):
+            return self  # pragma: no cover
+
     assert_request_is_empty(get_routing_for_object(None))
     assert_request_is_empty(get_routing_for_object(object()))
 
@@ -638,7 +644,7 @@ def test_get_routing_for_object():
 @config_context(enable_metadata_routing=True)
 def test_metadata_request_consumes_method():
     """Test that MetadataRequest().consumes() method works as expected."""
-    request = MetadataRouter(owner="test")
+    request = MetadataRequest(owner="test")
     assert request.consumes(method="fit", params={"foo"}) == set()
 
     request = MetadataRequest(owner="test")
@@ -684,7 +690,7 @@ def test_metaestimator_warnings():
         __metadata_request__fit = {"sample_weight": metadata_routing.WARN}
 
     with pytest.warns(
-        UserWarning, match="Support for .* has recently been added to this class"
+        UserWarning, match="Support for .* has recently been added to .* class"
     ):
         WeightedMetaRegressorWarn(
             estimator=LinearRegression().set_fit_request(sample_weight=False)
@@ -697,7 +703,7 @@ def test_estimator_warnings():
         __metadata_request__fit = {"sample_weight": metadata_routing.WARN}
 
     with pytest.warns(
-        UserWarning, match="Support for .* has recently been added to this class"
+        UserWarning, match="Support for .* has recently been added to .* class"
     ):
         MetaRegressor(estimator=ConsumingRegressorWarn()).fit(
             X, y, sample_weight=my_weights

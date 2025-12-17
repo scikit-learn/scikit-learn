@@ -114,6 +114,8 @@ unsupervised learning: in particular, see :class:`~sklearn.manifold.Isomap`,
 :class:`~sklearn.manifold.LocallyLinearEmbedding`, and
 :class:`~sklearn.cluster.SpectralClustering`.
 
+.. _kdtree_and_balltree_classes:
+
 KDTree and BallTree Classes
 ---------------------------
 Alternatively, one can use the :class:`KDTree` or :class:`BallTree` classes
@@ -347,7 +349,7 @@ Alternatively, the user can work with the :class:`BallTree` class directly.
 .. dropdown:: References
 
   * `"Five Balltree Construction Algorithms"
-    <https://citeseerx.ist.psu.edu/doc_view/pid/17ac002939f8e950ffb32ec4dc8e86bdd8cb5ff1>`_,
+    <https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=17ac002939f8e950ffb32ec4dc8e86bdd8cb5ff1>`_,
     Omohundro, S.M., International Computer Science Institute
     Technical Report (1989)
 

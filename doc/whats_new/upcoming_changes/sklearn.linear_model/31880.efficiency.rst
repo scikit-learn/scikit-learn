@@ -1,0 +1,9 @@
+- :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
+  :class:`linear_model.Lasso`, :class:`linear_model.LassoCV`,
+  :class:`linear_model.MultiTaskElasticNet`,
+  :class:`linear_model.MultiTaskElasticNetCV`,
+  :class:`linear_model.MultiTaskLasso` and :class:`linear_model.MultiTaskLassoCV`
+  are faster to fit by avoiding a BLAS level 1 (axpy) call in the innermost loop.
+  Same for functions :func:`linear_model.enet_path` and
+  :func:`linear_model.lasso_path`.
+  By :user:`Christian Lorentzen <lorentzenchr>` :pr:`31956` and

@@ -15,12 +15,15 @@ import numpy as np
 from scipy import linalg
 from scipy.stats import chi2
 
-from ..base import _fit_context
-from ..utils import check_array, check_random_state
-from ..utils._param_validation import Interval
-from ..utils.extmath import fast_logdet
-from ..utils.validation import validate_data
-from ._empirical_covariance import EmpiricalCovariance, empirical_covariance
+from sklearn.base import _fit_context
+from sklearn.covariance._empirical_covariance import (
+    EmpiricalCovariance,
+    empirical_covariance,
+)
+from sklearn.utils import check_array, check_random_state
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.extmath import fast_logdet
+from sklearn.utils.validation import validate_data
 
 
 # Minimum Covariance Determinant
@@ -208,6 +211,43 @@ def _c_step(
     # Convert from list of indices to boolean mask.
     support = np.bincount(support_indices, minlength=n_samples).astype(bool)
     return location, covariance, det, support, dist
+
+
+def _consistency_factor(n_features, alpha):
+    """Multiplicative factor to make covariance estimate consistent
+    at the normal distribution, as described in [Pison2002]_.
+
+    Parameters
+    ----------
+    n_features : int
+        Number of features.
+
+    alpha : float
+        Parameter related to the proportion of discarded points.
+        This parameter must be in the range (0, 1).
+
+    Returns
+    -------
+    c_alpha : float
+        Scaling factor to make covariance matrix consistent.
+
+    References
+    ----------
+    .. [Butler1993] R. W. Butler. P. L. Davies. M. Jhun. "Asymptotics for the
+        Minimum Covariance Determinant Estimator." Ann. Statist. 21 (3)
+        1385 - 1400, September, 1993. https://doi.org/10.1214/aos/1176349264]
+
+    .. [Croux1999] Croux, C., Haesbroeck, G. "Influence Function and
+        Efficiency of the Minimum Covariance Determinant Scatter Matrix
+        Estimator" Journal of Multivariate Analysis 71(2) (1999) 161-190
+
+    .. [Pison2002] Pison, G., Van Aelst, S., Willems, G., "Small sample
+        corrections for LTS and MCD" Metrika 55(1) (2002) 111-123
+    """
+    # Formulas as in Sec 3 of Pison 2002, derived from Eq 4.2 in Croux 1999
+    q_alpha = chi2.ppf(alpha, df=n_features)
+    c_alpha = alpha / chi2.cdf(q_alpha, n_features + 2)
+    return c_alpha
 
 
 def select_candidates(
@@ -701,10 +741,10 @@ class MinCovDet(EmpiricalCovariance):
     ...                                   size=500)
     >>> cov = MinCovDet(random_state=0).fit(X)
     >>> cov.covariance_
-    array([[0.7411, 0.2535],
-           [0.2535, 0.3053]])
+    array([[0.8102, 0.2736],
+           [0.2736, 0.3330]])
     >>> cov.location_
-    array([0.0813 , 0.0427])
+    array([0.0769 , 0.0397])
     """
 
     _parameter_constraints: dict = {
@@ -784,8 +824,7 @@ class MinCovDet(EmpiricalCovariance):
     def correct_covariance(self, data):
         """Apply a correction to raw Minimum Covariance Determinant estimates.
 
-        Correction using the empirical correction factor suggested
-        by Rousseeuw and Van Driessen in [RVD]_.
+        Correction using the asymptotic correction factor derived by [Croux1999]_.
 
         Parameters
         ----------
@@ -801,24 +840,24 @@ class MinCovDet(EmpiricalCovariance):
 
         References
         ----------
-
-        .. [RVD] A Fast Algorithm for the Minimum Covariance
-            Determinant Estimator, 1999, American Statistical Association
-            and the American Society for Quality, TECHNOMETRICS
+        .. [Croux1999] Influence Function and Efficiency of the Minimum
+            Covariance Determinant Scatter Matrix Estimator, 1999, Journal of
+            Multivariate Analysis, Volume 71, Issue 2, Pages 161-190
         """
 
         # Check that the covariance of the support data is not equal to 0.
         # Otherwise self.dist_ = 0 and thus correction = 0.
         n_samples = len(self.dist_)
         n_support = np.sum(self.support_)
+        n_features = self.raw_covariance_.shape[0]
         if n_support < n_samples and np.allclose(self.raw_covariance_, 0):
             raise ValueError(
                 "The covariance matrix of the support data "
                 "is equal to 0, try to increase support_fraction"
             )
-        correction = np.median(self.dist_) / chi2(data.shape[1]).isf(0.5)
-        covariance_corrected = self.raw_covariance_ * correction
-        self.dist_ /= correction
+        consistency_factor = _consistency_factor(n_features, n_support / n_samples)
+        covariance_corrected = self.raw_covariance_ * consistency_factor
+        self.dist_ /= consistency_factor
         return covariance_corrected
 
     def reweight_covariance(self, data):
@@ -828,6 +867,9 @@ class MinCovDet(EmpiricalCovariance):
         deleting outlying observations from the data set before
         computing location and covariance estimates) described
         in [RVDriessen]_.
+
+        Corrects the re-weighted covariance to be consistent at the normal
+        distribution, following [Croux1999]_.
 
         Parameters
         ----------
@@ -854,9 +896,14 @@ class MinCovDet(EmpiricalCovariance):
         .. [RVDriessen] A Fast Algorithm for the Minimum Covariance
             Determinant Estimator, 1999, American Statistical Association
             and the American Society for Quality, TECHNOMETRICS
+
+        .. [Croux1999] Influence Function and Efficiency of the Minimum
+            Covariance Determinant Scatter Matrix Estimator, 1999, Journal of
+            Multivariate Analysis, Volume 71, Issue 2, Pages 161-190
         """
         n_samples, n_features = data.shape
-        mask = self.dist_ < chi2(n_features).isf(0.025)
+        quantile_threshold = 0.025
+        mask = self.dist_ < chi2(n_features).isf(quantile_threshold)
         if self.assume_centered:
             location_reweighted = np.zeros(n_features)
         else:
@@ -866,7 +913,11 @@ class MinCovDet(EmpiricalCovariance):
         )
         support_reweighted = np.zeros(n_samples, dtype=bool)
         support_reweighted[mask] = True
-        self._set_covariance(covariance_reweighted)
+        # Parameter alpha as in [Croux1999] Eq. 4.2
+        consistency_factor = _consistency_factor(
+            n_features=n_features, alpha=1 - quantile_threshold
+        )
+        self._set_covariance(covariance_reweighted * consistency_factor)
         self.location_ = location_reweighted
         self.support_ = support_reweighted
         X_centered = data - self.location_

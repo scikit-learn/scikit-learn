@@ -12,18 +12,18 @@ import numpy as np
 from joblib import effective_n_jobs
 from scipy import linalg
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..linear_model import Lars, Lasso, LassoLars, orthogonal_mp_gram
-from ..utils import check_array, check_random_state, gen_batches, gen_even_slices
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.extmath import _randomized_svd, row_norms, svd_flip
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted, validate_data
+from sklearn.linear_model import Lars, Lasso, LassoLars, orthogonal_mp_gram
+from sklearn.utils import check_array, check_random_state, gen_batches, gen_even_slices
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.extmath import _randomized_svd, row_norms, svd_flip
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 def _check_positive_coding(method, positive):
@@ -146,6 +146,7 @@ def _sparse_encode_precomputed(
             alpha=alpha,
             fit_intercept=False,
             precompute=gram,
+            tol=1e-8,  # TODO: This parameter should be exposed.
             max_iter=max_iter,
             warm_start=True,
             positive=positive,
@@ -356,14 +357,11 @@ def sparse_encode(
            [ 0.,  1.,  1.,  0.,  0.]])
     """
     if check_input:
-        if algorithm == "lasso_cd":
-            dictionary = check_array(
-                dictionary, order="C", dtype=[np.float64, np.float32]
-            )
-            X = check_array(X, order="C", dtype=[np.float64, np.float32])
-        else:
-            dictionary = check_array(dictionary)
-            X = check_array(X)
+        order = "C" if algorithm == "lasso_cd" else None
+        dictionary = check_array(
+            dictionary, order=order, dtype=[np.float64, np.float32]
+        )
+        X = check_array(X, order=order, dtype=[np.float64, np.float32])
 
     if dictionary.shape[1] != X.shape[1]:
         raise ValueError(
@@ -421,7 +419,7 @@ def _sparse_encode(
             regularization = 1.0
 
     if gram is None and algorithm != "threshold":
-        gram = np.dot(dictionary, dictionary.T)
+        gram = np.dot(dictionary, dictionary.T).astype(X.dtype, copy=False)
 
     if cov is None and algorithm != "lasso_cd":
         copy_cov = False
@@ -1301,6 +1299,19 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
            [ 0.,  1.,  1.,  0.,  0.]])
     """
 
+    _parameter_constraints: dict = {
+        "dictionary": ["array-like"],
+        "transform_algorithm": [
+            StrOptions({"lasso_lars", "lasso_cd", "lars", "omp", "threshold"})
+        ],
+        "transform_n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
+        "transform_alpha": [Interval(Real, 0, None, closed="left"), None],
+        "split_sign": ["boolean"],
+        "n_jobs": [Integral, None],
+        "positive_code": ["boolean"],
+        "transform_max_iter": [Interval(Integral, 0, None, closed="left")],
+    }
+
     def __init__(
         self,
         dictionary,
@@ -1324,16 +1335,17 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         )
         self.dictionary = dictionary
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
-        """Do nothing and return the estimator unchanged.
+        """Only validate the parameters of the estimator.
 
-        This method is just there to implement the usual API and hence
-        work in pipelines.
+        This method allows to: (i) validate the parameters of the estimator and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------
-        X : Ignored
-            Not used, present for API consistency by convention.
+        X : array-like of shape (n_samples, n_features)
+            Training data. Only used for input validation.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -1343,6 +1355,13 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        X = validate_data(self, X)
+        self.n_components_ = self.dictionary.shape[0]
+        if X.shape[1] != self.dictionary.shape[1]:
+            raise ValueError(
+                "Dictionary and X have different numbers of features:"
+                f"dictionary.shape: {self.dictionary.shape} X.shape{X.shape}"
+            )
         return self
 
     def transform(self, X, y=None):
@@ -1353,7 +1372,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training vector, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
@@ -1388,16 +1407,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         tags.requires_fit = False
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         return tags
-
-    @property
-    def n_components_(self):
-        """Number of atoms."""
-        return self.dictionary.shape[0]
-
-    @property
-    def n_features_in_(self):
-        """Number of features seen during `fit`."""
-        return self.dictionary.shape[1]
 
     @property
     def _n_features_out(self):
@@ -1955,6 +1964,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
     np.float64(0.052)
+
+    For a more detailed example, see
+    :ref:`sphx_glr_auto_examples_decomposition_plot_image_denoising.py`
     """
 
     _parameter_constraints: dict = {

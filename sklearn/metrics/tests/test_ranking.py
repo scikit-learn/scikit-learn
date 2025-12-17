@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from scipy import stats
 
-from sklearn import datasets, svm
+from sklearn import datasets
 from sklearn.datasets import make_multilabel_classification
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.linear_model import LogisticRegression
@@ -13,6 +13,7 @@ from sklearn.metrics import (
     accuracy_score,
     auc,
     average_precision_score,
+    confusion_matrix_at_thresholds,
     coverage_error,
     dcg_score,
     det_curve,
@@ -47,6 +48,7 @@ from sklearn.utils.validation import (
 # Utilities for testing
 
 CURVE_FUNCS = [
+    confusion_matrix_at_thresholds,
     det_curve,
     precision_recall_curve,
     roc_curve,
@@ -54,7 +56,7 @@ CURVE_FUNCS = [
 
 
 def make_prediction(dataset=None, binary=False):
-    """Make some classification predictions on a toy dataset using a SVC
+    """Make some classification predictions on a toy dataset using an SVC
 
     If binary is True restrict to a binary classification problem instead of a
     multiclass classification problem
@@ -84,7 +86,7 @@ def make_prediction(dataset=None, binary=False):
     X = np.c_[X, rng.randn(n_samples, 200 * n_features)]
 
     # run classifier, get class probabilities and label predictions
-    clf = svm.SVC(kernel="linear", probability=True, random_state=0)
+    clf = LogisticRegression(random_state=0)
     y_score = clf.fit(X[:half], y[:half]).predict_proba(X[half:])
 
     if binary:
@@ -191,6 +193,25 @@ def _partial_roc_auc_score(y_true, y_predict, max_fpr):
     min_area = 0.5 * (fpr2 - fpr1) * (fpr2 + fpr1)
     max_area = fpr2 - fpr1
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
+
+
+def test_confusion_matrix_at_thresholds(global_random_seed):
+    """Smoke test for confusion_matrix_at_thresholds."""
+    rng = np.random.RandomState(global_random_seed)
+
+    n_samples = 100
+    y_true = rng.randint(0, 2, size=100)
+    y_score = rng.uniform(size=100)
+
+    n_pos = np.sum(y_true)
+    n_neg = n_samples - n_pos
+
+    tns, fps, fns, tps, thresholds = confusion_matrix_at_thresholds(y_true, y_score)
+
+    assert len(tns) == len(fps) == len(fns) == len(tps) == len(thresholds)
+    assert_allclose(tps + fns, n_pos)
+    assert_allclose(tns + fps, n_neg)
+    assert_allclose(tns + fps + fns + tps, n_samples)
 
 
 @pytest.mark.parametrize("drop", [True, False])
@@ -839,7 +860,7 @@ def test_auc_score_non_binary_class():
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
-def test_binary_clf_curve_multiclass_error(curve_func):
+def test_confusion_matrix_at_thresholds_multiclass_error(curve_func):
     rng = check_random_state(404)
     y_true = rng.randint(0, 3, size=10)
     y_pred = rng.rand(10)
@@ -849,7 +870,7 @@ def test_binary_clf_curve_multiclass_error(curve_func):
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
-def test_binary_clf_curve_implicit_pos_label(curve_func):
+def test_confusion_matrix_at_thresholds_implicit_pos_label(curve_func):
     # Check that using string class labels raises an informative
     # error for any supported string dtype:
     msg = (
@@ -876,7 +897,9 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
 @pytest.mark.filterwarnings("ignore:Support for labels represented as bytes")
 @pytest.mark.parametrize("curve_func", [precision_recall_curve, roc_curve])
 @pytest.mark.parametrize("labels_type", ["list", "array"])
-def test_binary_clf_curve_implicit_bytes_pos_label(curve_func, labels_type):
+def test_confusion_matrix_at_thresholds_implicit_bytes_pos_label(
+    curve_func, labels_type
+):
     # Check that using bytes class labels raises an informative
     # error for any supported string dtype:
     labels = _convert_container([b"a", b"b"], labels_type)
@@ -886,7 +909,7 @@ def test_binary_clf_curve_implicit_bytes_pos_label(curve_func, labels_type):
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
-def test_binary_clf_curve_zero_sample_weight(curve_func):
+def test_confusion_matrix_at_thresholds_zero_sample_weight(curve_func):
     y_true = [0, 0, 1, 1, 1]
     y_score = [0.1, 0.2, 0.3, 0.4, 0.5]
     sample_weight = [1, 1, 1, 0.5, 0]
@@ -934,7 +957,7 @@ def _test_precision_recall_curve(y_true, y_score, drop):
     # Test Precision-Recall and area under PR curve
     p, r, thresholds = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
     precision_recall_auc = _average_precision_slow(y_true, y_score)
-    assert_array_almost_equal(precision_recall_auc, 0.859, 3)
+    assert_array_almost_equal(precision_recall_auc, 0.869, 3)
     assert_array_almost_equal(
         precision_recall_auc, average_precision_score(y_true, y_score)
     )

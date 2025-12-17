@@ -12,12 +12,12 @@ import numpy as np
 from scipy import linalg
 from scipy.linalg import pinvh
 
-from ..base import RegressorMixin, _fit_context
-from ..utils import _safe_indexing
-from ..utils._param_validation import Interval
-from ..utils.extmath import fast_logdet
-from ..utils.validation import _check_sample_weight, validate_data
-from ._base import LinearModel, _preprocess_data, _rescale_data
+from sklearn.base import RegressorMixin, _fit_context
+from sklearn.linear_model._base import LinearModel, _preprocess_data
+from sklearn.utils import _safe_indexing
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.extmath import fast_logdet
+from sklearn.utils.validation import _check_sample_weight, validate_data
 
 ###############################################################################
 # BayesianRidge regression
@@ -254,17 +254,15 @@ class BayesianRidge(RegressorMixin, LinearModel):
             y_mean = np.average(y, weights=sample_weight)
             y_var = np.average((y - y_mean) ** 2, weights=sample_weight)
 
-        X, y, X_offset_, y_offset_, X_scale_ = _preprocess_data(
+        X, y, X_offset_, y_offset_, X_scale_, _ = _preprocess_data(
             X,
             y,
             fit_intercept=self.fit_intercept,
             copy=self.copy_X,
             sample_weight=sample_weight,
-        )
-
-        if sample_weight is not None:
             # Sample weight can be implemented via a simple rescaling.
-            X, y, _ = _rescale_data(X, y, sample_weight)
+            rescale_with_sw=True,
+        )
 
         self.X_offset_ = X_offset_
         self.X_scale_ = X_scale_
@@ -671,7 +669,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features, dtype=dtype)
 
-        X, y, X_offset_, y_offset_, X_scale_ = _preprocess_data(
+        X, y, X_offset_, y_offset_, X_scale_, _ = _preprocess_data(
             X, y, fit_intercept=self.fit_intercept, copy=self.copy_X
         )
 

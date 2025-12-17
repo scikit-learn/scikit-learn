@@ -5,11 +5,12 @@ from itertools import chain, permutations, product
 
 import numpy as np
 import pytest
-from scipy import linalg
+from scipy import linalg, sparse
 from scipy.spatial.distance import hamming as sp_hamming
 from scipy.stats import bernoulli
 
 from sklearn import datasets, svm
+from sklearn.base import config_context
 from sklearn.datasets import make_multilabel_classification
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics import (
@@ -35,12 +36,24 @@ from sklearn.metrics import (
     recall_score,
     zero_one_loss,
 )
-from sklearn.metrics._classification import _check_targets, d2_log_loss_score
+from sklearn.metrics._classification import (
+    _check_targets,
+    d2_brier_score,
+    d2_log_loss_score,
+)
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils._array_api import (
+    device as array_api_device,
+)
+from sklearn.utils._array_api import (
+    get_namespace,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
@@ -56,7 +69,7 @@ from sklearn.utils.validation import check_random_state
 
 
 def make_prediction(dataset=None, binary=False):
-    """Make some classification predictions on a toy dataset using a SVC
+    """Make some classification predictions on a toy dataset using an SVC
 
     If binary is True restrict to a binary classification problem instead of a
     multiclass classification problem
@@ -168,40 +181,14 @@ def test_classification_report_dictionary_output():
     assert isinstance(expected_report["macro avg"]["support"], int)
 
 
-def test_classification_report_output_dict_empty_input():
-    report = classification_report(y_true=[], y_pred=[], output_dict=True)
-    expected_report = {
-        "accuracy": 0.0,
-        "macro avg": {
-            "f1-score": np.nan,
-            "precision": np.nan,
-            "recall": np.nan,
-            "support": 0,
-        },
-        "weighted avg": {
-            "f1-score": np.nan,
-            "precision": np.nan,
-            "recall": np.nan,
-            "support": 0,
-        },
-    }
-    assert isinstance(report, dict)
-    # assert the 2 dicts are equal.
-    assert report.keys() == expected_report.keys()
-    for key in expected_report:
-        if key == "accuracy":
-            assert isinstance(report[key], float)
-            assert report[key] == expected_report[key]
-        else:
-            assert report[key].keys() == expected_report[key].keys()
-            for metric in expected_report[key]:
-                assert_almost_equal(expected_report[key][metric], report[key][metric])
-
-
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
 def test_classification_report_zero_division_warning(zero_division):
     y_true, y_pred = ["a", "b", "c"], ["a", "b", "d"]
     with warnings.catch_warnings(record=True) as record:
+        # We need "always" instead of "once" for free-threaded with
+        # pytest-run-parallel to capture all the warnings in the
+        # zero_division="warn" case.
+        warnings.filterwarnings("always", message=".+Use `zero_division`")
         classification_report(
             y_true, y_pred, zero_division=zero_division, output_dict=True
         )
@@ -596,7 +583,7 @@ def test_multilabel_confusion_matrix_errors():
     # Bad sample_weight
     with pytest.raises(ValueError, match="inconsistent numbers of samples"):
         multilabel_confusion_matrix(y_true, y_pred, sample_weight=[1, 2])
-    with pytest.raises(ValueError, match="should be a 1d array"):
+    with pytest.raises(ValueError, match="Sample weights must be 1D array or scalar"):
         multilabel_confusion_matrix(
             y_true, y_pred, sample_weight=[[1, 2, 3], [2, 3, 4], [3, 4, 5]]
         )
@@ -1265,7 +1252,7 @@ def test_confusion_matrix_multiclass_subset_labels():
 @pytest.mark.parametrize(
     "labels, err_msg",
     [
-        ([], "'labels' should contains at least one label."),
+        ([], "'labels' should contain at least one label."),
         ([3, 4], "At least one label specified must be in y_true"),
     ],
     ids=["empty list", "unknown labels"],
@@ -1274,16 +1261,6 @@ def test_confusion_matrix_error(labels, err_msg):
     y_true, y_pred, _ = make_prediction(binary=False)
     with pytest.raises(ValueError, match=err_msg):
         confusion_matrix(y_true, y_pred, labels=labels)
-
-
-@pytest.mark.parametrize(
-    "labels", (None, [0, 1], [0, 1, 2]), ids=["None", "binary", "multiclass"]
-)
-def test_confusion_matrix_on_zero_length_input(labels):
-    expected_n_classes = len(labels) if labels else 0
-    expected = np.zeros((expected_n_classes, expected_n_classes), dtype=int)
-    cm = confusion_matrix([], [], labels=labels)
-    assert_array_equal(cm, expected)
 
 
 def test_confusion_matrix_dtype():
@@ -2541,7 +2518,7 @@ def test__check_targets():
                         _check_targets(y1, y2)
 
         else:
-            merged_type, y1out, y2out = _check_targets(y1, y2)
+            merged_type, y1out, y2out, _ = _check_targets(y1, y2)
             assert merged_type == expected
             if merged_type.startswith("multilabel"):
                 assert y1out.format == "csr"
@@ -2565,11 +2542,41 @@ def test__check_targets():
         _check_targets(y1, y2)
 
 
+def test__check_targets_raises_on_empty_inputs():
+    msg = "Found empty input array (e.g., `y_true` or `y_pred`) while a minimum of 1"
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        _check_targets(np.array([]), np.array([]))
+
+
 def test__check_targets_multiclass_with_both_y_true_and_y_pred_binary():
     # https://github.com/scikit-learn/scikit-learn/issues/8098
     y_true = [0, 1]
     y_pred = [0, -1]
     assert _check_targets(y_true, y_pred)[0] == "multiclass"
+
+
+@pytest.mark.parametrize(
+    "y, target_type",
+    [
+        (sparse.csr_matrix([[1], [0], [1], [0]]), "binary"),
+        (sparse.csr_matrix([[0], [1], [2], [1]]), "multiclass"),
+        (sparse.csr_matrix([[1, 0, 1], [0, 1, 0], [1, 1, 0]]), "multilabel"),
+    ],
+)
+def test__check_targets_sparse_inputs(y, target_type):
+    """Check correct behaviour when different target types are sparse."""
+    if target_type in ("binary", "multiclass"):
+        with pytest.raises(
+            TypeError, match="Sparse input is only supported when targets"
+        ):
+            _check_targets(y, y)
+    else:
+        # This should not raise an error
+        y_type, y_true_out, y_pred_out, _ = _check_targets(y, y)
+
+        assert y_type == "multilabel-indicator"
+        assert y_true_out.format == "csr"
+        assert y_pred_out.format == "csr"
 
 
 def test_hinge_loss_binary():
@@ -3134,6 +3141,9 @@ def test_f1_for_small_binary_inputs_with_zero_division(y_true, y_pred, expected_
     assert f1_score(y_true, y_pred, zero_division=1.0) == pytest.approx(expected_score)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize(
     "scoring",
     [
@@ -3395,3 +3405,341 @@ def test_d2_log_loss_score_raises():
     err = "The labels array needs to contain at least two"
     with pytest.raises(ValueError, match=err):
         d2_log_loss_score(y_true, y_pred, labels=labels)
+
+
+def test_d2_brier_score():
+    """Test that d2_brier_score gives expected outcomes in both the binary and
+    multiclass settings.
+    """
+    # Binary targets
+    sample_weight = [2, 2, 3, 1, 1, 1]
+    y_true = [0, 1, 1, 0, 0, 1]
+    y_true_string = ["no", "yes", "yes", "no", "no", "yes"]
+
+    # check that the value of the returned d2 score is correct
+    y_proba = [0.3, 0.5, 0.6, 0.7, 0.9, 0.8]
+    y_proba_ref = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    d2_score = d2_brier_score(y_true=y_true, y_proba=y_proba)
+    brier_score_model = brier_score_loss(y_true=y_true, y_proba=y_proba)
+    brier_score_ref = brier_score_loss(y_true=y_true, y_proba=y_proba_ref)
+    d2_score_expected = 1 - brier_score_model / brier_score_ref
+    assert pytest.approx(d2_score) == d2_score_expected
+
+    # check that a model which gives a constant prediction equal to the
+    # proportion of the positive class should get a d2 score of 0
+    y_proba = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    d2_score = d2_brier_score(y_true=y_true, y_proba=y_proba)
+    assert d2_score == 0
+    d2_score = d2_brier_score(y_true=y_true_string, y_proba=y_proba, pos_label="yes")
+    assert d2_score == 0
+
+    # check that a model which gives a constant prediction equal to the
+    # proportion of the positive class should get a d2 score of 0
+    # when we also provide sample weight
+    y_proba = [0.6, 0.6, 0.6, 0.6, 0.6, 0.6]
+    d2_score = d2_brier_score(
+        y_true=y_true, y_proba=y_proba, sample_weight=sample_weight
+    )
+    assert d2_score == 0
+    d2_score = d2_brier_score(
+        y_true=y_true_string,
+        y_proba=y_proba,
+        sample_weight=sample_weight,
+        pos_label="yes",
+    )
+    assert d2_score == 0
+
+    # Multiclass targets
+    sample_weight = [2, 1, 3, 1, 1, 2, 1, 4, 1, 4]
+    y_true = [3, 3, 2, 2, 2, 1, 1, 1, 1, 0]
+    y_true_string = ["dd", "dd", "cc", "cc", "cc", "bb", "bb", "bb", "bb", "aa"]
+
+    # check that a model which gives a constant prediction equal to the
+    # proportion of the given labels gives a d2 score of 0 when we also
+    # provide sample weight
+    y_proba = [
+        [0.2, 0.4, 0.25, 0.15],
+        [0.2, 0.4, 0.25, 0.15],
+        [0.2, 0.4, 0.25, 0.15],
+        [0.2, 0.4, 0.25, 0.15],
+        [0.2, 0.4, 0.25, 0.15],
+        [0.2, 0.4, 0.25, 0.15],
+        [0.2, 0.4, 0.25, 0.15],
+        [0.2, 0.4, 0.25, 0.15],
+        [0.2, 0.4, 0.25, 0.15],
+        [0.2, 0.4, 0.25, 0.15],
+    ]
+    d2_score = d2_brier_score(
+        y_true=y_true, y_proba=y_proba, sample_weight=sample_weight
+    )
+    assert d2_score == 0
+    d2_score = d2_brier_score(
+        y_true=y_true_string,
+        y_proba=y_proba,
+        sample_weight=sample_weight,
+    )
+    assert d2_score == 0
+
+    # check that a model which gives generally good predictions has
+    # a d2 score that is greater than 0.5
+    y_proba = [
+        [0.1, 0.2, 0.2, 0.5],
+        [0.1, 0.2, 0.2, 0.5],
+        [0.1, 0.2, 0.5, 0.2],
+        [0.1, 0.2, 0.5, 0.2],
+        [0.1, 0.2, 0.5, 0.2],
+        [0.2, 0.5, 0.2, 0.1],
+        [0.2, 0.5, 0.2, 0.1],
+        [0.2, 0.5, 0.2, 0.1],
+        [0.2, 0.5, 0.2, 0.1],
+        [0.5, 0.2, 0.2, 0.1],
+    ]
+    d2_score = d2_brier_score(
+        y_true=y_true, y_proba=y_proba, sample_weight=sample_weight
+    )
+    assert d2_score > 0.5
+    d2_score = d2_brier_score(
+        y_true=y_true_string,
+        y_proba=y_proba,
+        sample_weight=sample_weight,
+    )
+    assert d2_score > 0.5
+
+
+def test_d2_brier_score_with_labels():
+    """Test that d2_brier_score gives expected outcomes when labels are passed"""
+    # Check when labels are provided and some labels may not be present inside
+    # y_true, the d2 score is 0, when we use the label proportions based on
+    # y_true as the predictions
+    y_true = [0, 2, 0, 2]
+    labels = [0, 1, 2]
+    y_proba = [
+        [0.5, 0, 0.5],
+        [0.5, 0, 0.5],
+        [0.5, 0, 0.5],
+        [0.5, 0, 0.5],
+    ]
+    d2_score = d2_brier_score(y_true=y_true, y_proba=y_proba, labels=labels)
+    assert d2_score == 0
+
+    # Also confirm that the order of the labels does not affect the d2 score
+    labels = [2, 0, 1]
+    new_d2_score = d2_brier_score(y_true=y_true, y_proba=y_proba, labels=labels)
+    assert new_d2_score == pytest.approx(d2_score)
+
+    # Check that a simple model with wrong predictions gives a negative d2 score
+    y_proba = [
+        [0, 0, 1],
+        [1, 0, 0],
+        [0, 0, 1],
+        [1, 0, 0],
+    ]
+    neg_d2_score = d2_brier_score(y_true=y_true, y_proba=y_proba, labels=labels)
+    assert pytest.approx(neg_d2_score) == -3
+
+
+@pytest.mark.parametrize(
+    "y_true, y_pred, labels, error_msg",
+    [
+        (
+            [1, 2, 1, 3],
+            [0.8, 0.6, 0.4, 0.2],
+            None,
+            "inferred from y_true is multiclass but should be binary",
+        ),
+        (
+            ["yes", "no", "yes", "no"],
+            [0.8, 0.6, 0.4, 0.2],
+            None,
+            "pos_label is not specified",
+        ),
+        (
+            [0, 1, 0, 0, 1, 1, 0],
+            [0.8, 0.6, 0.4, 0.2],
+            None,
+            "variables with inconsistent numbers of samples",
+        ),
+        (
+            [0, 1, 0, 1],
+            [1.8, 0.6, 0.4, 0.2],
+            None,
+            "y_prob contains values greater than 1",
+        ),
+        (
+            [0, 1, 0, 1],
+            [-0.8, 0.6, 0.4, 0.2],
+            None,
+            "y_prob contains values less than 0",
+        ),
+        (
+            [1, 1, 1],
+            [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]],
+            None,
+            "y_true contains only one label",
+        ),
+        (
+            [[1, 0, 1, 0], [2, 3, 3, 2]],
+            [[0.3, 0.3, 0.2, 0.2], [0.4, 0.1, 0.3, 0.2]],
+            None,
+            "Multioutput target data is not supported",
+        ),
+        (
+            [1, 2, 0],
+            [[0.5, 0.3, 0.2], [0.5, 0.3, 0.2], [0.5, 0.3, 0.2]],
+            [0, 2],
+            "not belonging to the passed labels",
+        ),
+        (
+            [0, 0, 0],
+            [[0.5, 0.3, 0.2], [0.5, 0.3, 0.2], [0.5, 0.3, 0.2]],
+            [0],
+            "labels array needs to contain at least two",
+        ),
+    ],
+)
+def test_d2_brier_score_raises(y_true, y_pred, labels, error_msg):
+    """Test that d2_brier_score raises the appropriate errors
+    on invalid inputs."""
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+    with pytest.raises(ValueError, match=error_msg):
+        d2_brier_score(y_true, y_pred, labels=labels)
+
+
+def test_d2_brier_score_warning_on_less_than_two_samples():
+    """Test that d2_brier_score emits a warning when there are less than
+    two samples"""
+    y_true = np.array([1])
+    y_pred = np.array([0.8])
+    warning_message = "not well-defined with less than two samples"
+    with pytest.warns(UndefinedMetricWarning, match=warning_message):
+        d2_brier_score(y_true, y_pred)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
+)
+def test_confusion_matrix_array_api(array_namespace, device, _):
+    """Test that `confusion_matrix` works for all array types when `labels` are passed
+    such that the inner boolean `need_index_conversion` evaluates to `True`."""
+    xp = _array_api_for_tests(array_namespace, device)
+
+    y_true = xp.asarray([1, 2, 3], device=device)
+    y_pred = xp.asarray([4, 5, 6], device=device)
+    labels = xp.asarray([1, 2, 3], device=device)
+
+    with config_context(array_api_dispatch=True):
+        result = confusion_matrix(y_true, y_pred, labels=labels)
+        assert get_namespace(result)[0] == get_namespace(y_pred)[0]
+        assert array_api_device(result) == array_api_device(y_pred)
+
+
+@pytest.mark.parametrize(
+    "prob_metric", [brier_score_loss, log_loss, d2_brier_score, d2_log_loss_score]
+)
+@pytest.mark.parametrize("str_y_true", [False, True])
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_probabilistic_metrics_array_api(
+    prob_metric, str_y_true, use_sample_weight, array_namespace, device_, dtype_name
+):
+    """Test that :func:`brier_score_loss`, :func:`log_loss`, func:`d2_brier_score`
+    and :func:`d2_log_loss_score` work correctly with the array API for binary
+    and mutli-class inputs.
+    """
+    xp = _array_api_for_tests(array_namespace, device_)
+    sample_weight = np.array([1, 2, 3, 1]) if use_sample_weight else None
+
+    # binary case
+    extra_kwargs = {}
+    if str_y_true:
+        y_true_np = np.array(["yes", "no", "yes", "no"])
+        y_true_xp_or_np = np.asarray(y_true_np)
+        if "brier" in prob_metric.__name__:
+            # `brier_score_loss` and `d2_brier_score` require specifying the
+            # `pos_label`
+            extra_kwargs["pos_label"] = "yes"
+    else:
+        y_true_np = np.array([1, 0, 1, 0])
+        y_true_xp_or_np = xp.asarray(y_true_np, device=device_)
+
+    y_prob_np = np.array([0.5, 0.2, 0.7, 0.6], dtype=dtype_name)
+    y_prob_xp = xp.asarray(y_prob_np, device=device_)
+    metric_score_np = prob_metric(
+        y_true_np, y_prob_np, sample_weight=sample_weight, **extra_kwargs
+    )
+    with config_context(array_api_dispatch=True):
+        metric_score_xp = prob_metric(
+            y_true_xp_or_np, y_prob_xp, sample_weight=sample_weight, **extra_kwargs
+        )
+
+    assert metric_score_xp == pytest.approx(metric_score_np)
+
+    # multi-class case
+    if str_y_true:
+        y_true_np = np.array(["a", "b", "c", "d"])
+        y_true_xp_or_np = np.asarray(y_true_np)
+    else:
+        y_true_np = np.array([0, 1, 2, 3])
+        y_true_xp_or_np = xp.asarray(y_true_np, device=device_)
+
+    y_prob_np = np.array(
+        [
+            [0.5, 0.2, 0.2, 0.1],
+            [0.4, 0.4, 0.1, 0.1],
+            [0.1, 0.1, 0.7, 0.1],
+            [0.1, 0.2, 0.6, 0.1],
+        ],
+        dtype=dtype_name,
+    )
+    y_prob_xp = xp.asarray(y_prob_np, device=device_)
+    metric_score_np = prob_metric(y_true_np, y_prob_np)
+    with config_context(array_api_dispatch=True):
+        metric_score_xp = prob_metric(y_true_xp_or_np, y_prob_xp)
+
+    assert metric_score_xp == pytest.approx(metric_score_np)
+
+
+@pytest.mark.parametrize(
+    "prob_metric", [brier_score_loss, log_loss, d2_brier_score, d2_log_loss_score]
+)
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_probabilistic_metrics_multilabel_array_api(
+    prob_metric, use_sample_weight, array_namespace, device_, dtype_name
+):
+    """Test that :func:`brier_score_loss`, :func:`log_loss`, func:`d2_brier_score`
+    and :func:`d2_log_loss_score` work correctly with the array API for
+    multi-label inputs.
+    """
+    xp = _array_api_for_tests(array_namespace, device_)
+    sample_weight = np.array([1, 2, 3, 1]) if use_sample_weight else None
+    y_true_np = np.array(
+        [
+            [0, 0, 1, 1],
+            [1, 0, 1, 0],
+            [0, 1, 0, 0],
+            [1, 1, 0, 1],
+        ],
+        dtype=dtype_name,
+    )
+    y_true_xp = xp.asarray(y_true_np, device=device_)
+    y_prob_np = np.array(
+        [
+            [0.15, 0.27, 0.46, 0.12],
+            [0.33, 0.38, 0.06, 0.23],
+            [0.06, 0.28, 0.03, 0.63],
+            [0.14, 0.31, 0.26, 0.29],
+        ],
+        dtype=dtype_name,
+    )
+    y_prob_xp = xp.asarray(y_prob_np, device=device_)
+    metric_score_np = prob_metric(y_true_np, y_prob_np, sample_weight=sample_weight)
+    with config_context(array_api_dispatch=True):
+        metric_score_xp = prob_metric(y_true_xp, y_prob_xp, sample_weight=sample_weight)
+
+    assert metric_score_xp == pytest.approx(metric_score_np)

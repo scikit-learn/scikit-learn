@@ -1,0 +1,4 @@
+- :class:`linear_model.RidgeCV`, :class:`linear_model.RidgeClassifier` and
+  :class:`linear_model.RidgeClassifierCV` now support array API compatible
+  inputs with `solver="svd"`.
+  By :user:`Jérôme Dockès <jeromedockes>`.

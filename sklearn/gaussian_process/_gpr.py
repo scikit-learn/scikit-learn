@@ -11,14 +11,20 @@ import numpy as np
 import scipy.optimize
 from scipy.linalg import cho_solve, cholesky, solve_triangular
 
-from ..base import BaseEstimator, MultiOutputMixin, RegressorMixin, _fit_context, clone
-from ..preprocessing._data import _handle_zeros_in_scale
-from ..utils import check_random_state
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.optimize import _check_optimize_result
-from ..utils.validation import validate_data
-from .kernels import RBF, Kernel
-from .kernels import ConstantKernel as C
+from sklearn.base import (
+    BaseEstimator,
+    MultiOutputMixin,
+    RegressorMixin,
+    _fit_context,
+    clone,
+)
+from sklearn.gaussian_process.kernels import RBF, Kernel
+from sklearn.gaussian_process.kernels import ConstantKernel as C
+from sklearn.preprocessing._data import _handle_zeros_in_scale
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.optimize import _check_optimize_result
+from sklearn.utils.validation import validate_data
 
 GPR_CHOLESKY_LOWER = True
 

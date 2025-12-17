@@ -7,10 +7,10 @@ from numbers import Real
 
 import numpy as np
 
-from ..preprocessing import LabelBinarizer
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_array, check_consistent_length
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.validation import check_array, check_consistent_length
 
 
 @validate_params(
@@ -29,7 +29,7 @@ def l1_min_c(X, y, *, loss="squared_hinge", fit_intercept=True, intercept_scalin
     The lower bound for `C` is computed such that for `C` in `(l1_min_C, infinity)`
     the model is guaranteed not to be empty. This applies to l1 penalized
     classifiers, such as :class:`sklearn.svm.LinearSVC` with penalty='l1' and
-    :class:`sklearn.linear_model.LogisticRegression` with penalty='l1'.
+    :class:`sklearn.linear_model.LogisticRegression` with `l1_ratio=1`.
 
     This value is valid if `class_weight` parameter in `fit()` is not set.
 

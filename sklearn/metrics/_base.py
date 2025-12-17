@@ -10,8 +10,8 @@ from itertools import combinations
 
 import numpy as np
 
-from ..utils import check_array, check_consistent_length
-from ..utils.multiclass import type_of_target
+from sklearn.utils import check_array, check_consistent_length
+from sklearn.utils.multiclass import type_of_target
 
 
 def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight=None):

@@ -3,10 +3,13 @@
 
 
 import re
+import sys
 import warnings
 from contextlib import suppress
 from functools import partial
 from inspect import isfunction
+
+import numpy as np
 
 from sklearn import clone, config_context
 from sklearn.calibration import CalibratedClassifierCV
@@ -161,10 +164,7 @@ from sklearn.preprocessing import (
     StandardScaler,
     TargetEncoder,
 )
-from sklearn.random_projection import (
-    GaussianRandomProjection,
-    SparseRandomProjection,
-)
+from sklearn.random_projection import GaussianRandomProjection, SparseRandomProjection
 from sklearn.semi_supervised import (
     LabelPropagation,
     LabelSpreading,
@@ -178,6 +178,8 @@ from sklearn.utils._testing import SkipTest
 from sklearn.utils.fixes import _IS_32BIT, parse_version, sp_base_version
 
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
+
+rng = np.random.RandomState(0)
 
 # The following dictionary is to indicate constructor arguments suitable for the test
 # suite, which uses very small datasets, and is intended to run rather quickly.
@@ -343,7 +345,7 @@ INIT_PARAMS = {
     LinearSVC: dict(max_iter=20),
     LinearSVR: dict(max_iter=20),
     LocallyLinearEmbedding: dict(max_iter=5),
-    LogisticRegressionCV: dict(max_iter=5, cv=3),
+    LogisticRegressionCV: dict(max_iter=5, cv=3, use_legacy_attributes=False),
     LogisticRegression: dict(max_iter=5),
     MDS: dict(n_init=2, max_iter=5),
     # In the case of check_fit2d_1sample, bandwidth is set to None and
@@ -443,6 +445,7 @@ INIT_PARAMS = {
     SGDClassifier: dict(max_iter=5),
     SGDOneClassSVM: dict(max_iter=5),
     SGDRegressor: dict(max_iter=5),
+    SparseCoder: dict(dictionary=rng.normal(size=(5, 3))),
     SparsePCA: dict(max_iter=5),
     # Due to the jl lemma and often very few samples, the number
     # of components of the random matrix projection will be probably
@@ -629,9 +632,13 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     },
     LogisticRegressionCV: {
         "check_sample_weight_equivalence": [
-            dict(solver="lbfgs"),
-            dict(solver="newton-cholesky"),
-            dict(solver="newton-cholesky", class_weight="balanced"),
+            dict(solver="lbfgs", use_legacy_attributes=False),
+            dict(solver="newton-cholesky", use_legacy_attributes=False),
+            dict(
+                solver="newton-cholesky",
+                class_weight="balanced",
+                use_legacy_attributes=False,
+            ),
         ],
         "check_sample_weight_equivalence_on_sparse_data": [
             dict(solver="liblinear"),
@@ -713,6 +720,38 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         ],
     },
     SkewedChi2Sampler: {"check_dict_unchanged": dict(n_components=1)},
+    SparseCoder: {
+        "check_estimators_dtypes": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_dtype_object": dict(dictionary=rng.normal(size=(5, 10))),
+        "check_transformers_unfitted_stateless": dict(
+            dictionary=rng.normal(size=(5, 5))
+        ),
+        "check_fit_idempotent": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_transformer_preserve_dtypes": dict(
+            dictionary=rng.normal(size=(5, 3)).astype(np.float32)
+        ),
+        "check_set_output_transform": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_global_output_transform_pandas": dict(
+            dictionary=rng.normal(size=(5, 5))
+        ),
+        "check_set_output_transform_pandas": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_set_output_transform_polars": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_global_set_output_transform_polars": dict(
+            dictionary=rng.normal(size=(5, 5))
+        ),
+        "check_dataframe_column_names_consistency": dict(
+            dictionary=rng.normal(size=(5, 8))
+        ),
+        "check_estimators_overwrite_params": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_estimators_fit_returns_self": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_readonly_memmap_input": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_n_features_in_after_fitting": dict(dictionary=rng.normal(size=(5, 4))),
+        "check_fit_check_is_fitted": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_n_features_in": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_positive_only_tag_during_fit": dict(dictionary=rng.normal(size=(5, 4))),
+        "check_fit2d_1sample": dict(dictionary=rng.normal(size=(5, 10))),
+        "check_fit2d_1feature": dict(dictionary=rng.normal(size=(5, 1))),
+    },
     SparsePCA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     SparseRandomProjection: {"check_dict_unchanged": dict(n_components=1)},
     SpectralBiclustering: {
@@ -750,7 +789,7 @@ def _tested_estimators(type_filter=None):
                 yield estimator
 
 
-SKIPPED_ESTIMATORS = [SparseCoder, FrozenEstimator]
+SKIPPED_ESTIMATORS = [FrozenEstimator]
 
 
 def _construct_instances(Estimator):
@@ -1252,6 +1291,17 @@ if sp_base_version < parse_version("1.11"):
             "scipy < 1.11 implementation of _bsplines does not"
             "support const memory views."
         ),
+    }
+
+linear_svr_not_thread_safe = "LinearSVR is not thread-safe https://github.com/scikit-learn/scikit-learn/issues/31883"
+if "pytest_run_parallel" in sys.modules:
+    PER_ESTIMATOR_XFAIL_CHECKS[LinearSVR] = {
+        "check_supervised_y_2d": linear_svr_not_thread_safe,
+        "check_regressors_int": linear_svr_not_thread_safe,
+        "check_fit_idempotent": linear_svr_not_thread_safe,
+        "check_sample_weight_equivalence_on_dense_data": linear_svr_not_thread_safe,
+        "check_sample_weight_equivalence_on_sparse_data": linear_svr_not_thread_safe,
+        "check_regressor_data_not_an_array": linear_svr_not_thread_safe,
     }
 
 

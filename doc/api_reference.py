@@ -587,7 +587,7 @@ API_REFERENCE = {
                 "autosummary": [
                     "LogisticRegression",
                     "LogisticRegressionCV",
-                    "PassiveAggressiveClassifier",
+                    "PassiveAggressiveClassifier",  # TODO(1.10): remove
                     "Perceptron",
                     "RidgeClassifier",
                     "RidgeClassifierCV",
@@ -672,7 +672,7 @@ API_REFERENCE = {
             {
                 "title": "Miscellaneous",
                 "autosummary": [
-                    "PassiveAggressiveRegressor",
+                    "PassiveAggressiveRegressor",  # TODO(1.10): remove
                     "enet_path",
                     "lars_path",
                     "lars_path_gram",
@@ -691,6 +691,7 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
+                    "ClassicalMDS",
                     "Isomap",
                     "LocallyLinearEmbedding",
                     "MDS",
@@ -731,6 +732,8 @@ API_REFERENCE = {
                     "classification_report",
                     "cohen_kappa_score",
                     "confusion_matrix",
+                    "confusion_matrix_at_thresholds",
+                    "d2_brier_score",
                     "d2_log_loss_score",
                     "dcg_score",
                     "det_curve",

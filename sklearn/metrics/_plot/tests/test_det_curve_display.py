@@ -37,10 +37,9 @@ def test_det_curve_display(
 
     lr = LogisticRegression()
     lr.fit(X, y)
-    y_pred = getattr(lr, response_method)(X)
-    if y_pred.ndim == 2:
-        y_pred = y_pred[:, 1]
-
+    y_score = getattr(lr, response_method)(X)
+    if y_score.ndim == 2:
+        y_score = y_score[:, 1]
     # safe guard for the binary if/else construction
     assert constructor_name in ("from_estimator", "from_predictions")
 
@@ -54,11 +53,11 @@ def test_det_curve_display(
     if constructor_name == "from_estimator":
         disp = DetCurveDisplay.from_estimator(lr, X, y, **common_kwargs)
     else:
-        disp = DetCurveDisplay.from_predictions(y, y_pred, **common_kwargs)
+        disp = DetCurveDisplay.from_predictions(y, y_score, **common_kwargs)
 
     fpr, fnr, _ = det_curve(
         y,
-        y_pred,
+        y_score,
         sample_weight=sample_weight,
         drop_intermediate=drop_intermediate,
         pos_label=pos_label,
@@ -103,12 +102,30 @@ def test_det_curve_display_default_name(
     X, y = X[y < 2], y[y < 2]
 
     lr = LogisticRegression().fit(X, y)
-    y_pred = lr.predict_proba(X)[:, 1]
+    y_score = lr.predict_proba(X)[:, 1]
 
     if constructor_name == "from_estimator":
         disp = DetCurveDisplay.from_estimator(lr, X, y)
     else:
-        disp = DetCurveDisplay.from_predictions(y, y_pred)
+        disp = DetCurveDisplay.from_predictions(y, y_score)
 
     assert disp.estimator_name == expected_clf_name
     assert disp.line_.get_label() == expected_clf_name
+
+
+# TODO(1.10): remove
+def test_y_score_and_y_pred_specified_error(pyplot):
+    """1. Check that an error is raised when both y_score and y_pred are specified.
+    2. Check that a warning is raised when y_pred is specified.
+    """
+    y_true = np.array([0, 0, 1, 1])
+    y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    y_pred = np.array([0.2, 0.3, 0.5, 0.1])
+
+    with pytest.raises(
+        ValueError, match="`y_pred` and `y_score` cannot be both specified"
+    ):
+        DetCurveDisplay.from_predictions(y_true, y_score=y_score, y_pred=y_pred)
+
+    with pytest.warns(FutureWarning, match="y_pred was deprecated in 1.8"):
+        DetCurveDisplay.from_predictions(y_true, y_pred=y_score)

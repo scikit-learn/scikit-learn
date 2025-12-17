@@ -1,0 +1,6 @@
+- Fixed uncontrollable randomness in :class:`sklearn.covariance.GraphicalLasso`,
+  :class:`sklearn.covariance.GraphicalLassoCV` and
+  :func:`sklearn.covariance.graphical_lasso`. For `mode="cd"`, they now use cyclic
+  coordinate descent. Before, it was random coordinate descent with uncontrollable
+  random number seeding.
+  By :user:`Christian Lorentzen <lorentzenchr>`.

@@ -16,16 +16,16 @@ from libc.math cimport INFINITY, ceil
 from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
 
-from ...utils._typedefs cimport uint8_t
-from .common cimport X_BINNED_DTYPE_C
-from .common cimport Y_DTYPE_C
-from .common cimport hist_struct
-from .common cimport BITSET_INNER_DTYPE_C
-from .common cimport BITSET_DTYPE_C
-from .common cimport MonotonicConstraint
-from ._bitset cimport init_bitset
-from ._bitset cimport set_bitset
-from ._bitset cimport in_bitset
+from sklearn.utils._typedefs cimport uint8_t
+from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
+from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
+from sklearn.ensemble._hist_gradient_boosting.common cimport hist_struct
+from sklearn.ensemble._hist_gradient_boosting.common cimport BITSET_INNER_DTYPE_C
+from sklearn.ensemble._hist_gradient_boosting.common cimport BITSET_DTYPE_C
+from sklearn.ensemble._hist_gradient_boosting.common cimport MonotonicConstraint
+from sklearn.ensemble._hist_gradient_boosting._bitset cimport init_bitset
+from sklearn.ensemble._hist_gradient_boosting._bitset cimport set_bitset
+from sklearn.ensemble._hist_gradient_boosting._bitset cimport in_bitset
 
 
 cdef struct split_info_struct:

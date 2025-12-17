@@ -5,17 +5,20 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import OneToOneFeatureMixin, _fit_context
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.multiclass import type_of_target
-from ..utils.validation import (
+from sklearn.base import OneToOneFeatureMixin, _fit_context
+from sklearn.preprocessing._encoders import _BaseEncoder
+from sklearn.preprocessing._target_encoder_fast import (
+    _fit_encoding_fast,
+    _fit_encoding_fast_auto_smooth,
+)
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import (
     _check_feature_names_in,
     _check_y,
     check_consistent_length,
     check_is_fitted,
 )
-from ._encoders import _BaseEncoder
-from ._target_encoder_fast import _fit_encoding_fast, _fit_encoding_fast_auto_smooth
 
 
 class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
@@ -215,6 +218,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     def fit(self, X, y):
         """Fit the :class:`TargetEncoder` to X and y.
 
+        It is discouraged to use this method because it can introduce data leakage.
+        Use `fit_transform` on training data instead.
+
+        .. note::
+            `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
+            :term:`cross fitting` scheme is used in `fit_transform` for encoding.
+            See the :ref:`User Guide <target_encoder>` for details.
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -233,12 +244,16 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y):
-        """Fit :class:`TargetEncoder` and transform X with the target encoding.
+        """Fit :class:`TargetEncoder` and transform `X` with the target encoding.
+
+        This method uses a :term:`cross fitting` scheme to prevent target leakage
+        and overfitting in downstream predictors. It is the recommended method for
+        encoding training data.
 
         .. note::
             `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
             :term:`cross fitting` scheme is used in `fit_transform` for encoding.
-            See the :ref:`User Guide <target_encoder>`. for details.
+            See the :ref:`User Guide <target_encoder>` for details.
 
         Parameters
         ----------
@@ -254,7 +269,10 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                     (n_samples, (n_features * n_classes))
             Transformed input.
         """
-        from ..model_selection import KFold, StratifiedKFold  # avoid circular import
+        from sklearn.model_selection import (  # avoid circular import
+            KFold,
+            StratifiedKFold,
+        )
 
         X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
 
@@ -308,10 +326,13 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     def transform(self, X):
         """Transform X with the target encoding.
 
+        This method internally uses the `encodings_` attribute learnt during
+        :meth:`TargetEncoder.fit_transform` to transform test data.
+
         .. note::
             `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
             :term:`cross fitting` scheme is used in `fit_transform` for encoding.
-            See the :ref:`User Guide <target_encoder>`. for details.
+            See the :ref:`User Guide <target_encoder>` for details.
 
         Parameters
         ----------
@@ -350,10 +371,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     def _fit_encodings_all(self, X, y):
         """Fit a target encoding with all the data."""
         # avoid circular import
-        from ..preprocessing import (
-            LabelBinarizer,
-            LabelEncoder,
-        )
+        from sklearn.preprocessing import LabelBinarizer, LabelEncoder
 
         check_consistent_length(X, y)
         self._fit(X, handle_unknown="ignore", ensure_all_finite="allow-nan")

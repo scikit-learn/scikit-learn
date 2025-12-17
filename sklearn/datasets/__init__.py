@@ -5,7 +5,7 @@
 
 import textwrap
 
-from ._base import (
+from sklearn.datasets._base import (
     clear_data_home,
     fetch_file,
     get_data_home,
@@ -19,14 +19,14 @@ from ._base import (
     load_sample_images,
     load_wine,
 )
-from ._california_housing import fetch_california_housing
-from ._covtype import fetch_covtype
-from ._kddcup99 import fetch_kddcup99
-from ._lfw import fetch_lfw_pairs, fetch_lfw_people
-from ._olivetti_faces import fetch_olivetti_faces
-from ._openml import fetch_openml
-from ._rcv1 import fetch_rcv1
-from ._samples_generator import (
+from sklearn.datasets._california_housing import fetch_california_housing
+from sklearn.datasets._covtype import fetch_covtype
+from sklearn.datasets._kddcup99 import fetch_kddcup99
+from sklearn.datasets._lfw import fetch_lfw_pairs, fetch_lfw_people
+from sklearn.datasets._olivetti_faces import fetch_olivetti_faces
+from sklearn.datasets._openml import fetch_openml
+from sklearn.datasets._rcv1 import fetch_rcv1
+from sklearn.datasets._samples_generator import (
     make_biclusters,
     make_blobs,
     make_checkerboard,
@@ -48,13 +48,16 @@ from ._samples_generator import (
     make_spd_matrix,
     make_swiss_roll,
 )
-from ._species_distributions import fetch_species_distributions
-from ._svmlight_format_io import (
+from sklearn.datasets._species_distributions import fetch_species_distributions
+from sklearn.datasets._svmlight_format_io import (
     dump_svmlight_file,
     load_svmlight_file,
     load_svmlight_files,
 )
-from ._twenty_newsgroups import fetch_20newsgroups, fetch_20newsgroups_vectorized
+from sklearn.datasets._twenty_newsgroups import (
+    fetch_20newsgroups,
+    fetch_20newsgroups_vectorized,
+)
 
 __all__ = [
     "clear_data_home",

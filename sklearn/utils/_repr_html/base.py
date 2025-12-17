@@ -3,9 +3,21 @@
 
 import itertools
 
-from ... import __version__
-from ..._config import get_config
-from ..fixes import parse_version
+from sklearn import __version__
+from sklearn._config import get_config
+from sklearn.utils.fixes import parse_version
+
+
+class _IDCounter:
+    """Generate sequential ids with a prefix."""
+
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.count = 0
+
+    def get_id(self):
+        self.count += 1
+        return f"{self.prefix}-{self.count}"
 
 
 class _HTMLDocumentationLinkMixin:
@@ -25,7 +37,7 @@ class _HTMLDocumentationLinkMixin:
     The method :meth:`_get_doc_link` generates the link to the API documentation for a
     given estimator.
 
-    This useful provides all the necessary states for
+    This mixin provides all the necessary states for
     :func:`sklearn.utils.estimator_html_repr` to generate a link to the API
     documentation for the estimator HTML diagram.
 

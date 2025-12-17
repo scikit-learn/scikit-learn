@@ -1,0 +1,4 @@
+- :func:`sklearn.utils.estimator_checks.parametrize_with_checks` now lets you configure
+  strict mode for xfailing checks. Tests that unexpectedly pass will lead to a test
+  failure. The default behaviour is unchanged.
+  By :user:`Tim Head <betatim>`.

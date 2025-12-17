@@ -7,9 +7,9 @@ repos:
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.7
+    rev: v0.12.2
     hooks:
-    -   id: ruff
+    -   id: ruff-check
         args: ["--fix", "--output-format=full"]
     -   id: ruff-format
 -   repo: https://github.com/pre-commit/mirrors-mypy
@@ -19,11 +19,12 @@ repos:
         files: sklearn/
         additional_dependencies: [pytest==6.2.4]
 -   repo: https://github.com/MarcoGorelli/cython-lint
-    rev: v0.16.6
+    rev: v0.18.0
     hooks:
     # TODO: add the double-quote-cython-strings hook when it's usability has improved:
     # possibility to pass a directory and use it as a check instead of auto-formatter.
     -   id: cython-lint
+        args: [--ban-relative-imports]
 -   repo: https://github.com/pre-commit/mirrors-prettier
     rev: v2.7.1
     hooks:
@@ -31,3 +32,9 @@ repos:
         files: ^doc/scss/|^doc/js/scripts/
         exclude: ^doc/js/scripts/vendor/
         types_or: ["scss", "javascript"]
+
+- repo: https://github.com/codespell-project/codespell
+  # Configuration for codespell is in pyproject.toml
+  rev: v2.4.1
+  hooks:
+  - id: codespell

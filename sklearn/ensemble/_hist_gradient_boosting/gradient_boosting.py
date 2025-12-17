@@ -12,7 +12,7 @@ from time import time
 
 import numpy as np
 
-from ..._loss.loss import (
+from sklearn._loss.loss import (
     _LOSSES,
     BaseLoss,
     HalfBinomialLoss,
@@ -21,37 +21,39 @@ from ..._loss.loss import (
     HalfPoissonLoss,
     PinballLoss,
 )
-from ...base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     RegressorMixin,
     _fit_context,
     is_classifier,
 )
-from ...compose import ColumnTransformer
-from ...metrics import check_scoring
-from ...metrics._scorer import _SCORERS
-from ...model_selection import train_test_split
-from ...preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
-from ...utils import check_random_state, compute_sample_weight, resample
-from ...utils._missing import is_scalar_nan
-from ...utils._openmp_helpers import _openmp_effective_n_threads
-from ...utils._param_validation import Interval, RealNotInt, StrOptions
-from ...utils.multiclass import check_classification_targets
-from ...utils.validation import (
+from sklearn.compose import ColumnTransformer
+from sklearn.ensemble._hist_gradient_boosting._gradient_boosting import (
+    _update_raw_predictions,
+)
+from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
+from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE, X_DTYPE, Y_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
+from sklearn.metrics import check_scoring
+from sklearn.metrics._scorer import _SCORERS
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
+from sklearn.utils import check_random_state, compute_sample_weight, resample
+from sklearn.utils._dataframe import is_pandas_df
+from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.validation import (
     _check_monotonic_cst,
     _check_sample_weight,
     _check_y,
-    _is_pandas_df,
     check_array,
     check_consistent_length,
     check_is_fitted,
     validate_data,
 )
-from ._gradient_boosting import _update_raw_predictions
-from .binning import _BinMapper
-from .common import G_H_DTYPE, X_DTYPE, Y_DTYPE
-from .grower import TreeGrower
 
 _LOSSES = _LOSSES.copy()
 _LOSSES.update(
@@ -369,7 +371,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # fixed in main and maybe included in 2.2.1, see
         # https://github.com/pandas-dev/pandas/pull/57173.
         # Also pandas versions < 1.5.1 do not support the dataframe interchange
-        if _is_pandas_df(X):
+        if is_pandas_df(X):
             X_is_dataframe = True
             categorical_columns_mask = np.asarray(X.dtypes == "category")
         elif hasattr(X, "__dataframe__"):
@@ -441,7 +443,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     is_categorical[feature_names.index(feature_name)] = True
                 except ValueError as e:
                     raise ValueError(
-                        f"categorical_features has a item value '{feature_name}' "
+                        f"categorical_features has an item value '{feature_name}' "
                         "which is not a valid feature name of the training "
                         f"data. Observed feature names: {feature_names}"
                     ) from e

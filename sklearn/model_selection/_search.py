@@ -22,37 +22,44 @@ import numpy as np
 from numpy.ma import MaskedArray
 from scipy.stats import rankdata
 
-from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
-from ..exceptions import NotFittedError
-from ..metrics import check_scoring
-from ..metrics._scorer import (
+from sklearn.base import (
+    BaseEstimator,
+    MetaEstimatorMixin,
+    _fit_context,
+    clone,
+    is_classifier,
+)
+from sklearn.exceptions import NotFittedError
+from sklearn.metrics import check_scoring
+from sklearn.metrics._scorer import (
     _check_multimetric_scoring,
     _MultimetricScorer,
     get_scorer_names,
 )
-from ..utils import Bunch, check_random_state
-from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils._repr_html.estimator import _VisualBlock
-from ..utils._tags import get_tags
-from ..utils.metadata_routing import (
-    MetadataRouter,
-    MethodMapping,
-    _raise_for_params,
-    _routing_enabled,
-    process_routing,
-)
-from ..utils.metaestimators import available_if
-from ..utils.parallel import Parallel, delayed
-from ..utils.random import sample_without_replacement
-from ..utils.validation import _check_method_params, check_is_fitted, indexable
-from ._split import check_cv
-from ._validation import (
+from sklearn.model_selection._split import check_cv
+from sklearn.model_selection._validation import (
     _aggregate_score_dicts,
     _fit_and_score,
     _insert_error_scores,
     _normalize_score_results,
     _warn_or_raise_about_fit_failures,
 )
+from sklearn.utils import Bunch, check_random_state
+from sklearn.utils._array_api import xpx
+from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
+from sklearn.utils._repr_html.estimator import _VisualBlock
+from sklearn.utils._tags import get_tags
+from sklearn.utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.random import sample_without_replacement
+from sklearn.utils.validation import _check_method_params, check_is_fitted, indexable
 
 __all__ = ["GridSearchCV", "ParameterGrid", "ParameterSampler", "RandomizedSearchCV"]
 
@@ -476,11 +483,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self.error_score = error_score
         self.return_train_score = return_train_score
 
-    @property
-    # TODO(1.8) remove this property
-    def _estimator_type(self):
-        return self.estimator._estimator_type
-
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         sub_estimator_tags = get_tags(self.estimator)
@@ -716,7 +718,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Only available when `refit=True`.
         """
-        # For consistency with other estimators we raise a AttributeError so
+        # For consistency with other estimators we raise an AttributeError so
         # that hasattr() fails if the search estimator isn't fitted.
         try:
             check_is_fitted(self)
@@ -1157,7 +1159,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                     rank_result = np.ones_like(array_means, dtype=np.int32)
                 else:
                     min_array_means = np.nanmin(array_means) - 1
-                    array_means = np.nan_to_num(array_means, nan=min_array_means)
+                    array_means = xpx.nan_to_num(
+                        array_means, fill_value=min_array_means
+                    )
                     rank_result = rankdata(-array_means, method="min").astype(
                         np.int32, copy=False
                     )
@@ -1206,7 +1210,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
         router.add(
             estimator=self.estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
@@ -1441,6 +1445,9 @@ class GridSearchCV(BaseSearchCV):
             'std_score_time'     : [0.00, 0.00, 0.00, 0.01],
             'params'             : [{'kernel': 'poly', 'degree': 2}, ...],
             }
+
+        For an example of visualization and interpretation of GridSearch results,
+        see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
 
         NOTE
 
@@ -1825,6 +1832,9 @@ class RandomizedSearchCV(BaseSearchCV):
             'params'             : [{'kernel' : 'rbf', 'gamma' : 0.1}, ...],
             }
 
+        For an example of analysing ``cv_results_``,
+        see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
+
         NOTE
 
         The key ``'params'`` is used to store a list of parameter
@@ -1942,11 +1952,11 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> logistic = LogisticRegression(solver='saga', tol=1e-2, max_iter=200,
     ...                               random_state=0)
     >>> distributions = dict(C=uniform(loc=0, scale=4),
-    ...                      penalty=['l2', 'l1'])
+    ...                      l1_ratio=[0, 1])
     >>> clf = RandomizedSearchCV(logistic, distributions, random_state=0)
     >>> search = clf.fit(iris.data, iris.target)
     >>> search.best_params_
-    {'C': np.float64(2.195...), 'penalty': 'l1'}
+    {'C': np.float64(2.195...), 'l1_ratio': 1}
     """
 
     _parameter_constraints: dict = {
