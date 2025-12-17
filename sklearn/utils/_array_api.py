@@ -563,6 +563,7 @@ def move_to(*arrays, xp, device):
 
     arrays_ = arrays
     # Down cast float64 `arrays` when highest precision of `xp`/`device` is float32
+    d = _max_precision_float_dtype(xp, device)
     if _max_precision_float_dtype(xp, device) == xp.float32:
         arrays_ = []
         for array in arrays:
