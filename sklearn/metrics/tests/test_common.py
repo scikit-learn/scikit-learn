@@ -2544,8 +2544,9 @@ def test_mixed_array_api_namespace_input_compliance(
                 # `pos_label` needs to be specified when `y_true` is string
                 if metric_name in METRICS_WITH_POS_LABEL:
                     metric_kwargs["pos_label"] = "b"
-            else:
-                # Use default input
+                # We only need to check default `y1`, which was done in previous loop
+                continue
+            if check == "default":
                 dtype = _get_dtype(y1_np, xp_from, from_ns_and_device.device)
                 y1_xp = xp_from.asarray(
                     y1_np, device=from_ns_and_device.device, dtype=dtype
@@ -2557,7 +2558,7 @@ def test_mixed_array_api_namespace_input_compliance(
                 sample_weight_np = np.array(sample_weight)
                 metric_kwargs_np = {**metric_kwargs, "sample_weight": sample_weight_np}
                 sample_weight_xp = xp_from.asarray(
-                    sample_weight_np, device=from_ns_and_device.device
+                    sample_weight_np, device=from_ns_and_device.device, dtype=dtype
                 )
                 metric_kwargs_xp = {**metric_kwargs, "sample_weight": sample_weight_xp}
 
