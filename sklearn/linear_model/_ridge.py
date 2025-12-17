@@ -1979,9 +1979,10 @@ class _RidgeGCV(LinearModel):
             K += xp.linalg.outer(sqrt_sw, sqrt_sw)
         eigvals, Q = xp.linalg.eigh(K)
         QT_y = Q.T @ y
-        return X_mean, eigvals, Q, QT_y
+        XT = X.T
+        return X_mean, eigvals, Q, QT_y, XT
 
-    def _solve_eigen_gram(self, alpha, y, sqrt_sw, X_mean, eigvals, Q, QT_y):
+    def _solve_eigen_gram(self, alpha, y, sqrt_sw, X_mean, eigvals, Q, QT_y, XT):
         """Compute dual coefficients and diagonal of G^-1.
 
         Used when we have a decomposition of X.X^T (n_samples <= n_features).
@@ -2004,7 +2005,9 @@ class _RidgeGCV(LinearModel):
         # handle case where y is 2-d
         if len(y.shape) != 1:
             G_inverse_diag = G_inverse_diag[:, None]
-        return G_inverse_diag, c
+        looe = c / G_inverse_diag
+        coef = XT @ c
+        return looe, coef
 
     def _eigen_decompose_covariance(self, X, y, sqrt_sw):
         """Eigendecomposition of X^T.X, used when n_samples > n_features
@@ -2047,7 +2050,9 @@ class _RidgeGCV(LinearModel):
         if len(y.shape) != 1:
             # handle case where y is 2-d
             hat_diag = hat_diag[:, np.newaxis]
-        return (1 - hat_diag) / alpha, (y - y_hat) / alpha
+        looe = (y - y_hat) / (1 - hat_diag)
+        coef = AXy
+        return looe, coef
 
     def _solve_eigen_covariance_intercept(
         self, alpha, y, sqrt_sw, X_mean, eigvals, V, X
@@ -2078,7 +2083,10 @@ class _RidgeGCV(LinearModel):
         if len(y.shape) != 1:
             # handle case where y is 2-d
             hat_diag = hat_diag[:, np.newaxis]
-        return (1 - hat_diag) / alpha, (y - y_hat) / alpha
+        looe = (y - y_hat) / (1 - hat_diag)
+        # FIXME check coef expression with fit_intercept
+        coef = np.delete(AXy, intercept_dim)
+        return looe, coef
 
     def _solve_eigen_covariance(self, alpha, y, sqrt_sw, X_mean, eigvals, V, X):
         """Compute dual coefficients and diagonal of G^-1.
@@ -2104,31 +2112,55 @@ class _RidgeGCV(LinearModel):
             # by centering, the other columns are orthogonal to that one
             intercept_column = sqrt_sw[:, None]
             X = xp.concat((X, intercept_column), axis=1)
-        U, singvals, _ = xp.linalg.svd(X, full_matrices=False)
-        singvals_sq = singvals**2
+        # reduced svd
+        U, singvals, VT = xp.linalg.svd(X, full_matrices=False)
         UT_y = U.T @ y
-        return X_mean, singvals_sq, U, UT_y
+        V = VT.T
+        return X_mean, singvals, U, V, UT_y
 
-    def _solve_svd_design_matrix(self, alpha, y, sqrt_sw, X_mean, singvals_sq, U, UT_y):
+    def _solve_svd_design_matrix(self, alpha, y, sqrt_sw, X_mean, singvals, U, V, UT_y):
         """Compute dual coefficients and diagonal of G^-1.
 
         Used when we have an SVD decomposition of X
         (n_samples > n_features and X is dense).
         """
         xp, is_array_api = get_namespace(U)
-        w = ((singvals_sq + alpha) ** -1) - (alpha**-1)
         if self.fit_intercept:
             # detect intercept column
             normalized_sw = sqrt_sw / xp.linalg.vector_norm(sqrt_sw)
             intercept_dim = int(_find_smallest_angle(normalized_sw, U))
-            # cancel the regularization for the intercept
-            w[intercept_dim] = -(alpha**-1)
-        c = U @ self._diag_dot(w, UT_y) + (alpha**-1) * y
-        G_inverse_diag = self._decomp_diag(w, U) + (alpha**-1)
+
+        n, r = U.shape
+        p, r = V.shape
+        if p < n:
+            assert p == r == len(singvals)
+            w = alpha / (singvals**2 + alpha) - 1
+            if self.fit_intercept:
+                # cancel the regularization for the intercept
+                w[intercept_dim] = -1
+            alpha_c = U @ self._diag_dot(w, UT_y) + y
+            alpha_d = self._decomp_diag(w, U) + 1
+        else:
+            assert n == r == len(singvals)
+            g = alpha / (singvals**2 + alpha)
+            if self.fit_intercept:
+                # cancel the regularization for the intercept
+                g[intercept_dim] = 0
+            alpha_c = U @ self._diag_dot(g, UT_y)
+            alpha_d = self._decomp_diag(g, U)
+
         if len(y.shape) != 1:
             # handle case where y is 2-d
-            G_inverse_diag = G_inverse_diag[:, None]
-        return G_inverse_diag, c
+            alpha_d = alpha_d[:, None]
+
+        # coefficient and leave-one-out-errors
+        looe = alpha_c / alpha_d
+        h = singvals / (singvals**2 + alpha)
+        coef = V @ self._diag_dot(h, UT_y)
+        if self.fit_intercept:
+            # remove intercept dim
+            coef = np.delete(coef, intercept_dim)
+        return looe, coef
 
     def fit(self, X, y, sample_weight=None, score_params=None):
         """Fit Ridge regression model with gcv.
@@ -2215,7 +2247,7 @@ class _RidgeGCV(LinearModel):
                 decompose = self._svd_decompose_design_matrix
                 solve = self._solve_svd_design_matrix
 
-        n_samples = X.shape[0]
+        n_samples, n_features = X.shape
 
         if sqrt_sw is None:
             sqrt_sw = xp.ones(n_samples, dtype=X.dtype, device=device_)
@@ -2240,14 +2272,16 @@ class _RidgeGCV(LinearModel):
         best_coef, best_score, best_alpha = None, None, None
 
         for i, alpha in enumerate(alphas):
-            G_inverse_diag, c = solve(float(alpha), y, sqrt_sw, X_mean, *decomposition)
+            looe, coef = solve(float(alpha), y, sqrt_sw, X_mean, *decomposition)
+            assert len(looe) == n_samples
+            assert len(coef) == n_features, "coef wrong size"
             if self.scoring is None:
-                squared_errors = (c / G_inverse_diag) ** 2
+                squared_errors = looe**2
                 alpha_score = self._score_without_scorer(squared_errors=squared_errors)
                 if self.store_cv_results:
                     self.cv_results_[:, i] = _ravel(squared_errors)
             else:
-                predictions = y - (c / G_inverse_diag)
+                predictions = y - looe
                 # Rescale predictions back to original scale
                 if sample_weight is not None:  # avoid the unnecessary division by ones
                     if predictions.ndim > 1:
@@ -2272,32 +2306,26 @@ class _RidgeGCV(LinearModel):
             if best_score is None:
                 # initialize
                 if self.alpha_per_target and n_y > 1:
-                    best_coef = c
+                    best_coef = coef
                     best_score = xp.reshape(alpha_score, shape=(-1,))
                     best_alpha = xp.full(n_y, alpha, device=device_)
                 else:
-                    best_coef = c
+                    best_coef = coef
                     best_score = alpha_score
                     best_alpha = alpha
             else:
                 # update
                 if self.alpha_per_target and n_y > 1:
                     to_update = alpha_score > best_score
-                    best_coef.T[to_update] = c.T[to_update]
+                    best_coef[to_update] = coef[to_update]
                     best_score[to_update] = alpha_score[to_update]
                     best_alpha[to_update] = alpha
                 elif alpha_score > best_score:
-                    best_coef, best_score, best_alpha = c, alpha_score, alpha
+                    best_coef, best_score, best_alpha = coef, alpha_score, alpha
 
         self.alpha_ = best_alpha
         self.best_score_ = best_score
-        self.dual_coef_ = best_coef
-        # avoid torch warning about x.T for x with ndim != 2
-        if self.dual_coef_.ndim > 1:
-            dual_T = self.dual_coef_.T
-        else:
-            dual_T = self.dual_coef_
-        self.coef_ = dual_T @ X
+        self.coef_ = best_coef
         if y.ndim == 1 or y.shape[1] == 1:
             self.coef_ = _ravel(self.coef_)
 
@@ -2317,7 +2345,6 @@ class _RidgeGCV(LinearModel):
         if original_dtype is not None:
             if type(self.intercept_) is not float:
                 self.intercept_ = xp.astype(self.intercept_, original_dtype, copy=False)
-            self.dual_coef_ = xp.astype(self.dual_coef_, original_dtype, copy=False)
             self.coef_ = xp.astype(self.coef_, original_dtype, copy=False)
         return self
 
