@@ -205,11 +205,22 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           disable_search: true
 
-  update-tracker:
-    uses: ./.github/workflows/update_tracking_issue.yml
-    if: ${{ always() }}
-    needs: [unit-tests]
-    with:
-      job_status: ${{ needs.unit-tests.result }}
-    secrets:
-      BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+      - name: Update tracking issue
+        if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
+        run: |
+          set -ex
+          if [[ ${{ job.status }} == "success" ]]; then
+            TESTS_PASSED=true
+          else
+            TESTS_PASSED=false
+          fi
+
+          pip install defusedxml PyGithub
+          python maint_tools/update_tracking_issue.py \
+            ${{ secrets.BOT_GITHUB_TOKEN }} \
+            "$GITHUB_WORKFLOW ${{ matrix.name }}" \
+            "$GITHUB_REPOSITORY" \
+            https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID \
+            --tests-passed $TESTS_PASSED \
+            --auto-close false \
+            --job-name "${{ matrix.name }}"
