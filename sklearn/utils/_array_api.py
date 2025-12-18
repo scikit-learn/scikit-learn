@@ -16,6 +16,7 @@ from sklearn._config import get_config
 from sklearn.externals import array_api_compat
 from sklearn.externals import array_api_extra as xpx
 from sklearn.externals.array_api_compat import numpy as np_compat
+from sklearn.utils._dataframe import is_df_or_series
 from sklearn.utils.fixes import parse_version
 
 # TODO: complete __all__
@@ -320,6 +321,8 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
             continue
         if sp.issparse(array):
             continue
+        if is_df_or_series(array):
+            continue
         filtered_arrays.append(array)
 
     return filtered_arrays
@@ -469,7 +472,7 @@ def move_to(*arrays, xp, device):
     `array` may contain `None` entries, these are left unchanged.
 
     Sparse arrays are accepted (as pass through) if the reference namespace is
-    Numpy, in which case they are returned unchanged. Otherwise a `TypeError`
+    NumPy, in which case they are returned unchanged. Otherwise a `TypeError`
     is raised.
 
     Parameters
@@ -527,7 +530,15 @@ def move_to(*arrays, xp, device):
                     # kwargs in the from_dlpack method and their expected
                     # meaning by namespaces implementing the array API spec.
                     # TODO: try removing this once DLPack v1 more widely supported
-                except (AttributeError, TypeError, NotImplementedError):
+                    # TODO: ValueError should not be needed but is in practice:
+                    # https://github.com/numpy/numpy/issues/30341
+                except (
+                    AttributeError,
+                    TypeError,
+                    NotImplementedError,
+                    BufferError,
+                    ValueError,
+                ):
                     # Converting to numpy is tricky, handle this via dedicated function
                     if _is_numpy_namespace(xp):
                         array_converted = _convert_to_numpy(array, xp_array)

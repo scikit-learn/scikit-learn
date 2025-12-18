@@ -635,6 +635,9 @@ def _fit_classifier_calibrator_pair(
     classes : ndarray, shape (n_classes,)
         The target classes.
 
+    xp : namespace
+        Array API namespace.
+
     sample_weight : array-like, default=None
         Sample weights for `X`.
 
@@ -705,6 +708,9 @@ def _fit_calibrator(clf, predictions, y, classes, method, xp, sample_weight=None
 
     method : {'sigmoid', 'isotonic', 'temperature'}
         The method to use for calibration.
+
+    xp : namespace
+        Array API namespace.
 
     sample_weight : ndarray, shape (n_samples,), default=None
         Sample weights. If None, then samples are equally weighted.
