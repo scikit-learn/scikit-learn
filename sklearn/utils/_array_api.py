@@ -568,7 +568,7 @@ def move_to(*arrays, xp, device):
         for array in arrays:
             xp_array, _ = get_namespace(array)
             if getattr(array, "dtype", None) == xp_array.float64:
-                arrays_.append(xp_array.astype(array, dtype=xp_array.float32))
+                arrays_.append(xp_array.astype(array, xp_array.float32))
             else:
                 arrays_.append(array)
 
