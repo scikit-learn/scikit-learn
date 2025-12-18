@@ -49,6 +49,8 @@ def _fitted_attr_html_repr(fitted_attributes):
                  <th>Type</th>
                  <th>Shape</th>
                  <th>dtype</th>
+                 <th>size</th>
+                 <th>value</th>
                  </tr>
                    {rows}
                  </tbody>
@@ -62,18 +64,33 @@ def _fitted_attr_html_repr(fitted_attributes):
            <td>{type}</td>
            <td>{shape}</td>
            <td>{dtype}</td>
+           <td>{attr_size}</td>
+           <td>{attr_value}</td>
        </tr>
     """
 
     rows = []
     for name, value in fitted_attributes.items():
-        breakpoint()
-        if isinstance(value, str):
-            rows.append(ROW_TEMPLATE.format(name=name, type=value, shape="", dtype=""))
+        if len(value) == 2:
+            rows.append(
+                ROW_TEMPLATE.format(
+                    name=name,
+                    type=value[0],
+                    shape="",
+                    dtype="",
+                    attr_size="",
+                    attr_value=value[1],
+                )
+            )
         else:
             rows.append(
                 ROW_TEMPLATE.format(
-                    name=name, type=value[0], shape=value[1], dtype=value[2]
+                    name=name,
+                    type=value[0],
+                    shape=value[1],
+                    dtype=value[2],
+                    attr_size=value[3],
+                    attr_value="",
                 )
             )
 
