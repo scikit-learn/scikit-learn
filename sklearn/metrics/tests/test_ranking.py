@@ -1230,14 +1230,17 @@ def test_average_precision_score_multiclass_pos_label_errors():
         average_precision_score(y_true, y_score, pos_label=3)
 
 
-def test_average_precision_score_multiclass_raises_for_incoherent_input_shapes():
-    # Test than an error is raised for multiclass `y_true` if `y_score` is provided as a
-    # 1D array.
+def test_multiclass_ranking_metrics_raise_for_incorrect_shape_of_y_score():
+    """Test the ranking metrics that support multiclass values in `y_true`
+    raise if shape `y_score` is 1D"""
     y_true = np.array([0, 1, 2, 0, 1, 2])
     y_score = np.array([0.5, 0.4, 0.8, 0.9, 0.8, 0.7])
+
     msg = re.escape("`y_score` needs to be of shape `(n_samples, n_classes)`")
     with pytest.raises(ValueError, match=msg):
         average_precision_score(y_true, y_score)
+        roc_auc_score(y_true, y_score, multi_class="ovr")
+        top_k_accuracy_score(y_true, y_score)
 
 
 def test_score_scale_invariance():

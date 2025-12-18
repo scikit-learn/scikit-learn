@@ -267,7 +267,8 @@ def average_precision_score(
         if not y_score.shape == y_true.shape:
             raise ValueError(
                 "`y_score` needs to be of shape `(n_samples, n_classes)`, since "
-                f"`y_true` contains multiple classes. Got {y_score}."
+                "`y_true` contains multiple classes. Got "
+                f"`y_score.shape={y_score.shape}`."
             )
 
     average_precision = partial(
@@ -772,7 +773,12 @@ def _multiclass_roc_auc_score(
         Sample weights.
 
     """
-    # validation of the input y_score
+    if not y_score.ndim == 2:
+        raise ValueError(
+            "`y_score` needs to be of shape `(n_samples, n_classes)`, since "
+            "`y_true` contains multiple classes. Got "
+            f"`y_score.shape={y_score.shape}`."
+        )
     if not np.allclose(1, y_score.sum(axis=1)):
         raise ValueError(
             "Target scores need to be probabilities for multiclass "
@@ -2119,6 +2125,13 @@ def top_k_accuracy_score(
                 " labels, `labels` must be provided."
             )
         y_score = column_or_1d(y_score)
+    else:
+        if not y_score.ndim == 2:
+            raise ValueError(
+                "`y_score` needs to be of shape `(n_samples, n_classes)`, since "
+                "`y_true` contains multiple classes. Got "
+                f"`y_score.shape={y_score.shape}`."
+            )
 
     check_consistent_length(y_true, y_score, sample_weight)
     y_score_n_classes = y_score.shape[1] if y_score.ndim == 2 else 2
