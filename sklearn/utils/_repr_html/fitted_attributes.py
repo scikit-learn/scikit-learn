@@ -44,6 +44,12 @@ def _fitted_attr_html_repr(fitted_attributes):
                <summary>Fitted attributes</summary>
                <table class="body-table">
                  <tbody>
+                 <tr>
+                 <th>Class</th>
+                 <th>Type</th>
+                 <th>Shape</th>
+                 <th>dtype</th>
+                 </tr>
                    {rows}
                  </tbody>
                </table>
@@ -55,6 +61,7 @@ def _fitted_attr_html_repr(fitted_attributes):
            <td>{name}&nbsp;</td>
            <td>{shape}</td>
            <td>{type}</td>
+           <td>{dtype}</td>
        </tr>
     """
 
@@ -64,9 +71,11 @@ def _fitted_attr_html_repr(fitted_attributes):
         if split_value > -1:
             shape = value[:split_value]
             type = value[(split_value + 2) :]
-            rows.append(ROW_TEMPLATE.format(name=name, shape=shape, type=type))
+            rows.append(
+                ROW_TEMPLATE.format(name=name, shape=shape, type="", dtype=type)
+            )
         else:
-            rows.append(ROW_TEMPLATE.format(name=name, shape="", type=value))
+            rows.append(ROW_TEMPLATE.format(name=name, shape="", type=value, dtype=""))
 
     return HTML_TEMPLATE.format(rows="\n".join(rows))
 

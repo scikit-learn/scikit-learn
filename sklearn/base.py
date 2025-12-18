@@ -249,7 +249,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             key: type(value).__name__ for key, value in fitted_attributes.items()
         }
         fitted_attr = fitted_attributes | cleaned_fitted_attr | arrays_attr
-
+        breakpoint()
         return AttrsDict(
             fitted_attrs=fitted_attr,
             estimator_class=self.__class__,
