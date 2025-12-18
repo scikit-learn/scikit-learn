@@ -1239,7 +1239,9 @@ def test_multiclass_ranking_metrics_raise_for_incorrect_shape_of_y_score():
     msg = re.escape("`y_score` needs to be of shape `(n_samples, n_classes)`")
     with pytest.raises(ValueError, match=msg):
         average_precision_score(y_true, y_score)
+    with pytest.raises(ValueError, match=msg):
         roc_auc_score(y_true, y_score, multi_class="ovr")
+    with pytest.raises(ValueError, match=msg):
         top_k_accuracy_score(y_true, y_score)
 
 
