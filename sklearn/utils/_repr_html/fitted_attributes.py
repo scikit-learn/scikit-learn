@@ -59,23 +59,23 @@ def _fitted_attr_html_repr(fitted_attributes):
     ROW_TEMPLATE = """
        <tr class="default">
            <td>{name}&nbsp;</td>
-           <td>{shape}</td>
            <td>{type}</td>
+           <td>{shape}</td>
            <td>{dtype}</td>
        </tr>
     """
 
     rows = []
     for name, value in fitted_attributes.items():
-        split_value = value.find(",", value.find(",") + 1)
-        if split_value > -1:
-            shape = value[:split_value]
-            type = value[(split_value + 2) :]
-            rows.append(
-                ROW_TEMPLATE.format(name=name, shape=shape, type="", dtype=type)
-            )
+        breakpoint()
+        if isinstance(value, str):
+            rows.append(ROW_TEMPLATE.format(name=name, type=value, shape="", dtype=""))
         else:
-            rows.append(ROW_TEMPLATE.format(name=name, shape="", type=value, dtype=""))
+            rows.append(
+                ROW_TEMPLATE.format(
+                    name=name, type=value[0], shape=value[1], dtype=value[2]
+                )
+            )
 
     return HTML_TEMPLATE.format(rows="\n".join(rows))
 
