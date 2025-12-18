@@ -229,10 +229,9 @@ class DecisionBoundaryDisplay:
             _, ax = plt.subplots()
 
         plot_func = getattr(ax, plot_method)
-        if self.response.ndim == 2:
+        if self.n_classes == 2:
             self.surface_ = plot_func(self.xx0, self.xx1, self.response, **kwargs)
-        else:  # self.response.ndim == 3
-            n_responses = self.response.shape[-1]
+        else:  # multiclass
             for kwarg in ("cmap", "colors"):
                 if kwarg in kwargs:
                     warnings.warn(
@@ -270,29 +269,38 @@ class DecisionBoundaryDisplay:
                 raise ValueError("'multiclass_colors' must be a list or a str.")
 
             self.multiclass_colors_ = colors
-            if plot_method == "contour":
-                # Plot only argmax map for contour
-                class_map = self.response.argmax(axis=2)
-                self.surface_ = plot_func(
-                    self.xx0, self.xx1, class_map, colors=colors, **kwargs
-                )
-            else:
-                multiclass_cmaps = [
-                    mpl.colors.LinearSegmentedColormap.from_list(
-                        f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
-                    )
-                    for class_idx, (r, g, b, _) in enumerate(colors)
-                ]
 
-                self.surface_ = []
-                for class_idx, cmap in enumerate(multiclass_cmaps):
-                    response = np.ma.array(
-                        self.response[:, :, class_idx],
-                        mask=~(self.response.argmax(axis=2) == class_idx),
+            if self.response.ndim == 2:  # multiclass "predict"
+                # Create a colormap from the selected colors (required by pcolormesh)
+                cmap = mpl.colors.ListedColormap(colors)
+                self.surface_ = plot_func(
+                    self.xx0, self.xx1, self.response, cmap=cmap, **kwargs
+                )
+            else:  # other multiclass cases
+                if plot_method == "contour":
+                    # Plot only argmax for contour
+                    class_map = self.response.argmax(axis=2)
+                    self.surface_ = plot_func(
+                        self.xx0, self.xx1, class_map, colors=colors, **kwargs
                     )
-                    self.surface_.append(
-                        plot_func(self.xx0, self.xx1, response, cmap=cmap, **kwargs)
-                    )
+                else:
+                    multiclass_cmaps = [
+                        mpl.colors.LinearSegmentedColormap.from_list(
+                            f"colormap_{class_idx}",
+                            [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)],
+                        )
+                        for class_idx, (r, g, b, _) in enumerate(colors)
+                    ]
+
+                    self.surface_ = []
+                    for class_idx, cmap in enumerate(multiclass_cmaps):
+                        response = np.ma.array(
+                            self.response[:, :, class_idx],
+                            mask=~(self.response.argmax(axis=2) == class_idx),
+                        )
+                        self.surface_.append(
+                            plot_func(self.xx0, self.xx1, response, cmap=cmap, **kwargs)
+                        )
 
         if xlabel is not None or not ax.get_xlabel():
             xlabel = self.xlabel if xlabel is None else xlabel
