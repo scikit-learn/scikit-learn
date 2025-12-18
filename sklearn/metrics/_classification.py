@@ -1010,7 +1010,6 @@ def cohen_kappa_score(
     confusion = xp.astype(confusion, max_float_dtype, copy=False)
     sum0 = xp.sum(confusion, axis=0)
     sum1 = xp.sum(confusion, axis=1)
-    # expected = xp.linalg.outer(sum0, sum1) / xp.sum(sum0)
 
     numerator = xp.linalg.outer(sum0, sum1)
     denominator = xp.sum(sum0)
