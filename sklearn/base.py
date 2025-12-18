@@ -10,7 +10,6 @@ import platform
 import re
 import warnings
 from collections import defaultdict
-from collections.abc import Sequence
 
 import numpy as np
 
@@ -231,27 +230,15 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             if not name.startswith("_") and name.endswith("_")
         }
 
-        cleaned_fitted_attr = {
-            name: "None"
-            if value is None
-            else f"{type(value).__name__} of length {len(value)}"
-            for name, value in fitted_attributes.items()
-            if value is None or isinstance(value, Sequence)
-        }
+        fitted_attr_out = {}
+        for name, value in fitted_attributes.items():
+            if _is_arraylike_not_scalar(value) and hasattr(value, "shape"):
+                fitted_attr_out[name] = (type(value).__name__, value.shape, value.dtype)
+            else:
+                fitted_attr_out[name] = type(value).__name__
 
-        arrays_attr = {
-            name: f"{type(value).__name__} of shape {value.shape}, dtype={value.dtype}"
-            for name, value in fitted_attributes.items()
-            if _is_arraylike_not_scalar(value) and hasattr(value, "shape")
-        }
-
-        fitted_attributes = {
-            key: type(value).__name__ for key, value in fitted_attributes.items()
-        }
-        fitted_attr = fitted_attributes | cleaned_fitted_attr | arrays_attr
-        breakpoint()
         return AttrsDict(
-            fitted_attrs=fitted_attr,
+            fitted_attrs=fitted_attr_out,
             estimator_class=self.__class__,
             doc_link=doc_link,
         )
