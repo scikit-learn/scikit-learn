@@ -93,15 +93,16 @@ class DecisionBoundaryDisplay:
 
     multiclass_colors : list of str or str, default=None
         Specifies how to color each class when plotting all classes of multiclass
-        problem. Ignored for binary problems and multiclass problems when plotting a
-        single prediction value per point.
+        problem. Ignored for binary problems.
         Possible inputs are:
 
         * list: list of Matplotlib
           `color <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
           strings, of length `n_classes`
         * str: name of :class:`matplotlib.colors.Colormap`
-        * None: 'viridis' colormap is used to sample colors
+        * None: 'tab10' colormap is used to sample colors if the number of
+                classes is less than or equal to 10, otherwise 'gist_rainbow'
+                colormap.
 
         Single color colormaps will be generated from the colors in the list or
         colors taken from the colormap and passed to the `cmap` parameter of
@@ -125,7 +126,7 @@ class DecisionBoundaryDisplay:
 
     multiclass_colors_ : array of shape (n_classes, 4)
         Colors used to plot each class in multiclass problems.
-        Only defined when `color_of_interest` is None.
+        Only defined when `n_classes` > 2.
 
         .. versionadded:: 1.7
 
@@ -208,7 +209,9 @@ class DecisionBoundaryDisplay:
             Overwrite the y-axis label.
 
         **kwargs : dict
-            Additional keyword arguments to be passed to the `plot_method`.
+            Additional keyword arguments to be passed to the `plot_method`. Here, `cmap`
+            or `colors` can be set to specify the colormap or colors for binary
+            problems.
 
         Returns
         -------
@@ -236,8 +239,7 @@ class DecisionBoundaryDisplay:
                 if kwarg in kwargs:
                     warnings.warn(
                         f"'{kwarg}' is ignored in favor of 'multiclass_colors' "
-                        "in the multiclass case when the response method is "
-                        "'decision_function' or 'predict_proba'."
+                        "in the multiclass case."
                     )
                     del kwargs[kwarg]
 
@@ -380,9 +382,8 @@ class DecisionBoundaryDisplay:
             .. versionadded:: 1.4
 
         multiclass_colors : list of str, or str, default=None
-            Specifies how to color each class when plotting multiclass
-            'predict_proba' or 'decision_function' and `class_of_interest` is
-            None. Ignored in all other cases.
+            Specifies how to color each class when plotting multiclass problems
+            and `class_of_interest` is None. Ignored in all other cases.
 
             Possible inputs are:
 
@@ -415,8 +416,9 @@ class DecisionBoundaryDisplay:
             created.
 
         **kwargs : dict
-            Additional keyword arguments to be passed to the
-            `plot_method`.
+            Additional keyword arguments to be passed to the `plot_method`. Here, `cmap`
+            or `colors` can be used to specify the colormap or colors for binary
+            problems.
 
         Returns
         -------
@@ -445,7 +447,8 @@ class DecisionBoundaryDisplay:
         ...     xlabel=iris.feature_names[0], ylabel=iris.feature_names[1],
         ...     alpha=0.5,
         ... )
-        >>> disp.ax_.scatter(X[:, 0], X[:, 1], c=iris.target, edgecolor="k")
+        >>> cmap = mpl.colors.ListedColormap(display.multiclass_colors_)
+        >>> disp.ax_.scatter(X[:, 0], X[:, 1], c=iris.target, edgecolor="k", cmap=cmap)
         <...>
         >>> plt.show()
         """
