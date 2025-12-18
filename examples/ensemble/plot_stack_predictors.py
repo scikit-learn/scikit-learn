@@ -43,8 +43,7 @@ drop = 10.0 * (X > 2).astype(float)
 sigma = 0.75 + 0.75 * X**2
 y = trend + seasonal - drop + rng.normal(loc=0.0, scale=np.sqrt(sigma))
 
-data = np.c_[X, y]
-df = pd.DataFrame(data, columns=["X", "y"])
+df = pd.DataFrame({"X": X, "y": y})
 _ = df.plot.scatter(x="X", y="y")
 
 # %%
