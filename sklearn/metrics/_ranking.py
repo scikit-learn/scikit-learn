@@ -504,7 +504,7 @@ def roc_auc_score(
     y_true : array-like of shape (n_samples,) or (n_samples, n_classes)
         True labels or :term:`label indicator matrix`. The binary and multiclass cases
         expect labels with shape (n_samples,) while the multilabel case expects
-        :term:`multilabel indicator matrix` with shape (n_samples, n_classes).
+        a :term:`multilabel indicator matrix` with shape (n_samples, n_classes).
 
     y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target scores.

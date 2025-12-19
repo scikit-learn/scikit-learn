@@ -527,6 +527,9 @@ General Concepts
         corresponds to a class, and each element is 1 if the sample is labeled
         with the class and 0 if not.
 
+        :class:`LabelBinarizer` can be used to create a multilabel indicator matrix
+        from :term:`multiclass` labels.
+
     leakage
     data leakage
         A problem in cross validation where generalization performance can be
