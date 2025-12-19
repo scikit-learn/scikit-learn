@@ -68,7 +68,7 @@ EXAMPLE_ADDITIONAL_PACKAGE_PYPROJECT_SECTIONS = """
 [project]
 dependencies = ["joblib>=1.3.0", "scipy>=1.10.0"]
 [project.optional-dependencies]
-build = ["scipy>=1.10.0", "package_not_in_dependencies>=4.2"]
+build = ["scipy>=1.10.0", "package_not_in_min_dependencies_py_file>=4.2"]
 install = ["joblib>=1.3.0", "scipy>=1.10.0"]
 maintenance = ["conda-lock==3.0.1"]
 [build-system]
