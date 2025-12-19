@@ -12,7 +12,7 @@ import numpy as np
 
 import sklearn.externals.array_api_extra as xpx
 from sklearn.utils import check_array, check_consistent_length
-from sklearn.utils._array_api import _ravel, get_namespace_and_device
+from sklearn.utils._array_api import _average, _ravel, get_namespace_and_device
 from sklearn.utils.multiclass import type_of_target
 
 
@@ -87,12 +87,17 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
 
     elif average == "weighted":
         if score_weight is not None:
+            # convert dtype of `y_true` to floats, to prevent array_api_strict error:
+            y_true = xp.astype(xp.asarray(y_true), xp.float64, copy=False)
             average_weight = xp.sum(
                 xp.multiply(y_true, xp.reshape(score_weight, (-1, 1))), axis=0
             )
         else:
             average_weight = xp.sum(y_true, axis=0)
-        if xpx.isclose(xp.sum(average_weight), 0):
+        if xpx.isclose(
+            xp.sum(average_weight),
+            xp.asarray(0, dtype=average_weight.dtype, device=_device),
+        ):
             return 0
 
     elif average == "samples":
@@ -108,7 +113,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         y_score = xp.reshape(y_score, (-1, 1))
 
     n_classes = y_score.shape[not_average_axis]
-    score = xp.zeros((n_classes,))
+    score = xp.zeros((n_classes,), device=_device)
     for c in range(n_classes):
         y_true_c = _ravel(
             xp.take(y_true, xp.asarray([c], device=_device), axis=not_average_axis)
@@ -124,7 +129,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
             # Scores with 0 weights are forced to be 0, preventing the average
             # score from being affected by 0-weighted NaN elements.
             score[average_weight == 0] = 0
-        return float(np.average(score, weights=average_weight))
+        return float(_average(score, weights=average_weight))
     else:
         return score
 
