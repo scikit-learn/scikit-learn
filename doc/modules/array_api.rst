@@ -164,8 +164,10 @@ Metrics
 - :func:`sklearn.metrics.cluster.calinski_harabasz_score`
 - :func:`sklearn.metrics.cohen_kappa_score`
 - :func:`sklearn.metrics.confusion_matrix`
+- :func:`sklearn.metrics.d2_absolute_error_score`
 - :func:`sklearn.metrics.d2_brier_score`
 - :func:`sklearn.metrics.d2_log_loss_score`
+- :func:`sklearn.metrics.d2_pinball_score`
 - :func:`sklearn.metrics.d2_tweedie_score`
 - :func:`sklearn.metrics.det_curve`
 - :func:`sklearn.metrics.explained_variance_score`
