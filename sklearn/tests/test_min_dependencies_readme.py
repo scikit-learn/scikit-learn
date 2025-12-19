@@ -14,7 +14,7 @@ from sklearn.utils.fixes import parse_version
 
 # minimal dependencies and pyproject definitions for testing the pyproject tests
 
-EXAMPLE_MIN_DEPENDENT_PACKAGES = {
+EXAMPLE_MIN_DEPENDENCIES_PY_INFO = {
     "joblib": ("1.3.0", "install"),
     "scipy": ("1.10.0", "build, install"),
     "conda-lock": ("3.0.1", "maintenance"),
@@ -225,7 +225,7 @@ def test_check_matching_pyproject_section(example_pyproject):
 
     pyproject_toml = tomllib.loads(example_pyproject)
 
-    check_pyproject_sections(pyproject_toml, EXAMPLE_MIN_DEPENDENT_PACKAGES)
+    check_pyproject_sections(pyproject_toml, EXAMPLE_MIN_DEPENDENCIES_PY_INFO)
 
 
 @pytest.mark.parametrize(
@@ -259,4 +259,4 @@ def test_check_non_matching_pyproject_section(
     pyproject_toml = tomllib.loads(example_non_matching_pyproject)
 
     with pytest.raises(Exception, match=error_msg):
-        check_pyproject_sections(pyproject_toml, EXAMPLE_MIN_DEPENDENT_PACKAGES)
+        check_pyproject_sections(pyproject_toml, EXAMPLE_MIN_DEPENDENCIES_PY_INFO)
