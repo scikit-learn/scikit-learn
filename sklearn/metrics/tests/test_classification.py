@@ -3760,7 +3760,7 @@ def test_pos_label_in_brier_score_metrics_array_api(
     # `pos_label` defaults to the largest label.
     xp = _array_api_for_tests(array_namespace, device_)
     y_true_pos_1 = xp.asarray(np.array([1, 0, 1, 0]), device=device_)
-    # Result should be the same when we use 2 for the label instead of 1
+    # Result should be the same when we use 2's for the label instead of 1's
     y_true_pos_2 = xp.asarray(np.array([2, 0, 2, 0]), device=device_)
     y_prob = xp.asarray(
         np.array([0.5, 0.2, 0.7, 0.6], dtype=dtype_name), device=device_
