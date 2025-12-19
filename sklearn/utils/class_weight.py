@@ -85,16 +85,20 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
     else:
         # user-defined dictionary
         weight = np.ones(classes.shape[0], dtype=np.float64, order="C")
-        unweighted_classes = []
+        # Use set difference for efficient unweighted class detection
+        class_weight_keys = set(class_weight.keys())
+        classes_set = set(classes)
+        unweighted_classes = classes_set - class_weight_keys
+
+        # Vectorized weight assignment using dictionary get with default
         for i, c in enumerate(classes):
-            if c in class_weight:
-                weight[i] = class_weight[c]
-            else:
-                unweighted_classes.append(c)
+            weight[i] = class_weight.get(c, 1.0)
 
         n_weighted_classes = len(classes) - len(unweighted_classes)
         if unweighted_classes and n_weighted_classes != len(class_weight):
-            unweighted_classes_user_friendly_str = np.array(unweighted_classes).tolist()
+            unweighted_classes_user_friendly_str = np.array(
+                sorted(unweighted_classes)
+            ).tolist()
             raise ValueError(
                 f"The classes, {unweighted_classes_user_friendly_str}, are not in"
                 " class_weight"
