@@ -142,8 +142,8 @@ def average_precision_score(
     Parameters
     ----------
     y_true : array-like of shape (n_samples,) or (n_samples, n_classes)
-        True binary labels, :term:`binary label indicators <multi-label>` or
-        :term:`multi-class` labels.
+        True binary labels, :term:`multi-label` indicators (as a
+        :term:`multilabel indicator matrix`) or :term:`multi-class` labels.
 
     y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target scores, can either be probability estimates of the positive

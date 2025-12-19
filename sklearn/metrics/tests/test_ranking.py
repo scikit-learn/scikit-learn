@@ -1231,8 +1231,7 @@ def test_average_precision_score_multiclass_pos_label_errors():
 
 
 def test_multiclass_ranking_metrics_raise_for_incorrect_shape_of_y_score():
-    """Test the ranking metrics that support multiclass values in `y_true`
-    raise if shape `y_score` is 1D"""
+    """Test ranking metrics, with multiclass support, raise if shape `y_score` is 1D."""
     y_true = np.array([0, 1, 2, 0, 1, 2])
     y_score = np.array([0.5, 0.4, 0.8, 0.9, 0.8, 0.7])
 
