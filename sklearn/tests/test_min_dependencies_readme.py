@@ -17,24 +17,27 @@ from sklearn.utils.fixes import parse_version
 EXAMPLE_MIN_DEPENDENT_PACKAGES = {
     "joblib": ("1.3.0", "install"),
     "scipy": ("1.10.0", "build, install"),
+    "conda-lock": ("3.0.1", "maintenance"),
 }
 
 EXAMPLE_MATCHING_PYPROJECT_SECTIONS = """
 [project]
-dependencies = ["joblib>=1.3.0", "scipy==1.10.0"]
+dependencies = ["joblib>=1.3.0", "scipy>=1.10.0"]
 [project.optional-dependencies]
 build = ["scipy>=1.10.0"]
-install = ["joblib>=1.3.0", "scipy==1.10.0"]
+install = ["joblib>=1.3.0", "scipy>=1.10.0"]
+maintenance = ["conda-lock==3.0.1"]
 [build-system]
 requires = ["scipy>=1.10.0"]
 """
 
 EXAMPLE_MATCHING_PYPROJECT_SECTIONS_WITH_UPPER_BOUND = """
 [project]
-dependencies = ["joblib>=1.3.0,<2.0", "scipy==1.10.0"]
+dependencies = ["joblib>=1.3.0,<2.0", "scipy>=1.10.0"]
 [project.optional-dependencies]
 build = ["scipy>=1.10.0,<1.19.0"]
-install = ["joblib>=1.3.0,<2.0", "scipy==1.10.0"]
+install = ["joblib>=1.3.0,<2.0", "scipy>=1.10.0"]
+maintenance = ["conda-lock==3.0.1"]
 [build-system]
 requires = ["scipy>=1.10.0,<1.19.0"]
 """
@@ -45,6 +48,7 @@ dependencies = ["scipy<1.10.0"]
 [project.optional-dependencies]
 build = ["scipy>=1.10.0"]
 install = ["scipy>=1.10.0"]
+maintenance = ["conda-lock==3.0.1"]
 [build-system]
 requires = ["scipy>=1.10.0"]
 """
@@ -55,6 +59,7 @@ dependencies = ["scipy>=1.10.0"]
 [project.optional-dependencies]
 build = ["scipy>=1.10.0"]
 install = ["scipy>=1.10.0"]
+maintenance = ["conda-lock==3.0.1"]
 [build-system]
 requires = ["scipy>=1.10.0"]
 """
@@ -63,8 +68,9 @@ EXAMPLE_ADDITIONAL_PACKAGE_PYPROJECT_SECTIONS = """
 [project]
 dependencies = ["joblib>=1.3.0", "scipy>=1.10.0"]
 [project.optional-dependencies]
-build = ["scipy>=1.10.0", "foo-bar>=4.2"]
+build = ["scipy>=1.10.0", "package_not_in_dependencies>=4.2"]
 install = ["joblib>=1.3.0", "scipy>=1.10.0"]
+maintenance = ["conda-lock==3.0.1"]
 [build-system]
 requires = ["scipy>=1.10.0"]
 """
@@ -75,6 +81,7 @@ dependencies = ["joblib>=1.42.0", "scipy>=1.10.0"]
 [project.optional-dependencies]
 build = ["scipy>=1.10.0"]
 install = ["joblib>=1.3.0", "scipy>=1.10.0"]
+maintenance = ["conda-lock==3.0.1"]
 [build-system]
 requires = ["scipy>=1.10.0"]
 """
