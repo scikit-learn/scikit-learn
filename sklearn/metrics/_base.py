@@ -87,8 +87,8 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
 
     elif average == "weighted":
         if score_weight is not None:
-            # convert dtype of `y_true` to floats, to prevent array_api_strict error:
-            y_true = xp.astype(xp.asarray(y_true), xp.float64, copy=False)
+            if xp.__name__ == "array_api_strict":
+                y_true = xp.astype(xp.asarray(y_true), xp.float64, copy=False)
             average_weight = xp.sum(
                 xp.multiply(y_true, xp.reshape(score_weight, (-1, 1))), axis=0
             )
