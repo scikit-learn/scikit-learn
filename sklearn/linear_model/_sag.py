@@ -16,13 +16,7 @@ from sklearn.utils.validation import _check_sample_weight
 
 
 def get_auto_step_size(
-    max_squared_sum,
-    alpha_scaled,
-    loss,
-    fit_intercept,
-    n_samples=None,
-    is_saga=False,
-    sample_weight=None,
+    max_squared_sum, alpha_scaled, loss, fit_intercept, n_samples=None, is_saga=False
 ):
     """Compute automatic step size for SAG solver.
 
@@ -67,11 +61,6 @@ def get_auto_step_size(
     "SAGA: A Fast Incremental Gradient Method With Support
     for Non-Strongly Convex Composite Objectives" <1407.0202>`
     """
-
-    # Lipschitz smoothness constant for f_i(w) = s_i (loss_i(w)) + alpha ||w||^2):
-    # L_i = s_i ( kappa * (||x_i||^2 + fit_intercept) + alpha )
-    # where kappa = 1/4 for classification (log or multinomial loss)
-    # and 1 for regression (squared loss)
     if loss in ("log", "multinomial"):
         L = 0.25 * (max_squared_sum + int(fit_intercept)) + alpha_scaled
     elif loss == "squared":
@@ -82,14 +71,11 @@ def get_auto_step_size(
             "Unknown loss function for SAG solver, got %s instead of 'log' or 'squared'"
             % loss
         )
-    if sample_weight is not None:
-        L *= sample_weight
-    L = L.max()
-
     if is_saga:
         # SAGA theoretical step size is 1/3L or 1 / (2 * (L + mu n))
         # See Defazio et al. 2014
-        step = 1.0 / 3 * L
+        mun = min(2 * n_samples * alpha_scaled, L)
+        step = 1.0 / (2 * L + mun)
     else:
         # SAG theoretical step size is 1/16L but it is recommended to use 1 / L
         # see http://www.birs.ca//workshops//2014/14w5003/files/schmidt.pdf,
@@ -264,16 +250,15 @@ def sag_solver(
         y = check_array(y, dtype=_dtype, ensure_2d=False, order="C")
 
     n_samples, n_features = X.shape[0], X.shape[1]
+    # As in SGD, the alpha is scaled by n_samples.
+    alpha_scaled = float(alpha) / n_samples
+    beta_scaled = float(beta) / n_samples
 
     # if loss == 'multinomial', y should be label encoded.
     n_classes = int(y.max()) + 1 if loss == "multinomial" else 1
 
     # initialization
     sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-
-    # As in SGD, the alpha is scaled by n_samples.
-    alpha_scaled = float(alpha) / sample_weight.sum()
-    beta_scaled = float(beta) / sample_weight.sum()
 
     if "coef" in warm_start_mem.keys():
         coef_init = warm_start_mem["coef"]
@@ -325,21 +310,20 @@ def sag_solver(
         alpha_scaled,
         loss,
         fit_intercept,
-        n_samples=sample_weight.sum(),
+        n_samples=n_samples,
         is_saga=is_saga,
-        sample_weight=sample_weight,
     )
     if step_size * alpha_scaled == 1:
         raise ZeroDivisionError(
             "Current sag implementation does not handle "
             "the case step_size * alpha_scaled == 1"
         )
+
     sag = sag64 if X.dtype == np.float64 else sag32
     num_seen, n_iter_ = sag(
         dataset,
         coef_init,
         intercept_init,
-        sample_weight,
         n_samples,
         n_features,
         n_classes,
@@ -359,6 +343,7 @@ def sag_solver(
         is_saga,
         verbose,
     )
+
     if n_iter_ == max_iter:
         warnings.warn(
             "The max_iter was reached which means the coef_ did not converge",
