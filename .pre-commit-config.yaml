@@ -1,7 +1,7 @@
 exclude: '^(.git/|sklearn/externals/|asv_benchmarks/env/)'
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
     -   id: check-yaml
     -   id: end-of-file-fixer
@@ -9,26 +9,26 @@ repos:
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     # WARNING if you update ruff version here, remember to update
     # sklearn/_min_dependencies.py and doc .rst files mentioning ruff==<version>
-    rev: v0.12.2
+    rev: v0.14.10
     hooks:
     -   id: ruff-check
         args: ["--fix", "--output-format=full"]
     -   id: ruff-format
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
+    rev: v1.19.1
     hooks:
      -  id: mypy
         files: sklearn/
         additional_dependencies: [pytest==6.2.4]
 -   repo: https://github.com/MarcoGorelli/cython-lint
-    rev: v0.18.0
+    rev: v0.18.1
     hooks:
     # TODO: add the double-quote-cython-strings hook when it's usability has improved:
     # possibility to pass a directory and use it as a check instead of auto-formatter.
     -   id: cython-lint
         args: [--ban-relative-imports]
 -   repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.7.1
+    rev: v4.0.0-alpha.8
     hooks:
     -   id: prettier
         files: ^doc/scss/|^doc/js/scripts/

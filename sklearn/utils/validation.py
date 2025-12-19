@@ -2571,6 +2571,7 @@ def _check_pos_label_consistency(pos_label, y_true):
         # Compute classes only if pos_label is not specified:
         xp, _, device = get_namespace_and_device(y_true)
         classes = xp.unique_values(y_true)
+        classes = xp.sort(classes)
         if (
             (_is_numpy_namespace(xp) and classes.dtype.kind in "OUS")
             or classes.shape[0] > 2
