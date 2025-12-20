@@ -47,27 +47,21 @@ jobs:
             To increase the chance of a productive review, please refer to: [How do I
             improve my issue or pull
             request?](https://scikit-learn.org/dev/faq.html#how-do-i-improve-my-issue-or-pull-request)
-            As the author, you are responsible for driving this PR, which entails
-            presenting its context and your approach, complying with scikit-learn's
-            development standards, fixing test failures, answering questions, addressing
-            maintainer suggestions, and doing additional research if requested. If you
-            are a [new
+            As the author, you are responsible for driving this PR, which entails doing
+            necessary background research as well as presenting its context and your
+            thought process. If you are a [new
             contributor](https://scikit-learn.org/dev/developers/contributing.html#new-contributors),
-            or you do not know how to fulfill these requirements, we recommend to
-            familiarise yourself with scikit-learn's development conventions with other
+            or do not know how to fulfill these requirements, we recommend to
+            familiarise yourself with scikit-learn's development conventions via other
             contribution types (e.g., reviewing PRs) before submitting code.
 
 
             Scikit-learn maintainers cannot provide one-to-one guidance on this PR.
-            However, as a community that values friendly, didactic discussions, we
-            encourage you to ask focused questions when you are stuck (e.g., on a test
-            failure) that show you have tried to investigate the problem on your own. If
-            you engage genuinely (no pushing AI-generated comments or code without
-            understanding), a community member (most likely not a maintainer) might be
-            willing to offer advice. 💬
+            However, if you ask focused, well-researched questions, a community
+            member may be willing to help. 💬
 
 
             If you substantially improve this PR within two weeks, a team member may
             remove the `autoclose` label and the PR stays open. Cosmetic changes or
             incomplete fixes will not be sufficient. Maintainers will assess
-            improvements on their own schedule. Please do not ping maintainers.
+            improvements on their own schedule. Please do not ping (`@`) maintainers.
