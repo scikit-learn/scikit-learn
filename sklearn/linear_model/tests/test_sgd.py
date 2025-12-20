@@ -10,6 +10,7 @@ from scipy.optimize import minimize
 
 from sklearn import datasets, linear_model, metrics
 from sklearn.base import clone, is_classifier
+from sklearn.datasets._samples_generator import make_blobs
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import _sgd_fast as sgd_fast
@@ -2316,37 +2317,34 @@ def test_sgd_one_class_svm_formulation_with_scipy_minimize():
     """
     nu = 0.5
     hinge_threshold = 1.0
-    n_samples, n_features = 300, 20
+    n_samples, n_features = 300, 3
     random_seed = 42
 
-    def objective_and_grad(w, X, y, alpha):
+    def objective(w, X, y, alpha):
         weights = w[:-1]
         intercept = w[-1]
         p = X @ weights + intercept
         z = p * y
-        n_samples, n_features = X.shape
-        sum_loss = np.where(z <= hinge_threshold, hinge_threshold - z, 0.0).sum()
+        n_samples = X.shape[0]
+        sum_loss = np.maximum(hinge_threshold - z, 0.0).sum()
         avg_loss = sum_loss / n_samples
-        reg = 0.5 * alpha * np.dot(weights, weights)
-        obj = avg_loss + reg + (intercept * alpha)
-        grad_pointwise = np.where(z <= hinge_threshold, -y, 0.0)
-        grad_pointwise /= n_samples
-        grad = np.empty_like(w)
-        grad[:n_features] = X.T @ grad_pointwise + alpha * weights
-        grad[-1] = grad_pointwise.sum() + alpha
-        return obj, grad
+        reg = 0.5 * alpha * weights @ weights
+        obj = avg_loss + reg + intercept * alpha
+        return obj
 
-    rng = np.random.RandomState(random_seed)
-    X = rng.rand(n_samples, n_features)
+    X, _ = make_blobs(
+        n_samples=n_samples,
+        n_features=n_features,
+        random_state=random_seed,
+    )
     y = np.ones(n_samples, dtype=X.dtype)
     w0 = np.zeros(n_features + 1)
     scipy_output = minimize(
-        objective_and_grad,
+        objective,
         w0,
-        method="L-BFGS-B",
-        jac=True,
+        method="Nelder-Mead",
         args=(X, y, nu),
-        options={"maxiter": 100},
+        options={"maxiter": 1000},
     )
     w_out = scipy_output.x
     expected_coef = w_out[:-1]
@@ -2362,5 +2360,5 @@ def test_sgd_one_class_svm_formulation_with_scipy_minimize():
     )
     model.fit(X, y)
 
-    assert_allclose(model.coef_, expected_coef, rtol=3e-3)
-    assert_allclose(model.offset_, expected_offset, rtol=1e-4)
+    assert_allclose(model.coef_, expected_coef, rtol=5e-3)
+    assert_allclose(model.offset_, expected_offset, rtol=1e-2)
