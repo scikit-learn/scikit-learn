@@ -1104,14 +1104,6 @@ def _bincount(array, weights=None, minlength=None, xp=None):
     return xp.asarray(bin_out, device=device(array))
 
 
-def _tolist(array, xp=None):
-    xp, _ = get_namespace(array, xp=xp)
-    if _is_numpy_namespace(xp):
-        return array.tolist()
-    array_np = _convert_to_numpy(array, xp=xp)
-    return [element.item() for element in array_np]
-
-
 def _logsumexp(array, axis=None, xp=None):
     # TODO replace by scipy.special.logsumexp when
     # https://github.com/scipy/scipy/pull/22683 is part of a release.

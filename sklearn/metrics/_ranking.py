@@ -239,9 +239,7 @@ def average_precision_score(
 
     y_type = type_of_target(y_true, input_name="y_true")
 
-    # Convert to Python primitive type to avoid NumPy type / Python str
-    # comparison. See https://github.com/numpy/numpy/issues/6784
-    present_labels = np.unique(y_true).tolist()
+    present_labels = np.unique(y_true)
 
     if y_type == "binary":
         if len(present_labels) == 2 and pos_label not in present_labels:
