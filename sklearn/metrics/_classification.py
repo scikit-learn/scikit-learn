@@ -3616,9 +3616,9 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
     except ValueError:
         xp_y_true, _ = get_namespace(y_true)
         classes = xp_y_true.unique_values(y_true)
+        # For backward compatibility, if classes are not string then
+        # `pos_label` will correspond to the greater label.
         if not (_is_numpy_namespace(xp_y_true) and classes.dtype.kind in "OUS"):
-            # For backward compatibility, if classes are not string then
-            # `pos_label` will correspond to the greater label.
             pos_label = classes[-1]
         else:
             raise
