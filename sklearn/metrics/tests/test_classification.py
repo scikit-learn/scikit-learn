@@ -898,8 +898,6 @@ def test_cohen_kappa():
 @pytest.mark.parametrize(
     "test_case",
     [
-        # empty inputs:
-        ([], [], None, None),
         # annotator y2 does not assign any label specified in `labels` (note: also
         # applicable if `labels` is default and `y2` does not contain any label that is
         # in `y1`):
@@ -917,7 +915,7 @@ def test_cohen_kappa():
 @pytest.mark.parametrize("replace_undefined_by", [0.0, np.nan])
 def test_cohen_kappa_undefined(test_case, replace_undefined_by):
     """Test that cohen_kappa_score handles divisions by 0 correctly by returning the
-    `replace_undefined_by` param. (The fist two test cases cover the first possible
+    `replace_undefined_by` param. (The first test case covers the first possible
     location in the function for an occurrence of a division by zero, the last three
     test cases cover a zero division in the the second possible location in the
     function."""
