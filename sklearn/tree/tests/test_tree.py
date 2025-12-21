@@ -2787,9 +2787,11 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_se
     X = X.reshape(-1, 1)
     y = np.arange(1, 7)
     # y needs to be > 0 for this test to pass with poisson criterion
-    # if some y[i] is 0, there might be multiple optimal splits, which
-    # makes the impurity check below fail because different splits were
-    # made due to different rounding errors
+    # Poisson criterion allows multiple optimal splits when y[i] = 0 because
+    # the impurity calculation involves log(y[i]), which is undefined at 0.
+    # Different splits (with identical impurities) can be chosen due to
+    # floating-point rounding differences, causing the impurity comparison
+    # between `tree` and `tree_ref` to fail non-deterministically.
 
     tree = Tree(criterion=criterion, random_state=global_random_seed).fit(X, y)
     tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
