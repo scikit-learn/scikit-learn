@@ -45,11 +45,12 @@ from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._array_api import (
-    device as array_api_device,
-)
-from sklearn.utils._array_api import (
+    _get_namespace_device_dtype_ids,
     get_namespace,
     yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._array_api import (
+    device as array_api_device,
 )
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
@@ -1571,7 +1572,7 @@ def test_multilabel_hamming_loss():
 def test_jaccard_score_validation():
     y_true = np.array([0, 1, 0, 1, 1])
     y_pred = np.array([0, 1, 0, 1, 1])
-    err_msg = r"pos_label=2 is not a valid label. It should be one of \[0, 1\]"
+    err_msg = re.escape("pos_label=2 is not a valid label. It should be one of [0 1]")
     with pytest.raises(ValueError, match=err_msg):
         jaccard_score(y_true, y_pred, average="binary", pos_label=2)
 
@@ -3743,3 +3744,30 @@ def test_probabilistic_metrics_multilabel_array_api(
         metric_score_xp = prob_metric(y_true_xp, y_prob_xp, sample_weight=sample_weight)
 
     assert metric_score_xp == pytest.approx(metric_score_np)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize("prob_metric", [brier_score_loss, d2_brier_score])
+def test_pos_label_in_brier_score_metrics_array_api(
+    prob_metric, array_namespace, device_, dtype_name
+):
+    """Check `pos_label` handled correctly when labels not in {-1, 1} or {0, 1}."""
+    # For 'brier_score' metrics, when `pos_label=None` and labels are not strings,
+    # `pos_label` defaults to the largest label.
+    xp = _array_api_for_tests(array_namespace, device_)
+    y_true_pos_1 = xp.asarray(np.array([1, 0, 1, 0]), device=device_)
+    # Result should be the same when we use 2's for the label instead of 1's
+    y_true_pos_2 = xp.asarray(np.array([2, 0, 2, 0]), device=device_)
+    y_prob = xp.asarray(
+        np.array([0.5, 0.2, 0.7, 0.6], dtype=dtype_name), device=device_
+    )
+
+    with config_context(array_api_dispatch=True):
+        metric_pos_1 = prob_metric(y_true_pos_1, y_prob)
+        metric_pos_2 = prob_metric(y_true_pos_2, y_prob)
+
+    assert metric_pos_1 == pytest.approx(metric_pos_2)
