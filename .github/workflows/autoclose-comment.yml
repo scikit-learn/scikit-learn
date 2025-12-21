@@ -51,7 +51,7 @@ jobs:
             necessary background research as well as presenting its context and your
             thought process. If you are a [new
             contributor](https://scikit-learn.org/dev/developers/contributing.html#new-contributors),
-            or do not know how to fulfill these requirements, we recommend to
+            or do not know how to fulfill these requirements, we recommend that you
             familiarise yourself with scikit-learn's development conventions via other
             contribution types (e.g., reviewing PRs) before submitting code.
 
