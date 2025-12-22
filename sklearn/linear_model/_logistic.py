@@ -1166,7 +1166,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
 
         if penalty is None:
-            if self.C != 1.0:  # default values
+            if self.penalty is None and self.C != 1.0:
                 warnings.warn(
                     "Setting penalty=None will ignore the C and l1_ratio parameters"
                 )
