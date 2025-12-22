@@ -153,7 +153,7 @@ def _parallel_build_trees(
         indices = _generate_sample_indices(
             tree.random_state, n_samples, n_samples_bootstrap, sample_weight
         )
-        # Simulate row-wise sampling by passing sample_weight in trees.
+        # Simulate row-wise sampling by passing counts as sample_weight in trees.
         sample_weight_tree = np.bincount(indices, minlength=n_samples)
         if class_weight == "balanced_subsample":
             expanded_class_weight = compute_sample_weight(
@@ -398,8 +398,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Combined _sample_weight = sample_weight * expanded_class_weight
-        # used in _parallel_build_trees to draw indices (bootstrap=True)
-        # or passed to the trees (bootstrap=False)
+        # (when provided) used in _parallel_build_trees to draw indices
+        # (bootstrap=True) or passed to the trees (bootstrap=False)
         if sample_weight is None:
             _sample_weight = expanded_class_weight
         elif expanded_class_weight is None:
@@ -1370,7 +1370,7 @@ class RandomForestClassifier(ForestClassifier):
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
 
-        - If None (default), then draw `X.shape[0]` samples.
+        - If None (default), then draw `X.shape[0]` samples irrespective of `sample_weight`.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` unweighted samples
           or `max_samples * sample_weight.sum()` weighted samples.
@@ -1763,7 +1763,7 @@ class RandomForestRegressor(ForestRegressor):
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
 
-        - If None (default), then draw `X.shape[0]` samples.
+        - If None (default), then draw `X.shape[0]` samples irrespective of `sample_weight`.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` unweighted samples
           or `max_samples * sample_weight.sum()` weighted samples.
@@ -2146,7 +2146,7 @@ class ExtraTreesClassifier(ForestClassifier):
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
 
-        - If None (default), then draw `X.shape[0]` samples.
+        - If None (default), then draw `X.shape[0]` samples irrespective of `sample_weight`.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` unweighted samples
           or `max_samples * sample_weight.sum()` weighted samples.
@@ -2522,7 +2522,7 @@ class ExtraTreesRegressor(ForestRegressor):
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
 
-        - If None (default), then draw `X.shape[0]` samples.
+        - If None (default), then draw `X.shape[0]` samples irrespective of `sample_weight`.
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` unweighted samples
           or `max_samples * sample_weight.sum()` weighted samples.

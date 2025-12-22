@@ -1165,10 +1165,11 @@ def test_validate_y_class_weight(name):
     # toy dataset with two classes
     y = np.array([1, 1, 1, 0, 0, 0])
     sw = np.array([1, 2, 3, 1, 1, 1])
-    weighted_frequency = np.array([sw[y == i].sum() / sw.sum() for i in [0, 1]])
+    weighted_frequency = np.bincount(y, weights=sw) / sw.sum()
     balanced_class_weight = 1 / (2 * weighted_frequency)
     # validation in fit reshapes y as (n_samples, 1)
     y_reshaped = np.reshape(y, (-1, 1))
+    # Manually set these attributes, as we are not calling `fit`
     clf._n_samples, clf.n_outputs_ = y_reshaped.shape
 
     # checking dict class_weight
