@@ -154,13 +154,12 @@ def _parallel_build_trees(
             tree.random_state, n_samples, n_samples_bootstrap, sample_weight
         )
         # Simulate row-wise sampling by passing sample_weight in trees.
-        sample_weight_tree = np.bincount(indices, minlength=n_samples).astype(
-            np.float64
-        )
+        sample_weight_tree = np.bincount(indices, minlength=n_samples)
         if class_weight == "balanced_subsample":
             expanded_class_weight = compute_sample_weight(
                 "balanced", y, indices=indices
             )
+            sample_weight_tree = sample_weight_tree.astype(expanded_class_weight.dtype)
             sample_weight_tree *= expanded_class_weight
 
         tree._fit(
