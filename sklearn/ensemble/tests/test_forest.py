@@ -1198,10 +1198,11 @@ def test_validate_y_class_weight(name):
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
-def test_class_weights(name):
+@pytest.mark.parametrize("bootstrap", [True, False])
+def test_class_weights(name, bootstrap):
     # Check class_weights resemble sample_weights behavior.
     ForestClassifier = FOREST_CLASSIFIERS[name]
-    clf = ForestClassifier(random_state=0)
+    clf = ForestClassifier(random_state=0, bootstrap=bootstrap)
     if clf.bootstrap:
         # When bootstrap=True, the only way to reproduce n_samples_bootstrap
         # across estimators is to specify an absolute (integer) max_samples,
