@@ -78,6 +78,9 @@ can be used via the `BSD 3-Clause License
 your work. Citations of scikit-learn are highly encouraged and appreciated. See
 :ref:`citing scikit-learn <citing-scikit-learn>`.
 
+However, the scikit-learn logo is subject to some terms and conditions.
+See :ref:`branding-and-logos`.
+
 Implementation decisions
 ------------------------
 
