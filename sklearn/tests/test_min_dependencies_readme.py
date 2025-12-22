@@ -152,9 +152,12 @@ def check_pyproject_sections(pyproject_toml, min_dependencies):
     packages, pyproject_tags = extract_packages_and_pyproject_tags(min_dependencies)
 
     for pyproject_section, min_dependencies_tag in pyproject_tags.items():
-        # NumPy is more complex because build-time (>=1.25) and run-time (>=1.19.5)
-        # requirement currently don't match
-        skip_version_check_for = ["numpy"] if min_dependencies_tag == "build" else []
+        # Special situation for numpy: we have numpy>=2 in
+        # build-system.requires to make sure we build wheels against numpy>=2.
+        # TODO remove this when our minimum supported numpy version is >=2.
+        skip_version_check_for = (
+            ["numpy"] if pyproject_section == "build-system.requires" else []
+        )
 
         expected_packages = packages[min_dependencies_tag]
 
