@@ -25,11 +25,9 @@ def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
           `max_samples * sample_weight.sum()` weighted samples.
 
     sample_weight : array of shape (n_samples,) or None
-        Sample weights with frequency semantics when `max_samples` is explicitly
-        set to a float or integer value. When keeping the `max_samples=None` default
-        value, the equivalence between fitting with integer weighted data points or
-        integer repeated data points is no longer guaranteed because the effective
-        bootstrap size is no longer guaranteed to be equivalent.
+        Sample weights. The frequency semantics of :term:`sample_weight` is
+        guaranteed when `max_samples` is a float or integer, but not when
+        `max_samples` is None.
 
     Returns
     -------

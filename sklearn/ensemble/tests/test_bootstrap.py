@@ -58,3 +58,24 @@ def test_get_n_samples_bootstrap():
         assert _get_n_samples_bootstrap(n_samples, max_samples, sample_weight) == int(
             max_samples * sample_weight.sum()
         )
+
+
+@pytest.mark.parametrize("max_samples", [None, 1, 5, 1.0, 0.1])
+def test_n_samples_bootstrap_repeated_weighted_equivalence(max_samples):
+    # weighted dataset
+    n_samples = 100
+    rng = np.random.RandomState(0)
+    sample_weight = rng.randint(2, 5, n_samples)
+    # repeated dataset
+    n_samples_repeated = sample_weight.sum()
+
+    n_bootstrap_weighted = _get_n_samples_bootstrap(
+        n_samples, max_samples, sample_weight
+    )
+    n_bootstrap_repeated = _get_n_samples_bootstrap(
+        n_samples_repeated, max_samples, None
+    )
+    if max_samples is None:
+        assert n_bootstrap_weighted != n_bootstrap_repeated
+    else:
+        assert n_bootstrap_weighted == n_bootstrap_repeated
