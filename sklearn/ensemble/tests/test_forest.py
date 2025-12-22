@@ -1159,21 +1159,23 @@ def test_1d_input(name):
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
-def test_validate_y_class_weight(name):
+@pytest.mark.parametrize("n_classes", [2, 3, 4])
+def test_validate_y_class_weight(name, n_classes, global_random_seed):
     ForestClassifier = FOREST_CLASSIFIERS[name]
     clf = ForestClassifier(random_state=0)
-    # toy dataset with two classes
-    y = np.array([1, 1, 1, 0, 0, 0])
-    sw = np.array([1, 2, 3, 1, 1, 1])
+    # toy dataset with n_classes
+    y = np.repeat(np.arange(n_classes), 3)
+    rng = np.random.RandomState(global_random_seed)
+    sw = rng.randint(1, 5, size=len(y))
     weighted_frequency = np.bincount(y, weights=sw) / sw.sum()
-    balanced_class_weight = 1 / (2 * weighted_frequency)
+    balanced_class_weight = 1 / (n_classes * weighted_frequency)
     # validation in fit reshapes y as (n_samples, 1)
     y_reshaped = np.reshape(y, (-1, 1))
     # Manually set these attributes, as we are not calling `fit`
     clf._n_samples, clf.n_outputs_ = y_reshaped.shape
 
     # checking dict class_weight
-    class_weight = np.array([1, 7])
+    class_weight = rng.randint(1, 7, size=n_classes)
     class_weight_dict = dict(enumerate(class_weight))
     clf.set_params(class_weight=class_weight_dict)
     _, expanded_class_weight = clf._validate_y_class_weight(y_reshaped, sw)
