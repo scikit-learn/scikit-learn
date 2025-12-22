@@ -71,7 +71,8 @@ def test_features_html_no_fitted_class():
     assert "feature1" in html
     assert "feature2" in html
     assert "feature3" in html
-    assert 'class="features "' in html or 'class="features"' in html
+    assert 'class="features "' in html
+    assert "fitted" not in html
 
 
 def test_features_html_with_fitted_class():
@@ -80,7 +81,6 @@ def test_features_html_with_fitted_class():
     html = _features_html(features, is_fitted_css_class="fitted")
 
     assert "2 features" in html
-    assert "fitted" in html
     assert 'class="features fitted"' in html
 
 
