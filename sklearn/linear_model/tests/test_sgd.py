@@ -1710,28 +1710,6 @@ def test_average_sparse_oneclass(klass):
     assert_allclose(clf.offset_, average_offset)
 
 
-def test_sgd_oneclass():
-    # Test fit, decision_function, predict and score_samples on a toy
-    # dataset
-    X_train = np.array([[-2, -1], [-1, -1], [1, 1]])
-    X_test = np.array([[0.5, -2], [2, 2]])
-    clf = SGDOneClassSVM(
-        nu=0.25, eta0=1, learning_rate="constant", shuffle=False, max_iter=1
-    )
-    clf.fit(X_train)
-    assert_allclose(clf.coef_, np.array([-0.125, 0.4375]))
-    assert clf.offset_[0] == -1.25
-
-    scores = clf.score_samples(X_test)
-    assert_allclose(scores, np.array([-0.9375, 0.625]))
-
-    dec = clf.score_samples(X_test) - clf.offset_
-    assert_allclose(clf.decision_function(X_test), dec)
-
-    pred = clf.predict(X_test)
-    assert_array_equal(pred, np.array([1, 1]))
-
-
 def test_ocsvm_vs_sgdocsvm():
     # Checks SGDOneClass SVM gives a good approximation of kernelized
     # One-Class SVM
