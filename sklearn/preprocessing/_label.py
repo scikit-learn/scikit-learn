@@ -104,6 +104,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
         self.classes_ = _unique(y)
         return self
 
+    # pyrefly: ignore [bad-param-name-override]
     def fit_transform(self, y):
         """Fit label encoder and return encoded labels.
 
@@ -331,6 +332,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
         self.classes_ = unique_labels(y)
         return self
 
+    # pyrefly: ignore [bad-param-name-override]
     def fit_transform(self, y):
         """Fit label binarizer/transform multi-class labels to binary labels.
 

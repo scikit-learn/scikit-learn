@@ -463,9 +463,12 @@ def _maybe_mark(
         # take precedence and that means not passing strict to the xfail
         # mark at all.
         if xfail_strict is None:
+            # pyrefly: ignore [missing-attribute]
             mark = pytest.mark.xfail(reason=reason)
         else:
+            # pyrefly: ignore [missing-attribute]
             mark = pytest.mark.xfail(reason=reason, strict=xfail_strict)
+        # pyrefly: ignore [missing-attribute]
         return pytest.param(estimator, check, marks=mark)
     else:
 
@@ -897,6 +900,7 @@ def check_estimator(
                 check_result["status"] = "failed"
 
             if on_fail == "warn":
+                # pyrefly: ignore [bad-argument-type]
                 warning = EstimatorCheckFailedWarning(**check_result)
                 warnings.warn(warning)
         else:

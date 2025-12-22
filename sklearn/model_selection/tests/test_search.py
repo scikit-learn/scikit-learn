@@ -130,6 +130,7 @@ class MockClassifier(ClassifierMixin, BaseEstimator):
     predict_log_proba = predict
     decision_function = predict
 
+    # pyrefly: ignore [bad-param-name-override]
     def score(self, X=None, Y=None):
         if self.foo_param > 1:
             score = 1.0
@@ -149,6 +150,7 @@ class LinearSVCNoScore(LinearSVC):
     """A LinearSVC classifier that has no score method."""
 
     @property
+    # pyrefly: ignore [bad-override]
     def score(self):
         raise AttributeError
 

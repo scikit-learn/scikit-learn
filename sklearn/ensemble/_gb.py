@@ -949,6 +949,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         return i + 1
 
+    # pyrefly: ignore [bad-override]
     def _make_estimator(self, append=True):
         # we don't need _make_estimator
         raise NotImplementedError()
@@ -1518,6 +1519,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             ccp_alpha=ccp_alpha,
         )
 
+    # pyrefly: ignore [bad-override]
     def _encode_y(self, y, sample_weight):
         # encode classes into 0 ... n_classes - 1 and sets attributes classes_
         # and n_trees_per_iteration_

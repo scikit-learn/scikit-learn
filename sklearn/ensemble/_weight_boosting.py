@@ -474,6 +474,7 @@ class AdaBoostClassifier(
             random_state=random_state,
         )
 
+    # pyrefly: ignore [bad-override]
     def _validate_estimator(self):
         """Check the estimator and set the estimator_ attribute."""
         super()._validate_estimator(default=DecisionTreeClassifier(max_depth=1))
@@ -962,6 +963,7 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
         self.loss = loss
         self.random_state = random_state
 
+    # pyrefly: ignore [bad-override]
     def _validate_estimator(self):
         """Check the estimator and set the estimator_ attribute."""
         super()._validate_estimator(default=DecisionTreeRegressor(max_depth=3))
