@@ -14,13 +14,13 @@ from sklearn.utils.fixes import parse_version
 
 # minimal dependencies and pyproject definitions for testing the pyproject tests
 
-EXAMPLE_MIN_DEPENDENCIES_PY_INFO = {
+TOY_MIN_DEPENDENCIES_PY_INFO = {
     "joblib": ("1.3.0", "install"),
     "scipy": ("1.10.0", "build, install"),
     "conda-lock": ("3.0.1", "maintenance"),
 }
 
-EXAMPLE_MATCHING_PYPROJECT_SECTIONS = """
+TOY_MATCHING_PYPROJECT_SECTIONS = """
 [project]
 dependencies = ["joblib>=1.3.0", "scipy>=1.10.0"]
 [project.optional-dependencies]
@@ -31,7 +31,7 @@ maintenance = ["conda-lock==3.0.1"]
 requires = ["scipy>=1.10.0"]
 """
 
-EXAMPLE_MATCHING_PYPROJECT_SECTIONS_WITH_UPPER_BOUND = """
+TOY_MATCHING_PYPROJECT_SECTIONS_WITH_UPPER_BOUND = """
 [project]
 dependencies = ["joblib>=1.3.0,<2.0", "scipy>=1.10.0"]
 [project.optional-dependencies]
@@ -42,7 +42,7 @@ maintenance = ["conda-lock==3.0.1"]
 requires = ["scipy>=1.10.0,<1.19.0"]
 """
 
-EXAMPLE_WRONG_SYMBOL_PYPROJECT_SECTIONS = """
+TOY_WRONG_SYMBOL_PYPROJECT_SECTIONS = """
 [project]
 dependencies = ["scipy<1.10.0"]
 [project.optional-dependencies]
@@ -53,7 +53,7 @@ maintenance = ["conda-lock==3.0.1"]
 requires = ["scipy>=1.10.0"]
 """
 
-EXAMPLE_MISSING_PACKAGE_PYPROJECT_SECTIONS = """
+TOY_MISSING_PACKAGE_PYPROJECT_SECTIONS = """
 [project]
 dependencies = ["scipy>=1.10.0"]
 [project.optional-dependencies]
@@ -64,7 +64,7 @@ maintenance = ["conda-lock==3.0.1"]
 requires = ["scipy>=1.10.0"]
 """
 
-EXAMPLE_ADDITIONAL_PACKAGE_PYPROJECT_SECTIONS = """
+TOY_ADDITIONAL_PACKAGE_PYPROJECT_SECTIONS = """
 [project]
 dependencies = ["joblib>=1.3.0", "scipy>=1.10.0"]
 [project.optional-dependencies]
@@ -75,7 +75,7 @@ maintenance = ["conda-lock==3.0.1"]
 requires = ["scipy>=1.10.0"]
 """
 
-EXAMPLE_NON_MATCHING_VERSION_PYPROJECT_SECTIONS = """
+TOY_NON_MATCHING_VERSION_PYPROJECT_SECTIONS = """
 [project]
 dependencies = ["joblib>=1.42.0", "scipy>=1.10.0"]
 [project.optional-dependencies]
@@ -219,8 +219,8 @@ def test_min_dependencies_pyproject_toml():
 @pytest.mark.parametrize(
     "example_pyproject",
     [
-        EXAMPLE_MATCHING_PYPROJECT_SECTIONS,
-        EXAMPLE_MATCHING_PYPROJECT_SECTIONS_WITH_UPPER_BOUND,
+        TOY_MATCHING_PYPROJECT_SECTIONS,
+        TOY_MATCHING_PYPROJECT_SECTIONS_WITH_UPPER_BOUND,
     ],
 )
 def test_check_matching_pyproject_section(example_pyproject):
@@ -228,27 +228,27 @@ def test_check_matching_pyproject_section(example_pyproject):
 
     pyproject_toml = tomllib.loads(example_pyproject)
 
-    check_pyproject_sections(pyproject_toml, EXAMPLE_MIN_DEPENDENCIES_PY_INFO)
+    check_pyproject_sections(pyproject_toml, TOY_MIN_DEPENDENCIES_PY_INFO)
 
 
 @pytest.mark.parametrize(
     "example_non_matching_pyproject, error_msg",
     [
         (
-            EXAMPLE_WRONG_SYMBOL_PYPROJECT_SECTIONS,
+            TOY_WRONG_SYMBOL_PYPROJECT_SECTIONS,
             ".* does not match expected regex .*. "
             "Only >= and == are supported for version requirements",
         ),
         (
-            EXAMPLE_MISSING_PACKAGE_PYPROJECT_SECTIONS,
+            TOY_MISSING_PACKAGE_PYPROJECT_SECTIONS,
             "Packages in .* differ from _min_depencies.py",
         ),
         (
-            EXAMPLE_ADDITIONAL_PACKAGE_PYPROJECT_SECTIONS,
+            TOY_ADDITIONAL_PACKAGE_PYPROJECT_SECTIONS,
             "Packages in .* differ from _min_depencies.py",
         ),
         (
-            EXAMPLE_NON_MATCHING_VERSION_PYPROJECT_SECTIONS,
+            TOY_NON_MATCHING_VERSION_PYPROJECT_SECTIONS,
             ".* has inconsistent minimum versions in pyproject.toml and"
             " _min_depencies.py: .* != .*",
         ),
@@ -262,4 +262,4 @@ def test_check_non_matching_pyproject_section(
     pyproject_toml = tomllib.loads(example_non_matching_pyproject)
 
     with pytest.raises(Exception, match=error_msg):
-        check_pyproject_sections(pyproject_toml, EXAMPLE_MIN_DEPENDENCIES_PY_INFO)
+        check_pyproject_sections(pyproject_toml, TOY_MIN_DEPENDENCIES_PY_INFO)
