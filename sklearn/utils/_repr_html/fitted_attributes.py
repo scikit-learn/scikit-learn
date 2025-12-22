@@ -1,10 +1,14 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import inspect
 import re
+import reprlib
 from collections import UserDict
+from functools import lru_cache
 from urllib.parse import quote
 
+from sklearn.externals._numpydoc import docscrape
 from sklearn.utils._repr_html.base import ReprHTMLMixin
 
 
@@ -28,6 +32,21 @@ def _generate_link_to_param_doc(estimator_class, param_name, doc_link):
     text_fragment = f"{quote(param_name)},-{quote(param_type)}"
 
     return f"{doc_link}#:~:text={text_fragment}"
+
+
+def _read_params(value):
+    r = reprlib.Repr()
+    r.maxlist = 2
+    r.maxdict = 1
+    r.maxstring = 50
+    cleaned_value = r.repr(value)
+
+    return {cleaned_value}
+
+
+@lru_cache
+def _scrape_estimator_docstring(docstring):
+    return docscrape.NumpyDocString(docstring)
 
 
 def _fitted_attr_html_repr(fitted_attributes):
@@ -68,6 +87,15 @@ def _fitted_attr_html_repr(fitted_attributes):
            <td>{attr_value}</td>
        </tr>
     """
+
+    FITTED_ATTR_AVAILABLE_DOC_LINK_TEMPLATE = """
+        <a class="param-doc-link"
+            rel="noreferrer" target="_blank" href="{link}">
+            {param_name}
+            <span class="param-doc-description">{param_description}</span>
+        </a>
+    """
+    estimator_class_docs = inspect.getdoc(fitted_attributes.estimator_class)
 
     rows = []
     for name, value in fitted_attributes.items():
