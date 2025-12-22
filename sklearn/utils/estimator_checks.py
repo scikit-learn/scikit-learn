@@ -1416,6 +1416,7 @@ def check_sample_weights_pandas_series(name, estimator_orig):
             ]
         )
         X = pd.DataFrame(_enforce_estimator_tags_X(estimator_orig, X), copy=False)
+        X.columns = X.columns.astype(str)
         y = pd.Series([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
         weights = pd.Series([1] * 12)
         if (
@@ -1423,6 +1424,7 @@ def check_sample_weights_pandas_series(name, estimator_orig):
             and get_tags(estimator).target_tags.multi_output
         ):
             y = pd.DataFrame(y, copy=False)
+            y.columns = y.columns.astype(str)
         try:
             estimator.fit(X, y, sample_weight=weights)
         except ValueError:
@@ -3783,7 +3785,9 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type):
                 y_ = pd.Series(y_, copy=False)
             else:
                 y_ = pd.DataFrame(y_, copy=False)
+                y_.columns = y_.columns.astype(str)
             X_ = pd.DataFrame(np.asarray(X), copy=False)
+            X_.columns = X_.columns.astype(str)
 
         except ImportError:
             raise SkipTest(
