@@ -334,7 +334,7 @@ def _write_estimator_html(
                 out,
                 params,
                 estimator_label,
-                estimator_label_details,
+                "",
                 doc_link=doc_link,
                 is_fitted_css_class=is_fitted_css_class,
                 is_fitted_icon=is_fitted_icon,
