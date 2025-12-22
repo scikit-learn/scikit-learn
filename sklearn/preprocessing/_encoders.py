@@ -273,15 +273,84 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             for category, indices in zip(self.categories_, infrequent_indices)
         ]
 
+    def _validate_max_categories(self):
+        """
+        Check max_categories and returns the corresponding array.
+        """
+        max_categories = getattr(self, "max_categories", None)
+
+        if isinstance(max_categories, Integral) and max_categories >= 1:
+            return [max_categories] * self.n_features_in_
+
+        elif isinstance(max_categories, dict):
+            if not hasattr(self, "feature_names_in_"):
+                raise ValueError(
+                    f"{self.__class__.__name__} was not fitted on data "
+                    "with feature names. Pass max_categories as an integer "
+                    "array instead."
+                )
+
+            unexpected_feature_names = list(
+                set(self.max_categories) - set(self.feature_names_in_)
+            )
+            if unexpected_feature_names:
+                unexpected_feature_names.sort()  # deterministic error message
+                n_unexpected = len(unexpected_feature_names)
+                if len(unexpected_feature_names) > 5:
+                    unexpected_feature_names = unexpected_feature_names[:5]
+                    unexpected_feature_names.append("...")
+                raise ValueError(
+                    f"max_categories contains {n_unexpected} unexpected feature "
+                    f"names: {unexpected_feature_names}."
+                )
+
+            max_categories_array = [None] * self.n_features_in_
+            for feature_idx, feature_name in enumerate(self.feature_names_in_):
+                if feature_name in max_categories:
+                    max_count = max_categories[feature_name]
+                    if not (isinstance(max_count, Integral) and max_count >= 1):
+                        raise ValueError(
+                            f"max_categories['{feature_name}'] must be an "
+                            f"integer at least 1. Got {max_count!r}."
+                        )
+                    max_categories_array[feature_idx] = max_count
+            return max_categories_array if any(max_categories_array) else None
+
+        elif _is_arraylike_not_scalar(max_categories):
+            max_categories = np.asarray(max_categories)
+            if (
+                max_categories.ndim != 1
+                or max_categories.shape[0] != self.n_features_in_
+            ):
+                raise ValueError(
+                    f"max_categories has shape {max_categories.shape} but the "
+                    f"input data X has {self.n_features_in_} features."
+                )
+
+            if any(
+                max_count is not None
+                and not (isinstance(max_count, Integral) and max_count >= 1)
+                for max_count in max_categories
+            ):
+                raise ValueError(
+                    "max_categories must be an array-like of None or integers "
+                    "at least 1."
+                )
+
+            return max_categories if any(max_categories) else None
+
+        else:
+            return None
+
     def _check_infrequent_enabled(self):
         """
         This functions checks whether _infrequent_enabled is True or False.
         This has to be called after parameter validation in the fit function.
         """
-        max_categories = getattr(self, "max_categories", None)
+        self._max_categories_per_feature = self._validate_max_categories()
         min_frequency = getattr(self, "min_frequency", None)
         self._infrequent_enabled = (
-            max_categories is not None and max_categories >= 1
+            self._max_categories_per_feature is not None
         ) or min_frequency is not None
 
     def _identify_infrequent(self, category_count, n_samples, col_idx):
@@ -313,9 +382,14 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             infrequent_mask = np.zeros(category_count.shape[0], dtype=bool)
 
         n_current_features = category_count.size - infrequent_mask.sum() + 1
-        if self.max_categories is not None and self.max_categories < n_current_features:
+        if self._max_categories_per_feature is not None:
+            max_categories = self._max_categories_per_feature[col_idx]
+        else:
+            max_categories = None
+
+        if max_categories is not None and max_categories < n_current_features:
             # max_categories includes the one infrequent category
-            frequent_category_count = self.max_categories - 1
+            frequent_category_count = max_categories - 1
             if frequent_category_count == 0:
                 # All categories are infrequent
                 infrequent_mask[:] = True
@@ -1326,12 +1400,20 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         .. versionadded:: 1.3
             Read more in the :ref:`User Guide <encoder_infrequent_categories>`.
 
-    max_categories : int, default=None
+    max_categories : int, array-like of int, dict of str or None, default=None
         Specifies an upper limit to the number of output categories for each input
         feature when considering infrequent categories. If there are infrequent
         categories, `max_categories` includes the category representing the
-        infrequent categories along with the frequent categories. If `None`,
-        there is no limit to the number of output features.
+        infrequent categories along with the frequent categories.
+
+        - If int, then `max_categories` is the upper limit of output categories
+            for all input features.
+        - If array-like, then each item in `max_categories` is the upper limit
+            of output categories for the corresponding input feature.
+        - If dict, then its keys should be the feature names occurring in
+            `feature_names_in_` and the corresponding values should be the
+            upper limits of output categories.
+        - If `None`, then there is no limit to the number of output categories.
 
         `max_categories` do **not** take into account missing or unknown
         categories. Setting `unknown_value` or `encoded_missing_value` to an
@@ -1444,7 +1526,12 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         "encoded_missing_value": [Integral, type(np.nan)],
         "handle_unknown": [StrOptions({"error", "use_encoded_value"})],
         "unknown_value": [Integral, type(np.nan), None],
-        "max_categories": [Interval(Integral, 1, None, closed="left"), None],
+        "max_categories": [
+            Interval(Integral, 1, None, closed="left"),
+            "array-like",
+            dict,
+            None,
+        ],
         "min_frequency": [
             Interval(Integral, 1, None, closed="left"),
             Interval(RealNotInt, 0, 1, closed="neither"),
