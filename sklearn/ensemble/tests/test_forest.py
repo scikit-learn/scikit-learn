@@ -1205,11 +1205,6 @@ def test_class_weights(name, bootstrap):
     # Check class_weights resemble sample_weights behavior.
     ForestClassifier = FOREST_CLASSIFIERS[name]
     clf = ForestClassifier(random_state=0, bootstrap=bootstrap)
-    if clf.bootstrap:
-        # When bootstrap=True, the only way to reproduce n_samples_bootstrap
-        # across estimators is to specify an absolute (integer) max_samples,
-        # otherwise it is relative to sample_weight.sum().
-        clf.set_params(max_samples=10)
 
     # Iris is balanced, so no effect expected for using 'balanced' weights.
     # Using the class_weight="balanced" option is then equivalent to fit with
