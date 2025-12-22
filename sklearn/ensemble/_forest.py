@@ -159,8 +159,7 @@ def _parallel_build_trees(
             expanded_class_weight = compute_sample_weight(
                 "balanced", y, indices=indices
             )
-            sample_weight_tree = sample_weight_tree.astype(expanded_class_weight.dtype)
-            sample_weight_tree *= expanded_class_weight
+            sample_weight_tree = sample_weight_tree * expanded_class_weight
 
         tree._fit(
             X,
