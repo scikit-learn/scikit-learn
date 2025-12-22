@@ -41,7 +41,7 @@ def _read_params(value):
     r.maxstring = 50
     cleaned_value = r.repr(value)
 
-    return {cleaned_value}
+    return cleaned_value
 
 
 @lru_cache
@@ -98,26 +98,33 @@ def _fitted_attr_html_repr(fitted_attributes):
     estimator_class_docs = inspect.getdoc(fitted_attributes.estimator_class)
 
     rows = []
-    for name, value in fitted_attributes.items():
-        if len(value) == 2:
+    for fitted_attr_name, attr_info in fitted_attributes.items():
+        link = _generate_link_to_param_doc(
+            fitted_attributes.estimator_class,
+            fitted_attr_name,
+            fitted_attributes.doc_link,
+        )
+        formated_attr_value = _read_params(attr_info[1])
+
+        if len(attr_info) == 2:
             rows.append(
                 ROW_TEMPLATE.format(
-                    name=name,
-                    type=value[0],
+                    name=fitted_attr_name,
+                    type=attr_info[0],
                     shape="",
                     dtype="",
                     attr_size="",
-                    attr_value=value[1],
+                    attr_value=formated_attr_value,
                 )
             )
         else:
             rows.append(
                 ROW_TEMPLATE.format(
-                    name=name,
-                    type=value[0],
-                    shape=value[1],
-                    dtype=value[2],
-                    attr_size=value[3],
+                    name=fitted_attr_name,
+                    type=attr_info[0],
+                    shape=attr_info[1],
+                    dtype=attr_info[2],
+                    attr_size=attr_info[3],
                     attr_value="",
                 )
             )
