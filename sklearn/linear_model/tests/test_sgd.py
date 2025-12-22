@@ -10,7 +10,7 @@ from scipy.optimize import minimize
 
 from sklearn import datasets, linear_model, metrics
 from sklearn.base import clone, is_classifier
-from sklearn.datasets._samples_generator import make_blobs
+from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import _sgd_fast as sgd_fast
@@ -1498,7 +1498,7 @@ def asgd_oneclass(klass, X, eta, nu, coef_init=None, offset_init=0.0):
             gradient = -1
         else:
             gradient = 0
-        coef *= max(0, 1.0 - (eta * nu))
+        coef *= max(0, 1.0 - eta * nu)
         coef += -(eta * gradient * entry)
         intercept += -(eta * (nu + gradient)) * decay
 
@@ -2311,9 +2311,7 @@ def test_sgd_one_class_svm_estimator_type():
 
 def test_sgd_one_class_svm_formulation_with_scipy_minimize():
     """
-    Test that the objective formulation of `SGDOneClassSVM` is appropriate by
-    checking that the converged parameters are close enough to the ones output
-    by scipy's `minimize` function using "L-BFGS-B".
+    Test that `SGDOneClassSVM` minimizes the correct objective function.
     """
     nu = 0.5
     hinge_threshold = 1.0
@@ -2325,9 +2323,7 @@ def test_sgd_one_class_svm_formulation_with_scipy_minimize():
         intercept = w[-1]
         p = X @ weights + intercept
         z = p * y
-        n_samples = X.shape[0]
-        sum_loss = np.maximum(hinge_threshold - z, 0.0).sum()
-        avg_loss = sum_loss / n_samples
+        avg_loss = np.mean(np.maximum(hinge_threshold - z, 0.0))
         reg = 0.5 * alpha * weights @ weights
         obj = avg_loss + reg + intercept * alpha
         return obj
