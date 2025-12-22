@@ -1378,7 +1378,7 @@ class RandomForestClassifier(ForestClassifier):
 
         .. versionadded:: 0.22
 
-        .. versionchanged:: 1.8
+        .. versionchanged:: 1.9
             Float `max_samples` is relative to `sample_weight.sum()` instead of
             `X.shape[0]` for weighted samples.
 
@@ -1771,7 +1771,7 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionadded:: 0.22
 
-        .. versionchanged:: 1.8
+        .. versionchanged:: 1.9
             Float `max_samples` is relative to `sample_weight.sum()` instead of
             `X.shape[0]` for weighted samples.
 
@@ -2154,7 +2154,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
         .. versionadded:: 0.22
 
-        .. versionchanged:: 1.8
+        .. versionchanged:: 1.9
             Float `max_samples` is relative to `sample_weight.sum()` instead of
             `X.shape[0]` for weighted samples.
 
@@ -2530,7 +2530,7 @@ class ExtraTreesRegressor(ForestRegressor):
 
         .. versionadded:: 0.22
 
-        .. versionchanged:: 1.8
+        .. versionchanged:: 1.9
             Float `max_samples` is relative to `sample_weight.sum()` instead of
             `X.shape[0]` for weighted samples.
 
