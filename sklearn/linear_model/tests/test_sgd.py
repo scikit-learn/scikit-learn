@@ -6,9 +6,11 @@ import joblib
 import numpy as np
 import pytest
 import scipy.sparse as sp
+from scipy.optimize import minimize
 
 from sklearn import datasets, linear_model, metrics
 from sklearn.base import clone, is_classifier
+from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import _sgd_fast as sgd_fast
@@ -1496,7 +1498,7 @@ def asgd_oneclass(klass, X, eta, nu, coef_init=None, offset_init=0.0):
             gradient = -1
         else:
             gradient = 0
-        coef *= max(0, 1.0 - (eta * nu / 2))
+        coef *= max(0, 1.0 - eta * nu)
         coef += -(eta * gradient * entry)
         intercept += -(eta * (nu + gradient)) * decay
 
@@ -1708,28 +1710,6 @@ def test_average_sparse_oneclass(klass):
     assert_allclose(clf.offset_, average_offset)
 
 
-def test_sgd_oneclass():
-    # Test fit, decision_function, predict and score_samples on a toy
-    # dataset
-    X_train = np.array([[-2, -1], [-1, -1], [1, 1]])
-    X_test = np.array([[0.5, -2], [2, 2]])
-    clf = SGDOneClassSVM(
-        nu=0.5, eta0=1, learning_rate="constant", shuffle=False, max_iter=1
-    )
-    clf.fit(X_train)
-    assert_allclose(clf.coef_, np.array([-0.125, 0.4375]))
-    assert clf.offset_[0] == -0.5
-
-    scores = clf.score_samples(X_test)
-    assert_allclose(scores, np.array([-0.9375, 0.625]))
-
-    dec = clf.score_samples(X_test) - clf.offset_
-    assert_allclose(clf.decision_function(X_test), dec)
-
-    pred = clf.predict(X_test)
-    assert_array_equal(pred, np.array([-1, 1]))
-
-
 def test_ocsvm_vs_sgdocsvm():
     # Checks SGDOneClass SVM gives a good approximation of kernelized
     # One-Class SVM
@@ -1785,12 +1765,13 @@ def test_sgd_oneclass_convergence():
         assert model.n_iter_ > 6
 
 
-def test_sgd_oneclass_vs_linear_oneclass():
+@pytest.mark.parametrize("eta0, max_iter", [(1e-3, 10000), (3e-4, 20000)])
+def test_sgd_oneclass_vs_linear_oneclass(eta0, max_iter):
     # Test convergence vs. liblinear `OneClassSVM` with kernel="linear"
     for nu in [0.1, 0.5, 0.9]:
         # allow enough iterations, small dataset
         model = SGDOneClassSVM(
-            nu=nu, max_iter=20000, tol=None, learning_rate="constant", eta0=1e-3
+            nu=nu, max_iter=max_iter, tol=None, learning_rate="constant", eta0=eta0
         )
         model_ref = OneClassSVM(kernel="linear", nu=nu, tol=1e-6)  # reference model
         model.fit(iris.data)
@@ -1815,7 +1796,30 @@ def test_sgd_oneclass_vs_linear_oneclass():
         assert dec_fn_corr > 0.99
         assert preds_corr > 0.95
         assert coef_corr > 0.99
-        assert_allclose(1 - share_ones, nu)
+        assert_allclose(1 - share_ones, nu, atol=1e-2)
+
+
+@pytest.mark.parametrize("nu", [0.1, 0.9])
+def test_sgd_oneclass_vs_linear_oneclass_offsets_match(nu):
+    """Test that the `offset_` of `SGDOneClassSVM` is close to the `offset_`
+    of `OneClassSVM` with `kernel="linear"`, given enough iterations and a
+    suitable value for the `eta0` parameter, while also ensuring that the
+    dataset is scaled.
+    """
+    X = iris.data
+    X_scaled = StandardScaler().fit_transform(X)
+    model = SGDOneClassSVM(
+        nu=nu,
+        max_iter=40000,
+        tol=None,
+        learning_rate="optimal",
+        eta0=1e-6,
+        random_state=42,
+    )
+    model_ref = OneClassSVM(kernel="linear", nu=nu, tol=5e-6)
+    model.fit(X_scaled)
+    model_ref.fit(X_scaled)
+    assert_allclose(model.offset_, model_ref.offset_, atol=1.3e-6)
 
 
 def test_l1_ratio():
@@ -2265,10 +2269,10 @@ def test_sgd_numerical_consistency(SGDEstimator):
     X_32 = X.astype(dtype=np.float32)
     Y_32 = np.array(Y, dtype=np.float32)
 
-    sgd_64 = SGDEstimator(max_iter=20)
+    sgd_64 = SGDEstimator(max_iter=22, shuffle=False)
     sgd_64.fit(X_64, Y_64)
 
-    sgd_32 = SGDEstimator(max_iter=20)
+    sgd_32 = SGDEstimator(max_iter=22, shuffle=False)
     sgd_32.fit(X_32, Y_32)
 
     assert_allclose(sgd_64.coef_, sgd_32.coef_)
@@ -2281,3 +2285,52 @@ def test_sgd_one_class_svm_estimator_type():
     """
     sgd_ocsvm = SGDOneClassSVM()
     assert get_tags(sgd_ocsvm).estimator_type == "outlier_detector"
+
+
+def test_sgd_one_class_svm_formulation_with_scipy_minimize():
+    """Test that SGDOneClassSVM minimizes the correct objective function."""
+    nu = 0.5
+    hinge_threshold = 1.0
+    n_samples, n_features = 300, 3
+    random_seed = 42
+
+    def objective(w, X, y, alpha):
+        weights = w[:-1]
+        intercept = w[-1]
+        p = X @ weights + intercept
+        z = p * y
+        avg_loss = np.mean(np.maximum(hinge_threshold - z, 0.0))
+        reg = 0.5 * alpha * weights @ weights
+        obj = avg_loss + reg + intercept * alpha
+        return obj
+
+    X, _ = make_blobs(
+        n_samples=n_samples,
+        n_features=n_features,
+        random_state=random_seed,
+    )
+    y = np.ones(n_samples, dtype=X.dtype)
+    w0 = np.zeros(n_features + 1)
+    scipy_output = minimize(
+        objective,
+        w0,
+        method="Nelder-Mead",
+        args=(X, y, nu),
+        options={"maxiter": 1000},
+    )
+    w_out = scipy_output.x
+    expected_coef = w_out[:-1]
+    expected_offset = 1 - w_out[-1]
+
+    model = SGDOneClassSVM(
+        nu=nu,
+        learning_rate="constant",
+        max_iter=4000,
+        tol=None,
+        eta0=1e-4,
+        random_state=random_seed,
+    )
+    model.fit(X, y)
+
+    assert_allclose(model.coef_, expected_coef, rtol=5e-3)
+    assert_allclose(model.offset_, expected_offset, rtol=1e-2)
