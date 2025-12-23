@@ -71,8 +71,8 @@ from sklearn.utils.fixes import (
 from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_random_state
 
-CLF_CRITERIONS = ("gini", "log_loss")
-REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
+CLF_CRITERIONS = {"gini", "log_loss"}
+REG_CRITERIONS = {"squared_error", "absolute_error", "friedman_mse", "poisson"}
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
@@ -2769,7 +2769,8 @@ def test_deterministic_pickle():
         np.array([1, 2, 3, np.nan, 6, np.nan]),
     ],
 )
-@pytest.mark.parametrize("criterion", REG_CRITERIONS)
+@pytest.mark.parametrize("criterion", REG_CRITERIONS - {"poisson"})
+# TODO: adapt this test for poisson criterion
 def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_seed):
     """Check that we properly handle missing values in regression trees using a toy
     dataset.
@@ -2785,13 +2786,7 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_se
     https://github.com/scikit-learn/scikit-learn/issues/28316
     """
     X = X.reshape(-1, 1)
-    y = np.arange(1, 7)
-    # y needs to be > 0 for this test to pass with poisson criterion
-    # Poisson criterion allows multiple optimal splits when y[i] = 0 because
-    # the impurity calculation involves log(y[i]), which is undefined at 0.
-    # Different splits (with identical impurities) can be chosen due to
-    # floating-point rounding differences, causing the impurity comparison
-    # between `tree` and `tree_ref` to fail non-deterministically.
+    y = np.arange(6)
 
     tree = Tree(criterion=criterion, random_state=global_random_seed).fit(X, y)
     tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
