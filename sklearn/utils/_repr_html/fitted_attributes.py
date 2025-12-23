@@ -91,12 +91,20 @@ def _fitted_attr_html_repr(fitted_attributes):
     FITTED_ATTR_AVAILABLE_DOC_LINK_TEMPLATE = """
         <a class="param-doc-link"
             rel="noreferrer" target="_blank" href="{link}">
-            {param_name}
-            <span class="param-doc-description">{param_description}</span>
+            {fitted_attr_name}
+            <span class="param-doc-description">{fitted_attr_description}</span>
         </a>
     """
     estimator_class_docs = inspect.getdoc(fitted_attributes.estimator_class)
-
+    if estimator_class_docs and (
+        structured_docstring := _scrape_estimator_docstring(estimator_class_docs)
+    ):
+        fitted_attr_map = {
+            fitted_attr_docstring.name: fitted_attr_docstring
+            for fitted_attr_docstring in structured_docstring["Attributes"]
+        }
+    else:
+        fitted_attr_map = {}
     rows = []
     for fitted_attr_name, attr_info in fitted_attributes.items():
         link = _generate_link_to_param_doc(
