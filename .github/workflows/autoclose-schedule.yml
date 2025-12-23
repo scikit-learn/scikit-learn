@@ -18,6 +18,7 @@ jobs:
   autoclose:
     name: autoclose labeled PRs
     runs-on: ubuntu-latest
+    if: github.repository == 'scikit-learn/scikit-learn'
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
