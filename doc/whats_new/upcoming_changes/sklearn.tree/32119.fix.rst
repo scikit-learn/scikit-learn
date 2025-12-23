@@ -1,4 +1,5 @@
 - Fix calculation of nodes impurity in :class:`tree.DecisionTreeRegressor`
   and :class:`ensemble.RandomForestRegressor` when missing values are
-  present.
+  present for poisson criterion. Poisson criterion was returning invalid
+  impurities (including negative values) when missing values were present.
   By :user:`Arthur Lacote <cakedev0>`
