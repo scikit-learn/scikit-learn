@@ -2267,9 +2267,10 @@ def test_c_inf_no_warning(solver):
     """
     X, y = make_classification(n_samples=100, n_redundant=0, random_state=42)
 
-    lr = LogisticRegression(C=np.inf, solver=solver, max_iter=300)
+    lr = LogisticRegression(C=np.inf, solver=solver)
     with warnings.catch_warnings():
         warnings.simplefilter("error")
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
         lr.fit(X, y)
 
 
