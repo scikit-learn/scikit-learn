@@ -943,8 +943,8 @@ def test_sag_weighted_classification_convergence(
     # FIXME: change dataset or only test decay=False
     if sparse and saga and fit_intercept:
         pytest.xfail("Convergence issue for sparse=True")
-    if solver == sag_solver:
-        pytest.xfail("Log loss is exploding under the sag_solver")
+    # if solver == sag_solver:
+    #    pytest.xfail("Log loss is exploding under the sag_solver")
     n_samples = 100
     max_iter = 1000
     tol = 1e-10
@@ -1022,8 +1022,8 @@ def test_sag_weighted_regression_convergence(
     # FIXME: change dataset or only test decay=False
     if saga and fit_intercept:
         pytest.xfail("AssertionError")
-    if solver == sag_solver:
-        pytest.xfail("No convergence with sag_solver")
+    # if solver == sag_solver:
+    #    pytest.xfail("No convergence with sag_solver")
     n_samples = 15
     max_iter = 1000
     tol = 1e-11
