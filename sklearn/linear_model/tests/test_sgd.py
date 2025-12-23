@@ -2288,9 +2288,7 @@ def test_sgd_one_class_svm_estimator_type():
 
 
 def test_sgd_one_class_svm_formulation_with_scipy_minimize():
-    """
-    Test that `SGDOneClassSVM` minimizes the correct objective function.
-    """
+    """Test that SGDOneClassSVM minimizes the correct objective function."""
     nu = 0.5
     hinge_threshold = 1.0
     n_samples, n_features = 300, 3
