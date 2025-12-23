@@ -117,8 +117,8 @@ FOREST_ESTIMATORS.update(FOREST_TRANSFORMERS)
 FOREST_CLASSIFIERS_REGRESSORS: Dict[str, Any] = FOREST_CLASSIFIERS.copy()
 FOREST_CLASSIFIERS_REGRESSORS.update(FOREST_REGRESSORS)
 
-CLF_CRITERIONS = {"gini", "log_loss"}
-REG_CRITERIONS = {"squared_error", "absolute_error", "friedman_mse", "poisson"}
+CLF_CRITERIONS = ("gini", "log_loss")
+REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
@@ -1771,7 +1771,7 @@ def test_estimators_samples(ForestClass, bootstrap, seed):
 @pytest.mark.parametrize(
     "Forest, criterion",
     [
-        *product(FOREST_REGRESSORS.values(), REG_CRITERIONS - {"poisson"}),
+        *product(FOREST_REGRESSORS.values(), sorted(set(REG_CRITERIONS) - {"poisson"})),
         # this test is not adapted for poisson loss (not positive count-like targets)
         *product(FOREST_CLASSIFIERS.values(), CLF_CRITERIONS),
     ],

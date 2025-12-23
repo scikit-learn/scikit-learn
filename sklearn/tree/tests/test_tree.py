@@ -71,8 +71,8 @@ from sklearn.utils.fixes import (
 from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_random_state
 
-CLF_CRITERIONS = {"gini", "log_loss"}
-REG_CRITERIONS = {"squared_error", "absolute_error", "friedman_mse", "poisson"}
+CLF_CRITERIONS = ("gini", "log_loss")
+REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
@@ -2769,7 +2769,7 @@ def test_deterministic_pickle():
         np.array([1, 2, 3, np.nan, 6, np.nan]),
     ],
 )
-@pytest.mark.parametrize("criterion", REG_CRITERIONS - {"poisson"})
+@pytest.mark.parametrize("criterion", sorted(set(REG_CRITERIONS) - {"poisson"}))
 # TODO: adapt this test for poisson criterion
 def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_seed):
     """Check that we properly handle missing values in regression trees using a toy
