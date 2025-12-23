@@ -2252,9 +2252,9 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
     >>> import numpy as np
     >>> from sklearn import linear_model
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
-    >>> clf = linear_model.SGDOneClassSVM(random_state=42)
+    >>> clf = linear_model.SGDOneClassSVM(random_state=42, tol=None)
     >>> clf.fit(X)
-    SGDOneClassSVM(random_state=42)
+    SGDOneClassSVM(random_state=42, tol=None)
 
     >>> print(clf.predict([[4, 4]]))
     [1]
@@ -2492,7 +2492,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         if not hasattr(self, "coef_"):
             self._more_validate_params(for_partial_fit=True)
 
-        alpha = self.nu / 2
+        alpha = self.nu
         return self._partial_fit(
             X,
             alpha,
@@ -2596,7 +2596,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         """
         self._more_validate_params()
 
-        alpha = self.nu / 2
+        alpha = self.nu
         self._fit(
             X,
             alpha=alpha,

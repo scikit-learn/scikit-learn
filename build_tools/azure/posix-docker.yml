@@ -56,12 +56,12 @@ jobs:
         docker container run --rm
         --volume $TEST_DIR:/temp_dir
         --volume $BUILD_REPOSITORY_LOCALPATH:/repo_localpath
-        --volume $PWD:/io
+        --volume $PWD:/scikit-learn
         --volume $CCACHE_DIR:/ccache
-        -w /io
+        -w /scikit-learn
         --detach
         --name skcontainer
-        -e BUILD_SOURCESDIRECTORY=/io
+        -e BUILD_SOURCESDIRECTORY=/scikit-learn
         -e TEST_DIR=/temp_dir
         -e CCACHE_DIR=/ccache
         -e BUILD_REPOSITORY_LOCALPATH=/repo_localpath

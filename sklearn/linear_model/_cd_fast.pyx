@@ -6,14 +6,14 @@ import numpy as np
 
 from cython cimport floating
 import warnings
-from ..exceptions import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning
 
-from ..utils._cython_blas cimport (
+from sklearn.utils._cython_blas cimport (
     _axpy, _dot, _asum, _gemv, _nrm2, _copy, _scal
 )
-from ..utils._cython_blas cimport ColMajor, Trans, NoTrans
-from ..utils._typedefs cimport uint8_t, uint32_t
-from ..utils._random cimport our_rand_r
+from sklearn.utils._cython_blas cimport ColMajor, Trans, NoTrans
+from sklearn.utils._typedefs cimport uint8_t, uint32_t
+from sklearn.utils._random cimport our_rand_r
 
 
 # The following two functions are shamelessly copied from the tree code.
@@ -1407,7 +1407,7 @@ def enet_coordinate_descent_multi_task(
                 if do_screening:
                     n_active = 0
                     for j in range(n_features):
-                        if norm2_cols_X[j] == 0:
+                        if excluded_set[j]:
                             continue
                         # Xj_theta = ||X[:,j] @ dual_theta||_2
                         Xj_theta = XtA_row_norms[j] / fmax(l1_reg, dual_norm_XtA)

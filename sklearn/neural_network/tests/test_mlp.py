@@ -822,7 +822,11 @@ def test_early_stopping_stratified():
 
     mlp = MLPClassifier(early_stopping=True)
     with pytest.raises(
-        ValueError, match="The least populated class in y has only 1 member"
+        ValueError,
+        match=(
+            r"The least populated classes in y have only 1 member.*Classes with "
+            r"too few members are: \['True'\]"
+        ),
     ):
         mlp.fit(X, y)
 

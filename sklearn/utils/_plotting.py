@@ -77,7 +77,6 @@ class _BinaryClassifierCurveDisplayMixin:
         y,
         *,
         sample_weight,
-        pos_label,
     ):
         check_matplotlib_support(f"{cls.__name__}.from_cv_results")
 
@@ -107,14 +106,6 @@ class _BinaryClassifierCurveDisplayMixin:
             )
         check_consistent_length(X, y, sample_weight)
 
-        try:
-            pos_label = _check_pos_label_consistency(pos_label, y)
-        except ValueError as e:
-            # Adapt error message
-            raise ValueError(str(e).replace("y_true", "y"))
-
-        return pos_label
-
     @staticmethod
     def _get_legend_label(curve_legend_metric, curve_name, legend_metric_name):
         """Helper to get legend label using `name` and `legend_metric`"""
@@ -135,6 +126,8 @@ class _BinaryClassifierCurveDisplayMixin:
         legend_metric,
         legend_metric_name,
         curve_kwargs,
+        default_curve_kwargs=None,
+        default_multi_curve_kwargs=None,
         **kwargs,
     ):
         """Get validated line kwargs for each curve.
@@ -160,6 +153,14 @@ class _BinaryClassifierCurveDisplayMixin:
             parameters are applied to the curves sequentially. If a single
             dictionary is provided, the same parameters are applied to all
             curves.
+
+        default_curve_kwargs : dict, default=None
+            Default curve kwargs, to be added to all curves. Individual kwargs
+            are over-ridden by `curve_kwargs`, if kwarg also set in `curve_kwargs`.
+
+        default_multi_curve_kwargs : dict, default=None
+            Default curve kwargs for multi-curve plots. Individual kwargs
+            are over-ridden by `curve_kwargs`, if kwarg also set in `curve_kwargs`.
 
         **kwargs : dict
             Deprecated. Keyword arguments to be passed to matplotlib's `plot`.
@@ -208,13 +209,16 @@ class _BinaryClassifierCurveDisplayMixin:
         # Ensure `curve_kwargs` is of correct length
         if isinstance(curve_kwargs, Mapping):
             curve_kwargs = [curve_kwargs] * n_curves
+        elif curve_kwargs is None:
+            curve_kwargs = [{}] * n_curves
 
-        default_multi_curve_kwargs = {"alpha": 0.5, "linestyle": "--", "color": "blue"}
-        if curve_kwargs is None:
-            if n_curves > 1:
-                curve_kwargs = [default_multi_curve_kwargs] * n_curves
-            else:
-                curve_kwargs = [{}]
+        if default_curve_kwargs is None:
+            default_curve_kwargs = {}
+        if default_multi_curve_kwargs is None:
+            default_multi_curve_kwargs = {}
+
+        if n_curves > 1:
+            default_curve_kwargs.update(default_multi_curve_kwargs)
 
         labels = []
         if "mean" in legend_metric:
@@ -244,7 +248,9 @@ class _BinaryClassifierCurveDisplayMixin:
                 )
 
         curve_kwargs_ = [
-            _validate_style_kwargs({"label": label}, curve_kwargs[fold_idx])
+            _validate_style_kwargs(
+                {"label": label, **default_curve_kwargs}, curve_kwargs[fold_idx]
+            )
             for fold_idx, label in enumerate(labels)
         ]
         return curve_kwargs_
