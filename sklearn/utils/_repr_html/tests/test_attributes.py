@@ -1,7 +1,7 @@
 import pytest
 
 from sklearn import config_context
-from sklearn.utils._repr_html.params import AttrsDict, _fitted_attr_html_repr
+from sklearn.utils._repr_html.fitted_attributes import AttrsDict, _fitted_attr_html_repr
 
 
 def test_fitted_attrs_dict_content():
