@@ -3052,6 +3052,8 @@ def test_missing_values_and_constant_toy():
 
 def test_missing_values_and_poisson_toy():
     # Non regression test for https://github.com/scikit-learn/scikit-learn/issues/32870
+    # Poisson criterion returned invalid impurities (including negative values)
+    # when missing values were present.
     X = np.array([np.nan, 1, 2, 3, np.nan]).reshape(-1, 1)
     y = [0.49, 0.5, 0.7, 1.5, 0.8]
 
