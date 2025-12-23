@@ -210,7 +210,7 @@ def evaluate(model, X, y, cv, model_prop=None, model_step=None):
         y,
         cv=cv,
         scoring=["neg_mean_absolute_error", "neg_root_mean_squared_error"],
-        return_estimator=model_prop is not None,
+        return_estimator=True,
     )
     if model_prop is not None:
         if model_step is not None:
@@ -226,6 +226,8 @@ def evaluate(model, X, y, cv, model_prop=None, model_step=None):
         f"Mean Absolute Error:     {mae.mean():.3f} +/- {mae.std():.3f}\n"
         f"Root Mean Squared Error: {rmse.mean():.3f} +/- {rmse.std():.3f}"
     )
+    # To display the fitted estimator diagrams in the notebook.
+    return cv_results["estimator"][0]
 
 
 evaluate(gbrt, X, y, cv=ts_cv, model_prop="n_iter_")
@@ -615,7 +617,13 @@ hour_workday_interaction = make_pipeline(
     ColumnTransformer(
         [
             ("cyclic_hour", periodic_spline_transformer(24, n_splines=8), ["hour"]),
-            ("workingday", FunctionTransformer(lambda x: x == "True"), ["workingday"]),
+            (
+                "workingday",
+                FunctionTransformer(
+                    lambda x: x == "True", feature_names_out="one-to-one"
+                ),
+                ["workingday"],
+            ),
         ]
     ),
     PolynomialFeatures(degree=2, interaction_only=True, include_bias=False),
