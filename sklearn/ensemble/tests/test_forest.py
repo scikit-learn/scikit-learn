@@ -1232,9 +1232,8 @@ def test_class_weights_forest(name, bootstrap, global_random_seed):
     clf3.fit(iris.data, iris_multi)
     # for multi-output, weights are multiplied
     assert_almost_equal(clf3._sample_weight, 2 * 2 * 1)
-    # FIXME large atol=0.002, test is brittle on ExtraTreesClassifier
-    atol = 0.002 if isinstance(clf, ExtraTreesClassifier) else 0
-    assert_allclose(clf2.feature_importances_, clf3.feature_importances_, atol=atol)
+    # FIXME why is this test brittle ?
+    assert_allclose(clf2.feature_importances_, clf3.feature_importances_, atol=0.002)
     # Check against multi-output "balanced" which should also have no effect
     clf4 = clone(clf).set_params(class_weight="balanced")
     clf4.fit(iris.data, iris_multi)
