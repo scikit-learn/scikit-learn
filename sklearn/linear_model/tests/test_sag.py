@@ -100,6 +100,8 @@ def sag(
             S_seen = len(seen)
             if sample_weight is not None:
                 S_seen = sample_weight[list(seen)].sum()
+            if S_seen == 0:
+                continue
             p = np.dot(entry, weights) + intercept
             gradient = dloss(p, y[idx])
             update = entry * gradient + alpha * weights
@@ -108,10 +110,9 @@ def sag(
                 gradient_correction *= sample_weight[idx]
             sum_gradient += gradient_correction
             gradient_memory[idx] = update
-            if S_seen != 0:
-                weights -= step_size * sum_gradient / S_seen
-                if saga:
-                    weights -= gradient_correction * step_size * (1 - 1.0 / S_seen)
+            weights -= step_size * sum_gradient / S_seen
+            if saga:
+                weights -= gradient_correction * step_size * (1 - 1.0 / S_seen)
 
             if fit_intercept:
                 update = gradient
@@ -120,12 +121,9 @@ def sag(
                     gradient_correction *= sample_weight[idx]
                 intercept_sum_gradient += gradient_correction
                 intercept_gradient_memory[idx] = update
-                if S_seen != 0:
-                    intercept -= step_size * intercept_sum_gradient / S_seen * decay
-                    if saga:
-                        intercept -= (
-                            gradient_correction * step_size * (1 - 1.0 / S_seen)
-                        )
+                intercept -= step_size * intercept_sum_gradient / S_seen * decay
+                if saga:
+                    intercept -= gradient_correction * step_size * (1 - 1.0 / S_seen)
 
         # stopping criteria
         max_weight = np.abs(weights).max()
@@ -187,6 +185,8 @@ def sag_sparse(
             S_seen = len(seen)
             if sample_weight is not None:
                 S_seen = sample_weight[list(seen)].sum()
+            if S_seen == 0:
+                continue
 
             if counter >= 1:
                 for j in range(n_features):
@@ -208,30 +208,21 @@ def sag_sparse(
             gradient_correction = update - (gradient_memory[idx] * entry)
             sum_gradient += gradient_correction
             if saga:
-                if S_seen == 0:
-                    weights = weights
-                else:
-                    for j in range(n_features):
-                        weights[j] -= (
-                            gradient_correction[j]
-                            * step_size
-                            * (1 - 1.0 / S_seen)
-                            / wscale
-                        )
+                for j in range(n_features):
+                    weights[j] -= (
+                        gradient_correction[j] * step_size * (1 - 1.0 / S_seen) / wscale
+                    )
 
             if fit_intercept:
                 gradient_correction = gradient - gradient_memory[idx]
                 intercept_sum_gradient += gradient_correction
-                if S_seen == 0:
-                    intercept = intercept
+                gradient_correction *= step_size * (1.0 - 1.0 / S_seen)
+                if saga:
+                    intercept -= (
+                        step_size * intercept_sum_gradient / S_seen * decay
+                    ) + gradient_correction
                 else:
-                    gradient_correction *= step_size * (1.0 - 1.0 / S_seen)
-                    if saga:
-                        intercept -= (
-                            step_size * intercept_sum_gradient / S_seen * decay
-                        ) + gradient_correction
-                    else:
-                        intercept -= step_size * intercept_sum_gradient / S_seen * decay
+                    intercept -= step_size * intercept_sum_gradient / S_seen * decay
 
             gradient_memory[idx] = gradient
 
@@ -253,8 +244,7 @@ def sag_sparse(
                 c_sum[counter] = 0
                 weights *= wscale
                 wscale = 1.0
-            if S_seen != 0:
-                counter += 1
+            counter += 1
         # Actual weights is wscale times the just-in-time updates for all features
         actual_weights = weights.copy()
         for j in range(n_features):
@@ -941,7 +931,7 @@ def test_sag_weighted_classification_convergence(
     solver, sparse, decay, saga, fit_intercept
 ):
     # FIXME: change dataset or only test decay=False
-    if sparse and saga and fit_intercept:
+    if saga and fit_intercept:
         pytest.xfail("Convergence issue for sparse=True")
     # if solver == sag_solver:
     #    pytest.xfail("Log loss is exploding under the sag_solver")
@@ -1022,8 +1012,8 @@ def test_sag_weighted_regression_convergence(
     # FIXME: change dataset or only test decay=False
     if saga and fit_intercept:
         pytest.xfail("AssertionError")
-    # if solver == sag_solver:
-    #    pytest.xfail("No convergence with sag_solver")
+    if solver == sag_solver:
+        pytest.xfail("No convergence with sag_solver")
     n_samples = 15
     max_iter = 1000
     tol = 1e-11

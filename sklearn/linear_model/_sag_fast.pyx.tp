@@ -70,7 +70,7 @@ def sag{{name_suffix}}(
     {{c_type}}[:, ::1] sum_gradient_init,
     {{c_type}}[:, ::1] gradient_memory_init,
     bint[::1] seen_init,
-    int num_seen,
+    double num_seen,
     bint fit_intercept,
     {{c_type}}[::1] intercept_sum_gradient_init,
     double intercept_decay,
@@ -234,10 +234,11 @@ def sag{{name_suffix}}(
 
                 # update the number of samples seen and the seen array
                 if seen_init[sample_ind] == 0:
-                    with gil:
-                        num_seen += int(sample_weight)
+                    num_seen += sample_weight
                     seen_init[sample_ind] = 1
 
+                if num_seen==0:
+                    continue
                 # make the weight updates (just-in-time gradient step, and prox operator)
                 if sample_itr > 0:
                    status = lagged_update{{name_suffix}}(
@@ -291,7 +292,6 @@ def sag{{name_suffix}}(
                     val = x_data_ptr[j]
                     f_idx = feature_ind * n_classes
                     for class_ind in range(n_classes):
-                        if num_seen!=0:
                             gradient_correction = \
                                 val * (gradient[class_ind] -
                                     gradient_memory[s_idx + class_ind])
@@ -309,19 +309,18 @@ def sag{{name_suffix}}(
                 # fit the intercept
                 if fit_intercept:
                     for class_ind in range(n_classes):
-                        if num_seen!=0:
-                            gradient_correction = (gradient[class_ind] -
-                                                gradient_memory[s_idx + class_ind])
-                            intercept_sum_gradient_init[class_ind] += gradient_correction
-                            gradient_correction *= step_size * (1. - 1. / num_seen)
-                            if saga:
-                                intercept_array[class_ind] -= \
-                                    (step_size * intercept_sum_gradient_init[class_ind] /
-                                    num_seen * intercept_decay) + gradient_correction
-                            else:
-                                intercept_array[class_ind] -= \
-                                    (step_size * intercept_sum_gradient_init[class_ind] /
-                                    num_seen * intercept_decay)
+                        gradient_correction = (gradient[class_ind] -
+                                            gradient_memory[s_idx + class_ind])
+                        intercept_sum_gradient_init[class_ind] += gradient_correction
+                        gradient_correction *= step_size * (1. - 1. / num_seen)
+                        if saga:
+                            intercept_array[class_ind] -= \
+                                (step_size * intercept_sum_gradient_init[class_ind] /
+                                num_seen * intercept_decay) + gradient_correction
+                        else:
+                            intercept_array[class_ind] -= \
+                                (step_size * intercept_sum_gradient_init[class_ind] /
+                                num_seen * intercept_decay)
 
                         # check to see that the intercept is not inf or NaN
                         if not isfinite(intercept_array[class_ind]):
@@ -333,21 +332,20 @@ def sag{{name_suffix}}(
                         break
 
                 # update the gradient memory for this sample
-                if num_seen!=0:
-                    for class_ind in range(n_classes):
-                        gradient_memory[s_idx + class_ind] = gradient[class_ind]
-                    if sample_itr == 0:
-                        cumulative_sums[0] = step_size / (wscale * num_seen)
-                        if prox:
-                            cumulative_sums_prox[0] = step_size * beta / wscale
-                    else:
-                        cumulative_sums[sample_itr] = \
-                            (cumulative_sums[sample_itr - 1] +
-                            step_size / (wscale * num_seen))
-                        if prox:
-                            cumulative_sums_prox[sample_itr] = \
-                            (cumulative_sums_prox[sample_itr - 1] +
-                                step_size * beta / wscale)
+                for class_ind in range(n_classes):
+                    gradient_memory[s_idx + class_ind] = gradient[class_ind]
+                if sample_itr == 0:
+                    cumulative_sums[0] = step_size / (wscale * num_seen)
+                    if prox:
+                        cumulative_sums_prox[0] = step_size * beta / wscale
+                else:
+                    cumulative_sums[sample_itr] = \
+                        (cumulative_sums[sample_itr - 1] +
+                        step_size / (wscale * num_seen))
+                    if prox:
+                        cumulative_sums_prox[sample_itr] = \
+                        (cumulative_sums_prox[sample_itr - 1] +
+                            step_size * beta / wscale)
                 # If wscale gets too small, we need to reset the scale.
                 # This also resets the just-in-time update system.
                 if wscale < 1e-9:
@@ -394,25 +392,24 @@ def sag{{name_suffix}}(
             )
             if status == -1:
                 break
-            if num_seen!=0:
-                # check if the stopping criteria is reached
-                max_change = 0.0
-                max_weight = 0.0
-                for idx in range(n_features * n_classes):
-                    max_weight = fmax{{name_suffix}}(max_weight, fabs(weights[idx]))
-                    max_change = fmax{{name_suffix}}(max_change, fabs(weights[idx] - previous_weights[idx]))
-                    previous_weights[idx] = weights[idx]
-                if ((max_weight != 0 and max_change / max_weight <= tol)
-                    or max_weight == 0 and max_change == 0):
-                    if verbose:
-                        end_time = time(NULL)
-                        with gil:
-                            print("convergence after %d epochs took %d seconds" %
-                                (n_iter + 1, end_time - start_time))
-                    break
-                elif verbose:
-                    printf('Epoch %d, change: %.8g\n', n_iter + 1,
-                                                    max_change / max_weight)
+            # check if the stopping criteria is reached
+            max_change = 0.0
+            max_weight = 0.0
+            for idx in range(n_features * n_classes):
+                max_weight = fmax{{name_suffix}}(max_weight, fabs(weights[idx]))
+                max_change = fmax{{name_suffix}}(max_change, fabs(weights[idx] - previous_weights[idx]))
+                previous_weights[idx] = weights[idx]
+            if ((max_weight != 0 and max_change / max_weight <= tol)
+                or max_weight == 0 and max_change == 0):
+                if verbose:
+                    end_time = time(NULL)
+                    with gil:
+                        print("convergence after %d epochs took %d seconds" %
+                            (n_iter + 1, end_time - start_time))
+                break
+            elif verbose:
+                printf('Epoch %d, change: %.8g\n', n_iter + 1,
+                                                max_change / max_weight)
     n_iter += 1
     # We do the error treatment here based on error code in status to avoid
     # re-acquiring the GIL within the cython code, which slows the computation
