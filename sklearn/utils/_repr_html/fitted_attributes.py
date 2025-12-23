@@ -34,7 +34,7 @@ def _generate_link_to_param_doc(estimator_class, param_name, doc_link):
     return f"{doc_link}#:~:text={text_fragment}"
 
 
-def _read_params(value):
+def _read_fitted_attr(value):
     r = reprlib.Repr()
     r.maxlist = 2
     r.maxdict = 1
@@ -107,12 +107,12 @@ def _fitted_attr_html_repr(fitted_attributes):
         fitted_attr_map = {}
     rows = []
     for fitted_attr_name, attr_info in fitted_attributes.items():
+        formated_attr_value = _read_fitted_attr(attr_info[1])
         link = _generate_link_to_param_doc(
             fitted_attributes.estimator_class,
             fitted_attr_name,
             fitted_attributes.doc_link,
         )
-        formated_attr_value = _read_params(attr_info[1])
 
         if len(attr_info) == 2:
             rows.append(
