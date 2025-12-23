@@ -13,6 +13,7 @@ github account that does **not** have commit access to the public repo.
 
 import argparse
 import sys
+import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -28,12 +29,21 @@ parser.add_argument(
 parser.add_argument("ci_name", help="Name of CI run instance")
 parser.add_argument("issue_repo", help="Repo to track issues")
 parser.add_argument("link_to_ci_run", help="URL to link to")
+parser.add_argument(
+    "--job-name",
+    help=(
+        "Name of the job. If provided the job ID will be added to the log URL so that"
+        " it points to log of the job and not the whole workflow."
+    ),
+    default=None,
+)
 parser.add_argument("--junit-file", help="JUnit file to determine if tests passed")
 parser.add_argument(
     "--tests-passed",
     help=(
         "If --tests-passed is true, then the original issue is closed if the issue "
-        "exists. If tests-passed is false, then the an issue is updated or created."
+        "exists, unless --auto-close is set to false. If tests-passed is false, then "
+        "the issue is updated or created."
     ),
 )
 parser.add_argument(
@@ -62,11 +72,29 @@ date_str = dt_now.strftime("%b %d, %Y")
 title_query = f"CI failed on {args.ci_name}"
 title = f"⚠️ {title_query} (last failure: {date_str}) ⚠️"
 
+url = args.link_to_ci_run
+
+if args.job_name is not None:
+    run_id = int(args.link_to_ci_run.split("/")[-1])
+    workflow_run = issue_repo.get_workflow_run(run_id)
+    jobs = workflow_run.jobs()
+
+    for job in jobs:
+        if job.name == args.job_name:
+            url = f"{url}/job/{job.id}"
+            break
+    else:
+        warnings.warn(
+            f"Job '{args.job_name}' not found, the URL in the issue will link to the"
+            " whole workflow's log rather than the job's one."
+        )
+
 
 def get_issue():
     login = gh.get_user().login
     issues = gh.search_issues(
         f"repo:{args.issue_repo} {title_query} in:title state:open author:{login}"
+        " is:issue"
     )
     first_page = issues.get_page(0)
     # Return issue if it exist
@@ -75,7 +103,7 @@ def get_issue():
 
 def create_or_update_issue(body=""):
     # Interact with GitHub API to create issue
-    link = f"[{args.ci_name}]({args.link_to_ci_run})"
+    link = f"[{args.ci_name}]({url})"
     issue = get_issue()
 
     max_body_length = 60_000
@@ -106,9 +134,7 @@ def close_issue_if_opened():
     issue = get_issue()
     if issue is not None:
         header_str = "## CI is no longer failing!"
-        comment_str = (
-            f"{header_str} ✅\n\n[Successful run]({args.link_to_ci_run}) on {date_str}"
-        )
+        comment_str = f"{header_str} ✅\n\n[Successful run]({url}) on {date_str}"
 
         print(f"Commented on issue #{issue.number}")
         # New comment if "## CI is no longer failing!" comment does not exist

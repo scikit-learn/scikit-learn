@@ -201,7 +201,7 @@ def _preprocess_data(
         else:
             y_offset = xp.zeros(y.shape[1], dtype=dtype_, device=device_)
 
-    # XXX: X_scale is no longer needed. It is an historic artifact from the
+    # X_scale is no longer needed. It is a historic artifact from the
     # time where linear model exposed the normalize parameter.
     X_scale = xp.ones(n_features, dtype=X.dtype, device=device_)
 
@@ -361,7 +361,8 @@ class LinearClassifierMixin(ClassifierMixin):
         xp, _ = get_namespace(X)
 
         X = validate_data(self, X, accept_sparse="csr", reset=False)
-        scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
+        coef_T = self.coef_.T if self.coef_.ndim == 2 else self.coef_
+        scores = safe_sparse_dot(X, coef_T, dense_output=True) + self.intercept_
         return (
             xp.reshape(scores, (-1,))
             if (scores.ndim > 1 and scores.shape[1] == 1)

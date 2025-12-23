@@ -1203,7 +1203,7 @@ def test_categorical_spec_errors_with_feature_names(Est):
 
     est = Est(categorical_features=["f0", "f1", "f3"])
     expected_msg = re.escape(
-        "categorical_features has a item value 'f3' which is not a valid "
+        "categorical_features has an item value 'f3' which is not a valid "
         "feature name of the training data."
     )
     with pytest.raises(ValueError, match=expected_msg):

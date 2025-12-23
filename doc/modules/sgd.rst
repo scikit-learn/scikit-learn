@@ -283,7 +283,7 @@ variant can be several orders of magnitude faster.
 
   This is similar to the optimization problems studied in section
   :ref:`sgd_mathematical_formulation` with :math:`y_i = 1, 1 \leq i \leq n` and
-  :math:`\alpha = \nu/2`, :math:`L` being the hinge loss function and :math:`R`
+  :math:`\alpha = \nu`, :math:`L` being the hinge loss function and :math:`R`
   being the :math:`L_2` norm. We just need to add the term :math:`b\nu` in the
   optimization loop.
 
@@ -457,7 +457,7 @@ misclassification error (Zero-one loss) as shown in the Figure below.
 Popular choices for the regularization term :math:`R` (the `penalty`
 parameter) include:
 
-- :math:`L_2` norm: :math:`R(w) := \frac{1}{2} \sum_{j=1}^{m} w_j^2 = ||w||_2^2`,
+- :math:`L_2` norm: :math:`R(w) := \frac{1}{2} \sum_{j=1}^{m} w_j^2 = \frac{1}{2} ||w||_2^2`,
 - :math:`L_1` norm: :math:`R(w) := \sum_{j=1}^{m} |w_j|`, which leads to sparse
   solutions.
 - Elastic Net: :math:`R(w) := \frac{\rho}{2} \sum_{j=1}^{n} w_j^2 +

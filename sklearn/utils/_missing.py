@@ -55,10 +55,12 @@ def is_pandas_na(x):
     Parameters
     ----------
     x : any type
+        The input value to test.
 
     Returns
     -------
     boolean
+        True if `x` is `pandas.NA`, False otherwise.
     """
     with suppress(ImportError):
         from pandas import NA

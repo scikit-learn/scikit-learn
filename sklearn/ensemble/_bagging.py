@@ -46,6 +46,63 @@ __all__ = ["BaggingClassifier", "BaggingRegressor"]
 MAX_INT = np.iinfo(np.int32).max
 
 
+def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
+    """
+    Get the number of samples in a bootstrap sample.
+
+    Parameters
+    ----------
+    n_samples : int
+        Number of samples in the dataset.
+
+    max_samples : None, int or float
+        The maximum number of samples to draw.
+
+        - If None, then draw `n_samples` samples.
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * n_samples` unweighted samples or
+          `max_samples * sample_weight.sum()` weighted samples.
+
+    sample_weight : array of shape (n_samples,) or None
+        Sample weights with frequency semantics when `max_samples` is explicitly
+        set to a float or integer value. When keeping the `max_samples=None` default
+        value, the equivalence between fitting with integer weighted data points or
+        integer repeated data points is no longer guaranteed because the effective
+        bootstrap size is no longer guaranteed to be equivalent.
+
+    Returns
+    -------
+    n_samples_bootstrap : int
+        The total number of samples to draw for the bootstrap sample.
+    """
+    if max_samples is None:
+        return n_samples
+    elif isinstance(max_samples, Integral):
+        return max_samples
+
+    if sample_weight is None:
+        weighted_n_samples = n_samples
+        weighted_n_samples_msg = f"the number of samples is {weighted_n_samples} "
+    else:
+        weighted_n_samples = sample_weight.sum()
+        weighted_n_samples_msg = (
+            f"the total sum of sample weights is {weighted_n_samples} "
+        )
+
+    # max_samples Real fractional value relative to weighted_n_samples
+    n_samples_bootstrap = max(int(max_samples * weighted_n_samples), 1)
+    # Warn when number of bootstrap samples is suspiciously small
+    # This heuristic for "suspiciously small" might be adapted if found
+    # unsuitable in practice
+    if n_samples_bootstrap < max(10, n_samples ** (1 / 3)):
+        warn(
+            f"Using the fractional value {max_samples=} when {weighted_n_samples_msg}"
+            f"results in a low number ({n_samples_bootstrap}) of bootstrap samples. "
+            "We recommend passing `max_samples` as an integer instead."
+        )
+    return n_samples_bootstrap
+
+
 def _generate_indices(random_state, bootstrap, n_population, n_samples):
     """Draw randomly sampled indices."""
     # Draw sample indices
@@ -273,6 +330,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         "estimator": [HasMethods(["fit", "predict"]), None],
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "max_samples": [
+            None,
             Interval(Integral, 1, None, closed="left"),
             Interval(RealNotInt, 0, 1, closed="right"),
         ],
@@ -295,7 +353,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         estimator=None,
         n_estimators=10,
         *,
-        max_samples=1.0,
+        max_samples=None,
         max_features=1.0,
         bootstrap=True,
         bootstrap_features=False,
@@ -340,7 +398,9 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             Sample weights. If None, then samples are equally weighted. Used as
             probabilities to sample the training set. Note that the expected
             frequency semantics for the `sample_weight` parameter are only
-            fulfilled when sampling with replacement `bootstrap=True`.
+            fulfilled when sampling with replacement `bootstrap=True` and using
+            a float or integer `max_samples` (instead of the default
+            `max_samples=None`).
 
         **fit_params : dict
             Parameters to pass to the underlying estimators.
@@ -462,20 +522,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         if max_samples is None:
             max_samples = self.max_samples
 
-        if not isinstance(max_samples, numbers.Integral):
-            if sample_weight is None:
-                max_samples = max(int(max_samples * X.shape[0]), 1)
-            else:
-                sw_sum = np.sum(sample_weight)
-                if sw_sum <= 1:
-                    raise ValueError(
-                        f"The total sum of sample weights is {sw_sum}, which prevents "
-                        "resampling with a fractional value for max_samples="
-                        f"{max_samples}. Either pass max_samples as an integer or "
-                        "use a larger sample_weight."
-                    )
-                max_samples = max(int(max_samples * sw_sum), 1)
-
+        max_samples = _get_n_samples_bootstrap(X.shape[0], max_samples, sample_weight)
         if not self.bootstrap and max_samples > X.shape[0]:
             raise ValueError(
                 f"Effective max_samples={max_samples} must be <= n_samples="
@@ -728,13 +775,14 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     n_estimators : int, default=10
         The number of base estimators in the ensemble.
 
-    max_samples : int or float, default=1.0
+    max_samples : int or float, default=None
         The number of samples to draw from X to train each base estimator (with
         replacement by default, see `bootstrap` for more details).
 
+        - If None, then draw `X.shape[0]` samples irrespective of `sample_weight`.
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * X.shape[0]` unweighted samples
-          or `max_samples * sample_weight.sum()` weighted samples.
+        - If float, then draw `max_samples * X.shape[0]` unweighted samples or
+          `max_samples * sample_weight.sum()` weighted samples.
 
     max_features : int or float, default=1.0
         The number of features to draw from X to train each base estimator (
@@ -867,7 +915,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         estimator=None,
         n_estimators=10,
         *,
-        max_samples=1.0,
+        max_samples=None,
         max_features=1.0,
         bootstrap=True,
         bootstrap_features=False,
@@ -1239,12 +1287,14 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     n_estimators : int, default=10
         The number of base estimators in the ensemble.
 
-    max_samples : int or float, default=1.0
+    max_samples : int or float, default=None
         The number of samples to draw from X to train each base estimator (with
         replacement by default, see `bootstrap` for more details).
 
+        - If None, then draw `X.shape[0]` samples irrespective of `sample_weight`.
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * X.shape[0]` samples.
+        - If float, then draw `max_samples * X.shape[0]` unweighted samples or
+          `max_samples * sample_weight.sum()` weighted samples.
 
     max_features : int or float, default=1.0
         The number of features to draw from X to train each base estimator (
@@ -1368,7 +1418,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         estimator=None,
         n_estimators=10,
         *,
-        max_samples=1.0,
+        max_samples=None,
         max_features=1.0,
         bootstrap=True,
         bootstrap_features=False,
