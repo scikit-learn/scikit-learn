@@ -350,11 +350,15 @@ from sklearn.preprocessing import FunctionTransformer
 
 
 def sin_transformer(period):
-    return FunctionTransformer(lambda x: np.sin(x / period * 2 * np.pi))
+    return FunctionTransformer(
+        lambda x: np.sin(x / period * 2 * np.pi), feature_names_out="one-to-one"
+    )
 
 
 def cos_transformer(period):
-    return FunctionTransformer(lambda x: np.cos(x / period * 2 * np.pi))
+    return FunctionTransformer(
+        lambda x: np.cos(x / period * 2 * np.pi), feature_names_out="one-to-one"
+    )
 
 
 # %%
