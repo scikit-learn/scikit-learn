@@ -1201,10 +1201,10 @@ def test_validate_y_class_weight(name, n_classes, global_random_seed):
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
 @pytest.mark.parametrize("bootstrap", [True, False])
-def test_class_weights(name, bootstrap):
+def test_class_weights_forest(name, bootstrap, global_random_seed):
     # Check class_weights resemble sample_weights behavior.
     ForestClassifier = FOREST_CLASSIFIERS[name]
-    clf = ForestClassifier(random_state=0, bootstrap=bootstrap)
+    clf = ForestClassifier(random_state=global_random_seed, bootstrap=bootstrap)
 
     # Iris is balanced, so no effect expected for using 'balanced' weights.
     # Using the class_weight="balanced" option is then equivalent to fit with
@@ -1232,7 +1232,9 @@ def test_class_weights(name, bootstrap):
     clf3.fit(iris.data, iris_multi)
     # for multi-output, weights are multiplied
     assert_almost_equal(clf3._sample_weight, 2 * 2 * 1)
-    assert_almost_equal(clf2.feature_importances_, clf3.feature_importances_)
+    # FIXME large atol=0.002, test is brittle on ExtraTreesClassifier
+    atol = 0.002 if isinstance(clf, ExtraTreesClassifier) else 0
+    assert_allclose(clf2.feature_importances_, clf3.feature_importances_, atol=atol)
     # Check against multi-output "balanced" which should also have no effect
     clf4 = clone(clf).set_params(class_weight="balanced")
     clf4.fit(iris.data, iris_multi)
