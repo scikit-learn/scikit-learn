@@ -16,23 +16,38 @@ from sklearn.utils.validation import _check_sample_weight
 
 
 def get_auto_step_size(
-    max_squared_sum,
+    squared_sum,
     alpha_scaled,
     loss,
     fit_intercept,
     sample_weight=None,
-    n_samples=None,
     is_saga=False,
 ):
-    """Compute automatic step size for SAG solver.
+    """Compute automatic step size for SAG(A) solver.
 
-    The step size is set to 1 / (alpha_scaled + L + fit_intercept) where L is
-    the max sum of squares for over all samples.
+    The step size is set to 1 / L for SAG and 1/3L for SAGA where L is the
+    maximal Lipschitz smoothness constant.
+
+    For each sample i, the objective function term with intercept is:
+
+    .. math::
+        f_i(w, b) = s_i l(x_i^T w + b, y_i) + 0.5 s_i \\alpha \\Vert w \\Vert^2
+
+    The Lipschitz smoothness constant for sample i is:
+
+    .. math::
+        L_i = s_i \\kappa (\\Vert x_i \\Vert^2 + 1) + s_i \\alpha
+
+    where:
+    - :math:`\\kappa = 1/4` for classification tasks (log, multinomial loss)
+    - :math:`\\kappa = 1` for regression tasks (squared loss)
+    - :math:`s_i` is the sample weight for sample i
+    - :math:`\\Vert x_i \\Vert^2` is the squared L2 norm of feature vector x_i.
 
     Parameters
     ----------
-    max_squared_sum : float
-        Maximum squared sum of X over samples.
+    squared_sum : array of shape (n_samples,)
+        Squared sum of the feature vector for each sample.
 
     alpha_scaled : float
         Constant that multiplies the regularization term, scaled by
@@ -45,9 +60,6 @@ def get_auto_step_size(
         Specifies if a constant (a.k.a. bias or intercept) will be
         added to the decision function.
 
-    n_samples : int, default=None
-        Number of rows in X. Useful if is_saga=True.
-
     is_saga : bool, default=False
         Whether to return step size for the SAGA algorithm or the SAG
         algorithm.
@@ -55,7 +67,7 @@ def get_auto_step_size(
     Returns
     -------
     step_size : float
-        Step size used in SAG solver.
+        Step size used in SAG(A) solver.
 
     References
     ----------
@@ -68,28 +80,23 @@ def get_auto_step_size(
     for Non-Strongly Convex Composite Objectives" <1407.0202>`
     """
     if loss in ("log", "multinomial"):
-        L = 0.25 * (max_squared_sum + int(fit_intercept)) + alpha_scaled
+        kappa = 0.25
     elif loss == "squared":
-        # inverse Lipschitz constant for squared loss
-        L = max_squared_sum + int(fit_intercept) + alpha_scaled
+        kappa = 1
     else:
         raise ValueError(
             "Unknown loss function for SAG solver, got %s instead of 'log' or 'squared'"
             % loss
         )
+    L = kappa * (squared_sum + fit_intercept) + alpha_scaled
     if sample_weight is not None:
         L *= sample_weight
     L = L.max()
-    if is_saga:
-        # SAGA theoretical step size is 1/3L
-        # See Defazio et al. 2014
-        step = 1.0 / (3 * L)
-    else:
-        # SAG theoretical step size is 1/16L but it is recommended to use 1 / L
-        # see http://www.birs.ca//workshops//2014/14w5003/files/schmidt.pdf,
-        # slide 65
-        step = 1.0 / L
-    return step
+    # SAGA theoretical step size is 1/3L. See Defazio et al. 2014
+    # SAG theoretical step size is 1/16L but it is recommended to use 1/L
+    # See http://www.birs.ca//workshops//2014/14w5003/files/schmidt.pdf slide 65
+    step_size = 1 / (3 * L) if is_saga else 1 / L
+    return step_size
 
 
 def sag_solver(
@@ -104,7 +111,7 @@ def sag_solver(
     verbose=0,
     random_state=None,
     check_input=True,
-    max_squared_sum=None,
+    squared_sum=None,
     warm_start_mem=None,
     is_saga=False,
 ):
@@ -177,8 +184,8 @@ def sag_solver(
     check_input : bool, default=True
         If False, the input arrays X and y will not be checked.
 
-    max_squared_sum : float, default=None
-        Maximum squared sum of X over samples. If None, it will be computed,
+    squared_sum : float, default=None
+        Squared sum of X over samples. If None, it will be computed,
         going through all the samples. The value should be precomputed
         to speed up cross validation.
 
@@ -311,15 +318,14 @@ def sag_solver(
 
     dataset, intercept_decay = make_dataset(X, y, sample_weight, random_state)
 
-    if max_squared_sum is None:
-        max_squared_sum = row_norms(X, squared=True).max()
+    if squared_sum is None:
+        squared_sum = row_norms(X, squared=True)
     step_size = get_auto_step_size(
-        max_squared_sum,
+        squared_sum,
         alpha_scaled,
         loss,
         fit_intercept,
         sample_weight=sample_weight,
-        n_samples=n_samples,
         is_saga=is_saga,
     )
     if step_size * alpha_scaled == 1:

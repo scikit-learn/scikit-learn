@@ -19,7 +19,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
 )
-from sklearn.utils.extmath import row_norms
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 iris = load_iris()
@@ -66,8 +65,7 @@ def sag(
     sample_weight=None,
     max_iter=1,
     dloss=None,
-    sparse=False,
-    decay=None,
+    decay=1.0,
     fit_intercept=True,
     saga=False,
     tol=0,
@@ -85,10 +83,6 @@ def sag(
     rng = np.random.RandomState(77)
     decay = 1.0
     seen = set()
-
-    # sparse data has a fixed decay of .01
-    if decay is None and sparse:
-        decay = 0.05
 
     for epoch in range(max_iter):
         previous_weights = weights.copy()
@@ -145,8 +139,7 @@ def sag_sparse(
     sample_weight=None,
     max_iter=1,
     dloss=None,
-    sparse=False,
-    decay=None,
+    decay=1.0,
     fit_intercept=True,
     saga=False,
     tol=0,
@@ -172,8 +165,6 @@ def sag_sparse(
 
     c_sum = np.zeros(max_iter * n_samples)
 
-    if decay is None and sparse:
-        decay = 0.01
     counter = 0
     for epoch in range(max_iter):
         previous_weights = actual_weights
@@ -288,14 +279,10 @@ def get_step_size(
     if sample_weight is not None:
         L *= sample_weight
     L = L.max()
-    if is_saga:
-        # SAGA theoretical step size is 1/3L
-        # See Defazio et al. 2014
-        step = 1.0 / (3 * L)
-    else:
-        step = 1 / L
-    # Recommended step_size = 1 / max L_i
-    return step
+    # step_size = 1/L for SAG https://arxiv.org/abs/1309.2388
+    # step_size = 1/3L for SAGA https://arxiv.org/abs/1407.0202
+    step_size = 1 / (3 * L) if is_saga else 1 / L
+    return step_size
 
 
 def test_classifier_matching():
@@ -531,7 +518,7 @@ def test_sag_regressor_computed_correctly(csr_container):
         alpha,
         max_iter=max_iter,
         dloss=squared_dloss,
-        sparse=True,
+        decay=0.01,
         fit_intercept=fit_intercept,
         random_state=rng,
     )
@@ -546,54 +533,31 @@ def test_sag_regressor_computed_correctly(csr_container):
     # assert_almost_equal(clf2.intercept_, spintercept2, decimal=1)'''
 
 
-def test_get_auto_step_size():
-    X = np.array([[1, 2, 3], [2, 3, 4], [2, 3, 2]], dtype=np.float64)
+@pytest.mark.parametrize("saga", [True, False])
+@pytest.mark.parametrize("fit_intercept", [True, False])
+@pytest.mark.parametrize("classification", [True, False])
+@pytest.mark.parametrize("sample_weight", [None, "random"])
+def test_get_auto_step_size(saga, fit_intercept, classification, sample_weight):
     alpha = 1.2
-    fit_intercept = False
-    # sum the squares of the second sample because that's the largest
-    max_squared_sum = 4 + 9 + 16
-    max_squared_sum_ = row_norms(X, squared=True).max()
-    n_samples = X.shape[0]
-    assert_almost_equal(max_squared_sum, max_squared_sum_, decimal=4)
+    n_samples = 100
+    rng = np.random.RandomState(42)
+    X = rng.rand(n_samples, 10)
+    squared_sum = np.sum(X * X, axis=1)
+    if sample_weight == "random":
+        sample_weight = rng.rand(n_samples)
 
-    for saga in [True, False]:
-        for fit_intercept in (True, False):
-            if saga:
-                L_sqr = max_squared_sum + alpha + int(fit_intercept)
-                L_log = (max_squared_sum + 4.0 * alpha + int(fit_intercept)) / 4.0
-                mun_sqr = min(2 * n_samples * alpha, L_sqr)
-                mun_log = min(2 * n_samples * alpha, L_log)
-                step_size_sqr = 1 / (2 * L_sqr + mun_sqr)
-                step_size_log = 1 / (2 * L_log + mun_log)
-            else:
-                step_size_sqr = 1.0 / (max_squared_sum + alpha + int(fit_intercept))
-                step_size_log = 4.0 / (
-                    max_squared_sum + 4.0 * alpha + int(fit_intercept)
-                )
-
-            step_size_sqr_ = get_auto_step_size(
-                max_squared_sum_,
-                alpha,
-                "squared",
-                fit_intercept,
-                n_samples=n_samples,
-                is_saga=saga,
-            )
-            step_size_log_ = get_auto_step_size(
-                max_squared_sum_,
-                alpha,
-                "log",
-                fit_intercept,
-                n_samples=n_samples,
-                is_saga=saga,
-            )
-
-            assert_almost_equal(step_size_sqr, step_size_sqr_, decimal=4)
-            assert_almost_equal(step_size_log, step_size_log_, decimal=4)
+    step_size = get_step_size(
+        X, alpha, fit_intercept, classification, sample_weight, saga
+    )
+    loss = "log" if classification else "squared"
+    auto_step_size = get_auto_step_size(
+        squared_sum, alpha, loss, fit_intercept, sample_weight, saga
+    )
+    assert_allclose(step_size, auto_step_size)
 
     msg = "Unknown loss function for SAG solver, got wrong instead of"
     with pytest.raises(ValueError, match=msg):
-        get_auto_step_size(max_squared_sum_, alpha, "wrong", fit_intercept)
+        get_auto_step_size(squared_sum, alpha, "wrong", fit_intercept)
 
 
 @pytest.mark.parametrize("seed", range(3))  # locally tested with 1000 seeds
@@ -691,7 +655,6 @@ def test_sag_classifier_computed_correctly(csr_container):
         alpha,
         max_iter=max_iter,
         dloss=log_dloss,
-        sparse=True,
         decay=0.05,
         fit_intercept=fit_intercept,
     )
@@ -756,7 +719,7 @@ def test_sag_multiclass_computed_correctly(csr_container):
             alpha,
             dloss=log_dloss,
             max_iter=max_iter,
-            sparse=True,
+            decay=0.01,
             fit_intercept=fit_intercept,
         )
         coef1.append(spweights1)
@@ -861,7 +824,7 @@ def test_binary_classifier_class_weight(csr_container):
         alpha,
         max_iter=max_iter,
         dloss=log_dloss,
-        sparse=True,
+        decay=0.01,
         sample_weight=sample_weight,
         fit_intercept=fit_intercept,
     )
@@ -924,23 +887,20 @@ def test_sag_classifier_raises_error(solver):
 
 
 @pytest.mark.parametrize("solver", [sag, sag_sparse, sag_solver])
-@pytest.mark.parametrize("sparse,decay", [(False, None), (True, 0.05)])
+@pytest.mark.parametrize("decay", [1.0, 0.05])
 @pytest.mark.parametrize("saga", [True, False])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_sag_weighted_classification_convergence(
-    solver, sparse, decay, saga, fit_intercept
-):
-    # FIXME: change dataset or only test decay=False
-    if saga and fit_intercept:
-        pytest.xfail("Convergence issue for sparse=True")
-    # if solver == sag_solver:
-    #    pytest.xfail("Log loss is exploding under the sag_solver")
+def test_sag_weighted_classification_convergence(solver, decay, saga, fit_intercept):
+    # FIXME
+    if solver == sag_solver:
+        pytest.xfail("sag_solver fail convergence test")
     n_samples = 100
     max_iter = 1000
     tol = 1e-10
     alpha = 1.1
 
     X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0, cluster_std=0.1)
+    n_features = X.shape[1]
     y = 1 * (y >= 1)
     sample_weights = np.random.randint(0, 3, size=n_samples)
 
@@ -962,7 +922,6 @@ def test_sag_weighted_classification_convergence(
         sag_kwargs = dict(
             dloss=log_dloss,
             max_iter=max_iter,
-            sparse=sparse,
             decay=decay,
             tol=tol,
             fit_intercept=fit_intercept,
@@ -987,7 +946,7 @@ def test_sag_weighted_classification_convergence(
             max_iter=max_iter,
             tol=tol,
             warm_start_mem={
-                "coef": np.zeros((X.shape[1] + int(fit_intercept), 1), dtype=X.dtype)
+                "coef": np.zeros((n_features + fit_intercept, 1), dtype=X.dtype)
             },
             is_saga=saga,
         )
@@ -997,29 +956,28 @@ def test_sag_weighted_classification_convergence(
         if fit_intercept:
             intercept = weights[-1]
             weights = weights[:-1]
-
+    assert weights.shape == (n_features,)
     assert_allclose(weights, true_weights)
     assert_allclose(intercept, true_intercept)
 
 
 @pytest.mark.parametrize("solver", [sag, sag_sparse, sag_solver])
-@pytest.mark.parametrize("sparse,decay", [(False, None), (True, 0.05)])
+@pytest.mark.parametrize("decay", [1.0, 0.05])
 @pytest.mark.parametrize("saga", [True, False])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_sag_weighted_regression_convergence(
-    solver, sparse, decay, saga, fit_intercept
-):
-    # FIXME: change dataset or only test decay=False
+def test_sag_weighted_regression_convergence(solver, decay, saga, fit_intercept):
+    # FIXME
     if saga and fit_intercept:
-        pytest.xfail("AssertionError")
+        pytest.xfail("saga + fit_intercept fail convergence test")
     if solver == sag_solver:
-        pytest.xfail("No convergence with sag_solver")
+        pytest.xfail("sag_solver fail convergence test")
     n_samples = 15
     max_iter = 1000
     tol = 1e-11
     alpha = 1.1
     rng = np.random.RandomState(42)
     X = rng.rand(n_samples, n_samples * 2)
+    n_features = X.shape[1]
     y = rng.randint(0, 3, size=n_samples)
     # Use random integers (including zero) as weights.
     sample_weights = rng.randint(0, 5, size=n_samples)
@@ -1041,7 +999,6 @@ def test_sag_weighted_regression_convergence(
         sag_kwargs = dict(
             dloss=squared_dloss,
             max_iter=max_iter,
-            sparse=sparse,
             decay=decay,
             tol=tol,
             fit_intercept=fit_intercept,
@@ -1064,14 +1021,16 @@ def test_sag_weighted_regression_convergence(
             max_iter=max_iter,
             tol=tol,
             warm_start_mem={
-                "coef": np.zeros((X.shape[1] + int(fit_intercept), 1), dtype=X.dtype)
+                "coef": np.zeros((n_features + fit_intercept, 1), dtype=X.dtype)
             },
             is_saga=saga,
         )
         weights, n_iter, warm_start_mem = solver(
             X, y, sample_weights, alpha=alpha, **sag_kwargs
         )
-        intercept = weights[-1]
-        weights = weights[:-1]
+        if fit_intercept:
+            intercept = weights[-1]
+            weights = weights[:-1]
+    assert weights.shape == (n_features,)
     assert_allclose(weights, true_weights, atol=1e-10)
     assert_allclose(intercept, true_intercept)
