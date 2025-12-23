@@ -977,3 +977,5 @@ def test_categorical_input_tag(Estimator):
         assert tags.input_tags.categorical
     else:
         assert not tags.input_tags.categorical
+
+# CI repro: trigger all-seeds run for test_predict_joint_proba
