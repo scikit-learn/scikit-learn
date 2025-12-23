@@ -31,7 +31,7 @@ jobs:
             update_script_args: "--select-tag cuda"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Generate lock files
         run: |
           source build_tools/shared.sh

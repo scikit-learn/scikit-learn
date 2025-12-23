@@ -13,6 +13,11 @@ example illustrates the simple regularization used in
 :ref:`shrunk_covariance` estimators. In particular, it focuses on how to
 set the amount of regularization, i.e. how to choose the bias-variance
 trade-off.
+
+.. rubric:: References
+
+.. [1] "Shrinkage Algorithms for MMSE Covariance Estimation"
+   Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
 """
 
 # Authors: The scikit-learn developers
@@ -71,10 +76,9 @@ loglik_real = -log_likelihood(emp_cov, linalg.inv(real_cov))
 #   covariance estimate.
 #
 # * An improvement of the Ledoit-Wolf shrinkage, the
-#   :class:`~sklearn.covariance.OAS`, proposed by Chen et al. Its
+#   :class:`~sklearn.covariance.OAS`, proposed by Chen et al. [1]_. Its
 #   convergence is significantly better under the assumption that the data
 #   are Gaussian, in particular for small samples.
-
 
 from sklearn.covariance import OAS, LedoitWolf
 from sklearn.model_selection import GridSearchCV
