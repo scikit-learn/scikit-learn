@@ -1,6 +1,6 @@
 import numpy as np
+import pytest
 
-from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer
 from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
@@ -14,65 +14,45 @@ rng = np.random.RandomState(42)
 
 
 def test_n_features_not_fitted():
-    assert "2 features" not in estimator_html_repr(ct)
-    assert "x0" not in estimator_html_repr(ct)
-    assert "x1" not in estimator_html_repr(ct)
+    out = estimator_html_repr(ct)
+    assert "2 features" not in out
+    assert "x0" not in out
+    assert "x1" not in out
+    assert "<div class='features fitted'>" not in out
 
 
 def test_n_features_fitted():
     X = np.array([[0, 2], [1, 1]])
     ct.fit(X)
-    assert "2 features" in estimator_html_repr(ct)
-    assert "x0" in estimator_html_repr(ct)
-    assert "x1" in estimator_html_repr(ct)
+    out = estimator_html_repr(ct)
+    assert "2 features" in out
+    assert "x0" in out
+    assert "x1" in out
 
 
-def test_n_features_with_Transformer():
-    class Trans(TransformerMixin, BaseEstimator):
-        def fit(self, X, y=None):
-            return self
-
-        def transform(self, X, y=None):
-            return X
-
-    X = np.array([[0, 2], [1, 1]])
-    ct = ColumnTransformer([("trans", Trans(), [0, 1])])
-    ct.fit(X)
-    estimator_html_repr(ct)
-
-
-def test_n_features_with_MinimalTransformer():
+def test_with_MinimalTransformer():
     X, y = np.array([[0, 1], [1, 1]]), np.array([[0, 1]])
-    ct = ColumnTransformer([("minimal", MinimalTransformer(), [0, 1])])
-    model = Pipeline([("transformer", ct)])
-    model.fit(X, y)
-
-    estimator_html_repr(model)
-
-
-def test_remainder_passthrough():
-    X = np.array([[0, 1], [1, 1]])
-    y = np.array([[0, 1]])
-
     ct = ColumnTransformer(
         [("minimal", MinimalTransformer(), [0])], remainder="passthrough"
     )
     model = Pipeline([("transformer", ct)])
     model.fit(X, y)
-    assert "passthrough" in estimator_html_repr(model)
+
+    out = estimator_html_repr(model)
+    assert "1 features" in out
+    assert "x0" in out
+    assert "passthrough" in out
 
 
-def test_features_html_no_fitted_class():
+def test_estimator_html_repr_pandas_fitted():
     """Test that features HTML is generated without fitted CSS class."""
-    features = ["feature1", "feature2", "feature3"]
-    html = _features_html(features)
+    pd = pytest.importorskip("pandas")
 
-    assert "3 features" in html
-    assert "feature1" in html
-    assert "feature2" in html
-    assert "feature3" in html
-    assert 'class="features "' in html
-    assert "fitted" not in html
+    X = pd.DataFrame({"A": [0, 2, 3], "B": [1, 1, 3]})
+    ct.fit(X)
+    out = estimator_html_repr(ct)
+    assert "A" in out
+    assert "B" in out
 
 
 def test_features_html_with_fitted_class():

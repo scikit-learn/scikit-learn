@@ -30,7 +30,7 @@ def _features_html(features, is_fitted_css_class=""):
                 </table>
             </div>
           </details>
-          </div>
+        </div>
     """
 
     FEATURES_ROW_TEMPLATE = """

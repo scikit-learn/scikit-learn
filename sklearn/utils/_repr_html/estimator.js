@@ -42,7 +42,7 @@ document.querySelectorAll('.copy-paste-icon').forEach(function(element) {
 
     const parent = element.parentElement;
     if (!parent || !parent.nextElementSibling) {
-        console.warn('Copy-paste icon missing expected DOM structure');
+        console.warn('Expected copy-paste icon is missing from the DOM structure');
         return;
     }
 
