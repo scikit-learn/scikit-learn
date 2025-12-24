@@ -1075,10 +1075,11 @@ def check_array_api_input(
     When check_sample_weight is True, dummy sample weights are passed to the
     fit call.
 
-    When expect_only_array_outputs is False, the check accepts non-array
-    outputs from estimator methods (e.g., sparse data structures). This is
-    useful to test that enabling array API dispatch does not break the
-    estimator, even if the estimator does not support array API.
+    When expect_only_array_outputs is False, the check is looser: in particular
+    it accepts non-array outputs such as sparse data structures. This is
+    useful to test that enabling array API dispatch does not change the 
+    behavior of any estimator fed with NumPy inputs, even for estimators that
+    do not support array API.
     """
     xp = _array_api_for_tests(array_namespace, device)
 
