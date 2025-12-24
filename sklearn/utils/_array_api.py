@@ -389,7 +389,7 @@ def get_namespace(
     remove_none : bool, default=True
         Whether to ignore None objects passed in arrays.
 
-    remove_types : tuple or list, (str, list, tuple)
+    remove_types : tuple or list, default=(str, list, tuple)
         Types to ignore in the arrays.
 
     xp : module, default=None
@@ -457,7 +457,7 @@ def get_namespace_and_device(
         Array objects.
     remove_none : bool, default=True
         Whether to ignore None objects passed in arrays.
-    remove_types : tuple or list, (str, list, tuple)
+    remove_types : tuple or list, default=(str, list, tuple)
         Types to ignore in the arrays.
     xp : module, default=None
         Precomputed array namespace module. When passed, typically from a caller

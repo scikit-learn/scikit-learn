@@ -72,7 +72,7 @@ def test_get_namespace_ndarray_creation_device():
 
 @skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize("X", [numpy.asarray([1, 2, 3]), [1, 2, 3], (1, 2, 3)])
-def test_get_namespace_ndarray_with_dispatch(X):
+def test_get_namespace_ndarray_or_similar_default_with_dispatch(X):
     """Test get_namespace on NumPy ndarrays."""
 
     with config_context(array_api_dispatch=True):

@@ -1243,7 +1243,8 @@ def check_array_api_input(
                     "'inverse_transform' output is in wrong namespace, expected"
                     f" {input_ns}, got {inverse_result_ns}."
                 )
-                assert array_device(inverse_result_xp) == array_device(X_xp)
+                with config_context(array_api_dispatch=True):
+                    assert array_device(result_xp) == array_device(X_xp)
 
                 inverse_result_xp_np = _convert_to_numpy(inverse_result_xp, xp=xp)
                 if check_values:
