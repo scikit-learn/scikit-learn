@@ -224,12 +224,6 @@ def _check_reg_targets_with_floating_dtype(
     if xp is None or device is None:
         xp, _, device = get_namespace_and_device(y_pred)
 
-    # Ensure that all inputs are on the y_pred device and namespace.
-    y_true = move_to(y_true, xp=xp, device=device)
-    sample_weight = move_to(sample_weight, xp=xp, device=device)
-    if hasattr(multioutput, "shape"):
-        multioutput = move_to(multioutput, xp=xp, device=device)
-
     dtype_name = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
 
     y_type, y_true, y_pred, sample_weight, multioutput = _check_reg_targets(
