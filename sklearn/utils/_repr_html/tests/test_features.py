@@ -21,15 +21,6 @@ def test_n_features_not_fitted():
     assert "<div class='features fitted'>" not in out
 
 
-def test_n_features_fitted():
-    X = np.array([[0, 2], [1, 1]])
-    ct.fit(X)
-    out = estimator_html_repr(ct)
-    assert "2 features" in out
-    assert "x0" in out
-    assert "x1" in out
-
-
 def test_with_MinimalTransformer():
     X, y = np.array([[0, 1], [1, 1]]), np.array([[0, 1]])
     ct = ColumnTransformer(
@@ -44,15 +35,25 @@ def test_with_MinimalTransformer():
     assert "passthrough" in out
 
 
-def test_estimator_html_repr_pandas_fitted():
+@pytest.mark.parametrize(
+    "pandas, feature_cols",
+    [
+        (True, ["A", "B"]),
+        (False, ["x0", "x1"]),
+    ],
+)
+def test_estimator_html_repr_fitted(pandas, feature_cols):
     """Test that features HTML is generated without fitted CSS class."""
-    pd = pytest.importorskip("pandas")
+    if pandas:
+        pd = pytest.importorskip("pandas")
+        X = pd.DataFrame({"A": [0, 2], "B": [1, 1]})
+    else:
+        X = np.array([[0, 2], [1, 1]])
 
-    X = pd.DataFrame({"A": [0, 2, 3], "B": [1, 1, 3]})
     ct.fit(X)
     out = estimator_html_repr(ct)
-    assert "A" in out
-    assert "B" in out
+    assert feature_cols[0] in out
+    assert feature_cols[1] in out
 
 
 def test_features_html_with_fitted_class():
