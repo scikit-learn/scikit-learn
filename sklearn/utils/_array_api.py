@@ -308,7 +308,7 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=REMOVE_TYPES_DEFA
     remove_none : bool, default=True
         Whether to ignore None objects passed in arrays.
 
-    remove_types : tuple or list, (str, list, tuple)
+    remove_types : tuple or list, default=(str, list, tuple)
         Types to ignore in the arrays.
 
     Returns
