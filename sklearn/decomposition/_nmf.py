@@ -25,6 +25,7 @@ from sklearn.decomposition._cdnmf_fast import _update_cdnmf_fast
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils import check_array, check_random_state, gen_batches
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import _randomized_svd, safe_sparse_dot, squared_norm
 from sklearn.utils.validation import check_is_fitted, check_non_negative, validate_data
 
@@ -196,8 +197,8 @@ def _special_sparse_dot(W, H, X):
                 axis=1
             )
 
-        WH = sp.coo_matrix((dot_vals, (ii, jj)), shape=X.shape)
-        return WH.tocsr()
+        WH = sp.coo_array((dot_vals, (ii, jj)), shape=X.shape)
+        return _align_api_if_sparse(WH.tocsr())
     else:
         return np.dot(W, H)
 

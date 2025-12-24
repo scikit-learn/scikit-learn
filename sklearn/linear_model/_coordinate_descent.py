@@ -31,6 +31,7 @@ from sklearn.utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.metadata_routing import _routing_enabled, process_routing
 from sklearn.utils.parallel import Parallel, delayed
@@ -1172,7 +1173,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     @property
     def sparse_coef_(self):
         """Sparse representation of the fitted `coef_`."""
-        return sparse.csr_matrix(self.coef_)
+        return _align_api_if_sparse(sparse.csr_array(np.atleast_2d(self.coef_)))
 
     def _decision_function(self, X):
         """Decision function of the linear model.
