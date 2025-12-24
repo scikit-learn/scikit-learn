@@ -158,14 +158,14 @@ def test_compute_class_weight_balanced_sample_weight_equivalence():
 
 
 def test_compute_class_weight_balanced_zero_sample_weight_class():
-    """Check that zero total sample_weight for a class raises an error.
+    # Check that zero total sample_weight for a class raises an error.
 
-    When sample_weight zeros out an entire class, the weighted class count
-    becomes zero, which would cause division by zero and produce inf values.
-    This test ensures we raise a clear error instead.
+    # When sample_weight zeros out an entire class, the weighted class count
+    # becomes zero, which would cause division by zero and produce inf values.
+    # This test ensures we raise a clear error instead.
 
-    Non-regression test for silent division by zero bug.
-    """
+    # Non-regression test for silent division by zero bug.
+
     classes = np.array([0, 1, 2])
     y = np.array([0, 0, 1, 1, 2, 2])
     # sample_weight zeros out class 1 entirely
@@ -176,7 +176,7 @@ def test_compute_class_weight_balanced_zero_sample_weight_class():
 
 
 def test_compute_class_weight_balanced_zero_sample_weight_multiple_classes():
-    """Check error message lists all zero-weight classes."""
+    # Check error message lists all zero-weight classes.
     classes = np.array([0, 1, 2])
     y = np.array([0, 0, 1, 1, 2, 2])
     # sample_weight zeros out classes 0 and 2
