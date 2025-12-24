@@ -19,6 +19,7 @@ from sklearn.metrics.pairwise import (
     rbf_kernel,
 )
 from sklearn.utils._array_api import (
+    _atol_for_type,
     _convert_to_numpy,
     yield_namespace_device_dtype_combinations,
 )
@@ -347,40 +348,31 @@ def test_nystroem_approximation():
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
-def test_nystroem_approximation_array_api(array_namespace, device, dtype_name):
-    if dtype_name == "float32" and array_namespace == "torch":
-        pytest.xfail("rbf kernel not numerically stable with float32 in torch")
+@pytest.mark.parametrize("kernel", list(kernel_metrics()) + [_linear_kernel])
+@pytest.mark.parametrize("n_components", [2, 100])
+def test_nystroem_approximation_array_api(
+    array_namespace, device, dtype_name, kernel, n_components
+):
+    if kernel == "laplacian" and array_namespace != "numpy":
+        pytest.xfail("Laplacian kernel not supported for non-numpy namespaces")
+
     xp = _array_api_for_tests(array_namespace, device)
-    # some basic tests
     rnd = np.random.RandomState(0)
-    X_np = rnd.uniform(size=(10, 4)).astype(dtype_name)
+    n_samples = 10
+    # Ensure full-rank linear kernel to limit the impact of device-specific
+    # rounding discrepancies.
+    n_features = 2 * n_samples
+    X_np = rnd.uniform(size=(n_samples, n_features)).astype(dtype_name)
     X_xp = xp.asarray(X_np, device=device)
+    nystroem = Nystroem(n_components=n_components, kernel=kernel, random_state=0)
+    X_np_transformed = nystroem.fit_transform(X_np)
 
     with config_context(array_api_dispatch=True):
-        # With n_components = n_samples this is exact
-        X_xp_transformed = Nystroem(n_components=X_xp.shape[0]).fit_transform(X_xp)
+        X_xp_transformed = nystroem.fit_transform(X_xp)
         X_xp_transformed_np = _convert_to_numpy(X_xp_transformed, xp=xp)
-        K = rbf_kernel(X_np)
-        assert_array_almost_equal(np.dot(X_xp_transformed_np, X_xp_transformed_np.T), K)
 
-        trans = Nystroem(n_components=2, random_state=rnd)
-        X_xp_transformed = trans.fit(X_xp).transform(X_xp)
-        assert X_xp_transformed.shape == (X_xp.shape[0], 2)
-
-        # test callable kernel
-        trans = Nystroem(n_components=2, kernel=_linear_kernel, random_state=rnd)
-        X_xp_transformed = trans.fit(X_xp).transform(X_xp)
-        assert X_xp_transformed.shape == (X_xp.shape[0], 2)
-
-        # test that available kernels fit and transform
-        kernels_available = kernel_metrics()
-        for kern in kernels_available:
-            if (
-                kern != "laplacian"
-            ):  # Laplacian kernel not supported for non-numpy namespaces
-                trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
-                X_xp_transformed = trans.fit(X_xp).transform(X_xp)
-                assert X_xp_transformed.shape == (X_xp.shape[0], 2)
+    atol = _atol_for_type(dtype_name)
+    assert_allclose(X_np_transformed, X_xp_transformed_np, atol=atol)
 
 
 def test_nystroem_default_parameters():
