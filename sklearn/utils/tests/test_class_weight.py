@@ -172,7 +172,9 @@ def test_compute_class_weight_balanced_zero_sample_weight_class():
     sample_weight = np.array([1.0, 1.0, 0.0, 0.0, 1.0, 1.0])
 
     with pytest.raises(ValueError, match="zero total sample_weight"):
-        compute_class_weight("balanced", classes=classes, y=y, sample_weight=sample_weight)
+        compute_class_weight(
+            "balanced", classes=classes, y=y, sample_weight=sample_weight
+        )
 
 
 def test_compute_class_weight_balanced_zero_sample_weight_multiple_classes():
@@ -183,7 +185,9 @@ def test_compute_class_weight_balanced_zero_sample_weight_multiple_classes():
     sample_weight = np.array([0.0, 0.0, 1.0, 1.0, 0.0, 0.0])
 
     with pytest.raises(ValueError, match=r"\[0, 2\]"):
-        compute_class_weight("balanced", classes=classes, y=y, sample_weight=sample_weight)
+        compute_class_weight(
+            "balanced", classes=classes, y=y, sample_weight=sample_weight
+        )
 
 
 def test_compute_class_weight_balanced_unordered():
