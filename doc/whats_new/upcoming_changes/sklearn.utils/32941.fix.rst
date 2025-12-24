@@ -1,0 +1,4 @@
+- :func:`utils.class_weight.compute_class_weight` now raises a `ValueError`
+  when `sample_weight` zeros out an entire class, instead of silently
+  returning `inf` values that would propagate through training.
+  By :user:`Devarshi <codeMaestro78>`
