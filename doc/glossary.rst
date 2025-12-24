@@ -231,7 +231,7 @@ General Concepts
     cross validation
         A resampling method that iteratively partitions data into mutually
         exclusive 'train' and 'test' subsets so model performance can be
-        evaluated on unseen data. This conserves data as avoids the need to hold
+        evaluated on unseen data. This conserves data as it avoids the need to hold
         out a 'validation' dataset and accounts for variability as multiple
         rounds of cross validation are generally performed.
         See :ref:`User Guide <cross_validation>` for more details.
@@ -518,13 +518,17 @@ General Concepts
         :term:`memory mapping`. See :ref:`parallelism` for more
         information.
 
+    label indicator format
     label indicator matrix
     multilabel indicator matrix
     multilabel indicator matrices
-        The format used to represent multilabel data, where each row of a 2d
-        array or sparse matrix corresponds to a sample, each column
+        This format can be used to represent binary or multilabel data. Each row of
+        a 2d array or sparse matrix corresponds to a sample, each column
         corresponds to a class, and each element is 1 if the sample is labeled
         with the class and 0 if not.
+
+        :ref:`LabelBinarizer <preprocessing_targets>` can be used to create a
+        multilabel indicator matrix from :term:`multiclass` labels.
 
     leakage
     data leakage
