@@ -7,6 +7,8 @@ repos:
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
 -   repo: https://github.com/astral-sh/ruff-pre-commit
+    # WARNING if you update ruff version here, remember to update
+    # sklearn/_min_dependencies.py and doc .rst files mentioning ruff==<version>
     rev: v0.12.2
     hooks:
     -   id: ruff-check
