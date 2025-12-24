@@ -157,6 +157,35 @@ def test_compute_class_weight_balanced_sample_weight_equivalence():
     assert_allclose(class_weights_weighted, class_weights_repeated)
 
 
+def test_compute_class_weight_balanced_zero_sample_weight_class():
+    """Check that zero total sample_weight for a class raises an error.
+
+    When sample_weight zeros out an entire class, the weighted class count
+    becomes zero, which would cause division by zero and produce inf values.
+    This test ensures we raise a clear error instead.
+
+    Non-regression test for silent division by zero bug.
+    """
+    classes = np.array([0, 1, 2])
+    y = np.array([0, 0, 1, 1, 2, 2])
+    # sample_weight zeros out class 1 entirely
+    sample_weight = np.array([1.0, 1.0, 0.0, 0.0, 1.0, 1.0])
+
+    with pytest.raises(ValueError, match="zero total sample_weight"):
+        compute_class_weight("balanced", classes=classes, y=y, sample_weight=sample_weight)
+
+
+def test_compute_class_weight_balanced_zero_sample_weight_multiple_classes():
+    """Check error message lists all zero-weight classes."""
+    classes = np.array([0, 1, 2])
+    y = np.array([0, 0, 1, 1, 2, 2])
+    # sample_weight zeros out classes 0 and 2
+    sample_weight = np.array([0.0, 0.0, 1.0, 1.0, 0.0, 0.0])
+
+    with pytest.raises(ValueError, match=r"\[0, 2\]"):
+        compute_class_weight("balanced", classes=classes, y=y, sample_weight=sample_weight)
+
+
 def test_compute_class_weight_balanced_unordered():
     # Test compute_class_weight when classes are unordered
     classes = np.array([1, 0, 3])
