@@ -1077,7 +1077,7 @@ def check_array_api_input(
 
     When expect_only_array_outputs is False, the check is looser: in particular
     it accepts non-array outputs such as sparse data structures. This is
-    useful to test that enabling array API dispatch does not change the 
+    useful to test that enabling array API dispatch does not change the
     behavior of any estimator fed with NumPy inputs, even for estimators that
     do not support array API.
     """
