@@ -21,7 +21,11 @@ from sklearn.metrics.pairwise import (
 from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
+    get_namespace_and_device,
     yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._array_api import (
+    device as array_device,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
@@ -348,7 +352,9 @@ def test_nystroem_approximation():
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
-@pytest.mark.parametrize("kernel", list(kernel_metrics()) + [_linear_kernel])
+@pytest.mark.parametrize(
+    "kernel", list(kernel_metrics()) + [_linear_kernel, "precomputed"]
+)
 @pytest.mark.parametrize("n_components", [2, 100])
 def test_nystroem_approximation_array_api(
     array_namespace, device, dtype_name, kernel, n_components
@@ -363,13 +369,24 @@ def test_nystroem_approximation_array_api(
     # rounding discrepancies.
     n_features = 2 * n_samples
     X_np = rnd.uniform(size=(n_samples, n_features)).astype(dtype_name)
+    if kernel == "precomputed":
+        X_np = rbf_kernel(X_np[:n_components])
+
     X_xp = xp.asarray(X_np, device=device)
+
     nystroem = Nystroem(n_components=n_components, kernel=kernel, random_state=0)
     X_np_transformed = nystroem.fit_transform(X_np)
 
     with config_context(array_api_dispatch=True):
         X_xp_transformed = nystroem.fit_transform(X_xp)
         X_xp_transformed_np = _convert_to_numpy(X_xp_transformed, xp=xp)
+
+        for attribute_name in ["components_", "normalization_"]:
+            xp_attr, _, device_attr = get_namespace_and_device(
+                getattr(nystroem, attribute_name)
+            )
+            assert xp_attr is xp
+            assert device_attr == array_device(X_xp)
 
     atol = _atol_for_type(dtype_name)
     assert_allclose(X_np_transformed, X_xp_transformed_np, atol=atol)

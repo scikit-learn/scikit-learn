@@ -1122,6 +1122,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.array_api_support = True
         tags.input_tags.sparse = True
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         return tags
