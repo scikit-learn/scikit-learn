@@ -44,7 +44,7 @@
 .. image:: https://raw.githubusercontent.com/scikit-learn/scikit-learn/main/doc/logos/scikit-learn-logo.png
   :target: https://scikit-learn.org/
 
-**scikit-learn** is a Python module for machine learning built on top of
+**scikit-learn** is a Python module for machine learning which is built on the top of
 SciPy and is distributed under the 3-Clause BSD license.
 
 The project was started in 2007 by David Cournapeau as a Google Summer
@@ -74,9 +74,9 @@ scikit-learn requires:
 
 Scikit-learn plotting capabilities (i.e., functions start with ``plot_`` and
 classes end with ``Display``) require Matplotlib (>= |MatplotlibMinVersion|).
-For running the examples Matplotlib >= |MatplotlibMinVersion| is required.
-A few examples require scikit-image >= |Scikit-ImageMinVersion|, a few examples
-require pandas >= |PandasMinVersion|, some examples require seaborn >=
+For running the examples, Matplotlib >= |MatplotlibMinVersion| is required.
+Few examples require scikit-image >= |Scikit-ImageMinVersion|, while some examples
+require pandas >= |PandasMinVersion|; some examples require seaborn >=
 |SeabornMinVersion| and Plotly >= |PlotlyMinVersion|.
 
 User installation
@@ -159,7 +159,7 @@ of Code project, and since then many volunteers have contributed. See
 the `About us <https://scikit-learn.org/dev/about.html#authors>`__ page
 for a list of core contributors.
 
-The project is currently maintained by a team of volunteers.
+The project is maintained by a team of volunteers.
 
 **Note**: `scikit-learn` was previously referred to as `scikits.learn`.
 
