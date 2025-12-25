@@ -192,12 +192,14 @@ def _alpha_grid(
     else:
         n_samples = X.shape[0]
 
-    if positive:
-        Xyw = np.maximum(0, Xyw)
-
-    # Compute np.max(np.sqrt(np.sum(Xyw**2, axis=1))). We switch sqrt and max to avoid
-    # many computations of sqrt.
-    alpha_max = np.sqrt(np.max(np.sum(Xyw**2, axis=1))) / (n_samples * l1_ratio)
+    if not positive:
+        # Compute np.max(np.sqrt(np.sum(Xyw**2, axis=1))). We switch sqrt and max to
+        # avoid many computations of sqrt.
+        alpha_max = np.sqrt(np.max(np.sum(Xyw**2, axis=1))) / (n_samples * l1_ratio)
+    else:
+        # We may safely assume Xyw.shape[1] == 1, MultiTask estimators do not support
+        # positive constraints.
+        alpha_max = max(0, np.max(Xyw)) / (n_samples * l1_ratio)
 
     if alpha_max <= np.finfo(np.float64).resolution:
         return np.full(n_alphas, np.finfo(np.float64).resolution)
