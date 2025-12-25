@@ -68,7 +68,7 @@ def check_predictions(clf, X, y):
 
     probabilities = clf.predict_proba(X)
     assert probabilities.shape == (n_samples, n_classes)
-    assert_array_almost_equal(probabilities.sum(axis=1), np.ones(n_samples))
+    assert_allclose(probabilities.sum(axis=1), np.ones(n_samples))
     assert_array_equal(probabilities.argmax(axis=1), y)
 
 
@@ -86,95 +86,10 @@ def test_predict_2_classes(csr_container):
     check_predictions(LogisticRegression(fit_intercept=False), csr_container(X), Y1)
 
 
-def test_logistic_cv_mock_scorer():
-    """Test that LogisticRegressionCV calls the scorer."""
-
-    class MockScorer:
-        def __init__(self):
-            self.calls = 0
-            self.scores = [0.1, 0.4, 0.8, 0.5]
-
-        def __call__(self, model, X, y, sample_weight=None):
-            score = self.scores[self.calls % len(self.scores)]
-            self.calls += 1
-            return score
-
-    mock_scorer = MockScorer()
-    Cs = [1, 2, 3, 4]
-    cv = 2
-
-    lr = LogisticRegressionCV(
-        Cs=Cs,
-        l1_ratios=(0,),  # TODO(1.10): remove with new default of l1_ratios
-        scoring=mock_scorer,
-        cv=cv,
-        use_legacy_attributes=False,
-    )
-    X, y = make_classification(random_state=0)
-    lr.fit(X, y)
-
-    # Cs[2] has the highest score (0.8) from MockScorer
-    assert lr.C_ == Cs[2]
-
-    # scorer called 8 times (cv*len(Cs))
-    assert mock_scorer.calls == cv * len(Cs)
-
-    # reset mock_scorer
-    mock_scorer.calls = 0
-    custom_score = lr.score(X, lr.predict(X))
-
-    assert custom_score == mock_scorer.scores[0]
-    assert mock_scorer.calls == 1
-
-
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_predict_3_classes(csr_container):
     check_predictions(LogisticRegression(C=10), X, Y2)
     check_predictions(LogisticRegression(C=10), csr_container(X), Y2)
-
-
-@pytest.mark.parametrize(
-    "clf",
-    [
-        LogisticRegression(C=len(iris.data), solver="lbfgs", max_iter=200),
-        LogisticRegression(C=len(iris.data), solver="newton-cg"),
-        LogisticRegression(
-            C=len(iris.data),
-            solver="sag",
-            tol=1e-2,
-        ),
-        LogisticRegression(
-            C=len(iris.data),
-            solver="saga",
-            tol=1e-2,
-        ),
-        LogisticRegression(C=len(iris.data), solver="newton-cholesky"),
-        OneVsRestClassifier(LogisticRegression(C=len(iris.data), solver="liblinear")),
-    ],
-)
-def test_predict_iris(clf, global_random_seed):
-    """Test logistic regression with the iris dataset.
-
-    Test that different solvers handle multiclass data correctly and
-    give good accuracy score (>0.95) for the training data.
-    """
-    clf = clone(clf)  # Avoid side effects from shared instances
-    n_samples, _ = iris.data.shape
-    target = iris.target_names[iris.target]
-
-    if getattr(clf, "solver", None) in ("sag", "saga", "liblinear"):
-        clf.set_params(random_state=global_random_seed)
-    clf.fit(iris.data, target)
-    assert_array_equal(np.unique(target), clf.classes_)
-
-    pred = clf.predict(iris.data)
-    assert np.mean(pred == target) > 0.95
-
-    probabilities = clf.predict_proba(iris.data)
-    assert_allclose(probabilities.sum(axis=1), np.ones(n_samples))
-
-    pred = iris.target_names[probabilities.argmax(axis=1)]
-    assert np.mean(pred == target) > 0.95
 
 
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
@@ -348,11 +263,13 @@ def test_inconsistent_input():
     # Wrong dimensions for training data
     y_wrong = y_[:-1]
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="Found input variables with inconsistent number"
+    ):
         clf.fit(X, y_wrong)
 
     # Wrong dimensions for test data
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="X has 12 features, but"):
         clf.fit(X_, y_).predict(rng.random_sample((3, 12)))
 
 
@@ -370,10 +287,10 @@ def test_nan():
     # Regression test for Issue #252: fit used to go into an infinite loop.
     Xnan = np.array(X, dtype=np.float64)
     Xnan[0, 1] = np.nan
-    logistic = LogisticRegression()
+    clf = LogisticRegression()
 
-    with pytest.raises(ValueError):
-        logistic.fit(Xnan, Y1)
+    with pytest.raises(ValueError, match="Input X contains NaN."):
+        clf.fit(Xnan, Y1)
 
 
 def test_consistency_path(global_random_seed):
@@ -543,6 +460,47 @@ def test_logistic_cv(global_random_seed, use_legacy_attributes):
         assert lr_cv.scores_.shape == (n_cv, n_l1_ratios, n_Cs)
 
 
+def test_logistic_cv_mock_scorer():
+    """Test that LogisticRegressionCV calls the scorer."""
+
+    class MockScorer:
+        def __init__(self):
+            self.calls = 0
+            self.scores = [0.1, 0.4, 0.8, 0.5]
+
+        def __call__(self, model, X, y, sample_weight=None):
+            score = self.scores[self.calls % len(self.scores)]
+            self.calls += 1
+            return score
+
+    mock_scorer = MockScorer()
+    Cs = [1, 2, 3, 4]
+    cv = 2
+
+    lr = LogisticRegressionCV(
+        Cs=Cs,
+        l1_ratios=(0,),  # TODO(1.10): remove with new default of l1_ratios
+        scoring=mock_scorer,
+        cv=cv,
+        use_legacy_attributes=False,
+    )
+    X, y = make_classification(random_state=0)
+    lr.fit(X, y)
+
+    # Cs[2] has the highest score (0.8) from MockScorer
+    assert lr.C_ == Cs[2]
+
+    # scorer called 8 times (cv*len(Cs))
+    assert mock_scorer.calls == cv * len(Cs)
+
+    # reset mock_scorer
+    mock_scorer.calls = 0
+    custom_score = lr.score(X, lr.predict(X))
+
+    assert custom_score == mock_scorer.scores[0]
+    assert mock_scorer.calls == 1
+
+
 @pytest.mark.parametrize(
     "scoring, multiclass_agg_list",
     [
@@ -650,23 +608,6 @@ def test_multinomial_logistic_regression_string_inputs():
     )
 
     assert sorted(np.unique(lr_cv_str.predict(X_ref))) == ["bar", "baz"]
-
-
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_logistic_cv_sparse(global_random_seed, csr_container):
-    X, y = make_classification(
-        n_samples=100, n_features=5, random_state=global_random_seed
-    )
-    X[X < 1.0] = 0.0
-    csr = csr_container(X)
-
-    clf = LogisticRegressionCV(use_legacy_attributes=False)
-    clf.fit(X, y)
-    clfs = LogisticRegressionCV(use_legacy_attributes=False)
-    clfs.fit(csr, y)
-    assert_array_almost_equal(clfs.coef_, clf.coef_)
-    assert_array_almost_equal(clfs.intercept_, clf.intercept_)
-    assert clfs.C_ == clf.C_
 
 
 # TODO(1.12): remove deprecated use_legacy_attributes
@@ -835,11 +776,12 @@ def test_logistic_regression_solvers(global_random_seed):
 @pytest.mark.parametrize("fit_intercept", [False, True])
 def test_logistic_regression_solvers_multiclass(fit_intercept):
     """Test solvers converge to the same result for multiclass problems."""
+    n_samples, n_features, n_classes = 20, 20, 3
     X, y = make_classification(
-        n_samples=20,
-        n_features=20,
+        n_samples=n_samples,
+        n_features=n_features,
         n_informative=10,
-        n_classes=3,
+        n_classes=n_classes,
         random_state=0,
     )
     tol = 1e-8
@@ -847,7 +789,7 @@ def test_logistic_regression_solvers_multiclass(fit_intercept):
 
     # Override max iteration count for specific solvers to allow for
     # proper convergence.
-    solver_max_iter = {"lbfgs": 200, "sag": 10_000, "saga": 10_000}
+    solver_max_iter = {"lbfgs": 200, "sag": 20_000, "saga": 20_000}
 
     classifiers = {
         solver: LogisticRegression(
@@ -855,6 +797,10 @@ def test_logistic_regression_solvers_multiclass(fit_intercept):
         ).fit(X, y)
         for solver in set(SOLVERS) - set(["liblinear"])
     }
+    for solver, clf in classifiers.items():
+        assert clf.coef_.shape == (n_classes, n_features), (
+            f"Solver {solver} generates coef_ with wrong shape."
+        )
 
     for solver_1, solver_2 in itertools.combinations(classifiers, r=2):
         assert_allclose(
@@ -869,6 +815,30 @@ def test_logistic_regression_solvers_multiclass(fit_intercept):
                 classifiers[solver_2].intercept_,
                 rtol=5e-3 if (solver_1 == "saga" or solver_2 == "saga") else 1e-3,
                 err_msg=f"{solver_1} vs {solver_2}",
+            )
+
+    # Test that LogisticRegressionCV gives almost the same results for the same C.
+    # However, since in this case we take the average of the coefs after fitting across
+    # all the folds, it need not be exactly the same.
+    classifiers_cv = {
+        solver: LogisticRegressionCV(
+            Cs=[1.0],
+            solver=solver,
+            max_iter=solver_max_iter.get(solver, 100),
+            use_legacy_attributes=False,
+            **params,
+        ).fit(X, y)
+        for solver in set(SOLVERS) - set(["liblinear"])
+    }
+    for solver in classifiers_cv:
+        assert_allclose(
+            classifiers_cv[solver].coef_, classifiers[solver].coef_, rtol=1e-2
+        )
+        if fit_intercept:
+            assert_allclose(
+                classifiers_cv[solver].intercept_,
+                classifiers[solver].intercept_,
+                rtol=1e-2,
             )
 
 
@@ -942,6 +912,27 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
             )
 
 
+@pytest.mark.parametrize("solver", SOLVERS)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_logistic_cv_sparse(global_random_seed, solver, csr_container):
+    """Test that sparse and dense X gives same result for each solver."""
+    X, y = make_classification(
+        n_samples=100, n_features=5, random_state=global_random_seed
+    )
+    X[X < 0.0] = 0.0  # make it a bit sparse
+    params = dict(Cs=[1e-1, 1, 1e1], max_iter=10_000, tol=1e-6, random_state=42)
+
+    clf = LogisticRegressionCV(solver=solver, use_legacy_attributes=False, **params)
+    clf.fit(X, y)
+    clfs = LogisticRegressionCV(solver=solver, use_legacy_attributes=False, **params)
+    clfs.fit(csr_container(X), y)
+
+    rtol = 5e-2 if solver in ("sag", "saga") else 1e-5
+    assert_allclose(clfs.coef_, clf.coef_, rtol=rtol)
+    assert_allclose(clfs.intercept_, clf.intercept_, rtol=rtol)
+    assert clfs.C_ == clf.C_
+
+
 @pytest.mark.parametrize("weight", [{0: 0.1, 1: 0.2}, {0: 0.1, 1: 0.2, 2: 0.5}])
 @pytest.mark.parametrize("class_weight", ["weight", "balanced"])
 def test_logistic_regressioncv_class_weights(weight, class_weight, global_random_seed):
@@ -994,9 +985,7 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
 # TODO(1.10): remove filterwarnings with deprecation period of use_legacy_attributes
 @pytest.mark.filterwarnings("ignore:.*use_legacy_attributes.*:FutureWarning")
 @pytest.mark.parametrize("problem", ("single", "cv"))
-@pytest.mark.parametrize(
-    "solver", ("lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga")
-)
+@pytest.mark.parametrize("solver", SOLVERS)
 def test_logistic_regression_sample_weights(problem, solver, global_random_seed):
     n_samples_per_cv_group = 200
     n_cv_groups = 3
@@ -1036,13 +1025,13 @@ def test_logistic_regression_sample_weights(problem, solver, global_random_seed)
             ]
         )
         splits_weighted = list(LeaveOneGroupOut().split(X, groups=groups_weighted))
-        kw_weighted.update({"Cs": 100, "cv": splits_weighted})
+        kw_weighted.update({"Cs": 10, "cv": splits_weighted})
 
         groups_repeated = np.repeat(groups_weighted, sw.astype(int), axis=0)
         splits_repeated = list(
             LeaveOneGroupOut().split(X_repeated, groups=groups_repeated)
         )
-        kw_repeated.update({"Cs": 100, "cv": splits_repeated})
+        kw_repeated.update({"Cs": 10, "cv": splits_repeated})
 
     clf_sw_weighted = LR(solver=solver, **kw_weighted)
     clf_sw_repeated = LR(solver=solver, **kw_repeated)
@@ -1064,9 +1053,7 @@ def test_logistic_regression_sample_weights(problem, solver, global_random_seed)
     assert_allclose(clf_sw_weighted.coef_, clf_sw_repeated.coef_, atol=1e-5)
 
 
-@pytest.mark.parametrize(
-    "solver", ("lbfgs", "newton-cg", "newton-cholesky", "sag", "saga")
-)
+@pytest.mark.parametrize("solver", SOLVERS)
 def test_logistic_regression_solver_class_weights(solver, global_random_seed):
     # Test that passing class_weight as [1, 2] is the same as
     # passing class weight = [1,1] but adjusting sample weights
@@ -1204,69 +1191,6 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
         assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=6)
 
 
-def test_logistic_regression_multinomial(global_random_seed):
-    # Tests for the multinomial option in logistic regression
-
-    # Some basic attributes of Logistic Regression
-    n_samples, n_features, n_classes = 200, 20, 3
-    X, y = make_classification(
-        n_samples=n_samples,
-        n_features=n_features,
-        n_informative=10,
-        n_classes=n_classes,
-        random_state=global_random_seed,
-    )
-
-    X = StandardScaler(with_mean=False).fit_transform(X)
-
-    # 'lbfgs' solver is used as a reference - it's the default
-    ref_i = LogisticRegression(tol=1e-10)
-    ref_w = LogisticRegression(fit_intercept=False, tol=1e-10)
-    ref_i.fit(X, y)
-    ref_w.fit(X, y)
-    assert ref_i.coef_.shape == (n_classes, n_features)
-    assert ref_w.coef_.shape == (n_classes, n_features)
-    for solver in ["sag", "saga", "newton-cg"]:
-        clf_i = LogisticRegression(
-            solver=solver,
-            random_state=global_random_seed,
-            max_iter=2000,
-            tol=1e-10,
-        )
-        clf_w = LogisticRegression(
-            solver=solver,
-            random_state=global_random_seed,
-            max_iter=2000,
-            tol=1e-10,
-            fit_intercept=False,
-        )
-        clf_i.fit(X, y)
-        clf_w.fit(X, y)
-        assert clf_i.coef_.shape == (n_classes, n_features)
-        assert clf_w.coef_.shape == (n_classes, n_features)
-
-        # Compare solutions between lbfgs and the other solvers
-        assert_allclose(ref_i.coef_, clf_i.coef_, rtol=3e-3)
-        assert_allclose(ref_w.coef_, clf_w.coef_, rtol=1e-2)
-        assert_allclose(ref_i.intercept_, clf_i.intercept_, rtol=1e-3)
-
-    # Test that the path give almost the same results. However since in this
-    # case we take the average of the coefs after fitting across all the
-    # folds, it need not be exactly the same.
-    for solver in ["lbfgs", "newton-cg", "sag", "saga"]:
-        clf_path = LogisticRegressionCV(
-            solver=solver,
-            random_state=global_random_seed,
-            max_iter=2000,
-            tol=1e-10,
-            Cs=[1.0],
-            use_legacy_attributes=False,
-        )
-        clf_path.fit(X, y)
-        assert_allclose(clf_path.coef_, ref_i.coef_, rtol=1e-2)
-        assert_allclose(clf_path.intercept_, ref_i.intercept_, rtol=1e-2)
-
-
 def test_liblinear_decision_function_zero(global_random_seed):
     # Test negative prediction when decision_function values are zero.
     # Liblinear predicts the positive class when decision_function values
@@ -1286,33 +1210,6 @@ def test_liblinear_decision_function_zero(global_random_seed):
     assert_array_equal(clf.predict(X), np.zeros(5))
 
 
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_liblinear_logregcv_sparse(csr_container, global_random_seed):
-    # Test LogRegCV with solver='liblinear' works for sparse matrices
-
-    X, y = make_classification(
-        n_samples=10, n_features=5, random_state=global_random_seed
-    )
-    clf = LogisticRegressionCV(solver="liblinear", use_legacy_attributes=False)
-    clf.fit(csr_container(X), y)
-
-
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_saga_sparse(csr_container, global_random_seed):
-    # Test LogRegCV with solver='liblinear' works for sparse matrices
-
-    X, y = make_classification(
-        n_samples=10, n_features=5, random_state=global_random_seed
-    )
-    clf = LogisticRegressionCV(
-        solver="saga",
-        tol=1e-2,
-        random_state=global_random_seed,
-        use_legacy_attributes=False,
-    )
-    clf.fit(csr_container(X), y)
-
-
 def test_logreg_intercept_scaling_zero():
     # Test that intercept_scaling is ignored when fit_intercept is False
 
@@ -1321,7 +1218,8 @@ def test_logreg_intercept_scaling_zero():
     assert clf.intercept_ == 0.0
 
 
-def test_logreg_l1(global_random_seed):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_logreg_l1(global_random_seed, csr_container):
     # Because liblinear penalizes the intercept and saga does not, we do not
     # fit the intercept to make it possible to compare the coefficients of
     # the two models at convergence.
@@ -1333,86 +1231,31 @@ def test_logreg_l1(global_random_seed):
     X_noise = rng.normal(size=(n_samples, 3))
     X_constant = np.ones(shape=(n_samples, 2))
     X = np.concatenate((X, X_noise, X_constant), axis=1)
-    lr_liblinear = LogisticRegression(
+    params = dict(
         l1_ratio=1,
         C=1.0,
-        solver="liblinear",
         fit_intercept=False,
         max_iter=10000,
         tol=1e-10,
         random_state=global_random_seed,
     )
+    lr_liblinear = LogisticRegression(solver="liblinear", **params)
     lr_liblinear.fit(X, y)
 
-    lr_saga = LogisticRegression(
-        l1_ratio=1,
-        C=1.0,
-        solver="saga",
-        fit_intercept=False,
-        max_iter=10000,
-        tol=1e-10,
-        random_state=global_random_seed,
-    )
+    lr_saga = LogisticRegression(solver="saga", **params)
     lr_saga.fit(X, y)
 
     assert_allclose(lr_saga.coef_, lr_liblinear.coef_, atol=0.3)
 
-
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_logreg_l1_sparse_data(global_random_seed, csr_container):
-    # Because liblinear penalizes the intercept and saga does not, we do not
-    # fit the intercept to make it possible to compare the coefficients of
-    # the two models at convergence.
-    rng = np.random.RandomState(global_random_seed)
-    n_samples = 50
-    X, y = make_classification(
-        n_samples=n_samples, n_features=20, random_state=global_random_seed
-    )
-    X_noise = rng.normal(scale=0.1, size=(n_samples, 3))
-    X_constant = np.zeros(shape=(n_samples, 2))
-    X = np.concatenate((X, X_noise, X_constant), axis=1)
-    X[X < 1] = 0
-    X = csr_container(X)
-
-    lr_liblinear = LogisticRegression(
-        l1_ratio=1,
-        C=1.0,
-        solver="liblinear",
-        fit_intercept=False,
-        tol=1e-10,
-        max_iter=10000,
-        random_state=global_random_seed,
-    )
-    lr_liblinear.fit(X, y)
-
-    lr_saga = LogisticRegression(
-        l1_ratio=1,
-        C=1.0,
-        solver="saga",
-        fit_intercept=False,
-        max_iter=10000,
-        tol=1e-10,
-        random_state=global_random_seed,
-    )
-    lr_saga.fit(X, y)
-    assert_array_almost_equal(lr_saga.coef_, lr_liblinear.coef_)
-    # Noise and constant features should be regularized to zero by the l1
-    # penalty
-    assert_array_almost_equal(lr_liblinear.coef_[0, -5:], np.zeros(5))
-    assert_array_almost_equal(lr_saga.coef_[0, -5:], np.zeros(5))
-
     # Check that solving on the sparse and dense data yield the same results
-    lr_saga_dense = LogisticRegression(
-        l1_ratio=1,
-        C=1.0,
-        solver="saga",
-        fit_intercept=False,
-        max_iter=10000,
-        tol=1e-10,
-        random_state=global_random_seed,
-    )
-    lr_saga_dense.fit(X.toarray(), y)
-    assert_array_almost_equal(lr_saga.coef_, lr_saga_dense.coef_)
+    X_sp = csr_container(X)
+    lr_liblinear_sp = LogisticRegression(solver="liblinear", **params)
+    lr_liblinear_sp.fit(X_sp, y)
+    assert_allclose(lr_liblinear_sp.coef_, lr_liblinear.coef_)
+
+    lr_saga_sp = LogisticRegression(solver="saga", **params)
+    lr_saga_sp.fit(X_sp, y)
+    assert_allclose(lr_saga_sp.coef_, lr_saga.coef_)
 
 
 @pytest.mark.parametrize("l1_ratio", [1, 0])  # L1 and L2 penalty
@@ -1444,7 +1287,7 @@ def test_logistic_regression_cv_refit(global_random_seed, l1_ratio):
     lr_cv.fit(X, y)
     lr = LogisticRegression(C=1.0, l1_ratio=l1_ratio, **common_params)
     lr.fit(X, y)
-    assert_array_almost_equal(lr_cv.coef_, lr.coef_)
+    assert_allclose(lr_cv.coef_, lr.coef_)
 
 
 def test_logreg_predict_proba_multinomial(global_random_seed):
