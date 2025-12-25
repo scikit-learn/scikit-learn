@@ -31,18 +31,28 @@ class _SubsampleMetaSplitter:
 
     def split(self, X, y, **kwargs):
         for train_idx, test_idx in self.base_cv.split(X, y, **kwargs):
+            n_train = int(self.fraction * len(train_idx))
+            if len(train_idx) >= 2:
+                n_train = max(n_train, 2)
+            elif len(train_idx) > 0:
+                n_train = max(n_train, 1)
             train_idx = resample(
                 train_idx,
                 replace=False,
                 random_state=self.random_state,
-                n_samples=int(self.fraction * len(train_idx)),
+                n_samples=n_train,
             )
             if self.subsample_test:
+                n_test = int(self.fraction * len(test_idx))
+                if len(test_idx) >= 2:
+                    n_test = max(n_test, 2)
+                elif len(test_idx) > 0:
+                    n_test = max(n_test, 1)
                 test_idx = resample(
                     test_idx,
                     replace=False,
                     random_state=self.random_state,
-                    n_samples=int(self.fraction * len(test_idx)),
+                    n_samples=n_test,
                 )
             yield train_idx, test_idx
 

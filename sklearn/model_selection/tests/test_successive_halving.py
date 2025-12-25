@@ -15,6 +15,7 @@ from sklearn.model_selection import (
     KFold,
     LeaveOneGroupOut,
     LeavePGroupsOut,
+    PredefinedSplit,
     ShuffleSplit,
     StratifiedKFold,
     StratifiedShuffleSplit,
@@ -851,3 +852,32 @@ def test_halving_random_search_list_of_dicts():
         for i in range(n_candidates)
         if cv_results["param_kernel"][i] == "rbf"
     )
+
+
+def test_halving_random_search_predefined_split_small_test():
+    # Check that HalvingRandomSearchCV works with PredefinedSplit and small
+    # test sets.
+    # We use a small dataset and a PredefinedSplit with a small test set.
+    # We check that the search does not fail and that the best score is not NaN.
+    X, y = make_classification(n_samples=100, random_state=42)
+    # 80 training samples, 20 test samples
+    test_fold = [-1] * 80 + [0] * 20
+    cv = PredefinedSplit(test_fold)
+
+    model = DummyClassifier(strategy="stratified", random_state=42)
+    param_distributions = {"constant": [0, 1]}
+
+    random_search = HalvingRandomSearchCV(
+        model,
+        param_distributions,
+        cv=cv,
+        random_state=42,
+        min_resources="smallest",
+        factor=2,
+        n_candidates=2,
+    )
+    random_search.fit(X, y)
+
+    # Check that we have results
+    assert random_search.best_score_ is not None
+    assert not np.isnan(random_search.best_score_)
