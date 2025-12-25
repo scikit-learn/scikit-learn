@@ -767,6 +767,11 @@ def _ridge_regression(
                 solver = "svd"
 
     elif solver in ["sag", "saga"]:
+        if has_sw:
+            sw_sum = xp.sum(sample_weight)
+        else:
+            sw_sum = xp.asarray(n_samples, dtype=X.dtype)
+
         # precompute max_squared_sum for all targets
         max_squared_sum = row_norms(X, squared=True).max()
 
@@ -774,6 +779,7 @@ def _ridge_regression(
         n_iter = np.empty(y.shape[1], dtype=np.int32)
         intercept = np.zeros((y.shape[1],), dtype=X.dtype)
         for i, (alpha_i, target) in enumerate(zip(alpha, y.T)):
+            current_alpha = alpha_i * n_samples / sw_sum
             init = {
                 "coef": np.zeros((n_features + int(return_intercept), 1), dtype=X.dtype)
             }
@@ -782,6 +788,7 @@ def _ridge_regression(
                 target.ravel(),
                 sample_weight,
                 "squared",
+                current_alpha,
                 alpha_i,
                 0,
                 max_iter,
