@@ -403,9 +403,9 @@ def _write_estimator_html(
             and not hasattr(estimator, "steps")
             and hasattr(estimator, "n_features_in_")
         ):
-            features = estimator.get_feature_names_out()
+            output_features = estimator.get_feature_names_out()
         else:
-            features = ""
+            output_features = ""
 
         if est_block.names == "NoneType(...)":
             est_block.names = "passthrough"
@@ -429,7 +429,7 @@ def _write_estimator_html(
             inner_class="sk-estimator",
             checked=first_call,
             doc_link=doc_link,
-            features=features,
+            features=output_features,
             is_fitted_css_class=is_fitted_css_class,
             is_fitted_icon=is_fitted_icon,
             param_prefix=param_prefix,
