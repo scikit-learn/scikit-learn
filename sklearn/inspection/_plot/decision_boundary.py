@@ -8,19 +8,18 @@ import numpy as np
 from sklearn.base import is_regressor
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import _safe_indexing
+from sklearn.utils._dataframe import is_pandas_df, is_polars_df
 from sklearn.utils._optional_dependencies import check_matplotlib_support
 from sklearn.utils._response import _get_response_values
 from sklearn.utils._set_output import _get_adapter_from_container
 from sklearn.utils.validation import (
     _is_arraylike_not_scalar,
-    _is_pandas_df,
-    _is_polars_df,
     _num_features,
     check_is_fitted,
 )
 
 
-def _check_boundary_response_method(estimator, response_method, class_of_interest):
+def _check_boundary_response_method(estimator, response_method):
     """Validate the response methods to be used with the fitted estimator.
 
     Parameters
@@ -32,12 +31,6 @@ def _check_boundary_response_method(estimator, response_method, class_of_interes
         Specifies whether to use :term:`decision_function`, :term:`predict_proba`,
         :term:`predict` as the target response. If set to 'auto', the response method is
         tried in the before mentioned order.
-
-    class_of_interest : int, float, bool, str or None
-        The class considered when plotting the decision. Cannot be None if
-        multiclass and `response_method` is 'predict_proba' or 'decision_function'.
-
-        .. versionadded:: 1.4
 
     Returns
     -------
@@ -496,7 +489,7 @@ class DecisionBoundaryDisplay:
         )
 
         X_grid = np.c_[xx0.ravel(), xx1.ravel()]
-        if _is_pandas_df(X) or _is_polars_df(X):
+        if is_pandas_df(X) or is_polars_df(X):
             adapter = _get_adapter_from_container(X)
             X_grid = adapter.create_container(
                 X_grid,
@@ -504,9 +497,7 @@ class DecisionBoundaryDisplay:
                 columns=X.columns,
             )
 
-        prediction_method = _check_boundary_response_method(
-            estimator, response_method, class_of_interest
-        )
+        prediction_method = _check_boundary_response_method(estimator, response_method)
         try:
             response, _, response_method_used = _get_response_values(
                 estimator,
