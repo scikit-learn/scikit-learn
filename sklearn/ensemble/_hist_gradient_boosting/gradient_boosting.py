@@ -640,9 +640,18 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # data.
         self._in_fit = True
 
-        # `_openmp_effective_n_threads` is used to take cgroups CPU quotes
-        # into account when determine the maximum number of threads to use.
-        n_threads = _openmp_effective_n_threads()
+        # `_openmp_effective_n_threads` is used to take cgroups CPU quotes into
+        # account when determine the maximum number of threads to use. We
+        # further limit the number of threads based on the input data shape to
+        # avoid spawning too many threads for small datasets as it was
+        # empirically found that using too many threads can slow down training.
+        self.n_threads_ = n_threads = min(
+            _openmp_effective_n_threads(),
+            min(
+                max(X.shape[0] * X.shape[1] // 1_000_000, 1),
+                max(X.shape[1] // 2, 1),
+            ),
+        )
 
         if isinstance(self.loss, str):
             self._loss = self._get_loss(sample_weight=sample_weight)
