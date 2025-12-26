@@ -37,8 +37,7 @@ See :ref:`ways_to_contribute` to learn how to make meaningful contributions.
 
 .. topic:: **Our community, our values**
 
-    We are a community based on openness and friendly, didactic,
-    discussions.
+    We are a community based on openness and friendly, didactic discussions.
 
     We aspire to treat everybody equally, and value their contributions.  We
     are particularly seeking people from underrepresented backgrounds in Open
