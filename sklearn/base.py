@@ -21,6 +21,7 @@ from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import validate_parameter_constraints
 from sklearn.utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
 from sklearn.utils._repr_html.estimator import estimator_html_repr
+from sklearn.utils._repr_html.methods import MethodsDict
 from sklearn.utils._repr_html.params import ParamsDict
 from sklearn.utils._set_output import _SetOutputMixin
 from sklearn.utils._tags import (
@@ -345,6 +346,27 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             estimator_class=self.__class__,
             doc_link=doc_link,
         )
+
+    def _get_methods_html(self, deep=True):
+        init_func = getattr(self.__init__, "deprecated_original", self)
+
+        # Pipeline fails without this check
+        if hasattr(init_func, "steps") and not len(init_func.steps):
+            return MethodsDict("", "")
+
+        params = self.get_params(deep=deep)
+
+        methods = {
+            name: str(inspect.signature(method))
+            for name, method in inspect.getmembers(init_func, predicate=callable)
+            if not name.startswith("_") and not name.endswith("_")
+            if not hasattr(method, name)
+            if name not in params
+        }
+
+        estimator_class = init_func.__class__
+
+        return MethodsDict(methods, estimator_class)
 
     def set_params(self, **params):
         """Set the parameters of this estimator.
