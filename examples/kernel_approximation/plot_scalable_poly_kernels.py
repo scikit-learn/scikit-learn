@@ -118,7 +118,7 @@ print(f"Linear SVM score on raw features: {lsvm_score:.2f}%")
 from sklearn.kernel_approximation import PolynomialCountSketch
 
 n_runs = 1
-N_COMPONENTS = [250, 500, 1000, 2000]
+N_COMPONENTS = [250, 500, 1000, 1500]
 
 for n_components in N_COMPONENTS:
     ps_lsvm_time = 0

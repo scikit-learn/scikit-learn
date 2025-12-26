@@ -201,6 +201,7 @@ echo "ccache build summary:"
 ccache -s
 
 export OMP_NUM_THREADS=1
+export PYTHONFAULTHANDLER=1
 
 if [[ "$CIRCLE_BRANCH" == "main" || "$CI_TARGET_BRANCH" == "main" ]]
 then
