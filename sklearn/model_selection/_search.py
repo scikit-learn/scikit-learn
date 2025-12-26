@@ -1360,8 +1360,12 @@ class GridSearchCV(BaseSearchCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    verbose : int
-        Controls the verbosity: the higher, the more messages.
+    verbose : int, default=0
+        Controls the verbosity of the grid search.
+
+        Higher values increase the amount of information printed during fitting.
+        Commonly values are between 0 and 3, but larger values (e.g. >3 or >10) may
+        produce increasingly detailed output depending on the execution backend.
 
         - >1 : the computation time for each fold and parameter candidate is
           displayed;
