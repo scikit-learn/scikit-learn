@@ -19,6 +19,7 @@ from scipy.integrate import trapezoid
 from scipy.sparse import csr_matrix, issparse
 from scipy.stats import rankdata
 
+from sklearn import get_config
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics._base import _average_binary_score, _average_multiclass_ovo_score
 from sklearn.preprocessing import label_binarize
@@ -29,7 +30,9 @@ from sklearn.utils import (
     column_or_1d,
 )
 from sklearn.utils._array_api import (
+    _convert_to_numpy,
     _max_precision_float_dtype,
+    get_namespace,
     get_namespace_and_device,
     size,
 )
@@ -224,25 +227,38 @@ def average_precision_score(
     >>> average_precision_score(y_true, y_scores)
     0.77
     """
+    xp, _ = get_namespace(y_true, y_score, sample_weight)
+
+    if not get_config().get("array_api_dispatch", False):
+        y_true = _convert_to_numpy(y_true, xp=xp)
+        y_score = _convert_to_numpy(y_score, xp=xp)
+        if sample_weight is not None:
+            sample_weight = _convert_to_numpy(sample_weight, xp=xp)
 
     def _binary_uninterpolated_average_precision(
-        y_true, y_score, pos_label=1, sample_weight=None
+        y_true,
+        y_score,
+        pos_label=1,
+        sample_weight=None,
+        xp=xp,
     ):
         precision, recall, _ = precision_recall_curve(
-            y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
+            y_true,
+            y_score,
+            pos_label=pos_label,
+            sample_weight=sample_weight,
         )
         # Return the step function integral
         # The following works because the last entry of precision is
         # guaranteed to be 1, as returned by precision_recall_curve.
         # Due to numerical error, we can get `-0.0` and we therefore clip it.
-        return float(max(0.0, -np.sum(np.diff(recall) * np.array(precision)[:-1])))
+        return float(max(0.0, -xp.sum(xp.diff(recall) * precision[:-1])))
 
     y_type = type_of_target(y_true, input_name="y_true")
-
-    present_labels = np.unique(y_true)
+    present_labels = xp.unique_values(y_true)
 
     if y_type == "binary":
-        if len(present_labels) == 2 and pos_label not in present_labels:
+        if present_labels.shape[0] == 2 and pos_label not in present_labels:
             raise ValueError(
                 f"pos_label={pos_label} is not a valid label. It should be "
                 f"one of {present_labels}"
@@ -263,7 +279,7 @@ def average_precision_score(
         y_true = label_binarize(y_true, classes=present_labels)
 
     average_precision = partial(
-        _binary_uninterpolated_average_precision, pos_label=pos_label
+        _binary_uninterpolated_average_precision, pos_label=pos_label, xp=xp
     )
     return _average_binary_score(
         average_precision, y_true, y_score, average, sample_weight=sample_weight
@@ -1130,7 +1146,7 @@ def precision_recall_curve(
             "No positive class found in y_true, "
             "recall is set to one for all thresholds."
         )
-        recall = xp.full(tps.shape, 1.0)
+        recall = xp.full(tps.shape, 1.0, device=device)
     else:
         recall = tps / tps[-1]
 
