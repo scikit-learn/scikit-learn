@@ -562,11 +562,19 @@ def test_make_sparse_uncorrelated():
     assert y.shape == (5,), "y shape mismatch"
 
 
-def test_make_spd_matrix(global_random_seed):
-    X = make_spd_matrix(n_dim=5, random_state=global_random_seed)
+@pytest.mark.parametrize("n_samples", [1, 3])
+def test_make_spd_matrix(global_random_seed, n_samples):
+    n_dim = 5
+    X = make_spd_matrix(
+        n_dim=n_dim, random_state=global_random_seed, n_samples=n_samples
+    )
 
-    assert X.shape == (5, 5), "X shape mismatch"
-    assert_array_almost_equal(X, X.T)
+    if n_samples == 1:
+        assert X.shape == (n_dim, n_dim), "X shape mismatch"
+        assert_array_almost_equal(X, X.T)
+    else:
+        assert X.shape == (n_samples, n_dim, n_dim), "X shape mismatch"
+        assert_array_almost_equal(X, X.transpose((0, 2, 1)))
 
     from numpy.linalg import eig
 
