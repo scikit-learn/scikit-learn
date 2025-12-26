@@ -90,7 +90,8 @@ def test_params_html_repr_with_doc_links():
         Parameters
         ----------
         a : int
-            Description of a.
+            Description of a which can include `<formatted text
+            https://example.com>`_ that should not be confused with HTML tags.
         b : str
         """
 
@@ -115,7 +116,8 @@ def test_params_html_repr_with_doc_links():
         r'\s*<span class="param-doc-description"'
         r'\s*style="position-anchor: --doc-link-a;">\s*a:'
         r"\sint<br><br>"
-        r"Description of a\.</span>"
+        r"Description of a which can include `&lt;formatted text<br>"
+        r"https://example.com&gt;`_ that should not be confused with HTML tags.</span>"
         r"\s*</a>"
         r"\s*</td>"
     )
