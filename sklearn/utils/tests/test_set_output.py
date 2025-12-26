@@ -5,6 +5,9 @@ from scipy.sparse import csr_matrix
 from numpy.testing import assert_array_equal
 
 from sklearn._config import config_context, get_config
+from sklearn.base import TransformerMixin
+from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 from sklearn.utils._set_output import _wrap_in_pandas_container
 from sklearn.utils._set_output import _safe_set_output
 from sklearn.utils._set_output import _SetOutputMixin
@@ -260,3 +263,116 @@ def test_set_output_mro():
         pass
 
     assert C().transform(None) == "B"
+
+
+def test_preserve_pandas_dtypes_subset_selector():
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame(
+        {
+            "float16_col": pd.Series([5.1, 4.9, 5.0, 5.3], dtype=np.float16),
+            "categorical_col": pd.Categorical([0, 1, 0, 1], categories=[0, 1]),
+            "float64_col": [1.4, 1.5, 1.3, 1.6],
+        }
+    )
+    y = np.array([0, 1, 0, 1])
+
+    def constant_scores(X_arr, y_arr):
+        scores = np.array([3.0, 2.0, 1.0])
+        pvalues = np.zeros_like(scores)
+        return scores, pvalues
+
+    selector = SelectKBest(score_func=constant_scores, k=2).set_output(
+        transform="pandas"
+    )
+
+    with config_context(transform_output="pandas", preserve_output_dtypes=True):
+        X_selected = selector.fit_transform(X, y)
+
+    expected_columns = ["float16_col", "categorical_col"]
+    assert list(X_selected.columns) == expected_columns
+    pd.testing.assert_series_equal(
+        X_selected.dtypes, X[expected_columns].dtypes, check_names=False
+    )
+
+
+def test_preserve_dtypes_skips_when_values_change():
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame(
+        {"float16_col": pd.Series([1.0, 2.0, 3.0], dtype=np.float16)}
+    )
+
+    def double_and_upcast(df):
+        data = df.to_numpy(dtype=np.float64) * 2
+        return pd.DataFrame(data, index=df.index, columns=df.columns)
+
+    transformer = FunctionTransformer(
+        double_and_upcast, feature_names_out="one-to-one"
+    ).set_output(transform="pandas")
+
+    with config_context(transform_output="pandas", preserve_output_dtypes=True):
+        X_trans = transformer.fit_transform(X)
+
+    assert X_trans.dtypes.iloc[0] == np.dtype(np.float64)
+
+
+def test_preserve_dtypes_skips_when_new_columns_added():
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame({"color": pd.Categorical(["red", "blue", "red"])})
+
+    encoder = OneHotEncoder(sparse_output=False).set_output(transform="pandas")
+
+    with config_context(transform_output="pandas", preserve_output_dtypes=True):
+        X_encoded = encoder.fit_transform(X)
+
+    assert "color" not in X_encoded.columns
+    assert not X_encoded.dtypes.eq(X["color"].dtype).any()
+
+
+class DuplicateSelector(TransformerMixin):
+    def __init__(self, columns):
+        self.columns = list(columns)
+
+    def fit(self, X, y=None):
+        name_counts = {}
+        positions = []
+        for column in self.columns:
+            offset = name_counts.get(column, 0)
+            matches = [idx for idx, name in enumerate(X.columns) if name == column]
+            if offset >= len(matches):
+                raise ValueError(f"Column {column!r} not available enough times")
+            positions.append(matches[offset])
+            name_counts[column] = offset + 1
+        self._positions = positions
+        return self
+
+    def transform(self, X, y=None):
+        return X.iloc[:, self._positions]
+
+    def get_feature_names_out(self, input_features=None):
+        return np.asarray(self.columns, dtype=object)
+
+
+def test_preserve_dtypes_with_duplicate_columns():
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame(
+        {
+            "first": pd.Series([1, 2, 3], dtype=np.int64),
+            "second": pd.Series([1.5, 2.5, 3.5], dtype=np.float32),
+        }
+    )
+    X.columns = ["feature", "feature"]
+
+    selector = DuplicateSelector(["feature", "feature"]).set_output(
+        transform="pandas"
+    )
+
+    with config_context(transform_output="pandas", preserve_output_dtypes=True):
+        X_selected = selector.fit(X).transform(X)
+
+    pd.testing.assert_series_equal(
+        X_selected.dtypes, X.dtypes, check_names=False
+    )

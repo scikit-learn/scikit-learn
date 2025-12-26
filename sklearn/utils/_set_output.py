@@ -1,5 +1,6 @@
 from functools import wraps
 
+import numpy as np
 from scipy.sparse import issparse
 
 from . import check_pandas_support
@@ -12,6 +13,8 @@ def _wrap_in_pandas_container(
     *,
     columns,
     index=None,
+    original_input=None,
+    preserve_dtypes=False,
 ):
     """Create a Pandas DataFrame.
 
@@ -36,6 +39,14 @@ def _wrap_in_pandas_container(
     index : array-like, default=None
         Index for data.
 
+    original_input : DataFrame, default=None
+        Original pandas input provided to the estimator.
+
+    preserve_dtypes : bool, default=False
+        Whether to attempt preserving the dtypes from ``original_input``
+        when the output is an unmodified subset or reordering of the input
+        columns.
+
     Returns
     -------
     dataframe : DataFrame
@@ -57,9 +68,25 @@ def _wrap_in_pandas_container(
             data_to_wrap.columns = columns
         if index is not None:
             data_to_wrap.index = index
-        return data_to_wrap
+        df = data_to_wrap
+    else:
+        df = pd.DataFrame(data_to_wrap, index=index, columns=columns)
 
-    return pd.DataFrame(data_to_wrap, index=index, columns=columns)
+    if preserve_dtypes and isinstance(original_input, pd.DataFrame):
+        resolved_columns = df.columns if columns is None else columns
+        if resolved_columns is not None:
+            try:
+                resolved_columns = list(resolved_columns)
+            except TypeError:
+                resolved_columns = list(df.columns)
+
+            if all(col in original_input.columns for col in resolved_columns):
+                original_subset = original_input.loc[:, resolved_columns]
+                if np.array_equal(df.to_numpy(), original_subset.to_numpy()):
+                    df = original_subset.copy()
+                    df.columns = resolved_columns
+
+    return df
 
 
 def _get_output_config(method, estimator=None):
@@ -81,19 +108,24 @@ def _get_output_config(method, estimator=None):
 
         - "dense": specifies the dense container for `method`. This can be
           `"default"` or `"pandas"`.
+        - "preserve_dtypes": whether to preserve pandas dtypes when wrapping
+          the output in a DataFrame.
     """
+    global_config = get_config()
     est_sklearn_output_config = getattr(estimator, "_sklearn_output_config", {})
     if method in est_sklearn_output_config:
         dense_config = est_sklearn_output_config[method]
     else:
-        dense_config = get_config()[f"{method}_output"]
+        dense_config = global_config[f"{method}_output"]
+
+    preserve_dtypes = global_config["preserve_output_dtypes"]
 
     if dense_config not in {"default", "pandas"}:
         raise ValueError(
             f"output config must be 'default' or 'pandas' got {dense_config}"
         )
 
-    return {"dense": dense_config}
+    return {"dense": dense_config, "preserve_dtypes": preserve_dtypes}
 
 
 def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
@@ -131,6 +163,8 @@ def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
         data_to_wrap=data_to_wrap,
         index=getattr(original_input, "index", None),
         columns=estimator.get_feature_names_out,
+        original_input=original_input,
+        preserve_dtypes=output_config["preserve_dtypes"],
     )
 
 

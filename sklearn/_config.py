@@ -15,6 +15,7 @@ _global_config = {
     "enable_cython_pairwise_dist": True,
     "array_api_dispatch": False,
     "transform_output": "default",
+    "preserve_output_dtypes": False,
 }
 _threadlocal = threading.local()
 
@@ -54,6 +55,7 @@ def set_config(
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
     transform_output=None,
+    preserve_output_dtypes=None,
 ):
     """Set global scikit-learn configuration
 
@@ -134,6 +136,11 @@ def set_config(
 
         .. versionadded:: 1.2
 
+    preserve_output_dtypes : bool, default=None
+        Preserve input pandas dtypes when ``transform_output="pandas"`` and
+        transformers emit an unmodified subset or reordering of the input
+        columns. Global default: False.
+
     See Also
     --------
     config_context : Context manager for global scikit-learn configuration.
@@ -157,6 +164,8 @@ def set_config(
         local_config["array_api_dispatch"] = array_api_dispatch
     if transform_output is not None:
         local_config["transform_output"] = transform_output
+    if preserve_output_dtypes is not None:
+        local_config["preserve_output_dtypes"] = preserve_output_dtypes
 
 
 @contextmanager
@@ -170,6 +179,7 @@ def config_context(
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
     transform_output=None,
+    preserve_output_dtypes=None,
 ):
     """Context manager for global scikit-learn configuration.
 
@@ -249,6 +259,12 @@ def config_context(
 
         .. versionadded:: 1.2
 
+    preserve_output_dtypes : bool, default=None
+        Preserve input pandas dtypes when ``transform_output="pandas"`` and
+        transformers emit an unmodified subset or reordering of the input
+        columns. If None, the existing value won't change. The default value
+        is False.
+
     Yields
     ------
     None.
@@ -286,6 +302,7 @@ def config_context(
         enable_cython_pairwise_dist=enable_cython_pairwise_dist,
         array_api_dispatch=array_api_dispatch,
         transform_output=transform_output,
+        preserve_output_dtypes=preserve_output_dtypes,
     )
 
     try:
