@@ -1,0 +1,7 @@
+- :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV` and
+  :func:`linear_model.enet_path`
+  now are able to fit Ridge regression, i.e. setting `l1_ratio=0`.
+  Before this PR, the stopping criterion was a formulation of the dual gap that breaks
+  down for `l1_ratio=0`. Now, an alternative dual gap formulation is used for this
+  setting. This reduces the noise of raised warnings.
+  By :user:`Christian Lorentzen <lorentzenchr>`.
