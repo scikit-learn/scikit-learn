@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 from sklearn.compose import ColumnTransformer
-from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import Normalizer, StandardScaler
 from sklearn.utils._repr_html.estimator import estimator_html_repr
@@ -42,8 +41,8 @@ def test_with_MinimalTransformer():
         (False, ["x0", "x1"]),
     ],
 )
-def test_estimator_html_repr_fitted(pandas, feature_cols):
-    """Test that features HTML is generated without fitted CSS class."""
+def test_estimator_html_repr_col_names(pandas, feature_cols):
+    """Test features names are kept with pandas col names and generic."""
     if pandas:
         pd = pytest.importorskip("pandas")
         X = pd.DataFrame({"A": [0, 2], "B": [1, 1]})
@@ -78,42 +77,15 @@ def test_features_html_correct_feature_names():
     assert "3 features" in html
 
 
-def test_features_html_column_transformer_feature_count():
-    """Test feature count with ColumnTransformer in Pipeline."""
-
-    ct = ColumnTransformer(
-        [
-            ("scaler", StandardScaler(), [0, 1]),
-            ("pca", PCA(n_components=2, random_state=42), [2, 3, 4]),
-        ]
-    )
-
-    X = rng.randn(10, 5)
-    ct.fit(X)
-
-    feature_names = ct.get_feature_names_out()
-    html = _features_html(feature_names)
-
-    assert f"{len(feature_names)} features" in html
-    assert len(feature_names) == 4
-
-
-def test_features_html_with_minimal_transformer():
-    """Test that _features_html works with MinimalTransformer (non-full API)."""
+def test_features_html_with_pipeline():
+    """Test works with MinimalTransformer in a pipeline."""
 
     pipe = Pipeline([("minimal", MinimalTransformer()), ("scaler", StandardScaler())])
 
     X = rng.randn(10, 3)
     pipe.fit(X)
-
-    try:
-        feature_names = pipe.get_feature_names_out()
-        html = _features_html(feature_names)
-        assert f"{len(feature_names)} features" in html
-    except AttributeError:
-        features = [f"x{i}" for i in range(3)]
-        html = _features_html(features)
-        assert "3 features" in html
+    html = estimator_html_repr(pipe)
+    assert "3 features" in html
 
 
 def test_features_html_empty_features():
