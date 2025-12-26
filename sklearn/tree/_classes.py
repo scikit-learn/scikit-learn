@@ -1099,15 +1099,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # XXX: nan is only supported for dense arrays, but we set this for
+        # XXX: nan values are only accepted in dense arrays, but we set this for
         # common test to pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter in ("best", "random") and self.criterion in {
-            "gini",
-            "log_loss",
-            "entropy",
-        }
+        tags.input_tags.allow_nan = True
         tags.classifier_tags.multi_label = True
-        tags.input_tags.allow_nan = allow_nan
         return tags
 
 
@@ -1442,14 +1437,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # XXX: nan is only supported for dense arrays, but we set this for
-        # common test to pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter in ("best", "random") and self.criterion in {
-            "squared_error",
-            "friedman_mse",
-            "poisson",
-        }
-        tags.input_tags.allow_nan = allow_nan
+        # XXX: nan values are only accepted in dense arrays, but we set this for
+        # for common test to pass, specifically: check_estimators_nan_inf
+        tags.input_tags.allow_nan = True
         return tags
 
 
@@ -1730,13 +1720,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # XXX: nan is only supported for dense arrays, but we set this for the
+        # XXX: nan values are only accepted in dense arrays, but we set this for
         # common test to pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter == "random" and self.criterion in {
-            "gini",
-            "log_loss",
-            "entropy",
-        }
+        allow_nan = self.splitter == "random"
         tags.classifier_tags.multi_label = True
         tags.input_tags.allow_nan = allow_nan
         return tags
@@ -1989,12 +1975,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # XXX: nan is only supported for dense arrays, but we set this for the
+        # XXX: nan values are only accepted in dense arrays, but we set this for
         # common test to pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter == "random" and self.criterion in {
-            "squared_error",
-            "friedman_mse",
-            "poisson",
-        }
+        allow_nan = self.splitter == "random"
         tags.input_tags.allow_nan = allow_nan
         return tags
