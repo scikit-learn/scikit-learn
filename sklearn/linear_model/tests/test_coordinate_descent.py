@@ -3,6 +3,7 @@
 
 import warnings
 from copy import deepcopy
+from functools import partial
 
 import joblib
 import numpy as np
@@ -102,6 +103,7 @@ def test_cython_solver_equivalence():
         "rng": np.random.RandomState(0),  # not used, but needed as argument
         "random": False,
         "positive": False,
+        "early_stopping": True,
     }
 
     def zc():
@@ -167,6 +169,81 @@ def test_cython_solver_equivalence():
             do_screening=do_screening,
         )
         assert_allclose(coef_4, coef_1)
+
+
+@pytest.mark.parametrize("cd", ["enet", "sparse_enet", "enet_gram", "enet_multi"])
+def test_cython_solver_early_stopping(cd):
+    """Test that early_stopping works correctly."""
+    X, y = make_regression()
+    X_mean = X.mean(axis=0)
+    X_centered = np.asfortranarray(X - X_mean)
+    y -= y.mean()
+    alpha_max = np.linalg.norm(X.T @ y, ord=np.inf)
+    params = {
+        "alpha": alpha_max / 100,
+        "beta": 0,
+        "max_iter": 100,
+        "tol": 1e-1,  # Set a high value on purpose.
+        "rng": np.random.RandomState(0),  # not used, but needed as argument
+        "random": False,
+    }
+    if cd == "enet":
+        cd_solve = partial(
+            cd_fast.enet_coordinate_descent,
+            X=X_centered,
+            y=y,
+            **params,
+        )
+    elif cd == "sparse_enet":
+        Xs = sparse.csc_matrix(X)
+        cd_solve = partial(
+            cd_fast.sparse_enet_coordinate_descent,
+            X_data=Xs.data,
+            X_indices=Xs.indices,
+            X_indptr=Xs.indptr,
+            y=y,
+            sample_weight=None,
+            X_mean=X_mean,
+            **params,
+        )
+    elif cd == "enet_gram":
+        cd_solve = partial(
+            cd_fast.enet_coordinate_descent_gram,
+            Q=X_centered.T @ X_centered,
+            q=X_centered.T @ y,
+            y=y,
+            **params,
+        )
+    elif cd == "enet_multi":
+
+        def cd_solve(w, early_stopping=True):
+            return cd_fast.enet_coordinate_descent_multi_task(
+                W=w,
+                X=X_centered,
+                Y=np.asfortranarray(np.c_[y, y]),
+                **params,
+                early_stopping=early_stopping,
+            )
+
+    if cd == "enet_multi":
+        coef_1 = np.zeros((2, X.shape[1]), order="F")
+    else:
+        coef_1 = np.zeros(X.shape[1])
+    _, gap_1, _, _ = cd_solve(w=coef_1)
+    assert np.sum(coef_1 != 0) > X.shape[1] / 4  # avoid all zeros
+
+    # With early stopping, the coefficients should stay unchanged.
+    coef_2 = coef_1.copy(order="F")
+    _, _, _, n_iter = cd_solve(w=coef_2, early_stopping=True)
+    assert n_iter == 0
+    assert_array_equal(coef_2, coef_1)
+
+    # Without early stopping, the coefficients should change.
+    coef_3 = coef_1.copy(order="F")
+    _, gap_3, _, n_iter = cd_solve(w=coef_3, early_stopping=False)
+    assert n_iter == 1
+    assert gap_3 < gap_1
+    assert not np.all(coef_3 == coef_1)
 
 
 def test_lasso_zero():
