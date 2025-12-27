@@ -1,0 +1,5 @@
+- Correct the formulation of `alpha` within :class:`linear_model.SGDOneClassSVM`.
+  The corrected value is `alpha = nu` instead of `alpha = nu / 2`.
+  Note: This might result in changed values for the fitted attributes like
+  `coef_` and `offset_` as well as the predictions made using this class.
+  By :user:`Omar Salman <OmarManzoor>`.

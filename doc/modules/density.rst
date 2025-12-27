@@ -42,7 +42,7 @@ the histogram.  But what if, instead of stacking the blocks on a regular grid,
 we center each block on the point it represents, and sum the total height at
 each location?  This idea leads to the lower-left visualization.  It is perhaps
 not as clean as a histogram, but the fact that the data drive the block
-locations mean that it is a much better representation of the underlying
+locations means that it is a much better representation of the underlying
 data.
 
 This visualization is an example of a *kernel density estimation*, in this case

@@ -39,7 +39,6 @@ from sklearn.utils._array_api import (
     _is_xp_namespace,
     _isin,
     _max_precision_float_dtype,
-    _tolist,
     _union1d,
     get_namespace,
     get_namespace_and_device,
@@ -1862,9 +1861,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
 
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred, _ = _check_targets(y_true, y_pred)
-    # Convert to Python primitive type to avoid NumPy type / Python str
-    # comparison. See https://github.com/numpy/numpy/issues/6784
-    present_labels = _tolist(unique_labels(y_true, y_pred))
+    present_labels = unique_labels(y_true, y_pred)
     if average == "binary":
         if y_type == "binary":
             if pos_label not in present_labels:
@@ -3617,10 +3614,11 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
     try:
         pos_label = _check_pos_label_consistency(pos_label, y_true)
     except ValueError:
-        classes = np.unique(y_true)
-        if classes.dtype.kind not in ("O", "U", "S"):
-            # for backward compatibility, if classes are not string then
-            # `pos_label` will correspond to the greater label
+        xp_y_true, _ = get_namespace(y_true)
+        classes = xp_y_true.unique_values(y_true)
+        # For backward compatibility, if classes are not string then
+        # `pos_label` will correspond to the greater label.
+        if not (_is_numpy_namespace(xp_y_true) and classes.dtype.kind in "OUS"):
             pos_label = classes[-1]
         else:
             raise
