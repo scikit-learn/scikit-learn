@@ -294,6 +294,8 @@ class DecisionBoundaryDisplay:
         *,
         grid_resolution=100,
         eps=1.0,
+        xlim=None,
+        ylim=None,
         plot_method="contourf",
         response_method="auto",
         class_of_interest=None,
@@ -322,7 +324,15 @@ class DecisionBoundaryDisplay:
 
         eps : float, default=1.0
             Extends the minimum and maximum values of X for evaluating the
-            response function.
+            response function. Ignored if both `xlim` and `ylim` are provided.
+
+        xlim : tuple of float, default=None
+            The x-axis limits for the plot. If None, limits are determined
+            from the data range. Should be a tuple of (min, max) values.
+
+        ylim : tuple of float, default=None
+            The y-axis limits for the plot. If None, limits are determined
+            from the data range. Should be a tuple of (min, max) values.
 
         plot_method : {'contourf', 'contour', 'pcolormesh'}, default='contourf'
             Plotting method to call when plotting the response. Please refer
@@ -478,10 +488,25 @@ class DecisionBoundaryDisplay:
                         f"Matplotlib colormap. Got: {multiclass_colors}"
                     )
 
+        for lim, name in [(xlim, "xlim"), (ylim, "ylim")]:
+            if lim is not None:
+                if not isinstance(lim, tuple) or len(lim) != 2 or lim[0] >= lim[1]:
+                    raise ValueError(
+                        f"`{name}` must be a tuple of (min, max) with min < max"
+                    )
+
         x0, x1 = _safe_indexing(X, 0, axis=1), _safe_indexing(X, 1, axis=1)
 
-        x0_min, x0_max = x0.min() - eps, x0.max() + eps
-        x1_min, x1_max = x1.min() - eps, x1.max() + eps
+        # Use provided xlim/ylim params or calculate from data
+        if xlim is not None:
+            x0_min, x0_max = xlim
+        else:
+            x0_min, x0_max = x0.min() - eps, x0.max() + eps
+
+        if ylim is not None:
+            x1_min, x1_max = ylim
+        else:
+            x1_min, x1_max = x1.min() - eps, x1.max() + eps
 
         xx0, xx1 = np.meshgrid(
             np.linspace(x0_min, x0_max, grid_resolution),
