@@ -2461,14 +2461,14 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
     """Check missing values goes to correct node during predictions."""
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
-    node_value = np.median if criterion == "absolute_error" else np.mean
+    node_value_func = np.median if criterion == "absolute_error" else np.mean
 
     dtc = DecisionTreeRegressor(random_state=42, max_depth=1, criterion=criterion)
     dtc.fit(X, y)
 
     # Goes to right node because it has the most data points
     y_pred = dtc.predict([[np.nan]])
-    assert_allclose(y_pred, [node_value(y[-5:])])
+    assert_allclose(y_pred, [node_value_func(y[-5:])])
 
     # equal number of elements in both nodes
     X_equal = X[:-1]
@@ -2480,7 +2480,7 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
     # Goes to right node because the implementation sets:
     # missing_go_to_left = n_left > n_right, which is False
     y_pred = dtc.predict([[np.nan]])
-    assert_allclose(y_pred, [node_value(y_equal[-4:])])
+    assert_allclose(y_pred, [node_value_func(y_equal[-4:])])
 
 
 @pytest.mark.parametrize("seed", range(3))
