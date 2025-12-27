@@ -859,3 +859,29 @@ def test_gpr_predict_no_cov_no_std_return(kernel):
     y_pred = gpr.predict(X, return_cov=False, return_std=False)
 
     assert_allclose(y_pred, y)
+
+
+@pytest.mark.parametrize("normalize_y", [False, True])
+def test_gpr_multioutput_normalization(normalize_y):
+    """Check the robustness of the training wrt the normalization policy."""
+    X_train = np.array([[0.0], [0.5], [1.0]])
+    X_train_squared = X_train**2
+    scale = 10
+    y_train = np.hstack((X_train_squared, scale * X_train_squared))
+    # Note that the 2nd output is equal to 10 times the 1st.
+
+    gpr = GaussianProcessRegressor(normalize_y=normalize_y)
+    gpr.fit(X_train, y_train)
+    mean, std = gpr.predict(np.array([[0.25]]), return_std=True)
+    _, cov = gpr.predict(np.array([[0.25]]), return_cov=True)
+    assert_almost_equal(mean[:, 1], mean[:, 0] * scale)
+    # As expected,
+    # the mean of the 2nd output is equal to 10 times that of the 1st.
+
+    assert_almost_equal(std[:, 1], std[:, 0] * scale)
+    # As expected,
+    # the standard deviation of the 2nd output is equal to 10 times that of the 1st.
+
+    assert_almost_equal(cov[:, :, 1], cov[:, :, 0] * scale**2)
+    # As expected,
+    # the covariance of the 2nd output is equal to 100 times that of the 1st.
