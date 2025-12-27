@@ -20,6 +20,7 @@ from sklearn._loss.loss import (
 from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
 from sklearn.linear_model._glm._newton_solver import (
     NewtonCDGramSolver,
+    NewtonCDSolver,
     NewtonCholeskySolver,
     NewtonSolver,
 )
@@ -149,7 +150,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         "fit_intercept": ["boolean"],
         "solver": [
             StrOptions({"lbfgs", "newton-cholesky"}),
-            Hidden(StrOptions({"newton-cd"})),
+            Hidden(StrOptions({"newton-cd", "newton-cd-gram"})),
             Hidden(type),
         ],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
@@ -201,8 +202,9 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             self,
             X,
             y,
-            accept_sparse=["csc", "csr"],
+            accept_sparse="csc" if self.solver == "newton-cd" else ["csc", "csr"],
             dtype=[np.float64, np.float32],
+            order="F" if self.solver == "newton-cd" else None,
             y_numeric=True,
             multi_output=False,
         )
@@ -288,12 +290,12 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 "lbfgs", opt_res, max_iter=self.max_iter
             )
             coef = opt_res.x
-        elif self.solver in ("newton-cd", "newton-cholesky"):
-            sol = (
-                NewtonCDGramSolver
-                if self.solver == "newton-cd"
-                else NewtonCholeskySolver
-            )
+        elif self.solver in ("newton-cd", "newton-cd-gram", "newton-cholesky"):
+            sol = {
+                "newton-cd": NewtonCDSolver,
+                "newton-cd-gram": NewtonCDGramSolver,
+                "newton-cholesky": NewtonCholeskySolver,
+            }[self.solver]
             sol = sol(
                 coef=coef,
                 linear_loss=linear_loss,
