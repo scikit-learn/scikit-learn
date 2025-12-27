@@ -237,6 +237,7 @@ def enet_coordinate_descent(
     bint random=0,
     bint positive=0,
     bint do_screening=1,
+    bint early_stopping=1,
 ):
     """
     Cython version of the coordinate descent algorithm for Elastic-Net regression.
@@ -380,7 +381,7 @@ def enet_coordinate_descent(
         gap, dual_norm_XtA = gap_enet(
             n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive, False
         )
-        if gap <= tol:
+        if early_stopping and gap <= tol:
             with gil:
                 return np.asarray(w), gap, tol, 0
 
@@ -657,6 +658,7 @@ def sparse_enet_coordinate_descent(
     bint random=0,
     bint positive=0,
     bint do_screening=1,
+    bint early_stopping=1,
 ):
     """Cython version of the coordinate descent algorithm for Elastic-Net
 
@@ -825,7 +827,7 @@ def sparse_enet_coordinate_descent(
             positive,
             False,
         )
-        if gap <= tol:
+        if early_stopping and gap <= tol:
             with gil:
                 return np.asarray(w), gap, tol, 0
 
@@ -1107,6 +1109,7 @@ def enet_coordinate_descent_gram(
     bint random=0,
     bint positive=0,
     bint do_screening=1,
+    bint early_stopping=1,
 ):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
@@ -1181,7 +1184,7 @@ def enet_coordinate_descent_gram(
         gap, dual_norm_XtA = gap_enet_gram(
             n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive, False
         )
-        if 0 <= gap <= tol:
+        if early_stopping and 0 <= gap <= tol:
             # Only if gap >=0 as singular Q may cause dubious values of gap.
             with gil:
                 return np.asarray(w), gap, tol, 0
@@ -1415,6 +1418,7 @@ def enet_coordinate_descent_multi_task(
     object rng,
     bint random=0,
     bint do_screening=1,
+    bint early_stopping=1,
 ):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net multi-task regression
@@ -1508,7 +1512,7 @@ def enet_coordinate_descent_multi_task(
         gap, dual_norm_XtA = gap_enet_multi_task(
             n_samples, n_features, n_tasks, W, alpha, beta, X, Y, R, XtA, XtA_row_norms, False
         )
-        if gap <= tol:
+        if early_stopping and gap <= tol:
             with gil:
                 return np.asarray(W), gap, tol, 0
 
