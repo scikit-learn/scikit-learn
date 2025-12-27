@@ -132,10 +132,10 @@ def yield_mixed_namespace_input_combinations():
     `yield_namespace_device_dtype_combinations` (excluding dtype variations, this is
     C(8,2)=56), to avoid slow testing and maintenance burden.
 
-    The current combinations ensures the following conversions are tested:
+    The current combinations ensures that the following conversions are tested:
 
-    * non-NumPy to NumPy (including CPU to GPU)
-    * NumPy to non-NumPy (including GPU to CPU)
+    * non-NumPy to NumPy (including GPU to CPU)
+    * NumPy to non-NumPy (including CPU to GPU)
     * non-NumPy to non-NumPy (GPU to GPU)
     * array-api-strict to non-NumPy
     """
@@ -175,12 +175,6 @@ def yield_mixed_namespace_input_combinations():
     yield (
         NamespaceAndDevice("array_api_strict", device),
         NamespaceAndDevice("torch", "mps"),
-        "array_api_strict to torch mps",
-    )
-    # XXX to delete, just here to allow local testing
-    yield (
-        NamespaceAndDevice("array_api_strict", device),
-        NamespaceAndDevice("torch", "cpu"),
         "array_api_strict to torch mps",
     )
 
