@@ -1,0 +1,3 @@
+- :class:`~sklearn.gaussian_process.GaussianProcessRegressor` takes into account the scale of the targets
+  when predicting the standard deviation and covariance, regardless of the value of `normalize_y`.
+  By :user:`Matthias De Lozzo <mdelozzo>`.
