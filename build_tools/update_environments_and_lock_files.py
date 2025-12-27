@@ -89,6 +89,7 @@ default_package_constraints = {
     "pytest-cov": "<=6.3.0",
 }
 
+
 def remove_from(alist, to_remove):
     return [each for each in alist if each not in to_remove]
 
