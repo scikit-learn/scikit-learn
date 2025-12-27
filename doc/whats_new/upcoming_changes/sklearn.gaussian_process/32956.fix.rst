@@ -1,0 +1,5 @@
+- By default,
+  in the case of multiple targets,
+  :class:`~sklearn.gaussian_process.GaussianProcessRegressor` normalizes the target values during fitting
+  to make the standard deviation and covariance dependent on the target scales.
+  By :user:`Matthias De Lozzo <mdelozzo>`.
