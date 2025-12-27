@@ -38,7 +38,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 
-SOLVERS = ["lbfgs", "newton-cd", "newton-cholesky"]
+SOLVERS = ["lbfgs", "newton-cd", "newton-cd-gram", "newton-cholesky"]
 
 
 class BinomialRegressor(_GeneralizedLinearRegressor):
@@ -358,8 +358,7 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
         alpha=alpha,
         fit_intercept=fit_intercept,
         solver=solver,
-        # TODO(newton-cd): Once the CD solver are better with ridge/ols.
-        tol=1e-13 if solver == "newton-cd" else 1e-12,
+        tol=1e-12,
         max_iter=1000,
     )
     is_newton_solver = solver.startswith("newton")
@@ -443,8 +442,7 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
         alpha=alpha,
         fit_intercept=fit_intercept,
         solver=solver,
-        # TODO(newton-cd): Once the CD solver are better with ridge/ols.
-        tol=1e-13 if solver == "newton-cd" else 1e-12,
+        tol=1e-12,
         max_iter=1000,
     )
     is_newton_solver = solver.startswith("newton")
@@ -490,7 +488,7 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
     if n_samples > n_features:
         assert model_intercept == pytest.approx(intercept)
         rtol = 1e-4
-        if solver == "newton-cd":
+        if solver in ["newton-cd", "newton-cd-gram"]:
             # This solver finds a solution, but a different linear combination.
             p = coef.shape[0]
             assert_allclose(model_coef[:p] + model_coef[p:], 2 * coef, rtol=rtol)
@@ -536,8 +534,7 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
         alpha=alpha,
         fit_intercept=fit_intercept,
         solver=solver,
-        # TODO(newton-cd): Once the CD solver are better with ridge/ols.
-        tol=1e-13 if solver == "newton-cd" else 1e-12,
+        tol=1e-12,
         max_iter=1000,
     )
     is_newton_solver = solver.startswith("newton")
@@ -734,8 +731,7 @@ def test_glm_log_regression(solver, fit_intercept, estimator):
         alpha=0,
         fit_intercept=fit_intercept,
         solver=solver,
-        # TODO(newton-cd): Once the CD solver are better with ridge/ols.
-        tol=1e-13 if solver == "newton-cd" else 1e-8,
+        tol=1e-8,
     )
     if fit_intercept:
         res = glm.fit(X[:, :-1], y)
