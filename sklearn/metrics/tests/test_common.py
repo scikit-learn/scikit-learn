@@ -2501,7 +2501,7 @@ def test_mixed_array_api_namespace_input_compliance(
         "binary_class": ([0, 0, 1, 1], [0, 1, 0, 1]),
         "continuous_binary": ([1, 0, 1, 0], [0.5, 0.2, 0.7, 0.6]),
         "continuous_label_indicator": ([[1, 0, 1, 0]], [[0.5, 0.2, 0.7, 0.6]]),
-        "regression": ([2.0, 0.1, 1.0, 4.0], [0.5, 0.5, 2, 2]),
+        "regression": ([2, 1, 3, 4], [2, 1, 2, 2]),
     }
     sample_weight = [1, 1, 2, 2]
 
@@ -2531,6 +2531,7 @@ def test_mixed_array_api_namespace_input_compliance(
                 data = data_all["continuous_label_indicator"]
         elif metric_name in REGRESSION_METRICS:
             data = data_all["regression"]
+            checks.append("float")
 
         string_labels = np.array(["a", "b"])
         metric_kwargs = {}
@@ -2539,14 +2540,21 @@ def test_mixed_array_api_namespace_input_compliance(
         y1_np = np.array(y1)
         y2_np = np.array(y2)
         for check in checks:
-            if check == "string" and _is_numpy_namespace(xp_from):
+            # we only need to check default `y1`, which was done in first loop
+            if check == "string" and not _is_numpy_namespace(xp_from):
+                continue
+
+            if check == "string":
                 y1_np = y1_xp = string_labels[y1_np]
                 # `pos_label` needs to be specified when `y_true` is string
                 if metric_name in METRICS_WITH_POS_LABEL:
                     metric_kwargs["pos_label"] = "b"
-                # We only need to check default `y1`, which was done in previous loop
-                continue
-            if check == "default":
+            elif check == "float":
+                # Convert regression inputs from int to float
+                y1_np = y1_np * 0.3
+                y2_np = y2_np * 0.3
+
+            if check in ("float", "default"):
                 dtype = _get_dtype(y1_np, xp_from, from_ns_and_device.device)
                 y1_xp = xp_from.asarray(
                     y1_np, device=from_ns_and_device.device, dtype=dtype
