@@ -2769,24 +2769,25 @@ def test_deterministic_pickle():
         np.array([1, 2, 3, np.nan, 6, np.nan]),
     ],
 )
-@pytest.mark.parametrize("criterion", sorted(set(REG_CRITERIONS) - {"poisson"}))
-# TODO: adapt this test for poisson criterion
+@pytest.mark.parametrize("criterion", REG_CRITERIONS)
 def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_seed):
-    """Check that we properly handle missing values in regression trees using a toy
-    dataset.
+    """Check that regression trees correctly handle missing values in impurity
+    calculations.
 
-    The regression targeted by this test was that we were not reinitializing the
-    criterion when it comes to the number of missing values. Therefore, the value
-    of the critetion (impurity) was completely wrong.
-
-    This test check that the impurity is null when there is a single sample in the leaf.
+    This test verifies that:
+    1. Impurity is always non-negative
+    2. Impurity is zero for leaves with a single sample
+    3. For decision trees, impurity matches reference trees after the first split
 
     Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/28254
-    https://github.com/scikit-learn/scikit-learn/issues/28316
+    - Missing values handling in regression criteria:
+      https://github.com/scikit-learn/scikit-learn/issues/28254
+      https://github.com/scikit-learn/scikit-learn/issues/28316
+    - Incorrect/Negative impurites for poission criterion with missing values:
+      https://github.com/scikit-learn/scikit-learn/issues/32870
     """
     X = X.reshape(-1, 1)
-    y = np.arange(6)
+    y = np.arange(1, 7)
 
     tree = Tree(criterion=criterion, random_state=global_random_seed).fit(X, y)
     tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
@@ -3048,16 +3049,3 @@ def test_missing_values_and_constant_toy():
     assert_array_equal(tree.predict(X), y)
     # with just one split (-> three nodes: the root + 2 leaves)
     assert tree.tree_.node_count == 3
-
-
-def test_missing_values_and_poisson_toy():
-    # Test that poisson criterion produces non-negative impurities
-    # when missing values were present.
-    # Non regression test for https://github.com/scikit-learn/scikit-learn/issues/32870
-
-    X = np.array([np.nan, 1, 2, 3, np.nan]).reshape(-1, 1)
-    y = [0.49, 0.5, 0.7, 1.5, 0.8]
-
-    tree = DecisionTreeRegressor(criterion="poisson")
-    tree.fit(X, y)
-    assert (tree.tree_.impurity >= -1e10).all()
