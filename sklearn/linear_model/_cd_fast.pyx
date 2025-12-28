@@ -108,22 +108,17 @@ cdef inline floating dual_gap_formulation_A(
     floating dual_norm_XtA,
 ) noexcept nogil:
     """Compute dual gap according to formulation A."""
-    cdef floating gap = 0.0
-    cdef floating A_norm2
-    cdef floating const_
+    cdef floating gap, primal, dual
+    cdef floating scale  # Scaling factor to achieve dual feasible point.
+
+    primal = 0.5 * (R_norm2 + beta * w_l2_norm2) + alpha * w_l1_norm
 
     if (dual_norm_XtA > alpha):
-        const_ = alpha / dual_norm_XtA
-        A_norm2 = R_norm2 * (const_ ** 2)
-        gap = 0.5 * (R_norm2 + A_norm2)
+        scale = alpha / dual_norm_XtA
     else:
-        const_ = 1.0
-        gap = R_norm2
-
-    gap += (
-        alpha * w_l1_norm - const_ * Ry
-        + 0.5 * beta * (1 + const_ ** 2) * w_l2_norm2
-    )
+        scale = 1.0
+    dual = -0.5 * (scale ** 2) * (R_norm2 + beta * w_l2_norm2) + scale * Ry
+    gap = primal - dual
     return gap
 
 
