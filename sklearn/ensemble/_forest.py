@@ -555,6 +555,25 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             (accuracy score).
         """
 
+    def _get_oob_pred_parallel(
+        self, estimators, n_samples, n_samples_bootstrap, X, oob_pred, n_oob_pred, lock
+    ):
+        local_oob_pred = np.zeros_like(oob_pred, dtype=np.float32)
+        local_n_oob_pred = np.zeros_like(n_oob_pred, dtype=np.int8)
+        for estimator in estimators:
+            unsampled_indices = _generate_unsampled_indices(
+                estimator.random_state,
+                n_samples,
+                n_samples_bootstrap,
+            )
+            local_oob_pred[unsampled_indices, ...] += self._get_oob_predictions(
+                estimator, X[unsampled_indices, :]
+            )
+            local_n_oob_pred[unsampled_indices, :] += 1
+        with lock:
+            oob_pred += local_oob_pred
+            n_oob_pred += local_n_oob_pred
+
     def _compute_oob_predictions(self, X, y):
         """Compute and set the OOB score.
 
@@ -595,16 +614,19 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             n_samples,
             self.max_samples,
         )
-        for estimator in self.estimators_:
-            unsampled_indices = _generate_unsampled_indices(
-                estimator.random_state,
-                n_samples,
-                n_samples_bootstrap,
-            )
 
-            y_pred = self._get_oob_predictions(estimator, X[unsampled_indices, :])
-            oob_pred[unsampled_indices, ...] += y_pred
-            n_oob_pred[unsampled_indices, :] += 1
+        lock = threading.Lock()
+        sub_ests = []
+        chunk_size = 40
+        for i in range(0, len(self.estimators_), chunk_size):
+            sub_ests.append(self.estimators_[i : i + chunk_size])
+
+        Parallel(n_jobs=self.n_jobs, verbose=self.verbose, require="sharedmem")(
+            delayed(self._get_oob_pred_parallel)(
+                ests, n_samples, n_samples_bootstrap, X, oob_pred, n_oob_pred, lock
+            )
+            for ests in sub_ests
+        )
 
         for k in range(n_outputs):
             if (n_oob_pred == 0).any():
