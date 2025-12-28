@@ -1124,7 +1124,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         variance reduction as feature selection criterion and minimizes the L2
         loss using the mean of each terminal node, "absolute_error" for the mean
         absolute error, which minimizes the L1 loss using the median of each terminal
-        node, and "poisson" which uses reduction in Poisson deviance to find splits.
+        node, and "poisson" which uses reduction in Poisson deviance to find splits, also using the mean of each terminal node.
         Training using "absolute_error" is significantly slower
         than when using "squared_error".
 
@@ -1367,7 +1367,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
                 'Value `"friedman_mse"` for `criterion` is deprecated and will be '
                 'removed in 1.10. It maps to `"squared_error"` as both '
                 'were always equivalent. Use `criterion="squared_error"` '
-                " to remove this warning.",
+                "to remove this warning.",
                 FutureWarning,
             )
         super().__init__(
@@ -1774,7 +1774,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         variance reduction as feature selection criterion and minimizes the L2
         loss using the mean of each terminal node, "absolute_error" for the mean
         absolute error, which minimizes the L1 loss using the median of each terminal
-        node, and "poisson" which uses reduction in Poisson deviance to find splits.
+        node, and "poisson" which uses reduction in Poisson deviance to find splits, also using the mean of each terminal node.
         Training using "absolute_error" is significantly slower
         than when using "squared_error".
 
