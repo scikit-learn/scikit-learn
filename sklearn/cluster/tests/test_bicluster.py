@@ -98,7 +98,7 @@ def test_spectral_biclustering(global_random_seed, csr_container):
     )
 
     non_default_params = {
-        "method": ["scale", "log"],
+        "method": ["scale", "log", lambda x: x / x.sum(axis=0)],
         "svd_method": ["arpack"],
         "n_svd_vecs": [20],
         "mini_batch": [True],
