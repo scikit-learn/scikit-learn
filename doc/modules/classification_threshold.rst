@@ -28,7 +28,7 @@ cut-off rules: a positive class is predicted when the conditional probability
 :math:`P(y|X)` is greater than 0.5 (obtained with :term:`predict_proba`) or if the
 decision score is greater than 0 (obtained with :term:`decision_function`).
 
-Here, we show an example that illustrates the relatonship between conditional
+Here, we show an example that illustrates the relationship between conditional
 probability estimates :math:`P(y|X)` and class labels::
 
     >>> from sklearn.datasets import make_classification
@@ -59,7 +59,7 @@ beneficial to classify them as positive for cancer when the conditional probabil
 estimate is much lower than 0.5.
 
 Post-tuning the decision threshold
-==================================
+-------------------------------
 
 One solution to address the problem stated in the introduction is to tune the decision
 threshold of the classifier once the model has been trained. The
