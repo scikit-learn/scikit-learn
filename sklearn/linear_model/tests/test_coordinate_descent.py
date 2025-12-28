@@ -1530,8 +1530,7 @@ def test_enet_alpha_max(X_is_sparse, fit_intercept, positive, sample_weight):
             .alpha_
         )
         assert not np.isclose(alpha_max, not_positive_alpha_max), (
-            f"Test data cannot distinguish alpha_max between positive=True and False "
-            f"for {locals()=}"
+            "Test data cannot distinguish alpha_max between positive=True and False."
         )
 
 
