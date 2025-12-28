@@ -1,5 +1,7 @@
-- `criterion="friedman_mse"` is now deprecated as it is a duplicate of
-  `criterion="squared_error"`, both in theory and in practice. This affects:
+- `criterion="friedman_mse"` is now deprecated. This criterion was intended for
+  gradient boosting but was incorrectly implemented in scikit-learn's trees and
+  was actually behaving identically to `criterion="squared_error"`. Use
+  `criterion="squared_error"` instead. This affects:
   - :class:`tree.DecisionTreeRegressor`
   - :class:`tree.ExtraTreeRegressor`
   - :class:`ensemble.RandomForestRegressor`
