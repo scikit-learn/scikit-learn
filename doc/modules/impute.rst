@@ -44,13 +44,11 @@ that contain the missing values::
 
     >>> import numpy as np
     >>> from sklearn.impute import SimpleImputer
+    >>> X = [[1,2], [np.nan,3], [7,6]]
     >>> imp = SimpleImputer(missing_values=np.nan, strategy='mean')
-    >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])
-    SimpleImputer()
-    >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
     >>> print(imp.transform(X))
-    [[4.          2.        ]
-     [6.          3.666]
+    [[1.          2.        ]
+     [4.          3.        ]
      [7.          6.        ]]
 
 The :class:`SimpleImputer` class also supports sparse matrices::
