@@ -1302,7 +1302,7 @@ is defined by:
   - w_{i, y_i}, 0\right\}
 
 Here is a small example demonstrating the use of the :func:`hinge_loss` function
-with a svm classifier in a binary class problem::
+with an svm classifier in a binary class problem::
 
   >>> from sklearn import svm
   >>> from sklearn.metrics import hinge_loss
@@ -1318,7 +1318,7 @@ with a svm classifier in a binary class problem::
   0.3
 
 Here is an example demonstrating the use of the :func:`hinge_loss` function
-with a svm classifier in a multiclass problem::
+with an svm classifier in a multiclass problem::
 
   >>> X = np.array([[0], [1], [2], [3]])
   >>> Y = np.array([0, 1, 2, 3])
