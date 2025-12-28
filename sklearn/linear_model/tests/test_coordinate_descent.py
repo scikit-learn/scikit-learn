@@ -581,16 +581,14 @@ def test_uniform_targets():
     for model in models_single_task:
         for y_values in (0, 5):
             y1.fill(y_values)
-            with ignore_warnings(category=ConvergenceWarning):
-                assert_array_equal(model.fit(X_train, y1).predict(X_test), y1)
+            assert_array_equal(model.fit(X_train, y1).predict(X_test), y1)
             assert_array_equal(model.alphas_, [np.finfo(float).resolution] * 3)
 
     for model in models_multi_task:
         for y_values in (0, 5):
             y2[:, 0].fill(y_values)
             y2[:, 1].fill(2 * y_values)
-            with ignore_warnings(category=ConvergenceWarning):
-                assert_array_equal(model.fit(X_train, y2).predict(X_test), y2)
+            assert_array_equal(model.fit(X_train, y2).predict(X_test), y2)
             assert_array_equal(model.alphas_, [np.finfo(float).resolution] * 3)
 
 
@@ -970,15 +968,14 @@ def test_check_input_false():
     X, y, _, _ = build_dataset(n_samples=20, n_features=10)
     X = check_array(X, order="F", dtype="float64")
     y = check_array(X, order="F", dtype="float64")
-    clf = ElasticNet(selection="cyclic", tol=1e-8)
+    clf = ElasticNet(selection="cyclic", tol=1e-7)
     # Check that no error is raised if data is provided in the right format
     clf.fit(X, y, check_input=False)
     # With check_input=False, an exhaustive check is not made on y but its
     # dtype is still cast in _preprocess_data to X's dtype. So the test should
     # pass anyway
     X = check_array(X, order="F", dtype="float32")
-    with ignore_warnings(category=ConvergenceWarning):
-        clf.fit(X, y, check_input=False)
+    clf.fit(X, y, check_input=False)
     # With no input checking, providing X in C order should result in false
     # computation
     X = check_array(X, order="C", dtype="float64")
@@ -1122,16 +1119,14 @@ def test_enet_l1_ratio():
     estkwds = {"alphas": alphas, "random_state": 42}
     est_desired = ElasticNetCV(l1_ratio=0.00001, **estkwds)
     est = ElasticNetCV(l1_ratio=0, **estkwds)
-    with ignore_warnings():
-        est_desired.fit(X, y)
-        est.fit(X, y)
+    est_desired.fit(X, y)
+    est.fit(X, y)
     assert_array_almost_equal(est.coef_, est_desired.coef_, decimal=5)
 
     est_desired = MultiTaskElasticNetCV(l1_ratio=0.00001, **estkwds)
     est = MultiTaskElasticNetCV(l1_ratio=0, **estkwds)
-    with ignore_warnings():
-        est.fit(X, y[:, None])
-        est_desired.fit(X, y[:, None])
+    est.fit(X, y[:, None])
+    est_desired.fit(X, y[:, None])
     assert_array_almost_equal(est.coef_, est_desired.coef_, decimal=5)
 
 
