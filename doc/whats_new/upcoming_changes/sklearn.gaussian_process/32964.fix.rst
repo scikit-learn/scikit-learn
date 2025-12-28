@@ -1,0 +1,3 @@
+- :class:`~sklearn.gaussian_process.GaussianProcessRegressor` optimizes the hyperparameters of the default kernel
+  when its `optimizer` argument is not set to `None`, in accordance with the definition of `optimizer`.
+  By :user:`Matthias De Lozzo <mdelozzo>`.

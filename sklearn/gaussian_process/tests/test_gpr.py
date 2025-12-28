@@ -186,11 +186,13 @@ def test_sample_statistics(kernel):
     )
 
 
-def test_no_optimizer():
-    # Test that kernel parameters are unmodified when optimizer is None.
-    kernel = RBF(1.0)
-    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None).fit(X, y)
-    assert np.exp(gpr.kernel_.theta) == 1.0
+@pytest.mark.parametrize("optimizer", [None, "fmin_l_bfgs_b"])
+@pytest.mark.parametrize("kernel", [None, RBF()])
+def test_no_optimizer(optimizer, kernel):
+    """Test that kernel parameters are unmodified when optimizer is None."""
+    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=optimizer)
+    gpr.fit(X, y)
+    assert bool((gpr.kernel_.theta == 0.0).all()) is (optimizer is None)
 
 
 @pytest.mark.parametrize("kernel", kernels)
