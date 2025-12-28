@@ -3028,3 +3028,8 @@ def test_splitting_with_missing_values():
     for i in range(20):
         tree = DecisionTreeRegressor(max_depth=1, random_state=i).fit(X, y)
         assert_array_equal(tree.tree_.impurity, np.array([0.25, 0.0, 0.0]))
+
+
+def test_friedman_mse_deprecation():
+    with pytest.warns(FutureWarning, match="friedman_mse"):
+        _ = DecisionTreeRegressor(criterion="friedman_mse")

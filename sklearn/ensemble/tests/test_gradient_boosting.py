@@ -1681,3 +1681,10 @@ def test_gb_denominator_zero(global_random_seed):
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         clf.fit(X, y)
+
+
+@pytest.mark.parametrize("GradientBoosting", GRADIENT_BOOSTING_ESTIMATORS)
+def test_criterion_param_deprecation(GradientBoosting):
+    with pytest.warns(FutureWarning, match="criterion"):
+        reg = GradientBoosting(criterion="friedman_mse")
+        reg.fit(X, y)
