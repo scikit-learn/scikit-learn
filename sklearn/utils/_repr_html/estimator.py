@@ -83,7 +83,6 @@ class _VisualBlock:
         self.dash_wrapped = dash_wrapped
         self.name_caption = name_caption
         self.doc_link_label = doc_link_label
-
         if self.kind in ("parallel", "serial"):
             if names is None:
                 names = (None,) * len(estimators)
@@ -396,7 +395,16 @@ def _write_estimator_html(
                 )
                 out.write("</div>")  # sk-parallel-item
 
-        out.write("</div></div>")
+        out.write("</div>")
+        if estimator_label == "columntransformer: ColumnTransformer":
+            block_total_output_features = (
+                f"<br><div class='features fitted features_total'>"
+                f"{estimator.get_feature_names_out()}</div>"
+            )
+            out.write(block_total_output_features)
+
+            breakpoint()
+        out.write("</div>")
     elif est_block.kind == "single":
         if (
             callable(getattr(estimator, "get_feature_names_out", None))
