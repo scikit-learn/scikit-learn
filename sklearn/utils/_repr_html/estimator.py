@@ -396,17 +396,21 @@ def _write_estimator_html(
                 out.write("</div>")  # sk-parallel-item
 
         out.write("</div>")
+        breakpoint()
+
         if (
-            estimator_label == "columntransformer: ColumnTransformer"
+            isinstance(estimator_label, str)
+            and estimator_label.endswith("ColumnTransformer")
             and is_fitted_css_class
+            and hasattr(estimator, "get_feature_names_out")
         ):
             features_div = _features_html(
                 estimator.get_feature_names_out(), is_fitted_css_class
             )
-            block_total_output_features = (
+            total_output_features_item = (
                 f"<br><div class='total_features'>{features_div}</div></div>"
             )
-            out.write(block_total_output_features)
+            out.write(total_output_features_item)
         out.write("</div>")
     elif est_block.kind == "single":
         if (
