@@ -232,10 +232,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             GaussianProcessRegressor class instance.
         """
-        if self.kernel is None:  # Use an RBF kernel as default
-            self.kernel_ = self.__create_default_kernel()
-        else:
-            self.kernel_ = clone(self.kernel)
+        self.kernel_ = self.__get_kernel(True)
 
         self._rng = check_random_state(self.random_state)
 
@@ -381,88 +378,80 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         dtype, ensure_2d = self.__get_dtype_ensure_2d()
         X = validate_data(self, X, ensure_2d=ensure_2d, dtype=dtype, reset=False)
 
-        if not hasattr(self, "X_train_"):  # Unfitted;predict based on GP prior
-            if self.kernel is None:
-                kernel = self.__create_default_kernel()
-            else:
-                kernel = self.kernel
-
+        if not hasattr(self, "X_train_"):
+            # GPR is unfitted; predict based on GP prior
+            kernel = self.__get_kernel(False)
             n_targets = self.n_targets if self.n_targets is not None else 1
             y_mean = np.zeros(shape=(X.shape[0], n_targets)).squeeze()
-
             if return_cov:
+                # Return prior mean and prior covariance
                 y_cov = kernel(X)
-                if n_targets > 1:
-                    y_cov = np.repeat(
-                        np.expand_dims(y_cov, -1), repeats=n_targets, axis=-1
-                    )
+                y_cov = self.__repeat_by_target(y_cov, n_targets)
                 return y_mean, y_cov
             elif return_std:
+                # Return prior mean and prior standard deviation
                 y_var = kernel.diag(X)
-                if n_targets > 1:
-                    y_var = np.repeat(
-                        np.expand_dims(y_var, -1), repeats=n_targets, axis=-1
-                    )
-                return y_mean, np.sqrt(y_var)
+                y_std = self.__repeat_by_target(np.sqrt(y_var), n_targets)
+                return y_mean, y_std
             else:
+                # Return prior mean
                 return y_mean
-        else:  # Predict based on GP posterior
-            # Alg 2.1, page 19, line 4 -> f*_bar = K(X_test, X_train) . alpha
-            K_trans = self.kernel_(X, self.X_train_)
-            y_mean = K_trans @ self.alpha_
+        else:
+            # GPR is fitted; predict based on GP posterior
 
-            # undo normalisation
+            # Alg 2.1, page 19, line 4 -> f*_bar = K(X_test, X_train) . alpha
+            K_test_train = self.kernel_(X, self.X_train_)
+            y_mean = K_test_train @ self.alpha_
+
+            # Undo normalisation
             y_mean = self._y_train_std * y_mean + self._y_train_mean
 
-            # if y_mean has shape (n_samples, 1), reshape to (n_samples,)
-            if y_mean.ndim > 1 and y_mean.shape[1] == 1:
-                y_mean = np.squeeze(y_mean, axis=1)
-
+            y_mean = self.__remove_target_axis_if_scalar(y_mean, 1)
             if not return_cov and not return_std:
+                # Return posterior mean
                 return y_mean
 
-            # Alg 2.1, page 19, line 5 -> v = L \ K(X_test, X_train)^T
+            # Alg 2.1, page 19, line 5 -> V = L \ K(X_test, X_train)^T
             V = solve_triangular(
-                self.L_, K_trans.T, lower=GPR_CHOLESKY_LOWER, check_finite=False
+                self.L_, K_test_train.T, lower=GPR_CHOLESKY_LOWER, check_finite=False
             )
 
             if return_cov:
-                # Alg 2.1, page 19, line 6 -> K(X_test, X_test) - v^T. v
+                # Return posterior mean and posterior covariance
+
+                # Alg 2.1, page 19, line 6 -> K(X_test, X_test) - V^T . V
                 y_cov = self.kernel_(X) - V.T @ V
 
-                # undo normalisation
+                # Undo normalisation
                 y_cov = np.outer(y_cov, self._y_train_std**2).reshape(*y_cov.shape, -1)
-                # if y_cov has shape (n_samples, n_samples, 1), reshape to
-                # (n_samples, n_samples)
-                if y_cov.shape[2] == 1:
-                    y_cov = np.squeeze(y_cov, axis=2)
 
+                y_cov = self.__remove_target_axis_if_scalar(y_cov, 2)
                 return y_mean, y_cov
-            else:  # return_std
-                # Compute variance of predictive distribution
-                # Use einsum to avoid explicitly forming the large matrix
-                # V^T @ V just to extract its diagonal afterward.
-                y_var = self.kernel_.diag(X).copy()
-                y_var -= np.einsum("ij,ji->i", V.T, V)
+            else:
+                # Return posterior mean and posterior standard deviation
 
-                # Check if any of the variances is negative because of
-                # numerical issues. If yes: set the variance to 0.
-                y_var_negative = y_var < 0
-                if np.any(y_var_negative):
-                    warnings.warn(
-                        "Predicted variances smaller than 0. "
-                        "Setting those variances to 0."
-                    )
-                    y_var[y_var_negative] = 0.0
+                # Posterior variance = diag(A), with A = K(X_test, X_test) - V^T . V
+                # Efficiency: compute only the diagonal elements of A.
+                y_var = self.kernel_.diag(X).copy() - np.einsum("ij,ji->i", V.T, V)
+                y_var = self.__replace_negative_variances_by_zero(y_var)
 
-                # undo normalisation
+                # Undo normalisation
                 y_var = np.outer(y_var, self._y_train_std**2).reshape(*y_var.shape, -1)
 
-                # if y_var has shape (n_samples, 1), reshape to (n_samples,)
-                if y_var.shape[1] == 1:
-                    y_var = np.squeeze(y_var, axis=1)
-
+                y_var = self.__remove_target_axis_if_scalar(y_var, 1)
                 return y_mean, np.sqrt(y_var)
+
+    @staticmethod
+    def __replace_negative_variances_by_zero(y_var):
+        y_var_negative = y_var < 0
+        if np.any(y_var_negative):
+            # There are negative variances due to numerical issues.
+            warnings.warn(
+                "Predicted variances smaller than 0. Setting those variances to 0."
+            )
+            y_var[y_var_negative] = 0.0
+
+        return y_var
 
     def __get_dtype_ensure_2d(self):
         if self.kernel is None or self.kernel.requires_vector_input:
@@ -640,5 +629,24 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         tags.requires_fit = False
         return tags
 
-    def __create_default_kernel(self):
-        return C(constant_value_bounds="fixed") * RBF(length_scale_bounds="fixed")
+    def __get_kernel(self, clone_):
+        if self.kernel is None:
+            kernel = C(constant_value_bounds="fixed") * RBF(length_scale_bounds="fixed")
+        else:
+            kernel = clone(self.kernel) if clone_ else self.kernel
+
+        return kernel
+
+    @staticmethod
+    def __remove_target_axis_if_scalar(array_, axis):
+        if array_.ndim > axis and array_.shape[axis] == 1:
+            array_ = np.squeeze(array_, axis=axis)
+
+        return array_
+
+    @staticmethod
+    def __repeat_by_target(array_, n_targets):
+        if n_targets > 1:
+            array_ = np.expand_dims(array_, -1).repeat(n_targets, axis=-1)
+
+        return array_
