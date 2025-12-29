@@ -241,10 +241,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         self._rng = check_random_state(self.random_state)
 
-        if self.kernel_.requires_vector_input:
-            dtype, ensure_2d = "numeric", True
-        else:
-            dtype, ensure_2d = None, False
+        dtype, ensure_2d = self.__get_dtype_ensure_2d()
         X, y = validate_data(
             self,
             X,
@@ -383,11 +380,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 "At most one of return_std or return_cov can be requested."
             )
 
-        if self.kernel is None or self.kernel.requires_vector_input:
-            dtype, ensure_2d = "numeric", True
-        else:
-            dtype, ensure_2d = None, False
-
+        dtype, ensure_2d = self.__get_dtype_ensure_2d()
         X = validate_data(self, X, ensure_2d=ensure_2d, dtype=dtype, reset=False)
 
         if not hasattr(self, "X_train_"):  # Unfitted;predict based on GP prior
@@ -474,6 +467,15 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     y_var = np.squeeze(y_var, axis=1)
 
                 return y_mean, np.sqrt(y_var)
+
+    def __get_dtype_ensure_2d(self):
+        if self.kernel is None or self.kernel.requires_vector_input:
+            dtype = "numeric"
+            ensure_2d = True
+        else:
+            dtype = None
+            ensure_2d = False
+        return dtype, ensure_2d
 
     def sample_y(self, X, n_samples=1, random_state=0):
         """Draw samples from Gaussian process and evaluate at X.
