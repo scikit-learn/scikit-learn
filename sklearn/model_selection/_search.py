@@ -1362,7 +1362,7 @@ class GridSearchCV(BaseSearchCV):
 
     verbose : int, default=0
         Controls the verbosity of the grid search.
-        
+
         Higher values increase the amount of information printed during fitting.
 
         - 0 : no messages are printed;
@@ -1753,7 +1753,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Controls the verbosity of the verbosity of the randomized search.
 
         Higher values increase the amount of information printed during fitting.
-    
+
         - 0 : no messages are printed;
         - >1 : the computation time for each fold and parameter candidate is
           displayed;
