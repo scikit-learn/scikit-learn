@@ -245,8 +245,8 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             GaussianProcessRegressor class instance.
         """
         if self.kernel is None:  # Use an RBF kernel as default
-            self.kernel_ = C(1.0, constant_value_bounds="fixed") * RBF(
-                1.0, length_scale_bounds="fixed"
+            self.kernel_ = C(constant_value_bounds="fixed") * RBF(
+                length_scale_bounds="fixed"
             )
         else:
             self.kernel_ = clone(self.kernel)
@@ -419,8 +419,8 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         if not hasattr(self, "X_train_"):  # Unfitted;predict based on GP prior
             if self.kernel is None:
-                kernel = C(1.0, constant_value_bounds="fixed") * RBF(
-                    1.0, length_scale_bounds="fixed"
+                kernel = C(constant_value_bounds="fixed") * RBF(
+                    length_scale_bounds="fixed"
                 )
             else:
                 kernel = self.kernel
