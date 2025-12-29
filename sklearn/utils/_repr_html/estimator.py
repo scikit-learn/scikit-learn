@@ -396,7 +396,10 @@ def _write_estimator_html(
                 out.write("</div>")  # sk-parallel-item
 
         out.write("</div>")
-        if estimator_label == "columntransformer: ColumnTransformer":
+        if (
+            estimator_label == "columntransformer: ColumnTransformer"
+            and is_fitted_css_class
+        ):
             features_div = _features_html(
                 estimator.get_feature_names_out(), is_fitted_css_class
             )
