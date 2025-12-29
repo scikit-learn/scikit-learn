@@ -1362,16 +1362,17 @@ class GridSearchCV(BaseSearchCV):
 
     verbose : int, default=0
         Controls the verbosity of the grid search.
-
+        
         Higher values increase the amount of information printed during fitting.
-        Commonly values are between 0 and 3, but larger values (e.g. >3 or >10) may
-        produce increasingly detailed output depending on the execution backend.
 
+        - 0 : no messages are printed;
         - >1 : the computation time for each fold and parameter candidate is
           displayed;
         - >2 : the score is also displayed;
-        - >3 : the fold and candidate parameter indexes are also displayed
-          together with the starting time of the computation.
+        - >3 : the fold and candidate parameter indexes are also displayed.
+
+        For larger values (e.g. verbose > 10), additional progress messages such as
+        start and end notifications may be printed depending on the execution backend.
 
     pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
@@ -1748,14 +1749,19 @@ class RandomizedSearchCV(BaseSearchCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    verbose : int
-        Controls the verbosity: the higher, the more messages.
+    verbose : int, default = 0
+        Controls the verbosity of the verbosity of the randomized search.
 
+        Higher values increase the amount of information printed during fitting.
+    
+        - 0 : no messages are printed;
         - >1 : the computation time for each fold and parameter candidate is
           displayed;
         - >2 : the score is also displayed;
-        - >3 : the fold and candidate parameter indexes are also displayed
-          together with the starting time of the computation.
+        - >3 : the fold and candidate parameter indexes are also displayed.
+
+        For larger values (e.g. >10), additional progress messages may be printed
+        depending on the execution backend.
 
     pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
