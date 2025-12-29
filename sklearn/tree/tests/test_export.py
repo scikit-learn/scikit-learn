@@ -11,6 +11,7 @@ import pytest
 from numpy.random import RandomState
 
 from sklearn.base import is_classifier
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.tree import (
     DecisionTreeClassifier,
@@ -386,6 +387,18 @@ def test_graphviz_errors():
     out = StringIO()
     with pytest.raises(IndexError):
         export_graphviz(clf, out, class_names=[])
+
+
+def test_criterion_in_gradient_boosting_graphviz():
+    dot_data = StringIO()
+
+    clf = GradientBoostingClassifier(n_estimators=2, random_state=0)
+    clf.fit(X, y)
+    for estimator in clf.estimators_:
+        export_graphviz(estimator[0], out_file=dot_data)
+
+    for finding in finditer(r"\[.*?samples.*?\]", dot_data.getvalue()):
+        assert "squared_error" in finding.group()
 
 
 def test_precision():
