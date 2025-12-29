@@ -602,9 +602,11 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         #     log_likelihood_dims[output_idx] = (
         #         y_train[:, [output_idx]] @ alpha[:, [output_idx]]
         #     )
-        log_likelihood_dims = -0.5 * np.einsum("ik,ik->k", y_train, alpha)
-        log_likelihood_dims -= np.log(np.diag(L)).sum()
-        log_likelihood_dims -= K.shape[0] / 2 * np.log(2 * np.pi)
+        log_likelihood_dims = (
+            -0.5 * np.einsum("ik,ik->k", y_train, alpha)
+            - np.log(np.diag(L)).sum()
+            - K.shape[0] / 2 * np.log(2 * np.pi)
+        )
         # the log likelihood is sum-up across the outputs
         log_likelihood = log_likelihood_dims.sum(axis=-1)
 
