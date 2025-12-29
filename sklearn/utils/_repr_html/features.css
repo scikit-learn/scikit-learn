@@ -112,3 +112,8 @@
   white-space: nowrap;
   color: var(--sklearn-color-text);
 }
+
+.total_features {
+  display: flex;
+  justify-content: center;
+}

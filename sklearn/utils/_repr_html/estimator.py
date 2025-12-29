@@ -397,13 +397,13 @@ def _write_estimator_html(
 
         out.write("</div>")
         if estimator_label == "columntransformer: ColumnTransformer":
+            features_div = _features_html(
+                estimator.get_feature_names_out(), is_fitted_css_class
+            )
             block_total_output_features = (
-                f"<br><div class='features fitted features_total'>"
-                f"{estimator.get_feature_names_out()}</div>"
+                f"<br><div class='total_features'>{features_div}</div></div>"
             )
             out.write(block_total_output_features)
-
-            breakpoint()
         out.write("</div>")
     elif est_block.kind == "single":
         if (
