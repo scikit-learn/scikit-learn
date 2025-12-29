@@ -609,45 +609,44 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         )
         # the log likelihood is sum-up across the outputs
         log_likelihood = log_likelihood_dims.sum(axis=-1)
-
-        if eval_gradient:
-            # Eq. 5.9, p. 114, and footnote 5 in p. 114
-            # 0.5 * trace((alpha . alpha^T - K^-1) . K_gradient)
-            # alpha is supposed to be a vector of (n_samples,) elements. With
-            # multioutputs, alpha is a matrix of size (n_samples, n_outputs).
-            # Therefore, we want to construct a matrix of
-            # (n_samples, n_samples, n_outputs) equivalent to
-            # for output_idx in range(n_outputs):
-            #     output_alpha = alpha[:, [output_idx]]
-            #     inner_term[..., output_idx] = output_alpha @ output_alpha.T
-            inner_term = np.einsum("ik,jk->ijk", alpha, alpha)
-            # compute K^-1 of shape (n_samples, n_samples)
-            K_inv = cho_solve(
-                (L, GPR_CHOLESKY_LOWER), np.eye(K.shape[0]), check_finite=False
-            )
-            # create a new axis to use broadcasting between inner_term and
-            # K_inv
-            inner_term -= K_inv[..., np.newaxis]
-            # Since we are interested about the trace of
-            # inner_term @ K_gradient, we don't explicitly compute the
-            # matrix-by-matrix operation and instead use an einsum. Therefore
-            # it is equivalent to:
-            # for param_idx in range(n_kernel_params):
-            #     for output_idx in range(n_output):
-            #         log_likehood_gradient_dims[param_idx, output_idx] = (
-            #             inner_term[..., output_idx] @
-            #             K_gradient[..., param_idx]
-            #         )
-            log_likelihood_gradient_dims = 0.5 * np.einsum(
-                "ijl,jik->kl", inner_term, K_gradient
-            )
-            # the log likelihood gradient is the sum-up across the outputs
-            log_likelihood_gradient = log_likelihood_gradient_dims.sum(axis=-1)
-
-        if eval_gradient:
-            return log_likelihood, log_likelihood_gradient
-        else:
+        if not eval_gradient:
             return log_likelihood
+
+        # Return both the log likelihood and its gradient
+        #
+        # Eq. 5.9, p. 114, and footnote 5 in p. 114
+        # 0.5 * trace((alpha . alpha^T - K^-1) . K_gradient)
+        # alpha is supposed to be a vector of (n_samples,) elements. With
+        # multioutputs, alpha is a matrix of size (n_samples, n_outputs).
+        # Therefore, we want to construct a matrix of
+        # (n_samples, n_samples, n_outputs) equivalent to
+        # for output_idx in range(n_outputs):
+        #     output_alpha = alpha[:, [output_idx]]
+        #     inner_term[..., output_idx] = output_alpha @ output_alpha.T
+        inner_term = np.einsum("ik,jk->ijk", alpha, alpha)
+        # compute K^-1 of shape (n_samples, n_samples)
+        K_inv = cho_solve(
+            (L, GPR_CHOLESKY_LOWER), np.eye(K.shape[0]), check_finite=False
+        )
+        # create a new axis to use broadcasting between inner_term and
+        # K_inv
+        inner_term -= K_inv[..., np.newaxis]
+        # Since we are interested about the trace of
+        # inner_term @ K_gradient, we don't explicitly compute the
+        # matrix-by-matrix operation and instead use an einsum. Therefore
+        # it is equivalent to:
+        # for param_idx in range(n_kernel_params):
+        #     for output_idx in range(n_output):
+        #         log_likehood_gradient_dims[param_idx, output_idx] = (
+        #             inner_term[..., output_idx] @
+        #             K_gradient[..., param_idx]
+        #         )
+        log_likelihood_gradient_dims = 0.5 * np.einsum(
+            "ijl,jik->kl", inner_term, K_gradient
+        )
+        # the log likelihood gradient is the sum-up across the outputs
+        log_likelihood_gradient = log_likelihood_gradient_dims.sum(axis=-1)
+        return log_likelihood, log_likelihood_gradient
 
     def _constrained_optimization(self, obj_func, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
