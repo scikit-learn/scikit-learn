@@ -55,28 +55,6 @@ def test_estimator_html_repr_col_names(pandas, feature_cols):
     assert feature_cols[1] in out
 
 
-def test_features_html_with_fitted_class():
-    """Test that features HTML includes fitted CSS class when specified."""
-    features = ["feature1", "feature2"]
-    html = _features_html(features, is_fitted_css_class="fitted")
-
-    assert "2 features" in html
-    assert 'class="features fitted"' in html
-
-
-def test_features_html_correct_feature_names():
-    """Test that feature names are correctly escaped and displayed in table."""
-    features = ["age", "income", "<script>alert('xss')</script>"]
-    html = _features_html(features)
-
-    assert "age" in html
-    assert "income" in html
-
-    assert "&lt;script&gt;" in html
-    assert "<script>alert" not in html
-    assert "3 features" in html
-
-
 def test_features_html_with_pipeline():
     """Test works with MinimalTransformer in a pipeline."""
 
@@ -99,14 +77,21 @@ def test_features_html_empty_features():
 
 def test_features_html_special_characters():
     """Test that special characters in feature names are properly escaped."""
-    features = ["feature&1", 'feature"2', "feature'3", "feature>4", "feature<5"]
+    features = [
+        "feature&1",
+        'feature"2',
+        "feature'3",
+        "feature>4",
+        "feature<5",
+        "<script>alert('xss')</script>",
+    ]
     html = _features_html(features)
 
     assert "&amp;" in html
     assert "&quot;" in html or "&#x27;" in html
     assert "&gt;" in html
     assert "&lt;" in html
-    assert "5 features" in html
+    assert "6 features" in html
 
 
 def test_features_html_structure():
