@@ -5,7 +5,6 @@
 
 import warnings
 from numbers import Integral, Real
-from operator import itemgetter
 
 import numpy as np
 import scipy.optimize
@@ -276,42 +275,28 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             self._y_train_mean = np.zeros(shape=shape_y_stats)
             self._y_train_std = np.ones(shape=shape_y_stats)
 
-        if np.iterable(self.alpha) and self.alpha.shape[0] != y.shape[0]:
-            if self.alpha.shape[0] == 1:
+        n_samples = len(y)
+        if np.iterable(self.alpha) and (n_alphas := self.alpha.shape[0]) != n_samples:
+            if n_alphas == 1:
                 self.alpha = self.alpha[0]
             else:
                 raise ValueError(
                     "alpha must be a scalar or an array with same number of "
-                    f"entries as y. ({self.alpha.shape[0]} != {y.shape[0]})"
+                    f"entries as y. ({n_alphas} != {n_samples})"
                 )
 
         self.X_train_ = np.copy(X) if self.copy_X_train else X
         self.y_train_ = np.copy(y) if self.copy_X_train and not self.normalize_y else y
 
         if self.optimizer is not None and self.kernel_.n_dims > 0:
-            # Choose hyperparameters based on maximizing the log-marginal
-            # likelihood (potentially starting from several initial values)
-            def obj_func(theta, eval_gradient=True):
-                if eval_gradient:
-                    lml, grad = self.log_marginal_likelihood(
-                        theta, eval_gradient=True, clone_kernel=False
-                    )
-                    return -lml, -grad
-                else:
-                    return -self.log_marginal_likelihood(theta, clone_kernel=False)
-
-            # First optimize starting from theta specified in kernel
+            # Find hyperparameters maximizing the log-marginal likelihood (LML):
             optima = [
-                (
-                    self._constrained_optimization(
-                        obj_func, self.kernel_.theta, self.kernel_.bounds
-                    )
+                self.__maximize_log_marginal_likelihood(
+                    self.kernel_.theta, self.kernel_.bounds
                 )
             ]
-
-            # Additional runs are performed from log-uniform chosen initial
-            # theta
             if self.n_restarts_optimizer > 0:
+                # Repeat LML maximization from log-uniform chosen initial theta:
                 if not np.isfinite(self.kernel_.bounds).all():
                     raise ValueError(
                         "Multiple optimizer restarts (n_restarts_optimizer>0) "
@@ -321,15 +306,14 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 for iteration in range(self.n_restarts_optimizer):
                     theta_initial = self._rng.uniform(bounds[:, 0], bounds[:, 1])
                     optima.append(
-                        self._constrained_optimization(obj_func, theta_initial, bounds)
+                        self.__maximize_log_marginal_likelihood(theta_initial, bounds)
                     )
-            # Select result from run with minimal (negative) log-marginal
-            # likelihood
-            lml_values = list(map(itemgetter(1), optima))
-            self.kernel_.theta = optima[np.argmin(lml_values)][0]
-            self.kernel_._check_bounds_params()
 
-            self.log_marginal_likelihood_value_ = -np.min(lml_values)
+            # Select hyperparameters maximizing the LML across repetitions:
+            theta, neg_lml = optima[min(enumerate(optima), key=lambda x: x[1][1])[0]]
+            self.kernel_.theta = theta
+            self.kernel_._check_bounds_params()
+            self.log_marginal_likelihood_value_ = -neg_lml
         else:
             self.log_marginal_likelihood_value_ = self.log_marginal_likelihood(
                 self.kernel_.theta, clone_kernel=False
@@ -624,10 +608,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         log_likelihood_gradient = log_likelihood_gradients.sum(axis=-1)
         return log_likelihood, log_likelihood_gradient
 
-    def _constrained_optimization(self, obj_func, initial_theta, bounds):
+    def __maximize_log_marginal_likelihood(self, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
             opt_res = scipy.optimize.minimize(
-                obj_func,
+                self.__neg_log_marginal_likelihood,
                 initial_theta,
                 method="L-BFGS-B",
                 jac=True,
@@ -636,11 +620,22 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             _check_optimize_result("lbfgs", opt_res)
             theta_opt, func_min = opt_res.x, opt_res.fun
         elif callable(self.optimizer):
-            theta_opt, func_min = self.optimizer(obj_func, initial_theta, bounds=bounds)
+            theta_opt, func_min = self.optimizer(
+                self.__neg_log_marginal_likelihood, initial_theta, bounds=bounds
+            )
         else:
             raise ValueError(f"Unknown optimizer {self.optimizer}.")
 
         return theta_opt, func_min
+
+    def __neg_log_marginal_likelihood(self, theta, eval_gradient=True):
+        if eval_gradient:
+            lml, grad = self.log_marginal_likelihood(
+                theta, eval_gradient=True, clone_kernel=False
+            )
+            return -lml, -grad
+        else:
+            return -self.log_marginal_likelihood(theta, clone_kernel=False)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
