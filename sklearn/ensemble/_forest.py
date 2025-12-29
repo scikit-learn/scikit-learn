@@ -1611,8 +1611,6 @@ class RandomForestRegressor(ForestRegressor):
         absolute error, which minimizes the L1 loss using the median of each terminal
         node, and "poisson" which uses reduction in Poisson deviance to find splits,
         also using the mean of each terminal node.
-        Training using "absolute_error" is significantly slower
-        than when using "squared_error".
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
@@ -2362,8 +2360,6 @@ class ExtraTreesRegressor(ForestRegressor):
         absolute error, which minimizes the L1 loss using the median of each terminal
         node, and "poisson" which uses reduction in Poisson deviance to find splits,
         also using the mean of each terminal node.
-        Training using "absolute_error" is significantly slower
-        than when using "squared_error".
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
