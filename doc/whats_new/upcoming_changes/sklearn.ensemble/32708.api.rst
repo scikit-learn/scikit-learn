@@ -1,4 +1,4 @@
-- `criterion` parameter is now deprecated for classes
+- The `criterion` parameter is now deprecated for classes
   :class:`ensemble.GradientBoostingRegressor`
   and :class:`ensemble.GradientBoostingClassifier`, as both options
   (`"friedman_mse"` and `"squared_error"`) were producing the same results,
