@@ -393,7 +393,7 @@ program.
 
 The `NeuroDebian <https://neuro.debian.net>`_ project providing `Debian
 <https://www.debian.org/>`_ packaging and contributions is supported by
-`Dr. James V. Haxby <https://haxbylab.dartmouth.edu/>`_ (`Dartmouth
+`Dr. James V. Haxby <http://haxbylab.dartmouth.edu/>`_ (`Dartmouth
 College <https://pbs.dartmouth.edu/>`_).
 
 ...................
