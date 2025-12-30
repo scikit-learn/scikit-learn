@@ -83,7 +83,7 @@ def test_estimator_html_col_names_featureunion():
     ct2.fit_transform(X)
     out = estimator_html_repr(ct2)
 
-    assert "pca_pca0" in out
+    assert "pca__pca0" in out
     assert "svd__truncatedsvd0" in out
     assert "2 features" in out
 
