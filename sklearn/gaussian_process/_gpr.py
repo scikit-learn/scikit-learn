@@ -308,11 +308,8 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         if self.optimizer is not None and self.kernel_.n_dims > 0:
             # Find hyperparameters maximizing the log-marginal likelihood (LML):
-            optima = [
-                self.__maximize_log_marginal_likelihood(
-                    self.kernel_.theta, self.kernel_.bounds
-                )
-            ]
+            bounds = self.kernel_.bounds
+            optima = [self.__maximize_likelihood(self.kernel_.theta, bounds)]
             if self.n_restarts_optimizer > 0:
                 # Repeat LML maximization from log-uniform chosen initial theta:
                 if not np.isfinite(self.kernel_.bounds).all():
@@ -320,12 +317,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                         "Multiple optimizer restarts (n_restarts_optimizer>0) "
                         "requires that all bounds are finite."
                     )
-                bounds = self.kernel_.bounds
                 for _ in range(self.n_restarts_optimizer):
-                    theta_initial = self._rng.uniform(bounds[:, 0], bounds[:, 1])
-                    optima.append(
-                        self.__maximize_log_marginal_likelihood(theta_initial, bounds)
-                    )
+                    initial_theta = self._rng.uniform(bounds[:, 0], bounds[:, 1])
+                    optima.append(self.__maximize_likelihood(initial_theta, bounds))
 
             # Select hyperparameters maximizing the LML across repetitions:
             theta, neg_lml = optima[min(enumerate(optima), key=lambda x: x[1][1])[0]]
@@ -626,7 +620,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         log_likelihood_gradient = log_likelihood_gradients.sum(axis=-1)
         return log_likelihood, log_likelihood_gradient
 
-    def __maximize_log_marginal_likelihood(self, initial_theta, bounds):
+    def __maximize_likelihood(self, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
             opt_res = scipy.optimize.minimize(
                 self.__neg_log_marginal_likelihood,
