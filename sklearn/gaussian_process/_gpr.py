@@ -242,7 +242,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
-        """Fit Gaussian process regression model.
+        """Fit GPR model.
 
         Parameters
         ----------
@@ -357,7 +357,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         return self
 
     def predict(self, X, return_std=False, return_cov=False):
-        """Predict using the Gaussian process regression model.
+        """Predict using the GPR model.
 
         We can also predict based on an unfitted model by using the GP prior.
         In addition to the mean of the predictive distribution,
