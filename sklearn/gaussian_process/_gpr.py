@@ -497,20 +497,17 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             (n_samples_X, n_targets, n_samples)
             GP samples evaluated at query points.
         """
-        rng = check_random_state(random_state)
-
+        sample = check_random_state(random_state).multivariate_normal
         y_mean, y_cov = self.predict(X, return_cov=True)
         if y_mean.ndim == 1:
-            y_samples = rng.multivariate_normal(y_mean, y_cov, n_samples).T
-        else:
-            y_samples = [
-                rng.multivariate_normal(
-                    y_mean[:, target], y_cov[..., target], n_samples
-                ).T[:, np.newaxis]
-                for target in range(y_mean.shape[1])
+            return sample(y_mean, y_cov, n_samples).T
+
+        return np.hstack(
+            [
+                sample(y_mean[:, i], y_cov[..., i], n_samples).T[:, np.newaxis]
+                for i in range(y_mean.shape[1])
             ]
-            y_samples = np.hstack(y_samples)
-        return y_samples
+        )
 
     def log_marginal_likelihood(
         self, theta=None, eval_gradient=False, clone_kernel=True
