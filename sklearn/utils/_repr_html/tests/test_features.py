@@ -2,13 +2,17 @@ import numpy as np
 import pytest
 
 from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
+from sklearn.decomposition import PCA, TruncatedSVD
+from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.preprocessing import Normalizer, StandardScaler
 from sklearn.utils._repr_html.estimator import estimator_html_repr
 from sklearn.utils._repr_html.features import _features_html
 from sklearn.utils._testing import MinimalTransformer
 
-ct = ColumnTransformer([("norm1", Normalizer(), [0, 1])])
+ct = ColumnTransformer([("norm1", Normalizer(), [0, 1])], remainder="passthrough")
+ct2 = FeatureUnion(
+    [("pca", PCA(n_components=1)), ("svd", TruncatedSVD(n_components=2))]
+)
 rng = np.random.RandomState(42)
 
 
@@ -48,6 +52,40 @@ def test_estimator_html_repr_col_names(pandas, feature_cols):
     out = estimator_html_repr(ct)
     assert feature_cols[0] in out
     assert feature_cols[1] in out
+
+
+@pytest.mark.parametrize(
+    "pandas, total_output_features",
+    [
+        (True, ["norm1__A", "norm1__B", "remainder__C"]),
+        (False, ["norm1__x0", "norm1__x1", "remainder__x2"]),
+    ],
+)
+def test_estimator_html_repr_total_feature_names(pandas, total_output_features):
+    """Test features names are kept with pandas col names and generic."""
+    if pandas:
+        pd = pytest.importorskip("pandas")
+        X = pd.DataFrame({"A": [0, 2, 3], "B": [1, 1, 3], "C": [3, 5, 4]})
+    else:
+        X = np.array([[0, 2, 3], [1, 1, 3], [3, 5, 4]])
+
+    ct.fit(X)
+    out = estimator_html_repr(ct)
+
+    assert "<div class='total_features'>" in out
+    assert "3 features</div>" in out
+    for feature_name in total_output_features:
+        assert feature_name in out
+
+
+def test_estimator_html_col_names_featureunion():
+    X = [[0.0, 1.0, 3], [2.0, 2.0, 5]]
+    ct2.fit_transform(X)
+    out = estimator_html_repr(ct2)
+
+    assert "pca_pca0" in out
+    assert "svd__truncatedsvd0" in out
+    assert "2 features" in out
 
 
 def test_features_html_with_pipeline():
