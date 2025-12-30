@@ -51,9 +51,9 @@ class Estimator(CallbackSupportMixin, BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X=None, y=None):
-        callback_ctx = self._callback_fit_ctx.set_task_info(
-            max_subtasks=self.max_iter
-        ).eval_on_fit_begin(estimator=self)
+        callback_ctx = self._callback_fit_ctx
+        callback_ctx.max_subtasks = self.max_iter
+        callback_ctx.eval_on_fit_begin(estimator=self)
 
         for i in range(self.max_iter):
             subcontext = callback_ctx.subcontext(task_id=i)
@@ -119,9 +119,9 @@ class ThirdPartyEstimator(CallbackSupportMixin, BaseEstimator):
 
     @with_callback_context
     def fit(self, X=None, y=None):
-        callback_ctx = self._callback_fit_ctx.set_task_info(
-            max_subtasks=self.max_iter
-        ).eval_on_fit_begin(estimator=self)
+        callback_ctx = self._callback_fit_ctx
+        callback_ctx.max_subtasks = self.max_iter
+        callback_ctx.eval_on_fit_begin(estimator=self)
 
         for i in range(self.max_iter):
             subcontext = callback_ctx.subcontext(task_id=i)
@@ -172,9 +172,9 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X=None, y=None):
-        callback_ctx = self._callback_fit_ctx.set_task_info(
-            max_subtasks=self.n_outer
-        ).eval_on_fit_begin(estimator=self)
+        callback_ctx = self._callback_fit_ctx
+        callback_ctx.max_subtasks = self.n_outer
+        callback_ctx.eval_on_fit_begin(estimator=self)
 
         Parallel(n_jobs=self.n_jobs, prefer=self.prefer)(
             delayed(_func)(

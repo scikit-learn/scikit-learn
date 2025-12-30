@@ -66,7 +66,7 @@ from sklearn.callback import AutoPropagatedCallback
 #     @with_callback_context
 #     def fit(self, X, y):
 #         callback_ctx = self._callback_fit_ctx
-#         callback_ctx.set_task_info(max_subtasks=self.max_iter)
+#         callback_ctx.max_subtasks = self.max_iter
 #         callback_ctx.eval_on_fit_begin(estimator=self)
 #
 #         for i in range(self.max_iter):
@@ -127,13 +127,16 @@ class CallbackContext:
     """
 
     @classmethod
-    def _from_estimator(cls, estimator):
+    def _from_estimator(cls, estimator, task_name):
         """Private constructor to create a root context.
 
         Parameters
         ----------
         estimator : estimator instance
             The estimator this context is responsible for.
+
+        task_name : str
+            The name of the task this context is responsible for.
         """
         new_ctx = cls.__new__(cls)
 
@@ -141,7 +144,7 @@ class CallbackContext:
         # because the estimator already holds a reference to the context.
         new_ctx._callbacks = getattr(estimator, "_skl_callbacks", [])
         new_ctx.estimator_name = estimator.__class__.__name__
-        new_ctx.task_name = "fit"
+        new_ctx.task_name = task_name
         new_ctx.task_id = 0
         new_ctx.parent = None
         new_ctx._children_map = {}
@@ -237,33 +240,6 @@ class CallbackContext:
         # Keep information about the context it was merged with
         self.prev_task_name = other_context.task_name
         self.prev_estimator_name = other_context.estimator_name
-
-    # TODO: maybe provide a convenience method to get the context, set the task info
-    #       and eval the on_fit_begin hook at once to avoid the repetitive pattern:
-    #           callback_ctx = self._callback_fit_ctx
-    #           callback_ctx.set_task_info(max_subtasks=self.max_iter)
-    #           callback_ctx.eval_on_fit_begin(estimator=self, data=...)
-    def set_task_info(self, *, task_name="fit", task_id=0, max_subtasks=None):
-        """Setter for the task_name, task_id and max_subtasks attributes.
-
-        Parameters
-        ----------
-        task_name : str or None, default="fit"
-            The name of the task.
-        task_id : int or None, default=0
-            An identifier of the task. Usually a number between 0 and the maximum
-            number of sibling contexts, but can be any identifier as long as it's unique
-            among the siblings.
-        max_subtasks : int or None, default=None
-            The maximum number of tasks that can be children of the task. 0 means
-            it's a leaf. None means the maximum number of subtasks is not known in
-            advance.
-        """
-        self.task_id = task_id
-        self.task_name = task_name
-        self.max_subtasks = max_subtasks
-
-        return self
 
     def subcontext(self, task_name="", task_id=0, max_subtasks=None):
         """Create a context for a subtask of the current task.
@@ -439,7 +415,7 @@ def get_context_path(context):
 
 
 @contextmanager
-def callback_management_context(estimator):
+def callback_management_context(estimator, fit_method_name):
     """Context manager to setup and teardown the callback context for an estimator.
 
     Parameters
@@ -447,11 +423,16 @@ def callback_management_context(estimator):
     estimator : estimator instance
         The estimator being fitted.
 
+    fit_method_name : str
+        The name of the fit method being called.
+
     Yields
     ------
     None.
     """
-    estimator._callback_fit_ctx = CallbackContext._from_estimator(estimator)
+    estimator._callback_fit_ctx = CallbackContext._from_estimator(
+        estimator, task_name=fit_method_name
+    )
 
     try:
         yield
@@ -462,10 +443,10 @@ def callback_management_context(estimator):
 
 
 def with_callback_context(fit_method):
-    """Decorator to run the fit methods within the callback context manager
+    """Decorator to run the fit methods within the callback context manager.
 
     This decorator creates the root callback context and stores it into a
-    `_callback_fit_ctx` attribute that is accessible during fit and cleaned up
+    `_callback_fit_ctx` attribute that is accessible during fit and cleaned-up
     afterwards.
 
     Parameters
@@ -480,7 +461,7 @@ def with_callback_context(fit_method):
     """
 
     def callback_managed_fit_method(estimator, *args, **kwargs):
-        with callback_management_context(estimator):
+        with callback_management_context(estimator, fit_method.__name__):
             return fit_method(estimator, *args, **kwargs)
 
     return callback_managed_fit_method
