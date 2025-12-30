@@ -471,12 +471,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     def __get_dtype_ensure_2d(self):
         if self.kernel is None or self.kernel.requires_vector_input:
-            dtype = "numeric"
-            ensure_2d = True
-        else:
-            dtype = None
-            ensure_2d = False
-        return dtype, ensure_2d
+            return "numeric", True
+
+        return None, False
 
     def sample_y(self, X, n_samples=1, random_state=0):
         """Draw GP samples and evaluate them at query points.
@@ -624,24 +621,19 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 bounds=bounds,
             )
             _check_optimize_result("lbfgs", opt_res)
-            theta_opt, func_min = opt_res.x, opt_res.fun
+            return opt_res.x, opt_res.fun
         elif callable(self.optimizer):
-            theta_opt, func_min = self.optimizer(
+            return self.optimizer(
                 self.__neg_log_marginal_likelihood, initial_theta, bounds=bounds
             )
         else:
             raise ValueError(f"Unknown optimizer {self.optimizer}.")
 
-        return theta_opt, func_min
-
     def __neg_log_marginal_likelihood(self, theta, eval_gradient=True):
-        if eval_gradient:
-            lml, grad = self.log_marginal_likelihood(
-                theta, eval_gradient=True, clone_kernel=False
-            )
-            return -lml, -grad
-        else:
-            return -self.log_marginal_likelihood(theta, clone_kernel=False)
+        result = self.log_marginal_likelihood(
+            theta=theta, eval_gradient=eval_gradient, clone_kernel=False
+        )
+        return (-result[0], -result[1]) if isinstance(result, tuple) else -result
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -650,22 +642,20 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     def __get_kernel(self, clone_):
         if self.kernel is None:
-            kernel = C(constant_value_bounds="fixed") * RBF(length_scale_bounds="fixed")
-        else:
-            kernel = clone(self.kernel) if clone_ else self.kernel
+            return C(constant_value_bounds="fixed") * RBF(length_scale_bounds="fixed")
 
-        return kernel
+        return clone(self.kernel) if clone_ else self.kernel
 
     @staticmethod
     def __remove_target_axis_if_scalar(array_, axis):
         if array_.ndim > axis and array_.shape[axis] == 1:
-            array_ = np.squeeze(array_, axis=axis)
+            return np.squeeze(array_, axis=axis)
 
         return array_
 
     @staticmethod
     def __repeat_by_target(array_, n_targets):
         if n_targets > 1:
-            array_ = np.expand_dims(array_, -1).repeat(n_targets, axis=-1)
+            return np.expand_dims(array_, -1).repeat(n_targets, axis=-1)
 
         return array_
