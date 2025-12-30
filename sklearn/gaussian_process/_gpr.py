@@ -303,7 +303,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         if self.optimizer is not None and self.kernel_.n_dims > 0:
             # Find hyperparameters maximizing the log-marginal likelihood (LML):
             bounds = self.kernel_.bounds
-            optima = [self.__maximize_likelihood(self.kernel_.theta, bounds)]
+            optima = [self.__maximize_lml(self.kernel_.theta, bounds)]
             if self.n_restarts_optimizer > 0:
                 # Repeat LML maximization from log-uniform chosen initial theta:
                 if not np.isfinite(self.kernel_.bounds).all():
@@ -313,7 +313,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     )
                 for _ in range(self.n_restarts_optimizer):
                     initial_theta = self._rng.uniform(bounds[:, 0], bounds[:, 1])
-                    optima.append(self.__maximize_likelihood(initial_theta, bounds))
+                    optima.append(self.__maximize_lml(initial_theta, bounds))
 
             # Select hyperparameters maximizing the LML across repetitions:
             theta, neg_lml = optima[min(enumerate(optima), key=lambda x: x[1][1])[0]]
@@ -608,25 +608,23 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         log_likelihood_gradient = log_likelihood_gradients.sum(axis=-1)
         return log_likelihood, log_likelihood_gradient
 
-    def __maximize_likelihood(self, initial_theta, bounds):
+    def __maximize_lml(self, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
-            opt_res = scipy.optimize.minimize(
-                self.__neg_log_marginal_likelihood,
+            result = scipy.optimize.minimize(
+                self.__evaluate_neg_lml,
                 initial_theta,
                 method="L-BFGS-B",
                 jac=True,
                 bounds=bounds,
             )
-            _check_optimize_result("lbfgs", opt_res)
-            return opt_res.x, opt_res.fun
+            _check_optimize_result("lbfgs", result)
+            return result.x, result.fun
         elif callable(self.optimizer):
-            return self.optimizer(
-                self.__neg_log_marginal_likelihood, initial_theta, bounds=bounds
-            )
+            return self.optimizer(self.__evaluate_neg_lml, initial_theta, bounds=bounds)
         else:
             raise ValueError(f"Unknown optimizer {self.optimizer}.")
 
-    def __neg_log_marginal_likelihood(self, theta, eval_gradient=True):
+    def __evaluate_neg_lml(self, theta, eval_gradient=True):
         result = self.log_marginal_likelihood(
             theta=theta, eval_gradient=eval_gradient, clone_kernel=False
         )
