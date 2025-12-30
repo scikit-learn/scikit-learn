@@ -209,10 +209,10 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,), dtype=integral
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
-    labels_pred : array-like of shape (n_samples,), dtype=integral
+    labels_pred : array-like of shape (n_samples,)
         Cluster labels to evaluate.
 
     Returns
@@ -295,10 +295,10 @@ def rand_score(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,), dtype=integral
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
-    labels_pred : array-like of shape (n_samples,), dtype=integral
+    labels_pred : array-like of shape (n_samples,)
         Cluster labels to evaluate.
 
     Returns
@@ -855,11 +855,11 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,), dtype=integral
+    labels_true : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets, called :math:`U` in
         the above formula.
 
-    labels_pred : array-like of shape (n_samples,), dtype=integral
+    labels_pred : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets, called :math:`V` in
         the above formula.
 
@@ -1218,10 +1218,10 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse="deprecated"):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,), dtype=int
+    labels_true : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
-    labels_pred : array-like of shape (n_samples,), dtype=int
+    labels_pred : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
     sparse : bool, default=False
