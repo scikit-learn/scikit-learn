@@ -147,24 +147,30 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     X_train_ : array-like of shape (n_samples, n_features) or list of object
         Feature vectors or other representations of training data
         (also required for prediction).
+        ``None`` before fitting.
 
     y_train_ : array-like of shape (n_samples,) or (n_samples, n_targets)
         Target values in training data (also required for prediction);
         these target values are normalized when ``normalize_y`` is ``True``.
+        ``None`` before fitting.
 
     kernel_ : kernel instance
-        The kernel used for prediction.
+        The kernel used for prediction from the prior GP.
         The structure of the kernel is the same as the one passed as argument
         but with optimized hyperparameters.
+        ``None`` before fitting.
 
     L_ : array-like of shape (n_samples, n_samples)
         Lower-triangular Cholesky decomposition of the kernel in ``X_train_``.
+        ``None`` before fitting.
 
     alpha_ : array-like of shape (n_samples,)
         Dual coefficients of training data points in kernel space.
+        ``None`` before fitting.
 
     log_marginal_likelihood_value_ : float
         The log-marginal-likelihood of ``self.kernel_.theta``.
+        ``None`` before fitting.
 
     See Also
     --------
@@ -223,6 +229,16 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self.copy_X_train = copy_X_train
         self.n_targets = n_targets
         self.random_state = random_state
+        # The following attributes are set to None until fitting.
+        self.X_train_ = None
+        self.y_train_ = None
+        self._y_train_mean = None
+        self._y_train_std = None
+        self.L_ = None
+        self.alpha_ = None
+        self.log_marginal_likelihood_value_ = None
+        self.kernel_ = None
+        self._rng = None
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
@@ -389,7 +405,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         dtype, ensure_2d = self.__get_dtype_ensure_2d()
         X = validate_data(self, X, ensure_2d=ensure_2d, dtype=dtype, reset=False)
 
-        if not hasattr(self, "X_train_"):
+        if self.X_train_ is None:
             # GPR is unfitted; predict based on GP prior
             kernel = self.__get_kernel(False)
             n_targets = self.n_targets if self.n_targets is not None else 1
