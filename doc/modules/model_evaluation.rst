@@ -2009,7 +2009,7 @@ the same does a lower Brier score loss always mean better calibration"
 
 .. [Bella2012] Bella, Ferri, Hernández-Orallo, and Ramírez-Quintana
   `"Calibration of Machine Learning Models"
-  <http://dmip.webs.upv.es/papers/BFHRHandbook2010.pdf>`_
+  <https://dmip.webs.upv.es/papers/BFHRHandbook2010.pdf>`_
   in Khosrow-Pour, M. "Machine learning: concepts, methodologies, tools
   and applications." Hershey, PA: Information Science Reference (2012).
 
