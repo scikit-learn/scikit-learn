@@ -1,9 +1,11 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
 from contextlib import contextmanager
 
-from sklearn.callback import AutoPropagatedCallback
+from sklearn.callback._base import AutoPropagatedCallback
+from sklearn.callback._mixin import CallbackSupportMixin
 
 # TODO(callbacks): move these explanations into a dedicated user guide.
 #
@@ -375,11 +377,19 @@ class CallbackContext:
             if isinstance(callback, AutoPropagatedCallback)
             and (
                 callback.max_estimator_depth is None
-                or self._estimator_depth < callback.max_estimator_depth
+                or self._estimator_depth < callback.max_estimator_depth - 1
             )
         ]
 
         if not callbacks_to_propagate:
+            return self
+
+        if not isinstance(sub_estimator, CallbackSupportMixin):
+            warnings.warn(
+                f"The estimator {sub_estimator.__class__.__name__} does not support "
+                f"callbacks. The callbacks attached to {self.estimator_name} will not "
+                f"be propagated to this estimator."
+            )
             return self
 
         # We store the parent context in the sub-estimator to be able to merge the

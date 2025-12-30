@@ -152,6 +152,22 @@ class ParentFitEstimator(Estimator):
         return super().fit(X, y)
 
 
+class NoCallbackEstimator(BaseEstimator):
+    """A class that mimics an estimator without callback support."""
+
+    _parameter_constraints: dict = {}
+
+    def __init__(self, max_iter=20, computation_intensity=0.001):
+        self.max_iter = max_iter
+        self.computation_intensity = computation_intensity
+
+    def fit(self, X=None, y=None):
+        for i in range(self.max_iter):
+            time.sleep(self.computation_intensity)  # Computation intensive task
+
+        return self
+
+
 class MetaEstimator(CallbackSupportMixin, BaseEstimator):
     """A class that mimics the behavior of a meta-estimator.
 

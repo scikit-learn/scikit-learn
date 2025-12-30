@@ -8,6 +8,7 @@ from sklearn.callback._callback_context import CallbackContext, get_context_path
 from sklearn.callback.tests._utils import (
     Estimator,
     MetaEstimator,
+    NoCallbackEstimator,
     ParentFitEstimator,
     TestingAutoPropagatedCallback,
     TestingCallback,
@@ -181,3 +182,20 @@ def test_callback_ctx_removed_after_fit(estimator_class):
     """Check that the _callback_fit_ctx attribute gets removed after fit."""
     estimator = estimator_class().fit()
     assert not hasattr(estimator, "_callback_fit_ctx")
+
+
+def test_inner_estimator_no_callback_support():
+    """Check that meta estimators can have sub estimators without callback support.
+
+    No error is raised when the sub-estimator does not support callbacks. If callbacks
+    would be propagated, a warning is raised instead.
+    """
+    estimator = NoCallbackEstimator()
+    meta_estimator = MetaEstimator(estimator)
+    meta_estimator.set_callbacks(TestingAutoPropagatedCallback())
+
+    with pytest.warns(
+        UserWarning,
+        match="The estimator NoCallbackEstimator does not support callbacks.",
+    ):
+        meta_estimator.fit()
