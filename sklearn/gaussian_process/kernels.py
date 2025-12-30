@@ -25,6 +25,7 @@ import math
 import warnings
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
+from collections.abc import Sequence
 from inspect import signature
 
 import numpy as np
@@ -1509,7 +1510,7 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
     @property
     def anisotropic(self):
-        return np.iterable(self.length_scale) and len(self.length_scale) > 1
+        return _is_sequence_like(self.length_scale) and len(self.length_scale) > 1
 
     @property
     def hyperparameter_length_scale(self):
@@ -2406,3 +2407,10 @@ class PairwiseKernel(Kernel):
         return "{0}(gamma={1}, metric={2})".format(
             self.__class__.__name__, self.gamma, self.metric
         )
+
+
+def _is_sequence_like(obj):
+    if isinstance(obj, np.ndarray):
+        return obj.ndim >= 1
+
+    return isinstance(obj, Sequence)

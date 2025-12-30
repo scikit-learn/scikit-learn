@@ -17,7 +17,7 @@ from sklearn.base import (
     _fit_context,
     clone,
 )
-from sklearn.gaussian_process.kernels import RBF, Kernel
+from sklearn.gaussian_process.kernels import RBF, Kernel, _is_sequence_like
 from sklearn.gaussian_process.kernels import ConstantKernel as C
 from sklearn.preprocessing._data import _handle_zeros_in_scale
 from sklearn.utils import check_random_state
@@ -292,14 +292,15 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             self._y_train_mean = np.zeros(shape=shape_y_stats)
             self._y_train_std = np.ones(shape=shape_y_stats)
 
+        alpha_length = len(self.alpha) if _is_sequence_like(self.alpha) else 0
         n_samples = len(y)
-        if np.iterable(self.alpha) and (n_alphas := self.alpha.shape[0]) != n_samples:
-            if n_alphas == 1:
+        if alpha_length != n_samples:
+            if alpha_length == 1:
                 self.alpha = self.alpha[0]
-            else:
+            elif alpha_length != 0:
                 raise ValueError(
                     "alpha must be a scalar or an array with same number of "
-                    f"entries as y. ({n_alphas} != {n_samples})"
+                    f"entries as y. ({alpha_length} != {n_samples})"
                 )
 
         self.X_train_ = np.copy(X) if self.copy_X_train else X
