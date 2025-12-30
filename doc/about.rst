@@ -159,8 +159,13 @@ Bibtex entry::
     pages = {108--122},
   }
 
+.. _branding-and-logos:
+
 Branding & Logos
 ================
+
+The scikit-learn brand is subject to the following `terms of use and guidelines
+<https://blog.scikit-learn.org/assets/brand_guidelines/2025-02-scikit-learn-brand-guidelines.pdf>`_.
 
 High quality PNG and SVG logos are available in the `doc/logos
 <https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos>`_
