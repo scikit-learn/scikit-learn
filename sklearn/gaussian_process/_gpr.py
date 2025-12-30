@@ -321,7 +321,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                         "requires that all bounds are finite."
                     )
                 bounds = self.kernel_.bounds
-                for iteration in range(self.n_restarts_optimizer):
+                for _ in range(self.n_restarts_optimizer):
                     theta_initial = self._rng.uniform(bounds[:, 0], bounds[:, 1])
                     optima.append(
                         self.__maximize_log_marginal_likelihood(theta_initial, bounds)
