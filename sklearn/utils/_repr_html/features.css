@@ -116,4 +116,5 @@
 .total_features {
   display: flex;
   justify-content: center;
+  margin-top: 0.5em;
 }

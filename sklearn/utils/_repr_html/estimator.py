@@ -396,7 +396,7 @@ def _write_estimator_html(
                 out.write("</div>")  # sk-parallel-item
 
         out.write("</div>")
-        breakpoint()
+
         if (
             hasattr(estimator_label, "endswith")
             and (
@@ -410,7 +410,7 @@ def _write_estimator_html(
                 estimator.get_feature_names_out(), is_fitted_css_class
             )
             total_output_features_item = (
-                f"<br><div class='total_features'>{features_div}</div>"
+                f"<div class='total_features'>{features_div}</div>"
             )
             out.write(total_output_features_item)
         out.write("</div>")

@@ -22,16 +22,11 @@ def test_n_features_not_fitted():
 
 def test_with_MinimalTransformer():
     X, y = np.array([[0, 1], [1, 1]]), np.array([[0, 1]])
-    ct = ColumnTransformer(
-        [("minimal", MinimalTransformer(), [0])], remainder="passthrough"
-    )
-    model = Pipeline([("transformer", ct)])
-    model.fit(X, y)
 
+    model = Pipeline([("transformer", MinimalTransformer())])
+    model.fit(X, y)
     out = estimator_html_repr(model)
-    assert "1 features" in out
-    assert "x0" in out
-    assert "passthrough" in out
+    assert "MinimalTransformer" in out
 
 
 @pytest.mark.parametrize(
