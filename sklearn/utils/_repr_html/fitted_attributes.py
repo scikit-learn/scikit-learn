@@ -61,24 +61,24 @@ def _fitted_attr_html_repr(fitted_attributes):
     """
 
     FITTED_ATTR_TEMPLATE = """
-       <div class="estimator-table">
-           <details>
-               <summary>Fitted attributes</summary>
-               <table class="body-table">
-                 <tbody>
-                 <tr>
-                 <th>Class</th>
-                 <th>Type</th>
-                 <th>Shape</th>
-                 <th>dtype</th>
-                 <th>size</th>
-                 <th>value</th>
-                 </tr>
-                   {rows}
-                 </tbody>
-               </table>
-           </details>
-       </div>
+        <div class="estimator-table">
+            <details>
+                <summary>Fitted attributes</summary>
+                <table class="parameters-table">
+                    <tbody>
+                        <tr>
+                        <th>Class</th>
+                        <th>Type</th>
+                        <th>Shape</th>
+                        <th>dtype</th>
+                        <th>size</th>
+                        <th>value</th>
+                        </tr>
+                        {rows}
+                    </tbody>
+                </table>
+            </details>
+        </div>
     """
     FITTED_ATTR_ROW_TEMPLATE = """
        <tr class="default">
@@ -93,9 +93,12 @@ def _fitted_attr_html_repr(fitted_attributes):
 
     FITTED_ATTR_AVAILABLE_DOC_LINK_TEMPLATE = """
         <a class="param-doc-link"
+            style="anchor-name: --doc-link-{fitted_attr_name};"
             rel="noreferrer" target="_blank" href="{link}">
             {fitted_attr_name}
-            <span class="param-doc-description">{fitted_attr_description}</span>
+            <span class="param-doc-description"
+            style="position-anchor: --doc-link-{fitted_attr_name};">
+            {fitted_attr_description}</span>
         </a>
     """
     estimator_class_docs = inspect.getdoc(fitted_attributes.estimator_class)
