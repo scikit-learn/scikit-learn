@@ -102,6 +102,8 @@ def _alpha_grid(
     eps=1e-3,
     n_alphas=100,
     sample_weight=None,
+    *,
+    positive: bool = False,
 ):
     """Compute the grid of alpha values for elastic net parameter search
 
@@ -138,6 +140,9 @@ def _alpha_grid(
         Whether to fit an intercept or not
 
     sample_weight : ndarray of shape (n_samples,), default=None
+
+    positive : bool, default=False
+        If set to True, forces coefficients to be positive.
 
     Returns
     -------
@@ -185,9 +190,15 @@ def _alpha_grid(
         n_samples = sample_weight.sum()
     else:
         n_samples = X.shape[0]
-    # Compute np.max(np.sqrt(np.sum(Xyw**2, axis=1))). We switch sqrt and max to avoid
-    # many computations of sqrt. This, however, needs an additional np.abs.
-    alpha_max = np.sqrt(np.max(np.abs(np.sum(Xyw**2, axis=1)))) / (n_samples * l1_ratio)
+
+    if not positive:
+        # Compute np.max(np.sqrt(np.sum(Xyw**2, axis=1))). We switch sqrt and max to
+        # avoid many computations of sqrt.
+        alpha_max = np.sqrt(np.max(np.sum(Xyw**2, axis=1))) / (n_samples * l1_ratio)
+    else:
+        # We may safely assume Xyw.shape[1] == 1, MultiTask estimators do not support
+        # positive constraints.
+        alpha_max = max(0, np.max(Xyw)) / (n_samples * l1_ratio)
 
     if alpha_max <= np.finfo(np.float64).resolution:
         return np.full(n_alphas, np.finfo(np.float64).resolution)
@@ -641,6 +652,7 @@ def enet_path(
             Xy=Xy,
             l1_ratio=l1_ratio,
             fit_intercept=False,
+            positive=positive,
             eps=eps,
             n_alphas=n_alphas,
         )
@@ -1801,6 +1813,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                     y,
                     l1_ratio=l1_ratio,
                     fit_intercept=self.fit_intercept,
+                    # Note: MultiTaskElasticNetCV has no attribute 'positive'
+                    positive=getattr(self, "positive", False),
                     eps=self.eps,
                     n_alphas=self._alphas,
                     sample_weight=sample_weight,
