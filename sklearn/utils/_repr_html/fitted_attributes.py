@@ -40,9 +40,11 @@ def _read_fitted_attr(value):
     r.maxlist = 2
     r.maxdict = 1
     r.maxstring = 50
-    cleaned_value = html.escape(r.repr(value))
 
-    return cleaned_value
+    if isinstance(value, float):
+        value = round(value, 3)
+
+    return html.escape(r.repr(value))
 
 
 @lru_cache
@@ -115,7 +117,6 @@ def _fitted_attr_html_repr(fitted_attributes):
             name,
             fitted_attributes.doc_link,
         )
-        formated_attr_value = _read_fitted_attr(value[1])
 
         if fitted_attr_numpydoc := fitted_attr_map.get(name, None):
             escaped_lines = (html.escape(line) for line in fitted_attr_numpydoc.desc)
@@ -131,29 +132,30 @@ def _fitted_attr_html_repr(fitted_attributes):
             # Create clickable parameter name with documentation link
             fitted_attr_display = FITTED_ATTR_AVAILABLE_DOC_LINK_TEMPLATE.format(
                 link=link,
-                fitted_attr_name=name,
+                fitted_attr_name=html.escape(name),
                 fitted_attr_description=fitted_attr_description,
             )
         else:
             # Just show the parameter name without link
-            fitted_attr_display = name
+            fitted_attr_display = html.escape(name)
 
         if len(value) == 2:
-            html_row_values = (value[0], "", "", "", value[1])
-            rows.append(
-                FITTED_ATTR_ROW_TEMPLATE.format(
-                    *html_row_values,
-                    fitted_attr_display=fitted_attr_display,
-                )
-            )
+            html_row_values = (value[0], "", "", "", _read_fitted_attr(value[1]))
         else:
-            html_row_values = (*value, "")
-            rows.append(
-                FITTED_ATTR_ROW_TEMPLATE.format(
-                    *html_row_values,
-                    fitted_attr_display=fitted_attr_display,
-                )
+            html_row_values = (
+                value[0],
+                _read_fitted_attr(value[1]),
+                value[2],
+                value[3],
+                "",
             )
+
+        rows.append(
+            FITTED_ATTR_ROW_TEMPLATE.format(
+                *html_row_values,
+                fitted_attr_display=fitted_attr_display,
+            )
+        )
 
     return FITTED_ATTR_TEMPLATE.format(rows="\n".join(rows))
 
