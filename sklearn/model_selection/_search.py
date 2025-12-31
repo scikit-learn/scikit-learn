@@ -1366,13 +1366,10 @@ class GridSearchCV(BaseSearchCV):
         Higher values increase the amount of information printed during fitting.
 
         - 0 : no messages are printed;
-        - >1 : the computation time for each fold and parameter candidate is
-          displayed;
-        - >2 : the score is also displayed;
-        - >3 : the fold and candidate parameter indexes are also displayed.
-
-        For larger values (e.g. verbose > 10), additional progress messages such as
-        start and end notifications may be printed depending on the execution backend.
+        - >=1 : summary of the total number of fits;
+        - >=2 : computation time for each fold and parameter candidate;
+        - >=3 : fold indices and scores;
+        - >=10 : parameter candidate indices and START messages before each fit.
 
     pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
@@ -1755,13 +1752,10 @@ class RandomizedSearchCV(BaseSearchCV):
         Higher values increase the amount of information printed during fitting.
 
         - 0 : no messages are printed;
-        - >1 : the computation time for each fold and parameter candidate is
-          displayed;
-        - >2 : the score is also displayed;
-        - >3 : the fold and candidate parameter indexes are also displayed.
-
-        For larger values (e.g. >10), additional progress messages may be printed
-        depending on the execution backend.
+        - >=1 : summary of the total number of fits;
+        - >=2 : computation time for each fold and parameter candidate;
+        - >=3 : fold indices and scores;
+        - >=10 : parameter candidate indices and START messages before each fit.
 
     pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
