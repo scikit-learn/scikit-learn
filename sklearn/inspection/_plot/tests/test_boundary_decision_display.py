@@ -63,57 +63,50 @@ def test_check_boundary_response_method_error():
 
     err_msg = "Multi-label and multi-output multi-class classifiers are not supported"
     with pytest.raises(ValueError, match=err_msg):
-        _check_boundary_response_method(MultiLabelClassifier(), "predict", None)
+        _check_boundary_response_method(MultiLabelClassifier(), "predict")
 
 
 @pytest.mark.parametrize(
-    "estimator, response_method, class_of_interest, expected_prediction_method",
+    "estimator, response_method, expected_prediction_method",
     [
-        (DecisionTreeRegressor(), "predict", None, "predict"),
-        (DecisionTreeRegressor(), "auto", None, "predict"),
-        (LogisticRegression().fit(*load_iris_2d_scaled()), "predict", None, "predict"),
+        (DecisionTreeRegressor(), "predict", "predict"),
+        (DecisionTreeRegressor(), "auto", "predict"),
+        (LogisticRegression().fit(*load_iris_2d_scaled()), "predict", "predict"),
         (
             LogisticRegression().fit(*load_iris_2d_scaled()),
             "auto",
-            None,
             ["decision_function", "predict_proba", "predict"],
         ),
         (
             LogisticRegression().fit(*load_iris_2d_scaled()),
             "predict_proba",
-            0,
             "predict_proba",
         ),
         (
             LogisticRegression().fit(*load_iris_2d_scaled()),
             "decision_function",
-            0,
             "decision_function",
         ),
         (
             LogisticRegression().fit(X, y),
             "auto",
-            None,
             ["decision_function", "predict_proba", "predict"],
         ),
-        (LogisticRegression().fit(X, y), "predict", None, "predict"),
+        (LogisticRegression().fit(X, y), "predict", "predict"),
         (
             LogisticRegression().fit(X, y),
             ["predict_proba", "decision_function"],
-            None,
             ["predict_proba", "decision_function"],
         ),
     ],
 )
 def test_check_boundary_response_method(
-    estimator, response_method, class_of_interest, expected_prediction_method
+    estimator, response_method, expected_prediction_method
 ):
     """Check the behaviour of `_check_boundary_response_method` for the supported
     cases.
     """
-    prediction_method = _check_boundary_response_method(
-        estimator, response_method, class_of_interest
-    )
+    prediction_method = _check_boundary_response_method(estimator, response_method)
     assert prediction_method == expected_prediction_method
 
 

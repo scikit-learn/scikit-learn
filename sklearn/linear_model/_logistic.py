@@ -861,7 +861,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
           class of problems.
         - For :term:`multiclass` problems (`n_classes >= 3`), all solvers except
           'liblinear' minimize the full multinomial loss, 'liblinear' will raise an
-           error.
+          error.
         - 'newton-cholesky' is a good choice for
           `n_samples` >> `n_features * n_classes`, especially with one-hot encoded
           categorical features with rare categories. Be aware that the memory usage
@@ -1165,8 +1165,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         if penalty == "elasticnet" and self.l1_ratio is None:
             raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
 
-        if penalty is None:
-            if self.C != 1.0:  # default values
+        if self.penalty is None:
+            if self.C != 1.0:  # default value
                 warnings.warn(
                     "Setting penalty=None will ignore the C and l1_ratio parameters"
                 )
@@ -1465,7 +1465,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
           class of problems.
         - For :term:`multiclass` problems (`n_classes >= 3`), all solvers except
           'liblinear' minimize the full multinomial loss, 'liblinear' will raise an
-           error.
+          error.
         - 'newton-cholesky' is a good choice for
           `n_samples` >> `n_features * n_classes`, especially with one-hot encoded
           categorical features with rare categories. Be aware that the memory usage

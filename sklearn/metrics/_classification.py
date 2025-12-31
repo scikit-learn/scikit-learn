@@ -39,7 +39,6 @@ from sklearn.utils._array_api import (
     _is_xp_namespace,
     _isin,
     _max_precision_float_dtype,
-    _tolist,
     _union1d,
     get_namespace,
     get_namespace_and_device,
@@ -251,7 +250,7 @@ def _validate_multiclass_probabilistic_prediction(
     y_true : array-like or label indicator matrix
         Ground truth (correct) labels for n_samples samples.
 
-    y_prob : array-like of float, shape=(n_samples, n_classes) or (n_samples,)
+    y_prob : array of floats, shape=(n_samples, n_classes) or (n_samples,)
         Predicted probabilities, as returned by a classifier's
         predict_proba method. If `y_prob.shape = (n_samples,)`
         the probabilities provided are assumed to be that of the
@@ -274,10 +273,6 @@ def _validate_multiclass_probabilistic_prediction(
     y_prob : array of shape (n_samples, n_classes)
     """
     xp, _, device_ = get_namespace_and_device(y_prob)
-
-    y_prob = check_array(
-        y_prob, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
-    )
 
     if xp.max(y_prob) > 1:
         raise ValueError(f"y_prob contains values greater than 1: {xp.max(y_prob)}")
@@ -317,7 +312,6 @@ def _validate_multiclass_probabilistic_prediction(
         )
 
     # Check if dimensions are consistent.
-    transformed_labels = check_array(transformed_labels)
     if lb_classes.shape[0] != y_prob.shape[1]:
         if labels is None:
             raise ValueError(
@@ -1867,9 +1861,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
 
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred, _ = _check_targets(y_true, y_pred)
-    # Convert to Python primitive type to avoid NumPy type / Python str
-    # comparison. See https://github.com/numpy/numpy/issues/6784
-    present_labels = _tolist(unique_labels(y_true, y_pred))
+    present_labels = unique_labels(y_true, y_pred)
     if average == "binary":
         if y_type == "binary":
             if pos_label not in present_labels:
@@ -3373,8 +3365,11 @@ def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None)
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616
     """
+    xp, _, device_ = get_namespace_and_device(y_pred)
+    y_pred = check_array(
+        y_pred, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
+    )
     if sample_weight is not None:
-        xp, _, device_ = get_namespace_and_device(y_pred)
         sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
     transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
@@ -3619,10 +3614,11 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
     try:
         pos_label = _check_pos_label_consistency(pos_label, y_true)
     except ValueError:
-        classes = np.unique(y_true)
-        if classes.dtype.kind not in ("O", "U", "S"):
-            # for backward compatibility, if classes are not string then
-            # `pos_label` will correspond to the greater label
+        xp_y_true, _ = get_namespace(y_true)
+        classes = xp_y_true.unique_values(y_true)
+        # For backward compatibility, if classes are not string then
+        # `pos_label` will correspond to the greater label.
+        if not (_is_numpy_namespace(xp_y_true) and classes.dtype.kind in "OUS"):
             pos_label = classes[-1]
         else:
             raise
@@ -3856,9 +3852,11 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
 
-    y_pred = check_array(y_pred, ensure_2d=False, dtype="numeric")
+    xp, _, device_ = get_namespace_and_device(y_pred)
+    y_pred = check_array(
+        y_pred, ensure_2d=False, dtype=supported_float_dtypes(xp, device=device_)
+    )
     if sample_weight is not None:
-        xp, _, device_ = get_namespace_and_device(y_pred)
         sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
     transformed_labels, y_pred = _validate_multiclass_probabilistic_prediction(
