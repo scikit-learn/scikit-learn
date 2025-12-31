@@ -258,7 +258,7 @@ def enet_coordinate_descent(
     same on both sides and because one has G(0, 0) = 1/2 ||y||_2^2.
 
     Note:
-    The above dual D(v) and duality gap G require alpha > 0 because auf the dual
+    The above dual D(v) and duality gap G require alpha > 0 because of the dual
     feasible condition.
     There is, however, an alternative dual formulation, see [Dünner 2016] 5.2.3 and
     https://github.com/scikit-learn/scikit-learn/issues/22836:
