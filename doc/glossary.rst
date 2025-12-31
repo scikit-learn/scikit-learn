@@ -41,9 +41,9 @@ General Concepts
         contributor documentation <api_overview>`.
 
         The specific interfaces that constitute Scikit-learn's public API are
-        largely documented in :ref:`api_ref`. However, we less formally consider
+        largely documented in :ref:`api_ref`. However, we more  informally consider
         anything as public API if none of the identifiers required to access it
-        begins with ``_``.  We generally try to maintain :term:`backwards
+        begin with ``_``.  We generally try to maintain :term:`backwards
         compatibility` for all objects in the public API.
 
         Private API, including functions, modules and methods beginning ``_``
