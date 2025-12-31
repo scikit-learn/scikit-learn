@@ -843,6 +843,10 @@ is based on the algorithm described in Appendix A of (Tipping, 2001)
 where the update of the parameters :math:`\alpha` and :math:`\lambda` is done
 as suggested in (MacKay, 1992). The initial value of the maximization procedure
 can be set with the hyperparameters ``alpha_init`` and ``lambda_init``.
+See :ref:`Ridge coefficients as a function of the L2 Regularization
+<sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py>`
+for more details.
+
 
 There are four more hyperparameters, :math:`\alpha_1`, :math:`\alpha_2`,
 :math:`\lambda_1` and :math:`\lambda_2` of the gamma prior distributions over
