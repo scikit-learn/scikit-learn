@@ -125,14 +125,14 @@ def _get_namespace_device_dtype_ids(param):
             return "device2"
 
 
-def yield_mixed_namespace_input_combinations():
+def yield_mixed_namespace_input_permutations():
     """Yield mixed namespace and device inputs for testing.
 
-    We do not test for all possible combinations of namespace/device from
+    We do not test for all possible permutations of namespace/device from
     `yield_namespace_device_dtype_combinations` (excluding dtype variations, this is
     C(8,2)=56), to avoid slow testing and maintenance burden.
 
-    The current combinations ensures that the following conversions are tested:
+    The included selection covers ensures that the following conversions are tested:
 
     * non-NumPy to NumPy (including GPU to CPU)
     * NumPy to non-NumPy (including CPU to GPU)

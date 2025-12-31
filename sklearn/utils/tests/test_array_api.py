@@ -38,7 +38,7 @@ from sklearn.utils._array_api import (
     move_to,
     np_compat,
     supported_float_dtypes,
-    yield_mixed_namespace_input_combinations,
+    yield_mixed_namespace_input_permutations,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -146,7 +146,7 @@ def test_get_namespace_array_api(monkeypatch):
     "array_input, reference",
     [
         pytest.param(*args[:2], id=args[2])
-        for args in yield_mixed_namespace_input_combinations()
+        for args in yield_mixed_namespace_input_permutations()
     ],
 )
 def test_move_to_array_api_conversions(array_input, reference):

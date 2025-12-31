@@ -89,7 +89,7 @@ from sklearn.utils._array_api import (
     _max_precision_float_dtype,
     device,
     get_namespace,
-    yield_mixed_namespace_input_combinations,
+    yield_mixed_namespace_input_permutations,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -2474,7 +2474,7 @@ def test_array_api_compliance(metric, array_namespace, device, dtype_name, check
     "from_ns_and_device, to_ns_and_device",
     [
         pytest.param(*args[:2], id=args[2])
-        for args in yield_mixed_namespace_input_combinations()
+        for args in yield_mixed_namespace_input_permutations()
     ],
 )
 @pytest.mark.parametrize("metric_name", sorted(METRICS_SUPPORTING_MIXED_NAMESPACE))
@@ -2583,6 +2583,9 @@ def test_mixed_array_api_namespace_input_compliance(
                     assert hasattr(out_xp, "shape")
                     assert get_namespace(out_xp)[0] == xp_to
                     assert device(out_xp) == device(y2_xp)
+                # `classification_report` returns str (with default `output_dict=False`)
+                elif isinstance(out_np, str):
+                    assert isinstance(out_xp, str)
 
             if isinstance(metric_np, Tuple):
                 for out_np, out_xp in zip(metric_np, metric_xp):
