@@ -119,12 +119,11 @@ def _fitted_attr_html_repr(fitted_attributes):
         formated_attr_value = _read_fitted_attr(value[1])
 
         if fitted_attr_numpydoc := fitted_attr_map.get(name, None):
+            escaped_lines = (html.escape(line) for line in fitted_attr_numpydoc.desc)
             fitted_attr_description = (
                 f"{html.escape(fitted_attr_numpydoc.name)}:"
                 f"{html.escape(fitted_attr_numpydoc.type)}<br><br>"
-                f"{
-                    '<br>'.join(html.escape(line) for line in fitted_attr_numpydoc.desc)
-                }"
+                f"{'<br>'.join(escaped_lines)}"
             )
         else:
             fitted_attr_description = None
