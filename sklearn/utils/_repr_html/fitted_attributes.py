@@ -81,12 +81,11 @@ def _fitted_attr_html_repr(fitted_attributes):
     FITTED_ATTR_ROW_TEMPLATE = """
        <tr class="default">
            <td class="param">{fitted_attr_display}</td>
-           <td>{type}</td>
-           <td>{shape}</td>
-           <td>{dtype}</td>
-           <td>{attr_size}</td>
-           <td>{attr_value}</td>
-
+           <td>{0}</td>
+           <td>{1}</td>
+           <td>{2}</td>
+           <td>{3}</td>
+           <td>{4}</td>
        </tr>
     """
 
@@ -140,26 +139,18 @@ def _fitted_attr_html_repr(fitted_attributes):
             fitted_attr_display = name
 
         if len(value) == 2:
+            html_row_values = (value[0], "", "", "", value[1])
             rows.append(
                 FITTED_ATTR_ROW_TEMPLATE.format(
-                    name=name,
-                    type=value[0],
-                    shape="",
-                    dtype="",
-                    attr_size="",
-                    attr_value=formated_attr_value,
+                    *html_row_values,
                     fitted_attr_display=fitted_attr_display,
                 )
             )
         else:
+            html_row_values = (*value, "")
             rows.append(
                 FITTED_ATTR_ROW_TEMPLATE.format(
-                    name=name,
-                    type=value[0],
-                    shape=value[1],
-                    dtype=value[2],
-                    attr_size=value[3],
-                    attr_value="",
+                    *html_row_values,
                     fitted_attr_display=fitted_attr_display,
                 )
             )
