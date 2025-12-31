@@ -56,15 +56,13 @@ def _object_dtype_isnan(X):
 
 # TODO: Remove when SciPy 1.11 is the minimum supported version
 def _mode(a, axis=0):
-    if sp_version >= parse_version("1.9.0"):
-        mode = scipy.stats.mode(a, axis=axis, keepdims=True)
-        if sp_version >= parse_version("1.10.999"):
-            # scipy.stats.mode has changed returned array shape with axis=None
-            # and keepdims=True, see https://github.com/scipy/scipy/pull/17561
-            if axis is None:
-                mode = np.ravel(mode)
-        return mode
-    return scipy.stats.mode(a, axis=axis)
+    mode = scipy.stats.mode(a, axis=axis, keepdims=True)
+    if sp_version >= parse_version("1.10.999"):
+        # scipy.stats.mode has changed returned array shape with axis=None
+        # and keepdims=True, see https://github.com/scipy/scipy/pull/17561
+        if axis is None:
+            mode = np.ravel(mode)
+    return mode
 
 
 # TODO: Remove when SciPy 1.12 is the minimum supported version

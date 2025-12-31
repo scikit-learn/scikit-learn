@@ -26,8 +26,9 @@ from sklearn.utils import (
 )
 from sklearn.utils._array_api import (
     _convert_to_numpy,
-    ensure_common_namespace_device,
     get_namespace,
+    get_namespace_and_device,
+    move_to,
 )
 from sklearn.utils._param_validation import Interval, RealNotInt, validate_params
 from sklearn.utils.extmath import _approximate_mode
@@ -2943,7 +2944,8 @@ def train_test_split(
 
         train, test = next(cv.split(X=arrays[0], y=stratify))
 
-    train, test = ensure_common_namespace_device(arrays[0], train, test)
+    xp, _, device = get_namespace_and_device(arrays[0])
+    train, test = move_to(train, test, xp=xp, device=device)
 
     return list(
         chain.from_iterable(

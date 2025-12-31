@@ -142,7 +142,7 @@ def average_precision_score(
     Parameters
     ----------
     y_true : array-like of shape (n_samples,) or (n_samples, n_classes)
-        True binary labels or binary label indicators.
+        True binary labels or :term:`multilabel indicator matrix`.
 
     y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target scores, can either be probability estimates of the positive
@@ -239,9 +239,7 @@ def average_precision_score(
 
     y_type = type_of_target(y_true, input_name="y_true")
 
-    # Convert to Python primitive type to avoid NumPy type / Python str
-    # comparison. See https://github.com/numpy/numpy/issues/6784
-    present_labels = np.unique(y_true).tolist()
+    present_labels = np.unique(y_true)
 
     if y_type == "binary":
         if len(present_labels) == 2 and pos_label not in present_labels:
@@ -287,9 +285,11 @@ def det_curve(
 ):
     """Compute Detection Error Tradeoff (DET) for different probability thresholds.
 
-    .. note::
-       This metric is used for evaluation of ranking and error tradeoffs of
-       a binary classification task.
+    Note: Support beyond :term:`binary` classification tasks, via one-vs-rest or
+    one-vs-one, is not implemented.
+
+    The DET curve is used for evaluation of ranking and error tradeoffs in binary
+    classification tasks.
 
     Read more in the :ref:`User Guide <det_curve>`.
 
@@ -492,22 +492,22 @@ def roc_auc_score(
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC) \
     from prediction scores.
 
-    Note: this implementation can be used with binary, multiclass and
-    multilabel classification, but some restrictions apply (see Parameters).
+    Note: this implementation can be used with :term:`binary`, :term:`multiclass` and
+    :term:`multilabel` classification, but some restrictions apply (see Parameters).
 
     Read more in the :ref:`User Guide <roc_metrics>`.
 
     Parameters
     ----------
     y_true : array-like of shape (n_samples,) or (n_samples, n_classes)
-        True labels or binary label indicators. The binary and multiclass cases
+        True labels or :term:`label indicator matrix`. The binary and multiclass cases
         expect labels with shape (n_samples,) while the multilabel case expects
-        binary label indicators with shape (n_samples, n_classes).
+        a :term:`multilabel indicator matrix` with shape (n_samples, n_classes).
 
     y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target scores.
 
-        * In the binary case, it corresponds to an array of shape
+        * In the :term:`binary` case, it corresponds to an array of shape
           `(n_samples,)`. Both probability estimates and non-thresholded
           decision values can be provided. The probability estimates correspond
           to the **probability of the class with the greater label**,
@@ -515,7 +515,7 @@ def roc_auc_score(
           `estimator.predict_proba(X, y)[:, 1]`. The decision values
           corresponds to the output of `estimator.decision_function(X, y)`.
           See more information in the :ref:`User guide <roc_auc_binary>`;
-        * In the multiclass case, it corresponds to an array of shape
+        * In the :term:`multiclass` case, it corresponds to an array of shape
           `(n_samples, n_classes)` of probability estimates provided by the
           `predict_proba` method. The probability estimates **must**
           sum to 1 across the possible classes. In addition, the order of the
@@ -523,7 +523,7 @@ def roc_auc_score(
           if provided, or else to the numerical or lexicographical order of
           the labels in ``y_true``. See more information in the
           :ref:`User guide <roc_auc_multiclass>`;
-        * In the multilabel case, it corresponds to an array of shape
+        * In the :term:`multilabel` case, it corresponds to an array of shape
           `(n_samples, n_classes)`. Probability estimates are provided by the
           `predict_proba` method and the non-thresholded decision values by
           the `decision_function` method. The probability estimates correspond
@@ -849,7 +849,7 @@ def _multiclass_roc_auc_score(
     prefer_skip_nested_validation=True,
 )
 def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weight=None):
-    """Calculate binary confusion matrix terms per classification threshold.
+    """Calculate :term:`binary` confusion matrix terms per classification threshold.
 
     Read more in the :ref:`User Guide <confusion_matrix>`.
 
@@ -1003,7 +1003,8 @@ def precision_recall_curve(
 ):
     """Compute precision-recall pairs for different probability thresholds.
 
-    Note: this implementation is restricted to the binary classification task.
+    Note: Support beyond :term:`binary` classification tasks, via one-vs-rest or
+    one-vs-one, is not implemented.
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
     true positives and ``fp`` the number of false positives. The precision is
@@ -1156,7 +1157,8 @@ def roc_curve(
 ):
     """Compute Receiver operating characteristic (ROC).
 
-    Note: this implementation is restricted to the binary classification task.
+    Note: Support beyond :term:`binary` classification tasks, via one-vs-rest or
+    one-vs-one, is not implemented.
 
     Read more in the :ref:`User Guide <roc_metrics>`.
 
@@ -1333,7 +1335,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     Parameters
     ----------
     y_true : {array-like, sparse matrix} of shape (n_samples, n_labels)
-        True binary labels in binary indicator format.
+        True binary labels in :term:`label indicator format`.
 
     y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
@@ -1435,7 +1437,7 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     Parameters
     ----------
     y_true : array-like of shape (n_samples, n_labels)
-        True binary labels in binary indicator format.
+        True binary labels in :term:`label indicator format`.
 
     y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
@@ -1512,7 +1514,7 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     Parameters
     ----------
     y_true : {array-like, sparse matrix} of shape (n_samples, n_labels)
-        True binary labels in binary indicator format.
+        True binary labels in :term:`label indicator format`.
 
     y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive

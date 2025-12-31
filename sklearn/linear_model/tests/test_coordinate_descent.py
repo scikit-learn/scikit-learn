@@ -18,6 +18,7 @@ from sklearn.linear_model import (
     Lasso,
     LassoCV,
     LassoLarsCV,
+    LinearRegression,
     MultiTaskElasticNet,
     MultiTaskElasticNetCV,
     MultiTaskLasso,
@@ -580,16 +581,14 @@ def test_uniform_targets():
     for model in models_single_task:
         for y_values in (0, 5):
             y1.fill(y_values)
-            with ignore_warnings(category=ConvergenceWarning):
-                assert_array_equal(model.fit(X_train, y1).predict(X_test), y1)
+            assert_array_equal(model.fit(X_train, y1).predict(X_test), y1)
             assert_array_equal(model.alphas_, [np.finfo(float).resolution] * 3)
 
     for model in models_multi_task:
         for y_values in (0, 5):
             y2[:, 0].fill(y_values)
             y2[:, 1].fill(2 * y_values)
-            with ignore_warnings(category=ConvergenceWarning):
-                assert_array_equal(model.fit(X_train, y2).predict(X_test), y2)
+            assert_array_equal(model.fit(X_train, y2).predict(X_test), y2)
             assert_array_equal(model.alphas_, [np.finfo(float).resolution] * 3)
 
 
@@ -969,15 +968,14 @@ def test_check_input_false():
     X, y, _, _ = build_dataset(n_samples=20, n_features=10)
     X = check_array(X, order="F", dtype="float64")
     y = check_array(X, order="F", dtype="float64")
-    clf = ElasticNet(selection="cyclic", tol=1e-8)
+    clf = ElasticNet(selection="cyclic", tol=1e-7)
     # Check that no error is raised if data is provided in the right format
     clf.fit(X, y, check_input=False)
     # With check_input=False, an exhaustive check is not made on y but its
     # dtype is still cast in _preprocess_data to X's dtype. So the test should
     # pass anyway
     X = check_array(X, order="F", dtype="float32")
-    with ignore_warnings(category=ConvergenceWarning):
-        clf.fit(X, y, check_input=False)
+    clf.fit(X, y, check_input=False)
     # With no input checking, providing X in C order should result in false
     # computation
     X = check_array(X, order="C", dtype="float64")
@@ -1093,7 +1091,6 @@ def test_enet_float_precision():
             )
 
 
-@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_enet_l1_ratio():
     # Test that an error message is raised if an estimator that
     # uses _alpha_grid is called with l1_ratio=0
@@ -1111,14 +1108,10 @@ def test_enet_l1_ratio():
     with pytest.raises(ValueError, match=msg):
         MultiTaskElasticNetCV(l1_ratio=0, random_state=42).fit(X, y[:, None])
 
-    # Test that l1_ratio=0 with alpha>0 produces user warning
-    warning_message = (
-        "Coordinate descent without L1 regularization may "
-        "lead to unexpected results and is discouraged. "
-        "Set l1_ratio > 0 to add L1 regularization."
-    )
+    # But no error for ElasticNetCV with l1_ratio=0 and alpha>0.
     est = ElasticNetCV(l1_ratio=[0], alphas=[1])
-    with pytest.warns(UserWarning, match=warning_message):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         est.fit(X, y)
 
     # Test that l1_ratio=0 is allowed if we supply a grid manually
@@ -1126,16 +1119,14 @@ def test_enet_l1_ratio():
     estkwds = {"alphas": alphas, "random_state": 42}
     est_desired = ElasticNetCV(l1_ratio=0.00001, **estkwds)
     est = ElasticNetCV(l1_ratio=0, **estkwds)
-    with ignore_warnings():
-        est_desired.fit(X, y)
-        est.fit(X, y)
+    est_desired.fit(X, y)
+    est.fit(X, y)
     assert_array_almost_equal(est.coef_, est_desired.coef_, decimal=5)
 
     est_desired = MultiTaskElasticNetCV(l1_ratio=0.00001, **estkwds)
     est = MultiTaskElasticNetCV(l1_ratio=0, **estkwds)
-    with ignore_warnings():
-        est.fit(X, y[:, None])
-        est_desired.fit(X, y[:, None])
+    est.fit(X, y[:, None])
+    est_desired.fit(X, y[:, None])
     assert_array_almost_equal(est.coef_, est_desired.coef_, decimal=5)
 
 
@@ -1553,39 +1544,85 @@ def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
     assert_array_equal(sample_weight, sample_weight_1_25)
 
 
-@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
-@pytest.mark.parametrize("ridge_alpha", [1e-1, 1.0, 1e6])
-def test_enet_ridge_consistency(ridge_alpha):
+@pytest.mark.parametrize("ridge_alpha", [1e-6, 1e-1, 1.0, 1e6])
+@pytest.mark.parametrize(
+    ["precompute", "n_targets"], [(False, 1), (True, 1), (False, 3)]
+)
+def test_enet_ridge_consistency(ridge_alpha, precompute, n_targets):
     # Check that ElasticNet(l1_ratio=0) converges to the same solution as Ridge
     # provided that the value of alpha is adapted.
-    #
-    # XXX: this test does not pass for weaker regularization (lower values of
-    # ridge_alpha): it could be either a problem of ElasticNet or Ridge (less
-    # likely) and depends on the dataset statistics: lower values for
-    # effective_rank are more problematic in particular.
 
     rng = np.random.RandomState(42)
     n_samples = 300
     X, y = make_regression(
         n_samples=n_samples,
         n_features=100,
+        n_targets=n_targets,
         effective_rank=10,
         n_informative=50,
         random_state=rng,
     )
     sw = rng.uniform(low=0.01, high=10, size=X.shape[0])
-    alpha = 1.0
-    common_params = dict(
-        tol=1e-12,
-    )
-    ridge = Ridge(alpha=alpha, **common_params).fit(X, y, sample_weight=sw)
 
-    alpha_enet = alpha / sw.sum()
-    enet = ElasticNet(alpha=alpha_enet, l1_ratio=0, **common_params).fit(
+    if n_targets == 1:
+        sw_arg = dict(sample_weight=sw)
+    else:
+        # MultiTaskElasticNet does not support sample weights (yet).
+        sw_arg = dict()
+
+    ridge = Ridge(alpha=ridge_alpha, solver="svd").fit(X, y, **sw_arg)
+
+    tol = 1e-11 if ridge_alpha >= 1e-2 else 1e-16
+    if n_targets == 1:
+        alpha_enet = ridge_alpha / sw.sum()
+        enet = ElasticNet(alpha=alpha_enet, l1_ratio=0, precompute=precompute, tol=tol)
+    else:
+        alpha_enet = ridge_alpha / n_samples
+        enet = MultiTaskElasticNet(alpha=alpha_enet, l1_ratio=0, tol=tol)
+    enet.fit(X, y, **sw_arg)
+
+    # The CD solver using the gram matrix (precompute = True) loses numerical precision
+    # by working with the squares of matrices like Q=X'X (=gram) and
+    # R^2 = y^2 + wQw - 2yQw (=square of residuals).
+    rtol = 1e-5 if precompute else 1e-7
+    assert_allclose(enet.coef_, ridge.coef_, rtol=rtol)
+    assert_allclose(enet.intercept_, ridge.intercept_)
+
+
+@pytest.mark.filterwarnings("ignore:With alpha=0, this algorithm:UserWarning")
+@pytest.mark.parametrize("precompute", [False, True])
+@pytest.mark.parametrize("effective_rank", [None, 10])
+def test_enet_ols_consistency(precompute, effective_rank):
+    """Test that ElasticNet(alpha=0) converges to the same solution as OLS."""
+    rng = np.random.RandomState(42)
+    n_samples = 300
+    X, y = make_regression(
+        n_samples=n_samples,
+        n_features=100,
+        effective_rank=effective_rank,
+        n_informative=50,
+        random_state=rng,
+    )
+    sw = rng.uniform(low=0.01, high=10, size=X.shape[0])
+
+    ols = LinearRegression().fit(X, y, sample_weight=sw)
+    enet = ElasticNet(alpha=0, precompute=precompute, tol=1e-15).fit(
         X, y, sample_weight=sw
     )
-    assert_allclose(ridge.coef_, enet.coef_)
-    assert_allclose(ridge.intercept_, enet.intercept_)
+
+    # Might be a singular problem, so check for same predictions
+    assert_allclose(enet.predict(X), ols.predict(X))
+    # and for similar objective function (squared error)
+    se_ols = np.sum((y - ols.predict(X)) ** 2)
+    se_enet = np.sum((y - enet.predict(X)) ** 2)
+    if precompute:
+        assert se_ols <= 1e-20
+        assert se_enet <= 1e-20
+    else:
+        assert se_enet <= se_ols <= 1e-20  # Who would have thought that?
+    # We check equal coefficients, but "only" with absolute tolerance.
+    assert_allclose(enet.coef_, ols.coef_, atol=1e-11)
+    assert_allclose(enet.intercept_, ols.intercept_, atol=1e-12)
 
 
 @pytest.mark.parametrize(
@@ -1769,7 +1806,9 @@ def test_linear_model_cv_alphas_n_alphas_unset(Estimator):
 
 # TODO(1.9): remove
 @pytest.mark.filterwarnings("ignore:'n_alphas' was deprecated in 1.7")
-@pytest.mark.filterwarnings("ignore:.*with no regularization.*:UserWarning")
+@pytest.mark.filterwarnings(
+    "ignore:With alpha=0, this algorithm does not converge well.*:UserWarning"
+)
 @pytest.mark.parametrize(
     "Estimator", [ElasticNetCV, LassoCV, MultiTaskLassoCV, MultiTaskElasticNetCV]
 )

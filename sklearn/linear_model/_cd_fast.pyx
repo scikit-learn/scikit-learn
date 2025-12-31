@@ -98,6 +98,30 @@ message_ridge = (
 )
 
 
+cdef inline floating dual_gap_formulation_A(
+    floating alpha,  # L1 penalty
+    floating beta,  # L1 penalty
+    floating w_l1_norm,
+    floating w_l2_norm2,
+    floating R_norm2,  # R @ R
+    floating Ry,  # R @ y
+    floating dual_norm_XtA,
+) noexcept nogil:
+    """Compute dual gap according to formulation A."""
+    cdef floating gap, primal, dual
+    cdef floating scale  # Scaling factor to achieve dual feasible point.
+
+    primal = 0.5 * (R_norm2 + beta * w_l2_norm2) + alpha * w_l1_norm
+
+    if (dual_norm_XtA > alpha):
+        scale = alpha / dual_norm_XtA
+    else:
+        scale = 1.0
+    dual = -0.5 * (scale ** 2) * (R_norm2 + beta * w_l2_norm2) + scale * Ry
+    gap = primal - dual
+    return gap
+
+
 cdef (floating, floating) gap_enet(
     int n_samples,
     int n_features,
@@ -110,14 +134,47 @@ cdef (floating, floating) gap_enet(
     floating[::1] XtA,  # XtA = X.T @ R - beta * w is calculated inplace
     bint positive,
 ) noexcept nogil:
-    """Compute dual gap for use in enet_coordinate_descent."""
+    """Compute dual gap for use in enet_coordinate_descent.
+
+    alpha > 0:            formulation A of the duality gap
+    alpha = 0 & beta > 0: formulation B of the duality gap
+    alpha = beta = 0:     OLS first order condition (=gradient)
+    """
     cdef floating gap = 0.0
     cdef floating dual_norm_XtA
     cdef floating R_norm2
-    cdef floating w_norm2 = 0.0
-    cdef floating l1_norm
-    cdef floating A_norm2
-    cdef floating const_
+    cdef floating Ry
+    cdef floating w_l1_norm
+    cdef floating w_l2_norm2 = 0.0
+
+    # w_l2_norm2 = w @ w
+    if beta > 0:
+        w_l2_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
+    # R_norm2 = R @ R
+    R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
+    # Ry = R @ y
+    if not (alpha == 0 and beta == 0):
+        Ry = _dot(n_samples, &R[0], 1, &y[0], 1)
+
+    if alpha == 0:
+        # XtA = X.T @ R
+        _gemv(
+            ColMajor, Trans, n_samples, n_features, 1.0, &X[0, 0],
+            n_samples, &R[0], 1, 0, &XtA[0], 1,
+        )
+        # ||X'R||_2^2
+        dual_norm_XtA = _dot(n_features, &XtA[0], 1, &XtA[0], 1)
+        if beta == 0:
+            # This is OLS, no dual gap available. Resort to first order condition
+            #     X'R = 0
+            #     gap = ||X'R||_2^2
+            # Compare with stopping criterion of LSQR.
+            gap = dual_norm_XtA
+            return gap, dual_norm_XtA
+        # This is Ridge regression, we use formulation B for the dual gap.
+        gap = R_norm2 + 0.5 * beta * w_l2_norm2 - Ry
+        gap += 1 / (2 * beta) * dual_norm_XtA
+        return gap, dual_norm_XtA
 
     # XtA = X.T @ R - beta * w
     _copy(n_features, &w[0], 1, &XtA[0], 1)
@@ -125,32 +182,23 @@ cdef (floating, floating) gap_enet(
           n_samples, &R[0], 1,
           -beta, &XtA[0], 1)
 
+    # dual_norm_XtA
     if positive:
         dual_norm_XtA = max(n_features, &XtA[0])
     else:
         dual_norm_XtA = abs_max(n_features, &XtA[0])
 
-    # R_norm2 = R @ R
-    R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
+    # w_l1_norm = np.sum(np.abs(w))
+    w_l1_norm = _asum(n_features, &w[0], 1)
 
-    # w_norm2 = w @ w
-    if beta > 0:
-        w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
-
-    if (dual_norm_XtA > alpha):
-        const_ = alpha / dual_norm_XtA
-        A_norm2 = R_norm2 * (const_ ** 2)
-        gap = 0.5 * (R_norm2 + A_norm2)
-    else:
-        const_ = 1.0
-        gap = R_norm2
-
-    l1_norm = _asum(n_features, &w[0], 1)
-
-    gap += (
-        alpha * l1_norm
-        - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # R @ y
-        + 0.5 * beta * (1 + const_ ** 2) * w_norm2
+    gap = dual_gap_formulation_A(
+        alpha=alpha,
+        beta=beta,
+        w_l1_norm=w_l1_norm,
+        w_l2_norm2=w_l2_norm2,
+        R_norm2=R_norm2,
+        Ry=Ry,
+        dual_norm_XtA=dual_norm_XtA,
     )
     return gap, dual_norm_XtA
 
@@ -178,7 +226,7 @@ def enet_coordinate_descent(
 
     The dual for beta = 0, see e.g. [Fercoq 2015] with v = alpha * theta, is
 
-        D(v) = -1/2 ||v||_2^2 + y v
+        D(v) = -1/2 ||v||_2^2 + y' v    (formulation A)
 
     with dual feasible condition ||X^T v||_inf <= alpha.
     For beta > 0, one uses extended versions of X and y by adding n_features rows
@@ -186,15 +234,21 @@ def enet_coordinate_descent(
         X -> (           X)    y -> (y)
              (sqrt(beta) I)         (0)
 
-    Note that the residual y - X w is an important ingredient for the estimation of a
-    dual feasible point v.
+    Note that the residual R = y - X w is an important ingredient for the estimation of
+    a dual feasible point v.
     At optimum of primal w* and dual v*, one has
 
-        v = y* - X w*
+        v* = y - X w*
 
     The duality gap is
 
         G(w, v) = P(w) - D(v) <= P(w) - P(w*)
+
+    Strong duality holds: G(w*, v*) = 0.
+    For testing convergence, one uses G(w, v) with current w and uses
+
+        v = R                            if ||X^T R||_inf <= alpha
+        v = R * alpha / ||X^T R||_inf    else
 
     The final stopping criterion is based on the duality gap
 
@@ -202,6 +256,18 @@ def enet_coordinate_descent(
 
     The tolerance here is multiplied by ||y||_2^2 to have an inequality that scales the
     same on both sides and because one has G(0, 0) = 1/2 ||y||_2^2.
+
+    Note:
+    The above dual D(v) and duality gap G require alpha > 0 because of the dual
+    feasible condition.
+    There is, however, an alternative dual formulation, see [Dünner 2016] 5.2.3 and
+    https://github.com/scikit-learn/scikit-learn/issues/22836:
+
+        D(v) = -1/2 ||v||_2^2 + y' v
+               -1/(2 beta) sum_j (|X_j' v| - alpha)_+^2    (formulation B)
+
+    The dual feasible set is v element real numbers. It requires beta > 0, but
+    alpha = 0 is allowed. Strong duality holds and at optimum, v* = y - X w*.
 
     Returns
     -------
@@ -225,6 +291,11 @@ def enet_coordinate_descent(
        Olivier Fercoq, Alexandre Gramfort, Joseph Salmon. (2015)
        Mind the duality gap: safer rules for the Lasso
        https://arxiv.org/abs/1505.03410
+
+    .. [Dünner 2016]
+       Celestine Dünner, Simon Forte, Martin Takác, Martin Jaggi. (2016).
+       Primal-Dual Rates and Certificates. In ICML 2016.
+       https://arxiv.org/abs/1602.05205
     """
 
     if floating is float:
@@ -266,9 +337,9 @@ def enet_coordinate_descent(
     cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef uint32_t* rand_r_state = &rand_r_state_seed
 
-    if alpha == 0 and beta == 0:
-        warnings.warn("Coordinate descent with no regularization may lead to "
-                      "unexpected results and is discouraged.")
+    if alpha == 0:
+        # No screeing without L1-penalty.
+        do_screening = False
 
     if do_screening:
         active_set = np.empty(n_features, dtype=np.uint32)  # map [:n_active] -> j
@@ -387,7 +458,7 @@ def enet_coordinate_descent(
             with gil:
                 message = (
                     message_conv +
-                    f" Duality gap: {gap:.3e}, tolerance: {tol:.3e}"
+                    f" Duality gap: {gap:.6e}, tolerance: {tol:.3e}"
                 )
                 if alpha < np.finfo(np.float64).eps:
                     message += "\n" + message_ridge
@@ -448,15 +519,60 @@ cdef (floating, floating) gap_enet_sparse(
     floating[::1] XtA,  # XtA = X.T @ R - beta * w is calculated inplace
     bint positive,
 ) noexcept nogil:
-    """Compute dual gap for use in sparse_enet_coordinate_descent."""
+    """Compute dual gap for use in sparse_enet_coordinate_descent.
+
+    alpha > 0:            formulation A of the duality gap
+    alpha = 0 & beta > 0: formulation B of the duality gap
+    alpha = beta = 0:     OLS first order condition (=gradient)
+    """
     cdef floating gap = 0.0
     cdef floating dual_norm_XtA
     cdef floating R_norm2
-    cdef floating w_norm2 = 0.0
-    cdef floating l1_norm
-    cdef floating A_norm2
-    cdef floating const_
+    cdef floating Ry
+    cdef floating w_l1_norm
+    cdef floating w_l2_norm2 = 0.0
     cdef unsigned int i, j
+
+    # w_l2_norm2 = w @ w
+    if beta > 0:
+        w_l2_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
+    # R_norm2 = R @ R
+    if no_sample_weights:
+        R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
+    else:
+        R_norm2 = 0.0
+        for i in range(n_samples):
+            # R is already multiplied by sample_weight
+            if sample_weight[i] != 0:
+                R_norm2 += (R[i] ** 2) / sample_weight[i]
+    # Ry = R @ y
+    if not (alpha == 0 and beta == 0):
+        # Note that with sample_weight, R equals R*sw and y is just y, such that
+        # Ry = (sw * R) @ y, as it should be.
+        Ry = _dot(n_samples, &R[0], 1, &y[0], 1)
+
+    if alpha == 0:
+        # XtA = X.T @ R
+        for j in range(n_features):
+            XtA[j] = 0.0
+            for i in range(X_indptr[j], X_indptr[j + 1]):
+                XtA[j] += X_data[i] * R[X_indices[i]]
+
+            if center:
+                XtA[j] -= X_mean[j] * R_sum
+        # ||X'R||_2^2
+        dual_norm_XtA = _dot(n_features, &XtA[0], 1, &XtA[0], 1)
+        if beta == 0:
+            # This is OLS, no dual gap available. Resort to first order condition
+            #     X'R = 0
+            #     gap = ||X'R||_2^2
+            # Compare with stopping criterion of LSQR.
+            gap = dual_norm_XtA
+            return gap, dual_norm_XtA
+        # This is Ridge regression, we use formulation B for the dual gap.
+        gap = R_norm2 + 0.5 * beta * w_l2_norm2 - Ry
+        gap += 1 / (2 * beta) * dual_norm_XtA
+        return gap, dual_norm_XtA
 
     # XtA = X.T @ R - beta * w
     # sparse X.T @ dense R
@@ -469,39 +585,23 @@ cdef (floating, floating) gap_enet_sparse(
             XtA[j] -= X_mean[j] * R_sum
         XtA[j] -= beta * w[j]
 
+    # dual_norm_XtA
     if positive:
         dual_norm_XtA = max(n_features, &XtA[0])
     else:
         dual_norm_XtA = abs_max(n_features, &XtA[0])
 
-    # R_norm2 = R @ R
-    if no_sample_weights:
-        R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
-    else:
-        R_norm2 = 0.0
-        for i in range(n_samples):
-            # R is already multiplied by sample_weight
-            if sample_weight[i] != 0:
-                R_norm2 += (R[i] ** 2) / sample_weight[i]
+    # w_l1_norm = np.sum(np.abs(w))
+    w_l1_norm = _asum(n_features, &w[0], 1)
 
-    # w_norm2 = w @ w
-    if beta > 0:
-        w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
-
-    if (dual_norm_XtA > alpha):
-        const_ = alpha / dual_norm_XtA
-        A_norm2 = R_norm2 * const_**2
-        gap = 0.5 * (R_norm2 + A_norm2)
-    else:
-        const_ = 1.0
-        gap = R_norm2
-
-    l1_norm = _asum(n_features, &w[0], 1)
-
-    gap += (
-        alpha * l1_norm
-        - const_ * _dot(n_samples, &R[0], 1, &y[0], 1)  # R @ y
-        + 0.5 * beta * (1 + const_ ** 2) * w_norm2
+    gap = dual_gap_formulation_A(
+        alpha=alpha,
+        beta=beta,
+        w_l1_norm=w_l1_norm,
+        w_l2_norm2=w_l2_norm2,
+        R_norm2=R_norm2,
+        Ry=Ry,
+        dual_norm_XtA=dual_norm_XtA,
     )
     return gap, dual_norm_XtA
 
@@ -605,6 +705,10 @@ def sparse_enet_coordinate_descent(
     cdef uint32_t* rand_r_state = &rand_r_state_seed
     cdef bint center = False
     cdef bint no_sample_weights = sample_weight is None
+
+    if alpha == 0:
+        # No screeing without L1-penalty.
+        do_screening = False
 
     if do_screening:
         active_set = np.empty(n_features, dtype=np.uint32)  # map [:n_active] -> j
@@ -843,7 +947,7 @@ def sparse_enet_coordinate_descent(
             with gil:
                 message = (
                     message_conv +
-                    f" Duality gap: {gap:.3e}, tolerance: {tol:.3e}"
+                    f" Duality gap: {gap:.6e}, tolerance: {tol:.3e}"
                 )
                 if alpha < np.finfo(np.float64).eps:
                     message += "\n" + message_ridge
@@ -863,97 +967,77 @@ cdef (floating, floating) gap_enet_gram(
     floating[::1] XtA,  # XtA = X.T @ R - beta * w is calculated inplace
     bint positive,
 ) noexcept nogil:
-    """Compute dual gap for use in enet_coordinate_descent."""
+    """Compute dual gap for use in enet_coordinate_descent.
+
+    alpha > 0:            formulation A of the duality gap
+    alpha = 0 & beta > 0: formulation B of the duality gap
+    alpha = beta = 0:     OLS first order condition (=gradient)
+    """
     cdef floating gap = 0.0
     cdef floating dual_norm_XtA
     cdef floating R_norm2
-    cdef floating w_norm2 = 0.0
-    cdef floating l1_norm
-    cdef floating A_norm2
-    cdef floating const_
+    cdef floating Ry
+    cdef floating w_l1_norm
+    cdef floating w_l2_norm2 = 0.0
     cdef floating q_dot_w
     cdef floating wQw
     cdef unsigned int j
 
+    # w_l2_norm2 = w @ w
+    if beta > 0:
+        w_l2_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
     # q_dot_w = w @ q
     q_dot_w = _dot(n_features, &w[0], 1, &q[0], 1)
+    # wQw = w @ Q @ w
+    wQw = _dot(n_features, &w[0], 1, &Qw[0], 1)
+    # R_norm2 = R @ R, residual R = y - Xw
+    R_norm2 = y_norm2 + wQw - 2.0 * q_dot_w
+    # Ry = R @ y
+    if not (alpha == 0 and beta == 0):
+        # Note that R'y = (y - Xw)' y = ||y||_2^2 - w'X'y = y_norm2 - q_dot_w
+        Ry = y_norm2 - q_dot_w
+
+    if alpha == 0:
+        # XtA = X'R
+        for j in range(n_features):
+            XtA[j] = q[j] - Qw[j]
+        # ||X'R||_2^2
+        dual_norm_XtA = _dot(n_features, &XtA[0], 1, &XtA[0], 1)
+        if beta == 0:
+            # This is OLS, no dual gap available. Resort to first order condition
+            #     X'R = 0
+            #     gap = ||X'R||_2^2
+            # Compare with stopping criterion of LSQR.
+            gap = dual_norm_XtA
+            return gap, dual_norm_XtA
+        # This is Ridge regression, we use formulation B for the dual gap.
+        gap = R_norm2 + 0.5 * beta * w_l2_norm2 - Ry
+        gap += 1 / (2 * beta) * dual_norm_XtA
+        return gap, dual_norm_XtA
 
     # XtA = X.T @ R - beta * w = X.T @ y - X.T @ X @ w - beta * w
     for j in range(n_features):
         XtA[j] = q[j] - Qw[j] - beta * w[j]
 
+    # dual_norm_XtA
     if positive:
         dual_norm_XtA = max(n_features, &XtA[0])
     else:
         dual_norm_XtA = abs_max(n_features, &XtA[0])
 
-    # wQw = w @ Q @ w
-    wQw = _dot(n_features, &w[0], 1, &Qw[0], 1)
-    # R_norm2 = R @ R
-    R_norm2 = y_norm2 + wQw - 2.0 * q_dot_w
+    # w_l1_norm = np.sum(np.abs(w))
+    w_l1_norm = _asum(n_features, &w[0], 1)
 
-    # w_norm2 = w @ w
-    if beta > 0:
-        w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
-
-    if (dual_norm_XtA > alpha):
-        const_ = alpha / dual_norm_XtA
-        A_norm2 = R_norm2 * (const_ ** 2)
-        gap = 0.5 * (R_norm2 + A_norm2)
-    else:
-        const_ = 1.0
-        gap = R_norm2
-
-    l1_norm = _asum(n_features, &w[0], 1)
-
-    gap += (
-        alpha * l1_norm
-        - const_ * (y_norm2 - q_dot_w)  # -const_ * R @ y
-        + 0.5 * beta * (1 + const_ ** 2) * w_norm2
+    gap = dual_gap_formulation_A(
+        alpha=alpha,
+        beta=beta,
+        w_l1_norm=w_l1_norm,
+        w_l2_norm2=w_l2_norm2,
+        R_norm2=R_norm2,
+        Ry=Ry,
+        dual_norm_XtA=dual_norm_XtA,
     )
     return gap, dual_norm_XtA
-
-
-cdef inline uint32_t screen_features_enet_gram(
-    const floating[:, ::1] Q,
-    const floating[::1] XtA,
-    floating[::1] w,
-    floating[::1] Qw,
-    uint32_t[::1] active_set,
-    uint8_t[::1] excluded_set,
-    floating alpha,
-    floating beta,
-    floating gap,
-    floating dual_norm_XtA,
-    uint32_t n_features,
-) noexcept nogil:
-    """Apply gap safe screening for all features within enet_coordinate_descent_gram"""
-    cdef floating d_j
-    cdef floating Xj_theta
-    cdef uint32_t n_active = 0
-    # Due to floating point issues, gap might be negative.
-    cdef floating radius = sqrt(2 * fabs(gap)) / alpha
-
-    for j in range(n_features):
-        if Q[j, j] == 0:
-            w[j] = 0
-            excluded_set[j] = 1
-            continue
-
-        Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X[:,j] @ dual_theta
-        d_j = (1 - fabs(Xj_theta)) / sqrt(Q[j, j] + beta)
-        if d_j <= radius:
-            # include feature j
-            active_set[n_active] = j
-            excluded_set[j] = 0
-            n_active += 1
-        else:
-            # Qw -= w[j] * Q[j]  # Update Qw = Q @ w
-            _axpy(n_features, -w[j], &Q[j, 0], 1, &Qw[0], 1)
-            w[j] = 0
-            excluded_set[j] = 1
-
-    return n_active
 
 
 def enet_coordinate_descent_gram(
@@ -1007,6 +1091,9 @@ def enet_coordinate_descent_gram(
     cdef floating[::1] XtA = np.zeros(n_features, dtype=dtype)
     cdef floating y_norm2 = np.dot(y, y)
 
+    cdef floating d_j
+    cdef floating radius
+    cdef floating Xj_theta
     cdef floating tmp
     cdef floating w_j
     cdef floating d_w_max
@@ -1026,11 +1113,8 @@ def enet_coordinate_descent_gram(
     cdef uint32_t* rand_r_state = &rand_r_state_seed
 
     if alpha == 0:
-        warnings.warn(
-            "Coordinate descent without L1 regularization may "
-            "lead to unexpected results and is discouraged. "
-            "Set l1_ratio > 0 to add L1 regularization."
-        )
+        # No screeing without L1-penalty.
+        do_screening = False
 
     if do_screening:
         active_set = np.empty(n_features, dtype=np.uint32)  # map [:n_active] -> j
@@ -1050,19 +1134,26 @@ def enet_coordinate_descent_gram(
 
         # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
         if do_screening:
-            n_active = screen_features_enet_gram(
-                Q=Q,
-                XtA=XtA,
-                w=w,
-                Qw=Qw,
-                active_set=active_set,
-                excluded_set=excluded_set,
-                alpha=alpha,
-                beta=beta,
-                gap=gap,
-                dual_norm_XtA=dual_norm_XtA,
-                n_features=n_features,
-            )
+            # Due to floating point issues, gap might be negative.
+            radius = sqrt(2 * fabs(gap)) / alpha
+            n_active = 0
+            for j in range(n_features):
+                if Q[j, j] == 0:
+                    w[j] = 0
+                    excluded_set[j] = 1
+                    continue
+                Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X[:,j] @ dual_theta
+                d_j = (1 - fabs(Xj_theta)) / sqrt(Q[j, j] + beta)
+                if d_j <= radius:
+                    # include feature j
+                    active_set[n_active] = j
+                    excluded_set[j] = 0
+                    n_active += 1
+                else:
+                    # Qw -= w[j] * Q[j]  # Update Qw = Q @ w
+                    _axpy(n_features, -w[j], &Q[j, 0], 1, &Qw[0], 1)
+                    w[j] = 0
+                    excluded_set[j] = 1
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -1116,27 +1207,34 @@ def enet_coordinate_descent_gram(
 
                 # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
                 if do_screening:
-                    n_active = screen_features_enet_gram(
-                        Q=Q,
-                        XtA=XtA,
-                        w=w,
-                        Qw=Qw,
-                        active_set=active_set,
-                        excluded_set=excluded_set,
-                        alpha=alpha,
-                        beta=beta,
-                        gap=gap,
-                        dual_norm_XtA=dual_norm_XtA,
-                        n_features=n_features,
-                    )
+                    # Due to floating point issues, gap might be negative.
+                    radius = sqrt(2 * fabs(gap)) / alpha
+                    n_active = 0
+                    for j in range(n_features):
+                        if excluded_set[j]:
+                            continue
+                        Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X @ dual_theta
+                        d_j = (1 - fabs(Xj_theta)) / sqrt(Q[j, j] + beta)
+                        if d_j <= radius:
+                            # include feature j
+                            active_set[n_active] = j
+                            excluded_set[j] = 0
+                            n_active += 1
+                        else:
+                            # Qw -= w[j] * Q[j]  # Update Qw = Q @ w
+                            _axpy(n_features, -w[j], &Q[j, 0], 1, &Qw[0], 1)
+                            w[j] = 0
+                            excluded_set[j] = 1
 
         else:
             # for/else, runs if for doesn't end with a `break`
             with gil:
                 message = (
                     message_conv +
-                    f" Duality gap: {gap:.3e}, tolerance: {tol:.3e}"
+                    f" Duality gap: {gap:.6e}, tolerance: {tol:.3e}"
                 )
+                if alpha < np.finfo(np.float64).eps:
+                    message += "\n" + message_ridge
                 warnings.warn(message, ConvergenceWarning)
 
     return np.asarray(w), gap, tol, n_iter + 1
@@ -1172,11 +1270,38 @@ cdef (floating, floating) gap_enet_multi_task(
     cdef floating gap = 0.0
     cdef floating dual_norm_XtA
     cdef floating R_norm2
-    cdef floating w_norm2 = 0.0
-    cdef floating l21_norm
-    cdef floating A_norm2
-    cdef floating const_
+    cdef floating Ry
+    cdef floating w_l21_norm
+    cdef floating w_l2_norm2 = 0.0
     cdef unsigned int t, j
+
+    # w_l2_norm2 = linalg.norm(W, ord="fro") ** 2
+    if l2_reg > 0:
+        w_l2_norm2 = _dot(n_features * n_tasks, &W[0, 0], 1, &W[0, 0], 1)
+    # R_norm2 = linalg.norm(R, ord="fro") ** 2
+    R_norm2 = _dot(n_samples * n_tasks, &R[0, 0], 1, &R[0, 0], 1)
+    # Ry = np.sum(R * Y)
+    if not (l1_reg == 0 and l2_reg == 0):
+        Ry = _dot(n_samples * n_tasks, &R[0, 0], 1, &Y[0, 0], 1)
+
+    if l1_reg == 0:
+        # XtA = X.T @ R
+        for j in range(n_features):
+            for t in range(n_tasks):
+                XtA[j, t] = _dot(n_samples, &X[0, j], 1, &R[0, t], 1)
+        # ||X'R||_2^2
+        dual_norm_XtA = _dot(n_features * n_tasks, &XtA[0, 0], 1, &XtA[0, 0], 1)
+        if l2_reg == 0:
+            # This is OLS, no dual gap available. Resort to first order condition
+            #     X'R = 0
+            #     gap = ||X'R||_2^2
+            # Compare with stopping criterion of LSQR.
+            gap = dual_norm_XtA
+            return gap, dual_norm_XtA
+        # This is Ridge regression, we use formulation B for the dual gap.
+        gap = R_norm2 + 0.5 * l2_reg * w_l2_norm2 - Ry
+        gap += 1 / (2 * l2_reg) * dual_norm_XtA
+        return gap, dual_norm_XtA
 
     # XtA = X.T @ R - l2_reg * W.T
     for j in range(n_features):
@@ -1191,30 +1316,19 @@ cdef (floating, floating) gap_enet_multi_task(
         if XtA_row_norms[j] > dual_norm_XtA:
             dual_norm_XtA = XtA_row_norms[j]
 
-    # R_norm2 = linalg.norm(R, ord="fro") ** 2
-    R_norm2 = _dot(n_samples * n_tasks, &R[0, 0], 1, &R[0, 0], 1)
-
-    # w_norm2 = linalg.norm(W, ord="fro") ** 2
-    if l2_reg > 0:
-        w_norm2 = _dot(n_features * n_tasks, &W[0, 0], 1, &W[0, 0], 1)
-
-    if (dual_norm_XtA > l1_reg):
-        const_ = l1_reg / dual_norm_XtA
-        A_norm2 = R_norm2 * (const_ ** 2)
-        gap = 0.5 * (R_norm2 + A_norm2)
-    else:
-        const_ = 1.0
-        gap = R_norm2
-
-    # l21_norm = np.sqrt(np.sum(W ** 2, axis=0)).sum()
-    l21_norm = 0.0
+    # w_l21_norm = np.sqrt(np.sum(W ** 2, axis=0)).sum()
+    w_l21_norm = 0.0
     for ii in range(n_features):
-        l21_norm += _nrm2(n_tasks, &W[0, ii], 1)
+        w_l21_norm += _nrm2(n_tasks, &W[0, ii], 1)
 
-    gap += (
-        l1_reg * l21_norm
-        - const_ * _dot(n_samples * n_tasks, &R[0, 0], 1, &Y[0, 0], 1)  # np.sum(R * Y)
-        + 0.5 * l2_reg * (1 + const_ ** 2) * w_norm2
+    gap = dual_gap_formulation_A(
+        alpha=l1_reg,
+        beta=l2_reg,
+        w_l1_norm=w_l21_norm,
+        w_l2_norm2=w_l2_norm2,
+        R_norm2=R_norm2,
+        Ry=Ry,
+        dual_norm_XtA=dual_norm_XtA,
     )
     return gap, dual_norm_XtA
 
@@ -1301,10 +1415,8 @@ def enet_coordinate_descent_multi_task(
     cdef uint32_t* rand_r_state = &rand_r_state_seed
 
     if l1_reg == 0:
-        warnings.warn(
-            "Coordinate descent with l1_reg=0 may lead to unexpected"
-            " results and is discouraged."
-        )
+        # No screeing without L1-penalty.
+        do_screening = False
 
     if do_screening:
         active_set = np.empty(n_features, dtype=np.uint32)  # map [:n_active] -> j
@@ -1434,7 +1546,7 @@ def enet_coordinate_descent_multi_task(
                 if do_screening:
                     n_active = 0
                     for j in range(n_features):
-                        if norm2_cols_X[j] == 0:
+                        if excluded_set[j]:
                             continue
                         # Xj_theta = ||X[:,j] @ dual_theta||_2
                         Xj_theta = XtA_row_norms[j] / fmax(l1_reg, dual_norm_XtA)
@@ -1456,8 +1568,10 @@ def enet_coordinate_descent_multi_task(
             with gil:
                 message = (
                     message_conv +
-                    f" Duality gap: {gap:.3e}, tolerance: {tol:.3e}"
+                    f" Duality gap: {gap:.6e}, tolerance: {tol:.3e}"
                 )
+                if l1_reg < np.finfo(np.float64).eps:
+                    message += "\n" + message_ridge
                 warnings.warn(message, ConvergenceWarning)
 
     return np.asarray(W), gap, tol, n_iter + 1

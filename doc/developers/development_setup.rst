@@ -129,8 +129,8 @@ the required packages.
 
             conda create -n sklearn-dev -c conda-forge ^
               python numpy scipy cython meson-python ninja ^
-              pytest pytest-cov ruff==0.11.2 mypy numpydoc ^
-              joblib threadpoolctl
+              pytest pytest-cov ruff==0.12.2 mypy numpydoc ^
+              joblib threadpoolctl pre-commit
 
           Activate the newly created conda environment:
 
@@ -167,8 +167,8 @@ the required packages.
           .. prompt::
 
             pip install wheel numpy scipy cython meson-python ninja ^
-              pytest pytest-cov ruff==0.11.2 mypy numpydoc ^
-              joblib threadpoolctl
+              pytest pytest-cov ruff==0.12.2 mypy numpydoc ^
+              joblib threadpoolctl pre-commit
 
 
     .. tab-item:: MacOS
@@ -199,8 +199,8 @@ the required packages.
 
             conda create -n sklearn-dev -c conda-forge python \
               numpy scipy cython meson-python ninja \
-              pytest pytest-cov ruff==0.11.2 mypy numpydoc \
-              joblib threadpoolctl compilers llvm-openmp
+              pytest pytest-cov ruff==0.12.2 mypy numpydoc \
+              joblib threadpoolctl compilers llvm-openmp pre-commit
 
           and activate the newly created conda environment:
 
@@ -244,8 +244,8 @@ the required packages.
           .. prompt::
 
             pip install wheel numpy scipy cython meson-python ninja \
-              pytest pytest-cov ruff==0.11.2 mypy numpydoc \
-              joblib threadpoolctl
+              pytest pytest-cov ruff==0.12.2 mypy numpydoc \
+              joblib threadpoolctl pre-commit
 
     .. tab-item:: Linux
       :class-label: tab-4
@@ -267,8 +267,8 @@ the required packages.
 
             conda create -n sklearn-dev -c conda-forge python \
               numpy scipy cython meson-python ninja \
-              pytest pytest-cov ruff==0.11.2 mypy numpydoc \
-              joblib threadpoolctl compilers
+              pytest pytest-cov ruff==0.12.2 mypy numpydoc \
+              joblib threadpoolctl compilers pre-commit
 
           and activate the newly created environment:
 
@@ -327,8 +327,9 @@ the required packages.
           .. prompt::
 
             pip install wheel numpy scipy cython meson-python ninja \
-              pytest pytest-cov ruff==0.11.2 mypy numpydoc \
-              joblib threadpoolctl
+              pytest pytest-cov ruff==0.12.2 mypy numpydoc \
+              joblib threadpoolctl pre-commit
+
 
 .. _install_from_source:
 
@@ -376,6 +377,19 @@ related to you contribution:
 
 For more information on testing, see also the :ref:`pr_checklist`
 and :ref:`pytest_tips`.
+
+.. _pre_commit:
+
+Set up pre-commit
+^^^^^^^^^^^^^^^^^
+
+Additionally, install the `pre-commit hooks <https://pre-commit.com>`__, which will
+automatically check your code for linting problems before each commit in the
+:ref:`development_workflow`:
+
+.. prompt::
+
+  pre-commit install
 
 .. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
 .. _meson-python: https://mesonbuild.com/meson-python
