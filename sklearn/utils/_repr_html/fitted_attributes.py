@@ -80,13 +80,13 @@ def _fitted_attr_html_repr(fitted_attributes):
     """
     FITTED_ATTR_ROW_TEMPLATE = """
        <tr class="default">
-           <td>{name}&nbsp;</td>
+           <td class="param">{fitted_attr_display}</td>
            <td>{type}</td>
            <td>{shape}</td>
            <td>{dtype}</td>
            <td>{attr_size}</td>
            <td>{attr_value}</td>
-           <td class="param">{fitted_attr_display}</td>
+
        </tr>
     """
 
@@ -107,7 +107,7 @@ def _fitted_attr_html_repr(fitted_attributes):
         }
     else:
         fitted_attr_map = {}
-    breakpoint()
+
     rows = []
     # for fitted_attr_name, attr_info in fitted_attributes.items():
     for name, value in fitted_attributes.items():
@@ -139,7 +139,6 @@ def _fitted_attr_html_repr(fitted_attributes):
         else:
             # Just show the parameter name without link
             fitted_attr_display = name
-        breakpoint()
 
         if len(value) == 2:
             rows.append(
