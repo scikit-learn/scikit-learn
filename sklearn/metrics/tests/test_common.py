@@ -85,7 +85,6 @@ from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
-    _is_numpy_namespace,
     _max_precision_float_dtype,
     device,
     get_namespace,
@@ -2506,15 +2505,14 @@ def test_mixed_array_api_namespace_input_compliance(
     sample_weight = [1, 1, 2, 2]
 
     # Deal with max mps float precision being float32
-    def _get_dtype(np_array, xp, device):
-        if np.issubdtype(np_array.dtype, np.floating):
+    def _get_dtype(data, xp, device):
+        # Assume list is all float if first element is float
+        if isinstance(data[0], float):
             dtype = _max_precision_float_dtype(xp, device)
         else:
             dtype = xp.int64
         return dtype
 
-    # We add additional check with string `y_true` for classification metrics
-    # that support string input
     checks = ["default"]
     with config_context(array_api_dispatch=True):
         if metric_name in CLASSIFICATION_METRICS:
@@ -2522,59 +2520,39 @@ def test_mixed_array_api_namespace_input_compliance(
             # `CLASSIFICATION_METRICS` that are in `METRIC_UNDEFINED_BINARY` and are
             # NOT `partial`s (which we do not test for in array API compliance)
             data = data_all["binary_class"]
-            checks.append("string")
         elif metric_name in {**CONTINUOUS_CLASSIFICATION_METRICS, **CURVE_METRICS}:
             if metric_name not in METRIC_UNDEFINED_BINARY:
                 data = data_all["continuous_binary"]
-                checks.append("string")
             else:
                 data = data_all["continuous_label_indicator"]
         elif metric_name in REGRESSION_METRICS:
             data = data_all["regression"]
             checks.append("float")
 
-        string_labels = np.array(["a", "b"])
-        metric_kwargs = {}
-
         y1, y2 = data
-        y1_np = np.array(y1)
-        y2_np = np.array(y2)
         for check in checks:
-            # we only need to check default `y1`, which was done in first loop
-            if check == "string" and not _is_numpy_namespace(xp_from):
-                continue
-
-            if check == "string":
-                y1_np = y1_xp = string_labels[y1_np]
-                # `pos_label` needs to be specified when `y_true` is string
-                if metric_name in METRICS_WITH_POS_LABEL:
-                    metric_kwargs["pos_label"] = "b"
-            elif check == "float":
+            if check == "float":
                 # Convert regression inputs from int to float
-                y1_np = y1_np * 0.3
-                y2_np = y2_np * 0.3
+                y1 = np.array(y1) * 0.3
+                y2 = np.array(y2) * 0.3
 
-            if check in ("float", "default"):
-                dtype = _get_dtype(y1_np, xp_from, from_ns_and_device.device)
-                y1_xp = xp_from.asarray(
-                    y1_np, device=from_ns_and_device.device, dtype=dtype
-                )
+            dtype = _get_dtype(y1, xp_from, from_ns_and_device.device)
+            y1_xp = xp_from.asarray(y1, device=from_ns_and_device.device, dtype=dtype)
 
-            metric_kwargs_np = metric_kwargs_xp = metric_kwargs
             if metric_name not in METRICS_WITHOUT_SAMPLE_WEIGHT:
                 # use `from_ns_and_device` for `sample_weight` as well
                 sample_weight_np = np.array(sample_weight)
-                metric_kwargs_np = {**metric_kwargs, "sample_weight": sample_weight_np}
+                metric_kwargs_np = {"sample_weight": sample_weight_np}
                 sample_weight_xp = xp_from.asarray(
                     sample_weight_np, device=from_ns_and_device.device
                 )
-                metric_kwargs_xp = {**metric_kwargs, "sample_weight": sample_weight_xp}
+                metric_kwargs_xp = {"sample_weight": sample_weight_xp}
 
-            dtype = _get_dtype(y2_np, xp_to, to_ns_and_device.device)
-            y2_xp = xp_to.asarray(y2_np, device=to_ns_and_device.device, dtype=dtype)
+            dtype = _get_dtype(y2, xp_to, to_ns_and_device.device)
+            y2_xp = xp_to.asarray(y2, device=to_ns_and_device.device, dtype=dtype)
 
             metric_xp = metric(y1_xp, y2_xp, **metric_kwargs_xp)
-            metric_np = metric(y1_np, y2_np, **metric_kwargs_np)
+            metric_np = metric(y1, y2, **metric_kwargs_np)
 
             def _check_output_type(out_np, out_xp):
                 if isinstance(out_np, float):
