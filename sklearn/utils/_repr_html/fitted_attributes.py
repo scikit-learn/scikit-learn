@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import html
 import inspect
 import re
 import reprlib
@@ -39,7 +40,7 @@ def _read_fitted_attr(value):
     r.maxlist = 2
     r.maxdict = 1
     r.maxstring = 50
-    cleaned_value = r.repr(value)
+    cleaned_value = html.escape(r.repr(value))
 
     return cleaned_value
 
@@ -57,7 +58,7 @@ def _fitted_attr_html_repr(fitted_attributes):
     shape is shown.
     """
 
-    HTML_TEMPLATE = """
+    FITTED_ATTR_TEMPLATE = """
        <div class="estimator-table">
            <details>
                <summary>Fitted attributes</summary>
@@ -77,7 +78,7 @@ def _fitted_attr_html_repr(fitted_attributes):
            </details>
        </div>
     """
-    ROW_TEMPLATE = """
+    FITTED_ATTR_ROW_TEMPLATE = """
        <tr class="default">
            <td>{name}&nbsp;</td>
            <td>{type}</td>
@@ -85,6 +86,7 @@ def _fitted_attr_html_repr(fitted_attributes):
            <td>{dtype}</td>
            <td>{attr_size}</td>
            <td>{attr_value}</td>
+           <td class="param">{fitted_attr_display}</td>
        </tr>
     """
 
@@ -105,39 +107,66 @@ def _fitted_attr_html_repr(fitted_attributes):
         }
     else:
         fitted_attr_map = {}
+    breakpoint()
     rows = []
-    for fitted_attr_name, attr_info in fitted_attributes.items():
-        formated_attr_value = _read_fitted_attr(attr_info[1])
+    # for fitted_attr_name, attr_info in fitted_attributes.items():
+    for name, value in fitted_attributes.items():
         link = _generate_link_to_param_doc(
             fitted_attributes.estimator_class,
-            fitted_attr_name,
+            name,
             fitted_attributes.doc_link,
         )
+        formated_attr_value = _read_fitted_attr(value[1])
 
-        if len(attr_info) == 2:
+        if fitted_attr_numpydoc := fitted_attr_map.get(name, None):
+            fitted_attr_description = (
+                f"{html.escape(fitted_attr_numpydoc.name)}:"
+                f"{html.escape(fitted_attr_numpydoc.type)}<br><br>"
+                f"{
+                    '<br>'.join(html.escape(line) for line in fitted_attr_numpydoc.desc)
+                }"
+            )
+        else:
+            fitted_attr_description = None
+
+        if fitted_attributes.doc_link and link and fitted_attr_description:
+            # Create clickable parameter name with documentation link
+            fitted_attr_display = FITTED_ATTR_AVAILABLE_DOC_LINK_TEMPLATE.format(
+                link=link,
+                fitted_attr_name=name,
+                fitted_attr_description=fitted_attr_description,
+            )
+        else:
+            # Just show the parameter name without link
+            fitted_attr_display = name
+        breakpoint()
+
+        if len(value) == 2:
             rows.append(
-                ROW_TEMPLATE.format(
-                    name=fitted_attr_name,
-                    type=attr_info[0],
+                FITTED_ATTR_ROW_TEMPLATE.format(
+                    name=name,
+                    type=value[0],
                     shape="",
                     dtype="",
                     attr_size="",
                     attr_value=formated_attr_value,
+                    fitted_attr_display=fitted_attr_display,
                 )
             )
         else:
             rows.append(
-                ROW_TEMPLATE.format(
-                    name=fitted_attr_name,
-                    type=attr_info[0],
-                    shape=attr_info[1],
-                    dtype=attr_info[2],
-                    attr_size=attr_info[3],
+                FITTED_ATTR_ROW_TEMPLATE.format(
+                    name=name,
+                    type=value[0],
+                    shape=value[1],
+                    dtype=value[2],
+                    attr_size=value[3],
                     attr_value="",
+                    fitted_attr_display=fitted_attr_display,
                 )
             )
 
-    return HTML_TEMPLATE.format(rows="\n".join(rows))
+    return FITTED_ATTR_TEMPLATE.format(rows="\n".join(rows))
 
 
 class AttrsDict(ReprHTMLMixin, UserDict):
