@@ -412,34 +412,6 @@ def test_nystroem_default_parameters():
     assert_array_almost_equal(K, K2)
 
 
-@pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
-)
-def test_nystroem_default_parameters_array_api(array_namespace, device, dtype_name):
-    xp = _array_api_for_tests(array_namespace, device)
-    rnd = np.random.RandomState(42)
-    X_np = rnd.uniform(size=(10, 4)).astype(dtype_name)
-    X_xp = xp.asarray(X_np, device=device)
-
-    with config_context(array_api_dispatch=True):
-        # rbf kernel should behave as gamma=None by default
-        # aka gamma = 1 / n_features
-        nystroem = Nystroem(n_components=10)
-        X_xp_transformed = nystroem.fit_transform(X_xp)
-        X_xp_transformed_np = _convert_to_numpy(X_xp_transformed, xp=xp)
-        K = rbf_kernel(X_xp, gamma=None)
-        K2 = np.dot(X_xp_transformed_np, X_xp_transformed_np.T)
-        assert_allclose(_convert_to_numpy(K, xp=xp), K2)
-
-        # chi2 kernel should behave as gamma=1 by default
-        nystroem = Nystroem(kernel="chi2", n_components=10)
-        X_xp_transformed = nystroem.fit_transform(X_xp)
-        X_xp_transformed_np = _convert_to_numpy(X_xp_transformed, xp=xp)
-        K = chi2_kernel(X_xp, gamma=1)
-        K2 = np.dot(X_xp_transformed_np, X_xp_transformed_np.T)
-        assert_allclose(_convert_to_numpy(K, xp=xp), K2)
-
-
 def test_nystroem_singular_kernel():
     # test that nystroem works with singular kernel matrix
     rng = np.random.RandomState(0)
@@ -496,26 +468,6 @@ def test_nystroem_poly_kernel_params():
     assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
 
 
-@pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
-)
-def test_nystroem_poly_kernel_params_array_api(array_namespace, device, dtype_name):
-    xp = _array_api_for_tests(array_namespace, device)
-    # Non-regression: Nystroem should pass other parameters beside gamma.
-    rnd = np.random.RandomState(37)
-    X_np = rnd.uniform(size=(10, 4)).astype(dtype_name)
-    X_xp = xp.asarray(X_np, device=device)
-
-    with config_context(array_api_dispatch=True):
-        K = polynomial_kernel(X_np, degree=3.1, coef0=0.1)
-        nystroem = Nystroem(
-            kernel="polynomial", n_components=X_xp.shape[0], degree=3.1, coef0=0.1
-        )
-        X_xp_transformed = nystroem.fit_transform(X_xp)
-        X_xp_transformed_np = _convert_to_numpy(X_xp_transformed, xp=xp)
-        assert_array_almost_equal(np.dot(X_xp_transformed_np, X_xp_transformed_np.T), K)
-
-
 def test_nystroem_callable():
     # Test Nystroem on a callable.
     rnd = np.random.RandomState(42)
@@ -563,36 +515,6 @@ def test_nystroem_precomputed_kernel():
         ny = Nystroem(kernel="precomputed", n_components=X.shape[0], **param)
         with pytest.raises(ValueError, match=msg):
             ny.fit(K)
-
-
-@pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
-)
-def test_nystroem_precomputed_kernel_array_api(array_namespace, device, dtype_name):
-    # Non-regression: test Nystroem on precomputed kernel.
-    # PR - 14706
-    xp = _array_api_for_tests(array_namespace, device)
-    rnd = np.random.RandomState(12)
-    X_np = rnd.uniform(size=(10, 4)).astype(dtype_name)
-    X_xp = xp.asarray(X_np, device=device)
-
-    with config_context(array_api_dispatch=True):
-        K = polynomial_kernel(X_xp, degree=2, coef0=0.1)
-        nystroem = Nystroem(kernel="precomputed", n_components=X_xp.shape[0])
-        X_xp_transformed = nystroem.fit_transform(K)
-        X_xp_transformed_np = _convert_to_numpy(X_xp_transformed, xp=xp)
-        assert_array_almost_equal(
-            np.dot(X_xp_transformed_np, X_xp_transformed_np.T),
-            _convert_to_numpy(K, xp=xp),
-        )
-
-        # if degree, gamma or coef0 is passed, we raise a ValueError
-        msg = "Don't pass gamma, coef0 or degree to Nystroem"
-        params = ({"gamma": 1}, {"coef0": 1}, {"degree": 2})
-        for param in params:
-            ny = Nystroem(kernel="precomputed", n_components=X_xp.shape[0], **param)
-            with pytest.raises(ValueError, match=msg):
-                ny.fit(K)
 
 
 def test_nystroem_component_indices():

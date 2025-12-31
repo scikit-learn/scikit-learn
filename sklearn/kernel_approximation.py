@@ -34,7 +34,7 @@ from sklearn.utils.validation import (
     check_is_fitted,
     validate_data,
 )
-
+from sklearn.utils._indexing import _safe_indexing
 
 class PolynomialCountSketch(
     ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
@@ -1040,7 +1040,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         if sp.issparse(X):
             basis = X[basis_inds]
         else:
-            basis = xp.take(X, basis_inds, axis=0)
+            basis = _safe_indexing(X, basis_inds, axis=0)
 
         basis_kernel = pairwise_kernels(
             basis,
@@ -1096,7 +1096,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         )
         dtype = _find_matching_floating_dtype(embedded, xp=xp)
         embedded = xp.asarray(embedded, dtype=dtype, device=device)
-        return xp.matmul(embedded, self.normalization_.T)
+        return embedded @ self.normalization_.T
 
     def _get_kernel_params(self):
         params = self.kernel_params
