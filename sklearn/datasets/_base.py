@@ -698,7 +698,8 @@ def load_iris(*, return_X_y=False, as_frame=False):
     Examples
     --------
     Let's say you are interested in the samples 10, 25, and 50, and want to
-    know their class name.
+    know their class name. The ``target`` array contains integer-encoded class
+    labels, which can be mapped to human-readable names using ``target_names``.
 
     >>> from sklearn.datasets import load_iris
     >>> data = load_iris()
