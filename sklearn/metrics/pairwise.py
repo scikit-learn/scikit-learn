@@ -936,6 +936,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     """
     ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
     X, Y = check_pairwise_arrays(X, Y, ensure_all_finite=ensure_all_finite)
+    xp, _ = get_namespace(X, Y)
 
     if axis == 0:
         X, Y = Y, X
@@ -971,15 +972,18 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         # Turn off check for finiteness because this is costly and because arrays
         # have already been validated.
         with config_context(assume_finite=True):
-            indices = np.concatenate(
-                list(
-                    # This returns an np.ndarray generator whose arrays we need
-                    # to flatten into one.
-                    pairwise_distances_chunked(
-                        X, Y, reduce_func=_argmin_reduce, metric=metric, **metric_kwargs
-                    )
+            indices_list = list(
+                # This returns an np.ndarray generator whose arrays we need
+                # to flatten into one.
+                pairwise_distances_chunked(
+                    X, Y, reduce_func=_argmin_reduce, metric=metric, **metric_kwargs
                 )
             )
+            # Use concat for Array API
+            if hasattr(xp, "concat"):
+                indices = xp.concat(indices_list, axis=0)
+            else:
+                indices = xp.concatenate(indices_list, axis=0)
 
     return indices
 
