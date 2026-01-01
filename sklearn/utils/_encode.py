@@ -67,7 +67,25 @@ def _unique_np(values, return_inverse=False, return_counts=False):
         uniques, counts = xp.unique_counts(values)
     else:
         uniques = xp.unique_values(values)
-    
+    # Array API does not guarantee ordering of unique values.
+    # Explicitly remove NaNs without assuming their position.
+    if uniques.size:
+        nan_mask = ~xp.isnan(uniques)
+
+        if return_inverse:
+            # Map indices pointing to NaNs to a single NaN index if present
+            nan_indices = xp.where(~nan_mask)[0]
+            if nan_indices.size:
+                nan_index = nan_indices[0]
+                inverse[inverse == nan_index] = nan_index
+
+        if return_counts:
+            if xp.any(~nan_mask):
+                nan_count = xp.sum(counts[~nan_mask])
+                counts = counts[nan_mask]
+                counts = xp.concatenate([counts, xp.asarray([nan_count])])
+
+        uniques = uniques[nan_mask]
 
     ret = (uniques,)
 
