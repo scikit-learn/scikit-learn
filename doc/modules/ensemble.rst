@@ -334,6 +334,10 @@ score should increase the probability of getting approved for a loan.
 Monotonic constraints allow you to incorporate such prior knowledge into the
 model.
 
+See :ref:`Monotonic constraints example
+<sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py>`
+for more details.
+
 For a predictor :math:`F` with two features:
 
 - a **monotonic increase constraint** is a constraint of the form:
