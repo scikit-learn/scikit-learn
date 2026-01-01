@@ -984,6 +984,9 @@ When growing each tree in the forest, the "best" split (i.e. equivalent to
 passing `splitter="best"` to the underlying decision trees) is chosen according
 to the impurity criterion. See the :ref:`CART mathematical formulation
 <tree_mathematical_formulation>` for more details.
+"gini" (default, faster) or "entropy" for classification impurity.
+Regression: "squared_error". Example:
+clf = RandomForestClassifier(criterion='gini')
 
 In contrast to the original publication [B2001]_, the scikit-learn
 implementation combines classifiers by averaging their probabilistic
