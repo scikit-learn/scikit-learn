@@ -1,0 +1,2 @@
+- :func:`sklearn.metrics.pairwise.paired_manhattan_distances` now support array API compatible inputs.
+  By :user:`Bharat Raghunathan <bharatr21>`.
