@@ -272,3 +272,15 @@ def test_check_unknown_with_both_missing_values():
 def test_get_counts(values, uniques, expected_counts):
     counts = _get_counts(values, uniques)
     assert_array_equal(counts, expected_counts)
+
+def test_unique_np_removes_nan_without_order_assumption():
+    import numpy as np
+    from sklearn.utils._encode import _unique_np
+
+    values = np.array([1.0, np.nan, 2.0, np.nan])
+
+    uniques = _unique_np(values)
+
+    # NaNs should be removed regardless of position
+    assert not np.any(np.isnan(uniques))
+    assert set(uniques.tolist()) == {1.0, 2.0}
