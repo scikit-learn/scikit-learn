@@ -649,7 +649,8 @@ def _argmin_reduce(dist, start):
     # `start` is specified in the signature but not used. This is because the higher
     # order `pairwise_distances_chunked` function needs reduction functions that are
     # passed as argument to have a two arguments signature.
-    return dist.argmin(axis=1)
+    xp, _ = get_namespace(dist)
+    return xp.argmin(dist, axis=1)
 
 
 _VALID_METRICS = [
