@@ -246,7 +246,6 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
 
             else:
                 fitted_attr_out[name] = (type(value).__name__, value)
-
         return AttrsDict(
             fitted_attrs=fitted_attr_out,
             estimator_class=self.__class__,
