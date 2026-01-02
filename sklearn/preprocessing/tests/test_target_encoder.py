@@ -829,32 +829,23 @@ def test_fit_dataframe_sets_feature_names_pandas():
 
 def test_fit_dataframe_sets_feature_names_polars():
     pl = pytest.importorskip("polars")
-    X = pl.DataFrame(
-        {
-            "feat_a": ["a", "b", "a"],
-            "feat_b": ["x", "y", "x"],
-        }
-    )
+    X = pl.DataFrame({"feat_a": ["a", "b", "a"], "feat_b": ["x", "y", "x"]})
     y = np.array([0, 1, 1], dtype=float)
 
     te = TargetEncoder(smooth=5.0).fit(X, y)
     names = te.get_feature_names_out()
-    expected = np.array(["feat_a", "feat_b"], dtype=object)
-    if hasattr(te, "feature_names_in_"):
-        assert_array_equal(names, expected)
-    else:
-        assert_array_equal(names, np.array(["x0", "x1"], dtype=object))
+    assert_array_equal(names, np.array(["feat_a", "feat_b"], dtype=object))
 
 
-def test_smallbatch_index_maps_built_lazily_on_transform():
+def test_smallbatch_index_maps_are_lazy_and_materialize_on_use():
     X = np.array([["a"], ["b"]], dtype=object)
     y = np.array([0.0, 1.0])
 
     te = TargetEncoder(smooth=5.0).fit(X, y)
 
-    # Should run without error for a small batch
-    Xt = te.transform(X)
-    assert Xt.shape == (2, 1)
+    index_maps = te._index_maps_
+    assert index_maps.__class__.__name__ == "_LazyIndexMaps"
+    assert index_maps._maps[0] is None
 
-    # Cache object should exist (may be lazy wrapper)
-    assert getattr(te, "_index_maps_", None) is not None
+    te.transform(X)
+    assert index_maps._maps[0] is not None

@@ -354,21 +354,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             )
         return X_out
 
-    def _build_index_maps(self):
-        """Precompute per-feature {category -> ordinal index} dicts.
-        Used only by the small-batch transform path to do O(1) lookups when
-        converting raw categories to their ordinal indices. This avoids
-        duplicating the learned encodings/means in memory.
-        """
-        n_features = len(self.categories_)
-        self._index_maps_ = [None] * n_features
-        for j in range(n_features):
-            cats_j = self.categories_[j]
-            idx_map = {}
-            for i, cat in enumerate(cats_j):
-                idx_map[_norm_key(cat)] = i
-            self._index_maps_[j] = idx_map
-
     def _transform_small_batch(self, X):
         """Fast-path transform for small inputs.
         This is called only when n_samples <= _small_batch_threshold.
