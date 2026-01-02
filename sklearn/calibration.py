@@ -1645,6 +1645,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
 
         pos_label : int, float, bool or str, default=None
             The positive class when computing the calibration curve.
+            This parameter is only relevant for binary classification.
+            By default, the positive class is inferred from the estimator or ``y_true``.
             When `pos_label=None`, if `y_true` is in {-1, 1} or {0, 1},
             `pos_label` is set to 1, otherwise an error will be raised.
 
