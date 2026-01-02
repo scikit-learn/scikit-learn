@@ -170,9 +170,18 @@ class AttrsDict(ReprHTMLMixin, UserDict):
 
     Parameters
     ----------
-    fitted_attributes : dict, default=None
+    fitted_attrs : dict, default=None
         Dictionary of fitted attributes and their values. When this is
         an array, it includes its size.
+
+    estimator_class : type, default=None
+        The class of the estimator. It allows to find the online documentation
+        link for each parameter.
+
+    doc_link : str, default=""
+        The base URL to the online documentation for the estimator class.
+        Used to generate parameter-specific documentation links in the HTML
+        representation. If empty, documentation links will not be generated.
     """
 
     _html_repr = _fitted_attr_html_repr
