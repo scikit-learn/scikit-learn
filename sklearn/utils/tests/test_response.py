@@ -394,3 +394,55 @@ def test_response_values_type_of_target_on_classes_no_warning():
         warnings.simplefilter("error", UserWarning)
 
         _get_response_values(clf, X, response_method="predict_proba")
+
+
+@pytest.mark.parametrize(
+    "estimator, response_method, target_type, expected_shape",
+    [
+        (LogisticRegression(), "predict", "binary", (10,)),
+        (LogisticRegression(), "predict_proba", "binary", (10,)),
+        (LogisticRegression(), "decision_function", "binary", (10,)),
+        (LogisticRegression(), "predict", "multiclass", (10,)),
+        (LogisticRegression(), "predict_proba", "multiclass", (10, 4)),
+        (LogisticRegression(), "decision_function", "multiclass", (10, 4)),
+        (ClassifierChain(LogisticRegression()), "predict", "multilabel", (10, 2)),
+        (ClassifierChain(LogisticRegression()), "predict_proba", "multilabel", (10, 2)),
+        (
+            ClassifierChain(LogisticRegression()),
+            "decision_function",
+            "multilabel",
+            (10, 2),
+        ),
+        (IsolationForest(), "predict", "binary", (10,)),
+        (IsolationForest(), "predict", "multiclass", (10,)),
+        (DecisionTreeRegressor(), "predict", "binary", (10,)),
+        (DecisionTreeRegressor(), "predict", "multiclass", (10,)),
+    ],
+)
+def test_response_values_output_shape_(
+    estimator, response_method, target_type, expected_shape
+):
+    """
+    Check that output shape corresponds to docstring description
+
+    - for binary classification, it is a 1d array of shape `(n_samples,)`;
+    - for multiclass classification
+        - with response_method="predict", it is a 1d array of shape `(n_samples,)`;
+        - otherwise, it is a 2d array of shape `(n_samples, n_classes)`;
+    - for multilabel classification, it is a 2d array of shape `(n_samples, n_outputs)`;
+    - for outlier detection, it is a 1d array of shape `(n_samples,)`;
+    - for regression, it is a 1d array of shape `(n_samples,)`.
+    """
+    X = np.random.RandomState(0).randn(10, 2)
+    if target_type == "binary":
+        y = np.array([0, 1] * 5)
+    elif target_type == "multiclass":
+        y = [0, 1, 2, 3, 0, 1, 2, 3, 3, 0]
+    else:  # multilabel
+        y = np.array([[0, 1], [1, 0]] * 5)
+
+    clf = estimator.fit(X, y)
+
+    y_pred, _ = _get_response_values(clf, X, response_method=response_method)
+
+    assert y_pred.shape == expected_shape

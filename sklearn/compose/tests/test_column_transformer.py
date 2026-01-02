@@ -1556,7 +1556,7 @@ def test_sk_visual_block_remainder(remainder):
     )
     visual_block = ct._sk_visual_block_()
     assert visual_block.names == ("ohe", "remainder")
-    assert visual_block.name_details == (["col1", "col2"], "")
+    assert visual_block.name_details == (["col1", "col2"], [])
     assert visual_block.estimators == (ohe, remainder)
 
 

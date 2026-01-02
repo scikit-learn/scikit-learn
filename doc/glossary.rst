@@ -518,13 +518,17 @@ General Concepts
         :term:`memory mapping`. See :ref:`parallelism` for more
         information.
 
+    label indicator format
     label indicator matrix
     multilabel indicator matrix
     multilabel indicator matrices
-        The format used to represent multilabel data, where each row of a 2d
-        array or sparse matrix corresponds to a sample, each column
+        This format can be used to represent binary or multilabel data. Each row of
+        a 2d array or sparse matrix corresponds to a sample, each column
         corresponds to a class, and each element is 1 if the sample is labeled
         with the class and 0 if not.
+
+        :ref:`LabelBinarizer <preprocessing_targets>` can be used to create a
+        multilabel indicator matrix from :term:`multiclass` labels.
 
     leakage
     data leakage
@@ -587,6 +591,26 @@ General Concepts
         A shorthand for Numpy due to the conventional import statement::
 
             import numpy as np
+
+    ovo
+    One-vs-one
+    one-vs-one
+        Method of decomposing a :term:`multiclass` problem into
+        `n_classes * (n_classes - 1) / 2` :term:`binary` problems, one for each
+        pairwise combination of classes. A metric is computed or a classifier is
+        fitted for each pair combination.
+        :class:`~sklearn.multiclass.OneVsOneClassifier` implements this
+        method for binary classifiers.
+
+    ovr
+    One-vs-Rest
+    one-vs-rest
+        Method for decomposing a :term:`multiclass` problem into `n_classes`
+        :term:`binary` problems. For each class a metric is computed or classifier
+        fitted, with that class being treated as the positive class while all other
+        classes are negative.
+        :class:`~sklearn.multiclass.OneVsRestClassifier` implements this
+        method for binary classifiers.
 
     online learning
         Where a model is iteratively updated by receiving each batch of ground
