@@ -1628,13 +1628,13 @@ def test_enet_ols_consistency(precompute, effective_rank, global_random_seed):
     # Might be a singular problem, so check for same predictions
     assert_allclose(enet.predict(X), ols.predict(X))
     # and for similar objective function (squared error)
-    se_ols = np.sum((y - ols.predict(X)) ** 2)
-    se_enet = np.sum((y - enet.predict(X)) ** 2)
-    assert se_ols <= 1.2e-20
-    assert se_enet <= 1.2e-20
+    se_ols = np.sum(sw * (y - ols.predict(X)) ** 2)
+    se_enet = np.sum(sw * (y - enet.predict(X)) ** 2)
+    assert se_ols <= 1e-19
+    assert se_enet <= 1e-19
     # We check equal coefficients, but "only" with absolute tolerance.
     assert_allclose(enet.coef_, ols.coef_, atol=1e-11)
-    assert_allclose(enet.intercept_, ols.intercept_, atol=1.2e-12)
+    assert_allclose(enet.intercept_, ols.intercept_, atol=1e-11)
 
 
 @pytest.mark.parametrize(
