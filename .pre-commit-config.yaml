@@ -11,7 +11,7 @@ repos:
     # sklearn/_min_dependencies.py and doc .rst files mentioning ruff==<version>
     rev: v0.12.2
     hooks:
-    -   id: ruff
+    -   id: ruff-check
         args: ["--fix", "--output-format=full"]
     -   id: ruff-format
 -   repo: https://github.com/pre-commit/mirrors-mypy
@@ -40,4 +40,3 @@ repos:
   rev: v2.4.1
   hooks:
   - id: codespell
-    exclude: _stop_words\.py$
