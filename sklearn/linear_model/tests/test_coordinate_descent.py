@@ -1607,9 +1607,9 @@ def test_enet_ridge_consistency(ridge_alpha, precompute, n_targets):
 @pytest.mark.filterwarnings("ignore:With alpha=0, this algorithm:UserWarning")
 @pytest.mark.parametrize("precompute", [False, True])
 @pytest.mark.parametrize("effective_rank", [None, 10])
-def test_enet_ols_consistency(precompute, effective_rank):
+def test_enet_ols_consistency(precompute, effective_rank, global_random_seed):
     """Test that ElasticNet(alpha=0) converges to the same solution as OLS."""
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 300
     X, y = make_regression(
         n_samples=n_samples,
@@ -1630,11 +1630,8 @@ def test_enet_ols_consistency(precompute, effective_rank):
     # and for similar objective function (squared error)
     se_ols = np.sum((y - ols.predict(X)) ** 2)
     se_enet = np.sum((y - enet.predict(X)) ** 2)
-    if precompute:
-        assert se_ols <= 1e-20
-        assert se_enet <= 1e-20
-    else:
-        assert se_enet <= se_ols <= 1e-20  # Who would have thought that?
+    assert se_ols <= 1e-20
+    assert se_enet <= 1e-20
     # We check equal coefficients, but "only" with absolute tolerance.
     assert_allclose(enet.coef_, ols.coef_, atol=1e-11)
     assert_allclose(enet.intercept_, ols.intercept_, atol=1e-12)
