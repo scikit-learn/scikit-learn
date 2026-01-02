@@ -24,20 +24,20 @@ Contributing
 
 .. currentmodule:: sklearn
 
-This project is a community effort, and everyone is welcome to
-contribute. It is hosted on https://github.com/scikit-learn/scikit-learn.
+This project is a community effort, shaped by a large number of contributors from
+across the world. For more information on the history and people behind scikit-learn
+see :ref:`about`. It is hosted on https://github.com/scikit-learn/scikit-learn.
 The decision making process and governance structure of scikit-learn is laid
 out in :ref:`governance`.
 
 Scikit-learn is :ref:`selective <selectiveness>` when it comes to
 adding new algorithms and features. This means the best way to contribute
 and help the project is to start working on known issues.
-See :ref:`new_contributors` to get started.
+See :ref:`ways_to_contribute` to learn how to make meaningful contributions.
 
 .. topic:: **Our community, our values**
 
-    We are a community based on openness and friendly, didactic,
-    discussions.
+    We are a community based on openness and friendly, didactic discussions.
 
     We aspire to treat everybody equally, and value their contributions.  We
     are particularly seeking people from underrepresented backgrounds in Open
@@ -54,49 +54,33 @@ See :ref:`new_contributors` to get started.
     Communications on all channels should respect our `Code of Conduct
     <https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md>`_.
 
-
-
-In case you experience issues using this package, do not hesitate to submit a
-ticket to the
-`GitHub issue tracker
-<https://github.com/scikit-learn/scikit-learn/issues>`_. You are also
-welcome to post feature requests or pull requests.
-
 .. _ways_to_contribute:
 
 Ways to contribute
 ==================
 
-There are many ways to contribute to scikit-learn. Improving the
-documentation is no less important than improving the code of the library
-itself. If you find a typo in the documentation, or have made improvements, do
-not hesitate to create a GitHub issue or preferably submit a GitHub pull request.
+There are many ways to contribute to scikit-learn. These include:
 
-There are many ways to help. In particular helping to
-:ref:`improve, triage, and investigate issues <bug_triaging>` and
-:ref:`reviewing other developers' pull requests <code_review>` are very
-valuable contributions that move the project forward.
+* referencing scikit-learn from your blog and articles, linking to it from your website,
+  or simply
+  `staring it <https://docs.github.com/en/get-started/exploring-projects-on-github/saving-repositories-with-stars>`__
+  to say "I use it"; this helps us promote the project
+* :ref:`improving and investigating issues <bug_triaging>`
+* :ref:`reviewing other developers' pull requests <code_review>`
+* reporting difficulties when using this package by submitting an
+  `issue <https://github.com/scikit-learn/scikit-learn/issues>`__, and giving a
+  "thumbs up" on issues that others reported and that are relevant to you (see
+  :ref:`submitting_bug_feature` for details)
+* improving the :ref:`contribute_documentation`
+* making a code contribution
 
-Another way to contribute is to report issues you are facing, and give a "thumbs
-up" on issues that others reported and that are relevant to you.  It also helps
-us if you spread the word: reference the project from your blog and articles,
-link to it from your website, or simply star to say "I use it":
-
-.. raw:: html
-
-  <p>
-    <object
-      data="https://img.shields.io/github/stars/scikit-learn/scikit-learn?style=for-the-badge&logo=github"
-      type="image/svg+xml">
-    </object>
-  </p>
-
-In case a contribution/issue involves changes to the API principles
-or changes to dependencies or supported versions, it must be backed by a
-:ref:`slep`, where a SLEP must be submitted as a pull-request to
-`enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_
-using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_
-and follows the decision-making process outlined in :ref:`governance`.
+There are many ways to contribute without writing code, and we value these
+contributions just as highly as code contributions. If you are interested in making
+a code contribution, please keep in mind that scikit-learn has evolved into a mature
+and complex project since its inception in 2007. Contributing to the project code
+generally requires advanced skills, and it may not be the best place to begin if you
+are new to open source contribution. In this case we suggest you follow the suggestions
+in :ref:`new_contributors`.
 
 .. dropdown:: Contributing to related projects
 
@@ -125,15 +109,31 @@ New Contributors
 ----------------
 
 We recommend new contributors start by reading this contributing guide, in
-particular :ref:`ways_to_contribute`, :ref:`automated_contributions_policy`
-and :ref:`pr_checklist`. For expected etiquette around which issues and stalled PRs
+particular :ref:`ways_to_contribute`, :ref:`automated_contributions_policy`.
+
+Next, we advise new contributors gain foundational knowledge on
+scikit-learn and open source by:
+
+* :ref:`improving and investigating issues <bug_triaging>`
+
+  * confirming that a problem reported can be reproduced and providing a
+    :ref:`minimal reproducible code <minimal_reproducer>` (if missing), can help you
+    learn about different use cases and user needs
+  * investigating the root cause of an issue will aid you in familiarising yourself
+    with the scikit-learn codebase
+
+* :ref:`reviewing other developers' pull requests <code_review>` will help you
+  develop an understanding of the requirements and quality expected of contributions
+* improving the :ref:`contribute_documentation` can help deepen your knowledge
+  of the statistical concepts behind models and functions, and scikit-learn API
+
+If you wish to make code contributions after building your foundational knowledge, we
+recommend you start by looking for an issue that is of interest to you, in an area you
+are already familiar with as a user or have background knowledge of. We recommend
+starting with smaller pull requests and following our :ref:`pr_checklist`.
+For expected etiquette around which issues and stalled PRs
 to work on, please read :ref:`stalled_pull_request`, :ref:`stalled_unclaimed_issues`
 and :ref:`issues_tagged_needs_triage`.
-
-We understand that everyone has different interests and backgrounds, thus we recommend
-you start by looking for an issue that is of interest to you, in an area you are
-already familiar with as a user or have background knowledge of. We recommend starting
-with smaller pull requests, to get used to the contribution process.
 
 We rarely use the "good first issue" label because it is difficult to make
 assumptions about new contributors and these issues often prove more complex
@@ -152,22 +152,28 @@ look.
 Automated Contributions Policy
 ==============================
 
+Contributing to scikit-learn requires human judgment, contextual understanding, and
+familiarity with scikit-learn's structure and goals. It is not suitable for
+automatic processing by AI tools.
+
 Please refrain from submitting issues or pull requests generated by
 fully-automated tools. Maintainers reserve the right, at their sole discretion,
 to close such submissions and to block any account responsible for them.
 
-Ideally, contributions should follow from a human-to-human discussion in the
-form of an issue. In particular, please do not paste AI generated text in the
-description of issues, PRs or in comments as it makes it significantly harder for
-reviewers to assess the relevance of your contribution and the potential value it
-brings to future end-users of the library. Note that it's fine to use AI tools
-to proofread or improve your draft text if you are not a native English speaker,
-but reviewers are not interested in unknowingly interacting back and forth with
-automated chatbots that fundamentally do not care about the value of our open
-source project.
+Review all code or documentation changes made by AI tools and
+make sure you understand all changes and can explain them on request, before
+submitting them under your name. Do not submit any AI-generated code that you haven't
+personally reviewed, understood and tested, as this wastes maintainers' time.
 
-Please self review all code or documentation changes made by AI tools before
-submitting them under your name.
+Please do not paste AI generated text in the description of issues, PRs or in comments
+as this makes it harder for reviewers to assess your contribution. We are happy for it
+to be used to improve grammar or if you are not a native English speaker.
+
+If you used AI tools, please state so in your PR description.
+
+PRs that appear to violate this policy will be closed without review.
+
+.. _submitting_bug_feature:
 
 Submitting a bug report or a feature request
 ============================================
@@ -194,6 +200,13 @@ following rules before submitting:
 
 -  If you are submitting a bug report, we strongly encourage you to follow the guidelines in
    :ref:`filing_bugs`.
+
+When a feature request involves changes to the API principles
+or changes to dependencies or supported versions, it must be backed by a
+:ref:`SLEP <slep>`, which must be submitted as a pull-request to
+`enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_
+using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_
+and follows the decision-making process outlined in :ref:`governance`.
 
 .. _filing_bugs:
 

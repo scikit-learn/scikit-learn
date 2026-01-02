@@ -503,8 +503,8 @@ def _plain_sgd{{name_suffix}}(
                                 l1_ratio * w.l1norm()
                             )
                         if one_class:  # specific to One-Class SVM
-                            # nu is alpha * 2 (alpha is set as nu / 2 by the caller)
-                            objective_sum += intercept * (alpha * 2)
+                            # nu is alpha
+                            objective_sum += intercept * alpha
 
                 if y > 0.0:
                     class_weight = weight_pos
@@ -549,7 +549,7 @@ def _plain_sgd{{name_suffix}}(
                 if fit_intercept == 1:
                     intercept_update = update
                     if one_class:  # specific for One-Class SVM
-                        intercept_update -= 2. * eta * alpha
+                        intercept_update -= eta * alpha
                     if intercept_update != 0:
                         intercept += intercept_update * intercept_decay
 
