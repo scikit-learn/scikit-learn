@@ -38,6 +38,29 @@ def _scrape_estimator_docstring(docstring):
 
 
 def _get_docstring(estimator_class, section_name, item):
+    """Extract and format docstring information for a specific item.
+
+    Parses the estimator's docstring to retrieve documentation for a
+    specific parameter or attribute, formatting it as HTML-escaped text.
+
+    Parameters
+    ----------
+    estimator_class : type
+        The estimator class whose docstring will be parsed.
+
+    section_name : str
+        The numpydoc section to search in (e.g., "Parameters", "Attributes").
+
+    item : str
+        The name of the parameter or attribute to retrieve documentation for.
+
+    Returns
+    -------
+    str or None
+        HTML-formatted docstring to be used as a tooltip. Returns None if the
+        estimator has no docstring or if the item is not found in the
+        specified section.
+    """
     estimator_class_docs = inspect.getdoc(estimator_class)
     if estimator_class_docs and (
         structured_docstring := _scrape_estimator_docstring(estimator_class_docs)
