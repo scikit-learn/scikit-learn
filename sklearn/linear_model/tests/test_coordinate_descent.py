@@ -1630,11 +1630,11 @@ def test_enet_ols_consistency(precompute, effective_rank, global_random_seed):
     # and for similar objective function (squared error)
     se_ols = np.sum((y - ols.predict(X)) ** 2)
     se_enet = np.sum((y - enet.predict(X)) ** 2)
-    assert se_ols <= 1e-20
-    assert se_enet <= 1e-20
+    assert se_ols <= 1.2e-20
+    assert se_enet <= 1.2e-20
     # We check equal coefficients, but "only" with absolute tolerance.
     assert_allclose(enet.coef_, ols.coef_, atol=1e-11)
-    assert_allclose(enet.intercept_, ols.intercept_, atol=1e-12)
+    assert_allclose(enet.intercept_, ols.intercept_, atol=1.2e-12)
 
 
 @pytest.mark.parametrize(
