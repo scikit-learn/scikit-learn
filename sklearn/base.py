@@ -220,7 +220,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         # It raises when inspecting an empty Pipeline. So we need
         # to check that a Pipeline is not empty.
         if hasattr(init, "steps") and not len(init.steps):
-            return AttrsDict("")
+            return AttrsDict(fitted_attrs="")
 
         attributes = inspect.getmembers(init)
 

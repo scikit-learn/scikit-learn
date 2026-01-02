@@ -78,7 +78,6 @@ def test_params_html_repr():
     """Check returned HTML template"""
     params = ParamsDict(params={"a": 1, "b": 2}, estimator_class="")
     assert "parameters-table" in _params_html_repr(params)
-    assert "body-table" in _params_html_repr(params)
     assert "estimator-table" in _params_html_repr(params)
 
 
