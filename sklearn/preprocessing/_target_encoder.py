@@ -25,6 +25,28 @@ from sklearn.utils.validation import (
 from sklearn.utils.validation import _normalize_na_key as _norm_key
 
 
+class _LazyIndexMaps:
+    """Lazy per-feature {normalized_category -> ordinal_index} maps.
+
+    Must not implement __eq__. Stored on estimator during fit so transform does
+    not mutate estimator.__dict__.
+    """
+
+    def __init__(self, categories):
+        self._categories = categories
+        self._maps = [None] * len(categories)
+
+    def get_index(self, feature_idx, value):
+        m = self._maps[feature_idx]
+        if m is None:
+            idx_map = {}
+            for i, cat in enumerate(self._categories[feature_idx]):
+                idx_map[_norm_key(cat)] = i
+            self._maps[feature_idx] = idx_map
+            m = idx_map
+        return m.get(_norm_key(value), -1)
+
+
 class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     """Target Encoder for regression and classification targets.
 
@@ -247,7 +269,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             Fitted encoder.
         """
         self._fit_encodings_all(X, y)
-        self._build_index_maps()
+        self._index_maps_ = _LazyIndexMaps(self.categories_)
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -283,7 +305,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         )
 
         X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
-        self._build_index_maps()
+        self._index_maps_ = _LazyIndexMaps(self.categories_)
 
         # The cv splitter is voluntarily restricted to *KFold to enforce non
         # overlapping validation folds, otherwise the fit_transform output will
@@ -383,7 +405,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
                 out_block = np.empty((n_samples, n_classes), dtype=float)
                 for i in range(n_samples):
-                    idx = index_maps[j].get(norm_key(col[i]), -1)
+                    idx = index_maps.get_index(j, col[i])
                     out_block[i, :] = enc_block[:, idx] if idx >= 0 else default_v
 
                 start = base
@@ -394,7 +416,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 default = float(np.asarray(self.target_mean_))
                 out_col = np.empty(n_samples, dtype=float)
                 for i in range(n_samples):
-                    idx = index_maps[j].get(norm_key(col[i]), -1)
+                    idx = index_maps.get_index(j, col[i])
                     out_col[i] = enc_vec[idx] if idx >= 0 else default
                 X_out[:, j] = out_col
 
@@ -429,11 +451,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         """
         check_is_fitted(self)
         n_samples = _num_samples(X)
-        use_small_batch = n_samples <= self._small_batch_threshold and hasattr(
-            self, "_index_maps_"
-        )
-
-        if use_small_batch:
+        if n_samples <= self._small_batch_threshold:
             return self._transform_small_batch(X)
 
         X_ordinal, X_known_mask = self._transform(

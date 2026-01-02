@@ -757,11 +757,8 @@ def _fit_target_encoder_fast_and_orig():
     return te_fast, te_orig
 
 
-def test_small_batch_fastpath_matches_vectorized_with_nans_and_nats():
-    """
-    For tiny inputs, small-batch dict-lookup path should match the reference
-    vectorized path exactly (within tight numerical tolerance).
-    """
+@pytest.mark.parametrize("n_repeats", [1, 300])
+def test_fastpath_matches_vectorized_with_nans_and_nats(n_repeats):
     te_fast, te_vec = _fit_target_encoder_fast_and_orig()
 
     X = np.empty((5, 2), dtype=object)
@@ -770,60 +767,34 @@ def test_small_batch_fastpath_matches_vectorized_with_nans_and_nats():
     X[2] = [None, "x"]
     X[3] = ["u", np.datetime64("NaT")]
     X[4] = ["new_unseen", "x"]
+    X = np.tile(X, (n_repeats, 1))
 
     assert_allclose(te_fast.transform(X), te_vec.transform(X), rtol=0, atol=1e-9)
 
 
-def test_large_batch_vectorized_consistency():
-    """
-    For large inputs, both encoders choose the vectorized path; results must
-    match exactly (within tight tolerance).
-    """
-    te_fast, te_vec = _fit_target_encoder_fast_and_orig()
-
-    base = np.array(
-        [["u", "x"], ["v", "y"], ["u", "x"], ["w", "y"], [None, "x"], ["new", "y"]],
-        dtype=object,
-    )
-    X_big = np.tile(base, (300, 1))
-
-    Z_fast = te_fast.transform(X_big)  # chooses vectorized due to size
-    Z_vec = te_vec.transform(X_big)  # always vectorized
-    assert_allclose(Z_fast, Z_vec, rtol=0, atol=1e-9)
-
-
+@pytest.mark.parametrize(
+    "n_classes, n_cats, n_fit, rng_seed",
+    [
+        (2, 50_000, 150_000, 0),
+        (5, 30_000, 200_000, 1),
+    ],
+)
 @pytest.mark.parametrize("n_small", [1, 2, 8, 32])
-@pytest.mark.parametrize("n_cats", [10_000, 50_000])
-def test_small_batch_binary_parity_and_missing(n_small, n_cats):
-    rng = np.random.default_rng(0)
-    X_fit = rng.integers(0, n_cats, size=(150_000, 1)).astype(object)
+def test_small_batch_parity_and_missing(n_classes, n_cats, n_fit, rng_seed, n_small):
+    rng = np.random.default_rng(rng_seed)
+
+    X_fit = rng.integers(0, n_cats, size=(n_fit, 1)).astype(object)
     X_fit[:100, 0] = None
-    y_fit = rng.integers(0, 2, size=(150_000,))
+    y_fit = rng.integers(0, n_classes, size=(n_fit,))
+
     enc = TargetEncoder(random_state=0).fit(X_fit, y_fit)
+
     X_small = rng.integers(0, n_cats * 2, size=(n_small, 1)).astype(object)
     if n_small >= 2:
         X_small[0, 0] = None
         X_small[-1, 0] = np.nan
-    old_thresh = enc._small_batch_threshold
-    enc._small_batch_threshold = -1
-    try:
-        ref = enc.transform(X_small)
-    finally:
-        enc._small_batch_threshold = old_thresh
-
-    fast = enc.transform(X_small)
-    assert_allclose(fast, ref, rtol=0, atol=0)
-
-
-def test_small_batch_multiclass_parity_and_order():
-    rng = np.random.default_rng(1)
-    n_cats = 30_000
-    n_classes = 5
-    X_fit = rng.integers(0, n_cats, size=(200_000, 1)).astype(object)
-    y_fit = rng.integers(0, n_classes, size=(200_000,))
-    enc = TargetEncoder(random_state=0).fit(X_fit, y_fit)
-
-    X_small = np.array([[0], [n_cats + 123], [42], [None], [np.nan]], dtype=object)
+    else:
+        X_small[0, 0] = n_cats + 123
 
     old_thresh = enc._small_batch_threshold
     enc._small_batch_threshold = -1
@@ -833,9 +804,12 @@ def test_small_batch_multiclass_parity_and_order():
         enc._small_batch_threshold = old_thresh
 
     fast = enc.transform(X_small)
+
     assert_allclose(fast, ref, rtol=0, atol=0)
-    assert fast.shape[1] % n_classes == 0
-    assert ref.shape == fast.shape
+
+    if n_classes > 2:
+        assert fast.shape == ref.shape
+        assert fast.shape[1] % n_classes == 0
 
 
 def test_fit_dataframe_sets_feature_names_pandas():
@@ -849,15 +823,12 @@ def test_fit_dataframe_sets_feature_names_pandas():
 
     te = TargetEncoder(smooth=5.0).fit(X, y)
     names = te.get_feature_names_out()
-
-    # With string column names, sklearn sets feature_names_in_
     assert hasattr(te, "feature_names_in_")
     assert_array_equal(names, np.array(["feat_a", "feat_b"], dtype=object))
 
 
 def test_fit_dataframe_sets_feature_names_polars():
     pl = pytest.importorskip("polars")
-    # Build a polars DataFrame; TargetEncoder should accept it as array-like
     X = pl.DataFrame(
         {
             "feat_a": ["a", "b", "a"],
@@ -867,22 +838,23 @@ def test_fit_dataframe_sets_feature_names_polars():
     y = np.array([0, 1, 1], dtype=float)
 
     te = TargetEncoder(smooth=5.0).fit(X, y)
-    # In current sklearn behavior, polars may or may not set feature_names_in_
     names = te.get_feature_names_out()
     expected = np.array(["feat_a", "feat_b"], dtype=object)
-    # If feature_names_in_ is present, it must match the polars column names.
     if hasattr(te, "feature_names_in_"):
         assert_array_equal(names, expected)
     else:
-        # Fall back to x0, x1 names if feature names were not captured
         assert_array_equal(names, np.array(["x0", "x1"], dtype=object))
 
 
-def test_smallbatch_index_maps_exist_after_fit():
-    """Index maps (lightweight caches) are built during fit."""
+def test_smallbatch_index_maps_built_lazily_on_transform():
     X = np.array([["a"], ["b"]], dtype=object)
     y = np.array([0.0, 1.0])
+
     te = TargetEncoder(smooth=5.0).fit(X, y)
+
+    # Should run without error for a small batch
+    Xt = te.transform(X)
+    assert Xt.shape == (2, 1)
+
+    # Cache object should exist (may be lazy wrapper)
     assert getattr(te, "_index_maps_", None) is not None
-    assert isinstance(te._index_maps_, list) and len(te._index_maps_) == 1
-    assert isinstance(te._index_maps_[0], dict) and len(te._index_maps_[0]) >= 2
