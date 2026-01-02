@@ -7,7 +7,7 @@ from collections import UserDict
 
 from sklearn.utils._repr_html._common import (
     _generate_link_to_param_doc,
-    _get_docstring_info,
+    _get_docstring,
 )
 from sklearn.utils._repr_html.base import ReprHTMLMixin
 
@@ -74,10 +74,6 @@ def _fitted_attr_html_repr(fitted_attributes):
         </a>
     """
 
-    fitted_attr_map = _get_docstring_info(
-        fitted_attributes.estimator_class, "Attributes"
-    )
-
     rows = []
     # for fitted_attr_name, attr_info in fitted_attributes.items():
     for name, value in fitted_attributes.items():
@@ -86,16 +82,9 @@ def _fitted_attr_html_repr(fitted_attributes):
             name,
             fitted_attributes.doc_link,
         )
-
-        if fitted_attr_numpydoc := fitted_attr_map.get(name, None):
-            escaped_lines = (html.escape(line) for line in fitted_attr_numpydoc.desc)
-            fitted_attr_description = (
-                f"{html.escape(fitted_attr_numpydoc.name)}:"
-                f"{html.escape(fitted_attr_numpydoc.type)}<br><br>"
-                f"{'<br>'.join(escaped_lines)}"
-            )
-        else:
-            fitted_attr_description = None
+        fitted_attr_description = _get_docstring(
+            fitted_attributes.estimator_class, "Attributes", name
+        )
 
         if fitted_attributes.doc_link and link and fitted_attr_description:
             # Create clickable parameter name with documentation link

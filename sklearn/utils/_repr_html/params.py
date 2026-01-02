@@ -7,7 +7,7 @@ from collections import UserDict
 
 from sklearn.utils._repr_html._common import (
     _generate_link_to_param_doc,
-    _get_docstring_info,
+    _get_docstring,
 )
 from sklearn.utils._repr_html.base import ReprHTMLMixin
 
@@ -69,19 +69,13 @@ def _params_html_repr(params):
             {param_description}</span>
         </a>
     """
-    param_map = _get_docstring_info(params.estimator_class, "Parameters")
+
     rows = []
     for row in params:
         param = _read_params(row, params[row], params.non_default)
         link = _generate_link_to_param_doc(params.estimator_class, row, params.doc_link)
-        if param_numpydoc := param_map.get(row, None):
-            param_description = (
-                f"{html.escape(param_numpydoc.name)}: "
-                f"{html.escape(param_numpydoc.type)}<br><br>"
-                f"{'<br>'.join(html.escape(line) for line in param_numpydoc.desc)}"
-            )
-        else:
-            param_description = None
+
+        param_description = _get_docstring(params.estimator_class, "Parameters", row)
 
         if params.doc_link and link and param_description:
             # Create clickable parameter name with documentation link

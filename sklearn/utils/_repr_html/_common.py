@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import html
 import inspect
 import re
 from functools import lru_cache
@@ -36,16 +37,23 @@ def _scrape_estimator_docstring(docstring):
     return docscrape.NumpyDocString(docstring)
 
 
-def _get_docstring_info(estimator_class, section_name):
+def _get_docstring(estimator_class, section_name, item):
     estimator_class_docs = inspect.getdoc(estimator_class)
     if estimator_class_docs and (
         structured_docstring := _scrape_estimator_docstring(estimator_class_docs)
     ):
         docstring_map = {
-            param_docstring.name: param_docstring
-            for param_docstring in structured_docstring[section_name]
+            item_docstring.name: item_docstring
+            for item_docstring in structured_docstring[section_name]
         }
     else:
         docstring_map = {}
-
-    return docstring_map
+    if item_numpydoc := docstring_map.get(item, None):
+        item_description = (
+            f"{html.escape(item_numpydoc.name)}: "
+            f"{html.escape(item_numpydoc.type)}<br><br>"
+            f"{'<br>'.join(html.escape(line) for line in item_numpydoc.desc)}"
+        )
+    else:
+        item_description = None
+    return item_description

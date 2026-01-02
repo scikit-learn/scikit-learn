@@ -31,7 +31,7 @@
     background-color: #f6f6f6;
 }
 
-.estimator-table .parameters-table tr:hover {
+.estimator-table .parameters-table tr:hover td {
     background-color: #e0e0e0;
 }
 
