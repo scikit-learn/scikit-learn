@@ -113,8 +113,9 @@ def _params_html_repr(params):
         link = _generate_link_to_param_doc(params.estimator_class, row, params.doc_link)
         if param_numpydoc := param_map.get(row, None):
             param_description = (
-                f"{param_numpydoc.name}: {param_numpydoc.type}<br><br>"
-                f"{'<br>'.join(param_numpydoc.desc)}"
+                f"{html.escape(param_numpydoc.name)}: "
+                f"{html.escape(param_numpydoc.type)}<br><br>"
+                f"{'<br>'.join(html.escape(line) for line in param_numpydoc.desc)}"
             )
         else:
             param_description = None
