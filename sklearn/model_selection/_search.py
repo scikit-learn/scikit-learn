@@ -1360,14 +1360,19 @@ class GridSearchCV(BaseSearchCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    verbose : int
-        Controls the verbosity: the higher, the more messages.
+    verbose : int, default=0
+    Controls the verbosity of the fitting process.
 
-        - >1 : the computation time for each fold and parameter candidate is
-          displayed;
-        - >2 : the score is also displayed;
-        - >3 : the fold and candidate parameter indexes are also displayed
-          together with the starting time of the computation.
+    - 0: no output.
+    - 1: prints a single line describing the number of folds,
+      the number of parameter candidates, and the total number of fits.
+    - 2: prints a line when each cross-validation split finishes,
+      including the computation time for that split.
+    - 3–9: prints the same END messages as `verbose=2`, with additional
+      information such as fold indices and scores.
+    - >=10: additionally prints messages at the start of each fit and
+      displays the indices of the parameter candidates.
+
 
     pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
@@ -1744,14 +1749,19 @@ class RandomizedSearchCV(BaseSearchCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    verbose : int
-        Controls the verbosity: the higher, the more messages.
+    verbose : int, default=0
+        Controls the verbosity of the fitting process.
 
-        - >1 : the computation time for each fold and parameter candidate is
-          displayed;
-        - >2 : the score is also displayed;
-        - >3 : the fold and candidate parameter indexes are also displayed
-          together with the starting time of the computation.
+        - 0: no output.
+        - 1: prints a single line describing the number of folds,
+        the number of parameter candidates, and the total number of fits.
+        - 2: prints a line when each cross-validation split finishes,
+        including the computation time for that split.
+        - 3–9: prints the same END messages as `verbose=2`, with additional
+        information such as fold indices and scores.
+        - >=10: additionally prints messages at the start of each fit and
+        displays the indices of the parameter candidates.
+
 
     pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
