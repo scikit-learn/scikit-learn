@@ -1363,14 +1363,14 @@ class GridSearchCV(BaseSearchCV):
     verbose : int, default=0
         Controls the verbosity of the fitting process.
 
-        - 0: no output.
-        - 1: prints a single line describing the number of folds,
-        the number of parameter candidates, and the total number of fits.
-        - 2: prints a line when each cross-validation split finishes,
-        including the computation time for that split.
-        - 3–9: prints the same END messages as `verbose=2`, with additional
-        information such as fold indices and scores.
-        - >=10: additionally prints messages at the start of each fit and
+        - 0 : no output;
+        - 1 : prints a single line describing the number of folds
+        the number of parameter candidates, and the total number of fits;
+        - 2 : prints a line when each cross-validation split finishes,
+        including the computation time for that split;
+        - 3–9 : prints the same END messages as `verbose=2`, with additional
+        information such as fold indices and scores;
+        - >=10 : additionally prints messages at the start of each fit and
         displays the indices of the parameter candidates.
 
 
@@ -1752,13 +1752,13 @@ class RandomizedSearchCV(BaseSearchCV):
     verbose : int, default=0
         Controls the verbosity of the fitting process.
 
-        - 0: no output.
+        - 0: no output;
         - 1: prints a single line describing the number of folds,
-        the number of parameter candidates, and the total number of fits.
+        the number of parameter candidates, and the total number of fits;
         - 2: prints a line when each cross-validation split finishes,
-        including the computation time for that split.
+        including the computation time for that split;
         - 3–9: prints the same END messages as `verbose=2`, with additional
-        information such as fold indices and scores.
+        information such as fold indices and scores;
         - >=10: additionally prints messages at the start of each fit and
         displays the indices of the parameter candidates.
 
