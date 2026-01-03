@@ -1361,7 +1361,7 @@ class GridSearchCV(BaseSearchCV):
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     verbose : int, default=0
-    Controls the verbosity of the fitting process.
+        Controls the verbosity of the fitting process.
 
         - 0: no output.
         - 1: prints a single line describing the number of folds,
