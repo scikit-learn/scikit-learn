@@ -643,6 +643,12 @@ def enet_path(
             copy=False,
             check_gram=True,
         )
+    else:
+    # Resolve 'auto' precompute when check_input=False
+    # to maintain consistency with check_input=True behavior
+        if precompute == 'auto':
+            precompute = (n_samples > n_features)
+            
     if alphas is None:
         # fit_intercept and sample_weight have already been dealt with in calling
         # methods like ElasticNet.fit.
