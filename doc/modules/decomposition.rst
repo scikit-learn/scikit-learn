@@ -553,38 +553,23 @@ indicates positive values, and white represents zeros.
 
 
 .. |dict_img_pos1| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_010.png
-    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
 .. |dict_img_pos2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_011.png
-    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
 .. |dict_img_pos3| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_012.png
-    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
 .. |dict_img_pos4| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_013.png
-    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
 .. centered:: |dict_img_pos1| |dict_img_pos2|
 .. centered:: |dict_img_pos3| |dict_img_pos4|
-
-
-The following image shows how a dictionary learned from 4x4 pixel image patches
-extracted from part of the image of a raccoon face looks like.
-
-
-.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_image_denoising_001.png
-    :target: ../auto_examples/decomposition/plot_image_denoising.html
-    :align: center
-    :scale: 50%
-
-
-.. rubric:: Examples
-
-* :ref:`sphx_glr_auto_examples_decomposition_plot_image_denoising.py`
 
 
 .. rubric:: References
@@ -630,6 +615,18 @@ does not fit into memory.
    Example: :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
 
 .. currentmodule:: sklearn.decomposition
+
+The following image shows how a dictionary, learned from 4x4 pixel image patches
+extracted from part of the image of a raccoon face, looks like.
+
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_image_denoising_001.png
+    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :align: center
+    :scale: 50%
+
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_decomposition_plot_image_denoising.py`
 
 .. _FA:
 
@@ -996,7 +993,7 @@ Note on notations presented in the graphical model above, which can be found in
 Hoffman et al. (2013):
 
 * The corpus is a collection of :math:`D` documents.
-* A document is a sequence of :math:`N` words.
+* A document :math:`d \in D` is a sequence of :math:`N_d` words.
 * There are :math:`K` topics in the corpus.
 * The boxes represent repeated sampling.
 
@@ -1023,12 +1020,12 @@ structure.
        :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha`
        corresponds to `doc_topic_prior`.
 
-    3. For each word :math:`i` in document :math:`d`:
+    3. For each word :math:`n=1,\cdots,N_d` in document :math:`d`:
 
-       a. Draw the topic assignment :math:`z_{di} \sim \mathrm{Multinomial}
+       a. Draw the topic assignment :math:`z_{dn} \sim \mathrm{Multinomial}
           (\theta_d)`
-       b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}
-          (\beta_{z_{di}})`
+       b. Draw the observed word :math:`w_{dn} \sim \mathrm{Multinomial}
+          (\beta_{z_{dn}})`
 
     For parameter estimation, the posterior distribution is:
 

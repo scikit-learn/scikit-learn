@@ -820,7 +820,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         For an example of connectivity matrix using
         :class:`~sklearn.neighbors.kneighbors_graph`, see
-        :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`.
+        :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`.
 
     compute_full_tree : 'auto' or bool, default='auto'
         Stop early the construction of the tree at ``n_clusters``. This is

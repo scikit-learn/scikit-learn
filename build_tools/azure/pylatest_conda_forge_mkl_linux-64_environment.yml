@@ -20,7 +20,7 @@ dependencies:
   - pip
   - ninja
   - meson-python
-  - pytest-cov
+  - pytest-cov<=6.3.0
   - coverage
   - ccache
   - pytorch
@@ -29,3 +29,4 @@ dependencies:
   - pyarrow
   - array-api-strict
   - scipy-doctest
+  - pytest-playwright

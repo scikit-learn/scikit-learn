@@ -1821,7 +1821,7 @@ class LarsCV(Lars):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             splitter=check_cv(self.cv),
             method_mapping=MethodMapping().add(caller="fit", callee="split"),
         )
@@ -2178,6 +2178,9 @@ class LassoLarsIC(LassoLars):
     LassoLarsIC(criterion='bic')
     >>> print(reg.coef_)
     [ 0.  -1.11]
+
+    For a detailed example of using this class, see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lars_ic.py`.
     """
 
     _parameter_constraints: dict = {

@@ -271,11 +271,18 @@ def test_path_parameters(csc_container):
 
 @pytest.mark.parametrize("Model", [Lasso, ElasticNet, LassoCV, ElasticNetCV])
 @pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("l1_ratio", [0.5, 0])
 @pytest.mark.parametrize("n_samples, n_features", [(24, 6), (6, 24)])
 @pytest.mark.parametrize("with_sample_weight", [True, False])
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_sparse_dense_equality(
-    Model, fit_intercept, n_samples, n_features, with_sample_weight, csc_container
+    Model,
+    fit_intercept,
+    l1_ratio,
+    n_samples,
+    n_features,
+    with_sample_weight,
+    csc_container,
 ):
     X, y = make_regression(
         n_samples=n_samples,
@@ -291,7 +298,12 @@ def test_sparse_dense_equality(
     else:
         sw = None
     Xs = csc_container(X)
-    params = {"fit_intercept": fit_intercept}
+    params = {"fit_intercept": fit_intercept, "tol": 1e-6}
+    if Model != ElasticNet:
+        if l1_ratio == 0:
+            return
+    else:
+        params["l1_ratio"] = l1_ratio
     reg_dense = Model(**params).fit(X, y, sample_weight=sw)
     reg_sparse = Model(**params).fit(Xs, y, sample_weight=sw)
     if fit_intercept:
@@ -306,23 +318,23 @@ def test_sparse_dense_equality(
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_same_output_sparse_dense_lasso_and_enet_cv(csc_container):
     X, y = make_sparse_data(csc_container, n_samples=40, n_features=10)
-    clfs = ElasticNetCV(max_iter=100)
+    clfs = ElasticNetCV(max_iter=100, tol=1e-7)
     clfs.fit(X, y)
-    clfd = ElasticNetCV(max_iter=100)
+    clfd = ElasticNetCV(max_iter=100, tol=1e-7)
     clfd.fit(X.toarray(), y)
-    assert_almost_equal(clfs.alpha_, clfd.alpha_, 7)
-    assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)
-    assert_array_almost_equal(clfs.mse_path_, clfd.mse_path_)
-    assert_array_almost_equal(clfs.alphas_, clfd.alphas_)
+    assert_allclose(clfs.alpha_, clfd.alpha_)
+    assert_allclose(clfs.intercept_, clfd.intercept_)
+    assert_allclose(clfs.mse_path_, clfd.mse_path_)
+    assert_allclose(clfs.alphas_, clfd.alphas_)
 
-    clfs = LassoCV(max_iter=100, cv=4)
+    clfs = LassoCV(max_iter=100, cv=4, tol=1e-8)
     clfs.fit(X, y)
-    clfd = LassoCV(max_iter=100, cv=4)
+    clfd = LassoCV(max_iter=100, cv=4, tol=1e-8)
     clfd.fit(X.toarray(), y)
-    assert_almost_equal(clfs.alpha_, clfd.alpha_, 7)
-    assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)
-    assert_array_almost_equal(clfs.mse_path_, clfd.mse_path_)
-    assert_array_almost_equal(clfs.alphas_, clfd.alphas_)
+    assert_allclose(clfs.alpha_, clfd.alpha_)
+    assert_allclose(clfs.intercept_, clfd.intercept_)
+    assert_allclose(clfs.mse_path_, clfd.mse_path_)
+    assert_allclose(clfs.alphas_, clfd.alphas_)
 
 
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)

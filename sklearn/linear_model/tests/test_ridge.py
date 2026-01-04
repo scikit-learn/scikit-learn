@@ -46,6 +46,7 @@ from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
+    _max_precision_float_dtype,
     yield_namespace_device_dtype_combinations,
     yield_namespaces,
 )
@@ -1058,6 +1059,7 @@ def _test_ridge_cv(sparse_container):
 def test_ridge_gcv_cv_results_not_stored(ridge, make_dataset):
     # Check that `cv_results_` is not stored when store_cv_results is False
     X, y = make_dataset(n_samples=6, random_state=42)
+    ridge = clone(ridge)
     ridge.fit(X, y)
     assert not hasattr(ridge, "cv_results_")
 
@@ -1070,6 +1072,7 @@ def test_ridge_gcv_cv_results_not_stored(ridge, make_dataset):
 def test_ridge_best_score(ridge, make_dataset, cv):
     # check that the best_score_ is store
     X, y = make_dataset(n_samples=6, random_state=42)
+    ridge = clone(ridge)  # Avoid side effects from shared instances
     ridge.set_params(store_cv_results=False, cv=cv)
     ridge.fit(X, y)
     assert hasattr(ridge, "best_score_")
@@ -1233,7 +1236,9 @@ def _test_tolerance(sparse_container):
     assert score >= score2
 
 
-def check_array_api_attributes(name, estimator, array_namespace, device, dtype_name):
+def check_array_api_attributes(
+    name, estimator, array_namespace, device, dtype_name, rtol=None
+):
     xp = _array_api_for_tests(array_namespace, device)
 
     X_iris_np = X_iris.astype(dtype_name)
@@ -1249,21 +1254,23 @@ def check_array_api_attributes(name, estimator, array_namespace, device, dtype_n
     with config_context(array_api_dispatch=True):
         estimator_xp = clone(estimator).fit(X_iris_xp, y_iris_xp)
         coef_xp = estimator_xp.coef_
-        assert coef_xp.shape == (4,)
+        assert coef_xp.shape == coef_np.shape
         assert coef_xp.dtype == X_iris_xp.dtype
 
         assert_allclose(
             _convert_to_numpy(coef_xp, xp=xp),
             coef_np,
+            rtol=rtol,
             atol=_atol_for_type(dtype_name),
         )
         intercept_xp = estimator_xp.intercept_
-        assert intercept_xp.shape == ()
+        assert intercept_xp.shape == intercept_np.shape
         assert intercept_xp.dtype == X_iris_xp.dtype
 
         assert_allclose(
             _convert_to_numpy(intercept_xp, xp=xp),
             intercept_np,
+            rtol=rtol,
             atol=_atol_for_type(dtype_name),
         )
 
@@ -1280,14 +1287,57 @@ def check_array_api_attributes(name, estimator, array_namespace, device, dtype_n
 )
 @pytest.mark.parametrize(
     "estimator",
-    [Ridge(solver="svd")],
+    [
+        Ridge(solver="svd"),
+        RidgeClassifier(solver="svd"),
+        RidgeCV(),
+        RidgeClassifierCV(),
+    ],
     ids=_get_check_estimator_ids,
 )
 def test_ridge_array_api_compliance(
     estimator, check, array_namespace, device, dtype_name
 ):
     name = estimator.__class__.__name__
-    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
+    tols = {}
+    xp = _array_api_for_tests(array_namespace, device)
+    if (
+        "CV" in name
+        and check is check_array_api_attributes
+        and _max_precision_float_dtype(xp, device) == xp.float32
+    ):
+        # RidgeGCV is not very numerically stable with float32. It casts the
+        # input to float64 unless the device and namespace combination does
+        # not allow float64 (specifically torch with mps)
+        tols["rtol"] = 1e-3
+    check(
+        name, estimator, array_namespace, device=device, dtype_name=dtype_name, **tols
+    )
+
+
+@pytest.mark.parametrize(
+    "estimator", [RidgeClassifier(solver="svd"), RidgeClassifierCV()]
+)
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_ridge_classifier_multilabel_array_api(
+    estimator, array_namespace, device_, dtype_name
+):
+    xp = _array_api_for_tests(array_namespace, device_)
+    X, y = make_multilabel_classification(random_state=0)
+    X_np = X.astype(dtype_name)
+    y_np = y.astype(dtype_name)
+    ridge_np = estimator.fit(X_np, y_np)
+    pred_np = ridge_np.predict(X_np)
+    with config_context(array_api_dispatch=True):
+        X_xp, y_xp = xp.asarray(X_np, device=device_), xp.asarray(y_np, device=device_)
+        ridge_xp = estimator.fit(X_xp, y_xp)
+        pred_xp = ridge_xp.predict(X_xp)
+        assert pred_xp.shape == pred_np.shape == y.shape
+        assert_allclose(_convert_to_numpy(pred_xp, xp=xp), pred_np)
 
 
 @pytest.mark.parametrize(
@@ -2373,6 +2423,7 @@ def test_set_score_request_with_default_scoring(metaestimator, make_dataset):
     `RidgeClassifierCV.fit()` when using the default scoring and no
     UnsetMetadataPassedError is raised. Regression test for the fix in PR #29634."""
     X, y = make_dataset(n_samples=100, n_features=5, random_state=42)
+    metaestimator = clone(metaestimator)  # Avoid side effects from shared instances
     metaestimator.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
 

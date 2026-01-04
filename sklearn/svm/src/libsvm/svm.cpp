@@ -117,7 +117,7 @@ static void info(const char *fmt,...)
 	char buf[BUFSIZ];
 	va_list ap;
 	va_start(ap,fmt);
-	vsprintf(buf,fmt,ap);
+	vsnprintf(buf,sizeof buf,fmt,ap);
 	va_end(ap);
 	(*svm_print_string)(buf);
 }

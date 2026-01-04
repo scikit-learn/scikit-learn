@@ -109,6 +109,10 @@ def _retry_on_network_error(
                     warn(
                         f"A network error occurred while downloading {url}. Retrying..."
                     )
+                    # Avoid a ResourceWarning on Python 3.14 and later.
+                    if isinstance(e, HTTPError):
+                        e.close()
+
                     retry_counter -= 1
                     time.sleep(delay)
 
@@ -888,7 +892,7 @@ def fetch_openml(
 
     read_csv_kwargs : dict, default=None
         Keyword arguments passed to :func:`pandas.read_csv` when loading the data
-        from a ARFF file and using the pandas parser. It can allow to
+        from an ARFF file and using the pandas parser. It can allow to
         overwrite some default parameters.
 
         .. versionadded:: 1.3

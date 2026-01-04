@@ -8,10 +8,12 @@ from enum import Enum
 from types import ModuleType
 from typing import TYPE_CHECKING, ClassVar, cast
 
+from ._utils import _compat
 from ._utils._compat import (
     array_namespace,
     is_dask_array,
     is_jax_array,
+    is_torch_array,
     is_writeable_array,
 )
 from ._utils._helpers import meta_namespace
@@ -35,7 +37,7 @@ class _AtOp(Enum):
     MAX = "max"
 
     # @override from Python 3.12
-    def __str__(self) -> str:  # type: ignore[explicit-override]  # pyright: ignore[reportImplicitOverride]
+    def __str__(self) -> str:  # pyright: ignore[reportImplicitOverride]
         """
         Return string representation (useful for pytest logs).
 
@@ -298,7 +300,7 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
             and idx.dtype == xp.bool
             and idx.shape == x.shape
         ):
-            y_xp = xp.asarray(y, dtype=x.dtype)
+            y_xp = xp.asarray(y, dtype=x.dtype, device=_compat.device(x))
             if y_xp.ndim == 0:
                 if out_of_place_op:  # add(), subtract(), ...
                     # suppress inf warnings on Dask
@@ -344,6 +346,13 @@ class at:  # pylint: disable=invalid-name  # numpydoc ignore=PR02
             msg = f"Can't update read-only array {x}"
             raise ValueError(msg)
 
+        # Work around bug in PyTorch where __setitem__ doesn't
+        # always support mismatched dtypes
+        # https://github.com/pytorch/pytorch/issues/150017
+        if is_torch_array(y):
+            y = xp.astype(y, x.dtype, copy=False)
+
+        # Backends without boolean indexing (other than JAX) crash here
         if in_place_op:  # add(), subtract(), ...
             x[idx] = in_place_op(x[idx], y)
         else:  # set()

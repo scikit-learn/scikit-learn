@@ -381,11 +381,10 @@ The parameter `deep` controls whether or not the parameters of the
     subestimator__dual -> False
     subestimator__fit_intercept -> True
     subestimator__intercept_scaling -> 1
-    subestimator__l1_ratio -> None
+    subestimator__l1_ratio -> 0.0
     subestimator__max_iter -> 100
-    subestimator__multi_class -> deprecated
     subestimator__n_jobs -> None
-    subestimator__penalty -> l2
+    subestimator__penalty -> deprecated
     subestimator__random_state -> None
     subestimator__solver -> lbfgs
     subestimator__tol -> 0.0001
@@ -524,7 +523,7 @@ You can create a new subclass of :class:`~sklearn.utils.Tags` if you wish to add
 tags to the existing set. Note that all attributes that you add in a child class need
 to have a default value. It can be of the form::
 
-    from dataclasses import dataclass, asdict
+    from dataclasses import dataclass, fields
 
     @dataclass
     class MyTags(Tags):

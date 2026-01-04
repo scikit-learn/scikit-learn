@@ -22,13 +22,22 @@ if [[ "$BUILD_REASON" == "Schedule" ]]; then
     export SKLEARN_RUN_FLOAT32_TESTS=1
 fi
 
-COMMIT_MESSAGE=$(python build_tools/azure/get_commit_message.py --only-show-message)
+# In GitHub Action (especially in `.github/workflows/unit-tests.yml` which
+# calls this script), the environment variable `COMMIT_MESSAGE` is already set
+# to the latest commit message.
+if [[ -z "${COMMIT_MESSAGE+x}" ]]; then
+    # If 'COMMIT_MESSAGE' is unset we are in Azure, and we retrieve the commit
+    # message via the get_commit_message.py script which uses Azure-specific
+    # variables, for example 'BUILD_SOURCEVERSIONMESSAGE'.
+    COMMIT_MESSAGE=$(python build_tools/azure/get_commit_message.py --only-show-message)
+fi
 
 if [[ "$COMMIT_MESSAGE" =~ \[float32\] ]]; then
     echo "float32 tests will be run due to commit message"
     export SKLEARN_RUN_FLOAT32_TESTS=1
 fi
 
+CHECKOUT_FOLDER=$PWD
 mkdir -p $TEST_DIR
 cp pyproject.toml $TEST_DIR
 cd $TEST_DIR
@@ -38,28 +47,31 @@ python -c "import joblib; print(f'Number of cores (physical): \
 python -c "import sklearn; sklearn.show_versions()"
 
 show_installed_libraries
+show_cpu_info
 
+NUM_CORES=$(python -c "import joblib; print(joblib.cpu_count())")
 TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML -o junit_family=legacy"
 
 if [[ "$COVERAGE" == "true" ]]; then
-    # Note: --cov-report= is used to disable to long text output report in the
+    # Note: --cov-report= is used to disable too long text output report in the
     # CI logs. The coverage data is consolidated by codecov to get an online
     # web report across all the platforms so there is no need for this text
     # report that otherwise hides the test failures and forces long scrolls in
     # the CI logs.
-    export COVERAGE_PROCESS_START="$BUILD_SOURCESDIRECTORY/.coveragerc"
+    export COVERAGE_PROCESS_START="$CHECKOUT_FOLDER/.coveragerc"
 
     # Use sys.monitoring to make coverage faster for Python >= 3.12
     HAS_SYSMON=$(python -c 'import sys; print(sys.version_info >= (3, 12))')
     if [[ "$HAS_SYSMON" == "True" ]]; then
         export COVERAGE_CORE=sysmon
     fi
-    TEST_CMD="$TEST_CMD --cov-config='$COVERAGE_PROCESS_START' --cov sklearn --cov-report="
+    TEST_CMD="$TEST_CMD --cov-config='$COVERAGE_PROCESS_START' --cov=sklearn --cov-report="
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
-    XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count(only_physical_cores=True))")
-    TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"
+    if [[ "$NUM_LOGICAL_CORES" != 1 ]]; then
+        TEST_CMD="$TEST_CMD -n$NUM_CORES"
+    fi
 fi
 
 if [[ -n "$SELECTED_TESTS" ]]; then
@@ -69,18 +81,9 @@ if [[ -n "$SELECTED_TESTS" ]]; then
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
 
-if which lscpu ; then
-    lscpu
-else
-    echo "Could not inspect CPU architecture."
-fi
-
 if [[ "$DISTRIB" == "conda-free-threaded" ]]; then
-    # Make sure that GIL is disabled even when importing extensions that have
-    # not declared free-threaded compatibility. This can be removed when numpy,
-    # scipy and scikit-learn extensions all have declared free-threaded
-    # compatibility.
-    export PYTHON_GIL=0
+    # Use pytest-run-parallel
+    TEST_CMD="$TEST_CMD --parallel-threads $NUM_CORES --iterations 1"
 fi
 
 TEST_CMD="$TEST_CMD --pyargs sklearn"

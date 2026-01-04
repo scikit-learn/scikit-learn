@@ -16,6 +16,7 @@ from sklearn._config import get_config
 from sklearn.externals import array_api_compat
 from sklearn.externals import array_api_extra as xpx
 from sklearn.externals.array_api_compat import numpy as np_compat
+from sklearn.utils._dataframe import is_df_or_series
 from sklearn.utils.fixes import parse_version
 
 # TODO: complete __all__
@@ -153,8 +154,7 @@ def _check_array_api_dispatch(array_api_dispatch):
 def _single_array_device(array):
     """Hardware device where the array data resides on."""
     if (
-        isinstance(array, (numpy.ndarray, numpy.generic))
-        or not hasattr(array, "device")
+        not hasattr(array, "device")
         # When array API dispatch is disabled, we expect the scikit-learn code
         # to use np.asarray so that the resulting NumPy array will implicitly use the
         # CPU. In this case, scikit-learn should stay as device neutral as possible,
@@ -246,9 +246,33 @@ def _union1d(a, b, xp):
 def supported_float_dtypes(xp, device=None):
     """Supported floating point types for the namespace.
 
-    Note: float16 is not officially part of the Array API spec at the
+    Parameters
+    ----------
+    xp : module
+        Array namespace to inspect.
+
+    device : str or device instance from xp, default=None
+        Device to use for dtype selection. If ``None``, then a default device
+        is assumed.
+
+    Returns
+    -------
+    supported_dtypes : tuple
+        Tuple of real floating data types supported by the provided array namespace,
+        ordered from the highest precision to lowest.
+
+    See Also
+    --------
+    max_precision_float_dtype : Maximum float dtype for a namespace/device pair.
+
+    Notes
+    -----
+    `float16` is not officially part of the Array API spec at the
     time of writing but scikit-learn estimators and functions can choose
     to accept it when xp.float16 is defined.
+
+    Additionally, some devices available within a namespace may not support
+    all floating-point types that the namespace provides.
 
     https://data-apis.org/array-api/latest/API_specification/data_types.html
     """
@@ -264,35 +288,6 @@ def supported_float_dtypes(xp, device=None):
         valid_float_dtypes.append(xp.float16)
 
     return tuple(valid_float_dtypes)
-
-
-def ensure_common_namespace_device(reference, *arrays):
-    """Ensure that all arrays use the same namespace and device as reference.
-
-    If necessary the arrays are moved to the same namespace and device as
-    the reference array.
-
-    Parameters
-    ----------
-    reference : array
-        Reference array.
-
-    *arrays : array
-        Arrays to check.
-
-    Returns
-    -------
-    arrays : list
-        Arrays with the same namespace and device as reference.
-    """
-    xp, is_array_api = get_namespace(reference)
-
-    if is_array_api:
-        device_ = device(reference)
-        # Move arrays to the same namespace and device as the reference array.
-        return [xp.asarray(a, device=device_) for a in arrays]
-    else:
-        return arrays
 
 
 def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
@@ -325,6 +320,8 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
         if isinstance(array, remove_types):
             continue
         if sp.issparse(array):
+            continue
+        if is_df_or_series(array):
             continue
         filtered_arrays.append(array)
 
@@ -466,6 +463,102 @@ def get_namespace_and_device(
         return xp, False, arrays_device
 
 
+def move_to(*arrays, xp, device):
+    """Move all arrays to `xp` and `device`.
+
+    Each array will be moved to the reference namespace and device if
+    it is not already using it. Otherwise the array is left unchanged.
+
+    `array` may contain `None` entries, these are left unchanged.
+
+    Sparse arrays are accepted (as pass through) if the reference namespace is
+    NumPy, in which case they are returned unchanged. Otherwise a `TypeError`
+    is raised.
+
+    Parameters
+    ----------
+    *arrays : iterable of arrays
+        Arrays to (potentially) move.
+
+    xp : namespace
+        Array API namespace to move arrays to.
+
+    device : device
+        Array API device to move arrays to.
+
+    Returns
+    -------
+    arrays : tuple or array
+        Tuple of arrays with the same namespace and device as reference. Single array
+        returned if only one `arrays` input.
+    """
+    sparse_mask = [sp.issparse(array) for array in arrays]
+    none_mask = [array is None for array in arrays]
+    if any(sparse_mask) and not _is_numpy_namespace(xp):
+        raise TypeError(
+            "Sparse arrays are only accepted (and passed through) when the target "
+            "namespace is Numpy"
+        )
+
+    converted_arrays = []
+
+    for array, is_sparse, is_none in zip(arrays, sparse_mask, none_mask):
+        if is_none:
+            converted_arrays.append(None)
+        elif is_sparse:
+            converted_arrays.append(array)
+        else:
+            xp_array, _, device_array = get_namespace_and_device(array)
+            if xp == xp_array and device == device_array:
+                converted_arrays.append(array)
+            else:
+                try:
+                    # The dlpack protocol is the future proof and library agnostic
+                    # method to transfer arrays across namespace and device boundaries
+                    # hence this method is attempted first and going through NumPy is
+                    # only used as fallback in case of failure.
+                    # Note: copy=None is the default since array-api 2023.12. Namespace
+                    # libraries should only trigger a copy automatically if needed.
+                    array_converted = xp.from_dlpack(array, device=device)
+                    # `AttributeError` occurs when `__dlpack__` and `__dlpack_device__`
+                    # methods are not present on the input array
+                    # `TypeError` and `NotImplementedError` for packages that do not
+                    # yet support dlpack 1.0
+                    # (i.e. the `device`/`copy` kwargs, e.g., torch <= 2.8.0)
+                    # See https://github.com/data-apis/array-api/pull/741 for
+                    # more details about the introduction of the `copy` and `device`
+                    # kwargs in the from_dlpack method and their expected
+                    # meaning by namespaces implementing the array API spec.
+                    # TODO: try removing this once DLPack v1 more widely supported
+                    # TODO: ValueError should not be needed but is in practice:
+                    # https://github.com/numpy/numpy/issues/30341
+                except (
+                    AttributeError,
+                    TypeError,
+                    NotImplementedError,
+                    BufferError,
+                    ValueError,
+                ):
+                    # Converting to numpy is tricky, handle this via dedicated function
+                    if _is_numpy_namespace(xp):
+                        array_converted = _convert_to_numpy(array, xp_array)
+                    # Convert from numpy, all array libraries can do this
+                    elif _is_numpy_namespace(xp_array):
+                        array_converted = xp.asarray(array, device=device)
+                    else:
+                        # There is no generic way to convert from namespace A to B
+                        # So we first convert from A to numpy and then from numpy to B
+                        # The way to avoid this round trip is to lobby for DLpack
+                        # support in libraries A and B
+                        array_np = _convert_to_numpy(array, xp_array)
+                        array_converted = xp.asarray(array_np, device=device)
+                converted_arrays.append(array_converted)
+
+    return (
+        converted_arrays[0] if len(converted_arrays) == 1 else tuple(converted_arrays)
+    )
+
+
 def _expit(X, xp=None):
     xp, _ = get_namespace(X, xp=xp)
     if _is_numpy_namespace(xp):
@@ -601,7 +694,7 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
     https://numpy.org/doc/stable/reference/generated/numpy.average.html but
     only for the common cases needed in scikit-learn.
     """
-    xp, _, device_ = get_namespace_and_device(a, weights)
+    xp, _, device_ = get_namespace_and_device(a, weights, xp=xp)
 
     if _is_numpy_namespace(xp):
         if normalize:
@@ -665,7 +758,7 @@ def _median(x, axis=None, keepdims=False, xp=None):
     # in most array libraries, and all that we support (as of May 2025).
     # TODO: consider simplifying this code to use scipy instead once the oldest
     # supported SciPy version provides `scipy.stats.quantile` with native array API
-    # support (likely scipy 1.6 at the time of writing). Proper benchmarking of
+    # support (likely scipy 1.16 at the time of writing). Proper benchmarking of
     # either option with popular array namespaces is required to evaluate the
     # impact of this choice.
     xp, _, device = get_namespace_and_device(x, xp=xp)
@@ -746,6 +839,19 @@ def _nanmean(X, axis=None, xp=None):
         )
         count = xp.sum(xp.astype(xp.logical_not(mask), X.dtype), axis=axis)
         return total / count
+
+
+def _nansum(X, axis=None, xp=None, keepdims=False, dtype=None):
+    # TODO: refactor once nan-aware reductions are standardized:
+    # https://github.com/data-apis/array-api/issues/621
+    xp, _, X_device = get_namespace_and_device(X, xp=xp)
+
+    if _is_numpy_namespace(xp):
+        return xp.asarray(numpy.nansum(X, axis=axis, keepdims=keepdims, dtype=dtype))
+
+    mask = xp.isnan(X)
+    masked_arr = xp.where(mask, xp.asarray(0, device=X_device, dtype=X.dtype), X)
+    return xp.sum(masked_arr, axis=axis, keepdims=keepdims, dtype=dtype)
 
 
 def _asarray_with_order(
@@ -840,7 +946,7 @@ def _atol_for_type(dtype_or_dtype_name):
         # expect the same floating precision level as NumPy's default floating
         # point dtype.
         dtype_or_dtype_name = numpy.float64
-    return numpy.finfo(dtype_or_dtype_name).eps * 100
+    return numpy.finfo(dtype_or_dtype_name).eps * 1000
 
 
 def indexing_dtype(xp):
@@ -865,21 +971,6 @@ def indexing_dtype(xp):
     # TODO: once sufficiently adopted, we might want to instead rely on the
     # newer inspection API: https://github.com/data-apis/array-api/issues/640
     return xp.asarray(0).dtype
-
-
-def _searchsorted(a, v, *, side="left", sorter=None, xp=None):
-    # Temporary workaround needed as long as searchsorted is not widely
-    # adopted by implementers of the Array API spec. This is a quite
-    # recent addition to the spec:
-    # https://data-apis.org/array-api/latest/API_specification/generated/array_api.searchsorted.html
-    xp, _ = get_namespace(a, v, xp=xp)
-    if hasattr(xp, "searchsorted"):
-        return xp.searchsorted(a, v, side=side, sorter=sorter)
-
-    a_np = _convert_to_numpy(a, xp=xp)
-    v_np = _convert_to_numpy(v, xp=xp)
-    indices = numpy.searchsorted(a_np, v_np, side=side, sorter=sorter)
-    return xp.asarray(indices, device=device(a))
 
 
 def _isin(element, test_elements, xp, assume_unique=False, invert=False):
@@ -1013,14 +1104,6 @@ def _bincount(array, weights=None, minlength=None, xp=None):
     return xp.asarray(bin_out, device=device(array))
 
 
-def _tolist(array, xp=None):
-    xp, _ = get_namespace(array, xp=xp)
-    if _is_numpy_namespace(xp):
-        return array.tolist()
-    array_np = _convert_to_numpy(array, xp=xp)
-    return [element.item() for element in array_np]
-
-
 def _logsumexp(array, axis=None, xp=None):
     # TODO replace by scipy.special.logsumexp when
     # https://github.com/scipy/scipy/pull/22683 is part of a release.
@@ -1068,3 +1151,15 @@ def _linalg_solve(cov_chol, eye_matrix, xp):
         return scipy.linalg.solve_triangular(cov_chol, eye_matrix, lower=True)
     else:
         return xp.linalg.solve(cov_chol, eye_matrix)
+
+
+def _half_multinomial_loss(y, pred, sample_weight=None, xp=None):
+    """A version of the multinomial loss that is compatible with the array API"""
+    xp, _, device_ = get_namespace_and_device(y, pred, sample_weight)
+    log_sum_exp = _logsumexp(pred, axis=1, xp=xp)
+    y = xp.asarray(y, dtype=xp.int64, device=device_)
+    class_margins = xp.arange(y.shape[0], device=device_) * pred.shape[1]
+    label_predictions = xp.take(_ravel(pred), y + class_margins)
+    return float(
+        _average(log_sum_exp - label_predictions, weights=sample_weight, xp=xp)
+    )

@@ -567,7 +567,7 @@ def test_dtype_preprocess_data(rescale_with_sw, fit_intercept, global_random_see
     n_features = 2
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
-    sw = np.abs(rng.rand(n_samples)) + 1
+    sw = rng.rand(n_samples) + 1
 
     X_32 = np.asarray(X, dtype=np.float32)
     y_32 = np.asarray(y, dtype=np.float32)

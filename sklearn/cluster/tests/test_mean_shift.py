@@ -78,6 +78,9 @@ def test_mean_shift(
     assert cluster_centers.dtype == global_dtype
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_parallel(global_dtype, global_random_seed):
     centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
     X, _ = make_blobs(

@@ -19,6 +19,7 @@ from sklearn.utils.sparsefuncs import (
     inplace_swap_row,
     mean_variance_axis,
     min_max_axis,
+    sparse_matmul_to_dense,
 )
 from sklearn.utils.sparsefuncs_fast import (
     assign_rows_csr,
@@ -996,3 +997,58 @@ def test_implit_center_rmatvec(global_random_seed, centered_matrices):
     y = rng.standard_normal(X_dense_centered.shape[0])
     assert_allclose(X_dense_centered.T @ y, X_sparse_centered.rmatvec(y))
     assert_allclose(X_dense_centered.T @ y, X_sparse_centered.T @ y)
+
+
+@pytest.mark.parametrize(
+    ["A", "B", "out", "msg"],
+    [
+        (sp.eye(3, format="csr"), sp.eye(2, format="csr"), None, "Shapes must fulfil"),
+        (sp.eye(2, format="csr"), sp.eye(2, format="csr"), np.eye(3), "Shape of out"),
+        (sp.eye(2, format="coo"), sp.eye(2, format="csr"), None, "Input 'A' must"),
+        (sp.eye(2, format="csr"), sp.eye(2, format="coo"), None, "Input 'B' must"),
+        (
+            sp.eye(2, format="csr", dtype=np.int32),
+            sp.eye(2, format="csr"),
+            None,
+            "Dtype of A and B",
+        ),
+        (
+            sp.eye(2, format="csr", dtype=np.float32),
+            sp.eye(2, format="csr", dtype=np.float64),
+            None,
+            "Dtype of A and B",
+        ),
+    ],
+)
+def test_sparse_matmul_to_dense_raises(A, B, out, msg):
+    """Test that sparse_matmul_to_dense raises when it should."""
+    with pytest.raises(ValueError, match=msg):
+        sparse_matmul_to_dense(A, B, out=out)
+
+
+@pytest.mark.parametrize("out_is_None", [False, True])
+@pytest.mark.parametrize("a_container", CSC_CONTAINERS + CSR_CONTAINERS)
+@pytest.mark.parametrize("b_container", CSC_CONTAINERS + CSR_CONTAINERS)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_sparse_matmul_to_dense(
+    global_random_seed, out_is_None, a_container, b_container, dtype
+):
+    """Test that sparse_matmul_to_dense computes correctly."""
+    rng = np.random.default_rng(global_random_seed)
+    n1, n2, n3 = 10, 19, 13
+    a_dense = rng.standard_normal((n1, n2)).astype(dtype)
+    b_dense = rng.standard_normal((n2, n3)).astype(dtype)
+    a_dense.flat[rng.choice([False, True], size=n1 * n2, p=[0.5, 0.5])] = 0
+    b_dense.flat[rng.choice([False, True], size=n2 * n3, p=[0.5, 0.5])] = 0
+    a = a_container(a_dense)
+    b = b_container(b_dense)
+    if out_is_None:
+        out = None
+    else:
+        out = np.empty((n1, n3), dtype=dtype)
+
+    result = sparse_matmul_to_dense(a, b, out=out)
+    # Use atol to account for the wide range of values in the computed matrix.
+    assert_allclose(result, a_dense @ b_dense, atol=1e-7)
+    if not out_is_None:
+        assert_allclose(out, result, atol=1e-7)

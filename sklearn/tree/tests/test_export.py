@@ -373,6 +373,11 @@ def test_graphviz_errors():
     with pytest.raises(ValueError, match=message):
         export_graphviz(clf, None, feature_names=["a", "b", "c"])
 
+    # Check error when feature_names contains non-string elements
+    message = "All feature names must be strings."
+    with pytest.raises(ValueError, match=message):
+        export_graphviz(clf, None, feature_names=["a", 1])
+
     # Check error when argument is not an estimator
     message = "is not an estimator instance"
     with pytest.raises(TypeError, match=message):

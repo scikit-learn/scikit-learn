@@ -318,18 +318,54 @@ the lower half of those faces.
 Complexity
 ==========
 
-In general, the run time cost to construct a balanced binary tree is
-:math:`O(n_{samples}n_{features}\log(n_{samples}))` and query time
-:math:`O(\log(n_{samples}))`.  Although the tree construction algorithm attempts
-to generate balanced trees, they will not always be balanced.  Assuming that the
-subtrees remain approximately balanced, the cost at each node consists of
-searching through :math:`O(n_{features})` to find the feature that offers the
-largest reduction in the impurity criterion, e.g. log loss (which is equivalent to an
-information gain). This has a cost of
-:math:`O(n_{features}n_{samples}\log(n_{samples}))` at each node, leading to a
-total cost over the entire trees (by summing the cost at each node) of
-:math:`O(n_{features}n_{samples}^{2}\log(n_{samples}))`.
+The following table shows the worst-case complexity estimates for a balanced
+binary tree:
 
++----------+----------------------------------------------------------------------+----------------------------------------+
+| Splitter | Total training cost                                                  | Total inference cost                   |
++==========+======================================================================+========================================+
+| "best"   | :math:`\mathcal{O}(n_{features} \, n^2_{samples} \log(n_{samples}))` | :math:`\mathcal{O}(\log(n_{samples}))` |
++----------+----------------------------------------------------------------------+----------------------------------------+
+| "random" | :math:`\mathcal{O}(n_{features} \, n^2_{samples})`                   | :math:`\mathcal{O}(\log(n_{samples}))` |
++----------+----------------------------------------------------------------------+----------------------------------------+
+
+In general, the training cost to construct a balanced binary tree **at each
+node** is
+
+.. math::
+
+    \mathcal{O}(n_{features}n_{samples}\log (n_{samples})) + \mathcal{O}(n_{features}n_{samples})
+
+The first term is the cost of sorting :math:`n_{samples}` repeated for
+:math:`n_{features}`. The second term is the linear scan over candidate split
+points to find the feature that offers the largest reduction in the impurity
+criterion. The latter is sub-leading for the greedy splitter strategy "best",
+and is therefore typically discarded.
+
+Regardless of the splitting strategy, after summing the cost over **all internal
+nodes**, the total complexity scales linearly with
+:math:`n_{nodes}=n_{leaves}-1`, which is :math:`\mathcal{O}(n_{samples})` in the
+worst-case complexity, that is, when the tree is grown until each sample ends up
+in its own leaf.
+
+Many implementations such as scikit-learn use efficient caching tricks to keep
+track of the general order of indices at each node such that the features do not
+need to be re-sorted at each node; hence, the time complexity of these
+implementations is just
+:math:`\mathcal{O}(n_{features}n_{samples}\log(n_{samples}))` [1]_.
+
+Inference cost is independent of the splitter strategy. It depends only on the
+tree depth, :math:`\mathcal{O}(\text{depth})`. In an approximately balanced
+binary tree, each split halves the data, and then the number of such halvings
+grows with the depth as powers of two. If this process continues until each
+sample is isolated in its own leaf, the resulting depth is
+:math:`\mathcal{O}(\log(n_{samples}))`.
+
+.. rubric:: References
+
+.. [1] S. Raschka,  `Stat 451: Machine learning lecture notes.
+  <https://sebastianraschka.com/pdf/lecture-notes/stat451fs20/06-trees__notes.pdf>`_
+  University of Wisconsin-Madison (2020).
 
 Tips on practical use
 =====================
@@ -472,9 +508,33 @@ Select the parameters that minimises the impurity
 
     \theta^* = \operatorname{argmin}_\theta  G(Q_m, \theta)
 
-Recurse for subsets :math:`Q_m^{left}(\theta^*)` and
-:math:`Q_m^{right}(\theta^*)` until the maximum allowable depth is reached,
-:math:`n_m < \min_{samples}` or :math:`n_m = 1`.
+The strategy to choose the split at each node is controlled by the `splitter`
+parameter:
+
+* With the **best splitter** (default, ``splitter='best'``), :math:`\theta^*` is
+  found by performing a **greedy exhaustive search** over all available features
+  and all possible thresholds :math:`t_m` (i.e. midpoints between sorted,
+  distinct feature values), selecting the pair that exactly minimizes
+  :math:`G(Q_m, \theta)`.
+
+* With the **random splitter** (``splitter='random'``), :math:`\theta^*` is
+  found by sampling a **single random candidate threshold** for each available
+  feature. This performs a stochastic approximation of the greedy search,
+  effectively reducing computation time (see :ref:`tree_complexity`).
+
+After choosing the optimal split :math:`\theta^*` at node :math:`m`, the same
+splitting procedure is then applied recursively to each partition
+:math:`Q_m^{left}(\theta^*)` and :math:`Q_m^{right}(\theta^*)` until a stopping
+condition is reached, such as:
+
+* the maximum allowable depth is reached (`max_depth`);
+
+* :math:`n_m` is smaller than `min_samples_split`;
+
+* the impurity decrease for this split is smaller than `min_impurity_decrease`.
+
+See the respective estimator docstring for other stopping conditions.
+
 
 Classification criteria
 -----------------------
@@ -560,9 +620,9 @@ Mean Poisson deviance:
 
 Setting `criterion="poisson"` might be a good choice if your target is a count
 or a frequency (count per some unit). In any case, :math:`y >= 0` is a
-necessary condition to use this criterion. Note that it fits much slower than
-the MSE criterion. For performance reasons the actual implementation minimizes
-the half mean poisson deviance, i.e. the mean poisson deviance divided by 2.
+necessary condition to use this criterion. For performance reasons the actual
+implementation minimizes the half mean poisson deviance, i.e. the mean poisson
+deviance divided by 2.
 
 Mean Absolute Error:
 
@@ -572,7 +632,7 @@ Mean Absolute Error:
 
     H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} |y - median(y)_m|
 
-Note that it fits much slower than the MSE criterion.
+Note that it is 3–6× slower to fit than the MSE criterion as of version 1.8.
 
 .. _tree_missing_value_support:
 
@@ -623,7 +683,7 @@ Decisions are made as follows:
     >>> X = np.array([np.nan, -1, np.nan, 1]).reshape(-1, 1)
     >>> y = [0, 0, 1, 1]
 
-    >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
+    >>> tree = DecisionTreeClassifier(random_state=0, max_depth=1).fit(X, y)
 
     >>> X_test = np.array([np.nan]).reshape(-1, 1)
     >>> tree.predict(X_test)

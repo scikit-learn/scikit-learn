@@ -100,7 +100,7 @@ def _affinity_propagation(
         R += tmp
 
         # tmp = Rp; compute availabilities
-        np.maximum(R, 0, tmp)
+        np.maximum(R, 0, out=tmp)
         tmp.flat[:: n_samples + 1] = R.flat[:: n_samples + 1]
 
         # tmp = -Anew
@@ -263,7 +263,7 @@ def affinity_propagation(
     You may also check out,
     :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py`
 
-    When the algorithm does not converge, it will still return a arrays of
+    When the algorithm does not converge, it will still return an array of
     ``cluster_center_indices`` and labels if there are any exemplars/clusters,
     however they may be degenerate and should be used with caution.
 
@@ -401,7 +401,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     The algorithmic complexity of affinity propagation is quadratic
     in the number of points.
 
-    When the algorithm does not converge, it will still return a arrays of
+    When the algorithm does not converge, it will still return an array of
     ``cluster_center_indices`` and labels if there are any exemplars/clusters,
     however they may be degenerate and should be used with caution.
 

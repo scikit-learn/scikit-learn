@@ -3,6 +3,7 @@ import warnings
 import numpy as np
 import pytest
 
+from sklearn.base import clone
 from sklearn.datasets import (
     load_iris,
     make_classification,
@@ -237,7 +238,7 @@ def test_get_response_values_binary_classifier_predict_proba(
 def test_get_response_error(estimator, X, y, err_msg, params):
     """Check that we raise the proper error messages in _get_response_values_binary."""
 
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)  # clone to make test execution thread-safe
     with pytest.raises(ValueError, match=err_msg):
         _get_response_values_binary(estimator, X, **params)
 
@@ -310,6 +311,7 @@ def test_get_response_values_multiclass(estimator, response_method):
     """Check that we can call `_get_response_values` with a multiclass estimator.
     It should return the predictions untouched.
     """
+    estimator = clone(estimator)
     estimator.fit(X, y)
     predictions, pos_label = _get_response_values(
         estimator, X, response_method=response_method
@@ -392,3 +394,55 @@ def test_response_values_type_of_target_on_classes_no_warning():
         warnings.simplefilter("error", UserWarning)
 
         _get_response_values(clf, X, response_method="predict_proba")
+
+
+@pytest.mark.parametrize(
+    "estimator, response_method, target_type, expected_shape",
+    [
+        (LogisticRegression(), "predict", "binary", (10,)),
+        (LogisticRegression(), "predict_proba", "binary", (10,)),
+        (LogisticRegression(), "decision_function", "binary", (10,)),
+        (LogisticRegression(), "predict", "multiclass", (10,)),
+        (LogisticRegression(), "predict_proba", "multiclass", (10, 4)),
+        (LogisticRegression(), "decision_function", "multiclass", (10, 4)),
+        (ClassifierChain(LogisticRegression()), "predict", "multilabel", (10, 2)),
+        (ClassifierChain(LogisticRegression()), "predict_proba", "multilabel", (10, 2)),
+        (
+            ClassifierChain(LogisticRegression()),
+            "decision_function",
+            "multilabel",
+            (10, 2),
+        ),
+        (IsolationForest(), "predict", "binary", (10,)),
+        (IsolationForest(), "predict", "multiclass", (10,)),
+        (DecisionTreeRegressor(), "predict", "binary", (10,)),
+        (DecisionTreeRegressor(), "predict", "multiclass", (10,)),
+    ],
+)
+def test_response_values_output_shape_(
+    estimator, response_method, target_type, expected_shape
+):
+    """
+    Check that output shape corresponds to docstring description
+
+    - for binary classification, it is a 1d array of shape `(n_samples,)`;
+    - for multiclass classification
+        - with response_method="predict", it is a 1d array of shape `(n_samples,)`;
+        - otherwise, it is a 2d array of shape `(n_samples, n_classes)`;
+    - for multilabel classification, it is a 2d array of shape `(n_samples, n_outputs)`;
+    - for outlier detection, it is a 1d array of shape `(n_samples,)`;
+    - for regression, it is a 1d array of shape `(n_samples,)`.
+    """
+    X = np.random.RandomState(0).randn(10, 2)
+    if target_type == "binary":
+        y = np.array([0, 1] * 5)
+    elif target_type == "multiclass":
+        y = [0, 1, 2, 3, 0, 1, 2, 3, 3, 0]
+    else:  # multilabel
+        y = np.array([[0, 1], [1, 0]] * 5)
+
+    clf = estimator.fit(X, y)
+
+    y_pred, _ = _get_response_values(clf, X, response_method=response_method)
+
+    assert y_pred.shape == expected_shape
