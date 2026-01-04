@@ -1876,14 +1876,14 @@ def test_linear_model_cv_alphas(Estimator):
         clf.fit(X, y[:, 0])
     assert len(clf.alphas_) == 100
 
+
 def test_enet_path_check_input_false_with_auto_precompute():
     """Test enet_path with check_input=False and precompute='auto'.
 
     Non-regression test for issue where precompute='auto' was not
     resolved when check_input=False, causing ValueError.
     """
-    X, y = make_regression(n_samples=100, n_features=5, n_informative=2,
-                          random_state=0)
+    X, y = make_regression(n_samples=100, n_features=5, n_informative=2, random_state=0)
     X = np.asfortranarray(X)
 
     # Should not raise ValueError
