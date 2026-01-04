@@ -849,8 +849,14 @@ def _pre_fit(
             _check_precomputed_gram_matrix(X, precompute, X_offset, X_scale)
 
     # precompute if n_samples > n_features
-    if isinstance(precompute, str) and precompute == "auto":
-        precompute = n_samples > n_features
+    if isinstance(precompute, str):
+        if precompute == "auto":
+            precompute = n_samples > n_features
+        else:
+            raise ValueError(
+                "Precompute should be one of True, False, 'auto' or array-like. "
+                f"Got {precompute!r}"
+            )
 
     if precompute is True:
         # make sure that the 'precompute' array is contiguous.

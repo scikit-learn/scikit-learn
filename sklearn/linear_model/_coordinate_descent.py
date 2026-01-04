@@ -643,6 +643,15 @@ def enet_path(
             copy=False,
             check_gram=True,
         )
+    elif isinstance(precompute, str):
+        if precompute == "auto":
+            precompute = n_samples > n_features
+        else:
+            raise ValueError(
+                "Precompute should be one of True, False, 'auto' or array-like. "
+                f"Got {precompute!r}"
+            )
+
     if alphas is None:
         # fit_intercept and sample_weight have already been dealt with in calling
         # methods like ElasticNet.fit.

@@ -983,6 +983,57 @@ def test_check_input_false():
         clf.fit(X, y, check_input=False)
 
 
+def test_enet_path_precompute_auto_with_check_input_false():
+    """Test that enet_path works with precompute='auto' and check_input=False.
+
+    Non-regression test for issue where enet_path would crash when called
+    with check_input=False and precompute='auto' (the default value).
+    """
+    from sklearn.datasets import make_regression
+
+    X, y = make_regression(n_samples=100, n_features=5, random_state=0)
+    X = np.asfortranarray(X)
+
+    # This should work without raising ValueError
+    alphas, coefs, dual_gaps = enet_path(X, y, n_alphas=3, check_input=False)
+
+    assert alphas.shape[0] == 3
+    assert coefs.shape[1] == 3
+
+
+def test_enet_path_precompute_invalid_string():
+    """Test that invalid precompute string values raise ValueError."""
+    from sklearn.datasets import make_regression
+
+    X, y = make_regression(n_samples=50, n_features=10, random_state=0)
+    X = np.asfortranarray(X)
+
+    # Invalid string with check_input=False
+    with pytest.raises(ValueError, match="Precompute should be one of"):
+        enet_path(X, y, precompute="invalid", check_input=False)
+
+    # Invalid string with check_input=True
+    with pytest.raises(ValueError, match="Precompute should be one of"):
+        enet_path(X, y, precompute="invalid", check_input=True)
+
+
+@pytest.mark.parametrize("precompute", [True, False, "auto"])
+@pytest.mark.parametrize("check_input", [True, False])
+def test_enet_path_precompute_valid_values(precompute, check_input):
+    """Test all valid precompute values work with both check_input settings."""
+    from sklearn.datasets import make_regression
+
+    X, y = make_regression(n_samples=50, n_features=10, random_state=42)
+    X = np.asfortranarray(X)
+
+    alphas, coefs, dual_gaps = enet_path(
+        X, y, n_alphas=5, precompute=precompute, check_input=check_input
+    )
+
+    assert alphas.shape[0] == 5
+    assert coefs.shape[1] == 5
+
+
 @pytest.mark.parametrize("check_input", [True, False])
 def test_enet_copy_X_True(check_input):
     X, y, _, _ = build_dataset()
@@ -1520,9 +1571,9 @@ def test_enet_alpha_max(X_is_sparse, fit_intercept, positive, sample_weight):
             .fit(X, y, sample_weight=sample_weight)
             .alpha_
         )
-        assert not np.isclose(alpha_max, not_positive_alpha_max), (
-            "Test data cannot distinguish alpha_max between positive=True and False."
-        )
+        assert not np.isclose(
+            alpha_max, not_positive_alpha_max
+        ), "Test data cannot distinguish alpha_max between positive=True and False."
 
 
 @pytest.mark.parametrize("estimator", [ElasticNetCV, LassoCV])
