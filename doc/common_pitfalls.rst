@@ -374,7 +374,7 @@ following snippet::
     array([0.85, 0.95, 0.95, 0.9 , 0.9 ])
 
     >>> rf_none = RandomForestClassifier(random_state=None)
-    >>> cross_val_score(rf_inst, X, y)
+    >>> cross_val_score(rf_none, X, y)
     array([0.9 , 0.95, 0.95, 0.9 , 0.9 ])
 
 We see that the cross-validated scores of `rf_123` and `rf_none` are
