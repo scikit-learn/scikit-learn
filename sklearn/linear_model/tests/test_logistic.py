@@ -46,7 +46,13 @@ from sklearn.utils._array_api import (
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import _array_api_for_tests, ignore_warnings
-from sklearn.utils.fixes import _IS_32BIT, COO_CONTAINERS, CSR_CONTAINERS
+from sklearn.utils.fixes import (
+    _IS_32BIT,
+    COO_CONTAINERS,
+    CSR_CONTAINERS,
+    parse_version,
+    sp_version,
+)
 
 pytestmark = pytest.mark.filterwarnings(
     "error::sklearn.exceptions.ConvergenceWarning:sklearn.*"
@@ -293,12 +299,6 @@ def test_check_solver_option(LR):
         lr = LR(C=np.inf, solver="liblinear")
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
-
-    # newton-cd does not support sparse X for multiclass
-    msg = "Solver 'newton-cd' does not support sparse X for multiclass settings"
-    lr = LR(solver="newton-cd")
-    with pytest.raises(ValueError, match=msg):
-        lr.fit(sparse.csr_array(X), y)
 
 
 # TODO(1.11): remove filterwarnings with change of default scoring
@@ -1039,8 +1039,7 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
             max_iter=solver_max_iter.get(solver, 100),
             **params,
         ).fit(X, y)
-        # TODO(newton-cd): remove newton-cd when is supports multiclass
-        for solver in set(SOLVERS) - set(["liblinear", "newton-cd"])
+        for solver in set(SOLVERS) - set(["liblinear"])
     }
     for solver in regressors.keys():
         # See the docstring of test_multinomial_identifiability_on_iris for reference.
@@ -1135,8 +1134,7 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
     with ignore_warnings(category=ConvergenceWarning):
         clf_lbfgs.fit(X, y)
 
-    # TODO(newton-cd): remove newton-cd when is supports multiclass
-    for solver in set(SOLVERS) - set(["lbfgs", "liblinear", "newton-cd"]):
+    for solver in set(SOLVERS) - set(["lbfgs", "liblinear"]):
         clf = LogisticRegressionCV(
             solver=solver,
             scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
@@ -1334,8 +1332,10 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
     y = iris.target[45:]
     class_weight_dict = _compute_class_weight_dictionary(y)
 
-    # TODO(newton-cd): remove newton-cd when is supports multiclass
-    for solver in set(SOLVERS) - set(["liblinear", "newton-cd"]):
+    for solver in set(SOLVERS) - set(["liblinear"]):
+        if solver == "newton-cd" and sparse.issparse(X):
+            # TODO(scipy 1.17): remove once scipy >= 1.17 is minimal version.
+            continue
         params = dict(solver=solver, max_iter=2000, random_state=global_random_seed)
         clf1 = LogisticRegression(class_weight="balanced", **params)
         clf2 = LogisticRegression(class_weight=class_weight_dict, **params)
@@ -1356,6 +1356,9 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
     class_weight_dict = _compute_class_weight_dictionary(y)
 
     for solver in SOLVERS:
+        if solver == "newton-cd" and sparse.issparse(X):
+            # TODO(scipy 1.17): remove once scipy >= 1.17 is minimal version.
+            continue
         params = dict(solver=solver, max_iter=1000, random_state=global_random_seed)
 
         clf1 = LogisticRegression(class_weight="balanced", **params)
@@ -1596,8 +1599,7 @@ def test_n_iter(solver, use_legacy_attributes):
         assert clf_cv.n_iter_.shape == (n_cv_fold, n_l1_ratios, n_Cs)
 
     # multinomial case
-    # TODO(newton-cd): remove newton-cd when is supports multiclass
-    if solver in ("liblinear", "newton-cd"):
+    if solver == "liblinear":
         # This solver only supports one-vs-rest multiclass classification.
         return
 
@@ -1613,10 +1615,7 @@ def test_n_iter(solver, use_legacy_attributes):
         assert clf_cv.n_iter_.shape == (n_cv_fold, n_l1_ratios, n_Cs)
 
 
-# TODO(newton-cd): remove newton-cd when is supports multiclass
-@pytest.mark.parametrize(
-    "solver", sorted(set(SOLVERS) - set(["liblinear", "newton-cd"]))
-)
+@pytest.mark.parametrize("solver", sorted(set(SOLVERS) - set(["liblinear"])))
 @pytest.mark.parametrize("warm_start", (True, False))
 @pytest.mark.parametrize("fit_intercept", (True, False))
 def test_warm_start(global_random_seed, solver, warm_start, fit_intercept):
@@ -2961,3 +2960,26 @@ def test_get_default_scorer():
     """Test that LogisticRegressionCV gets correct default scorer."""
     lr = LogisticRegressionCV()
     assert lr._get_scorer()._score_func.__name__ == "accuracy_score"
+
+
+# TODO(scipy 1.17): remove once scipy >= 1.17 is minimal version.
+@pytest.mark.skipif(
+    sp_version >= parse_version("1.17"),
+    reason="scipy version 1.17 required for sparse slicing",
+)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_newton_cd_scipy_below_1_16_raises(csr_container):
+    """Tests that newton-cd with multiclass and sparse X raises for scipy<1.17"""
+    X, y = make_classification(n_classes=3, n_samples=50, n_informative=6)
+    X = csr_container(X)
+    msg = "Solver 'newton-cd' supports sparse X in a multiclass setting"
+    with pytest.raises(ValueError, match=msg):
+        LogisticRegression(solver="newton-cd").fit(X, y)
+
+    with pytest.raises(ValueError, match=msg):
+        LogisticRegressionCV(
+            solver="newton-cd",
+            l1_ratios=[0],
+            use_legacy_attributes=False,
+            scoring="neg_log_loss",
+        ).fit(X, y)
