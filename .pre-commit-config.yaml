@@ -24,7 +24,7 @@ repos:
     hooks:
     -   id: pyrefly-typecheck-specific-version
         name: pyrefly (type checking)
-        additional_dependencies: ["pyrefly==0.41.0"]
+        additional_dependencies: ["pyrefly==0.46.0"]
 -   repo: https://github.com/MarcoGorelli/cython-lint
     rev: v0.18.0
     hooks:
