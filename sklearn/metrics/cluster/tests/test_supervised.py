@@ -24,6 +24,7 @@ from sklearn.metrics.cluster._supervised import (
     _entropy,
     _generalized_average,
     check_clusterings,
+    # pyrefly: ignore [deprecated]
     entropy,
 )
 from sklearn.utils import assert_all_finite

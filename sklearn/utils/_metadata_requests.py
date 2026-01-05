@@ -1474,6 +1474,7 @@ class _MetadataRequester:
         signature_items = list(
             inspect.signature(getattr(cls, method)).parameters.items()
         )[1:]
+        # pyrefly: ignore [no-matching-overload]
         params = defaultdict(
             str,
             {

@@ -377,6 +377,7 @@ def test_transform_target_regressor_route_pipeline():
 
 
 class DummyRegressorWithExtraPredictParams(DummyRegressor):
+    # pyrefly: ignore [bad-param-name-override]
     def predict(self, X, check_input=True):
         # In the test below we make sure that the check input parameter is
         # passed as false

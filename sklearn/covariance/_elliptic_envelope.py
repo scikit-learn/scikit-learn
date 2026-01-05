@@ -240,6 +240,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
         return is_inlier
 
+    # pyrefly: ignore [bad-param-name-override]
     def score(self, X, y, sample_weight=None):
         """Return the mean accuracy on the given test data and labels.
 

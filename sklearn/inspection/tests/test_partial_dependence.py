@@ -528,11 +528,17 @@ def test_partial_dependence_easy_target(est, power):
 @pytest.mark.parametrize(
     "Estimator",
     (
+        # pyrefly: ignore [implicit-import]
         sklearn.tree.DecisionTreeClassifier,
+        # pyrefly: ignore [implicit-import]
         sklearn.tree.ExtraTreeClassifier,
+        # pyrefly: ignore [implicit-import]
         sklearn.ensemble.ExtraTreesClassifier,
+        # pyrefly: ignore [implicit-import]
         sklearn.neighbors.KNeighborsClassifier,
+        # pyrefly: ignore [implicit-import]
         sklearn.neighbors.RadiusNeighborsClassifier,
+        # pyrefly: ignore [implicit-import]
         sklearn.ensemble.RandomForestClassifier,
     ),
 )

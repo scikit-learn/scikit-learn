@@ -270,6 +270,7 @@ class MockClassifier(ClassifierMixin, BaseEstimator):
     def predict_proba(self, T):
         return T
 
+    # pyrefly: ignore [bad-param-name-override]
     def score(self, X=None, Y=None):
         return 1.0 / (1 + np.abs(self.a))
 

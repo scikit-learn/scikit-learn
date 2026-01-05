@@ -443,6 +443,7 @@ class ConsumingScorer(_Scorer):
         )
         self.registry = registry
 
+    # pyrefly: ignore [bad-param-name-override]
     def _score(self, method_caller, clf, X, y, **kwargs):
         if self.registry is not None:
             self.registry.append(self)

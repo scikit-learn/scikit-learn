@@ -50,6 +50,7 @@ def _check_length_scale(X, length_scale):
 
 
 class Hyperparameter(
+    # pyrefly: ignore [invalid-inheritance]
     namedtuple(
         "Hyperparameter", ("name", "value_type", "bounds", "n_elements", "fixed")
     )

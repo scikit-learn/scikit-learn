@@ -14,6 +14,7 @@ from sklearn.metrics.cluster._supervised import (
     adjusted_rand_score,
     completeness_score,
     contingency_matrix,
+    # pyrefly: ignore [deprecated]
     entropy,
     expected_mutual_information,
     fowlkes_mallows_score,
