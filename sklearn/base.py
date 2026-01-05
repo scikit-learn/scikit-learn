@@ -318,19 +318,30 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
 
             return False
 
-        # reorder the parameters from `self.get_params` using the `__init__`
-        # signature
-        remaining_params = [name for name in out if name not in init_default_params]
-        ordered_out = {name: out[name] for name in init_default_params if name in out}
-        ordered_out.update({name: out[name] for name in remaining_params})
-
-        non_default_ls = tuple(
-            [name for name, value in ordered_out.items() if is_non_default(name, value)]
+        # Sort parameters so non-default parameters are shown first
+        unordered_params = {
+            name: out[name] for name in init_default_params if name in out
+        }
+        unordered_params.update(
+            {
+                name: value
+                for name, value in out.items()
+                if name not in init_default_params
+            }
         )
 
+        non_default_params, default_params = [], []
+        for name, value in unordered_params.items():
+            if is_non_default(name, value):
+                non_default_params.append(name)
+            else:
+                default_params.append(name)
+
+        params = {name: out[name] for name in non_default_params + default_params}
+
         return ParamsDict(
-            params=ordered_out,
-            non_default=non_default_ls,
+            params=params,
+            non_default=tuple(non_default_params),
             estimator_class=self.__class__,
             doc_link=doc_link,
         )
