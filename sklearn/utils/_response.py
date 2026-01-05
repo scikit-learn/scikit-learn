@@ -125,7 +125,9 @@ def _get_response_values(
     The response values are predictions such that it follows the following shape:
 
     - for binary classification, it is a 1d array of shape `(n_samples,)`;
-    - for multiclass classification, it is a 2d array of shape `(n_samples, n_classes)`;
+    - for multiclass classification
+        - with response_method="predict", it is a 1d array of shape `(n_samples,)`;
+        - otherwise, it is a 2d array of shape `(n_samples, n_classes)`;
     - for multilabel classification, it is a 2d array of shape `(n_samples, n_outputs)`;
     - for outlier detection, it is a 1d array of shape `(n_samples,)`;
     - for regression, it is a 1d array of shape `(n_samples,)`.
