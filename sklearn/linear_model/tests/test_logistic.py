@@ -292,12 +292,6 @@ def test_check_solver_option(LR):
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
 
-    # newton-cd does not support sparse X for multiclass
-    msg = "Solver 'newton-cd' does not support sparse X for multiclass settings"
-    lr = LR(solver="newton-cd")
-    with pytest.raises(ValueError, match=msg):
-        lr.fit(sparse.csr_array(X), y)
-
 
 # TODO(1.10): remove test with removal of penalty
 @pytest.mark.filterwarnings("ignore::FutureWarning")
@@ -972,8 +966,7 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
             max_iter=solver_max_iter.get(solver, 100),
             **params,
         ).fit(X, y)
-        # TODO(newton-cd): remove newton-cd when is supports multiclass
-        for solver in set(SOLVERS) - set(["liblinear", "newton-cd"])
+        for solver in set(SOLVERS) - set(["liblinear"])
     }
     for solver in regressors.keys():
         # See the docstring of test_multinomial_identifiability_on_iris for reference.
@@ -1054,8 +1047,7 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
     with ignore_warnings(category=ConvergenceWarning):
         clf_lbfgs.fit(X, y)
 
-    # TODO(newton-cd): remove newton-cd when is supports multiclass
-    for solver in set(SOLVERS) - set(["lbfgs", "liblinear", "newton-cd"]):
+    for solver in set(SOLVERS) - set(["lbfgs", "liblinear"]):
         clf = LogisticRegressionCV(solver=solver, **params)
         if solver in ("sag", "saga"):
             clf.set_params(
@@ -1247,8 +1239,7 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
     y = iris.target[45:]
     class_weight_dict = _compute_class_weight_dictionary(y)
 
-    # TODO(newton-cd): remove newton-cd when is supports multiclass
-    for solver in set(SOLVERS) - set(["liblinear", "newton-cd"]):
+    for solver in set(SOLVERS) - set(["liblinear"]):
         params = dict(solver=solver, max_iter=2000, random_state=global_random_seed)
         clf1 = LogisticRegression(class_weight="balanced", **params)
         clf2 = LogisticRegression(class_weight=class_weight_dict, **params)
@@ -1507,8 +1498,7 @@ def test_n_iter(solver, use_legacy_attributes):
         assert clf_cv.n_iter_.shape == (n_cv_fold, n_l1_ratios, n_Cs)
 
     # multinomial case
-    # TODO(newton-cd): remove newton-cd when is supports multiclass
-    if solver in ("liblinear", "newton-cd"):
+    if solver == "liblinear":
         # This solver only supports one-vs-rest multiclass classification.
         return
 
@@ -1524,10 +1514,7 @@ def test_n_iter(solver, use_legacy_attributes):
         assert clf_cv.n_iter_.shape == (n_cv_fold, n_l1_ratios, n_Cs)
 
 
-# TODO(newton-cd): remove newton-cd when is supports multiclass
-@pytest.mark.parametrize(
-    "solver", sorted(set(SOLVERS) - set(["liblinear", "newton-cd"]))
-)
+@pytest.mark.parametrize("solver", sorted(set(SOLVERS) - set(["liblinear"])))
 @pytest.mark.parametrize("warm_start", (True, False))
 @pytest.mark.parametrize("fit_intercept", (True, False))
 def test_warm_start(global_random_seed, solver, warm_start, fit_intercept):

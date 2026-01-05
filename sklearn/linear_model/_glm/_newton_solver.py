@@ -21,7 +21,10 @@ from sklearn.linear_model._cd_fast import (
     enet_coordinate_descent_gram,
     sparse_enet_coordinate_descent,
 )
-from sklearn.linear_model._linear_loss import LinearModelLoss
+from sklearn.linear_model._linear_loss import (
+    LinearModelLoss,
+    Multinomial_LDL_Decomposition,
+)
 from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
 from sklearn.utils.optimize import _check_optimize_result
 
@@ -972,6 +975,7 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
 
         n_samples, n_features = X.shape
         gradient, hessian = self.prepare_gradient_hessian()
+        # TODO: Pass correct y=b (see NewtonCDSolver), or at least y=||b||_2^2.
 
         if self.linear_loss.base_loss.is_multiclass:
             # Often needed variables for the multinomial.
@@ -1423,78 +1427,65 @@ class NewtonCDSolver(NewtonSolver):
                 self.coef_newton = w - self.coef
         else:
             # Multinomial multiclass.
-            # We use the majorization of Lemma 3.3 in https://arxiv.org/abs/1311.6529.
-            # But we omit the maximum over classes, which is not necessary as shown in
-            # the proof of the Lemma.
-            # For any probability vector p of size K:
+            # Unfortunately, the pointwise hessian h is not diagonal and we can't write
+            # this as least squares plus penalties:
+            #   ||sqrt(h) X w - y||_2^2 + penalties
+            # One possible solution is to majorized the hessian by a diagonal matrix t,
+            # see Lemma 3.3 in https://arxiv.org/abs/1311.6529:
+            #   - one diagonal t_k for each class k
             #     diag(p) - p p' <= 2 diag(p (1 - p)) = t
-            #     t_ik = 2 p_ik (1 - p_ik)  for k=1..K classes and i=1..n_samples
-            # Thus we majorize the Hessian H
+            #   - identity times constant
+            #     diag(p) - p p' <= max(2 diag(p (1 - p))) * identity = t
+            # The full Hessian H would then be majorized by
             #     H <= X' diag(t) X  for each class k=1..K
-            # meaning
-            #     H <= X' (diag(t_1),         0, 0,        ..) X
-            #             (        0, diag(t_2), 0,        ..)
-            #             (        ..                        )
-            #             (        ..,            , diag(t_K))
-            n_classes = self.linear_loss.base_loss.n_classes
+            # Another strategy is pursued in Friedman, Hastie & Tibshirani (2010)
+            # https://doi.org/10.18637/JSS.V033.I01. In section 4, they add another
+            # middle loop over classes and optimized only for that class. This is
+            # the same as using the diagonal majorization above and additionally
+            # updating gradient and hessian in this middle loop.
+            # Unfortunately, these strategies fail even for simple datasets such as
+            #     X, y = make_classification(n_samples=20, n_features=20,
+            #         n_informative=10, n_classes=3)
+            #     LogisticRegression(C=1).fit(X, y)
+            # Therefore, we take a more sophisticated approach:
+            # Tanabe & Sagae (1992) https://doi.org/10.1111/J.2517-6161.1992.TB01875.X
+            # derive an analytical LDL' decomposition for the matrix
+            # h = diag(p) - p p' = LDL'.
+            # Defining A = sqrt(D) L' X and b = we can now write
+            #     1/2 c' H c + (G' - coef' H) c + alpha ||c||_1 + beta/2 ||c||_2^2
+            #   = 1/2 ||A c - b||_2^2 + alpha ||c||_1 + beta/2 ||c||_2^2 + const
+            #
+            #   A' A = H
+            #   G = X' g
+            #   -c' A' b = c' (G - H coef)
+            #   b = (L sqrt(D))^-1 (LDL' X coef - g)
             proba = self.hess_pointwise
-            if self.linear_loss.fit_intercept:
-                w = np.copy(self.coef[:, :-1], order="C")
-                w0 = np.zeros_like(w, shape=n_classes, order="C")
-            else:
-                w = np.copy(self.coef, order="C")
-            gap = 0.0
-            n_inner_iter = 0
-            for k in range(n_classes):
-                t = 2 / self.sw_sum * proba[:, k] * (1 - proba[:, k])
-                z = self.raw_prediction[:, k] - self.grad_pointwise[:, k] / t
-                X, z, X_offset, z_offset, X_scale, _, _ = _pre_fit(
-                    X=X,
-                    y=z,
-                    Xy=None,
-                    precompute=False,
-                    fit_intercept=self.linear_loss.fit_intercept,
-                    copy=True,  # TODO(newton-cd): Is this really necessary?
-                    sample_weight=t,
-                )
+            w = np.copy(self.coef, order="F")
 
-                with warnings.catch_warnings():
-                    # Ignore warnings that add little information for users.
-                    warnings.simplefilter("ignore", ConvergenceWarning)
-                    _, gap_k, inner_tol, n_inner_iter_k = enet_coordinate_descent(
-                        w=w[k],
+            with warnings.catch_warnings():
+                # Ignore warnings that add little information for users.
+                warnings.simplefilter("ignore", ConvergenceWarning)
+                _, gap, inner_tol, n_inner_iter = (
+                    enet_coordinate_descent_multinomial_py(
+                        W=w,
                         alpha=self.l1_reg_strength,
                         beta=self.l2_reg_strength,
                         X=X,
-                        y=z,
+                        sample_weight=sample_weight,
+                        raw_prediction=self.raw_prediction,
+                        grad_pointwise=self.grad_pointwise,
+                        proba=proba,
+                        fit_intercept=self.linear_loss.fit_intercept,
                         max_iter=1000,  # TODO(newton-cd): improve
                         tol=self.inner_tol,
-                        rng=np.random.RandomState(42),
-                        random=False,
-                        positive=False,
+                        do_screening=True,
                         early_stopping=False,
+                        verbose=max(0, self.verbose - 3),  # True for verbose >= 4
                     )
-                gap += gap_k
-                n_inner_iter = max(n_inner_iter_k, n_inner_iter)
-
-                # Compute intercept terms.
-                if self.linear_loss.fit_intercept:
-                    if n_inner_iter == 0:
-                        # Safeguard: if nothing changed nothing should change in this
-                        # iter. Without it, intercept terms might change.
-                        w0[k] = self.coef[k, -1]
-                    else:
-                        # Intercept treatment as in class ElasticNet, i.e. mean
-                        # centering and scaling.
-                        if X_scale is not None:
-                            w[k, :] /= X_scale
-                        w0[k] = z_offset - X_offset @ w[k]
+                )
 
             # Set self.coef_newton.
-            if self.linear_loss.fit_intercept:
-                self.coef_newton = np.c_[w, w0] - self.coef
-            else:
-                self.coef_newton = w - self.coef
+            self.coef_newton = w - self.coef
 
         # Tighten inner stopping criterion, see Chapter 6.1 of "An Improved GLMNET".
         if n_inner_iter == 0:
@@ -1579,3 +1570,583 @@ class NewtonCDSolver(NewtonSolver):
         ):
             # Only the intercept needs an update to the symmetric parametrization.
             self.coef[:, -1] -= np.mean(self.coef[:, -1])
+
+
+def gap_enet_multinomial(
+    w,
+    alpha,  # L1 penalty
+    beta,  # L2 penalty
+    X,
+    y,
+    R,  # current residual b - A @ w
+    LD_R,  # LD_R = LDL.L_sqrt_D_matmul(R.copy()) * sqrt_sw[:, None]
+    fit_intercept,
+    H00_pinv_H0,
+    XtA,  # XtA = X.T @ R - beta * w is calculated inplace
+    gap_smaller_eps,
+):
+    """Compute dual gap for use in enet_coordinate_descent.
+
+    Note that X must always be replaced by A = sqrt(D) L' X
+    """
+    l1_norm = 0.0
+    l2_norm2 = 0.0
+    eps = np.finfo(w.dtype).eps
+    n_classes = R.shape[1]
+
+    # l2_norm2 = w @ w
+    if beta > 0:
+        l2_norm2 = np.linalg.norm(w, ord="fro") ** 2
+    if alpha > 0:
+        l1_norm = np.sum(np.abs(w))
+    R_norm2 = np.linalg.norm(R, ord="fro") ** 2
+    # Ry = R @ y
+    if not (alpha == 0 and beta == 0):
+        Ry = R.ravel(order="F") @ y.ravel(order="F")
+
+    primal = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * l2_norm2
+
+    # XtA = X'R -> A'R = X' L sqrt(D) R
+    XtA[:, :] = (X.T @ LD_R).T
+    if fit_intercept:
+        XtA -= (H00_pinv_H0.T @ LD_R[:, :-1].sum(axis=0)).reshape(
+            n_classes, -1, order="F"
+        )
+
+    if alpha == 0:
+        # ||X'R||_2^2
+        dual_norm_XtA = np.linalg.norm(XtA, ord="fro") ** 2
+        if beta == 0:
+            # This is OLS, no dual gap available. Resort to first order condition
+            #     X'R = 0
+            #     gap = ||X'R||_2^2
+            # Compare with stopping criterion of LSQR.
+            gap = dual_norm_XtA
+            return gap, dual_norm_XtA
+        # This is Ridge regression with primal objective
+        #     P(w) = 1/2 ||y - X w||_2^2 + beta/2 ||w||_2^2
+        # We use the "alternative" dual formulation with alpha=0, see
+        # https://github.com/scikit-learn/scikit-learn/issues/22836
+        #     D(v) = -1/2 ||v||_2^2 - v'y - 1/(2 beta) |||X'v||_2^2
+        # With v = Xw - y = -R (residual), the dual gap reads
+        #     G = P(w) - D(-R)
+        #       = ||R||_2^2  + beta/2 ||w||_2^2 - R'y + 1/(2 beta) ||X'R||_2^2
+        dual = -0.5 * R_norm2 + Ry - 1 / (2 * beta) * dual_norm_XtA
+    else:
+        # XtA = X.T @ R - beta * w
+        XtA -= beta * w
+        dual_norm_XtA = np.max(np.abs(XtA))
+
+        if dual_norm_XtA > alpha:
+            const_ = alpha / dual_norm_XtA
+        else:
+            const_ = 1.0
+        dual = -0.5 * (const_**2) * (R_norm2 + beta * l2_norm2)
+        dual += const_ * Ry
+
+    gap = primal - dual
+    if gap_smaller_eps and abs(gap) <= 2 * eps * primal:
+        gap = 0.0
+    return gap, dual_norm_XtA
+
+
+def enet_coordinate_descent_multinomial_py(
+    W,
+    alpha,
+    beta,
+    X,
+    sample_weight,
+    raw_prediction,
+    grad_pointwise,
+    proba,
+    fit_intercept,
+    max_iter,
+    tol,
+    do_screening=True,
+    early_stopping=True,
+    verbose=False,
+):
+    """Cython coordinate descent algorithm for Elastic-Net multinomial regression.
+
+    See function enet_coordinate_descent.
+    We minimize the primal
+
+        P(w) = 1/2 ||y - X w||_2^2 + alpha ||w||_1 + beta/2 ||w||_2^2
+
+    But we replace the variables y and X such that P(w) corresponds to the 2nd order
+    approximation of the multinomial loss
+
+        1/2 w' H w + (G' - coef' H) w + alpha ||w||_1 + beta/2 ||w||_2^2
+
+    - w = W.ravel(order="F")
+    - G = gradient = X.T @ (proba - Y)  with Y_k = (y==k)
+    - H = X' * (diag(p) - pp') * X, the full multinomial hessian
+      (* is kind of a Kronecker multiplication)
+
+    We use the analytical LDL decomposition of diag(p) - pp' = L D L' of
+    Tanabe & Sagae (1992) to replace
+
+        X -> A = sqrt(D) L' * X
+        y -> b = (L sqrt(D))^-1 (LDL' * X coef - g)
+               = A coef - (L sqrt(D))^-1 g
+
+    Which gives (up to a constant)
+
+        P(w) = 1/2 ||b - A w||_2^2 + alpha ||w||_1 + beta/2 ||w||_2^2
+
+    As the matrix A has n_samples * n_features * n_classes * n_classes entries, we
+    avoid to explicitly build it.
+
+    Note:
+        - H = A'A
+        - A'b = (coef' H - G') w
+
+    Intercepts
+    ----------
+    If intercepts w0 of shape (n_classes,) are included, we have
+
+        P(w) = 1/2 ||b - A w - A0 w0||_2^2 + alpha ||w||_1 + beta/2 ||w||_2^2
+
+    with A0 = sqrt(D) L' 1 and 1 = 1_{n_samples, n_classes} for the n_classes intercept
+    columns.
+
+    Minimizing for w0 gives
+
+        w0 = (A0' A0)^(-1) (A0' b - A0' A w)
+
+        P(w) = 1/2 ||(I - A0 (A0' A0)^(-1) A0') (b - A w)||_2^2 + ...
+             = 1/2 ||(b - A0 H00^(-1) q0) - (A - A0 H00^(-1) H0) w||_2^2 + ...
+
+    We therefore replace
+
+        A -> A - A0 H00^(-1) H0 = sqrt(D) L' (X - 1 H00^(-1) H0)
+
+        b -> b - A0 H00^(-1) q0 = sqrt(D) L' (X - 1 H00^(-1) H0) coef
+                                - (L sqrt(D))^-1 (I - LDL' 1 H00^(-1) 1') g
+
+    Note:
+        - A0 = sqrt(D) L' 1_{n_samples, n_classes}
+        - H00 = A0 A0', i.e. the part of the hessian for the the intercept alone
+        - H0 = A0' A, i.e. the part of the hessian mixing intercepts with the features:
+          H[-n_classes, :-n_classes]
+        - q0 = A0' b = 1' (LDL' X coef - g)
+
+    Tracking the Residual
+    ---------------------
+    Usually, CD tracks the residual R = y - X w -> b - Aw. In the multinomial case, it
+    is advantageous to track the rotated residual instead:
+
+        LD_R = L sqrt(D) R
+
+    This makes the coordinate update simple and fast involving just
+
+        X[:, j] @ LD_R[:, k]
+
+    The update of the rotated residual involves basically multiplying by the full
+    LDL = diag(p) - pp', i.e.
+
+        L sqrt(D) R -= (w_new_kj - w_old_kj) * LDL[:, k] * X[:, j]
+
+    with LDL[:, k] begin the k-th column of the LDL matrix, having shape
+    (n_sampels, n_classes).
+
+    Returns
+    -------
+    W : ndarray of shape (n_classes, n_features + fit_intercept)
+        ElasticNet coefficients.
+    gap : float
+        Achieved dual gap.
+    tol : float
+        Equals input `tol` times `np.dot(y, y)`. The tolerance used for the dual gap.
+    n_iter : int
+        Number of coordinate descent iterations.
+    """
+    dtype = X.dtype
+
+    # get the data information into easy vars
+    n_samples = X.shape[0]
+    n_features = X.shape[1]
+    n_classes = W.shape[0]
+    n_active = np.full(shape=n_classes, fill_value=n_features)
+    X_is_sparse = sparse.issparse(X)
+
+    if sample_weight is None:
+        sw_sum = n_samples
+        sw = np.full(fill_value=1 / sw_sum, shape=n_samples, dtype=dtype)
+    else:
+        sw_sum = np.sum(sample_weight)
+        sw = sample_weight / sw_sum
+    sqrt_sw = np.sqrt(sw)
+    # Note: Full hessian H of LinearModelLoss.gradient_hessian(coef=W, X=X, y=y)
+    # divides by sw_sum. So each LDL.XXX_matmul computation must be multiplied by
+    # sqrt(samples_weight / sw_sum) = sqrt_sw, i.e. as if sqrt(D) would have
+    # been multiplied by sqrt_sw.
+    LDL = Multinomial_LDL_Decomposition(proba=proba)
+    XtA = np.zeros((n_classes, n_features), dtype=dtype, order="C")
+    R = np.empty((n_samples, n_classes), dtype=dtype, order="F")
+    LD_R = np.empty_like(R, order="F")  # memory buffer for LDL.L_sqrt_D_matmul(R)
+    sw_proba = sw[:, None] * proba  # precompute this one
+    x_k = np.empty(n_samples, dtype=dtype)  # memory buffer for temporaries
+    if fit_intercept:
+        # memory buffer for temporaries
+        xx = np.empty((n_samples, n_classes), dtype=dtype, order="F")
+
+    W_original = W
+    H00_pinv_H0 = None
+    if fit_intercept:
+        # See LinearModelLoss.gradient_hessian and NewtonCDGramSolver.inner_solve.
+        # We set the intercept of the last class to zero, loops and shapes often
+        # have n_classes - 1 instead of n_classes. The missing entries are all zeros,
+        # but we often do not add those zeros explicitly.
+        W0 = W[:, -1]
+        W0[-1] = 0  # intercept of last class
+        W = W[:, :-1]
+        # H00 = H[-n_classes:-1, -n_classes:-1] = Hessian part of intercepts
+        H00 = np.zeros((n_classes - 1, n_classes - 1), dtype=dtype)
+        # H0 = H[-n_classes:-1, :-n_classes] = Hessian part mixing intercepts with
+        # features
+        H0 = np.zeros((n_classes - 1, n_classes * n_features), dtype=dtype)
+        H0_coef = np.zeros((n_classes - 1,), dtype=dtype)  # 1' LDL raw_prediction
+        h = x_k
+        for k in range(n_classes - 1):
+            # Diagonal terms h_kk.
+            h[:] = proba[:, k] * (1 - proba[:, k]) * sw
+            H00[k, k] = h.sum()
+            H0[k, k::n_classes] = X.T @ h
+            H0_coef[k] += (h * raw_prediction[:, k]).sum()
+            # Off diagonal terms (in classes) hess_kl.
+            for l in range(k + 1, n_classes - 1):
+                # Upper triangle (in classes).
+                h[:] = -proba[:, k] * proba[:, l] * sw
+                H00[k, l] = h.sum()
+                H00[l, k] = H00[k, l]
+                H0[k, l::n_classes] = X.T @ h
+                H0[l, k::n_classes] = H0[k, l::n_classes]
+                H0_coef[k] += (h * raw_prediction[:, l]).sum()
+                H0_coef[l] += (h * raw_prediction[:, k]).sum()
+            # So far omitted term for last class where we still need it:
+            l = n_classes - 1
+            h[:] = -proba[:, k] * proba[:, l] * sw
+            H0[k, l::n_classes] = X.T @ h
+            H0_coef[k] += (h * raw_prediction[:, l]).sum()
+
+        H00_pinv = np.linalg.pinv(H00, hermitian=True)
+        # H0_coef is the same as:
+        # H0_coef = H0 @ W.ravel(order="F") + H00 @ W0
+        grad_p_sum = grad_pointwise[:, :-1].sum(axis=0)
+        q0 = H0_coef - grad_p_sum
+        # H00_pinv_H0 = H00_pinv @ H0  # shape (n_classes - 1, n_classes * n_features)
+        H00_pinv_H0 = (H0.T @ H00_pinv.T).T  # make it F-contiguous
+
+        # Centering X as
+        #   X -= (H00_pinv_H0)[None, :]
+        # is not an option because it would mean n_classes^2 copies of X.
+        # Center raw_prediction: += -intercepts - 1 H00^(-1) H0) coef
+        raw_prediction = raw_prediction - W0  # creates a copy
+        raw_prediction[:, :-1] -= (H00_pinv_H0 @ W.ravel(order="F"))[None, :]
+        # Center grad_pointwise: g -= LDL' 1 H00^(-1) 1' g
+        t = H00_pinv @ grad_p_sum  # H00^(-1) 1' g
+        for k in range(n_classes - 1):
+            h = proba[:, k] * (1 - proba[:, k]) * sw
+            grad_pointwise[:, k] -= h * t[k]
+            for l in range(k + 1, n_classes - 1):
+                h = -proba[:, k] * proba[:, l] * sw
+                grad_pointwise[:, k] -= h * t[l]
+                grad_pointwise[:, l] -= h * t[k]
+
+    gap = tol + 1.0
+    d_w_tol = tol
+    n_iter = 0
+    if alpha <= 0:
+        do_screening = False
+    if do_screening:
+        # active_set maps [k, :n_active[k]] -> j
+        active_set = np.empty((n_classes, n_features), dtype=np.uint32)
+        excluded_set = np.empty((n_classes, n_features), dtype=np.uint8)
+
+    # A w = sqrt(D) L' X w = sqrt(D) L' raw = sqrt_D_Lt_raw
+    sqrt_D_Lt_raw = LDL.sqrt_D_Lt_matmul(raw_prediction.copy()) * sqrt_sw[:, None]
+
+    # residual R = b - A w = -(L sqrt(D))^-1 g
+    R[:, :] = LDL.inverse_L_sqrt_D_matmul(-grad_pointwise / sqrt_sw[:, None])
+
+    # b = A w - (L sqrt(D))^-1 g
+    b = sqrt_D_Lt_raw + R  # shape (n_samples, n_classes)
+
+    # tol = tol * linalg.norm(Y, ord='fro') ** 2
+    tol = tol * np.linalg.norm(b, ord="fro") ** 2
+
+    # Rotated residual: L sqrt(D) R sqrt(sw)
+    LD_R[:, :] = LDL.L_sqrt_D_matmul(R * sqrt_sw[:, None])
+    # IMPORTANT NOTE: With fit_intercept=True, np.sum(LD_R, axis=0) == 0.
+
+    # Check convergence before entering the main loop.
+    gap, dual_norm_XtA = gap_enet_multinomial(
+        w=W,
+        alpha=alpha,
+        beta=beta,
+        X=X,
+        y=b,
+        R=R,
+        LD_R=LD_R,
+        fit_intercept=fit_intercept,
+        H00_pinv_H0=H00_pinv_H0,
+        XtA=XtA,
+        gap_smaller_eps=False,
+    )
+    if early_stopping and gap <= tol:
+        if verbose:
+            print(
+                f"  inner coordinate descent solver stops early with gap={float(gap)}"
+                f"  <= tol={float(tol)}"
+            )
+        return np.asarray(W), gap, tol, 0
+
+    # Compute squared norms of the columns of X.
+    # Same as norm2_cols_X = np.square(X).sum(axis=0)
+    # norm2_cols_X = np.einsum(
+    #     "ij,ij->j", X, X, dtype=dtype, order="C"
+    # )
+    # X -> sqrt(D) L' X = A
+    # sum_{i} X_{ij} X_{ij} -> sum_i X_{ij} LDL_i X_{ij}
+    # These are just the diagonal elements of the full hessian H.
+    norm2_cols_X = np.empty((n_classes, n_features), dtype=dtype, order="F")
+    for k in range(n_classes):
+        h = proba[:, k] * (1 - proba[:, k]) * sw
+        if not X_is_sparse:
+            norm2_cols_X[k, :] = np.einsum("ij, i, ij -> j", X, h, X)
+        else:
+            # norm2_cols_X[k, :] = [X[:, j] @ (h * X[:, j]) for j in range(n_features)]
+
+            def Xj_h_Xj(X, h, j):
+                startptr = X.indptr[j]
+                endptr = X.indptr[j + 1]
+                idx = X.indices[startptr:endptr]
+                return X.data[startptr:endptr] @ (h[idx] * X.data[startptr:endptr])
+
+            norm2_cols_X[k, :] = [Xj_h_Xj(X, h, j) for j in range(n_features)]
+    if fit_intercept:
+        # See Q_centered = Q - Q0.T @ Q00_inv @ Q0 in NewtonCDGramSolve.
+        norm2_cols_X -= np.einsum("ji, ji -> i", H0, H00_pinv_H0).reshape(
+            n_classes, -1, order="F"
+        )
+        # Guarantee norm2_cols_X >= 0:
+        norm2_cols_X[norm2_cols_X < 0] = 0
+
+    # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
+    if do_screening:
+        n_active[:] = 0
+        for k in range(n_classes):
+            for j in range(n_features):
+                if norm2_cols_X[k, j] == 0:
+                    W[k, j] = 0
+                    excluded_set[k, j] = 1
+                    continue
+                Xj_theta = XtA[k, j] / max(alpha, dual_norm_XtA)  # X[:,j] @ dual_theta
+                d_j = (1 - np.abs(Xj_theta)) / np.sqrt(norm2_cols_X[k, j] + beta)
+                if d_j <= np.sqrt(2 * gap) / alpha:
+                    # include feature j of class k
+                    active_set[k, n_active[k]] = j
+                    excluded_set[k, j] = 0
+                    n_active[k] += 1
+                else:
+                    # R += w[j] * X[:,j] -> w[k, j] A[:, kj]
+                    # LD_R += w[k, j] * LDL[:, k] * X[:, j]
+                    if not fit_intercept:
+                        if not X_is_sparse:
+                            x_k[:] = W[k, j] * X[:, j] * sw_proba[:, k]
+                        else:
+                            x_k[:] = 0
+                            idx = X.indices[X.indptr[j] : X.indptr[j + 1]]
+                            x_k[idx] = (
+                                W[k, j]
+                                * X.data[X.indptr[j] : X.indptr[j + 1]]
+                                * sw_proba[idx, k]
+                            )
+                        LD_R -= proba * x_k[:, None]
+                        LD_R[:, k] += x_k
+                    else:
+                        jn = n_classes * j
+                        xx[:, :-1] = -H00_pinv_H0[:, jn + k][None, :]
+                        xx[:, -1] = 0
+                        if not X_is_sparse:
+                            xx[:, k] += X[:, j]
+                        else:
+                            idx = X.indices[X.indptr[j] : X.indptr[j + 1]]
+                            xx[idx, k] += X.data[X.indptr[j] : X.indptr[j + 1]]
+                        xx *= W[k, j] * sw_proba
+                        LD_R -= proba * np.sum(xx, axis=1)[:, None]
+                        LD_R += xx
+                    W[k, j] = 0
+                    excluded_set[k, j] = 1
+        if np.sum(n_active) == 0:
+            # We want to guarantee at least one CD step.
+            n_active[:] = n_features
+            active_set[:, :] = np.arange(n_features, dtype=np.uint32)[None, :]
+            excluded_set[:, :] = 0
+
+    for n_iter in range(max_iter):
+        w_max = 0.0
+        d_w_max = 0.0
+        for k in range(n_classes):  # Loop over coordinates
+            for j in range(n_active[k]):  # Loop over coordinates
+                if do_screening:
+                    j = active_set[k, j]
+
+                if norm2_cols_X[k, j] == 0.0:
+                    continue
+                w_kj = W[k, j]  # Store previous value
+
+                # tmp = X[:,j].T @ (R + w_j * X[:,j])
+                #    -> A[:,jk].T @ (R + w_kj * A[:,kj])
+                # With precomputed LD_R: A'R = X' L sqrt(D) R
+                tmp = X[:, j] @ LD_R[:, k] + w_kj * norm2_cols_X[k, j]
+                # Note: With fit_intercept=True, np.sum(LD_R, axis=0) == 0. So the
+                # additional term
+                #   tmp -= H00_pinv_H0[:, n_classes * j + k].T @ np.sum(LD_R, axis=0)
+                # is zero.
+
+                W[k, j] = (
+                    np.sign(tmp)
+                    * max(np.abs(tmp) - alpha, 0)
+                    / (norm2_cols_X[k, j] + beta)
+                )
+
+                if W[k, j] != w_kj:
+                    # Update residual
+                    # R -= (w[j] - w_j) * X[:,j] -> (w[kj] - w_kj) * A[:,kj]
+                    if not fit_intercept:
+                        # Update rotated residual LD_R instead of R
+                        # L sqrt(D) R -= (w[kj] - w_kj) * LDL[:, k] * X[:, j]
+                        if not X_is_sparse:
+                            x_k[:] = (w_kj - W[k, j]) * X[:, j] * sw_proba[:, k]
+                        else:
+                            x_k[:] = 0
+                            idx = X.indices[X.indptr[j] : X.indptr[j + 1]]
+                            x_k[idx] = (
+                                (w_kj - W[k, j])
+                                * X.data[X.indptr[j] : X.indptr[j + 1]]
+                                * sw_proba[idx, k]
+                            )
+                        # LD_R[:, k] += (1 - proba[:, k]) * x_k  # diagonal LDL
+                        # for l in range(n_classes):
+                        #     if l != k:
+                        #         LD_R[:, l] -= proba[:, l] * x_k
+                        # faster version:
+                        LD_R -= proba * x_k[:, None]
+                        LD_R[:, k] += x_k
+                    else:
+                        # Update rotated residual LD_R instead of R
+                        xx[:, :-1] = -H00_pinv_H0[:, n_classes * j + k][None, :]
+                        xx[:, -1] = 0
+                        if not X_is_sparse:
+                            xx[:, k] += X[:, j]
+                        else:
+                            idx = X.indices[X.indptr[j] : X.indptr[j + 1]]
+                            xx[idx, k] += X.data[X.indptr[j] : X.indptr[j + 1]]
+                        xx *= (w_kj - W[k, j]) * sw_proba
+                        # L sqrt(D) R += LDL xx
+                        # for l in range(n_classes):
+                        #     LD_R[:, l] += (1 - proba[:, l]) * xx[:, l]
+                        #     for m in range(l + 1, n_classes):
+                        #         LD_R[:, l] -= proba[:, l] * xx[:, m]
+                        #         LD_R[:, m] -= proba[:, m] * xx[:, l]
+                        # faster version:
+                        LD_R -= proba * np.sum(xx, axis=1)[:, None]
+                        LD_R += xx
+
+                # update the maximum absolute coefficient update
+                d_w_j = abs(W[k, j] - w_kj)
+                d_w_max = max(d_w_max, d_w_j)
+                w_max = max(w_max, np.abs(W[k, j]))
+
+        if w_max == 0.0 or d_w_max / w_max <= d_w_tol or n_iter == max_iter - 1:
+            # The biggest coordinate update of this iteration was smaller
+            # than the tolerance: check the duality gap as ultimate
+            # stopping criterion.
+            R = LDL.inverse_L_sqrt_D_matmul(LD_R / sqrt_sw[:, None])
+            gap, dual_norm_XtA = gap_enet_multinomial(
+                w=W,
+                alpha=alpha,
+                beta=beta,
+                X=X,
+                y=b,
+                R=R,
+                LD_R=LD_R,
+                fit_intercept=fit_intercept,
+                H00_pinv_H0=H00_pinv_H0,
+                XtA=XtA,
+                gap_smaller_eps=True,
+            )
+            if verbose:
+                print(
+                    f"  inner coordinate descent solver at iter {n_iter} "
+                    f"checks for gap={float(gap)} <= tol={float(tol)} ? {gap <= tol}"
+                )
+            if gap <= tol:
+                # return if we reached desired tolerance
+                break
+
+            # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
+            if do_screening:
+                n_active[:] = 0
+                for k in range(n_classes):
+                    for j in range(n_features):
+                        if excluded_set[k, j]:
+                            continue
+                        Xj_theta = XtA[k, j] / max(
+                            alpha, dual_norm_XtA
+                        )  # X[:,j] @ dual_theta
+                        d_j = (1 - np.abs(Xj_theta)) / np.sqrt(
+                            norm2_cols_X[k, j] + beta
+                        )
+                        if d_j <= np.sqrt(2 * gap) / alpha:
+                            # include feature j of class k
+                            active_set[k, n_active[k]] = j
+                            excluded_set[k, j] = 0
+                            n_active[k] += 1
+                        else:
+                            # R += w[j] * X[:,j] -> w[k, j] A[:, kj]
+                            # LD_R += w[k, j] * LDL[:, k] * X[:, j]
+                            if not fit_intercept:
+                                if not X_is_sparse:
+                                    x_k[:] = W[k, j] * X[:, j] * sw_proba[:, k]
+                                else:
+                                    x_k[:] = 0
+                                    idx = X.indices[X.indptr[j] : X.indptr[j + 1]]
+                                    x_k[idx] = (
+                                        W[k, j]
+                                        * X.data[X.indptr[j] : X.indptr[j + 1]]
+                                        * sw_proba[idx, k]
+                                    )
+                                LD_R -= proba * x_k[:, None]
+                                LD_R[:, k] += x_k
+                            else:
+                                jn = n_classes * j
+                                xx[:, :-1] = -H00_pinv_H0[:, jn + k][None, :]
+                                xx[:, -1] = 0
+                                if not X_is_sparse:
+                                    xx[:, k] += X[:, j]
+                                else:
+                                    idx = X.indices[X.indptr[j] : X.indptr[j + 1]]
+                                    xx[idx, k] += X.data[X.indptr[j] : X.indptr[j + 1]]
+                                xx *= W[k, j] * sw_proba
+                                LD_R -= proba * np.sum(xx, axis=1)[:, None]
+                                LD_R += xx
+                            W[k, j] = 0
+                            excluded_set[k, j] = 1
+    else:
+        # for/else, runs if for doesn't end with a `break`
+        message = (
+            "Objective did not converge. You might want to increase "
+            "the number of iterations, check the scale of the "
+            "features or consider increasing regularisation."
+            f" Duality gap: {gap:.6e}, tolerance: {tol:.3e}"
+        )
+        warnings.warn(message, ConvergenceWarning)
+
+    if fit_intercept:
+        W0[:-1] = H00_pinv @ (q0 - H0 @ W.ravel(order="F"))
+        # W0[-1] = 0  # was already set at the beginning.
+
+    return np.asarray(W_original), gap, tol, n_iter + 1
