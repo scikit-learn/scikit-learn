@@ -276,7 +276,7 @@ We here illustrate these rules for both estimators and CV splitters.
     `RandomState` instance from `numpy`
     (`random_state=np.random.mtrand._rand`). Most of what that applies to
     instances also applies to using `None`, with the notable exception of cloning
-    (see the `Cloning <#cloning>`_ section below).
+    (see the `Cloning <#cloning>`__ section below).
 
 Estimators
 ..........
