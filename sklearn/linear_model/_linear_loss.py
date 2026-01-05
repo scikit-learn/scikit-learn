@@ -5,6 +5,8 @@ Loss functions for linear models with raw_prediction = X @ coef
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
+
 import numpy as np
 from scipy import sparse
 
@@ -908,3 +910,247 @@ class LinearModelLoss:
                 return grad.ravel(order="F"), hessp
 
         return grad, hessp
+
+
+class Multinomial_LDL_Decomposition:
+    """A class for symbolic LDL' decomposition of multinomial hessian.
+
+    The pointwise hessian of the multinomial loss with c = n_classes is given by
+        h = diag(p) - p' p        or with indices
+        h_ij = p_i * delta_ij - p_i * p_j    i and j are indices of classes.
+    This holds for every single point (sample). The LDL decomposition
+    of this 2-dim matrix is given in [1] for p_i > 0 and sum(p) <= 1 as (math indices)
+        h = L D L'   with lower triangular L and diagonal D:: text
+
+        q_0 = 1
+        q_i = 1 - sum(p_k, k=1..i)
+        L_ii = 1
+        for i > j:
+            L_ij = -p_i / q_j
+        D_ii = p_i * q_i / q_{i-1}
+
+    If the p_i sum to 1, then q_c = 0 and D_cc = 0, with c = n_classes.
+    The inverse L^-1 is also lower triangular and given by:: text
+
+        (L^-1)_ii = 1
+        for i > j:
+            (L^-1)_ij = f_i = p_i / q_{i-1} = -L_{i, i-1}
+
+    Note that with Python indices (zero-based), we have: p_i = p[:, i-1],
+    q_i = q[:, i-1] and we don't explicitly need q_0 = 1.
+
+    The trick is to apply this LDL decomposition to all points (samples) at the same
+    time. This class therefore provides methods to apply products with the matrices L
+    and D to vectors/matrices. All objects have the 0-th dimension for n_samples and
+    the 1st dimension for n_classes, i.e. shape (n_samples, n_classes).
+
+    Parameters
+    ----------
+        proba : ndarray of shape (n_samples, n_classes)
+            Array of predicted probabilities per class (and sample).
+
+    Attributes
+    ----------
+        p : ndarray of shape (n_samples, n_classes)
+            Array of predicted probabilities per class (and sample).
+
+        q_inv : ndarray of shape (n_samples, n_classes)
+            Helper array, inverse of q[:, j] = 1 - sum_{i=0}^j p[:, i], i.e. 1/q.
+
+        sqrt_d : ndarray of shape (n_samples, n_classes)
+            Square root of the diagonal matrix D, D_ii = p_i * q_i / q_{i-1}
+            with q_{-1} = 1.
+
+        proba_sum_to_1 : bool
+            True if probabilities p sum to 1. This is most often expected to be true.
+
+    References
+    ----------
+    .. [1] Kunio Tanabe and Masahiko Sagae. (1992) "An Exact Cholesky Decomposition and
+           the Generalized Inverse of the Variance-Covariance Matrix of the Multinomial
+           Distribution, with Applications"
+           https://doi.org/10.1111/j.2517-6161.1992.tb01875.x
+    """
+
+    def __init__(self, *, proba, proba_sum_to_1=True):
+        self.p = proba
+        q = 1 - np.cumsum(self.p, axis=1)  # contiguity of p
+        self.proba_sum_to_1 = proba_sum_to_1
+        if self.p.dtype == np.float32:
+            eps = 2 * np.finfo(np.float32).resolution
+        else:
+            eps = 2 * np.finfo(np.float64).resolution
+        if not np.allclose(q[:, -1], 0, atol=eps):
+            warnings.warn(
+                "Probabilities proba are assumed to sum to 1, but they don't.",
+                UserWarning,
+            )
+        if self.proba_sum_to_1:
+            # If np.sum(p, axis=1) = 1 then q[:, -1] = d[:, -1] = 0.
+            q[:, -1] = 0.0
+            # One might not need all classes for p to sum to 1, so we detect and
+            # correct all values close to zero.
+            q[q <= eps] = 0.0
+            self.p[self.p <= eps] = 0.0
+        d = self.p * q
+        # From now on, q is always used in the denominator. We handle q == 0 by
+        # setting q to 1 whenever q == 0 such that a division of q is a no-op in this
+        # case.
+        q[q == 0] = 1
+        # And we use the inverse of q, 1/q.
+        self.q_inv = 1 / q
+        if self.proba_sum_to_1:
+            # If q_{i - 1} = 0, then also q_i = 0.
+            d[:, 1:-1] *= self.q_inv[:, :-2]  # d[:, -1] = 0 anyway.
+        else:
+            d[:, 1:] *= self.q_inv[:, :-1]
+        self.sqrt_d = np.sqrt(d)
+
+    def sqrt_D_Lt_matmul(self, x):
+        """Compute sqrt(D) L' x from the multinomial LDL' decomposition.
+
+        L' is the transpose of L, Lij is the i-th row and j-th column of L:
+            Lij = -p[:, i] / q[:, j]
+
+        For n_classes = 4, L' looks like:: text
+
+            L' = (1 L10 L20 L30)
+                 (0   1 L21 L31)
+                 (0   0   1 L32)
+                 (0   0   0   1)
+
+        The carried out operation is matmul over n_classes (1st dimension) and
+        element-wise multiplication over n_samples (0th dimension):
+
+            x_ij = sum_k sqrt_d_{i, j} L'_{i, j, k} x_{i, k}
+
+        Parameters
+        ----------
+        x : ndarray of shape (n_samples, n_classes)
+            This array is overwritten with the result.
+
+        Return
+        ------
+        x : ndarray of shape (n_samples, n_classes)
+            Input array x, filled with the result.
+        """
+        n_classes = self.p.shape[1]
+        # precompute
+        px = np.einsum(
+            "ij,ij->i",
+            self.p[:, 1:],
+            x[:, 1:],
+            order="A",
+        )
+        for i in range(0, n_classes - 1):  # row i
+            # L_ij = -p_i / q_j, we need transpose L'
+            # for j in range(i + 1, n_classes):  # column j
+            #     x[:, i] -= self.p[:, j] / self.q[:, i] * x[:, j]
+            # The following is the same but faster.
+            # px = np.einsum(
+            #     "ij,ij->i",
+            #     self.p[:, i + 1 : n_classes],
+            #     x[:, i + 1 : n_classes],
+            #     order="A",
+            # )
+            # And using precomputed px:
+            x[:, i] -= px * self.q_inv[:, i]
+            if i < n_classes - 2:
+                px -= self.p[:, i + 1] * x[:, i + 1]
+        x *= self.sqrt_d
+        return x
+
+    def L_sqrt_D_matmul(self, x):
+        """Compute L sqrt(D) x from the multinomial LDL' decomposition.
+
+        L is lower triangular and given by Lij = -p[:, i] / q[:, j]
+
+        For n_classes = 4, L looks like:: text
+
+            L = (1     0   0 0)
+                (L10   1   0 0)
+                (L20 L21   1 0)
+                (L30 L31 L32 1)
+
+        The carried out operation is matmul over n_classes (1st dimension) and
+        element-wise multiplication over n_samples (0th dimension):
+
+            x_ij = sum_k L'_{i, j, k} sqrt_d_{i, k}  x_{i, k}
+
+        Parameters
+        ----------
+        x : ndarray of shape (n_samples, n_classes)
+            This array is overwritten with the result.
+
+        Return
+        ------
+        x : ndarray of shape (n_samples, n_classes)
+            Input array x, filled with the result.
+        """
+        n_classes = self.p.shape[1]
+        x *= self.sqrt_d
+        # precompute
+        qx = np.einsum("ij,ij->i", self.q_inv[:, :-1], x[:, :-1], order="A")
+        for i in range(n_classes - 1, 0, -1):  # row i
+            # L_ij = -p_i / q_j
+            # for j in range(0, i):  # column j
+            #     x[:, i] -= self.p[:, i] / self.q[:, j] * x[:, j]
+            # The following is the same but faster.
+            # qx = np.einsum("ij,ij->i", self.q_inv[:, :i], x[:, :i], order="A")
+            # And using precomputed qx:
+            x[:, i] -= qx * self.p[:, i]
+            if i > 1:
+                qx -= self.q_inv[:, i - 1] * x[:, i - 1]
+        return x
+
+    def inverse_L_sqrt_D_matmul(self, x):
+        """Compute 1/sqrt(D) L^(-1) x from the multinomial LDL' decomposition.
+
+        L^(-1) is again lower triangular and given by:
+            L^(-1)_ij = f[:, i] = p[:, i] / q[:, i-1]
+
+        For n_classes = 4, L^(-1) looks like:: text
+
+            L^(-1) = (1   0  0  0)
+                     (f1  1  0  0)
+                     (f2  f2 1  0)
+                     (f3  f3 f3 1)
+
+        Note that (L sqrt(D))^(-1) = 1/sqrt(D) L^(-1)
+
+        Parameters
+        ----------
+        x : ndarray of shape (n_samples, n_classes)
+            This array is overwritten with the result.
+
+        Return
+        ------
+        x : ndarray of shape (n_samples, n_classes)
+            Input array x, filled with the result.
+        """
+        n_classes = self.p.shape[1]
+        x_sum = np.sum(x[:, :-1], axis=1)  # precomputation
+        for i in range(n_classes - 1, 0, -1):  # row i, here i > 0.
+            fj = self.p[:, i] * self.q_inv[:, i - 1]
+            # for i = 0 we would set: fj = self.p[:, i]
+
+            # for j in range(0, i):  # column j
+            #     x[:, i] += fj * x[:, j]
+            # The following is the same but faster.
+            # x[:, i] += fj * np.sum(x[:, :i], axis=1)
+            # Using precomputation
+            x[:, i] += fj * x_sum
+            if i > 1:
+                x_sum -= x[:, i - 1]
+        if self.proba_sum_to_1:
+            # x[:, :-1] /= self.sqrt_d[:, :-1]
+            mask = self.sqrt_d[:, :-1] == 0
+            x[:, :-1] *= (~mask) / (self.sqrt_d[:, :-1] + mask)
+            # Important Note:
+            # Strictly speaking, the inverse of D does not exist.
+            # We use 0 as the inverse of 0 and just set:
+            # x[:, -1] = 0
+            x[:, -1] = 0
+        else:
+            x /= self.sqrt_d
+        return x
