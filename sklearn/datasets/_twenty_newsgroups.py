@@ -59,7 +59,7 @@ logger = logging.getLogger(__name__)
 # https://people.csail.mit.edu/jrennie/20Newsgroups/20news-bydate.tar.gz
 ARCHIVE = RemoteFileMetadata(
     filename="20news-bydate.tar.gz",
-    url="https://ndownloader.figshare.com/files/5975967",
+    url="http://people.csail.mit.edu/jrennie/20Newsgroups/20news-bydate.tar.gz",
     checksum="8f1b2514ca22a5ade8fbb9cfa5727df95fa587f4c87b786e15c759fa66d95610",
 )
 
