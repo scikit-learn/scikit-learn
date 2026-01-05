@@ -4090,7 +4090,7 @@ def check_transformer_n_iter(name, estimator_orig):
         set_random_state(estimator, 0)
         estimator.fit(X, y_)
 
-        # These return a n_iter per component.
+        # These return an n_iter per component.
         if name in CROSS_DECOMPOSITION:
             for iter_ in estimator.n_iter_:
                 assert iter_ >= 1
