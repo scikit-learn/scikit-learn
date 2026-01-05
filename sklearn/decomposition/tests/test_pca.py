@@ -18,13 +18,12 @@ from sklearn.utils._array_api import (
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._array_api import device as array_device
-from sklearn.utils._sparse import _sparse_random
 from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
 from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 from sklearn.utils.estimator_checks import (
     check_array_api_input_and_values,
 )
-from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS, _sparse_random
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "covariance_eigh", "arpack", "randomized", "auto"]

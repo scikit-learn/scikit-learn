@@ -21,7 +21,6 @@ from sklearn.linear_model import ARDRegression, BayesianRidge, RidgeCV
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline, make_union
 from sklearn.random_projection import _sparse_random_matrix
-from sklearn.utils._sparse import SCIPY_VERSION_BELOW_1_12
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose,
@@ -35,6 +34,7 @@ from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
     LIL_CONTAINERS,
+    SCIPY_VERSION_BELOW_1_12,
 )
 
 

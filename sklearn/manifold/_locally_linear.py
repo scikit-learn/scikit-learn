@@ -21,8 +21,8 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_array, check_random_state
 from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
-from sklearn.utils._sparse import _align_api_if_sparse, _sparse_eye
-from sklearn.utils.fixes import SCIPY_VERSION_BELOW_1_15
+from sklearn.utils._sparse import _align_api_if_sparse
+from sklearn.utils.fixes import SCIPY_VERSION_BELOW_1_15, _sparse_eye
 from sklearn.utils.validation import FLOAT_DTYPES, check_is_fitted, validate_data
 
 

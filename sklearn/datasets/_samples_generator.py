@@ -18,8 +18,8 @@ from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.utils import Bunch, check_array, check_random_state
 from sklearn.utils import shuffle as util_shuffle
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
-from sklearn.utils._sparse import (
-    _align_api_if_sparse,
+from sklearn.utils._sparse import _align_api_if_sparse
+from sklearn.utils.fixes import (
     _sparse_diags,
     _sparse_eye,
     _sparse_random,

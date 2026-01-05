@@ -16,7 +16,7 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MaxAbsScaler, StandardScaler
-from sklearn.utils._sparse import _sparse_random
+from sklearn.utils.fixes import _sparse_random
 
 # memory location for caching datasets
 M = Memory(location=str(Path(__file__).resolve().parent / "cache"))

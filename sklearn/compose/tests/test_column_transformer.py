@@ -34,14 +34,13 @@ from sklearn.tests.metadata_routing_common import (
     check_recorded_metadata,
 )
 from sklearn.utils._indexing import _safe_indexing
-from sklearn.utils._sparse import _sparse_eye
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose_dense_sparse,
     assert_almost_equal,
     assert_array_equal,
 )
-from sklearn.utils.fixes import CSR_CONTAINERS, parse_version
+from sklearn.utils.fixes import CSR_CONTAINERS, _sparse_eye, parse_version
 
 
 class Trans(TransformerMixin, BaseEstimator):

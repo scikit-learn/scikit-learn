@@ -28,8 +28,8 @@ from sklearn.feature_extraction._stop_words import ENGLISH_STOP_WORDS
 from sklearn.preprocessing import normalize
 from sklearn.utils import metadata_routing
 from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
-from sklearn.utils._sparse import SCIPY_VERSION_BELOW_1_12, _align_api_if_sparse
-from sklearn.utils.fixes import _IS_32BIT
+from sklearn.utils._sparse import _align_api_if_sparse
+from sklearn.utils.fixes import _IS_32BIT, SCIPY_VERSION_BELOW_1_12
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
     check_array,

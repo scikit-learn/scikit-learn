@@ -43,7 +43,6 @@ from sklearn.utils._mocking import (
     MockDataFrame,
     _MockEstimatorOnOffPrediction,
 )
-from sklearn.utils._sparse import _sparse_random
 from sklearn.utils._testing import (
     SkipTest,
     TempMemmap,
@@ -62,6 +61,7 @@ from sklearn.utils.fixes import (
     CSR_CONTAINERS,
     DIA_CONTAINERS,
     DOK_CONTAINERS,
+    _sparse_random,
 )
 from sklearn.utils.validation import (
     FLOAT_DTYPES,

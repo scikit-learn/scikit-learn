@@ -13,8 +13,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model._base import LinearModel
 from sklearn.utils import _safe_indexing
 from sklearn.utils._param_validation import Interval, StrOptions
-from sklearn.utils._sparse import _sparse_eye
-from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils.fixes import _sparse_eye, parse_version, sp_version
 from sklearn.utils.validation import _check_sample_weight, validate_data
 
 

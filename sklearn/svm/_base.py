@@ -24,8 +24,9 @@ from sklearn.utils import (
     compute_class_weight,
 )
 from sklearn.utils._param_validation import Interval, StrOptions
-from sklearn.utils._sparse import SCIPY_VERSION_BELOW_1_12, _align_api_if_sparse
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.fixes import SCIPY_VERSION_BELOW_1_12
 from sklearn.utils.metaestimators import available_if
 from sklearn.utils.multiclass import (
     _ovr_decision_function,

@@ -25,14 +25,13 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import pairwise_distances, pairwise_distances_argmin
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.utils._sparse import _sparse_random
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
     create_memmap_backed_data,
 )
 from sklearn.utils.extmath import row_norms
-from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.fixes import CSR_CONTAINERS, _sparse_random
 from sklearn.utils.parallel import _get_threadpool_controller
 
 # non centered, sparse centers to check the

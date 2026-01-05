@@ -23,7 +23,6 @@ from sklearn.utils._array_api import (
 from sklearn.utils._array_api import (
     device as array_device,
 )
-from sklearn.utils._sparse import _sparse_random
 from sklearn.utils._testing import (
     _array_api_for_tests,
     assert_allclose,
@@ -57,6 +56,7 @@ from sklearn.utils.fixes import (
     DOK_CONTAINERS,
     LIL_CONTAINERS,
     _mode,
+    _sparse_random,
 )
 
 

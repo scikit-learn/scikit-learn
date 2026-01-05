@@ -43,7 +43,6 @@ from sklearn.utils._array_api import (
     _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._sparse import _sparse_random
 from sklearn.utils._testing import (
     _array_api_for_tests,
     _convert_container,
@@ -65,6 +64,7 @@ from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
     LIL_CONTAINERS,
+    _sparse_random,
     sp_version,
 )
 from sklearn.utils.sparsefuncs import mean_variance_axis

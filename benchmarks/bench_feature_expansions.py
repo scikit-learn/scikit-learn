@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from sklearn.preprocessing import PolynomialFeatures
-from sklearn.utils._sparse import _sparse_random
+from sklearn.utils.fixes import _sparse_random
 
 degree = 2
 trials = 3

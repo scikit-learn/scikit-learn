@@ -6,14 +6,18 @@ from numpy.testing import assert_allclose
 from sklearn.datasets import make_regression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import ElasticNet, ElasticNetCV, Lasso, LassoCV
-from sklearn.utils._sparse import _sparse_random
 from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     create_memmap_backed_data,
     ignore_warnings,
 )
-from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, LIL_CONTAINERS
+from sklearn.utils.fixes import (
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    LIL_CONTAINERS,
+    _sparse_random,
+)
 
 
 def test_sparse_coef():

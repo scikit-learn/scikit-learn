@@ -15,7 +15,6 @@ from sklearn.linear_model._base import (
     make_dataset,
 )
 from sklearn.preprocessing import add_dummy_feature
-from sklearn.utils._sparse import _sparse_eye
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
@@ -26,6 +25,7 @@ from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
     LIL_CONTAINERS,
+    _sparse_eye,
 )
 
 rtol = 1e-6

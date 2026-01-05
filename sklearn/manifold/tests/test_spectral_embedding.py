@@ -17,13 +17,14 @@ from sklearn.manifold._spectral_embedding import (
 from sklearn.metrics import normalized_mutual_info_score, pairwise_distances
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.neighbors import NearestNeighbors
-from sklearn.utils._sparse import _sparse_diags, _sparse_random
 from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.fixes import (
     COO_CONTAINERS,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
+    _sparse_diags,
+    _sparse_random,
     parse_version,
     sp_version,
 )

@@ -8,7 +8,6 @@ from scipy import sparse
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.utils._sparse import _sparse_diags, _sparse_random
 from sklearn.utils._testing import (
     TempMemmap,
     _convert_container,
@@ -31,6 +30,8 @@ from sklearn.utils.fixes import (
     _IS_WASM,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
+    _sparse_diags,
+    _sparse_random,
 )
 from sklearn.utils.metaestimators import available_if
 

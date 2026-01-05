@@ -6,9 +6,13 @@ from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import linalg
 
 from sklearn.datasets import make_classification
-from sklearn.utils._sparse import _sparse_random
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS, LIL_CONTAINERS
+from sklearn.utils.fixes import (
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    LIL_CONTAINERS,
+    _sparse_random,
+)
 from sklearn.utils.sparsefuncs import (
     _implicit_column_offset,
     count_nonzero,

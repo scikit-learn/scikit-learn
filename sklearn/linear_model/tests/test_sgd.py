@@ -24,13 +24,14 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler, scale
 from sklearn.svm import OneClassSVM
 from sklearn.utils import get_tags
-from sklearn.utils._sparse import _align_api_if_sparse, _sparse_random
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.fixes import _sparse_random
 
 
 def _update_kwargs(kwargs):
