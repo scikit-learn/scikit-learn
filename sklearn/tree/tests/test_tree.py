@@ -2480,8 +2480,10 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing():
     assert_allclose(y_pred, [np.mean(y_equal[-4:])])
 
 
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize("seed", range(3))
-def test_missing_values_random_splitter_on_equal_nodes_no_missing(seed):
+@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
+def test_missing_values_random_splitter_on_equal_nodes_no_missing(seed, criterion):
     """Check missing values go to the correct node during predictions for ExtraTree.
 
     Since ETC use random splits, we use different seeds to verify that the
@@ -2490,7 +2492,7 @@ def test_missing_values_random_splitter_on_equal_nodes_no_missing(seed):
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
 
-    etr = ExtraTreeRegressor(random_state=seed, max_depth=1)
+    etr = ExtraTreeRegressor(random_state=seed, max_depth=1, criterion=criterion)
     etr.fit(X, y)
 
     # Get the left and right children of the root node

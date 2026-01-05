@@ -11,7 +11,6 @@ import pytest
 from numpy.random import RandomState
 
 from sklearn.base import is_classifier
-from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.tree import (
     DecisionTreeClassifier,
@@ -20,6 +19,9 @@ from sklearn.tree import (
     export_text,
     plot_tree,
 )
+
+CLF_CRITERIONS = ("gini", "log_loss")
+REG_CRITERIONS = ("squared_error", "absolute_error", "poisson")
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -389,16 +391,20 @@ def test_graphviz_errors():
         export_graphviz(clf, out, class_names=[])
 
 
-def test_criterion_in_gradient_boosting_graphviz():
+@pytest.mark.parametrize("criterion", CLF_CRITERIONS + REG_CRITERIONS)
+def test_criterion_in_gradient_boosting_graphviz(criterion):
     dot_data = StringIO()
 
-    clf = GradientBoostingClassifier(n_estimators=2, random_state=0)
-    clf.fit(X, y)
-    for estimator in clf.estimators_:
-        export_graphviz(estimator[0], out_file=dot_data)
+    is_reg = criterion in REG_CRITERIONS
+    Tree = DecisionTreeRegressor if is_reg else DecisionTreeClassifier
+    clf = Tree(random_state=0, criterion=criterion)
+    # positive values for poisson criterion:
+    y_ = [yi + 2 for yi in y] if is_reg else y
+    clf.fit(X, y_)
+    export_graphviz(clf, out_file=dot_data)
 
     for finding in finditer(r"\[.*?samples.*?\]", dot_data.getvalue()):
-        assert "squared_error" in finding.group()
+        assert criterion in finding.group()
 
 
 def test_precision():
