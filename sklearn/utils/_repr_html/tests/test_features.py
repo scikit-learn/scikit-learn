@@ -121,7 +121,7 @@ def test_features_html_special_characters():
     html = _features_html(features)
 
     assert "&amp;" in html
-    assert "&quot;" in html or "&#x27;" in html
+    assert "&lt;script&gt;alert(&#x27;xss&#x27;)&lt;/script&gt;" in html
     assert "&gt;" in html
     assert "&lt;" in html
     assert "6 features" in html
