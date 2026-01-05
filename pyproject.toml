@@ -213,6 +213,10 @@ ignore-missing-imports = ["*"]
 # The following flag will configure Pyrefly to match mypy's behavior:
 untyped_def_behavior = "skip-and-infer-return-any" #"check-and-infer-return-type"
 
+[tool.pyrefly.errors]
+# disable `bad-override` errors
+bad-override = false
+
 [tool.mypy]
 ignore_missing_imports = true
 allow_redefinition = true

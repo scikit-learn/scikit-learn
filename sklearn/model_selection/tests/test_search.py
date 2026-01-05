@@ -150,7 +150,6 @@ class LinearSVCNoScore(LinearSVC):
     """A LinearSVC classifier that has no score method."""
 
     @property
-    # pyrefly: ignore [bad-override]
     def score(self):
         raise AttributeError
 

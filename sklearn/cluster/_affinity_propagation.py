@@ -585,7 +585,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             )
             return np.array([-1] * X.shape[0])
 
-    # pyrefly: ignore [bad-override]
     def fit_predict(self, X, y=None):
         """Fit clustering from features/affinity matrix; return cluster labels.
 

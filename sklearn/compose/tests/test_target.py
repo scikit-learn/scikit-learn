@@ -292,7 +292,6 @@ class DummyCheckerListRegressor(DummyRegressor):
         assert isinstance(X, list)
         return super().fit(X, y, sample_weight)
 
-    # pyrefly: ignore [bad-override]
     def predict(self, X):
         assert isinstance(X, list)
         return super().predict(X)

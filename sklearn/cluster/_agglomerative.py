@@ -1094,7 +1094,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
             self.labels_ = np.searchsorted(np.unique(labels), labels)
         return self
 
-    # pyrefly: ignore [bad-override]
     def fit_predict(self, X, y=None):
         """Fit and return the result of each sample's clustering assignment.
 
@@ -1331,7 +1330,6 @@ class FeatureAgglomeration(
         return self
 
     @property
-    # pyrefly: ignore [bad-override]
     def fit_predict(self):
         """Fit and return the result of each sample's clustering assignment."""
         raise AttributeError

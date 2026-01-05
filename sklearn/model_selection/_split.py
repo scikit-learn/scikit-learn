@@ -215,7 +215,6 @@ class LeaveOneOut(_UnsupportedGroupCVMixin, BaseCrossValidator):
     GroupKFold : K-fold iterator variant with non-overlapping groups.
     """
 
-    # pyrefly: ignore [bad-override]
     def _iter_test_indices(self, X, y=None, groups=None):
         n_samples = _num_samples(X)
         if n_samples <= 1:
@@ -224,7 +223,6 @@ class LeaveOneOut(_UnsupportedGroupCVMixin, BaseCrossValidator):
             )
         return range(n_samples)
 
-    # pyrefly: ignore [bad-override]
     def get_n_splits(self, X, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator.
 
@@ -311,7 +309,6 @@ class LeavePOut(_UnsupportedGroupCVMixin, BaseCrossValidator):
     def __init__(self, p):
         self.p = p
 
-    # pyrefly: ignore [bad-override]
     def _iter_test_indices(self, X, y=None, groups=None):
         n_samples = _num_samples(X)
         if n_samples <= self.p:
@@ -323,7 +320,6 @@ class LeavePOut(_UnsupportedGroupCVMixin, BaseCrossValidator):
         for combination in combinations(range(n_samples), self.p):
             yield np.array(combination)
 
-    # pyrefly: ignore [bad-override]
     def get_n_splits(self, X, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator.
 
@@ -519,7 +515,6 @@ class KFold(_UnsupportedGroupCVMixin, _BaseKFold):
     def __init__(self, n_splits=5, *, shuffle=False, random_state=None):
         super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
 
-    # pyrefly: ignore [bad-override]
     def _iter_test_indices(self, X, y=None, groups=None):
         n_samples = _num_samples(X)
         indices = np.arange(n_samples)
@@ -614,7 +609,6 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     def __init__(self, n_splits=5, *, shuffle=False, random_state=None):
         super().__init__(n_splits, shuffle=shuffle, random_state=random_state)
 
-    # pyrefly: ignore [bad-override]
     def _iter_test_indices(self, X, y, groups):
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
@@ -848,13 +842,11 @@ class StratifiedKFold(_BaseKFold):
             test_folds[y_encoded == k] = folds_for_class
         return test_folds
 
-    # pyrefly: ignore [bad-override]
     def _iter_test_masks(self, X, y=None, groups=None):
         test_folds = self._make_test_folds(X, y)
         for i in range(self.n_splits):
             yield test_folds == i
 
-    # pyrefly: ignore [bad-override]
     def split(self, X, y, groups=None):
         """Generate indices to split data into training and test set.
 
@@ -1006,7 +998,6 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     def __init__(self, n_splits=5, shuffle=False, random_state=None):
         super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
 
-    # pyrefly: ignore [bad-override]
     def _iter_test_indices(self, X, y, groups):
         # Implementation is based on this kaggle kernel:
         # https://www.kaggle.com/jakubwasikowski/stratified-group-k-fold-cross-validation
@@ -1376,7 +1367,6 @@ class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
     GroupKFold: K-fold iterator variant with non-overlapping groups.
     """
 
-    # pyrefly: ignore [bad-override]
     def _iter_test_masks(self, X, y, groups):
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
@@ -1503,7 +1493,6 @@ class LeavePGroupsOut(GroupsConsumerMixin, BaseCrossValidator):
     def __init__(self, n_groups):
         self.n_groups = n_groups
 
-    # pyrefly: ignore [bad-override]
     def _iter_test_masks(self, X, y, groups):
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
@@ -1825,7 +1814,6 @@ class RepeatedStratifiedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
             n_splits=n_splits,
         )
 
-    # pyrefly: ignore [bad-override]
     def split(self, X, y, groups=None):
         """Generate indices to split data into training and test set.
 
@@ -2188,7 +2176,6 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
         )
         self._default_test_size = 0.2
 
-    # pyrefly: ignore [bad-override]
     def _iter_indices(self, X, y, groups):
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
@@ -2328,7 +2315,6 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         )
         self._default_test_size = 0.1
 
-    # pyrefly: ignore [bad-override]
     def _iter_indices(self, X, y, groups=None):
         n_samples = _num_samples(X)
         y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
@@ -2406,7 +2392,6 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
             yield train, test
 
-    # pyrefly: ignore [bad-override]
     def split(self, X, y, groups=None):
         """Generate indices to split data into training and test set.
 
@@ -2619,7 +2604,6 @@ class PredefinedSplit(BaseCrossValidator):
             test_index = ind[test_index]
             yield train_index, test_index
 
-    # pyrefly: ignore [bad-override]
     def _iter_test_masks(self):
         """Generates boolean masks corresponding to test sets."""
         for f in self.unique_folds:

@@ -900,7 +900,7 @@ def check_estimator(
                 check_result["status"] = "failed"
 
             if on_fail == "warn":
-                # pyrefly: ignore [bad-argument-type]
+                # pyrefly: ignore [bad-argument-type, missing-argument]
                 warning = EstimatorCheckFailedWarning(**check_result)
                 warnings.warn(warning)
         else:

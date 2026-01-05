@@ -57,10 +57,12 @@ from sklearn.utils.fixes import CSR_CONTAINERS
         ARDRegression(),
         BayesianRidge(),
         ElasticNet(),
+        # pyrefly: ignore [bad-instantiation]
         ElasticNetCV(),
         Lars(),
         LarsCV(),
         Lasso(),
+        # pyrefly: ignore [bad-instantiation]
         LassoCV(),
         LassoLarsCV(),
         LassoLarsIC(),
@@ -76,8 +78,10 @@ from sklearn.utils.fixes import CSR_CONTAINERS
         ),
         LogisticRegressionCV(tol=1e-6),
         MultiTaskElasticNet(),
+        # pyrefly: ignore [bad-instantiation]
         MultiTaskElasticNetCV(),
         MultiTaskLasso(),
+        # pyrefly: ignore [bad-instantiation]
         MultiTaskLassoCV(),
         OrthogonalMatchingPursuit(),
         OrthogonalMatchingPursuitCV(),

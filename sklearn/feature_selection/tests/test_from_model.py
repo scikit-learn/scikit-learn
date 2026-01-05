@@ -325,8 +325,10 @@ def test_sample_weight():
     "estimator",
     [
         Lasso(alpha=0.1, random_state=42),
+        # pyrefly: ignore [bad-instantiation]
         LassoCV(random_state=42),
         ElasticNet(l1_ratio=1, random_state=42),
+        # pyrefly: ignore [bad-instantiation]
         ElasticNetCV(l1_ratio=[1], random_state=42),
     ],
 )

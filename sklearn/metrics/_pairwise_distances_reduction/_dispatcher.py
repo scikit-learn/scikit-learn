@@ -182,7 +182,6 @@ class ArgKmin(BaseDistancesReductionDispatcher):
     """
 
     @classmethod
-    # pyrefly: ignore [bad-override]
     def compute(
         cls,
         X,
@@ -321,7 +320,6 @@ class RadiusNeighbors(BaseDistancesReductionDispatcher):
     """
 
     @classmethod
-    # pyrefly: ignore [bad-override]
     def compute(
         cls,
         X,
@@ -478,7 +476,6 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
         return list(set(BaseDistancesReductionDispatcher.valid_metrics()) - excluded)
 
     @classmethod
-    # pyrefly: ignore [bad-override]
     def compute(
         cls,
         X,
@@ -647,7 +644,6 @@ class RadiusNeighborsClassMode(BaseDistancesReductionDispatcher):
         return sorted(set(BaseDistancesReductionDispatcher.valid_metrics()) - excluded)
 
     @classmethod
-    # pyrefly: ignore [bad-override]
     def compute(
         cls,
         X,
