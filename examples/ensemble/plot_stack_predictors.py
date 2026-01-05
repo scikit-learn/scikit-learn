@@ -243,17 +243,17 @@ stacking_regressor.final_estimator_.coef_
 from sklearn.linear_model import LinearRegression
 
 linear_reg = LinearRegression(fit_intercept=False, positive=True)
-stacking_regressor = StackingRegressor(
+super_learner_like = StackingRegressor(
     estimators=estimators, final_estimator=linear_reg
 )
-stacking_regressor.fit(X, y)
-stacking_regressor.final_estimator_.coef_
+super_learner_like.fit(X, y)
+super_learner_like.final_estimator_.coef_
 
 # %%
 # The sum of meta-weights in the stacked regressor is close to 1.0, but not
 # exactly one:
 
-stacking_regressor.final_estimator_.coef_.sum()
+super_learner_like.final_estimator_.coef_.sum()
 
 # %%
 # Beyond interpretability, the normalization to 1.0 constraint in the `SuperLearner`
@@ -266,6 +266,10 @@ stacking_regressor.final_estimator_.coef_.sum()
 #   the ensemble by the same constant.
 # - Removes one degree of freedom: avoiding redundancy with a constant term and
 #   modestly stabilizing weights under collinearity.
+#
+# The cleanest way to enforce the coefficient normalization with scikit-learn is
+# by defining a custom estimator, but doing so is beyond the scope of this
+# tutorial.
 #
 # Conclusions
 # ###########
