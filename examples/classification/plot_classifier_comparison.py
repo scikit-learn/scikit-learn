@@ -41,6 +41,15 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
+# This example compares several classical classification algorithms
+# on a toy dataset and visualizes their decision boundaries.
+#
+# The goal is to help beginners understand:
+# - how different classifiers behave
+# - why feature scaling matters
+# - how decision boundaries differ between models
+
+
 names = [
     "Nearest Neighbors",
     "Linear SVM",
