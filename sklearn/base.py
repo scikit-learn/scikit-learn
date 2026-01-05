@@ -706,7 +706,7 @@ class ClusterMixin:
         **kwargs : dict
             Arguments to be passed to ``fit``.
 
-            .. versionadded:: 1.4
+            .. versionadded:: scikit-learn 1.4
 
         Returns
         -------
@@ -1103,7 +1103,7 @@ class OutlierMixin:
         **kwargs : dict
             Arguments to be passed to ``fit``.
 
-            .. versionadded:: 1.4
+            .. versionadded:: scikit-learn 1.4
 
         Returns
         -------
@@ -1256,7 +1256,7 @@ def is_regressor(estimator):
 def is_clusterer(estimator):
     """Return True if the given estimator is (probably) a clusterer.
 
-    .. versionadded:: 1.6
+    .. versionadded:: scikit-learn 1.6
 
     Parameters
     ----------
