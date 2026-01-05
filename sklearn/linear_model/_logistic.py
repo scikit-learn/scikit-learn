@@ -306,12 +306,6 @@ def _logistic_regression_path(
             "one-versus-rest scheme."
         )
 
-    if n_classes >= 3 and solver == "newton-cd" and sparse.issparse(X):
-        raise ValueError(
-            f"Solver 'newton-cd' does not support sparse X for multiclass settings"
-            f" (n_classes >= 3); got {n_classes=}."
-        )
-
     random_state = check_random_state(random_state)
 
     le = LabelEncoder().fit(classes)
@@ -1373,12 +1367,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 "This solver needs samples of at least 2 classes"
                 " in the data, but the data contains only one"
                 " class: %r" % self.classes_[0]
-            )
-
-        if n_classes >= 3 and solver == "newton-cd" and sparse.issparse(X):
-            raise ValueError(
-                f"Solver 'newton-cd' does not support sparse X for multiclass settings"
-                f" (n_classes >= 3); got {n_classes=}."
             )
 
         if self.warm_start:
