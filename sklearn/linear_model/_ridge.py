@@ -451,12 +451,11 @@ def ridge_regression(
         reasons, using `alpha = 0` with the `Ridge` object is not advised.
         Instead, you should use the :class:`LinearRegression` object.
 
-        For an example on how the model coefficients
-        vary with the regularization strength, see
-        :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`.
-
         If an array is passed, penalties are assumed to be specific to the
         targets. Hence they must correspond in number.
+
+        For an illustration of the effect of alpha on the model coefficients, see
+        :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`.
 
     sample_weight : float or array-like of shape (n_samples,), default=None
         Individual weights for each sample. If given a float, every sample
@@ -1059,8 +1058,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         targets. Hence they must correspond in number.
 
         See :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`
-        for an example on how the model coefficients
-        vary with the regularization strength.
+        for an illustration of the effect of alpha on the model coefficients.
 
     fit_intercept : bool, default=True
         Whether to fit the intercept for this model. If set
@@ -1404,8 +1402,7 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`.
 
-        For an example on how the model coefficients vary
-        with the regularization strength, see
+        For an illustration of the effect of alpha on the model coefficients, see
         :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`.
 
     fit_intercept : bool, default=True
@@ -2634,9 +2631,8 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         :class:`~sklearn.svm.LinearSVC`.
         If using Leave-One-Out cross-validation, alphas must be strictly positive.
 
-        For an example on how the model coefficients vary
-        with the regularization strength, see
-        :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`.
+        For an example on how regularization strength affects the model coefficients,
+        see :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -2828,9 +2824,8 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         :class:`~sklearn.svm.LinearSVC`.
         If using Leave-One-Out cross-validation, alphas must be strictly positive.
 
-        For an example on how the model coefficients vary
-        with the regularization strength, see
-        :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`.
+        For an example on how regularization strength affects the model coefficients,
+        see :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set

@@ -108,8 +108,6 @@ of squares:
 The complexity parameter :math:`\alpha \geq 0` controls the amount
 of shrinkage: the larger the value of :math:`\alpha`, the greater the amount
 of shrinkage and thus the coefficients become more robust to collinearity.
-See :ref:`Ridge coefficients as a function of the L2 Regularization <sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py>`
-for more details.
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ridge_path_001.png
    :target: ../auto_examples/linear_model/plot_ridge_path.html
