@@ -56,7 +56,11 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.extmath import row_norms, softmax
-from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
+from sklearn.utils.fixes import (
+    _get_additional_lbfgs_options_dict,
+    parse_version,
+    sp_version,
+)
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -435,12 +439,6 @@ def _logistic_regression_path(
             " (n_classes >= 3). Either use another solver or wrap the "
             "estimator in a OneVsRestClassifier to keep applying a "
             "one-versus-rest scheme."
-        )
-
-    if n_classes >= 3 and solver == "newton-cd" and sparse.issparse(X):
-        raise ValueError(
-            f"Solver 'newton-cd' does not support sparse X for multiclass settings"
-            f" (n_classes >= 3); got {n_classes=}."
         )
 
     random_state = check_random_state(random_state)
@@ -1564,6 +1562,15 @@ class LogisticRegression(
         n_classes = size(self.classes_)
         is_binary = n_classes == 2
 
+        if solver == "newton-cd" and n_classes >= 3 and sparse.issparse(X):
+            # TODO(scipy 1.17): remove once scipy >= 1.17 is minimal version.
+            if sp_version < parse_version("1.17.0"):
+                raise ValueError(
+                    "Solver 'newton-cd' supports sparse X in a multiclass setting "
+                    "(n_classes >= 3) only with scipy >= 1.17."
+                )
+            X = sparse.csc_array(X)
+
         # With lbfgs, the fit task will have a subtask even if max_iter is 0.
         # There's also always one extra empty subtask due to the scipy.optimize.minimize
         # callback logic.
@@ -1617,12 +1624,6 @@ class LogisticRegression(
                 "This solver needs samples of at least 2 classes"
                 " in the data, but the data contains only one"
                 " class: %r" % self.classes_[0]
-            )
-
-        if n_classes >= 3 and solver == "newton-cd" and sparse.issparse(X):
-            raise ValueError(
-                f"Solver 'newton-cd' does not support sparse X for multiclass settings"
-                f" (n_classes >= 3); got {n_classes=}."
             )
 
         if self.warm_start:
@@ -2324,11 +2325,14 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 f" class: {self.classes_[0]}."
             )
 
-        if n_classes >= 3 and solver == "newton-cd" and sparse.issparse(X):
-            raise ValueError(
-                f"Solver 'newton-cd' does not support sparse X for multiclass settings"
-                f" (n_classes >= 3); got {n_classes=}."
-            )
+        if solver == "newton-cd" and n_classes >= 3 and sparse.issparse(X):
+            # TODO(scipy 1.17): remove once scipy >= 1.17 is minimal version.
+            if sp_version < parse_version("1.17.0"):
+                raise ValueError(
+                    "Solver 'newton-cd' supports sparse X in a multiclass setting "
+                    "(n_classes >= 3) only with scipy >= 1.17."
+                )
+            X = sparse.csr_array(X)
 
         if solver in ["sag", "saga"]:
             max_squared_sum = row_norms(X, squared=True).max()
