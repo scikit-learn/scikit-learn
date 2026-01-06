@@ -142,7 +142,8 @@ def average_precision_score(
     Parameters
     ----------
     y_true : array-like of shape (n_samples,) or (n_samples, n_classes)
-        True binary labels or binary label indicators.
+        True binary labels, :term:`multi-label` indicators (as a
+        :term:`multilabel indicator matrix`) or :term:`multi-class` labels.
 
     y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target scores, can either be probability estimates of the positive
@@ -261,6 +262,12 @@ def average_precision_score(
                 "Do not set pos_label or set pos_label to 1."
             )
         y_true = label_binarize(y_true, classes=present_labels)
+        if not y_score.shape == y_true.shape:
+            raise ValueError(
+                "`y_score` needs to be of shape `(n_samples, n_classes)`, since "
+                "`y_true` contains multiple classes. Got "
+                f"`y_score.shape={y_score.shape}`."
+            )
 
     average_precision = partial(
         _binary_uninterpolated_average_precision, pos_label=pos_label
@@ -500,9 +507,9 @@ def roc_auc_score(
     Parameters
     ----------
     y_true : array-like of shape (n_samples,) or (n_samples, n_classes)
-        True labels or binary label indicators. The binary and multiclass cases
+        True labels or :term:`label indicator matrix`. The binary and multiclass cases
         expect labels with shape (n_samples,) while the multilabel case expects
-        binary label indicators with shape (n_samples, n_classes).
+        a :term:`multilabel indicator matrix` with shape (n_samples, n_classes).
 
     y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target scores.
@@ -764,7 +771,12 @@ def _multiclass_roc_auc_score(
         Sample weights.
 
     """
-    # validation of the input y_score
+    if not y_score.ndim == 2:
+        raise ValueError(
+            "`y_score` needs to be of shape `(n_samples, n_classes)`, since "
+            "`y_true` contains multiple classes. Got "
+            f"`y_score.shape={y_score.shape}`."
+        )
     if not np.allclose(1, y_score.sum(axis=1)):
         raise ValueError(
             "Target scores need to be probabilities for multiclass "
@@ -1335,7 +1347,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     Parameters
     ----------
     y_true : {array-like, sparse matrix} of shape (n_samples, n_labels)
-        True binary labels in binary indicator format.
+        True binary labels in :term:`label indicator format`.
 
     y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
@@ -1437,7 +1449,7 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     Parameters
     ----------
     y_true : array-like of shape (n_samples, n_labels)
-        True binary labels in binary indicator format.
+        True binary labels in :term:`label indicator format`.
 
     y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
@@ -1514,7 +1526,7 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     Parameters
     ----------
     y_true : {array-like, sparse matrix} of shape (n_samples, n_labels)
-        True binary labels in binary indicator format.
+        True binary labels in :term:`label indicator format`.
 
     y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
@@ -2111,6 +2123,13 @@ def top_k_accuracy_score(
                 " labels, `labels` must be provided."
             )
         y_score = column_or_1d(y_score)
+    else:
+        if not y_score.ndim == 2:
+            raise ValueError(
+                "`y_score` needs to be of shape `(n_samples, n_classes)`, since "
+                "`y_true` contains multiple classes. Got "
+                f"`y_score.shape={y_score.shape}`."
+            )
 
     check_consistent_length(y_true, y_score, sample_weight)
     y_score_n_classes = y_score.shape[1] if y_score.ndim == 2 else 2
