@@ -1886,8 +1886,8 @@ def test_enet_path_check_input_false():
     X = np.asfortranarray(X)
 
     # All of these used to raise ValueError, now they should run smoothly
-    # Case 1: Testing 'auto'
-    alphas, _, _ = enet_path(X, y, n_alphas=3, check_input=False, precompute='auto')
+    # Case 1: Testing "auto"
+    alphas, _, _ = enet_path(X, y, n_alphas=3, check_input=False, precompute="auto")
     assert len(alphas) == 3
 
     # Case 2: Testing True
