@@ -1,0 +1,3 @@
+- :func:`linear_model.enet_path` now correctly handles ``check_input=False`` 
+  when ``precompute="auto"``, ``precompute=True`` or ``precompute=False``.
+  By :user:`Albert Dorador <adc-trust-ai>`
