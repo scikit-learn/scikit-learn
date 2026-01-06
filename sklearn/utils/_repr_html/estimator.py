@@ -414,7 +414,7 @@ def _write_estimator_html(
 
 
 def estimator_html_repr(estimator):
-    """Build a HTML representation of an estimator.
+    """Build an HTML representation of an estimator.
 
     Read more in the :ref:`User Guide <visualizing_composite_estimators>`.
 
