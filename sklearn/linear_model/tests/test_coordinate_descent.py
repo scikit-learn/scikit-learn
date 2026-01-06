@@ -1903,5 +1903,6 @@ def test_enet_path_check_input_false():
         n_samples=100, n_features=5, n_targets=3, random_state=0
     )
     X_multi = np.asfortranarray(X_multi)
+    y_multi = np.asfortranarray(y_multi)
     alphas, _, _ = enet_path(X_multi, y_multi, n_alphas=3, check_input=False)
     assert len(alphas) == 3
