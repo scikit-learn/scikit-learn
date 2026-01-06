@@ -1885,8 +1885,15 @@ def test_enet_path_check_input_false():
     X, y = make_regression(n_samples=100, n_features=5, n_informative=2, random_state=0)
     X = np.asfortranarray(X)
 
-    # This used to raise ValueError, now it should run smoothly
-    alphas, coefs, gaps = enet_path(X, y, n_alphas=3, check_input=False)
+    # All of these used to raise ValueError, now they should run smoothly
+    # Case 1: Testing 'auto'
+    alphas, _, _ = enet_path(X, y, n_alphas=3, check_input=False, precompute='auto')
+    assert len(alphas) == 3
 
-    assert len(alphas) > 0
-    assert coefs.shape == (5, len(alphas))
+    # Case 2: Testing True
+    alphas, _, _ = enet_path(X, y, n_alphas=3, check_input=False, precompute=True)
+    assert len(alphas) == 3
+
+    # Case 3: Testing False
+    alphas, _, _ = enet_path(X, y, n_alphas=3, check_input=False, precompute=False)
+    assert len(alphas) == 3
