@@ -1897,3 +1897,11 @@ def test_enet_path_check_input_false():
     # Case 3: Testing False
     alphas, _, _ = enet_path(X, y, n_alphas=3, check_input=False, precompute=False)
     assert len(alphas) == 3
+
+    # Case 4: Testing Multi-output
+    X_multi, y_multi = make_regression(
+        n_samples=100, n_features=5, n_targets=3, random_state=0
+    )
+    X_multi = np.asfortranarray(X_multi)
+    alphas, _, _ = enet_path(X_multi, y_multi, n_alphas=3, check_input=False, precompute=True)
+    assert len(alphas) == 3
