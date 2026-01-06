@@ -234,9 +234,15 @@ def test_binmapper_weighted_vs_repeated_equivalence(global_random_seed, n_bins):
     assert_array_equal(X_trans_weighted, X_trans_repeated)
 
 
+# Note: we use a small number of RNG seeds to check that the tests is not seed
+# dependent while keeping the statistical test valid. If we had used the
+# global_random_seed fixture, it would have been expected to get some failed
+# rejections of the null hypothesis rejections because of the large number of
+# tests run by the fixture.
+@pytest.mark.parametrize("seed", [0, 1, 42])
 @pytest.mark.parametrize("n_bins", [3, 5])
-def test_subsampled_weighted_vs_repeated_equivalence(global_random_seed, n_bins):
-    rng = np.random.RandomState(global_random_seed)
+def test_subsampled_weighted_vs_repeated_equivalence(seed, n_bins):
+    rng = np.random.RandomState(seed)
 
     n_samples = 500
     X = rng.randn(n_samples, 3)
@@ -265,8 +271,10 @@ def test_subsampled_weighted_vs_repeated_equivalence(global_random_seed, n_bins)
             for bin_weighted, bin_repeated in zip(bins_weighted, bins_repeated)
         ]
     )
-    # Apply Bonferroni test correction
-    assert (kstest_pval < 0.025).sum() <= 1
+    # We should not be able to reject the null hypothesis that the two samples
+    # come from the same distribution for all bins at level 5% with Bonferroni
+    # correction.
+    assert np.min(kstest_pval) > 0.05 / len(kstest_pval)
 
 
 @pytest.mark.parametrize(
