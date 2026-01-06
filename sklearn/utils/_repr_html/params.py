@@ -89,9 +89,12 @@ def _params_html_repr(params):
 
     PARAM_AVAILABLE_DOC_LINK_TEMPLATE = """
         <a class="param-doc-link"
+            style="anchor-name: --doc-link-{param_name};"
             rel="noreferrer" target="_blank" href="{link}">
             {param_name}
-            <span class="param-doc-description">{param_description}</span>
+            <span class="param-doc-description"
+            style="position-anchor: --doc-link-{param_name};">
+            {param_description}</span>
         </a>
     """
     estimator_class_docs = inspect.getdoc(params.estimator_class)
@@ -110,8 +113,9 @@ def _params_html_repr(params):
         link = _generate_link_to_param_doc(params.estimator_class, row, params.doc_link)
         if param_numpydoc := param_map.get(row, None):
             param_description = (
-                f"{param_numpydoc.name}: {param_numpydoc.type}<br><br>"
-                f"{'<br>'.join(param_numpydoc.desc)}"
+                f"{html.escape(param_numpydoc.name)}: "
+                f"{html.escape(param_numpydoc.type)}<br><br>"
+                f"{'<br>'.join(html.escape(line) for line in param_numpydoc.desc)}"
             )
         else:
             param_description = None
