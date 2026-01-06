@@ -1,3 +1,0 @@
-- Fixed a regression in :ref:`decision trees <tree>` where almost constant features were
-  not handled properly.
-  By :user:`Sercan Turkmen <sercant>`.
