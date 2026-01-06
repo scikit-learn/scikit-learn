@@ -1876,6 +1876,7 @@ def test_linear_model_cv_alphas(Estimator):
         clf.fit(X, y[:, 0])
     assert len(clf.alphas_) == 100
 
+
 def test_enet_path_check_input_false():
     # Test for issue #32989
     import numpy as np
@@ -1884,9 +1885,9 @@ def test_enet_path_check_input_false():
 
     X, y = make_regression(n_samples=100, n_features=5, n_informative=2, random_state=0)
     X = np.asfortranarray(X)
-    
+
     # This used to raise ValueError, now it should run smoothly
     alphas, coefs, gaps = enet_path(X, y, n_alphas=3, check_input=False)
-    
+
     assert len(alphas) > 0
     assert coefs.shape == (5, len(alphas))
