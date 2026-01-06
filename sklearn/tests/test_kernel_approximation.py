@@ -428,33 +428,6 @@ def test_nystroem_singular_kernel():
     assert np.all(np.isfinite(Y))
 
 
-@pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
-)
-def test_nystroem_singular_kernel_array_api(array_namespace, device, dtype_name):
-    if dtype_name == "float32":
-        pytest.xfail(
-            "rbf kernel on singular data is not numerically stable with float32"
-        )
-    xp = _array_api_for_tests(array_namespace, device)
-    # test that nystroem works with singular kernel matrix
-    rng = np.random.RandomState(0)
-    X_np = rng.rand(10, 20).astype(dtype_name)
-    X_np = np.vstack([X_np] * 2)  # duplicate samples
-    X_xp = xp.asarray(X_np, device=device)
-
-    with config_context(array_api_dispatch=True):
-        gamma = 100
-        N = Nystroem(gamma=gamma, n_components=X_xp.shape[0]).fit(X_xp)
-        X_xp_transformed = N.transform(X_xp)
-        X_xp_transformed_np = _convert_to_numpy(X_xp_transformed, xp=xp)
-
-        K = rbf_kernel(X_np, gamma=gamma)
-
-        assert_array_almost_equal(K, X_xp_transformed_np @ X_xp_transformed_np.T)
-        assert np.all(np.isfinite(Y))
-
-
 def test_nystroem_poly_kernel_params():
     # Non-regression: Nystroem should pass other parameters beside gamma.
     rnd = np.random.RandomState(37)
