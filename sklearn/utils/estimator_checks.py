@@ -340,8 +340,8 @@ def _yield_outliers_checks(estimator):
 
 def _yield_array_api_checks(estimator, only_numpy=False):
     if only_numpy:
-        # Enabling array API dispatch and feeding the NumPy inputs should yield
-        # consistent results, even if estimator does not explicitly support
+        # Enabling array API dispatch and using NumPy inputs should not
+        # change results, even if the estimator does not explicitly support
         # array API.
         yield partial(
             check_array_api_input,
