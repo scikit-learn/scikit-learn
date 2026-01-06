@@ -359,9 +359,6 @@ def test_nystroem_approximation():
 def test_nystroem_approximation_array_api(
     array_namespace, device, dtype_name, kernel, n_components
 ):
-    if kernel == "laplacian" and array_namespace != "numpy":
-        pytest.xfail("Laplacian kernel not supported for non-numpy namespaces")
-
     xp = _array_api_for_tests(array_namespace, device)
     rnd = np.random.RandomState(0)
     n_samples = 10
