@@ -1744,14 +1744,25 @@ class RandomizedSearchCV(BaseSearchCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    verbose : int
-        Controls the verbosity: the higher, the more messages.
+    verbose : int, default=0
+    Controls the verbosity of the search process.
 
-        - >1 : the computation time for each fold and parameter candidate is
-          displayed;
-        - >2 : the score is also displayed;
-        - >3 : the fold and candidate parameter indexes are also displayed
-          together with the starting time of the computation.
+    The behavior of this parameter is inherited from joblib and the amount
+    of information printed increases with higher values. The exact output
+    is not guaranteed to be stable across versions, but the following
+    describes the observed behavior:
+
+    - 0 : no messages are printed.
+    - 1 : a single summary line is printed describing the number of
+      candidates, folds, and total fits.
+    - 2–9 : progress messages are printed when each cross-validation
+      split finishes, including the score and elapsed time.
+    - ≥10 : in addition to the above, messages are printed at the start
+      of each fit and include both the cross-validation split index and
+      the parameter candidate index.
+
+    Note that increasing verbose beyond these ranges may increase the
+    frequency of messages but does not necessarily add new information.
 
     pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
