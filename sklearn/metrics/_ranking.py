@@ -32,8 +32,8 @@ from sklearn.utils import (
 from sklearn.utils._array_api import (
     _convert_to_numpy,
     _max_precision_float_dtype,
-    get_namespace,
     get_namespace_and_device,
+    move_to,
     size,
 )
 from sklearn.utils._encode import _encode, _unique
@@ -228,7 +228,8 @@ def average_precision_score(
     >>> average_precision_score(y_true, y_scores)
     0.77
     """
-    xp, _ = get_namespace(y_true, y_score, sample_weight)
+    xp, _, device = get_namespace_and_device(y_score)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     if not get_config().get("array_api_dispatch", False):
         y_true = _convert_to_numpy(y_true, xp=xp)
