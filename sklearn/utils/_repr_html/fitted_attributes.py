@@ -14,9 +14,17 @@ from sklearn.utils._repr_html.base import ReprHTMLMixin
 
 def _read_fitted_attr(value):
     r = reprlib.Repr()
-    r.maxlist = 2
-    r.maxdict = 1
-    r.maxstring = 50
+    for attr in (
+        "maxlist",
+        "maxdict",
+        "maxtuple",
+        "maxset",
+        "maxfrozenset",
+        "maxdeque",
+        "maxarray",
+    ):
+        setattr(r, attr, 2)
+    r.maxstring = 9
 
     if isinstance(value, float):
         value = round(value, 3)
@@ -101,12 +109,11 @@ def _fitted_attr_html_repr(fitted_attributes):
         else:
             html_row_values = (
                 value[0],
-                _read_fitted_attr(value[1]),
+                value[1],
                 value[2],
-                value[3],
+                _read_fitted_attr(value[3]),
                 "",
             )
-
         rows.append(
             FITTED_ATTR_ROW_TEMPLATE.format(
                 *html_row_values,
