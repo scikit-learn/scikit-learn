@@ -203,7 +203,7 @@ def _write_label_html(
 
         fmt_str = (
             f'<input class="sk-toggleable__control sk-hidden--visually '
-            f'sk-css-selector" id="{est_id}" '
+            f'sk-global" id="{est_id}" '
             f'type="checkbox" {checked_str}>{label_html}<div '
             f'class="sk-toggleable__content {is_fitted_css_class}" '
             f'data-param-prefix="{html.escape(param_prefix)}">'
@@ -424,7 +424,7 @@ def estimator_html_repr(estimator):
     >>> from sklearn.utils._repr_html.estimator import estimator_html_repr
     >>> from sklearn.linear_model import LogisticRegression
     >>> estimator_html_repr(LogisticRegression())
-    '<style>.sk-css-selector...'
+    '<style>.sk-global...'
     """
     from sklearn.exceptions import NotFittedError
     from sklearn.utils.validation import check_is_fitted
@@ -467,7 +467,7 @@ def estimator_html_repr(estimator):
         html_template = (
             f"<style>{_CSS_STYLE}</style>"
             f"<body>"
-            f'<div id="{container_id}" class="sk-top-container sk-css-selector">'
+            f'<div id="{container_id}" class="sk-top-container sk-global">'
             '<div class="sk-text-repr-fallback">'
             f"<pre>{html.escape(estimator_str)}</pre><b>{fallback_msg}</b>"
             "</div>"
