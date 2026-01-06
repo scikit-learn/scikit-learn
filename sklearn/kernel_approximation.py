@@ -1017,7 +1017,6 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         self : object
             Returns the instance itself.
         """
-
         xp, _, device = get_namespace_and_device(X)
         X = validate_data(self, X, accept_sparse="csr")
         rnd = check_random_state(self.random_state)
