@@ -634,9 +634,7 @@ def enet_path(
             common_dtype = np.result_type(X.dtype, y.dtype)
             if y.ndim == 1:
                 # Xy is 1d, make sure it is contiguous.
-                Xy = np.empty(
-                    shape=n_features, dtype=common_dtype, order="C"
-                )
+                Xy = np.empty(shape=n_features, dtype=common_dtype, order="C")
                 np.dot(X.T, y, out=Xy)
             else:
                 # Make sure that Xy is always F contiguous even if X or y are not
