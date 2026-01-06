@@ -618,7 +618,7 @@ def enet_path(
         # Replicate _pre_fit logic: Sparse matrices cannot use precompute
         if sparse.issparse(X):
             precompute = False
-        elif precompute == "auto":
+        elif isinstance(precompute, str) and precompute == "auto":
             precompute = n_samples > n_features
 
         # Replicate _pre_fit logic: Convert 'True' to actual Gram matrix
@@ -628,6 +628,9 @@ def enet_path(
                 shape=(n_features, n_features), dtype=X.dtype, order="C"
             )
             np.dot(X.T, X, out=precompute)
+
+        if not hasattr(precompute, "__array__"):
+            Xy = None  # cannot use Xy if precompute is not Gram
 
         # Replicate _pre_fit logic: Gram solver requires Xy
         if hasattr(precompute, "__array__") and Xy is None:
