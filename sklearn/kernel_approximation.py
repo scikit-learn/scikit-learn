@@ -1055,10 +1055,8 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         _, _, dtype = _find_floating_dtype_allow_sparse(basis_kernel, Y=None, xp=xp)
         basis_kernel = xp.asarray(basis_kernel, dtype=dtype, device=device)
         U, S, V = xp.linalg.svd(basis_kernel)
-        # XXX: Torch does not accept scalar arguments in xp.maximum yet:
-        # https://github.com/data-apis/array-api-compat/issues/271
-        S = xp.maximum(S, xp.asarray(1e-12, dtype=dtype, device=device))
-        self.normalization_ = xp.matmul(U / xp.sqrt(S), V)
+        S = xp.clip(S, 1e-12, None)
+        self.normalization_ = U / xp.sqrt(S) @ V
         self.components_ = basis
         self.component_indices_ = basis_inds
         self._n_features_out = n_components
