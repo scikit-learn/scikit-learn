@@ -60,7 +60,6 @@ from sklearn.utils.metadata_routing import (
     _routing_enabled,
     process_routing,
 )
-from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.utils.validation import (
     _check_sample_weight,
     check_is_fitted,
@@ -1610,13 +1609,25 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
 
 def _check_gcv_mode(X, gcv_mode):
-    if gcv_mode in ["eigen", "svd"]:
+    if gcv_mode in ["cov", "gram"]:
         return gcv_mode
-    # if X has more rows than columns, use decomposition of X^T.X,
-    # otherwise X.X^T
-    if X.shape[0] > X.shape[1]:
-        return "svd"
-    return "eigen"
+
+    # auto option
+    if gcv_mode not in ["eigen", "svd"]:
+        gcv_mode = "eigen" if sparse.issparse(X) else "svd"
+
+    # svd not implemented for sparse X, fallback to eigen
+    if gcv_mode == "svd" and sparse.issparse(X):
+        gcv_mode = "eigen"
+
+    # eigen : gram (n < p) or cov (p <= n)
+    if gcv_mode == "eigen":
+        n, p = X.shape
+        return "gram" if n < p else "cov"
+
+    # sanity check
+    assert gcv_mode == "svd" and not sparse.issparse(X)
+    return "svd"
 
 
 def _find_smallest_angle(query, vectors):
@@ -1828,13 +1839,16 @@ class _RidgeGCV(LinearModel):
             D = D[(slice(None),) + (None,) * (len(B.shape) - 1)]
         return D * B
 
-    def _compute_gram(self, X, sqrt_sw):
+    def _compute_gram(self, X, X_mean, sqrt_sw):
         """Computes the Gram matrix XX^T with possible centering.
 
         Parameters
         ----------
-        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X : {ndarray, sparse matrix, sparse array} of shape (n_samples, n_features)
             The preprocessed design matrix.
+
+        X_mean : ndarray of shape (n_feature,)
+            The weighted mean of ``X`` for each feature.
 
         sqrt_sw : ndarray of shape (n_samples,)
             square roots of sample weights
@@ -1843,8 +1857,6 @@ class _RidgeGCV(LinearModel):
         -------
         gram : ndarray of shape (n_samples, n_samples)
             The Gram matrix.
-        X_mean : ndarray of shape (n_feature,)
-            The weighted mean of ``X`` for each feature.
 
         Notes
         -----
@@ -1859,35 +1871,29 @@ class _RidgeGCV(LinearModel):
         The centered X is never actually computed because centering would break
         the sparsity of X.
         """
-        xp, _ = get_namespace(X)
         center = self.fit_intercept and sparse.issparse(X)
         if not center:
             # in this case centering has been done in preprocessing
             # or we are not fitting an intercept.
-            X_mean = xp.zeros(X.shape[1], dtype=X.dtype)
-            return safe_sparse_dot(X, X.T, dense_output=True), X_mean
-        # X is sparse
-        n_samples = X.shape[0]
-        sample_weight_matrix = sparse.dia_matrix(
-            (sqrt_sw, 0), shape=(n_samples, n_samples)
-        )
-        X_weighted = sample_weight_matrix.dot(X)
-        X_mean, _ = mean_variance_axis(X_weighted, axis=0)
-        X_mean *= n_samples / sqrt_sw.dot(sqrt_sw)
-        X_mX = sqrt_sw[:, None] * safe_sparse_dot(X_mean, X.T, dense_output=True)
+            return safe_sparse_dot(X, X.T, dense_output=True)
+        # X is sparse and fit_intercept is True
+        # centered matrix = X - sqrt_sw X_mean^T
+        # FIXME use broadcasting ?
+        # X_mX = sqrt_sw[:, None] * safe_sparse_dot(X_mean, X.T, dense_output=True)
+        X_mX = np.outer(sqrt_sw, safe_sparse_dot(X, X_mean, dense_output=True))
         X_mX_m = np.outer(sqrt_sw, sqrt_sw) * np.dot(X_mean, X_mean)
-        return (
-            safe_sparse_dot(X, X.T, dense_output=True) + X_mX_m - X_mX - X_mX.T,
-            X_mean,
-        )
+        return safe_sparse_dot(X, X.T, dense_output=True) + X_mX_m - X_mX - X_mX.T
 
-    def _compute_covariance(self, X, sqrt_sw):
+    def _compute_covariance(self, X, X_mean, sqrt_sw):
         """Computes covariance matrix X^TX with possible centering.
 
         Parameters
         ----------
-        X : sparse matrix of shape (n_samples, n_features)
+        X : {ndarray, sparse matrix, sparse array} of shape (n_samples, n_features)
             The preprocessed design matrix.
+
+        X_mean : ndarray of shape (n_feature,)
+            The weighted mean of ``X`` for each feature.
 
         sqrt_sw : ndarray of shape (n_samples,)
             square roots of sample weights
@@ -1896,8 +1902,6 @@ class _RidgeGCV(LinearModel):
         -------
         covariance : ndarray of shape (n_features, n_features)
             The covariance matrix.
-        X_mean : ndarray of shape (n_feature,)
-            The weighted mean of ``X`` for each feature.
 
         Notes
         -----
@@ -1909,24 +1913,16 @@ class _RidgeGCV(LinearModel):
         The centered X is never actually computed because centering would break
         the sparsity of X.
         """
-        if not self.fit_intercept:
+        center = self.fit_intercept and sparse.issparse(X)
+        if not center:
             # in this case centering has been done in preprocessing
             # or we are not fitting an intercept.
-            X_mean = np.zeros(X.shape[1], dtype=X.dtype)
-            return safe_sparse_dot(X.T, X, dense_output=True), X_mean
-        # this function only gets called for sparse X
-        n_samples = X.shape[0]
-        sample_weight_matrix = sparse.dia_matrix(
-            (sqrt_sw, 0), shape=(n_samples, n_samples)
-        )
-        X_weighted = sample_weight_matrix.dot(X)
-        X_mean, _ = mean_variance_axis(X_weighted, axis=0)
-        X_mean = X_mean * n_samples / sqrt_sw.dot(sqrt_sw)
-        weight_sum = sqrt_sw.dot(sqrt_sw)
-        return (
-            safe_sparse_dot(X.T, X, dense_output=True)
-            - weight_sum * np.outer(X_mean, X_mean),
-            X_mean,
+            return safe_sparse_dot(X.T, X, dense_output=True)
+        # X is sparse and fit_intercept is True
+        # centered matrix = X - sqrt_sw X_mean^T
+        sw_sum = sqrt_sw.dot(sqrt_sw)
+        return safe_sparse_dot(X.T, X, dense_output=True) - sw_sum * np.outer(
+            X_mean, X_mean
         )
 
     def _sparse_multidot_diag(self, X, A, X_mean, sqrt_sw):
@@ -1936,13 +1932,13 @@ class _RidgeGCV(LinearModel):
 
         Parameters
         ----------
-        X : sparse matrix of shape (n_samples, n_features)
+        X : {ndarray, sparse matrix, sparse array} of shape (n_samples, n_features)
 
         A : ndarray of shape (n_features, n_features)
 
         X_mean : ndarray of shape (n_features,)
 
-        sqrt_sw : ndarray of shape (n_features,)
+        sqrt_sw : ndarray of shape (n_samples,)
             square roots of sample weights
 
         Returns
@@ -1950,216 +1946,161 @@ class _RidgeGCV(LinearModel):
         diag : np.ndarray, shape (n_samples,)
             The computed diagonal.
         """
-        intercept_col = scale = sqrt_sw
-        batch_size = X.shape[1]
-        diag = np.empty(X.shape[0], dtype=X.dtype)
-        for start in range(0, X.shape[0], batch_size):
-            batch = slice(start, min(X.shape[0], start + batch_size), 1)
-            X_batch = np.empty(
-                (X[batch].shape[0], X.shape[1] + self.fit_intercept), dtype=X.dtype
-            )
-            if self.fit_intercept:
-                X_batch[:, :-1] = X[batch].toarray() - X_mean * scale[batch][:, None]
-                X_batch[:, -1] = intercept_col[batch]
-            else:
-                X_batch = X[batch].toarray()
-            diag[batch] = (X_batch.dot(A) * X_batch).sum(axis=1)
-        return diag
+        # FIXME ?
+        XA = X.dot(A)
+        if sparse.isspmatrix(X):
+            # sparse matrix use multiply for element wise multiplication
+            XAX = np.ravel(X.multiply(XA).sum(axis=1))
+        else:
+            XAX = (XA * X).sum(axis=1)
+        center = self.fit_intercept and sparse.issparse(X)
+        if not center:
+            # in this case centering has been done in preprocessing
+            # or we are not fitting an intercept.
+            return XAX
+        # X is sparse and fit_intercept is True
+        # centered matrix = X - sqrt_sw X_mean^T
+        XA_Xm = XA.dot(X_mean)
+        A_Xm = A.dot(X_mean)
+        sw = sqrt_sw * sqrt_sw
+        return XAX - 2 * sqrt_sw * XA_Xm + sw * X_mean.dot(A_Xm)
 
-    def _eigen_decompose_gram(self, X, y, sqrt_sw):
+    def _eigen_decompose_gram(self, X, X_mean, y, sqrt_sw):
         """Eigendecomposition of X.X^T, used when n_samples <= n_features."""
         # if X is dense it has already been centered in preprocessing
         xp, is_array_api = get_namespace(X)
-        K, X_mean = self._compute_gram(X, sqrt_sw)
-        if self.fit_intercept:
-            # to emulate centering X with sample weights,
-            # ie removing the weighted average, we add a column
-            # containing the square roots of the sample weights.
-            # by centering, it is orthogonal to the other columns
-            K += xp.linalg.outer(sqrt_sw, sqrt_sw)
+        K = self._compute_gram(X, X_mean, sqrt_sw)
         eigvals, Q = xp.linalg.eigh(K)
+        # kill nullspace
+        n_samples, n_features = X.shape
+        n_nullspace = max(self.fit_intercept, n_samples - n_features)
+        assert np.allclose(eigvals[:n_nullspace], 0), "wrong nullspace"
+        Q = Q[:, n_nullspace:]
+        eigvals = eigvals[n_nullspace:]
         QT_y = Q.T @ y
+        QT_sqrt_sw = Q.T @ sqrt_sw
         XT = X.T
-        return X_mean, eigvals, Q, QT_y, XT
+        return eigvals, Q, QT_y, QT_sqrt_sw, XT, X_mean
 
-    def _solve_eigen_gram(self, alpha, y, sqrt_sw, X_mean, eigvals, Q, QT_y, XT):
+    def _solve_eigen_gram(
+        self, alpha, y, sqrt_sw, eigvals, Q, QT_y, QT_sqrt_sw, XT, X_mean
+    ):
         """Compute dual coefficients and diagonal of G^-1.
 
         Used when we have a decomposition of X.X^T (n_samples <= n_features).
         """
-        xp, is_array_api = get_namespace(eigvals)
         w = 1.0 / (eigvals + alpha)
-        if self.fit_intercept:
-            # the vector containing the square roots of the sample weights (1
-            # when no sample weights) is the eigenvector of XX^T which
-            # corresponds to the intercept; we cancel the regularization on
-            # this dimension. the corresponding eigenvalue is
-            # sum(sample_weight).
-            norm = xp.linalg.vector_norm if is_array_api else np.linalg.norm
-            normalized_sw = sqrt_sw / norm(sqrt_sw)
-            intercept_dim = _find_smallest_angle(normalized_sw, Q)
-            w[intercept_dim] = 0  # cancel regularization for the intercept
-
         c = Q @ self._diag_dot(w, QT_y)
-        G_inverse_diag = self._decomp_diag(w, Q)
-        # handle case where y is 2-d
-        if len(y.shape) != 1:
-            G_inverse_diag = G_inverse_diag[:, None]
-        looe = c / G_inverse_diag
-        coef = XT @ c
+        d = self._decomp_diag(w, Q)
+        g = Q @ self._diag_dot(w, QT_sqrt_sw)
+        if self.fit_intercept:
+            sw_sum = sqrt_sw.dot(sqrt_sw)
+            d -= g * sqrt_sw / sw_sum
+        if y.ndim == 2:
+            d = d[:, None]
+        XT_c = XT @ c
+        if self.fit_intercept and sparse.issparse(XT):
+            # centered matrix = X - sqrt_sw X_mean^T
+            if y.ndim == 2:
+                XT_c -= X_mean[:, None] * sqrt_sw.dot(c)
+            else:
+                XT_c -= X_mean * sqrt_sw.dot(c)
+        looe = c / d
+        coef = XT_c
         return looe, coef
 
-    def _eigen_decompose_covariance(self, X, y, sqrt_sw):
-        """Eigendecomposition of X^T.X, used when n_samples > n_features
-        and X is sparse.
-        """
-        n_samples, n_features = X.shape
-        cov = np.empty((n_features + 1, n_features + 1), dtype=X.dtype)
-        cov[:-1, :-1], X_mean = self._compute_covariance(X, sqrt_sw)
-        if not self.fit_intercept:
-            cov = cov[:-1, :-1]
-        # to emulate centering X with sample weights,
-        # ie removing the weighted average, we add a column
-        # containing the square roots of the sample weights.
-        # by centering, it is orthogonal to the other columns
-        # when all samples have the same weight we add a column of 1
-        else:
-            cov[-1] = 0
-            cov[:, -1] = 0
-            cov[-1, -1] = sqrt_sw.dot(sqrt_sw)
-        nullspace_dim = max(0, n_features - n_samples)
+    def _eigen_decompose_covariance(self, X, X_mean, y, sqrt_sw):
+        """Eigendecomposition of X^T.X used when n_samples > n_features"""
+        cov = self._compute_covariance(X, X_mean, sqrt_sw)
         eigvals, V = linalg.eigh(cov)
-        # remove eigenvalues and vectors in the null space of X^T.X
-        eigvals = eigvals[nullspace_dim:]
-        V = V[:, nullspace_dim:]
-        return X_mean, eigvals, V, X
+        XT_y = safe_sparse_dot(X.T, y, dense_output=True)
+        XT_sqrt_sw = safe_sparse_dot(X.T, sqrt_sw, dense_output=True)
+        if self.fit_intercept and sparse.issparse(X):
+            # centered matrix = X - sqrt_sw X_mean^T
+            if y.ndim == 2:
+                XT_y -= X_mean[:, None] * sqrt_sw.dot(y)
+            else:
+                XT_y -= X_mean * sqrt_sw.dot(y)
+            XT_sqrt_sw -= X_mean * sqrt_sw.dot(sqrt_sw)
+        # kill nullspace
+        n_samples, n_features = X.shape
+        n_nullspace = max(0, n_features - n_samples + self.fit_intercept)
+        assert np.allclose(eigvals[:n_nullspace], 0), "wrong nullspace"
+        V = V[:, n_nullspace:]
+        eigvals = eigvals[n_nullspace:]
+        return eigvals, V, X, X_mean, XT_y, XT_sqrt_sw
 
-    def _solve_eigen_covariance_no_intercept(
-        self, alpha, y, sqrt_sw, X_mean, eigvals, V, X
+    def _solve_eigen_covariance(
+        self, alpha, y, sqrt_sw, eigvals, V, X, X_mean, XT_y, XT_sqrt_sw
     ):
         """Compute dual coefficients and diagonal of G^-1.
 
-        Used when we have a decomposition of X^T.X
-        (n_samples > n_features and X is sparse), and not fitting an intercept.
+        Used when we have a decomposition of X^T.X (n_samples > n_features).
         """
+        # FIXME check cov, gram, and solve
         w = 1 / (eigvals + alpha)
         A = (V * w).dot(V.T)
-        AXy = A.dot(safe_sparse_dot(X.T, y, dense_output=True))
-        y_hat = safe_sparse_dot(X, AXy, dense_output=True)
-        hat_diag = self._sparse_multidot_diag(X, A, X_mean, sqrt_sw)
-        if len(y.shape) != 1:
-            # handle case where y is 2-d
-            hat_diag = hat_diag[:, np.newaxis]
-        looe = (y - y_hat) / (1 - hat_diag)
-        coef = AXy
+        AXT_y = A.dot(XT_y)
+        AXT_sqrt_sw = A.dot(XT_sqrt_sw)
+        XAXT_y = safe_sparse_dot(X, AXT_y, dense_output=True)
+        XAXT_sqrt_sw = safe_sparse_dot(X, AXT_sqrt_sw, dense_output=True)
+        if self.fit_intercept and sparse.issparse(X):
+            # centered = X - sqrt_sw X_mean^T
+            if y.ndim == 2:
+                XAXT_y -= sqrt_sw[:, None] * X_mean.dot(AXT_y)
+            else:
+                XAXT_y -= sqrt_sw * X_mean.dot(AXT_y)
+            XAXT_sqrt_sw -= sqrt_sw * X_mean.dot(AXT_sqrt_sw)
+        alpha_c = y - XAXT_y
+        alpha_g = sqrt_sw - XAXT_sqrt_sw
+        alpha_d = 1 - self._sparse_multidot_diag(X, A, X_mean, sqrt_sw)
+        if self.fit_intercept:
+            sw_sum = sqrt_sw.dot(sqrt_sw)
+            alpha_d -= alpha_g * sqrt_sw / sw_sum
+        if y.ndim == 2:
+            alpha_d = alpha_d[:, None]
+        looe = alpha_c / alpha_d
+        coef = AXT_y
         return looe, coef
 
-    def _solve_eigen_covariance_intercept(
-        self, alpha, y, sqrt_sw, X_mean, eigvals, V, X
-    ):
-        """Compute dual coefficients and diagonal of G^-1.
-
-        Used when we have a decomposition of X^T.X
-        (n_samples > n_features and X is sparse),
-        and we are fitting an intercept.
-        """
-        # the vector [0, 0, ..., 0, 1]
-        # is the eigenvector of X^TX which
-        # corresponds to the intercept; we cancel the regularization on
-        # this dimension. the corresponding eigenvalue is
-        # sum(sample_weight), e.g. n when uniform sample weights.
-        intercept_sv = np.zeros(V.shape[0])
-        intercept_sv[-1] = 1
-        intercept_dim = _find_smallest_angle(intercept_sv, V)
-        w = 1 / (eigvals + alpha)
-        w[intercept_dim] = 1 / eigvals[intercept_dim]
-        A = (V * w).dot(V.T)
-        # add a column to X containing the square roots of sample weights
-        X_op = _X_CenterStackOp(X, X_mean, sqrt_sw)
-        AXy = A.dot(X_op.T.dot(y))
-        y_hat = X_op.dot(AXy)
-        hat_diag = self._sparse_multidot_diag(X, A, X_mean, sqrt_sw)
-        # return (1 - hat_diag), (y - y_hat)
-        if len(y.shape) != 1:
-            # handle case where y is 2-d
-            hat_diag = hat_diag[:, np.newaxis]
-        looe = (y - y_hat) / (1 - hat_diag)
-        # FIXME check coef expression with fit_intercept
-        coef = np.delete(AXy, intercept_dim)
-        return looe, coef
-
-    def _solve_eigen_covariance(self, alpha, y, sqrt_sw, X_mean, eigvals, V, X):
-        """Compute dual coefficients and diagonal of G^-1.
-
-        Used when we have a decomposition of X^T.X
-        (n_samples > n_features and X is sparse).
-        """
-        if self.fit_intercept:
-            return self._solve_eigen_covariance_intercept(
-                alpha, y, sqrt_sw, X_mean, eigvals, V, X
-            )
-        return self._solve_eigen_covariance_no_intercept(
-            alpha, y, sqrt_sw, X_mean, eigvals, V, X
-        )
-
-    def _svd_decompose_design_matrix(self, X, y, sqrt_sw):
-        xp, _, device_ = get_namespace_and_device(X)
-        # X already centered
-        X_mean = xp.zeros(X.shape[1], dtype=X.dtype, device=device_)
-        if self.fit_intercept:
-            # to emulate fit_intercept=True situation, add a column
-            # containing the square roots of the sample weights
-            # by centering, the other columns are orthogonal to that one
-            intercept_column = sqrt_sw[:, None]
-            X = xp.concat((X, intercept_column), axis=1)
+    def _svd_decompose_design_matrix(self, X, X_mean, y, sqrt_sw):
+        xp, _ = get_namespace(X)
         # reduced svd
         U, singvals, VT = xp.linalg.svd(X, full_matrices=False)
         UT_y = U.T @ y
+        UT_sqrt_sw = U.T @ sqrt_sw
         V = VT.T
-        return X_mean, singvals, U, V, UT_y
+        return singvals, U, V, UT_y, UT_sqrt_sw
 
-    def _solve_svd_design_matrix(self, alpha, y, sqrt_sw, X_mean, singvals, U, V, UT_y):
+    def _solve_svd_design_matrix(
+        self, alpha, y, sqrt_sw, singvals, U, V, UT_y, UT_sqrt_sw
+    ):
         """Compute dual coefficients and diagonal of G^-1.
 
-        Used when we have an SVD decomposition of X
-        (n_samples > n_features and X is dense).
+        Used when we have an SVD decomposition of X.
         """
-        xp, is_array_api = get_namespace(U)
+        n_samples = U.shape[0]
+        n_features = V.shape[0]
+        D = alpha / (singvals**2 + alpha)
+        if n_features < n_samples:
+            D -= 1
+        alpha_c = U @ self._diag_dot(D, UT_y)
+        alpha_d = self._decomp_diag(D, U)
+        alpha_g = U @ self._diag_dot(D, UT_sqrt_sw)
+        if n_features < n_samples:
+            alpha_c += y
+            alpha_d += 1
+            alpha_g += sqrt_sw
         if self.fit_intercept:
-            # detect intercept column
-            normalized_sw = sqrt_sw / xp.linalg.vector_norm(sqrt_sw)
-            intercept_dim = int(_find_smallest_angle(normalized_sw, U))
-
-        n, r = U.shape
-        p, r = V.shape
-        if p < n:
-            assert p == r == len(singvals)
-            w = alpha / (singvals**2 + alpha) - 1
-            if self.fit_intercept:
-                # cancel the regularization for the intercept
-                w[intercept_dim] = -1
-            alpha_c = U @ self._diag_dot(w, UT_y) + y
-            alpha_d = self._decomp_diag(w, U) + 1
-        else:
-            assert n == r == len(singvals)
-            g = alpha / (singvals**2 + alpha)
-            if self.fit_intercept:
-                # cancel the regularization for the intercept
-                g[intercept_dim] = 0
-            alpha_c = U @ self._diag_dot(g, UT_y)
-            alpha_d = self._decomp_diag(g, U)
-
+            sw_sum = sqrt_sw.dot(sqrt_sw)
+            alpha_d -= alpha_g * sqrt_sw / sw_sum
         if len(y.shape) != 1:
             # handle case where y is 2-d
             alpha_d = alpha_d[:, None]
-
         # coefficient and leave-one-out-errors
         looe = alpha_c / alpha_d
-        h = singvals / (singvals**2 + alpha)
-        coef = V @ self._diag_dot(h, UT_y)
-        if self.fit_intercept:
-            # remove intercept dim
-            coef = np.delete(coef, intercept_dim)
+        H = singvals / (singvals**2 + alpha)
+        coef = V @ self._diag_dot(H, UT_y)
         return looe, coef
 
     def fit(self, X, y, sample_weight=None, score_params=None):
@@ -2233,26 +2174,26 @@ class _RidgeGCV(LinearModel):
             sample_weight=sample_weight,
             rescale_with_sw=True,
         )
-
         gcv_mode = _check_gcv_mode(X, self.gcv_mode)
 
-        if gcv_mode == "eigen":
+        n_samples, n_features = X.shape
+        # FIXME restore options eigen/svd
+        if gcv_mode == "gram":
             decompose = self._eigen_decompose_gram
             solve = self._solve_eigen_gram
+        elif gcv_mode == "cov":
+            decompose = self._eigen_decompose_covariance
+            solve = self._solve_eigen_covariance
         elif gcv_mode == "svd":
-            if sparse.issparse(X):
-                decompose = self._eigen_decompose_covariance
-                solve = self._solve_eigen_covariance
-            else:
-                decompose = self._svd_decompose_design_matrix
-                solve = self._solve_svd_design_matrix
-
-        n_samples, n_features = X.shape
+            decompose = self._svd_decompose_design_matrix
+            solve = self._solve_svd_design_matrix
+        else:
+            raise ValueError(f"Unknown {gcv_mode=}")
 
         if sqrt_sw is None:
             sqrt_sw = xp.ones(n_samples, dtype=X.dtype, device=device_)
 
-        X_mean, *decomposition = decompose(X, y, sqrt_sw)
+        decomposition = decompose(X, X_offset, y, sqrt_sw)
 
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
         if (
@@ -2272,7 +2213,7 @@ class _RidgeGCV(LinearModel):
         best_coef, best_score, best_alpha = None, None, None
 
         for i, alpha in enumerate(alphas):
-            looe, coef = solve(float(alpha), y, sqrt_sw, X_mean, *decomposition)
+            looe, coef = solve(float(alpha), y, sqrt_sw, *decomposition)
             assert len(looe) == n_samples
             assert len(coef) == n_features, "coef wrong size"
             if self.scoring is None:
@@ -2317,7 +2258,7 @@ class _RidgeGCV(LinearModel):
                 # update
                 if self.alpha_per_target and n_y > 1:
                     to_update = alpha_score > best_score
-                    best_coef[to_update] = coef[to_update]
+                    best_coef[:, to_update] = coef[:, to_update]
                     best_score[to_update] = alpha_score[to_update]
                     best_alpha[to_update] = alpha
                 elif alpha_score > best_score:
@@ -2326,13 +2267,11 @@ class _RidgeGCV(LinearModel):
         self.alpha_ = best_alpha
         self.best_score_ = best_score
         self.coef_ = best_coef
+        if y.ndim == 2:
+            self.coef_ = self.coef_.T
         if y.ndim == 1 or y.shape[1] == 1:
             self.coef_ = _ravel(self.coef_)
 
-        if sparse.issparse(X):
-            X_offset = X_mean * X_scale
-        else:
-            X_offset += X_mean * X_scale
         self._set_intercept(X_offset, y_offset, X_scale)
 
         if self.store_cv_results:
@@ -2411,7 +2350,7 @@ class _BaseRidgeCV(LinearModel):
         "fit_intercept": ["boolean"],
         "scoring": [StrOptions(set(get_scorer_names())), callable, None],
         "cv": ["cv_object"],
-        "gcv_mode": [StrOptions({"auto", "svd", "eigen"}), None],
+        "gcv_mode": [StrOptions({"auto", "svd", "eigen", "cov", "gram"}), None],
         "store_cv_results": ["boolean"],
         "alpha_per_target": ["boolean"],
     }

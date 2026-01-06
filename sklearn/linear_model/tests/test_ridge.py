@@ -665,8 +665,7 @@ def test_compute_gram(shape, uniform_weights, csr_container):
     true_gram = X_centered.dot(X_centered.T)
     X_sparse = csr_container(X * sqrt_sw[:, None])
     gcv = _RidgeGCV(fit_intercept=True)
-    computed_gram, computed_mean = gcv._compute_gram(X_sparse, sqrt_sw)
-    assert_allclose(X_mean, computed_mean)
+    computed_gram = gcv._compute_gram(X_sparse, X_mean, sqrt_sw)
     assert_allclose(true_gram, computed_gram)
 
 
@@ -686,8 +685,7 @@ def test_compute_covariance(shape, uniform_weights, csr_container):
     true_covariance = X_centered.T.dot(X_centered)
     X_sparse = csr_container(X * sqrt_sw[:, None])
     gcv = _RidgeGCV(fit_intercept=True)
-    computed_cov, computed_mean = gcv._compute_covariance(X_sparse, sqrt_sw)
-    assert_allclose(X_mean, computed_mean)
+    computed_cov = gcv._compute_covariance(X_sparse, X_mean, sqrt_sw)
     assert_allclose(true_covariance, computed_cov)
 
 
@@ -797,7 +795,7 @@ def test_solver_consistency(
     assert_allclose(ridge.intercept_, svd_ridge.intercept_, atol=1e-3, rtol=1e-3)
 
 
-@pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
+@pytest.mark.parametrize("gcv_mode", ["svd", "eigen", "cov", "gram"])
 @pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
 @pytest.mark.parametrize("X_shape", [(11, 8), (11, 20)])
 @pytest.mark.parametrize("fit_intercept", [True, False])
@@ -849,7 +847,7 @@ def test_ridge_gcv_vs_ridge_loo_cv(
 
 
 @pytest.mark.parametrize("alpha", [1e-12, 1e-16])
-@pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
+@pytest.mark.parametrize("gcv_mode", ["svd", "eigen", "cov", "gram"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("X_shape", [(100, 50), (50, 100)])
 @pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
@@ -901,7 +899,7 @@ def test_ridge_loo_cv_asym_scoring():
     assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
 
 
-@pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
+@pytest.mark.parametrize("gcv_mode", ["svd", "eigen", "cov", "gram"])
 @pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
 @pytest.mark.parametrize("n_features", [8, 20])
 @pytest.mark.parametrize(
@@ -976,23 +974,24 @@ def test_ridge_gcv_sample_weights(
 
 
 @pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
-@pytest.mark.parametrize(
-    "mode, mode_n_greater_than_p, mode_p_greater_than_n",
-    [
-        (None, "svd", "eigen"),
-        ("auto", "svd", "eigen"),
-        ("eigen", "eigen", "eigen"),
-        ("svd", "svd", "svd"),
-    ],
-)
-def test_check_gcv_mode_choice(
-    sparse_container, mode, mode_n_greater_than_p, mode_p_greater_than_n
-):
-    X, _ = make_regression(n_samples=5, n_features=2)
-    if sparse_container is not None:
+@pytest.mark.parametrize("X_shape", [(5, 2), (2, 5)])
+def test_check_gcv_mode_choice(sparse_container, X_shape):
+    n, p = X_shape
+    X, _ = make_regression(n_samples=n, n_features=p)
+    sparse_X = sparse_container is not None
+    if sparse_X:
         X = sparse_container(X)
-    assert _check_gcv_mode(X, mode) == mode_n_greater_than_p
-    assert _check_gcv_mode(X.T, mode) == mode_p_greater_than_n
+
+    eigen_mode = "gram" if n < p else "cov"
+    assert _check_gcv_mode(X, "eigen") == eigen_mode
+    assert _check_gcv_mode(X, "cov") == "cov"
+    assert _check_gcv_mode(X, "gram") == "gram"
+    if sparse_X:
+        assert _check_gcv_mode(X, "auto") == eigen_mode
+        assert _check_gcv_mode(X, "svd") == eigen_mode
+    else:
+        assert _check_gcv_mode(X, "auto") == "svd"
+        assert _check_gcv_mode(X, "svd") == "svd"
 
 
 def _test_ridge_loo(sparse_container):
