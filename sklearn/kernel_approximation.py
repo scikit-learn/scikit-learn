@@ -104,7 +104,7 @@ class PolynomialCountSketch(
     --------
     AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
     Nystroem : Approximate a kernel map using a subset of the training data.
-    RBFSampler : Approximate a RBF kernel feature map using random Fourier
+    RBFSampler : Approximate an RBF kernel feature map using random Fourier
         features.
     SkewedChi2Sampler : Approximate feature map for "skewed chi-squared" kernel.
     sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
@@ -251,7 +251,7 @@ class PolynomialCountSketch(
 
 
 class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
-    """Approximate a RBF kernel feature map using random Fourier features.
+    """Approximate an RBF kernel feature map using random Fourier features.
 
     It implements a variant of Random Kitchen Sinks.[1]
 
@@ -469,7 +469,7 @@ class SkewedChi2Sampler(
     --------
     AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
     Nystroem : Approximate a kernel map using a subset of the training data.
-    RBFSampler : Approximate a RBF kernel feature map using random Fourier
+    RBFSampler : Approximate an RBF kernel feature map using random Fourier
         features.
     SkewedChi2Sampler : Approximate feature map for "skewed chi-squared" kernel.
     sklearn.metrics.pairwise.chi2_kernel : The exact chi squared kernel.
@@ -927,7 +927,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
     --------
     AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
     PolynomialCountSketch : Polynomial kernel approximation via Tensor Sketch.
-    RBFSampler : Approximate a RBF kernel feature map using random Fourier
+    RBFSampler : Approximate an RBF kernel feature map using random Fourier
         features.
     SkewedChi2Sampler : Approximate feature map for "skewed chi-squared" kernel.
     sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
