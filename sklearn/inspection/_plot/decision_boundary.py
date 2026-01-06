@@ -272,37 +272,46 @@ class DecisionBoundaryDisplay:
 
             self.multiclass_colors_ = colors
 
-            if self.response.ndim == 2:  # multiclass "predict"
-                # Create a colormap from the selected colors (required by pcolormesh)
+            if plot_method == "contour":
+                # Plot only argmax
+                response = (
+                    self.response.argmax(axis=2)
+                    if self.response.ndim == 3
+                    else self.response
+                )
+                self.surface_ = plot_func(
+                    self.xx0, self.xx1, response, colors=colors, **kwargs
+                )
+            elif plot_method == "pcolormesh" and self.response.ndim == 2:  # predict
                 cmap = mpl.colors.ListedColormap(colors)
                 self.surface_ = plot_func(
                     self.xx0, self.xx1, self.response, cmap=cmap, **kwargs
                 )
-            else:  # other multiclass cases
-                if plot_method == "contour":
-                    # Plot only argmax for contour
-                    class_map = self.response.argmax(axis=2)
-                    self.surface_ = plot_func(
-                        self.xx0, self.xx1, class_map, colors=colors, **kwargs
+            else:
+                multiclass_cmaps = [
+                    mpl.colors.LinearSegmentedColormap.from_list(
+                        f"colormap_{class_idx}",
+                        [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)],
                     )
-                else:
-                    multiclass_cmaps = [
-                        mpl.colors.LinearSegmentedColormap.from_list(
-                            f"colormap_{class_idx}",
-                            [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)],
+                    for class_idx, (r, g, b, _) in enumerate(colors)
+                ]
+                self.surface_ = []
+                for class_idx, cmap in enumerate(multiclass_cmaps):
+                    if self.response.ndim == 2:  # predict
+                        response = np.ma.array(
+                            (self.response == class_idx),
+                            mask=~(self.response == class_idx),
                         )
-                        for class_idx, (r, g, b, _) in enumerate(colors)
-                    ]
 
-                    self.surface_ = []
-                    for class_idx, cmap in enumerate(multiclass_cmaps):
+                    else:  # predict_proba or decision_function
                         response = np.ma.array(
                             self.response[:, :, class_idx],
                             mask=~(self.response.argmax(axis=2) == class_idx),
                         )
-                        self.surface_.append(
-                            plot_func(self.xx0, self.xx1, response, cmap=cmap, **kwargs)
-                        )
+
+                    self.surface_.append(
+                        plot_func(self.xx0, self.xx1, response, cmap=cmap, **kwargs)
+                    )
 
         if xlabel is not None or not ax.get_xlabel():
             xlabel = self.xlabel if xlabel is None else xlabel

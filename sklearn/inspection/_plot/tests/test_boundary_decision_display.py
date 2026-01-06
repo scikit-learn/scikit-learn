@@ -620,13 +620,19 @@ def test_multiclass_plot_max_class(pyplot, response_method):
 @pytest.mark.parametrize(
     "multiclass_colors",
     [
+        None,
         "plasma",
         "Blues",
         ["red", "green", "blue"],
     ],
 )
+@pytest.mark.parametrize(
+    "response_method", ["decision_function", "predict_proba", "predict"]
+)
 @pytest.mark.parametrize("plot_method", ["contourf", "contour", "pcolormesh"])
-def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
+def test_multiclass_colors_cmap(
+    pyplot, response_method, plot_method, multiclass_colors
+):
     """Check correct cmap used for all `multiclass_colors` inputs."""
     import matplotlib as mpl
 
@@ -641,11 +647,15 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
     disp = DecisionBoundaryDisplay.from_estimator(
         clf,
         X,
+        response_method=response_method,
         plot_method=plot_method,
         multiclass_colors=multiclass_colors,
     )
 
-    if multiclass_colors == "plasma":
+    if multiclass_colors is None:
+        assert clf.classes_.size <= 10
+        colors = mpl.pyplot.get_cmap("tab10", 10).colors[: len(clf.classes_)]
+    elif multiclass_colors == "plasma":
         colors = mpl.pyplot.get_cmap(multiclass_colors, len(clf.classes_)).colors
     elif multiclass_colors == "Blues":
         cmap = mpl.pyplot.get_cmap(multiclass_colors, len(clf.classes_))
@@ -653,7 +663,11 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
     else:
         colors = [mpl.colors.to_rgba(color) for color in multiclass_colors]
 
-    if plot_method != "contour":
+    if plot_method == "pcolormesh" and response_method == "predict":
+        # pcolormesh with predict uses ListedColormap
+        cmap = mpl.colors.ListedColormap(colors)
+        assert disp.surface_.cmap == cmap
+    elif plot_method != "contour":
         cmaps = [
             mpl.colors.LinearSegmentedColormap.from_list(
                 f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
