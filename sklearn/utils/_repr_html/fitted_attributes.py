@@ -39,12 +39,12 @@ def _fitted_attr_html_repr(fitted_attributes):
                 <table class="parameters-table">
                     <tbody>
                         <tr>
-                        <th>Class</th>
+                        <th>Name</th>
                         <th>Type</th>
                         <th>Shape</th>
-                        <th>dtype</th>
-                        <th>size</th>
-                        <th>value</th>
+                        <th>Dtype</th>
+                        <th>Memory (Mb)</th>
+                        <th>Value</th>
                         </tr>
                         {rows}
                     </tbody>
