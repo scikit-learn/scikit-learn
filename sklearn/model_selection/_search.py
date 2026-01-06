@@ -1738,7 +1738,6 @@ Notes
 The parameters selected are those that maximize the score of the held-out
 data, according to the scoring parameter.
 """
-
     _parameter_constraints: dict = {
         **BaseSearchCV._parameter_constraints,
         "param_distributions": [dict, list],
