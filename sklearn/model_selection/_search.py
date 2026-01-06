@@ -1360,14 +1360,19 @@ class GridSearchCV(BaseSearchCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    verbose : int
-        Controls the verbosity: the higher, the more messages.
+    verbose : int, default=0
+    Controls the verbosity: the higher, the more messages.
 
-        - >1 : the computation time for each fold and parameter candidate is
-          displayed;
-        - >2 : the score is also displayed;
-        - >3 : the fold and candidate parameter indexes are also displayed
-          together with the starting time of the computation.
+    - 0: no output.
+    - 1: prints a single line showing the number of folds, candidates,
+      and total fits.
+    - 2–9: prints one line per completed fit, including the score and
+      computation time.
+    - ≥10: additionally prints a line at the start of each fit and
+      displays the parameter candidate indices (e.g. ``[CV 1/2; 1/3]``).
+
+    Note that the exact verbosity behavior is inherited from joblib and
+    is intended for informational purposes.
 
     pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
