@@ -1879,7 +1879,6 @@ def test_linear_model_cv_alphas(Estimator):
 
 def test_enet_path_check_input_false():
     # Test for issue #32989
-    import numpy as np
     from sklearn.datasets import make_regression
     from sklearn.linear_model import enet_path
 
