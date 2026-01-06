@@ -1,0 +1,4 @@
+- :class:`inspection.DecisionBoundaryDisplay` now also uses `multiclass_colors` for
+  multiclass plotting when `response_method="predict"`. This also fixes the bug that not
+  all classes were shown in distinct colours for problems with more than 7 classes.
+  By :user:`Anne Beyer <AnneBeyer>`
