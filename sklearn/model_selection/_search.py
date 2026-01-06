@@ -1613,7 +1613,7 @@ class GridSearchCV(BaseSearchCV):
 
 
 class RandomizedSearchCV(BaseSearchCV):
-    """Randomized search on hyperparameters.
+   """Randomized search on hyperparameters.
 
 The parameters of the estimator are optimized by cross-validated search over
 parameter settings. Unlike GridSearchCV, this does not try all parameter
