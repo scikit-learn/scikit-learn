@@ -154,7 +154,7 @@ print_routing(est)
 #
 #     Out:
 #
-#     .. code-block:: none
+#     .. code-block:: python-console
 #
 #         Received sample_weight of length = 100 in ExampleClassifier.
 #         Received groups of length = 100 in ExampleClassifier.

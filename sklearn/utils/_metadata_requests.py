@@ -1706,12 +1706,10 @@ def process_routing(_obj, _method, /, **kwargs):
     >>> from sklearn.linear_model import Ridge
     >>> from sklearn.feature_selection import SelectFromModel
     >>> set_config(enable_metadata_routing=True)
-    >>> print(
-    ...     process_routing(
-    ...         SelectFromModel(Ridge().set_fit_request(sample_weight=True)),
-    ...         "fit",
-    ...         sample_weight=np.array([1, 1, 2]),
-    ...     )
+    >>> process_routing(
+    ...     SelectFromModel(Ridge().set_fit_request(sample_weight=True)),
+    ...     "fit",
+    ...     sample_weight=np.array([1, 1, 2]),
     ... )
     {'estimator': {'fit': {'sample_weight': array([1, 1, 2])}}}
     >>> set_config(enable_metadata_routing=False)
