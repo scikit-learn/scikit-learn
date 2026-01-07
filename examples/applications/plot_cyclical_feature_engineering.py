@@ -25,6 +25,7 @@ from sklearn.datasets import fetch_openml
 
 bike_sharing = fetch_openml("Bike_Sharing_Demand", version=2, as_frame=True)
 df = bike_sharing.frame
+raise ValueError()
 
 # %%
 # To get a quick understanding of the periodic patterns of the data, let us
