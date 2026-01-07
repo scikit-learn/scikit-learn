@@ -19,7 +19,7 @@ from sklearn.utils.validation import (
 )
 
 
-def _check_boundary_response_method(estimator, response_method, class_of_interest):
+def _check_boundary_response_method(estimator, response_method):
     """Validate the response methods to be used with the fitted estimator.
 
     Parameters
@@ -31,12 +31,6 @@ def _check_boundary_response_method(estimator, response_method, class_of_interes
         Specifies whether to use :term:`decision_function`, :term:`predict_proba`,
         :term:`predict` as the target response. If set to 'auto', the response method is
         tried in the before mentioned order.
-
-    class_of_interest : int, float, bool, str or None
-        The class considered when plotting the decision. Cannot be None if
-        multiclass and `response_method` is 'predict_proba' or 'decision_function'.
-
-        .. versionadded:: 1.4
 
     Returns
     -------
@@ -503,9 +497,7 @@ class DecisionBoundaryDisplay:
                 columns=X.columns,
             )
 
-        prediction_method = _check_boundary_response_method(
-            estimator, response_method, class_of_interest
-        )
+        prediction_method = _check_boundary_response_method(estimator, response_method)
         try:
             response, _, response_method_used = _get_response_values(
                 estimator,

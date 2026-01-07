@@ -23,7 +23,6 @@ else:
     Array: TypeAlias = np.ndarray
 
 __all__ = ["Array", "DType", "Device"]
-_all_ignore = ["np"]
 
 
 def __dir__() -> list[str]:

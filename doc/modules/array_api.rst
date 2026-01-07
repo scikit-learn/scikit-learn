@@ -125,6 +125,7 @@ Estimators
 
 - :class:`decomposition.PCA` (with `svd_solver="full"`, `svd_solver="covariance_eigh"`, or
   `svd_solver="randomized"` (`svd_solver="randomized"` only if `power_iteration_normalizer="QR"`))
+- :class:`kernel_approximation.Nystroem`
 - :class:`linear_model.Ridge` (with `solver="svd"`)
 - :class:`linear_model.RidgeCV` (with `solver="svd"`, see :ref:`device_support_for_float64`)
 - :class:`linear_model.RidgeClassifier` (with `solver="svd"`)

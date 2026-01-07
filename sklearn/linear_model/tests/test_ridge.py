@@ -1920,6 +1920,7 @@ def test_ridge_regression_check_arguments_validity(
                 return_intercept=return_intercept,
                 positive=positive,
                 tol=tol,
+                random_state=rng,
             )
         return
 
@@ -1932,6 +1933,7 @@ def test_ridge_regression_check_arguments_validity(
         positive=positive,
         return_intercept=return_intercept,
         tol=tol,
+        random_state=rng,
     )
 
     if return_intercept:

@@ -271,11 +271,18 @@ def test_path_parameters(csc_container):
 
 @pytest.mark.parametrize("Model", [Lasso, ElasticNet, LassoCV, ElasticNetCV])
 @pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("l1_ratio", [0.5, 0])
 @pytest.mark.parametrize("n_samples, n_features", [(24, 6), (6, 24)])
 @pytest.mark.parametrize("with_sample_weight", [True, False])
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_sparse_dense_equality(
-    Model, fit_intercept, n_samples, n_features, with_sample_weight, csc_container
+    Model,
+    fit_intercept,
+    l1_ratio,
+    n_samples,
+    n_features,
+    with_sample_weight,
+    csc_container,
 ):
     X, y = make_regression(
         n_samples=n_samples,
@@ -292,6 +299,11 @@ def test_sparse_dense_equality(
         sw = None
     Xs = csc_container(X)
     params = {"fit_intercept": fit_intercept, "tol": 1e-6}
+    if Model != ElasticNet:
+        if l1_ratio == 0:
+            return
+    else:
+        params["l1_ratio"] = l1_ratio
     reg_dense = Model(**params).fit(X, y, sample_weight=sw)
     reg_sparse = Model(**params).fit(Xs, y, sample_weight=sw)
     if fit_intercept:
