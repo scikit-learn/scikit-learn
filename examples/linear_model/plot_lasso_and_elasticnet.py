@@ -153,7 +153,7 @@ print(f"ARD r^2 on test data : {r2_score_ard:.3f}")
 #
 # :class:`~sklearn.linear_model.ElasticNet` is a middle ground between
 # :class:`~sklearn.linear_model.Lasso` and :class:`~sklearn.linear_model.Ridge`,
-# as it combines a L1 and a L2-penalty. The amount of regularization is
+# as it combines an L1 and an L2-penalty. The amount of regularization is
 # controlled by the two hyperparameters `l1_ratio` and `alpha`. For `l1_ratio =
 # 0` the penalty is pure L2 and the model is equivalent to a
 # :class:`~sklearn.linear_model.Ridge`. Similarly, `l1_ratio = 1` is a pure L1
