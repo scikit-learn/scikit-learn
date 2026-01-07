@@ -2539,6 +2539,7 @@ def test_mixed_array_api_namespace_input_compliance(
             dtype = _get_dtype(y1, xp_from, from_ns_and_device.device)
             y1_xp = xp_from.asarray(y1, device=from_ns_and_device.device, dtype=dtype)
 
+            metric_kwargs_xp = metric_kwargs_np = {}
             if metric_name not in METRICS_WITHOUT_SAMPLE_WEIGHT:
                 # use `from_ns_and_device` for `sample_weight` as well
                 sample_weight_np = np.array(sample_weight)
