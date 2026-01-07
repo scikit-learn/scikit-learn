@@ -1134,7 +1134,7 @@ Note the following behaviors when averaging:
 
 * If all labels are included, "micro"-averaging in a multiclass setting will produce
   precision, recall and :math:`F` that are all identical to accuracy.
-* "weighted" averaging may produce a F-score that is not between precision and recall.
+* "weighted" averaging may produce an F-score that is not between precision and recall.
 * "macro" averaging for F-measures is calculated as the arithmetic mean over
   per-label/class F-measures, not the harmonic mean over the arithmetic precision and
   recall means. Both calculations can be seen in the literature but are not equivalent,
