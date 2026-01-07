@@ -407,7 +407,7 @@ cyclic_cossin_transformer = ColumnTransformer(
         ("hour_cos", cos_transformer(24), ["hour"]),
     ],
     remainder=MinMaxScaler(),
-    verbose_feature_names_out=False,
+    verbose_feature_names_out=True,
 )
 cyclic_cossin_linear_pipeline = make_pipeline(
     cyclic_cossin_transformer,
@@ -649,7 +649,7 @@ cyclic_spline_interactions_pipeline = make_pipeline(
             ("marginal", cyclic_spline_transformer),
             ("interactions", hour_workday_interaction),
         ],
-        verbose_feature_names_out=False,
+        verbose_feature_names_out=True,
     ).set_output(transform="pandas"),
     RidgeCV(alphas=alphas),
 )
