@@ -391,7 +391,7 @@ Who is using scikit-learn?
 
 
 `HowAboutWe <https://www.howaboutwe.com/>`_
-------------------------------------------
+-------------------------------------------
 
 .. div:: sk-text-image-grid-large
 
