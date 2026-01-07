@@ -231,6 +231,13 @@ def average_precision_score(
     xp, _, device = get_namespace_and_device(y_score)
     y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
+    # Explicitly convert array inputs from other namespaces to numpy when
+    # `array_api_dispatch` is disabled, to avoid incompatibilities between namespaces.
+    # See: https://github.com/numpy/numpy/issues/28024. Specifically fixes numpy/torch
+    # incompatibilities when np.sum and np.repeat are called with a torch array as an
+    # input in `_average_binary_score`. `np.sum` internally dispatches to torch, but
+    # fails because `torch.sum` doesn't take an `out` argument; `np.repeat` internally
+    # calls `torch.repeat`, but this fails because it doesn't have an `axis` argument.
     if not get_config().get("array_api_dispatch", False):
         y_true = _convert_to_numpy(y_true, xp=xp)
         y_score = _convert_to_numpy(y_score, xp=xp)
