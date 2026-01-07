@@ -1361,9 +1361,8 @@ class GridSearchCV(BaseSearchCV):
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     verbose : int, default=0
-        Controls the verbosity of the grid search.
-
-        Higher values increase the amount of information printed during fitting.
+        Controls the verbosity of information printed during fitting, with higher
+        values yielding more detailed logging.
 
         - 0 : no messages are printed;
         - >=1 : summary of the total number of fits;
@@ -1747,9 +1746,8 @@ class RandomizedSearchCV(BaseSearchCV):
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     verbose : int, default = 0
-        Controls the verbosity of the verbosity of the randomized search.
-
-        Higher values increase the amount of information printed during fitting.
+        Controls the verbosity of information printed during fitting, with higher
+        values yielding more detailed logging.
 
         - 0 : no messages are printed;
         - >=1 : summary of the total number of fits;
