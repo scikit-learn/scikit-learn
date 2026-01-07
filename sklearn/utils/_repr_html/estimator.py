@@ -344,7 +344,14 @@ def _write_estimator_html(
                 hasattr(estimator, "_get_fitted_attr_html")
                 and is_fitted_css_class == "fitted"
             ):
-                attrs = estimator._get_fitted_attr_html(doc_link)._repr_html_inner()
+                attrs = "".join(
+                    [
+                        estimator._get_fitted_attr_html(doc_link)._repr_html_inner(),
+                        "estimator's sizeof :",
+                        str(estimator.__sizeof__()),
+                    ]
+                )
+
             else:
                 attrs = ""
 
@@ -412,7 +419,14 @@ def _write_estimator_html(
             hasattr(estimator, "_get_fitted_attr_html")
             and is_fitted_css_class == "fitted"
         ):
-            attrs = estimator._get_fitted_attr_html(doc_link)._repr_html_inner()
+            attrs = "".join(
+                [
+                    estimator._get_fitted_attr_html(doc_link)._repr_html_inner(),
+                    "estimator's sizeof :",
+                    str(estimator.__sizeof__()),
+                ]
+            )
+
         else:
             attrs = ""
 
