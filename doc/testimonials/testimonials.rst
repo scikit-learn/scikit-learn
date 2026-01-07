@@ -599,7 +599,7 @@ Who is using scikit-learn?
 
 
 `INFONEA <https://www.infonea.com/en/>`_
----------------------------------------
+----------------------------------------
 
 .. div:: sk-text-image-grid-large
 
