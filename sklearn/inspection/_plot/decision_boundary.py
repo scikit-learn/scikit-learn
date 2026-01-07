@@ -5,7 +5,7 @@ import warnings
 
 import numpy as np
 
-from sklearn.base import is_regressor
+from sklearn.base import is_clusterer, is_outlier_detector, is_regressor
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import _safe_indexing
 from sklearn.utils._dataframe import is_pandas_df, is_polars_df
@@ -583,6 +583,10 @@ class DecisionBoundaryDisplay:
 
         if hasattr(estimator, "classes_"):
             n_classes = len(estimator.classes_)
+        elif is_outlier_detector(estimator):
+            n_classes = 2
+        elif is_clusterer(estimator) and hasattr(estimator, "labels_"):
+            n_classes = len(np.unique(estimator.labels_))
         else:
             n_classes = len(np.unique(response))
 

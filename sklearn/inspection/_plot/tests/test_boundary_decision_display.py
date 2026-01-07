@@ -239,7 +239,7 @@ def test_decision_boundary_display_classifier(
 
 
 @pytest.mark.parametrize("response_method", ["auto", "predict", "decision_function"])
-@pytest.mark.parametrize("plot_method", ["contourf", "contour"])
+@pytest.mark.parametrize("plot_method", ["contourf", "contour", "pcolormesh"])
 def test_decision_boundary_display_outlier_detector(
     pyplot, response_method, plot_method
 ):
@@ -256,7 +256,10 @@ def test_decision_boundary_display_outlier_detector(
         eps=eps,
         ax=ax,
     )
-    assert isinstance(disp.surface_, pyplot.matplotlib.contour.QuadContourSet)
+    if plot_method == "pcolormesh":
+        assert isinstance(disp.surface_, pyplot.matplotlib.collections.QuadMesh)
+    else:
+        assert isinstance(disp.surface_, pyplot.matplotlib.contour.QuadContourSet)
     assert disp.ax_ == ax
     assert disp.figure_ == fig
 
@@ -288,7 +291,12 @@ def test_decision_boundary_display_regressor(pyplot, response_method, plot_metho
         eps=eps,
         plot_method=plot_method,
     )
-    assert isinstance(disp.surface_, pyplot.matplotlib.contour.QuadContourSet)
+    if disp.n_classes == 2 or plot_method == "contour":
+        assert isinstance(disp.surface_, pyplot.matplotlib.contour.QuadContourSet)
+    else:
+        assert isinstance(disp.surface_, list)
+        for surface in disp.surface_:
+            assert isinstance(surface, pyplot.matplotlib.contour.QuadContourSet)
     assert disp.ax_ == ax
     assert disp.figure_ == fig
 
