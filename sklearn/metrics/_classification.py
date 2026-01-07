@@ -533,7 +533,7 @@ def confusion_matrix(
         ensure_min_samples=0,
     )
     # Convert the input arrays to NumPy (on CPU) irrespective of the original
-    # namespace and device so as to be able to leverage the the efficient
+    # namespace and device so as to be able to leverage the efficient
     # counting operations implemented by SciPy in the coo_matrix constructor.
     # The final results will be converted back to the input namespace and device
     # for the sake of consistency with other metric functions with array API support.
