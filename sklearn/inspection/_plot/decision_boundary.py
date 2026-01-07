@@ -83,13 +83,13 @@ class DecisionBoundaryDisplay:
     xx1 : ndarray of shape (grid_resolution, grid_resolution)
         Second output of :func:`meshgrid <numpy.meshgrid>`.
 
-    response : ndarray of shape (grid_resolution, grid_resolution) or \
-            (grid_resolution, grid_resolution, n_classes)
-        Values of the response function.
-
     n_classes : int
         Number of classes if estimator is a classifier, number of unique values in the
         response otherwise.
+
+    response : ndarray of shape (grid_resolution, grid_resolution) or \
+            (grid_resolution, grid_resolution, n_classes)
+        Values of the response function.
 
     multiclass_colors : list of str or str, default=None
         Specifies how to color each class when plotting all classes of multiclass
