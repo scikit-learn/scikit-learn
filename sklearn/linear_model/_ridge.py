@@ -1946,7 +1946,6 @@ class _RidgeGCV(LinearModel):
         diag : np.ndarray, shape (n_samples,)
             The computed diagonal.
         """
-        # FIXME ?
         XA = X.dot(A)
         if sparse.isspmatrix(X):
             # sparse matrix use multiply for element wise multiplication
@@ -1971,12 +1970,6 @@ class _RidgeGCV(LinearModel):
         xp, is_array_api = get_namespace(X)
         K = self._compute_gram(X, X_mean, sqrt_sw)
         eigvals, Q = xp.linalg.eigh(K)
-        # kill nullspace
-        n_samples, n_features = X.shape
-        n_nullspace = max(self.fit_intercept, n_samples - n_features)
-        assert np.allclose(eigvals[:n_nullspace], 0), "wrong nullspace"
-        Q = Q[:, n_nullspace:]
-        eigvals = eigvals[n_nullspace:]
         QT_y = Q.T @ y
         QT_sqrt_sw = Q.T @ sqrt_sw
         XT = X.T
@@ -2037,7 +2030,6 @@ class _RidgeGCV(LinearModel):
 
         Used when we have a decomposition of X^T.X (n_samples > n_features).
         """
-        # FIXME check cov, gram, and solve
         w = 1 / (eigvals + alpha)
         A = (V * w).dot(V.T)
         AXT_y = A.dot(XT_y)
@@ -2177,7 +2169,6 @@ class _RidgeGCV(LinearModel):
         gcv_mode = _check_gcv_mode(X, self.gcv_mode)
 
         n_samples, n_features = X.shape
-        # FIXME restore options eigen/svd
         if gcv_mode == "gram":
             decompose = self._eigen_decompose_gram
             solve = self._solve_eigen_gram
@@ -2619,17 +2610,20 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    gcv_mode : {'auto', 'svd', 'eigen'}, default='auto'
+    gcv_mode : {'auto', 'svd', 'eigen', 'cov', 'gram'}, default='auto'
         Flag indicating which strategy to use when performing
         Leave-One-Out Cross-Validation. Options are::
 
-            'auto' : use 'svd' if n_samples > n_features, otherwise use 'eigen'
-            'svd' : force use of singular value decomposition of X when X is
-                dense, eigenvalue decomposition of X^T.X when X is sparse.
-            'eigen' : force computation via eigendecomposition of X.X^T
+            'auto' : use 'svd' if X is dense, otherwise use 'eigen'
+            'svd' : use singular value decomposition of X when X is
+                dense, fallback to 'eigen' when X is sparse
+            'eigen' : use 'gram' when n_samples < n_features and
+                'cov' when n_features <= n_samples
+            'cov' : force computation via eigendecomposition of X^T X
+            'gram' : force computation via eigendecomposition of X X^T
 
         The 'auto' mode is the default and is intended to pick the cheaper
-        option of the two depending on the shape of the training data.
+        option depending on the shape and sparsity of the training data.
 
     store_cv_results : bool, default=False
         Flag indicating if the cross-validation values corresponding to
