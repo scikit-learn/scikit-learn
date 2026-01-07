@@ -310,7 +310,7 @@ the lower half of those faces.
 
 * M. Dumont et al,  `Fast multi-class image annotation with random subwindows
   and multiple output randomized trees
-  <http://www.montefiore.ulg.ac.be/services/stochastic/pubs/2009/DMWG09/dumont-visapp09-shortpaper.pdf>`_,
+  <https://www.montefiore.ulg.ac.be/services/stochastic/pubs/2009/DMWG09/dumont-visapp09-shortpaper.pdf>`_,
   International Conference on Computer Vision Theory and Applications 2009
 
 .. _tree_complexity:
