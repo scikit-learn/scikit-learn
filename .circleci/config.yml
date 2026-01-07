@@ -32,7 +32,10 @@ jobs:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
-          key: v1-doc-min-deps-datasets-{{ .Branch }}
+          keys:
+            - v1-doc-min-deps-datasets-{{ .Branch }}
+            - v1-doc-min-deps-datasets-main
+            - v1-doc-min-deps-datasets
       - restore_cache:
           keys:
             - doc-min-deps-ccache-{{ .Branch }}
@@ -43,10 +46,20 @@ jobs:
           paths:
             - ~/.ccache
             - ~/.cache/pip
-      - save_cache:
-          key: v1-doc-min-deps-datasets-{{ .Branch }}
-          paths:
-            - ~/scikit_learn_data
+      # Only save dataset cache on main and release branches to prevent
+      # cache poisoning from PR branches.
+      - when:
+          condition:
+            or:
+              - equal: [ main, << pipeline.git.branch >> ]
+              - matches:
+                  pattern: "^[0-9]+\\.[0-9]+\\.X$"
+                  value: << pipeline.git.branch >>
+          steps:
+            - save_cache:
+                key: v1-doc-min-deps-datasets-{{ .Branch }}-{{ .BuildNum }}
+                paths:
+                  - ~/scikit_learn_data
       - store_artifacts:
           path: doc/_build/html/stable
           destination: doc
@@ -69,7 +82,10 @@ jobs:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
-          key: v1-doc-datasets-{{ .Branch }}
+          keys:
+            - v1-doc-datasets-{{ .Branch }}
+            - v1-doc-datasets-main
+            - v1-doc-datasets
       - restore_cache:
           keys:
             - doc-ccache-{{ .Branch }}
@@ -80,10 +96,20 @@ jobs:
           paths:
             - ~/.ccache
             - ~/.cache/pip
-      - save_cache:
-          key: v1-doc-datasets-{{ .Branch }}
-          paths:
-            - ~/scikit_learn_data
+      # Only save dataset cache on main and release branches to prevent
+      # cache poisoning from PR branches.
+      - when:
+          condition:
+            or:
+              - equal: [ main, << pipeline.git.branch >> ]
+              - matches:
+                  pattern: "^[0-9]+\\.[0-9]+\\.X$"
+                  value: << pipeline.git.branch >>
+          steps:
+            - save_cache:
+                key: v1-doc-datasets-{{ .Branch }}-{{ .BuildNum }}
+                paths:
+                  - ~/scikit_learn_data
       - store_artifacts:
           path: doc/_build/html/stable
           destination: doc
