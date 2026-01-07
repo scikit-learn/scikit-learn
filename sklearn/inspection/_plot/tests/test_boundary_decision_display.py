@@ -701,3 +701,82 @@ def test_subclass_named_constructors_return_type_is_subclass(pyplot):
     curve = SubclassOfDisplay.from_estimator(estimator=clf, X=X)
 
     assert isinstance(curve, SubclassOfDisplay)
+
+
+@pytest.mark.parametrize(
+    "xlim, ylim",
+    [
+        ((-2, 2), (-3, 3)),
+        ((-1, 1), None),
+        (None, (-2, 2)),
+        ((-0.5, 0.5), (-1, 1)),
+        ((-5, -1), (-3, -0.5)),
+    ],
+)
+def test_xlim_ylim_ranges(pyplot, fitted_clf, xlim, ylim):
+    """Check that xlim and ylim parameters correctly set the plot ranges."""
+    eps = 1.0
+    disp = DecisionBoundaryDisplay.from_estimator(
+        fitted_clf, X, xlim=xlim, ylim=ylim, eps=eps, grid_resolution=10
+    )
+
+    def check_range(axis_data, lim, fallback_min, fallback_max):
+        if lim is not None:
+            assert axis_data.min() == pytest.approx(lim[0])
+            assert axis_data.max() == pytest.approx(lim[1])
+        else:
+            assert axis_data.min() == pytest.approx(fallback_min)
+            assert axis_data.max() == pytest.approx(fallback_max)
+
+    check_range(disp.xx0, xlim, X[:, 0].min() - eps, X[:, 0].max() + eps)
+    check_range(disp.xx1, ylim, X[:, 1].min() - eps, X[:, 1].max() + eps)
+
+
+@pytest.mark.parametrize(
+    "xlim, ylim, error_msg",
+    [
+        ([1, 2], None, r"`xlim` must be a tuple of \(min, max\) with min < max"),
+        (None, [1, 2], r"`ylim` must be a tuple of \(min, max\) with min < max"),
+        ((2, 1), None, r"`xlim` must be a tuple of \(min, max\) with min < max"),
+        (None, (3, 1), r"`ylim` must be a tuple of \(min, max\) with min < max"),
+        ((1, 1), None, r"`xlim` must be a tuple of \(min, max\) with min < max"),
+        (None, (2, 2), r"`ylim` must be a tuple of \(min, max\) with min < max"),
+        ((1, 2, 3), None, r"`xlim` must be a tuple of \(min, max\) with min < max"),
+        (None, (1,), r"`ylim` must be a tuple of \(min, max\) with min < max"),
+    ],
+)
+def test_xlim_ylim_validation_errors(pyplot, fitted_clf, xlim, ylim, error_msg):
+    """Check input validation for xlim and ylim parameters."""
+    with pytest.raises(ValueError, match=error_msg):
+        DecisionBoundaryDisplay.from_estimator(fitted_clf, X, xlim=xlim, ylim=ylim)
+
+
+def test_xlim_ylim_overrides_eps(pyplot, fitted_clf):
+    """Check that xlim and ylim override eps parameter."""
+    eps = 5.0
+    xlim = (-1, 1)
+    ylim = (-2, 2)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        fitted_clf, X, xlim=xlim, ylim=ylim, eps=eps, grid_resolution=10
+    )
+
+    assert disp.xx0.min() == pytest.approx(xlim[0])
+    assert disp.xx0.max() == pytest.approx(xlim[1])
+    assert disp.xx1.min() == pytest.approx(ylim[0])
+    assert disp.xx1.max() == pytest.approx(ylim[1])
+
+
+def test_xlim_ylim_grid_shape(pyplot, fitted_clf):
+    """Check that xlim and ylim don't affect grid resolution."""
+    xlim = (-10, 10)
+    ylim = (-5, 5)
+    grid_resolution = 15
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        fitted_clf, X, xlim=xlim, ylim=ylim, grid_resolution=grid_resolution
+    )
+
+    assert disp.xx0.shape == (grid_resolution, grid_resolution)
+    assert disp.xx1.shape == (grid_resolution, grid_resolution)
+    assert disp.response.shape == (grid_resolution, grid_resolution)
