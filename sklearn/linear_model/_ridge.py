@@ -1840,7 +1840,7 @@ class _RidgeGCV(LinearModel):
         return D * B
 
     def _compute_gram(self, X, X_mean, sqrt_sw):
-        """Computes the Gram matrix XX^T with possible centering.
+        """Computes the Gram matrix X X^T with possible centering.
 
         Parameters
         ----------
@@ -1848,10 +1848,10 @@ class _RidgeGCV(LinearModel):
             The preprocessed design matrix.
 
         X_mean : ndarray of shape (n_feature,)
-            The weighted mean of ``X`` for each feature.
+            The weighted mean of X for each feature.
 
         sqrt_sw : ndarray of shape (n_samples,)
-            square roots of sample weights
+            Square roots of sample weights.
 
         Returns
         -------
@@ -1860,16 +1860,14 @@ class _RidgeGCV(LinearModel):
 
         Notes
         -----
-        When X is dense the centering has been done in preprocessing
-        so the mean is 0 and we just compute XX^T.
-
-        When X is sparse it has not been centered in preprocessing, but it has
-        been scaled by sqrt(sample weights).
-
         When self.fit_intercept is False no centering is done.
 
-        The centered X is never actually computed because centering would break
-        the sparsity of X.
+        When X is dense the centering has been done in preprocessing
+        so the mean is 0 and we just compute X X^T.
+
+        When X is sparse it has not been centered in preprocessing, but
+        it has been scaled by sqrt_sw. The centered X is never actually
+        computed because centering would break the sparsity of X.
         """
         center = self.fit_intercept and sparse.issparse(X)
         if not center:
@@ -1878,14 +1876,12 @@ class _RidgeGCV(LinearModel):
             return safe_sparse_dot(X, X.T, dense_output=True)
         # X is sparse and fit_intercept is True
         # centered matrix = X - sqrt_sw X_mean^T
-        # FIXME use broadcasting ?
-        # X_mX = sqrt_sw[:, None] * safe_sparse_dot(X_mean, X.T, dense_output=True)
-        X_mX = np.outer(sqrt_sw, safe_sparse_dot(X, X_mean, dense_output=True))
+        X_mX = sqrt_sw[:, None] * safe_sparse_dot(X_mean, X.T, dense_output=True)
         X_mX_m = np.outer(sqrt_sw, sqrt_sw) * np.dot(X_mean, X_mean)
         return safe_sparse_dot(X, X.T, dense_output=True) + X_mX_m - X_mX - X_mX.T
 
     def _compute_covariance(self, X, X_mean, sqrt_sw):
-        """Computes covariance matrix X^TX with possible centering.
+        """Computes covariance matrix X^T X with possible centering.
 
         Parameters
         ----------
@@ -1893,10 +1889,10 @@ class _RidgeGCV(LinearModel):
             The preprocessed design matrix.
 
         X_mean : ndarray of shape (n_feature,)
-            The weighted mean of ``X`` for each feature.
+            The weighted mean of X for each feature.
 
         sqrt_sw : ndarray of shape (n_samples,)
-            square roots of sample weights
+            Square roots of sample weights.
 
         Returns
         -------
@@ -1905,13 +1901,14 @@ class _RidgeGCV(LinearModel):
 
         Notes
         -----
-        Since X is sparse it has not been centered in preprocessing, but it has
-        been scaled by sqrt(sample weights).
-
         When self.fit_intercept is False no centering is done.
 
-        The centered X is never actually computed because centering would break
-        the sparsity of X.
+        When X is dense the centering has been done in preprocessing
+        so the mean is 0 and we just compute X^T X.
+
+        When X is sparse it has not been centered in preprocessing, but
+        it has been scaled by sqrt_sw. The centered X is never actually
+        computed because centering would break the sparsity of X.
         """
         center = self.fit_intercept and sparse.issparse(X)
         if not center:
@@ -1926,25 +1923,37 @@ class _RidgeGCV(LinearModel):
         )
 
     def _sparse_multidot_diag(self, X, A, X_mean, sqrt_sw):
-        """Compute the diagonal of (X - X_mean).dot(A).dot((X - X_mean).T)
-        without explicitly centering X nor computing X.dot(A)
-        when X is sparse.
+        """Compute the diagonal of X A X^T with possible centering.
 
         Parameters
         ----------
         X : {ndarray, sparse matrix, sparse array} of shape (n_samples, n_features)
+            The preprocessed design matrix.
 
         A : ndarray of shape (n_features, n_features)
+            The inner matrix.
 
-        X_mean : ndarray of shape (n_features,)
+        X_mean : ndarray of shape (n_feature,)
+            The weighted mean of X for each feature.
 
         sqrt_sw : ndarray of shape (n_samples,)
-            square roots of sample weights
+            Square roots of sample weights.
 
         Returns
         -------
         diag : np.ndarray, shape (n_samples,)
             The computed diagonal.
+
+        Notes
+        -----
+        When self.fit_intercept is False no centering is done.
+
+        When X is dense the centering has been done in preprocessing
+        so the mean is 0 and we just compute diag(X A X^T).
+
+        When X is sparse it has not been centered in preprocessing, but
+        it has been scaled by sqrt_sw. The centered X is never actually
+        computed because centering would break the sparsity of X.
         """
         XA = X.dot(A)
         if sparse.isspmatrix(X):
@@ -1965,8 +1974,7 @@ class _RidgeGCV(LinearModel):
         return XAX - 2 * sqrt_sw * XA_Xm + sw * X_mean.dot(A_Xm)
 
     def _eigen_decompose_gram(self, X, X_mean, y, sqrt_sw):
-        """Eigendecomposition of X.X^T, used when n_samples <= n_features."""
-        # if X is dense it has already been centered in preprocessing
+        """Eigendecomposition of Gram matrix X.X^T"""
         xp, is_array_api = get_namespace(X)
         K = self._compute_gram(X, X_mean, sqrt_sw)
         eigvals, Q = xp.linalg.eigh(K)
@@ -1978,10 +1986,7 @@ class _RidgeGCV(LinearModel):
     def _solve_eigen_gram(
         self, alpha, y, sqrt_sw, eigvals, Q, QT_y, QT_sqrt_sw, XT, X_mean
     ):
-        """Compute dual coefficients and diagonal of G^-1.
-
-        Used when we have a decomposition of X.X^T (n_samples <= n_features).
-        """
+        """Compute looe and coef when we have a decomposition of X.X^T"""
         w = 1.0 / (eigvals + alpha)
         c = Q @ self._diag_dot(w, QT_y)
         d = self._decomp_diag(w, Q)
@@ -2003,7 +2008,7 @@ class _RidgeGCV(LinearModel):
         return looe, coef
 
     def _eigen_decompose_covariance(self, X, X_mean, y, sqrt_sw):
-        """Eigendecomposition of X^T.X used when n_samples > n_features"""
+        """Eigendecomposition of covariance matrix X^T.X"""
         cov = self._compute_covariance(X, X_mean, sqrt_sw)
         eigvals, V = linalg.eigh(cov)
         XT_y = safe_sparse_dot(X.T, y, dense_output=True)
@@ -2026,10 +2031,7 @@ class _RidgeGCV(LinearModel):
     def _solve_eigen_covariance(
         self, alpha, y, sqrt_sw, eigvals, V, X, X_mean, XT_y, XT_sqrt_sw
     ):
-        """Compute dual coefficients and diagonal of G^-1.
-
-        Used when we have a decomposition of X^T.X (n_samples > n_features).
-        """
+        """Compute looe and coef when we have a decomposition of X^T.X"""
         w = 1 / (eigvals + alpha)
         A = (V * w).dot(V.T)
         AXT_y = A.dot(XT_y)
@@ -2056,6 +2058,7 @@ class _RidgeGCV(LinearModel):
         return looe, coef
 
     def _svd_decompose_design_matrix(self, X, X_mean, y, sqrt_sw):
+        """SVD decomposition of X"""
         xp, _ = get_namespace(X)
         # reduced svd
         U, singvals, VT = xp.linalg.svd(X, full_matrices=False)
@@ -2064,36 +2067,64 @@ class _RidgeGCV(LinearModel):
         V = VT.T
         return singvals, U, V, UT_y, UT_sqrt_sw
 
-    def _solve_svd_design_matrix(
+    def _solve_svd_design_matrix_long(
         self, alpha, y, sqrt_sw, singvals, U, V, UT_y, UT_sqrt_sw
     ):
-        """Compute dual coefficients and diagonal of G^-1.
+        """Compute looe and coef when we have an SVD decomposition of X.
 
-        Used when we have an SVD decomposition of X.
+        Long X case (n_features < n_samples).
         """
-        n_samples = U.shape[0]
-        n_features = V.shape[0]
-        D = alpha / (singvals**2 + alpha)
-        if n_features < n_samples:
-            D -= 1
-        alpha_c = U @ self._diag_dot(D, UT_y)
-        alpha_d = self._decomp_diag(D, U)
-        alpha_g = U @ self._diag_dot(D, UT_sqrt_sw)
-        if n_features < n_samples:
-            alpha_c += y
-            alpha_d += 1
-            alpha_g += sqrt_sw
+        D = alpha / (singvals**2 + alpha) - 1
+        alpha_c = U @ self._diag_dot(D, UT_y) + y
+        alpha_d = self._decomp_diag(D, U) + 1
+        alpha_g = U @ self._diag_dot(D, UT_sqrt_sw) + sqrt_sw
         if self.fit_intercept:
             sw_sum = sqrt_sw.dot(sqrt_sw)
             alpha_d -= alpha_g * sqrt_sw / sw_sum
         if len(y.shape) != 1:
             # handle case where y is 2-d
             alpha_d = alpha_d[:, None]
-        # coefficient and leave-one-out-errors
         looe = alpha_c / alpha_d
         H = singvals / (singvals**2 + alpha)
         coef = V @ self._diag_dot(H, UT_y)
         return looe, coef
+
+    def _solve_svd_design_matrix_wide(
+        self, alpha, y, sqrt_sw, singvals, U, V, UT_y, UT_sqrt_sw
+    ):
+        """Compute looe and coef when we have an SVD decomposition of X.
+
+        Wide X case (n_samples < n_features).
+        """
+        D = alpha / (singvals**2 + alpha)
+        alpha_c = U @ self._diag_dot(D, UT_y)
+        alpha_d = self._decomp_diag(D, U)
+        alpha_g = U @ self._diag_dot(D, UT_sqrt_sw)
+        if self.fit_intercept:
+            sw_sum = sqrt_sw.dot(sqrt_sw)
+            alpha_d -= alpha_g * sqrt_sw / sw_sum
+        if len(y.shape) != 1:
+            # handle case where y is 2-d
+            alpha_d = alpha_d[:, None]
+        looe = alpha_c / alpha_d
+        H = singvals / (singvals**2 + alpha)
+        coef = V @ self._diag_dot(H, UT_y)
+        return looe, coef
+
+    def _solve_svd_design_matrix(
+        self, alpha, y, sqrt_sw, singvals, U, V, UT_y, UT_sqrt_sw
+    ):
+        """Compute looe and coef when we have an SVD decomposition of X."""
+        n_samples = U.shape[0]
+        n_features = V.shape[0]
+        if n_samples < n_features:
+            return self._solve_svd_design_matrix_wide(
+                alpha, y, sqrt_sw, singvals, U, V, UT_y, UT_sqrt_sw
+            )
+        else:
+            return self._solve_svd_design_matrix_long(
+                alpha, y, sqrt_sw, singvals, U, V, UT_y, UT_sqrt_sw
+            )
 
     def fit(self, X, y, sample_weight=None, score_params=None):
         """Fit Ridge regression model with gcv.
