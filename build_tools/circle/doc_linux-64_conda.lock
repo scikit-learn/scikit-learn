@@ -164,7 +164,7 @@ https://conda.anaconda.org/conda-forge/linux-64/markupsafe-3.0.3-py311h3778330_0
 https://conda.anaconda.org/conda-forge/noarch/mdurl-0.1.2-pyhd8ed1ab_1.conda#592132998493b3ff25fd7479396e8351
 https://conda.anaconda.org/conda-forge/noarch/meson-1.10.0-pyhcf101f3_0.conda#58d003cc46fba78516176732d6a19ede
 https://conda.anaconda.org/conda-forge/noarch/munkres-1.1.4-pyhd8ed1ab_1.conda#37293a85a0f4f77bbd9cf7aaefc62609
-https://conda.anaconda.org/conda-forge/noarch/narwhals-2.14.0-pyhcf101f3_0.conda#2708dffa2a43a303f5f9cb020fedb6ab
+https://conda.anaconda.org/conda-forge/noarch/narwhals-2.15.0-pyhcf101f3_0.conda#37926bb0db8b04b8b99945076e1442d0
 https://conda.anaconda.org/conda-forge/noarch/networkx-3.6.1-pyhcf101f3_0.conda#a2c1eeadae7a309daed9d62c96012a2b
 https://conda.anaconda.org/conda-forge/linux-64/openldap-2.6.10-he970967_0.conda#2e5bf4f1da39c0b32778561c3c4e5878
 https://conda.anaconda.org/conda-forge/noarch/packaging-25.0-pyh29332c3_1.conda#58335b26c38bf4a20f399384c33cbcf9
@@ -235,8 +235,8 @@ https://conda.anaconda.org/conda-forge/noarch/jinja2-3.1.6-pyhcf101f3_1.conda#04
 https://conda.anaconda.org/conda-forge/noarch/joblib-1.5.3-pyhd8ed1ab_0.conda#615de2a4d97af50c350e5cf160149e77
 https://conda.anaconda.org/conda-forge/noarch/jupyter_core-5.9.1-pyhc90fa1f_0.conda#b38fe4e78ee75def7e599843ef4c1ab0
 https://conda.anaconda.org/conda-forge/noarch/jupyterlab_pygments-0.3.0-pyhd8ed1ab_2.conda#fd312693df06da3578383232528c468d
-https://conda.anaconda.org/conda-forge/linux-64/libclang-cpp21.1-21.1.7-default_h99862b1_3.conda#b450493426793d5fe7d8216a27120050
-https://conda.anaconda.org/conda-forge/linux-64/libclang13-21.1.7-default_h746c552_3.conda#ee42c44c3676cdbb6e63190077ca57d3
+https://conda.anaconda.org/conda-forge/linux-64/libclang-cpp21.1-21.1.8-default_h99862b1_0.conda#e55b5f69f6b53ec33cdaac390131f77a
+https://conda.anaconda.org/conda-forge/linux-64/libclang13-21.1.8-default_h746c552_0.conda#7e8e1d030e2d02196c498383aae486ae
 https://conda.anaconda.org/conda-forge/linux-64/liblapacke-3.11.0-5_h6ae95b6_openblas.conda#e487a0e38d89da76410cb92a5db39ec5
 https://conda.anaconda.org/conda-forge/linux-64/libpq-18.1-hb80d175_3.conda#c39da2ad0e7dd600d1eb3146783b057d
 https://conda.anaconda.org/conda-forge/linux-64/libvulkan-loader-1.4.328.1-h5279c79_0.conda#372a62464d47d9e966b630ffae3abe73
@@ -259,7 +259,7 @@ https://conda.anaconda.org/conda-forge/noarch/tinycss2-1.5.1-pyhcf101f3_0.conda#
 https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.15.0-h396c80c_0.conda#edd329d7d3a4ab45dcf905899a7a6115
 https://conda.anaconda.org/conda-forge/linux-64/xorg-libxtst-1.2.5-hb9d3cd8_3.conda#7bbe9a0cc0df0ac5f5a8ad6d6a11af2f
 https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda#aaa2a381ccc56eac91d63b6c1240312f
-https://conda.anaconda.org/conda-forge/noarch/anyio-4.12.0-pyhcf101f3_0.conda#9958d4a1ee7e9c768fe8f4fb51bd07ea
+https://conda.anaconda.org/conda-forge/noarch/anyio-4.12.1-pyhcf101f3_0.conda#11a2b8c732d215d977998ccd69a9d5e8
 https://conda.anaconda.org/conda-forge/linux-64/argon2-cffi-bindings-25.1.0-py311h49ec1c0_2.conda#6e36e9d2b535c3fbe2e093108df26695
 https://conda.anaconda.org/conda-forge/noarch/arrow-1.4.0-pyhcf101f3_0.conda#85c4f19f377424eafc4ed7911b291642
 https://conda.anaconda.org/conda-forge/noarch/beautifulsoup4-4.14.3-pyha770c72_0.conda#5267bef8efea4127aacd1f4e1f149b6e
