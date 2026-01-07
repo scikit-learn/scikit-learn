@@ -1,4 +1,7 @@
-- :class:`inspection.DecisionBoundaryDisplay` now also uses `multiclass_colors` for
-  multiclass plotting when `response_method="predict"`. This also fixes the bug that not
-  all classes were shown in distinct colours for problems with more than 7 classes.
+- A class variable `n_classes` is added to :class:`inspection.DecisionBoundaryDisplay`
+  which extracts the number of classes from the estimator (or the response values).
+  Based on this, `multiclass_colors` is now also used for multiclass plotting when
+  `response_method="predict"`, and the classes are plotted one by one (as it is also
+  done for the other response methods). This also fixes the known bug that not all
+  classes were shown in distinct colours for problems with more than 7 classes.
   By :user:`Anne Beyer <AnneBeyer>`
