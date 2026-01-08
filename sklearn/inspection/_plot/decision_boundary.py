@@ -156,7 +156,7 @@ class DecisionBoundaryDisplay:
     >>> tree = DecisionTreeClassifier().fit(iris.data[:, :2], iris.target)
     >>> y_pred = np.reshape(tree.predict(grid), feature_1.shape)
     >>> display = DecisionBoundaryDisplay(
-    ...     xx0=feature_1, xx1=feature_2, n_classes=tree.classes_, response=y_pred
+    ...     xx0=feature_1, xx1=feature_2, n_classes=len(tree.classes_), response=y_pred
     ... )
     >>> display.plot()
     <...>
@@ -444,6 +444,7 @@ class DecisionBoundaryDisplay:
 
         Examples
         --------
+        >>> import matplotlib as mpl
         >>> import matplotlib.pyplot as plt
         >>> from sklearn.datasets import load_iris
         >>> from sklearn.linear_model import LogisticRegression
