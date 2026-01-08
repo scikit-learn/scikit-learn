@@ -60,7 +60,7 @@ def test_get_n_samples_bootstrap():
         )
 
 
-@pytest.mark.parametrize("max_samples", [None, 1, 5, 1.0, 0.1])
+@pytest.mark.parametrize("max_samples", [None, 1, 5, 1000, 0.1, 1.0, 1.5])
 def test_n_samples_bootstrap_repeated_weighted_equivalence(max_samples):
     # weighted dataset
     n_samples = 100

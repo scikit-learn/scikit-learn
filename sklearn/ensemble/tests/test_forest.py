@@ -1582,6 +1582,23 @@ def test_forest_degenerate_feature_importances():
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_max_samples_geq_one(name):
+    # Check that `max_samples >= 1.0` is allowed, issue #28507
+    X, y = hastie_X, hastie_y
+    max_samples_float = 1.5
+    max_sample_int = int(max_samples_float * X.shape[0])
+    est1 = FOREST_CLASSIFIERS_REGRESSORS[name](
+        bootstrap=True, max_samples=max_samples_float
+    )
+    est1.fit(X, y)
+    est2 = FOREST_CLASSIFIERS_REGRESSORS[name](
+        bootstrap=True, max_samples=max_sample_int
+    )
+    est2.fit(X, y)
+    assert est1._n_samples_bootstrap == est2._n_samples_bootstrap
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
 def test_max_samples_bootstrap(name):
     # Check invalid `max_samples` values
     est = FOREST_CLASSIFIERS_REGRESSORS[name](bootstrap=False, max_samples=0.5)
