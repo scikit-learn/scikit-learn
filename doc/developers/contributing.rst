@@ -37,8 +37,7 @@ See :ref:`ways_to_contribute` to learn how to make meaningful contributions.
 
 .. topic:: **Our community, our values**
 
-    We are a community based on openness and friendly, didactic,
-    discussions.
+    We are a community based on openness and friendly, didactic discussions.
 
     We aspire to treat everybody equally, and value their contributions.  We
     are particularly seeking people from underrepresented backgrounds in Open
@@ -359,7 +358,7 @@ line
 .. topic:: Learning Git
 
     The `Git documentation <https://git-scm.com/doc>`_ and
-    http://try.github.io are excellent resources to get started with git,
+    https://try.github.io are excellent resources to get started with git,
     and understanding all of the commands shown here.
 
 .. _pr_checklist:
@@ -509,7 +508,7 @@ profiling and Cython optimizations.
 
    For two very well documented and more detailed guides on development
    workflow, please pay a visit to the `Scipy Development Workflow
-   <http://scipy.github.io/devdocs/dev/dev_quickstart.html>`_ -
+   <https://scipy.github.io/devdocs/dev/dev_quickstart.html>`_ -
    and the `Astropy Workflow for Developers
    <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.

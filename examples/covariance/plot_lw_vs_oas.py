@@ -5,7 +5,7 @@ Ledoit-Wolf vs OAS estimation
 
 The usual covariance maximum likelihood estimate can be regularized
 using shrinkage. Ledoit and Wolf proposed a close formula to compute
-the asymptotically optimal shrinkage parameter (minimizing a MSE
+the asymptotically optimal shrinkage parameter (minimizing an MSE
 criterion), yielding the Ledoit-Wolf covariance estimate.
 
 Chen et al. [1]_ proposed an improvement of the Ledoit-Wolf shrinkage

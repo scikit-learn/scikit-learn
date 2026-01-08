@@ -3,6 +3,7 @@ import re
 import numpy as np
 import pytest
 
+from sklearn._config import config_context
 from sklearn.datasets import make_classification
 from sklearn.kernel_approximation import (
     AdditiveChi2Sampler,
@@ -17,7 +18,17 @@ from sklearn.metrics.pairwise import (
     polynomial_kernel,
     rbf_kernel,
 )
+from sklearn.utils._array_api import (
+    _atol_for_type,
+    _convert_to_numpy,
+    get_namespace_and_device,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._array_api import (
+    device as array_device,
+)
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
@@ -90,8 +101,8 @@ def test_polynomial_count_sketch_dense_sparse(gamma, degree, coef0, csr_containe
     assert_allclose(Yt_dense, Yt_sparse)
 
 
-def _linear_kernel(X, Y):
-    return np.dot(X, Y.T)
+def _linear_kernel(x, y):
+    return x @ y
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -336,6 +347,46 @@ def test_nystroem_approximation():
         trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
         X_transformed = trans.fit(X).transform(X)
         assert X_transformed.shape == (X.shape[0], 2)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "kernel", list(kernel_metrics()) + [_linear_kernel, "precomputed"]
+)
+@pytest.mark.parametrize("n_components", [2, 100])
+def test_nystroem_approximation_array_api(
+    array_namespace, device, dtype_name, kernel, n_components
+):
+    xp = _array_api_for_tests(array_namespace, device)
+    rnd = np.random.RandomState(0)
+    n_samples = 10
+    # Ensure full-rank linear kernel to limit the impact of device-specific
+    # rounding discrepancies.
+    n_features = 2 * n_samples
+    X_np = rnd.uniform(size=(n_samples, n_features)).astype(dtype_name)
+    if kernel == "precomputed":
+        X_np = rbf_kernel(X_np[:n_components])
+
+    X_xp = xp.asarray(X_np, device=device)
+
+    nystroem = Nystroem(n_components=n_components, kernel=kernel, random_state=0)
+    X_np_transformed = nystroem.fit_transform(X_np)
+
+    with config_context(array_api_dispatch=True):
+        X_xp_transformed = nystroem.fit_transform(X_xp)
+        X_xp_transformed_np = _convert_to_numpy(X_xp_transformed, xp=xp)
+
+        for attribute_name in ["components_", "normalization_"]:
+            xp_attr, _, device_attr = get_namespace_and_device(
+                getattr(nystroem, attribute_name)
+            )
+            assert xp_attr is xp
+            assert device_attr == array_device(X_xp)
+
+    atol = _atol_for_type(dtype_name)
+    assert_allclose(X_np_transformed, X_xp_transformed_np, atol=atol)
 
 
 def test_nystroem_default_parameters():

@@ -1360,14 +1360,15 @@ class GridSearchCV(BaseSearchCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    verbose : int
-        Controls the verbosity: the higher, the more messages.
+    verbose : int, default=0
+        Controls the verbosity of information printed during fitting, with higher
+        values yielding more detailed logging.
 
-        - >1 : the computation time for each fold and parameter candidate is
-          displayed;
-        - >2 : the score is also displayed;
-        - >3 : the fold and candidate parameter indexes are also displayed
-          together with the starting time of the computation.
+        - 0 : no messages are printed;
+        - >=1 : summary of the total number of fits;
+        - >=2 : computation time for each fold and parameter candidate;
+        - >=3 : fold indices and scores;
+        - >=10 : parameter candidate indices and START messages before each fit.
 
     pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
@@ -1744,14 +1745,15 @@ class RandomizedSearchCV(BaseSearchCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    verbose : int
-        Controls the verbosity: the higher, the more messages.
+    verbose : int, default = 0
+        Controls the verbosity of information printed during fitting, with higher
+        values yielding more detailed logging.
 
-        - >1 : the computation time for each fold and parameter candidate is
-          displayed;
-        - >2 : the score is also displayed;
-        - >3 : the fold and candidate parameter indexes are also displayed
-          together with the starting time of the computation.
+        - 0 : no messages are printed;
+        - >=1 : summary of the total number of fits;
+        - >=2 : computation time for each fold and parameter candidate;
+        - >=3 : fold indices and scores;
+        - >=10 : parameter candidate indices and START messages before each fit.
 
     pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
