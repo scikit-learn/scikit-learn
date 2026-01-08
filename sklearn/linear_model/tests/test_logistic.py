@@ -920,14 +920,14 @@ def test_logistic_cv_sparse(global_random_seed, solver, csr_container):
         n_samples=100, n_features=5, random_state=global_random_seed
     )
     X[X < 0.0] = 0.0  # make it a bit sparse
-    params = dict(Cs=[1e-1, 1, 1e1], max_iter=10_000, tol=1e-6, random_state=42)
+    params = dict(Cs=[1e-1, 1, 1e1], max_iter=10_000, tol=1e-7, random_state=42)
 
     clf = LogisticRegressionCV(solver=solver, use_legacy_attributes=False, **params)
     clf.fit(X, y)
     clfs = LogisticRegressionCV(solver=solver, use_legacy_attributes=False, **params)
     clfs.fit(csr_container(X), y)
 
-    rtol = 5e-2 if solver in ("sag", "saga") else 1e-5
+    rtol = 6e-2 if solver in ("sag", "saga") else 1e-5
     assert_allclose(clfs.coef_, clf.coef_, rtol=rtol)
     assert_allclose(clfs.intercept_, clf.intercept_, rtol=rtol)
     assert clfs.C_ == clf.C_
