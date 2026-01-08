@@ -11,6 +11,7 @@ import numpy
 import scipy
 import scipy.sparse as sp
 import scipy.special as special
+from scipy.spatial import distance as sp_distance
 
 from sklearn._config import get_config
 from sklearn.externals import array_api_compat
@@ -1195,3 +1196,246 @@ def _half_multinomial_loss(y, pred, sample_weight=None, xp=None):
     return float(
         _average(log_sum_exp - label_predictions, weights=sample_weight, xp=xp)
     )
+
+
+def _cdist_euclidean_fallback(X, Y, xp):
+    """Pure array API fallback for squared Euclidean pairwise distances.
+
+    Uses the expanded form: ||x - y||^2 = ||x||^2 + ||y||^2 - 2 * x.y
+    This avoids creating a large (n, m, d) intermediate array.
+    """
+    _, _, device_ = get_namespace_and_device(X, Y, xp=xp)
+    X_sqnorm = xp.sum(X**2, axis=1, keepdims=True)
+    Y_sqnorm = xp.sum(Y**2, axis=1, keepdims=True)
+    sq_dist = X_sqnorm + Y_sqnorm.T - 2 * (X @ Y.T)
+    # Ensure non-negative due to numerical precision
+    sq_dist = xp.where(
+        sq_dist < 0, xp.asarray(0.0, dtype=sq_dist.dtype, device=device_), sq_dist
+    )
+    return sq_dist
+
+
+def _cdist(X, Y, metric="euclidean", xp=None):
+    """Compute pairwise distance between rows of X and Y.
+
+    This function dispatches to backend-specific implementations when available,
+    falling back to pure array API operations otherwise.
+
+    Parameters
+    ----------
+    X : array of shape (n_samples_X, n_features)
+        First input array.
+    Y : array of shape (n_samples_Y, n_features)
+        Second input array.
+    metric : str, default="euclidean"
+        Distance metric. Supported: "euclidean", "sqeuclidean".
+    xp : module, optional
+        Array namespace.
+
+    Returns
+    -------
+    distances : array of shape (n_samples_X, n_samples_Y)
+        Pairwise distances.
+    """
+    xp, _, device_ = get_namespace_and_device(X, Y, xp=xp)
+
+    if _is_numpy_namespace(xp):
+        return xp.asarray(sp_distance.cdist(X, Y, metric=metric))
+
+    if _is_xp_namespace(xp, "torch"):
+        # torch.cdist computes p-norm distances
+        if metric == "sqeuclidean":
+            return xp.cdist(X, Y, p=2) ** 2
+        elif metric == "euclidean":
+            return xp.cdist(X, Y, p=2)
+        else:
+            raise ValueError(f"Metric {metric!r} not supported for torch backend")
+
+    if _is_xp_namespace(xp, "cupy"):
+        from cupyx.scipy.spatial.distance import cdist
+
+        return cdist(X, Y, metric=metric)
+
+    # Fallback for array-api-strict and other backends
+    sq_dist = _cdist_euclidean_fallback(X, Y, xp)
+    if metric == "sqeuclidean":
+        return sq_dist
+    elif metric == "euclidean":
+        return xp.sqrt(sq_dist)
+    else:
+        raise ValueError(
+            f"Metric {metric!r} not supported in fallback. "
+            "Use 'euclidean' or 'sqeuclidean'."
+        )
+
+
+def _pdist(X, metric="euclidean", xp=None):
+    """Compute pairwise distance between all pairs of rows in X.
+
+    Returns distances in condensed form (upper triangular, row-major order).
+
+    Parameters
+    ----------
+    X : array of shape (n_samples, n_features)
+        Input array.
+    metric : str, default="euclidean"
+        Distance metric. Supported: "euclidean", "sqeuclidean".
+    xp : module, optional
+        Array namespace.
+
+    Returns
+    -------
+    distances : array of shape (n_samples * (n_samples - 1) / 2,)
+        Condensed distance matrix.
+    """
+    xp, _, device_ = get_namespace_and_device(X, xp=xp)
+
+    if _is_numpy_namespace(xp):
+        return xp.asarray(sp_distance.pdist(X, metric=metric))
+
+    if _is_xp_namespace(xp, "torch"):
+        import torch
+
+        # torch.nn.functional.pdist returns condensed form
+        if metric == "sqeuclidean":
+            return torch.nn.functional.pdist(X, p=2) ** 2
+        elif metric == "euclidean":
+            return torch.nn.functional.pdist(X, p=2)
+        else:
+            raise ValueError(f"Metric {metric!r} not supported for torch backend")
+
+    if _is_xp_namespace(xp, "cupy"):
+        from cupyx.scipy.spatial.distance import pdist
+
+        return pdist(X, metric=metric)
+
+    # Fallback: compute full distance matrix and extract upper triangle
+    sq_dist = _cdist_euclidean_fallback(X, X, xp)
+    n = X.shape[0]
+
+    # Extract upper triangular indices (row-major order)
+    indices_i = []
+    indices_j = []
+    for i in range(n):
+        for j in range(i + 1, n):
+            indices_i.append(i)
+            indices_j.append(j)
+
+    indices_i = xp.asarray(indices_i, device=device_)
+    indices_j = xp.asarray(indices_j, device=device_)
+
+    condensed = sq_dist[indices_i, indices_j]
+
+    if metric == "sqeuclidean":
+        return condensed
+    elif metric == "euclidean":
+        return xp.sqrt(condensed)
+    else:
+        raise ValueError(
+            f"Metric {metric!r} not supported in fallback. "
+            "Use 'euclidean' or 'sqeuclidean'."
+        )
+
+
+def _squareform(condensed, xp=None):
+    """Convert a condensed distance matrix to square form.
+
+    Parameters
+    ----------
+    condensed : array of shape (n_samples * (n_samples - 1) / 2,)
+        Condensed distance matrix (upper triangular, row-major order).
+    xp : module, optional
+        Array namespace.
+
+    Returns
+    -------
+    square : array of shape (n_samples, n_samples)
+        Square distance matrix with zeros on diagonal.
+    """
+    xp, _, device_ = get_namespace_and_device(condensed, xp=xp)
+
+    if _is_numpy_namespace(xp):
+        return xp.asarray(sp_distance.squareform(condensed))
+
+    # Compute n from condensed length: n*(n-1)/2 = len
+    # n^2 - n - 2*len = 0 => n = (1 + sqrt(1 + 8*len)) / 2
+    m = condensed.shape[0]
+    n = int((1 + math.sqrt(1 + 8 * m)) / 2)
+
+    square = xp.zeros((n, n), dtype=condensed.dtype, device=device_)
+
+    # Fill upper and lower triangular
+    idx = 0
+    for i in range(n):
+        for j in range(i + 1, n):
+            square = xpx.at(square)[i, j].set(condensed[idx])
+            square = xpx.at(square)[j, i].set(condensed[idx])
+            idx += 1
+
+    return square
+
+
+def _cho_solve(L, b, xp=None):
+    """Solve L @ L.T @ x = b given lower-triangular Cholesky factor L.
+
+    Parameters
+    ----------
+    L : array of shape (n, n)
+        Lower-triangular Cholesky factor.
+    b : array of shape (n,) or (n, m)
+        Right-hand side.
+    xp : module, optional
+        Array namespace.
+
+    Returns
+    -------
+    x : array of shape (n,) or (n, m)
+        Solution to L @ L.T @ x = b.
+    """
+    xp, _ = get_namespace(L, b, xp=xp)
+
+    if _is_numpy_namespace(xp):
+        return scipy.linalg.cho_solve((L, True), b, check_finite=False)
+
+    # Two triangular solves: L @ y = b, then L.T @ x = y
+    y = xp.linalg.solve(L, b)
+    return xp.linalg.solve(L.mT, y)
+
+
+def _kv(nu, x, xp=None):
+    """Modified Bessel function of the second kind K_nu(x).
+
+    Used by Matern kernel for general nu values. For nu in {0.5, 1.5, 2.5, inf},
+    closed-form expressions exist in the kernel and this function is not called.
+
+    Parameters
+    ----------
+    nu : float
+        Order of the Bessel function (scalar).
+    x : array
+        Argument array (distances).
+    xp : module, optional
+        Array namespace.
+
+    Returns
+    -------
+    result : array
+        K_nu(x) evaluated element-wise.
+
+    Notes
+    -----
+    This function falls back to scipy.special.kv via CPU for all non-NumPy
+    backends. PyTorch only provides K_0 and K_1, not general K_nu.
+    Users needing full GPU acceleration should use nu in {0.5, 1.5, 2.5, inf}
+    which have closed-form expressions in the Matern kernel.
+    """
+    xp, _, device_ = get_namespace_and_device(x, xp=xp)
+
+    if _is_numpy_namespace(xp):
+        return xp.asarray(special.kv(nu, numpy.asarray(x)))
+
+    # All other backends: fall back to CPU via scipy
+    # Note: PyTorch only has modified_bessel_k0/k1, not general kv
+    x_np = _convert_to_numpy(x, xp)
+    result_np = special.kv(nu, x_np)
+    return xp.asarray(result_np, device=device_)
