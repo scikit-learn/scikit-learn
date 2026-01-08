@@ -6,7 +6,6 @@ from contextlib import closing
 from inspect import isclass
 from io import StringIO
 from pathlib import Path
-from string import Template
 
 from sklearn import config_context
 
@@ -207,7 +206,8 @@ def _write_label_html(
         )
 
         fmt_str = (
-            f'<input class="sk-toggleable__control sk-hidden--visually" id="{est_id}" '
+            f'<input class="sk-toggleable__control sk-hidden--visually '
+            f'sk-global" id="{est_id}" '
             f'type="checkbox" {checked_str}>{label_html}<div '
             f'class="sk-toggleable__content {is_fitted_css_class}" '
             f'data-param-prefix="{html.escape(param_prefix)}">'
@@ -433,7 +433,7 @@ def estimator_html_repr(estimator):
     >>> from sklearn.utils._repr_html.estimator import estimator_html_repr
     >>> from sklearn.linear_model import LogisticRegression
     >>> estimator_html_repr(LogisticRegression())
-    '<style>#sk-container-id...'
+    '<style>.sk-global...'
     """
     from sklearn.exceptions import NotFittedError
     from sklearn.utils.validation import check_is_fitted
@@ -456,8 +456,6 @@ def estimator_html_repr(estimator):
     )
     with closing(StringIO()) as out:
         container_id = _CONTAINER_ID_COUNTER.get_id()
-        style_template = Template(_CSS_STYLE)
-        style_with_id = style_template.substitute(id=container_id)
         estimator_str = str(estimator)
 
         # The fallback message is shown by default and loading the CSS sets
@@ -476,9 +474,9 @@ def estimator_html_repr(estimator):
             " with nbviewer.org."
         )
         html_template = (
-            f"<style>{style_with_id}</style>"
+            f"<style>{_CSS_STYLE}</style>"
             f"<body>"
-            f'<div id="{container_id}" class="sk-top-container">'
+            f'<div id="{container_id}" class="sk-top-container sk-global">'
             '<div class="sk-text-repr-fallback">'
             f"<pre>{html.escape(estimator_str)}</pre><b>{fallback_msg}</b>"
             "</div>"
