@@ -2485,7 +2485,7 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing():
 @pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize("seed", range(3))
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
-def test_missing_values_random_splitter_on_equal_nodes_no_missing(seed, criterion):
+def test_missing_values_random_splitter_on_equal_nodes_no_missing(criterion, seed):
     """Check missing values go to the correct node during predictions for ExtraTree.
 
     Since ETC use random splits, we use different seeds to verify that the
