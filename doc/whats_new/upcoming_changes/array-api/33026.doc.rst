@@ -1,0 +1,11 @@
+.. _array_api_input_conversion_note:
+
+Array API input conversion behavior
+-----------------------------------
+
+Clarify that scikit-learn does not implicitly convert non-Array API inputs
+into Array API–compatible arrays. Users are expected to explicitly provide
+Array API–compatible inputs when opting into Array API support.
+
+This note helps avoid confusion when mixing NumPy arrays and Array API
+implementations.
