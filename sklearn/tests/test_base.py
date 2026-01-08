@@ -189,6 +189,10 @@ def test_clone_empty_array():
     clf2 = clone(clf)
     assert_array_equal(clf.empty.data, clf2.empty.data)
 
+    clf = MyEstimator(empty=sp.csr_array(np.array([[0]])))
+    clf2 = clone(clf)
+    assert_array_equal(clf.empty.data, clf2.empty.data)
+
 
 def test_clone_nan():
     # Regression test for cloning estimators with default parameter as np.nan

@@ -22,7 +22,7 @@ from sklearn.metrics.pairwise import (
     _find_floating_dtype_allow_sparse,
     pairwise_kernels,
 )
-from sklearn.utils import check_random_state
+from sklearn.utils import _align_api_if_sparse, check_random_state
 from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
     get_namespace_and_device,
@@ -811,8 +811,10 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         indptr = X.indptr.copy()
 
         data_step = np.sqrt(X.data * sample_interval)
-        X_step = sp.csr_matrix(
-            (data_step, indices, indptr), shape=X.shape, dtype=X.dtype, copy=False
+        X_step = _align_api_if_sparse(
+            sp.csr_array(
+                (data_step, indices, indptr), shape=X.shape, dtype=X.dtype, copy=False
+            )
         )
         X_new = [X_step]
 
@@ -823,14 +825,24 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
             factor_nz = np.sqrt(step_nz / np.cosh(np.pi * j * sample_interval))
 
             data_step = factor_nz * np.cos(j * log_step_nz)
-            X_step = sp.csr_matrix(
-                (data_step, indices, indptr), shape=X.shape, dtype=X.dtype, copy=False
+            X_step = _align_api_if_sparse(
+                sp.csr_array(
+                    (data_step, indices, indptr),
+                    shape=X.shape,
+                    dtype=X.dtype,
+                    copy=False,
+                )
             )
             X_new.append(X_step)
 
             data_step = factor_nz * np.sin(j * log_step_nz)
-            X_step = sp.csr_matrix(
-                (data_step, indices, indptr), shape=X.shape, dtype=X.dtype, copy=False
+            X_step = _align_api_if_sparse(
+                sp.csr_array(
+                    (data_step, indices, indptr),
+                    shape=X.shape,
+                    dtype=X.dtype,
+                    copy=False,
+                )
             )
             X_new.append(X_step)
 

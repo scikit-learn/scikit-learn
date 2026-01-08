@@ -38,6 +38,7 @@ from sklearn.utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.graph import _fix_connected_components
 from sklearn.utils.validation import check_memory, validate_data
 
@@ -92,7 +93,7 @@ def _fix_connectivity(X, connectivity, affinity):
 
     # Convert connectivity matrix to LIL
     if not sparse.issparse(connectivity):
-        connectivity = sparse.lil_matrix(connectivity)
+        connectivity = sparse.lil_array(connectivity)
 
     # `connectivity` is a sparse matrix at this point
     if connectivity.format != "lil":
@@ -118,7 +119,7 @@ def _fix_connectivity(X, connectivity, affinity):
             mode="connectivity",
         )
 
-    return connectivity, n_connected_components
+    return _align_api_if_sparse(connectivity), n_connected_components
 
 
 def _single_linkage_tree(
