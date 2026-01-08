@@ -12,6 +12,7 @@ def test_binary_log_loss_1_prob_finite():
 
     loss = binary_log_loss(y_true, y_prob)
     assert np.isfinite(loss)
+    assert False
 
 
 @pytest.mark.parametrize(
@@ -50,3 +51,4 @@ def test_poisson_loss(global_random_seed):
     )
 
     assert loss == pytest.approx(loss_ref, rel=1e-12)
+    assert False
