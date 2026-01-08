@@ -14,7 +14,6 @@ from pytest import importorskip
 
 import sklearn
 from sklearn._config import config_context
-from sklearn._min_dependencies import dependent_packages
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_blobs
 from sklearn.ensemble import RandomForestRegressor
@@ -77,8 +76,6 @@ from sklearn.utils.validation import (
     _estimator_has,
     _get_feature_names,
     _is_fitted,
-    _is_pandas_df,
-    _is_polars_df,
     _num_features,
     _num_samples,
     _to_object_array,
@@ -2002,63 +1999,6 @@ def test_get_feature_names_dataframe_protocol(constructor_name, minversion):
     assert_array_equal(feature_names, columns)
 
 
-@pytest.mark.parametrize("constructor_name", ["pyarrow", "dataframe", "polars"])
-def test_is_pandas_df_other_libraries(constructor_name):
-    df = _convert_container([[1, 4, 2], [3, 3, 6]], constructor_name)
-    if constructor_name in ("pyarrow", "polars"):
-        assert not _is_pandas_df(df)
-    else:
-        assert _is_pandas_df(df)
-
-
-def test_is_pandas_df():
-    """Check behavior of is_pandas_df when pandas is installed."""
-    pd = pytest.importorskip("pandas")
-    df = pd.DataFrame([[1, 2, 3]])
-    assert _is_pandas_df(df)
-    assert not _is_pandas_df(np.asarray([1, 2, 3]))
-    assert not _is_pandas_df(1)
-
-
-def test_is_pandas_df_pandas_not_installed(hide_available_pandas):
-    """Check _is_pandas_df when pandas is not installed."""
-
-    assert not _is_pandas_df(np.asarray([1, 2, 3]))
-    assert not _is_pandas_df(1)
-
-
-@pytest.mark.parametrize(
-    "constructor_name, minversion",
-    [
-        ("pyarrow", dependent_packages["pyarrow"][0]),
-        ("dataframe", dependent_packages["pandas"][0]),
-        ("polars", dependent_packages["polars"][0]),
-    ],
-)
-def test_is_polars_df_other_libraries(constructor_name, minversion):
-    df = _convert_container(
-        [[1, 4, 2], [3, 3, 6]],
-        constructor_name,
-        minversion=minversion,
-    )
-    if constructor_name in ("pyarrow", "dataframe"):
-        assert not _is_polars_df(df)
-    else:
-        assert _is_polars_df(df)
-
-
-def test_is_polars_df_for_duck_typed_polars_dataframe():
-    """Check _is_polars_df for object that looks like a polars dataframe"""
-
-    class NotAPolarsDataFrame:
-        def __init__(self):
-            self.columns = [1, 2, 3]
-            self.schema = "my_schema"
-
-    not_a_polars_df = NotAPolarsDataFrame()
-    assert not _is_polars_df(not_a_polars_df)
-
-
 def test_get_feature_names_numpy():
     """Get feature names return None for numpy arrays."""
     X = np.array([[1, 2, 3], [4, 5, 6]])
@@ -2327,17 +2267,6 @@ def test_column_or_1d():
         else:
             with pytest.raises(ValueError):
                 column_or_1d(y)
-
-
-def test__is_polars_df():
-    """Check that _is_polars_df return False for non-dataframe objects."""
-
-    class LooksLikePolars:
-        def __init__(self):
-            self.columns = ["a", "b"]
-            self.schema = ["a", "b"]
-
-    assert not _is_polars_df(LooksLikePolars())
 
 
 def test_check_array_writeable_np():

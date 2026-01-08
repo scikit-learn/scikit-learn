@@ -2500,7 +2500,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         if not hasattr(self, "coef_"):
             self._more_validate_params(for_partial_fit=True)
 
-        alpha = self.nu / 2
+        alpha = self.nu
         return self._partial_fit(
             X,
             alpha,
@@ -2604,7 +2604,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         """
         self._more_validate_params()
 
-        alpha = self.nu / 2
+        alpha = self.nu
         self._fit(
             X,
             alpha=alpha,

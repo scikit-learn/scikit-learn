@@ -1448,7 +1448,7 @@ eta0=1.0)` can be used for PA-I or with ``learning_rate="pa2"`` for PA-II.
 .. dropdown:: References
 
   * `"Online Passive-Aggressive Algorithms"
-    <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
+    <https://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
 
 Robustness regression: outliers and modeling errors
@@ -1655,7 +1655,7 @@ better than an ordinary least squares in high dimension.
 
   .. [#f1] Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang: `Theil-Sen Estimators in a Multiple Linear Regression Model. <http://home.olemiss.edu/~xdang/papers/MTSE.pdf>`_
 
-  .. [#f2] T. Kärkkäinen and S. Äyrämö: `On Computation of Spatial Median for Robust Data Mining. <http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf>`_
+  .. [#f2] T. Kärkkäinen and S. Äyrämö: `On Computation of Spatial Median for Robust Data Mining. <https://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf>`_
 
   Also see the `Wikipedia page <https://en.wikipedia.org/wiki/Theil%E2%80%93Sen_estimator>`_
 
