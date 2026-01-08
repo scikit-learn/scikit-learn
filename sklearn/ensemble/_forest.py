@@ -1618,7 +1618,7 @@ class RandomForestRegressor(ForestRegressor):
         .. versionadded:: 1.0
            Poisson criterion.
 
-        .. versionchanged:: 1.8
+        .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
 
     max_depth : int, default=None

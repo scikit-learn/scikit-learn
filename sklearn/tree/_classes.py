@@ -1133,7 +1133,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         .. versionadded:: 0.24
             Poisson deviance criterion.
 
-        .. versionchanged:: 1.8
+        .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
 
     splitter : {"best", "random"}, default="best"
@@ -1364,7 +1364,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             criterion = "squared_error"
             warnings.warn(
                 'Value `"friedman_mse"` for `criterion` is deprecated and will be '
-                'removed in 1.10. It maps to `"squared_error"` as both '
+                'removed in 1.11. It maps to `"squared_error"` as both '
                 'were always equivalent. Use `criterion="squared_error"` '
                 "to remove this warning.",
                 FutureWarning,
@@ -1782,7 +1782,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         .. versionadded:: 0.24
             Poisson deviance criterion.
 
-        .. versionchanged:: 1.8
+        .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
 
     splitter : {"random", "best"}, default="random"

@@ -665,7 +665,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if self.criterion != "deprecated":
             warnings.warn(
                 "The parameter `criterion` is deprecated and will be "
-                "removed in 1.10. It has no effect. Leave it to its default value to "
+                "removed in 1.11. It has no effect. Leave it to its default value to "
                 "avoid this warning.",
                 FutureWarning,
             )
@@ -1194,8 +1194,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.18
 
-        .. deprecated:: 1.8
-           `criterion` is deprecated and will be removed in 1.10.
+        .. deprecated:: 1.9
+           `criterion` is deprecated and will be removed in 1.11.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
@@ -1805,8 +1805,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.18
 
-        .. deprecated:: 1.8
-           `criterion` is deprecated and will be removed in 1.10.
+        .. deprecated:: 1.9
+           `criterion` is deprecated and will be removed in 1.11.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
