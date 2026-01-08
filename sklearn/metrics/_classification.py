@@ -3391,7 +3391,7 @@ def _log_loss(transformed_labels, y_pred, *, normalize=True, sample_weight=None)
     eps = xp.finfo(y_pred.dtype).eps
     y_pred = xp.clip(y_pred, eps, 1 - eps)
     transformed_labels = xp.astype(transformed_labels, y_pred.dtype, copy=False)
-    loss = -xp.sum(_xlogy(transformed_labels, y_pred), axis=1)
+    loss = -xp.sum(_xlogy(transformed_labels, y_pred, xp=xp), axis=1)
     return float(_average(loss, weights=sample_weight, normalize=normalize))
 
 
