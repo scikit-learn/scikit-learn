@@ -2364,7 +2364,7 @@ class ExtraTreesRegressor(ForestRegressor):
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
-        .. versionchanged:: 1.8
+        .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
 
     max_depth : int, default=None
