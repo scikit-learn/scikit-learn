@@ -1,0 +1,8 @@
+.. _array_api_doc_update:
+
+Clarify Array API documentation
+-------------------------------
+
+Clarified the documentation for Array API support, including expected
+behavior and usage notes when passing Array API–compatible inputs to
+scikit-learn estimators.
