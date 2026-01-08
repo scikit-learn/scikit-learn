@@ -568,6 +568,12 @@ def partial_dependence(
     PartialDependenceDisplay.from_estimator : Plot Partial Dependence.
     PartialDependenceDisplay : Partial Dependence visualization.
 
+    Notes
+    -----
+    For regressors the averaged predictions returned by `'brute'` method differ
+    from the results returned by `'recursive'` method. For classifiers
+    the same results are guaranteed when `response_method='decision_function'`.
+
     Examples
     --------
     >>> X = [[0, 0, 2], [1, 0, 0]]
