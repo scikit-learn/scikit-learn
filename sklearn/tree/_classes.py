@@ -1361,6 +1361,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         monotonic_cst=None,
     ):
         if isinstance(criterion, str) and criterion == "friedman_mse":
+            # TODO(1.11): remove support of "friedman_mse" criterion.
             criterion = "squared_error"
             warnings.warn(
                 'Value `"friedman_mse"` for `criterion` is deprecated and will be '

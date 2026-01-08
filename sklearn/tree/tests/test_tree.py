@@ -72,7 +72,7 @@ from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_random_state
 
 CLF_CRITERIONS = ("gini", "log_loss")
-REG_CRITERIONS = ("squared_error", "absolute_error", "poisson")
+REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
@@ -267,6 +267,8 @@ def test_weighted_classification_toy():
         assert_array_equal(clf.predict(T), true_result, "Failed with {0}".format(name))
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize("Tree", REG_TREES.values())
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
 def test_regression_toy(Tree, criterion):
@@ -329,6 +331,8 @@ def test_iris():
         )
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize("name, Tree", REG_TREES.items())
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
 def test_diabetes_overfit(name, Tree, criterion):
@@ -342,12 +346,15 @@ def test_diabetes_overfit(name, Tree, criterion):
     )
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize("Tree", REG_TREES.values())
 @pytest.mark.parametrize(
     "criterion, metric",
     [
         ("squared_error", mean_squared_error),
         ("absolute_error", mean_absolute_error),
+        ("friedman_mse", mean_squared_error),
         ("poisson", mean_poisson_deviance),
     ],
 )
@@ -945,6 +952,8 @@ def test_pickle():
             )
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize(
     "Tree, criterion",
     [
@@ -1489,6 +1498,8 @@ def test_sparse_parameters(tree_type, dataset, csc_container):
     assert_array_almost_equal(s.predict(X), d.predict(X))
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize(
     "tree_type, criterion",
     list(product([tree for tree in SPARSE_TREES if tree in REG_TREES], REG_CRITERIONS))
@@ -2033,7 +2044,9 @@ def test_apply_path_readonly_all_trees(name, splitter, sparse_container):
     )
 
 
-@pytest.mark.parametrize("criterion", ["squared_error", "poisson"])
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
+@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse", "poisson"])
 @pytest.mark.parametrize("Tree", REG_TREES.values())
 def test_balance_property(criterion, Tree):
     # Test that sum(y_pred)=sum(y_true) on training set.
@@ -2455,12 +2468,15 @@ def test_min_sample_split_1_error(Tree):
         tree.fit(X, y)
 
 
-def test_missing_values_best_splitter_on_equal_nodes_no_missing():
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
+@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
+def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
     """Check missing values goes to correct node during predictions."""
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
 
-    dtc = DecisionTreeRegressor(random_state=42, max_depth=1)
+    dtc = DecisionTreeRegressor(random_state=42, max_depth=1, criterion=criterion)
     dtc.fit(X, y)
 
     # Goes to right node because it has the most data points
@@ -2471,7 +2487,7 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing():
     X_equal = X[:-1]
     y_equal = y[:-1]
 
-    dtc = DecisionTreeRegressor(random_state=42, max_depth=1)
+    dtc = DecisionTreeRegressor(random_state=42, max_depth=1, criterion=criterion)
     dtc.fit(X_equal, y_equal)
 
     # Goes to right node because the implementation sets:
@@ -2480,8 +2496,7 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing():
     assert_allclose(y_pred, [np.mean(y_equal[-4:])])
 
 
-# TODO(1.11): remove the deprecated friedman_mse criterion parametrization and
-# use the default instead. 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
 @pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize("seed", range(3))
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
@@ -2758,6 +2773,8 @@ def test_deterministic_pickle():
     assert pickle1 == pickle2
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize("Tree", [DecisionTreeRegressor, ExtraTreeRegressor])
 @pytest.mark.parametrize(
     "X",
@@ -2770,7 +2787,8 @@ def test_deterministic_pickle():
         np.array([1, 2, 3, np.nan, 6, np.nan]),
     ],
 )
-def test_regression_tree_missing_values_toy(Tree, X, global_random_seed):
+@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
+def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_seed):
     """Check that we properly handle missing values in regression trees using a toy
     dataset.
 
@@ -2787,7 +2805,7 @@ def test_regression_tree_missing_values_toy(Tree, X, global_random_seed):
     X = X.reshape(-1, 1)
     y = np.arange(6)
 
-    tree = Tree(random_state=global_random_seed).fit(X, y)
+    tree = Tree(criterion=criterion, random_state=global_random_seed).fit(X, y)
     tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
 
     impurity = tree.tree_.impurity
