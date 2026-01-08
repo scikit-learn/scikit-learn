@@ -51,9 +51,9 @@ def _check_length_scale(X, length_scale, xp=None):
     if xp is None:
         xp, _ = get_namespace(X)
 
-    # Convert length_scale to array if needed, on same device as X
-    if not hasattr(length_scale, "ndim"):
-        length_scale = xp.asarray(length_scale, dtype=X.dtype, device=array_device(X))
+    # Convert length_scale to array in the same namespace as X
+    # This handles cases where length_scale is a scalar, numpy array, or array API array
+    length_scale = xp.asarray(length_scale, dtype=X.dtype, device=array_device(X))
 
     # Squeeze all dimensions of size 1
     # Array API squeeze requires explicit axis, so we squeeze one axis at a time
@@ -65,11 +65,6 @@ def _check_length_scale(X, length_scale, xp=None):
                 length_scale = xp.squeeze(length_scale, axis=axis)
                 squeezed = True
                 break
-
-    # Ensure the length_scale uses the same dtype as X (already done if created
-    # from scalar above, but ensure it for array inputs too)
-    if length_scale.dtype != X.dtype:
-        length_scale = xp.astype(length_scale, X.dtype)
 
     if length_scale.ndim > 1:
         raise ValueError("length_scale cannot be of dimension greater than 1")
@@ -1318,7 +1313,8 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
 
         n_samples_X = _num_samples(X)
         n_samples_Y = _num_samples(Y)
-        dtype = xp.asarray(self.constant_value).dtype
+        # Use input dtype to preserve precision (MPS doesn't support float64)
+        dtype = X.dtype
 
         K = xp.full(
             (n_samples_X, n_samples_Y), self.constant_value, dtype=dtype, device=device_
@@ -1357,9 +1353,8 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
             Diagonal of kernel k(X, X)
         """
         xp, _ = get_namespace(X)
-        dtype = xp.asarray(self.constant_value).dtype
         return xp.full(
-            _num_samples(X), self.constant_value, dtype=dtype, device=array_device(X)
+            _num_samples(X), self.constant_value, dtype=X.dtype, device=array_device(X)
         )
 
     def __repr__(self):
@@ -1451,7 +1446,7 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
             raise ValueError("Gradient can only be evaluated when Y is None.")
 
         n_samples_X = _num_samples(X)
-        dtype = xp.asarray(self.noise_level).dtype
+        dtype = X.dtype
 
         if Y is None:
             K = self.noise_level * xp.eye(n_samples_X, dtype=dtype, device=device_)
@@ -1491,9 +1486,8 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
             Diagonal of kernel k(X, X)
         """
         xp, _ = get_namespace(X)
-        dtype = xp.asarray(self.noise_level).dtype
         return xp.full(
-            _num_samples(X), self.noise_level, dtype=dtype, device=array_device(X)
+            _num_samples(X), self.noise_level, dtype=X.dtype, device=array_device(X)
         )
 
     def __repr__(self):

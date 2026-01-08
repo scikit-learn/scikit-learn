@@ -9,7 +9,6 @@ from operator import itemgetter
 
 import numpy as np
 import scipy.optimize
-from scipy.linalg import cho_solve, cholesky, solve_triangular
 
 from sklearn.base import (
     BaseEstimator,
@@ -22,6 +21,13 @@ from sklearn.gaussian_process.kernels import RBF, Kernel
 from sklearn.gaussian_process.kernels import ConstantKernel as C
 from sklearn.preprocessing._data import _handle_zeros_in_scale
 from sklearn.utils import check_random_state
+from sklearn.utils._array_api import (
+    _add_to_diagonal,
+    _cho_solve,
+    _cholesky,
+    _convert_to_numpy,
+    get_namespace_and_device,
+)
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.optimize import _check_optimize_result
 from sklearn.utils.validation import validate_data
@@ -267,6 +273,15 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             dtype=dtype,
         )
 
+        xp, _, device_ = get_namespace_and_device(X, y)
+        self._xp = xp
+        self._device = device_
+
+        # Ensure y is floating point (required for linalg operations)
+        # Only convert dtype if X is floating point (not for structured data)
+        if xp.isdtype(X.dtype, "real floating"):
+            y = xp.asarray(y, dtype=X.dtype, device=device_)
+
         n_targets_seen = y.shape[1] if y.ndim > 1 else 1
         if self.n_targets is not None and n_targets_seen != self.n_targets:
             raise ValueError(
@@ -276,16 +291,16 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         # Normalize target value
         if self.normalize_y:
-            self._y_train_mean = np.mean(y, axis=0)
-            self._y_train_std = _handle_zeros_in_scale(np.std(y, axis=0), copy=False)
+            self._y_train_mean = xp.mean(y, axis=0)
+            self._y_train_std = _handle_zeros_in_scale(xp.std(y, axis=0), copy=False)
 
             # Remove mean and make unit variance
             y = (y - self._y_train_mean) / self._y_train_std
 
         else:
-            shape_y_stats = (y.shape[1],) if y.ndim == 2 else 1
-            self._y_train_mean = np.zeros(shape=shape_y_stats)
-            self._y_train_std = np.ones(shape=shape_y_stats)
+            shape_y_stats = (y.shape[1],) if y.ndim == 2 else (1,)
+            self._y_train_mean = xp.zeros(shape_y_stats, dtype=y.dtype, device=device_)
+            self._y_train_std = xp.ones(shape_y_stats, dtype=y.dtype, device=device_)
 
         if np.iterable(self.alpha) and self.alpha.shape[0] != y.shape[0]:
             if self.alpha.shape[0] == 1:
@@ -296,43 +311,53 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     f"entries as y. ({self.alpha.shape[0]} != {y.shape[0]})"
                 )
 
-        self.X_train_ = np.copy(X) if self.copy_X_train else X
-        self.y_train_ = np.copy(y) if self.copy_X_train else y
+        # Store training data
+        if self.copy_X_train:
+            self.X_train_ = xp.asarray(X, device=device_, copy=True)
+            self.y_train_ = xp.asarray(y, device=device_, copy=True)
+        else:
+            self.X_train_ = X
+            self.y_train_ = y
 
         if self.optimizer is not None and self.kernel_.n_dims > 0:
             # Choose hyperparameters based on maximizing the log-marginal
             # likelihood (potentially starting from several initial values)
+            # Hybrid strategy: scipy.optimize uses NumPy, but kernel computations
+            # happen on native array library (GPU if available)
             def obj_func(theta, eval_gradient=True):
                 if eval_gradient:
                     lml, grad = self.log_marginal_likelihood(
                         theta, eval_gradient=True, clone_kernel=False
                     )
-                    return -lml, -grad
+                    # Convert to Python floats/numpy for scipy.optimize
+                    return -float(lml), -_convert_to_numpy(grad, xp)
                 else:
-                    return -self.log_marginal_likelihood(theta, clone_kernel=False)
+                    lml = self.log_marginal_likelihood(theta, clone_kernel=False)
+                    return -float(lml)
+
+            # Get theta and bounds as numpy for scipy.optimize
+            theta_init = _convert_to_numpy(self.kernel_.theta, xp)
+            bounds_init = _convert_to_numpy(self.kernel_.bounds, xp)
 
             # First optimize starting from theta specified in kernel
-            optima = [
-                (
-                    self._constrained_optimization(
-                        obj_func, self.kernel_.theta, self.kernel_.bounds
-                    )
-                )
-            ]
+            optima = [self._constrained_optimization(obj_func, theta_init, bounds_init)]
 
             # Additional runs are performed from log-uniform chosen initial
             # theta
             if self.n_restarts_optimizer > 0:
-                if not np.isfinite(self.kernel_.bounds).all():
+                if not np.isfinite(bounds_init).all():
                     raise ValueError(
                         "Multiple optimizer restarts (n_restarts_optimizer>0) "
                         "requires that all bounds are finite."
                     )
-                bounds = self.kernel_.bounds
                 for iteration in range(self.n_restarts_optimizer):
-                    theta_initial = self._rng.uniform(bounds[:, 0], bounds[:, 1])
+                    theta_initial = self._rng.uniform(
+                        bounds_init[:, 0], bounds_init[:, 1]
+                    )
                     optima.append(
-                        self._constrained_optimization(obj_func, theta_initial, bounds)
+                        self._constrained_optimization(
+                            obj_func, theta_initial, bounds_init
+                        )
                     )
             # Select result from run with minimal (negative) log-marginal
             # likelihood
@@ -350,24 +375,19 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         # of actual query points
         # Alg. 2.1, page 19, line 2 -> L = cholesky(K + sigma^2 I)
         K = self.kernel_(self.X_train_)
-        K[np.diag_indices_from(K)] += self.alpha
+        alpha_val = xp.asarray(self.alpha, dtype=K.dtype, device=device_)
+        _add_to_diagonal(K, alpha_val, xp)
         try:
-            self.L_ = cholesky(K, lower=GPR_CHOLESKY_LOWER, check_finite=False)
-        except np.linalg.LinAlgError as exc:
-            exc.args = (
-                (
-                    f"The kernel, {self.kernel_}, is not returning a positive "
-                    "definite matrix. Try gradually increasing the 'alpha' "
-                    "parameter of your GaussianProcessRegressor estimator."
-                ),
-            ) + exc.args
-            raise
+            self.L_ = _cholesky(K, xp)
+        except Exception as exc:
+            # Re-raise with helpful message
+            raise np.linalg.LinAlgError(
+                f"The kernel, {self.kernel_}, is not returning a positive "
+                "definite matrix. Try gradually increasing the 'alpha' "
+                "parameter of your GaussianProcessRegressor estimator."
+            ) from exc
         # Alg 2.1, page 19, line 3 -> alpha = L^T \ (L \ y)
-        self.alpha_ = cho_solve(
-            (self.L_, GPR_CHOLESKY_LOWER),
-            self.y_train_,
-            check_finite=False,
-        )
+        self.alpha_ = _cho_solve(self.L_, self.y_train_, xp=xp)
         return self
 
     def predict(self, X, return_std=False, return_cov=False):
@@ -417,7 +437,18 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         X = validate_data(self, X, ensure_2d=ensure_2d, dtype=dtype, reset=False)
 
-        if not hasattr(self, "X_train_"):  # Unfitted;predict based on GP prior
+        # Get array namespace
+        xp, _, device_ = get_namespace_and_device(X)
+
+        # Validate namespace matches training data if fitted
+        if hasattr(self, "_xp") and xp.__name__ != self._xp.__name__:
+            raise ValueError(
+                f"X has array namespace '{xp.__name__}' but the estimator was "
+                f"fitted with namespace '{self._xp.__name__}'. "
+                "The array namespace must match between fit and predict."
+            )
+
+        if not hasattr(self, "X_train_"):  # Unfitted; predict based on GP prior
             if self.kernel is None:
                 kernel = C(1.0, constant_value_bounds="fixed") * RBF(
                     1.0, length_scale_bounds="fixed"
@@ -426,22 +457,21 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 kernel = self.kernel
 
             n_targets = self.n_targets if self.n_targets is not None else 1
-            y_mean = np.zeros(shape=(X.shape[0], n_targets)).squeeze()
+            y_mean = xp.zeros((X.shape[0], n_targets), dtype=X.dtype, device=device_)
+            if n_targets == 1:
+                y_mean = xp.squeeze(y_mean, axis=1)
 
             if return_cov:
                 y_cov = kernel(X)
                 if n_targets > 1:
-                    y_cov = np.repeat(
-                        np.expand_dims(y_cov, -1), repeats=n_targets, axis=-1
-                    )
+                    # Repeat covariance for each target
+                    y_cov = xp.stack([y_cov] * n_targets, axis=-1)
                 return y_mean, y_cov
             elif return_std:
                 y_var = kernel.diag(X)
                 if n_targets > 1:
-                    y_var = np.repeat(
-                        np.expand_dims(y_var, -1), repeats=n_targets, axis=-1
-                    )
-                return y_mean, np.sqrt(y_var)
+                    y_var = xp.stack([y_var] * n_targets, axis=-1)
+                return y_mean, xp.sqrt(y_var)
             else:
                 return y_mean
         else:  # Predict based on GP posterior
@@ -454,53 +484,69 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
             # if y_mean has shape (n_samples, 1), reshape to (n_samples,)
             if y_mean.ndim > 1 and y_mean.shape[1] == 1:
-                y_mean = np.squeeze(y_mean, axis=1)
+                y_mean = xp.squeeze(y_mean, axis=1)
 
             if not return_cov and not return_std:
                 return y_mean
 
+            # XXX Should we keep solve_triangilar here?
             # Alg 2.1, page 19, line 5 -> v = L \ K(X_test, X_train)^T
-            V = solve_triangular(
-                self.L_, K_trans.T, lower=GPR_CHOLESKY_LOWER, check_finite=False
-            )
+            # V = solve_triangular(
+            #     self.L_, K_trans.T, lower=GPR_CHOLESKY_LOWER, check_finite=False
+            # )
+            V = xp.linalg.solve(self.L_, K_trans.T)
 
             if return_cov:
                 # Alg 2.1, page 19, line 6 -> K(X_test, X_test) - v^T. v
                 y_cov = self.kernel_(X) - V.T @ V
 
                 # undo normalisation
-                y_cov = np.outer(y_cov, self._y_train_std**2).reshape(*y_cov.shape, -1)
-                # if y_cov has shape (n_samples, n_samples, 1), reshape to
-                # (n_samples, n_samples)
-                if y_cov.shape[2] == 1:
-                    y_cov = np.squeeze(y_cov, axis=2)
+                # np.outer equivalent: expand dims and multiply
+                y_train_std_sq = xp.asarray(self._y_train_std, device=device_) ** 2
+                if y_train_std_sq.ndim == 0:
+                    # scalar case
+                    y_cov = y_cov * y_train_std_sq
+                else:
+                    # Reshape y_cov to (n_samples, n_samples, 1) then multiply
+                    y_cov = xp.expand_dims(y_cov, axis=-1) * y_train_std_sq
+                    # if y_cov has shape (n_samples, n_samples, 1), reshape to
+                    # (n_samples, n_samples)
+                    if y_cov.shape[2] == 1:
+                        y_cov = xp.squeeze(y_cov, axis=2)
 
                 return y_mean, y_cov
             else:  # return_std
                 # Compute variance of predictive distribution
-                # Use einsum to avoid explicitly forming the large matrix
-                # V^T @ V just to extract its diagonal afterward.
-                y_var = self.kernel_.diag(X).copy()
-                y_var -= np.einsum("ij,ji->i", V.T, V)
+                # Use sum of element-wise product instead of einsum
+                # einsum("ij,ji->i", V.T, V) == sum(V * V, axis=0)
+                y_var = self.kernel_.diag(X) + 0  # +0 to copy
+                y_var = y_var - xp.sum(V * V, axis=0)
 
                 # Check if any of the variances is negative because of
                 # numerical issues. If yes: set the variance to 0.
                 y_var_negative = y_var < 0
-                if np.any(y_var_negative):
+                if xp.any(y_var_negative):
                     warnings.warn(
                         "Predicted variances smaller than 0. "
                         "Setting those variances to 0."
                     )
-                    y_var[y_var_negative] = 0.0
+                    y_var = xp.where(
+                        y_var_negative,
+                        xp.asarray(0.0, dtype=y_var.dtype, device=device_),
+                        y_var,
+                    )
 
                 # undo normalisation
-                y_var = np.outer(y_var, self._y_train_std**2).reshape(*y_var.shape, -1)
+                y_train_std_sq = xp.asarray(self._y_train_std, device=device_) ** 2
+                if y_train_std_sq.ndim == 0:
+                    y_var = y_var * y_train_std_sq
+                else:
+                    y_var = xp.expand_dims(y_var, axis=-1) * y_train_std_sq
+                    # if y_var has shape (n_samples, 1), reshape to (n_samples,)
+                    if y_var.shape[1] == 1:
+                        y_var = xp.squeeze(y_var, axis=1)
 
-                # if y_var has shape (n_samples, 1), reshape to (n_samples,)
-                if y_var.shape[1] == 1:
-                    y_var = np.squeeze(y_var, axis=1)
-
-                return y_mean, np.sqrt(y_var)
+                return y_mean, xp.sqrt(y_var)
 
     def sample_y(self, X, n_samples=1, random_state=0):
         """Draw samples from Gaussian process and evaluate at X.
@@ -528,17 +574,29 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         """
         rng = check_random_state(random_state)
 
+        # Get array namespace from input
+        xp, _, device_ = get_namespace_and_device(X)
+
         y_mean, y_cov = self.predict(X, return_cov=True)
-        if y_mean.ndim == 1:
-            y_samples = rng.multivariate_normal(y_mean, y_cov, n_samples).T
+        # XXX Which way around should we do the conversion? Move y_mean or move
+        # XXX the indices?
+        # Convert to numpy for random sampling (sampling happens on CPU)
+        y_mean_np = _convert_to_numpy(y_mean, xp)
+        y_cov_np = _convert_to_numpy(y_cov, xp)
+
+        if y_mean_np.ndim == 1:
+            y_samples_np = rng.multivariate_normal(y_mean_np, y_cov_np, n_samples).T
         else:
-            y_samples = [
+            y_samples_list = [
                 rng.multivariate_normal(
-                    y_mean[:, target], y_cov[..., target], n_samples
+                    y_mean_np[:, target], y_cov_np[..., target], n_samples
                 ).T[:, np.newaxis]
-                for target in range(y_mean.shape[1])
+                for target in range(y_mean_np.shape[1])
             ]
-            y_samples = np.hstack(y_samples)
+            y_samples_np = np.hstack(y_samples_list)
+
+        # Convert back to original array namespace with original dtype
+        y_samples = xp.asarray(y_samples_np, dtype=X.dtype, device=device_)
         return y_samples
 
     def log_marginal_likelihood(
@@ -577,6 +635,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 raise ValueError("Gradient can only be evaluated for theta!=None")
             return self.log_marginal_likelihood_value_
 
+        # Get array namespace from training data
+        xp, _, device_ = get_namespace_and_device(self.X_train_)
+
         if clone_kernel:
             kernel = self.kernel_.clone_with_theta(theta)
         else:
@@ -589,69 +650,70 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             K = kernel(self.X_train_)
 
         # Alg. 2.1, page 19, line 2 -> L = cholesky(K + sigma^2 I)
-        K[np.diag_indices_from(K)] += self.alpha
+        alpha_val = xp.asarray(self.alpha, dtype=K.dtype, device=device_)
+        _add_to_diagonal(K, alpha_val, xp)
         try:
-            L = cholesky(K, lower=GPR_CHOLESKY_LOWER, check_finite=False)
-        except np.linalg.LinAlgError:
-            return (-np.inf, np.zeros_like(theta)) if eval_gradient else -np.inf
+            L = _cholesky(K, xp)
+        except Exception:
+            # Return -inf for non-positive definite matrices
+            if eval_gradient:
+                n_dims = len(theta) if hasattr(theta, "__len__") else 1
+                return -float("inf"), xp.zeros(n_dims, dtype=K.dtype, device=device_)
+            else:
+                return -float("inf")
 
         # Support multi-dimensional output of self.y_train_
         y_train = self.y_train_
         if y_train.ndim == 1:
-            y_train = y_train[:, np.newaxis]
+            y_train = xp.expand_dims(y_train, axis=-1)
 
         # Alg 2.1, page 19, line 3 -> alpha = L^T \ (L \ y)
-        alpha = cho_solve((L, GPR_CHOLESKY_LOWER), y_train, check_finite=False)
+        alpha = _cho_solve(L, y_train, xp=xp)
 
         # Alg 2.1, page 19, line 7
         # -0.5 . y^T . alpha - sum(log(diag(L))) - n_samples / 2 log(2*pi)
-        # y is originally thought to be a (1, n_samples) row vector. However,
-        # in multioutputs, y is of shape (n_samples, 2) and we need to compute
-        # y^T . alpha for each output, independently using einsum. Thus, it
-        # is equivalent to:
-        # for output_idx in range(n_outputs):
-        #     log_likelihood_dims[output_idx] = (
-        #         y_train[:, [output_idx]] @ alpha[:, [output_idx]]
-        #     )
-        log_likelihood_dims = -0.5 * np.einsum("ik,ik->k", y_train, alpha)
-        log_likelihood_dims -= np.log(np.diag(L)).sum()
-        log_likelihood_dims -= K.shape[0] / 2 * np.log(2 * np.pi)
+        # einsum("ik,ik->k", y_train, alpha) is element-wise product summed over axis 0
+        log_likelihood_dims = -0.5 * xp.sum(y_train * alpha, axis=0)
+        log_likelihood_dims = log_likelihood_dims - xp.sum(
+            xp.log(xp.linalg.diagonal(L))
+        )
+        log_likelihood_dims = log_likelihood_dims - K.shape[0] / 2 * float(
+            np.log(2 * np.pi)
+        )
         # the log likelihood is sum-up across the outputs
-        log_likelihood = log_likelihood_dims.sum(axis=-1)
+        log_likelihood = xp.sum(log_likelihood_dims, axis=-1)
 
         if eval_gradient:
             # Eq. 5.9, p. 114, and footnote 5 in p. 114
             # 0.5 * trace((alpha . alpha^T - K^-1) . K_gradient)
-            # alpha is supposed to be a vector of (n_samples,) elements. With
-            # multioutputs, alpha is a matrix of size (n_samples, n_outputs).
-            # Therefore, we want to construct a matrix of
-            # (n_samples, n_samples, n_outputs) equivalent to
-            # for output_idx in range(n_outputs):
-            #     output_alpha = alpha[:, [output_idx]]
-            #     inner_term[..., output_idx] = output_alpha @ output_alpha.T
-            inner_term = np.einsum("ik,jk->ijk", alpha, alpha)
+            # einsum("ik,jk->ijk", alpha, alpha) is outer product per output
+            # alpha[:, None, :] * alpha[None, :, :] gives (n, n, n_outputs)
+            inner_term = xp.expand_dims(alpha, axis=1) * xp.expand_dims(alpha, axis=0)
+
             # compute K^-1 of shape (n_samples, n_samples)
-            K_inv = cho_solve(
-                (L, GPR_CHOLESKY_LOWER), np.eye(K.shape[0]), check_finite=False
-            )
-            # create a new axis to use broadcasting between inner_term and
-            # K_inv
-            inner_term -= K_inv[..., np.newaxis]
-            # Since we are interested about the trace of
-            # inner_term @ K_gradient, we don't explicitly compute the
-            # matrix-by-matrix operation and instead use an einsum. Therefore
-            # it is equivalent to:
-            # for param_idx in range(n_kernel_params):
-            #     for output_idx in range(n_output):
-            #         log_likehood_gradient_dims[param_idx, output_idx] = (
-            #             inner_term[..., output_idx] @
-            #             K_gradient[..., param_idx]
-            #         )
-            log_likelihood_gradient_dims = 0.5 * np.einsum(
-                "ijl,jik->kl", inner_term, K_gradient
-            )
+            eye_matrix = xp.eye(K.shape[0], dtype=K.dtype, device=device_)
+            K_inv = _cho_solve(L, eye_matrix, xp=xp)
+
+            # create a new axis to use broadcasting between inner_term and K_inv
+            inner_term = inner_term - xp.expand_dims(K_inv, axis=-1)
+
+            # einsum("ijl,jik->kl", inner_term, K_gradient)
+            # = sum over i,j of inner_term[i,j,l] * K_gradient[j,i,k]
+            # K_gradient needs to be transposed in first two dims
+            K_gradient_T = xp.permute_dims(K_gradient, (1, 0, 2))
+            # inner_term: (n, n, n_outputs) -> (n, n, n_outputs, 1)
+            # K_gradient_T: (n, n, n_params) -> (n, n, 1, n_params)
+            inner_expanded = xp.expand_dims(inner_term, axis=-1)
+            K_grad_expanded = xp.expand_dims(K_gradient_T, axis=-2)
+            # product: (n, n, n_outputs, n_params)
+            product = inner_expanded * K_grad_expanded
+            # sum over i,j: (n_outputs, n_params)
+            result = xp.sum(product, axis=(0, 1))
+            # transpose to (n_params, n_outputs)
+            log_likelihood_gradient_dims = 0.5 * result.T
+
             # the log likelihood gradient is the sum-up across the outputs
-            log_likelihood_gradient = log_likelihood_gradient_dims.sum(axis=-1)
+            log_likelihood_gradient = xp.sum(log_likelihood_gradient_dims, axis=-1)
 
         if eval_gradient:
             return log_likelihood, log_likelihood_gradient
@@ -679,4 +741,5 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.requires_fit = False
+        tags.array_api_support = True
         return tags

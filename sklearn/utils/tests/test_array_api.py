@@ -1012,7 +1012,7 @@ def test_squareform_matches_scipy(array_namespace, device_, dtype_name):
     X_np = rng.rand(10, 4).astype(dtype)
 
     # Create condensed distance matrix
-    condensed_np = scipy_pdist(X_np, metric="euclidean")
+    condensed_np = scipy_pdist(X_np, metric="euclidean").astype(dtype)
     condensed_xp = xp.asarray(condensed_np, device=device_)
 
     expected = scipy_squareform(condensed_np)

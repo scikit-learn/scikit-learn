@@ -933,6 +933,11 @@ def _ravel(array, xp=None):
 
 def _convert_to_numpy(array, xp):
     """Convert X into a NumPy ndarray on the CPU."""
+    # XXX Do we really need this short cut?
+    # If already a numpy array, return as-is
+    if isinstance(array, numpy.ndarray):
+        return array
+
     if _is_xp_namespace(xp, "torch"):
         return array.cpu().numpy()
     elif _is_xp_namespace(xp, "cupy"):  # pragma: nocover
@@ -1174,7 +1179,9 @@ def _logsumexp(array, axis=None, xp=None):
 
 def _cholesky(covariance, xp):
     if _is_numpy_namespace(xp):
-        return scipy.linalg.cholesky(covariance, lower=True)
+        # scipy may upcast float32 to float64; cast back to preserve input dtype
+        result = scipy.linalg.cholesky(covariance, lower=True)
+        return result.astype(covariance.dtype, copy=False)
     else:
         return xp.linalg.cholesky(covariance)
 
@@ -1240,7 +1247,9 @@ def _cdist(X, Y, metric="euclidean", xp=None):
     xp, _, device_ = get_namespace_and_device(X, Y, xp=xp)
 
     if _is_numpy_namespace(xp):
-        return xp.asarray(sp_distance.cdist(X, Y, metric=metric))
+        # scipy may upcast float32 to float64; cast back to preserve input dtype
+        result = sp_distance.cdist(X, Y, metric=metric)
+        return xp.asarray(result, dtype=X.dtype)
 
     if _is_xp_namespace(xp, "torch"):
         # torch.cdist computes p-norm distances
@@ -1291,7 +1300,9 @@ def _pdist(X, metric="euclidean", xp=None):
     xp, _, device_ = get_namespace_and_device(X, xp=xp)
 
     if _is_numpy_namespace(xp):
-        return xp.asarray(sp_distance.pdist(X, metric=metric))
+        # scipy may upcast float32 to float64; cast back to preserve input dtype
+        result = sp_distance.pdist(X, metric=metric)
+        return xp.asarray(result, dtype=X.dtype)
 
     if _is_xp_namespace(xp, "torch"):
         import torch
@@ -1313,17 +1324,25 @@ def _pdist(X, metric="euclidean", xp=None):
     sq_dist = _cdist_euclidean_fallback(X, X, xp)
     n = X.shape[0]
 
-    # Extract upper triangular indices (row-major order)
-    indices_i = []
-    indices_j = []
-    for i in range(n):
-        for j in range(i + 1, n):
-            indices_i.append(i)
-            indices_j.append(j)
+    # Extract upper triangular indices using vectorized operations
+    ii, jj = xp.meshgrid(
+        xp.arange(n, device=device_), xp.arange(n, device=device_), indexing="ij"
+    )
+    mask = jj > ii
+    indices_i = ii[mask]
+    indices_j = jj[mask]
 
-    indices_i = xp.asarray(indices_i, device=device_)
-    indices_j = xp.asarray(indices_j, device=device_)
+    # XXX Or should it be this? Aka not worth using complicated meshgrid stuff?
+    # # Extract upper triangular indices (row-major order)
+    # indices_i = []
+    # indices_j = []
+    # for i in range(n):
+    #     for j in range(i + 1, n):
+    #         indices_i.append(i)
+    #         indices_j.append(j)
 
+    # indices_i = xp.asarray(indices_i, device=device_)
+    # indices_j = xp.asarray(indices_j, device=device_)
     condensed = sq_dist[indices_i, indices_j]
 
     if metric == "sqeuclidean":
@@ -1355,7 +1374,9 @@ def _squareform(condensed, xp=None):
     xp, _, device_ = get_namespace_and_device(condensed, xp=xp)
 
     if _is_numpy_namespace(xp):
-        return xp.asarray(sp_distance.squareform(condensed))
+        # scipy may upcast float32 to float64; cast back to preserve input dtype
+        result = sp_distance.squareform(condensed)
+        return xp.asarray(result, dtype=condensed.dtype)
 
     # Compute n from condensed length: n*(n-1)/2 = len
     # n^2 - n - 2*len = 0 => n = (1 + sqrt(1 + 8*len)) / 2
@@ -1395,7 +1416,12 @@ def _cho_solve(L, b, xp=None):
     xp, _ = get_namespace(L, b, xp=xp)
 
     if _is_numpy_namespace(xp):
-        return scipy.linalg.cho_solve((L, True), b, check_finite=False)
+        result = scipy.linalg.cho_solve((L, True), b, check_finite=False)
+        # scipy may upcast float32 to float64; cast back to preserve input dtype
+        # Only cast if input is floating point (not for integer inputs)
+        if numpy.issubdtype(b.dtype, numpy.floating):
+            result = result.astype(b.dtype, copy=False)
+        return result
 
     # Two triangular solves: L @ y = b, then L.T @ x = y
     y = xp.linalg.solve(L, b)
