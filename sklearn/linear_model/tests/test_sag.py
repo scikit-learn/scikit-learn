@@ -611,7 +611,6 @@ def test_sag_regressor(seed, csr_container):
 
 @pytest.mark.filterwarnings("ignore:The max_iter was reached")
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-@pytest.mark.xfail()
 def test_sag_classifier_computed_correctly(csr_container):
     """tests if the binary classifier is computed correctly"""
     alpha = 0.1
@@ -668,7 +667,6 @@ def test_sag_classifier_computed_correctly(csr_container):
 
 @pytest.mark.filterwarnings("ignore:The max_iter was reached")
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-@pytest.mark.xfail()
 def test_sag_multiclass_computed_correctly(csr_container):
     """tests if the multiclass classifier is computed correctly"""
     alpha = 0.1
@@ -774,7 +772,6 @@ def test_classifier_results(csr_container):
 
 @pytest.mark.filterwarnings("ignore:The max_iter was reached")
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-@pytest.mark.xfail()
 def test_binary_classifier_class_weight(csr_container):
     """tests binary classifier with classweights for each class"""
     alpha = 0.1
@@ -981,9 +978,6 @@ def test_sag_weighted_regression_convergence(solver, decay, saga, fit_intercept)
     y = rng.randint(0, 3, size=n_samples)
     # Use random integers (including zero) as weights.
     sample_weights = rng.randint(0, 5, size=n_samples)
-    # FIXME: zero sample_weight lead to division by zero in sag_sparse
-    if solver == sag_sparse:
-        sample_weights += 1
     est = Ridge(
         max_iter=max_iter,
         tol=tol,
