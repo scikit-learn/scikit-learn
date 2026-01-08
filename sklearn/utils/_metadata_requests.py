@@ -1450,6 +1450,7 @@ class _MetadataRequester:
         """
 
         def is_RequestMethod(obj, name: str):
+            """Check if obj.name is a RequestMethod"""
             value = inspect.getattr_static(obj, name)
             return isinstance(value, RequestMethod)
 
