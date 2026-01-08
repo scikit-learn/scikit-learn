@@ -2480,6 +2480,8 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing():
     assert_allclose(y_pred, [np.mean(y_equal[-4:])])
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization and
+# use the default instead. 
 @pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize("seed", range(3))
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
