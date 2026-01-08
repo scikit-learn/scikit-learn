@@ -198,7 +198,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         "warm_start": ["boolean"],
         "max_samples": [
             None,
-            Interval(RealNotInt, 0.0, 1.0, closed="right"),
+            Interval(RealNotInt, 0.0, None, closed="neither"),
             Interval(Integral, 1, None, closed="left"),
         ],
     }
