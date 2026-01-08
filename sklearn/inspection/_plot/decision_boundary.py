@@ -457,7 +457,7 @@ class DecisionBoundaryDisplay:
         ...     xlabel=iris.feature_names[0], ylabel=iris.feature_names[1],
         ...     alpha=0.5,
         ... )
-        >>> cmap = mpl.colors.ListedColormap(display.multiclass_colors_)
+        >>> cmap = mpl.colors.ListedColormap(disp.multiclass_colors_)
         >>> disp.ax_.scatter(X[:, 0], X[:, 1], c=iris.target, edgecolor="k", cmap=cmap)
         <...>
         >>> plt.show()
