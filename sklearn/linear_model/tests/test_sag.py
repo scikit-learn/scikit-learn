@@ -90,10 +90,10 @@ def sag(
             # idx = k
             entry = X[idx]
             seen.add(idx)
-            S_seen = len(seen)
+            n_seen = len(seen)
             if sample_weight is not None:
-                S_seen = sample_weight[list(seen)].sum()
-            if S_seen == 0:
+                n_seen = sample_weight[list(seen)].sum()
+            if n_seen == 0:
                 continue
             p = np.dot(entry, weights) + intercept
             gradient = dloss(p, y[idx])
@@ -103,9 +103,9 @@ def sag(
                 gradient_correction *= sample_weight[idx]
             sum_gradient += gradient_correction
             gradient_memory[idx] = update
-            weights -= step_size * sum_gradient / S_seen
+            weights -= step_size * sum_gradient / n_seen
             if saga:
-                weights -= gradient_correction * step_size * (1 - 1.0 / S_seen)
+                weights -= gradient_correction * step_size * (1 - 1.0 / n_seen)
 
             if fit_intercept:
                 update = gradient
@@ -114,9 +114,9 @@ def sag(
                     gradient_correction *= sample_weight[idx]
                 intercept_sum_gradient += gradient_correction
                 intercept_gradient_memory[idx] = update
-                intercept -= step_size * intercept_sum_gradient / S_seen * decay
+                intercept -= step_size * intercept_sum_gradient / n_seen * decay
                 if saga:
-                    intercept -= gradient_correction * step_size * (1 - 1.0 / S_seen)
+                    intercept -= gradient_correction * step_size * (1 - 1.0 / n_seen)
 
         # stopping criteria
         max_weight = np.abs(weights).max()
@@ -171,10 +171,10 @@ def sag_sparse(
             idx = int(rng.rand() * n_samples)
             entry = X[idx]
             seen.add(idx)
-            S_seen = len(seen)
+            n_seen = len(seen)
             if sample_weight is not None:
-                S_seen = sample_weight[list(seen)].sum()
-            if S_seen == 0:
+                n_seen = sample_weight[list(seen)].sum()
+            if n_seen == 0:
                 continue
 
             if counter >= 1:
@@ -199,27 +199,27 @@ def sag_sparse(
             if saga:
                 for j in range(n_features):
                     weights[j] -= (
-                        gradient_correction[j] * step_size * (1 - 1.0 / S_seen) / wscale
+                        gradient_correction[j] * step_size * (1 - 1.0 / n_seen) / wscale
                     )
 
             if fit_intercept:
                 gradient_correction = gradient - gradient_memory[idx]
                 intercept_sum_gradient += gradient_correction
-                gradient_correction *= step_size * (1.0 - 1.0 / S_seen)
+                gradient_correction *= step_size * (1.0 - 1.0 / n_seen)
                 if saga:
                     intercept -= (
-                        step_size * intercept_sum_gradient / S_seen * decay
+                        step_size * intercept_sum_gradient / n_seen * decay
                     ) + gradient_correction
                 else:
-                    intercept -= step_size * intercept_sum_gradient / S_seen * decay
+                    intercept -= step_size * intercept_sum_gradient / n_seen * decay
 
             gradient_memory[idx] = gradient
 
             wscale *= 1.0 - alpha * step_size
             if counter == 0:
-                c_sum[0] = step_size / (wscale * S_seen)
+                c_sum[0] = step_size / (wscale * n_seen)
             else:
-                c_sum[counter] = c_sum[counter - 1] + step_size / (wscale * S_seen)
+                c_sum[counter] = c_sum[counter - 1] + step_size / (wscale * n_seen)
 
             if counter >= 1 and wscale < 1e-9:
                 for j in range(n_features):
