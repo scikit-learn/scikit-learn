@@ -236,9 +236,9 @@ def sag{{name_suffix}}(
                 if seen_init[sample_ind] == 0:
                     num_seen += sample_weight
                     seen_init[sample_ind] = 1
-
                 if num_seen==0:
                     continue
+
                 # make the weight updates (just-in-time gradient step, and prox operator)
                 if sample_itr > 0:
                    status = lagged_update{{name_suffix}}(
@@ -292,35 +292,35 @@ def sag{{name_suffix}}(
                     val = x_data_ptr[j]
                     f_idx = feature_ind * n_classes
                     for class_ind in range(n_classes):
-                            gradient_correction = \
-                                val * (gradient[class_ind] -
-                                    gradient_memory[s_idx + class_ind])
-                            if saga:
-                                # Note that this is not the main gradient step,
-                                # which is performed just-in-time in lagged_update.
-                                # This part is done outside the JIT update
-                                # as it does not depend on the average gradient.
-                                # The prox operator is applied after the JIT update
-                                weights[f_idx + class_ind] -= \
-                                    (gradient_correction * step_size
-                                    * (1 - 1. / num_seen) / wscale)
-                            sum_gradient[f_idx + class_ind] += gradient_correction
+                        gradient_correction = \
+                            val * (gradient[class_ind] -
+                                   gradient_memory[s_idx + class_ind])
+                        if saga:
+                            # Note that this is not the main gradient step,
+                            # which is performed just-in-time in lagged_update.
+                            # This part is done outside the JIT update
+                            # as it does not depend on the average gradient.
+                            # The prox operator is applied after the JIT update
+                            weights[f_idx + class_ind] -= \
+                                (gradient_correction * step_size
+                                 * (1 - 1. / num_seen) / wscale)
+                        sum_gradient[f_idx + class_ind] += gradient_correction
 
                 # fit the intercept
                 if fit_intercept:
                     for class_ind in range(n_classes):
                         gradient_correction = (gradient[class_ind] -
-                                            gradient_memory[s_idx + class_ind])
+                                               gradient_memory[s_idx + class_ind])
                         intercept_sum_gradient_init[class_ind] += gradient_correction
                         gradient_correction *= step_size * (1. - 1. / num_seen)
                         if saga:
                             intercept_array[class_ind] -= \
                                 (step_size * intercept_sum_gradient_init[class_ind] /
-                                num_seen * intercept_decay) + gradient_correction
+                                 num_seen * intercept_decay) + gradient_correction
                         else:
                             intercept_array[class_ind] -= \
                                 (step_size * intercept_sum_gradient_init[class_ind] /
-                                num_seen * intercept_decay)
+                                 num_seen * intercept_decay)
 
                         # check to see that the intercept is not inf or NaN
                         if not isfinite(intercept_array[class_ind]):
@@ -334,6 +334,7 @@ def sag{{name_suffix}}(
                 # update the gradient memory for this sample
                 for class_ind in range(n_classes):
                     gradient_memory[s_idx + class_ind] = gradient[class_ind]
+
                 if sample_itr == 0:
                     cumulative_sums[0] = step_size / (wscale * num_seen)
                     if prox:
@@ -341,11 +342,11 @@ def sag{{name_suffix}}(
                 else:
                     cumulative_sums[sample_itr] = \
                         (cumulative_sums[sample_itr - 1] +
-                        step_size / (wscale * num_seen))
+                         step_size / (wscale * num_seen))
                     if prox:
                         cumulative_sums_prox[sample_itr] = \
                         (cumulative_sums_prox[sample_itr - 1] +
-                            step_size * beta / wscale)
+                             step_size * beta / wscale)
                 # If wscale gets too small, we need to reset the scale.
                 # This also resets the just-in-time update system.
                 if wscale < 1e-9:
@@ -368,10 +369,12 @@ def sag{{name_suffix}}(
                     )
                     if status == -1:
                         break
+
             # Break from the n_iter outer loop if an error happened in the
             # n_samples inner loop
             if status == -1:
                 break
+
             # We scale the weights every n_samples iterations and reset the
             # just-in-time update system for numerical stability.
             # Because this reset is done before every convergence check, we are
@@ -392,6 +395,7 @@ def sag{{name_suffix}}(
             )
             if status == -1:
                 break
+
             # check if the stopping criteria is reached
             max_change = 0.0
             max_weight = 0.0
@@ -405,11 +409,11 @@ def sag{{name_suffix}}(
                     end_time = time(NULL)
                     with gil:
                         print("convergence after %d epochs took %d seconds" %
-                            (n_iter + 1, end_time - start_time))
+                              (n_iter + 1, end_time - start_time))
                 break
             elif verbose:
                 printf('Epoch %d, change: %.8g\n', n_iter + 1,
-                                                max_change / max_weight)
+                                                  max_change / max_weight)
     n_iter += 1
     # We do the error treatment here based on error code in status to avoid
     # re-acquiring the GIL within the cython code, which slows the computation
