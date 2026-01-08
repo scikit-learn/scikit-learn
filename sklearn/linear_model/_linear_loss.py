@@ -832,7 +832,7 @@ class LinearModelLoss:
                 else:
                     s_intercept = 0
                 tmp = X @ s.T + s_intercept  # X_{im} * s_k_m
-                tmp += (-proba * tmp).sum(axis=1)[:, np.newaxis]  # - sum_l ..
+                tmp -= (proba * tmp).sum(axis=1)[:, np.newaxis]  # - sum_l ..
                 tmp *= proba  # * p_i_k
                 if sample_weight is not None:
                     tmp *= sample_weight[:, np.newaxis]

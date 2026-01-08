@@ -87,7 +87,7 @@ After the model is trained, fitted attributes that are arrays will also be
 from the same Array API namespace as the training data. For example, if CuPy's
 Array API namespace was used for training, then fitted attributes will be on the
 GPU. We provide an experimental `_estimator_with_converted_arrays` utility that
-transfers an estimator attributes from Array API to a ndarray::
+transfers an estimator attributes from Array API to an ndarray::
 
     >>> from sklearn.utils._array_api import _estimator_with_converted_arrays
     >>> cupy_to_ndarray = lambda array : array.get()
@@ -125,6 +125,7 @@ Estimators
 
 - :class:`decomposition.PCA` (with `svd_solver="full"`, `svd_solver="covariance_eigh"`, or
   `svd_solver="randomized"` (`svd_solver="randomized"` only if `power_iteration_normalizer="QR"`))
+- :class:`kernel_approximation.Nystroem`
 - :class:`linear_model.LogisticRegression` (with `solver="lbfgs"`)
 - :class:`linear_model.Ridge` (with `solver="svd"`)
 - :class:`linear_model.RidgeCV` (with `solver="svd"`, see :ref:`device_support_for_float64`)
@@ -134,6 +135,7 @@ Estimators
 - :class:`naive_bayes.GaussianNB`
 - :class:`preprocessing.Binarizer`
 - :class:`preprocessing.KernelCenterer`
+- :class:`preprocessing.LabelBinarizer` (with `sparse_output=False`)
 - :class:`preprocessing.LabelEncoder`
 - :class:`preprocessing.MaxAbsScaler`
 - :class:`preprocessing.MinMaxScaler`
@@ -164,8 +166,10 @@ Metrics
 - :func:`sklearn.metrics.cluster.calinski_harabasz_score`
 - :func:`sklearn.metrics.cohen_kappa_score`
 - :func:`sklearn.metrics.confusion_matrix`
+- :func:`sklearn.metrics.d2_absolute_error_score`
 - :func:`sklearn.metrics.d2_brier_score`
 - :func:`sklearn.metrics.d2_log_loss_score`
+- :func:`sklearn.metrics.d2_pinball_score`
 - :func:`sklearn.metrics.d2_tweedie_score`
 - :func:`sklearn.metrics.det_curve`
 - :func:`sklearn.metrics.explained_variance_score`
@@ -213,6 +217,7 @@ Metrics
 Tools
 -----
 
+- :func:`preprocessing.label_binarize` (with `sparse_output=False`)
 - :func:`model_selection.cross_val_predict`
 - :func:`model_selection.train_test_split`
 - :func:`utils.check_consistent_length`

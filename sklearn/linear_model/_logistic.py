@@ -788,8 +788,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         Specify the norm of the penalty:
 
         - `None`: no penalty is added;
-        - `'l2'`: add a L2 penalty term and it is the default choice;
-        - `'l1'`: add a L1 penalty term;
+        - `'l2'`: add an L2 penalty term and it is the default choice;
+        - `'l1'`: add an L1 penalty term;
         - `'elasticnet'`: both L1 and L2 penalty terms are added.
 
         .. warning::
@@ -888,7 +888,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
           class of problems.
         - For :term:`multiclass` problems (`n_classes >= 3`), all solvers except
           'liblinear' minimize the full multinomial loss, 'liblinear' will raise an
-           error.
+          error.
         - 'newton-cholesky' is a good choice for
           `n_samples` >> `n_features * n_classes`, especially with one-hot encoded
           categorical features with rare categories. Be aware that the memory usage
@@ -1195,8 +1195,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         xp, _, device_ = get_namespace_and_device(X)
         xp_y, _ = get_namespace(y)
 
-        if penalty is None:
-            if self.C != 1.0:  # default values
+        if self.penalty is None:
+            if self.C != 1.0:  # default value
                 warnings.warn(
                     "Setting penalty=None will ignore the C and l1_ratio parameters"
                 )
@@ -1459,8 +1459,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     penalty : {'l1', 'l2', 'elasticnet'}, default='l2'
         Specify the norm of the penalty:
 
-        - `'l2'`: add a L2 penalty term (used by default);
-        - `'l1'`: add a L1 penalty term;
+        - `'l2'`: add an L2 penalty term (used by default);
+        - `'l1'`: add an L1 penalty term;
         - `'elasticnet'`: both L1 and L2 penalty terms are added.
 
         .. warning::
@@ -1492,7 +1492,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
           class of problems.
         - For :term:`multiclass` problems (`n_classes >= 3`), all solvers except
           'liblinear' minimize the full multinomial loss, 'liblinear' will raise an
-           error.
+          error.
         - 'newton-cholesky' is a good choice for
           `n_samples` >> `n_features * n_classes`, especially with one-hot encoded
           categorical features with rare categories. Be aware that the memory usage
