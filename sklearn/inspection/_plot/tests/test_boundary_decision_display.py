@@ -7,6 +7,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.datasets import (
     load_diabetes,
     load_iris,
+    make_blobs,
     make_classification,
     make_multilabel_classification,
 )
@@ -626,12 +627,35 @@ def test_multiclass_plot_max_class(pyplot, response_method):
 
 
 @pytest.mark.parametrize(
-    "multiclass_colors",
+    "multiclass_colors, n_classes",
     [
-        None,
-        "plasma",
-        "Blues",
-        ["red", "green", "blue"],
+        (None, 3),
+        (None, 15),
+        ("plasma", 3),
+        ("plasma", 15),
+        ("Blues", 3),
+        ("Blues", 15),
+        (["red", "green", "blue"], 3),
+        (
+            [
+                "red",
+                "green",
+                "blue",
+                "yellow",
+                "orange",
+                "purple",
+                "pink",
+                "brown",
+                "gray",
+                "cyan",
+                "magenta",
+                "lime",
+                "navy",
+                "teal",
+                "olive",
+            ],
+            15,
+        ),
     ],
 )
 @pytest.mark.parametrize(
@@ -639,7 +663,11 @@ def test_multiclass_plot_max_class(pyplot, response_method):
 )
 @pytest.mark.parametrize("plot_method", ["contourf", "contour", "pcolormesh"])
 def test_multiclass_colors_cmap(
-    pyplot, response_method, plot_method, multiclass_colors
+    pyplot,
+    n_classes,
+    response_method,
+    plot_method,
+    multiclass_colors,
 ):
     """Check correct cmap used for all `multiclass_colors` inputs."""
     import matplotlib as mpl
@@ -649,7 +677,7 @@ def test_multiclass_colors_cmap(
             "Matplotlib >= 3.5 is needed for `==` to check equivalence of colormaps"
         )
 
-    X, y = load_iris_2d_scaled()
+    X, y = make_blobs(n_samples=150, centers=n_classes, n_features=2, random_state=42)
     clf = LogisticRegression().fit(X, y)
 
     disp = DecisionBoundaryDisplay.from_estimator(
@@ -661,8 +689,11 @@ def test_multiclass_colors_cmap(
     )
 
     if multiclass_colors is None:
-        assert clf.classes_.size <= 10
-        colors = mpl.pyplot.get_cmap("tab10", 10).colors[: len(clf.classes_)]
+        if len(clf.classes_) <= 10:
+            colors = mpl.pyplot.get_cmap("tab10", 10).colors[: len(clf.classes_)]
+        else:
+            cmap = mpl.pyplot.get_cmap("gist_rainbow", len(clf.classes_))
+            colors = cmap(np.linspace(0, 1, len(clf.classes_)))
     elif multiclass_colors == "plasma":
         colors = mpl.pyplot.get_cmap(multiclass_colors, len(clf.classes_)).colors
     elif multiclass_colors == "Blues":
@@ -670,6 +701,10 @@ def test_multiclass_colors_cmap(
         colors = cmap(np.linspace(0, 1, len(clf.classes_)))
     else:
         colors = [mpl.colors.to_rgba(color) for color in multiclass_colors]
+
+    # part of a non-regression test for issue #32866
+    # to make sure the colormap used has enough distinct colors
+    assert disp.n_classes <= len(np.unique(colors, axis=0))
 
     if plot_method == "pcolormesh" and response_method == "predict":
         # pcolormesh with predict uses ListedColormap
@@ -682,10 +717,18 @@ def test_multiclass_colors_cmap(
             )
             for class_idx, (r, g, b, _) in enumerate(colors)
         ]
+        # part of a non-regression test for issue #32866
+        # to make sure every class has its own surface
+        assert len(disp.surface_) == disp.n_classes
+
         for idx, quad in enumerate(disp.surface_):
             assert quad.cmap == cmaps[idx]
     else:
         assert_allclose(disp.surface_.colors, colors)
+
+    # non-regression test for issue #32866 with `contour` (currently still fails)
+    # if hasattr(disp.surface_, "levels"):
+    #    assert len(disp.surface_.levels) >= disp.n_classes
 
 
 def test_cmap_and_colors_logic(pyplot):
