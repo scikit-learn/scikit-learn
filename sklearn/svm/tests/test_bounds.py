@@ -34,7 +34,7 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=1.0):
     )
 
     clf = {
-        "log": LogisticRegression(penalty="l1", solver="liblinear"),
+        "log": LogisticRegression(l1_ratio=1, solver="liblinear"),
         "squared_hinge": LinearSVC(loss="squared_hinge", penalty="l1", dual=False),
     }[loss]
 
@@ -105,7 +105,7 @@ def test_newrand_bounded_rand_int(range_, n_pts):
         sample = [bounded_rand_int_wrap(range_) for _ in range(n_pts)]
         res = stats.kstest(sample, uniform_dist.cdf)
         ks_pvals.append(res.pvalue)
-    # Null hypothesis = samples come from an uniform distribution.
+    # Null hypothesis = samples come from a uniform distribution.
     # Under the null hypothesis, p-values should be uniformly distributed
     # and not concentrated on low values
     # (this may seem counter-intuitive but is backed by multiple refs)

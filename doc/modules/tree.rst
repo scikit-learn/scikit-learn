@@ -310,7 +310,7 @@ the lower half of those faces.
 
 * M. Dumont et al,  `Fast multi-class image annotation with random subwindows
   and multiple output randomized trees
-  <http://www.montefiore.ulg.ac.be/services/stochastic/pubs/2009/DMWG09/dumont-visapp09-shortpaper.pdf>`_,
+  <https://www.montefiore.ulg.ac.be/services/stochastic/pubs/2009/DMWG09/dumont-visapp09-shortpaper.pdf>`_,
   International Conference on Computer Vision Theory and Applications 2009
 
 .. _tree_complexity:
@@ -683,7 +683,7 @@ Decisions are made as follows:
     >>> X = np.array([np.nan, -1, np.nan, 1]).reshape(-1, 1)
     >>> y = [0, 0, 1, 1]
 
-    >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
+    >>> tree = DecisionTreeClassifier(random_state=0, max_depth=1).fit(X, y)
 
     >>> X_test = np.array([np.nan]).reshape(-1, 1)
     >>> tree.predict(X_test)

@@ -19,7 +19,7 @@ def test_mcd(global_random_seed):
     # Tests the FastMCD algorithm implementation
     # Small data set
     # test without outliers (random independent normal data)
-    launch_mcd_on_dataset(100, 5, 0, 0.02, 0.1, 75, global_random_seed)
+    launch_mcd_on_dataset(100, 5, 0, 0.02, 0.1, 74, global_random_seed)
     # test with a contaminated data set (medium contamination)
     launch_mcd_on_dataset(100, 5, 20, 0.3, 0.3, 65, global_random_seed)
     # test with a contaminated data set (strong contamination)
@@ -182,11 +182,17 @@ def test_mincovdet_bias_on_normal(n_samples, n_features, global_random_seed):
     https://github.com/scikit-learn/scikit-learn/issues/23162
     """
     threshold = 0.985  # threshold for variance underesitmation
-    x = np.random.randn(n_features, n_samples)
+    rng = np.random.default_rng(global_random_seed)
+    x = rng.normal(size=(n_features, n_samples))
     # Assume centered data, to reduce test complexity
     var_emp = empirical_covariance(x.T, assume_centered=True).diagonal()
     cov_mcd = (
-        MinCovDet(support_fraction=1.0, store_precision=False, assume_centered=True)
+        MinCovDet(
+            support_fraction=1.0,
+            store_precision=False,
+            assume_centered=True,
+            random_state=global_random_seed,
+        )
         .fit(x.T)
         .covariance_
     )

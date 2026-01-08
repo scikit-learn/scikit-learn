@@ -52,8 +52,9 @@ def _return_float_dtype(X, Y):
     1. If dtype of X and Y is float32, then dtype float32 is returned.
     2. Else dtype float is returned.
     """
+    xp, _ = get_namespace(X, Y)
     if not issparse(X) and not isinstance(X, np.ndarray):
-        X = np.asarray(X)
+        X = xp.asarray(X)
 
     if Y is None:
         Y_dtype = X.dtype
@@ -973,7 +974,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         with config_context(assume_finite=True):
             indices = np.concatenate(
                 list(
-                    # This returns a np.ndarray generator whose arrays we need
+                    # This returns an np.ndarray generator whose arrays we need
                     # to flatten into one.
                     pairwise_distances_chunked(
                         X, Y, reduce_func=_argmin_reduce, metric=metric, **metric_kwargs
@@ -1545,12 +1546,14 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     """
     xp, _ = get_namespace(X, Y)
     X, Y = check_pairwise_arrays(X, Y)
+
     if gamma is None:
         gamma = 1.0 / X.shape[1]
 
     K = safe_sparse_dot(X, Y.T, dense_output=True)
     K *= gamma
     K += coef0
+
     # compute tanh in-place for numpy
     K = _modify_in_place_if_numpy(xp, xp.tanh, K, out=K)
     return K

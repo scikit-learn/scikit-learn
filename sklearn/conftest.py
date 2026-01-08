@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import builtins
-import faulthandler
 import platform
 import sys
 from contextlib import suppress
@@ -345,11 +344,6 @@ def pytest_configure(config):
         # https://github.com/pytest-dev/pytest/issues/3311#issuecomment-373177592
         for line in get_pytest_filterwarning_lines():
             config.addinivalue_line("filterwarnings", line)
-
-    faulthandler_timeout = int(environ.get("SKLEARN_FAULTHANDLER_TIMEOUT", "0"))
-    if faulthandler_timeout > 0:
-        faulthandler.enable()
-        faulthandler.dump_traceback_later(faulthandler_timeout, exit=True)
 
     if not PARALLEL_RUN_AVAILABLE:
         config.addinivalue_line(

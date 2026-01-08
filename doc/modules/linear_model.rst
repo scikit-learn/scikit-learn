@@ -999,20 +999,20 @@ specific training sample (the vector :math:`s` is formed by element-wise
 multiplication of the class weights and sample weights),
 and the sum :math:`S = \sum_{i=1}^n s_i`.
 
-We currently provide four choices for the regularization term  :math:`r(w)` via
-the `penalty` argument:
+We currently provide four choices for the regularization or penalty term :math:`r(w)`
+via the arguments `C` and `l1_ratio`:
 
-+----------------+-------------------------------------------------+
-| penalty        | :math:`r(w)`                                    |
-+================+=================================================+
-| `None`         | :math:`0`                                       |
-+----------------+-------------------------------------------------+
-| :math:`\ell_1` | :math:`\|w\|_1`                                 |
-+----------------+-------------------------------------------------+
-| :math:`\ell_2` | :math:`\frac{1}{2}\|w\|_2^2 = \frac{1}{2}w^T w` |
-+----------------+-------------------------------------------------+
-| `ElasticNet`   | :math:`\frac{1 - \rho}{2}w^T w + \rho \|w\|_1`  |
-+----------------+-------------------------------------------------+
++-------------------------------+-------------------------------------------------+
+| penalty                       | :math:`r(w)`                                    |
++===============================+=================================================+
+| none (`C=np.inf`)             | :math:`0`                                       |
++-------------------------------+-------------------------------------------------+
+| :math:`\ell_1` (`l1_ratio=1`) | :math:`\|w\|_1`                                 |
++-------------------------------+-------------------------------------------------+
+| :math:`\ell_2` (`l1_ratio=0`) | :math:`\frac{1}{2}\|w\|_2^2 = \frac{1}{2}w^T w` |
++-------------------------------+-------------------------------------------------+
+| ElasticNet (`0<l1_ratio<1`)   | :math:`\frac{1 - \rho}{2}w^T w + \rho \|w\|_1`  |
++-------------------------------+-------------------------------------------------+
 
 For ElasticNet, :math:`\rho` (which corresponds to the `l1_ratio` parameter)
 controls the strength of :math:`\ell_1` regularization vs. :math:`\ell_2`
@@ -1063,21 +1063,20 @@ logistic regression, see also `log-linear model
   Again, :math:`s_{ik}` are the weights assigned by the user (multiplication of sample
   weights and class weights) with their sum :math:`S = \sum_{i=1}^n \sum_{k=0}^{K-1} s_{ik}`.
 
-  We currently provide four choices
-  for the regularization term :math:`r(W)` via the `penalty` argument, where :math:`m`
-  is the number of features:
+  We currently provide four choices for the regularization or penalty term :math:`r(W)`
+  via the arguments `C` and `l1_ratio`, where :math:`m` is the number of features:
 
-  +----------------+----------------------------------------------------------------------------------+
-  | penalty        | :math:`r(W)`                                                                     |
-  +================+==================================================================================+
-  | `None`         | :math:`0`                                                                        |
-  +----------------+----------------------------------------------------------------------------------+
-  | :math:`\ell_1` | :math:`\|W\|_{1,1} = \sum_{i=1}^m\sum_{j=1}^{K}|W_{i,j}|`                        |
-  +----------------+----------------------------------------------------------------------------------+
-  | :math:`\ell_2` | :math:`\frac{1}{2}\|W\|_F^2 = \frac{1}{2}\sum_{i=1}^m\sum_{j=1}^{K} W_{i,j}^2`   |
-  +----------------+----------------------------------------------------------------------------------+
-  | `ElasticNet`   | :math:`\frac{1 - \rho}{2}\|W\|_F^2 + \rho \|W\|_{1,1}`                           |
-  +----------------+----------------------------------------------------------------------------------+
+  +-------------------------------+----------------------------------------------------------------------------------+
+  | penalty                       | :math:`r(W)`                                                                     |
+  +===============================+==================================================================================+
+  | none (`C=np.inf`)             | :math:`0`                                                                        |
+  +-------------------------------+----------------------------------------------------------------------------------+
+  | :math:`\ell_1` (`l1_ratio=1`) | :math:`\|W\|_{1,1} = \sum_{i=1}^m\sum_{j=1}^{K}|W_{i,j}|`                        |
+  +-------------------------------+----------------------------------------------------------------------------------+
+  | :math:`\ell_2` (`l1_ratio=0`) | :math:`\frac{1}{2}\|W\|_F^2 = \frac{1}{2}\sum_{i=1}^m\sum_{j=1}^{K} W_{i,j}^2`   |
+  +-------------------------------+----------------------------------------------------------------------------------+
+  | ElasticNet (`0<l1_ratio<1`)   | :math:`\frac{1 - \rho}{2}\|W\|_F^2 + \rho \|W\|_{1,1}`                           |
+  +-------------------------------+----------------------------------------------------------------------------------+
 
 .. _logistic_regression_solvers:
 
@@ -1100,7 +1099,7 @@ The following table summarizes the penalties and multinomial multiclass supporte
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 | Elastic-Net (L1 + L2)        |     no      |       no        |       no        |     no                |    no     |    yes     |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| No penalty ('none')          |     yes     |       no        |       yes       |     yes               |    yes    |    yes     |
+| No penalty                   |     yes     |       no        |       yes       |     yes               |    yes    |    yes     |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 | **Multiclass support**       |                                                                                                  |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
@@ -1164,10 +1163,10 @@ zero, is likely to be an underfit, bad model and you are advised to set
     than other solvers for large datasets, when both the number of samples and the
     number of features are large.
 
-  * The "saga" solver [7]_ is a variant of "sag" that also supports the
-    non-smooth `penalty="l1"`. This is therefore the solver of choice for sparse
-    multinomial logistic regression. It is also the only solver that supports
-    `penalty="elasticnet"`.
+  * The "saga" solver [7]_ is a variant of "sag" that also supports the non-smooth
+    :math:`\ell_1` penalty (`l1_ratio=1`). This is therefore the solver of choice for
+    sparse multinomial logistic regression. It is also the only solver that supports
+    Elastic-Net (`0 < l1_ratio < 1`).
 
   * The "lbfgs" is an optimization algorithm that approximates the
     Broyden–Fletcher–Goldfarb–Shanno algorithm [8]_, which belongs to
@@ -1449,7 +1448,7 @@ eta0=1.0)` can be used for PA-I or with ``learning_rate="pa2"`` for PA-II.
 .. dropdown:: References
 
   * `"Online Passive-Aggressive Algorithms"
-    <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
+    <https://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
 
 Robustness regression: outliers and modeling errors
@@ -1656,7 +1655,7 @@ better than an ordinary least squares in high dimension.
 
   .. [#f1] Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang: `Theil-Sen Estimators in a Multiple Linear Regression Model. <http://home.olemiss.edu/~xdang/papers/MTSE.pdf>`_
 
-  .. [#f2] T. Kärkkäinen and S. Äyrämö: `On Computation of Spatial Median for Robust Data Mining. <http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf>`_
+  .. [#f2] T. Kärkkäinen and S. Äyrämö: `On Computation of Spatial Median for Robust Data Mining. <https://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf>`_
 
   Also see the `Wikipedia page <https://en.wikipedia.org/wiki/Theil%E2%80%93Sen_estimator>`_
 
