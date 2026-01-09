@@ -2655,17 +2655,15 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    gcv_mode : {'auto', 'svd', 'eigen', 'cov', 'gram'}, default='auto'
+    gcv_mode : {'auto', 'svd', 'eigen'}, default='auto'
         Flag indicating which strategy to use when performing
         Leave-One-Out Cross-Validation. Options are::
 
             'auto' : use 'svd' if X is dense, otherwise use 'eigen'
-            'svd' : use singular value decomposition of X when X is
-                dense, fallback to 'eigen' when X is sparse
-            'eigen' : use 'gram' when n_samples < n_features and
-                'cov' when n_features <= n_samples
-            'cov' : force computation via eigendecomposition of X^T X
-            'gram' : force computation via eigendecomposition of X X^T
+            'svd' : use singular value decomposition of X when X is dense,
+                fallback to 'eigen' when X is sparse
+            'eigen' : use eigendecomposition of X X^T when n_samples < n_features
+                or X^T X when n_features <= n_samples
 
         The 'auto' mode is the default and is intended to pick the cheaper
         option depending on the shape and sparsity of the training data.
