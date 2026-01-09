@@ -70,11 +70,11 @@ def sag(
     saga=False,
     tol=0,
 ):
-    n_samples, n_features = X.shape[0], X.shape[1]
+    n_samples, n_features = X.shape
 
-    weights = np.zeros(X.shape[1])
-    sum_gradient = np.zeros(X.shape[1])
-    gradient_memory = np.zeros((n_samples, n_features))
+    weights = np.zeros(n_features)
+    weights_sum_gradient = np.zeros(n_features)
+    weigths_gradient_memory = np.zeros((n_samples, n_features))
 
     intercept = 0.0
     intercept_sum_gradient = 0.0
@@ -97,26 +97,32 @@ def sag(
                 continue
             p = np.dot(entry, weights) + intercept
             gradient = dloss(p, y[idx])
-            update = entry * gradient + alpha * weights
-            gradient_correction = update - gradient_memory[idx]
+            weights_gradient_update = entry * gradient + alpha * weights
+            weights_gradient_correction = (
+                weights_gradient_update - weigths_gradient_memory[idx]
+            )
             if sample_weight is not None:
-                gradient_correction *= sample_weight[idx]
-            sum_gradient += gradient_correction
-            gradient_memory[idx] = update
-            weights -= step_size * sum_gradient / n_seen
+                weights_gradient_correction *= sample_weight[idx]
+            weights_sum_gradient += weights_gradient_correction
+            weigths_gradient_memory[idx] = weights_gradient_update
+            weights -= step_size * weights_sum_gradient / n_seen
             if saga:
-                weights -= gradient_correction * step_size * (1 - 1.0 / n_seen)
+                weights -= weights_gradient_correction * step_size * (1 - 1.0 / n_seen)
 
             if fit_intercept:
-                update = gradient
-                gradient_correction = update - intercept_gradient_memory[idx]
+                intercept_gradient_update = gradient
+                intercept_gradient_correction = (
+                    intercept_gradient_update - intercept_gradient_memory[idx]
+                )
                 if sample_weight is not None:
-                    gradient_correction *= sample_weight[idx]
-                intercept_sum_gradient += gradient_correction
-                intercept_gradient_memory[idx] = update
+                    intercept_gradient_correction *= sample_weight[idx]
+                intercept_sum_gradient += intercept_gradient_correction
+                intercept_gradient_memory[idx] = intercept_gradient_update
                 intercept -= step_size * intercept_sum_gradient / n_seen * decay
                 if saga:
-                    intercept -= gradient_correction * step_size * (1 - 1.0 / n_seen)
+                    intercept -= (
+                        intercept_gradient_correction * step_size * (1 - 1.0 / n_seen)
+                    )
 
         # stopping criteria
         max_weight = np.abs(weights).max()
@@ -167,7 +173,7 @@ def sag_sparse(
     for epoch in range(max_iter):
         previous_weights = actual_weights
         for k in range(n_samples):
-            # idx = k
+            # FIXME : use same random idx  as cython
             idx = int(rng.rand() * n_samples)
             entry = X[idx]
             seen.add(idx)
@@ -778,7 +784,6 @@ def test_binary_classifier_class_weight(csr_container):
     tol = 0.00001
     fit_intercept = True
     X, y = make_blobs(n_samples=n_samples, centers=2, random_state=10, cluster_std=0.1)
-    step_size = get_step_size(X, alpha, fit_intercept, classification=True)
     classes = np.unique(y)
     y_tmp = np.ones(n_samples)
     y_tmp[y != classes[1]] = -1
@@ -802,15 +807,20 @@ def test_binary_classifier_class_weight(csr_container):
     le = LabelEncoder()
     class_weight_ = compute_class_weight(class_weight, classes=np.unique(y), y=y)
     sample_weight = class_weight_[le.fit_transform(y)]
+    step_size = get_step_size(
+        X, alpha, fit_intercept, classification=True, sample_weight=sample_weight
+    )
     spweights, spintercept, sp_n_iter = sag_sparse(
         X,
         y,
         step_size,
         alpha,
         max_iter=max_iter,
+        tol=tol,
         dloss=log_dloss,
         sample_weight=sample_weight,
         fit_intercept=fit_intercept,
+        random_state=77,
     )
     spweights2, spintercept2, sp_n_iter2 = sag_sparse(
         X,
@@ -818,10 +828,12 @@ def test_binary_classifier_class_weight(csr_container):
         step_size,
         alpha,
         max_iter=max_iter,
+        tol=tol,
         dloss=log_dloss,
         decay=0.01,
         sample_weight=sample_weight,
         fit_intercept=fit_intercept,
+        random_state=77,
     )
 
     assert_array_almost_equal(clf1.coef_.ravel(), spweights.ravel(), decimal=2)
