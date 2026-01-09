@@ -2021,6 +2021,8 @@ def check_array_api_metric(
             _check_metric_matches(metric_a_val, metric_b_val, convert_a=convert_a)
 
     if numpy_as_array_works:
+        print("type(a_xp): ", type(a_xp))
+        print("type(b_xp): ", type(b_xp))
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
 
         # Handle cases where multiple return values are not of the same shape,

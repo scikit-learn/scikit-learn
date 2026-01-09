@@ -90,6 +90,8 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
             if xp.__name__ == "array_api_strict":
                 # in array_api_strict, int64 and float64 cannot be promoted together
                 y_true = xp.astype(xp.asarray(y_true), xp.float64, copy=False)
+            print("type(y_true): ", type(y_true))
+            print("type(score_weight): ", type(score_weight))
             average_weight = xp.sum(
                 xp.multiply(y_true, xp.reshape(score_weight, (-1, 1))), axis=0
             )
