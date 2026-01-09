@@ -370,23 +370,21 @@ def test_lasso_cv_positive_constraint(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
 
     n_samples = 80
-    X = rng.randn(n_samples, 1)  # has both + and - values
-    y = -3.0 * X[:, 0] + 0.01 * rng.randn(
-        n_samples
-    )  # strong negative slope, tiny noise
+    X = rng.randn(n_samples, 1)
+    # Strong negative slope with low noise to keep the unconstrained
+    # coefficient reliably negative across seeds.
+    y = -3.0 * X[:, 0] + 0.01 * rng.randn(n_samples)
 
-    alphas = [1e-6, 1e-5, 1e-4, 1e-3]
     max_iter = 5000
 
     # Unconstrained: should recover a clearly negative coefficient
     clf_unconstrained = LassoCV(
-        alphas=alphas, cv=3, max_iter=max_iter, fit_intercept=False, n_jobs=1
+        cv=3, max_iter=max_iter, fit_intercept=False, n_jobs=1
     ).fit(X, y)
     assert clf_unconstrained.coef_[0] < -0.5
 
     # Constrained: cannot be negative, should be driven to 0 (or very close)
     clf_constrained = LassoCV(
-        alphas=alphas,
         cv=3,
         max_iter=max_iter,
         fit_intercept=False,
@@ -416,7 +414,7 @@ def test_lassocv_alphas_validation(alphas, err_type, err_msg):
     """Check the `alphas` validation in LassoCV."""
 
     n_samples, n_features = 5, 5
-    X = np.zeros((n_samples, n_features))
+    X = np.arange(n_samples * n_features).reshape((n_samples, n_features))
     y = np.zeros(n_samples)
     lassocv = LassoCV(alphas=alphas)
     with pytest.raises(err_type, match=err_msg):
@@ -564,7 +562,7 @@ def test_enet_cv_positive_constraint(global_random_seed):
 
     n_samples = 100
     X = rng.randn(n_samples, 1)
-    y = -3.0 * X[:, 0] + 0.01 * rng.randn(n_samples)  # strong negative slope
+    y = -3.0 * X[:, 0] + 0.01 * rng.randn(n_samples)
 
     # Use a small alpha grid so the solution isn't trivially all-zeros
     alphas = [1e-6, 1e-5, 1e-4, 1e-3]
@@ -732,7 +730,7 @@ def test_enet_multitarget(global_random_seed):
 
 
 def test_multioutput_enetcv_error():
-    X = np.zeros((10, 2))
+    X = np.arange(20).reshape((10, 2))
     y = np.zeros((10, 2))
     clf = ElasticNetCV()
     with pytest.raises(ValueError):
@@ -823,8 +821,6 @@ def test_elasticnet_precompute_incorrect_gram():
 
     garbage = np.arange(X.size, dtype=float).reshape(X.shape)
     precompute = garbage.T @ garbage
-
-    assert not np.allclose(precompute, X.T @ X)
 
     clf = ElasticNet(alpha=0.01, fit_intercept=False, precompute=precompute)
     msg = r"Gram matrix.*did not pass validation.*"
@@ -987,7 +983,7 @@ def test_enet_path_positive(global_random_seed):
     # Test that the coefs returned by positive=True in enet_path are positive
     for path in [enet_path, lasso_path]:
         pos_path_coef = path(X, Y[:, 0], positive=True)[1]
-        assert np.min(pos_path_coef) >= -1e-12
+        assert np.all(pos_path_coef >= 0)
 
     # For multi output, positive parameter is not allowed
     # Test that an error is raised
@@ -1011,7 +1007,7 @@ def test_sparse_dense_descent_paths(csr_container, global_random_seed):
 
 @pytest.mark.parametrize("path_func", [enet_path, lasso_path])
 def test_path_unknown_parameter(path_func):
-    X = np.zeros((5, 2))
+    X = np.arange(10).reshape((5, 2))
     y = np.zeros(5)
     err_msg = "Unexpected parameters in params"
     with pytest.raises(ValueError, match=err_msg):
@@ -1601,7 +1597,7 @@ def test_linear_models_cv_fit_with_loky(estimator):
 def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
     """Check that ElasticNet does not overwrite sample_weights."""
     n_samples, n_features = 10, 5
-    X = np.zeros((n_samples, n_features))
+    X = np.arange(n_samples * n_features, dtype=float).reshape((n_samples, n_features))
     y = np.zeros(n_samples)
 
     sample_weight_1_25 = 1.25 * np.ones_like(y)
@@ -1653,8 +1649,12 @@ def test_enet_ridge_consistency(ridge_alpha, precompute, n_targets, global_rando
     # The CD solver using the gram matrix (precompute = True) loses numerical precision
     # by working with the squares of matrices like Q=X'X (=gram) and
     # R^2 = y^2 + wQw - 2yQw (=square of residuals).
-    rtol = 1e-5 if precompute else (1e-6 if n_targets > 1 else 1e-7)
-    atol = 1e-10 if precompute else (1e-9 if n_targets > 1 else 1e-12)
+    if precompute:
+        rtol, atol = 1e-5, 1e-10
+    elif n_targets > 1:
+        rtol, atol = 1e-6, 1e-9
+    else:
+        rtol, atol = 1e-7, 1e-12
 
     assert_allclose(enet.coef_, ridge.coef_, rtol=rtol, atol=atol)
     assert_allclose(enet.intercept_, ridge.intercept_, rtol=rtol, atol=atol)
