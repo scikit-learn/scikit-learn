@@ -1,0 +1,6 @@
+- The leave-one out errors :class:`linear_model.RidgeCV` are now numerically
+  stable in the small `alpha` regime for all `gcv_mode` options. Two `gcv_mode`
+  options are added: `cov` (resp `gram`) uses the eigendecomposition of the
+  covariance (resp Gram) matrix. The `eigen` option automatically picks the
+  cheaper option.
+  By :user:`Antoine Baker <antoinebaker>`
