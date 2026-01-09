@@ -21,7 +21,6 @@ env:
   CCACHE_DIR: ${{ github.workspace }}/ccache
   COVERAGE: 'true'
   JUNITXML: 'test-data.xml'
-  JUNIT_FILE: ${{ github.workspace }}/tmp_folder/test-data.xml
 
 jobs:
   lint:
