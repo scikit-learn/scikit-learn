@@ -347,7 +347,9 @@ class DecisionBoundaryDisplay:
         Parameters
         ----------
         estimator : object
-            Trained estimator used to plot the decision boundary.
+            Trained estimator used to plot the decision boundary. If `estimator` is a
+            regressor, the output of `predict` is treated as the output of
+            `decision_function` for a binary classifier.
 
         X : {array-like, sparse matrix, dataframe} of shape (n_samples, 2)
             Input data that should be only 2-dimensional.
