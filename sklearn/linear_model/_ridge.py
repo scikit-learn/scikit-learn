@@ -2090,7 +2090,7 @@ class _RidgeGCV(LinearModel):
         if self.fit_intercept:
             sw_sum = sqrt_sw @ sqrt_sw
             alpha_d -= alpha_g * sqrt_sw / sw_sum
-        if len(y.shape) != 1:
+        if y.ndim == 2:
             # handle case where y is 2-d
             alpha_d = alpha_d[:, None]
         looe = alpha_c / alpha_d
@@ -2112,7 +2112,7 @@ class _RidgeGCV(LinearModel):
         if self.fit_intercept:
             sw_sum = sqrt_sw @ sqrt_sw
             alpha_d -= alpha_g * sqrt_sw / sw_sum
-        if len(y.shape) != 1:
+        if y.ndim == 2:
             # handle case where y is 2-d
             alpha_d = alpha_d[:, None]
         looe = alpha_c / alpha_d
@@ -2226,7 +2226,7 @@ class _RidgeGCV(LinearModel):
 
         decomposition = decompose(X, X_offset, y, sqrt_sw)
 
-        n_y = 1 if len(y.shape) == 1 else y.shape[1]
+        n_y = 1 if y.ndim == 1 else y.shape[1]
         if (
             isinstance(self.alphas, numbers.Number)
             or getattr(self.alphas, "ndim", None) == 0
@@ -2309,7 +2309,7 @@ class _RidgeGCV(LinearModel):
         self._set_intercept(X_offset, y_offset, X_scale)
 
         if self.store_cv_results:
-            if len(y.shape) == 1:
+            if y.ndim == 1:
                 cv_results_shape = n_samples, n_alphas
             else:
                 cv_results_shape = n_samples, n_y, n_alphas
