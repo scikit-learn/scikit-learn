@@ -83,7 +83,9 @@ def _set_order(X, y, order="C"):
         else:
             X = np.asarray(X, order=order)
         if sparse_y:
-            y = y.asformat(sparse_format)
+            if getattr(y, "ndim") == 1:
+                y = y.reshape(-1, 1)
+            y = y.asformat(sparse_format, copy=False)
         else:
             y = np.asarray(y, order=order)
     return X, y
