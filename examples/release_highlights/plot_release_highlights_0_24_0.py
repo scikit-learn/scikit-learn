@@ -1,4 +1,4 @@
-# ruff: noqa
+# ruff: noqa: CPY001, E501
 """
 ========================================
 Release Highlights for scikit-learn 0.24
@@ -51,10 +51,11 @@ or with conda::
 
 import numpy as np
 from scipy.stats import randint
-from sklearn.experimental import enable_halving_search_cv  # noqa
-from sklearn.model_selection import HalvingRandomSearchCV
-from sklearn.ensemble import RandomForestClassifier
+
 from sklearn.datasets import make_classification
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
+from sklearn.model_selection import HalvingRandomSearchCV
 
 rng = np.random.RandomState(0)
 
@@ -118,6 +119,7 @@ rsh.best_params_
 # Read more in the :ref:`User guide <self_training>`.
 
 import numpy as np
+
 from sklearn import datasets
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.svm import SVC
@@ -140,9 +142,9 @@ self_training_model.fit(iris.data, iris.target)
 # (backward selection), based on a cross-validated score maximization.
 # See the :ref:`User Guide <sequential_feature_selection>`.
 
+from sklearn.datasets import load_iris
 from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.datasets import load_iris
 
 X, y = load_iris(return_X_y=True, as_frame=True)
 feature_names = X.columns
@@ -163,11 +165,11 @@ print(
 # :class:`~sklearn.preprocessing.PolynomialFeatures`.
 
 from sklearn.datasets import fetch_covtype
-from sklearn.pipeline import make_pipeline
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.kernel_approximation import PolynomialCountSketch
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import MinMaxScaler
 
 X, y = fetch_covtype(return_X_y=True)
 pipe = make_pipeline(
@@ -194,8 +196,8 @@ linear_baseline.fit(X_train, y_train).score(X_test, y_test)
 # prediction on a feature for each sample separately, with one line per sample.
 # See the :ref:`User Guide <individual_conditional>`
 
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.datasets import fetch_california_housing
+from sklearn.ensemble import RandomForestRegressor
 
 # from sklearn.inspection import plot_partial_dependence
 from sklearn.inspection import PartialDependenceDisplay
@@ -232,9 +234,10 @@ display.figure_.subplots_adjust(hspace=0.3)
 # splitting criterion. Setting `criterion="poisson"` might be a good choice
 # if your target is a count or a frequency.
 
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.model_selection import train_test_split
 import numpy as np
+
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeRegressor
 
 n_samples, n_features = 1000, 20
 rng = np.random.RandomState(0)

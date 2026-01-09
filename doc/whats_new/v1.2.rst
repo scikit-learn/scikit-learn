@@ -40,8 +40,8 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
-- |Fix| Fixed a bug in :class:`cluster.BisectingKMeans`, preventing `fit` to randomly
-  fail due to a permutation of the labels when running multiple inits.
+- |Fix| Fixed a bug in :class:`cluster.BisectingKMeans`, preventing `fit` from randomly
+  failing due to a permutation of the labels when running multiple inits.
   :pr:`25563` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.compose`
@@ -72,7 +72,7 @@ Changelog
 
 - |Fix| Raise a more informative error message in :func:`inspection.partial_dependence`
   when dealing with mixed data type categories that cannot be sorted by
-  :func:`numpy.unique`. This problem usually happen when categories are `str` and
+  :func:`numpy.unique`. This problem usually happens when categories are `str` and
   missing values are present using `np.nan`.
   :pr:`25774` by :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -163,7 +163,7 @@ Changelog
 ...................
 
 - |Fix| Fix a regression in `BaseEstimator.__getstate__` that would prevent
-  certain estimators to be pickled when using Python 3.11. :pr:`25188` by
+  certain estimators from being pickled when using Python 3.11. :pr:`25188` by
   :user:`Benjamin Bossan <BenjaminBossan>`.
 
 - |Fix| Inheriting from :class:`base.TransformerMixin` will only wrap the `transform`
@@ -174,7 +174,7 @@ Changelog
 
 - |Fix| Fixes an inconsistency in :func:`datasets.fetch_openml` between liac-arff
   and pandas parser when a leading space is introduced after the delimiter.
-  The ARFF specs requires to ignore the leading space.
+  The ARFF specs require ignoring the leading space.
   :pr:`25312` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| Fixes a bug in :func:`datasets.fetch_openml` when using `parser="pandas"`
@@ -185,7 +185,7 @@ Changelog
 ............................
 
 - |Fix| Fixed a bug in :class:`decomposition.MiniBatchDictionaryLearning` where the
-  online updates of the sufficient statistics where not correct when calling
+  online updates of the sufficient statistics were not correct when calling
   `partial_fit` on batches of different sizes.
   :pr:`25354` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
@@ -198,7 +198,7 @@ Changelog
 .......................
 
 - |Fix| :class:`ensemble.RandomForestClassifier`,
-  :class:`ensemble.RandomForestRegressor` :class:`ensemble.ExtraTreesClassifier`
+  :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`
   and :class:`ensemble.ExtraTreesRegressor` now support sparse readonly datasets.
   :pr:`25341` by :user:`Julien Jerphanion <jjerphan>`
 
@@ -226,7 +226,7 @@ Changelog
 ..............................
 
 - |Fix| :func:`model_selection.cross_validate` with multimetric scoring in
-  case of some failing scorers the non-failing scorers now returns proper
+  case of some failing scorers the non-failing scorers now return proper
   scores instead of `error_score` values.
   :pr:`23101` by :user:`András Simon <simonandras>` and `Thomas Fan`_.
 
@@ -431,8 +431,8 @@ Changelog
 ...................
 
 - |Enhancement| Introduces :class:`base.ClassNamePrefixFeaturesOutMixin` and
-  :class:`base.ClassNamePrefixFeaturesOutMixin` mixins that defines
-  :term:`get_feature_names_out` for common transformer uses cases.
+  :class:`base.ClassNamePrefixFeaturesOutMixin` mixins that define
+  :term:`get_feature_names_out` for common transformer use cases.
   :pr:`24688` by `Thomas Fan`_.
 
 :mod:`sklearn.calibration`
@@ -466,7 +466,7 @@ Changelog
   :pr:`23038` by :user:`Meekail Zain <micky774>`.
 
 - |Enhancement| :class:`cluster.SpectralClustering` and
-  :func:`cluster.spectral_clustering` now propagates the `eigen_tol` parameter
+  :func:`cluster.spectral_clustering` now propagate the `eigen_tol` parameter
   to all choices of `eigen_solver`. Includes a new option `eigen_tol="auto"`
   and begins deprecation to change the default from `eigen_tol=0` to
   `eigen_tol="auto"` in version 1.3.
@@ -503,7 +503,7 @@ Changelog
   :pr:`19075` by :user:`Carlos Ramos Carreño <vnmabus>`.
 
 - |Fix| Make sure that :func:`datasets.fetch_lfw_people` and
-  :func:`datasets.fetch_lfw_pairs` internally crops images based on the
+  :func:`datasets.fetch_lfw_pairs` internally crop images based on the
   `slice_` parameter.
   :pr:`24951` by :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -515,7 +515,7 @@ Changelog
   :pr:`22268` by :user:`MohamedBsh <Bsh>`.
 
 - |Enhancement| :class:`decomposition.SparsePCA` and
-  :class:`decomposition.MiniBatchSparsePCA` now implements an `inverse_transform`
+  :class:`decomposition.MiniBatchSparsePCA` now implement an `inverse_transform`
   function.
   :pr:`23905` by :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -591,7 +591,7 @@ Changelog
   and :user:`Vincent Maladiere <Vincent-Maladiere>`.
 
 - |Enhancement| :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingClassifier` now accept their
+  :class:`ensemble.HistGradientBoostingRegressor` now accept their
   `monotonic_cst` parameter to be passed as a dictionary in addition
   to the previously supported array-like format.
   Such dictionary have feature names as keys and one of `-1`, `0`, `1`
@@ -698,7 +698,7 @@ Changelog
 
 - |Enhancement| :class:`kernel_approximation.RBFSampler` now accepts
   `'scale'` option for parameter `gamma`.
-  :pr:`24755` by :user:`Gleb Levitski <GLevV>`.
+  :pr:`24755` by :user:`Hleb Levitski <glevv>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -1023,7 +1023,7 @@ Papadopoulos Orfanos, Dimitris Litsidis, drewhogg, Duarte OC, Dwight Lindquist,
 Eden Brekke, Edern, Edoardo Abati, Eleanore Denies, EliaSchiavon, Emir,
 ErmolaevPA, Fabrizio Damicelli, fcharras, Felipe Siola, Flynn,
 francesco-tuveri, Franck Charras, ftorres16, Gael Varoquaux, Geevarghese
-George, genvalen, GeorgiaMayDay, Gianr Lazz, Gleb Levitski, Glòria Macià
+George, genvalen, GeorgiaMayDay, Gianr Lazz, Hleb Levitski, Glòria Macià
 Muñoz, Guillaume Lemaitre, Guillem García Subies, Guitared, gunesbayir,
 Haesun Park, Hansin Ahuja, Hao Chun Chang, Harsh Agrawal, harshit5674,
 hasan-yaman, henrymooresc, Henry Sorsky, Hristo Vrigazov, htsedebenham, humahn,

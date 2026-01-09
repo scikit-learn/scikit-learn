@@ -5,9 +5,6 @@
 # Pairwise Distances Reductions
 # =============================
 #
-#   Authors: The scikit-learn developers.
-#   License: BSD 3 clause
-#
 # Overview
 # --------
 #
@@ -94,7 +91,7 @@
 #    (see :class:`MiddleTermComputer{32,64}`).
 #
 
-from ._dispatcher import (
+from sklearn.metrics._pairwise_distances_reduction._dispatcher import (
     ArgKmin,
     ArgKminClassMode,
     BaseDistancesReductionDispatcher,
@@ -104,10 +101,10 @@ from ._dispatcher import (
 )
 
 __all__ = [
-    "BaseDistancesReductionDispatcher",
     "ArgKmin",
-    "RadiusNeighbors",
     "ArgKminClassMode",
+    "BaseDistancesReductionDispatcher",
+    "RadiusNeighbors",
     "RadiusNeighborsClassMode",
     "sqeuclidean_row_norms",
 ]

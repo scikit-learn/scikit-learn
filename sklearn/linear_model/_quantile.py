@@ -8,13 +8,13 @@ import numpy as np
 from scipy import sparse
 from scipy.optimize import linprog
 
-from ..base import BaseEstimator, RegressorMixin, _fit_context
-from ..exceptions import ConvergenceWarning
-from ..utils import _safe_indexing
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.fixes import parse_version, sp_version
-from ..utils.validation import _check_sample_weight
-from ._base import LinearModel
+from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import LinearModel
+from sklearn.utils import _safe_indexing
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils.validation import _check_sample_weight, validate_data
 
 
 class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
@@ -103,7 +103,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     >>> from sklearn.utils.fixes import sp_version, parse_version
     >>> reg = QuantileRegressor(quantile=0.8).fit(X, y)
     >>> np.mean(y <= reg.predict(X))
-    0.8
+    np.float64(0.8)
     """
 
     _parameter_constraints: dict = {
@@ -159,7 +159,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self : object
             Returns self.
         """
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csc", "csr", "coo"],
@@ -293,3 +294,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             self.coef_ = params
             self.intercept_ = 0.0
         return self
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags

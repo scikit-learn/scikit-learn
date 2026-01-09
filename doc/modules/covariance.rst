@@ -35,10 +35,9 @@ The empirical covariance matrix of a sample can be computed using the
 :class:`EmpiricalCovariance` object to the data sample with the
 :meth:`EmpiricalCovariance.fit` method. Be careful that results depend
 on whether the data are centered, so one may want to use the
-``assume_centered`` parameter accurately. More precisely, if
-``assume_centered=False``, then the test set is supposed to have the
-same mean vector as the training set. If not, both should be centered
-by the user, and ``assume_centered=True`` should be used.
+`assume_centered` parameter accurately. More precisely, if `assume_centered=True`, then
+all features in the train and test sets should have a mean of zero. If not, both should
+be centered by the user, or `assume_centered=False` should be used.
 
 .. rubric:: Examples
 
@@ -76,7 +75,7 @@ smallest and the largest eigenvalues of the empirical covariance matrix.
 It can be done by simply shifting every eigenvalue according to a given
 offset, which is equivalent of finding the l2-penalized Maximum
 Likelihood Estimator of the covariance matrix. In practice, shrinkage
-boils down to a simple a convex transformation : :math:`\Sigma_{\rm
+boils down to a simple convex transformation : :math:`\Sigma_{\rm
 shrunk} = (1-\alpha)\hat{\Sigma} + \alpha\frac{{\rm
 Tr}\hat{\Sigma}}{p}\rm Id`.
 
@@ -107,15 +106,15 @@ fitting a :class:`LedoitWolf` object to the same sample.
     It is important to note that when the number of samples is much larger than
     the number of features, one would expect that no shrinkage would be
     necessary. The intuition behind this is that if the population covariance
-    is full rank, when the number of sample grows, the sample covariance will
-    also become positive definite. As a result, no shrinkage would necessary
+    is full rank, when the number of samples grows, the sample covariance will
+    also become positive definite. As a result, no shrinkage would be necessary
     and the method should automatically do this.
 
     This, however, is not the case in the Ledoit-Wolf procedure when the
     population covariance happens to be a multiple of the identity matrix. In
     this case, the Ledoit-Wolf shrinkage estimate approaches 1 as the number of
     samples increases. This indicates that the optimal estimate of the
-    covariance matrix in the Ledoit-Wolf sense is multiple of the identity.
+    covariance matrix in the Ledoit-Wolf sense is a multiple of the identity.
     Since the population covariance is already a multiple of the identity
     matrix, the Ledoit-Wolf solution is indeed a reasonable estimate.
 

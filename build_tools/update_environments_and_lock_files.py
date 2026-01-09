@@ -7,7 +7,7 @@ Two scenarios where this script can be useful:
 - make sure that the latest versions of all the dependencies are used in the CI.
   There is a scheduled workflow that does this, see
   .github/workflows/update-lock-files.yml. This is still useful to run this
-  script when when the automated PR fails and for example some packages need to
+  script when the automated PR fails and for example some packages need to
   be pinned. You can add the pins to this script, run it, and open a PR with
   the changes.
 - bump minimum dependencies in sklearn/_min_dependencies.py. Running this
@@ -26,6 +26,7 @@ scipy) with apt-get and the rest of the dependencies (e.g. pytest and joblib)
 with pip.
 
 To run this script you need:
+- conda
 - conda-lock. The version should match the one used in the CI in
   sklearn/_min_dependencies.py
 - pip-tools
@@ -82,7 +83,11 @@ common_dependencies = common_dependencies_without_coverage + [
 
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
-default_package_constraints = {}
+default_package_constraints = {
+    # TODO: remove once when we're using the new way to enable coverage in subprocess
+    # introduced in 7.0.0, see https://github.com/pytest-dev/pytest-cov?tab=readme-ov-file#upgrading-from-pytest-cov-63
+    "pytest-cov": "<=6.3.0",
+}
 
 
 def remove_from(alist, to_remove):
@@ -100,15 +105,15 @@ build_metadata_list = [
         "conda_dependencies": common_dependencies
         + [
             "ccache",
-            # Make sure pytorch comes from the pytorch channel and not conda-forge
-            "pytorch::pytorch",
-            "pytorch-cuda",
+            "pytorch-gpu",
             "polars",
             "pyarrow",
             "cupy",
-            "array-api-compat",
             "array-api-strict",
         ],
+        "package_constraints": {
+            "blas": "[build=mkl]",
+        },
     },
     {
         "name": "pylatest_conda_forge_mkl_linux-64",
@@ -124,81 +129,70 @@ build_metadata_list = [
             "pytorch-cpu",
             "polars",
             "pyarrow",
-            "array-api-compat",
             "array-api-strict",
+            "scipy-doctest",
+            "pytest-playwright",
         ],
         "package_constraints": {
             "blas": "[build=mkl]",
         },
     },
     {
-        "name": "pylatest_conda_forge_mkl_osx-64",
+        "name": "pylatest_conda_forge_osx-arm64",
         "type": "conda",
         "tag": "main-ci",
         "folder": "build_tools/azure",
-        "platform": "osx-64",
+        "platform": "osx-arm64",
         "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies
         + [
             "ccache",
             "compilers",
             "llvm-openmp",
+            "pytorch",
+            "pytorch-cpu",
+            "array-api-strict",
         ],
-        "package_constraints": {
-            "blas": "[build=mkl]",
-        },
     },
     {
-        "name": "pylatest_conda_mkl_no_openmp",
+        "name": "pylatest_conda_forge_mkl_no_openmp",
         "type": "conda",
         "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "osx-64",
-        "channels": ["defaults"],
-        "conda_dependencies": remove_from(
-            common_dependencies, ["cython", "threadpoolctl", "meson-python"]
-        )
-        + ["ccache"],
+        "channels": ["conda-forge"],
+        "conda_dependencies": common_dependencies + ["ccache"],
         "package_constraints": {
             "blas": "[build=mkl]",
-            # scipy 1.12.x crashes on this platform (https://github.com/scipy/scipy/pull/20086)
-            # TODO: release scipy constraint when 1.13 is available in the "default"
-            # channel.
-            "scipy": "<1.12",
-            # TODO temporary to avoid a timeout in the no-OpenMP build, see
-            # https://github.com/scikit-learn/scikit-learn/pull/29486#issuecomment-2242359516
-            "meson": "<1.5",
         },
-        # TODO: put cython, threadpoolctl and meson-python back to conda
-        # dependencies when required version is available on the main channel
-        "pip_dependencies": ["cython", "threadpoolctl", "meson-python", "meson"],
     },
     {
-        "name": "pymin_conda_defaults_openblas",
+        "name": "pymin_conda_forge_openblas_min_dependencies",
         "type": "conda",
         "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channels": ["defaults"],
-        "conda_dependencies": remove_from(
-            common_dependencies,
-            ["pandas", "threadpoolctl", "pip", "meson-python"],
-        )
-        + ["ccache"],
+        "channels": ["conda-forge"],
+        "conda_dependencies": remove_from(common_dependencies, ["pandas"])
+        + ["ccache", "polars", "pyarrow"],
+        # TODO: move pandas to conda_dependencies when pandas 1.5.1 is the minimum
+        # supported version
+        "pip_dependencies": ["pandas"],
         "package_constraints": {
-            "python": "3.9",
+            "python": "3.11",
             "blas": "[build=openblas]",
-            "numpy": "1.21",  # the min version is not available on the defaults channel
-            "scipy": "1.7",  # the min version has some low level crashes
+            "numpy": "min",
+            "scipy": "min",
             "matplotlib": "min",
             "cython": "min",
             "joblib": "min",
             "threadpoolctl": "min",
             "meson-python": "min",
+            "pandas": "min",
+            "polars": "min",
+            "pyamg": "min",
+            "pyarrow": "min",
         },
-        # TODO: put pip dependencies back to conda dependencies when required
-        # version is available on the defaults channel.
-        "pip_dependencies": ["threadpoolctl", "meson-python"],
     },
     {
         "name": "pymin_conda_forge_openblas_ubuntu_2204",
@@ -208,12 +202,12 @@ build_metadata_list = [
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": (
-            common_dependencies_without_coverage
+            remove_from(common_dependencies_without_coverage, ["matplotlib"])
             + docstring_test_dependencies
             + ["ccache"]
         ),
         "package_constraints": {
-            "python": "3.9",
+            "python": "3.11",
             "blas": "[build=openblas]",
         },
     },
@@ -223,22 +217,23 @@ build_metadata_list = [
         "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channels": ["defaults"],
+        "channels": ["conda-forge"],
         "conda_dependencies": ["python", "ccache"],
+        "package_constraints": {
+            # TODO: remove this constraint once pyamg provide binary
+            # wheels for Python 3.14 (or later) on PyPI.
+            "python": "3.13",
+        },
         "pip_dependencies": (
             remove_from(common_dependencies, ["python", "blas", "pip"])
             + docstring_test_dependencies
             # Test with some optional dependencies
-            + ["lightgbm", "scikit-image"]
+            + ["lightgbm"]
             # Test array API on CPU without PyTorch
-            + ["array-api-compat", "array-api-strict"]
+            + ["array-api-strict"]
+            # doctests dependencies
+            + ["scipy-doctest"]
         ),
-        "package_constraints": {
-            # XXX: we would like to use the latest Python version, but for now using
-            # Python 3.12 makes the CI much slower so we use Python 3.11. See
-            # https://github.com/scikit-learn/scikit-learn/pull/29444#issuecomment-2219550662.
-            "python": "3.11",
-        },
     },
     {
         "name": "pylatest_pip_scipy_dev",
@@ -246,7 +241,7 @@ build_metadata_list = [
         "tag": "scipy-dev",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channels": ["defaults"],
+        "channels": ["conda-forge"],
         "conda_dependencies": ["python", "ccache"],
         "pip_dependencies": (
             remove_from(
@@ -275,7 +270,28 @@ build_metadata_list = [
         ),
     },
     {
-        "name": "pymin_conda_forge_mkl",
+        "name": "pylatest_free_threaded",
+        "type": "conda",
+        "tag": "free-threaded",
+        "folder": "build_tools/azure",
+        "platform": "linux-64",
+        "channels": ["conda-forge"],
+        "conda_dependencies": [
+            "python-freethreading",
+            "meson-python",
+            "cython",
+            "numpy",
+            "scipy",
+            "joblib",
+            "threadpoolctl",
+            "pytest",
+            "pytest-run-parallel",
+            "ccache",
+            "pip",
+        ],
+    },
+    {
+        "name": "pymin_conda_forge_openblas",
         "type": "conda",
         "tag": "main-ci",
         "folder": "build_tools/azure",
@@ -287,8 +303,8 @@ build_metadata_list = [
             "pip",
         ],
         "package_constraints": {
-            "python": "3.9",
-            "blas": "[build=mkl]",
+            "python": "3.11",
+            "blas": "[build=openblas]",
         },
     },
     {
@@ -298,7 +314,9 @@ build_metadata_list = [
         "folder": "build_tools/circle",
         "platform": "linux-64",
         "channels": ["conda-forge"],
-        "conda_dependencies": common_dependencies_without_coverage
+        "conda_dependencies": remove_from(
+            common_dependencies_without_coverage, ["pandas"]
+        )
         + [
             "scikit-image",
             "seaborn",
@@ -312,16 +330,20 @@ build_metadata_list = [
             "plotly",
             "polars",
             "pooch",
+            "sphinxext-opengraph",
             "sphinx-remove-toctrees",
             "sphinx-design",
             "pydata-sphinx-theme",
+            "towncrier",
         ],
         "pip_dependencies": [
-            "sphinxext-opengraph",
             "sphinxcontrib-sass",
+            # TODO: move pandas to conda_dependencies when pandas 1.5.1 is the minimum
+            # supported version
+            "pandas",
         ],
         "package_constraints": {
-            "python": "3.9",
+            "python": "3.11",
             "numpy": "min",
             "scipy": "min",
             "matplotlib": "min",
@@ -337,10 +359,12 @@ build_metadata_list = [
             "plotly": "min",
             "polars": "min",
             "pooch": "min",
+            "pyamg": "min",
             "sphinx-design": "min",
             "sphinxcontrib-sass": "min",
             "sphinx-remove-toctrees": "min",
             "pydata-sphinx-theme": "min",
+            "towncrier": "min",
         },
     },
     {
@@ -368,33 +392,38 @@ build_metadata_list = [
             "sphinx-remove-toctrees",
             "sphinx-design",
             "pydata-sphinx-theme",
-        ],
-        "pip_dependencies": [
+            "towncrier",
             "jupyterlite-sphinx",
             "jupyterlite-pyodide-kernel",
+        ],
+        "pip_dependencies": [
             "sphinxcontrib-sass",
         ],
         "package_constraints": {
-            "python": "3.9",
+            "python": "3.11",
+            # Pinned while https://github.com/pola-rs/polars/issues/25039 is
+            # not fixed.
+            "polars": "1.34.0",
         },
     },
     {
-        "name": "pymin_conda_forge",
+        "name": "pymin_conda_forge_arm",
         "type": "conda",
-        "tag": "arm",
-        "folder": "build_tools/cirrus",
+        "tag": "main-ci",
+        "folder": "build_tools/github",
         "platform": "linux-aarch64",
         "channels": ["conda-forge"],
-        "conda_dependencies": remove_from(
-            common_dependencies_without_coverage, ["pandas", "pyamg"]
-        )
+        "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
         + ["pip", "ccache"],
         "package_constraints": {
-            "python": "3.9",
+            "python": "3.11",
+            # The following is needed to avoid getting libnvpl build for blas for some
+            # reason.
+            "blas": "[build=openblas]",
         },
     },
     {
-        "name": "debian_atlas_32bit",
+        "name": "debian_32bit",
         "type": "pip",
         "tag": "main-ci",
         "folder": "build_tools/azure",
@@ -403,20 +432,14 @@ build_metadata_list = [
             "joblib",
             "threadpoolctl",
             "pytest",
+            "pytest-xdist",
             "pytest-cov",
             "ninja",
             "meson-python",
         ],
-        "package_constraints": {
-            "joblib": "min",
-            "threadpoolctl": "3.1.0",
-            "pytest": "min",
-            "pytest-cov": "min",
-            # no pytest-xdist because it causes issue on 32bit
-            "cython": "min",
-        },
-        # same Python version as in debian-32 build
-        "python_version": "3.9.2",
+        # Python version from the python3 APT package in the debian-32 docker
+        # image.
+        "python_version": "3.12.5",
     },
     {
         "name": "ubuntu_atlas",
@@ -437,7 +460,7 @@ build_metadata_list = [
             "threadpoolctl": "min",
             "cython": "min",
         },
-        "python_version": "3.10.4",
+        "python_version": "3.12.3",
     },
 ]
 
@@ -634,9 +657,9 @@ def write_pip_lock_file(build_metadata):
 
     json_output = execute_command(["conda", "info", "--json"])
     conda_info = json.loads(json_output)
-    environment_folder = [
+    environment_folder = next(
         each for each in conda_info["envs"] if each.endswith(environment_name)
-    ][0]
+    )
     environment_path = Path(environment_folder)
     pip_compile_path = environment_path / "bin" / "pip-compile"
 

@@ -1,21 +1,26 @@
 import warnings
 from numbers import Integral, Real
-from warnings import warn
 
 import numpy as np
 
-from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
-from ..utils import Bunch, safe_mask
-from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
-from ..utils.metadata_routing import (
+from sklearn.base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MetaEstimatorMixin,
+    _fit_context,
+    clone,
+)
+from sklearn.utils import Bunch, get_tags, safe_mask
+from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.metaestimators import available_if
-from ..utils.validation import check_is_fitted
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.validation import _estimator_has, check_is_fitted, validate_data
 
 __all__ = ["SelfTrainingClassifier"]
 
@@ -23,26 +28,7 @@ __all__ = ["SelfTrainingClassifier"]
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-def _estimator_has(attr):
-    """Check if we can delegate a method to the underlying estimator.
-
-    First, we check the fitted `estimator_` if available, otherwise we check
-    the unfitted `estimator`. We raise the original `AttributeError` if
-    `attr` does not exist. This function is used together with `available_if`.
-    """
-
-    def check(self):
-        if hasattr(self, "estimator_"):
-            getattr(self.estimator_, attr)
-        else:
-            getattr(self.estimator, attr)
-
-        return True
-
-    return check
-
-
-class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
+class SelfTrainingClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     """Self-training classifier.
 
     This :term:`metaestimator` allows a given supervised classifier to function as a
@@ -64,15 +50,6 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
         .. versionadded:: 1.6
             `estimator` was added to replace `base_estimator`.
-
-    base_estimator : estimator object
-        An estimator object implementing `fit` and `predict_proba`.
-        Invoking the `fit` method will fit a clone of the passed estimator,
-        which will be stored in the `estimator_` attribute.
-
-        .. deprecated:: 1.6
-            `base_estimator` was deprecated in 1.6 and will be removed in 1.8.
-            Use `estimator` instead.
 
     threshold : float, default=0.75
         The decision threshold for use with `criterion='threshold'`.
@@ -171,18 +148,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     SelfTrainingClassifier(...)
     """
 
-    _estimator_type = "classifier"
-
     _parameter_constraints: dict = {
         # We don't require `predic_proba` here to allow passing a meta-estimator
         # that only exposes `predict_proba` after fitting.
-        # TODO(1.8) remove None option
-        "estimator": [None, HasMethods(["fit"])],
-        # TODO(1.8) remove
-        "base_estimator": [
-            HasMethods(["fit"]),
-            Hidden(StrOptions({"deprecated"})),
-        ],
+        "estimator": [HasMethods(["fit"])],
         "threshold": [Interval(Real, 0.0, 1.0, closed="left")],
         "criterion": [StrOptions({"threshold", "k_best"})],
         "k_best": [Interval(Integral, 1, None, closed="left")],
@@ -193,7 +162,6 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     def __init__(
         self,
         estimator=None,
-        base_estimator="deprecated",
         threshold=0.75,
         criterion="threshold",
         k_best=10,
@@ -207,9 +175,6 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         self.max_iter = max_iter
         self.verbose = verbose
 
-        # TODO(1.8) remove
-        self.base_estimator = base_estimator
-
     def _get_estimator(self):
         """Get the estimator.
 
@@ -218,31 +183,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         estimator_ : estimator object
             The cloned estimator object.
         """
-        # TODO(1.8): remove and only keep clone(self.estimator)
-        if self.estimator is None and self.base_estimator != "deprecated":
-            estimator_ = clone(self.base_estimator)
-
-            warn(
-                (
-                    "`base_estimator` has been deprecated in 1.6 and will be removed"
-                    " in 1.8. Please use `estimator` instead."
-                ),
-                FutureWarning,
-            )
-        # TODO(1.8) remove
-        elif self.estimator is None and self.base_estimator == "deprecated":
-            raise ValueError(
-                "You must pass an estimator to SelfTrainingClassifier."
-                " Use `estimator`."
-            )
-        elif self.estimator is not None and self.base_estimator != "deprecated":
-            raise ValueError(
-                "You must pass only one estimator to SelfTrainingClassifier."
-                " Use `estimator`."
-            )
-        else:
-            estimator_ = clone(self.estimator)
-        return estimator_
+        return clone(self.estimator)
 
     @_fit_context(
         # SelfTrainingClassifier.estimator is not validated yet
@@ -282,8 +223,12 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
         # we need row slicing support for sparse matrices, but costly finiteness check
         # can be delegated to the base estimator.
-        X, y = self._validate_data(
-            X, y, accept_sparse=["csr", "csc", "lil", "dok"], force_all_finite=False
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            accept_sparse=["csr", "csc", "lil", "dok"],
+            ensure_all_finite=False,
         )
 
         if y.dtype.kind in ["U", "S"]:
@@ -412,10 +357,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         else:
             routed_params = Bunch(estimator=Bunch(predict={}))
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
         return self.estimator_.predict(X, **routed_params.estimator.predict)
@@ -454,10 +400,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         else:
             routed_params = Bunch(estimator=Bunch(predict_proba={}))
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
         return self.estimator_.predict_proba(X, **routed_params.estimator.predict_proba)
@@ -496,10 +443,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         else:
             routed_params = Bunch(estimator=Bunch(decision_function={}))
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
         return self.estimator_.decision_function(
@@ -540,10 +488,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         else:
             routed_params = Bunch(estimator=Bunch(predict_log_proba={}))
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
         return self.estimator_.predict_log_proba(
@@ -586,10 +535,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         else:
             routed_params = Bunch(estimator=Bunch(score={}))
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
         return self.estimator_.score(X, y, **routed_params.estimator.score)
@@ -608,7 +558,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
         router.add(
             estimator=self.estimator,
             method_mapping=(
@@ -623,3 +573,8 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             ),
         )
         return router
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
+        return tags

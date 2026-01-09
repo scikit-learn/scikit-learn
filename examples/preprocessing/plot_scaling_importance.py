@@ -12,13 +12,13 @@ Even if tree based models are (almost) not affected by scaling, many other
 algorithms require features to be normalized, often for different reasons: to
 ease the convergence (such as a non-penalized logistic regression), to create a
 completely different model fit compared to the fit with unscaled data (such as
-KNeighbors models). The latter is demoed on the first part of the present
+KNeighbors models). The latter is demonstrated on the first part of the present
 example.
 
 On the second part of the example we show how Principal Component Analysis (PCA)
 is impacted by normalization of features. To illustrate this, we compare the
 principal components found using :class:`~sklearn.decomposition.PCA` on unscaled
-data with those obatined when using a
+data with those obtained when using a
 :class:`~sklearn.preprocessing.StandardScaler` to scale data first.
 
 In the last part of the example we show the effect of the normalization on the
@@ -206,14 +206,20 @@ from sklearn.pipeline import make_pipeline
 
 Cs = np.logspace(-5, 5, 20)
 
-unscaled_clf = make_pipeline(pca, LogisticRegressionCV(Cs=Cs))
+unscaled_clf = make_pipeline(
+    pca, LogisticRegressionCV(Cs=Cs, use_legacy_attributes=False, l1_ratios=(0,))
+)
 unscaled_clf.fit(X_train, y_train)
 
-scaled_clf = make_pipeline(scaler, pca, LogisticRegressionCV(Cs=Cs))
+scaled_clf = make_pipeline(
+    scaler,
+    pca,
+    LogisticRegressionCV(Cs=Cs, use_legacy_attributes=False, l1_ratios=(0,)),
+)
 scaled_clf.fit(X_train, y_train)
 
-print(f"Optimal C for the unscaled PCA: {unscaled_clf[-1].C_[0]:.4f}\n")
-print(f"Optimal C for the standardized data with PCA: {scaled_clf[-1].C_[0]:.2f}")
+print(f"Optimal C for the unscaled PCA: {unscaled_clf[-1].C_:.4f}\n")
+print(f"Optimal C for the standardized data with PCA: {scaled_clf[-1].C_:.2f}")
 
 # %%
 # The need for regularization is higher (lower values of `C`) for the data that

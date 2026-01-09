@@ -22,7 +22,7 @@ When alpha is very large, the regularization effect dominates the
 squared loss function and the coefficients tend to zero.
 At the end of the path, as alpha tends toward zero
 and the solution tends towards the ordinary least squares, coefficients
-exhibit big oscillations. In practise it is necessary to tune alpha
+exhibit big oscillations. In practice it is necessary to tune alpha
 in such a way that a balance is maintained between both.
 
 """
@@ -63,6 +63,9 @@ ax.set_xscale("log")
 ax.set_xlim(ax.get_xlim()[::-1])  # reverse axis
 plt.xlabel("alpha")
 plt.ylabel("weights")
-plt.title("Ridge coefficients as a function of the regularization")
+plt.title("Ridge Coefficients vs Regularization Strength (alpha)")
 plt.axis("tight")
+plt.legend(
+    [f"Feature {i + 1}" for i in range(X.shape[1])], loc="best", fontsize="small"
+)
 plt.show()

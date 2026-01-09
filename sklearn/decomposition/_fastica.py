@@ -14,18 +14,23 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..exceptions import ConvergenceWarning
-from ..utils import as_float_array, check_array, check_random_state
-from ..utils._param_validation import Interval, Options, StrOptions, validate_params
-from ..utils.validation import check_is_fitted
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils import as_float_array, check_array, check_random_state
+from sklearn.utils._param_validation import (
+    Interval,
+    Options,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.validation import check_is_fitted, validate_data
 
-__all__ = ["fastica", "FastICA"]
+__all__ = ["FastICA", "fastica"]
 
 
 def _gs_decorrelation(w, W, j):
@@ -560,8 +565,12 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         S : ndarray of shape (n_samples, n_components) or None
             Sources matrix. `None` if `compute_sources` is `False`.
         """
-        XT = self._validate_data(
-            X, copy=self.whiten, dtype=[np.float64, np.float32], ensure_min_samples=2
+        XT = validate_data(
+            self,
+            X,
+            copy=self.whiten,
+            dtype=[np.float64, np.float32],
+            ensure_min_samples=2,
         ).T
         fun_args = {} if self.fun_args is None else self.fun_args
         random_state = check_random_state(self.random_state)
@@ -605,7 +614,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                 # Faster when num_samples >> n_features
                 d, u = linalg.eigh(XT.dot(X))
                 sort_indices = np.argsort(d)[::-1]
-                eps = np.finfo(d.dtype).eps
+                eps = np.finfo(d.dtype).eps * 10
                 degenerate_idx = d < eps
                 if np.any(degenerate_idx):
                     warnings.warn(
@@ -752,8 +761,12 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(
-            X, copy=(copy and self.whiten), dtype=[np.float64, np.float32], reset=False
+        X = validate_data(
+            self,
+            X,
+            copy=(copy and self.whiten),
+            dtype=[np.float64, np.float32],
+            reset=False,
         )
         if self.whiten:
             X -= self.mean_
@@ -773,7 +786,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_new : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Reconstructed data obtained with the mixing matrix.
         """
         check_is_fitted(self)
@@ -790,5 +803,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         """Number of transformed output features."""
         return self.components_.shape[0]
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float32, np.float64]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags

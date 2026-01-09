@@ -7,6 +7,7 @@ from io import StringIO
 import numpy as np
 import pytest
 from scipy import sparse as sp
+from threadpoolctl import threadpool_info
 
 from sklearn.base import clone
 from sklearn.cluster import KMeans, MiniBatchKMeans, k_means, kmeans_plusplus
@@ -287,7 +288,7 @@ def _check_fitted_model(km):
 )
 @pytest.mark.parametrize(
     "init",
-    ["random", "k-means++", centers, lambda X, k, random_state: centers],
+    ["random", "k-means++", centers.copy(), lambda X, k, random_state: centers.copy()],
     ids=["random", "k-means++", "ndarray", "callable"],
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
@@ -302,10 +303,14 @@ def test_all_init(Estimator, input_data, init):
 
 @pytest.mark.parametrize(
     "init",
-    ["random", "k-means++", centers, lambda X, k, random_state: centers],
+    ["random", "k-means++", centers, lambda X, k, random_state: centers.copy()],
     ids=["random", "k-means++", "ndarray", "callable"],
 )
 def test_minibatch_kmeans_partial_fit_init(init):
+    if hasattr(init, "copy"):
+        # Avoid mutating a shared array in place to avoid side effects in other tests.
+        init = init.copy()
+
     # Check MiniBatchKMeans init with partial_fit
     n_init = 10 if isinstance(init, str) else 1
     km = MiniBatchKMeans(
@@ -740,7 +745,7 @@ def test_transform(Estimator, global_random_seed):
     # In particular, diagonal must be 0
     assert_array_equal(Xt.diagonal(), np.zeros(n_clusters))
 
-    # Transorfming X should return the pairwise distances between X and the
+    # Transforming X should return the pairwise distances between X and the
     # centers
     Xt = km.transform(X)
     assert_allclose(Xt, pairwise_distances(X, km.cluster_centers_))
@@ -790,6 +795,13 @@ def test_k_means_function(global_random_seed):
     ids=data_containers_ids,
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+@pytest.mark.skipif(
+    not any(i for i in threadpool_info() if i["user_api"] == "blas"),
+    reason=(
+        "Fails for some global_random_seed on Atlas which cannot be detected by "
+        "threadpoolctl."
+    ),
+)
 def test_float_precision(Estimator, input_data, global_random_seed):
     # Check that the results are the same for single and double precision.
     km = Estimator(n_init=1, random_state=global_random_seed)
@@ -818,10 +830,11 @@ def test_float_precision(Estimator, input_data, global_random_seed):
 
     # compare arrays with low precision since the difference between 32 and
     # 64 bit comes from an accumulation of rounding errors.
-    assert_allclose(inertia[np.float32], inertia[np.float64], rtol=1e-4)
-    assert_allclose(Xt[np.float32], Xt[np.float64], atol=Xt[np.float64].max() * 1e-4)
+    rtol = 1e-4
+    assert_allclose(inertia[np.float32], inertia[np.float64], rtol=rtol)
+    assert_allclose(Xt[np.float32], Xt[np.float64], atol=Xt[np.float64].max() * rtol)
     assert_allclose(
-        centers[np.float32], centers[np.float64], atol=centers[np.float64].max() * 1e-4
+        centers[np.float32], centers[np.float64], atol=centers[np.float64].max() * rtol
     )
     assert_array_equal(labels[np.float32], labels[np.float64])
 

@@ -1,4 +1,4 @@
-# ruff: noqa
+# ruff: noqa: CPY001
 """
 =======================================
 Release Highlights for scikit-learn 1.1
@@ -28,9 +28,10 @@ or with conda::
 # -----------------------------------------------------------------
 # :class:`~ensemble.HistGradientBoostingRegressor` can model quantiles with
 # `loss="quantile"` and the new parameter `quantile`.
-from sklearn.ensemble import HistGradientBoostingRegressor
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn.ensemble import HistGradientBoostingRegressor
 
 # Simple regression function for X * cos(X)
 rng = np.random.RandomState(42)
@@ -60,16 +61,18 @@ _ = ax.legend(loc="lower left")
 # %%
 # `get_feature_names_out` Available in all Transformers
 # -----------------------------------------------------
-# :term:`get_feature_names_out` is now available in all Transformers. This enables
-# :class:`~pipeline.Pipeline` to construct the output feature names for more complex
-# pipelines:
+# :term:`get_feature_names_out` is now available in all transformers, thereby
+# concluding the implementation of
+# `SLEP007 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep007/proposal.html>`__.
+# This enables :class:`~pipeline.Pipeline` to construct the output feature names for
+# more complex pipelines:
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.pipeline import make_pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.feature_selection import SelectKBest
 from sklearn.datasets import fetch_openml
+from sklearn.feature_selection import SelectKBest
+from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 X, y = fetch_openml(
     "titanic", version=1, as_frame=True, return_X_y=True, parser="pandas"
@@ -113,8 +116,9 @@ plt.tight_layout()
 # the gathering of infrequent categories are `min_frequency` and
 # `max_categories`. See the :ref:`User Guide <encoder_infrequent_categories>`
 # for more details.
-from sklearn.preprocessing import OneHotEncoder
 import numpy as np
+
+from sklearn.preprocessing import OneHotEncoder
 
 X = np.array(
     [["dog"] * 5 + ["cat"] * 20 + ["rabbit"] * 10 + ["snake"] * 3], dtype=object
@@ -182,6 +186,7 @@ pd.DataFrame(encoded, columns=enc.get_feature_names_out())
 # learning when the data is not readily available from the start, or when the
 # data does not fit into memory.
 import numpy as np
+
 from sklearn.decomposition import MiniBatchNMF
 
 rng = np.random.RandomState(0)
@@ -200,7 +205,7 @@ H = nmf.components_
 X_reconstructed = W @ H
 
 print(
-    f"relative reconstruction error: ",
+    "relative reconstruction error: ",
     f"{np.sum((X - X_reconstructed) ** 2) / np.sum(X**2):.5f}",
 )
 
@@ -213,9 +218,10 @@ print(
 # previous clustering: a cluster is split into two new clusters repeatedly
 # until the target number of clusters is reached, giving a hierarchical
 # structure to the clustering.
-from sklearn.datasets import make_blobs
-from sklearn.cluster import KMeans, BisectingKMeans
 import matplotlib.pyplot as plt
+
+from sklearn.cluster import BisectingKMeans, KMeans
+from sklearn.datasets import make_blobs
 
 X, _ = make_blobs(n_samples=1000, centers=2, random_state=0)
 

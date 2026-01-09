@@ -1,11 +1,12 @@
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 cimport cython
 
-from ..metrics._dist_metrics cimport DistanceMetric64
-from ..utils._fast_dict cimport IntFloatDict
-from ..utils._typedefs cimport float64_t, intp_t, uint8_t
+from sklearn.metrics._dist_metrics cimport DistanceMetric64
+from sklearn.utils._fast_dict cimport IntFloatDict
+from sklearn.utils._typedefs cimport float64_t, intp_t, uint8_t
 
 # C++
 from cython.operator cimport dereference as deref, preincrement as inc
@@ -350,7 +351,7 @@ cdef class UnionFind(object):
 
 def _single_linkage_label(const float64_t[:, :] L):
     """
-    Convert an linkage array or MST to a tree by labelling clusters at merges.
+    Convert a linkage array or MST to a tree by labelling clusters at merges.
     This is done by using a Union find structure to keep track of merges
     efficiently. This is the private version of the function that assumes that
     ``L`` has been properly validated. See ``single_linkage_label`` for the
@@ -398,7 +399,7 @@ def _single_linkage_label(const float64_t[:, :] L):
 @cython.wraparound(True)
 def single_linkage_label(L):
     """
-    Convert an linkage array or MST to a tree by labelling clusters at merges.
+    Convert a linkage array or MST to a tree by labelling clusters at merges.
     This is done by using a Union find structure to keep track of merges
     efficiently.
 

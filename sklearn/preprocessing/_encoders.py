@@ -8,14 +8,23 @@ from numbers import Integral
 import numpy as np
 from scipy import sparse
 
-from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_context
-from ..utils import _safe_indexing, check_array
-from ..utils._encode import _check_unknown, _encode, _get_counts, _unique
-from ..utils._mask import _get_mask
-from ..utils._missing import is_scalar_nan
-from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils._set_output import _get_output_config
-from ..utils.validation import _check_feature_names_in, check_is_fitted
+from sklearn.base import (
+    BaseEstimator,
+    OneToOneFeatureMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from sklearn.utils import _safe_indexing, check_array
+from sklearn.utils._encode import _check_unknown, _encode, _get_counts, _unique
+from sklearn.utils._mask import _get_mask
+from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
+from sklearn.utils._set_output import _get_output_config
+from sklearn.utils.validation import (
+    _check_feature_names_in,
+    check_is_fitted,
+    validate_data,
+)
 
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
 
@@ -27,7 +36,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
     """
 
-    def _check_X(self, X, force_all_finite=True):
+    def _check_X(self, X, ensure_all_finite=True):
         """
         Perform custom check_array:
         - convert list of strings to object dtype
@@ -41,16 +50,16 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         """
         if not (hasattr(X, "iloc") and getattr(X, "ndim", 0) == 2):
             # if not a dataframe, do normal check_array validation
-            X_temp = check_array(X, dtype=None, force_all_finite=force_all_finite)
+            X_temp = check_array(X, dtype=None, ensure_all_finite=ensure_all_finite)
             if not hasattr(X, "dtype") and np.issubdtype(X_temp.dtype, np.str_):
-                X = check_array(X, dtype=object, force_all_finite=force_all_finite)
+                X = check_array(X, dtype=object, ensure_all_finite=ensure_all_finite)
             else:
                 X = X_temp
             needs_validation = False
         else:
             # pandas dataframe, do validation later column by column, in order
             # to keep the dtype information to be used in the encoder.
-            needs_validation = force_all_finite
+            needs_validation = ensure_all_finite
 
         n_samples, n_features = X.shape
         X_columns = []
@@ -58,7 +67,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         for i in range(n_features):
             Xi = _safe_indexing(X, indices=i, axis=1)
             Xi = check_array(
-                Xi, ensure_2d=False, dtype=None, force_all_finite=needs_validation
+                Xi, ensure_2d=False, dtype=None, ensure_all_finite=needs_validation
             )
             X_columns.append(Xi)
 
@@ -68,15 +77,14 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         self,
         X,
         handle_unknown="error",
-        force_all_finite=True,
+        ensure_all_finite=True,
         return_counts=False,
         return_and_ignore_missing_for_infrequent=False,
     ):
         self._check_infrequent_enabled()
-        self._check_n_features(X, reset=True)
-        self._check_feature_names(X, reset=True)
+        validate_data(self, X=X, reset=True, skip_check_array=True)
         X_list, n_samples, n_features = self._check_X(
-            X, force_all_finite=force_all_finite
+            X, ensure_all_finite=ensure_all_finite
         )
         self.n_features_in_ = n_features
 
@@ -186,15 +194,14 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         self,
         X,
         handle_unknown="error",
-        force_all_finite=True,
+        ensure_all_finite=True,
         warn_on_unknown=False,
         ignore_category_indices=None,
     ):
         X_list, n_samples, n_features = self._check_X(
-            X, force_all_finite=force_all_finite
+            X, ensure_all_finite=ensure_all_finite
         )
-        self._check_feature_names(X, reset=False)
-        self._check_n_features(X, reset=False)
+        validate_data(self, X=X, reset=False, skip_check_array=True)
 
         X_int = np.zeros((n_samples, n_features), dtype=int)
         X_mask = np.ones((n_samples, n_features), dtype=bool)
@@ -238,14 +245,20 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             # already called above.
             X_int[:, i] = _encode(Xi, uniques=self.categories_[i], check_unknown=False)
         if columns_with_unknown:
-            warnings.warn(
-                (
+            if handle_unknown == "infrequent_if_exist":
+                msg = (
+                    "Found unknown categories in columns "
+                    f"{columns_with_unknown} during transform. These "
+                    "unknown categories will be encoded as the "
+                    "infrequent category."
+                )
+            else:
+                msg = (
                     "Found unknown categories in columns "
                     f"{columns_with_unknown} during transform. These "
                     "unknown categories will be encoded as all zeros"
-                ),
-                UserWarning,
-            )
+                )
+            warnings.warn(msg, UserWarning)
 
         self._map_infrequent_categories(X_int, X_mask, ignore_category_indices)
         return X_int, X_mask
@@ -429,7 +442,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 continue
 
             X_int[~X_mask[:, col_idx], col_idx] = infrequent_idx[0]
-            if self.handle_unknown == "infrequent_if_exist":
+            if self.handle_unknown in ("infrequent_if_exist", "warn"):
                 # All the unknown values are now mapped to the
                 # infrequent_idx[0], which makes the unknown values valid
                 # This is needed in `transform` when the encoding is formed
@@ -450,8 +463,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
             X_int[rows_to_update, i] = np.take(mapping, X_int[rows_to_update, i])
 
-    def _more_tags(self):
-        return {"X_types": ["2darray", "categorical"], "allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.categorical = True
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 class OneHotEncoder(_BaseEncoder):
@@ -537,7 +553,7 @@ class OneHotEncoder(_BaseEncoder):
     dtype : number type, default=np.float64
         Desired dtype of output.
 
-    handle_unknown : {'error', 'ignore', 'infrequent_if_exist'}, \
+    handle_unknown : {'error', 'ignore', 'infrequent_if_exist', 'warn'}, \
                      default='error'
         Specifies the way unknown categories are handled during :meth:`transform`.
 
@@ -557,10 +573,16 @@ class OneHotEncoder(_BaseEncoder):
           `handle_unknown='ignore'`. Infrequent categories exist based on
           `min_frequency` and `max_categories`. Read more in the
           :ref:`User Guide <encoder_infrequent_categories>`.
+        - 'warn' : When an unknown category is encountered during transform
+          a warning is issued, and the encoding then proceeds as described for
+          `handle_unknown="infrequent_if_exist"`.
 
         .. versionchanged:: 1.1
             `'infrequent_if_exist'` was added to automatically handle unknown
             categories and infrequent categories.
+
+        .. versionadded:: 1.6
+           The option `"warn"` was added in 1.6.
 
     min_frequency : int or float, default=None
         Specifies the minimum frequency below which a category will be
@@ -615,7 +637,7 @@ class OneHotEncoder(_BaseEncoder):
 
         If infrequent categories are enabled by setting `min_frequency` or
         `max_categories` to a non-default value and `drop_idx[i]` corresponds
-        to a infrequent category, then the entire infrequent category is
+        to an infrequent category, then the entire infrequent category is
         dropped.
 
         .. versionchanged:: 0.23
@@ -728,7 +750,9 @@ class OneHotEncoder(_BaseEncoder):
         "categories": [StrOptions({"auto"}), list],
         "drop": [StrOptions({"first", "if_binary"}), "array-like", None],
         "dtype": "no_validation",  # validation delegated to numpy
-        "handle_unknown": [StrOptions({"error", "ignore", "infrequent_if_exist"})],
+        "handle_unknown": [
+            StrOptions({"error", "ignore", "infrequent_if_exist", "warn"})
+        ],
         "max_categories": [Interval(Integral, 1, None, closed="left"), None],
         "min_frequency": [
             Interval(Integral, 1, None, closed="left"),
@@ -975,7 +999,7 @@ class OneHotEncoder(_BaseEncoder):
         self._fit(
             X,
             handle_unknown=self.handle_unknown,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
         self._set_drop_idx()
         self._n_features_outs = self._compute_n_features_outs()
@@ -1016,14 +1040,18 @@ class OneHotEncoder(_BaseEncoder):
             )
 
         # validation of X happens in _check_X called by _transform
-        warn_on_unknown = self.drop is not None and self.handle_unknown in {
-            "ignore",
-            "infrequent_if_exist",
-        }
+        if self.handle_unknown == "warn":
+            warn_on_unknown, handle_unknown = True, "infrequent_if_exist"
+        else:
+            warn_on_unknown = self.drop is not None and self.handle_unknown in {
+                "ignore",
+                "infrequent_if_exist",
+            }
+            handle_unknown = self.handle_unknown
         X_int, X_mask = self._transform(
             X,
-            handle_unknown=self.handle_unknown,
-            force_all_finite="allow-nan",
+            handle_unknown=handle_unknown,
+            ensure_all_finite="allow-nan",
             warn_on_unknown=warn_on_unknown,
         )
 
@@ -1084,7 +1112,7 @@ class OneHotEncoder(_BaseEncoder):
 
         Returns
         -------
-        X_tr : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Inverse transformed array.
         """
         check_is_fitted(self)
@@ -1138,7 +1166,7 @@ class OneHotEncoder(_BaseEncoder):
             X_tr[:, i] = cats_wo_dropped[labels]
 
             if self.handle_unknown == "ignore" or (
-                self.handle_unknown == "infrequent_if_exist"
+                self.handle_unknown in ("infrequent_if_exist", "warn")
                 and infrequent_indices[i] is None
             ):
                 unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
@@ -1351,13 +1379,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     LabelEncoder : Encodes target labels with values between 0 and
         ``n_classes-1``.
 
-    Notes
-    -----
-    With a high proportion of `nan` values, inferring categories becomes slow with
-    Python versions before 3.10. The handling of `nan` values was improved
-    from Python 3.10 onwards, (c.f.
-    `bpo-43475 <https://github.com/python/cpython/issues/87641>`_).
-
     Examples
     --------
     Given a dataset with two features, we let the encoder find the unique
@@ -1495,7 +1516,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         fit_results = self._fit(
             X,
             handle_unknown=self.handle_unknown,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
             return_and_ignore_missing_for_infrequent=True,
         )
         self._missing_indices = fit_results["missing_indices"]
@@ -1577,7 +1598,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         X_int, X_mask = self._transform(
             X,
             handle_unknown=self.handle_unknown,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
             ignore_category_indices=self._missing_indices,
         )
         X_trans = X_int.astype(self.dtype, copy=False)
@@ -1602,11 +1623,11 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         Returns
         -------
-        X_tr : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Inverse transformed array.
         """
         check_is_fitted(self)
-        X = check_array(X, force_all_finite="allow-nan")
+        X = check_array(X, ensure_all_finite="allow-nan")
 
         n_samples, _ = X.shape
         n_features = len(self.categories_)

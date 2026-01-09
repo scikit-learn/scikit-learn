@@ -1,3 +1,4 @@
+import os
 import re
 import warnings
 
@@ -14,12 +15,13 @@ from sklearn.decomposition._pca import _assess_dimension, _infer_dimension
 from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._array_api import device as array_device
+from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
 from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 from sklearn.utils.estimator_checks import (
-    _get_check_estimator_ids,
     check_array_api_input_and_values,
 )
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
@@ -1005,7 +1007,9 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "check",
@@ -1033,11 +1037,14 @@ def test_pca_array_api_compliance(
     estimator, check, array_namespace, device, dtype_name
 ):
     name = estimator.__class__.__name__
+    estimator = clone(estimator)
     check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "check",
@@ -1114,8 +1121,10 @@ def test_pca_mle_array_api_compliance(
         assert all(np.abs(extra_variance_xp_np - reference_variance) < atol)
 
 
+@pytest.mark.skipif(
+    os.environ.get("SCIPY_ARRAY_API") != "1", reason="SCIPY_ARRAY_API not set to 1."
+)
 def test_array_api_error_and_warnings_on_unsupported_params():
-    pytest.importorskip("array_api_compat")
     xp = pytest.importorskip("array_api_strict")
     iris_xp = xp.asarray(iris.data)
 
