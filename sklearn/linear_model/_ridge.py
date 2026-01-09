@@ -2245,8 +2245,11 @@ class _RidgeGCV(LinearModel):
 
         for i, alpha in enumerate(alphas):
             looe, coef = solve(float(alpha), y, sqrt_sw, *decomposition)
-            assert looe.shape == (n_samples,), "looe wrong size"
-            assert coef.shape == (n_features,), "coef wrong size"
+            assert looe.shape[0] == n_samples, f"{looe.shape=} wrong size"
+            assert coef.shape[0] == n_features, f"{coef.shape=} wrong size"
+            if y.ndim == 2:
+                assert looe.shape[1] == n_y, f"{looe.shape=} wrong size"
+                assert coef.shape[1] == n_y, f"{coef.shape=} wrong size"
             if self.scoring is None:
                 squared_errors = looe**2
                 alpha_score = self._score_without_scorer(squared_errors=squared_errors)
