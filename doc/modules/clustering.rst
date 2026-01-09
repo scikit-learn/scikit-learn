@@ -847,7 +847,7 @@ clusters from Bisecting K-Means are well ordered and create quite a visible hier
 .. dropdown:: References
 
   * `"A Comparison of Document Clustering Techniques"
-    <http://www.philippe-fournier-viger.com/spmf/bisectingkmeans.pdf>`_ Michael
+    <https://www.philippe-fournier-viger.com/spmf/bisectingkmeans.pdf>`_ Michael
     Steinbach, George Karypis and Vipin Kumar, Department of Computer Science and
     Egineering, University of Minnesota (June 2000)
   * `"Performance Analysis of K-Means and Bisecting K-Means Algorithms in Weblog
@@ -1492,7 +1492,7 @@ Bad (e.g. independent labelings) have non-positive scores::
 
 .. topic:: Advantages:
 
-  - **Random (uniform) label assignments have a AMI score close to 0.0** for any
+  - **Random (uniform) label assignments have an AMI score close to 0.0** for any
     value of ``n_clusters`` and ``n_samples`` (which is not the case for raw
     Mutual Information or the V-measure for instance).
 
@@ -1584,7 +1584,7 @@ Bad (e.g. independent labelings) have non-positive scores::
   * Strehl, Alexander, and Joydeep Ghosh (2002). "Cluster ensembles - a
     knowledge reuse framework for combining multiple partitions". Journal of
     Machine Learning Research 3: 583-617. `doi:10.1162/153244303321897735
-    <http://strehl.com/download/strehl-jmlr02.pdf>`_.
+    <https://strehl.com/download/strehl-jmlr02.pdf>`_.
 
   * `Wikipedia entry for the (normalized) Mutual Information
     <https://en.wikipedia.org/wiki/Mutual_Information>`_
@@ -1769,7 +1769,7 @@ homogeneous but not complete::
   Hirschberg, 2007
 
 .. [B2011] `Identification and Characterization of Events in Social Media
-  <http://www.cs.columbia.edu/~hila/hila-thesis-distributed.pdf>`_, Hila
+  <https://www.cs.columbia.edu/~hila/hila-thesis-distributed.pdf>`_, Hila
   Becker, PhD Thesis.
 
 

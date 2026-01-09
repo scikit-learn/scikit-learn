@@ -234,7 +234,7 @@ def test_leave_zero_eig():
         # There might be warnings about the kernel being badly conditioned,
         # but there should not be warnings about division by zero.
         # (Numpy division by zero warning can have many message variants, but
-        # at least we know that it is a RuntimeWarning so lets check only this)
+        # at least we know that it is a RuntimeWarning so let's check only this)
         warnings.simplefilter("error", RuntimeWarning)
         with np.errstate(all="warn"):
             k = KernelPCA(n_components=2, remove_zero_eig=False, eigen_solver="dense")
@@ -355,7 +355,7 @@ def test_nested_circles():
     train_score = Perceptron(max_iter=5).fit(X, y).score(X, y)
     assert train_score < 0.8
 
-    # Project the circles data into the first 2 components of a RBF Kernel
+    # Project the circles data into the first 2 components of an RBF Kernel
     # PCA model.
     # Note that the gamma value is data dependent. If this test breaks
     # and the gamma value has to be updated, the Kernel PCA example will

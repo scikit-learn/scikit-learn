@@ -603,7 +603,7 @@ API_REFERENCE = {
                 "title": "Regressors with variable selection",
                 "description": (
                     "The following estimators have built-in variable selection fitting "
-                    "procedures, but any estimator using a L1 or elastic-net penalty "
+                    "procedures, but any estimator using an L1 or elastic-net penalty "
                     "also performs variable selection: typically "
                     ":class:`~linear_model.SGDRegressor` or "
                     ":class:`~sklearn.linear_model.SGDClassifier` with an appropriate "
@@ -732,6 +732,7 @@ API_REFERENCE = {
                     "classification_report",
                     "cohen_kappa_score",
                     "confusion_matrix",
+                    "confusion_matrix_at_thresholds",
                     "d2_brier_score",
                     "d2_log_loss_score",
                     "dcg_score",

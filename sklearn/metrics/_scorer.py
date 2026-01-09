@@ -34,6 +34,8 @@ from sklearn.metrics import (
     brier_score_loss,
     class_likelihood_ratios,
     d2_absolute_error_score,
+    d2_brier_score,
+    d2_log_loss_score,
     explained_variance_score,
     f1_score,
     jaccard_score,
@@ -69,7 +71,6 @@ from sklearn.metrics.cluster import (
 from sklearn.utils import Bunch
 from sklearn.utils._param_validation import (
     HasMethods,
-    Hidden,
     StrOptions,
     validate_params,
 )
@@ -610,18 +611,16 @@ def _get_response_method_name(response_method):
     {
         "score_func": [callable],
         "response_method": [
-            None,
             list,
             tuple,
             StrOptions({"predict", "predict_proba", "decision_function"}),
-            Hidden(StrOptions({"default"})),
         ],
         "greater_is_better": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
 def make_scorer(
-    score_func, *, response_method="default", greater_is_better=True, **kwargs
+    score_func, *, response_method="predict", greater_is_better=True, **kwargs
 ):
     """Make a scorer from a performance metric or loss function.
 
@@ -643,7 +642,7 @@ def make_scorer(
         ``score_func(y, y_pred, **kwargs)``.
 
     response_method : {"predict_proba", "decision_function", "predict"} or \
-            list/tuple of such str, default=None
+            list/tuple of such str, default="predict"
 
         Specifies the response method to use get prediction from an estimator
         (i.e. :term:`predict_proba`, :term:`decision_function` or
@@ -653,13 +652,8 @@ def make_scorer(
         - if a list or tuple of `str`, it provides the method names in order of
           preference. The method returned corresponds to the first method in
           the list and which is implemented by `estimator`.
-        - if `None`, it is equivalent to `"predict"`.
 
         .. versionadded:: 1.4
-
-        .. deprecated:: 1.6
-            None is equivalent to 'predict' and is deprecated. It will be removed in
-            version 1.8.
 
     greater_is_better : bool, default=True
         Whether `score_func` is a score function (default), meaning high is
@@ -686,16 +680,6 @@ def make_scorer(
     ...                     scoring=ftwo_scorer)
     """
     sign = 1 if greater_is_better else -1
-
-    if response_method is None:
-        warnings.warn(
-            "response_method=None is deprecated in version 1.6 and will be removed "
-            "in version 1.8. Leave it to its default value to avoid this warning.",
-            FutureWarning,
-        )
-        response_method = "predict"
-    elif response_method == "default":
-        response_method = "predict"
 
     return _Scorer(score_func, sign, kwargs, response_method)
 
@@ -731,6 +715,8 @@ neg_mean_gamma_deviance_scorer = make_scorer(
     mean_gamma_deviance, greater_is_better=False
 )
 d2_absolute_error_scorer = make_scorer(d2_absolute_error_score)
+d2_brier_score_scorer = make_scorer(d2_brier_score, response_method="predict_proba")
+d2_log_loss_scorer = make_scorer(d2_log_loss_score, response_method="predict_proba")
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
@@ -824,6 +810,8 @@ _SCORERS = dict(
     neg_mean_poisson_deviance=neg_mean_poisson_deviance_scorer,
     neg_mean_gamma_deviance=neg_mean_gamma_deviance_scorer,
     d2_absolute_error_score=d2_absolute_error_scorer,
+    d2_log_loss_score=d2_log_loss_scorer,
+    d2_brier_score=d2_brier_score_scorer,
     accuracy=accuracy_scorer,
     top_k_accuracy=top_k_accuracy_scorer,
     roc_auc=roc_auc_scorer,

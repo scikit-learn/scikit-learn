@@ -157,6 +157,7 @@ def _yield_checks(estimator):
         yield check_sample_weights_pandas_series
         yield check_sample_weights_not_an_array
         yield check_sample_weights_list
+        yield check_all_zero_sample_weights_error
         if not tags.input_tags.pairwise:
             # We skip pairwise because the data is not pairwise
             yield check_sample_weights_shape
@@ -196,9 +197,11 @@ def _yield_checks(estimator):
     yield check_estimators_pickle
     yield partial(check_estimators_pickle, readonly_memmap=True)
 
-    if tags.array_api_support:
-        for check in _yield_array_api_checks(estimator):
-            yield check
+    for check in _yield_array_api_checks(
+        estimator,
+        only_numpy=not tags.array_api_support,
+    ):
+        yield check
 
     yield check_f_contiguous_array_estimator
 
@@ -336,18 +339,30 @@ def _yield_outliers_checks(estimator):
     yield check_non_transformer_estimators_n_iter
 
 
-def _yield_array_api_checks(estimator):
-    for (
-        array_namespace,
-        device,
-        dtype_name,
-    ) in yield_namespace_device_dtype_combinations():
+def _yield_array_api_checks(estimator, only_numpy=False):
+    if only_numpy:
+        # Enabling array API dispatch and using NumPy inputs should not
+        # change results, even if the estimator does not explicitly support
+        # array API.
         yield partial(
             check_array_api_input,
-            array_namespace=array_namespace,
-            dtype_name=dtype_name,
-            device=device,
+            array_namespace="numpy",
+            expect_only_array_outputs=False,
         )
+    else:
+        # These extended checks should pass for all estimators that declare
+        # array API support in their tags.
+        for (
+            array_namespace,
+            device,
+            dtype_name,
+        ) in yield_namespace_device_dtype_combinations():
+            yield partial(
+                check_array_api_input,
+                array_namespace=array_namespace,
+                dtype_name=dtype_name,
+                device=device,
+            )
 
 
 def _yield_all_checks(estimator, legacy: bool):
@@ -691,7 +706,6 @@ def parametrize_with_checks(
 
 @validate_params(
     {
-        "generate_only": ["boolean"],
         "legacy": ["boolean"],
         "expected_failed_checks": [dict, None],
         "on_skip": [StrOptions({"warn"}), None],
@@ -702,7 +716,6 @@ def parametrize_with_checks(
 )
 def check_estimator(
     estimator=None,
-    generate_only=False,
     *,
     legacy: bool = True,
     expected_failed_checks: dict[str, str] | None = None,
@@ -734,18 +747,6 @@ def check_estimator(
     ----------
     estimator : estimator object
         Estimator instance to check.
-
-    generate_only : bool, default=False
-        When `False`, checks are evaluated when `check_estimator` is called.
-        When `True`, `check_estimator` returns a generator that yields
-        (estimator, check) tuples. The check is run by calling
-        `check(estimator)`.
-
-        .. versionadded:: 0.22
-
-        .. deprecated:: 1.6
-            `generate_only` will be removed in 1.8. Use
-            :func:`~sklearn.utils.estimator_checks.estimator_checks_generator` instead.
 
     legacy : bool, default=True
         Whether to include legacy checks. Over time we remove checks from this category
@@ -823,17 +824,6 @@ def check_estimator(
                 "expected_to_fail_reason": expected_to_fail_reason,
             }
 
-    estimator_checks_generator : generator
-        Generator that yields (estimator, check) tuples. Returned when
-        `generate_only=True`.
-
-        ..
-            TODO(1.8): remove return value
-
-        .. deprecated:: 1.6
-            ``generate_only`` will be removed in 1.8. Use
-            :func:`~sklearn.utils.estimator_checks.estimator_checks_generator` instead.
-
     Raises
     ------
     Exception
@@ -869,18 +859,6 @@ def check_estimator(
         raise ValueError("callback cannot be provided together with on_fail='raise'")
 
     name = type(estimator).__name__
-
-    # TODO(1.8): remove generate_only
-    if generate_only:
-        warnings.warn(
-            "`generate_only` is deprecated in 1.6 and will be removed in 1.8. "
-            "Use :func:`~sklearn.utils.estimator_checks.estimator_checks_generator` "
-            "instead.",
-            FutureWarning,
-        )
-        return estimator_checks_generator(
-            estimator, legacy=legacy, expected_failed_checks=None, mark="skip"
-        )
 
     test_results = []
 
@@ -1085,6 +1063,7 @@ def check_array_api_input(
     dtype_name="float64",
     check_values=False,
     check_sample_weight=False,
+    expect_only_array_outputs=True,
 ):
     """Check that the estimator can work consistently with the Array API
 
@@ -1094,17 +1073,25 @@ def check_array_api_input(
     When check_values is True, it also checks that calling the estimator on the
     array_api Array gives the same results as ndarrays.
 
-    When sample_weight is True, dummy sample weights are passed to the fit call.
+    When check_sample_weight is True, dummy sample weights are passed to the
+    fit call.
+
+    When expect_only_array_outputs is False, the check is looser: in particular
+    it accepts non-array outputs such as sparse data structures. This is
+    useful to test that enabling array API dispatch does not change the
+    behavior of any estimator fed with NumPy inputs, even for estimators that
+    do not support array API.
     """
     xp = _array_api_for_tests(array_namespace, device)
 
-    X, y = make_classification(random_state=42)
+    X, y = make_classification(n_samples=30, n_features=10, random_state=42)
     X = X.astype(dtype_name, copy=False)
 
     X = _enforce_estimator_tags_X(estimator_orig, X)
     y = _enforce_estimator_tags_y(estimator_orig, y)
 
     est = clone(estimator_orig)
+    set_random_state(est)
 
     X_xp = xp.asarray(X, device=device)
     y_xp = xp.asarray(y, device=device)
@@ -1230,47 +1217,48 @@ def check_array_api_input(
             f"got {result_ns}."
         )
 
-        with config_context(array_api_dispatch=True):
-            assert array_device(result_xp) == array_device(X_xp)
+        if expect_only_array_outputs:
+            with config_context(array_api_dispatch=True):
+                assert array_device(result_xp) == array_device(X_xp)
 
-        result_xp_np = _convert_to_numpy(result_xp, xp=xp)
-
-        if check_values:
-            assert_allclose(
-                result,
-                result_xp_np,
-                err_msg=f"{method} did not the return the same result",
-                atol=_atol_for_type(X.dtype),
-            )
-        else:
-            if hasattr(result, "shape"):
+            result_xp_np = _convert_to_numpy(result_xp, xp=xp)
+            if check_values:
+                assert_allclose(
+                    result,
+                    result_xp_np,
+                    err_msg=f"{method} did not the return the same result",
+                    atol=_atol_for_type(X.dtype),
+                )
+            elif hasattr(result, "shape"):
                 assert result.shape == result_xp_np.shape
                 assert result.dtype == result_xp_np.dtype
 
         if method_name == "transform" and hasattr(est, "inverse_transform"):
             inverse_result = est.inverse_transform(result)
             with config_context(array_api_dispatch=True):
-                invese_result_xp = est_xp.inverse_transform(result_xp)
-                inverse_result_ns = get_namespace(invese_result_xp)[0].__name__
-            assert inverse_result_ns == input_ns, (
-                "'inverse_transform' output is in wrong namespace, expected"
-                f" {input_ns}, got {inverse_result_ns}."
-            )
+                inverse_result_xp = est_xp.inverse_transform(result_xp)
 
-            with config_context(array_api_dispatch=True):
-                assert array_device(invese_result_xp) == array_device(X_xp)
-
-            invese_result_xp_np = _convert_to_numpy(invese_result_xp, xp=xp)
-            if check_values:
-                assert_allclose(
-                    inverse_result,
-                    invese_result_xp_np,
-                    err_msg="inverse_transform did not the return the same result",
-                    atol=_atol_for_type(X.dtype),
+            if expect_only_array_outputs:
+                with config_context(array_api_dispatch=True):
+                    inverse_result_ns = get_namespace(inverse_result_xp)[0].__name__
+                assert inverse_result_ns == input_ns, (
+                    "'inverse_transform' output is in wrong namespace, expected"
+                    f" {input_ns}, got {inverse_result_ns}."
                 )
-            else:
-                assert inverse_result.shape == invese_result_xp_np.shape
-                assert inverse_result.dtype == invese_result_xp_np.dtype
+                with config_context(array_api_dispatch=True):
+                    assert array_device(result_xp) == array_device(X_xp)
+
+                inverse_result_xp_np = _convert_to_numpy(inverse_result_xp, xp=xp)
+                if check_values:
+                    assert_allclose(
+                        inverse_result,
+                        inverse_result_xp_np,
+                        err_msg="inverse_transform did not the return the same result",
+                        atol=_atol_for_type(X.dtype),
+                    )
+                elif hasattr(result, "shape"):
+                    assert inverse_result.shape == inverse_result_xp_np.shape
+                    assert inverse_result.dtype == inverse_result_xp_np.dtype
 
 
 def check_array_api_input_and_values(
@@ -1521,6 +1509,28 @@ def check_sample_weights_list(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
+def check_all_zero_sample_weights_error(name, estimator_orig):
+    """Check that estimator raises error when all sample weights are 0."""
+    estimator = clone(estimator_orig)
+
+    X, y = make_classification(random_state=42)
+    X = _enforce_estimator_tags_X(estimator, X)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    sample_weight = np.zeros(_num_samples(X))
+
+    # The following estimators have custom error messages:
+    # - NuSVC: Invalid input - all samples have zero or negative weights.
+    # - Perceptron: The sample weights for validation set are all zero, consider using
+    #   a different random state.
+    # - SGDClassifier: The sample weights for validation set are all zero, consider
+    #   using a different random state.
+    # All other estimators: Sample weights must contain at least one non-zero number.
+    with raises(ValueError, match=r"(.*weight.*zero.*)|(.*zero.*weight.*)"):
+        estimator.fit(X, y, sample_weight=sample_weight)
+
+
+@ignore_warnings(category=FutureWarning)
 def check_sample_weights_shape(name, estimator_orig):
     # check that estimators raise an error if sample_weight
     # shape mismatches the input
@@ -1680,10 +1690,16 @@ def check_sample_weights_not_overwritten(name, estimator_orig):
 def check_dtype_object(name, estimator_orig):
     # check that estimators treat dtype object as numeric if possible
     rng = np.random.RandomState(0)
-    X = _enforce_estimator_tags_X(estimator_orig, rng.uniform(size=(40, 10)))
+    n_classes = 4
+    n_samples_per_class = 14
+    n_samples_total = n_classes * n_samples_per_class
+    X = _enforce_estimator_tags_X(
+        estimator_orig, rng.uniform(size=(n_samples_total, 10))
+    )
     X = X.astype(object)
     tags = get_tags(estimator_orig)
-    y = (X[:, 0] * 4).astype(int)
+    y = np.repeat(np.arange(n_classes), n_samples_per_class)
+    y = rng.permutation(y)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -4121,7 +4137,7 @@ def check_transformer_n_iter(name, estimator_orig):
         set_random_state(estimator, 0)
         estimator.fit(X, y_)
 
-        # These return a n_iter per component.
+        # These return an n_iter per component.
         if name in CROSS_DECOMPOSITION:
             for iter_ in estimator.n_iter_:
                 assert iter_ >= 1
@@ -4490,14 +4506,14 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     if "warm_start" in estimator.get_params():
         estimator.set_params(warm_start=False)
 
-    n_samples = 10
+    n_samples = 15
     X = rng.normal(size=(n_samples, 4))
     X = _enforce_estimator_tags_X(estimator, X)
 
     if is_regressor(estimator):
         y = rng.normal(size=n_samples)
     else:
-        y = rng.randint(low=0, high=2, size=n_samples)
+        y = rng.permutation(np.repeat(np.arange(3), 5))
     y = _enforce_estimator_tags_y(estimator, y)
 
     err_msg = (
@@ -4993,7 +5009,7 @@ def check_param_validation(name, estimator_orig):
                     f"{name} does not raise an informative error message when the "
                     f"parameter {param_name} does not have a valid value.\n"
                     "Constraints should be disjoint. For instance "
-                    "[StrOptions({'a_string'}), str] is not a acceptable set of "
+                    "[StrOptions({'a_string'}), str] is not an acceptable set of "
                     "constraint because generating an invalid string for the first "
                     "constraint will always produce a valid string for the second "
                     "constraint."

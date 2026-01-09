@@ -11,7 +11,7 @@ import pytest
 from joblib.numpy_pickle import NumpyPickler
 from numpy.testing import assert_allclose, assert_array_equal
 
-import sklearn
+import sklearn.ensemble._hist_gradient_boosting.gradient_boosting as hgb_module
 from sklearn._loss.loss import (
     AbsoluteError,
     HalfBinomialLoss,
@@ -870,11 +870,7 @@ def test_early_stopping_with_sample_weights(monkeypatch):
         assert scoring == "neg_median_absolute_error"
         return mock_scorer
 
-    monkeypatch.setattr(
-        sklearn.ensemble._hist_gradient_boosting.gradient_boosting,
-        "check_scoring",
-        mock_check_scoring,
-    )
+    monkeypatch.setattr(hgb_module, "check_scoring", mock_check_scoring)
 
     X, y = make_regression(random_state=0)
     sample_weight = np.ones_like(y)
@@ -1203,7 +1199,7 @@ def test_categorical_spec_errors_with_feature_names(Est):
 
     est = Est(categorical_features=["f0", "f1", "f3"])
     expected_msg = re.escape(
-        "categorical_features has a item value 'f3' which is not a valid "
+        "categorical_features has an item value 'f3' which is not a valid "
         "feature name of the training data."
     )
     with pytest.raises(ValueError, match=expected_msg):

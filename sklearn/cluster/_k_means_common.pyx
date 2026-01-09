@@ -6,7 +6,7 @@ from cython cimport floating
 from cython.parallel cimport prange
 from libc.math cimport sqrt
 
-from ..utils.extmath import row_norms
+from sklearn.utils.extmath import row_norms
 
 
 # Number of samples per data chunk defined as a global constant.
