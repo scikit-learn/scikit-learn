@@ -1,0 +1,7 @@
+Fix confusion_matrix crash with empty sample_weight
+---------------------------------------------------
+
+Fixed a crash in :func:`sklearn.metrics.confusion_matrix` when
+``sample_weight`` was provided as an empty array while ``y_true`` and
+``y_pred`` were non-empty. An empty ``sample_weight`` is now treated as
+all-zero weights.
