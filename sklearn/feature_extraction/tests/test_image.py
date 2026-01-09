@@ -223,13 +223,15 @@ def test_reconstruct_patches_perfect_color(orange_face):
     np.testing.assert_array_almost_equal(face, face_reconstructed)
 
 
-def test_patch_extractor_fit(downsampled_face_collection):
+def test_patch_extractor_fit(downsampled_face_collection, global_random_seed):
     faces = downsampled_face_collection
-    extr = PatchExtractor(patch_size=(8, 8), max_patches=100, random_state=0)
+    extr = PatchExtractor(
+        patch_size=(8, 8), max_patches=100, random_state=global_random_seed
+    )
     assert extr == extr.fit(faces)
 
 
-def test_patch_extractor_max_patches(downsampled_face_collection):
+def test_patch_extractor_max_patches(downsampled_face_collection, global_random_seed):
     faces = downsampled_face_collection
     i_h, i_w = faces.shape[1:3]
     p_h, p_w = 8, 8
@@ -237,7 +239,7 @@ def test_patch_extractor_max_patches(downsampled_face_collection):
     max_patches = 100
     expected_n_patches = len(faces) * max_patches
     extr = PatchExtractor(
-        patch_size=(p_h, p_w), max_patches=max_patches, random_state=0
+        patch_size=(p_h, p_w), max_patches=max_patches, random_state=global_random_seed
     )
     patches = extr.transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w)
@@ -247,35 +249,37 @@ def test_patch_extractor_max_patches(downsampled_face_collection):
         (i_h - p_h + 1) * (i_w - p_w + 1) * max_patches
     )
     extr = PatchExtractor(
-        patch_size=(p_h, p_w), max_patches=max_patches, random_state=0
+        patch_size=(p_h, p_w), max_patches=max_patches, random_state=global_random_seed
     )
     patches = extr.transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
 
-def test_patch_extractor_max_patches_default(downsampled_face_collection):
+def test_patch_extractor_max_patches_default(
+    downsampled_face_collection, global_random_seed
+):
     faces = downsampled_face_collection
-    extr = PatchExtractor(max_patches=100, random_state=0)
+    extr = PatchExtractor(max_patches=100, random_state=global_random_seed)
     patches = extr.transform(faces)
     assert patches.shape == (len(faces) * 100, 19, 25)
 
 
-def test_patch_extractor_all_patches(downsampled_face_collection):
+def test_patch_extractor_all_patches(downsampled_face_collection, global_random_seed):
     faces = downsampled_face_collection
     i_h, i_w = faces.shape[1:3]
     p_h, p_w = 8, 8
     expected_n_patches = len(faces) * (i_h - p_h + 1) * (i_w - p_w + 1)
-    extr = PatchExtractor(patch_size=(p_h, p_w), random_state=0)
+    extr = PatchExtractor(patch_size=(p_h, p_w), random_state=global_random_seed)
     patches = extr.transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
 
-def test_patch_extractor_color(orange_face):
+def test_patch_extractor_color(orange_face, global_random_seed):
     faces = _make_images(orange_face)
     i_h, i_w = faces.shape[1:3]
     p_h, p_w = 8, 8
     expected_n_patches = len(faces) * (i_h - p_h + 1) * (i_w - p_w + 1)
-    extr = PatchExtractor(patch_size=(p_h, p_w), random_state=0)
+    extr = PatchExtractor(patch_size=(p_h, p_w), random_state=global_random_seed)
     patches = extr.transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w, 3)
 

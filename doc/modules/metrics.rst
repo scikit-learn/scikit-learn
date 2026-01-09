@@ -111,7 +111,7 @@ Polynomial kernel
 -----------------
 The function :func:`polynomial_kernel` computes the degree-d polynomial kernel
 between two vectors. The polynomial kernel represents the similarity between two
-vectors. Conceptually, the polynomial kernels considers not only the similarity
+vectors. Conceptually, the polynomial kernel considers not only the similarity
 between vectors under the same dimension, but also across dimensions. When used
 in machine learning algorithms, this allows to account for feature interaction.
 

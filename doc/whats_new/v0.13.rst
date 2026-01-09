@@ -122,7 +122,7 @@ Changelog
 ---------
 
 - :func:`metrics.zero_one_loss` (formerly ``metrics.zero_one``) now has
-  option for normalized output that reports the fraction of
+  an option for normalized output that reports the fraction of
   misclassifications, rather than the raw number of misclassifications. By
   Kyle Beauchamp.
 

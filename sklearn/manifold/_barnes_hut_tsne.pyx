@@ -1,6 +1,6 @@
-# Author: Christopher Moody <chrisemoody@gmail.com>
-# Author: Nick Travers <nickt@squareup.com>
-# Implementation by Chris Moody & Nick Travers
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # See http://homepage.tudelft.nl/19j49/t-SNE.html for reference
 # implementations and papers describing the technique
 
@@ -13,7 +13,7 @@ from libc.stdlib cimport malloc, free
 from libc.time cimport clock, clock_t
 from cython.parallel cimport prange, parallel
 
-from ..neighbors._quad_tree cimport _QuadTree
+from sklearn.neighbors._quad_tree cimport _QuadTree
 
 cnp.import_array()
 

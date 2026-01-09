@@ -180,7 +180,7 @@ Testing Functions
 - :func:`discovery.all_displays` : returns a list of all displays (related to
   plotting API) in scikit-learn to test for consistent behavior and interfaces.
 
-- :func:`discovery.all_functions` : returns a list all functions in
+- :func:`discovery.all_functions` : returns a list of all functions in
   scikit-learn to test for consistent behavior and interfaces.
 
 Multiclass and multilabel utility function

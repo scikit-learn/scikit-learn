@@ -278,7 +278,7 @@ def test_forward_neg_tol_error():
         tol=-1e-3,
     )
 
-    with pytest.raises(ValueError, match="tol must be positive"):
+    with pytest.raises(ValueError, match="tol must be strictly positive"):
         sfs.fit(X, y)
 
 

@@ -78,7 +78,7 @@ y = df["transfer"]
 
 fig, ax = plt.subplots(figsize=(15, 10))
 pointplot = sns.lineplot(x=df["period"], y=df["transfer"], hue=df["day"], ax=ax)
-handles, lables = ax.get_legend_handles_labels()
+handles, labels = ax.get_legend_handles_labels()
 ax.set(
     title="Hourly energy transfer for different days of the week",
     xlabel="Normalized time of the day",
@@ -326,7 +326,7 @@ _ = ax.legend(loc="lower right")
 #
 # Given specific domain knowledge that requires the relationship between a
 # feature and the target to be monotonically increasing or decreasing, one can
-# enforce such behaviour in the predictions of a HGBT model using monotonic
+# enforce such behaviour in the predictions of an HGBT model using monotonic
 # constraints. This makes the model more interpretable and can reduce its
 # variance (and potentially mitigate overfitting) at the risk of increasing
 # bias. Monotonic constraints can also be used to enforce specific regulatory

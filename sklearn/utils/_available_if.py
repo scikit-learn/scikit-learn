@@ -26,7 +26,7 @@ class _AvailableIfDescriptor:
 
     def _check(self, obj, owner):
         attr_err_msg = (
-            f"This {repr(owner.__name__)} has no attribute {repr(self.attribute_name)}"
+            f"This {owner.__name__!r} has no attribute {self.attribute_name!r}"
         )
         try:
             check_result = self.check(obj)

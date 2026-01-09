@@ -109,9 +109,9 @@ Changelog
 
 - |Fix| All `sklearn.metrics.MinkowskiDistance` now accepts a weight
   parameter that makes it possible to write code that behaves consistently both
-  with scipy 1.8 and earlier versions. In turns this means that all
+  with scipy 1.8 and earlier versions. In turn this means that all
   neighbors-based estimators (except those that use `algorithm="kd_tree"`) now
-  accept a weight parameter with `metric="minknowski"` to yield results that
+  accept a weight parameter with `metric="minkowski"` to yield results that
   are always consistent with `scipy.spatial.distance.cdist`.
   :pr:`21741` by :user:`Olivier Grisel <ogrisel>`.
 
@@ -124,7 +124,7 @@ Changelog
 :mod:`sklearn.neighbors`
 ........................
 
-- |Fix| :class:`neighbors.KDTree` and :class:`neighbors.BallTree` correctly supports
+- |Fix| :class:`neighbors.KDTree` and :class:`neighbors.BallTree` correctly support
   read-only buffer attributes. :pr:`21845` by `Thomas Fan`_.
 
 :mod:`sklearn.preprocessing`
@@ -179,7 +179,7 @@ Fixed models
 
 - |Fix| Fixed a bug in :class:`calibration.CalibratedClassifierCV` with
   `method="sigmoid"` that was ignoring the `sample_weight` when computing the
-  the Bayesian priors.
+  Bayesian priors.
   :pr:`21179` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.cluster`
@@ -419,7 +419,8 @@ Changelog
 
 - |API| All estimators store `feature_names_in_` when fitted on pandas Dataframes.
   These feature names are compared to names seen in non-`fit` methods, e.g.
-  `transform` and will raise a `FutureWarning` if they are not consistent.
+  `transform` and will raise a `FutureWarning` if they are not consistent, see also
+  :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_0_0.py`.
   These ``FutureWarning`` s will become ``ValueError`` s in 1.2. :pr:`18010` by
   `Thomas Fan`_.
 
@@ -778,7 +779,7 @@ Changelog
 - |Feature| The new :class:`linear_model.SGDOneClassSVM` provides an SGD
   implementation of the linear One-Class SVM. Combined with kernel
   approximation techniques, this implementation approximates the solution of
-  a kernelized One Class SVM while benefitting from a linear
+  a kernelized One Class SVM while benefiting from a linear
   complexity in the number of samples.
   :pr:`10027` by :user:`Albert Thomas <albertcthomas>`.
 
@@ -1028,7 +1029,7 @@ Changelog
 - |FIX| :class:`neighbors.NearestNeighbors`, :class:`neighbors.KNeighborsClassifier`,
   :class:`neighbors.RadiusNeighborsClassifier`, :class:`neighbors.KNeighborsRegressor`
   and :class:`neighbors.RadiusNeighborsRegressor` do not validate `weights` in
-  `__init__` and validates `weights` in `fit` instead. :pr:`20072` by
+  `__init__` and validate `weights` in `fit` instead. :pr:`20072` by
   :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 - |API| The parameter `kwargs` of :class:`neighbors.RadiusNeighborsClassifier` is
@@ -1080,7 +1081,7 @@ Changelog
 
 - |Efficiency| Changed ``algorithm`` argument for :class:`cluster.KMeans` in
   :class:`preprocessing.KBinsDiscretizer` from ``auto`` to ``full``.
-  :pr:`19934` by :user:`Gleb Levitskiy <GLevV>`.
+  :pr:`19934` by :user:`Hleb Levitski <glevv>`.
 
 - |Efficiency| The implementation of `fit` for
   :class:`preprocessing.PolynomialFeatures` transformer is now faster. This is
@@ -1236,7 +1237,7 @@ Markou, EricEllwanger, Eric Fiegel, Erich Schubert, Ezri-Mudde, Fatos Morina,
 Felipe Rodrigues, Felix Hafner, Fenil Suchak, flyingdutchman23, Flynn, Fortune
 Uwha, Francois Berenger, Frankie Robertson, Frans Larsson, Frederick Robinson,
 frellwan, Gabriel S Vicente, Gael Varoquaux, genvalen, Geoffrey Thomas,
-geroldcsendes, Gleb Levitskiy, Glen, Glòria Macià Muñoz, gregorystrubel,
+geroldcsendes, Hleb Levitski, Glen, Glòria Macià Muñoz, gregorystrubel,
 groceryheist, Guillaume Lemaitre, guiweber, Haidar Almubarak, Hans Moritz
 Günther, Haoyin Xu, Harris Mirza, Harry Wei, Harutaka Kawamura, Hassan
 Alsawadi, Helder Geovane Gomes de Lima, Hugo DEFOIS, Igor Ilic, Ikko Ashimine,

@@ -6,10 +6,10 @@
 import numpy as np
 cimport numpy as cnp
 
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint8_t, uint32_t
+from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint8_t, uint32_t
 
-from ._splitter cimport Splitter
-from ._splitter cimport SplitRecord
+from sklearn.tree._splitter cimport Splitter
+from sklearn.tree._splitter cimport SplitRecord
 
 cdef struct Node:
     # Base storage structure for the nodes in a Tree object
@@ -114,3 +114,20 @@ cdef class TreeBuilder:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
     )
+
+
+# =============================================================================
+# Tree pruning
+# =============================================================================
+
+# The private function allows any external caller to prune the tree and return
+# a new tree with the pruned nodes. The pruned tree is a new tree object.
+#
+# .. warning:: this function is not backwards compatible and may change without
+#              notice.
+cdef void _build_pruned_tree(
+    Tree tree,  # OUT
+    Tree orig_tree,
+    const uint8_t[:] leaves_in_subtree,
+    intp_t capacity
+)

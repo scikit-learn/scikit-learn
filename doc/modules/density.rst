@@ -42,7 +42,7 @@ the histogram.  But what if, instead of stacking the blocks on a regular grid,
 we center each block on the point it represents, and sum the total height at
 each location?  This idea leads to the lower-left visualization.  It is perhaps
 not as clean as a histogram, but the fact that the data drive the block
-locations mean that it is a much better representation of the underlying
+locations means that it is a much better representation of the underlying
 data.
 
 This visualization is an example of a *kernel density estimation*, in this case
@@ -90,7 +90,7 @@ Here we have used ``kernel='gaussian'``, as seen above.
 Mathematically, a kernel is a positive function :math:`K(x;h)`
 which is controlled by the bandwidth parameter :math:`h`.
 Given this kernel form, the density estimate at a point :math:`y` within
-a group of points :math:`x_i; i=1\cdots N` is given by:
+a group of points :math:`x_i; i=1, \cdots, N` is given by:
 
 .. math::
     \rho_K(y) = \sum_{i=1}^{N} K(y - x_i; h)
@@ -101,7 +101,7 @@ smooth (i.e. high-bias) density distribution.  A small bandwidth leads
 to an unsmooth (i.e. high-variance) density distribution.
 
 The parameter `bandwidth` controls this smoothing. One can either set
-manually this parameter or use Scott's and Silvermann's estimation
+manually this parameter or use Scott's and Silverman's estimation
 methods.
 
 :class:`~sklearn.neighbors.KernelDensity` implements several common kernel

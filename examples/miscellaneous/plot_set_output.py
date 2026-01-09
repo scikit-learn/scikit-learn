@@ -10,7 +10,7 @@ output pandas DataFrames. `set_output` can be configured per estimator by callin
 the `set_output` method or globally by setting `set_config(transform_output="pandas")`.
 For details, see
 `SLEP018 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep018/proposal.html>`__.
-"""  # noqa
+"""  # noqa: CPY001
 
 # %%
 # First, we load the iris dataset as a DataFrame to demonstrate the `set_output` API.

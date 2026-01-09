@@ -10,19 +10,18 @@ from scipy.linalg import eigh, qr, solve, svd
 from scipy.sparse import csr_matrix, eye, lil_matrix
 from scipy.sparse.linalg import eigsh
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
     _UnstableArchMixin,
 )
-from ..neighbors import NearestNeighbors
-from ..utils import check_array, check_random_state
-from ..utils._arpack import _init_arpack_v0
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.extmath import stable_cumsum
-from ..utils.validation import FLOAT_DTYPES, check_is_fitted
+from sklearn.neighbors import NearestNeighbors
+from sklearn.utils import check_array, check_random_state
+from sklearn.utils._arpack import _init_arpack_v0
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.validation import FLOAT_DTYPES, check_is_fitted, validate_data
 
 
 def barycenter_weights(X, Y, indices, reg=1e-3):
@@ -224,7 +223,7 @@ def _locally_linear_embedding(
         )
     if n_neighbors >= N:
         raise ValueError(
-            "Expected n_neighbors <= n_samples,  but n_samples = %d, n_neighbors = %d"
+            "Expected n_neighbors < n_samples, but n_samples = %d, n_neighbors = %d"
             % (N, n_neighbors)
         )
 
@@ -240,10 +239,10 @@ def _locally_linear_embedding(
         # depending on the solver, we'll do this differently
         if M_sparse:
             M = eye(*W.shape, format=W.format) - W
-            M = M.T * M
+            M = M.T @ M
         else:
-            M = (W.T * W - W.T - W).toarray()
-            M.flat[:: M.shape[0] + 1] += 1  # W = W - I = W - I
+            M = (W.T @ W - W.T - W).toarray()
+            M.flat[:: M.shape[0] + 1] += 1  # M = W' W - W' - W + I
 
     elif method == "hessian":
         dp = n_components * (n_components + 1) // 2
@@ -351,7 +350,7 @@ def _locally_linear_embedding(
         # this is the size of the largest set of eigenvalues
         # such that Sum[v; v in set]/Sum[v; v not in set] < eta
         s_range = np.zeros(N, dtype=int)
-        evals_cumsum = stable_cumsum(evals, 1)
+        evals_cumsum = np.cumsum(evals, 1)
         eta_range = evals_cumsum[:, -1:] / evals_cumsum[:, :-1] - 1
         for i in range(N):
             s_range[i] = np.searchsorted(eta_range[i, ::-1], eta)
@@ -413,7 +412,7 @@ def _locally_linear_embedding(
             Xi = X[neighbors[i]]
             Xi -= Xi.mean(0)
 
-            # compute n_components largest eigenvalues of Xi * Xi^T
+            # compute n_components largest eigenvalues of Xi @ Xi^T
             if use_svd:
                 v = svd(Xi, full_matrices=True)[0]
             else:
@@ -789,7 +788,7 @@ class LocallyLinearEmbedding(
         )
 
         random_state = check_random_state(self.random_state)
-        X = self._validate_data(X, dtype=float)
+        X = validate_data(self, X, dtype=float)
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = _locally_linear_embedding(
             X=self.nbrs_,
@@ -868,7 +867,7 @@ class LocallyLinearEmbedding(
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         ind = self.nbrs_.kneighbors(
             X, n_neighbors=self.n_neighbors, return_distance=False
         )

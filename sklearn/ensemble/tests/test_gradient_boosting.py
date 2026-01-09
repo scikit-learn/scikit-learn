@@ -694,6 +694,7 @@ def test_oob_multilcass_iris():
     #                           decimal=2)
 
 
+@pytest.mark.thread_unsafe  # manually captured stdout
 def test_verbose_output():
     # Check verbose=1 does not cause error.
     import sys
@@ -725,6 +726,7 @@ def test_verbose_output():
     assert 10 + 9 == n_lines
 
 
+@pytest.mark.thread_unsafe  # manually captured stdout
 def test_more_verbose_output():
     # Check verbose=2 does not cause error.
     import sys
@@ -961,7 +963,7 @@ def test_warm_start_sparse(Cls, sparse_container):
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
 def test_warm_start_fortran(Cls, global_random_seed):
-    # Test that feeding a X in Fortran-ordered is giving the same results as
+    # Test that feeding an X in Fortran-ordered is giving the same results as
     # in C-ordered
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=global_random_seed)
     est_c = Cls(n_estimators=1, random_state=global_random_seed, warm_start=True)
@@ -1329,7 +1331,11 @@ def test_early_stopping_stratified():
 
     gbc = GradientBoostingClassifier(n_iter_no_change=5)
     with pytest.raises(
-        ValueError, match="The least populated class in y has only 1 member"
+        ValueError,
+        match=(
+            r"The least populated classes in y have only 1 member.*Classes with "
+            r"too few members are: \[1.0\]"
+        ),
     ):
         gbc.fit(X, y)
 

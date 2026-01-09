@@ -42,13 +42,13 @@ It seems that scikit-learn has not been built correctly.
 
 If you have installed scikit-learn from source, please do not forget
 to build the package before using it. For detailed instructions, see:
-https://scikit-learn.org/dev/developers/advanced_installation.html#building-from-source
+https://scikit-learn.org/dev/developers/development_setup.html#install-editable-version-of-scikit-learn
 %s"""
         % (e, local_dir, "".join(dir_content).strip(), msg)
     )
 
 
 try:
-    from ._check_build import check_build  # noqa
+    from sklearn.__check_build._check_build import check_build  # noqa: F401
 except ImportError as e:
     raise_build_error(e)

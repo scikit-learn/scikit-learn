@@ -10,8 +10,8 @@ from itertools import combinations
 
 import numpy as np
 
-from ..utils import check_array, check_consistent_length
-from ..utils.multiclass import type_of_target
+from sklearn.utils import check_array, check_consistent_length
+from sklearn.utils.multiclass import type_of_target
 
 
 def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight=None):
@@ -118,7 +118,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
             # score from being affected by 0-weighted NaN elements.
             average_weight = np.asarray(average_weight)
             score[average_weight == 0] = 0
-        return np.average(score, weights=average_weight)
+        return float(np.average(score, weights=average_weight))
     else:
         return score
 

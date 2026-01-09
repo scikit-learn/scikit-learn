@@ -137,35 +137,36 @@ scoring = {
 # predictions (correct or wrong) might impact the business value of deploying a
 # given machine learning model in a specific application context. For our
 # credit prediction task, the authors provide a custom cost-matrix which
-# encodes that classifying a a "bad" credit as "good" is 5 times more costly on
+# encodes that classifying a "bad" credit as "good" is 5 times more costly on
 # average than the opposite: it is less costly for the financing institution to
 # not grant a credit to a potential customer that will not default (and
 # therefore miss a good customer that would have otherwise both reimbursed the
-# credit and payed interests) than to grant a credit to a customer that will
+# credit and paid interests) than to grant a credit to a customer that will
 # default.
 #
-# We define a python function that weight the confusion matrix and return the
+# We define a python function that weighs the confusion matrix and returns the
 # overall cost.
+# The rows of the confusion matrix hold the counts of observed classes
+# while the columns hold counts of predicted classes. Recall that here we
+# consider "bad" as the positive class (second row and column).
+# Scikit-learn model selection tools expect that we follow a convention
+# that "higher" means "better", hence the following gain matrix assigns
+# negative gains (costs) to the two kinds of prediction errors:
+#
+# - a gain of `-1` for each false positive ("good" credit labeled as "bad"),
+# - a gain of `-5` for each false negative ("bad" credit labeled as "good"),
+# - a `0` gain for true positives and true negatives.
+#
+# Note that theoretically, given that our model is calibrated and our data
+# set representative and large enough, we do not need to tune the
+# threshold, but can safely set it to 1/5 of the cost ratio, as stated by
+# Eq. (2) in Elkan's paper [2]_.
 import numpy as np
 
 
 def credit_gain_score(y, y_pred, neg_label, pos_label):
     cm = confusion_matrix(y, y_pred, labels=[neg_label, pos_label])
-    # The rows of the confusion matrix hold the counts of observed classes
-    # while the columns hold counts of predicted classes. Recall that here we
-    # consider "bad" as the positive class (second row and column).
-    # Scikit-learn model selection tools expect that we follow a convention
-    # that "higher" means "better", hence the following gain matrix assigns
-    # negative gains (costs) to the two kinds of prediction errors:
-    # - a gain of -1 for each false positive ("good" credit labeled as "bad"),
-    # - a gain of -5 for each false negative ("bad" credit labeled as "good"),
-    # The true positives and true negatives are assigned null gains in this
-    # metric.
-    #
-    # Note that theoretically, given that our model is calibrated and our data
-    # set representative and large enough, we do not need to tune the
-    # threshold, but can safely set it to the cost ration 1/5, as stated by Eq.
-    # (2) in Elkan paper [2]_.
+
     gain_matrix = np.array(
         [
             [0, -1],  # -1 gain for false positives
@@ -321,8 +322,7 @@ def plot_roc_pr_curves(vanilla_model, tuned_model, *, title):
             X_test,
             y_test,
             pos_label=pos_label,
-            linestyle=linestyle,
-            color=color,
+            curve_kwargs=dict(linestyle=linestyle, color=color),
             ax=axs[1],
             name=name,
             plot_chance_level=idx == 1,
@@ -660,15 +660,18 @@ print(
 #
 # The class :class:`~sklearn.model_selection.FixedThresholdClassifier` allows us to
 # manually set the decision threshold. At prediction time, it behave as the previous
-# tuned model but no search is performed during the fitting process.
+# tuned model but no search is performed during the fitting process. Note that here
+# we use :class:`~sklearn.frozen.FrozenEstimator` to wrap the predictive model to
+# avoid any refitting.
 #
 # Here, we will reuse the decision threshold found in the previous section to create a
 # new model and check that it gives the same results.
+from sklearn.frozen import FrozenEstimator
 from sklearn.model_selection import FixedThresholdClassifier
 
 model_fixed_threshold = FixedThresholdClassifier(
-    estimator=model, threshold=tuned_model.best_threshold_, prefit=True
-).fit(data_train, target_train)
+    estimator=FrozenEstimator(model), threshold=tuned_model.best_threshold_
+)
 
 # %%
 business_score = business_scorer(
@@ -686,3 +689,6 @@ print(f"Benefit of logistic regression with a tuned threshold:  {business_score:
 # historical data (offline evaluation) should ideally be confirmed by A/B testing
 # on live data (online evaluation). Note however that A/B testing models is
 # beyond the scope of the scikit-learn library itself.
+#
+# At the end, we disable the configuration flag for metadata routing::
+sklearn.set_config(enable_metadata_routing=False)

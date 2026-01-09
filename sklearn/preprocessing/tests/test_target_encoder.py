@@ -1,4 +1,5 @@
 import re
+import warnings
 
 import numpy as np
 import pytest
@@ -20,6 +21,7 @@ from sklearn.preprocessing import (
     LabelEncoder,
     TargetEncoder,
 )
+from sklearn.utils.fixes import parse_version
 
 
 def _encode_target(X_ordinal, y_numeric, n_categories, smooth):
@@ -561,9 +563,9 @@ def test_invariance_of_encoding_under_label_permutation(smooth, global_random_se
     # using smoothing.
     y = rng.normal(size=1000)
     n_categories = 30
-    X = KBinsDiscretizer(n_bins=n_categories, encode="ordinal").fit_transform(
-        y.reshape(-1, 1)
-    )
+    X = KBinsDiscretizer(
+        n_bins=n_categories, quantile_method="averaged_inverted_cdf", encode="ordinal"
+    ).fit_transform(y.reshape(-1, 1))
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, random_state=global_random_seed
@@ -709,6 +711,24 @@ def test_pandas_copy_on_write():
     Non-regression test for gh-27879.
     """
     pd = pytest.importorskip("pandas", minversion="2.0")
-    with pd.option_context("mode.copy_on_write", True):
+    # Pandas currently warns that setting copy_on_write will be removed in pandas 4
+    # (and copy-on-write will always be enabled).
+    # see https://github.com/scikit-learn/scikit-learn/issues/32829
+    # TODO: remove this workaround when pandas 4 is our minimum version
+    if parse_version(pd.__version__) >= parse_version("4.0"):
         df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
         TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
+    else:
+        with warnings.catch_warnings():
+            expected_message = (
+                ".*Copy-on-Write can no longer be disabled.*This option will"
+                r" be removed in pandas 4\.0"
+            )
+            warnings.filterwarnings(
+                "ignore",
+                message=expected_message,
+                category=DeprecationWarning,
+            )
+            with pd.option_context("mode.copy_on_write", True):
+                df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
+                TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])

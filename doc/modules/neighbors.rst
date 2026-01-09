@@ -114,6 +114,8 @@ unsupervised learning: in particular, see :class:`~sklearn.manifold.Isomap`,
 :class:`~sklearn.manifold.LocallyLinearEmbedding`, and
 :class:`~sklearn.cluster.SpectralClustering`.
 
+.. _kdtree_and_balltree_classes:
+
 KDTree and BallTree Classes
 ---------------------------
 Alternatively, one can use the :class:`KDTree` or :class:`BallTree` classes
@@ -347,7 +349,7 @@ Alternatively, the user can work with the :class:`BallTree` class directly.
 .. dropdown:: References
 
   * `"Five Balltree Construction Algorithms"
-    <https://citeseerx.ist.psu.edu/doc_view/pid/17ac002939f8e950ffb32ec4dc8e86bdd8cb5ff1>`_,
+    <https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=17ac002939f8e950ffb32ec4dc8e86bdd8cb5ff1>`_,
     Omohundro, S.M., International Computer Science Institute
     Technical Report (1989)
 
@@ -560,7 +562,7 @@ a scikit-learn pipeline, one can also use the corresponding classes
 :class:`KNeighborsTransformer` and :class:`RadiusNeighborsTransformer`.
 The benefits of this sparse graph API are multiple.
 
-First, the precomputed graph can be re-used multiple times, for instance while
+First, the precomputed graph can be reused multiple times, for instance while
 varying a parameter of the estimator. This can be done manually by the user, or
 using the caching properties of the scikit-learn pipeline:
 
@@ -835,7 +837,7 @@ added space complexity in the operation.
 .. rubric:: References
 
 .. [1] `"Neighbourhood Components Analysis"
-  <http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf>`_,
+  <https://papers.nips.cc/paper_files/paper/2004/file/42fe880812925e520249e808937738d2-Paper.pdf>`_,
   J. Goldberger, S. Roweis, G. Hinton, R. Salakhutdinov, Advances in
   Neural Information Processing Systems, Vol. 17, May 2005, pp. 513-520.
 

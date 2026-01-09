@@ -1,7 +1,5 @@
 .. currentmodule:: sklearn
 
-.. TODO: update doc/conftest.py once document is updated and examples run.
-
 .. _metadata_routing:
 
 Metadata Routing
@@ -84,8 +82,8 @@ Weighted scoring and fitting
 The splitter used internally in :class:`~linear_model.LogisticRegressionCV`,
 :class:`~model_selection.GroupKFold`, requests ``groups`` by default. However, we need
 to explicitly request `sample_weight` for it and for our custom scorer by specifying
-`sample_weight=True` in :class:`~linear_model.LogisticRegressionCV`s `set_fit_request()`
-method and in :func:`~metrics.make_scorer`s `set_score_request()` method. Both
+`sample_weight=True` in :class:`~linear_model.LogisticRegressionCV`'s `set_fit_request()`
+method and in :func:`~metrics.make_scorer`'s `set_score_request()` method. Both
 :term:`consumers <consumer>` know how to use ``sample_weight`` in their `fit()` or
 `score()` methods. We can then pass the metadata in
 :func:`~model_selection.cross_validate` which will route it to any active consumers::
@@ -93,7 +91,8 @@ method and in :func:`~metrics.make_scorer`s `set_score_request()` method. Both
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
   >>> lr = LogisticRegressionCV(
   ...     cv=GroupKFold(),
-  ...     scoring=weighted_acc
+  ...     scoring=weighted_acc,
+  ...     use_legacy_attributes=False,
   ... ).set_fit_request(sample_weight=True)
   >>> cv_results = cross_validate(
   ...     lr,
@@ -126,7 +125,7 @@ that :func:`~model_selection.cross_validate` does not pass the weights along::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
   >>> lr = LogisticRegressionCV(
-  ...     cv=GroupKFold(), scoring=weighted_acc,
+  ...     cv=GroupKFold(), scoring=weighted_acc, use_legacy_attributes=False
   ... ).set_fit_request(sample_weight=False)
   >>> cv_results = cross_validate(
   ...     lr,
@@ -157,7 +156,7 @@ to it::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
   >>> lr = LogisticRegressionCV(
-  ...     cv=GroupKFold(), scoring=weighted_acc,
+  ...     cv=GroupKFold(), scoring=weighted_acc, use_legacy_attributes=False
   ... ).set_fit_request(sample_weight=True)
   >>> sel = SelectKBest(k=2)
   >>> pipe = make_pipeline(sel, lr)
@@ -183,7 +182,7 @@ consumers. In this example, we pass ``scoring_weight`` to the scorer, and
   ...    sample_weight="scoring_weight"
   ... )
   >>> lr = LogisticRegressionCV(
-  ...     cv=GroupKFold(), scoring=weighted_acc,
+  ...     cv=GroupKFold(), scoring=weighted_acc, use_legacy_attributes=False
   ... ).set_fit_request(sample_weight="fitting_weight")
   >>> cv_results = cross_validate(
   ...     lr,
@@ -248,7 +247,8 @@ should be passed to the estimator's scorer or not::
     [sample_weight] are passed but are not explicitly set as requested or not
     requested for LogisticRegression.score, which is used within GridSearchCV.fit.
     Call `LogisticRegression.set_score_request({metadata}=True/False)` for each metadata
-    you want to request/ignore.
+    you want to request/ignore. See the Metadata Routing User guide
+    <https://scikit-learn.org/stable/metadata_routing.html> for more information.
 
 The issue can be fixed by explicitly setting the request value::
 
@@ -284,6 +284,8 @@ Meta-estimators and functions supporting metadata routing:
 - :class:`sklearn.ensemble.VotingRegressor`
 - :class:`sklearn.ensemble.BaggingClassifier`
 - :class:`sklearn.ensemble.BaggingRegressor`
+- :class:`sklearn.feature_selection.RFE`
+- :class:`sklearn.feature_selection.RFECV`
 - :class:`sklearn.feature_selection.SelectFromModel`
 - :class:`sklearn.feature_selection.SequentialFeatureSelector`
 - :class:`sklearn.impute.IterativeImputer`
@@ -323,5 +325,3 @@ Meta-estimators and tools not supporting metadata routing yet:
 
 - :class:`sklearn.ensemble.AdaBoostClassifier`
 - :class:`sklearn.ensemble.AdaBoostRegressor`
-- :class:`sklearn.feature_selection.RFE`
-- :class:`sklearn.feature_selection.RFECV`

@@ -20,7 +20,7 @@ from scipy.stats import randint
 
 from sklearn import datasets
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.model_selection import HalvingRandomSearchCV
 
 # %%
