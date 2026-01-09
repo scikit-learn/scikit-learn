@@ -1225,7 +1225,15 @@ def _solve_triangular(L, b, lower=True, xp=None):
     if _is_xp_namespace(xp, "torch"):
         import torch
 
-        return torch.linalg.solve_triangular(L, b, upper=not lower)
+        # torch.linalg.solve_triangular requires 2D input
+        squeeze_result = False
+        if b.ndim == 1:
+            b = xp.expand_dims(b, axis=-1)
+            squeeze_result = True
+        result = torch.linalg.solve_triangular(L, b, upper=not lower)
+        if squeeze_result:
+            result = xp.squeeze(result, axis=-1)
+        return result
 
     # Fallback for backends without triangular solve (e.g., array_api_strict)
     # This is O(n³) instead of O(n²), but maintains correctness
@@ -1472,8 +1480,8 @@ def _cho_solve(L, b, xp=None):
         return result
 
     # Two triangular solves: L @ y = b, then L.T @ x = y
-    y = xp.linalg.solve(L, b)
-    return xp.linalg.solve(L.mT, y)
+    y = _solve_triangular(L, b, lower=True, xp=xp)
+    return _solve_triangular(L.mT, y, lower=False, xp=xp)
 
 
 def _kv(nu, x, xp=None):
