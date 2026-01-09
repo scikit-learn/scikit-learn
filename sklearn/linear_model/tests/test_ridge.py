@@ -795,7 +795,7 @@ def test_solver_consistency(
     assert_allclose(ridge.intercept_, svd_ridge.intercept_, atol=1e-3, rtol=1e-3)
 
 
-@pytest.mark.parametrize("gcv_mode", ["svd", "eigen", "cov", "gram"])
+@pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
 @pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
 @pytest.mark.parametrize("X_shape", [(11, 8), (11, 20)])
 @pytest.mark.parametrize("fit_intercept", [True, False])
@@ -847,9 +847,9 @@ def test_ridge_gcv_vs_ridge_loo_cv(
 
 
 @pytest.mark.parametrize("alpha", [1e-12, 1e-16])
-@pytest.mark.parametrize("gcv_mode", ["svd", "eigen", "cov", "gram"])
+@pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.parametrize("X_shape", [(100, 50), (50, 100)])
+@pytest.mark.parametrize("X_shape", [(100, 50), (50, 50), (50, 100)])
 @pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
 def test_ridge_gcv_noiseless(alpha, gcv_mode, fit_intercept, X_shape, X_container):
     # Ridge should recover LinearRegression in the noiseless case
@@ -899,7 +899,7 @@ def test_ridge_loo_cv_asym_scoring():
     assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
 
 
-@pytest.mark.parametrize("gcv_mode", ["svd", "eigen", "cov", "gram"])
+@pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
 @pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
 @pytest.mark.parametrize("n_features", [8, 20])
 @pytest.mark.parametrize(

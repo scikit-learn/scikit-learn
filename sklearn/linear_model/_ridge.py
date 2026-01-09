@@ -2030,11 +2030,10 @@ class _RidgeGCV(LinearModel):
                 XT_y -= X_mean * (sqrt_sw @ y)
             XT_sqrt_sw -= X_mean * (sqrt_sw @ sqrt_sw)
         # kill nullspace
-        n_samples, n_features = X.shape
-        n_nullspace = max(0, n_features - n_samples + self.fit_intercept)
-        assert np.allclose(eigvals[:n_nullspace], 0), "wrong nullspace"
-        V = V[:, n_nullspace:]
-        eigvals = eigvals[n_nullspace:]
+        if X.shape[0] == X.shape[1] and self.fit_intercept:
+            assert np.allclose(eigvals[0], 0)
+            V = V[:, 1:]
+            eigvals = eigvals[1:]
         return eigvals, V, X, X_mean, XT_y, XT_sqrt_sw
 
     def _solve_eigen_covariance(
@@ -2384,7 +2383,7 @@ class _BaseRidgeCV(LinearModel):
         "fit_intercept": ["boolean"],
         "scoring": [StrOptions(set(get_scorer_names())), callable, None],
         "cv": ["cv_object"],
-        "gcv_mode": [StrOptions({"auto", "svd", "eigen", "cov", "gram"}), None],
+        "gcv_mode": [StrOptions({"auto", "svd", "eigen"}), None],
         "store_cv_results": ["boolean"],
         "alpha_per_target": ["boolean"],
     }
