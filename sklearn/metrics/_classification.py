@@ -978,7 +978,7 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
 
     if weights is None:
         w_mat = xp.ones([n_classes, n_classes], dtype=max_float_dtype, device=device_)
-        _fill_diagonal(w_mat, 0, xp=xp)
+        w_mat = _fill_diagonal(w_mat, 0, xp=xp)
     else:  # "linear" or "quadratic"
         w_mat = xp.zeros([n_classes, n_classes], dtype=max_float_dtype, device=device_)
         w_mat += xp.arange(n_classes)

@@ -648,7 +648,9 @@ def _fill_diagonal(array, value, xp):
     1D of greater or equal length as the diagonal (i.e., `value` is never repeated
     when shorter).
 
-    Note `array` is altered in place.
+    Note `array` is altered in place but the caller should use the returned
+    value for array libraries where in-place operations are not supported such
+    as JAX.
     """
     value, min_rows_columns = _validate_diagonal_args(array, value, xp)
 
@@ -661,10 +663,12 @@ def _fill_diagonal(array, value, xp):
         # made within `reshape`. See #31445 for details.
         if value.ndim == 0:
             for i in range(min_rows_columns):
-                array[i, i] = value
+                array = xpx.at(array, (i, i)).set(value)
         else:
             for i in range(min_rows_columns):
-                array[i, i] = value[i]
+                array = xpx.at(array, (i, i)).set(value[i])
+
+    return array
 
 
 def _add_to_diagonal(array, value, xp):
@@ -674,7 +678,9 @@ def _add_to_diagonal(array, value, xp):
     1D of greater or equal length as the diagonal (i.e., `value` is never repeated
     when shorter).
 
-    Note `array` is altered in place.
+    Note `array` is altered in place but the caller should use the returned
+    value for array libraries where in-place operations are not supported such
+    as JAX.
     """
     value, min_rows_columns = _validate_diagonal_args(array, value, xp)
 
@@ -683,7 +689,7 @@ def _add_to_diagonal(array, value, xp):
         # Ensure we do not wrap
         end = array.shape[1] * array.shape[1]
         array.flat[:end:step] += value
-        return
+        return array
 
     # TODO: when array libraries support `reshape(copy)`, use
     # `reshape(array, (-1,), copy=False)`, then fill with `[:end:step]` (within
@@ -691,7 +697,9 @@ def _add_to_diagonal(array, value, xp):
     # made within `reshape`. See #31445 for details.
     value = xp.linalg.diagonal(array) + value
     for i in range(min_rows_columns):
-        array[i, i] = value[i]
+        array = xpx.at(array, (i, i)).set(value[i])
+
+    return array
 
 
 def _is_xp_namespace(xp, name):
@@ -1171,7 +1179,7 @@ def _logsumexp(array, axis=None, xp=None):
     index_max = array == array_max
 
     array = xp.asarray(array, copy=True)
-    array[index_max] = -xp.inf
+    array = xpx.at(array, index_max).set(-xp.inf)
     i_max_dt = xp.astype(index_max, array.dtype)
     m = xp.sum(i_max_dt, axis=axis, keepdims=True, dtype=array.dtype)
     # Specifying device explicitly is the fix for https://github.com/scipy/scipy/issues/22680
