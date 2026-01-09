@@ -14,11 +14,37 @@ from sklearn.preprocessing._target_encoder_fast import (
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import (
+    _check_feature_names,
     _check_feature_names_in,
+    _check_n_features,
     _check_y,
+    _num_samples,
     check_consistent_length,
     check_is_fitted,
 )
+from sklearn.utils.validation import _normalize_na_key as _norm_key
+
+
+class _LazyIndexMaps:
+    """Lazy per-feature {normalized_category -> ordinal_index} maps.
+
+    Must not implement __eq__. Stored on estimator during fit so transform does
+    not mutate estimator.__dict__.
+    """
+
+    def __init__(self, categories):
+        self._categories = categories
+        self._maps = [None] * len(categories)
+
+    def get_index(self, feature_idx, value):
+        m = self._maps[feature_idx]
+        if m is None:
+            idx_map = {}
+            for i, cat in enumerate(self._categories[feature_idx]):
+                idx_map[_norm_key(cat)] = i
+            self._maps[feature_idx] = idx_map
+            m = idx_map
+        return m.get(_norm_key(value), -1)
 
 
 class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
@@ -197,6 +223,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         "shuffle": ["boolean"],
         "random_state": ["random_state"],
     }
+    # Cutoff (in n_samples) for routing to the small-batch
+    # per-row transform instead of the vectorized path.
+    _small_batch_threshold = 1024
 
     def __init__(
         self,
@@ -240,6 +269,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             Fitted encoder.
         """
         self._fit_encodings_all(X, y)
+        self._index_maps_ = _LazyIndexMaps(self.categories_)
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -275,6 +305,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         )
 
         X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
+        self._index_maps_ = _LazyIndexMaps(self.categories_)
 
         # The cv splitter is voluntarily restricted to *KFold to enforce non
         # overlapping validation folds, otherwise the fit_transform output will
@@ -323,6 +354,59 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             )
         return X_out
 
+    def _transform_small_batch(self, X):
+        """Fast-path transform for small inputs.
+        This is called only when n_samples <= _small_batch_threshold.
+        """
+        _, n_samples, n_features = self._check_X(X, ensure_all_finite="allow-nan")
+
+        _check_feature_names(self, X, reset=False)
+        _check_n_features(self, X, reset=False)
+
+        X_arr = np.asarray(X, dtype=object)
+        n_samples, n_features = X_arr.shape
+        is_multi = self.target_type_ == "multiclass"
+
+        features_out = n_features
+        if is_multi:
+            n_classes = len(self.classes_)
+            features_out *= n_classes
+        X_out = np.empty((n_samples, features_out), dtype=np.float64)
+
+        index_maps = self._index_maps_
+        norm_key = _norm_key
+
+        for j in range(n_features):
+            col = X_arr[:, j]
+
+            if is_multi:
+                base = j * n_classes
+                default_v = np.asarray(self.target_mean_, dtype=float)
+
+                # Local block view from encodings_ (not stored on self)
+                enc_block = np.empty((n_classes, len(self.categories_[j])), dtype=float)
+                for c in range(n_classes):
+                    enc_block[c, :] = np.asarray(self.encodings_[base + c], dtype=float)
+
+                out_block = np.empty((n_samples, n_classes), dtype=float)
+                for i in range(n_samples):
+                    idx = index_maps.get_index(j, col[i])
+                    out_block[i, :] = enc_block[:, idx] if idx >= 0 else default_v
+
+                start = base
+                X_out[:, start : start + n_classes] = out_block
+
+            else:
+                enc_vec = np.asarray(self.encodings_[j], dtype=float)
+                default = float(np.asarray(self.target_mean_))
+                out_col = np.empty(n_samples, dtype=float)
+                for i in range(n_samples):
+                    idx = index_maps.get_index(j, col[i])
+                    out_col[i] = enc_vec[idx] if idx >= 0 else default
+                X_out[:, j] = out_col
+
+        return X_out
+
     def transform(self, X):
         """Transform X with the target encoding.
 
@@ -337,19 +421,28 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            The data to determine the categories of each feature.
+            Input data to encode. Missing values (e.g., None or np.nan) are
+            treated as categories. Categories unseen during fit are encoded
+            with ``target_mean_``.
 
         Returns
         -------
         X_trans : ndarray of shape (n_samples, n_features) or \
-                    (n_samples, (n_features * n_classes))
-            Transformed input.
+                (n_samples, n_features * n_classes)
+                Encoded representation of X. For binary and continuous targets,
+                one column per input feature is returned. For multiclass targets,
+                one column per (feature, class) pair is returned, with classes
+                ordered as in ``classes_``.
         """
+        check_is_fitted(self)
+        n_samples = _num_samples(X)
+        if n_samples <= self._small_batch_threshold:
+            return self._transform_small_batch(X)
+
         X_ordinal, X_known_mask = self._transform(
             X, handle_unknown="ignore", ensure_all_finite="allow-nan"
         )
 
-        # If 'multiclass' multiply axis=1 by num of classes else keep shape the same
         if self.target_type_ == "multiclass":
             X_out = np.empty(
                 (X_ordinal.shape[0], X_ordinal.shape[1] * len(self.classes_)),
@@ -531,7 +624,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             Transformed feature names. `feature_names_in_` is used unless it is
             not defined, in which case the following input feature names are
             generated: `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
-            When `type_of_target_` is "multiclass" the names are of the format
+            When `target_type_` is "multiclass" the names are of the format
             '<feature_name>_<class_name>'.
         """
         check_is_fitted(self, "n_features_in_")
