@@ -1614,10 +1614,11 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         length_scale = _check_length_scale(X, self.length_scale, xp=xp)
 
         if Y is None:
-            dists = _pdist(X / length_scale, metric="sqeuclidean", xp=xp)
+            # Use cdist(X, X) instead of pdist + squareform for better performance
+            # on GPU backends (torch.cdist is much faster than torch.nn.functional.pdist)
+            X_scaled = X / length_scale
+            dists = _cdist(X_scaled, X_scaled, metric="sqeuclidean", xp=xp)
             K = xp.exp(-0.5 * dists)
-            # convert from upper-triangular matrix to square matrix
-            K = _squareform(K, xp=xp)
             _fill_diagonal(K, xp.asarray(1.0, dtype=K.dtype), xp)
         else:
             if eval_gradient:
@@ -1633,7 +1634,8 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
                 # Hyperparameter l kept fixed
                 return K, xp.empty((X.shape[0], X.shape[0], 0), dtype=K.dtype)
             elif not self.anisotropic or length_scale.shape[0] == 1:
-                K_gradient = xp.expand_dims(K * _squareform(dists, xp=xp), axis=-1)
+                # dists is already in square form from cdist above
+                K_gradient = xp.expand_dims(K * dists, axis=-1)
                 return K, K_gradient
             elif self.anisotropic:
                 # We need to recompute the pairwise dimension-wise distances
@@ -1777,15 +1779,16 @@ class Matern(RBF):
         length_scale = _check_length_scale(X, self.length_scale, xp=xp)
         device_ = array_device(X)
 
+        # Use cdist(X, X) instead of pdist + squareform for better performance
+        # on GPU backends (torch.cdist is much faster than torch.nn.functional.pdist)
+        X_scaled = X / length_scale
         if Y is None:
-            dists = _pdist(X / length_scale, metric="euclidean", xp=xp)
+            dists = _cdist(X_scaled, X_scaled, metric="euclidean", xp=xp)
         else:
             if eval_gradient:
                 raise ValueError("Gradient can only be evaluated when Y is None.")
             Y = xp.asarray(Y)
-            dists = _cdist(
-                X / length_scale, Y / length_scale, metric="euclidean", xp=xp
-            )
+            dists = _cdist(X_scaled, Y / length_scale, metric="euclidean", xp=xp)
 
         if self.nu == 0.5:
             K = xp.exp(-dists)
@@ -1807,8 +1810,7 @@ class Matern(RBF):
             K = coef * (tmp**self.nu) * _kv(self.nu, tmp, xp=xp)
 
         if Y is None:
-            # convert from upper-triangular matrix to square matrix
-            K = _squareform(K, xp=xp)
+            # K is already in square form from cdist, just set diagonal
             _fill_diagonal(K, xp.asarray(1.0, dtype=K.dtype), xp)
 
         if eval_gradient:
@@ -1825,7 +1827,8 @@ class Matern(RBF):
                     length_scale**2
                 )
             else:
-                D = xp.expand_dims(_squareform(dists**2, xp=xp), axis=-1)
+                # dists is already in square form from cdist above
+                D = xp.expand_dims(dists**2, axis=-1)
 
             if self.nu == 0.5:
                 denominator = xp.expand_dims(xp.sqrt(xp.sum(D, axis=2)), axis=-1)
@@ -2001,7 +2004,9 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         length_scale = float(self.length_scale)
 
         if Y is None:
-            dists = _squareform(_pdist(X, metric="sqeuclidean", xp=xp), xp=xp)
+            # Use cdist(X, X) instead of pdist + squareform for better performance
+            # on GPU backends (torch.cdist is much faster than torch.nn.functional.pdist)
+            dists = _cdist(X, X, metric="sqeuclidean", xp=xp)
             tmp = dists / (2 * alpha * length_scale**2)
             base = 1 + tmp
             K = base ** (-alpha)
@@ -2156,7 +2161,9 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             X = xp.reshape(X, (1, -1))
 
         if Y is None:
-            dists = _squareform(_pdist(X, metric="euclidean", xp=xp), xp=xp)
+            # Use cdist(X, X) instead of pdist + squareform for better performance
+            # on GPU backends (torch.cdist is much faster than torch.nn.functional.pdist)
+            dists = _cdist(X, X, metric="euclidean", xp=xp)
             arg = pi * dists / periodicity
             sin_of_arg = xp.sin(arg)
             K = xp.exp(-2 * (sin_of_arg / length_scale) ** 2)
