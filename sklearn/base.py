@@ -21,6 +21,7 @@ from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import validate_parameter_constraints
 from sklearn.utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
 from sklearn.utils._repr_html.estimator import estimator_html_repr
+from sklearn.utils._repr_html.fitted_attributes import AttrsDict
 from sklearn.utils._repr_html.methods import MethodsDict
 from sklearn.utils._repr_html.params import ParamsDict
 from sklearn.utils._set_output import _SetOutputMixin
@@ -36,6 +37,7 @@ from sklearn.utils.fixes import _IS_32BIT
 from sklearn.utils.validation import (
     _check_feature_names_in,
     _generate_get_feature_names_out,
+    _is_arraylike_not_scalar,
     _is_fitted,
     check_array,
     check_is_fitted,
@@ -207,6 +209,50 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
 
     _html_repr = estimator_html_repr
 
+    def _get_fitted_attr_html(self, doc_link=""):
+        """Get fitted attributes of the estimator."""
+        # fetch the constructor or the original constructor before
+        # deprecation wrapping if any
+        init = getattr(self.__init__, "deprecated_original", self)
+        if init is object.__init__:
+            # No explicit constructor to introspect
+            return []
+
+        # It raises when inspecting an empty Pipeline. So we need
+        # to check that a Pipeline is not empty.
+        if hasattr(init, "steps") and not len(init.steps):
+            return AttrsDict(fitted_attrs="")
+
+        attributes = inspect.getmembers(init)
+
+        fitted_attributes = {
+            name: value
+            for name, value in attributes
+            if not name.startswith("_") and name.endswith("_")
+        }
+
+        fitted_attr_out = {}
+        for name, value in fitted_attributes.items():
+            if _is_arraylike_not_scalar(value) and hasattr(value, "shape"):
+                if hasattr(value, "nbytes"):
+                    attr_size = value.nbytes
+                if hasattr(value, "memory_usage"):
+                    attr_size = value.memory_usage(deep=True)
+                fitted_attr_out[name] = (
+                    type(value).__name__,
+                    value.shape,
+                    value.dtype,
+                    attr_size,
+                )
+
+            else:
+                fitted_attr_out[name] = (type(value).__name__, value)
+        return AttrsDict(
+            fitted_attrs=fitted_attr_out,
+            estimator_class=self.__class__,
+            doc_link=doc_link,
+        )
+
     @classmethod
     def _get_param_names(cls):
         """Get parameter names for the estimator"""
@@ -319,19 +365,30 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
 
             return False
 
-        # reorder the parameters from `self.get_params` using the `__init__`
-        # signature
-        remaining_params = [name for name in out if name not in init_default_params]
-        ordered_out = {name: out[name] for name in init_default_params if name in out}
-        ordered_out.update({name: out[name] for name in remaining_params})
-
-        non_default_ls = tuple(
-            [name for name, value in ordered_out.items() if is_non_default(name, value)]
+        # Sort parameters so non-default parameters are shown first
+        unordered_params = {
+            name: out[name] for name in init_default_params if name in out
+        }
+        unordered_params.update(
+            {
+                name: value
+                for name, value in out.items()
+                if name not in init_default_params
+            }
         )
 
+        non_default_params, default_params = [], []
+        for name, value in unordered_params.items():
+            if is_non_default(name, value):
+                non_default_params.append(name)
+            else:
+                default_params.append(name)
+
+        params = {name: out[name] for name in non_default_params + default_params}
+
         return ParamsDict(
-            params=ordered_out,
-            non_default=non_default_ls,
+            params=params,
+            non_default=tuple(non_default_params),
             estimator_class=self.__class__,
             doc_link=doc_link,
         )

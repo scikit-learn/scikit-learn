@@ -48,11 +48,12 @@ def test_write_label_html(checked):
     # Test checking logic and labeling
     name = "LogisticRegression"
     params = ""
+    attrs = ""
     tool_tip = "hello-world"
     methods = "fit"
 
     with closing(StringIO()) as out:
-        _write_label_html(out, params, methods, name, tool_tip, checked=checked)
+        _write_label_html(out, params, attrs, methods, name, tool_tip, checked=checked)
         html_label = out.getvalue()
 
         p = (

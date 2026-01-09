@@ -513,6 +513,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._validate_names(names)
 
         # validate estimators
+        self._check_estimators_are_instances(transformers)
         for t in transformers:
             if t in ("drop", "passthrough"):
                 continue
@@ -1223,13 +1224,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return np.hstack(Xs)
 
     def _sk_visual_block_(self):
-        if hasattr(self, "transformers_"):
-            transformers = [
-                transformer
-                for transformer in getattr(self, "transformers_", self.transformers)
-                if transformer[1] != "drop"
-            ]
-            # We can find remainder and its column only when it's fitted
+        transformers = getattr(self, "transformers_", self.transformers)
+        filtered_transformers = [tr for tr in transformers if "remainder" not in tr]
+
+        if not (isinstance(self.remainder, str) and self.remainder == "drop"):
+            # We can find the columns of remainder only when it's fitted
+            # because only when it's fitted it has a remainder
             if hasattr(self, "_remainder"):
                 remainder_columns = self._remainder[2]
                 if (
@@ -1240,18 +1240,16 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     remainder_columns = self.feature_names_in_[
                         remainder_columns
                     ].tolist()
-        else:
-            if self.remainder != "drop":
-                transformers = chain(
-                    self.transformers, [("remainder", self.remainder, [])]
-                )
             else:
-                transformers = self.transformers
-
-        names, transformers, name_details = zip(*transformers)
+                remainder_columns = []
+            filtered_transformers = chain(
+                filtered_transformers,
+                [("remainder", self.remainder, remainder_columns)],
+            )
+        names, filtered_transformers, name_details = zip(*filtered_transformers)
 
         return _VisualBlock(
-            "parallel", transformers, names=names, name_details=name_details
+            "parallel", filtered_transformers, names=names, name_details=name_details
         )
 
     def __getitem__(self, key):

@@ -93,6 +93,23 @@ class TransRaise(BaseEstimator):
         raise ValueError("specific message")
 
 
+@pytest.mark.parametrize(
+    "transformers",
+    [
+        [("trans1", Trans, [0]), ("trans2", Trans(), [1])],
+        [("trans1", Trans(), [0]), ("trans2", Trans, [1])],
+        [("drop", "drop", [0]), ("trans2", Trans, [1])],
+        [("trans1", Trans, [0]), ("passthrough", "passthrough", [1])],
+    ],
+)
+def test_column_transformer_raises_class_not_instance_error(transformers):
+    # non-regression tests for https://github.com/scikit-learn/scikit-learn/issues/32719
+    ct = ColumnTransformer(transformers)
+    msg = "Expected an estimator instance (.*()), got estimator class instead (.*)."
+    with pytest.raises(TypeError, match=msg):
+        ct.fit([[1]])
+
+
 def test_column_transformer():
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
 
@@ -1574,11 +1591,7 @@ def test_sk_visual_block_remainder_fitted_pandas(remainder):
     assert visual_block.names == ("ohe", "remainder")
     assert visual_block.name_details == (["col1", "col2"], ["col3", "col4"])
     assert isinstance(visual_block.estimators[0], OneHotEncoder)
-
-    if remainder == "passthrough":
-        assert isinstance(visual_block.estimators[1], FunctionTransformer)
-    else:
-        assert isinstance(visual_block.estimators[1], StandardScaler)
+    assert visual_block.estimators[1] == remainder
 
 
 @pytest.mark.parametrize("remainder", ["passthrough", StandardScaler()])
@@ -1594,11 +1607,7 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
     assert visual_block.names == ("scale", "remainder")
     assert visual_block.name_details == ([0, 2], [1])
     assert isinstance(visual_block.estimators[0], StandardScaler)
-
-    if remainder == "passthrough":
-        assert isinstance(visual_block.estimators[1], FunctionTransformer)
-    else:
-        assert isinstance(visual_block.estimators[1], StandardScaler)
+    assert visual_block.estimators[1] == remainder
 
 
 @pytest.mark.parametrize("explicit_colname", ["first", "second", 0, 1])
