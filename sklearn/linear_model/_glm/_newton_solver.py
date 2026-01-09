@@ -7,6 +7,7 @@ Newton solver for Generalized Linear Models
 
 import warnings
 from abc import ABC, abstractmethod
+from time import perf_counter
 
 import numpy as np
 import scipy.linalg
@@ -1762,6 +1763,10 @@ def enet_coordinate_descent_multinomial_py(
         Number of coordinate descent iterations.
     """
     dtype = X.dtype
+    time_pre = 0
+    time_w = 0
+    time_r = 0
+    tic = perf_counter()
 
     # get the data information into easy vars
     n_samples = X.shape[0]
@@ -1985,11 +1990,14 @@ def enet_coordinate_descent_multinomial_py(
             active_set[:, :] = np.arange(n_features, dtype=np.uint32)[None, :]
             excluded_set[:, :] = 0
 
+    time_pre += perf_counter() - tic
+
     for n_iter in range(max_iter):
         w_max = 0.0
         d_w_max = 0.0
         for k in range(n_classes):  # Loop over coordinates
             for j in range(n_active[k]):  # Loop over coordinates
+                tic = perf_counter()
                 if do_screening:
                     j = active_set[k, j]
 
@@ -2011,6 +2019,8 @@ def enet_coordinate_descent_multinomial_py(
                     * max(np.abs(tmp) - alpha, 0)
                     / (norm2_cols_X[k, j] + beta)
                 )
+                time_w += perf_counter() - tic
+                tic = perf_counter()
 
                 if W[k, j] != w_kj:
                     # Update residual
@@ -2054,6 +2064,9 @@ def enet_coordinate_descent_multinomial_py(
                         # faster version:
                         LD_R -= proba * np.sum(xx, axis=1)[:, None]
                         LD_R += xx
+
+                time_r += perf_counter() - tic
+                tic = perf_counter()
 
                 # update the maximum absolute coefficient update
                 d_w_j = abs(W[k, j] - w_kj)
@@ -2149,4 +2162,8 @@ def enet_coordinate_descent_multinomial_py(
         W0[:-1] = H00_pinv @ (q0 - H0 @ W.ravel(order="F"))
         # W0[-1] = 0  # was already set at the beginning.
 
+    # print(
+    #     f"{time_pre=:6.4f} {time_w=:6.4f} {time_r=:6.4f} "
+    #     f"total={time_pre + time_w + time_r:6.4f}"
+    # )
     return np.asarray(W_original), gap, tol, n_iter + 1
