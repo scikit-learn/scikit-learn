@@ -101,8 +101,7 @@ class DecisionBoundaryDisplay:
           strings, of length `n_classes`
         * str: name of :class:`matplotlib.colors.Colormap`
         * None: 'tab10' colormap is used to sample colors if the number of
-                classes is less than or equal to 10, otherwise 'gist_rainbow'
-                colormap.
+          classes is less than or equal to 10, otherwise 'gist_rainbow' colormap.
 
         Single color colormaps will be generated from the colors in the list or
         colors taken from the colormap and passed to the `cmap` parameter of
