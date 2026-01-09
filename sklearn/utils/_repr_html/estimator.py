@@ -219,7 +219,7 @@ def _write_label_html(
         )
 
         if params:
-            fmt_str = "".join([fmt_str, f"{params}{attrs}</div>"])
+            fmt_str = "".join([fmt_str, f"{params}{methods}{attrs}</div>"])
         elif name_details and ("Pipeline" not in name):
             if name == "passthrough" or name_details == "[]":
                 name_details = ""
@@ -361,8 +361,8 @@ def _write_estimator_html(
                 attrs = "".join(
                     [
                         estimator._get_fitted_attr_html(doc_link)._repr_html_inner(),
-                        "estimator's sizeof :",
-                        str(estimator.__sizeof__()),
+                        # "estimator's sizeof :",
+                        # str(estimator.__sizeof__()),
                     ]
                 )
 
@@ -455,8 +455,8 @@ def _write_estimator_html(
             attrs = "".join(
                 [
                     estimator._get_fitted_attr_html(doc_link)._repr_html_inner(),
-                    "estimator's sizeof :",
-                    str(estimator.__sizeof__()),
+                    # "estimator's sizeof :",
+                    # str(estimator.__sizeof__()),
                 ]
             )
 
