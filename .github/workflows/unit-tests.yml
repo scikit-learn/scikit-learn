@@ -20,6 +20,7 @@ env:
   TEST_DIR: ${{ github.workspace }}/tmp_folder
   CCACHE_DIR: ${{ github.workspace }}/ccache
   COVERAGE: 'true'
+  JUNITXML: 'test-data.xml'
 
 jobs:
   lint:
@@ -209,11 +210,6 @@ jobs:
         if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
         run: |
           set -ex
-          if [[ ${{ job.status }} == "success" ]]; then
-            TESTS_PASSED=true
-          else
-            TESTS_PASSED=false
-          fi
 
           pip install defusedxml PyGithub
           python maint_tools/update_tracking_issue.py \
@@ -221,6 +217,6 @@ jobs:
             "$GITHUB_WORKFLOW ${{ matrix.name }}" \
             "$GITHUB_REPOSITORY" \
             https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID \
-            --tests-passed $TESTS_PASSED \
+            --junit-file $TEST_DIR/$JUNITXML \
             --auto-close false \
             --job-name "${{ matrix.name }}"
