@@ -600,6 +600,11 @@ def confusion_matrix(
     else:
         dtype = np.float32 if str(device_).startswith("mps") else np.float64
 
+    # Handle empty sample_weight: treat as all-zero weights
+    if sample_weight.size == 0 and y_true.size > 0:
+        sample_weight = np.zeros_like(y_true, dtype=dtype)
+
+
     cm = coo_matrix(
         (sample_weight, (y_true, y_pred)),
         shape=(n_labels, n_labels),
