@@ -79,7 +79,6 @@ def test_set_order_sparse(order, input_order, coo_container):
     y = coo_container(np.array([0, 0, 0]))
     sparse_format = "csc" if input_order == "F" else "csr"
     X = X.asformat(sparse_format)
-    y = X.asformat(sparse_format)
     X2, y2 = _set_order(X, y, order=order)
 
     format = "csc" if order == "F" else "csr"
