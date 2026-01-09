@@ -1280,6 +1280,7 @@ def test_confusion_matrix_on_zero_length_input(labels, sample_weight):
 
 def test_confusion_matrix_empty_sample_weight_behaves_like_zero_weight():
     import numpy as np
+
     from sklearn.metrics import confusion_matrix
 
     y_true = [0, 1]
