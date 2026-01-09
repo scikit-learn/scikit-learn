@@ -1886,7 +1886,7 @@ class _RidgeGCV(LinearModel):
         # X is sparse and fit_intercept is True
         # centered matrix = X - sqrt_sw X_mean^T
         X_mX = sqrt_sw[:, None] * safe_sparse_dot(X_mean, X.T, dense_output=True)
-        X_mX_m = np.outer(sqrt_sw, sqrt_sw) * np.dot(X_mean, X_mean)
+        X_mX_m = sqrt_sw[:, None] * sqrt_sw[None, :] * (X_mean @ X_mean)
         return safe_sparse_dot(X, X.T, dense_output=True) + X_mX_m - X_mX - X_mX.T
 
     def _compute_covariance(self, X, X_mean, sqrt_sw):
@@ -1926,7 +1926,7 @@ class _RidgeGCV(LinearModel):
             return safe_sparse_dot(X.T, X, dense_output=True)
         # X is sparse and fit_intercept is True
         # centered matrix = X - sqrt_sw X_mean^T
-        sw_sum = sqrt_sw.dot(sqrt_sw)
+        sw_sum = sqrt_sw @ sqrt_sw
         return safe_sparse_dot(X.T, X, dense_output=True) - sw_sum * np.outer(
             X_mean, X_mean
         )
@@ -1964,7 +1964,7 @@ class _RidgeGCV(LinearModel):
         it has been scaled by sqrt_sw. The centered X is never actually
         computed because centering would break the sparsity of X.
         """
-        XA = X.dot(A)
+        XA = X @ A
         if sparse.isspmatrix(X):
             # sparse matrix use multiply for element wise multiplication
             XAX = np.ravel(X.multiply(XA).sum(axis=1))
@@ -1977,10 +1977,10 @@ class _RidgeGCV(LinearModel):
             return XAX
         # X is sparse and fit_intercept is True
         # centered matrix = X - sqrt_sw X_mean^T
-        XA_Xm = XA.dot(X_mean)
-        A_Xm = A.dot(X_mean)
+        XA_Xm = XA @ X_mean
+        A_Xm = A @ X_mean
         sw = sqrt_sw * sqrt_sw
-        return XAX - 2 * sqrt_sw * XA_Xm + sw * X_mean.dot(A_Xm)
+        return XAX - 2 * sqrt_sw * XA_Xm + sw * (X_mean @ A_Xm)
 
     def _eigen_decompose_gram(self, X, X_mean, y, sqrt_sw):
         """Eigendecomposition of Gram matrix X.X^T"""
@@ -2001,7 +2001,7 @@ class _RidgeGCV(LinearModel):
         d = self._decomp_diag(w, Q)
         g = Q @ self._diag_dot(w, QT_sqrt_sw)
         if self.fit_intercept:
-            sw_sum = sqrt_sw.dot(sqrt_sw)
+            sw_sum = sqrt_sw @ sqrt_sw
             d -= g * sqrt_sw / sw_sum
         if y.ndim == 2:
             d = d[:, None]
@@ -2009,9 +2009,9 @@ class _RidgeGCV(LinearModel):
         if self.fit_intercept and sparse.issparse(XT):
             # centered matrix = X - sqrt_sw X_mean^T
             if y.ndim == 2:
-                XT_c -= X_mean[:, None] * sqrt_sw.dot(c)
+                XT_c -= X_mean[:, None] * (sqrt_sw @ c)
             else:
-                XT_c -= X_mean * sqrt_sw.dot(c)
+                XT_c -= X_mean * (sqrt_sw @ c)
         looe = c / d
         coef = XT_c
         return looe, coef
@@ -2025,10 +2025,10 @@ class _RidgeGCV(LinearModel):
         if self.fit_intercept and sparse.issparse(X):
             # centered matrix = X - sqrt_sw X_mean^T
             if y.ndim == 2:
-                XT_y -= X_mean[:, None] * sqrt_sw.dot(y)
+                XT_y -= X_mean[:, None] * (sqrt_sw @ y)
             else:
-                XT_y -= X_mean * sqrt_sw.dot(y)
-            XT_sqrt_sw -= X_mean * sqrt_sw.dot(sqrt_sw)
+                XT_y -= X_mean * (sqrt_sw @ y)
+            XT_sqrt_sw -= X_mean * (sqrt_sw @ sqrt_sw)
         # kill nullspace
         n_samples, n_features = X.shape
         n_nullspace = max(0, n_features - n_samples + self.fit_intercept)
@@ -2042,23 +2042,23 @@ class _RidgeGCV(LinearModel):
     ):
         """Compute looe and coef when we have a decomposition of X^T.X"""
         w = 1 / (eigvals + alpha)
-        A = (V * w).dot(V.T)
-        AXT_y = A.dot(XT_y)
-        AXT_sqrt_sw = A.dot(XT_sqrt_sw)
+        A = (V * w) @ V.T
+        AXT_y = A @ XT_y
+        AXT_sqrt_sw = A @ XT_sqrt_sw
         XAXT_y = safe_sparse_dot(X, AXT_y, dense_output=True)
         XAXT_sqrt_sw = safe_sparse_dot(X, AXT_sqrt_sw, dense_output=True)
         if self.fit_intercept and sparse.issparse(X):
             # centered = X - sqrt_sw X_mean^T
             if y.ndim == 2:
-                XAXT_y -= sqrt_sw[:, None] * X_mean.dot(AXT_y)
+                XAXT_y -= sqrt_sw[:, None] * (X_mean @ AXT_y)
             else:
-                XAXT_y -= sqrt_sw * X_mean.dot(AXT_y)
-            XAXT_sqrt_sw -= sqrt_sw * X_mean.dot(AXT_sqrt_sw)
+                XAXT_y -= sqrt_sw * (X_mean @ AXT_y)
+            XAXT_sqrt_sw -= sqrt_sw * (X_mean @ AXT_sqrt_sw)
         alpha_c = y - XAXT_y
         alpha_g = sqrt_sw - XAXT_sqrt_sw
         alpha_d = 1 - self._sparse_multidot_diag(X, A, X_mean, sqrt_sw)
         if self.fit_intercept:
-            sw_sum = sqrt_sw.dot(sqrt_sw)
+            sw_sum = sqrt_sw @ sqrt_sw
             alpha_d -= alpha_g * sqrt_sw / sw_sum
         if y.ndim == 2:
             alpha_d = alpha_d[:, None]
@@ -2088,7 +2088,7 @@ class _RidgeGCV(LinearModel):
         alpha_d = self._decomp_diag(D, U) + 1
         alpha_g = U @ self._diag_dot(D, UT_sqrt_sw) + sqrt_sw
         if self.fit_intercept:
-            sw_sum = sqrt_sw.dot(sqrt_sw)
+            sw_sum = sqrt_sw @ sqrt_sw
             alpha_d -= alpha_g * sqrt_sw / sw_sum
         if len(y.shape) != 1:
             # handle case where y is 2-d
@@ -2110,7 +2110,7 @@ class _RidgeGCV(LinearModel):
         alpha_d = self._decomp_diag(D, U)
         alpha_g = U @ self._diag_dot(D, UT_sqrt_sw)
         if self.fit_intercept:
-            sw_sum = sqrt_sw.dot(sqrt_sw)
+            sw_sum = sqrt_sw @ sqrt_sw
             alpha_d -= alpha_g * sqrt_sw / sw_sum
         if len(y.shape) != 1:
             # handle case where y is 2-d
