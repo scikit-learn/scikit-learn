@@ -194,7 +194,7 @@ def _estimate_gaussian_covariances_full(resp, X, nk, means, reg_covar, xp=None):
         diff = X - means[k, :]
         cov_k = ((resp[:, k] * diff.T) @ diff) / nk[k]
         cov_k = _add_to_diagonal(cov_k, reg_covar, xp)
-        covariances = xpx.at(covariances, (k, slice(None), slice(None))).set(cov_k)
+        covariances = xpx.at(covariances)[k, :, :].set(cov_k)
     return covariances
 
 
@@ -366,9 +366,7 @@ def _compute_precision_cholesky(covariances, covariance_type, xp=None):
             # catch only numpy exceptions, b/c exceptions aren't part of array api spec
             except np.linalg.LinAlgError:
                 raise ValueError(estimate_precision_error_message)
-            precisions_chol = xpx.at(
-                precisions_chol, (k, slice(None), slice(None))
-            ).set(
+            precisions_chol = xpx.at(precisions_chol)[k, :, :].set(
                 _linalg_solve(
                     cov_chol, xp.eye(n_features, dtype=dtype, device=device_), xp
                 ).T
@@ -529,18 +527,14 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type, xp=N
             mu = means[k, :]
             prec_chol = precisions_chol[k, :, :]
             y = (X @ prec_chol) - (mu @ prec_chol)
-            log_prob = xpx.at(log_prob, (slice(None), k)).set(
-                xp.sum(xp.square(y), axis=1)
-            )
+            log_prob = xpx.at(log_prob)[:, k].set(xp.sum(xp.square(y), axis=1))
 
     elif covariance_type == "tied":
         log_prob = xp.empty((n_samples, n_components), dtype=X.dtype, device=device_)
         for k in range(means.shape[0]):
             mu = means[k, :]
             y = (X @ precisions_chol) - (mu @ precisions_chol)
-            log_prob = xpx.at(log_prob, (slice(None), k)).set(
-                xp.sum(xp.square(y), axis=1)
-            )
+            log_prob = xpx.at(log_prob)[:, k].set(xp.sum(xp.square(y), axis=1))
 
     elif covariance_type == "diag":
         precisions = precisions_chol**2
@@ -943,9 +937,9 @@ class GaussianMixture(BaseMixture):
             self.precisions_ = xp.empty_like(self.precisions_cholesky_, device=device_)
             for k in range(self.precisions_cholesky_.shape[0]):
                 prec_chol = self.precisions_cholesky_[k, :, :]
-                self.precisions_ = xpx.at(
-                    self.precisions_, (k, slice(None), slice(None))
-                ).set(prec_chol @ prec_chol.T)
+                self.precisions_ = xpx.at(self.precisions_)[k, :, :].set(
+                    prec_chol @ prec_chol.T
+                )
 
         elif self.covariance_type == "tied":
             self.precisions_ = self.precisions_cholesky_ @ self.precisions_cholesky_.T
