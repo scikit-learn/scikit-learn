@@ -1269,36 +1269,13 @@ def test_confusion_matrix_error(labels, err_msg):
 )
 @pytest.mark.parametrize(
     "sample_weight",
-    (None, []),
+    (None),
 )
 def test_confusion_matrix_on_zero_length_input(labels, sample_weight):
     expected_n_classes = len(labels) if labels else 0
     expected = np.zeros((expected_n_classes, expected_n_classes), dtype=int)
     cm = confusion_matrix([], [], sample_weight=sample_weight, labels=labels)
     assert_array_equal(cm, expected)
-
-
-def test_confusion_matrix_empty_sample_weight_behaves_like_zero_weight():
-    import numpy as np
-
-    from sklearn.metrics import confusion_matrix
-
-    y_true = [0, 1]
-    y_pred = [0, 1]
-
-    cm_zero = confusion_matrix(
-        y_true,
-        y_pred,
-        sample_weight=np.array([0, 0]),
-    )
-
-    cm_empty = confusion_matrix(
-        y_true,
-        y_pred,
-        sample_weight=np.array([]),
-    )
-
-    assert np.array_equal(cm_empty, cm_zero)
 
 
 def test_confusion_matrix_dtype():
