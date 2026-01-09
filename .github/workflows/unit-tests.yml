@@ -218,6 +218,6 @@ jobs:
             "$GITHUB_WORKFLOW ${{ matrix.name }}" \
             "$GITHUB_REPOSITORY" \
             https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID \
-            --junit-file $JUNIT_FILE \
+            --junit-file $TEST_DIR/$JUNITXML \
             --auto-close false \
             --job-name "${{ matrix.name }}"
