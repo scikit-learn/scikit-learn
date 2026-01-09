@@ -604,7 +604,6 @@ def confusion_matrix(
     if sample_weight.size == 0 and y_true.size > 0:
         sample_weight = np.zeros_like(y_true, dtype=dtype)
 
-
     cm = coo_matrix(
         (sample_weight, (y_true, y_pred)),
         shape=(n_labels, n_labels),

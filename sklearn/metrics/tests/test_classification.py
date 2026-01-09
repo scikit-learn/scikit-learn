@@ -1276,7 +1276,7 @@ def test_confusion_matrix_on_zero_length_input(labels, sample_weight):
     expected = np.zeros((expected_n_classes, expected_n_classes), dtype=int)
     cm = confusion_matrix([], [], sample_weight=sample_weight, labels=labels)
     assert_array_equal(cm, expected)
-    
+
 
 def test_confusion_matrix_empty_sample_weight_behaves_like_zero_weight():
     import numpy as np
