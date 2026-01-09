@@ -34,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -199,7 +199,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -243,7 +243,7 @@ jobs:
         run: bash build_tools/wheels/build_wheels.sh
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: cibw-wheels-cp${{ matrix.python }}-${{ matrix.platform_id }}
           path: wheelhouse/*.whl
@@ -266,7 +266,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -282,7 +282,7 @@ jobs:
           SKLEARN_SKIP_NETWORK_TESTS: 1
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: cibw-sdist
           path: dist/*.tar.gz
@@ -298,10 +298,10 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Download artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           pattern: cibw-*
           path: dist
