@@ -26,6 +26,7 @@ from sklearn.utils._array_api import (
     _cho_solve,
     _cholesky,
     _convert_to_numpy,
+    _solve_triangular,
     get_namespace_and_device,
 )
 from sklearn.utils._param_validation import Interval, StrOptions
@@ -336,6 +337,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     return -float(lml)
 
             # Get theta and bounds as numpy for scipy.optimize
+            # XXX Are they not already numpy arrays?
             theta_init = _convert_to_numpy(self.kernel_.theta, xp)
             bounds_init = _convert_to_numpy(self.kernel_.bounds, xp)
 
@@ -489,12 +491,8 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             if not return_cov and not return_std:
                 return y_mean
 
-            # XXX Should we keep solve_triangilar here?
             # Alg 2.1, page 19, line 5 -> v = L \ K(X_test, X_train)^T
-            # V = solve_triangular(
-            #     self.L_, K_trans.T, lower=GPR_CHOLESKY_LOWER, check_finite=False
-            # )
-            V = xp.linalg.solve(self.L_, K_trans.T)
+            V = _solve_triangular(self.L_, K_trans.T, lower=GPR_CHOLESKY_LOWER, xp=xp)
 
             if return_cov:
                 # Alg 2.1, page 19, line 6 -> K(X_test, X_test) - v^T. v

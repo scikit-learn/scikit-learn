@@ -1193,6 +1193,45 @@ def _linalg_solve(cov_chol, eye_matrix, xp):
         return xp.linalg.solve(cov_chol, eye_matrix)
 
 
+def _solve_triangular(L, b, lower=True, xp=None):
+    """Solve a triangular linear system L @ x = b.
+
+    Uses optimized triangular solvers when available (O(n²) vs O(n³) for general solve).
+
+    Parameters
+    ----------
+    L : array of shape (n, n)
+        Triangular matrix (lower by default).
+    b : array of shape (n,) or (n, m)
+        Right-hand side.
+    lower : bool, default=True
+        Whether L is lower triangular (True) or upper triangular (False).
+    xp : module, optional
+        Array namespace.
+
+    Returns
+    -------
+    x : array
+        Solution to L @ x = b.
+    """
+    xp, _ = get_namespace(L, b, xp=xp)
+
+    if _is_numpy_namespace(xp):
+        result = scipy.linalg.solve_triangular(L, b, lower=lower, check_finite=False)
+        if numpy.issubdtype(b.dtype, numpy.floating):
+            result = result.astype(b.dtype, copy=False)
+        return result
+
+    if _is_xp_namespace(xp, "torch"):
+        import torch
+
+        return torch.linalg.solve_triangular(L, b, upper=not lower)
+
+    # Fallback for backends without triangular solve (e.g., array_api_strict)
+    # This is O(n³) instead of O(n²), but maintains correctness
+    return xp.linalg.solve(L, b)
+
+
 def _half_multinomial_loss(y, pred, sample_weight=None, xp=None):
     """A version of the multinomial loss that is compatible with the array API"""
     xp, _, device_ = get_namespace_and_device(y, pred, sample_weight)
@@ -1385,7 +1424,16 @@ def _squareform(condensed, xp=None):
 
     square = xp.zeros((n, n), dtype=condensed.dtype, device=device_)
 
-    # Fill upper and lower triangular
+    if _is_xp_namespace(xp, "torch"):
+        import torch
+
+        # Use torch's native triu_indices for vectorized fill (much faster than loop)
+        i_indices, j_indices = torch.triu_indices(n, n, offset=1, device=device_)
+        square[i_indices, j_indices] = condensed
+        square[j_indices, i_indices] = condensed
+        return square
+
+    # Fallback for array-api-strict and other backends (uses loop with xpx.at)
     idx = 0
     for i in range(n):
         for j in range(i + 1, n):
