@@ -73,17 +73,23 @@ def test_set_order_dense(order, input_order):
 @pytest.mark.parametrize("order", ["C", "F"])
 @pytest.mark.parametrize("input_order", ["C", "F"])
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
-def test_set_order_sparse(order, input_order, coo_container):
+@pytest.mark.parametrize("y_data", [np.array([0, 0, 0]), np.array([[0], [0], [0]])])
+def test_set_order_sparse(order, input_order, coo_container, y_data):
     """Check that _set_order returns sparse matrices in promised format."""
     X = coo_container(np.array([[0], [0], [0]]))
-    y = coo_container(np.array([0, 0, 0]))
+    y = coo_container(y_data)
+
     sparse_format = "csc" if input_order == "F" else "csr"
     X = X.asformat(sparse_format)
+
+    if getattr(y, "ndim", 2) == 2:
+        y = y.asformat(sparse_format)
+
     X2, y2 = _set_order(X, y, order=order)
 
-    format = "csc" if order == "F" else "csr"
-    assert sparse.issparse(X2) and X2.format == format
-    assert sparse.issparse(y2) and y2.format == format
+    expected_format = "csc" if order == "F" else "csr"
+    assert sparse.issparse(X2) and X2.format == expected_format
+    assert sparse.issparse(y2) and y2.format == expected_format
 
 
 def test_cython_solver_equivalence():
