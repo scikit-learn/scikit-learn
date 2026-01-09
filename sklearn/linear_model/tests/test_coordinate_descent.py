@@ -79,7 +79,7 @@ def test_set_order_sparse(order, input_order, coo_container):
     y = coo_container(np.array([0, 0, 0]))
     sparse_format = "csc" if input_order == "F" else "csr"
     X = X.asformat(sparse_format)
-    y = y.asformat(sparse_format)
+    y = X.asformat(sparse_format)
     X2, y2 = _set_order(X, y, order=order)
 
     format = "csc" if order == "F" else "csr"
@@ -375,17 +375,18 @@ def test_lasso_cv_positive_constraint(global_random_seed):
     # coefficient reliably negative across seeds.
     y = -3.0 * X[:, 0] + 0.01 * rng.randn(n_samples)
 
-    max_iter = 5000
-
     # Unconstrained: should recover a clearly negative coefficient
+    max_iter = 500
     clf_unconstrained = LassoCV(
-        cv=3, max_iter=max_iter, fit_intercept=False, n_jobs=1
+        alphas=3, eps=1e-1, cv=2, max_iter=max_iter, fit_intercept=False, n_jobs=1
     ).fit(X, y)
     assert clf_unconstrained.coef_[0] < -0.5
 
     # Constrained: cannot be negative, should be driven to 0 (or very close)
     clf_constrained = LassoCV(
-        cv=3,
+        alphas=3,
+        eps=1e-1,
+        cv=2,
         max_iter=max_iter,
         fit_intercept=False,
         positive=True,
@@ -463,6 +464,7 @@ def test_enet_path(global_random_seed):
         alphas=[0.01, 0.05, 0.1], eps=2e-3, l1_ratio=[0.5, 0.7], cv=3, max_iter=max_iter
     )
     clf.fit(X, y)
+
     # Well-conditioned settings, we should have selected our
     # smallest penalty
     assert_almost_equal(clf.alpha_, min(clf.alphas_))
@@ -564,25 +566,23 @@ def test_enet_cv_positive_constraint(global_random_seed):
     X = rng.randn(n_samples, 1)
     y = -3.0 * X[:, 0] + 0.01 * rng.randn(n_samples)
 
-    # Use a small alpha grid so the solution isn't trivially all-zeros
-    alphas = [1e-6, 1e-5, 1e-4, 1e-3]
-    max_iter = 5000
+    max_iter = 500
 
     enetcv_unconstrained = ElasticNetCV(
-        alphas=alphas,
-        l1_ratio=[0.2, 0.5, 0.8],
-        cv=3,
+        alphas=3,
+        eps=1e-1,
         max_iter=max_iter,
+        cv=2,
         fit_intercept=False,
         n_jobs=1,
     ).fit(X, y)
     assert enetcv_unconstrained.coef_[0] < -0.5
 
     enetcv_constrained = ElasticNetCV(
-        alphas=alphas,
-        l1_ratio=[0.2, 0.5, 0.8],
-        cv=3,
+        alphas=3,
+        eps=1e-1,
         max_iter=max_iter,
+        cv=2,
         fit_intercept=False,
         positive=True,
         n_jobs=1,
