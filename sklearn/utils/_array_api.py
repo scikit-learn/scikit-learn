@@ -55,7 +55,7 @@ def yield_namespaces(include_numpy_namespaces=True):
         "array_api_strict",
         "cupy",
         "torch",
-        "jax.experimental.array_api",
+        "jax.numpy",
     ]:
         if not include_numpy_namespaces and array_namespace in _NUMPY_NAMESPACE_NAMES:
             continue
@@ -97,7 +97,7 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
                 yield array_namespace, device, dtype
             yield array_namespace, "mps", "float32"
 
-        elif array_namespace == "jax.experimental.array_api":
+        elif array_namespace == "jax.numpy":
             # XXX: this will dynamically and implicitly pick-up any non-default
             # device if JAX is configured to use it, contrary to PyTorch for
             # which we explicitly list all the devices we want to test against
