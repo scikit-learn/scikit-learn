@@ -29,6 +29,7 @@ from sklearn.utils._array_api import (
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
+    move_to,
     supported_float_dtypes,
 )
 from sklearn.utils._param_validation import Interval
@@ -390,7 +391,10 @@ class LinearClassifierMixin(ClassifierMixin):
         else:
             indices = xp.argmax(scores, axis=1)
 
-        return xp.take(self.classes_, indices, axis=0)
+        xp_classes, _, device_ = get_namespace_and_device(self.classes_)
+        return xp_classes.take(
+            self.classes_, move_to(indices, xp=xp_classes, device=device_), axis=0
+        )
 
     def _predict_proba_lr(self, X):
         """Probability estimation for OvR logistic regression.
