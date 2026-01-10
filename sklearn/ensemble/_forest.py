@@ -939,13 +939,41 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         p : ndarray of shape (n_samples, n_classes), or a list of such arrays
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
+
+        Notes
+        -----
+        For small batches (< 100 samples), sequential processing is automatically
+        used instead of parallel processing to avoid parallelization overhead,
+        which can make predictions 5-10x slower for small batches.
+
+        .. versionchanged:: 1.6
+            Added automatic parallelization strategy selection based on batch
+            size to improve small batch performance.
         """
         check_is_fitted(self)
         # Check data
         X = self._validate_X_predict(X)
 
+        n_samples = X.shape[0]
+
+        # Determine optimal parallelization strategy
+        # For small batches, parallelization overhead dominates computation time
+        # Empirically measured threshold (see Issue #16143): parallel becomes
+        # beneficial around 100-200 samples for typical configurations.
+
+        # Only apply optimization when parallel processing is requested
+        if self.n_jobs is None or self.n_jobs == 1:
+            # Default or explicitly sequential - no optimization needed
+            effective_n_jobs = self.n_jobs
+        elif n_samples < 100:
+            # Small batch - use sequential to avoid overhead
+            effective_n_jobs = 1
+        else:
+            # Large batch - use requested parallelization
+            effective_n_jobs = self.n_jobs
+
         # Assign chunk of trees to jobs
-        n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
+        n_jobs, _, _ = _partition_estimators(self.n_estimators, effective_n_jobs)
 
         # avoid storing the output of every estimator by summing them here
         all_proba = [
