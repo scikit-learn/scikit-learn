@@ -1928,6 +1928,16 @@ class RandomForestRegressor(ForestRegressor):
             max_samples=max_samples,
         )
 
+        if isinstance(criterion, str) and criterion == "friedman_mse":
+            # TODO(1.11): remove support of "friedman_mse" criterion.
+            criterion = "squared_error"
+            warn(
+                'Value `"friedman_mse"` for `criterion` is deprecated and will be '
+                'removed in 1.11. It maps to `"squared_error"` as both '
+                'were always equivalent. Use `criterion="squared_error"` '
+                "to remove this warning.",
+                FutureWarning,
+            )
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
@@ -2662,6 +2672,16 @@ class ExtraTreesRegressor(ForestRegressor):
             max_samples=max_samples,
         )
 
+        if isinstance(criterion, str) and criterion == "friedman_mse":
+            # TODO(1.11): remove support of "friedman_mse" criterion.
+            criterion = "squared_error"
+            warn(
+                'Value `"friedman_mse"` for `criterion` is deprecated and will be '
+                'removed in 1.11. It maps to `"squared_error"` as both '
+                'were always equivalent. Use `criterion="squared_error"` '
+                "to remove this warning.",
+                FutureWarning,
+            )
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
