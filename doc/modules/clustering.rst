@@ -862,6 +862,17 @@ clusters from Bisecting K-Means are well ordered and create quite a visible hier
     Baoding, Hebei, China (August 2017)
 
 
+References
+----------
+
+- Ward, J. H. (1963). *Hierarchical grouping to optimize an objective function*.
+  Journal of the American Statistical Association, 58(301), 236–244.
+
+- Murtagh, F., & Contreras, P. (2012).
+  *Algorithms for hierarchical clustering: an overview*.
+  Wiley Interdisciplinary Reviews: Data Mining and Knowledge Discovery.
+
+
 .. _dbscan:
 
 DBSCAN
