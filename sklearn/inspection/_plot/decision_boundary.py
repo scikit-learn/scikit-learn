@@ -5,7 +5,7 @@ import warnings
 
 import numpy as np
 
-from sklearn.base import is_regressor
+from sklearn.base import is_classifier, is_clusterer, is_regressor
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import _safe_indexing
 from sklearn.utils._dataframe import is_pandas_df, is_polars_df
@@ -77,21 +77,25 @@ class DecisionBoundaryDisplay:
     xx1 : ndarray of shape (grid_resolution, grid_resolution)
         Second output of :func:`meshgrid <numpy.meshgrid>`.
 
+    n_classes : int
+        Number of classes if estimator is a classifier, number of unique values in the
+        response otherwise.
+
     response : ndarray of shape (grid_resolution, grid_resolution) or \
             (grid_resolution, grid_resolution, n_classes)
         Values of the response function.
 
     multiclass_colors : list of str or str, default=None
         Specifies how to color each class when plotting all classes of multiclass
-        problem. Ignored for binary problems and multiclass problems when plotting a
-        single prediction value per point.
+        problem. Ignored for binary problems.
         Possible inputs are:
 
         * list: list of Matplotlib
           `color <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
           strings, of length `n_classes`
         * str: name of :class:`matplotlib.colors.Colormap`
-        * None: 'viridis' colormap is used to sample colors
+        * None: 'tab10' colormap is used to sample colors if the number of
+          classes is less than or equal to 10, otherwise 'gist_rainbow' colormap.
 
         Single color colormaps will be generated from the colors in the list or
         colors taken from the colormap and passed to the `cmap` parameter of
@@ -115,7 +119,7 @@ class DecisionBoundaryDisplay:
 
     multiclass_colors_ : array of shape (n_classes, 4)
         Colors used to plot each class in multiclass problems.
-        Only defined when `color_of_interest` is None.
+        Only defined when `n_classes` > 2.
 
         .. versionadded:: 1.7
 
@@ -145,7 +149,7 @@ class DecisionBoundaryDisplay:
     >>> tree = DecisionTreeClassifier().fit(iris.data[:, :2], iris.target)
     >>> y_pred = np.reshape(tree.predict(grid), feature_1.shape)
     >>> display = DecisionBoundaryDisplay(
-    ...     xx0=feature_1, xx1=feature_2, response=y_pred
+    ...     xx0=feature_1, xx1=feature_2, n_classes=len(tree.classes_), response=y_pred
     ... )
     >>> display.plot()
     <...>
@@ -157,10 +161,19 @@ class DecisionBoundaryDisplay:
     """
 
     def __init__(
-        self, *, xx0, xx1, response, multiclass_colors=None, xlabel=None, ylabel=None
+        self,
+        *,
+        xx0,
+        xx1,
+        n_classes,
+        response,
+        multiclass_colors=None,
+        xlabel=None,
+        ylabel=None,
     ):
         self.xx0 = xx0
         self.xx1 = xx1
+        self.n_classes = n_classes
         self.response = response
         self.multiclass_colors = multiclass_colors
         self.xlabel = xlabel
@@ -189,7 +202,9 @@ class DecisionBoundaryDisplay:
             Overwrite the y-axis label.
 
         **kwargs : dict
-            Additional keyword arguments to be passed to the `plot_method`.
+            Additional keyword arguments to be passed to the `plot_method`. Here, `cmap`
+            or `colors` can be set to specify the colormap or colors for binary
+            problems.
 
         Returns
         -------
@@ -210,16 +225,14 @@ class DecisionBoundaryDisplay:
             _, ax = plt.subplots()
 
         plot_func = getattr(ax, plot_method)
-        if self.response.ndim == 2:
+        if self.n_classes == 2:
             self.surface_ = plot_func(self.xx0, self.xx1, self.response, **kwargs)
-        else:  # self.response.ndim == 3
-            n_responses = self.response.shape[-1]
+        else:  # multiclass
             for kwarg in ("cmap", "colors"):
                 if kwarg in kwargs:
                     warnings.warn(
                         f"'{kwarg}' is ignored in favor of 'multiclass_colors' "
-                        "in the multiclass case when the response method is "
-                        "'decision_function' or 'predict_proba'."
+                        "in the multiclass case."
                     )
                     del kwargs[kwarg]
 
@@ -227,22 +240,22 @@ class DecisionBoundaryDisplay:
                 self.multiclass_colors, str
             ):
                 if self.multiclass_colors is None:
-                    cmap = "tab10" if n_responses <= 10 else "gist_rainbow"
+                    cmap = "tab10" if self.n_classes <= 10 else "gist_rainbow"
                 else:
                     cmap = self.multiclass_colors
 
                 # Special case for the tab10 and tab20 colormaps that encode a
                 # discrete set of colors that are easily distinguishable
                 # contrary to other colormaps that are continuous.
-                if cmap == "tab10" and n_responses <= 10:
-                    colors = plt.get_cmap("tab10", 10).colors[:n_responses]
-                elif cmap == "tab20" and n_responses <= 20:
-                    colors = plt.get_cmap("tab20", 20).colors[:n_responses]
+                if cmap == "tab10" and self.n_classes <= 10:
+                    colors = plt.get_cmap("tab10", 10).colors[: self.n_classes]
+                elif cmap == "tab20" and self.n_classes <= 20:
+                    colors = plt.get_cmap("tab20", 20).colors[: self.n_classes]
                 else:
-                    cmap = plt.get_cmap(cmap, n_responses)
+                    cmap = plt.get_cmap(cmap, self.n_classes)
                     if not hasattr(cmap, "colors"):
                         # For LinearSegmentedColormap
-                        colors = cmap(np.linspace(0, 1, n_responses))
+                        colors = cmap(np.linspace(0, 1, self.n_classes))
                     else:
                         colors = cmap.colors
             elif isinstance(self.multiclass_colors, list):
@@ -251,26 +264,44 @@ class DecisionBoundaryDisplay:
                 raise ValueError("'multiclass_colors' must be a list or a str.")
 
             self.multiclass_colors_ = colors
+
             if plot_method == "contour":
-                # Plot only argmax map for contour
-                class_map = self.response.argmax(axis=2)
+                # Plot only argmax
+                response = (
+                    self.response.argmax(axis=2)
+                    if self.response.ndim == 3
+                    else self.response
+                )
                 self.surface_ = plot_func(
-                    self.xx0, self.xx1, class_map, colors=colors, **kwargs
+                    self.xx0, self.xx1, response, colors=colors, **kwargs
+                )
+            elif plot_method == "pcolormesh" and self.response.ndim == 2:  # predict
+                cmap = mpl.colors.ListedColormap(colors)
+                self.surface_ = plot_func(
+                    self.xx0, self.xx1, self.response, cmap=cmap, **kwargs
                 )
             else:
                 multiclass_cmaps = [
                     mpl.colors.LinearSegmentedColormap.from_list(
-                        f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
+                        f"colormap_{class_idx}",
+                        [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)],
                     )
                     for class_idx, (r, g, b, _) in enumerate(colors)
                 ]
-
                 self.surface_ = []
                 for class_idx, cmap in enumerate(multiclass_cmaps):
-                    response = np.ma.array(
-                        self.response[:, :, class_idx],
-                        mask=~(self.response.argmax(axis=2) == class_idx),
-                    )
+                    if self.response.ndim == 2:  # predict
+                        response = np.ma.array(
+                            (self.response == class_idx),
+                            mask=~(self.response == class_idx),
+                        )
+
+                    else:  # predict_proba or decision_function
+                        response = np.ma.array(
+                            self.response[:, :, class_idx],
+                            mask=~(self.response.argmax(axis=2) == class_idx),
+                        )
+
                     self.surface_.append(
                         plot_func(self.xx0, self.xx1, response, cmap=cmap, **kwargs)
                     )
@@ -310,7 +341,9 @@ class DecisionBoundaryDisplay:
         Parameters
         ----------
         estimator : object
-            Trained estimator used to plot the decision boundary.
+            Trained estimator used to plot the decision boundary. If `estimator` is a
+            regressor, the output of `predict` is treated as the output of
+            `decision_function` for a binary classifier.
 
         X : {array-like, sparse matrix, dataframe} of shape (n_samples, 2)
             Input data that should be only 2-dimensional.
@@ -353,9 +386,8 @@ class DecisionBoundaryDisplay:
             .. versionadded:: 1.4
 
         multiclass_colors : list of str, or str, default=None
-            Specifies how to color each class when plotting multiclass
-            'predict_proba' or 'decision_function' and `class_of_interest` is
-            None. Ignored in all other cases.
+            Specifies how to color each class when plotting multiclass problems
+            and `class_of_interest` is None. Ignored in all other cases.
 
             Possible inputs are:
 
@@ -388,8 +420,9 @@ class DecisionBoundaryDisplay:
             created.
 
         **kwargs : dict
-            Additional keyword arguments to be passed to the
-            `plot_method`.
+            Additional keyword arguments to be passed to the `plot_method`. Here, `cmap`
+            or `colors` can be used to specify the colormap or colors for binary
+            problems.
 
         Returns
         -------
@@ -406,6 +439,7 @@ class DecisionBoundaryDisplay:
 
         Examples
         --------
+        >>> import matplotlib as mpl
         >>> import matplotlib.pyplot as plt
         >>> from sklearn.datasets import load_iris
         >>> from sklearn.linear_model import LogisticRegression
@@ -418,7 +452,8 @@ class DecisionBoundaryDisplay:
         ...     xlabel=iris.feature_names[0], ylabel=iris.feature_names[1],
         ...     alpha=0.5,
         ... )
-        >>> disp.ax_.scatter(X[:, 0], X[:, 1], c=iris.target, edgecolor="k")
+        >>> cmap = mpl.colors.ListedColormap(disp.multiclass_colors_)
+        >>> disp.ax_.scatter(X[:, 0], X[:, 1], c=iris.target, edgecolor="k", cmap=cmap)
         <...>
         >>> plt.show()
         """
@@ -512,6 +547,8 @@ class DecisionBoundaryDisplay:
                 # to our user when interacting with
                 # `DecisionBoundaryDisplay.from_estimator`
                 raise ValueError(
+                    # Note: it is ok to use estimator.classes_ here, as this error will
+                    # only be thrown if estimator is a classifier
                     f"class_of_interest={class_of_interest} is not a valid label: It "
                     f"should be one of {estimator.classes_}"
                 ) from exc
@@ -538,6 +575,13 @@ class DecisionBoundaryDisplay:
             else:
                 response = response.reshape(*xx0.shape, response.shape[-1])
 
+        if is_classifier(estimator):
+            n_classes = len(estimator.classes_)
+        elif is_clusterer(estimator):
+            n_classes = len(np.unique(estimator.labels_))
+        else:  # regressor and outlier detector are treated as binary classification
+            n_classes = 2
+
         if xlabel is None:
             xlabel = X.columns[0] if hasattr(X, "columns") else ""
 
@@ -547,6 +591,7 @@ class DecisionBoundaryDisplay:
         display = cls(
             xx0=xx0,
             xx1=xx1,
+            n_classes=n_classes,
             response=response,
             multiclass_colors=multiclass_colors,
             xlabel=xlabel,
