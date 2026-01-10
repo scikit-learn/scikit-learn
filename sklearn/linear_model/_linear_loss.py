@@ -456,6 +456,8 @@ class LinearModelLoss:
         n_threads=1,
         gradient_out=None,
         hessian_out=None,
+        grad_pointwise_out=None,
+        hess_pointwise_out=None,
         raw_prediction=None,
     ):
         """Computes gradient and hessian w.r.t. coef.
@@ -484,6 +486,13 @@ class LinearModelLoss:
             (n_classes * n_dof, n_classes * n_dof)
             A location into which the hessian is stored. If None, a new array
             might be created.
+        grad_pointwise_out : None or ndarray of shape (n_samples,) or
+            (n_samples, n_classes)
+            Array into which the pointwise gradients are written.
+        hess_pointwise_out : None or ndarray of shape (n_samples,) or
+            (n_samples, n_classes)
+            Array into which the pointwise hessians are written. For the multinomial
+            loss, it is not the hessians but the predicted probabilities.
         raw_prediction : C-contiguous array of shape (n_samples,) or array of \
             shape (n_samples, n_classes)
             Raw prediction values (in link space). If provided, these are used. If
@@ -542,6 +551,8 @@ class LinearModelLoss:
                 y_true=y,
                 raw_prediction=raw_prediction,
                 sample_weight=sample_weight,
+                gradient_out=grad_pointwise_out,
+                hessian_out=hess_pointwise_out,
                 n_threads=n_threads,
             )
             grad_pointwise /= sw_sum
@@ -594,6 +605,8 @@ class LinearModelLoss:
                 y_true=y,
                 raw_prediction=raw_prediction,
                 sample_weight=sample_weight,
+                gradient_out=grad_pointwise_out,
+                proba_out=hess_pointwise_out,
                 n_threads=n_threads,
             )
             grad_pointwise /= sw_sum

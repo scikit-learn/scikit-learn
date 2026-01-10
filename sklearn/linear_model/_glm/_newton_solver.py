@@ -462,6 +462,7 @@ class NewtonCholeskySolver(NewtonSolver):
             # Easier with ravelled arrays, e.g., for scipy.linalg.solve.
             # As with LinearModelLoss, we always are contiguous in n_classes.
             self.coef = self.coef.ravel(order="F")
+            n_classes = self.linear_loss.base_loss.n_classes
         # Note that the computation of gradient in LinearModelLoss follows the shape of
         # coef.
         self.gradient = np.empty_like(self.coef)
@@ -480,14 +481,23 @@ class NewtonCholeskySolver(NewtonSolver):
             # that the last class is set to zero.
             # This is done by the usual freedom of a (overparametrized) multinomial to
             # add a constant to all classes which doesn't change predictions.
-            n_classes = self.linear_loss.base_loss.n_classes
             coef = self.coef.reshape(n_classes, -1, order="F")  # easier as 2d
             coef -= coef[-1, :]  # coef -= coef of last class
         elif self.is_multinomial_with_intercept:
             # See inner_solve. Same as above, but only for the intercept.
-            n_classes = self.linear_loss.base_loss.n_classes
             # intercept -= intercept of last class
             self.coef[-n_classes:] -= self.coef[-1]
+
+        # Memory buffers for pointwise gradient and hessian.
+        n_samples = X.shape[0]
+        if self.linear_loss.base_loss.is_multiclass:
+            self.grad_pointwise = np.empty_like(
+                y, shape=(n_samples, n_classes), order="F"
+            )
+            self.hess_pointwise = np.empty_like(self.grad_pointwise)
+        else:
+            self.grad_pointwise = np.empty_like(y, order="F")
+            self.hess_pointwise = np.empty_like(self.grad_pointwise)
 
     def update_gradient_hessian(self, X, y, sample_weight):
         _, _, self.hessian_warning = self.linear_loss.gradient_hessian(
@@ -500,6 +510,8 @@ class NewtonCholeskySolver(NewtonSolver):
             gradient_out=self.gradient,
             hessian_out=self.hessian,
             raw_prediction=self.raw_prediction,  # this was updated in line_search
+            grad_pointwise_out=self.grad_pointwise,
+            hess_pointwise_out=self.hess_pointwise,
         )
 
     def inner_solve(self, X, y, sample_weight):
