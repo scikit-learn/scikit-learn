@@ -811,12 +811,6 @@ def test_normal_ridge_comparison(
         noise=0.5,
         random_state=42,
     )
-
-    if n_samples > n_features:
-        ridge_params = {"solver": "svd"}
-    else:
-        ridge_params = {"solver": "saga", "max_iter": 1000000, "tol": 1e-7}
-
     (
         X_train,
         X_test,
@@ -832,6 +826,13 @@ def test_normal_ridge_comparison(
         sw_train = np.random.RandomState(0).rand(len(y_train))
         alpha_ridge = alpha * sw_train.sum()
 
+    if n_samples > n_features:
+        ridge_params = {"solver": "svd"}
+    else:
+        ridge_params = {"solver": "saga", "max_iter": 1000, "tol": 1e-7}
+        if sample_weight is not None:
+            sw_train = (sw_train * len(y_train)).astype(int)
+
     # GLM has 1/(2*n) * Loss + 1/2*L2, Ridge has Loss + L2
     ridge = Ridge(
         alpha=alpha_ridge,
@@ -845,7 +846,7 @@ def test_normal_ridge_comparison(
         alpha=alpha,
         fit_intercept=fit_intercept,
         max_iter=300,
-        tol=1e-5,
+        tol=1e-7,
     )
     glm.fit(X_train, y_train, sample_weight=sw_train)
     assert glm.coef_.shape == (X.shape[1],)
