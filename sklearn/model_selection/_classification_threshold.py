@@ -205,11 +205,13 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
 
 
 class FixedThresholdClassifier(BaseThresholdClassifier):
-    """Binary classifier that manually sets the decision threshold.
+    """Classifier that sets decision threshold(s) for binarized/binned classification.
 
     This classifier allows to change the default decision threshold used for
     converting posterior probability estimates (i.e. output of `predict_proba`) or
     decision scores (i.e. output of `decision_function`) into a class label.
+    It also supports applying multiple thresholds to discretize scores into bins
+    for multi-class or ordinal-style classification.
 
     Here, the threshold is not optimized and is set to a constant value.
 
@@ -229,6 +231,16 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
         `decision_function`) into a class label. When `"auto"`, the threshold is set
         to 0.5 if `predict_proba` is used as `response_method`, otherwise it is set to
         0 (i.e. the default threshold for `decision_function`).
+
+    labels : list, default=None
+        Class labels corresponding to output bins. Used for both binary and
+        multi-threshold classification.
+
+        - For binary classification, must contain exactly 2 elements.
+        - For multi-thresholding, must contain exactly `len(threshold) + 1` labels.
+
+        If `labels` is None, binary outputs are inferred from `classes_`, and
+        multi-threshold outputs are bin indices.
 
     pos_label : int, float, bool or str, default=None
         The label of the positive class. Used to process the output of the
@@ -274,6 +286,8 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.metrics import confusion_matrix
     >>> from sklearn.model_selection import FixedThresholdClassifier, train_test_split
+
+    >>> # Binary classification with custom threshold
     >>> X, y = make_classification(
     ...     n_samples=1_000, weights=[0.9, 0.1], class_sep=0.8, random_state=42
     ... )
@@ -290,12 +304,25 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
     >>> print(confusion_matrix(y_test, classifier_other_threshold.predict(X_test)))
     [[184  40]
      [  6  20]]
+
+    >>> # Multi-threshold classification using discretized scores
+    >>> import numpy as np
+    >>> base_clf = LogisticRegression(random_state=0)
+    >>> clf_multi = FixedThresholdClassifier(
+    ...     base_clf, threshold=[0.3, 0.6], labels=["Low", "Medium", "High"]
+    ... ).fit(X_train, y_train)
+    >>> y_pred = clf_multi.predict(X_test)
+    >>> labels, counts = np.unique(y_pred, return_counts=True)
+    >>> result = [(str(label), int(count)) for label, count in zip(labels, counts)]
+    >>> print(result)
+    [('High', 14), ('Low', 218), ('Medium', 18)]
     """
 
     _parameter_constraints: dict = {
         **BaseThresholdClassifier._parameter_constraints,
-        "threshold": [StrOptions({"auto"}), Real],
+        "threshold": [StrOptions({"auto"}), Real, list],
         "pos_label": [Real, str, "boolean", None],
+        "labels": [None, list],
     }
 
     def __init__(
@@ -303,12 +330,14 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
         estimator,
         *,
         threshold="auto",
+        labels=None,
         pos_label=None,
         response_method="auto",
     ):
         super().__init__(estimator=estimator, response_method=response_method)
         self.pos_label = pos_label
         self.threshold = threshold
+        self.labels = labels
 
     @property
     def classes_(self):
@@ -377,7 +406,7 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
             decision_threshold = self.threshold
 
         return _threshold_scores_to_class_labels(
-            y_score, decision_threshold, self.classes_, self.pos_label
+            y_score, decision_threshold, self.classes_, self.pos_label, self.labels
         )
 
     def get_metadata_routing(self):
