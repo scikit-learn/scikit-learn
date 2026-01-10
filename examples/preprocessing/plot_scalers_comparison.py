@@ -1,8 +1,9 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 """
 ====================================================================
 Comparing StandardScaler and MinMaxScaler on Synthetic 2D Data
 ====================================================================
-
 This example visually compares the effect of :class:`StandardScaler`
 and :class:`MinMaxScaler` on a simple 2D dataset.
 
@@ -16,18 +17,21 @@ KNN, and SVM. Visualizing the difference is helpful for understanding
 how scaling changes the geometry of the data.
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+import numpy as np
+
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 # -----------------------------
 # Generate synthetic dataset
 # -----------------------------
 rng = np.random.RandomState(42)
-X = np.vstack([
-    rng.normal(loc=[2, 8], scale=[1.0, 2.0], size=(200, 2)),
-    rng.normal(loc=[8, 3], scale=[2.0, 1.0], size=(200, 2)),
-])
+X = np.vstack(
+    [
+        rng.normal(loc=[2, 8], scale=[1.0, 2.0], size=(200, 2)),
+        rng.normal(loc=[8, 3], scale=[2.0, 1.0], size=(200, 2)),
+    ]
+)
 
 # -----------------------------
 # Apply the scalers
@@ -37,6 +41,7 @@ mm_scaler = MinMaxScaler()
 
 X_std = std_scaler.fit_transform(X)
 X_mm = mm_scaler.fit_transform(X)
+
 
 # -----------------------------
 # Plotting function
@@ -75,5 +80,3 @@ plt.show()
 #
 # - Distance-based models (KMeans, KNN) benefit from StandardScaler.
 # - Neural networks often benefit from MinMaxScaler.
-#
-
