@@ -285,6 +285,8 @@ def test_fit_docstring_attributes(name, Estimator):
         est.fit(np.c_[y, y])
     elif est.__sklearn_tags__().input_tags.three_d_array:
         est.fit(X[np.newaxis, ...], y)
+    elif Estimator.__name__ == "TargetEncoder":
+        est.fit_transform(X, y)
     else:
         est.fit(X, y)
 
