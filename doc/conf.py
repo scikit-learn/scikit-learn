@@ -49,6 +49,10 @@ except ImportError:
     # that need plotly.
     pass
 
+# Set the environment variable to use Algolia docsearch to overwrite the default sphinx
+# local search; this is used in CI
+use_algolia = os.environ.get("SKLEARN_DOC_USE_ALGOLIA_SEARCH", "0") != "0"
+
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -300,6 +304,14 @@ html_theme_options = {
     "announcement": None,
 }
 
+if use_algolia:
+    # Remove the sphinx searchbox from the persistent field and add Algolia searchbox
+    # to the start field; note that Algolia searchbox can only be placed in the start
+    # field because all other fields have multiple slots to adapt to different screen
+    # sizes while Algolia can hydrate only one slot
+    html_theme_options["navbar_start"].append("algolia-searchbox")
+    html_theme_options["navbar_persistent"] = []
+
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = ["themes"]
 
@@ -344,6 +356,9 @@ html_sidebars = {
 # template names.
 html_additional_pages = {"index": "index.html"}
 
+if use_algolia:
+    html_additional_pages["algolia-search"] = "algolia-search.html"
+
 # Additional files to copy
 # html_extra_path = []
 
@@ -387,6 +402,28 @@ def add_js_css_files(app, pagename, templatename, context, doctree):
         app.add_css_file("styles/index.css")
     elif pagename.startswith("modules/generated/"):
         app.add_css_file("styles/api.css")
+
+    if use_algolia:
+        # If using Algolia search, load Algolia credentials and index name so that they
+        # are accessible in JavaScript
+        app.add_js_file(
+            None,
+            body=(
+                'SKLEARN_ALGOLIA_APP_ID = "WAC7N12TSK";\n'
+                'SKLEARN_ALGOLIA_API_KEY = "85fcdebd88be36ce665548bbbf328519";\n'
+                'SKLEARN_ALGOLIA_INDEX_NAME = "scikit-learn";'
+            ),
+        )
+        if pagename != "algolia-search":
+            # For all pages except for search page, load Algolia docsearch CSS and JS to
+            # enable the search field in the navbar
+            app.add_js_file(
+                "https://cdn.jsdelivr.net/npm/@docsearch/js@3.6.1",
+                loading_method="defer",
+            )
+            app.add_js_file("scripts/algolia-searchbox.js", loading_method="defer")
+            app.add_css_file("https://cdn.jsdelivr.net/npm/@docsearch/css@3.6.1")
+            app.add_css_file("styles/algolia-searchbox.css")
 
 
 # If false, no module index is generated.
