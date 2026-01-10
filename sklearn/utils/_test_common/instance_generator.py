@@ -1105,6 +1105,17 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
+    MultiOutputClassifier: {
+        "check_estimator_sparse_array": (
+            "predict_proba returns a list of arrays, test expects array"
+        ),
+        "check_estimator_sparse_matrix": (
+            "predict_proba returns a list of arrays, test expects array"
+        ),
+        "check_methods_sample_order_invariance": (
+            "predict_proba returns a list of arrays, test expects array"
+        ),
+    },
     NuSVC: {
         "check_class_weight_classifiers": "class_weight is ignored.",
         # TODO: fix sample_weight handling of this estimator when probability=False
