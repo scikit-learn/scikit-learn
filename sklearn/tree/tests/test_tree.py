@@ -829,6 +829,8 @@ def test_min_weight_fraction_leaf_with_min_samples_leaf_on_sparse_input(
     )
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize(
     "TreeEstimator, criterion",
     [
@@ -868,7 +870,9 @@ def test_min_impurity_decrease(TreeEstimator, criterion, global_random_seed):
                         weighted_impurity[left] + weighted_impurity[right]
                     )
 
-                    assert actual_decrease >= expected_decrease
+                    # Allow a tiny slack to account for
+                    # floating-point rounding errors:
+                    assert actual_decrease > expected_decrease - 1e-10
 
 
 def test_pickle():
