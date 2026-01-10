@@ -370,6 +370,13 @@ class BaseSuccessiveHalving(BaseSearchCV):
     def _generate_candidate_params(self):
         pass
 
+    def __sklearn_tags__(self):
+        # TODO: remove this when we add array API support to
+        # `BaseSuccessiveHalving`
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = False
+        return tags
+
 
 class HalvingGridSearchCV(BaseSuccessiveHalving):
     """Search over specified parameter values with successive halving.
