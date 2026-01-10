@@ -1,0 +1,7 @@
+- Both :class:`ensemble.GradientBoostingRegressor` and
+  :class:`ensemble.GradientBoostingClassifier` with the default
+  `"friedman_mse"` criterion were computing impurity values with an incorrect scaling,
+  leading to unexpected trees in some cases. The implementation now uses
+  `"squared_error"`, which is exactly equivalent to `"friedman_mse"` up to
+  floating-point error discrepancies but computes correct impurity values.
+  By :user:`Arthur Lacote <cakedev0>`.
