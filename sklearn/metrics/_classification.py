@@ -17,7 +17,6 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix, issparse
-from scipy.special import xlogy
 
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder
@@ -40,6 +39,7 @@ from sklearn.utils._array_api import (
     _isin,
     _max_precision_float_dtype,
     _union1d,
+    _xlogy,
     get_namespace,
     get_namespace_and_device,
     move_to,
@@ -533,7 +533,7 @@ def confusion_matrix(
         ensure_min_samples=0,
     )
     # Convert the input arrays to NumPy (on CPU) irrespective of the original
-    # namespace and device so as to be able to leverage the the efficient
+    # namespace and device so as to be able to leverage the efficient
     # counting operations implemented by SciPy in the coo_matrix constructor.
     # The final results will be converted back to the input namespace and device
     # for the sake of consistency with other metric functions with array API support.
@@ -3390,7 +3390,8 @@ def _log_loss(transformed_labels, y_pred, *, normalize=True, sample_weight=None)
         sample_weight = move_to(sample_weight, xp=xp, device=device_)
     eps = xp.finfo(y_pred.dtype).eps
     y_pred = xp.clip(y_pred, eps, 1 - eps)
-    loss = -xp.sum(xlogy(transformed_labels, y_pred), axis=1)
+    transformed_labels = xp.astype(transformed_labels, y_pred.dtype, copy=False)
+    loss = -xp.sum(_xlogy(transformed_labels, y_pred, xp=xp), axis=1)
     return float(_average(loss, weights=sample_weight, normalize=normalize))
 
 

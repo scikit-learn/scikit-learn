@@ -1465,7 +1465,7 @@ def test_rbf_kernel():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     K = rbf_kernel(X, X)
-    # the diagonal elements of a rbf kernel are 1
+    # the diagonal elements of an rbf kernel are 1
     assert_allclose(K.flat[::6], np.ones(5))
 
 
