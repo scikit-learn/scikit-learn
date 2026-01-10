@@ -17,7 +17,6 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix, issparse
-from scipy.special import xlogy
 
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder
@@ -39,8 +38,8 @@ from sklearn.utils._array_api import (
     _is_xp_namespace,
     _isin,
     _max_precision_float_dtype,
-    _tolist,
     _union1d,
+    _xlogy,
     get_namespace,
     get_namespace_and_device,
     move_to,
@@ -534,7 +533,7 @@ def confusion_matrix(
         ensure_min_samples=0,
     )
     # Convert the input arrays to NumPy (on CPU) irrespective of the original
-    # namespace and device so as to be able to leverage the the efficient
+    # namespace and device so as to be able to leverage the efficient
     # counting operations implemented by SciPy in the coo_matrix constructor.
     # The final results will be converted back to the input namespace and device
     # for the sake of consistency with other metric functions with array API support.
@@ -1862,9 +1861,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
 
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred, _ = _check_targets(y_true, y_pred)
-    # Convert to Python primitive type to avoid NumPy type / Python str
-    # comparison. See https://github.com/numpy/numpy/issues/6784
-    present_labels = _tolist(unique_labels(y_true, y_pred))
+    present_labels = unique_labels(y_true, y_pred)
     if average == "binary":
         if y_type == "binary":
             if pos_label not in present_labels:
@@ -3393,7 +3390,8 @@ def _log_loss(transformed_labels, y_pred, *, normalize=True, sample_weight=None)
         sample_weight = move_to(sample_weight, xp=xp, device=device_)
     eps = xp.finfo(y_pred.dtype).eps
     y_pred = xp.clip(y_pred, eps, 1 - eps)
-    loss = -xp.sum(xlogy(transformed_labels, y_pred), axis=1)
+    transformed_labels = xp.astype(transformed_labels, y_pred.dtype, copy=False)
+    loss = -xp.sum(_xlogy(transformed_labels, y_pred, xp=xp), axis=1)
     return float(_average(loss, weights=sample_weight, normalize=normalize))
 
 
@@ -3617,10 +3615,11 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
     try:
         pos_label = _check_pos_label_consistency(pos_label, y_true)
     except ValueError:
-        classes = np.unique(y_true)
-        if classes.dtype.kind not in ("O", "U", "S"):
-            # for backward compatibility, if classes are not string then
-            # `pos_label` will correspond to the greater label
+        xp_y_true, _ = get_namespace(y_true)
+        classes = xp_y_true.unique_values(y_true)
+        # For backward compatibility, if classes are not string then
+        # `pos_label` will correspond to the greater label.
+        if not (_is_numpy_namespace(xp_y_true) and classes.dtype.kind in "OUS"):
             pos_label = classes[-1]
         else:
             raise
