@@ -210,7 +210,8 @@ def _preprocess_data(
         # For sparse X and y, it triggers copies anyway.
         # For dense X and y that already have been copied, we safely do inplace
         # rescaling.
-        X, y, sample_weight_sqrt = _rescale_data(X, y, sample_weight, inplace=copy)
+        # Hence, inplace=True here regardless of copy.
+        X, y, sample_weight_sqrt = _rescale_data(X, y, sample_weight, inplace=True)
     else:
         sample_weight_sqrt = None
     return X, y, X_offset, y_offset, X_scale, sample_weight_sqrt
