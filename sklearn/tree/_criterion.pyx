@@ -1522,61 +1522,6 @@ cdef class MAE(Criterion):
             dest[0] = upper_bound
 
 
-cdef class FriedmanMSE(MSE):
-    """Mean squared error impurity criterion with improvement score by Friedman.
-
-    Uses the formula (35) in Friedman's original Gradient Boosting paper:
-
-        diff = mean_left - mean_right
-        improvement = n_left * n_right * diff^2 / (n_left + n_right)
-    """
-
-    cdef float64_t proxy_impurity_improvement(self) noexcept nogil:
-        """Compute a proxy of the impurity reduction.
-
-        This method is used to speed up the search for the best split.
-        It is a proxy quantity such that the split that maximizes this value
-        also maximizes the impurity improvement. It neglects all constant terms
-        of the impurity decrease for a given split.
-
-        The absolute impurity improvement is only computed by the
-        impurity_improvement method once the best split has been found.
-        """
-        cdef float64_t total_sum_left = 0.0
-        cdef float64_t total_sum_right = 0.0
-
-        cdef intp_t k
-        cdef float64_t diff = 0.0
-
-        for k in range(self.n_outputs):
-            total_sum_left += self.sum_left[k]
-            total_sum_right += self.sum_right[k]
-
-        diff = (self.weighted_n_right * total_sum_left -
-                self.weighted_n_left * total_sum_right)
-
-        return diff * diff / (self.weighted_n_left * self.weighted_n_right)
-
-    cdef float64_t impurity_improvement(self, float64_t impurity_parent, float64_t
-                                        impurity_left, float64_t impurity_right) noexcept nogil:
-        # Note: none of the arguments are used here
-        cdef float64_t total_sum_left = 0.0
-        cdef float64_t total_sum_right = 0.0
-
-        cdef intp_t k
-        cdef float64_t diff = 0.0
-
-        for k in range(self.n_outputs):
-            total_sum_left += self.sum_left[k]
-            total_sum_right += self.sum_right[k]
-
-        diff = (self.weighted_n_right * total_sum_left -
-                self.weighted_n_left * total_sum_right) / self.n_outputs
-
-        return (diff * diff / (self.weighted_n_left * self.weighted_n_right *
-                               self.weighted_n_node_samples))
-
-
 cdef class Poisson(RegressionCriterion):
     """Half Poisson deviance as impurity criterion.
 
