@@ -350,10 +350,10 @@ def test_y_multioutput():
     # of 1d GP and that second dimension is twice as large
     kernel = RBF(length_scale=1.0)
 
-    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None, normalize_y=False)
+    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None)
     gpr.fit(X, y)
 
-    gpr_2d = GaussianProcessRegressor(kernel=kernel, optimizer=None, normalize_y=False)
+    gpr_2d = GaussianProcessRegressor(kernel=kernel, optimizer=None)
     gpr_2d.fit(X, y_2d)
 
     y_pred_1d, y_std_1d = gpr.predict(X2, return_std=True)

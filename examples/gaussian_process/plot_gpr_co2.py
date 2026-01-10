@@ -167,7 +167,7 @@ co2_kernel
 from sklearn.gaussian_process import GaussianProcessRegressor
 
 y_mean = y.mean()
-gaussian_process = GaussianProcessRegressor(kernel=co2_kernel, normalize_y=False)
+gaussian_process = GaussianProcessRegressor(kernel=co2_kernel)
 gaussian_process.fit(X, y - y_mean)
 
 # %%
