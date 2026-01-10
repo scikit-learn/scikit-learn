@@ -1498,7 +1498,9 @@ def test_quantile_transform_subsampling_disabled():
 
     expected_references = np.linspace(0, 1, n_quantiles)
     assert_allclose(transformer.references_, expected_references)
-    expected_quantiles = np.quantile(X.ravel(), expected_references)
+    expected_quantiles = np.quantile(
+        X.ravel(), expected_references, method="averaged_inverted_cdf"
+    )
     assert_allclose(transformer.quantiles_.ravel(), expected_quantiles)
 
 
