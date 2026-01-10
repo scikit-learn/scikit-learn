@@ -1766,6 +1766,8 @@ def test_estimators_samples(ForestClass, bootstrap, seed):
     assert_allclose(orig_tree_values, new_tree_values)
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize(
     "Forest, criterion",
     [
@@ -1805,6 +1807,8 @@ def test_missing_values_is_resilient(Forest, criterion):
     assert score_with_missing >= 0.80 * score_without_missing
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize(
     "Forest, criterion",
     [
