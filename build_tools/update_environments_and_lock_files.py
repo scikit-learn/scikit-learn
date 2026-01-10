@@ -109,6 +109,7 @@ build_metadata_list = [
             "polars",
             "pyarrow",
             "cupy",
+            "jax",
             "array-api-strict",
         ],
         "package_constraints": {
@@ -129,6 +130,7 @@ build_metadata_list = [
             "pytorch-cpu",
             "polars",
             "pyarrow",
+            "jax",
             "array-api-strict",
             "scipy-doctest",
             "pytest-playwright",

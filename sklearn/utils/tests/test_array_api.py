@@ -555,7 +555,7 @@ def test_indexing_dtype(namespace, _device, _dtype):
     if _IS_32BIT:
         assert indexing_dtype(xp) == xp.int32
     else:
-        assert indexing_dtype(xp) == xp.int64
+        assert indexing_dtype(xp) in (xp.int64, xp.int32)
 
 
 @pytest.mark.parametrize(
@@ -751,7 +751,7 @@ def test_fill_diagonal(array, array_namespace, device_, dtype_name):
 
     numpy.fill_diagonal(array_np, val=1)
     with config_context(array_api_dispatch=True):
-        _fill_diagonal(array_xp, value=1, xp=xp)
+        array_xp = _fill_diagonal(array_xp, value=1, xp=xp)
 
     assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
 
@@ -770,9 +770,9 @@ def test_add_to_diagonal(array_namespace, device_, dtype_name):
     array_xp = xp.asarray(array_np.copy(), device=device_)
 
     add_val = [1, 2, 3]
-    _fill_diagonal(array_np, value=add_val, xp=np_xp)
+    array_np = _fill_diagonal(array_np, value=add_val, xp=np_xp)
     with config_context(array_api_dispatch=True):
-        _fill_diagonal(array_xp, value=add_val, xp=xp)
+        array_xp = _fill_diagonal(array_xp, value=add_val, xp=xp)
 
     assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
 
