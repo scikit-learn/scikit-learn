@@ -21,6 +21,7 @@ from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import validate_parameter_constraints
 from sklearn.utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
 from sklearn.utils._repr_html.estimator import estimator_html_repr
+from sklearn.utils._repr_html.fitted_attributes import AttrsDict
 from sklearn.utils._repr_html.params import ParamsDict
 from sklearn.utils._set_output import _SetOutputMixin
 from sklearn.utils._tags import (
@@ -35,6 +36,7 @@ from sklearn.utils.fixes import _IS_32BIT
 from sklearn.utils.validation import (
     _check_feature_names_in,
     _generate_get_feature_names_out,
+    _is_arraylike_not_scalar,
     _is_fitted,
     check_array,
     check_is_fitted,
@@ -205,6 +207,50 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             return [attr for attr in super().__dir__() if hasattr(self, attr)]
 
     _html_repr = estimator_html_repr
+
+    def _get_fitted_attr_html(self, doc_link=""):
+        """Get fitted attributes of the estimator."""
+        # fetch the constructor or the original constructor before
+        # deprecation wrapping if any
+        init = getattr(self.__init__, "deprecated_original", self)
+        if init is object.__init__:
+            # No explicit constructor to introspect
+            return []
+
+        # It raises when inspecting an empty Pipeline. So we need
+        # to check that a Pipeline is not empty.
+        if hasattr(init, "steps") and not len(init.steps):
+            return AttrsDict(fitted_attrs="")
+
+        attributes = inspect.getmembers(init)
+
+        fitted_attributes = {
+            name: value
+            for name, value in attributes
+            if not name.startswith("_") and name.endswith("_")
+        }
+
+        fitted_attr_out = {}
+        for name, value in fitted_attributes.items():
+            if _is_arraylike_not_scalar(value) and hasattr(value, "shape"):
+                if hasattr(value, "nbytes"):
+                    attr_size = value.nbytes
+                if hasattr(value, "memory_usage"):
+                    attr_size = value.memory_usage(deep=True)
+                fitted_attr_out[name] = (
+                    type(value).__name__,
+                    value.shape,
+                    value.dtype,
+                    attr_size,
+                )
+
+            else:
+                fitted_attr_out[name] = (type(value).__name__, value)
+        return AttrsDict(
+            fitted_attrs=fitted_attr_out,
+            estimator_class=self.__class__,
+            doc_link=doc_link,
+        )
 
     @classmethod
     def _get_param_names(cls):
