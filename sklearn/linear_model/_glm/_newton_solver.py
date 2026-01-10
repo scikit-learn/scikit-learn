@@ -169,6 +169,10 @@ class NewtonSolver(ABC):
             - self.gradient_times_newton
         """
 
+    @abstractmethod
+    def compute_d2(self, X, sample_weight):
+        """Compute square of Newton decrement."""
+
     def fallback_lbfgs_solve(self, X, y, sample_weight):
         """Fallback solver in case of emergency.
 
@@ -338,8 +342,9 @@ class NewtonSolver(ABC):
         # 2. Criterion: For Newton decrement d, check 1/2 * d^2 <= tol
         #       d = sqrt(grad @ hessian^-1 @ grad)
         #         = sqrt(coef_newton @ hessian @ coef_newton)
-        #    See Boyd, Vanderberghe (2009) "Convex Optimization" Chapter 9.5.1.
-        d2 = self.coef_newton @ self.hessian @ self.coef_newton
+        #    See Boyd, Vanderberghe (2009) "Convex Optimization" Chapter 9.5.1. and
+        #    Eq. 20 of Yuan, Ho, Lin (2011).
+        d2 = self.compute_d2(X, sample_weight=sample_weight)
         check = 0.5 * d2 <= self.tol
         if self.verbose:
             print(f"    2. Newton decrement {0.5 * d2} <= {self.tol} {check}")
@@ -633,6 +638,10 @@ class NewtonCholeskySolver(NewtonSolver):
                 )
             self.use_fallback_lbfgs_solve = True
             return
+
+    def compute_d2(self, X, sample_weight):
+        """Compute square of Newton decrement."""
+        return self.coef_newton @ self.hessian @ self.coef_newton
 
     def finalize(self, X, y, sample_weight):
         if self.is_multinomial_no_penalty:
