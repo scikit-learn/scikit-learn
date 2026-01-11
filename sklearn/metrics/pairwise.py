@@ -1252,12 +1252,13 @@ def paired_manhattan_distances(X, Y):
     array([1., 2., 1.])
     """
     X, Y = check_paired_arrays(X, Y)
+    xp, _ = get_namespace(X, Y)
     diff = X - Y
     if issparse(diff):
         diff.data = np.abs(diff.data)
         return np.squeeze(np.array(diff.sum(axis=1)))
     else:
-        return np.abs(diff).sum(axis=-1)
+        return xp.sum(xp.abs(diff), axis=-1)
 
 
 @validate_params(
