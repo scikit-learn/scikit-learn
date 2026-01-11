@@ -980,11 +980,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
                     X, Y, reduce_func=_argmin_reduce, metric=metric, **metric_kwargs
                 )
             )
-            # Use concat for Array API
-            if hasattr(xp, "concat"):
-                indices = xp.concat(indices_list, axis=0)
-            else:
-                indices = xp.concatenate(indices_list, axis=0)
+            indices = xp.concat(indices_list, axis=0)
 
     return indices
 
