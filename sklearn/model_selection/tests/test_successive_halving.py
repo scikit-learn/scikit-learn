@@ -881,3 +881,38 @@ def test_halving_random_search_predefined_split_small_test():
     # Check that we have results
     assert random_search.best_score_ is not None
     assert not np.isnan(random_search.best_score_)
+
+
+@pytest.mark.parametrize(
+    "n_train, n_test, subsample_test",
+    [
+        (1, 10, False),  # single train sample, no test subsampling
+        (1, 10, True),  # single train sample, with test subsampling
+        (10, 1, True),  # single test sample, with test subsampling
+        (1, 1, True),  # single train and test sample
+    ],
+)
+def test_subsample_splitter_single_sample(n_train, n_test, subsample_test):
+    # Test that _SubsampleMetaSplitter handles edge cases with single samples.
+    # This covers the elif branches for when len(train_idx) == 1 or
+    # len(test_idx) == 1."""
+    n_samples = n_train + n_test
+    X = np.arange(n_samples).reshape(-1, 1)
+    y = np.zeros(n_samples)
+
+    # Use PredefinedSplit to create a split with exactly n_train and n_test samples
+    test_fold = [-1] * n_train + [0] * n_test
+    base_cv = PredefinedSplit(test_fold)
+
+    cv = _SubsampleMetaSplitter(
+        base_cv=base_cv,
+        fraction=0.5,
+        subsample_test=subsample_test,
+        random_state=42,
+    )
+
+    for train_idx, test_idx in cv.split(X, y):
+        # With fraction=0.5 and single sample, we should still get at least 1
+        assert len(train_idx) >= 1
+        if subsample_test:
+            assert len(test_idx) >= 1
