@@ -650,7 +650,8 @@ def _argmin_reduce(dist, start):
     # `start` is specified in the signature but not used. This is because the higher
     # order `pairwise_distances_chunked` function needs reduction functions that are
     # passed as argument to have a two arguments signature.
-    return dist.argmin(axis=1)
+    xp, _ = get_namespace(dist)
+    return xp.argmin(dist, axis=1)
 
 
 _VALID_METRICS = [
@@ -937,6 +938,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     """
     ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
     X, Y = check_pairwise_arrays(X, Y, ensure_all_finite=ensure_all_finite)
+    xp, _ = get_namespace(X, Y)
 
     if axis == 0:
         X, Y = Y, X
@@ -972,15 +974,14 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         # Turn off check for finiteness because this is costly and because arrays
         # have already been validated.
         with config_context(assume_finite=True):
-            indices = np.concatenate(
-                list(
-                    # This returns an np.ndarray generator whose arrays we need
-                    # to flatten into one.
-                    pairwise_distances_chunked(
-                        X, Y, reduce_func=_argmin_reduce, metric=metric, **metric_kwargs
-                    )
+            indices_list = list(
+                # This returns an np.ndarray generator whose arrays we need
+                # to flatten into one.
+                pairwise_distances_chunked(
+                    X, Y, reduce_func=_argmin_reduce, metric=metric, **metric_kwargs
                 )
             )
+            indices = xp.concat(indices_list, axis=0)
 
     return indices
 
