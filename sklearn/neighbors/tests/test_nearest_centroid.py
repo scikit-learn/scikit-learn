@@ -258,5 +258,7 @@ def test_partial_fit_manhattan_error():
     """Check that partial_fit raises error for manhattan metric."""
     X, y = make_blobs(n_samples=50, centers=2, random_state=42)
     nc = NearestCentroid(metric="manhattan")
-    with pytest.raises(ValueError, match="partial_fit does not support the 'manhattan' metric"):
+    with pytest.raises(
+        ValueError, match="partial_fit does not support the 'manhattan' metric"
+    ):
         nc.partial_fit(X, y, classes=[0, 1])

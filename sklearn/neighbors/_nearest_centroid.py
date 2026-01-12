@@ -18,7 +18,10 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import get_tags
 from sklearn.utils._available_if import available_if
 from sklearn.utils._param_validation import Interval, StrOptions
-from sklearn.utils.multiclass import check_classification_targets, _check_partial_fit_first_call
+from sklearn.utils.multiclass import (
+    check_classification_targets,
+    _check_partial_fit_first_call,
+)
 from sklearn.utils.sparsefuncs import csc_median_axis_0
 from sklearn.utils.validation import check_is_fitted, validate_data
 
@@ -303,9 +306,7 @@ class NearestCentroid(
             Fitted estimator.
         """
         first_call = _check_partial_fit_first_call(self, classes)
-        ensure_all_finite = (
-            "allow-nan" if get_tags(self).input_tags.allow_nan else True
-        )
+        ensure_all_finite = "allow-nan" if get_tags(self).input_tags.allow_nan else True
         X, y = validate_data(
             self,
             X,
