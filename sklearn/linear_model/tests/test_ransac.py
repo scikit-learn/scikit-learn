@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 from numpy.testing import assert_array_almost_equal, assert_array_equal
-from sklearn.utils._testing import assert_no_warnings
+import warnings
 
 from sklearn.datasets import make_regression
 from sklearn.exceptions import ConvergenceWarning
@@ -561,5 +561,8 @@ def test_ransac_skip_non_finite_score():
         random_state=0,
     )
 
-    # Should not raise UndefinedMetricWarning (e.g. from R^2 score)
-    assert_no_warnings(ransac.fit, X, y)
+    with warnings.catch_warnings(record=True) as w:
+        ransac.fit(X, y)
+
+    # Ensure no warnings were raised
+    assert len(w) == 0
