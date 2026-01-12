@@ -1352,11 +1352,13 @@ class Lasso(ElasticNet):
     fitting time, see :ref:`User Guide on coordinate descent <coordinate_descent>`.
 
     .. note::
-    The :meth:`path` static method is inherited from :class:`ElasticNet` and
-    computes the Elastic Net regularization path. Its default ``l1_ratio=0.5``
-    differs from the Lasso's implicit ``l1_ratio=1.0`` (pure L1 penalty).
-    To compute a true Lasso regularization path, use :func:`lasso_path` or
-    explicitly set ``l1_ratio=1.0`` when calling :meth:`path`.
+    The :meth:`~sklearn.linear_model.ElasticNet.path` static method is inherited
+    from :class:`~sklearn.linear_model.ElasticNet` and computes the Elastic Net
+    regularization path. Its default ``l1_ratio=0.5`` differs from the Lasso's
+    implicit ``l1_ratio=1.0`` (pure L1 penalty).
+    To compute a true Lasso regularization path, use
+    :func:`~sklearn.linear_model.lasso_path` or explicitly set ``l1_ratio=1.0``
+    when calling :meth:`~sklearn.linear_model.ElasticNet.path`.
 
     Examples
     --------
