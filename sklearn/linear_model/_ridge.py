@@ -1874,9 +1874,13 @@ class _RidgeGCV(LinearModel):
             return safe_sparse_dot(X, X.T, dense_output=True)
         # X is sparse and fit_intercept is True
         # centered matrix = X - sqrt_sw X_mean^T
-        X_mX = sqrt_sw[:, None] * safe_sparse_dot(X_mean, X.T, dense_output=True)
-        X_mX_m = sqrt_sw[:, None] * sqrt_sw[None, :] * (X_mean @ X_mean)
-        return safe_sparse_dot(X, X.T, dense_output=True) + X_mX_m - X_mX - X_mX.T
+        X_Xm = safe_sparse_dot(X, X_mean, dense_output=True)
+        return (
+            safe_sparse_dot(X, X.T, dense_output=True)
+            - X_Xm[:, None] * sqrt_sw[None, :]
+            - sqrt_sw[:, None] * X_Xm[None, :]
+            + (X_mean @ X_mean) * sqrt_sw[:, None] * sqrt_sw[None, :]
+        )
 
     def _compute_covariance(self, X, X_mean, sqrt_sw):
         """Computes covariance matrix X^T X with possible centering.
