@@ -3407,15 +3407,15 @@ def _log_loss(transformed_labels, y_pred, *, normalize=True, sample_weight=None)
 def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     """Average hinge loss (non-regularized).
 
-    In binary class case, assuming labels in y_true are encoded with +1 and -1,
-    when a prediction mistake is made, ``margin = y_true * pred_decision`` is
-    always negative (since the signs disagree), implying ``1 - margin`` is
+    In :term:`binary` class case, assuming labels in `y_true` are encoded with +1
+    and -1, when a prediction mistake is made, `margin = y_true * pred_decision` is
+    always negative (since the signs are opposite), implying `1 - margin` is
     always greater than 1.  The cumulated hinge loss is therefore an upper
     bound of the number of mistakes made by the classifier.
 
-    In multiclass case, the function expects that either all the labels are
-    included in y_true or an optional labels argument is provided which
-    contains all the labels. The multilabel margin is calculated according
+    In :term:`multiclass` case, the function expects that either all the labels are
+    present in `y_true` or an optional `labels` argument is provided which
+    contains all the labels. The multiclass margin is calculated according
     to Crammer-Singer's method. As in the binary case, the cumulated hinge loss
     is an upper bound of the number of mistakes made by the classifier.
 
@@ -3424,11 +3424,13 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     Parameters
     ----------
     y_true : array-like of shape (n_samples,)
-        True target, consisting of integers of two values. The positive label
-        must be greater than the negative label.
+        True target. For :term:`binary` data, it should only contain two unique
+        values, with the positive label being greater than the negative label.
+        For :term:`multiclass` data, all labels should be present, or provided
+        via `labels`.
 
     pred_decision : array-like of shape (n_samples,) or (n_samples, n_classes)
-        Predicted decisions, as output by decision_function (floats).
+        Predicted decisions, as output by :term:`decision_function` (floats).
 
     labels : array-like, default=None
         Contains all the labels for the problem. Used in multiclass hinge loss.
