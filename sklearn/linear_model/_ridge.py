@@ -1953,12 +1953,13 @@ class _RidgeGCV(LinearModel):
         it has been scaled by sqrt_sw. The centered X is never actually
         computed because centering would break the sparsity of X.
         """
+        xp, _ = get_namespace(X)
         XA = X @ A
         if sparse.isspmatrix(X):
             # sparse matrix use multiply for element wise multiplication
             XAX = np.ravel(X.multiply(XA).sum(axis=1))
         else:
-            XAX = (XA * X).sum(axis=1)
+            XAX = xp.sum(XA * X, axis=1)
         center = self.fit_intercept and sparse.issparse(X)
         if not center:
             # in this case centering has been done in preprocessing
