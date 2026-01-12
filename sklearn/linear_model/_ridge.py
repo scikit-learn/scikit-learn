@@ -2007,8 +2007,9 @@ class _RidgeGCV(LinearModel):
 
     def _eigen_decompose_covariance(self, X, X_mean, y, sqrt_sw):
         """Eigendecomposition of covariance matrix X^T.X"""
+        xp, is_array_api = get_namespace(X)
         cov = self._compute_covariance(X, X_mean, sqrt_sw)
-        eigvals, V = linalg.eigh(cov)
+        eigvals, V = xp.linalg.eigh(cov)
         XT_y = safe_sparse_dot(X.T, y, dense_output=True)
         XT_sqrt_sw = safe_sparse_dot(X.T, sqrt_sw, dense_output=True)
         if self.fit_intercept and sparse.issparse(X):
