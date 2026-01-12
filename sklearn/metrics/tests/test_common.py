@@ -2574,6 +2574,32 @@ def test_mixed_array_api_namespace_input_compliance(
                 _check_output_type(metric_np, metric_xp)
 
 
+# All classification metrics, minus multilabel ranking metrics, which take
+# label indicator input (and thus never string input)
+CLASSIFICATION_METRICS_EXCL_MULTILABEL_RANKING = (set(CLASSIFICATION_METRICS.keys()) | set(CONTINUOUS_CLASSIFICATION_METRICS.keys()) | set(CURVE_METRICS.keys())) - METRIC_UNDEFINED_BINARY
+
+
+@pytest.mark.parametrize(
+    "from_ns_and_device, to_ns_and_device",
+    [
+        pytest.param(*args[:2], id=args[2])
+        for args in yield_mixed_namespace_input_permutations()
+    ],
+)
+@pytest.mark.parametrize("metric_name", sorted(set(METRICS_SUPPORTING_MIXED_NAMESPACE) & CLASSIFICATION_METRICS_EXCL_MULTILABEL_RANKING))
+def test_mixed_array_api_namespace_list_input(
+    metric_name, from_ns_and_device, to_ns_and_device
+):
+    """
+    """
+    xp_to = _array_api_for_tests(to_ns_and_device.xp, to_ns_and_device.device)
+    xp_from = _array_api_for_tests(from_ns_and_device.xp, from_ns_and_device.device)
+
+    binary = ([0, 0, 1, 1], [0, 1, 0, 1])
+    multiclass = ([0, 1, 2, 1], [0, 1, 2, 1])
+
+
+
 @pytest.mark.parametrize("df_lib_name", ["pandas", "polars"])
 @pytest.mark.parametrize("metric_name", sorted(ALL_METRICS))
 def test_metrics_dataframe_series(metric_name, df_lib_name):
