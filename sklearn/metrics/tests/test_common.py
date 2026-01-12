@@ -2469,6 +2469,18 @@ def test_array_api_compliance(metric, array_namespace, device, dtype_name, check
     check_func(metric, array_namespace, device, dtype_name)
 
 
+def _check_output_type(out_np, out_xp, xp_to, y2_xp):
+    if isinstance(out_np, float):
+        assert isinstance(out_xp, float)
+    elif hasattr(out_np, "shape"):
+        assert hasattr(out_xp, "shape")
+        assert get_namespace(out_xp)[0] == xp_to
+        assert device(out_xp) == device(y2_xp)
+    # `classification_report` returns str (with default `output_dict=False`)
+    elif isinstance(out_np, str):
+        assert isinstance(out_xp, str)
+
+
 @pytest.mark.parametrize(
     "from_ns_and_device, to_ns_and_device",
     [
@@ -2497,7 +2509,7 @@ def test_mixed_array_api_namespace_input_compliance(
     metric = ALL_METRICS[metric_name]
 
     data_all = {
-        "binary_class": ([0, 0, 1, 1], [0, 1, 0, 1]),
+        "binary": ([0, 0, 1, 1], [0, 1, 0, 1]),
         "continuous_binary": ([1, 0, 1, 0], [0.5, 0.2, 0.7, 0.6]),
         "continuous_label_indicator": ([[1, 0, 1, 0]], [[0.5, 0.2, 0.7, 0.6]]),
         "regression": ([2, 1, 3, 4], [2, 1, 2, 2]),
@@ -2519,7 +2531,7 @@ def test_mixed_array_api_namespace_input_compliance(
             # These should all accept binary label input as there are no
             # `CLASSIFICATION_METRICS` that are in `METRIC_UNDEFINED_BINARY` and are
             # NOT `partial`s (which we do not test for in array API compliance)
-            data = data_all["binary_class"]
+            data = data_all["binary"]
         elif metric_name in {**CONTINUOUS_CLASSIFICATION_METRICS, **CURVE_METRICS}:
             if metric_name not in METRIC_UNDEFINED_BINARY:
                 data = data_all["continuous_binary"]
@@ -2554,17 +2566,6 @@ def test_mixed_array_api_namespace_input_compliance(
 
             metric_xp = metric(y1_xp, y2_xp, **metric_kwargs_xp)
             metric_np = metric(y1, y2, **metric_kwargs_np)
-
-            def _check_output_type(out_np, out_xp):
-                if isinstance(out_np, float):
-                    assert isinstance(out_xp, float)
-                elif hasattr(out_np, "shape"):
-                    assert hasattr(out_xp, "shape")
-                    assert get_namespace(out_xp)[0] == xp_to
-                    assert device(out_xp) == device(y2_xp)
-                # `classification_report` returns str (with default `output_dict=False`)
-                elif isinstance(out_np, str):
-                    assert isinstance(out_xp, str)
 
             if isinstance(metric_np, Tuple):
                 for out_np, out_xp in zip(metric_np, metric_xp):

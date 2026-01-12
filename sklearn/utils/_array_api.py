@@ -142,7 +142,8 @@ def yield_mixed_namespace_input_permutations():
     * non-NumPy to NumPy (including GPU to CPU)
     * NumPy to non-NumPy (including CPU to GPU)
     * non-NumPy to non-NumPy (GPU to GPU)
-    * array-api-strict to non-NumPy
+    * array-api-strict to non-NumPy (this pair also has no special hardware
+      requirements to allow for local testing)
     """
 
     NamespaceAndDevice = namedtuple("NamespaceAndDevice", ["xp", "device"])
@@ -171,7 +172,7 @@ def yield_mixed_namespace_input_permutations():
     try:
         import array_api_strict
 
-        device = array_api_strict.Device("CPU_DEVICE")
+        device = array_api_strict.Device("device1")
     except ImportError:
         # This case will generally be skipped when `array_api_strict` is not installed
         # but we still include it so it shows in the test output.
@@ -179,8 +180,8 @@ def yield_mixed_namespace_input_permutations():
 
     yield (
         NamespaceAndDevice("array_api_strict", device),
-        NamespaceAndDevice("torch", "mps"),
-        "array_api_strict to torch mps",
+        NamespaceAndDevice("torch", "cpu"),
+        "array_api_strict to torch cpu",
     )
 
 
