@@ -18,7 +18,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import get_tags
 from sklearn.utils._available_if import available_if
 from sklearn.utils._param_validation import Interval, StrOptions
-from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.multiclass import check_classification_targets, _check_partial_fit_first_call
 from sklearn.utils.sparsefuncs import csc_median_axis_0
 from sklearn.utils.validation import check_is_fitted, validate_data
 
@@ -270,6 +270,85 @@ class NearestCentroid(
             # Now adjust the centroids using the deviation
             msd = ms * self.deviations_
             self.centroids_ = np.array(dataset_centroid_ + msd, copy=False)
+        return self
+
+    @_fit_context(prefer_skip_nested_validation=True)
+    def partial_fit(self, X, y, classes=None):
+        """
+        Incremental fit on a batch of samples.
+
+        This method is expected to be called several times consecutively
+        on different chunks of a dataset so as to implement out-of-core
+        or online learning.
+
+        This is especially useful when the whole dataset is too big to fit in
+        memory at once.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+        y : array-like of shape (n_samples,)
+            Target values.
+        classes : array-like of shape (n_classes,), default=None
+            List of all the classes that can possibly appear in the y vector.
+
+            Must be provided at the first call to partial_fit, can be omitted
+            in subsequent calls.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
+        first_call = _check_partial_fit_first_call(self, classes)
+        ensure_all_finite = (
+            "allow-nan" if get_tags(self).input_tags.allow_nan else True
+        )
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            reset=first_call,
+            ensure_all_finite=ensure_all_finite,
+            accept_sparse=["csr", "csc"],
+        )
+        check_classification_targets(y)
+
+        n_samples, n_features = X.shape
+
+        if self.metric == "manhattan":
+            raise ValueError("partial_fit does not support the 'manhattan' metric.")
+
+        if first_call:
+            self.n_features_in_ = n_features
+            n_classes = len(self.classes_)
+            self.nk_ = np.zeros(n_classes, dtype=np.int64)
+            self.true_centroids_ = np.zeros((n_classes, n_features), dtype=np.float64)
+        else:
+            n_classes = len(self.classes_)
+            if n_features != self.n_features_in_:
+                raise ValueError("Number of features does not match previous calls.")
+
+        unique_y = np.unique(y)
+        for y_i in unique_y:
+            if y_i not in self.classes_:
+                raise ValueError(f"Unknown class {y_i} in y.")
+            i = np.searchsorted(self.classes_, y_i)
+            mask = y == y_i
+            n_new = mask.sum()
+            if n_new == 0:
+                continue
+            mu_new = X[mask].mean(axis=0)
+            n_old = self.nk_[i]
+            mu_old = self.true_centroids_[i]
+            self.true_centroids_[i] = (n_old * mu_old + n_new * mu_new) / (
+                n_old + n_new
+            )
+            self.nk_[i] += n_new
+
+        self.centroids_ = self.true_centroids_.copy()
         return self
 
     def predict(self, X):
