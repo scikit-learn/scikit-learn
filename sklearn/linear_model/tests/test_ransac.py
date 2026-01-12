@@ -542,6 +542,7 @@ def test_perfect_horizontal_line():
     assert_allclose(ransac_estimator.estimator_.coef_, 0.0)
     assert_allclose(ransac_estimator.estimator_.intercept_, 0.0)
 
+
 def test_ransac_skip_non_finite_score():
     """Ensure RANSAC skips iterations when estimator.score returns nan.
 
@@ -562,4 +563,3 @@ def test_ransac_skip_non_finite_score():
     # Should not raise UndefinedMetricWarning (e.g. from R^2 score)
     with pytest.warns(None):
         ransac.fit(X, y)
-
