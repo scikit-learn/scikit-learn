@@ -20,6 +20,7 @@ from sklearn.linear_model._base import _pre_fit
 from sklearn.linear_model._cd_fast import (
     enet_coordinate_descent,
     enet_coordinate_descent_gram,
+    enet_coordinate_descent_multinomial,
     sparse_enet_coordinate_descent,
 )
 from sklearn.linear_model._linear_loss import (
@@ -1466,23 +1467,21 @@ class NewtonCDSolver(NewtonSolver):
             with warnings.catch_warnings():
                 # Ignore warnings that add little information for users.
                 warnings.simplefilter("ignore", ConvergenceWarning)
-                _, gap, inner_tol, n_inner_iter = (
-                    enet_coordinate_descent_multinomial_py(
-                        W=w,
-                        alpha=self.l1_reg_strength,
-                        beta=self.l2_reg_strength,
-                        X=X,
-                        sample_weight=sample_weight,
-                        raw_prediction=self.raw_prediction,
-                        grad_pointwise=self.grad_pointwise,
-                        proba=proba,
-                        fit_intercept=self.linear_loss.fit_intercept,
-                        max_iter=1000,  # TODO(newton-cd): improve
-                        tol=self.inner_tol,
-                        do_screening=True,
-                        early_stopping=False,
-                        verbose=max(0, self.verbose - 3),  # True for verbose >= 4
-                    )
+                _, gap, inner_tol, n_inner_iter = enet_coordinate_descent_multinomial(
+                    W=w,
+                    alpha=self.l1_reg_strength,
+                    beta=self.l2_reg_strength,
+                    X=X,
+                    sample_weight=sample_weight,
+                    raw_prediction=self.raw_prediction,
+                    grad_pointwise=self.grad_pointwise,
+                    proba=proba,
+                    fit_intercept=self.linear_loss.fit_intercept,
+                    max_iter=1000,  # TODO(newton-cd): improve
+                    tol=self.inner_tol,
+                    do_screening=True,
+                    early_stopping=False,
+                    verbose=max(0, self.verbose - 3),  # True for verbose >= 4
                 )
 
             # Set self.coef_newton.

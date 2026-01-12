@@ -8,7 +8,10 @@ import pytest
 from scipy import sparse
 
 from sklearn._loss import HalfMultinomialLoss, HalfSquaredError
-from sklearn.linear_model._cd_fast import enet_coordinate_descent_gram
+from sklearn.linear_model._cd_fast import (
+    enet_coordinate_descent_gram,
+    enet_coordinate_descent_multinomial,
+)
 from sklearn.linear_model._glm._newton_solver import (
     enet_coordinate_descent_multinomial_py,
     min_norm_subgradient,
@@ -71,7 +74,10 @@ def test_min_norm_subgradient():
 
 
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
-@pytest.mark.parametrize("cd_multinomial", [enet_coordinate_descent_multinomial_py])
+@pytest.mark.parametrize(
+    "cd_multinomial",
+    [enet_coordinate_descent_multinomial, enet_coordinate_descent_multinomial_py],
+)
 @pytest.mark.parametrize("sparse_X", [False, True])
 @pytest.mark.parametrize("alpha", [0, 1])
 @pytest.mark.parametrize("max_iter", [1, 5])
