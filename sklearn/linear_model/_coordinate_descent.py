@@ -1312,7 +1312,8 @@ class Lasso(ElasticNet):
     See Also
     --------
     lars_path : Regularization path using LARS.
-    lasso_path : Regularization path using Lasso.
+    lasso_path : Compute Lasso path with coordinate descent using pure L1 penalty.
+        Recommended over the :meth:`path` method for computing true Lasso paths.
     LassoLars : Lasso Path along the regularization parameter using LARS algorithm.
     LassoCV : Lasso alpha parameter by cross-validation.
     LassoLarsCV : Lasso least angle parameter algorithm by cross-validation.
@@ -1349,6 +1350,13 @@ class Lasso(ElasticNet):
 
     The underlying coordinate descent solver uses gap safe screening rules to speedup
     fitting time, see :ref:`User Guide on coordinate descent <coordinate_descent>`.
+
+    .. note::
+    The :meth:`path` static method is inherited from :class:`ElasticNet` and
+    computes the Elastic Net regularization path. Its default ``l1_ratio=0.5``
+    differs from the Lasso's implicit ``l1_ratio=1.0`` (pure L1 penalty).
+    To compute a true Lasso regularization path, use :func:`lasso_path` or
+    explicitly set ``l1_ratio=1.0`` when calling :meth:`path`.
 
     Examples
     --------
