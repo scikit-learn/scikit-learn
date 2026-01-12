@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 from numpy.testing import assert_array_almost_equal, assert_array_equal
-import warnings
 
 from sklearn.datasets import make_regression
 from sklearn.exceptions import ConvergenceWarning
