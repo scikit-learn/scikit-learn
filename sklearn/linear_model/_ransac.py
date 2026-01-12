@@ -524,10 +524,16 @@ class RANSACRegressor(
 
             # score of inlier data set
             score_subset = estimator.score(
-                X_inlier_subset,
-                y_inlier_subset,
-                **score_params_inlier_subset,
+            X_inlier_subset,
+            y_inlier_subset,
+            **score_params_inlier_subset,
             )
+
+            # Skip iterations with invalid score (e.g. nan, inf)
+            if not np.isfinite(score_subset):
+            self.n_skips_invalid_model_ += 1
+            continue
+
 
             # same number of inliers but worse score -> skip current random
             # sample
