@@ -173,8 +173,9 @@ jobs:
 
       - name: Build and test wheels
         env:
+          # To allow cibuildwheel to be run manually, non-CI-specific settings are in
+          # pyproject.toml.
           CIBW_ENABLE: ${{ matrix.cibw_enable }}
-          CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_ARCHS: all
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
@@ -184,17 +185,13 @@ jobs:
           # toolchain
           CIBW_CONFIG_SETTINGS_WINDOWS: "setup-args=--vsenv"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir}
-          CIBW_BEFORE_BUILD: bash {project}/build_tools/wheels/cibw_before_build.sh {project}
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }}
           CIBW_ENVIRONMENT_PASS_LINUX: RUNNER_OS
-          CIBW_TEST_REQUIRES: pytest pandas
           # On Windows, we use a custom Docker image and CIBW_TEST_REQUIRES_WINDOWS
           # does not make sense because it would install dependencies in the host
           # rather than inside the Docker image
           CIBW_TEST_REQUIRES_WINDOWS: ""
-          CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh {project}
           CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }} {project}
-          CIBW_BUILD_VERBOSITY: 1
 
         run: bash build_tools/wheels/build_wheels.sh
 

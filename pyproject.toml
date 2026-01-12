@@ -97,9 +97,11 @@ maintenance = ["conda-lock==3.0.1"]
 build-backend = "mesonpy"
 # Minimum requirements for the build system to execute.
 requires = [
-    "meson-python>=0.16.0,<0.19.0",
+    # TODO: use an official meson-python version once
+    # https://github.com/mesonbuild/meson-python/pull/824 has been released.
+    "meson-python @ git+https://github.com/mhsmith/meson-python@android",
     "Cython>=3.0.10,<3.2.0",
-    "numpy>=2,<2.3.0",
+    "numpy==2.3.2", # TODO: revert to ">=2,<2.3.0"" once Android NumPy wheels are on PyPI.
     "scipy>=1.8.0,<1.16.0",
 ]
 
@@ -111,6 +113,28 @@ addopts = [
     "--color=yes",
     "--import-mode=importlib",
 ]
+
+# Additional CI-specific settings are in the GitHub workflow files.
+[tool.cibuildwheel]
+before-build = "bash {project}/build_tools/wheels/cibw_before_build.sh {project}"
+test-requires = [
+    "pytest",
+    "pandas",
+]
+test-command = "bash {project}/build_tools/wheels/test_wheels.sh {project}"
+build-verbosity = 1
+
+[tool.cibuildwheel.environment]
+SKLEARN_SKIP_NETWORK_TESTS = "1"
+
+[[tool.cibuildwheel.overrides]]
+select = "*-android_*"
+before-build = ""
+test-command = "python -m pytest --pyargs sklearn"
+
+# Python 3.13 defaults to API level 21, which lacks some required math functions.
+inherit.environment = "append"
+environment.ANDROID_API_LEVEL = "24"
 
 [tool.ruff]
 line-length = 88
