@@ -37,10 +37,10 @@ def check_clusterings(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,)
+    labels_true : array-like of shape (n_samples,), dtype=integral
         The true labels.
 
-    labels_pred : array-like of shape (n_samples,)
+    labels_pred : array-like of shape (n_samples,), dtype=integral
         The predicted labels.
     """
     labels_true = check_array(
@@ -113,10 +113,10 @@ def contingency_matrix(
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,)
+    labels_true : array-like of shape (n_samples,), dtype=integral
         Ground truth class labels to be used as a reference.
 
-    labels_pred : array-like of shape (n_samples,)
+    labels_pred : array-like of shape (n_samples,), dtype=integral
         Cluster labels to evaluate.
 
     eps : float, default=None
@@ -500,10 +500,10 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,)
+    labels_true : array-like of shape (n_samples,), dtype=integral
         Ground truth class labels to be used as a reference.
 
-    labels_pred : array-like of shape (n_samples,)
+    labels_pred : array-like of shape (n_samples,), dtype=integral
         Cluster labels to evaluate.
 
     beta : float, default=1.0
@@ -588,10 +588,10 @@ def homogeneity_score(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,)
+    labels_true : array-like of shape (n_samples,), dtype=integral
         Ground truth class labels to be used as a reference.
 
-    labels_pred : array-like of shape (n_samples,)
+    labels_pred : array-like of shape (n_samples,), dtype=integral
         Cluster labels to evaluate.
 
     Returns
@@ -664,10 +664,10 @@ def completeness_score(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,)
+    labels_true : array-like of shape (n_samples,), dtype=integral
         Ground truth class labels to be used as a reference.
 
-    labels_pred : array-like of shape (n_samples,)
+    labels_pred : array-like of shape (n_samples,), dtype=integral
         Cluster labels to evaluate.
 
     Returns
@@ -747,10 +747,10 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,)
+    labels_true : array-like of shape (n_samples,), dtype=integral
         Ground truth class labels to be used as a reference.
 
-    labels_pred : array-like of shape (n_samples,)
+    labels_pred : array-like of shape (n_samples,), dtype=integral
         Cluster labels to evaluate.
 
     beta : float, default=1.0
@@ -972,11 +972,11 @@ def adjusted_mutual_info_score(
 
     Parameters
     ----------
-    labels_true : int array-like of shape (n_samples,)
+    labels_true : int array-like of shape (n_samples,), dtype=integral
         A clustering of the data into disjoint subsets, called :math:`U` in
         the above formula.
 
-    labels_pred : int array-like of shape (n_samples,)
+    labels_pred : int array-like of shape (n_samples,), dtype=integral
         A clustering of the data into disjoint subsets, called :math:`V` in
         the above formula.
 
@@ -1108,10 +1108,10 @@ def normalized_mutual_info_score(
 
     Parameters
     ----------
-    labels_true : int array-like of shape (n_samples,)
+    labels_true : int array-like of shape (n_samples,), dtype=integral
         A clustering of the data into disjoint subsets.
 
-    labels_pred : int array-like of shape (n_samples,)
+    labels_pred : int array-like of shape (n_samples,), dtype=integral
         A clustering of the data into disjoint subsets.
 
     average_method : {'min', 'geometric', 'arithmetic', 'max'}, default='arithmetic'
