@@ -1916,8 +1916,9 @@ class _RidgeGCV(LinearModel):
         # X is sparse and fit_intercept is True
         # centered matrix = X - sqrt_sw X_mean^T
         sw_sum = sqrt_sw @ sqrt_sw
-        return safe_sparse_dot(X.T, X, dense_output=True) - sw_sum * np.outer(
-            X_mean, X_mean
+        return (
+            safe_sparse_dot(X.T, X, dense_output=True)
+            - sw_sum * X_mean[:, None] * X_mean[None, :]
         )
 
     def _sparse_multidot_diag(self, X, A, X_mean, sqrt_sw):
