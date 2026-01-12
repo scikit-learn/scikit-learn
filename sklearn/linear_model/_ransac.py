@@ -530,9 +530,10 @@ class RANSACRegressor(
             )
 
             # Skip iterations with invalid score (e.g. nan, inf)
-            if not np.isfinite(score_subset):
-            self.n_skips_invalid_model_ += 1
-            continue
+            if score_subset is None or not np.isfinite(score_subset):
+                self.n_skips_invalid_model_ += 1
+                continue
+
 
 
             # same number of inliers but worse score -> skip current random
