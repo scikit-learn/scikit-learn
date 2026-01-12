@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 from numpy.testing import assert_array_almost_equal, assert_array_equal
+from sklearn.utils._testing import assert_no_warnings
 
 from sklearn.datasets import make_regression
 from sklearn.exceptions import ConvergenceWarning
@@ -542,7 +543,6 @@ def test_perfect_horizontal_line():
     assert_allclose(ransac_estimator.estimator_.coef_, 0.0)
     assert_allclose(ransac_estimator.estimator_.intercept_, 0.0)
 
-
 def test_ransac_skip_non_finite_score():
     """Ensure RANSAC skips iterations when estimator.score returns nan.
 
@@ -561,5 +561,4 @@ def test_ransac_skip_non_finite_score():
     )
 
     # Should not raise UndefinedMetricWarning (e.g. from R^2 score)
-    with pytest.warns(None):
-        ransac.fit(X, y)
+    assert_no_warnings(ransac.fit, X, y)
