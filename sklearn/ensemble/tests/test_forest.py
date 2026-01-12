@@ -1596,6 +1596,7 @@ def test_max_samples_geq_one(name):
     )
     est2.fit(X, y)
     assert est1._n_samples_bootstrap == est2._n_samples_bootstrap
+    assert_allclose(est1.score(X, y), est2.score(X, y))
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
