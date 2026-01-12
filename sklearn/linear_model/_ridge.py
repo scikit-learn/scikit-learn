@@ -1618,25 +1618,14 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
 
 def _check_gcv_mode(X, gcv_mode):
-    if gcv_mode in ["cov", "gram"]:
-        return gcv_mode
+    # svd only implemented for dense X
+    if gcv_mode == "svd" and not sparse.issparse(X):
+        return "svd"
 
-    # auto option
-    if gcv_mode not in ["eigen", "svd"]:
-        gcv_mode = "eigen" if sparse.issparse(X) else "svd"
-
-    # svd not implemented for sparse X, fallback to eigen
-    if gcv_mode == "svd" and sparse.issparse(X):
-        gcv_mode = "eigen"
-
-    # eigen : gram (n < p) or cov (p <= n)
-    if gcv_mode == "eigen":
-        n, p = X.shape
-        return "gram" if n < p else "cov"
-
-    # sanity check
-    assert gcv_mode == "svd" and not sparse.issparse(X)
-    return "svd"
+    # All other cases ("auto", "eigen", "svd" with sparse X)
+    # fallbacks to gram (n < p) or cov (p <= n)
+    n, p = X.shape
+    return "gram" if n < p else "cov"
 
 
 def _find_smallest_angle(query, vectors):
@@ -2659,7 +2648,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Flag indicating which strategy to use when performing
         Leave-One-Out Cross-Validation. Options are::
 
-            'auto' : use 'svd' if X is dense, otherwise use 'eigen'
+            'auto' : same as 'eigen'
             'svd' : use singular value decomposition of X when X is dense,
                 fallback to 'eigen' when X is sparse
             'eigen' : use eigendecomposition of X X^T when n_samples < n_features

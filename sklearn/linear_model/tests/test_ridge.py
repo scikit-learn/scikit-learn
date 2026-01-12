@@ -975,23 +975,19 @@ def test_ridge_gcv_sample_weights(
 
 @pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize("X_shape", [(5, 2), (2, 5)])
-def test_check_gcv_mode_choice(sparse_container, X_shape):
+@pytest.mark.parametrize("gcv_mode", ["auto", "svd", "eigen"])
+def test_check_gcv_mode_choice(sparse_container, X_shape, gcv_mode):
     n, p = X_shape
     X, _ = make_regression(n_samples=n, n_features=p)
     sparse_X = sparse_container is not None
     if sparse_X:
         X = sparse_container(X)
 
-    eigen_mode = "gram" if n < p else "cov"
-    assert _check_gcv_mode(X, "eigen") == eigen_mode
-    assert _check_gcv_mode(X, "cov") == "cov"
-    assert _check_gcv_mode(X, "gram") == "gram"
-    if sparse_X:
-        assert _check_gcv_mode(X, "auto") == eigen_mode
-        assert _check_gcv_mode(X, "svd") == eigen_mode
+    if gcv_mode == "svd" and not sparse_X:
+        assert _check_gcv_mode(X, gcv_mode) == "svd"
     else:
-        assert _check_gcv_mode(X, "auto") == "svd"
-        assert _check_gcv_mode(X, "svd") == "svd"
+        eigen_mode = "gram" if n < p else "cov"
+        assert _check_gcv_mode(X, gcv_mode) == eigen_mode
 
 
 def _test_ridge_loo(sparse_container):
