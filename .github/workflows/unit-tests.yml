@@ -175,6 +175,13 @@ jobs:
             COVERAGE: false
             SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 1  # non-default seed
 
+          - name: Linux docker_debian_32bit
+            os: ubuntu-24.04
+            DOCKER_CONTAINER: i386/debian:trixie
+            DISTRIB: debian-32
+            LOCK_FILE: build_tools/azure/debian_32bit_lock.txt
+            SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 4  # non-default seed
+
           - name: macOS pylatest_conda_forge_arm
             os: macos-15
             DISTRIB: conda
