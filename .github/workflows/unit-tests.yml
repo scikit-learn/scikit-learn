@@ -143,7 +143,7 @@ jobs:
             PYTEST_XDIST_VERSION: none
             PIP_BUILD_ISOLATION: true
 
-          - name: macOS arm64 pylatest_conda_forge_arm
+          - name: macOS pylatest_conda_forge_arm
             os: macos-15
             DISTRIB: conda
             LOCK_FILE: build_tools/azure/pylatest_conda_forge_osx-arm64_conda.lock
