@@ -1,4 +1,4 @@
 - |Fix| :class:`linear_model.RANSACRegressor` now skips iterations where
   ``base_estimator.score``  returns a non-finite value (e.g.  ``NaN``  or ``inf``)
   without emitting unnecessary warnings.
-  By :user:`shlok0603`
+  By :user:`shlok`
