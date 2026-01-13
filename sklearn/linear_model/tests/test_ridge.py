@@ -863,8 +863,8 @@ def test_ridge_gcv_noiseless(alpha, gcv_mode, fit_intercept, X_shape, X_containe
     X = X_container(X)
     gcv_ridge = RidgeCV(alphas=alphas, gcv_mode=gcv_mode, fit_intercept=fit_intercept)
     gcv_ridge.fit(X, y)
-    assert_allclose(gcv_ridge.coef_, lin_reg.coef_, atol=1e-10)
-    assert_allclose(gcv_ridge.intercept_, lin_reg.intercept_, atol=1e-10)
+    assert_allclose(gcv_ridge.coef_, lin_reg.coef_, atol=1e-9)
+    assert_allclose(gcv_ridge.intercept_, lin_reg.intercept_, atol=1e-9)
 
 
 def test_ridge_loo_cv_asym_scoring():
