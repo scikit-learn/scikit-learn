@@ -1588,11 +1588,11 @@ def test_max_samples_geq_one(name):
     max_samples_float = 1.5
     max_sample_int = int(max_samples_float * X.shape[0])
     est1 = FOREST_CLASSIFIERS_REGRESSORS[name](
-        bootstrap=True, max_samples=max_samples_float
+        bootstrap=True, max_samples=max_samples_float, random_state=11
     )
     est1.fit(X, y)
     est2 = FOREST_CLASSIFIERS_REGRESSORS[name](
-        bootstrap=True, max_samples=max_sample_int
+        bootstrap=True, max_samples=max_sample_int, random_state=11
     )
     est2.fit(X, y)
     assert est1._n_samples_bootstrap == est2._n_samples_bootstrap
