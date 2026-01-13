@@ -10,6 +10,20 @@ implementing custom components for your own projects, this chapter
 details how to develop objects that safely interact with scikit-learn
 pipelines and model selection tools.
 
+.. warning::
+
+   **Common pitfall: setting attributes in ``__init__``**
+
+   Estimators must not set any attributes in ``__init__`` other than
+   parameters passed as arguments. All learned or derived attributes
+   (for example ``n_features_`` or ``coef_``) must be created in
+   ``fit``.
+
+   Setting non-parameter attributes in ``__init__`` will cause
+   ``check_estimator`` to fail and can break cloning, pipelines,
+   and grid search.
+
+
 This section details the public API you should use and implement for a scikit-learn
 compatible estimator. Inside scikit-learn itself, we experiment and use some private
 tools and our goal is always to make them public once they are stable enough, so that
