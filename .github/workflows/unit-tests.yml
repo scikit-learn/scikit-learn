@@ -143,6 +143,16 @@ jobs:
             PYTEST_XDIST_VERSION: none
             PIP_BUILD_ISOLATION: true
 
+          # Linux environment to test that scikit-learn can be built against
+          # versions of numpy, scipy with ATLAS that comes with Ubuntu 24.04
+          # Noble Numbat i.e. numpy 1.26.4 and scipy 1.11.4
+          - name: Linux x86-64 ubuntu_atlas
+            os: ubuntu-24.04
+            DISTRIB: ubuntu
+            LOCK_FILE: build_tools/azure/ubuntu_atlas_lock.txt
+            COVERAGE: false
+            SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 1  # non-default seed
+
           - name: macOS pylatest_conda_forge_arm
             os: macOS-15
             DISTRIB: conda
@@ -185,6 +195,7 @@ jobs:
 
       - name: Set up conda
         uses: conda-incubator/setup-miniconda@v3
+        if: ${{ startsWith(env.DISTRIB, 'conda') }}
         with:
           miniforge-version: latest
           auto-activate-base: true
