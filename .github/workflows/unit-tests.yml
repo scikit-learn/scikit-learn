@@ -127,6 +127,19 @@ jobs:
             DISTRIB: conda
             LOCK_FILE: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
 
+          # Linux build with minimum supported version of dependencies
+          - name: Linux x86-64 pymin_conda_forge_openblas_min_dependencies
+            os: ubuntu-22.04
+            DISTRIB: conda
+            LOCK_FILE: build_tools/azure/pymin_conda_forge_openblas_min_dependencies_linux-64_conda.lock
+            # Enable debug Cython directives to capture IndexError exceptions in
+            # combination with the -Werror::pytest.PytestUnraisableExceptionWarning
+            # flag for pytest.
+            # https://github.com/scikit-learn/scikit-learn/pull/24438
+            SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: 1
+            SKLEARN_RUN_FLOAT32_TESTS: 1
+            SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 2  # non-default seed
+
           # Linux environment to test the latest available dependencies.
           # It runs tests requiring lightgbm, pandas and PyAMG.
           - name: Linux pylatest_pip_openblas_pandas
