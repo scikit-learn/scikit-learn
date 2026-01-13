@@ -152,6 +152,14 @@ jobs:
             PYTORCH_ENABLE_MPS_FALLBACK: 1
             CHECK_PYTEST_SOFT_DEPENDENCY: true
 
+          - name: macOS pylatest_conda_forge_mkl_no_openmp
+            os: macOS-15-intel
+            DISTRIB: conda
+            LOCK_FILE: build_tools/azure/pylatest_conda_forge_mkl_no_openmp_osx-64_conda.lock
+            SKLEARN_TEST_NO_OPENMP: true
+            SKLEARN_SKIP_OPENMP_TEST: true
+            SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 6  # non-default seed
+
           - name: Windows pymin_conda_forge_openblas
             os: windows-latest
             DISTRIB: conda
