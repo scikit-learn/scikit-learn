@@ -3,7 +3,13 @@ import warnings
 import numpy as np
 import pytest
 
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import (
+    BaseEstimator,
+    ClassifierMixin,
+    is_outlier_detector,
+    is_regressor,
+)
+from sklearn.cluster import KMeans
 from sklearn.datasets import (
     load_diabetes,
     load_iris,
@@ -729,6 +735,38 @@ def test_multiclass_colors_cmap(
     # non-regression test for issue #32866 with `contour` (currently still fails)
     # if hasattr(disp.surface_, "levels"):
     #    assert len(disp.surface_.levels) >= disp.n_classes
+
+
+@pytest.mark.parametrize(
+    "estimator, n_classes",
+    [
+        (DecisionTreeClassifier(random_state=0), 7),
+        (DecisionTreeClassifier(random_state=0), 2),
+        (KMeans(n_clusters=7, random_state=0), 7),
+        (KMeans(n_clusters=2, random_state=0), 2),
+        (DecisionTreeRegressor(random_state=0), 7),
+        (IsolationForest(random_state=0), 7),
+    ],
+)
+def test_n_classes_attribute(pyplot, estimator, n_classes):
+    """Check that `n_classes` is set correctly.
+
+    Introduced in https://github.com/scikit-learn/scikit-learn/pull/33015"""
+
+    X, y = make_blobs(n_samples=150, centers=n_classes, n_features=2, random_state=42)
+    clf = estimator.fit(X, y)
+
+    disp = DecisionBoundaryDisplay.from_estimator(clf, X, response_method="predict")
+
+    if is_regressor(estimator) or is_outlier_detector(estimator):
+        n_classes = 2  # by convention for regressors and outlier detectors
+    assert disp.n_classes == n_classes
+
+    # test that setting class_of_interest converts to a binary problem
+    disp_coi = DecisionBoundaryDisplay.from_estimator(
+        clf, X, class_of_interest=y[0], response_method="predict"
+    )
+    assert disp_coi.n_classes == 2
 
 
 def test_cmap_and_colors_logic(pyplot):
