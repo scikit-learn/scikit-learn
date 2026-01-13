@@ -162,7 +162,7 @@ jobs:
             PYTORCH_ENABLE_MPS_FALLBACK: 1
             CHECK_PYTEST_SOFT_DEPENDENCY: true
 
-          - name: Windows pymin_conda_forge_openblas
+          - name: Windows x64 pymin_conda_forge_openblas
             os: windows-latest
             DISTRIB: conda
             LOCK_FILE: build_tools/azure/pymin_conda_forge_openblas_win-64_conda.lock
