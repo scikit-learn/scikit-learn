@@ -144,7 +144,7 @@ jobs:
             PIP_BUILD_ISOLATION: true
 
           - name: macOS pylatest_conda_forge_arm
-            os: macOS-15
+            os: macOS-15-arm64
             DISTRIB: conda
             LOCK_FILE: build_tools/azure/pylatest_conda_forge_osx-arm64_conda.lock
             SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 5  # non-default seed
