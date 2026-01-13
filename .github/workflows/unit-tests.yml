@@ -152,7 +152,7 @@ jobs:
             PYTORCH_ENABLE_MPS_FALLBACK: 1
             CHECK_PYTEST_SOFT_DEPENDENCY: true
 
-          - name: macOS Intel pylatest_conda_forge_mkl_no_openmp
+          - name: macOS x86-64 pylatest_conda_forge_mkl_no_openmp
             os: macos-15-intel
             DISTRIB: conda
             LOCK_FILE: build_tools/azure/pylatest_conda_forge_mkl_no_openmp_osx-64_conda.lock
