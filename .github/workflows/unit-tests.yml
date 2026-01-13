@@ -146,7 +146,7 @@ jobs:
           # Linux environment to test that scikit-learn can be built against
           # versions of numpy, scipy with ATLAS that comes with Ubuntu 24.04
           # Noble Numbat i.e. numpy 1.26.4 and scipy 1.11.4
-          - name: Linux ubuntu_atlas
+          - name: Linux x86-64 ubuntu_atlas
             os: ubuntu-24.04
             DISTRIB: ubuntu
             LOCK_FILE: build_tools/azure/ubuntu_atlas_lock.txt
