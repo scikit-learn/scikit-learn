@@ -5,7 +5,7 @@ import warnings
 
 import numpy as np
 
-from sklearn.base import is_classifier, is_clusterer, is_regressor
+from sklearn.base import is_classifier, is_clusterer, is_outlier_detector, is_regressor
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import _safe_indexing
 from sklearn.utils._dataframe import is_pandas_df, is_polars_df
@@ -583,12 +583,16 @@ class DecisionBoundaryDisplay:
             else:
                 response = response.reshape(*xx0.shape, response.shape[-1])
 
-        if is_classifier(estimator):
+        if (
+            class_of_interest is not None
+            or is_regressor(estimator)
+            or is_outlier_detector(estimator)
+        ):
+            n_classes = 2
+        elif is_classifier(estimator):
             n_classes = len(estimator.classes_)
         elif is_clusterer(estimator):
             n_classes = len(np.unique(estimator.labels_))
-        else:  # regressor and outlier detector are treated as binary classification
-            n_classes = 2
 
         if xlabel is None:
             xlabel = X.columns[0] if hasattr(X, "columns") else ""
