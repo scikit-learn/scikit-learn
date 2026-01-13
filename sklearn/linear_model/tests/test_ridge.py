@@ -863,8 +863,8 @@ def test_ridge_gcv_noiseless(alpha, gcv_mode, fit_intercept, X_shape, X_containe
     X = X_container(X)
     gcv_ridge = RidgeCV(alphas=alphas, gcv_mode=gcv_mode, fit_intercept=fit_intercept)
     gcv_ridge.fit(X, y)
-    assert_allclose(gcv_ridge.coef_, lin_reg.coef_, atol=1e-9)
-    assert_allclose(gcv_ridge.intercept_, lin_reg.intercept_, atol=1e-9)
+    assert_allclose(gcv_ridge.coef_, lin_reg.coef_, atol=1e-10)
+    assert_allclose(gcv_ridge.intercept_, lin_reg.intercept_, atol=1e-10)
 
 
 def test_ridge_loo_cv_asym_scoring():
@@ -974,7 +974,7 @@ def test_ridge_gcv_sample_weights(
 
 
 @pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
-@pytest.mark.parametrize("X_shape", [(5, 2), (2, 5)])
+@pytest.mark.parametrize("X_shape", [(5, 2), (5, 5), (2, 5)])
 @pytest.mark.parametrize("gcv_mode", ["auto", "svd", "eigen"])
 def test_check_gcv_mode_choice(sparse_container, X_shape, gcv_mode):
     n, p = X_shape
@@ -986,7 +986,7 @@ def test_check_gcv_mode_choice(sparse_container, X_shape, gcv_mode):
     if gcv_mode == "svd" and not sparse_X:
         assert _check_gcv_mode(X, gcv_mode) == "svd"
     else:
-        eigen_mode = "gram" if n < p else "cov"
+        eigen_mode = "gram" if n <= p else "cov"
         assert _check_gcv_mode(X, gcv_mode) == eigen_mode
 
 

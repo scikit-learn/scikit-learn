@@ -1623,9 +1623,9 @@ def _check_gcv_mode(X, gcv_mode):
         return "svd"
 
     # All other cases ("auto", "eigen", "svd" with sparse X)
-    # fallbacks to gram (n < p) or cov (p <= n)
+    # fallbacks to gram (n <= p) or cov (p < n)
     n, p = X.shape
-    return "gram" if n < p else "cov"
+    return "gram" if n <= p else "cov"
 
 
 def _find_smallest_angle(query, vectors):
@@ -2025,11 +2025,6 @@ class _RidgeGCV(LinearModel):
             else:
                 XT_y -= X_mean * (sqrt_sw @ y)
             XT_sqrt_sw -= X_mean * (sqrt_sw @ sqrt_sw)
-        # kill nullspace
-        if X.shape[0] == X.shape[1] and self.fit_intercept:
-            assert np.allclose(eigvals[0], 0)
-            V = V[:, 1:]
-            eigvals = eigvals[1:]
         return eigvals, V, X, X_mean, XT_y, XT_sqrt_sw
 
     def _solve_eigen_covariance(
@@ -2121,7 +2116,7 @@ class _RidgeGCV(LinearModel):
         """Compute looe and coef when we have an SVD decomposition of X."""
         n_samples = U.shape[0]
         n_features = V.shape[0]
-        if n_samples < n_features:
+        if n_samples <= n_features:
             return self._solve_svd_design_matrix_wide(
                 alpha, y, sqrt_sw, singvals, U, V, UT_y, UT_sqrt_sw
             )
@@ -2658,8 +2653,8 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
             'auto' : same as 'eigen'
             'svd' : use singular value decomposition of X when X is dense,
                 fallback to 'eigen' when X is sparse
-            'eigen' : use eigendecomposition of X X^T when n_samples < n_features
-                or X^T X when n_features <= n_samples
+            'eigen' : use eigendecomposition of X X^T when n_samples <= n_features
+                or X^T X when n_features < n_samples
 
         The 'auto' mode is the default and is intended to pick the cheaper
         option depending on the shape and sparsity of the training data.
