@@ -1,4 +1,4 @@
-- :class:`sklearn.linear_model.RANSACRegressor` now skips iterations where
-  ``estimator.score`` returns a non-finite value (e.g. ``NaN``) without
-  emitting warnings.
+- |Fix| :class:`linear_model.RANSACRegressor` now skips iterations where
+  ``base_estimator.score`` returns a non-finite value (e.g. ``NaN`` or ``inf``)
+  without emitting unnecessary warnings.
   By :user:`shlok0603`
