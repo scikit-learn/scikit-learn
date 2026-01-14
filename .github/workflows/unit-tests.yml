@@ -127,6 +127,15 @@ jobs:
             DISTRIB: conda
             LOCK_FILE: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
 
+          # Check compilation with Ubuntu 22.04 LTS (Jammy Jellyfish) and scipy from conda-forge
+          - name: Linux x86-64 pymin_conda_forge_openblas_ubuntu_2204
+            os: ubuntu-22.04
+            DISTRIB: conda
+            LOCK_FILE: build_tools/azure/pymin_conda_forge_openblas_ubuntu_2204_linux-64_conda.lock
+            SKLEARN_WARNINGS_AS_ERRORS: 1
+            COVERAGE: false
+            SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 0  # non-default seed
+
           # Linux build with minimum supported version of dependencies
           - name: Linux x86-64 pymin_conda_forge_openblas_min_dependencies
             os: ubuntu-22.04
