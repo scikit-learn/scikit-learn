@@ -72,6 +72,7 @@ from sklearn.metrics.pairwise import (
     manhattan_distances,
     paired_cosine_distances,
     paired_euclidean_distances,
+    paired_manhattan_distances,
     pairwise_distances,
     pairwise_kernels,
     polynomial_kernel,
@@ -1966,8 +1967,8 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
         "specified: either make y_true take value in {0, 1} or {-1, 1} or "
         "pass pos_label explicit"
     )
-    err_msg_pos_label_1 = (
-        r"pos_label=1 is not a valid label. It should be one of \['eggs', 'spam'\]"
+    err_msg_pos_label_1 = re.escape(
+        "pos_label=1 is not a valid label. It should be one of ['eggs' 'spam']"
     )
 
     pos_label_default = signature(metric).parameters["pos_label"].default
@@ -2414,6 +2415,7 @@ array_api_metric_checkers = {
     ],
     chi2_kernel: [check_array_api_metric_pairwise],
     paired_euclidean_distances: [check_array_api_metric_pairwise],
+    paired_manhattan_distances: [check_array_api_metric_pairwise],
     cosine_distances: [check_array_api_metric_pairwise],
     euclidean_distances: [check_array_api_metric_pairwise],
     manhattan_distances: [check_array_api_metric_pairwise],

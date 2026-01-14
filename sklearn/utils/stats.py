@@ -97,6 +97,9 @@ def _weighted_percentile(
     sample_weight = xp.asarray(sample_weight, dtype=floating_dtype, device=device)
     percentile_rank = xp.asarray(percentile_rank, dtype=floating_dtype, device=device)
 
+    if xp.all(sample_weight == 0):
+        return xp.nan
+
     n_dim = array.ndim
     if n_dim == 0:
         return array
