@@ -26,7 +26,7 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    if: github.repository == 'scikit-learn/scikit-learn'
+    #if: github.repository == 'scikit-learn/scikit-learn'
 
     steps:
       - name: Checkout
@@ -50,7 +50,7 @@ jobs:
   retrieve-commit-message:
     name: Retrieve the latest commit message
     runs-on: ubuntu-latest
-    if: github.repository == 'scikit-learn/scikit-learn'
+    #if: github.repository == 'scikit-learn/scikit-learn'
     outputs:
       message: ${{ steps.git-log.outputs.message }}
     steps:
@@ -84,7 +84,7 @@ jobs:
     #     ...
     name: Retrieve the selected tests
     runs-on: ubuntu-latest
-    if: github.repository == 'scikit-learn/scikit-learn'
+    #if: github.repository == 'scikit-learn/scikit-learn'
     outputs:
       tests: ${{ steps.selected-tests.outputs.tests }}
     needs: [retrieve-commit-message]
@@ -118,7 +118,7 @@ jobs:
     defaults:
       run:
         shell: bash
-    if: github.repository == 'scikit-learn/scikit-learn'
+    #if: github.repository == 'scikit-learn/scikit-learn'
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
     strategy:
       # Ensures that all builds run to completion even if one of them fails
