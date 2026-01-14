@@ -199,6 +199,7 @@ Metrics
 - :func:`sklearn.metrics.pairwise.manhattan_distances`
 - :func:`sklearn.metrics.pairwise.paired_cosine_distances`
 - :func:`sklearn.metrics.pairwise.paired_euclidean_distances`
+- :func:`sklearn.metrics.pairwise.paired_manhattan_distances`
 - :func:`sklearn.metrics.pairwise.pairwise_kernels`
 - :func:`sklearn.metrics.pairwise.polynomial_kernel`
 - :func:`sklearn.metrics.pairwise.rbf_kernel` (see :ref:`device_support_for_float64`)
