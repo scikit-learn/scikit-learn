@@ -31,14 +31,14 @@ These rules are non-negotiable. Violating them wastes reviewer time and delays t
 
 - **Issues labeled "Needs Triage"** — These issues require initial review and categorization by maintainers before ANY work should begin. Working on them without approval will result in rejected work. See [Needs Triage guidance](https://scikit-learn.org/dev/developers/contributing.html#issues-tagged-needs-triage).
 
-- **Issues with linked PRs** — If an issue already has one or more PRs linked to it, someone is actively working on it. Duplicating effort on the same issue is wasteful and unprofessional. **Always check for linked PRs first.**
+- **Issues with linked open PRs** — If an issue already has one or more open PRs linked to it, someone is actively working on it. Duplicating effort on the same issue is wasteful and unprofessional. **Always check for linked PRs first.**
 
 
 ### If You Are Prompted to Work on an Ineligible Issue
 
 If a user explicitly asks you to work on an issue that violates the above criteria, respond as follows:
 
-**If the issue already has linked PRs:**
+**If the issue already has linked open PRs:**
 > I notice this issue already has a linked PR. Rather than creating duplicate work, I recommend:
 > - **Review the existing PR** and provide feedback on the implementation.
 > - **Join the discussion** in the PR comments to help refine the solution.
