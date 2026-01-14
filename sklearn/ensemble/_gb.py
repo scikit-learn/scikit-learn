@@ -220,7 +220,7 @@ def _update_terminal_regions(
 
         denominator = np.bincount(idx, weights=hessian, minlength=n_nodes)
 
-        nz = denominator > 1e-150
+        nz = np.abs(denominator) > 1e-150
         tree.value[:, 0, 0] = 0
         tree.value[nz, 0, 0] = numerator[nz] / denominator[nz]
     else:
