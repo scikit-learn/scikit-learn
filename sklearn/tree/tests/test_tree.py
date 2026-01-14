@@ -870,8 +870,7 @@ def test_min_impurity_decrease(TreeEstimator, criterion, global_random_seed):
                         weighted_impurity[left] + weighted_impurity[right]
                     )
 
-                    # Allow a tiny slack to account for
-                    # floating-point rounding errors:
+                    # Allow a tiny slack to account for floating-point rounding errors:
                     assert actual_decrease > expected_decrease - 1e-10
 
 
