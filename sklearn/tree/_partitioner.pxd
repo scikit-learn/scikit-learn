@@ -57,7 +57,6 @@ cdef const float32_t FEATURE_THRESHOLD = 1e-7
 #     ) noexcept nogil
 #     cdef void partition_samples_final(
 #         self,
-#         intp_t best_pos,
 #         float64_t best_threshold,
 #         intp_t best_feature,
 #         bint best_missing_go_to_left
@@ -105,7 +104,6 @@ cdef class DensePartitioner:
     ) noexcept nogil
     cdef void partition_samples_final(
         self,
-        intp_t best_pos,
         float64_t best_threshold,
         intp_t best_feature,
         bint best_missing_go_to_left,
@@ -162,7 +160,6 @@ cdef class SparsePartitioner:
     ) noexcept nogil
     cdef void partition_samples_final(
         self,
-        intp_t best_pos,
         float64_t best_threshold,
         intp_t best_feature,
         bint best_missing_go_to_left,
@@ -174,8 +171,7 @@ cdef class SparsePartitioner:
     ) noexcept nogil
     cdef intp_t _partition(
         self,
-        float64_t threshold,
-        intp_t zero_pos
+        float64_t threshold
     ) noexcept nogil
 
 

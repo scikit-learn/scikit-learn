@@ -104,9 +104,9 @@ cdef class DensePartitioner:
     cdef void shift_missing_to_the_left(self) noexcept nogil:
         """Moves missing values from the right to the left.
 
-        All missing values are expected to be grouped at the right hand side of the 
+        All missing values are expected to be grouped at the right hand side of the
         [self.start:self.end] slices of the self.samples and self.feature_values arrays
-        before calling this method. 
+        before calling this method.
 
         Non-missing values are correspondingly moved from the left to the right while
         preserving their inner ordering.
@@ -213,7 +213,6 @@ cdef class DensePartitioner:
 
     cdef inline void partition_samples_final(
         self,
-        intp_t best_pos,
         float64_t best_threshold,
         intp_t best_feature,
         bint best_missing_go_to_left
@@ -400,20 +399,19 @@ cdef class SparsePartitioner:
         bint missing_go_to_left
     ) noexcept nogil:
         """Partition samples for feature_values at the current_threshold."""
-        return self._partition(current_threshold, self.start_positive)
+        return self._partition(current_threshold)
 
     cdef inline void partition_samples_final(
         self,
-        intp_t best_pos,
         float64_t best_threshold,
         intp_t best_feature,
         bint missing_go_to_left
     ) noexcept nogil:
         """Partition samples for X at the best_threshold and best_feature."""
         self.extract_nnz(best_feature)
-        self._partition(best_threshold, best_pos)
+        self._partition(best_threshold)
 
-    cdef inline intp_t _partition(self, float64_t threshold, intp_t zero_pos) noexcept nogil:
+    cdef inline intp_t _partition(self, float64_t threshold) noexcept nogil:
         """Partition samples[start:end] based on threshold."""
         cdef:
             intp_t p, partition_end
@@ -429,7 +427,7 @@ cdef class SparsePartitioner:
             partition_end = self.end
         else:
             # Data are already split
-            return zero_pos
+            return self.start_positive
 
         while p < partition_end:
             if feature_values[p] <= threshold:
