@@ -410,9 +410,10 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             if name not in params
         }
 
-        estimator_class = init_func.__class__
-
-        return MethodsDict(methods, estimator_class)
+        return MethodsDict(
+            methods=methods,
+            estimator_class=self.__class__,
+        )
 
     def set_params(self, **params):
         """Set the parameters of this estimator.
