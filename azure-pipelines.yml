@@ -114,12 +114,7 @@ jobs:
         SCIPY_ARRAY_API: '1'
 
 # Check compilation with Ubuntu 22.04 LTS (Jammy Jellyfish) and scipy from conda-forge
-# By default the CI is sequential, where `Ubuntu_Jammy_Jellyfish` runs first and
-# the others jobs are run only if `Ubuntu_Jammy_Jellyfish` succeeds.
-# When "[azure parallel]" is in the commit message, `Ubuntu_Jammy_Jellyfish` will
-# run in parallel with the rest of the jobs. On Azure, the job's name will be
-# `Ubuntu_Jammy_Jellyfish_Parallel`.
-- template: build_tools/azure/posix-all-parallel.yml
+- template: build_tools/azure/posix.yml
   parameters:
     name: Ubuntu_Jammy_Jellyfish
     vmImage: ubuntu-22.04
@@ -142,7 +137,7 @@ jobs:
   parameters:
     name: Linux_Docker
     vmImage: ubuntu-24.04
-    dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
+    dependsOn: [linting, git_commit]
     # Runs when dependencies succeeded or skipped
     condition: |
       and(
