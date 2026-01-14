@@ -72,10 +72,9 @@ cdef inline float64_t log(float64_t x) noexcept nogil:
 cdef int swap_array_slices(
     array_data_type[::1] array, intp_t start, intp_t end, intp_t n
 ) except -1 nogil:
-    """
-    Swaps the order of the slices array[start:start + n]
-    and array[start + n:end] while preserving the order
-    in the slices. Works for any itemsize.
+    """Swaps the order of the slices array[start:start + n] and array[start + n:end].
+
+    Preserves the order within the slices. Works for any itemsize.
     """
     if start >= end:
         return 0

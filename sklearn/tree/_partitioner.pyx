@@ -102,10 +102,14 @@ cdef class DensePartitioner:
         self.n_missing = n_missing
 
     cdef void shift_missing_to_the_left(self) noexcept nogil:
-        """
-        Moves missing values from the right to the left
-            and non-missing values from the left to the right
-            while preserving their inner ordering
+        """Moves missing values from the right to the left.
+
+        All missing values are expected to be grouped at the right hand side of the 
+        [self.start:self.end] slices of the self.samples and self.feature_values arrays
+        before calling this method. 
+
+        Non-missing values are correspondingly moved from the left to the right while
+        preserving their inner ordering.
         """
         assert not self.missing_on_the_left
         cdef intp_t n_non_missing = self.end - self.start - self.n_missing
@@ -217,7 +221,7 @@ cdef class DensePartitioner:
         """Partition samples for X at the best_threshold and best_feature.
 
         If missing values are present, this method partitions them accordingly
-        to best_missing_go_to_left
+        to best_missing_go_to_left.
         """
         cdef:
             # Local invariance: start <= p <= partition_end <= end
@@ -325,7 +329,7 @@ cdef class SparsePartitioner:
         self.n_missing = 0
 
     cdef void shift_missing_to_the_left(self) noexcept nogil:
-        pass  # missing values not support for sparse
+        pass  # Missing values are not supported for sparse data.
 
     cdef inline void find_min_max(
         self,
