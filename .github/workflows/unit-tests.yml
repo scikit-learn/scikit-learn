@@ -115,6 +115,9 @@ jobs:
   unit-tests:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     if: github.repository == 'scikit-learn/scikit-learn'
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
     strategy:
