@@ -129,11 +129,9 @@ def _write_label_html(
         If estimator is fitted, this is the HTML representation of its
         the fitted attributes.
     methods: str
-        If the estimator has `_get_methods_html` method, this is the HTML
-        representation of the estimator's methods with their signature.
-        A link to its online documentation is provided.
-        When the estimator does not have `_get_methods_html`,
-        it is an empty string.
+        HTML representation of the estimator's methods with their
+        signatures and links to their docs, as returned by
+        `estimator._get_methods_html()`.
     name : str
         The label for the estimator. It corresponds either to the estimator class name
         for a simple estimator or in the case of a `Pipeline` and `ColumnTransformer`,

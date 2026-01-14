@@ -57,7 +57,7 @@ def _read_params(method, signature):
     r = reprlib.Repr()
     r.maxlist = 2
     r.maxtuple = 1  # Show only first item of tuples
-    r.maxstring = 20  # Limit string length
+    r.maxstring = 15  # Limit string length
     cleaned_signature = html.escape(r.repr(signature).replace("'", ""))
 
     return method, cleaned_signature
