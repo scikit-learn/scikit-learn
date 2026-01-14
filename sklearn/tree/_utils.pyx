@@ -111,9 +111,6 @@ def _py_swap_array_slices(cnp.ndarray array, intp_t start, intp_t end, intp_t n)
     Python wrapper for swap_array_slices for testing.
     `array` must be contiguous.
     """
-    if not array.flags['C_CONTIGUOUS']:
-        raise ValueError("Input array must be C-contiguous")
-
     # Dispatch to the appropriate specialized version based on dtype
     if array.dtype == np.intp:
         swap_array_slices[intp_t](array, start, end, n)
