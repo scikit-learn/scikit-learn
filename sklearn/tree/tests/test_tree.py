@@ -2801,7 +2801,7 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_se
     - Missing values handling in regression criteria:
       https://github.com/scikit-learn/scikit-learn/issues/28254
       https://github.com/scikit-learn/scikit-learn/issues/28316
-    - Incorrect/Negative impurites for poission criterion with missing values:
+    - Incorrect/negative impurites for the Poisson criterion with missing values:
       https://github.com/scikit-learn/scikit-learn/issues/32870
     """
     X = X.reshape(-1, 1)

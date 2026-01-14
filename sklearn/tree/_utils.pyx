@@ -72,10 +72,9 @@ cdef inline float64_t log(float64_t x) noexcept nogil:
 cdef int swap_array_slices(
     array_data_type[::1] array, intp_t start, intp_t end, intp_t n
 ) except -1 nogil:
-    """
-    Swaps the order of the slices array[start:start + n]
-    and array[start + n:end] while preserving the order
-    in the slices. Works for any itemsize.
+    """Swaps the order of the slices array[start:start + n] and array[start + n:end].
+
+    Preserves the order within the slices. Works for any itemsize.
     """
     if start >= end:
         return 0
@@ -112,9 +111,6 @@ def _py_swap_array_slices(cnp.ndarray array, intp_t start, intp_t end, intp_t n)
     Python wrapper for swap_array_slices for testing.
     `array` must be contiguous.
     """
-    if not array.flags['C_CONTIGUOUS']:
-        raise ValueError("Input array must be C-contiguous")
-
     # Dispatch to the appropriate specialized version based on dtype
     if array.dtype == np.intp:
         swap_array_slices[intp_t](array, start, end, n)
