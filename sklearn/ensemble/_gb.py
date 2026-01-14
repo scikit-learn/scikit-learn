@@ -227,28 +227,15 @@ def _update_terminal_regions(
         # regression losses other than the squared error.
         # As of now: absolute error, pinball loss, huber loss.
 
-        # build a CSR matrix to efficiently retrieve indices of
-        # each leaf in the loop below:
-        n_samples = terminal_regions.size
-        indices = np.arange(n_samples)
-        terminal_regions_to_indices = csr_matrix(
-            (
-                # mask all which are not in sample mask.
-                y[sample_mask],
-                (terminal_regions[sample_mask], indices[sample_mask]),
-            ),
-            shape=(tree.node_count, n_samples),
-        )
-
+        # mask all which are not in sample mask.
+        masked_terminal_regions = terminal_regions.copy()
+        masked_terminal_regions[~sample_mask] = -1
         # update each leaf (= perform line search)
         for leaf in np.nonzero(tree.children_left == TREE_LEAF)[0]:
-            s = terminal_regions_to_indices.indptr[leaf]
-            e = terminal_regions_to_indices.indptr[leaf + 1]
-            indices = terminal_regions_to_indices.indices[s:e]
-            y_leaf = terminal_regions_to_indices.data[s:e]
+            (indices,) = np.nonzero(masked_terminal_regions == leaf)
             sw = None if sample_weight is None else sample_weight[indices]
             update = loss.fit_intercept_only(
-                y_true=y_leaf - raw_prediction[indices, k],
+                y_true=y[indices] - raw_prediction[indices, k],
                 sample_weight=sw,
             )
 
