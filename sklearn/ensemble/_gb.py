@@ -223,7 +223,10 @@ def _update_terminal_regions(
         nz = denominator > 1e-150
         tree.value[:, 0, 0] = 0
         tree.value[nz, 0, 0] = numerator[nz] / denominator[nz]
-    else:  # regression losses other than the squared error.
+    else:
+        # regression losses other than the squared error.
+        # As of now: absolute error, pinball loss, huber loss.
+
         # build a CSR matrix to efficiently retrieve indices of
         # each leaf in the loop below:
         n_samples = terminal_regions.size
