@@ -33,16 +33,7 @@ from sklearn.utils.validation import check_array, check_consistent_length
 
 
 def check_clusterings(labels_true, labels_pred):
-    """Check that the labels arrays are 1D and of same dimension.
-
-    Parameters
-    ----------
-    labels_true : array-like of shape (n_samples,)
-        The true labels.
-
-    labels_pred : array-like of shape (n_samples,)
-        The predicted labels.
-    """
+ 
     labels_true = check_array(
         labels_true,
         ensure_2d=False,
@@ -114,10 +105,11 @@ def contingency_matrix(
     Parameters
     ----------
     labels_true : array-like of shape (n_samples,)
-        Ground truth class labels to be used as a reference.
+        Ground truth class labels to be used as a reference. Can be integers or floats; no dtype restriction.
+
 
     labels_pred : array-like of shape (n_samples,)
-        Cluster labels to evaluate.
+        Cluster labels to evaluate. Can be integers or floats; no dtype restriction.
 
     eps : float, default=None
         If a float, that value is added to all values in the contingency
@@ -209,11 +201,12 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,), dtype=integral
-        Ground truth class labels to be used as a reference.
+    labels_true : array-like of shape (n_samples,)
+        Ground truth class labels to be used as a reference. Can be integers or floats; no dtype restriction.
 
-    labels_pred : array-like of shape (n_samples,), dtype=integral
-        Cluster labels to evaluate.
+
+    labels_pred : array-like of shape (n_samples,)
+        Cluster labels to evaluate. Can be integers or floats; no dtype restriction.
 
     Returns
     -------
@@ -295,11 +288,12 @@ def rand_score(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,), dtype=integral
-        Ground truth class labels to be used as a reference.
+    labels_true : array-like of shape (n_samples,) 
+        Ground truth class labels to be used as a reference. Can be integers or floats; no dtype restriction.
 
-    labels_pred : array-like of shape (n_samples,), dtype=integral
-        Cluster labels to evaluate.
+
+    labels_pred : array-like of shape (n_samples,)
+        Cluster labels to evaluate. Can be integers or floats; no dtype restriction.
 
     Returns
     -------
@@ -384,11 +378,12 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,), dtype=int
-        Ground truth class labels to be used as a reference.
+    labels_true : array-like of shape (n_samples,)
+        Ground truth class labels to be used as a reference. Can be integers or floats; no dtype restriction.
 
-    labels_pred : array-like of shape (n_samples,), dtype=int
-        Cluster labels to evaluate.
+
+    labels_pred : array-like of shape (n_samples,)
+        Cluster labels to evaluate. Can be integers or floats; no dtype restriction.
 
     Returns
     -------
@@ -501,10 +496,11 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     Parameters
     ----------
     labels_true : array-like of shape (n_samples,)
-        Ground truth class labels to be used as a reference.
+        Ground truth class labels to be used as a reference. Can be integers or floats; no dtype restriction.
+
 
     labels_pred : array-like of shape (n_samples,)
-        Cluster labels to evaluate.
+        Cluster labels to evaluate. Can be integers or floats; no dtype restriction.
 
     beta : float, default=1.0
         Ratio of weight attributed to ``homogeneity`` vs ``completeness``.
@@ -589,10 +585,11 @@ def homogeneity_score(labels_true, labels_pred):
     Parameters
     ----------
     labels_true : array-like of shape (n_samples,)
-        Ground truth class labels to be used as a reference.
+        Ground truth class labels to be used as a reference. Can be integers or floats; no dtype restriction.
+
 
     labels_pred : array-like of shape (n_samples,)
-        Cluster labels to evaluate.
+        Cluster labels to evaluate. Can be integers or floats; no dtype restriction.
 
     Returns
     -------
@@ -665,10 +662,11 @@ def completeness_score(labels_true, labels_pred):
     Parameters
     ----------
     labels_true : array-like of shape (n_samples,)
-        Ground truth class labels to be used as a reference.
+        Ground truth class labels to be used as a reference. Can be integers or floats; no dtype restriction.
+
 
     labels_pred : array-like of shape (n_samples,)
-        Cluster labels to evaluate.
+        Cluster labels to evaluate. Can be integers or floats; no dtype restriction.
 
     Returns
     -------
@@ -748,10 +746,11 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
     Parameters
     ----------
     labels_true : array-like of shape (n_samples,)
-        Ground truth class labels to be used as a reference.
+        Ground truth class labels to be used as a reference. Can be integers or floats; no dtype restriction.
+
 
     labels_pred : array-like of shape (n_samples,)
-        Cluster labels to evaluate.
+        Cluster labels to evaluate. Can be integers or floats; no dtype restriction.
 
     beta : float, default=1.0
         Ratio of weight attributed to ``homogeneity`` vs ``completeness``.
@@ -855,13 +854,14 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,), dtype=integral
+    labels_true : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets, called :math:`U` in
-        the above formula.
+        the above formula. Can be integers or floats; no dtype restriction.
 
-    labels_pred : array-like of shape (n_samples,), dtype=integral
+
+    labels_pred : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets, called :math:`V` in
-        the above formula.
+        the above formula. Can be integers or floats; no dtype restriction.
 
     contingency : {array-like, sparse matrix} of shape \
             (n_classes_true, n_classes_pred), default=None
@@ -974,11 +974,12 @@ def adjusted_mutual_info_score(
     ----------
     labels_true : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets, called :math:`U` in
-        the above formula.
+        the above formula. Can be integers or floats; no dtype restriction.
+
 
     labels_pred : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets, called :math:`V` in
-        the above formula.
+        the above formula. Can be integers or floats; no dtype restriction.
 
     average_method : {'min', 'geometric', 'arithmetic', 'max'}, default='arithmetic'
         How to compute the normalizer in the denominator.
@@ -1109,10 +1110,11 @@ def normalized_mutual_info_score(
     Parameters
     ----------
     labels_true : int array-like of shape (n_samples,)
-        A clustering of the data into disjoint subsets.
+        A clustering of the data into disjoint subsets. Can be integers or floats; no dtype restriction.
+
 
     labels_pred : int array-like of shape (n_samples,)
-        A clustering of the data into disjoint subsets.
+        A clustering of the data into disjoint subsets. Can be integers or floats; no dtype restriction.
 
     average_method : {'min', 'geometric', 'arithmetic', 'max'}, default='arithmetic'
         How to compute the normalizer in the denominator.
@@ -1218,11 +1220,12 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse="deprecated"):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,), dtype=int
-        A clustering of the data into disjoint subsets.
+    labels_true : array-like of shape (n_samples,)
+        A clustering of the data into disjoint subsets. Can be integers or floats; no dtype restriction.
 
-    labels_pred : array-like of shape (n_samples,), dtype=int
-        A clustering of the data into disjoint subsets.
+
+    labels_pred : array-like of shape (n_samples,)
+        A clustering of the data into disjoint subsets. Can be integers or floats; no dtype restriction.
 
     sparse : bool, default=False
         Compute contingency matrix internally with sparse matrix.
@@ -1288,8 +1291,9 @@ def _entropy(labels):
 
     Parameters
     ----------
-    labels : array-like of shape (n_samples,), dtype=int
-        The labels.
+    labels : array-like of shape (n_samples,)
+        The labels. Can be integers or floats; no dtype restriction.
+
 
     Returns
     -------
@@ -1326,8 +1330,9 @@ def entropy(labels):
 
     Parameters
     ----------
-    labels : array-like of shape (n_samples,), dtype=int
-        The labels.
+    labels : array-like of shape (n_samples,)
+        The labels. Can be integers or floats; no dtype restriction.
+
 
     Returns
     -------
