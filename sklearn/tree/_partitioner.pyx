@@ -187,27 +187,30 @@ cdef class DensePartitioner:
 
     cdef inline intp_t partition_samples(
         self,
-        float64_t current_threshold,
+        float64_t threshold,
         bint missing_go_to_left
     ) noexcept nogil:
-        """Partition samples for feature_values at the current_threshold."""
+        """Partition samples on current feature_values for a given threshold.
+
+        Used while searching splits through random threshold sampling.
+        """
         cdef:
-            intp_t p = self.start
+            intp_t partition_start = self.start
             intp_t partition_end = self.end
             intp_t* samples = &self.samples[0]
             float32_t* feature_values = &self.feature_values[0]
             bint go_to_left
 
-        while p < partition_end:
+        while partition_start < partition_end:
             go_to_left = (
-                missing_go_to_left if isnan(feature_values[p])
-                else feature_values[p] <= current_threshold
+                missing_go_to_left if isnan(feature_values[partition_start])
+                else feature_values[partition_start] <= threshold
             )
             if go_to_left:
-                p += 1
+                partition_start += 1
             else:
                 partition_end -= 1
-                swap(feature_values, samples, p, partition_end)
+                swap(feature_values, samples, partition_start, partition_end)
 
         return partition_end
 
@@ -224,23 +227,23 @@ cdef class DensePartitioner:
         """
         cdef:
             # Local invariance: start <= p <= partition_end <= end
-            intp_t p = self.start
+            intp_t partition_start = self.start
             intp_t partition_end = self.end
             intp_t* samples = &self.samples[0]
             float32_t current_value
             bint go_to_left
 
-        while p < partition_end:
-            current_value = self.X[samples[p], best_feature]
+        while partition_start < partition_end:
+            current_value = self.X[samples[partition_start], best_feature]
             go_to_left = (
                 best_missing_go_to_left if isnan(current_value)
                 else current_value <= best_threshold
             )
             if go_to_left:
-                p += 1
+                partition_start += 1
             else:
                 partition_end -= 1
-                samples[p], samples[partition_end] = samples[partition_end], samples[p]
+                samples[partition_start], samples[partition_end] = samples[partition_end], samples[partition_start]
 
 
 @final
