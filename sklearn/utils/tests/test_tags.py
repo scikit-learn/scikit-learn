@@ -39,7 +39,7 @@ def test_type_error_is_thrown_for_class_vs_instance():
     https://github.com/scikit-learn/scikit-learn/issues/32394#issuecomment-3375647854.
     """
     est = BaseEstimator
-    with pytest.raises(TypeError, match="get_tags was called on a class"):
+    with pytest.raises(TypeError, match="'get_tags' was called on a class"):
         get_tags(est)
 
 

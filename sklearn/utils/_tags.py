@@ -271,20 +271,14 @@ def get_tags(estimator) -> Tags:
         The estimator tags.
     """
 
+    if isinstance(estimator, type):
+        raise TypeError(
+            f"'get_tags' was called on a class ({estimator.__name__}),"
+            f"but it expects an instance ({estimator.__name__}())."
+        )
+
     try:
         tags = estimator.__sklearn_tags__()
-    except TypeError as exc:
-        error_msg = "__sklearn_tags__() missing 1 required positional argument: 'self'"
-        if error_msg in str(exc):
-            # Happens when a class is passed instead of an instance.
-
-            raise TypeError(
-                f"get_tags was called on a class ({estimator.__name__}),"
-                f"but it expects an instance ({estimator.__name__}())."
-            )
-        else:
-            raise
-
     except AttributeError as exc:
         if "object has no attribute '__sklearn_tags__'" in str(exc):
             # Happens when `__sklearn_tags__` is implemented by calling
