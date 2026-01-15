@@ -43,6 +43,7 @@ from sklearn.metrics import (
     mean_squared_error,
 )
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
+from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.svm import LinearSVC
 from sklearn.tree._classes import SPARSE_SPLITTERS
 from sklearn.utils._testing import (
@@ -1771,8 +1772,7 @@ def test_estimators_samples(ForestClass, bootstrap, seed):
 @pytest.mark.parametrize(
     "Forest, criterion",
     [
-        *product(FOREST_REGRESSORS.values(), sorted(set(REG_CRITERIONS) - {"poisson"})),
-        # this test is not adapted for poisson loss (not positive count-like targets)
+        *product(FOREST_REGRESSORS.values(), REG_CRITERIONS),
         *product(FOREST_CLASSIFIERS.values(), CLF_CRITERIONS),
     ],
 )
@@ -1782,6 +1782,11 @@ def test_missing_values_is_resilient(Forest, criterion):
     n_samples, n_features = 500, 5
     make_data = make_regression if criterion in REG_CRITERIONS else make_classification
     X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
+
+    # For Poisson criterion, discretize y into positive integer bins
+    if criterion == "poisson":
+        kbd = KBinsDiscretizer(encode="ordinal", random_state=rng)
+        y = kbd.fit_transform(y.reshape(-1, 1)).ravel()
 
     # Create dataset with missing values
     X_missing = X.copy()
