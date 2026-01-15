@@ -243,7 +243,8 @@ cdef class DensePartitioner:
                 partition_start += 1
             else:
                 partition_end -= 1
-                samples[partition_start], samples[partition_end] = samples[partition_end], samples[partition_start]
+                samples[partition_start], samples[partition_end] = (
+                    samples[partition_end], samples[partition_start])
 
 
 @final
