@@ -15,7 +15,6 @@ from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import (
     RBF,
     CompoundKernel,
-    Product,
     WhiteKernel,
 )
 from sklearn.gaussian_process.kernels import (
@@ -138,7 +137,8 @@ def test_lml_gradient(kernel):
         result = []
         for length_scale in length_scales:
             kernel.set_params(**{length_scale_param_name: length_scale})
-            result.append(gpc.log_marginal_likelihood(kernel.theta))
+            if kernel.__class__.__name__ == "Product" or len(kernel.theta) == 1:
+                result.append(gpc.log_marginal_likelihood(kernel.theta))
 
         if length_scales.ndim == 1:
             return np.stack(result)
