@@ -2717,6 +2717,17 @@ def check_cv(cv=5, y=None, *, classifier=False, shuffle=False, random_state=None
         Whether the task is a classification task, in which case
         :class:`StratifiedKFold` will be used over :class:`KFold`.
 
+    shuffle : bool, default=False
+        Whether to shuffle the data before splitting into batches.
+        Note that the samples within each split will not be shuffled.
+
+    random_state : int, RandomState instance or None, default=None
+        When `shuffle` is True, `random_state` affects the ordering of the
+        indices, which controls the randomness of each fold. Otherwise, this
+        parameter has no effect.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
     Returns
     -------
     checked_cv : a cross-validator instance.
