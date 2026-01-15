@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass, fields
 
 import numpy as np
@@ -38,8 +39,12 @@ def test_type_error_is_thrown_for_class_vs_instance():
     Related to the discussion in
     https://github.com/scikit-learn/scikit-learn/issues/32394#issuecomment-3375647854.
     """
-    est = BaseEstimator
-    with pytest.raises(TypeError, match="'get_tags' was called on a class"):
+    est = EmptyClassifier
+    match = re.escape(
+        "Expected an estimator instance (EmptyClassifier()), "
+        "got estimator class instead (EmptyClassifier)."
+    )
+    with pytest.raises(TypeError, match=match):
         get_tags(est)
 
 

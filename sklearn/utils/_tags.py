@@ -273,8 +273,8 @@ def get_tags(estimator) -> Tags:
 
     if isinstance(estimator, type):
         raise TypeError(
-            f"'get_tags' was called on a class ({estimator.__name__}),"
-            f"but it expects an instance ({estimator.__name__}())."
+            f"Expected an estimator instance ({estimator.__name__}()), got "
+            f"estimator class instead ({estimator.__name__})."
         )
 
     try:
