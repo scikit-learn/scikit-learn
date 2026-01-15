@@ -1429,7 +1429,7 @@ def _get_warnings_filters_info_list():
             "ignore",
             message=(
                 "Setting the shape on a NumPy array has been deprecated"
-                r" in NumPy 2\.5"
+                r" in NumPy 2.5"
             ),
             category=DeprecationWarning,
         ),
