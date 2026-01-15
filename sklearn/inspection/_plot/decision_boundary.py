@@ -306,7 +306,7 @@ class DecisionBoundaryDisplay:
                     else:  # predict_proba or decision_function
                         response = np.ma.array(
                             self.response[:, :, class_idx],
-                            mask=~(self.response.argmax(axis=2) == class_idx),
+                            mask=(self.response.argmax(axis=2) != class_idx),
                         )
 
                     self.surface_.append(
