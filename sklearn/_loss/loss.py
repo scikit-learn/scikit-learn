@@ -1135,17 +1135,22 @@ class HalfBinomialLoss(BaseLoss):
         sample_weight=None,
         xp=None,
     ):
+        constants = (
+            [-37, -2, 18, 33.3]
+            if raw_prediction.dtype == xp.float64
+            else [-17, -1, 9, 14.6]
+        )
         log1pexp = xp.where(
-            raw_prediction <= -37,
+            raw_prediction <= constants[0],
             raw_prediction_exp,
             xp.where(
-                raw_prediction <= -2,
+                raw_prediction <= constants[1],
                 xp.log1p(raw_prediction_exp),
                 xp.where(
-                    raw_prediction <= 18,
+                    raw_prediction <= constants[2],
                     xp.log(1.0 + raw_prediction_exp),
                     xp.where(
-                        raw_prediction <= 33.3,
+                        raw_prediction <= constants[3],
                         raw_prediction + neg_raw_prediction_exp,
                         raw_prediction,
                     ),
