@@ -300,7 +300,7 @@ class DecisionBoundaryDisplay:
                     if self.response.ndim == 2:  # predict
                         response = np.ma.array(
                             (self.response == class_idx),
-                            mask=~(self.response == class_idx),
+                            mask=(self.response != class_idx),
                         )
 
                     else:  # predict_proba or decision_function
