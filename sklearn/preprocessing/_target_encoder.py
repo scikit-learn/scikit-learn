@@ -341,11 +341,19 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         if self.target_type_ == "continuous":
             cv = check_cv(
-                self.cv, y, classifier=False, shuffle=self.shuffle, random_state=None
+                self.cv,
+                y,
+                classifier=False,
+                shuffle=self.shuffle,
+                random_state=self.random_state,
             )
         else:
             cv = check_cv(
-                self.cv, y, classifier=True, shuffle=self.shuffle, random_state=None
+                self.cv,
+                y,
+                classifier=True,
+                shuffle=self.shuffle,
+                random_state=self.random_state,
             )
 
         if _routing_enabled():
@@ -367,7 +375,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         )
         if cv.__class__ not in non_overlapping_splitters:
             _test_indices = np.array([])
-            for fold in cv.split(X, y):
+            for fold in cv.split(X, y, **routed_params.splitter.split):
                 _, test_idx = fold
                 _test_indices = np.concatenate([_test_indices, test_idx])
             if not np.isin(np.arange(X.shape[0]), _test_indices).all():
