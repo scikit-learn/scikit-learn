@@ -40,7 +40,7 @@ def get_module_doc_link(estimator_class, method_name):
     class_name = estimator_class.__qualname__
 
     # doc = inspect.getdoc(getattr(estimator_class, method_name))
-    doc = getattr(estimator_class, method_name).__doc__
+    doc = html.escape(getattr(estimator_class, method_name).__doc__)
     if doc:
         docstring = doc[:50]
     else:
@@ -54,11 +54,14 @@ def get_module_doc_link(estimator_class, method_name):
 
 def _read_params(method, signature):
     method = html.escape(method)
-    r = reprlib.Repr()
-    r.maxlist = 2
-    r.maxtuple = 1  # Show only first item of tuples
-    r.maxstring = 15  # Limit string length
-    cleaned_signature = html.escape(r.repr(signature).replace("'", ""))
+    if "self" in signature:
+        cleaned_signature = "()"
+    else:
+        r = reprlib.Repr()
+        r.maxlist = 2
+        r.maxtuple = 1  # Show only first item of tuples
+        r.maxstring = 15  # Limit string length
+        cleaned_signature = html.escape(r.repr(signature).replace("'", ""))
 
     return method, cleaned_signature
 
@@ -136,7 +139,7 @@ class MethodsDict(ReprHTMLMixin, UserDict):
     estimator_class : class
         The class of the estimator whose methods are being represented.
     doc_link : str, default=""
-        The base URL to the online documentation for the estimator class.
+        The base URL to the docs for the estimator class.
         Used to generate parameter-specific documentation links in the HTML
         representation. If empty, documentation links will not be generated.
     """
