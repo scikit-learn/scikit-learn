@@ -78,13 +78,13 @@ def unique_labels(*ys, ys_types=None):
     xp, is_array_api_compliant = get_namespace(*ys)
     if len(ys) == 0:
         raise ValueError("No argument has been passed.")
-    # Check that we don't mix label format
 
     if ys_types is None:
         ys_types = set(type_of_target(x) for x in ys)
         if ys_types == {"binary", "multiclass"}:
             ys_types = {"multiclass"}
 
+    # Check that we don't mix label format
     if len(ys_types) > 1:
         raise ValueError("Mix type of y not allowed, got types %s" % ys_types)
 

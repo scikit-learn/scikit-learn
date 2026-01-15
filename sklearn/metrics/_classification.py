@@ -136,8 +136,7 @@ def _check_targets(y_true, y_pred, sample_weight=None):
             )
         )
 
-    y_type_set = y_type.copy()
-    # We can't have more than one value on y_type
+    # We can't have more than one value on y_type => The set is no more needed
     y_type = y_type.pop()
 
     # No metrics support "multiclass-multioutput" format
@@ -156,7 +155,7 @@ def _check_targets(y_true, y_pred, sample_weight=None):
             else:
                 raise
 
-    unique_labels_ = unique_labels(y_true, y_pred, ys_types=y_type_set)
+    unique_labels_ = unique_labels(y_true, y_pred, ys_types={y_type})
     if y_type == "binary":
         if unique_labels_.shape[0] > 2:
             y_type = "multiclass"
