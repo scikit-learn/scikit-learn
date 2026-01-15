@@ -2,9 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from libc.stdlib cimport free
-from libc.stdlib cimport malloc
 from libc.stdlib cimport realloc
-from libc.string cimport memcpy, memmove
 from libc.math cimport log as ln
 from libc.math cimport isnan
 from libc.string cimport memset
@@ -67,57 +65,6 @@ cdef inline float64_t rand_uniform(float64_t low, float64_t high,
 
 cdef inline float64_t log(float64_t x) noexcept nogil:
     return ln(x) / ln(2.0)
-
-
-cdef int swap_array_slices(
-    array_data_type[::1] array, intp_t start, intp_t end, intp_t n
-) except -1 nogil:
-    """Swaps the order of the slices array[start:start + n] and array[start + n:end].
-
-    Preserves the order within the slices. Works for any itemsize.
-    """
-    if start >= end:
-        return 0
-    cdef size_t itemsize = sizeof(array[0])
-    cdef intp_t n_rev = end - start - n
-    cdef size_t nbytes = n * itemsize
-    cdef size_t nbytes_rev = n_rev * itemsize
-    cdef size_t nbytes_tmp = nbytes if n <= n_rev else nbytes_rev
-    cdef char* tmp = <char*> malloc(nbytes_tmp)
-    if tmp == NULL:
-        raise MemoryError(f"could not allocate {nbytes_tmp} bytes")
-    cdef char* arr = <char*> &array[0]
-    if n <= n_rev:
-        # Copy array[start : start + n] to temporary buffer
-        memcpy(tmp, arr + start * itemsize, nbytes)
-        # Move array[start + n : end] to array[start : start + n_rev]
-        # `memmove` is needed as the dest & source regions overlap
-        memmove(arr + start * itemsize, arr + (start + n) * itemsize, nbytes_rev)
-        # array[start + n_rev : end] = tmp
-        memcpy(arr + (start + n_rev) * itemsize, tmp, nbytes)
-    else:
-        # Copy array[start + n : end] to temporary buffer
-        memcpy(tmp, arr + (start + n) * itemsize, nbytes_rev)
-        # Move array[start : start + n] to array[start + n_rev : end]
-        memmove(arr + (start + n_rev) * itemsize, arr + start * itemsize, nbytes)
-        # array[start : start + n_rev] = tmp
-        memcpy(arr + start * itemsize, tmp, nbytes_rev)
-    free(tmp)
-    return 0
-
-
-def _py_swap_array_slices(cnp.ndarray array, intp_t start, intp_t end, intp_t n):
-    """
-    Python wrapper for swap_array_slices for testing.
-    `array` must be contiguous.
-    """
-    # Dispatch to the appropriate specialized version based on dtype
-    if array.dtype == np.intp:
-        swap_array_slices[intp_t](array, start, end, n)
-    elif array.dtype == np.float32:
-        swap_array_slices[float32_t](array, start, end, n)
-    else:
-        raise ValueError(f"Unsupported dtype: {array.dtype}. Expected np.intp or np.float32")
 
 
 def _any_isnan_axis0(const float32_t[:, :] X):

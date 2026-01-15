@@ -51,15 +51,6 @@ cdef float64_t rand_uniform(float64_t low, float64_t high,
 cdef float64_t log(float64_t x) noexcept nogil
 
 
-ctypedef fused array_data_type:
-    intp_t
-    float32_t
-
-cdef int swap_array_slices(
-    array_data_type[::1] array, intp_t start, intp_t end, intp_t n
-) except -1 nogil
-
-
 cdef class WeightedFenwickTree:
     cdef intp_t size         # number of leaves (ranks)
     cdef float64_t* tree_w   # BIT for weights

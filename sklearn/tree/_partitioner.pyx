@@ -13,12 +13,14 @@ and sparse data stored in a Compressed Sparse Column (CSC) format.
 from cython cimport final
 from libc.math cimport isnan, log2
 from libc.stdlib cimport qsort
-from libc.string cimport memcpy
+from libc.string cimport memcpy, memmove
 
 import numpy as np
+cimport numpy as cnp
+cnp.import_array()
 from scipy.sparse import issparse
 
-from sklearn.tree._utils cimport swap_array_slices
+# from sklearn.tree._utils cimport swap_array_slices
 
 
 # Constant to switch between algorithm non zero value extract algorithm
@@ -46,6 +48,8 @@ cdef class DensePartitioner:
         self.samples = samples
         self.feature_values = feature_values
         self.missing_values_in_feature_mask = missing_values_in_feature_mask
+        buffer_size = samples.size * max(samples.itemsize, feature_values.itemsize)
+        self.swap_buffer = np.empty(buffer_size, dtype=np.uint8)
 
     cdef inline void init_node_split(self, intp_t start, intp_t end) noexcept nogil:
         """Initialize splitter at the beginning of node_split."""
@@ -113,8 +117,8 @@ cdef class DensePartitioner:
         """
         assert not self.missing_on_the_left
         cdef intp_t n_non_missing = self.end - self.start - self.n_missing
-        swap_array_slices(self.samples, self.start, self.end, n_non_missing)
-        swap_array_slices(self.feature_values, self.start, self.end, n_non_missing)
+        swap_array_slices(self.samples, self.start, self.end, n_non_missing, self.swap_buffer)
+        swap_array_slices(self.feature_values, self.start, self.end, n_non_missing, self.swap_buffer)
         self.missing_on_the_left = True
 
     cdef inline void find_min_max(
@@ -190,11 +194,13 @@ cdef class DensePartitioner:
         float64_t threshold,
         bint missing_go_to_left
     ) noexcept nogil:
-        """Partition samples on current feature_values for a given threshold.
+        """Partition self.samples and self.feature_values
+        on current self.feature_values for a given threshold.
 
         Used while searching splits through random threshold sampling.
         """
         cdef:
+            # Local invariance: start <= partition_start <= partition_end <= end
             intp_t partition_start = self.start
             intp_t partition_end = self.end
             intp_t* samples = &self.samples[0]
@@ -220,13 +226,13 @@ cdef class DensePartitioner:
         intp_t best_feature,
         bint best_missing_go_to_left
     ) noexcept nogil:
-        """Partition samples for X at the best_threshold and best_feature.
+        """Partition self.samples for X[:, best_feature] at the best_threshold.
 
         If missing values are present, this method partitions them accordingly
         to best_missing_go_to_left.
         """
         cdef:
-            # Local invariance: start <= p <= partition_end <= end
+            # Local invariance: start <= partition_start <= partition_end <= end
             intp_t partition_start = self.start
             intp_t partition_end = self.end
             intp_t* samples = &self.samples[0]
@@ -772,3 +778,41 @@ cdef void heapsort(floating* feature_values, intp_t* samples, intp_t n) noexcept
         swap(feature_values, samples, 0, end)
         sift_down(feature_values, samples, 0, end)
         end = end - 1
+
+
+cdef void swap_array_slices(
+    array_data_type[::1] array, intp_t start, intp_t end, intp_t n,
+    char[::1] buffer
+) noexcept nogil:
+    """Swaps the order of the slices array[start:start + n] and array[start + n:end].
+
+    Preserves the order within the slices. Works for any itemsize.
+    """
+    if start >= end:
+        return
+    cdef size_t itemsize = sizeof(array[0])
+    cdef intp_t n_rev = end - start - n
+    cdef char* arr = <char*> &array[0]
+    cdef char* buf = &buffer[0]
+    # Copy array[start + n : end] to temporary buffer
+    memcpy(buf, arr + (start + n) * itemsize, n_rev * itemsize)
+    # Move array[start : start + n] to array[start + n_rev : end]
+    # `memmove` is needed as the dest & source regions overlap
+    memmove(arr + (start + n_rev) * itemsize, arr + start * itemsize, n * itemsize)
+    # array[start : start + n_rev] = buffer[:n_rev]
+    memcpy(arr + start * itemsize, buf, n_rev * itemsize)
+
+
+def _py_swap_array_slices(cnp.ndarray array, intp_t start, intp_t end, intp_t n):
+    """
+    Python wrapper for swap_array_slices for testing.
+    `array` must be contiguous.
+    """
+    buffer = np.empty(array.size * array.dtype.itemsize, dtype=np.uint8)
+    # Dispatch to the appropriate specialized version based on dtype
+    if array.dtype == np.intp:
+        swap_array_slices[intp_t](array, start, end, n, buffer)
+    elif array.dtype == np.float32:
+        swap_array_slices[float32_t](array, start, end, n, buffer)
+    else:
+        raise ValueError(f"Unsupported dtype: {array.dtype}. Expected np.intp or np.float32")

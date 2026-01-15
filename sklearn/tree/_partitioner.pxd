@@ -76,6 +76,7 @@ cdef class DensePartitioner:
     cdef intp_t n_missing
     cdef const uint8_t[::1] missing_values_in_feature_mask
     cdef bint missing_on_the_left
+    cdef char[::1] swap_buffer
 
     cdef void sort_samples_and_feature_values(
         self, intp_t current_feature
@@ -176,3 +177,8 @@ cdef class SparsePartitioner:
 
 
 cdef void sort(floating* feature_values, intp_t* samples, intp_t n) noexcept nogil
+
+
+ctypedef fused array_data_type:
+    intp_t
+    float32_t
