@@ -170,11 +170,7 @@ def test_lml_gradient(kernel):
         result = []
         for length_scale in length_scales.flatten():
             kernel.set_params(**{length_scale_param_name: length_scale})
-            if (
-                kernel.__class__.__name__ in ["Product", "Sum"]
-                or len(kernel.theta) == 1
-            ):
-                result.append(gpr.log_marginal_likelihood(kernel.theta))
+            result.append(gpr.log_marginal_likelihood(kernel.theta))
 
         if length_scales.ndim == 1:
             return np.stack(result)

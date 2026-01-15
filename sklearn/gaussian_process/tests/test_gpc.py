@@ -135,10 +135,9 @@ def test_lml_gradient(kernel):
             name for name in kernel.get_params() if name.endswith("length_scale")
         )
         result = []
-        for length_scale in length_scales:
+        for length_scale in length_scales.flatten():
             kernel.set_params(**{length_scale_param_name: length_scale})
-            if kernel.__class__.__name__ == "Product" or len(kernel.theta) == 1:
-                result.append(gpc.log_marginal_likelihood(kernel.theta))
+            result.append(gpc.log_marginal_likelihood(kernel.theta))
 
         if length_scales.ndim == 1:
             return np.stack(result)
