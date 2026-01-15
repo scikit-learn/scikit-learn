@@ -1304,6 +1304,10 @@ _LOSSES = {
 
 
 class HalfBinomialLossArrayAPI(HalfBinomialLoss):
+    """A version of the the HalfBinomialLoss that is compatible with
+    the array API.
+    """
+
     def loss(
         self,
         y_true,
@@ -1429,6 +1433,18 @@ class HalfBinomialLossArrayAPI(HalfBinomialLoss):
 
 
 class HalfMultinomialLossArrayAPI(HalfMultinomialLoss):
+    """A version of the the HalfMultinomialLoss that is compatible with
+    the array API.
+
+    Parameters
+    ----------
+    sample_weight : {None, ndarray}
+        If sample_weight is None, the hessian might be constant.
+
+    n_classes : {None, int}
+        The number of classes for classification, else None.
+    """
+
     def __init__(self, sample_weight=None, n_classes=3):
         super().__init__(n_classes=n_classes)
         # These instance variables are specifically to store certain
