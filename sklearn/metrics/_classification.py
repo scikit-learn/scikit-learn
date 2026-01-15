@@ -3060,12 +3060,12 @@ def classification_report(
     """
 
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, unique_labels, y_true, y_pred, sample_weight = _check_targets(
+    y_type, unique_labels_, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
 
     if labels is None:
-        labels = unique_labels
+        labels = unique_labels_
         labels_given = False
     else:
         labels = np.asarray(labels)

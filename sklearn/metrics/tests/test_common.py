@@ -1940,8 +1940,8 @@ def test_metrics_consistent_type_error(input, metric_name):
 
     y2 = rng.randint(0, 2, size=n_samples)
 
-    err_msg = "Mix of label input types (string and number)"
-    with pytest.raises(TypeError, match=err_msg):
+    err_msg = r"Mix of label input types \(string and number\)"
+    with pytest.raises(ValueError, match=err_msg):
         CLASSIFICATION_METRICS[metric_name](y1, y2)
 
 
