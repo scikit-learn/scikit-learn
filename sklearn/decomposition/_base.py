@@ -13,6 +13,7 @@ from sklearn.base import (
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
 )
+from sklearn.externals import array_api_extra as xpx
 from sklearn.utils._array_api import _add_to_diagonal, device, get_namespace
 from sklearn.utils.validation import check_array, check_is_fitted, validate_data
 
@@ -164,7 +165,7 @@ class _BasePCA(
             # whitening. To avoid this problem we clip the variance below.
             scale = xp.sqrt(self.explained_variance_)
             min_scale = xp.finfo(scale.dtype).eps
-            scale = scale.at[scale < min_scale].set(min_scale)
+            scale = xpx.at(scale, (scale < min_scale)).set(min_scale)
             X_transformed /= scale
         return X_transformed
 
