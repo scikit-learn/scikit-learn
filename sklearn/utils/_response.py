@@ -237,9 +237,8 @@ def _get_response_values(
         y_pred, pos_label = prediction_method(X), None
     else:
         raise ValueError(
-            f"{estimator.__class__.__name__} is not recognized as an estimator with "
-            "response values. It should be a classifier, an outlier detector or a "
-            "regressor."
+            f"{estimator.__class__.__name__} is not recognized as a classifier, "
+            "an outlier detector or a regressor."
         )
 
     if return_response_method_used:
