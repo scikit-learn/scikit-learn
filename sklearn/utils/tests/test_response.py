@@ -441,7 +441,7 @@ def test_response_values_output_shape_(
     else:  # multilabel
         y = np.array([[0, 1], [1, 0]] * 5)
 
-    clf = estimator.fit(X, y)
+    clf = clone(estimator).fit(X, y)
 
     y_pred, _ = _get_response_values(clf, X, response_method=response_method)
 
