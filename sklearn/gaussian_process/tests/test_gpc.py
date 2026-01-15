@@ -158,9 +158,9 @@ def test_lml_gradient(kernel):
         )
 
     derivative_results = derivative(
-         evaluate_grad_at_length_scales,
-         length_scales,
-         maxiter=20,
+        evaluate_grad_at_length_scales,
+        length_scales,
+        maxiter=20,
     )
     # Check that the numerical estimation converged within tolerances.
     assert np.all(derivative_results.status == 0)
