@@ -111,16 +111,12 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         - None, to use a 5-fold cross-validation chosen internally based on
             `target_type` and `groups`,
         - integer, to specify the number of folds for the cross-validation chosen
-            internally based on `target_type` and `groups`,
-        - :term:`CV splitter` from :class:`GroupKFold`, :class:`KFold`,
-            :class:`StratifiedKFold`, or :class:`StratifiedGroupKFold` (which do not
-            repeat samples across test folds),
+            internally based on `target_type`,
+        - :term:`CV splitter` that does not repeat samples across test folds,
         - an iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs, if `target_type` is `"continuous"` and `groups` is
-        None, :class:`KFold` is used, in all other cases, :class:`StratifiedKFold` is
-        used. If `groups` are passed into :meth:`fit_transform`, :class:`GroupKFold` or
-        :class:`StratifiedGroupKFold` are used for cross fitting instead. After calling
+        For integer/None inputs, if `target_type` is `"continuous"`, :class:`KFold` is
+        used, otherwise :class:`StratifiedKFold` is used. After calling
         :meth:`fit_transform`, the `cv_` attribute stores the name of the
         cross-validation strategy used.
 
