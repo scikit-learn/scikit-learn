@@ -38,7 +38,6 @@ from sklearn.utils._array_api import (
     _is_xp_namespace,
     _isin,
     _max_precision_float_dtype,
-    _union1d,
     _xlogy,
     get_namespace,
     get_namespace_and_device,
@@ -76,9 +75,14 @@ def _check_targets(y_true, y_pred, sample_weight=None):
     """Check that y_true and y_pred belong to the same classification task.
 
     This converts multiclass or binary types to a common shape, and raises a
-    ValueError for a mix of multilabel and multiclass targets, a mix of
-    multilabel formats, for the presence of continuous-valued or multioutput
-    targets, or for targets of different lengths.
+    ValueError for:
+
+        - targets of different lengths,
+        - a mix of multilabel and multiclass targets,
+        - a mix of multilabel target and anything else
+          (because there are no explicit labels),
+        - the presence of continuous-valued or multioutput (or 'unknown') targets,
+        - mix of string and integer labels.
 
     Column vectors are squeezed to 1d, while multilabel formats are returned
     as CSR sparse label indicators.
@@ -96,6 +100,9 @@ def _check_targets(y_true, y_pred, sample_weight=None):
     type_true : one of {'multilabel-indicator', 'multiclass', 'binary'}
         The type of the true target data, as output by
         ``utils.multiclass.type_of_target``.
+
+    unique_labels : array
+        An ordered array of unique labels.
 
     y_true : array or indicator matrix
 
@@ -129,7 +136,8 @@ def _check_targets(y_true, y_pred, sample_weight=None):
             )
         )
 
-    # We can't have more than one value on y_type => The set is no more needed
+    y_type_set = y_type.copy()
+    # We can't have more than one value on y_type
     y_type = y_type.pop()
 
     # No metrics support "multiclass-multioutput" format
@@ -148,25 +156,12 @@ def _check_targets(y_true, y_pred, sample_weight=None):
             else:
                 raise
 
-        xp, _ = get_namespace(y_true, y_pred)
-        if y_type == "binary":
-            try:
-                unique_values = _union1d(y_true, y_pred, xp)
-            except TypeError as e:
-                # We expect y_true and y_pred to be of the same data type.
-                # If `y_true` was provided to the classifier as strings,
-                # `y_pred` given by the classifier will also be encoded with
-                # strings. So we raise a meaningful error
-                raise TypeError(
-                    "Labels in y_true and y_pred should be of the same type. "
-                    f"Got y_true={xp.unique(y_true)} and "
-                    f"y_pred={xp.unique(y_pred)}. Make sure that the "
-                    "predictions provided by the classifier coincides with "
-                    "the true labels."
-                ) from e
-            if unique_values.shape[0] > 2:
-                y_type = "multiclass"
+    unique_labels_ = unique_labels(y_true, y_pred, ys_types=y_type_set)
+    if y_type == "binary":
+        if unique_labels_.shape[0] > 2:
+            y_type = "multiclass"
 
+    xp, _ = get_namespace(y_true, y_pred)
     if y_type.startswith("multilabel"):
         if _is_numpy_namespace(xp):
             # XXX: do we really want to sparse-encode multilabel indicators when
@@ -177,7 +172,7 @@ def _check_targets(y_true, y_pred, sample_weight=None):
             y_pred = csr_matrix(y_pred)
         y_type = "multilabel-indicator"
 
-    return y_type, y_true, y_pred, sample_weight
+    return y_type, unique_labels_, y_true, y_pred, sample_weight
 
 
 def _one_hot_encoding_multiclass_target(y_true, labels, target_xp, target_device):
@@ -407,7 +402,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
     # Compute accuracy for each possible representation
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred, sample_weight = _check_targets(
+    y_type, _, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
 
@@ -545,7 +540,7 @@ def confusion_matrix(
         sample_weight = _convert_to_numpy(sample_weight, xp)
 
     if len(sample_weight) > 0:
-        y_type, y_true, y_pred, sample_weight = _check_targets(
+        y_type, unique_labels, y_true, y_pred, sample_weight = _check_targets(
             y_true, y_pred, sample_weight
         )
     else:
@@ -554,14 +549,14 @@ def confusion_matrix(
         # In this case we don't pass sample_weight to _check_targets that would
         # check that sample_weight is not empty and we don't reuse the returned
         # sample_weight
-        y_type, y_true, y_pred, _ = _check_targets(y_true, y_pred)
+        y_type, unique_labels, y_true, y_pred, _ = _check_targets(y_true, y_pred)
 
     y_true, y_pred = attach_unique(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
 
     if labels is None:
-        labels = unique_labels(y_true, y_pred)
+        labels = unique_labels
     else:
         labels = _convert_to_numpy(labels, xp)
         n_labels = labels.size
@@ -742,14 +737,13 @@ def multilabel_confusion_matrix(
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
     xp, _, device_ = get_namespace_and_device(y_true, y_pred, sample_weight)
-    y_type, y_true, y_pred, sample_weight = _check_targets(
+    y_type, present_labels, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
 
     if y_type not in ("binary", "multiclass", "multilabel-indicator"):
         raise ValueError("%s is not supported" % y_type)
 
-    present_labels = unique_labels(y_true, y_pred)
     if labels is None:
         labels = present_labels
         n_labels = None
@@ -1266,7 +1260,7 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     -0.33
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred, sample_weight = _check_targets(
+    y_type, _, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
     if y_type not in {"binary", "multiclass"}:
@@ -1860,8 +1854,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
         raise ValueError("average has to be one of " + str(average_options))
 
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred, _ = _check_targets(y_true, y_pred)
-    present_labels = unique_labels(y_true, y_pred)
+    y_type, present_labels, y_true, y_pred, _ = _check_targets(y_true, y_pred)
     if average == "binary":
         if y_type == "binary":
             if pos_label not in present_labels:
@@ -2330,7 +2323,7 @@ def class_likelihood_ratios(
     # remove `FutureWarning`, and the Warns section in the docstring should not mention
     # `raise_warning` anymore.
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred, sample_weight = _check_targets(
+    y_type, _, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
     if y_type != "binary":
@@ -3067,12 +3060,12 @@ def classification_report(
     """
 
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred, sample_weight = _check_targets(
+    y_type, unique_labels, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
 
     if labels is None:
-        labels = unique_labels(y_true, y_pred)
+        labels = unique_labels
         labels_given = False
     else:
         labels = np.asarray(labels)
@@ -3260,7 +3253,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     0.75
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    y_type, y_true, y_pred, sample_weight = _check_targets(
+    y_type, _, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
 
