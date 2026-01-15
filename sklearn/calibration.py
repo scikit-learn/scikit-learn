@@ -12,7 +12,11 @@ import numpy as np
 from scipy.optimize import minimize, minimize_scalar
 from scipy.special import expit
 
-from sklearn._loss import HalfBinomialLoss, HalfMultinomialLoss
+from sklearn._loss import (
+    HalfBinomialLoss,
+    HalfMultinomialLoss,
+    HalfMultinomialLossArrayAPI,
+)
 from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
@@ -1110,8 +1114,12 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, labels, dtype=dtype_)
 
-        multinomial_loss = HalfMultinomialLoss(n_classes=logits.shape[1])
         is_numpy_namespace = _is_numpy_namespace(xp)
+        multinomial_loss = (
+            HalfMultinomialLoss(n_classes=logits.shape[1])
+            if is_numpy_namespace
+            else HalfMultinomialLossArrayAPI(n_classes=logits.shape[1])
+        )
 
         def log_loss(log_beta=0.0):
             """Compute the log loss as a parameter of the inverse temperature

@@ -12,7 +12,12 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import optimize
 
-from sklearn._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
+from sklearn._loss.loss import (
+    HalfBinomialLoss,
+    HalfBinomialLossArrayAPI,
+    HalfMultinomialLoss,
+    HalfMultinomialLossArrayAPI,
+)
 from sklearn.base import _fit_context
 from sklearn.linear_model._base import (
     BaseEstimator,
@@ -371,7 +376,12 @@ def _logistic_regression_path(
     if is_binary:
         target = y_bin
         loss = LinearModelLoss(
-            base_loss=HalfBinomialLoss(), fit_intercept=fit_intercept
+            base_loss=(
+                HalfBinomialLoss()
+                if _is_numpy_namespace(xp)
+                else HalfBinomialLossArrayAPI()
+            ),
+            fit_intercept=fit_intercept,
         )
         if solver == "lbfgs":
             func = loss.loss_gradient
@@ -382,7 +392,11 @@ def _logistic_regression_path(
         warm_start_sag = {"coef": np.expand_dims(w0, axis=1)}
     else:  # multinomial
         loss = LinearModelLoss(
-            base_loss=HalfMultinomialLoss(n_classes=size(classes)),
+            base_loss=(
+                HalfMultinomialLoss(n_classes=size(classes))
+                if _is_numpy_namespace(xp)
+                else HalfMultinomialLossArrayAPI(n_classes=size(classes))
+            ),
             fit_intercept=fit_intercept,
         )
         target = Y_multi

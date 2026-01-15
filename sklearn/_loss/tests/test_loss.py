@@ -19,8 +19,10 @@ from sklearn._loss.loss import (
     AbsoluteError,
     BaseLoss,
     HalfBinomialLoss,
+    HalfBinomialLossArrayAPI,
     HalfGammaLoss,
     HalfMultinomialLoss,
+    HalfMultinomialLossArrayAPI,
     HalfPoissonLoss,
     HalfSquaredError,
     HalfTweedieLoss,
@@ -1372,9 +1374,12 @@ def test_tweedie_log_identity_consistency(p):
 
 
 @pytest.mark.parametrize(
-    "loss_class",
-    [HalfBinomialLoss, HalfMultinomialLoss],
-    ids=["HalfBinomialLoss", "HalfMultinomialLoss"],
+    "array_api_loss_class, loss_class",
+    [
+        (HalfBinomialLossArrayAPI, HalfBinomialLoss),
+        (HalfMultinomialLossArrayAPI, HalfMultinomialLoss),
+    ],
+    ids=["HalfBinomialLossArrayAPI", "HalfMultinomialLossArrayAPI"],
 )
 @pytest.mark.parametrize(
     "method_name", ["__call__", "gradient", "loss", "loss_gradient"]
@@ -1386,7 +1391,13 @@ def test_tweedie_log_identity_consistency(p):
     ids=_get_namespace_device_dtype_ids,
 )
 def test_loss_array_api(
-    loss_class, method_name, use_sample_weight, namespace, device_, dtype_name
+    array_api_loss_class,
+    loss_class,
+    method_name,
+    use_sample_weight,
+    namespace,
+    device_,
+    dtype_name,
 ):
     def _assert_array_api_result(result_xp, result_np, raw_prediction_xp, xp, atol):
         assert_allclose(_convert_to_numpy(result_xp, xp=xp), result_np, atol=atol)
@@ -1397,6 +1408,7 @@ def test_loss_array_api(
     atol = _atol_for_type(dtype_name)
     random_seed = 42
     n_samples = 100
+    array_api_loss_instance = array_api_loss_class()
     loss_instance = loss_class()
     y_true, raw_prediction = random_y_true_raw_prediction(
         loss=loss_instance,
@@ -1420,12 +1432,10 @@ def test_loss_array_api(
         sample_weight_xp = None
 
     method = getattr(loss_instance, method_name)
+    array_api_method = getattr(array_api_loss_instance, method_name)
+    extra_params_xp = {}
     if method_name == "__call__":
-        array_api_method = getattr(loss_instance, method_name)
-        extra_params_xp = {"is_numpy_namespace": _is_numpy_namespace(xp)}
-    else:
-        array_api_method = getattr(loss_instance, f"{method_name}_array_api")
-        extra_params_xp = {}
+        extra_params_xp["is_numpy_namespace"] = _is_numpy_namespace(xp)
 
     result_np = method(
         y_true=y_true, raw_prediction=raw_prediction, sample_weight=sample_weight_np
@@ -1435,7 +1445,6 @@ def test_loss_array_api(
             y_true=y_true_xp,
             raw_prediction=raw_prediction_xp,
             sample_weight=sample_weight_xp,
-            xp=xp,
             **extra_params_xp,
         )
         if (

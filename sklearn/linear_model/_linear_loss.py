@@ -10,7 +10,6 @@ from scipy import sparse
 
 from sklearn.utils._array_api import (
     _convert_to_numpy,
-    _is_numpy_namespace,
     get_namespace,
     get_namespace_and_device,
 )
@@ -325,22 +324,13 @@ class LinearModelLoss:
         else:
             weights, intercept = self.weight_intercept(coef)
 
+        loss, grad_pointwise = self.base_loss.loss_gradient(
+            y_true=y,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+            n_threads=n_threads,
+        )
         xp, _ = get_namespace(X, y, sample_weight)
-        if _is_numpy_namespace(xp):
-            loss, grad_pointwise = self.base_loss.loss_gradient(
-                y_true=y,
-                raw_prediction=raw_prediction,
-                sample_weight=sample_weight,
-                n_threads=n_threads,
-            )
-        else:
-            loss, grad_pointwise = self.base_loss.loss_gradient_array_api(
-                y_true=y,
-                raw_prediction=raw_prediction,
-                sample_weight=sample_weight,
-                xp=xp,
-            )
-
         sw_sum = n_samples if sample_weight is None else xp.sum(sample_weight)
         loss = float(xp.sum(loss) / sw_sum)
         loss += self.l2_penalty(weights, l2_reg_strength)
