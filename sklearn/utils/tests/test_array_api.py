@@ -510,12 +510,33 @@ def test_convert_to_numpy_cpu():
 class SimpleEstimator(BaseEstimator):
     def fit(self, X, y=None):
         self.X_ = X
+        self.X_dict_ = {"X": X}
         self.n_features_ = X.shape[0]
         return self
 
     def predict(self, X):
         check_same_namespace(X, self, attribute="X_", method="predict")
         return X
+
+
+class SimpleEstimatorCustomLogic(BaseEstimator):
+    def fit(self, X, y=None):
+        self.X_ = X
+        self.X_dict_ = {"X": X}
+        self.n_features_ = X.shape[0]
+        return self
+
+    def predict(self, X):
+        check_same_namespace(X, self, attribute="X_", method="predict")
+        return X
+
+    def __sklearn_array_api_convert__(self, converter):
+        self.X_ = converter(self.X_)
+        self.X_dict_ = {k: converter(v) for k, v in self.X_dict_.items()}
+        # XXX Do we need this? What else could the custom logic do that wouldn't work
+        # with the default logic?
+        self.converted_ = True
+        return self
 
 
 @skip_if_array_api_compat_not_configured
@@ -543,7 +564,7 @@ def test_convert_estimator_to_ndarray(array_namespace, converter):
 
 
 @skip_if_array_api_compat_not_configured
-def test_convert_estimator_to_array_api_strict():
+def test_convert_estimator_with_custom_logic():
     xp = pytest.importorskip("array_api_strict")
 
     X_np = numpy.asarray([[1.3, 4.5]])
@@ -553,7 +574,38 @@ def test_convert_estimator_to_array_api_strict():
     assert hasattr(new_est.X_, "__array_namespace__")
     with config_context(array_api_dispatch=True):
         new_est = convert_estimator(est, xp.asarray([0]))
+
         assert get_namespace(new_est.X_)[0] == xp
+        assert get_namespace(new_est.X_dict_["X"])[0] == xp
+
+
+@skip_if_array_api_compat_not_configured
+def test_custom_conversion_estimator_to_array_api_strict():
+    xp = pytest.importorskip("array_api_strict")
+
+    X_np = numpy.asarray([[1.3, 4.5]])
+    est = SimpleEstimatorCustomLogic().fit(X_np)
+
+    with config_context(array_api_dispatch=True):
+        new_est = convert_estimator(est, xp.asarray([0]))
+
+        assert get_namespace(new_est.X_)[0] == xp
+        assert get_namespace(new_est.X_dict_["X"])[0] == xp
+        assert new_est.converted_
+
+
+@skip_if_array_api_compat_not_configured
+def test_convert_estimator_to_array_api_strict():
+    xp = pytest.importorskip("array_api_strict")
+
+    X_np = numpy.asarray([[1.3, 4.5]])
+    est = SimpleEstimator().fit(X_np)
+
+    with config_context(array_api_dispatch=True):
+        new_est = convert_estimator(est, xp.asarray([0]))
+
+        assert get_namespace(new_est.X_)[0] == xp
+        assert get_namespace(new_est.X_dict_["X"])[0] == xp
 
 
 @skip_if_array_api_compat_not_configured
