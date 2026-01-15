@@ -511,6 +511,7 @@ class SimpleEstimator(BaseEstimator):
     def fit(self, X, y=None):
         self.X_ = X
         self.X_dict_ = {"X": X}
+        self.X_list_ = [X]
         self.n_features_ = X.shape[0]
         return self
 
@@ -577,6 +578,7 @@ def test_convert_estimator_with_custom_logic():
 
         assert get_namespace(new_est.X_)[0] == xp
         assert get_namespace(new_est.X_dict_["X"])[0] == xp
+        assert get_namespace(new_est.X_list_[0])[0] == xp
 
 
 @skip_if_array_api_compat_not_configured
@@ -588,6 +590,8 @@ def test_custom_conversion_estimator_to_array_api_strict():
 
     with config_context(array_api_dispatch=True):
         new_est = convert_estimator(est, xp.asarray([0]))
+
+        new_est.predict(xp.asarray([[1.3, 4.5]]))
 
         assert get_namespace(new_est.X_)[0] == xp
         assert get_namespace(new_est.X_dict_["X"])[0] == xp
