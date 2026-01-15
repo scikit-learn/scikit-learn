@@ -1870,6 +1870,8 @@ def test_non_supported_criterion_raises_error_with_missing_values(Forest):
         forest.fit(X, y)
 
 
+
+# TODO(1.11): remove test with the deprecation of friedman_mse criterion
 @pytest.mark.parametrize("Forest", FOREST_REGRESSORS.values())
 def test_friedman_mse_deprecation(Forest):
     with pytest.warns(FutureWarning, match="friedman_mse"):
