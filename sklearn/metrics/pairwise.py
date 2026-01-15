@@ -945,7 +945,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     if metric_kwargs is None:
         metric_kwargs = {}
 
-    if ArgKmin.is_usable_for(X, Y, metric):
+    if ArgKmin.is_usable_for(X, Y, metric) and _is_numpy_namespace(xp):
         # This is an adaptor for one "sqeuclidean" specification.
         # For this backend, we can directly use "sqeuclidean".
         if metric_kwargs.get("squared", False) and metric == "euclidean":
@@ -973,14 +973,14 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         # Turn off check for finiteness because this is costly and because arrays
         # have already been validated.
         with config_context(assume_finite=True):
-            indices_list = list(
-                # This returns an np.ndarray generator whose arrays we need
-                # to flatten into one.
-                pairwise_distances_chunked(
-                    X, Y, reduce_func=_argmin_reduce, metric=metric, **metric_kwargs
-                )
+            indices = xp.concat(
+                list(
+                    pairwise_distances_chunked(
+                        X, Y, reduce_func=_argmin_reduce, metric=metric, **metric_kwargs
+                    )
+                ),
+                axis=0,
             )
-            indices = xp.concat(indices_list, axis=0)
 
     return indices
 
