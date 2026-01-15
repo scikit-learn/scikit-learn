@@ -241,6 +241,9 @@ def lasso_path(
 ):
     """Compute Lasso path with coordinate descent.
 
+    
+    Note: By default, this method computes the Elastic net path.
+
     The Lasso optimization function varies for mono and multi-outputs.
 
     For mono-output tasks it is::
