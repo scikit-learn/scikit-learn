@@ -78,7 +78,7 @@ python_environment_install_and_activate() {
         check_packages_dev_version $dev_packages
 
         echo "Installing Cython from latest sources"
-        # NO_CYTHON_COMPILE install Cython as a pure Python package (faster install)
+        # NO_CYTHON_COMPILE=true installs Cython as a pure Python package (faster install)
         NO_CYTHON_COMPILE=true pip install https://github.com/cython/cython/archive/master.zip
         echo "Installing joblib from latest sources"
         pip install https://github.com/joblib/joblib/archive/master.zip
