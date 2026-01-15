@@ -1,0 +1,8 @@
+- :func:`metrics.accuracy_score`, :func:`metrics.hamming_loss`
+  :func:`metrics.zero_one_loss`, :func:`metrics.matthews_corrcoef` and
+  :func:`metrics.confusion_matrix` (when `labels` is not `None`) now
+  raise an error for mixed string and numeric inputs when
+  inputs are list or numpy arrays not of `object` dtype.
+  The above metrics, except for :func:`metrics.confusion_matrix`, will
+  also raise an error for label indicator array inputs of inconsistent size.
+  By :user:`Lucy Liu <lucyleeow>`.
