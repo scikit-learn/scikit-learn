@@ -283,22 +283,25 @@ def test_pipeline_invalid_parameters():
 
 
 @pytest.mark.parametrize(
-    "meta_estimators",
+    "meta_estimators, class_name",
     [
-        Pipeline([("pca", PCA)]),
-        Pipeline([("pca", PCA), ("ident", None)]),
-        Pipeline([("passthrough", "passthrough"), ("pca", PCA)]),
-        Pipeline([("passthrough", None), ("pca", PCA)]),
-        Pipeline([("scale", StandardScaler), ("pca", PCA())]),
-        FeatureUnion([("pca", PCA), ("svd", TruncatedSVD())]),
-        FeatureUnion([("pca", PCA()), ("svd", TruncatedSVD)]),
-        FeatureUnion([("drop", "drop"), ("svd", TruncatedSVD)]),
-        FeatureUnion([("pca", PCA), ("passthrough", "passthrough")]),
+        (Pipeline([("pca", PCA)]), "PCA"),
+        (Pipeline([("pca", PCA), ("ident", None)]), "PCA"),
+        (Pipeline([("passthrough", "passthrough"), ("pca", PCA)]), "PCA"),
+        (Pipeline([("passthrough", None), ("pca", PCA)]), "PCA"),
+        (Pipeline([("scale", StandardScaler), ("pca", PCA())]), "StandardScaler"),
+        (FeatureUnion([("pca", PCA), ("svd", TruncatedSVD())]), "PCA"),
+        (FeatureUnion([("pca", PCA()), ("svd", TruncatedSVD)]), "TruncatedSVD"),
+        (FeatureUnion([("drop", "drop"), ("svd", TruncatedSVD)]), "TruncatedSVD"),
+        (FeatureUnion([("pca", PCA), ("passthrough", "passthrough")]), "PCA"),
     ],
 )
-def test_meta_estimator_raises_class_not_instance_error(meta_estimators):
+def test_meta_estimator_raises_class_not_instance_error(meta_estimators, class_name):
     # non-regression tests for https://github.com/scikit-learn/scikit-learn/issues/32719
-    msg = "Expected an estimator instance (.*()), got estimator class instead (.*)."
+    msg = re.escape(
+        f"Expected an estimator instance ({class_name}()), "
+        f"got estimator class instead ({class_name})."
+    )
     with pytest.raises(TypeError, match=msg):
         meta_estimators.fit([[1]])
 
