@@ -1785,7 +1785,9 @@ def test_missing_values_is_resilient(Forest, criterion):
 
     # For Poisson criterion, discretize y into positive integer bins
     if criterion == "poisson":
-        kbd = KBinsDiscretizer(encode="ordinal", random_state=rng)
+        kbd = KBinsDiscretizer(
+            encode="ordinal", random_state=rng, quantile_method="linear"
+        )
         y = kbd.fit_transform(y.reshape(-1, 1)).ravel()
 
     # Create dataset with missing values
