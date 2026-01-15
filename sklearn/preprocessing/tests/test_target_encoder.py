@@ -6,11 +6,9 @@ import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn.datasets import make_regression
-from sklearn.datasets._samples_generator import make_classification
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import (
-    GroupKFold,
     KFold,
     ShuffleSplit,
     StratifiedKFold,
@@ -737,58 +735,9 @@ def test_pandas_copy_on_write():
                 TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
 
 
-def test_target_encoder_raises_bad_cv_generator():
-    """
-    Test that `TargetEncoder` raises when a non-accepted cross-validation generator is
-    passed as `cv` object.
-    """
-    X, y = make_classification(random_state=0)
-    encoder = TargetEncoder(target_type="binary", cv=ShuffleSplit())
-    msg = re.escape("The `cv` object needs to be one in [`GroupKFold()`, `KFold()`,")
-    with pytest.raises(ValueError, match=msg):
-        encoder.fit_transform(X, y)
-
-    X, y = make_regression(n_samples=100, n_features=3, random_state=0)
-    groups = np.repeat(np.arange(5), X.shape[0] / 5)
-    encoder = TargetEncoder(target_type="continuous", cv=KFold())
-    msg = re.escape("Expected `cv` from [`GroupKFold()`, `StratifiedGroupKFold()`]")
-    with pytest.raises(ValueError, match=msg):
-        encoder.fit_transform(X, y, groups)
-
-
-def test_target_encoder_raises_groups_not_passed_with_group_splitter():
-    """
-    Test that `TargetEncoder` raises when a grouped cross-validation generator is
-    passed as `cv` object and `groups` is `None`.
-    """
-    X, y = make_classification(random_state=0)
-    encoder = TargetEncoder(target_type="continuous", cv=GroupKFold())
-    msg = "`groups` must be passed since `GroupKFold` requires group labels."
-    with pytest.raises(ValueError, match=msg):
-        encoder.fit_transform(X, y)
-
-
-def test_target_encoder_cv_auto_groups():
-    """
-    Test that `TargetEncoder` uses the correct splitter when `cv` is an integer and
-    `groups` are passed into `fit_transform`.
-    """
-    X, y = make_regression(n_samples=100, n_features=3, random_state=0)
-    groups = np.repeat(np.arange(5), X.shape[0] / 5)
-    encoder = TargetEncoder(target_type="continuous")
-    encoder.fit_transform(X, y, groups)
-    assert encoder.cv_ == "GroupKFold"
-
-    X, y = make_classification(random_state=0)
-    groups = np.repeat(np.arange(5), X.shape[0] / 5)
-    encoder = TargetEncoder(target_type="binary")
-    encoder.fit_transform(X, y, groups)
-    assert encoder.cv_ == "StratifiedGroupKFold"
-
-
 def test_target_encoder_raises_cv_overlap(global_random_seed):
     """
-    Test that `TargetEncoder` raises if `cv` is an iterable with overlapping splits.
+    Test that `TargetEncoder` raises if `cv` has overlapping splits.
     """
     X, y = make_regression(n_samples=100, n_features=3, random_state=0)
 
@@ -800,19 +749,6 @@ def test_target_encoder_raises_cv_overlap(global_random_seed):
         n_splits=5, random_state=global_random_seed
     ).split(X, y)
     encoder = TargetEncoder(cv=overlapping_iterable)
-    msg = "Validation indices from the iterable `cv` must cover each sample index"
+    msg = "Validation indices from `cv` must cover each sample index exactly once"
     with pytest.raises(ValueError, match=msg):
         encoder.fit_transform(X, y)
-
-
-def test_target_encoder_inherited_splitters():
-    """Test that `TargetEncoder` accepts cv splitters that inherit from the allowed
-    splitters."""
-
-    class SplitterBasedOnGroupKFold(GroupKFold):
-        pass
-
-    X, y = make_classification(random_state=0)
-    groups = np.repeat(np.arange(5), X.shape[0] / 5)
-    encoder = TargetEncoder(target_type="binary", cv=SplitterBasedOnGroupKFold())
-    encoder.fit_transform(X, y, groups)

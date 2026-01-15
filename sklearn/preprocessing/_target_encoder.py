@@ -1,7 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from collections.abc import Iterable
 from numbers import Real
 
 import numpy as np
@@ -252,7 +251,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.random_state = random_state
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y, groups=None, **params):
+    def fit(self, X, y, **params):
         """Fit the :class:`TargetEncoder` to X and y.
 
         It is discouraged to use this method because it can introduce data leakage.
@@ -271,11 +270,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         y : array-like of shape (n_samples,)
             The target data used to encode the categories.
 
-        groups : array-like of shape (n_samples,), default=None
-            Always ignored, exists for API compatibility.
-
-            .. versionadded:: 1.9
-
         **params : dict
             Always ignored, exists for API compatibility.
 
@@ -290,7 +284,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit_transform(self, X, y, groups=None, **params):
+    def fit_transform(self, X, y, **params):
         """Fit :class:`TargetEncoder` and transform `X` with the target encoding.
 
         This method uses a :term:`cross fitting` scheme to prevent target leakage
@@ -310,22 +304,15 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         y : array-like of shape (n_samples,)
             The target data used to encode the categories.
 
-        groups : array-like of shape (n_samples,), default=None
-            Group labels for the samples used in the internal :term:`cross fitting`.
-            Only used in conjunction with a "Group" :term:`cv` instance (e.g.,
-            :class:`GroupKFold`).
-
-            If `cv` is `None` or an integer, passing `groups` modifies the
-            :term:`cv` splitter to use :class:`GroupKFold` instead of :class:`KFold` and
-            :class:`StratifiedGroupKFold` instead of :class:`StratifiedKFold`. If `cv`
-            is a cross-validation generator that needs `groups`, `groups` must be
-            passed, otherwise a `ValueError` is raised. `groups` is ignored if `cv` is
-            an iterable.
-
-            .. versionadded:: 1.9
-
         **params : dict
             Parameters to route to the internal CV object.
+
+            Can only be used in conjunction with a cross-validation generator as CV
+            object.
+
+            For instance, `groups` (array-like of shape `(n_samples,)`) can be routed to
+            a CV splitter that accepts `groups`, such as :class:`GroupKFold` or
+            :class:`StratifiedGroupKFold`.
 
             .. versionadded:: 1.9
                 Only available if `enable_metadata_routing=True`, which can be
@@ -346,100 +333,51 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             StratifiedGroupKFold,
             StratifiedKFold,
         )
-        from sklearn.model_selection._split import _CVIterableWrapper
+        from sklearn.model_selection._split import check_cv
 
         _raise_for_params(params, self, "fit_transform")
-        _has_groups = groups is not None or params.get("groups") is not None
 
         X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
 
+        if self.target_type_ == "continuous":
+            cv = check_cv(
+                self.cv, y, classifier=False, shuffle=self.shuffle, random_state=None
+            )
+        else:
+            cv = check_cv(
+                self.cv, y, classifier=True, shuffle=self.shuffle, random_state=None
+            )
+
+        if _routing_enabled():
+            if params["groups"] is not None:
+                X, y, params["groups"] = indexable(X, y, params["groups"])
+            routed_params = process_routing(self, "fit_transform", **params)
+        else:
+            routed_params = Bunch(splitter=Bunch(split={}))
+
         # The CV splitter is restricted to splitters where each sample index appears in
         # exactly one validation fold; otherwise the `fit_transform` output would be
-        # ill-defined.
-
+        # ill-defined. We exclude a predefined list of all well defined splitters in
+        # scikit-learn from the check:
         non_overlapping_splitters = (
             GroupKFold,
             KFold,
             StratifiedKFold,
             StratifiedGroupKFold,
         )
-        X, y, groups = indexable(X, y, groups)
-
-        if type(self.cv) is int:
-            if not _has_groups:
-                if self.target_type_ == "continuous":
-                    cv = KFold(
-                        self.cv, shuffle=self.shuffle, random_state=self.random_state
-                    )
-                else:
-                    cv = StratifiedKFold(
-                        self.cv, shuffle=self.shuffle, random_state=self.random_state
-                    )
-            else:
-                if self.target_type_ == "continuous":
-                    cv = GroupKFold(
-                        self.cv, shuffle=self.shuffle, random_state=self.random_state
-                    )
-                else:
-                    cv = StratifiedGroupKFold(
-                        self.cv, shuffle=self.shuffle, random_state=self.random_state
-                    )
-
-        elif hasattr(self.cv, "split"):  # cv is a cross-validation generator
-            cv = self.cv
-            if isinstance(self.cv, non_overlapping_splitters):
-                if _has_groups and not isinstance(
-                    self.cv, (GroupKFold, StratifiedGroupKFold)
-                ):
-                    raise ValueError(
-                        "Expected `cv` from [`GroupKFold()`, `StratifiedGroupKFold()`] "
-                        f"since `groups` were passed. Got {self.cv}."
-                    )
-                elif not _has_groups and isinstance(
-                    self.cv, (GroupKFold, StratifiedGroupKFold)
-                ):
-                    raise ValueError(
-                        f"`groups` must be passed since `{type(self.cv).__name__}` "
-                        "requires group labels."
-                    )
-            else:
+        if cv.__class__ not in non_overlapping_splitters:
+            _test_indices = np.array([])
+            for fold in cv.split(X, y):
+                _, test_idx = fold
+                _test_indices = np.concatenate([_test_indices, test_idx])
+            if not np.isin(np.arange(X.shape[0]), _test_indices).all():
                 raise ValueError(
-                    "The `cv` object needs to be one in [`GroupKFold()`, `KFold()`, "
-                    f"`StratifiedKFold()`, `StratifiedGroupKFold()`]. Got {self.cv}."
+                    "Validation indices from `cv` must cover each sample index exactly "
+                    "once with no overlap. Pass a splitter with non-overlapping "
+                    "validation folds as `cv` or refer to the docs for other options."
                 )
 
-        else:  # cv is an Iterable
-            if not hasattr(self.cv, "split") or isinstance(self.cv, str):
-                if not isinstance(self.cv, Iterable) or isinstance(self.cv, str):
-                    raise ValueError(
-                        "Expected `cv` as an integer, a cross-validation object "
-                        "(from sklearn.model_selection), or an iterable yielding "
-                        f"(train, test) splits as arrays of indices. Got {self.cv}."
-                    )
-                _test_indices = np.array([])
-                for fold in self.cv:
-                    _, test_idx = fold
-                    _test_indices = np.concatenate([_test_indices, test_idx])
-                if not np.isin(np.arange(X.shape[0]), _test_indices).all():
-                    raise ValueError(
-                        "Validation indices from the iterable `cv` must cover each "
-                        "sample index exactly once with no overlap. Pass an iterator "
-                        "with non-overlapping validation folds as `cv` or refer to the "
-                        "docs for other options."
-                    )
-                cv = _CVIterableWrapper(self.cv)
-
         self.cv_ = cv.__class__.__name__
-
-        if _routing_enabled():
-            if groups is not None:
-                params["groups"] = groups
-            routed_params = process_routing(self, "fit_transform", **params)
-        else:
-            if groups is not None:
-                routed_params = Bunch(splitter=Bunch(split=Bunch(groups=groups)))
-            else:
-                routed_params = Bunch(splitter=Bunch(split={}))
 
         # If 'multiclass' multiply axis=1 by num classes else keep shape the same
         if self.target_type_ == "multiclass":
