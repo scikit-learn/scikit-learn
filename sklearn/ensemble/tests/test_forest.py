@@ -157,8 +157,12 @@ def test_iris_criterion(name, criterion):
     assert score > 0.5, "Failed with criterion %s and score = %f" % (criterion, score)
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
-@pytest.mark.parametrize("criterion", ("squared_error", "absolute_error"))
+@pytest.mark.parametrize(
+    "criterion", ("squared_error", "friedman_mse", "absolute_error")
+)
 def test_regression_criterion(name, criterion):
     # Check consistency on regression dataset.
     ForestRegressor = FOREST_REGRESSORS[name]
@@ -1864,3 +1868,10 @@ def test_non_supported_criterion_raises_error_with_missing_values(Forest):
     msg = ".*does not accept missing values"
     with pytest.raises(ValueError, match=msg):
         forest.fit(X, y)
+
+
+# TODO(1.11): remove test with the deprecation of friedman_mse criterion
+@pytest.mark.parametrize("Forest", FOREST_REGRESSORS.values())
+def test_friedman_mse_deprecation(Forest):
+    with pytest.warns(FutureWarning, match="friedman_mse"):
+        _ = Forest(criterion="friedman_mse")
