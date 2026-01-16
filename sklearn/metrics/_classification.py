@@ -940,17 +940,17 @@ def cohen_kappa_score(
         Sample weights.
 
     replace_undefined_by : np.nan, float in [-1.0, 1.0], default=np.nan
-        Sets the return value when the metric is undefined. This can happen for
-        instance on empty input arrays, or when no label of interest (as defined in the
-        `labels` param) is assigned by the second annotator, or when both `y1` and `y2`
-        only have one label in common that is also in `labels`. In these cases, an
+        Sets the return value when the metric is undefined. This can happen when no
+        label of interest (as defined in the `labels` param) is assigned by the second
+        annotator, or when both `y1` and `y2`only have one label in common that is also
+        in `labels`. In these cases, an
         :class:`~sklearn.exceptions.UndefinedMetricWarning` is raised. Can take the
         following values:
 
         - `np.nan` to return `np.nan`
         - a floating point value in the range of [-1.0, 1.0] to return a specific value
 
-        .. versionadded:: 1.8
+        .. versionadded:: 1.9
 
     Returns
     -------
@@ -1004,11 +1004,12 @@ def cohen_kappa_score(
     numerator = xp.linalg.outer(sum0, sum1)
     denominator = xp.sum(sum0)
     msg_zero_division = (
-        "`y2` contains no labels that are presented in both `y1` and `labels`."
+        "`y2` contains no labels that are present in both `y1` and `labels`."
         "`cohen_kappa_score` is undefined and set to the value defined by "
         "the `replace_undefined_by` param, which defaults to `np.nan`."
     )
-    if np.isclose(_convert_to_numpy(denominator, xp), 0):
+    # exact equality is safe here, since denominator is a sum of positive terms:
+    if denominator == 0:
         warnings.warn(msg_zero_division, UndefinedMetricWarning, stacklevel=2)
         return replace_undefined_by
 
@@ -1032,7 +1033,8 @@ def cohen_kappa_score(
         "`cohen_kappa_score` is undefined and set to the value defined by the "
         "`replace_undefined_by` param, which defaults to `np.nan`."
     )
-    if np.isclose(_convert_to_numpy(denominator, xp), 0):
+    # exact equality is safe here, since denominator is a sum of positive terms:
+    if denominator == 0:
         warnings.warn(msg_zero_division, UndefinedMetricWarning, stacklevel=2)
         return replace_undefined_by
 

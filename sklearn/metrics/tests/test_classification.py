@@ -943,7 +943,7 @@ def test_cohen_kappa_zero_division_warning():
     y2 = np.array([3] * 10)
     with pytest.warns(
         UndefinedMetricWarning,
-        match="`y2` contains no labels that are presented in both `y1` and `labels`.",
+        match="`y2` contains no labels that are present in both `y1` and `labels`.",
     ):
         cohen_kappa_score(y1, y2, labels=labels)
 
