@@ -197,6 +197,7 @@ def test_lml_gradient(kernel):
     # Check that the numerical estimation converged within tolerances.
     assert np.all(derivative_results.status == 0)
     lml_gradient_approx = derivative_results.df
+
     assert_almost_equal(np.stack(lml_gradient), lml_gradient_approx, 3)
 
 
