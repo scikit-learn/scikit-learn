@@ -16,6 +16,7 @@ from numbers import Real
 import numpy as np
 
 from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.externals import array_api_extra as xpx
 from sklearn.utils._array_api import (
     _average,
     _find_matching_floating_dtype,
@@ -955,13 +956,17 @@ def _assemble_fraction_of_explained_deviance(
         # Non-zero Numerator and Non-zero Denominator: use the formula
         valid_score = nonzero_denominator & nonzero_numerator
 
-        output_scores[valid_score] = 1 - (
-            numerator[valid_score] / denominator[valid_score]
+        output_scores = xpx.at(output_scores)[valid_score].set(
+            1 - (numerator[valid_score] / denominator[valid_score])
         )
 
         # Non-zero Numerator and Zero Denominator:
         # arbitrary set to 0.0 to avoid -inf scores
-        output_scores[nonzero_numerator & ~nonzero_denominator] = 0.0
+        output_scores = xp.where(
+            nonzero_numerator & ~nonzero_denominator,
+            xp.zeros([n_outputs], device=device, dtype=dtype),
+            output_scores,
+        )
 
     if isinstance(multioutput, str):
         if multioutput == "raw_values":

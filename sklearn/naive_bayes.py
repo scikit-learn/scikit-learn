@@ -517,11 +517,13 @@ class GaussianNB(_BaseNB):
                 self.class_count_[i], self.theta_[i, :], self.var_[i, :], X_i, sw_i
             )
 
-            self.theta_[i, :] = new_theta
-            self.var_[i, :] = new_sigma
-            self.class_count_[i] += N_i
+            self.theta_ = xpx.at(self.theta_)[i, :].set(new_theta)
+            self.var_ = xpx.at(self.var_)[i, :].set(new_sigma)
+            self.class_count_ = xpx.at(self.class_count_)[i].set(
+                self.class_count_[i] + N_i
+            )
 
-        self.var_[:, :] += self.epsilon_
+        self.var_ = xpx.at(self.var_)[:, :].set(self.var_ + self.epsilon_)
 
         # Update if only no priors is provided
         if self.priors is None:

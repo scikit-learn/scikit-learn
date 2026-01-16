@@ -627,7 +627,7 @@ class PCA(_BasePCA):
             # construction. However, the eigenvalues returned by xp.linalg.eigh
             # can be slightly negative due to numerical errors. This would be
             # an issue for the subsequent sqrt, hence the manual clipping.
-            eigenvals[eigenvals < 0.0] = 0.0
+            eigenvals = xp.where(eigenvals < 0, 0, eigenvals)
             explained_variance_ = eigenvals
 
             # Re-construct SVD of centered X indirectly and make it consistent

@@ -16,6 +16,7 @@ from scipy.spatial import distance
 
 from sklearn import config_context
 from sklearn.exceptions import DataConversionWarning
+from sklearn.externals import array_api_extra as xpx
 from sklearn.metrics._pairwise_distances_reduction import ArgKmin
 from sklearn.metrics._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from sklearn.preprocessing import normalize
@@ -632,7 +633,9 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
                 d += XX_chunk
                 d += YY_chunk
 
-            distances[x_slice, y_slice] = xp.astype(d, xp.float32, copy=False)
+            distances = xpx.at(distances)[x_slice, y_slice].set(
+                xp.astype(d, xp.float32, copy=False)
+            )
 
     return distances
 

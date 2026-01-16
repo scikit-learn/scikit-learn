@@ -127,7 +127,7 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
         if copy:
             # New array to avoid side-effects
             scale = xp.asarray(scale, copy=True)
-        scale[constant_mask] = 1.0
+        scale = xp.where(constant_mask, 1.0, scale)
         return scale
 
 
@@ -2270,8 +2270,8 @@ def binarize(X, *, threshold=0.0, copy=True):
         float_dtype = _find_matching_floating_dtype(X, threshold, xp=xp)
         cond = xp.astype(X, float_dtype, copy=False) > threshold
         not_cond = xp.logical_not(cond)
-        X[cond] = 1
-        X[not_cond] = 0
+        X = xp.where(cond, 1, X)
+        X = xp.where(not_cond, 0, X)
     return X
 
 
