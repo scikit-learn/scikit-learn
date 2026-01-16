@@ -37,8 +37,6 @@ from sklearn.utils._array_api import (
     _cdist,
     _fill_diagonal,
     _kv,
-    _pdist,
-    _squareform,
     get_namespace,
 )
 from sklearn.utils._array_api import (
@@ -1615,7 +1613,8 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
         if Y is None:
             # Use cdist(X, X) instead of pdist + squareform for better performance
-            # on GPU backends (torch.cdist is much faster than torch.nn.functional.pdist)
+            # on GPU backends (torch.cdist is much faster than
+            # torch.nn.functional.pdist)
             X_scaled = X / length_scale
             dists = _cdist(X_scaled, X_scaled, metric="sqeuclidean", xp=xp)
             K = xp.exp(-0.5 * dists)
@@ -2005,7 +2004,8 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
         if Y is None:
             # Use cdist(X, X) instead of pdist + squareform for better performance
-            # on GPU backends (torch.cdist is much faster than torch.nn.functional.pdist)
+            # on GPU backends (torch.cdist is much faster than
+            # torch.nn.functional.pdist)
             dists = _cdist(X, X, metric="sqeuclidean", xp=xp)
             tmp = dists / (2 * alpha * length_scale**2)
             base = 1 + tmp
@@ -2162,7 +2162,8 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
         if Y is None:
             # Use cdist(X, X) instead of pdist + squareform for better performance
-            # on GPU backends (torch.cdist is much faster than torch.nn.functional.pdist)
+            # on GPU backends (torch.cdist is much faster than
+            # torch.nn.functional.pdist)
             dists = _cdist(X, X, metric="euclidean", xp=xp)
             arg = pi * dists / periodicity
             sin_of_arg = xp.sin(arg)
