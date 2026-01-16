@@ -1,3 +1,5 @@
-- :class:`~sklearn.gaussian_process.GaussianProcessRegressor` optimizes the hyperparameters of the default kernel
-  when its `optimizer` argument is not set to `None`, in accordance with the definition of `optimizer`.
+- The hyperparameters of the default kernel of :class:`~sklearn.gaussian_process.GaussianProcessRegressor`,
+  namely `ConstantKernel() * RBF()`,
+  are now optimized when `optimizer` is not `None`.
+  Thus, `gpr = GaussianProcessRegressor().fit(X, y)` uses optimized kernel hyperparameters.
   By :user:`Matthias De Lozzo <mdelozzo>`.
