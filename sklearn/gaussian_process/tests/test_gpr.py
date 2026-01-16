@@ -356,7 +356,6 @@ def test_y_multioutput():
     kernel = RBF(length_scale=1.0)
 
     # Set normalize_y to True because gpr_2d will normalize the target values.
-    # Otherwise, change the tolerance in assert_almost_equal below.
     gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None, normalize_y=True)
     gpr.fit(X, y)
 
@@ -870,7 +869,7 @@ def test_gpr_predict_no_cov_no_std_return(kernel):
     assert_allclose(y_pred, y)
 
 
-@pytest.mark.parametrize("normalize_y", [None, False, True])
+@pytest.mark.parametrize("normalize_y", [False, True])
 @pytest.mark.parametrize("kernel", kernels)
 def test_gpr_multioutput_normalization(normalize_y, kernel):
     """Check the robustness of the training wrt the normalization policy
@@ -884,7 +883,7 @@ def test_gpr_multioutput_normalization(normalize_y, kernel):
     mean, std = gpr.predict(np.array([[0.25]]), return_std=True)
     _, cov = gpr.predict(np.array([[0.25]]), return_cov=True)
 
-    scale = 1 if normalize_y is False else 10
+    scale = 10
     assert_almost_equal(mean[:, 1], mean[:, 0] * 10)
     assert_almost_equal(std[:, 1], std[:, 0] * scale)
     assert_almost_equal(cov[:, :, 1], cov[:, :, 0] * scale**2)

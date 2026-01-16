@@ -108,14 +108,13 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         must be finite. Note that `n_restarts_optimizer == 0` implies that one
         run is performed.
 
-    normalize_y : bool, default=None
+    normalize_y : bool, default=False
         Whether :meth:`fit` must normalize the training target values `y`
         by removing the mean and scaling to unit-variance.
         This is recommended
-        when zero-mean, unit-variance priors are used
-        or when the target is multidimensional.
-        If `None` and the target is scalar, normalization is performed.
-        If `None` and the target is multidimensional, normalization is not performed.
+        when zero-mean, unit-variance priors are used.
+        This argument is ignored when the target is multidimensional;
+        normalization is performed whatever the value of `normalization_y`.
 
         .. versionchanged:: 0.23
 
@@ -202,7 +201,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
         "optimizer": [StrOptions({"fmin_l_bfgs_b"}), callable, None],
         "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],
-        "normalize_y": [None, "boolean"],
+        "normalize_y": ["boolean"],
         "copy_X_train": ["boolean"],
         "n_targets": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
@@ -215,7 +214,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         alpha=1e-10,
         optimizer="fmin_l_bfgs_b",
         n_restarts_optimizer=0,
-        normalize_y=None,
+        normalize_y=False,
         copy_X_train=True,
         n_targets=None,
         random_state=None,
@@ -277,8 +276,18 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 f"`n_targets`. Got {n_targets_seen} != {self.n_targets}."
             )
 
-        if self._normalize_y is None:
-            self._normalize_y = n_targets_seen > 1
+        if n_targets_seen > 1:
+            # This class merges targets when applying Alg 2.1, page 19.
+            # By doing so,
+            # it assumes that the targets are instances of the same GP,
+            # with prior covariance function k.
+            # Therefore,
+            # the targets would have the same posterior covariance function
+            # (see Alg 2.1, page 19, line 6 -> K(X_test, X_test) - v^T. v)
+            # if we applied the algorithm as is to the raw data.
+            # To avoid this pitfall,
+            # we standardize the targets during the training.
+            self._normalize_y = True
 
         self._y_train_mean = np.mean(y, axis=0)
         self._y_train_std = _handle_zeros_in_scale(np.std(y, axis=0), copy=False)
