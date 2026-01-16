@@ -26,9 +26,7 @@ Ordinary Least Squares
 =======================
 
 :class:`LinearRegression` fits a linear model with coefficients
-:math:`w = (w_1, ..., w_p)` to minimize the residual sum
-of squares between the observed targets in the dataset, and the
-targets predicted by the linear approximation. Mathematically it
+:math:`w = (w_1, ..., w_p)` it tries to draw a line that stays as close as possible to all the data points at once. Mathematically it
 solves a problem of the form:
 
 .. math:: \min_{w} || X w - y||_2^2
