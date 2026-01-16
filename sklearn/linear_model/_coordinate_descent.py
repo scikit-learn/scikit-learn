@@ -613,11 +613,6 @@ def enet_path(
 
     n_samples, n_features = X.shape
 
-    if not check_input:
-        _, _, _, _, _, precompute, Xy = _pre_fit(
-            X, y, Xy, precompute, fit_intercept=False, copy=False
-        )
-
     multi_output = False
     if y.ndim != 1:
         multi_output = True
@@ -638,7 +633,7 @@ def enet_path(
 
     # X should have been passed through _pre_fit already if function is called
     # from ElasticNet.fit
-    if check_input:
+    if check_input or precompute is not False:
         X, y, _, _, _, precompute, Xy = _pre_fit(
             X,
             y,
