@@ -3,9 +3,9 @@
 Importance of Feature Scaling
 =============================
 
-Illustrates the importance of feature scaling by improving the clarity 
-of visualizations,including explicit plot titles and consistent layout 
-management using plt.tight_layout().
+Illustrates the importance of feature scaling by improving the clarity
+of visualizations, including explicit plot titles and consistent layout
+management using ``plt.tight_layout()``.
 
 Feature scaling through standardization, also called Z-score normalization, is
 an important preprocessing step for many machine learning algorithms. It
