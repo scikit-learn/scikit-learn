@@ -2357,7 +2357,7 @@ def test_scores_attribute_layout_elasticnet():
         solver="saga",
         random_state=0,
         max_iter=250,
-        tol=1e-3,
+        tol=1e-4,
         use_legacy_attributes=True,
     )
     lrcv.fit(X, y)
