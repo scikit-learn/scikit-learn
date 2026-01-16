@@ -1583,7 +1583,8 @@ def test_forest_degenerate_feature_importances():
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
 def test_max_samples_geq_one(name):
-    # Check that `max_samples >= 1.0` is allowed, issue #28507
+    # Check that `max_samples >= 1.0` and `max_samples >= n_samples `
+    # is allowed, issue #28507
     X, y = hastie_X, hastie_y
     max_samples_float = 1.5
     max_sample_int = int(max_samples_float * X.shape[0])
