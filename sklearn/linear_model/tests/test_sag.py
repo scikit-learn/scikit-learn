@@ -6,6 +6,7 @@ import re
 
 import numpy as np
 import pytest
+from scipy.sparse import csr_array
 
 from sklearn.base import clone
 from sklearn.datasets import load_iris, make_blobs, make_classification
@@ -58,6 +59,21 @@ def get_pobj(w, alpha, myX, myy, loss):
     return p
 
 
+# Using dataset to emulate random draw of samples in cython sag_solver
+def get_mock_dataset(X_shape, X_dtype, X_sparse, random_state):
+    assert isinstance(random_state, int), "must use int random_state"
+    assert random_state > 0, "must use random_state > 0"
+    n, p = X_shape
+    y = np.zeros(n, dtype=X_dtype)
+    sample_weight = np.zeros(n, dtype=X_dtype)
+    if X_sparse:
+        X = csr_array((n, p), dtype=X_dtype)
+    else:
+        X = np.zeros((n, p), dtype=X_dtype)
+    dataset, intercept_decay = make_dataset(X, y, sample_weight, random_state)
+    return dataset
+
+
 def sag(
     X,
     y,
@@ -71,11 +87,10 @@ def sag(
     saga=False,
     tol=0,
     random_state=77,
+    X_sparse=False,
 ):
     # Using dataset to emulate random draw of samples in cython sag_solver
-    assert isinstance(random_state, int), "must use int random_state"
-    assert random_state > 0, "must use random_state > 0"
-    dataset, _ = make_dataset(X, y, sample_weight, random_state)
+    dataset = get_mock_dataset(X.shape, X.dtype, X_sparse, random_state)
     n_samples, n_features = X.shape
 
     weights = np.zeros(n_features)
@@ -151,11 +166,10 @@ def sag_sparse(
     saga=False,
     tol=0,
     random_state=77,
+    X_sparse=False,
 ):
     # Using dataset to emulate random draw of samples in cython sag_solver
-    assert isinstance(random_state, int), "must use int random_state"
-    assert random_state > 0, "must use random_state > 0"
-    dataset, _ = make_dataset(X, y, sample_weight, random_state)
+    dataset = get_mock_dataset(X.shape, X.dtype, X_sparse, random_state)
     if step_size * alpha == 1.0:
         raise ZeroDivisionError(
             "Sparse sag does not handle the case step_size * alpha == 1"
@@ -310,7 +324,7 @@ def test_classifier_matching():
             solver=solver,
             fit_intercept=fit_intercept,
             tol=1e-11,
-            C=1.0 / alpha / n_samples,
+            C=1.0 / (alpha * n_samples),
             max_iter=max_iter,
             random_state=10,
         )
@@ -347,7 +361,6 @@ def test_classifier_matching():
         assert_array_almost_equal(intercept2, clf.intercept_, decimal=9)
 
 
-@pytest.mark.skip("segmentation fault?")
 def test_regressor_matching():
     n_samples = 10
     n_features = 5
@@ -409,7 +422,7 @@ def test_sag_pobj_matches_logistic_regression(csr_container):
         solver="sag",
         fit_intercept=False,
         tol=0.0000001,
-        C=1.0 / alpha / n_samples,
+        C=1.0 / (alpha * n_samples),
         max_iter=max_iter,
         random_state=10,
     )
@@ -417,7 +430,7 @@ def test_sag_pobj_matches_logistic_regression(csr_container):
     clf3 = LogisticRegression(
         fit_intercept=False,
         tol=0.0000001,
-        C=1.0 / alpha / n_samples,
+        C=1.0 / (alpha * n_samples),
         max_iter=max_iter,
         random_state=10,
     )
@@ -502,7 +515,7 @@ def test_sag_regressor_computed_correctly(csr_container):
         solver="sag",
         alpha=alpha * n_samples,
         max_iter=max_iter,
-        random_state=rng,
+        random_state=77,
     )
     clf2 = clone(clf1)
 
@@ -517,7 +530,8 @@ def test_sag_regressor_computed_correctly(csr_container):
         max_iter=max_iter,
         dloss=squared_dloss,
         fit_intercept=fit_intercept,
-        random_state=rng,
+        random_state=77,
+        X_sparse=False,
     )
 
     spweights2, spintercept2, sp_n_iter2 = sag_sparse(
@@ -529,7 +543,8 @@ def test_sag_regressor_computed_correctly(csr_container):
         dloss=squared_dloss,
         decay=SPARSE_INTERCEPT_DECAY,
         fit_intercept=fit_intercept,
-        random_state=rng,
+        random_state=77,
+        X_sparse=True,
     )
 
     assert_array_almost_equal(clf1.coef_.ravel(), spweights1.ravel(), decimal=3)
@@ -618,7 +633,6 @@ def test_sag_regressor(seed, csr_container):
     assert score2 > 0.45
 
 
-@pytest.mark.skip("segmentation fault?")
 @pytest.mark.filterwarnings("ignore:The max_iter was reached")
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_sag_classifier_computed_correctly(csr_container):
@@ -637,7 +651,7 @@ def test_sag_classifier_computed_correctly(csr_container):
 
     clf1 = LogisticRegression(
         solver="sag",
-        C=1.0 / alpha / n_samples,
+        C=1.0 / (alpha * n_samples),
         max_iter=max_iter,
         tol=tol,
         random_state=77,
@@ -656,6 +670,8 @@ def test_sag_classifier_computed_correctly(csr_container):
         max_iter=max_iter,
         dloss=log_dloss,
         fit_intercept=fit_intercept,
+        random_state=77,
+        X_sparse=False,
     )
     spweights2, spintercept2, sp_n_iter2 = sag_sparse(
         X,
@@ -666,6 +682,8 @@ def test_sag_classifier_computed_correctly(csr_container):
         dloss=log_dloss,
         decay=SPARSE_INTERCEPT_DECAY,
         fit_intercept=fit_intercept,
+        random_state=77,
+        X_sparse=True,
     )
 
     assert_array_almost_equal(clf1.coef_.ravel(), spweights.ravel(), decimal=2)
@@ -675,7 +693,6 @@ def test_sag_classifier_computed_correctly(csr_container):
     assert_almost_equal(clf2.intercept_, spintercept2, decimal=1)
 
 
-@pytest.mark.skip("segmentation fault?")
 @pytest.mark.filterwarnings("ignore:The max_iter was reached")
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_sag_multiclass_computed_correctly(csr_container):
@@ -692,7 +709,7 @@ def test_sag_multiclass_computed_correctly(csr_container):
     clf1 = OneVsRestClassifier(
         LogisticRegression(
             solver="sag",
-            C=1.0 / alpha / n_samples,
+            C=1.0 / (alpha * n_samples),
             max_iter=max_iter,
             tol=tol,
             random_state=77,
@@ -720,6 +737,8 @@ def test_sag_multiclass_computed_correctly(csr_container):
             dloss=log_dloss,
             max_iter=max_iter,
             fit_intercept=fit_intercept,
+            random_state=77,
+            X_sparse=False,
         )
         spweights2, spintercept2, sp_n_iter2 = sag_sparse(
             X,
@@ -730,6 +749,8 @@ def test_sag_multiclass_computed_correctly(csr_container):
             max_iter=max_iter,
             decay=SPARSE_INTERCEPT_DECAY,
             fit_intercept=fit_intercept,
+            random_state=77,
+            X_sparse=True,
         )
         coef1.append(spweights1)
         intercept1.append(spintercept1)
@@ -766,7 +787,7 @@ def test_classifier_results(csr_container):
     y = np.sign(y)
     clf1 = LogisticRegression(
         solver="sag",
-        C=1.0 / alpha / n_samples,
+        C=1.0 / (alpha * n_samples),
         max_iter=max_iter,
         tol=tol,
         random_state=77,
@@ -797,9 +818,13 @@ def test_binary_classifier_class_weight(csr_container):
     y = y_tmp
 
     class_weight = {1: 0.45, -1: 0.55}
+    le = LabelEncoder()
+    class_weight_ = compute_class_weight(class_weight, classes=np.unique(y), y=y)
+    sample_weight = class_weight_[le.fit_transform(y)]
+
     clf1 = LogisticRegression(
         solver="sag",
-        C=1.0 / alpha / n_samples,
+        C=1.0 / (alpha * sample_weight.sum()),
         max_iter=max_iter,
         tol=tol,
         random_state=77,
@@ -811,9 +836,6 @@ def test_binary_classifier_class_weight(csr_container):
     clf1.fit(X, y)
     clf2.fit(csr_container(X), y)
 
-    le = LabelEncoder()
-    class_weight_ = compute_class_weight(class_weight, classes=np.unique(y), y=y)
-    sample_weight = class_weight_[le.fit_transform(y)]
     step_size = get_step_size(
         X, alpha, fit_intercept, classification=True, sample_weight=sample_weight
     )
@@ -828,6 +850,7 @@ def test_binary_classifier_class_weight(csr_container):
         sample_weight=sample_weight,
         fit_intercept=fit_intercept,
         random_state=77,
+        X_sparse=False,
     )
     spweights2, spintercept2, sp_n_iter2 = sag_sparse(
         X,
@@ -841,6 +864,7 @@ def test_binary_classifier_class_weight(csr_container):
         sample_weight=sample_weight,
         fit_intercept=fit_intercept,
         random_state=77,
+        X_sparse=True,
     )
 
     assert_array_almost_equal(clf1.coef_.ravel(), spweights.ravel(), decimal=2)
@@ -978,7 +1002,7 @@ def test_sag_weighted_classification_convergence(solver, decay, saga, fit_interc
 
 
 @pytest.mark.parametrize("solver", [sag, sag_sparse, sag_solver])
-@pytest.mark.parametrize("decay", [1.0, 0.01])
+@pytest.mark.parametrize("decay", [1.0, SPARSE_INTERCEPT_DECAY])
 @pytest.mark.parametrize("saga", [True, False])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_sag_weighted_regression_convergence(solver, decay, saga, fit_intercept):
