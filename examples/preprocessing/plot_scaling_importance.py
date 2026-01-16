@@ -3,6 +3,10 @@
 Importance of Feature Scaling
 =============================
 
+Illustrates the importance of feature scaling by improving the clarity 
+of visualizations,including explicit plot titles and consistent layout 
+management using plt.tight_layout().
+
 Feature scaling through standardization, also called Z-score normalization, is
 an important preprocessing step for many machine learning algorithms. It
 involves rescaling each feature such that it has a standard deviation of 1 and a
@@ -70,6 +74,8 @@ from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.neighbors import KNeighborsClassifier
 
 X_plot = X[["proline", "hue"]]
+
+# Explicitly scale features for distance-based models
 X_plot_scaled = scaler.fit_transform(X_plot)
 clf = KNeighborsClassifier(n_neighbors=20)
 
@@ -92,12 +98,13 @@ def fit_and_plot_model(X_plot, y, clf, ax):
 fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(12, 6))
 
 fit_and_plot_model(X_plot, y, clf, ax1)
-ax1.set_title("KNN without scaling")
+ax1.set_title("KNN decision boundary (without feature scaling)")
 
 fit_and_plot_model(X_plot_scaled, y, clf, ax2)
 ax2.set_xlabel("scaled proline")
 ax2.set_ylabel("scaled hue")
-_ = ax2.set_title("KNN with scaling")
+_ = ax2.set_title("KNN decision boundary (with StandardScaler)")
+plt.tight_layout()
 
 # %%
 # Here the decision boundary shows that fitting scaled or non-scaled data lead
