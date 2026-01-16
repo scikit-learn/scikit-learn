@@ -66,10 +66,10 @@ def get_mock_dataset(X_shape, X_dtype, X_sparse, random_state):
     n, p = X_shape
     y = np.zeros(n, dtype=X_dtype)
     sample_weight = np.zeros(n, dtype=X_dtype)
+    X = np.zeros((n, p), dtype=X_dtype)
+    X[0, 1] += 1
     if X_sparse:
-        X = csr_array((n, p), dtype=X_dtype)
-    else:
-        X = np.zeros((n, p), dtype=X_dtype)
+        X = csr_array(X)
     dataset, intercept_decay = make_dataset(X, y, sample_weight, random_state)
     return dataset
 
