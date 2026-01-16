@@ -164,7 +164,7 @@ class _BasePCA(
             # whitening. To avoid this problem we clip the variance below.
             scale = xp.sqrt(self.explained_variance_)
             min_scale = xp.finfo(scale.dtype).eps
-            scale = xp.where(scale < min_scale, min_scale, scale)
+            scale = xp.clip(scale, min_scale, None)
             X_transformed /= scale
         return X_transformed
 
