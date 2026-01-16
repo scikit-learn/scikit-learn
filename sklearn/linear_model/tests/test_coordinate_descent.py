@@ -1878,10 +1878,7 @@ def test_linear_model_cv_alphas(Estimator):
 
 
 def test_enet_path_check_input_false():
-    # Test for issue #32989
-    from sklearn.datasets import make_regression
-    from sklearn.linear_model import enet_path
-
+    """Test enet_path works with check_input=False and various precompute settings."""
     X, y = make_regression(n_samples=100, n_features=5, n_informative=2, random_state=0)
     X = np.asfortranarray(X)
 
