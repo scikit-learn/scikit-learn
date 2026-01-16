@@ -42,6 +42,8 @@ y = f(X).ravel()
 
 fixed_kernel = RBF(length_scale=1.0, length_scale_bounds="fixed")
 kernels = [
+    # None is the default value of the `kernel` argument of GaussianProcessRegressor.
+    None,
     RBF(length_scale=1.0),
     fixed_kernel,
     RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
@@ -51,7 +53,9 @@ kernels = [
     C(0.1, (1e-2, 1e2)) * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3))
     + C(1e-5, (1e-5, 1e2)),
 ]
-non_fixed_kernels = [kernel for kernel in kernels if kernel != fixed_kernel]
+# Some test functions require kernel.theta and so do not support None.
+kernels_except_none = kernels[1:]
+non_fixed_kernels = [kernel for kernel in kernels_except_none if kernel != fixed_kernel]
 
 
 @pytest.mark.parametrize("kernel", kernels)
@@ -168,7 +172,7 @@ def test_lml_gradient(kernel, length_scale):
     assert_allclose(lml_gradient, lml_gradient_approx, rtol=1e-4, atol=epsilon * 100)
 
 
-@pytest.mark.parametrize("kernel", kernels)
+@pytest.mark.parametrize("kernel", kernels_except_none)
 def test_prior(kernel):
     # Test that GP prior has mean 0 and identical variances.
     gpr = GaussianProcessRegressor(kernel=kernel)
