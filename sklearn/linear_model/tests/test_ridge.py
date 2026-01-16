@@ -510,7 +510,7 @@ def test_ridge_regression_sample_weights(
     coef = coef[:-1]
 
     assert model.intercept_ == pytest.approx(intercept)
-    assert_allclose(model.coef_, coef, atol=1e-6)
+    assert_allclose(model.coef_, coef)
 
 
 def test_primal_dual_relationship():

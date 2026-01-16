@@ -834,7 +834,7 @@ def test_normal_ridge_comparison(
         alpha=alpha,
         fit_intercept=fit_intercept,
         max_iter=300,
-        tol=1e-7,
+        tol=1e-5,
     )
     glm.fit(X_train, y_train, sample_weight=sw_train)
     assert glm.coef_.shape == (X.shape[1],)
