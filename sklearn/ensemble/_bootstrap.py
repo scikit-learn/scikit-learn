@@ -11,6 +11,15 @@ def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
     """
     Get the number of samples in a bootstrap sample.
 
+    Notes
+    -----
+    The frequency semantics of :term:`sample_weight` is guaranteed when
+    `max_samples` is a float or integer, but not when `max_samples` is None. The
+    returned `n_samples_bootstrap` will be the same between a weighted dataset
+    with integer `sample_weights` and a dataset with as many rows repeated when
+    `max_samples` is a float or integer. They will differ when `max_samples` is
+    None (the weighted and repeated datasets do not have the same number of rows).
+
     Parameters
     ----------
     n_samples : int
@@ -25,9 +34,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples, sample_weight):
           `max_samples * sample_weight.sum()` weighted samples.
 
     sample_weight : array of shape (n_samples,) or None
-        Sample weights. The frequency semantics of :term:`sample_weight` is
-        guaranteed when `max_samples` is a float or integer, but not when
-        `max_samples` is None.
+        Sample weights.
 
     Returns
     -------
