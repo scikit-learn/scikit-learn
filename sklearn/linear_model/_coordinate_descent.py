@@ -613,41 +613,10 @@ def enet_path(
 
     n_samples, n_features = X.shape
 
-    # Fixing issue #32989
     if not check_input:
-        # Replicate _pre_fit logic: Sparse matrices cannot use precompute
-        if sparse.issparse(X):
-            precompute = False
-        elif isinstance(precompute, str) and precompute == "auto":
-            precompute = n_samples > n_features
-
-        # Replicate _pre_fit logic: Convert 'True' to actual Gram matrix
-        # enet_path solver expects an array, not a boolean True
-        if precompute is True:
-            precompute = np.empty(
-                shape=(n_features, n_features), dtype=X.dtype, order="C"
-            )
-            np.dot(X.T, X, out=precompute)
-
-        if not hasattr(precompute, "__array__"):
-            Xy = None  # cannot use Xy if precompute is not Gram
-
-        # Replicate _pre_fit logic: Gram solver requires Xy
-        if hasattr(precompute, "__array__") and Xy is None:
-            common_dtype = np.result_type(X.dtype, y.dtype)
-            if y.ndim == 1:
-                # Xy is 1d, make sure it is contiguous.
-                Xy = np.empty(shape=n_features, dtype=common_dtype, order="C")
-                np.dot(X.T, y, out=Xy)
-            else:
-                # Make sure that Xy is always F contiguous even if X or y are not
-                # contiguous: the goal is to make it fast to extract the data for a
-                # specific target.
-                n_targets = y.shape[1]
-                Xy = np.empty(
-                    shape=(n_features, n_targets), dtype=common_dtype, order="F"
-                )
-                np.dot(y.T, X, out=Xy.T)
+        _, _, _, _, _, precompute, Xy = _pre_fit(
+            X, y, Xy, precompute, fit_intercept=False, copy=False
+        )
 
     multi_output = False
     if y.ndim != 1:
