@@ -980,7 +980,6 @@ def test_sag_weighted_classification_convergence(solver, decay, saga, fit_interc
         tol=tol,
         fit_intercept=fit_intercept,
         solver="lbfgs",
-        penalty="l2",
         C=1 / (sample_weights.sum() * alpha),
     )
     est.fit(X, y, sample_weight=sample_weights)
