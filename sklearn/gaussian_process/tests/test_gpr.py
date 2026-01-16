@@ -867,7 +867,7 @@ def test_gpr_predict_no_cov_no_std_return(kernel):
 
 
 @pytest.mark.parametrize("normalize_y", [None, False, True])
-@pytest.mark.parametrize("kernel", [None, RBF(), 1 * RBF()])
+@pytest.mark.parametrize("kernel", kernels)
 def test_gpr_multioutput_normalization(normalize_y, kernel):
     """Check the robustness of the training wrt the normalization policy
     in the case of a multioutput use case."""
