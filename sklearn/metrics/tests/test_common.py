@@ -2528,21 +2528,21 @@ def test_mixed_array_api_namespace_input_compliance(
         return dtype
 
     checks = ["default"]
-    with config_context(array_api_dispatch=True):
-        if metric_name in CLASSIFICATION_METRICS:
-            # These should all accept binary label input as there are no
-            # `CLASSIFICATION_METRICS` that are in `METRIC_UNDEFINED_BINARY` and are
-            # NOT `partial`s (which we do not test for in array API compliance)
-            data = data_all["binary"]
-        elif metric_name in {**CONTINUOUS_CLASSIFICATION_METRICS, **CURVE_METRICS}:
-            if metric_name not in METRIC_UNDEFINED_BINARY:
-                data = data_all["continuous_binary"]
-            else:
-                data = data_all["continuous_label_indicator"]
-        elif metric_name in REGRESSION_METRICS:
-            data = data_all["regression"]
-            checks.append("float")
+    if metric_name in CLASSIFICATION_METRICS:
+        # These should all accept binary label input as there are no
+        # `CLASSIFICATION_METRICS` that are in `METRIC_UNDEFINED_BINARY` and are
+        # NOT `partial`s (which we do not test for in array API compliance)
+        data = data_all["binary"]
+    elif metric_name in {**CONTINUOUS_CLASSIFICATION_METRICS, **CURVE_METRICS}:
+        if metric_name not in METRIC_UNDEFINED_BINARY:
+            data = data_all["continuous_binary"]
+        else:
+            data = data_all["continuous_label_indicator"]
+    elif metric_name in REGRESSION_METRICS:
+        data = data_all["regression"]
+        checks.append("float")
 
+    with config_context(array_api_dispatch=True):
         y1, y2 = data
         for check in checks:
             if check == "float":
@@ -2571,35 +2571,122 @@ def test_mixed_array_api_namespace_input_compliance(
 
             if isinstance(metric_np, Tuple):
                 for out_np, out_xp in zip(metric_np, metric_xp):
-                    _check_output_type(out_np, out_xp)
+                    _check_output_type(out_np, out_xp, xp_to, y2_xp)
             else:
-                _check_output_type(metric_np, metric_xp)
+                _check_output_type(metric_np, metric_xp, xp_to, y2_xp)
 
 
 # All classification metrics, minus multilabel ranking metrics, which take
 # label indicator input (and thus never string input)
-CLASSIFICATION_METRICS_EXCL_MULTILABEL_RANKING = (set(CLASSIFICATION_METRICS.keys()) | set(CONTINUOUS_CLASSIFICATION_METRICS.keys()) | set(CURVE_METRICS.keys())) - METRIC_UNDEFINED_BINARY
+@pytest.mark.parametrize(
+    "metric_name",
+    sorted(
+        set(METRICS_SUPPORTING_MIXED_NAMESPACE)
+        & (set(CLASSIFICATION_METRICS.keys()) - METRIC_UNDEFINED_BINARY)
+    ),
+)
+def test_array_api_classification_string_input(metric_name):
+    """Check string inputs accepted with dispatch enabled.
+
+    All classification metrics that do not require label indicator format input
+    should work when both inputs (e.g.,`y_true` and `y_pred`) are string (numpy
+    namespace only) and dispatch is enabled.
+    """
+    metric = ALL_METRICS[metric_name]
+    y_true = np.array(["a", "b", "a", "a"])
+    y_pred = np.array(["a", "b", "b", "a"])
+
+    kwargs = {}
+    if metric_name in METRICS_WITH_POS_LABEL:
+        kwargs["pos_label"] = "a"
+
+    with config_context(array_api_dispatch=True):
+        metric_enabled = metric(y_true, y_pred, **kwargs)
+
+    with config_context(array_api_dispatch=False):
+        metric_disabled = metric(y_true, y_pred, **kwargs)
+
+    _check_output_type(
+        metric_enabled, metric_disabled, get_namespace(y_pred)[0], y_pred
+    )
+
+
+CONTINUOUS_CLASSIFICATION_METRICS_EXCL_MULTILABEL_RANKING = (
+    set(CONTINUOUS_CLASSIFICATION_METRICS.keys()) | set(CURVE_METRICS.keys())
+) - METRIC_UNDEFINED_BINARY
 
 
 @pytest.mark.parametrize(
-    "from_ns_and_device, to_ns_and_device",
-    [
-        pytest.param(*args[:2], id=args[2])
-        for args in yield_mixed_namespace_input_permutations()
-    ],
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
 )
-@pytest.mark.parametrize("metric_name", sorted(set(METRICS_SUPPORTING_MIXED_NAMESPACE) & CLASSIFICATION_METRICS_EXCL_MULTILABEL_RANKING))
-def test_mixed_array_api_namespace_list_input(
-    metric_name, from_ns_and_device, to_ns_and_device
+# All continuous classification metrics, minus multilabel ranking metrics,
+# which take label indicator input (and thus never string input)
+@pytest.mark.parametrize(
+    "metric_name",
+    sorted(
+        set(METRICS_SUPPORTING_MIXED_NAMESPACE)
+        & (
+            (set(CONTINUOUS_CLASSIFICATION_METRICS.keys()) | set(CURVE_METRICS.keys()))
+            - METRIC_UNDEFINED_BINARY
+        )
+    ),
+)
+def test_array_api_classification_mixed_string_numeric_input(
+    metric_name, array_namespace, device, dtype_name
 ):
-    """
-    """
-    xp_to = _array_api_for_tests(to_ns_and_device.xp, to_ns_and_device.device)
-    xp_from = _array_api_for_tests(from_ns_and_device.xp, from_ns_and_device.device)
+    """Check mixed string/numeric inputs accepted with dispatch enabled.
 
-    binary = ([0, 0, 1, 1], [0, 1, 0, 1])
-    multiclass = ([0, 1, 2, 1], [0, 1, 2, 1])
+    Non-thresholded (aka continuous/ranking) classification metrics should accept
+    a mix of string and numeric inputs (numeric input should be able to be of
+    any supported namespace/device), with dispatch enabled.
+    """
+    xp = _array_api_for_tests(array_namespace, device)
+    metric = ALL_METRICS[metric_name]
 
+    # Binary
+    y_true = np.array(["a", "b", "a", "a"])
+    y_prob_np = np.array([0.5, 0.2, 0.7, 0.6], dtype=dtype_name)
+    y_prob_xp = xp.asarray(y_prob_np, device=device)
+
+    kwargs = {}
+    if metric_name in METRICS_WITH_POS_LABEL:
+        kwargs["pos_label"] = "a"
+
+    with config_context(array_api_dispatch=True):
+        metric_np = metric(y_true, y_prob_np, **kwargs)
+        metric_xp = metric(y_true, y_prob_xp, **kwargs)
+
+        if isinstance(metric_np, Tuple):
+            for out_np, out_xp in zip(metric_np, metric_xp):
+                _check_output_type(out_np, out_xp, xp, y_prob_xp)
+        else:
+            _check_output_type(metric_np, metric_xp, xp, y_prob_xp)
+
+    # Multiclass
+    if metric_name not in METRIC_UNDEFINED_MULTICLASS:
+        y_true = np.array(["a", "b", "c", "d"])
+        y_prob_np = np.array(
+            [
+                [0.5, 0.2, 0.2, 0.1],
+                [0.4, 0.4, 0.1, 0.1],
+                [0.1, 0.1, 0.7, 0.1],
+                [0.1, 0.2, 0.6, 0.1],
+            ],
+            dtype=dtype_name,
+        )
+        y_prob_xp = xp.asarray(y_prob_np, device=device)
+
+        with config_context(array_api_dispatch=True):
+            metric_np = metric(y_true, y_prob_np, **kwargs)
+            metric_xp = metric(y_true, y_prob_xp, **kwargs)
+
+            if isinstance(metric_np, Tuple):
+                for out_np, out_xp in zip(metric_np, metric_xp):
+                    _check_output_type(out_np, out_xp, xp, y_prob_xp)
+            else:
+                _check_output_type(metric_np, metric_xp, xp, y_prob_xp)
 
 
 @pytest.mark.parametrize("df_lib_name", ["pandas", "polars"])
