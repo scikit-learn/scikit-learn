@@ -6,8 +6,6 @@ import pytest
 from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
-    is_outlier_detector,
-    is_regressor,
 )
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
@@ -708,8 +706,8 @@ def test_multiclass_colors_cmap(
     else:
         colors = [mpl.colors.to_rgba(color) for color in multiclass_colors]
 
-    # part of a non-regression test for issue #32866
-    # to make sure the colormap used has enough distinct colors
+    # Part of a non-regression test for issue #32866 to make sure the colormap
+    # used has enough distinct colors.
     assert disp.n_classes <= len(np.unique(colors, axis=0))
 
     if plot_method == "pcolormesh" and response_method == "predict":
@@ -723,8 +721,8 @@ def test_multiclass_colors_cmap(
             )
             for class_idx, (r, g, b, _) in enumerate(colors)
         ]
-        # part of a non-regression test for issue #32866
-        # to make sure every class has its own surface
+        # Part of a non-regression test for issue #32866 to make sure every class
+        # has its own surface.
         assert len(disp.surface_) == disp.n_classes
 
         for idx, quad in enumerate(disp.surface_):
@@ -738,31 +736,27 @@ def test_multiclass_colors_cmap(
 
 
 @pytest.mark.parametrize(
-    "estimator, n_classes",
+    "estimator, n_blobs, expected_n_classes",
     [
-        (DecisionTreeClassifier(random_state=0), 7),
-        (DecisionTreeClassifier(random_state=0), 2),
-        (KMeans(n_clusters=7, random_state=0), 7),
-        (KMeans(n_clusters=2, random_state=0), 2),
-        (DecisionTreeRegressor(random_state=0), 7),
-        (IsolationForest(random_state=0), 7),
+        (DecisionTreeClassifier(random_state=0), 7, 7),
+        (DecisionTreeClassifier(random_state=0), 2, 2),
+        (KMeans(n_clusters=7, random_state=0), 7, 7),
+        (KMeans(n_clusters=2, random_state=0), 7, 2),
+        (DecisionTreeRegressor(random_state=0), 7, 2),
+        (IsolationForest(random_state=0), 7, 2),
     ],
 )
-def test_n_classes_attribute(pyplot, estimator, n_classes):
+def test_n_classes_attribute(pyplot, estimator, n_blobs, expected_n_classes):
     """Check that `n_classes` is set correctly.
 
     Introduced in https://github.com/scikit-learn/scikit-learn/pull/33015"""
 
-    X, y = make_blobs(n_samples=150, centers=n_classes, n_features=2, random_state=42)
+    X, y = make_blobs(n_samples=150, centers=n_blobs, n_features=2, random_state=42)
     clf = estimator.fit(X, y)
-
     disp = DecisionBoundaryDisplay.from_estimator(clf, X, response_method="predict")
+    assert disp.n_classes == expected_n_classes
 
-    if is_regressor(estimator) or is_outlier_detector(estimator):
-        n_classes = 2  # by convention for regressors and outlier detectors
-    assert disp.n_classes == n_classes
-
-    # test that setting class_of_interest converts to a binary problem
+    # Test that setting class_of_interest always converts to a binary problem.
     disp_coi = DecisionBoundaryDisplay.from_estimator(
         clf, X, class_of_interest=y[0], response_method="predict"
     )
