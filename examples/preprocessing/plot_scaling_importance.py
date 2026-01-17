@@ -3,6 +3,11 @@
 Importance of Feature Scaling
 =============================
 
+This example illustrates how feature scaling affects distance-based models and dimensionality
+reduction techniques. It simply compares model behavior with and without scaling using 
+k-nearest neighbors (KNN) classification and principal component analysis (PCA).
+
+
 Illustrates the importance of feature scaling by improving the clarity
 of visualizations, including explicit plot titles and consistent layout
 management using ``plt.tight_layout()``.
@@ -75,7 +80,7 @@ from sklearn.neighbors import KNeighborsClassifier
 
 X_plot = X[["proline", "hue"]]
 
-# Explicitly scale features for distance-based models
+# Scale features so KNN distance calculations are not dominated by one feature
 X_plot_scaled = scaler.fit_transform(X_plot)
 clf = KNeighborsClassifier(n_neighbors=20)
 
