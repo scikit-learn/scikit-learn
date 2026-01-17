@@ -1,6 +1,7 @@
 import numpy as np
 
 from sklearn.preprocessing import robust_minmax_scale
+
 def test_basic_scaling():
     X = np.array([[1], [5], [100]])
     X_scaled = robust_minmax_scale(X)
