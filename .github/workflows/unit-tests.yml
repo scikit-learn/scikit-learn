@@ -237,6 +237,7 @@ jobs:
       - name: Set random seed for nightly/manual runs
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: echo "SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$((RANDOM % 100))" >> $GITHUB_ENV
+        shell: bash
 
       - name: Run tests
         env:
@@ -267,6 +268,7 @@ jobs:
 
       - name: Update tracking issue
         if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
+        shell: bash
         run: |
           set -ex
 
