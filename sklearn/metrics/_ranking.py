@@ -19,7 +19,6 @@ from scipy.integrate import trapezoid
 from scipy.sparse import csr_matrix, issparse
 from scipy.stats import rankdata
 
-from sklearn import get_config
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics._base import _average_binary_score, _average_multiclass_ovo_score
 from sklearn.preprocessing import label_binarize
@@ -30,7 +29,6 @@ from sklearn.utils import (
     column_or_1d,
 )
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     _max_precision_float_dtype,
     get_namespace_and_device,
     move_to,
@@ -231,18 +229,8 @@ def average_precision_score(
     xp, _, device = get_namespace_and_device(y_score)
     y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
-    # Explicitly convert array inputs from other namespaces to numpy when
-    # `array_api_dispatch` is disabled, to avoid incompatibilities between namespaces.
-    # See: https://github.com/numpy/numpy/issues/28024. Specifically fixes numpy/torch
-    # incompatibilities when np.sum and np.repeat are called with a torch array as an
-    # input in `_average_binary_score`. `np.sum` internally dispatches to torch, but
-    # fails because `torch.sum` doesn't take an `out` argument; `np.repeat` internally
-    # calls `torch.repeat`, but this fails because it doesn't have an `axis` argument.
-    if not get_config().get("array_api_dispatch", False):
-        y_true = _convert_to_numpy(y_true, xp=xp)
-        y_score = _convert_to_numpy(y_score, xp=xp)
-        if sample_weight is not None:
-            sample_weight = _convert_to_numpy(sample_weight, xp=xp)
+    if sample_weight is not None:
+        sample_weight = column_or_1d(sample_weight)
 
     def _binary_uninterpolated_average_precision(
         y_true,
