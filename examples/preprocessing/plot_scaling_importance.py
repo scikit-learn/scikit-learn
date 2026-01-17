@@ -3,14 +3,10 @@
 Importance of Feature Scaling
 =============================
 
-This example illustrates how feature scaling affects distance-based models and dimensionality
-reduction techniques. It simply compares model behavior with and without scaling using 
-k-nearest neighbors (KNN) classification and principal component analysis (PCA).
-
-
-Illustrates the importance of feature scaling by improving the clarity
-of visualizations, including explicit plot titles and consistent layout
-management using ``plt.tight_layout()``.
+This example illustrates how feature scaling affects distance-based models and 
+dimensionality reduction techniques. It simply compares model behavior with 
+and without scaling using k-nearest neighbors (KNN) classification and 
+principal component analysis (PCA).
 
 Feature scaling through standardization, also called Z-score normalization, is
 an important preprocessing step for many machine learning algorithms. It
