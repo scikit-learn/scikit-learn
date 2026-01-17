@@ -23,6 +23,7 @@ from sklearn.preprocessing._data import (
     robust_scale,
     scale,
 )
+from sklearn.preprocessing._robust_minmax import robust_minmax_scale
 from sklearn.preprocessing._discretization import KBinsDiscretizer
 from sklearn.preprocessing._encoders import OneHotEncoder, OrdinalEncoder
 from sklearn.preprocessing._function_transformer import FunctionTransformer
@@ -65,4 +66,5 @@ __all__ = [
     "quantile_transform",
     "robust_scale",
     "scale",
+    "robust_minmax_scale",
 ]

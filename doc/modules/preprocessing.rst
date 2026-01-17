@@ -184,6 +184,29 @@ Here is how to use the toy data from the previous example with this scaler::
   array([2.,  1.,  2.])
 
 
+Robust Min-Max Scaling
+----------------------
+
+The :func:`~sklearn.preprocessing.robust_minmax_scale` function scales
+features to the ``[0, 1]`` range using robust percentiles
+(``quantile_range``) , instead of the min and max. 
+
+This method is more stable and handle outliers excellently. 
+
+
+Example
+~~~~~~~
+
+.. code-block:: python
+
+    from sklearn.preprocessing import robust_minmax_scale
+    import numpy as np
+
+    X = np.array([[1], [5], [100]])
+    X_scaled = robust_minmax_scale(X)
+
+
+
 Scaling sparse data
 -------------------
 Centering sparse data would destroy the sparseness structure in the data, and
