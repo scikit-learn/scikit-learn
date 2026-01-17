@@ -365,11 +365,10 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         if not isinstance(
             cv, (GroupKFold, KFold, StratifiedKFold, StratifiedGroupKFold)
         ):
-            _test_indices = np.array([])
-            for fold in cv.split(X, y, **routed_params.splitter.split):
-                _, test_idx = fold
-                _test_indices = np.concatenate([_test_indices, test_idx])
-            if not np.isin(np.arange(X.shape[0]), _test_indices).all():
+            seen_count = np.zeros(X.shape[0])
+            for _, test_idx in cv.split(X, y, **routed_params.splitter.split):
+                seen_count[test_idx] += 1
+            if not np.all(seen_count == 1):
                 raise ValueError(
                     "Validation indices from `cv` must cover each sample index exactly "
                     "once with no overlap. Pass a splitter with non-overlapping "
