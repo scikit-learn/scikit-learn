@@ -1,5 +1,5 @@
-# Authors: Jubril Olasunkanmi
 # SPDX-License-Identifier: BSD-3-Clause
+# Authors: Jubril Olasunkanmi
 
 """
 robust_minmax: Helps scales data to the [0,1] range using robust percentile.
