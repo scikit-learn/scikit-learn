@@ -359,17 +359,12 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         else:
             routed_params = Bunch(splitter=Bunch(split={}))
 
-        # The CV splitter is restricted to splitters where each sample index appears in
-        # exactly one validation fold; otherwise the `fit_transform` output would be
-        # ill-defined. We exclude a predefined list of all well defined splitters in
-        # scikit-learn from the check:
-        non_overlapping_splitters = (
-            GroupKFold,
-            KFold,
-            StratifiedKFold,
-            StratifiedGroupKFold,
-        )
-        if cv.__class__ not in non_overlapping_splitters:
+        # The internal cross-fitting is only well-defined when each sample index
+        # appears in exactly one validation fold. Skip the validation check for
+        # known non-overlapping splitters in scikit-learn:
+        if not isinstance(
+            cv, (GroupKFold, KFold, StratifiedKFold, StratifiedGroupKFold)
+        ):
             _test_indices = np.array([])
             for fold in cv.split(X, y, **routed_params.splitter.split):
                 _, test_idx = fold
