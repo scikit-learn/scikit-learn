@@ -5,7 +5,6 @@ This method is more stable and handle outliers excellently.
 """
 
 import numpy as np
-from scipy.stats import mstats
 from sklearn.utils.validation import check_array
 
 

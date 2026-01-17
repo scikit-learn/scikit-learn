@@ -67,4 +67,4 @@ __all__ = [
     "robust_scale",
     "scale",
     "robust_minmax_scale",
-]
+    ]
