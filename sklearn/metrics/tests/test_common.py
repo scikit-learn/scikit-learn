@@ -2576,8 +2576,9 @@ def test_mixed_array_api_namespace_input_compliance(
                 _check_output_type(metric_np, metric_xp, xp_to, y2_xp)
 
 
-# All classification metrics, minus multilabel ranking metrics, which take
-# label indicator input (and thus never string input)
+# Check thresholded classification metrics, minus multilabel ranking metrics
+# (`METRIC_UNDEFINED_BINARY`), which take label indicator input (and thus never
+# string input).
 @pytest.mark.parametrize(
     "metric_name",
     sorted(
@@ -2588,9 +2589,11 @@ def test_mixed_array_api_namespace_input_compliance(
 def test_array_api_classification_string_input(metric_name):
     """Check string inputs accepted with dispatch enabled.
 
-    All classification metrics that do not require label indicator format input
-    should work when both inputs (e.g.,`y_true` and `y_pred`) are string (numpy
+    All thresholded classification metrics that do not require label indicator format
+    input should work when both inputs (e.g.,`y_true` and `y_pred`) are string (numpy
     namespace only) and dispatch is enabled.
+    Note thresholded classification metrics do not support mixed string and numeric
+    inputs.
     """
     metric = ALL_METRICS[metric_name]
     y_true = np.array(["a", "b", "a", "a"])
@@ -2621,8 +2624,9 @@ CONTINUOUS_CLASSIFICATION_METRICS_EXCL_MULTILABEL_RANKING = (
     yield_namespace_device_dtype_combinations(),
     ids=_get_namespace_device_dtype_ids,
 )
-# All continuous classification metrics, minus multilabel ranking metrics,
-# which take label indicator input (and thus never string input)
+# All continuous classification metrics, minus multilabel ranking metrics
+# (`METRIC_UNDEFINED_BINARY`), which take label indicator input (and thus never
+# string input)
 @pytest.mark.parametrize(
     "metric_name",
     sorted(
