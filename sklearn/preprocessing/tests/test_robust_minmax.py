@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
+
 from sklearn.preprocessing import robust_minmax_scale
 
 
