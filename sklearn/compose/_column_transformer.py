@@ -1518,13 +1518,8 @@ class make_column_selector:
     :class:`ColumnTransformer`.
 
     :func:`make_column_selector` can select columns based on datatype or the
-    columns name with a regex. When using multiple selection criteria, **all**
-    criteria must match for a column to be selected.
-
-    For an example of how to use :func:`make_column_selector` within a
-    :class:`ColumnTransformer` to select columns based on data type (i.e.
-    `dtype`), refer to
-    :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
+    columns name with a regex. When multiple parameters are set, an `AND`
+    selection is used.
 
     Parameters
     ----------
@@ -1540,14 +1535,14 @@ class make_column_selector:
         A selection of dtypes to exclude. For more details, see
         :meth:`pandas.DataFrame.select_dtypes`.
 
-        min_cardinality : int, default=None
-        Minimum cardinality (number of unique values) to select a column.
-        If None, then no minimum cardinality is required to select.
+    min_cardinality : int, default=None
+        The minimum cardinality (number of unique values) of the column to be
+        included. If None, no minimum cardinality is required.
 
-        max_cardinality : int, default=None
-            Maximum cardinality to select a column. If None, then no maximum
-            cardinality is required to select.
-    
+    max_cardinality : int, default=None
+        The maximum cardinality (number of unique values) of the column to be
+        included. If None, no maximum cardinality is required.
+
     Returns
     -------
     selector : callable
@@ -1557,54 +1552,25 @@ class make_column_selector:
     See Also
     --------
     ColumnTransformer : Class that allows combining the
-        outputs of multiple transformer objects used on column subsets
-        of the data into a single feature space.
-
-    Examples
-    --------
-    >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
-    >>> from sklearn.compose import make_column_transformer
-    >>> from sklearn.compose import make_column_selector
-    >>> import numpy as np
-    >>> import pandas as pd  # doctest: +SKIP
-    >>> X = pd.DataFrame({'city': ['London', 'London', 'Paris', 'Sallisaw'],
-    ...                   'rating': [5, 3, 4, 5]})  # doctest: +SKIP
-    >>> ct = make_column_transformer(
-    ...       (StandardScaler(),
-    ...        make_column_selector(dtype_include=np.number)),  # rating
-    ...       (OneHotEncoder(),
-    ...        make_column_selector(dtype_include=[object, "string"])))  # city
-    >>> ct.fit_transform(X)  # doctest: +SKIP
-    array([[ 0.90453403,  1.        ,  0.        ,  0.        ],
-           [-1.50755672,  1.        ,  0.        ,  0.        ],
-           [-0.30151134,  0.        ,  1.        ,  0.        ],
-           [ 0.90453403,  0.        ,  0.        ,  1.        ]])
+        outputs of multiple transformer objects.
     """
 
     def __init__(
-            self,
-            pattern=None,
-            *,
-            dtype_include=None,
-            dtype_exclude=None,
-            min_cardinality=None,
-            max_cardinality=None,
-        ):
-            self.pattern = pattern
-            self.dtype_include = dtype_include
-            self.dtype_exclude = dtype_exclude
-            self.min_cardinality = min_cardinality
-            self.max_cardinality = max_cardinality
+        self,
+        pattern=None,
+        *,
+        dtype_include=None,
+        dtype_exclude=None,
+        min_cardinality=None,
+        max_cardinality=None,
+    ):
+        self.pattern = pattern
+        self.dtype_include = dtype_include
+        self.dtype_exclude = dtype_exclude
+        self.min_cardinality = min_cardinality
+        self.max_cardinality = max_cardinality
 
     def __call__(self, df):
-        """Callable for column selection to be used by a
-        :class:`ColumnTransformer`.
-
-        Parameters
-        ----------
-        df : dataframe of shape (n_features, n_samples)
-            DataFrame to select columns from.
-        """
         if not hasattr(df, "iloc"):
             raise ValueError(
                 "make_column_selector can only be applied to pandas dataframes"
@@ -1617,12 +1583,16 @@ class make_column_selector:
         cols = df_row.columns
         if self.pattern is not None:
             cols = cols[cols.str.contains(self.pattern, regex=True)]
-        if self.min_cardinality or self.max_cardinality:
+
+        if self.min_cardinality is not None or self.max_cardinality is not None:
             cols_cardinality = df[cols].nunique()
-        if self.min_cardinality:
-            cols = cols[cols_cardinality >= self.min_cardinality]
-        if self.max_cardinality:
-            cols = cols[cols_cardinality <= self.max_cardinality]
+            if self.min_cardinality is not None:
+                cols = cols[cols_cardinality >= self.min_cardinality]
+                cols_cardinality = cols_cardinality[cols]
+
+            if self.max_cardinality is not None:
+                cols = cols[cols_cardinality <= self.max_cardinality]
+
         return cols.tolist()
 
 
