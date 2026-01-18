@@ -2825,6 +2825,7 @@ def test_unused_transformer_request_present():
 # End of Metadata Routing Tests
 # =============================
 
+
 def test_make_column_selector_with_cardinality():
     pd = pytest.importorskip("pandas")
     X_df = pd.DataFrame(

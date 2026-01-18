@@ -1547,7 +1547,7 @@ class make_column_selector:
         max_cardinality : int, default=None
             Maximum cardinality to select a column. If None, then no maximum
             cardinality is required to select.
-    
+
     Returns
     -------
     selector : callable
@@ -1581,8 +1581,15 @@ class make_column_selector:
            [ 0.90453403,  0.        ,  0.        ,  1.        ]])
     """
 
-    def __init__(self, pattern=None, *, dtype_include=None, dtype_exclude=None,
-                 min_cardinality=None, max_cardinality=None):
+    def __init__(
+        self,
+        pattern=None,
+        *,
+        dtype_include=None,
+        dtype_exclude=None,
+        min_cardinality=None,
+        max_cardinality=None,
+    ):
         self.pattern = pattern
         self.dtype_include = dtype_include
         self.dtype_exclude = dtype_exclude
