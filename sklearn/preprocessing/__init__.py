@@ -33,6 +33,7 @@ from sklearn.preprocessing._label import (
     label_binarize,
 )
 from sklearn.preprocessing._polynomial import PolynomialFeatures, SplineTransformer
+from sklearn.preprocessing._robust_minmax import robust_minmax_scale
 from sklearn.preprocessing._target_encoder import TargetEncoder
 
 __all__ = [
@@ -63,6 +64,7 @@ __all__ = [
     "normalize",
     "power_transform",
     "quantile_transform",
+    "robust_minmax_scale",
     "robust_scale",
     "scale",
 ]
