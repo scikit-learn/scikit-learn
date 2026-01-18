@@ -1,0 +1,3 @@
+- :func:`~sklearn.compose.make_column_selector` now accepts ``min_cardinality`` and
+  ``max_cardinality`` parameters to filter columns based on the number of unique values.
+  :pr:`33101` by :user:`TejasAnalyst`.
