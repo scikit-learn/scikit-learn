@@ -1,5 +1,4 @@
 import numpy as np
-
 from sklearn.preprocessing import robust_minmax_scale
 
 def test_basic_scaling():
