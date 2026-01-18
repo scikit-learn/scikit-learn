@@ -140,9 +140,7 @@ cdef class DensePartitioner:
             float32_t max_feature_value = -INFINITY_32t
             float32_t[::1] feature_values = self.feature_values
             intp_t n_missing = 0
-
-        min_feature_value = self.X[samples[self.start], current_feature]
-        max_feature_value = min_feature_value
+            bint found_non_missing = False
 
         for p in range(self.start, self.end):
             current_feature_value = self.X[samples[p], current_feature]
@@ -150,6 +148,10 @@ cdef class DensePartitioner:
 
             if isnan(current_feature_value):
                 n_missing += 1
+            elif not found_non_missing:
+                min_feature_value = current_feature_value
+                max_feature_value = current_feature_value
+                found_non_missing = True
             elif current_feature_value < min_feature_value:
                 min_feature_value = current_feature_value
             elif current_feature_value > max_feature_value:
