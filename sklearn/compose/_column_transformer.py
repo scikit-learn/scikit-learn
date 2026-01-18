@@ -1540,6 +1540,14 @@ class make_column_selector:
         A selection of dtypes to exclude. For more details, see
         :meth:`pandas.DataFrame.select_dtypes`.
 
+        min_cardinality : int, default=None
+        Minimum cardinality (number of unique values) to select a column.
+        If None, then no minimum cardinality is required to select.
+
+        max_cardinality : int, default=None
+            Maximum cardinality to select a column. If None, then no maximum
+            cardinality is required to select.
+    
     Returns
     -------
     selector : callable
@@ -1573,10 +1581,13 @@ class make_column_selector:
            [ 0.90453403,  0.        ,  0.        ,  1.        ]])
     """
 
-    def __init__(self, pattern=None, *, dtype_include=None, dtype_exclude=None):
+    def __init__(self, pattern=None, *, dtype_include=None, dtype_exclude=None,
+                 min_cardinality=None, max_cardinality=None):
         self.pattern = pattern
         self.dtype_include = dtype_include
         self.dtype_exclude = dtype_exclude
+        self.min_cardinality = min_cardinality
+        self.max_cardinality = max_cardinality
 
     def __call__(self, df):
         """Callable for column selection to be used by a
@@ -1599,6 +1610,12 @@ class make_column_selector:
         cols = df_row.columns
         if self.pattern is not None:
             cols = cols[cols.str.contains(self.pattern, regex=True)]
+        if self.min_cardinality or self.max_cardinality:
+            cols_cardinality = df[cols].nunique()
+        if self.min_cardinality:
+            cols = cols[cols_cardinality >= self.min_cardinality]
+        if self.max_cardinality:
+            cols = cols[cols_cardinality <= self.max_cardinality]
         return cols.tolist()
 
 

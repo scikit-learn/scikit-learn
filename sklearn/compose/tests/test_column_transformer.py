@@ -2824,3 +2824,26 @@ def test_unused_transformer_request_present():
 
 # End of Metadata Routing Tests
 # =============================
+
+def test_make_column_selector_with_cardinality():
+    pd = pytest.importorskip("pandas")
+    X_df = pd.DataFrame(
+        {
+            "col_low": np.array([1, 1, 1, 1, 1, 1], dtype=int),
+            "col_mid": np.array([1, 2, 3, 4, 5, 5], dtype=int),
+            "col_high": np.array([1, 2, 3, 4, 5, 6], dtype=int),
+        },
+        columns=["col_low", "col_mid", "col_high"],
+    )
+
+    # Test 1: Min Cardinality
+    selector = make_column_selector(min_cardinality=2)
+    assert selector(X_df) == ["col_mid", "col_high"]
+
+    # Test 2: Max Cardinality
+    selector = make_column_selector(max_cardinality=5)
+    assert selector(X_df) == ["col_low", "col_mid"]
+
+    # Test 3: Range
+    selector = make_column_selector(min_cardinality=2, max_cardinality=5)
+    assert selector(X_df) == ["col_mid"]
