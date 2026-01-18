@@ -7,8 +7,8 @@ robust_minmax: Helps scales data to the [0,1] range using robust percentile.
 This method is more stable and handle outliers excellently.
 """
 
-import numpy as np
 from sklearn.utils.validation import check_array
+import numpy as np
 
 
 def robust_minmax_scale(X, *, quantile_range=(25.0, 75.0)):

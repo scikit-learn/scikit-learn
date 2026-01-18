@@ -1,8 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 from sklearn.preprocessing import robust_minmax_scale
+import numpy as np
 
 
 def test_basic_scaling():
@@ -17,3 +17,4 @@ def test_resistant_to_outliers():
     X_scaled = robust_minmax_scale(X)
     # Check that the outlier is clipped at 1
     assert X_scaled[-1] == 1.0
+    
