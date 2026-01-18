@@ -3246,3 +3246,24 @@ def test_missing_values_and_constant_toy():
 def test_friedman_mse_deprecation():
     with pytest.warns(FutureWarning, match="friedman_mse"):
         _ = DecisionTreeRegressor(criterion="friedman_mse")
+
+
+@pytest.mark.parametrize(
+    "X,y",
+    [
+        (np.array([[np.nan], [0.0], [1.0], [2.0]]), np.array([0.0, 1.0, 2.0, 3.0])),
+        (np.array([[np.nan], [1.0], [np.nan]]), np.array([0.0, 1.0, 0.0])),
+    ],
+    ids=["multiple-non-missing", "single-non-missing"],
+)
+def test_random_splitter_missing_values_uses_non_missing_min_max(X, y):
+    """Check random-split thresholds are finite when the first sample is missing."""
+    tree = ExtraTreeRegressor(max_depth=1, random_state=0)
+    tree.fit(X, y)
+
+    assert tree.tree_.children_left[0] != TREE_LEAF
+    threshold = tree.tree_.threshold[0]
+    non_missing = X[~np.isnan(X)]
+
+    assert np.isfinite(threshold)
+    assert non_missing.min() <= threshold <= non_missing.max()
