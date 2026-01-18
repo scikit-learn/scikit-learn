@@ -1,5 +1,9 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 from sklearn.preprocessing import robust_minmax_scale
+
 
 def test_basic_scaling():
     X = np.array([[1], [5], [100]])
