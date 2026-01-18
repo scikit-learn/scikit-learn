@@ -1571,6 +1571,19 @@ class make_column_selector:
         self.max_cardinality = max_cardinality
 
     def __call__(self, df):
+        """Callable for column selection to be used by a
+        :class:`ColumnTransformer`.
+
+        Parameters
+        ----------
+        df : dataframe of shape (n_samples, n_features)
+            DataFrame to select columns from.
+
+        Returns
+        -------
+        selector : list of str
+            The list of column names selected.
+        """
         if not hasattr(df, "iloc"):
             raise ValueError(
                 "make_column_selector can only be applied to pandas dataframes"
