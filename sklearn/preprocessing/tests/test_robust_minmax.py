@@ -1,8 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from sklearn.preprocessing import robust_minmax_scale
 import numpy as np
+from sklearn.preprocessing import robust_minmax_scale
 
 
 def test_basic_scaling():
