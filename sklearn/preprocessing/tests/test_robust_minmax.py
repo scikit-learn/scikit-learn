@@ -17,4 +17,3 @@ def test_resistant_to_outliers():
     X_scaled = robust_minmax_scale(X)
     # Check that the outlier is clipped at 1
     assert X_scaled[-1] == 1.0
-    
