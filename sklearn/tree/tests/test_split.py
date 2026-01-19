@@ -57,11 +57,8 @@ class NaiveSplitter:
             loss = np.average(np.abs(y - median), weights=w)
         elif self.criterion == "poisson":
             mean_y = np.average(y, weights=w)
-            loss = (
-                1
-                / 2
-                * mean_poisson_deviance(y, np.repeat(mean_y, y.size), sample_weight=w)
-            )
+            loss = mean_poisson_deviance(y, np.repeat(mean_y, y.size), sample_weight=w)
+            loss *= 1 / 2
         else:
             raise ValueError(f"Unknown criterion: {self.criterion}")
         return loss * sum_weights
