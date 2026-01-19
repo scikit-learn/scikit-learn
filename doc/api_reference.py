@@ -619,7 +619,7 @@ API_REFERENCE = {
                 "title": "Regressors with variable selection",
                 "description": (
                     "The following estimators have built-in variable selection fitting "
-                    "procedures, but any estimator using a L1 or elastic-net penalty "
+                    "procedures, but any estimator using an L1 or elastic-net penalty "
                     "also performs variable selection: typically "
                     ":class:`~linear_model.SGDRegressor` or "
                     ":class:`~sklearn.linear_model.SGDClassifier` with an appropriate "

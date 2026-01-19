@@ -159,8 +159,13 @@ Bibtex entry::
     pages = {108--122},
   }
 
+.. _branding-and-logos:
+
 Branding & Logos
 ================
+
+The scikit-learn brand is subject to the following `terms of use and guidelines
+<https://blog.scikit-learn.org/assets/brand_guidelines/2025-02-scikit-learn-brand-guidelines.pdf>`_.
 
 High quality PNG and SVG logos are available in the `doc/logos
 <https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos>`_
@@ -258,7 +263,7 @@ Bronze sponsors
 
   .. div:: text-box
 
-    `NVIDIA <https://nvidia.com>`_ supports scikit-learn through their sponsorship and employs full-time core maintainer Tim Head. 
+    `NVIDIA <https://nvidia.com>`_ supports scikit-learn through their sponsorship and employs full-time core maintainer Tim Head.
 
   .. div:: image-box
 
@@ -380,13 +385,13 @@ program.
 - 2013 - Kemal Eren, Nicolas Trésegnie
 - 2014 - Hamzeh Alsalhi, Issam Laradji, Maheshakya Wijewardena, Manoj Kumar
 - 2015 - `Raghav RV <https://github.com/raghavrv>`_, Wei Xue
-- 2016 - `Nelson Liu <http://nelsonliu.me>`_, `YenChen Lin <https://yenchenlin.me/>`_
+- 2016 - `Nelson Liu <https://nelsonliu.me>`_, `YenChen Lin <https://yenchenlin.me/>`_
 
 .. _Vlad Niculae: https://vene.ro/
 
 ...................
 
-The `NeuroDebian <http://neuro.debian.net>`_ project providing `Debian
+The `NeuroDebian <https://neuro.debian.net>`_ project providing `Debian
 <https://www.debian.org/>`_ packaging and contributions is supported by
 `Dr. James V. Haxby <http://haxbylab.dartmouth.edu/>`_ (`Dartmouth
 College <https://pbs.dartmouth.edu/>`_).
@@ -520,7 +525,7 @@ list of events.
 Donating to the project
 =======================
 
-If you have found scikit-learn to be useful in your work, research, or company, 
+If you have found scikit-learn to be useful in your work, research, or company,
 please consider making a donation to the project commensurate with your resources.
 There are several options for making donations:
 
@@ -553,15 +558,15 @@ There are several options for making donations:
   able to make a donation with a company match as high as 100%. Our project
   ID is `433725 <https://causes.benevity.org/projects/433725>`_.
 
-All donations are managed by `NumFOCUS <https://numfocus.org/>`_, a 501(c)(3) 
+All donations are managed by `NumFOCUS <https://numfocus.org/>`_, a 501(c)(3)
 non-profit organization based in Austin, Texas, USA. The NumFOCUS board
-consists of `SciPy community members <https://numfocus.org/board.html>`_. 
+consists of `SciPy community members <https://numfocus.org/board.html>`_.
 Contributions are tax-deductible to the extent allowed by law.
 
 .. rubric:: Notes
 
-Contributions support the maintenance of the project, including development, 
-documentation, infrastructure and coding sprints. 
+Contributions support the maintenance of the project, including development,
+documentation, infrastructure and coding sprints.
 
 
 scikit-learn Swag
@@ -569,5 +574,3 @@ scikit-learn Swag
 Official scikit-learn swag is available for purchase at the `NumFOCUS online store
 <https://numfocus.myspreadshop.com/scikit-learn+logo?idea=6335cad48f3f5268f5f42559>`_.
 A portion of the proceeds from each sale goes to support the scikit-learn project.
-
-
