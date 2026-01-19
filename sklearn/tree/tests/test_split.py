@@ -1,125 +1,113 @@
 from dataclasses import dataclass
-from functools import cached_property
+from itertools import product
 from operator import itemgetter
 
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose
 from scipy.sparse import csc_array
 from scipy.special import xlogy
 
-from sklearn.metrics import (
-    mean_absolute_error,
-    mean_poisson_deviance,
-    mean_squared_error,
+from sklearn.metrics import mean_poisson_deviance
+from sklearn.tree import (
+    DecisionTreeClassifier,
+    DecisionTreeRegressor,
+    ExtraTreeClassifier,
+    ExtraTreeRegressor,
 )
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils.stats import _weighted_percentile
 
 CLF_CRITERIONS = ("gini", "log_loss")
+
 REG_CRITERIONS = ("squared_error", "absolute_error", "poisson")
+
+CLF_TREES = {
+    "DecisionTreeClassifier": DecisionTreeClassifier,
+    "ExtraTreeClassifier": ExtraTreeClassifier,
+}
+
+REG_TREES = {
+    "DecisionTreeRegressor": DecisionTreeRegressor,
+    "ExtraTreeRegressor": ExtraTreeRegressor,
+}
 
 
 @dataclass
 class NaiveSplitter:
-    is_clf: bool
     criterion: str
-    with_nans: bool
-    n_classes: int
+    n_classes: int = 0
 
-    @staticmethod
-    def weighted_median(y, w):
-        sorter = np.argsort(y)
-        wc = np.cumsum(w[sorter])
-        idx = np.searchsorted(wc, wc[-1] / 2)
-        return y[sorter[idx]]
-
-    @staticmethod
-    def log_loss(y, y_pred, sample_weight):
-        """the one from sklearn.metrics is too slow, due to input-validation"""
-        eps = np.finfo(y_pred.dtype).eps
-        y_pred = np.clip(y_pred, eps, 1 - eps)
-        y_aligned = np.zeros_like(y_pred)
-        y_aligned[np.arange(len(y)), y] = 1
-        loss = -xlogy(y_aligned, y_pred).sum(axis=1)
-        return np.average(loss, weights=sample_weight)
-
-    @staticmethod
-    def gini_loss(y, y_pred, sample_weight):
-        p = y_pred[0]
-        return (p * (1 - p)).sum()
-
-    @cached_property
-    def loss(self):
-        losses = {
-            "poisson": mean_poisson_deviance,
-            "squared_error": mean_squared_error,
-            "absolute_error": mean_absolute_error,
-            "log_loss": self.log_loss,
-            "gini": self.gini_loss,
-        }
-        return losses[self.criterion]
-
-    def class_ratios(self, y, w):
-        return np.clip(np.bincount(y, w, minlength=self.n_classes) / w.sum(), None, 1)
-
-    @cached_property
-    def predictor(self):
-        if self.is_clf:
-            return self.class_ratios
+    def compute_node_impurity(self, y, w):
+        sum_weights = np.sum(w)
+        if sum_weights < 1e-7:
+            return np.inf  # invalid split
+        if self.criterion in ["gini", "entropy", "log_loss"]:
+            p = np.bincount(y, weights=w, minlength=self.n_classes) / sum_weights
+            if self.criterion == "gini":
+                # 1 - sum(pk^2)
+                loss = 1.0 - np.sum(p**2)
+            else:
+                # -sum(pk * log2(pk))
+                loss = -np.sum(xlogy(p, p)) / np.log(2)
+        elif self.criterion == "squared_error":
+            mean_y = np.average(y, weights=w)
+            loss = np.average((y - mean_y) ** 2, weights=w)
         elif self.criterion == "absolute_error":
-            return self.weighted_median
+            median = _weighted_percentile(y, w, percentile_rank=50, average=True)
+            loss = np.average(np.abs(y - median), weights=w)
+        elif self.criterion == "poisson":
+            mean_y = np.average(y, weights=w)
+            loss = (
+                1
+                / 2
+                * mean_poisson_deviance(y, np.repeat(mean_y, y.size), sample_weight=w)
+            )
         else:
-            return lambda y, w: np.average(y, weights=w)
+            raise ValueError(f"Unknown criterion: {self.criterion}")
+        return loss * sum_weights
 
-    def compute_child_loss(self, y: np.ndarray, w: np.ndarray):
-        if y.size == 0:
-            return np.inf
-        pred_dim = (y.size, self.n_classes) if self.is_clf else (y.size,)
-        y_pred = np.empty(pred_dim)
-        y_pred[:] = self.predictor(y, w)
-        return w.sum() * self.loss(y, y_pred, sample_weight=w)
-
-    def compute_split_loss(self, x, y, w, threshold=None, missing_left=False):
-        mask = x < threshold
+    def compute_split_impurity(
+        self, X, y, w, feature, threshold=None, missing_left=False
+    ):
+        x = X[:, feature]
+        go_left = x <= threshold
         if missing_left:
-            mask |= np.isnan(x)
+            go_left |= np.isnan(x)
         return (
-            self.compute_child_loss(y[mask], w[mask]),
-            self.compute_child_loss(y[~mask], w[~mask]),
+            self.compute_node_impurity(y[go_left], w[go_left]),
+            self.compute_node_impurity(y[~go_left], w[~go_left]),
         )
 
-    def compute_all_losses(self, x, y, w, missing_left=False):
-        nan_mask = np.isnan(x)
-        xu = np.unique(x[~nan_mask], sorted=True)
-        thresholds = (xu[1:] + xu[:-1]) / 2
-        if nan_mask.any() and not missing_left:
-            thresholds = np.append(thresholds, xu.max() * 2)
-        return thresholds, [
-            sum(self.compute_split_loss(x, y, w, threshold, missing_left=missing_left))
-            for threshold in thresholds
-        ]
+    def _generate_all_splits(self, X):
+        for f in range(X.shape[1]):
+            x = X[:, f]
+            nan_mask = np.isnan(x)
+            xu = np.unique(x[~nan_mask], sorted=True)
+            thresholds = (xu[1:] + xu[:-1]) / 2
+            for th in thresholds:
+                yield {
+                    "feature": f,
+                    "threshold": th,
+                    "missing_left": False,
+                }
+            if not nan_mask.any():
+                continue
+            for th in [*thresholds, -np.inf]:
+                # include -inf to test all NaNs on the left
+                yield {
+                    "feature": f,
+                    "threshold": th,
+                    "missing_left": True,
+                }
 
     def best_split_naive(self, X, y, w):
         splits = []
-        for f in range(X.shape[1]):
-            thresholds, losses = self.compute_all_losses(X[:, f], y, w)
-            if self.with_nans:
-                thresholds_, losses_ = self.compute_all_losses(
-                    X[:, f], y, w, missing_left=True
-                )
-                thresholds = np.concatenate((thresholds, thresholds_))
-                losses = np.concatenate((losses, losses_))
-            if len(losses) == 0:
-                continue
-            idx = np.argmin(losses)
-            splits.append(
-                (
-                    losses[idx],
-                    thresholds[idx],
-                    self.with_nans and idx >= thresholds.size // 2,
-                    f,
-                )
-            )
-        return min(splits, key=itemgetter(0))
+        splits = list(self._generate_all_splits(X))
+        split_impurities = [
+            sum(self.compute_split_impurity(X, y, w, **split)) for split in splits
+        ]
+
+        return min(zip(split_impurities, splits), key=itemgetter(0))
 
 
 def sparsify(X, density):
@@ -141,7 +129,7 @@ def make_simple_dataset(
 ):
     X_dense = rng.random((n, d))
     y = rng.random(n) + X_dense.sum(axis=1)
-    w = rng.random(n)
+    w = rng.integers(0, 5, size=n) if rng.uniform() < 0.5 else rng.random(n)
 
     with_duplicates = rng.integers(2) == 0
     if with_duplicates:
@@ -160,61 +148,88 @@ def make_simple_dataset(
         q = np.linspace(0, 1, num=n_classes + 1)[1:-1]
         y = np.searchsorted(np.quantile(y, q), y)
 
-    return X_dense, X, y, w
+    return X_dense.astype("float32"), X, y, w
 
 
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
+@pytest.mark.parametrize(
+    "Tree, criterion",
+    [
+        *product(REG_TREES.values(), REG_CRITERIONS),
+        *product(CLF_TREES.values(), CLF_CRITERIONS),
+    ],
+)
 @pytest.mark.parametrize("sparse", ["x", "sparse"])
 @pytest.mark.parametrize("missing_values", ["x", "missing_values"])
-@pytest.mark.parametrize("criterion", CLF_CRITERIONS + REG_CRITERIONS)
-def test_best_split_optimality(sparse, missing_values, criterion, global_random_seed):
+def test_best_split_optimality(
+    Tree, criterion, sparse, missing_values, global_random_seed
+):
     is_clf = criterion in CLF_CRITERIONS
     with_nans = missing_values != "x"
     is_sparse = sparse != "x"
     if is_sparse and with_nans:
         pytest.skip("Sparse + missing values not supported yet")
 
+    # TODO: (remove in PR #32119)
+    if with_nans and criterion == "absolute_error":
+        pytest.skip("AE + missing values not supported yet")
+    if with_nans and criterion == "poisson":
+        pytest.xfail("Poisson criterion is buggy for now")
+
     rng = np.random.default_rng(global_random_seed)
 
-    ns = [5] * 5 + [10] * 5 + [30, 30, 30, 30, 100, 100, 200]
+    ns = [5] * 5 + [10] * 5 + [20, 30, 50, 100]
 
     for it, n in enumerate(ns):
         d = rng.integers(1, 4)
-        n_classes = rng.integers(2, 5)
+        n_classes = rng.integers(2, 5)  # only used for classification
         X_dense, X, y, w = make_simple_dataset(
             n, d, with_nans, is_sparse, is_clf, n_classes, rng
         )
 
-        naive_splitter = NaiveSplitter(is_clf, criterion, with_nans, n_classes)
-        best_split = naive_splitter.best_split_naive(X_dense, y, w)
+        naive_splitter = NaiveSplitter(criterion, n_classes)
 
-        Tree = DecisionTreeClassifier if is_clf else DecisionTreeRegressor
         tree = Tree(
             criterion=criterion,
             max_depth=1,
-            max_features=d,
             random_state=global_random_seed,
         )
         tree.fit(X, y, sample_weight=w)
+        actual_impurity = tree.tree_.impurity * tree.tree_.weighted_n_node_samples
 
-        split_feature = tree.tree_.feature[0]
-        split = {"threshold": tree.tree_.threshold[0]}
-        tree_loss = naive_splitter.compute_split_loss(
-            X_dense[:, tree.tree_.feature[0]],
-            y,
-            w,
-            **split,
-            missing_left=bool(tree.tree_.missing_go_to_left[0]),
-        )
-        tree_split = (
-            sum(tree_loss),
-            split,
-            bool(tree.tree_.missing_go_to_left[0]),
-            tree.tree_.feature[0],
-        )
-        assert np.isclose(best_split[0], tree_split[0]), (it, best_split, tree_split)
+        # Check root's impurity:
+        # The root is 0, left child is 1 and right child is 2.
+        root_impurity = naive_splitter.compute_node_impurity(y, w)
+        assert_allclose(root_impurity, actual_impurity[0], atol=1e-12)
 
-        vals = tree.tree_.impurity * tree.tree_.weighted_n_node_samples
-        if criterion == "log_loss":
-            vals *= np.log(2)
-        if criterion == "poisson":
-            vals *= 2
+        if tree.tree_.node_count == 1:
+            # if no splits was made assert that either:
+            assert (
+                "Extra" in Tree.__name__
+                or root_impurity < 1e-12  # root impurity is 0
+                # or no valid split can be made:
+                or naive_splitter.best_split_naive(X_dense, y, w)[0] == np.inf
+            )
+            continue
+
+        # Check children impurity:
+        actual_split = {
+            "feature": tree.tree_.feature[0],
+            "threshold": tree.tree_.threshold[0],
+            "missing_left": bool(tree.tree_.missing_go_to_left[0]),
+        }
+        left_right_impurity = naive_splitter.compute_split_impurity(
+            X_dense, y, w, **actual_split
+        )
+        assert_allclose(left_right_impurity, actual_impurity[1:], atol=1e-12)
+
+        if "Extra" in Tree.__name__:
+            continue
+
+        # check that the selected split was really the best possible split:
+        best_impurity, excepted_split = naive_splitter.best_split_naive(X_dense, y, w)
+        actual_split_impurity = actual_impurity[1:].sum()
+        assert np.isclose(best_impurity, actual_split_impurity), (
+            excepted_split,
+            actual_split,
+        )
