@@ -235,11 +235,12 @@ def _get_response_values(
     else:  # estimator is a regressor
         if response_method != "predict":
             raise ValueError(
-                f"{estimator.__class__.__name__} should either be a classifier to be "
-                f"used with response_method={response_method} or the response_method "
-                "should be 'predict'. Got a regressor with response_method="
-                f"{response_method} instead."
+                f"{estimator.__class__.__name__} does not provide a valid response method. "
+                f"Expected a classifier to be used with response_method={response_method} "
+                f"or an estimator with a 'predict' method. "
+                f"Got response_method={response_method} instead."
             )
+
         prediction_method = estimator.predict
         y_pred, pos_label = prediction_method(X), None
 
