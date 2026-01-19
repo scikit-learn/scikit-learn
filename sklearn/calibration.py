@@ -1155,7 +1155,6 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
                 labels,
                 raw_prediction,
                 sample_weight,
-                is_numpy_namespace=is_numpy_namespace,
                 xp=xp,
             )
 

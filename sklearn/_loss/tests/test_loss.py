@@ -35,7 +35,6 @@ from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
-    _is_numpy_namespace,
     device,
     yield_namespace_device_dtype_combinations,
 )
@@ -1433,10 +1432,6 @@ def test_loss_array_api(
 
     method = getattr(loss_instance, method_name)
     array_api_method = getattr(array_api_loss_instance, method_name)
-    extra_params_xp = {}
-    if method_name == "__call__":
-        extra_params_xp["is_numpy_namespace"] = _is_numpy_namespace(xp)
-
     result_np = method(
         y_true=y_true, raw_prediction=raw_prediction, sample_weight=sample_weight_np
     )
@@ -1445,7 +1440,6 @@ def test_loss_array_api(
             y_true=y_true_xp,
             raw_prediction=raw_prediction_xp,
             sample_weight=sample_weight_xp,
-            **extra_params_xp,
         )
         if (
             method_name == "__call__"

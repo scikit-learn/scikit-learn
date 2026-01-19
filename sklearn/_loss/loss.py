@@ -389,13 +389,7 @@ class BaseLoss:
         return gradient_out, hessian_out
 
     def __call__(
-        self,
-        y_true,
-        raw_prediction,
-        sample_weight=None,
-        n_threads=1,
-        is_numpy_namespace=True,
-        xp=None,
+        self, y_true, raw_prediction, sample_weight=None, n_threads=1, xp=None
     ):
         """Compute the weighted average loss.
 
@@ -410,8 +404,6 @@ class BaseLoss:
             Sample weights.
         n_threads : int, default=1
             Might use openmp thread parallelism.
-        is_numpy_namespace : bool, default=True
-            Are we dealing with the NumPy namespace.
         xp : module, default=None
             Array namespace module.
 
@@ -420,22 +412,16 @@ class BaseLoss:
         loss : float
             Mean or averaged loss function.
         """
-        if is_numpy_namespace:
-            return np.average(
-                self.loss(
-                    y_true=y_true,
-                    raw_prediction=raw_prediction,
-                    sample_weight=None,
-                    loss_out=None,
-                    n_threads=n_threads,
-                ),
-                weights=sample_weight,
-            )
-        xp, _ = get_namespace(y_true, raw_prediction, sample_weight, xp=xp)
-        loss_xp = self.loss(
-            y_true=y_true, raw_prediction=raw_prediction, sample_weight=None
+        return np.average(
+            self.loss(
+                y_true=y_true,
+                raw_prediction=raw_prediction,
+                sample_weight=None,
+                loss_out=None,
+                n_threads=n_threads,
+            ),
+            weights=sample_weight,
         )
-        return float(_average(loss_xp, weights=sample_weight, xp=xp))
 
     def fit_intercept_only(self, y_true, sample_weight=None):
         """Compute raw_prediction of an intercept-only model.
@@ -994,61 +980,6 @@ class HalfBinomialLoss(BaseLoss):
         proba[:, 0] = 1 - proba[:, 1]
         return proba
 
-    def _compute_loss_array_api(
-        self,
-        y_true,
-        raw_prediction,
-        raw_prediction_exp,
-        neg_raw_prediction_exp,
-        sample_weight=None,
-        xp=None,
-    ):
-        constants = (
-            [-37, -2, 18, 33.3]
-            if raw_prediction.dtype == xp.float64
-            else [-17, -1, 9, 14.6]
-        )
-        log1pexp = xp.where(
-            raw_prediction <= constants[0],
-            raw_prediction_exp,
-            xp.where(
-                raw_prediction <= constants[1],
-                xp.log1p(raw_prediction_exp),
-                xp.where(
-                    raw_prediction <= constants[2],
-                    xp.log(1.0 + raw_prediction_exp),
-                    xp.where(
-                        raw_prediction <= constants[3],
-                        raw_prediction + neg_raw_prediction_exp,
-                        raw_prediction,
-                    ),
-                ),
-            ),
-        )
-        loss = log1pexp - y_true * raw_prediction
-        if sample_weight is not None:
-            loss *= sample_weight
-        return loss
-
-    def _compute_gradient_array_api(
-        self,
-        y_true,
-        raw_prediction,
-        raw_prediction_exp,
-        neg_raw_prediction_exp,
-        sample_weight=None,
-        xp=None,
-    ):
-        grad = xp.where(
-            raw_prediction > -37,
-            ((1 - y_true) - y_true * neg_raw_prediction_exp)
-            / (1 + neg_raw_prediction_exp),
-            raw_prediction_exp - y_true,
-        )
-        if sample_weight is not None:
-            grad *= sample_weight
-        return grad
-
 
 class HalfMultinomialLoss(BaseLoss):
     """Categorical cross-entropy loss, for multiclass classification.
@@ -1303,7 +1234,49 @@ _LOSSES = {
 }
 
 
-class HalfBinomialLossArrayAPI(HalfBinomialLoss):
+class ArrayAPILossMixin:
+    """Mixin for loss classes that are compatible with the array API.
+    Currently this mixin only redefines the `__call__` method such that it
+    works according to the array API specification.
+    """
+
+    def __call__(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+        n_threads=1,
+        xp=None,
+    ):
+        """Compute the weighted average loss for the array API losses.
+
+        Parameters
+        ----------
+        y_true : C-contiguous array of shape (n_samples,)
+            Observed, true target values.
+        raw_prediction : C-contiguous array of shape (n_samples,) or array of \
+            shape (n_samples, n_classes)
+            Raw prediction values (in link space).
+        sample_weight : None or C-contiguous array of shape (n_samples,)
+            Sample weights.
+        n_threads : int, default=1
+            Might use openmp thread parallelism.
+        xp : module, default=None
+            Array namespace module.
+
+        Returns
+        -------
+        loss : float
+            Mean or averaged loss function.
+        """
+        xp, _ = get_namespace(y_true, raw_prediction, sample_weight, xp=xp)
+        loss_xp = self.loss(
+            y_true=y_true, raw_prediction=raw_prediction, sample_weight=None
+        )
+        return float(_average(loss_xp, weights=sample_weight, xp=xp))
+
+
+class HalfBinomialLossArrayAPI(ArrayAPILossMixin, HalfBinomialLoss):
     """A version of the the HalfBinomialLoss that is compatible with
     the array API.
     """
@@ -1317,7 +1290,7 @@ class HalfBinomialLossArrayAPI(HalfBinomialLoss):
         n_threads=1,
     ):
         xp, _ = get_namespace(y_true, raw_prediction, sample_weight)
-        return self._compute_loss_array_api(
+        return self._compute_loss(
             xp=xp,
             y_true=y_true,
             raw_prediction=raw_prediction,
@@ -1335,7 +1308,7 @@ class HalfBinomialLossArrayAPI(HalfBinomialLoss):
         n_threads=1,
     ):
         xp, _ = get_namespace(y_true, raw_prediction, sample_weight)
-        return self._compute_gradient_array_api(
+        return self._compute_gradient(
             xp=xp,
             y_true=y_true,
             raw_prediction=raw_prediction,
@@ -1432,7 +1405,7 @@ class HalfBinomialLossArrayAPI(HalfBinomialLoss):
         return grad
 
 
-class HalfMultinomialLossArrayAPI(HalfMultinomialLoss):
+class HalfMultinomialLossArrayAPI(ArrayAPILossMixin, HalfMultinomialLoss):
     """A version of the the HalfMultinomialLoss that is compatible with
     the array API.
 
