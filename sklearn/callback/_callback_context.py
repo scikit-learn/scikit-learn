@@ -153,6 +153,7 @@ class CallbackContext:
         new_ctx.max_subtasks = None
         new_ctx.prev_estimator_name = None
         new_ctx.prev_task_name = None
+        new_ctx._has_called_on_fit_begin = False
 
         if hasattr(estimator, "_parent_callback_ctx"):
             # This context's task is the root task of the estimator which itself
@@ -200,6 +201,7 @@ class CallbackContext:
         new_ctx.max_subtasks = max_subtasks
         new_ctx.prev_estimator_name = None
         new_ctx.prev_task_name = None
+        new_ctx._has_called_on_fit_begin = parent_context._has_called_on_fit_begin
 
         # This task is a subtask of another task of a same estimator
         parent_context._add_child(new_ctx)
@@ -284,6 +286,8 @@ class CallbackContext:
             ):
                 callback.on_fit_begin(estimator)
 
+        self._has_called_on_fit_begin = True
+
         return self
 
     def eval_on_fit_task_end(self, estimator, **kwargs):
@@ -341,13 +345,18 @@ class CallbackContext:
         estimator : estimator instance
             The estimator calling this callback hook.
         """
-        for callback in self._callbacks:
-            # Only call the on_fit_end method of callbacks that are not
-            # propagated from a meta-estimator.
-            if not (
-                isinstance(callback, AutoPropagatedCallback) and self.parent is not None
-            ):
-                callback.on_fit_end(estimator, self)
+        # `eval_on_fit_end` being called in a `try finally` block, it can be called even
+        # if `fit` crashed and `eval_on_fit_begin` was not called, hence the
+        # defensive check of the `_has_called_on_fit_begin` attribute.
+        if self._has_called_on_fit_begin:
+            for callback in self._callbacks:
+                # Only call the on_fit_end method of callbacks that are not
+                # propagated from a meta-estimator.
+                if not (
+                    isinstance(callback, AutoPropagatedCallback)
+                    and self.parent is not None
+                ):
+                    callback.on_fit_end(estimator, self)
 
     def propagate_callbacks(self, sub_estimator):
         """Propagate the callbacks to a sub-estimator.
