@@ -1,6 +1,7 @@
-- The leave-one out errors and coefficients estimated in :class:`linear_model.RidgeCV`
-  are now numerically stable in the small `alpha` regime for all `gcv_mode` options.
-  The default `auto` option is now equivalent to `eigen` and picks the cheaper option:
-  eigendecomposition of the covariance (resp Gram) matrix when `n_features <=
-  n_samples` (resp `n_samples > n_features`).
+- The leave-one out errors and model parameters estimated in
+  :class:`linear_model.RidgeCV` are now numerically stable in the small `alpha`
+  regime for all `gcv_mode` options. The default `auto` option is now equivalent
+  to `eigen` and picks the cheaper option: eigendecomposition of the covariance
+  (resp Gram) matrix when `n_features <= n_samples` (resp `n_samples >
+  n_features`).
   By :user:`Antoine Baker <antoinebaker>`
