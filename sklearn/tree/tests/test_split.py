@@ -24,7 +24,6 @@ class NaiveSplitter:
     criterion: str
     with_nans: bool
     n_classes: int
-    is_categorical: np.ndarray
 
     @staticmethod
     def weighted_median(y, w):
@@ -79,15 +78,8 @@ class NaiveSplitter:
         y_pred[:] = self.predictor(y, w)
         return w.sum() * self.loss(y, y_pred, sample_weight=w)
 
-    def compute_split_loss(
-        self, x, y, w, threshold=None, categories=None, missing_left=False
-    ):
-        if categories is not None:
-            mask_c = np.zeros(int(x.max() + 1), dtype=bool)
-            mask_c[categories] = True
-            mask = mask_c[x.astype(int)]
-        else:
-            mask = x < threshold
+    def compute_split_loss(self, x, y, w, threshold=None, missing_left=False):
+        mask = x < threshold
         if missing_left:
             mask |= np.isnan(x)
         return (
@@ -95,7 +87,7 @@ class NaiveSplitter:
             self.compute_child_loss(y[~mask], w[~mask]),
         )
 
-    def compute_all_losses(self, x, y, w, is_categorical=False, missing_left=False):
+    def compute_all_losses(self, x, y, w, missing_left=False):
         nan_mask = np.isnan(x)
         xu = np.unique(x[~nan_mask], sorted=True)
         thresholds = (xu[1:] + xu[:-1]) / 2
@@ -109,9 +101,7 @@ class NaiveSplitter:
     def best_split_naive(self, X, y, w):
         splits = []
         for f in range(X.shape[1]):
-            thresholds, losses = self.compute_all_losses(
-                X[:, f], y, w, is_categorical=self.is_categorical[f]
-            )
+            thresholds, losses = self.compute_all_losses(X[:, f], y, w)
             if self.with_nans:
                 thresholds_, losses_ = self.compute_all_losses(
                     X[:, f], y, w, missing_left=True
@@ -145,7 +135,6 @@ def make_simple_dataset(
     d,
     with_nans,
     is_sparse,
-    is_categorical,
     is_clf,
     n_classes,
     rng: np.random.Generator,
@@ -191,14 +180,11 @@ def test_best_split_optimality(sparse, missing_values, criterion, global_random_
     for it, n in enumerate(ns):
         d = rng.integers(1, 4)
         n_classes = rng.integers(2, 5)
-        is_categorical = np.zeros(d, dtype=bool)
         X_dense, X, y, w = make_simple_dataset(
-            n, d, with_nans, is_sparse, is_categorical, is_clf, n_classes, rng
+            n, d, with_nans, is_sparse, is_clf, n_classes, rng
         )
 
-        naive_splitter = NaiveSplitter(
-            is_clf, criterion, with_nans, n_classes, is_categorical
-        )
+        naive_splitter = NaiveSplitter(is_clf, criterion, with_nans, n_classes)
         best_split = naive_splitter.best_split_naive(X_dense, y, w)
 
         Tree = DecisionTreeClassifier if is_clf else DecisionTreeRegressor
