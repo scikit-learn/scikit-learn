@@ -1,4 +1,4 @@
 - :func:`linear_model.enet_path` now correctly handles the ``precompute`` 
-  parameter when ``check_input=False``. Previously, this could lead to 
-  a ``ValueError`` regarding the truth value of an array.
+  parameter when ``check_input=False``. Previously, the value of
+  ``precompute`` was not properly treated which could lead to a ValueError.
   By :user:`Albert Dorador <adc-trust-ai>`
