@@ -98,21 +98,15 @@ class NaiveSplitter:
                 }
 
     def best_split_naive(self, X, y, w):
-        splits = []
         splits = list(self._generate_all_splits(X))
+        if len(splits) == 0:
+            return (np.inf, None)
+
         split_impurities = [
             sum(self.compute_split_impurity(X, y, w, **split)) for split in splits
         ]
 
         return min(zip(split_impurities, splits), key=itemgetter(0))
-
-
-def sparsify(X, density):
-    X -= 0.5
-    th_low = np.quantile(X.ravel(), q=density / 2)
-    th_up = np.quantile(X.ravel(), q=1 - density / 2)
-    X[(th_low < X) & (X < th_up)] = 0
-    return csc_array(X)
 
 
 def make_simple_dataset(
@@ -132,12 +126,15 @@ def make_simple_dataset(
     if with_duplicates:
         X_dense = X_dense.round(1 if n < 50 else 2)
     if with_nans:
-        for i in range(d):
-            step = rng.integers(2, 10)
-            X_dense[i::step, i] = np.nan
+        nan_density = rng.uniform(0.05, 0.8)
+        mask = rng.random(X_dense.shape) < nan_density
+        X_dense[mask] = np.nan
     if is_sparse:
         density = rng.uniform(0.05, 0.99)
-        X = sparsify(X_dense, density)
+        X_dense -= 0.5
+        mask = rng.random(X_dense.shape) > density
+        X_dense[mask] = 0
+        X = csc_array(X_dense)
     else:
         X = X_dense
 
@@ -156,23 +153,21 @@ def make_simple_dataset(
         *product(CLF_TREES.values(), CLF_CRITERIONS),
     ],
 )
-@pytest.mark.parametrize("sparse", ["x", "sparse"])
-@pytest.mark.parametrize("missing_values", ["x", "missing_values"])
+@pytest.mark.parametrize(
+    "sparse, missing_values", [("x", "x"), ("sparse", "x"), ("x", "missing_values")]
+)
 def test_best_split_optimality(
     Tree, criterion, sparse, missing_values, global_random_seed
 ):
     is_clf = criterion in CLF_CRITERIONS
     with_nans = missing_values != "x"
     is_sparse = sparse != "x"
-    if is_sparse and with_nans:
-        pytest.skip("Sparse + missing values not supported yet")
 
     # TODO: (remove in PR #32119)
     if with_nans and criterion == "absolute_error":
         pytest.skip("AE + missing values not supported yet")
     if with_nans and criterion == "poisson":
         pytest.xfail("Poisson criterion is buggy for now")
-
     rng = np.random.default_rng(global_random_seed)
 
     ns = [5] * 5 + [10] * 5 + [20, 30, 50, 100]
