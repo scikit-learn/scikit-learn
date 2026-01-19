@@ -55,13 +55,13 @@ from sklearn.model_selection import (
     LeavePGroupsOut,
     ShuffleSplit,
     StratifiedKFold,
+    TimeSeriesSplit,
     cross_val_predict,
     cross_val_score,
     cross_validate,
     learning_curve,
     permutation_test_score,
     validation_curve,
-    TimeSeriesSplit
 )
 from sklearn.model_selection._validation import (
     _check_is_permutation,
@@ -2748,39 +2748,38 @@ def test_cross_val_predict_array_api_compliance(
         _convert_to_numpy(pred_xp, xp), pred_np, atol=_atol_for_type(dtype_name)
     )
 
+
 def test_cross_val_predict_with_time_series_split():
     """Test cross_val_predict works with TimeSeriesSplit."""
     X = np.random.randn(100, 5)
     y = np.random.randn(100)
-    
+
     tscv = TimeSeriesSplit(n_splits=5)
     lr = LinearRegression()
 
     predictions = cross_val_predict(lr, X, y, cv=tscv)
-    
+
     expected_n_predictions = sum(len(test) for _, test in tscv.split(X))
     assert len(predictions) == expected_n_predictions
-    
+
     # Predictions will be for the later samples
     assert len(predictions) < len(X)  # Not all samples have predictions
+
 
 def test_stacking_regressor_with_time_series_split():
     """Test that StackingRegressor works with TimeSeriesSplit."""
 
     X = np.random.randn(100, 5)
     y = np.random.randn(100)
-    
-    estimators = [
-        ('lr', LinearRegression()),
-        ('ridge', Ridge())
-    ]
-    
+
+    estimators = [("lr", LinearRegression()), ("ridge", Ridge())]
+
     stacker = StackingRegressor(
         estimators=estimators,
         final_estimator=LinearRegression(),
-        cv=TimeSeriesSplit(n_splits=5)
+        cv=TimeSeriesSplit(n_splits=5),
     )
-    
+
     stacker.fit(X, y)
 
     predictions = stacker.predict(X)

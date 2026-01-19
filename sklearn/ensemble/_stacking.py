@@ -265,12 +265,12 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
                 if est != "drop"
             )
 
-            # Identify samples that have predictions. Some CV strategies like 
+            # Identify samples that have predictions. Some CV strategies like
             # TimeSeriesSplit may not include all samples in any test set.
             test_indices = np.concatenate([test for _, test in cv.split(X, y)])
             used_samples = np.sort(np.unique(test_indices))
 
-            # If some samples were never in a test set, we must filter y (and X 
+            # If some samples were never in a test set, we must filter y (and X
             # for passthrough) so they match the predictions from cross_val_predict.
             if len(used_samples) < X.shape[0]:
                 y = y[used_samples]

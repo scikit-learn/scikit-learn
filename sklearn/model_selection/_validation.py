@@ -1011,12 +1011,12 @@ def cross_val_predict(
     """Generate cross-validated estimates for each input data point.
 
     The data is split according to the cv parameter. For each sample that
-    appears in a test set, its prediction is computed with an estimator 
-    fitted on the corresponding training set. Each sample appears in at 
+    appears in a test set, its prediction is computed with an estimator
+    fitted on the corresponding training set. Each sample appears in at
     most one test set.
 
-    Note: Some cross-validation strategies like TimeSeriesSplit may not 
-    include all samples in test sets. In such cases, predictions are 
+    Note: Some cross-validation strategies like TimeSeriesSplit may not
+    include all samples in test sets. In such cases, predictions are
     returned only for samples that appear in test sets.
 
     Passing these predictions into an evaluation metric may not be a valid
@@ -1248,7 +1248,7 @@ def cross_val_predict(
         predictions = xp.concat(predictions)
 
     # Reorder predictions to match the original order of indices in X.
-    # We use np.argsort because the test set indices in CV can be arbitrary 
+    # We use np.argsort because the test set indices in CV can be arbitrary
     # and may not form a complete permutation of 0..N-1 (e.g., TimeSeriesSplit).
     sort_idx = np.argsort(test_indices)
     if isinstance(predictions, list):
@@ -1431,15 +1431,16 @@ def _check_is_permutation(indices, n_samples):
         return False
     return True
 
+
 def _check_cv_is_valid_for_predict(splits, n_samples):
-    """ Check whether CV split is valid for cross_val_predict
+    """Check whether CV split is valid for cross_val_predict
 
     A valid splitter for cross_val_predict must satisfy following conditions :
-    - Splits must not overlap with train and test 
+    - Splits must not overlap with train and test
     - Each sample appears in atmost one test set
     - At least some samples must appear in test set
 
-    This allows both partitioning splitter and non-partitioning splitters. 
+    This allows both partitioning splitter and non-partitioning splitters.
 
     Parameters
     -----------
@@ -1447,25 +1448,25 @@ def _check_cv_is_valid_for_predict(splits, n_samples):
         The train/test splits from the CV splitter
     n_samples : int
         Total number of samples
-    
+
     Returns
     -------
     is_valid : bool
         True if the CV splitter is valid for cross_val_predict
-        
+
     Examples
     --------
     >>> from sklearn.model_selection import KFold, TimeSeriesSplit
     >>> import numpy as np
     >>> X = np.random.randn(100, 5)
     >>> y = np.random.randn(100)
-    
+
     # KFold creates a partition
     >>> kf = KFold(n_splits=5)
     >>> splits = list(kf.split(X, y))
     >>> _check_cv_is_valid_for_predict(splits, len(X))
     True
-    
+
     # TimeSeriesSplit creates a valid non-partition
     >>> tscv = TimeSeriesSplit(n_splits=5)
     >>> splits = list(tscv.split(X, y))
@@ -1475,7 +1476,7 @@ def _check_cv_is_valid_for_predict(splits, n_samples):
 
     if len(splits) == 0:
         return False
-    
+
     test_indices = []
 
     for train, test in splits:
@@ -1484,19 +1485,20 @@ def _check_cv_is_valid_for_predict(splits, n_samples):
             overlap = np.intersect1d(train, test)
             if len(overlap) > 0:
                 return False
-    
+
         test_indices.extend(test)
-    
+
     # Check 2 : Each sample appears atmost one time in test sets
     test_indices = np.array(test_indices)
     if len(test_indices) != len(np.unique(test_indices)):
         return False
-    
+
     # Check 3 : At least some sample have predictions
     if len(test_indices) == 0:
         return False
-    
+
     return True
+
 
 @validate_params(
     {
