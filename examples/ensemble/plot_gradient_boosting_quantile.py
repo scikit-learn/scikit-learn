@@ -52,13 +52,13 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 # Fitting non-linear quantile and least squares regressors
 # --------------------------------------------------------
 #
-# Fit gradient boosting models trained with the quantile loss and
-# alpha=0.05, 0.5, 0.95.
+# Fit gradient boosting models trained with the quantile loss and `alpha=0.05`,
+# `alpha=0.5`, `alpha=0.95`.
 #
-# The models obtained for alpha=0.05 and alpha=0.95 produce a 90% confidence
-# interval (95% - 5% = 90%).
+# The models obtained for `alpha=0.05` and `alpha=0.95` produce a 90%
+# confidence interval (95% - 5% = 90%).
 #
-# The model trained with alpha=0.5 produces a regression of the median: on
+# The model trained with `alpha=0.5` produces a regression of the median: on
 # average, there should be the same number of target observations above and
 # below the predicted values.
 from sklearn.ensemble import GradientBoostingRegressor

@@ -18,6 +18,7 @@ from sklearn.metrics import (
     classification_report,
     cohen_kappa_score,
     confusion_matrix,
+    confusion_matrix_at_thresholds,
     coverage_error,
     d2_absolute_error_score,
     d2_brier_score,
@@ -71,6 +72,7 @@ from sklearn.metrics.pairwise import (
     manhattan_distances,
     paired_cosine_distances,
     paired_euclidean_distances,
+    paired_manhattan_distances,
     pairwise_distances,
     pairwise_kernels,
     polynomial_kernel,
@@ -148,6 +150,11 @@ REGRESSION_METRICS = {
     "mean_compound_poisson_deviance": partial(mean_tweedie_deviance, power=1.4),
     "d2_tweedie_score": partial(d2_tweedie_score, power=1.4),
     "d2_pinball_score": d2_pinball_score,
+    # The default `alpha=0.5` (median) masks differences between quantile methods,
+    # so we also test `alpha=0.1` and `alpha=0.9` to ensure correctness
+    # for non-median quantiles.
+    "d2_pinball_score_01": partial(d2_pinball_score, alpha=0.1),
+    "d2_pinball_score_09": partial(d2_pinball_score, alpha=0.9),
     "d2_absolute_error_score": d2_absolute_error_score,
 }
 
@@ -156,17 +163,13 @@ CLASSIFICATION_METRICS = {
     "balanced_accuracy_score": balanced_accuracy_score,
     "adjusted_balanced_accuracy_score": partial(balanced_accuracy_score, adjusted=True),
     "unnormalized_accuracy_score": partial(accuracy_score, normalize=False),
-    # `confusion_matrix` returns absolute values and hence behaves unnormalized
-    # . Naming it with an unnormalized_ prefix is necessary for this module to
-    # skip sample_weight scaling checks which will fail for unnormalized
-    # metrics.
-    "unnormalized_confusion_matrix": confusion_matrix,
+    "confusion_matrix": confusion_matrix,
     "normalized_confusion_matrix": lambda *args, **kwargs: (
         confusion_matrix(*args, **kwargs).astype("float")
         / confusion_matrix(*args, **kwargs).sum(axis=1)[:, np.newaxis]
     ),
-    "unnormalized_multilabel_confusion_matrix": multilabel_confusion_matrix,
-    "unnormalized_multilabel_confusion_matrix_sample": partial(
+    "multilabel_confusion_matrix": multilabel_confusion_matrix,
+    "multilabel_confusion_matrix_sample": partial(
         multilabel_confusion_matrix, samplewise=True
     ),
     "hamming_loss": hamming_loss,
@@ -240,6 +243,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
 
 
 CURVE_METRICS = {
+    "confusion_matrix_at_thresholds": confusion_matrix_at_thresholds,
     "roc_curve": roc_curve,
     "precision_recall_curve": precision_recall_curve_padded_thresholds,
     "det_curve": det_curve,
@@ -305,7 +309,7 @@ METRIC_UNDEFINED_BINARY = {
     "samples_recall_score",
     "samples_jaccard_score",
     "coverage_error",
-    "unnormalized_multilabel_confusion_matrix_sample",
+    "multilabel_confusion_matrix_sample",
     "label_ranking_loss",
     "label_ranking_average_precision_score",
     "dcg_score",
@@ -327,6 +331,7 @@ METRIC_UNDEFINED_MULTICLASS = {
     "f2_score",
     "f0.5_score",
     # curves
+    "confusion_matrix_at_thresholds",
     "roc_curve",
     "precision_recall_curve",
     "det_curve",
@@ -356,6 +361,7 @@ CONTINOUS_CLASSIFICATION_METRICS_WITH_AVERAGING = {
 
 # Metrics with a "pos_label" argument
 METRICS_WITH_POS_LABEL = {
+    "confusion_matrix_at_thresholds",
     "roc_curve",
     "precision_recall_curve",
     "det_curve",
@@ -377,7 +383,7 @@ METRICS_WITH_POS_LABEL = {
 # TODO: Handle multi_class metrics that has a labels argument as well as a
 # decision function argument. e.g hinge_loss
 METRICS_WITH_LABELS = {
-    "unnormalized_confusion_matrix",
+    "confusion_matrix",
     "normalized_confusion_matrix",
     "roc_curve",
     "precision_recall_curve",
@@ -406,8 +412,8 @@ METRICS_WITH_LABELS = {
     "macro_precision_score",
     "macro_recall_score",
     "macro_jaccard_score",
-    "unnormalized_multilabel_confusion_matrix",
-    "unnormalized_multilabel_confusion_matrix_sample",
+    "multilabel_confusion_matrix",
+    "multilabel_confusion_matrix_sample",
     "cohen_kappa_score",
     "log_loss",
     "d2_log_loss_score",
@@ -470,7 +476,7 @@ MULTILABELS_METRICS = {
     "micro_precision_score",
     "micro_recall_score",
     "micro_jaccard_score",
-    "unnormalized_multilabel_confusion_matrix",
+    "multilabel_confusion_matrix",
     "samples_f0.5_score",
     "samples_f1_score",
     "samples_f2_score",
@@ -492,6 +498,8 @@ MULTIOUTPUT_METRICS = {
     "mean_absolute_percentage_error",
     "mean_pinball_loss",
     "d2_pinball_score",
+    "d2_pinball_score_01",
+    "d2_pinball_score_09",
     "d2_absolute_error_score",
 }
 
@@ -538,8 +546,9 @@ NOT_SYMMETRIC_METRICS = {
     "adjusted_balanced_accuracy_score",
     "explained_variance_score",
     "r2_score",
-    "unnormalized_confusion_matrix",
+    "confusion_matrix",
     "normalized_confusion_matrix",
+    "confusion_matrix_at_thresholds",
     "roc_curve",
     "precision_recall_curve",
     "det_curve",
@@ -552,7 +561,7 @@ NOT_SYMMETRIC_METRICS = {
     "weighted_f2_score",
     "weighted_precision_score",
     "weighted_jaccard_score",
-    "unnormalized_multilabel_confusion_matrix",
+    "multilabel_confusion_matrix",
     "macro_f0.5_score",
     "macro_f2_score",
     "macro_precision_score",
@@ -563,6 +572,8 @@ NOT_SYMMETRIC_METRICS = {
     "mean_compound_poisson_deviance",
     "d2_tweedie_score",
     "d2_pinball_score",
+    "d2_pinball_score_01",
+    "d2_pinball_score_09",
     "d2_absolute_error_score",
     "mean_absolute_percentage_error",
 }
@@ -573,6 +584,19 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = {
     "max_error",
     "ovo_roc_auc",
     "weighted_ovo_roc_auc",
+}
+
+WEIGHT_SCALE_DEPENDENT_METRICS = {
+    # 'confusion_matrix' metrics returns absolute `tps`, `fps` etc values, which
+    # are scaled by weights, so will vary e.g., scaling by 3 will result in 3 * `tps`
+    "confusion_matrix",
+    "confusion_matrix_at_thresholds",
+    "multilabel_confusion_matrix",
+    "multilabel_confusion_matrix_sample",
+    # Metrics where we set `normalize=False`
+    "unnormalized_accuracy_score",
+    "unnormalized_zero_one_loss",
+    "unnormalized_log_loss",
 }
 
 METRICS_REQUIRE_POSITIVE_Y = {
@@ -1612,12 +1636,15 @@ def check_sample_weight_invariance(name, metric, y1, y2, sample_weight=None):
         % (weighted_score_zeroed, weighted_score_subset, name),
     )
 
-    if not name.startswith("unnormalized"):
-        # check that the score is invariant under scaling of the weights by a
-        # common factor
-        # Due to numerical instability of floating points in `cumulative_sum` in
-        # `median_absolute_error`, it is not always equivalent when scaling by a float.
-        scaling_values = [2] if name == "median_absolute_error" else [2, 0.3]
+    # Check the score is invariant under scaling of weights by a constant factor
+    if name not in WEIGHT_SCALE_DEPENDENT_METRICS:
+        # Numerical instability of floating points in `cumulative_sum` in
+        # `median_absolute_error`, and in `diff` when in calculating collinear points
+        # and points in between to drop `roc_curve` means they are not always
+        # equivalent when scaling by a float.
+        scaling_values = (
+            [2] if name in {"median_absolute_error", "roc_curve"} else [2, 0.3]
+        )
         for scaling in scaling_values:
             assert_allclose(
                 weighted_score,
@@ -1715,7 +1742,7 @@ def test_binary_sample_weight_invariance(name):
     y_pred = random_state.randint(0, 2, size=(n_samples,))
     y_score = random_state.random_sample(size=(n_samples,))
     metric = ALL_METRICS[name]
-    if name in CONTINUOUS_CLASSIFICATION_METRICS:
+    if name in (CONTINUOUS_CLASSIFICATION_METRICS | CURVE_METRICS.keys()):
         check_sample_weight_invariance(name, metric, y_true, y_score)
     else:
         check_sample_weight_invariance(name, metric, y_true, y_pred)
@@ -1816,7 +1843,7 @@ def test_no_averaging_labels():
 
 
 @pytest.mark.parametrize(
-    "name", sorted(MULTILABELS_METRICS - {"unnormalized_multilabel_confusion_matrix"})
+    "name", sorted(MULTILABELS_METRICS - {"multilabel_confusion_matrix"})
 )
 def test_multilabel_label_permutations_invariance(name):
     random_state = check_random_state(0)
@@ -1940,8 +1967,8 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
         "specified: either make y_true take value in {0, 1} or {-1, 1} or "
         "pass pos_label explicit"
     )
-    err_msg_pos_label_1 = (
-        r"pos_label=1 is not a valid label. It should be one of \['eggs', 'spam'\]"
+    err_msg_pos_label_1 = re.escape(
+        "pos_label=1 is not a valid label. It should be one of ['eggs' 'spam']"
     )
 
     pos_label_default = signature(metric).parameters["pos_label"].default
@@ -2358,6 +2385,22 @@ array_api_metric_checkers = {
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
     ],
+    d2_absolute_error_score: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    d2_pinball_score: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    partial(d2_pinball_score, alpha=0.1): [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    partial(d2_pinball_score, alpha=0.9): [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
     d2_tweedie_score: [
         check_array_api_regression_metric,
     ],
@@ -2372,6 +2415,7 @@ array_api_metric_checkers = {
     ],
     chi2_kernel: [check_array_api_metric_pairwise],
     paired_euclidean_distances: [check_array_api_metric_pairwise],
+    paired_manhattan_distances: [check_array_api_metric_pairwise],
     cosine_distances: [check_array_api_metric_pairwise],
     euclidean_distances: [check_array_api_metric_pairwise],
     manhattan_distances: [check_array_api_metric_pairwise],
