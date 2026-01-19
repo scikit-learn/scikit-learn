@@ -8,8 +8,9 @@ Linear Models
 
 The following are a set of methods intended for regression in which
 the target value is expected to be a linear combination of the features.
-In mathematical notation, if :math:`\hat{y}` is the predicted
-value.
+In mathematical notation, the predicted value :math:`\hat{y}` can be
+written as:
+
 
 .. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + ... + w_p x_p
 
