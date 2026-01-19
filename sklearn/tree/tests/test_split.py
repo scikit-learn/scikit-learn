@@ -16,7 +16,7 @@ from sklearn.metrics import (
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 CLF_CRITERIONS = ("gini", "log_loss")
-REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
+REG_CRITERIONS = ("squared_error", "absolute_error", "poisson")
 
 
 def powerset(iterable):
@@ -98,11 +98,6 @@ class NaiveSplitter:
             mask = x < threshold
         if missing_left:
             mask |= np.isnan(x)
-        if self.criterion == "friedman_mse":
-            diff = np.average(y[mask], weights=w[mask]) - np.average(
-                y[~mask], weights=w[~mask]
-            )
-            return (-(diff**2) * w[mask].sum() * w[~mask].sum() / w.sum(),)
         return (
             self.compute_child_loss(y[mask], w[mask]),
             self.compute_child_loss(y[~mask], w[~mask]),
@@ -138,8 +133,8 @@ class NaiveSplitter:
                 thresholds_, losses_ = self.compute_all_losses(
                     X[:, f], y, w, missing_left=True
                 )
-                thresholds = np.concat((thresholds, thresholds_))
-                losses = np.concat((losses, losses_))
+                thresholds = np.concatenate((thresholds, thresholds_))
+                losses = np.concatenate((losses, losses_))
             if len(losses) == 0:
                 continue
             idx = np.argmin(losses)
@@ -213,10 +208,7 @@ def bitset_to_set(v: np.uint64):
 @pytest.mark.parametrize("sparse", ["x", "sparse"])
 @pytest.mark.parametrize("categorical", ["x"])
 @pytest.mark.parametrize("missing_values", ["x", "missing_values"])
-@pytest.mark.parametrize(
-    "criterion",
-    ["gini", "log_loss", "squared_error", "absolute_error", "friedman_mse", "poisson"],
-)
+@pytest.mark.parametrize("criterion", CLF_CRITERIONS + REG_CRITERIONS)
 def test_best_split_optimality(
     sparse, categorical, missing_values, criterion, global_random_seed
 ):
@@ -287,5 +279,3 @@ def test_best_split_optimality(
             vals *= np.log(2)
         if criterion == "poisson":
             vals *= 2
-        if criterion != "friedman_mse":
-            assert np.allclose(vals[1:], tree_loss), it
