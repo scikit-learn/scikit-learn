@@ -23,10 +23,11 @@ from sklearn.datasets import (
     make_regression,
 )
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, StackingRegressor
 from sklearn.exceptions import FitFailedWarning, UnsetMetadataPassedError
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import (
+    LinearRegression,
     LogisticRegression,
     Ridge,
     RidgeClassifier,
@@ -60,6 +61,7 @@ from sklearn.model_selection import (
     learning_curve,
     permutation_test_score,
     validation_curve,
+    TimeSeriesSplit
 )
 from sklearn.model_selection._validation import (
     _check_is_permutation,
@@ -2745,3 +2747,41 @@ def test_cross_val_predict_array_api_compliance(
     assert_allclose(
         _convert_to_numpy(pred_xp, xp), pred_np, atol=_atol_for_type(dtype_name)
     )
+
+def test_cross_val_predict_with_time_series_split():
+    """Test cross_val_predict works with TimeSeriesSplit."""
+    X = np.random.randn(100, 5)
+    y = np.random.randn(100)
+    
+    tscv = TimeSeriesSplit(n_splits=5)
+    lr = LinearRegression()
+
+    predictions = cross_val_predict(lr, X, y, cv=tscv)
+    
+    expected_n_predictions = sum(len(test) for _, test in tscv.split(X))
+    assert len(predictions) == expected_n_predictions
+    
+    # Predictions will be for the later samples
+    assert len(predictions) < len(X)  # Not all samples have predictions
+
+def test_stacking_regressor_with_time_series_split():
+    """Test that StackingRegressor works with TimeSeriesSplit."""
+
+    X = np.random.randn(100, 5)
+    y = np.random.randn(100)
+    
+    estimators = [
+        ('lr', LinearRegression()),
+        ('ridge', Ridge())
+    ]
+    
+    stacker = StackingRegressor(
+        estimators=estimators,
+        final_estimator=LinearRegression(),
+        cv=TimeSeriesSplit(n_splits=5)
+    )
+    
+    stacker.fit(X, y)
+
+    predictions = stacker.predict(X)
+    assert predictions.shape == (len(X),)

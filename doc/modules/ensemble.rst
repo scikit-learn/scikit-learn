@@ -1633,6 +1633,40 @@ computationally expensive.
     ...       .format(multi_layer_regressor.score(X_test, y_test)))
     R2 score: 0.53
 
+.. note:: 
+  For time series data, use :class:`~sklearn.model_selection.TimeSeriesSplit`
+  to ensure predictions respect temporal ordering and avoid data leakage. This
+  is critical for time-ordered data where future information must not be used
+  to predict the past::
+
+    >>> from sklearn.linear_model import LinearRegression, Ridge
+    >>> from sklearn.ensemble import StackingRegressor
+    >>> from sklearn.model_selection import TimeSeriesSplit
+    >>> import numpy as np
+    >>> 
+    >>> # Generate time series data
+    >>> n_samples = 200
+    >>> X_ts = np.random.randn(n_samples, 5)
+    >>> y_ts = np.random.randn(n_samples)
+    >>> 
+    >>> # Use TimeSeriesSplit for temporal cross-validation
+    >>> tscv = TimeSeriesSplit(n_splits=5)
+    >>> stacker = StackingRegressor(
+    ...     estimators=[('lr', LinearRegression()), ('ridge', Ridge())],
+    ...     final_estimator=LinearRegression(),
+    ...     cv=tscv
+    ... )
+    >>> stacker.fit(X_ts, y_ts)
+    StackingRegressor(...)
+    >>> 
+    >>> # Predictions maintain temporal validity
+    >>> y_pred = stacker.predict(X_ts[-50:])
+
+  When using :class:`~sklearn.model_selection.TimeSeriesSplit`, only samples
+  that appear in test folds will be used to train the final estimator. This
+  ensures no future data leaks into past predictions while still leveraging
+  the full dataset for training base estimators.
+
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_ensemble_plot_stack_predictors.py`
