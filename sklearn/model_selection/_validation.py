@@ -1437,7 +1437,7 @@ def _check_cv_is_valid_for_predict(splits, n_samples):
 
     A valid splitter for cross_val_predict must satisfy following conditions :
     - Splits must not overlap with train and test
-    - Each sample appears in atmost one test set
+    - Each sample appears in at most one test set
     - At least some samples must appear in test set
 
     This allows both partitioning splitter and non-partitioning splitters.
@@ -1488,7 +1488,7 @@ def _check_cv_is_valid_for_predict(splits, n_samples):
 
         test_indices.extend(test)
 
-    # Check 2 : Each sample appears atmost one time in test sets
+    # Check 2 : Each sample appears at most one time in test sets
     test_indices = np.array(test_indices)
     if len(test_indices) != len(np.unique(test_indices)):
         return False
