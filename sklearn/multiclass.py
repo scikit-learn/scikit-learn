@@ -1252,7 +1252,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """
         check_is_fitted(self)
         # ArgKmin only accepts C-contiguous array. The aggregated predictions need to be
-        # transposed. We therefore create a F-contiguous array to avoid a copy and have
+        # transposed. We therefore create an F-contiguous array to avoid a copy and have
         # a C-contiguous array after the transpose operation.
         Y = np.array(
             [_predict_binary(e, X) for e in self.estimators_],
