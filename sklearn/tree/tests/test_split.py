@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from functools import cached_property
-from itertools import chain, combinations
 from operator import itemgetter
 
 import numpy as np
@@ -17,13 +16,6 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 CLF_CRITERIONS = ("gini", "log_loss")
 REG_CRITERIONS = ("squared_error", "absolute_error", "poisson")
-
-
-def powerset(iterable):
-    s = list(iterable)  # allows handling sets too
-    return chain.from_iterable(
-        (list(c) for c in combinations(s, r)) for r in range(1, (len(s) + 1) // 2 + 1)
-    )
 
 
 @dataclass
@@ -104,8 +96,6 @@ class NaiveSplitter:
         )
 
     def compute_all_losses(self, x, y, w, is_categorical=False, missing_left=False):
-        if is_categorical:
-            return self.compute_all_losses_categorical(x, y, w)
         nan_mask = np.isnan(x)
         xu = np.unique(x[~nan_mask], sorted=True)
         thresholds = (xu[1:] + xu[:-1]) / 2
@@ -114,13 +104,6 @@ class NaiveSplitter:
         return thresholds, [
             sum(self.compute_split_loss(x, y, w, threshold, missing_left=missing_left))
             for threshold in thresholds
-        ]
-
-    def compute_all_losses_categorical(self, x, y, w):
-        cat_splits = list(powerset(np.unique(x).astype(int)))
-        return cat_splits, [
-            sum(self.compute_split_loss(x, y, w, categories=left_cat))
-            for left_cat in cat_splits
         ]
 
     def best_split_naive(self, X, y, w):
@@ -157,13 +140,6 @@ def sparsify(X, density):
     return csc_array(X)
 
 
-def to_categorical(x, nc, rng: np.random.Generator):
-    q = np.linspace(0, 1, num=nc + 1)[1:-1]
-    quantiles = np.quantile(x, q)
-    cats = np.searchsorted(quantiles, x)
-    return rng.permutation(nc)[cats]
-
-
 def make_simple_dataset(
     n,
     d,
@@ -178,9 +154,6 @@ def make_simple_dataset(
     y = rng.random(n) + X_dense.sum(axis=1)
     w = rng.random(n)
 
-    for idx in np.where(is_categorical)[0]:
-        nc = rng.integers(2, 6)  # cant go to high or test will be too slow
-        X_dense[:, idx] = to_categorical(X_dense[:, idx], nc, rng)
     with_duplicates = rng.integers(2) == 0
     if with_duplicates:
         X_dense = X_dense.round(1 if n < 50 else 2)
@@ -201,39 +174,24 @@ def make_simple_dataset(
     return X_dense, X, y, w
 
 
-def bitset_to_set(v: np.uint64):
-    return [c for c in range(64) if v & (1 << c)]
-
-
 @pytest.mark.parametrize("sparse", ["x", "sparse"])
-@pytest.mark.parametrize("categorical", ["x"])
 @pytest.mark.parametrize("missing_values", ["x", "missing_values"])
 @pytest.mark.parametrize("criterion", CLF_CRITERIONS + REG_CRITERIONS)
-def test_best_split_optimality(
-    sparse, categorical, missing_values, criterion, global_random_seed
-):
+def test_best_split_optimality(sparse, missing_values, criterion, global_random_seed):
     is_clf = criterion in CLF_CRITERIONS
     with_nans = missing_values != "x"
     is_sparse = sparse != "x"
-    with_categoricals = categorical != "x"
     if is_sparse and with_nans:
         pytest.skip("Sparse + missing values not supported yet")
-    if with_categoricals and (is_sparse or criterion == "absolute_error" or with_nans):
-        pytest.skip("Categorical features not supported in this case")
 
     rng = np.random.default_rng(global_random_seed)
 
-    ns = [5] * 5 + [10] * 5 + [30, 30]
-    if not with_categoricals:  # and criterion != "log_loss":
-        ns.extend([30, 30, 30, 100, 100, 200])
+    ns = [5] * 5 + [10] * 5 + [30, 30, 30, 30, 100, 100, 200]
 
     for it, n in enumerate(ns):
         d = rng.integers(1, 4)
-        n_classes = 2 if with_categoricals else rng.integers(2, 5)
-        if with_categoricals:
-            is_categorical = rng.random(d) < 0.5
-        else:
-            is_categorical = np.zeros(d, dtype=bool)
+        n_classes = rng.integers(2, 5)
+        is_categorical = np.zeros(d, dtype=bool)
         X_dense, X, y, w = make_simple_dataset(
             n, d, with_nans, is_sparse, is_categorical, is_clf, n_classes, rng
         )
@@ -243,7 +201,6 @@ def test_best_split_optimality(
         )
         best_split = naive_splitter.best_split_naive(X_dense, y, w)
 
-        is_categorical = is_categorical if is_categorical.any() else None
         Tree = DecisionTreeClassifier if is_clf else DecisionTreeRegressor
         tree = Tree(
             criterion=criterion,
@@ -254,11 +211,7 @@ def test_best_split_optimality(
         tree.fit(X, y, sample_weight=w)
 
         split_feature = tree.tree_.feature[0]
-        split = (
-            {"threshold": tree.tree_.threshold[0]}
-            if is_categorical is None or not is_categorical[split_feature]
-            else {"categories": bitset_to_set(tree.tree_.categorical_bitset[0])}
-        )
+        split = {"threshold": tree.tree_.threshold[0]}
         tree_loss = naive_splitter.compute_split_loss(
             X_dense[:, tree.tree_.feature[0]],
             y,
