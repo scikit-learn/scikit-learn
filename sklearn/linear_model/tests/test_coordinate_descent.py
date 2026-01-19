@@ -1882,7 +1882,6 @@ def test_enet_path_check_input_false():
     X, y = make_regression(n_samples=100, n_features=5, n_informative=2, random_state=0)
     X = np.asfortranarray(X)
 
-    # All of these used to raise ValueError, now they should run smoothly
     # Case 1: Testing "auto"
     alphas, _, _ = enet_path(X, y, n_alphas=3, check_input=False)
     assert len(alphas) == 3
