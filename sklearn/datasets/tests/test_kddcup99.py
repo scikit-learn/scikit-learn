@@ -8,8 +8,11 @@ is too big to use in unit-testing.
 
 from functools import partial
 
+import joblib
+import numpy as np
 import pytest
 
+from sklearn.datasets import fetch_kddcup99
 from sklearn.datasets.tests.test_common import (
     check_as_frame,
     check_pandas_dependency_message,
@@ -87,3 +90,19 @@ def test_corrupted_file_error_message(fetch_kddcup99_fxt, tmp_path):
 
     with pytest.raises(OSError, match=msg):
         fetch_kddcup99_fxt(data_home=str(tmp_path))
+
+
+def test_fetch_kddcup99_compressed_cache(tmp_path):
+    kddcup99_dir = tmp_path / "kddcup99_10-py3"
+    kddcup99_dir.mkdir()
+    samples_path = kddcup99_dir / "samples"
+    targets_path = kddcup99_dir / "targets"
+
+    X = np.arange(82).reshape(2, 41)
+    y = np.array([b"normal.", b"smurf."])
+    joblib.dump(X, samples_path, compress=3)
+    joblib.dump(y, targets_path, compress=3)
+
+    data = fetch_kddcup99(data_home=str(tmp_path), download_if_missing=False)
+    assert np.array_equal(data.data, X)
+    assert np.array_equal(data.target, y)
