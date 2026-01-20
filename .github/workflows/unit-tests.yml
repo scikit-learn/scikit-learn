@@ -175,13 +175,6 @@ jobs:
             COVERAGE: false
             SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 1  # non-default seed
 
-          - name: Linux docker_debian_32bit
-            os: ubuntu-24.04
-            DOCKER_CONTAINER: i386/debian:trixie
-            DISTRIB: debian-32
-            LOCK_FILE: build_tools/azure/debian_32bit_lock.txt
-            SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 4  # non-default seed
-
           - name: macOS pylatest_conda_forge_arm
             os: macos-15
             DISTRIB: conda
@@ -288,3 +281,87 @@ jobs:
             --junit-file $TEST_DIR/$JUNITXML \
             --auto-close false \
             --job-name "${{ matrix.name }}"
+
+  Linux-docker_debian_32bit:
+    name: Linux docker_debian_32bit
+    runs-on: ubuntu-24.04
+    needs: [lint, retrieve-commit-message, retrieve-selected-tests]
+    container:
+      image: i386/debian:trixie
+      env:
+        DISTRIB: debian-32
+        LOCK_FILE: build_tools/azure/debian_32bit_lock.txt
+        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 4  # non-default seed
+          
+    env:
+      DISTRIB: debian-32
+      LOCK_FILE: build_tools/azure/debian_32bit_lock.txt
+      SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 4  # non-default seed
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Create cache for ccache
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-v1-linux-debian32-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp', format('{0}', env.LOCK_FILE)) }}
+          restore-keys: ccache-linux-debian32
+
+      - name: Set up conda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          auto-activate-base: true
+          activate-environment: ""
+
+      - name: Build scikit-learn
+        run: bash -l build_tools/azure/install.sh
+
+      - name: Set random seed for nightly/manual runs
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: echo "SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$((RANDOM % 100))" >> $GITHUB_ENV
+
+      - name: Run tests
+        env:
+          COMMIT_MESSAGE: ${{ needs.retrieve-commit-message.outputs.message }}
+          SELECTED_TESTS: ${{ needs.retrieve-selected-tests.outputs.tests }}
+          COVERAGE: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
+        run: bash -l build_tools/azure/test_script.sh
+
+      - name: Run doctests in .py and .rst files
+        run: bash -l build_tools/azure/test_docs.sh
+        if: ${{ needs.retrieve-selected-tests.outputs.tests == ''}}
+
+      - name: Run pytest soft dependency test
+        run: bash -l build_tools/azure/test_pytest_soft_dependency.sh
+        if: ${{ env.CHECK_PYTEST_SOFT_DEPENDENCY == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
+
+      - name: Combine coverage reports from parallel test runners
+        run: bash -l build_tools/azure/combine_coverage_reports.sh
+        if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
+
+      - name: Upload coverage report to Codecov
+        uses: codecov/codecov-action@v5
+        if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
+        with:
+          files: ./coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          disable_search: true
+
+      - name: Update tracking issue
+        if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
+        run: |
+          set -ex
+
+          pip install defusedxml PyGithub
+          python maint_tools/update_tracking_issue.py \
+            ${{ secrets.BOT_GITHUB_TOKEN }} \
+            "$GITHUB_WORKFLOW linux-debian32" \
+            "$GITHUB_REPOSITORY" \
+            https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID \
+            --junit-file $TEST_DIR/$JUNITXML \
+            --auto-close false \
+            --job-name "linux-debian32"
+
