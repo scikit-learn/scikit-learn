@@ -30,6 +30,7 @@ class ProgressBar:
         self.progress_monitor.start()
 
     def on_fit_task_end(self, estimator, context, **kwargs):
+        print(f"{context.estimator_name}, {context.task_name}, {context.task_id}")
         self._queue.put(context)
 
     def on_fit_end(self, estimator, context):
