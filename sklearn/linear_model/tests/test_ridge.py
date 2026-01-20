@@ -973,6 +973,8 @@ def test_ridge_gcv_sample_weights(
     assert_allclose(gcv_ridge.intercept_, kfold.intercept_, rtol=1e-3)
 
 
+# TODO(1.11) remove filter
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize("X_shape", [(5, 2), (5, 5), (2, 5)])
 @pytest.mark.parametrize("gcv_mode", ["auto", "svd", "eigen"])

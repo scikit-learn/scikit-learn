@@ -1619,8 +1619,18 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
 def _check_gcv_mode(X, gcv_mode):
     # svd only implemented for dense X
-    if gcv_mode == "svd" and not sparse.issparse(X):
-        return "svd"
+    if gcv_mode == "svd":
+        if sparse.issparse(X):
+            # TODO(1.11) raise ValueError
+            msg = (
+                "The `svd` mode is not supported for sparse X, we fallback to "
+                "`gcv_mode=eigen`. Passing `gcv_mode=svd` on sparse X will raise an "
+                "error in 1.11, use the default or pass `gcv_mode=eigen` to suppress "
+                "this warning."
+            )
+            warnings.warn(msg, FutureWarning)
+        else:
+            return "svd"
 
     # All other cases ("auto", "eigen", "svd" with sparse X)
     # fallbacks to gram (n <= p) or cov (p < n)
