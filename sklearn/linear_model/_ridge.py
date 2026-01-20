@@ -43,7 +43,6 @@ from sklearn.utils import (
 )
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
-    _max_precision_float_dtype,
     _ravel,
     device,
     get_namespace,
@@ -2172,17 +2171,12 @@ class _RidgeGCV(LinearModel):
             # the attributes will be stored in the dtype chosen by
             # `validate_data``, i.e. np.float64
             original_dtype = None
-        # Using float32 can be numerically unstable for this estimator. So if
-        # the array API namespace and device allow, convert the input values
-        # to float64 whenever possible before converting the results back to
-        # float32.
-        dtype = _max_precision_float_dtype(xp, device=device_)
         X, y = validate_data(
             self,
             X,
             y,
             accept_sparse=["csr", "csc", "coo"],
-            dtype=dtype,
+            dtype=original_dtype,
             multi_output=True,
             y_numeric=True,
         )
@@ -2315,10 +2309,6 @@ class _RidgeGCV(LinearModel):
                 cv_results_shape = n_samples, n_y, n_alphas
             self.cv_results_ = xp.reshape(self.cv_results_, shape=cv_results_shape)
 
-        if original_dtype is not None:
-            if type(self.intercept_) is not float:
-                self.intercept_ = xp.astype(self.intercept_, original_dtype, copy=False)
-            self.coef_ = xp.astype(self.coef_, original_dtype, copy=False)
         return self
 
     def _score_without_scorer(self, squared_errors):

@@ -46,7 +46,6 @@ from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
-    _max_precision_float_dtype,
     yield_namespace_device_dtype_combinations,
     yield_namespaces,
 )
@@ -1381,7 +1380,8 @@ def check_array_api_attributes(
     [
         Ridge(solver="svd"),
         RidgeClassifier(solver="svd"),
-        RidgeCV(),
+        RidgeCV(gcv_mode="svd"),
+        RidgeCV(gcv_mode="eigen"),
         RidgeClassifierCV(),
     ],
     ids=_get_check_estimator_ids,
@@ -1390,20 +1390,8 @@ def test_ridge_array_api_compliance(
     estimator, check, array_namespace, device, dtype_name
 ):
     name = estimator.__class__.__name__
-    tols = {}
     xp = _array_api_for_tests(array_namespace, device)
-    if (
-        "CV" in name
-        and check is check_array_api_attributes
-        and _max_precision_float_dtype(xp, device) == xp.float32
-    ):
-        # RidgeGCV is not very numerically stable with float32. It casts the
-        # input to float64 unless the device and namespace combination does
-        # not allow float64 (specifically torch with mps)
-        tols["rtol"] = 1e-3
-    check(
-        name, estimator, array_namespace, device=device, dtype_name=dtype_name, **tols
-    )
+    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
 
 
 @pytest.mark.parametrize(
