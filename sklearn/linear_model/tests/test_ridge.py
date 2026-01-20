@@ -810,6 +810,8 @@ def test_solver_consistency(
 def test_ridge_gcv_vs_ridge_loo_cv(
     gcv_mode, X_container, X_shape, y_shape, fit_intercept, noise
 ):
+    if gcv_mode == "svd" and (X_container in CSR_CONTAINERS):
+        pytest.skip("`svd` mode not supported for sparse X.")
     n_samples, n_features = X_shape
     n_targets = y_shape[-1] if len(y_shape) == 2 else 1
     X, y = _make_sparse_offset_regression(
@@ -852,6 +854,7 @@ def test_ridge_gcv_vs_ridge_loo_cv(
 @pytest.mark.parametrize("X_shape", [(100, 50), (50, 50), (50, 100)])
 @pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
 def test_ridge_gcv_noiseless(alpha, gcv_mode, fit_intercept, X_shape, X_container):
+    sparse_X = X_container in CSR_CONTAINERS
     # Ridge should recover LinearRegression in the noiseless case and
     # near-zero alpha.
     alphas = [alpha]
@@ -863,7 +866,13 @@ def test_ridge_gcv_noiseless(alpha, gcv_mode, fit_intercept, X_shape, X_containe
     lin_reg.fit(X, y)
     X = X_container(X)
     gcv_ridge = RidgeCV(alphas=alphas, gcv_mode=gcv_mode, fit_intercept=fit_intercept)
-    gcv_ridge.fit(X, y)
+    if gcv_mode == "svd" and sparse_X:
+        # TODO(1.11) should raises ValueError
+        expected_msg = "The `svd` mode is not supported for sparse X"
+        with pytest.warns(FutureWarning, match=expected_msg):
+            gcv_ridge.fit(X, y)
+    else:
+        gcv_ridge.fit(X, y)
     assert_allclose(gcv_ridge.coef_, lin_reg.coef_, atol=1e-10)
     assert_allclose(gcv_ridge.intercept_, lin_reg.intercept_, atol=1e-10)
 
@@ -915,6 +924,8 @@ def test_ridge_loo_cv_asym_scoring():
 def test_ridge_gcv_sample_weights(
     gcv_mode, X_container, fit_intercept, n_features, y_shape, noise
 ):
+    if gcv_mode == "svd" and (X_container in CSR_CONTAINERS):
+        pytest.skip("`svd` mode not supported for sparse X.")
     alphas = [1e-3, 0.1, 1.0, 10.0, 1e3]
     rng = np.random.RandomState(0)
     n_targets = y_shape[-1] if len(y_shape) == 2 else 1
@@ -974,8 +985,6 @@ def test_ridge_gcv_sample_weights(
     assert_allclose(gcv_ridge.intercept_, kfold.intercept_, rtol=1e-3)
 
 
-# TODO(1.11) remove filter
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize("X_shape", [(5, 2), (5, 5), (2, 5)])
 @pytest.mark.parametrize("gcv_mode", ["auto", "svd", "eigen"])
@@ -985,11 +994,17 @@ def test_check_gcv_mode_choice(sparse_container, X_shape, gcv_mode):
     sparse_X = sparse_container is not None
     if sparse_X:
         X = sparse_container(X)
+    eigen_mode = "gram" if n <= p else "cov"
 
     if gcv_mode == "svd" and not sparse_X:
         assert _check_gcv_mode(X, gcv_mode) == "svd"
+    elif gcv_mode == "svd" and sparse_X:
+        # TODO(1.11) should raises ValueError
+        expected_msg = "The `svd` mode is not supported for sparse X"
+        with pytest.warns(FutureWarning, match=expected_msg):
+            actual_gcv_mode = _check_gcv_mode(X, gcv_mode)
+        assert actual_gcv_mode == eigen_mode
     else:
-        eigen_mode = "gram" if n <= p else "cov"
         assert _check_gcv_mode(X, gcv_mode) == eigen_mode
 
 
