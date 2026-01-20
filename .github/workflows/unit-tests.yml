@@ -320,16 +320,13 @@ jobs:
         run: >
           docker container run --rm
           --volume $TEST_DIR:/temp_dir
-          --volume $BUILD_REPOSITORY_LOCALPATH:/repo_localpath
           --volume $PWD:/scikit-learn
           --volume $CCACHE_DIR:/ccache
           -w /scikit-learn
           --detach
           --name skcontainer
-          -e BUILD_SOURCESDIRECTORY=/scikit-learn
           -e TEST_DIR=/temp_dir
           -e CCACHE_DIR=/ccache
-          -e BUILD_REPOSITORY_LOCALPATH=/repo_localpath
           -e COVERAGE
           -e DISTRIB
           -e LOCK_FILE
@@ -339,8 +336,6 @@ jobs:
           -e SKLEARN_SKIP_NETWORK_TESTS
           -e SELECTED_TESTS
           -e CCACHE_COMPRESS
-          -e BUILD_SOURCEVERSIONMESSAGE
-          -e BUILD_REASON
           $DOCKER_CONTAINER
           sleep 1000000
 
