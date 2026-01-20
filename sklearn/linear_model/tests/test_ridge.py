@@ -2331,10 +2331,13 @@ def test_ridge_sample_weight_consistency(
         assert_allclose(reg1.intercept_, reg2.intercept_)
 
 
+@pytest.mark.parametrize("X_shape", [(50, 10), (10, 50)])
 @pytest.mark.parametrize("with_sample_weight", [False, True])
 @pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("n_targets", [1, 2])
-def test_ridge_cv_results_predictions(with_sample_weight, fit_intercept, n_targets):
+def test_ridge_cv_results_predictions(
+    X_shape, with_sample_weight, fit_intercept, n_targets
+):
     """Check that the predictions stored in `cv_results_` are on the original scale.
 
     The GCV approach works on scaled data: centered by an offset and scaled by the
@@ -2348,6 +2351,7 @@ def test_ridge_cv_results_predictions(with_sample_weight, fit_intercept, n_targe
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/13998
     """
+    n_samples, n_features = X_shape
     X, y = make_regression(
         n_samples=100, n_features=10, n_targets=n_targets, random_state=0
     )
@@ -2377,15 +2381,22 @@ def test_ridge_cv_results_predictions(with_sample_weight, fit_intercept, n_targe
     assert_allclose(ridge_cv.cv_results_, predictions)
 
 
-def test_ridge_cv_multioutput_sample_weight(global_random_seed):
+@pytest.mark.parametrize("X_shape", [(50, 10), (10, 50)])
+def test_ridge_cv_multioutput_sample_weight(X_shape, global_random_seed):
     """Check that `RidgeCV` works properly with multioutput and sample_weight
     when `scoring != None`.
 
     We check the error reported by the RidgeCV is close to a naive LOO-CV using a
     Ridge estimator.
     """
-    X, y = make_regression(n_targets=2, random_state=global_random_seed)
-    sample_weight = np.ones(shape=(X.shape[0],))
+    n_samples, n_features = X_shape
+    X, y = make_regression(
+        n_samples=n_samples,
+        n_features=n_features,
+        n_targets=2,
+        random_state=global_random_seed,
+    )
+    sample_weight = np.ones(n_samples)
 
     ridge_cv = RidgeCV(scoring="neg_mean_squared_error", store_cv_results=True)
     ridge_cv.fit(X, y, sample_weight=sample_weight)
@@ -2403,9 +2414,13 @@ def test_ridge_cv_multioutput_sample_weight(global_random_seed):
     assert_allclose(ridge_cv.best_score_, -mean_squared_error(y, y_pred_loo))
 
 
-def test_ridge_cv_custom_multioutput_scorer():
+@pytest.mark.parametrize("X_shape", [(50, 10), (10, 50)])
+def test_ridge_cv_custom_multioutput_scorer(X_shape):
     """Check that `RidgeCV` works properly with a custom multioutput scorer."""
-    X, y = make_regression(n_targets=2, random_state=0)
+    n_samples, n_features = X_shape
+    X, y = make_regression(
+        n_samples=n_samples, n_features=n_features, n_targets=2, random_state=0
+    )
 
     def custom_error(y_true, y_pred):
         errors = (y_true - y_pred) ** 2
