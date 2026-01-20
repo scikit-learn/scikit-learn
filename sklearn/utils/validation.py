@@ -1686,7 +1686,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     >>> check_is_fitted(lr)
     """
     if isclass(estimator):
-        raise TypeError("{} is a class, not an instance.".format(estimator))
+        raise TypeError(f"{estimator} is a class, not an instance.")
     if msg is None:
         msg = (
             "This %(name)s instance is not fitted yet. Call 'fit' with "
@@ -1694,7 +1694,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
         )
 
     if not hasattr(estimator, "fit"):
-        raise TypeError("%s is not an estimator instance." % (estimator))
+        raise TypeError(f"{estimator} is not an estimator instance.")
 
     tags = get_tags(estimator)
 
