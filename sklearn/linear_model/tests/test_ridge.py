@@ -852,7 +852,8 @@ def test_ridge_gcv_vs_ridge_loo_cv(
 @pytest.mark.parametrize("X_shape", [(100, 50), (50, 50), (50, 100)])
 @pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
 def test_ridge_gcv_noiseless(alpha, gcv_mode, fit_intercept, X_shape, X_container):
-    # Ridge should recover LinearRegression in the noiseless case
+    # Ridge should recover LinearRegression in the noiseless case and
+    # near-zero alpha.
     alphas = [alpha]
     n_samples, n_features = X_shape
     X, y = make_regression(
