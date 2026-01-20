@@ -405,7 +405,7 @@ class BaseLoss:
         n_threads : int, default=1
             Might use openmp thread parallelism.
         xp : module, default=None
-            Array namespace module.
+            Array namespace module. Ignored by the Cython implementation.
 
         Returns
         -------
@@ -1260,7 +1260,7 @@ class ArrayAPILossMixin:
         sample_weight : None or C-contiguous array of shape (n_samples,)
             Sample weights.
         n_threads : int, default=1
-            Might use openmp thread parallelism.
+            Ignored by the array API implementation.
         xp : module, default=None
             Array namespace module.
 
@@ -1395,7 +1395,7 @@ class HalfBinomialLossArrayAPI(ArrayAPILossMixin, HalfBinomialLoss):
         sample_weight=None,
     ):
         grad = xp.where(
-            raw_prediction > -37,
+            raw_prediction > (-37 if raw_prediction.dtype == xp.float64 else -17),
             ((1 - y_true) - y_true * neg_raw_prediction_exp)
             / (1 + neg_raw_prediction_exp),
             raw_prediction_exp - y_true,

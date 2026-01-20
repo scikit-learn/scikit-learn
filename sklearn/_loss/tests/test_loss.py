@@ -1378,7 +1378,7 @@ def test_tweedie_log_identity_consistency(p):
         (HalfBinomialLossArrayAPI, HalfBinomialLoss),
         (HalfMultinomialLossArrayAPI, HalfMultinomialLoss),
     ],
-    ids=["HalfBinomialLossArrayAPI", "HalfMultinomialLossArrayAPI"],
+    ids=["HalfBinomialLoss", "HalfMultinomialLoss"],
 )
 @pytest.mark.parametrize(
     "method_name", ["__call__", "gradient", "loss", "loss_gradient"]
