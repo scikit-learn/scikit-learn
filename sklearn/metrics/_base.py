@@ -129,7 +129,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
             # Scores with 0 weights are forced to be 0, preventing the average
             # score from being affected by 0-weighted NaN elements.
             score[average_weight == 0] = 0
-        return float(_average(score, weights=average_weight))
+        return float(_average(score, weights=average_weight, xp=xp))
     else:
         return score
 
