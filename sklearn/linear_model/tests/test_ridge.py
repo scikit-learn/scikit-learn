@@ -891,7 +891,6 @@ def test_ridge_gcv_looe(gcv_mode, X_container, X_shape, y_shape, fit_intercept, 
 
     loo = LeaveOneOut()
     loo_predictions = np.zeros_like(gcv_predictions)
-    print(f"{gcv_predictions.shape=}")
     for alpha_idx, alpha in enumerate(alphas):
         for train_idx, test_idx in loo.split(X):
             model = Ridge(alpha=alpha, fit_intercept=fit_intercept).fit(
