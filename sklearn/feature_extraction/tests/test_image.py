@@ -1,5 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+from itertools import product
 
 import numpy as np
 import pytest
@@ -223,6 +224,41 @@ def test_reconstruct_patches_perfect_color(orange_face):
     np.testing.assert_array_almost_equal(face, face_reconstructed)
 
 
+def test_reconstruct_patches_perfect_strided(downsampled_face):
+    face = downsampled_face
+    sizes = [(16, 16), (32, 32)]
+    strides = [1, 2, 4, (8, 4), (2, 2), (16, 16)]
+
+    for (p_h, p_w), stride in product(sizes, strides):
+        patches = extract_patches_2d(face, (p_h, p_w), stride=stride)
+        face_reconstructed = reconstruct_from_patches_2d(
+            patches, face.shape, stride=stride
+        )
+        np.testing.assert_array_almost_equal(face, face_reconstructed)
+
+
+def test_reconstruct_patches_perfect_color_strided(orange_face):
+    face = orange_face
+    sizes = [(16, 16), (32, 32)]
+    strides = [1, 2, 4, (8, 4), (2, 2), (16, 16), (8, 1, 1), (4, 8, 1)]
+
+    for (p_h, p_w), stride in product(sizes, strides):
+        patches = extract_patches_2d(face, (p_h, p_w), stride=stride)
+        face_reconstructed = reconstruct_from_patches_2d(
+            patches, face.shape, stride=stride
+        )
+        np.testing.assert_array_almost_equal(face, face_reconstructed)
+
+
+def test_extract_patches_2d_stride_tuple_length_mismatch():
+    img = np.zeros((32, 32, 3))
+    p_h, p_w = 16, 16
+    strides = [(1,), (1, 1, 1, 1), (1, 1, 1, 1, 1)]
+    for stride in strides:
+        with pytest.raises(ValueError, match="When stride is a tuple"):
+            _ = extract_patches_2d(img, (p_h, p_w), stride=stride)
+
+
 def test_patch_extractor_fit(downsampled_face_collection, global_random_seed):
     faces = downsampled_face_collection
     extr = PatchExtractor(
@@ -282,6 +318,22 @@ def test_patch_extractor_color(orange_face, global_random_seed):
     extr = PatchExtractor(patch_size=(p_h, p_w), random_state=global_random_seed)
     patches = extr.transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w, 3)
+
+
+def test_patch_extractor_color_strided(orange_face):
+    faces = _make_images(orange_face)
+    i_h, i_w = faces.shape[1:3]
+
+    sizes = [(16, 16), (32, 32), (8, 64)]
+    strides = [(1, 1), (2, 2), (16, 16), (8, 1), (4, 16)]
+
+    for (p_h, p_w), (s_h, s_w) in product(sizes, strides):
+        expected_n_patches = (
+            len(faces) * ((i_h - p_h) // s_h + 1) * ((i_w - p_w) // s_w + 1)
+        )
+        extr = PatchExtractor(patch_size=(p_h, p_w), random_state=0, stride=(s_h, s_w))
+        patches = extr.transform(faces)
+        assert patches.shape == (expected_n_patches, p_h, p_w, 3)
 
 
 def test_extract_patches_strided():
@@ -357,3 +409,16 @@ def test_patch_extractor_wrong_input(orange_face):
     extractor = PatchExtractor(patch_size=(8, 8, 8))
     with pytest.raises(ValueError, match=err_msg):
         extractor.transform(faces)
+
+
+def test_patch_extractor_stride_tuple_length_mismatch():
+    """`PatchExtractor.transform` should validate tuple `stride` length.
+
+    For a batch of images, the expected tuple length is the image ndim
+    (excluding the sample axis), so passing a too-short tuple should raise.
+    """
+    # one color image: shape (n_samples, height, width, channels)
+    X = np.zeros((1, 10, 10, 3))
+    extr = PatchExtractor(patch_size=(2, 2), stride=(1,))
+    with pytest.raises(ValueError, match="When stride is a tuple"):
+        extr.transform(X)
