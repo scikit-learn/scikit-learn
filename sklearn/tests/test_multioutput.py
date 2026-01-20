@@ -407,7 +407,7 @@ def test_multi_output_classification_sample_weights():
     w = np.asarray([2.0, 1.0])
     forest = RandomForestClassifier(n_estimators=10, random_state=1)
     clf_w = MultiOutputClassifier(forest)
-    clf_w.fit(Xw, yw, w)
+    clf_w.fit(Xw, yw, sample_weight=w)
 
     # unweighted, but with repeated samples
     X = [[1, 2, 3], [1, 2, 3], [4, 5, 6]]
@@ -427,7 +427,7 @@ def test_multi_output_classification_partial_fit_sample_weights():
     w = np.asarray([2.0, 1.0, 1.0])
     sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20, tol=None)
     clf_w = MultiOutputClassifier(sgd_linear_clf)
-    clf_w.fit(Xw, yw, w)
+    clf_w.fit(Xw, yw, sample_weight=w)
 
     # unweighted, but with repeated samples
     X = [[1, 2, 3], [1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
@@ -865,6 +865,38 @@ def test_multioutput_regressor_has_partial_fit():
     msg = "This 'MultiOutputRegressor' has no attribute 'partial_fit'"
     with pytest.raises(AttributeError, match=msg):
         getattr(est, "partial_fit")
+
+
+# TODO(1.9) Remove
+def test_multioutput_classifier_fit_dependency_warning():
+    """Test that using both y and Y raises ValueError and Y alone raises warning."""
+    X = [[1, 0], [0, 1], [1, 1]]
+    y = [[0, 2], [1, 1], [2, 0]]
+    Y = [[0, 2], [1, 1], [2, 0]]
+    est = MultiOutputClassifier(LogisticRegression())
+
+    # Test that using both y and Y raises ValueError
+    with pytest.warns(
+        FutureWarning, match="`Y` was renamed to `y` in 1.7 and will be removed in 1.9"
+    ):
+        with pytest.raises(
+            ValueError,
+            match="Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated.",
+        ):
+            est.fit(X, y, Y=Y)
+
+    # Test that using Y alone raises FutureWarning
+    with pytest.warns(
+        FutureWarning, match="`Y` was renamed to `y` in 1.7 and will be removed in 1.9"
+    ):
+        est.fit(X, Y=Y)
+
+    # Test not providing y or Y
+    with pytest.raises(
+        ValueError,
+        match="estimator requires y to be passed, but the target y is None.",
+    ):
+        est.fit(X)
 
 
 # TODO(1.9):  remove when deprecated `base_estimator` is removed
