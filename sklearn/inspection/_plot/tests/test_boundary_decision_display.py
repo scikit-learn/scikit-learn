@@ -634,11 +634,11 @@ def test_multiclass_plot_max_class(pyplot, response_method):
     "multiclass_colors, n_classes",
     [
         (None, 3),
-        (None, 15),
+        (None, 11),
         ("plasma", 3),
-        ("plasma", 15),
+        ("plasma", 11),
         ("Blues", 3),
-        ("Blues", 15),
+        ("Blues", 11),
         (["red", "green", "blue"], 3),
         (
             [
@@ -653,12 +653,8 @@ def test_multiclass_plot_max_class(pyplot, response_method):
                 "gray",
                 "cyan",
                 "magenta",
-                "lime",
-                "navy",
-                "teal",
-                "olive",
             ],
-            15,
+            11,
         ),
     ],
 )
@@ -706,12 +702,10 @@ def test_multiclass_colors_cmap(
     else:
         colors = [mpl.colors.to_rgba(color) for color in multiclass_colors]
 
-    # Part of a non-regression test for issue #32866 to make sure the colormap
-    # used has enough distinct colors.
-    assert disp.n_classes <= len(np.unique(colors, axis=0))
+    # Make sure the colormap has enough distinct colors.
+    assert disp.n_classes == len(np.unique(colors, axis=0))
 
-    if plot_method == "pcolormesh" and response_method == "predict":
-        # pcolormesh with predict uses ListedColormap
+    if response_method == "predict":
         cmap = mpl.colors.ListedColormap(colors)
         assert disp.surface_.cmap == cmap
     elif plot_method != "contour":
@@ -721,8 +715,7 @@ def test_multiclass_colors_cmap(
             )
             for class_idx, (r, g, b, _) in enumerate(colors)
         ]
-        # Part of a non-regression test for issue #32866 to make sure every class
-        # has its own surface.
+        # Make sure every class has its own surface.
         assert len(disp.surface_) == disp.n_classes
 
         for idx, quad in enumerate(disp.surface_):
@@ -730,7 +723,7 @@ def test_multiclass_colors_cmap(
     else:
         assert_allclose(disp.surface_.colors, colors)
 
-    # non-regression test for issue #32866 with `contour` (currently still fails)
+    # non-regression test for issue #32866 (currently still fails)
     # if hasattr(disp.surface_, "levels"):
     #    assert len(disp.surface_.levels) >= disp.n_classes
 
@@ -741,7 +734,7 @@ def test_multiclass_colors_cmap(
         (DecisionTreeClassifier(random_state=0), 7, 7),
         (DecisionTreeClassifier(random_state=0), 2, 2),
         (KMeans(n_clusters=7, random_state=0), 7, 7),
-        (KMeans(n_clusters=2, random_state=0), 7, 2),
+        (KMeans(n_clusters=2, random_state=0), 2, 2),
         (DecisionTreeRegressor(random_state=0), 7, 2),
         (IsolationForest(random_state=0), 7, 2),
     ],

@@ -272,20 +272,22 @@ class DecisionBoundaryDisplay:
 
             self.multiclass_colors_ = colors
 
-            if plot_method == "contour":
-                # Plot only argmax
-                response = (
-                    self.response.argmax(axis=2)
-                    if self.response.ndim == 3
-                    else self.response
-                )
-                self.surface_ = plot_func(
-                    self.xx0, self.xx1, response, colors=colors, **kwargs
-                )
-            elif plot_method == "pcolormesh" and self.response.ndim == 2:  # predict
+            if self.response.ndim == 2:  # predict
+                # `pcolormesh` requires cmap, fo the others it makes no difference
                 cmap = mpl.colors.ListedColormap(colors)
                 self.surface_ = plot_func(
                     self.xx0, self.xx1, self.response, cmap=cmap, **kwargs
+                )
+
+            # predict_proba and decision_function differ for plotting methods
+            elif plot_method == "contour":
+                # Plot only argmax
+                self.surface_ = plot_func(
+                    self.xx0,
+                    self.xx1,
+                    self.response.argmax(axis=2),
+                    colors=colors,
+                    **kwargs,
                 )
             else:
                 multiclass_cmaps = [
@@ -297,18 +299,10 @@ class DecisionBoundaryDisplay:
                 ]
                 self.surface_ = []
                 for class_idx, cmap in enumerate(multiclass_cmaps):
-                    if self.response.ndim == 2:  # predict
-                        response = np.ma.array(
-                            (self.response == class_idx),
-                            mask=(self.response != class_idx),
-                        )
-
-                    else:  # predict_proba or decision_function
-                        response = np.ma.array(
-                            self.response[:, :, class_idx],
-                            mask=(self.response.argmax(axis=2) != class_idx),
-                        )
-
+                    response = np.ma.array(
+                        self.response[:, :, class_idx],
+                        mask=(self.response.argmax(axis=2) != class_idx),
+                    )
                     self.surface_.append(
                         plot_func(self.xx0, self.xx1, response, cmap=cmap, **kwargs)
                     )
@@ -382,11 +376,11 @@ class DecisionBoundaryDisplay:
                 For multiclass problems, 'auto' no longer defaults to 'predict'.
 
         class_of_interest : int, float, bool or str, default=None
-            The class to be plotted when `response_method` is 'predict_proba'
-            or 'decision_function'. If None, `estimator.classes_[1]` is considered
-            the positive class for binary classifiers. For multiclass
+            The class to be plotted. For binary classifiers, if None,
+            `estimator.classes_[1]` is considered the positive class. For multiclass
             classifiers, if None, all classes will be represented in the
-            decision boundary plot; the class with the highest response value
+            decision boundary plot; when `response_method` is 'predict_proba'
+            or 'decision_function',the class with the highest response value
             at each point is plotted. The color of each class can be set via
             `multiclass_colors`.
 
