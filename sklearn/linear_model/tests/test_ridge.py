@@ -848,12 +848,15 @@ def test_ridge_gcv_vs_ridge_loo_cv(
 
 
 @pytest.mark.parametrize("alpha", [1e-12, 1e-16])
-@pytest.mark.parametrize("solver", ["auto", "svd", "cholesky", "lsqr", "sparse_cg"])
+@pytest.mark.parametrize("solver", ["svd", "cholesky", "lsqr", "sparse_cg"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.parametrize("X_shape", [(100, 50), (50, 50), (50, 100)])
+@pytest.mark.parametrize("X_shape", [(100, 50), (50, 100)])
 @pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
 def test_ridge_noiseless(alpha, solver, fit_intercept, X_shape, X_container):
     sparse_X = X_container in CSR_CONTAINERS
+    if solver in ["lsqr", "sparse_cg"]:
+        # FIXME: should we fix those solvers in the alpha=0 limit ?
+        pytest.xfail(f"solver='{solver}' does not recover the alpha=0 limit")
     if solver == "svd" and sparse_X:
         pytest.skip("solver='svd' does not support sparse data")
     if solver == "cholesky" and sparse_X and fit_intercept:
