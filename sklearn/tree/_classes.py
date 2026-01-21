@@ -227,7 +227,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if not np.isnan(overall_sum):
             return None
 
-        missing_values_in_feature_mask = np.isnan(X).any(axis=0)
+        missing_values_in_feature_mask = np.isnan(X.sum(axis=0))
         return missing_values_in_feature_mask
 
     def _fit(
