@@ -2376,12 +2376,15 @@ def test_ridge_sample_weight_consistency(
         assert_allclose(reg1.intercept_, reg2.intercept_)
 
 
-@pytest.mark.parametrize("X_shape", [(50, 10), (10, 50)])
-@pytest.mark.parametrize("with_sample_weight", [False, True])
-@pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("X_shape", [(50, 10), (10, 50)], ids=["tall", "wide"])
+@pytest.mark.parametrize("with_sample_weight", [False, True], ids=["no_sw", "with_sw"])
+@pytest.mark.parametrize(
+    "fit_intercept", [False, True], ids=["no_intercept", "with_intercept"]
+)
+@pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
 @pytest.mark.parametrize("n_targets", [1, 2])
 def test_ridge_cv_results_predictions(
-    X_shape, with_sample_weight, fit_intercept, n_targets
+    gcv_mode, X_shape, with_sample_weight, fit_intercept, n_targets
 ):
     """Check that the predictions stored in `cv_results_` are on the original scale.
 
@@ -2398,16 +2401,23 @@ def test_ridge_cv_results_predictions(
     """
     n_samples, n_features = X_shape
     X, y = make_regression(
-        n_samples=100, n_features=10, n_targets=n_targets, random_state=0
+        n_samples=n_samples, n_features=n_features, n_targets=n_targets, random_state=0
     )
-    sample_weight = np.ones(shape=(X.shape[0],))
     if with_sample_weight:
+        sample_weight = np.ones(shape=(X.shape[0],))
         sample_weight[::2] = 0.5
+    else:
+        sample_weight = None
 
-    alphas = (0.1, 1.0, 10.0)
+    # XXX: widening the range of alphas causes failures in the test, in
+    # particular for wide datasets. Not sure if this is an intrinsic limitation
+    # of the underlying linear algebra or if this points to a numerical issue
+    # in RidgeCV or in Ridge(solver="svd").
+    alphas = np.logspace(-5, 7, 5)
 
     # scoring should be set to store predictions and not the squared error
     ridge_cv = RidgeCV(
+        gcv_mode=gcv_mode,
         alphas=alphas,
         scoring="neg_mean_squared_error",
         fit_intercept=fit_intercept,
@@ -2420,8 +2430,13 @@ def test_ridge_cv_results_predictions(
     cv = LeaveOneOut()
     for alpha_idx, alpha in enumerate(alphas):
         for idx, (train_idx, test_idx) in enumerate(cv.split(X, y)):
-            ridge = Ridge(alpha=alpha, fit_intercept=fit_intercept)
-            ridge.fit(X[train_idx], y[train_idx], sample_weight[train_idx])
+            ridge = Ridge(alpha=alpha, fit_intercept=fit_intercept, solver="svd")
+            if with_sample_weight:
+                ridge.fit(
+                    X[train_idx], y[train_idx], sample_weight=sample_weight[train_idx]
+                )
+            else:
+                ridge.fit(X[train_idx], y[train_idx])
             predictions[idx, ..., alpha_idx] = ridge.predict(X[test_idx])
     assert_allclose(ridge_cv.cv_results_, predictions)
 
