@@ -641,7 +641,7 @@ def enet_path(
             precompute,
             fit_intercept=False,
             copy=False,
-            check_gram=True,
+            check_gram=check_input,
         )
     if alphas is None:
         # fit_intercept and sample_weight have already been dealt with in calling
