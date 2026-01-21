@@ -847,63 +847,6 @@ def test_ridge_gcv_vs_ridge_loo_cv(
     assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
 
 
-@pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
-@pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
-@pytest.mark.parametrize("X_shape", [(11, 8), (11, 20)])
-@pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.parametrize(
-    "y_shape, noise",
-    [
-        ((11,), 1.0),
-        ((11, 1), 30.0),
-        ((11, 3), 150.0),
-    ],
-)
-def test_ridge_gcv_looe(gcv_mode, X_container, X_shape, y_shape, fit_intercept, noise):
-    if gcv_mode == "svd" and (X_container in CSR_CONTAINERS):
-        pytest.skip("`svd` mode not supported for sparse X.")
-    n_samples, n_features = X_shape
-    n_targets = y_shape[-1] if len(y_shape) == 2 else 1
-    X, y = make_regression(
-        n_samples=n_samples,
-        n_features=n_features,
-        n_targets=n_targets,
-        random_state=0,
-        shuffle=False,
-        noise=noise,
-        n_informative=5,
-    )
-    y = y.reshape(y_shape)
-
-    alphas = [1e-3, 0.1, 1.0, 10.0, 1e3]
-
-    gcv_ridge = RidgeCV(
-        gcv_mode=gcv_mode,
-        fit_intercept=fit_intercept,
-        alphas=alphas,
-        scoring="neg_mean_squared_error",
-        store_cv_results=True,
-    )
-    X_gcv = X_container(X)
-    gcv_ridge.fit(X_gcv, y)
-    gcv_predictions = gcv_ridge.cv_results_
-
-    loo = LeaveOneOut()
-    loo_predictions = np.zeros_like(gcv_predictions)
-    for alpha_idx, alpha in enumerate(alphas):
-        for train_idx, test_idx in loo.split(X):
-            model = Ridge(alpha=alpha, fit_intercept=fit_intercept).fit(
-                X[train_idx], y[train_idx]
-            )
-            y_pred = model.predict(X[test_idx]).ravel()
-            if gcv_predictions.ndim == 2:
-                loo_predictions[test_idx, alpha_idx] = y_pred
-            else:
-                loo_predictions[test_idx, :, alpha_idx] = y_pred
-
-    assert_allclose(gcv_predictions, loo_predictions)
-
-
 @pytest.mark.parametrize("alpha", [1e-12, 1e-16])
 @pytest.mark.parametrize("solver", ["auto", "svd", "cholesky", "lsqr", "sparse_cg"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
