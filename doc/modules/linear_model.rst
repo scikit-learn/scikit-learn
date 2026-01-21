@@ -211,9 +211,10 @@ Usage example::
 
     >>> import numpy as np
     >>> from sklearn import linear_model
-    >>> reg = linear_model.RidgeCV(alphas=np.logspace(-3, 3, 7))
+    >>> reg = linear_model.RidgeCV(alphas=np.logspace(-6, 6, 13))
     >>> reg.fit([[0, 0], [0, 0.1], [1, 1]], [0, -0.1, 1])
-    RidgeCV(alphas=array([1.e-03, 1.e-02, 1.e-01, 1.e+00, 1.e+01, 1.e+02, 1.e+03]))
+    RidgeCV(alphas=array([1.e-06, 1.e-05, 1.e-04, 1.e-03, 1.e-02, 1.e-01, 1.e+00, 1.e+01,
+          1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]))
     >>> reg.alpha_
     np.float64(0.1)
 
