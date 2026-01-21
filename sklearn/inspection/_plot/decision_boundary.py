@@ -287,7 +287,7 @@ class DecisionBoundaryDisplay:
 
             # predict_proba and decision_function differ for plotting methods
             elif plot_method == "contour":
-                # Plot only argmax
+                # Plot only integer class values
                 self.surface_ = plot_func(
                     self.xx0,
                     self.xx1,
