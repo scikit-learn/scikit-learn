@@ -34,7 +34,7 @@ single feature::
 
 **Wrong**
 
-The train dataset is scaled, but not the test dataset, so model
+The training dataset is scaled, but not the test dataset, so model
 performance on the test dataset is worse than expected::
 
     >>> from sklearn.metrics import mean_squared_error
