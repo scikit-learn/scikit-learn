@@ -2426,8 +2426,9 @@ def test_ridge_cv_results_predictions(
     assert_allclose(ridge_cv.cv_results_, predictions)
 
 
+@pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
 @pytest.mark.parametrize("X_shape", [(50, 10), (10, 50)])
-def test_ridge_cv_multioutput_sample_weight(X_shape, global_random_seed):
+def test_ridge_cv_multioutput_sample_weight(gcv_mode, X_shape, global_random_seed):
     """Check that `RidgeCV` works properly with multioutput and sample_weight
     when `scoring != None`.
 
@@ -2443,7 +2444,9 @@ def test_ridge_cv_multioutput_sample_weight(X_shape, global_random_seed):
     )
     sample_weight = np.ones(n_samples)
 
-    ridge_cv = RidgeCV(scoring="neg_mean_squared_error", store_cv_results=True)
+    ridge_cv = RidgeCV(
+        gcv_mode=gcv_mode, scoring="neg_mean_squared_error", store_cv_results=True
+    )
     ridge_cv.fit(X, y, sample_weight=sample_weight)
 
     cv = LeaveOneOut()

@@ -1622,7 +1622,7 @@ def _check_gcv_mode(X, gcv_mode):
         if sparse.issparse(X):
             # TODO(1.11) raise ValueError
             msg = (
-                "The `"svd"` mode is not supported for sparse X, we fallback to "
+                "The `'svd'` mode is not supported for sparse X, we fallback to "
                 "`gcv_mode='eigen'`. Passing `gcv_mode='svd'` on sparse X will raise "
                 "an error in 1.11, use the default or pass `gcv_mode='eigen'` to "
                 "suppress this warning."
