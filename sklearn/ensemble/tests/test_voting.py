@@ -20,9 +20,9 @@ from sklearn.ensemble import (
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
-from sklearn.multiclass import OneVsRestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.tests.metadata_routing_common import (
@@ -45,6 +45,10 @@ X, y = iris.data[:, 1:3], iris.target
 X_scaled = StandardScaler().fit_transform(X)
 
 X_r, y_r = datasets.load_diabetes(return_X_y=True)
+
+X_multilabel, y_multilabel = make_multilabel_classification(
+    n_classes=3, random_state=42
+)
 
 
 @pytest.mark.parametrize(
@@ -268,21 +272,6 @@ def test_predict_proba_on_toy_problem():
 
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
-
-
-def test_multilabel():
-    """Check if error is raised for multilabel classification."""
-    X, y = make_multilabel_classification(
-        n_classes=2, n_labels=1, allow_unlabeled=False, random_state=123
-    )
-    clf = OneVsRestClassifier(SVC(kernel="linear"))
-
-    eclf = VotingClassifier(estimators=[("ovr", clf)], voting="hard")
-
-    try:
-        eclf.fit(X, y)
-    except NotImplementedError:
-        return
 
 
 def test_gridsearch():
@@ -697,6 +686,210 @@ def test_get_features_names_out_classifier_error():
     )
     with pytest.raises(ValueError, match=msg):
         voting.get_feature_names_out()
+
+
+def test_multioutput_classifier():
+    # Check voting classifiers on multi-output problems.
+    X_train = [
+        [-2, -1],
+        [-1, -1],
+        [-1, -2],
+        [1, 1],
+        [1, 2],
+        [2, 1],
+        [-2, 1],
+        [-1, 1],
+        [-1, 2],
+        [2, -1],
+        [1, -1],
+        [1, -2],
+    ]
+    y_train = [
+        [-1, 0],
+        [-1, 0],
+        [-1, 0],
+        [1, 1],
+        [1, 1],
+        [1, 1],
+        [-1, 2],
+        [-1, 2],
+        [-1, 2],
+        [1, 3],
+        [1, 3],
+        [1, 3],
+    ]
+    voting = VotingClassifier(
+        estimators=[
+            ("lr", LogisticRegression(random_state=0)),
+            ("tree", DecisionTreeClassifier(random_state=0)),
+        ],
+        voting="soft",
+        flatten_transform=False,
+    )
+    with pytest.raises(ValueError, match="Unknown label type"):
+        voting.fit(X_train, y_train)
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        # output a list of 2D array containing the probability of each class
+        # for each output
+        RandomForestClassifier(random_state=42),
+    ],
+)
+@pytest.mark.parametrize("voting", ["soft", "hard"])
+def test_voting_classifier_multilabel_predict_proba(estimator, voting):
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_multilabel, y_multilabel, stratify=y_multilabel, random_state=42
+    )
+    n_outputs = 3
+    n_classes = len(np.unique(y_multilabel))
+    n_samples = X_test.shape[0]
+
+    estimators = [("est", estimator)]
+    voter = VotingClassifier(
+        estimators=estimators,
+        voting=voting,
+    ).fit(X_train, y_train)
+
+    if voting == "hard":
+        inner_msg = "predict_proba is not available when voting='hard'"
+        outer_msg = "'VotingClassifier' has no attribute 'predict_proba'"
+        with pytest.raises(AttributeError, match=outer_msg) as exec_info:
+            y_proba = voter.predict_proba(X_test)
+        assert isinstance(exec_info.value.__cause__, AttributeError)
+        assert inner_msg in str(exec_info.value.__cause__)
+    else:
+        y_proba = voter.predict_proba(X_test)
+        assert isinstance(y_proba, list), f"{type(y_proba)}"
+        assert len(y_proba) == n_outputs, f"{len(y_proba)} != {n_outputs}"
+        assert all(
+            y_pred_proba.shape == (y_test.shape[0], n_classes)
+            for y_pred_proba in y_proba
+        ), f"{[y_pred_proba.shape for y_pred_proba in y_proba]} != {(n_samples,)}"
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        # output a 2D array of the probability of the positive class for each output
+        MLPClassifier(random_state=42),
+        # output a list of 2D array containing the probability of each class
+        # for each output
+        RandomForestClassifier(random_state=42),
+    ],
+)
+@pytest.mark.parametrize("voting", ["soft", "hard"])
+@pytest.mark.parametrize("type_of_target", ["normal", "multilabel-indicator"])
+@pytest.mark.parametrize("flatten_transform", [True, False])
+def test_voting_classifier_transform_with_different_target_types(
+    estimator, voting, type_of_target, flatten_transform
+):
+    """Check the behaviour for the multilabel classification case and the
+    `predict_proba` stacking method.
+
+    Estimators are not consistent with the output arrays and we need to ensure that
+    we handle all cases.
+    """
+    if type_of_target == "normal":
+        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+        n_outputs = 1
+        n_classes = len(np.unique(y))
+    else:
+        X_train, X_test, y_train, y_test = train_test_split(
+            X_multilabel, y_multilabel, stratify=y_multilabel, random_state=42
+        )
+        n_classes = len(np.unique(y_multilabel))
+        n_outputs = 3
+
+    estimators = [("est", estimator)]
+    voter = VotingClassifier(
+        estimators=estimators,
+        voting=voting,
+        flatten_transform=flatten_transform,
+    ).fit(X_train, y_train)
+
+    X_trans = np.asarray(voter.transform(X_test))
+
+    if voting == "soft":
+        # XXX: should we test this?
+        # i.e. should not have any collinear classes and thus nothing should sum to 1
+        # print(X_trans.shape)
+        # # print(X_trans[:, :, :, 0])
+        # print(X_trans[:, :2, :])
+        # print(X_trans.squeeze().sum(axis=1))
+        # assert not any(np.isclose(X_trans.squeeze().sum(axis=1), 1.0)),\
+        #     X_trans.squeeze().sum(axis=1)
+        if flatten_transform:
+            expected_shape = (
+                (X_test.shape[0], len(estimators) * n_outputs)
+                if n_outputs > 1
+                else (X_test.shape[0], len(estimators) * n_classes)
+            )
+            assert (
+                X_trans.shape == expected_shape
+            ), f"{X_trans.shape} != {expected_shape}"
+        else:
+            expected_shape = (
+                (len(estimators), X_test.shape[0], n_outputs)
+                if n_outputs > 1
+                else (len(estimators), X_test.shape[0], n_classes)
+            )
+            assert (
+                X_trans.shape == expected_shape
+            ), f"{X_trans.shape} != {expected_shape}"
+    else:
+        expected_shape = (
+            (X_test.shape[0], n_outputs, len(estimators))
+            if n_outputs > 1
+            else (X_test.shape[0], len(estimators))
+        )
+        assert X_trans.shape == expected_shape, f"{X_trans.shape} != {expected_shape}"
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        # output a 2D array of the probability of the positive class for each output
+        MLPClassifier(random_state=42),
+        # output a list of 2D array containing the probability of each class
+        # for each output
+        RandomForestClassifier(random_state=42),
+    ],
+)
+@pytest.mark.parametrize(
+    "voting",
+    ["soft", "hard"],
+)
+@pytest.mark.parametrize("type_of_target", ["normal", "multilabel-indicator"])
+def test_voting_classifier_multilabel_predict(estimator, voting, type_of_target):
+    if type_of_target == "normal":
+        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+    else:
+        X_train, X_test, y_train, y_test = train_test_split(
+            X_multilabel, y_multilabel, stratify=y_multilabel, random_state=42
+        )
+        y_train += 100
+        y_test += 100
+
+    estimators = [("est", estimator)]
+    voter = VotingClassifier(
+        estimators=estimators,
+        voting=voting,
+    ).fit(X_train, y_train)
+
+    y_pred = voter.predict(X_test)
+    assert y_pred.shape == y_test.shape, f"{y_pred.shape} != {y_test.shape}"
+
+    # check that encoding of the output is applied correctly
+    if type_of_target == "normal":
+        assert voter.le_.classes_.shape[0] == len(np.unique(y_train))
+        assert_array_equal(voter.le_.classes_, np.unique(y_train))
+    else:
+        for le in voter.le_:
+            assert le.classes_.shape[0] == len(np.unique(y_train))
+            assert_array_equal(le.classes_, np.unique(y_train))
 
 
 # Metadata Routing Tests
