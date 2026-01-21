@@ -298,8 +298,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
 def _solve_svd(X, y, alpha, xp=None):
     xp, _ = get_namespace(X, xp=xp)
     U, s, Vt = xp.linalg.svd(X, full_matrices=False)
-    # idx = s > 1e-15  # same default value as scipy.linalg.pinv
-    idx = s > 0
+    idx = s > 1e-15  # same default value as scipy.linalg.pinv
     s_nnz = s[idx][:, None]
     UTy = U.T @ y
     d = xp.zeros((s.shape[0], alpha.shape[0]), dtype=X.dtype, device=device(X))
