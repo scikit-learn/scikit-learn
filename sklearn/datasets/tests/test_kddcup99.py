@@ -87,3 +87,4 @@ def test_corrupted_file_error_message(fetch_kddcup99_fxt, tmp_path):
 
     with pytest.raises(OSError, match=msg):
         fetch_kddcup99_fxt(data_home=str(tmp_path))
+        
