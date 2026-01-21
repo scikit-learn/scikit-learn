@@ -924,7 +924,7 @@ def test_ridge_gcv_noiseless(alpha, gcv_mode, fit_intercept, X_shape, X_containe
     gcv_ridge = RidgeCV(alphas=alphas, gcv_mode=gcv_mode, fit_intercept=fit_intercept)
     if gcv_mode == "svd" and sparse_X:
         # TODO(1.11) should raises ValueError
-        expected_msg = "The `svd` mode is not supported for sparse X"
+        expected_msg = "The `'svd'` mode is not supported for sparse X"
         with pytest.warns(FutureWarning, match=expected_msg):
             gcv_ridge.fit(X, y)
     else:
