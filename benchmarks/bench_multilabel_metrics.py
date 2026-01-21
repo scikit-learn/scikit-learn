@@ -18,7 +18,7 @@ from sklearn.metrics import (
     accuracy_score,
     f1_score,
     hamming_loss,
-    jaccard_similarity_score,
+    jaccard_score,
 )
 from sklearn.utils._testing import ignore_warnings
 
@@ -27,7 +27,7 @@ METRICS = {
     "f1-by-sample": partial(f1_score, average="samples"),
     "accuracy": accuracy_score,
     "hamming": hamming_loss,
-    "jaccard": jaccard_similarity_score,
+    "jaccard": partial(jaccard_score, average="samples"),
 }
 
 FORMATS = {
