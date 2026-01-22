@@ -2720,13 +2720,15 @@ def check_cv(cv=5, y=None, *, classifier=False, shuffle=False, random_state=None
         cross-validator instance or iterable.
 
     shuffle : bool, default=False
-        Whether to shuffle the data before splitting into batches.
-        Note that the samples within each split will not be shuffled.
+        Whether to shuffle the data before splitting into batches. Note that the samples
+        within each split will not be shuffled. Only applies if `cv` is an int or
+        `None`. If `cv` is a cross-validation generator or an iterable, `shuffle` is
+        ignored.
 
     random_state : int, RandomState instance or None, default=None
-        When `shuffle` is True, `random_state` affects the ordering of the
-        indices, which controls the randomness of each fold. Otherwise, this
-        parameter has no effect.
+        When `shuffle` is True and `cv` is an integer or `None`, `random_state` affects
+        the ordering of the indices, which controls the randomness of each fold.
+        Otherwise, this parameter has no effect.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 

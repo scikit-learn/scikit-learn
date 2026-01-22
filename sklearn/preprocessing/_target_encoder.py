@@ -105,22 +105,20 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     cv : int, cross-validation generator or an iterable, default=None
         Determines the splitting strategy used in the internal :term:`cross fitting`
         during :meth:`fit_transform`. Splitters where each sample index doesn't appear
-        in a validation fold exactly once, raise a `ValueError`.
+        in the validation fold exactly once, raise a `ValueError`.
         Possible inputs for cv are:
 
-        - None, to use a 5-fold cross-validation chosen internally based on
-            `target_type` and `groups`,
+        - `None`, to use a 5-fold cross-validation chosen internally based on
+            `target_type`,
         - integer, to specify the number of folds for the cross-validation chosen
             internally based on `target_type`,
-        - :term:`CV splitter` that does not repeat samples across test folds,
+        - :term:`CV splitter` that does not repeat samples across validation folds,
         - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if `target_type` is `"continuous"`, :class:`KFold` is
-        used, otherwise :class:`StratifiedKFold` is used. After calling
-        :meth:`fit_transform`, the `cv_` attribute stores the name of the
-        cross-validation strategy used.
+        used, otherwise :class:`StratifiedKFold` is used.
 
-        Refer :ref:`User Guide <cross_validation>` for mor information on
+        Refer :ref:`User Guide <cross_validation>` for more information on
         cross-validation strategies.
 
         .. versionchanged:: 1.9
@@ -174,9 +172,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     classes_ : ndarray or None
         If `target_type_` is 'binary' or 'multiclass', holds the label for each class,
         otherwise `None`.
-
-    cv_ : str
-        Class name of the cv splitter used in `fit_transform` for :term:`cross fitting`.
 
     See Also
     --------
@@ -247,7 +242,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.random_state = random_state
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y, **params):
+    def fit(self, X, y):
         """Fit the :class:`TargetEncoder` to X and y.
 
         It is discouraged to use this method because it can introduce data leakage.
@@ -265,11 +260,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         y : array-like of shape (n_samples,)
             The target data used to encode the categories.
-
-        **params : dict
-            Always ignored, exists for API compatibility.
-
-            .. versionadded:: 1.9
 
         Returns
         -------
@@ -335,22 +325,13 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
 
-        if self.target_type_ == "continuous":
-            cv = check_cv(
-                self.cv,
-                y,
-                classifier=False,
-                shuffle=self.shuffle,
-                random_state=self.random_state,
-            )
-        else:
-            cv = check_cv(
-                self.cv,
-                y,
-                classifier=True,
-                shuffle=self.shuffle,
-                random_state=self.random_state,
-            )
+        cv = check_cv(
+            self.cv,
+            y,
+            classifier=self.target_type_ != "continuous",
+            shuffle=self.shuffle,
+            random_state=self.random_state,
+        )
 
         if _routing_enabled():
             if params["groups"] is not None:
@@ -374,8 +355,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                     "once with no overlap. Pass a splitter with non-overlapping "
                     "validation folds as `cv` or refer to the docs for other options."
                 )
-
-        self.cv_ = cv.__class__.__name__
 
         # If 'multiclass' multiply axis=1 by num classes else keep shape the same
         if self.target_type_ == "multiclass":
@@ -651,10 +630,17 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
+        from sklearn.model_selection import KFold  # avoid circular import
+
         router = MetadataRouter(owner=self)
 
+        if hasattr(self.cv, "split"):
+            splitter = self.cv
+        else:
+            # Mock splitter if `self.cv` is not a cv generator (no routing needed)
+            splitter = KFold(self.cv)
         router.add(
-            splitter=self.cv,
+            splitter=splitter,
             method_mapping=MethodMapping().add(caller="fit_transform", callee="split"),
         )
 
