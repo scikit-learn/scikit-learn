@@ -156,6 +156,7 @@ class DecisionBoundaryDisplay:
 
     Examples
     --------
+    >>> import matplotlib as mpl
     >>> import matplotlib.pyplot as plt
     >>> import numpy as np
     >>> from sklearn.datasets import load_iris
@@ -175,7 +176,11 @@ class DecisionBoundaryDisplay:
     >>> display.plot()
     <...>
     >>> display.ax_.scatter(
-    ...     iris.data[:, 0], iris.data[:, 1], c=iris.target, edgecolor="black"
+    ...     iris.data[:, 0],
+    ...     iris.data[:, 1],
+    ...     c=iris.target,
+    ...     cmap=mpl.colors.ListedColormap(display.multiclass_colors_),
+    ...     edgecolor="black"
     ... )
     <...>
     >>> plt.show()
