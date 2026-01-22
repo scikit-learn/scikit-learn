@@ -1493,5 +1493,7 @@ def test_log1pexp(namespace, device_, dtype_name):
         result_mpmath = float(mpmath.log(1 + mpmath.exp(value)))
         # Check that the relative error is within float32 or float64 precision.
         assert result_xp == pytest.approx(
-            result_mpmath, rel=1e-7 if dtype_name == "float32" else 1e-15, abs=0.
+            result_mpmath,
+            rel=1e-7 if dtype_name == "float32" else 1e-15,
+            abs=0,
         )
