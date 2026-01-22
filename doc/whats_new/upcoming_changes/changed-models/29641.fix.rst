@@ -1,9 +1,11 @@
-- :class:`HistGradientBoostingClassifier` and `HistGradientBoostingRegressor`
-   now calculate bin edges differently when sample_weights=None. When the
-   number of distinct feature values is less than the specified max_bins,
-   the edges are calculated using a sliding window of shape 2. Otherwise,
-   percentile values calculated using averaged inverted cdf are used as
-   the bin edges. N evenly spaced percentiles are selected going from
-   0-100, where N=max_bins. Percentiles are then reduced to their distinct
-   values to avoid repeated bin edge values.
+- Fixed the way :class:`HistGradientBoostingClassifier` and
+  `HistGradientBoostingRegressor` compute their bin edges to properly and consistently
+  handle :term:`sample_weight`. When `sample_weights=None` is passed to `fit` and the
+  number of distinct feature values is less than the specified `max_bins`,
+  the edges are calculated using a sliding window of shape 2. Otherwise,
+  the bin edges are set to `max_bins` weight-aware quantiles computed
+  using the averaged inverted CDF method. If `n_samples` is larger than the
+  `subsample` parameter, the weights are instead used to subsample the data
+  (with replacement) and the bin edges are set using unweighted quantiles
+  of the subsampled data. Furthermore, duplicate bin edges are trimmed.
    By :user:`Shruti Nath <snath-xoc>` and :user:`Olivier Grisel <ogrisel>`

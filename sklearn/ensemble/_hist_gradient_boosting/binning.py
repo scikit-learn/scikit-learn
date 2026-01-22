@@ -241,8 +241,12 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             subsampling_probabilities = None
             if sample_weight is not None:
                 subsampling_probabilities = sample_weight / np.sum(sample_weight)
+            # Sampling with replacement to implement frequency semantics
+            # for sample weights. Note that we need `replace=True` even when 
+            # `sample_weight is None` to make sure that passing no weights is 
+            # statistically equivalent to passing unit weights.
             subset = rng.choice(
-                X.shape[0], self.subsample, p=subsampling_probabilities, replace=True
+                X.shape[0], self.subsample, p=subsampling_probabilities, replace=False
             )
             X = X.take(subset, axis=0)
 
