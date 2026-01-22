@@ -2614,11 +2614,6 @@ def test_array_api_classification_string_input(metric_name):
     )
 
 
-CONTINUOUS_CLASSIFICATION_METRICS_EXCL_MULTILABEL_RANKING = (
-    set(CONTINUOUS_CLASSIFICATION_METRICS.keys()) | set(CURVE_METRICS.keys())
-) - METRIC_UNDEFINED_BINARY
-
-
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name",
     yield_namespace_device_dtype_combinations(),
