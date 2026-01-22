@@ -1276,6 +1276,64 @@ class ArrayAPILossMixin:
         return float(_average(loss_xp, weights=sample_weight, xp=xp))
 
 
+def _log1pexp(raw_prediction, raw_prediction_exp, neg_raw_prediction_exp, xp):
+    """Numerically stable version of log(1 + exp(x)) that is compatible with
+    the array API."""
+
+    # The `magic constants` used are different between the `float64` dtype
+    # and the `float32` dtype. For the `float64` case we simply use the values
+    # that are present in the Cython loss module and the details can be found
+    # there. For the `float32` case we use the `scipy.optimize.brentq` with
+    # `xtol=1e-7`to deduce the valid cutoff for each of the different cases
+    # that are handled. The trick is to define for each special case a function
+    # that subtracts `np.log1p(np.exp(x, dtype=np.float32))` from the special
+    # case under consideration. Additionally the resulting values that are very
+    # close to zero are set to -1.
+    # Consider as an example the case `x + exp(-x)`:
+    #
+    #     def x_plus_exp_negx(x):
+    #         x = np.float32(x)
+    #         val = (
+    #             x + np.exp(-x, dtype=np.float32))
+    #             - np.log1p(np.exp(x, dtype=np.float32)
+    #         )
+    #         if np.isclose(val, 0, atol=1e-16):
+    #             val = -1
+    #         return val
+    #
+    #
+    #     x_cutoff = brentq(x_plus_exp_negx, 1, 20, xtol=1e-7)
+    #
+    # The bounds used in the `brentq` function for each case respectively are
+    # acquired through the referenced paper:
+    # https://cran.r-project.org/web/packages/Rmpfr/vignettes/log1mexp-note.pdf
+    # Compared to the reference, we have the additional case distinction x <= -2
+    # in the `float64` case. Since we don't have the reference bounds for this,
+    # we estimate the value as approximately x <= -1 for `float32`.
+    constants = (
+        [-37, -2, 18, 33.3]
+        if raw_prediction.dtype == xp.float64
+        else [-17, -1, 9, 14.6]
+    )
+    return xp.where(
+        raw_prediction <= constants[0],
+        raw_prediction_exp,
+        xp.where(
+            raw_prediction <= constants[1],
+            xp.log1p(raw_prediction_exp),
+            xp.where(
+                raw_prediction <= constants[2],
+                xp.log(1.0 + raw_prediction_exp),
+                xp.where(
+                    raw_prediction <= constants[3],
+                    raw_prediction + neg_raw_prediction_exp,
+                    raw_prediction,
+                ),
+            ),
+        ),
+    )
+
+
 class HalfBinomialLossArrayAPI(ArrayAPILossMixin, HalfBinomialLoss):
     """A version of the the HalfBinomialLoss that is compatible with
     the array API.
@@ -1356,29 +1414,11 @@ class HalfBinomialLossArrayAPI(ArrayAPILossMixin, HalfBinomialLoss):
         neg_raw_prediction_exp,
         sample_weight=None,
     ):
-        # The `constants` used are different between the `float64` dtype
-        # and the `float32` dtype.
-        constants = (
-            [-37, -2, 18, 33.3]
-            if raw_prediction.dtype == xp.float64
-            else [-17, -1, 9, 14.6]
-        )
-        log1pexp = xp.where(
-            raw_prediction <= constants[0],
-            raw_prediction_exp,
-            xp.where(
-                raw_prediction <= constants[1],
-                xp.log1p(raw_prediction_exp),
-                xp.where(
-                    raw_prediction <= constants[2],
-                    xp.log(1.0 + raw_prediction_exp),
-                    xp.where(
-                        raw_prediction <= constants[3],
-                        raw_prediction + neg_raw_prediction_exp,
-                        raw_prediction,
-                    ),
-                ),
-            ),
+        log1pexp = _log1pexp(
+            raw_prediction=raw_prediction,
+            raw_prediction_exp=raw_prediction_exp,
+            neg_raw_prediction_exp=neg_raw_prediction_exp,
+            xp=xp,
         )
         loss = log1pexp - y_true * raw_prediction
         if sample_weight is not None:

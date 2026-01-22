@@ -205,6 +205,11 @@ class LinearModelLoss:
         weights, intercept = self.weight_intercept(coef)
         xp, _, device_ = get_namespace_and_device(X)
 
+        # The `weights` and `intercept` are only converted internally to the
+        # array API because the relevant `scipy.optimize` functions do not
+        # currently support the array API and we have to ensure that the final
+        # values returned to the respestive `scipy.optimize` function are in
+        # the `numpy` namespace.
         weights_xp = xp.asarray(weights, dtype=X.dtype, device=device_)
         intercept_xp = xp.asarray(intercept, dtype=X.dtype, device=device_)
         if not self.base_loss.is_multiclass:
@@ -346,6 +351,9 @@ class LinearModelLoss:
             if self.fit_intercept:
                 grad[-1] = xp.sum(grad_pointwise)
         else:
+            # The final value of `grad` needs to be in the `numpy` namespace
+            # because the relevant `scipy.optimize` functions do not currently
+            # support the array API.
             grad = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
             # grad_pointwise.shape = (n_samples, n_classes)
             grad_X = grad_pointwise.T @ X
