@@ -854,9 +854,6 @@ def test_ridge_gcv_vs_ridge_loo_cv(
 @pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
 def test_ridge_noiseless(alpha, solver, fit_intercept, X_shape, X_container):
     sparse_X = X_container in CSR_CONTAINERS
-    if solver in ["lsqr", "sparse_cg"]:
-        # FIXME: should we fix those solvers in the alpha=0 limit ?
-        pytest.xfail(f"solver='{solver}' does not recover the alpha=0 limit")
     if solver == "svd" and sparse_X:
         pytest.skip("solver='svd' does not support sparse data")
     if solver == "cholesky" and sparse_X and fit_intercept:
@@ -872,7 +869,7 @@ def test_ridge_noiseless(alpha, solver, fit_intercept, X_shape, X_container):
     lin_reg = LinearRegression(fit_intercept=fit_intercept)
     lin_reg.fit(X, y)
     X = X_container(X)
-    ridge = Ridge(alpha=alpha, solver=solver, fit_intercept=fit_intercept)
+    ridge = Ridge(alpha=alpha, solver=solver, fit_intercept=fit_intercept, tol=1e-12)
     ridge.fit(X, y)
     assert_allclose(ridge.coef_, lin_reg.coef_, atol=1e-10)
     assert_allclose(ridge.intercept_, lin_reg.intercept_, atol=1e-10)
