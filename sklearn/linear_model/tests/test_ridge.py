@@ -794,6 +794,26 @@ def test_solver_consistency(
     assert_allclose(ridge.intercept_, svd_ridge.intercept_, atol=1e-3, rtol=1e-3)
 
 
+def test_ridge_gcv_integer_arrays():
+    n_samples, n_features = 20, 10
+    X = np.random.randint(0, 5, size=(n_samples, n_features))
+    y = np.random.randint(0, 5, size=(n_samples,))
+
+    X_float = X.astype(np.float64)
+    y_float = y.astype(np.float64)
+
+    ridge_gcv = RidgeCV(
+        alphas=[0.1, 1.0, 10.0], scoring="neg_mean_squared_error", store_cv_results=True
+    )
+    ridge_gcv.fit(X, y)
+
+    ridge_gcv_float = clone(ridge_gcv)
+    ridge_gcv_float.fit(X_float, y_float)
+
+    assert_allclose(ridge_gcv.coef_, ridge_gcv_float.coef_)
+    assert_allclose(ridge_gcv.cv_results_, ridge_gcv_float.cv_results_)
+
+
 @pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
 @pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
 @pytest.mark.parametrize("X_shape", [(11, 8), (11, 20)])

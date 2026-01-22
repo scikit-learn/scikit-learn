@@ -2269,7 +2269,7 @@ class _RidgeGCV(LinearModel):
 
         if self.store_cv_results:
             self.cv_results_ = xp.empty(
-                (n_samples * n_y, n_alphas), dtype=original_dtype, device=device_
+                (n_samples * n_y, n_alphas), dtype=X.dtype, device=device_
             )
 
         best_coef, best_score, best_alpha = None, None, None
