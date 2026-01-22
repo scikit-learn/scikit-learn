@@ -94,13 +94,16 @@ class DecisionBoundaryDisplay:
         (continuous responses are displayed the same way as unthresholded binary
         responses).
 
+        .. versionadded:: 1.9
+
     response : ndarray of shape (grid_resolution, grid_resolution) or \
             (grid_resolution, grid_resolution, n_classes)
         Values of the response function.
 
     multiclass_colors : list of str or str, default=None
-        Specifies how to color each class when plotting all classes of multiclass
-        problem. Ignored for binary problems.
+        Specifies how to color each class when plotting all classes of
+        :term:`multiclass` problems.
+
         Possible inputs are:
 
         * list: list of Matplotlib
@@ -111,10 +114,15 @@ class DecisionBoundaryDisplay:
           classes is less than or equal to 10, otherwise 'gist_rainbow' colormap.
 
         Single color colormaps will be generated from the colors in the list or
-        colors taken from the colormap and passed to the `cmap` parameter of
+        colors taken from the colormap, and passed to the `cmap` parameter of
         the `plot_method`.
 
+        For :term:`binary` problems, this is ignored and `cmap` or `colors` can be
+        passed as kwargs instead, otherwise, the default colormap ('viridis') is used.
+
         .. versionadded:: 1.7
+        .. versionadded:: 1.9
+           `multiclass_colors` is now also used when `response_method="predict"`
 
     xlabel : str, default=None
         Default label to place on x axis.
@@ -392,7 +400,7 @@ class DecisionBoundaryDisplay:
 
         multiclass_colors : list of str, or str, default=None
             Specifies how to color each class when plotting :term:`multiclass` problems
-            and `class_of_interest` is None. Ignored in :term:`binary` cases.
+            and `class_of_interest` is None.
 
             Possible inputs are:
 
@@ -408,10 +416,13 @@ class DecisionBoundaryDisplay:
             colors taken from the colormap, and passed to the `cmap` parameter of
             the `plot_method`.
 
-            For binary problems, `cmap` or `colors` can be passed as kwargs to specify
-            the colormap or colors, otherwise, the default colormap ('viridis') is used.
+            For :term:`binary` problems, this is ignored and `cmap` or `colors` can be
+            passed as kwargs instead, otherwise, the default colormap ('viridis') is
+            used.
 
             .. versionadded:: 1.7
+            .. versionchanged:: 1.9
+               `multiclass_colors` is now also used when `response_method="predict"`
 
         xlabel : str, default=None
             The label used for the x-axis. If `None`, an attempt is made to
