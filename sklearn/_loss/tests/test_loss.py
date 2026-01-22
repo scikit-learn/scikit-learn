@@ -1473,7 +1473,7 @@ def test_loss_array_api(
 )
 def test_log1pexp(namespace, device_, dtype_name):
     mpmath = pytest.importorskip("mpmath")
-    mpmath.mp.prec = 53
+    mpmath.mp.prec = 100  # Significantly more precise reference than float64.
     values_to_test = [-38, -18, -3, -2, -1, 8, 13, 17, 34]
     xp = _array_api_for_tests(namespace, device_)
     for value in values_to_test:
