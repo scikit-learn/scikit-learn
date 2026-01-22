@@ -1245,8 +1245,8 @@ cdef (floating, floating) gap_enet_multi_task(
     int n_features,
     int n_tasks,
     const floating[::1, :] W,  # in
-    floating l1_reg,
-    floating l2_reg,
+    floating alpha,
+    floating beta,
     const floating[::1, :] X,  # in
     const floating[::1, :] Y,  # in
     const floating[::1, :] R,  # in
@@ -1263,7 +1263,7 @@ cdef (floating, floating) gap_enet_multi_task(
     R : memoryview of shape (n_samples, n_tasks)
         Current residuals = Y - X @ W.T
     XtA : memoryview of shape (n_features, n_tasks)
-        Inplace calculated as XtA = X.T @ R - l2_reg * W.T
+        Inplace calculated as XtA = X.T @ R - beta * W.T
     XtA_row_norms : memoryview of shape n_features
         Inplace calculated as np.sqrt(np.sum(XtA ** 2, axis=1))
     """
@@ -1276,22 +1276,22 @@ cdef (floating, floating) gap_enet_multi_task(
     cdef unsigned int t, j
 
     # w_l2_norm2 = linalg.norm(W, ord="fro") ** 2
-    if l2_reg > 0:
+    if beta > 0:
         w_l2_norm2 = _dot(n_features * n_tasks, &W[0, 0], 1, &W[0, 0], 1)
     # R_norm2 = linalg.norm(R, ord="fro") ** 2
     R_norm2 = _dot(n_samples * n_tasks, &R[0, 0], 1, &R[0, 0], 1)
     # Ry = np.sum(R * Y)
-    if not (l1_reg == 0 and l2_reg == 0):
+    if not (alpha == 0 and beta == 0):
         Ry = _dot(n_samples * n_tasks, &R[0, 0], 1, &Y[0, 0], 1)
 
-    if l1_reg == 0:
+    if alpha == 0:
         # XtA = X.T @ R
         for j in range(n_features):
             for t in range(n_tasks):
                 XtA[j, t] = _dot(n_samples, &X[0, j], 1, &R[0, t], 1)
         # ||X'R||_2^2
         dual_norm_XtA = _dot(n_features * n_tasks, &XtA[0, 0], 1, &XtA[0, 0], 1)
-        if l2_reg == 0:
+        if beta == 0:
             # This is OLS, no dual gap available. Resort to first order condition
             #     X'R = 0
             #     gap = ||X'R||_2^2
@@ -1299,14 +1299,14 @@ cdef (floating, floating) gap_enet_multi_task(
             gap = dual_norm_XtA
             return gap, dual_norm_XtA
         # This is Ridge regression, we use formulation B for the dual gap.
-        gap = R_norm2 + 0.5 * l2_reg * w_l2_norm2 - Ry
-        gap += 1 / (2 * l2_reg) * dual_norm_XtA
+        gap = R_norm2 + 0.5 * beta * w_l2_norm2 - Ry
+        gap += 1 / (2 * beta) * dual_norm_XtA
         return gap, dual_norm_XtA
 
-    # XtA = X.T @ R - l2_reg * W.T
+    # XtA = X.T @ R - beta * W.T
     for j in range(n_features):
         for t in range(n_tasks):
-            XtA[j, t] = _dot(n_samples, &X[0, j], 1, &R[0, t], 1) - l2_reg * W[t, j]
+            XtA[j, t] = _dot(n_samples, &X[0, j], 1, &R[0, t], 1) - beta * W[t, j]
 
     # dual_norm_XtA = np.max(np.sqrt(np.sum(XtA ** 2, axis=1)))
     dual_norm_XtA = 0.0
@@ -1322,8 +1322,8 @@ cdef (floating, floating) gap_enet_multi_task(
         w_l21_norm += _nrm2(n_tasks, &W[0, ii], 1)
 
     gap = dual_gap_formulation_A(
-        alpha=l1_reg,
-        beta=l2_reg,
+        alpha=alpha,
+        beta=beta,
         w_l1_norm=w_l21_norm,
         w_l2_norm2=w_l2_norm2,
         R_norm2=R_norm2,
@@ -1335,8 +1335,8 @@ cdef (floating, floating) gap_enet_multi_task(
 
 def enet_coordinate_descent_multi_task(
     floating[::1, :] W,
-    floating l1_reg,
-    floating l2_reg,
+    floating alpha,
+    floating beta,
     const floating[::1, :] X,
     const floating[::1, :] Y,
     unsigned int max_iter,
@@ -1350,7 +1350,7 @@ def enet_coordinate_descent_multi_task(
 
         We minimize
 
-        0.5 * norm(Y - X W.T, 2)^2 + l1_reg ||W.T||_21 + 0.5 * l2_reg norm(W.T, 2)^2
+        0.5 * norm(Y - X W.T, 2)^2 + alpha * ||W.T||_21 + 0.5 * beta * norm(W.T, 2)^2
 
     The algorithm follows
     Noah Simon, Jerome Friedman, Trevor Hastie. 2013.
@@ -1414,7 +1414,7 @@ def enet_coordinate_descent_multi_task(
     cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef uint32_t* rand_r_state = &rand_r_state_seed
 
-    if l1_reg == 0:
+    if alpha == 0:
         # No screeing without L1-penalty.
         do_screening = False
 
@@ -1435,7 +1435,7 @@ def enet_coordinate_descent_multi_task(
 
         # Check convergence before entering the main loop.
         gap, dual_norm_XtA = gap_enet_multi_task(
-            n_samples, n_features, n_tasks, W, l1_reg, l2_reg, X, Y, R, XtA, XtA_row_norms
+            n_samples, n_features, n_tasks, W, alpha, beta, X, Y, R, XtA, XtA_row_norms
         )
         if gap <= tol:
             with gil:
@@ -1452,9 +1452,9 @@ def enet_coordinate_descent_multi_task(
                     excluded_set[j] = 1
                     continue
                 # Xj_theta = ||X[:,j] @ dual_theta||_2
-                Xj_theta = XtA_row_norms[j] / fmax(l1_reg, dual_norm_XtA)
-                d_j = (1 - Xj_theta) / sqrt(norm2_cols_X[j] + l2_reg)
-                if d_j <= sqrt(2 * gap) / l1_reg:
+                Xj_theta = XtA_row_norms[j] / fmax(alpha, dual_norm_XtA)
+                d_j = (1 - Xj_theta) / sqrt(norm2_cols_X[j] + beta)
+                if d_j <= sqrt(2 * gap) / alpha:
                     # include feature j
                     active_set[n_active] = j
                     excluded_set[j] = 0
@@ -1502,9 +1502,9 @@ def enet_coordinate_descent_multi_task(
                 # nn = sqrt(np.sum(tmp ** 2))
                 nn = _nrm2(n_tasks, &tmp[0], 1)
 
-                # W[:, j] = tmp * fmax(1. - l1_reg / nn, 0) / (norm2_cols_X[j] + l2_reg)
+                # W[:, j] = tmp * fmax(1. - alpha / nn, 0) / (norm2_cols_X[j] + beta)
                 _copy(n_tasks, &tmp[0], 1, &W[0, j], 1)
-                _scal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm2_cols_X[j] + l2_reg),
+                _scal(n_tasks, fmax(1. - alpha / nn, 0) / (norm2_cols_X[j] + beta),
                       &W[0, j], 1)
 
                 # Update residual
@@ -1535,7 +1535,7 @@ def enet_coordinate_descent_multi_task(
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
                 gap, dual_norm_XtA = gap_enet_multi_task(
-                    n_samples, n_features, n_tasks, W, l1_reg, l2_reg, X, Y, R, XtA, XtA_row_norms
+                    n_samples, n_features, n_tasks, W, alpha, beta, X, Y, R, XtA, XtA_row_norms
                 )
                 if gap <= tol:
                     # return if we reached desired tolerance
@@ -1549,9 +1549,9 @@ def enet_coordinate_descent_multi_task(
                         if excluded_set[j]:
                             continue
                         # Xj_theta = ||X[:,j] @ dual_theta||_2
-                        Xj_theta = XtA_row_norms[j] / fmax(l1_reg, dual_norm_XtA)
-                        d_j = (1 - Xj_theta) / sqrt(norm2_cols_X[j] + l2_reg)
-                        if d_j <= sqrt(2 * gap) / l1_reg:
+                        Xj_theta = XtA_row_norms[j] / fmax(alpha, dual_norm_XtA)
+                        d_j = (1 - Xj_theta) / sqrt(norm2_cols_X[j] + beta)
+                        if d_j <= sqrt(2 * gap) / alpha:
                             # include feature j
                             active_set[n_active] = j
                             excluded_set[j] = 0
@@ -1570,7 +1570,7 @@ def enet_coordinate_descent_multi_task(
                     message_conv +
                     f" Duality gap: {gap:.6e}, tolerance: {tol:.3e}"
                 )
-                if l1_reg < np.finfo(np.float64).eps:
+                if alpha < np.finfo(np.float64).eps:
                     message += "\n" + message_ridge
                 warnings.warn(message, ConvergenceWarning)
 

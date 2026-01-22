@@ -515,13 +515,11 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         "check_sample_weight_equivalence_on_dense_data": [
             dict(criterion="squared_error"),
             dict(criterion="absolute_error"),
-            dict(criterion="friedman_mse"),
             dict(criterion="poisson"),
         ],
         "check_sample_weight_equivalence_on_sparse_data": [
             dict(criterion="squared_error"),
             dict(criterion="absolute_error"),
-            dict(criterion="friedman_mse"),
             dict(criterion="poisson"),
         ],
     },
@@ -1174,6 +1172,10 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        # TODO: error raised by all zero sample weights will be addressed by PR #31529
+        "check_classifiers_one_label_sample_weights": (
+            "failed when fitted on one label after sample_weight trimming."
         ),
     },
     RandomForestRegressor: {

@@ -1686,7 +1686,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     >>> check_is_fitted(lr)
     """
     if isclass(estimator):
-        raise TypeError("{} is a class, not an instance.".format(estimator))
+        raise TypeError(f"{estimator} is a class, not an instance.")
     if msg is None:
         msg = (
             "This %(name)s instance is not fitted yet. Call 'fit' with "
@@ -1694,7 +1694,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
         )
 
     if not hasattr(estimator, "fit"):
-        raise TypeError("%s is not an estimator instance." % (estimator))
+        raise TypeError(f"{estimator} is not an estimator instance.")
 
     tags = get_tags(estimator)
 
@@ -2085,6 +2085,7 @@ def _check_sample_weight(
     ensure_non_negative=False,
     ensure_same_device=True,
     copy=False,
+    allow_all_zero_weights=False,
 ):
     """Validate sample weights.
 
@@ -2126,6 +2127,9 @@ def _check_sample_weight(
 
     copy : bool, default=False
         If True, a copy of sample_weight will be created.
+
+    allow_all_zero_weights : bool, default=False,
+        Whether or not to raise an error when sample weights are all zero.
 
     Returns
     -------
@@ -2173,6 +2177,12 @@ def _check_sample_weight(
                 "sample_weight.shape == {}, expected {}!".format(
                     sample_weight.shape, (n_samples,)
                 )
+            )
+
+    if not allow_all_zero_weights:
+        if xp.all(sample_weight == 0):
+            raise ValueError(
+                "Sample weights must contain at least one non-zero number."
             )
 
     if ensure_non_negative:
