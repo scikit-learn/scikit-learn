@@ -267,7 +267,7 @@ class DecisionBoundaryDisplay:
                 else:
                     cmap = plt.get_cmap(cmap, self.n_classes)
                     if not hasattr(cmap, "colors"):
-                        # For LinearSegmentedColormap
+                        # Get `LinearSegmentedColormap` for non-qualitative cmaps
                         colors = cmap(np.linspace(0, 1, self.n_classes))
                     else:
                         colors = cmap.colors
