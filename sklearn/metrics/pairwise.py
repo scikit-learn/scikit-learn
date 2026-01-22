@@ -91,17 +91,18 @@ def _check_pairwise_arrays_for_scipy_metric(
     ensure_2d=True,
     copy=False,
 ):
-    """Metric-aware wrapper for `check_pairwise_arrays`
+    """Metric-aware input checks pairwise metrics computed by SciPy.
 
-    Accepts a scipy metric instead of a dtype, and forwards `bool` as dtype when the
-    metric is a `PAIRWISE_BOOLEAN_FUNCTIONS`, otherwise forwards `"infer_float"`.
+    If the metric is a boolean metric, checks that no dtype conversion is needed
+    and raise `DataConversionWarning` otherwise. If the metric is not a boolean
+    metric, check inputs to have matching floating point dtypes.
 
     This ensures `check_pairwise_arrays` doesn't cast boolean arrays to float, if
-    the scipy metric is boolean.
+    the SciPy metric is boolean.
 
-    Raises on sparse inputs, since scipy distance metrics don't support these
+    Raises on sparse inputs, since scipy distance metrics don't support these.
 
-    All other parameters are forwarded to `check_pairwise_arrays` unchanged
+    All other parameters are forwarded to `check_pairwise_arrays` unchanged.
     """
     if issparse(X) or issparse(Y):
         raise TypeError(
