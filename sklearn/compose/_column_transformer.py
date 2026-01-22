@@ -1238,7 +1238,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 self.transformers, [("remainder", self.remainder, remainder_columns)]
             )
         else:
-            transformers = chain(self.transformers, [("remainder", self.remainder, "")])
+            transformers = chain(self.transformers, [("remainder", self.remainder, [])])
 
         names, transformers, name_details = zip(*transformers)
         return _VisualBlock(
