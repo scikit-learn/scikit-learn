@@ -1777,32 +1777,69 @@ class _RidgeGCV(LinearModel):
     Notes
     -----
 
-    We want to solve (K + alpha*Id)c = y,
-    where K = X X^T is the kernel matrix.
+    1. Unweighted and no intercept
 
-    Let G = (K + alpha*Id).
+    We start by the simplest case `fit_intercept=False` and `sample_weight=None`.
+    The other cases (see below) reduce to this one after proper scaling/centering
+    of the design matrix X.
 
-    Dual solution: c = G^-1y
-    Primal solution: w = X^T c
+    Let G = (K + alpha*Id_n) where K = X X^T is the Gram matrix
+    and H = (C + alpha*Id_p) where C = X^T X is the covariance matrix.
 
-    Compute eigendecomposition K = Q V Q^T.
-    Then G^-1 = Q (V + alpha*Id)^-1 Q^T,
-    where (V + alpha*Id) is diagonal.
-    It is thus inexpensive to inverse for many alphas.
+    The solution of the regularized least square (fitted `coef_`) is given by:
+    w = H^-1 X^T y = X^T c where c = G^-1 y.
 
-    Let loov be the vector of prediction values for each example
-    when the model was fitted with all examples but this example.
-
-    loov = (KG^-1Y - diag(KG^-1)Y) / diag(I-KG^-1)
-
-    Let looe be the vector of prediction errors for each example
-    when the model was fitted with all examples but this example.
-
-    looe = y - loov = c / diag(G^-1)
+    Let loov (resp looe) be the leave-one-out values (resp errors), that is the
+    vector of prediction values (resp errors) for each example when the model
+    was fitted with all examples but this example. As shown in [1]:
+    looe = y - loov = c / d where d = diag(G^-1).
 
     The best score (negative mean squared error or user-provided scoring) is
     stored in the `best_score_` attribute, and the selected hyperparameter in
     `alpha_`.
+
+    2. Leveraging a precomputed matrix decomposition
+
+    The leave-one-out errors and coefficients can be efficiently computed for any
+    alpha from the SVD of X, the eigendecomposition of K = X X^T or C = X^T X.
+
+    Reduced SVD X = U S V^T when n < p (wide X)
+    Let D = 1 / (S^2 + alpha)
+    c = U D U^T y
+    d = diag(U D U^T)
+    w = V S / (S^2 + alpha) U^T y
+
+    Eigendecomposition K = U L U^T
+    Let D = 1 / (L + alpha)
+    c = U D U^T y
+    d = diag(U D U^T)
+    w = X^T c.
+
+    Reduced SVD X = U S V^T when p < n (long X)
+    Let M = alpha / (S^2 + alpha) - 1
+    alpha c = y + U M U^T y
+    alpha d = 1 + diag(U M U^T)
+    w = V S / (S^2 + alpha) U^T y
+
+    Eigendecomposition C = V L V^T
+    H^-1 = V 1 / (L + alpha) V^T
+    alpha c = y - X H^-1 X^T y
+    alpha d = 1 - diag(X H^-1 X^T)
+    w = H^-1 X^T y
+
+    3. Fitting with intercept or sample weights
+
+    Fitting with intercept and/or sample weights reduces to the unweigthed no
+    intercept case after centering and/or rescaling of X and y, as done in
+    `_preprocess_data`:
+    X <- sqrt(s) (X - X_mean)
+    y <- sqrt(s) (y - y_mean)
+
+    The returned looe are also rescaled by sample weights:
+    looe <- sqrt(s) looe
+
+    If we fit an intercept, there is the following correction term:
+    d <- d - sqrt(s) * G^-1 sqrt(s) / sum(s)
 
     References
     ----------
