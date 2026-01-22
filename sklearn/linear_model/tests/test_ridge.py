@@ -796,8 +796,9 @@ def test_solver_consistency(
 
 def test_ridge_gcv_integer_arrays():
     n_samples, n_features = 20, 10
-    X = np.random.randint(0, 5, size=(n_samples, n_features))
-    y = np.random.randint(0, 5, size=(n_samples,))
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 5, size=(n_samples, n_features))
+    y = rng.randint(0, 5, size=(n_samples,))
 
     X_float = X.astype(np.float64)
     y_float = y.astype(np.float64)
@@ -814,8 +815,12 @@ def test_ridge_gcv_integer_arrays():
     assert_allclose(ridge_gcv.cv_results_, ridge_gcv_float.cv_results_)
 
 
+def float32_array(x):
+    return np.asarray(x, dtype=np.float32)
+
+
 @pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
-@pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
+@pytest.mark.parametrize("X_container", [np.asarray, float32_array] + CSR_CONTAINERS)
 @pytest.mark.parametrize("X_shape", [(11, 8), (11, 20)])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize(
@@ -860,11 +865,12 @@ def test_ridge_gcv_vs_ridge_loo_cv(
     loo_ridge.fit(X, y)
 
     X_gcv = X_container(X)
-    gcv_ridge.fit(X_gcv, y)
+    y_gcv = y.astype(X.dtype)
+    gcv_ridge.fit(X_gcv, y_gcv)
 
     assert gcv_ridge.alpha_ == pytest.approx(loo_ridge.alpha_)
-    assert_allclose(gcv_ridge.coef_, loo_ridge.coef_, rtol=1e-3)
-    assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
+    assert_allclose(gcv_ridge.coef_, loo_ridge.coef_)
+    assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_)
 
 
 @pytest.mark.parametrize("alpha", [1e-12, 1e-16])
@@ -899,7 +905,7 @@ def test_ridge_noiseless(alpha, solver, fit_intercept, X_shape, X_container):
 @pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("X_shape", [(100, 50), (50, 50), (50, 100)])
-@pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
+@pytest.mark.parametrize("X_container", [np.asarray, float32_array] + CSR_CONTAINERS)
 def test_ridge_gcv_noiseless(alpha, gcv_mode, fit_intercept, X_shape, X_container):
     sparse_X = X_container in CSR_CONTAINERS
     # Ridge should recover LinearRegression in the noiseless case and
@@ -912,6 +918,7 @@ def test_ridge_gcv_noiseless(alpha, gcv_mode, fit_intercept, X_shape, X_containe
     lin_reg = LinearRegression(fit_intercept=fit_intercept)
     lin_reg.fit(X, y)
     X = X_container(X)
+    y = y.astype(X.dtype)
     gcv_ridge = RidgeCV(alphas=alphas, gcv_mode=gcv_mode, fit_intercept=fit_intercept)
     if gcv_mode == "svd" and sparse_X:
         # TODO(1.11) should raises ValueError
