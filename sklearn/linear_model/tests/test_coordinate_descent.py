@@ -1875,3 +1875,11 @@ def test_linear_model_cv_alphas(Estimator):
     else:
         clf.fit(X, y[:, 0])
     assert len(clf.alphas_) == 100
+
+
+@pytest.mark.parametrize("precompute", ["auto", True, False])
+def test_enet_path_check_input_false(precompute):
+    """Test enet_path works with check_input=False and various precompute settings."""
+    X, y = make_regression(n_samples=100, n_features=5, n_informative=2, random_state=0)
+    X = np.asfortranarray(X)
+    alphas, _, _ = enet_path(X, y, n_alphas=3, check_input=False, precompute=precompute)
