@@ -292,7 +292,7 @@ class DecisionBoundaryDisplay:
             self.multiclass_colors_ = colors
 
             if self.response.ndim == 2:  # predict
-                # `pcolormesh` requires cmap, fo the others it makes no difference
+                # `pcolormesh` requires cmap, for the others it makes no difference
                 cmap = mpl.colors.ListedColormap(colors)
                 self.surface_ = plot_func(
                     self.xx0, self.xx1, self.response, cmap=cmap, **kwargs
