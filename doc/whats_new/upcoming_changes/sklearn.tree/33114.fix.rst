@@ -1,0 +1,9 @@
+- Fixed feature-wise NaN detection for trees and tree-based model.
+  Features could be seen as NaN-free for some very edge-casy patterns
+  which lead to not consider splits with NaNs on the left for those features.
+  This affects:
+  - :class:`tree.DecisionTreeRegressor`
+  - :class:`tree.ExtraTreeRegressor`
+  - :class:`ensemble.RandomForestRegressor`
+  - :class:`ensemble.ExtraTreesRegressor`
+  By :user:`Arthur Lacote <cakedev0>`
