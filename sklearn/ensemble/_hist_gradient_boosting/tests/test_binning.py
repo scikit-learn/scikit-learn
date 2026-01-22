@@ -250,12 +250,12 @@ def test_subsampled_weighted_vs_repeated_equivalence(seed, n_bins):
     sw = rng.randint(0, 5, size=n_samples)
     X_repeated = np.repeat(X, sw, axis=0)
 
-    # Collect estimated bins thresholds on the weighted/repeated datasets 
+    # Collect estimated bins thresholds on the weighted/repeated datasets
     # for `n_subsample` subsampling.
-    n_subsample = 100 
+    n_subsample = 100
     bins_weighted = []
     bins_repeated = []
-    for _ in range(n_subsample):
+    for i in range(n_subsample):
         est_weighted = _BinMapper(n_bins=n_bins, subsample=300, random_state=i).fit(
             X, sample_weight=sw
         )
@@ -267,8 +267,8 @@ def test_subsampled_weighted_vs_repeated_equivalence(seed, n_bins):
 
     bins_weighted = np.stack(bins_weighted).T
     bins_repeated = np.stack(bins_repeated).T
-# bins_weighted and bins_weighted of shape (n_thresholds, n_subsample)
-# kstest_pval of shape (n_thresholds,) 
+    # bins_weighted and bins_weighted of shape (n_thresholds, n_subsample)
+    # kstest_pval of shape (n_thresholds,)
     kstest_pval = np.asarray(
         [
             kstest(bin_weighted, bin_repeated).pvalue
