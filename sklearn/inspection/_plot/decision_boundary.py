@@ -121,7 +121,7 @@ class DecisionBoundaryDisplay:
         passed as kwargs instead, otherwise, the default colormap ('viridis') is used.
 
         .. versionadded:: 1.7
-        .. versionadded:: 1.9
+        .. versionchanged:: 1.9
            `multiclass_colors` is now also used when `response_method="predict"`
 
     xlabel : str, default=None
