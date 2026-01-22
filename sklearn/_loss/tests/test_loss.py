@@ -29,6 +29,7 @@ from sklearn._loss.loss import (
     HalfTweedieLossIdentity,
     HuberLoss,
     PinballLoss,
+    _log1pexp,
 )
 from sklearn.utils import assert_all_finite
 from sklearn.utils._array_api import (
@@ -1463,3 +1464,31 @@ def test_loss_array_api(
                     xp=xp,
                     atol=atol,
                 )
+
+
+@pytest.mark.parametrize(
+    "namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_log1pexp(namespace, device_, dtype_name):
+    mpmath = pytest.importorskip("mpmath")
+    mpmath.mp.prec = 53
+    values_to_test = [-38, -18, -3, -2, -1, 8, 13, 17, 34]
+    xp = _array_api_for_tests(namespace, device_)
+    for value in values_to_test:
+        if dtype_name == "float32":
+            x = xp.asarray(value, dtype=xp.float32, device=device_)
+        else:
+            x = xp.asarray(value, dtype=xp.float64, device=device_)
+
+        result_xp = float(
+            _log1pexp(
+                raw_prediction=x,
+                raw_prediction_exp=xp.exp(x),
+                neg_raw_prediction_exp=xp.exp(-x),
+                xp=xp,
+            )
+        )
+        result_mpmath = float(mpmath.log(1 + mpmath.exp(value)))
+        assert result_xp == pytest.approx(result_mpmath)
