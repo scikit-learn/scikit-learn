@@ -12,6 +12,7 @@ from numbers import Integral
 import numpy as np
 from scipy import linalg, sparse
 
+from sklearn.externals import array_api_extra as xpx
 from sklearn.utils._array_api import (
     _average,
     _is_numpy_namespace,
@@ -1254,9 +1255,9 @@ def _incremental_mean_and_var(
             )
 
         zeros = last_sample_count == 0
-        updated_unnormalized_variance = xp.at(updated_unnormalized_variance, zeros).set(
-            new_unnormalized_variance
-        )
+        updated_unnormalized_variance = xpx.at(
+            updated_unnormalized_variance, zeros
+        ).set(new_unnormalized_variance)
         updated_variance = updated_unnormalized_variance / updated_sample_count
 
     return updated_mean, updated_variance, updated_sample_count

@@ -962,7 +962,7 @@ def _assemble_fraction_of_explained_deviance(
 
         # Non-zero Numerator and Zero Denominator:
         # arbitrary set to 0.0 to avoid -inf scores
-        output_scores = xp.at(
+        output_scores = xpx.at(
             output_scores, nonzero_numerator & ~nonzero_denominator
         ).set(0.0)
 
