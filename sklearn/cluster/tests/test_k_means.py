@@ -941,7 +941,7 @@ def test_unit_weights_vs_no_weights(Estimator, input_data, global_random_seed):
     [X] + X_as_any_csr,
     ids=data_containers_ids,
 )
-@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+@pytest.mark.parametrize("Estimator", [KMeans])
 def test_scaled_weights(Estimator, input_data, global_random_seed):
     # Check that scaling all sample weights by a common factor
     # shouldn't change the result

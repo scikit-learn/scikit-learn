@@ -17,7 +17,25 @@ from sklearn.base import (
     TransformerMixin,
     _fit_context,
 )
-from sklearn.cluster._k_means_common import (
+from ..exceptions import ConvergenceWarning
+from ..metrics.pairwise import _euclidean_distances, euclidean_distances
+from ..utils import check_array, check_random_state
+from ..utils._openmp_helpers import _openmp_effective_n_threads
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.extmath import row_norms, stable_cumsum
+from ..utils.parallel import (
+    _get_threadpool_controller,
+    _threadpool_controller_decorator,
+)
+from ..utils.sparsefuncs import mean_variance_axis
+from ..utils.sparsefuncs_fast import assign_rows_csr
+from ..utils.validation import (
+    _check_sample_weight,
+    _is_arraylike_not_scalar,
+    check_is_fitted,
+    validate_data,
+)
+from ._k_means_common import (
     CHUNK_SIZE,
     _inertia_dense,
     _inertia_sparse,
@@ -2155,12 +2173,8 @@ class MiniBatchKMeans(_BaseKMeans):
         self._n_since_last_reassign = 0
 
         n_effective_samples = np.sum(sample_weight)
-        scaling_factor = 1
         # Rescaling step for sample weights otherwise doesn not pass test_scaled_weights
-        scaling_factor = MinMaxScaler().fit(sample_weight.reshape(-1, 1)).scale_[0]
-        n_steps = int((self.max_iter * n_effective_samples * scaling_factor)) // (
-            self._batch_size
-        )
+        n_steps = int((self.max_iter * n_effective_samples)) // (self._batch_size)
         normalized_sample_weight = sample_weight / np.sum(sample_weight)
         unit_sample_weight = np.ones_like(sample_weight, shape=(self._batch_size,))
         with _get_threadpool_controller().limit(limits=1, user_api="blas"):
