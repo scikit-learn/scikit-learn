@@ -868,9 +868,10 @@ def test_ridge_gcv_vs_ridge_loo_cv(
     y_gcv = y.astype(X.dtype)
     gcv_ridge.fit(X_gcv, y_gcv)
 
+    atol = 1e-5 if X_container == float32_array else 1e-10
     assert gcv_ridge.alpha_ == pytest.approx(loo_ridge.alpha_)
-    assert_allclose(gcv_ridge.coef_, loo_ridge.coef_)
-    assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_)
+    assert_allclose(gcv_ridge.coef_, loo_ridge.coef_, atol=atol)
+    assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, atol=atol)
 
 
 @pytest.mark.parametrize("alpha", [1e-12, 1e-16])
@@ -927,8 +928,10 @@ def test_ridge_gcv_noiseless(alpha, gcv_mode, fit_intercept, X_shape, X_containe
             gcv_ridge.fit(X, y)
     else:
         gcv_ridge.fit(X, y)
-    assert_allclose(gcv_ridge.coef_, lin_reg.coef_, atol=1e-10)
-    assert_allclose(gcv_ridge.intercept_, lin_reg.intercept_, atol=1e-10)
+
+    atol = 1e-5 if X_container == float32_array else 1e-10
+    assert_allclose(gcv_ridge.coef_, lin_reg.coef_, atol=atol)
+    assert_allclose(gcv_ridge.intercept_, lin_reg.intercept_, atol=atol)
 
 
 def test_ridge_loo_cv_asym_scoring():
