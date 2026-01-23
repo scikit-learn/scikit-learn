@@ -156,7 +156,7 @@ for classifier_idx, (name, classifier) in enumerate(classifiers.items()):
         levels=levels,
     )
     for label in y_unique:
-        mask_label = y_test==label
+        mask_label = y_test == label
         max_col = len(y_unique)
         axes[classifier_idx, max_col].scatter(
             X_test[mask_label, 0],
