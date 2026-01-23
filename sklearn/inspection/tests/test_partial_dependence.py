@@ -453,8 +453,9 @@ def test_recursion_decision_tree_vs_forest_and_gbdt(seed):
 @pytest.mark.parametrize("target_feature", (0, 1, 2, 3, 4, 5))
 def test_recursion_decision_function(est, target_feature):
     # Make sure the recursion method (implicitly uses decision_function) has
-    # the same result as using brute method with
+    # the same result as using brute method with classifiers and
     # response_method=decision_function
+    # GH27441: For regressors, the results returned by two methods are different
 
     X, y = make_classification(n_classes=2, n_clusters_per_class=1, random_state=1)
     assert np.mean(y) == 0.5  # make sure the init estimator predicts 0 anyway
