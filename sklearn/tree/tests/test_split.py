@@ -226,8 +226,8 @@ def test_split_impurity(Tree, criterion, sparse, missing_values, global_random_s
         if "Extra" in Tree.__name__:
             # The remainder of the test checks for optimality of the found split.
             # However, randomized trees are not guaranteed to find an optimal split
-            # but only a "better-than-nothing" split. Therefore, end the test here
-            # for this combination of model type and dataset.
+            # but only a "better-than-nothing" split.
+            # Therefore, end the test here for these models.
             continue
 
         # Check that the selected split has the same impurity as the best split
