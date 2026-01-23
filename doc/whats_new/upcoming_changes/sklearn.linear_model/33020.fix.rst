@@ -3,8 +3,5 @@
   regime for all `gcv_mode` options. The default `auto` option is now equivalent
   to `eigen` and picks the cheaper option: eigendecomposition of the covariance
   (resp Gram) matrix when `n_features <= n_samples` (resp `n_samples >
-  n_features`). Furthermore, the `float32` data is no longer upcast to
-  `float64` when fitting :class:`linear_model.RidgeCV` as this is no longer
-  needed. Users wanting to retain the previous behavior can manually upcast
-  their data to `float64` before fitting.
+  n_features`).
   By :user:`Antoine Baker <antoinebaker>`
