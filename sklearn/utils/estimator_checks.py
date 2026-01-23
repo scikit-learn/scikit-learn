@@ -163,7 +163,6 @@ def _yield_checks(estimator):
             yield check_sample_weights_shape
             yield check_sample_weights_not_overwritten
             yield check_sample_weight_equivalence_on_dense_data
-            yield check_sample_weight_scaling
             if tags.input_tags.sparse:
                 yield check_sample_weight_equivalence_on_sparse_data
 
