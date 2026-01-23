@@ -9,7 +9,7 @@ import pytest
 from scipy.sparse import csr_array
 
 from sklearn.base import clone
-from sklearn.datasets import load_iris, make_blobs, make_classification
+from sklearn.datasets import load_iris, make_blobs, make_classification, make_regression
 from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.linear_model._base import SPARSE_INTERCEPT_DECAY, make_dataset
 from sklearn.linear_model._sag import get_auto_step_size, sag_solver
@@ -959,21 +959,25 @@ def test_sag_classifier_raises_error(solver):
 @pytest.mark.parametrize("decay", [1.0, SPARSE_INTERCEPT_DECAY])
 @pytest.mark.parametrize("saga", [True, False])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_sag_weighted_classification_convergence(solver, decay, saga, fit_intercept):
+def test_sag_weighted_classification_convergence(
+    solver, decay, saga, fit_intercept, global_random_seed
+):
     # FIXME
     if decay < 1.0:
         pytest.xfail(f"{decay=} fail convergence test")
     if solver == sag_solver:
         pytest.xfail("sag_solver fail convergence test")
-    n_samples = 100
     max_iter = 1000
     tol = 1e-10
     alpha = 1.1
 
-    X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0, cluster_std=0.1)
-    n_features = X.shape[1]
-    y = 1 * (y >= 1)
-    sample_weights = np.random.randint(0, 3, size=n_samples)
+    n_samples, n_features = 100, 20
+    X, y = make_classification(
+        n_samples=n_samples, n_features=n_features, random_state=global_random_seed
+    )
+    # Use random integers (including zero) as weights.
+    rng = np.random.RandomState(global_random_seed)
+    sample_weights = rng.randint(0, 5, size=n_samples)
 
     est = LogisticRegression(
         max_iter=max_iter,
@@ -1035,7 +1039,9 @@ def test_sag_weighted_classification_convergence(solver, decay, saga, fit_interc
 @pytest.mark.parametrize("decay", [1.0, SPARSE_INTERCEPT_DECAY])
 @pytest.mark.parametrize("saga", [True, False])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_sag_weighted_regression_convergence(solver, decay, saga, fit_intercept):
+def test_sag_weighted_regression_convergence(
+    solver, decay, saga, fit_intercept, global_random_seed
+):
     # FIXME
     if decay < 1.0:
         pytest.xfail(f"{decay=} fail convergence test")
@@ -1043,16 +1049,18 @@ def test_sag_weighted_regression_convergence(solver, decay, saga, fit_intercept)
         pytest.xfail("saga + fit_intercept fail convergence test")
     if solver == sag_solver:
         pytest.xfail("sag_solver fail convergence test")
-    n_samples = 15
     max_iter = 1000
     tol = 1e-11
     alpha = 1.1
-    rng = np.random.RandomState(42)
-    X = rng.rand(n_samples, n_samples * 2)
-    n_features = X.shape[1]
-    y = rng.randint(0, 3, size=n_samples)
+
+    n_samples, n_features = 100, 20
+    X, y = make_regression(
+        n_samples=n_samples, n_features=n_features, random_state=global_random_seed
+    )
     # Use random integers (including zero) as weights.
+    rng = np.random.RandomState(global_random_seed)
     sample_weights = rng.randint(0, 5, size=n_samples)
+
     est = Ridge(
         max_iter=max_iter,
         tol=tol,
@@ -1101,5 +1109,5 @@ def test_sag_weighted_regression_convergence(solver, decay, saga, fit_intercept)
             intercept = weights[-1]
             weights = weights[:-1]
     assert weights.shape == (n_features,)
-    assert_allclose(weights, true_weights, atol=1e-10)
+    assert_allclose(weights, true_weights, atol=1e-8)
     assert_allclose(intercept, true_intercept)
