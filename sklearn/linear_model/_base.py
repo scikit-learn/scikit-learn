@@ -699,7 +699,16 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 self.coef_ = np.vstack([out[0] for out in outs])
         else:
             # cut-off ratio for small singular values
-            cond = max(X.shape) * np.finfo(X.dtype).eps
+            if X.dtype == np.float32:
+                # For float32, we use None to allow scipy to use its machine-precision
+                # default, which is more robust for large datasets.
+                # See https://github.com/scikit-learn/scikit-learn/issues/33032
+                cond = None
+            else:
+                # For float64, we maintain the existing formula to ensure
+                # consistency with historical sample weight tests.
+                cond = max(X.shape) * np.finfo(X.dtype).eps
+            
             self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y, cond=cond)
             self.coef_ = self.coef_.T
 
