@@ -175,7 +175,7 @@ jobs:
             COVERAGE: false
             SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 1  # non-default seed
 
-          - name: Linux_Nightly pylatest_pip_scipy_dev
+          - name: Linux pylatest_pip_scipy_dev
             os: ubuntu-22.04
             DISTRIB: conda-pip-scipy-dev
             LOCK_FILE: build_tools/azure/pylatest_pip_scipy_dev_linux-64_conda.lock
