@@ -37,43 +37,50 @@ class NaiveSplitter:
     criterion: str
     n_classes: int = 0
 
-    def compute_node_impurity(self, y, w):
+    def compute_node_value_and_impurity(self, y, w):
         sum_weights = np.sum(w)
         if sum_weights < 1e-7:
-            return np.inf  # invalid split
+            return np.nan, np.inf  # invalid split
         if self.criterion in ["gini", "entropy", "log_loss"]:
-            p = np.bincount(y, weights=w, minlength=self.n_classes) / sum_weights
+            pred = np.bincount(y, weights=w, minlength=self.n_classes) / sum_weights
             if self.criterion == "gini":
                 # 1 - sum(pk^2)
-                loss = 1.0 - np.sum(p**2)
+                loss = 1.0 - np.sum(pred**2)
             else:
                 # -sum(pk * log2(pk))
-                loss = -np.sum(xlogy(p, p)) / np.log(2)
+                loss = -np.sum(xlogy(pred, pred)) / np.log(2)
         elif self.criterion == "squared_error":
-            mean_y = np.average(y, weights=w)
-            loss = np.average((y - mean_y) ** 2, weights=w)
+            pred = np.average(y, weights=w)
+            loss = np.average((y - pred) ** 2, weights=w)
         elif self.criterion == "absolute_error":
-            median = _weighted_percentile(y, w, percentile_rank=50, average=True)
-            loss = np.average(np.abs(y - median), weights=w)
+            pred = _weighted_percentile(
+                y[w > 0], w[w > 0], percentile_rank=50, average=True
+            )
+            loss = np.average(np.abs(y - pred), weights=w)
         elif self.criterion == "poisson":
-            mean_y = np.average(y, weights=w)
-            loss = mean_poisson_deviance(y, np.repeat(mean_y, y.size), sample_weight=w)
+            pred = np.average(y, weights=w)
+            loss = mean_poisson_deviance(y, np.repeat(pred, y.size), sample_weight=w)
             loss *= 1 / 2
         else:
             raise ValueError(f"Unknown criterion: {self.criterion}")
-        return loss * sum_weights
+        return pred, loss * sum_weights
 
-    def compute_split_impurity(
-        self, X, y, w, feature, threshold=None, missing_left=False
-    ):
+    def compute_split_nodes(self, X, y, w, feature, threshold=None, missing_left=False):
         x = X[:, feature]
         go_left = x <= threshold
         if missing_left:
             go_left |= np.isnan(x)
         return (
-            self.compute_node_impurity(y[go_left], w[go_left]),
-            self.compute_node_impurity(y[~go_left], w[~go_left]),
+            self.compute_node_value_and_impurity(y[go_left], w[go_left]),
+            self.compute_node_value_and_impurity(y[~go_left], w[~go_left]),
         )
+
+    def compute_split_impurity(
+        self, X, y, w, feature, threshold=None, missing_left=False
+    ):
+        nodes = self.compute_split_nodes(X, y, w, feature, threshold, missing_left)
+        (_, left_impurity), (_, right_impurity) = nodes
+        return left_impurity + right_impurity
 
     def _generate_all_splits(self, X):
         for f in range(X.shape[1]):
@@ -102,7 +109,7 @@ class NaiveSplitter:
             return (np.inf, None)
 
         split_impurities = [
-            sum(self.compute_split_impurity(X, y, w, **split)) for split in splits
+            self.compute_split_impurity(X, y, w, **split) for split in splits
         ]
 
         return min(zip(split_impurities, splits), key=itemgetter(0))
@@ -185,11 +192,13 @@ def test_split_impurity(Tree, criterion, sparse, missing_values, global_random_s
         )
         tree.fit(X, y, sample_weight=w)
         actual_impurity = tree.tree_.impurity * tree.tree_.weighted_n_node_samples
+        actual_value = tree.tree_.value[:, 0]
 
         # Check root's impurity:
         # The root is 0, left child is 1 and right child is 2.
-        root_impurity = naive_splitter.compute_node_impurity(y, w)
+        root_val, root_impurity = naive_splitter.compute_node_value_and_impurity(y, w)
         assert_allclose(root_impurity, actual_impurity[0], atol=1e-12)
+        assert_allclose(root_val, actual_value[0], atol=1e-12)
 
         if tree.tree_.node_count == 1:
             # if no splits was made assert that either:
@@ -203,14 +212,16 @@ def test_split_impurity(Tree, criterion, sparse, missing_values, global_random_s
 
         # Check children impurity:
         actual_split = {
-            "feature": tree.tree_.feature[0],
+            "feature": int(tree.tree_.feature[0]),
             "threshold": tree.tree_.threshold[0],
             "missing_left": bool(tree.tree_.missing_go_to_left[0]),
         }
-        left_right_impurity = naive_splitter.compute_split_impurity(
-            X_dense, y, w, **actual_split
-        )
-        assert_allclose(left_right_impurity, actual_impurity[1:], atol=1e-12)
+        nodes = naive_splitter.compute_split_nodes(X_dense, y, w, **actual_split)
+        (left_val, left_impurity), (right_val, right_impurity) = nodes
+        assert_allclose(left_impurity, actual_impurity[1], atol=1e-12)
+        assert_allclose(right_impurity, actual_impurity[2], atol=1e-12)
+        assert_allclose(left_val, actual_value[1], atol=1e-12)
+        assert_allclose(right_val, actual_value[2], atol=1e-12)
 
         if "Extra" in Tree.__name__:
             # The remainder of the test checks for optimality of the found split.
