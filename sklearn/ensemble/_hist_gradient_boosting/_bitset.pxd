@@ -1,8 +1,8 @@
-from .common cimport X_BINNED_DTYPE_C
-from .common cimport BITSET_DTYPE_C
-from .common cimport BITSET_INNER_DTYPE_C
-from .common cimport X_DTYPE_C
-from ...utils._typedefs cimport uint8_t
+from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
+from sklearn.ensemble._hist_gradient_boosting.common cimport BITSET_DTYPE_C
+from sklearn.ensemble._hist_gradient_boosting.common cimport BITSET_INNER_DTYPE_C
+from sklearn.ensemble._hist_gradient_boosting.common cimport X_DTYPE_C
+from sklearn.utils._typedefs cimport uint8_t
 
 
 cdef void init_bitset(BITSET_DTYPE_C bitset) noexcept nogil

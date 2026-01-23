@@ -156,7 +156,11 @@ def test_display_curve_estimator_name_multiple_calls(
         disp = Display.from_estimator(clf, X, y, name=clf_name)
     else:
         disp = Display.from_predictions(y, y_pred, name=clf_name)
-    assert disp.estimator_name == clf_name
+    # TODO: Clean-up once `estimator_name` deprecated in all displays
+    if Display in (PrecisionRecallDisplay, RocCurveDisplay):
+        assert disp.name == clf_name
+    else:
+        assert disp.estimator_name == clf_name
     pyplot.close("all")
     disp.plot()
     assert clf_name in disp.line_.get_label()
@@ -179,7 +183,7 @@ def test_display_curve_estimator_name_multiple_calls(
 @pytest.mark.parametrize(
     "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
 )
-def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
+def test_display_curve_not_fitted_errors_old_name(pyplot, data_binary, clf, Display):
     """Check that a proper error is raised when the classifier is not
     fitted."""
     X, y = data_binary
@@ -191,7 +195,36 @@ def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
     model.fit(X, y)
     disp = Display.from_estimator(model, X, y)
     assert model.__class__.__name__ in disp.line_.get_label()
-    assert disp.estimator_name == model.__class__.__name__
+    # TODO: Clean-up once `estimator_name` deprecated in all displays
+    if Display in (PrecisionRecallDisplay, RocCurveDisplay):
+        assert disp.name == model.__class__.__name__
+    else:
+        assert disp.estimator_name == model.__class__.__name__
+
+
+@pytest.mark.parametrize(
+    "clf",
+    [
+        LogisticRegression(),
+        make_pipeline(StandardScaler(), LogisticRegression()),
+        make_pipeline(
+            make_column_transformer((StandardScaler(), [0, 1])), LogisticRegression()
+        ),
+    ],
+)
+@pytest.mark.parametrize("Display", [RocCurveDisplay])
+def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
+    """Check that a proper error is raised when the classifier is not fitted."""
+    X, y = data_binary
+    # clone since we parametrize the test and the classifier will be fitted
+    # when testing the second and subsequent plotting function
+    model = clone(clf)
+    with pytest.raises(NotFittedError):
+        Display.from_estimator(model, X, y)
+    model.fit(X, y)
+    disp = Display.from_estimator(model, X, y)
+    assert model.__class__.__name__ in disp.line_.get_label()
+    assert disp.name == model.__class__.__name__
 
 
 @pytest.mark.parametrize(
@@ -267,3 +300,22 @@ def test_classifier_display_curve_named_constructor_return_type(
         curve = SubclassOfDisplay.from_estimator(classifier, X, y)
 
     assert isinstance(curve, SubclassOfDisplay)
+
+
+# TODO(1.10): Remove once deprecated in all Displays
+@pytest.mark.parametrize(
+    "Display, display_kwargs",
+    [
+        # TODO(1.10): Remove
+        (
+            PrecisionRecallDisplay,
+            {"precision": np.array([1, 0.5, 0]), "recall": np.array([0, 0.5, 1])},
+        ),
+        # TODO(1.9): Remove
+        (RocCurveDisplay, {"fpr": np.array([0, 0.5, 1]), "tpr": np.array([0, 0.5, 1])}),
+    ],
+)
+def test_display_estimator_name_deprecation(pyplot, Display, display_kwargs):
+    """Check deprecation of `estimator_name`."""
+    with pytest.warns(FutureWarning, match="`estimator_name` is deprecated in"):
+        Display(**display_kwargs, estimator_name="test")

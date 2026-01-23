@@ -28,6 +28,9 @@ def test_array_object_type(BinarySearchTree):
         BinarySearchTree(X)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize("BinarySearchTree", KD_TREE_CLASSES)
 def test_kdtree_picklable_with_joblib(BinarySearchTree):
     """Make sure that KDTree queries work when joblib memmaps.

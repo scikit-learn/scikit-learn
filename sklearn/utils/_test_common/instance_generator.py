@@ -3,10 +3,13 @@
 
 
 import re
+import sys
 import warnings
 from contextlib import suppress
 from functools import partial
 from inspect import isfunction
+
+import numpy as np
 
 from sklearn import clone, config_context
 from sklearn.calibration import CalibratedClassifierCV
@@ -43,7 +46,10 @@ from sklearn.decomposition import (
     SparsePCA,
     TruncatedSVD,
 )
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.discriminant_analysis import (
+    LinearDiscriminantAnalysis,
+    QuadraticDiscriminantAnalysis,
+)
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import (
     AdaBoostClassifier,
@@ -66,7 +72,7 @@ from sklearn.ensemble import (
     VotingRegressor,
 )
 from sklearn.exceptions import SkipTestWarning
-from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.feature_selection import (
     RFE,
     RFECV,
@@ -76,6 +82,7 @@ from sklearn.feature_selection import (
     SequentialFeatureSelector,
 )
 from sklearn.frozen import FrozenEstimator
+from sklearn.impute import SimpleImputer
 from sklearn.kernel_approximation import (
     Nystroem,
     PolynomialCountSketch,
@@ -144,7 +151,6 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
-from sklearn.naive_bayes import CategoricalNB
 from sklearn.neighbors import (
     KernelDensity,
     KNeighborsClassifier,
@@ -162,10 +168,7 @@ from sklearn.preprocessing import (
     StandardScaler,
     TargetEncoder,
 )
-from sklearn.random_projection import (
-    GaussianRandomProjection,
-    SparseRandomProjection,
-)
+from sklearn.random_projection import GaussianRandomProjection, SparseRandomProjection
 from sklearn.semi_supervised import (
     LabelPropagation,
     LabelSpreading,
@@ -176,9 +179,11 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import all_estimators
 from sklearn.utils._tags import get_tags
 from sklearn.utils._testing import SkipTest
-from sklearn.utils.fixes import parse_version, sp_base_version
+from sklearn.utils.fixes import _IS_32BIT, parse_version, sp_base_version
 
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
+
+rng = np.random.RandomState(0)
 
 # The following dictionary is to indicate constructor arguments suitable for the test
 # suite, which uses very small datasets, and is intended to run rather quickly.
@@ -344,7 +349,7 @@ INIT_PARAMS = {
     LinearSVC: dict(max_iter=20),
     LinearSVR: dict(max_iter=20),
     LocallyLinearEmbedding: dict(max_iter=5),
-    LogisticRegressionCV: dict(max_iter=5, cv=3),
+    LogisticRegressionCV: dict(max_iter=5, cv=3, use_legacy_attributes=False),
     LogisticRegression: dict(max_iter=5),
     MDS: dict(n_init=2, max_iter=5),
     # In the case of check_fit2d_1sample, bandwidth is set to None and
@@ -444,6 +449,7 @@ INIT_PARAMS = {
     SGDClassifier: dict(max_iter=5),
     SGDOneClassSVM: dict(max_iter=5),
     SGDRegressor: dict(max_iter=5),
+    SparseCoder: dict(dictionary=rng.normal(size=(5, 3))),
     SparsePCA: dict(max_iter=5),
     # Due to the jl lemma and often very few samples, the number
     # of components of the random matrix projection will be probably
@@ -509,13 +515,11 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         "check_sample_weight_equivalence_on_dense_data": [
             dict(criterion="squared_error"),
             dict(criterion="absolute_error"),
-            dict(criterion="friedman_mse"),
             dict(criterion="poisson"),
         ],
         "check_sample_weight_equivalence_on_sparse_data": [
             dict(criterion="squared_error"),
             dict(criterion="absolute_error"),
-            dict(criterion="friedman_mse"),
             dict(criterion="poisson"),
         ],
     },
@@ -557,11 +561,16 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="lbfgs"),
         ],
     },
-    GaussianMixture: {"check_dict_unchanged": dict(max_iter=5, n_init=2)},
+    GaussianMixture: {
+        "check_dict_unchanged": dict(max_iter=5, n_init=2),
+        "check_array_api_input": dict(
+            max_iter=5, n_init=2, init_params="random_from_data"
+        ),
+    },
     GaussianRandomProjection: {"check_dict_unchanged": dict(n_components=1)},
+    GraphicalLasso: {"check_array_api_input": dict(max_iter=5, alpha=1.0)},
     IncrementalPCA: {"check_dict_unchanged": dict(batch_size=10, n_components=1)},
     Isomap: {"check_dict_unchanged": dict(n_components=1)},
-    KMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
     # TODO(1.9) simplify when averaged_inverted_cdf is the default
     KBinsDiscretizer: {
         "check_sample_weight_equivalence_on_dense_data": [
@@ -593,7 +602,11 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             strategy="quantile", quantile_method="averaged_inverted_cdf"
         ),
     },
-    KernelPCA: {"check_dict_unchanged": dict(n_components=1)},
+    KernelPCA: {
+        "check_dict_unchanged": dict(n_components=1),
+        "check_array_api_input": dict(fit_inverse_transform=True),
+    },
+    KMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
     LassoLars: {"check_non_transformer_estimators_n_iter": dict(alpha=0.0)},
     LatentDirichletAllocation: {
         "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
@@ -630,9 +643,13 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     },
     LogisticRegressionCV: {
         "check_sample_weight_equivalence": [
-            dict(solver="lbfgs"),
-            dict(solver="newton-cholesky"),
-            dict(solver="newton-cholesky", class_weight="balanced"),
+            dict(solver="lbfgs", use_legacy_attributes=False),
+            dict(solver="newton-cholesky", use_legacy_attributes=False),
+            dict(
+                solver="newton-cholesky",
+                class_weight="balanced",
+                use_legacy_attributes=False,
+            ),
         ],
         "check_sample_weight_equivalence_on_sparse_data": [
             dict(solver="liblinear"),
@@ -687,6 +704,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="highs-ipm"),
         ],
     },
+    QuadraticDiscriminantAnalysis: {"check_array_api_input": dict(reg_param=1.0)},
     RBFSampler: {"check_dict_unchanged": dict(n_components=1)},
     Ridge: {
         "check_sample_weight_equivalence_on_dense_data": [
@@ -714,6 +732,40 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         ],
     },
     SkewedChi2Sampler: {"check_dict_unchanged": dict(n_components=1)},
+    SimpleImputer: {"check_array_api_input": dict(add_indicator=True)},
+    SparseCoder: {
+        "check_array_api_input": dict(dictionary=rng.normal(size=(5, 10))),
+        "check_estimators_dtypes": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_dtype_object": dict(dictionary=rng.normal(size=(5, 10))),
+        "check_transformers_unfitted_stateless": dict(
+            dictionary=rng.normal(size=(5, 5))
+        ),
+        "check_fit_idempotent": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_transformer_preserve_dtypes": dict(
+            dictionary=rng.normal(size=(5, 3)).astype(np.float32)
+        ),
+        "check_set_output_transform": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_global_output_transform_pandas": dict(
+            dictionary=rng.normal(size=(5, 5))
+        ),
+        "check_set_output_transform_pandas": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_set_output_transform_polars": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_global_set_output_transform_polars": dict(
+            dictionary=rng.normal(size=(5, 5))
+        ),
+        "check_dataframe_column_names_consistency": dict(
+            dictionary=rng.normal(size=(5, 8))
+        ),
+        "check_estimators_overwrite_params": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_estimators_fit_returns_self": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_readonly_memmap_input": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_n_features_in_after_fitting": dict(dictionary=rng.normal(size=(5, 4))),
+        "check_fit_check_is_fitted": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_n_features_in": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_positive_only_tag_during_fit": dict(dictionary=rng.normal(size=(5, 4))),
+        "check_fit2d_1sample": dict(dictionary=rng.normal(size=(5, 10))),
+        "check_fit2d_1feature": dict(dictionary=rng.normal(size=(5, 1))),
+    },
     SparsePCA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     SparseRandomProjection: {"check_dict_unchanged": dict(n_components=1)},
     SpectralBiclustering: {
@@ -751,7 +803,7 @@ def _tested_estimators(type_filter=None):
                 yield estimator
 
 
-SKIPPED_ESTIMATORS = [SparseCoder, FrozenEstimator]
+SKIPPED_ESTIMATORS = [FrozenEstimator]
 
 
 def _construct_instances(Estimator):
@@ -898,15 +950,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
-    CategoricalNB: {
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
-        "check_sample_weight_equivalence_on_dense_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-    },
     ColumnTransformer: {
         "check_estimators_empty_data_messages": "FIXME",
         "check_estimators_nan_inf": "FIXME",
@@ -961,8 +1004,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     HalvingGridSearchCV: {
         "check_fit2d_1sample": (
-            "Fail during parameter check since min/max resources requires"
-            " more samples"
+            "Fail during parameter check since min/max resources requires more samples"
         ),
         "check_estimators_nan_inf": "FIXME",
         "check_classifiers_one_label_sample_weights": "FIXME",
@@ -972,8 +1014,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     HalvingRandomSearchCV: {
         "check_fit2d_1sample": (
-            "Fail during parameter check since min/max resources requires"
-            " more samples"
+            "Fail during parameter check since min/max resources requires more samples"
         ),
         "check_estimators_nan_inf": "FIXME",
         "check_classifiers_one_label_sample_weights": "FIXME",
@@ -1132,6 +1173,10 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
+        # TODO: error raised by all zero sample weights will be addressed by PR #31529
+        "check_classifiers_one_label_sample_weights": (
+            "failed when fitted on one label after sample_weight trimming."
+        ),
     },
     RandomForestRegressor: {
         # TODO: replace by a statistical test, see meta-issue #16298
@@ -1266,6 +1311,17 @@ if sp_base_version < parse_version("1.11"):
         ),
     }
 
+linear_svr_not_thread_safe = "LinearSVR is not thread-safe https://github.com/scikit-learn/scikit-learn/issues/31883"
+if "pytest_run_parallel" in sys.modules:
+    PER_ESTIMATOR_XFAIL_CHECKS[LinearSVR] = {
+        "check_supervised_y_2d": linear_svr_not_thread_safe,
+        "check_regressors_int": linear_svr_not_thread_safe,
+        "check_fit_idempotent": linear_svr_not_thread_safe,
+        "check_sample_weight_equivalence_on_dense_data": linear_svr_not_thread_safe,
+        "check_sample_weight_equivalence_on_sparse_data": linear_svr_not_thread_safe,
+        "check_regressor_data_not_an_array": linear_svr_not_thread_safe,
+    }
+
 
 def _get_expected_failed_checks(estimator):
     """Get the expected failed checks for all estimators in scikit-learn."""
@@ -1281,6 +1337,24 @@ def _get_expected_failed_checks(estimator):
                 {
                     "check_n_features_in_after_fitting": "FIXME",
                     "check_dataframe_column_names_consistency": "FIXME",
+                }
+            )
+    if type(estimator) == LinearRegression:
+        # TODO: remove when scipy min version >= 1.16
+        # Regression introduced in scipy 1.15 and fixed in 1.16, see
+        # https://github.com/scipy/scipy/issues/22791
+        if (
+            parse_version("1.15.0") <= sp_base_version < parse_version("1.16")
+            and _IS_32BIT
+        ):
+            failed_checks.update(
+                {
+                    "check_sample_weight_equivalence_on_dense_data": (
+                        "Issue #31098. Fails on 32-bit platforms with recent scipy."
+                    ),
+                    "check_sample_weight_equivalence_on_sparse_data": (
+                        "Issue #31098. Fails on 32-bit platforms with recent scipy."
+                    ),
                 }
             )
 

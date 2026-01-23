@@ -13,7 +13,7 @@ from libc.stdlib cimport malloc, free
 from libc.time cimport clock, clock_t
 from cython.parallel cimport prange, parallel
 
-from ..neighbors._quad_tree cimport _QuadTree
+from sklearn.neighbors._quad_tree cimport _QuadTree
 
 cnp.import_array()
 

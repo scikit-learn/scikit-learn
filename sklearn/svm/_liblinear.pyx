@@ -6,8 +6,8 @@ Author: fabian.pedregosa@inria.fr
 
 import  numpy as np
 
-from ..utils._cython_blas cimport _dot, _axpy, _scal, _nrm2
-from ..utils._typedefs cimport float32_t, float64_t, int32_t
+from sklearn.utils._cython_blas cimport _dot, _axpy, _scal, _nrm2
+from sklearn.utils._typedefs cimport float32_t, float64_t, int32_t
 
 include "_liblinear.pxi"
 

@@ -6,7 +6,6 @@ functions to validate the model.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import numbers
 import time
 import warnings
@@ -20,68 +19,45 @@ import numpy as np
 import scipy.sparse as sp
 from joblib import logger
 
-from ..base import clone, is_classifier
-from ..exceptions import FitFailedWarning, UnsetMetadataPassedError
-from ..metrics import check_scoring, get_scorer_names
-from ..metrics._scorer import _MultimetricScorer
-from ..preprocessing import LabelEncoder
-from ..utils import Bunch, _safe_indexing, check_random_state, indexable
-from ..utils._array_api import device, get_namespace
-from ..utils._param_validation import (
+from sklearn.base import clone, is_classifier
+from sklearn.exceptions import FitFailedWarning, UnsetMetadataPassedError
+from sklearn.metrics import check_scoring, get_scorer_names
+from sklearn.metrics._scorer import _MultimetricScorer
+from sklearn.model_selection._split import check_cv
+from sklearn.preprocessing import LabelEncoder
+from sklearn.utils import Bunch, _safe_indexing, check_random_state, indexable
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    device,
+    get_namespace,
+    get_namespace_and_device,
+    move_to,
+)
+from sklearn.utils._param_validation import (
     HasMethods,
     Integral,
     Interval,
     StrOptions,
     validate_params,
 )
-from ..utils.metadata_routing import (
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _routing_enabled,
     process_routing,
 )
-from ..utils.metaestimators import _safe_split
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _check_method_params, _num_samples
-from ._split import check_cv
+from sklearn.utils.metaestimators import _safe_split
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import _check_method_params, _num_samples
 
 __all__ = [
-    "cross_validate",
-    "cross_val_score",
     "cross_val_predict",
-    "permutation_test_score",
+    "cross_val_score",
+    "cross_validate",
     "learning_curve",
+    "permutation_test_score",
     "validation_curve",
 ]
-
-
-def _check_params_groups_deprecation(fit_params, params, groups, version):
-    """A helper function to check deprecations on `groups` and `fit_params`.
-
-    # TODO(SLEP6): To be removed when set_config(enable_metadata_routing=False) is not
-    # possible.
-    """
-    if params is not None and fit_params is not None:
-        raise ValueError(
-            "`params` and `fit_params` cannot both be provided. Pass parameters "
-            "via `params`. `fit_params` is deprecated and will be removed in "
-            f"version {version}."
-        )
-    elif fit_params is not None:
-        warnings.warn(
-            (
-                "`fit_params` is deprecated and will be removed in version {version}. "
-                "Pass parameters via `params` instead."
-            ),
-            FutureWarning,
-        )
-        params = fit_params
-
-    params = {} if params is None else params
-
-    _check_groups_routing_disabled(groups)
-
-    return params
 
 
 # TODO(SLEP6): To be removed when set_config(enable_metadata_routing=False) is not
@@ -194,7 +170,7 @@ def cross_validate(
         - None, to use the default 5-fold cross validation,
         - int, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -287,8 +263,8 @@ def cross_validate(
             set for each cv split.
         ``score_time``
             The time for scoring the estimator on the test set for each
-            cv split. (Note time for scoring on the train set is not
-            included even if ``return_train_score`` is set to ``True``
+            cv split. (Note: time for scoring on the train set is not
+            included even if ``return_train_score`` is set to ``True``).
         ``estimator``
             The estimator objects for each cv split.
             This is available only if ``return_estimator`` parameter
@@ -313,9 +289,6 @@ def cross_validate(
     --------
     >>> from sklearn import datasets, linear_model
     >>> from sklearn.model_selection import cross_validate
-    >>> from sklearn.metrics import make_scorer
-    >>> from sklearn.metrics import confusion_matrix
-    >>> from sklearn.svm import LinearSVC
     >>> diabetes = datasets.load_diabetes()
     >>> X = diabetes.data[:150]
     >>> y = diabetes.target[:150]
@@ -336,7 +309,7 @@ def cross_validate(
     ...                         scoring=('r2', 'neg_mean_squared_error'),
     ...                         return_train_score=True)
     >>> print(scores['test_neg_mean_squared_error'])
-    [-3635.5... -3573.3... -6114.7...]
+    [-3635.5 -3573.3 -6114.7]
     >>> print(scores['train_r2'])
     [0.28009951 0.3908844  0.22784907]
     """
@@ -378,19 +351,8 @@ def cross_validate(
             # `process_routing` code, we pass `fit` as the caller. However,
             # the user is not calling `fit` directly, so we change the message
             # to make it more suitable for this case.
-            unrequested_params = sorted(e.unrequested_params)
             raise UnsetMetadataPassedError(
-                message=(
-                    f"{unrequested_params} are passed to cross validation but are not"
-                    " explicitly set as requested or not requested for cross_validate's"
-                    f" estimator: {estimator.__class__.__name__}. Call"
-                    " `.set_fit_request({{metadata}}=True)` on the estimator for"
-                    f" each metadata in {unrequested_params} that you"
-                    " want to use and `metadata=False` for not using it. See the"
-                    " Metadata Routing User guide"
-                    " <https://scikit-learn.org/stable/metadata_routing.html> for more"
-                    " information."
-                ),
+                message=str(e).replace("cross_validate.fit", "cross_validate"),
                 unrequested_params=e.unrequested_params,
                 routed_params=e.routed_params,
             )
@@ -830,9 +792,9 @@ def _fit_and_score(
     progress_msg = ""
     if verbose > 2:
         if split_progress is not None:
-            progress_msg = f" {split_progress[0]+1}/{split_progress[1]}"
+            progress_msg = f" {split_progress[0] + 1}/{split_progress[1]}"
         if candidate_progress and verbose > 9:
-            progress_msg += f"; {candidate_progress[0]+1}/{candidate_progress[1]}"
+            progress_msg += f"; {candidate_progress[0] + 1}/{candidate_progress[1]}"
 
     if verbose > 1:
         if parameters is None:
@@ -1174,6 +1136,10 @@ def cross_val_predict(
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
     >>> y_pred = cross_val_predict(lasso, X, y, cv=3)
+
+    For a detailed example of using ``cross_val_predict`` to visualize
+    prediction errors, please see
+    :ref:`sphx_glr_auto_examples_model_selection_plot_cv_predict.py`.
     """
     _check_groups_routing_disabled(groups)
     X, y = indexable(X, y)
@@ -1184,7 +1150,7 @@ def cross_val_predict(
         # methods. For these router methods, we create the router to use
         # `process_routing` on it.
         router = (
-            MetadataRouter(owner="cross_validate")
+            MetadataRouter(owner="cross_val_predict")
             .add(
                 splitter=cv,
                 method_mapping=MethodMapping().add(caller="fit", callee="split"),
@@ -1202,18 +1168,8 @@ def cross_val_predict(
             # `process_routing` code, we pass `fit` as the caller. However,
             # the user is not calling `fit` directly, so we change the message
             # to make it more suitable for this case.
-            unrequested_params = sorted(e.unrequested_params)
             raise UnsetMetadataPassedError(
-                message=(
-                    f"{unrequested_params} are passed to `cross_val_predict` but are"
-                    " not explicitly set as requested or not requested for"
-                    f" cross_validate's estimator: {estimator.__class__.__name__} Call"
-                    " `.set_fit_request({{metadata}}=True)` on the estimator for"
-                    f" each metadata in {unrequested_params} that you want to use and"
-                    " `metadata=False` for not using it. See the Metadata Routing User"
-                    " guide <https://scikit-learn.org/stable/metadata_routing.html>"
-                    " for more information."
-                ),
+                message=str(e).replace("cross_val_predict.fit", "cross_val_predict"),
                 unrequested_params=e.unrequested_params,
                 routed_params=e.routed_params,
             )
@@ -1235,8 +1191,10 @@ def cross_val_predict(
         method in ["decision_function", "predict_proba", "predict_log_proba"]
         and y is not None
     )
+    xp, is_array_api, device_ = get_namespace_and_device(X)
+    xp_y, _ = get_namespace(y)
     if encode:
-        y = np.asarray(y)
+        y = xp_y.asarray(y)
         if y.ndim == 1:
             le = LabelEncoder()
             y = le.fit_transform(y)
@@ -1246,6 +1204,7 @@ def cross_val_predict(
                 y_enc[:, i_label] = LabelEncoder().fit_transform(y[:, i_label])
             y = y_enc
 
+    y = move_to(y, xp=xp, device=device_)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
@@ -1279,10 +1238,13 @@ def cross_val_predict(
             concat_pred.append(label_preds)
         predictions = concat_pred
     else:
-        predictions = np.concatenate(predictions)
+        inv_test_indices = xp.asarray(inv_test_indices, device=device(X))
+        predictions = xp.concat(predictions)
 
     if isinstance(predictions, list):
         return [p[inv_test_indices] for p in predictions]
+    elif is_array_api:
+        return xp.take(predictions, inv_test_indices, axis=0)
     else:
         return predictions[inv_test_indices]
 
@@ -1356,7 +1318,10 @@ def _fit_and_predict(estimator, X, y, train, test, fit_params, method):
             ]
         else:
             # A 2D y array should be a binary label indicator matrix
-            n_classes = len(set(y)) if y.ndim == 1 else y.shape[1]
+            xp, _ = get_namespace(X, y)
+            n_classes = (
+                len(set(_convert_to_numpy(y, xp=xp))) if y.ndim == 1 else y.shape[1]
+            )
             predictions = _enforce_prediction_order(
                 estimator.classes_, predictions, n_classes, method
             )
@@ -1376,7 +1341,9 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
     (a subset of the classes in the full training set)
     and `n_classes` is the number of classes in the full training set.
     """
-    if n_classes != len(classes):
+    xp, _ = get_namespace(predictions, classes)
+    classes_length = classes.shape[0]
+    if n_classes != classes_length:
         recommendation = (
             "To fix this, use a cross-validation "
             "technique resulting in properly "
@@ -1386,11 +1353,11 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
             "Number of classes in training fold ({}) does "
             "not match total number of classes ({}). "
             "Results may not be appropriate for your use case. "
-            "{}".format(len(classes), n_classes, recommendation),
+            "{}".format(classes_length, n_classes, recommendation),
             RuntimeWarning,
         )
         if method == "decision_function":
-            if predictions.ndim == 2 and predictions.shape[1] != len(classes):
+            if predictions.ndim == 2 and predictions.shape[1] != classes_length:
                 # This handles the case when the shape of predictions
                 # does not match the number of classes used to train
                 # it with. This case is found when sklearn.svm.SVC is
@@ -1400,26 +1367,28 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
                     "number of classes ({}) in fold. "
                     "Irregular decision_function outputs "
                     "are not currently supported by "
-                    "cross_val_predict".format(predictions.shape, method, len(classes))
+                    "cross_val_predict".format(
+                        predictions.shape, method, classes_length
+                    )
                 )
-            if len(classes) <= 2:
+            if classes_length <= 2:
                 # In this special case, `predictions` contains a 1D array.
                 raise ValueError(
                     "Only {} class/es in training fold, but {} "
                     "in overall dataset. This "
                     "is not supported for decision_function "
                     "with imbalanced folds. {}".format(
-                        len(classes), n_classes, recommendation
+                        classes_length, n_classes, recommendation
                     )
                 )
 
-        float_min = np.finfo(predictions.dtype).min
+        float_min = xp.finfo(predictions.dtype).min
         default_values = {
             "decision_function": float_min,
             "predict_log_proba": float_min,
             "predict_proba": 0,
         }
-        predictions_for_all_classes = np.full(
+        predictions_for_all_classes = xp.full(
             (_num_samples(predictions), n_classes),
             default_values[method],
             dtype=predictions.dtype,
@@ -1465,7 +1434,6 @@ def _check_is_permutation(indices, n_samples):
         "random_state": ["random_state"],
         "verbose": ["verbose"],
         "scoring": [StrOptions(set(get_scorer_names())), callable, None],
-        "fit_params": [dict, None],
         "params": [dict, None],
     },
     prefer_skip_nested_validation=False,  # estimator is not validated yet
@@ -1482,7 +1450,6 @@ def permutation_test_score(
     random_state=0,
     verbose=0,
     scoring=None,
-    fit_params=None,
     params=None,
 ):
     """Evaluate the significance of a cross-validated score with permutations.
@@ -1537,7 +1504,7 @@ def permutation_test_score(
         - `None`, to use the default 5-fold cross validation,
         - int, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For `int`/`None` inputs, if the estimator is a classifier and `y` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -1576,13 +1543,6 @@ def permutation_test_score(
           See :ref:`scoring_callable` for details.
         - `None`: the `estimator`'s
           :ref:`default evaluation criterion <scoring_api_overview>` is used.
-
-    fit_params : dict, default=None
-        Parameters to pass to the fit method of the estimator.
-
-        .. deprecated:: 1.6
-            This parameter is deprecated and will be removed in version 1.6. Use
-            ``params`` instead.
 
     params : dict, default=None
         Parameters to pass to the `fit` method of the estimator, the scorer
@@ -1643,7 +1603,8 @@ def permutation_test_score(
     >>> print(f"P-value: {pvalue:.3f}")
     P-value: 0.010
     """
-    params = _check_params_groups_deprecation(fit_params, params, groups, "1.8")
+    _check_groups_routing_disabled(groups)
+    params = {} if params is None else params
 
     X, y, groups = indexable(X, y, groups)
 
@@ -1677,19 +1638,9 @@ def permutation_test_score(
             # `process_routing` code, we pass `fit` as the caller. However,
             # the user is not calling `fit` directly, so we change the message
             # to make it more suitable for this case.
-            unrequested_params = sorted(e.unrequested_params)
             raise UnsetMetadataPassedError(
-                message=(
-                    f"{unrequested_params} are passed to `permutation_test_score`"
-                    " but are not explicitly set as requested or not requested"
-                    " for permutation_test_score's"
-                    f" estimator: {estimator.__class__.__name__}. Call"
-                    " `.set_fit_request({{metadata}}=True)` on the estimator for"
-                    f" each metadata in {unrequested_params} that you"
-                    " want to use and `metadata=False` for not using it. See the"
-                    " Metadata Routing User guide"
-                    " <https://scikit-learn.org/stable/metadata_routing.html> for more"
-                    " information."
+                message=str(e).replace(
+                    "permutation_test_score.fit", "permutation_test_score"
                 ),
                 unrequested_params=e.unrequested_params,
                 routed_params=e.routed_params,
@@ -1779,7 +1730,6 @@ def _shuffle(y, groups, random_state):
         "random_state": ["random_state"],
         "error_score": [StrOptions({"raise"}), Real],
         "return_times": ["boolean"],
-        "fit_params": [dict, None],
         "params": [dict, None],
     },
     prefer_skip_nested_validation=False,  # estimator is not validated yet
@@ -1801,7 +1751,6 @@ def learning_curve(
     random_state=None,
     error_score=np.nan,
     return_times=False,
-    fit_params=None,
     params=None,
 ):
     """Learning curve.
@@ -1861,7 +1810,7 @@ def learning_curve(
         - None, to use the default 5-fold cross validation,
         - int, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -1921,13 +1870,6 @@ def learning_curve(
     return_times : bool, default=False
         Whether to return the fit and score times.
 
-    fit_params : dict, default=None
-        Parameters to pass to the fit method of the estimator.
-
-        .. deprecated:: 1.6
-            This parameter is deprecated and will be removed in version 1.8. Use
-            ``params`` instead.
-
     params : dict, default=None
         Parameters to pass to the `fit` method of the estimator and to the scorer.
 
@@ -1961,6 +1903,11 @@ def learning_curve(
         Times spent for scoring in seconds. Only present if ``return_times``
         is True.
 
+    See Also
+    --------
+    LearningCurveDisplay.from_estimator : Plot a learning curve using an
+        estimator and data.
+
     Examples
     --------
     >>> from sklearn.datasets import make_classification
@@ -1992,8 +1939,8 @@ def learning_curve(
             "An estimator must support the partial_fit interface "
             "to exploit incremental learning"
         )
-
-    params = _check_params_groups_deprecation(fit_params, params, groups, "1.8")
+    _check_groups_routing_disabled(groups)
+    params = {} if params is None else params
 
     X, y, groups = indexable(X, y, groups)
 
@@ -2029,19 +1976,8 @@ def learning_curve(
             # `process_routing` code, we pass `fit` as the caller. However,
             # the user is not calling `fit` directly, so we change the message
             # to make it more suitable for this case.
-            unrequested_params = sorted(e.unrequested_params)
             raise UnsetMetadataPassedError(
-                message=(
-                    f"{unrequested_params} are passed to `learning_curve` but are not"
-                    " explicitly set as requested or not requested for learning_curve's"
-                    f" estimator: {estimator.__class__.__name__}. Call"
-                    " `.set_fit_request({{metadata}}=True)` on the estimator for"
-                    f" each metadata in {unrequested_params} that you"
-                    " want to use and `metadata=False` for not using it. See the"
-                    " Metadata Routing User guide"
-                    " <https://scikit-learn.org/stable/metadata_routing.html> for more"
-                    " information."
-                ),
+                message=str(e).replace("learning_curve.fit", "learning_curve"),
                 unrequested_params=e.unrequested_params,
                 routed_params=e.routed_params,
             )
@@ -2289,7 +2225,6 @@ def _incremental_fit_estimator(
         "pre_dispatch": [Integral, str],
         "verbose": ["verbose"],
         "error_score": [StrOptions({"raise"}), Real],
-        "fit_params": [dict, None],
         "params": [dict, None],
     },
     prefer_skip_nested_validation=False,  # estimator is not validated yet
@@ -2308,7 +2243,6 @@ def validation_curve(
     pre_dispatch="all",
     verbose=0,
     error_score=np.nan,
-    fit_params=None,
     params=None,
 ):
     """Validation curve.
@@ -2362,7 +2296,7 @@ def validation_curve(
         - None, to use the default 5-fold cross validation,
         - int, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -2407,13 +2341,6 @@ def validation_curve(
 
         .. versionadded:: 0.20
 
-    fit_params : dict, default=None
-        Parameters to pass to the fit method of the estimator.
-
-        .. deprecated:: 1.6
-            This parameter is deprecated and will be removed in version 1.8. Use
-            ``params`` instead.
-
     params : dict, default=None
         Parameters to pass to the estimator, scorer and cross-validation object.
 
@@ -2433,6 +2360,11 @@ def validation_curve(
 
     test_scores : array of shape (n_ticks, n_cv_folds)
         Scores on test set.
+
+    See Also
+    --------
+    ValidationCurveDisplay.from_estimator : Plot the validation curve
+        given an estimator, the data, and the parameter to vary.
 
     Notes
     -----
@@ -2455,7 +2387,9 @@ def validation_curve(
     >>> print(f"The average test accuracy is {test_scores.mean():.2f}")
     The average test accuracy is 0.81
     """
-    params = _check_params_groups_deprecation(fit_params, params, groups, "1.8")
+    _check_groups_routing_disabled(groups)
+    params = {} if params is None else params
+
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
@@ -2485,19 +2419,8 @@ def validation_curve(
             # `process_routing` code, we pass `fit` as the caller. However,
             # the user is not calling `fit` directly, so we change the message
             # to make it more suitable for this case.
-            unrequested_params = sorted(e.unrequested_params)
             raise UnsetMetadataPassedError(
-                message=(
-                    f"{unrequested_params} are passed to `validation_curve` but are not"
-                    " explicitly set as requested or not requested for"
-                    f" validation_curve's estimator: {estimator.__class__.__name__}."
-                    " Call `.set_fit_request({{metadata}}=True)` on the estimator for"
-                    f" each metadata in {unrequested_params} that you"
-                    " want to use and `metadata=False` for not using it. See the"
-                    " Metadata Routing User guide"
-                    " <https://scikit-learn.org/stable/metadata_routing.html> for more"
-                    " information."
-                ),
+                message=str(e).replace("validation_curve.fit", "validation_curve"),
                 unrequested_params=e.unrequested_params,
                 routed_params=e.routed_params,
             )

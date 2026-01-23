@@ -103,7 +103,7 @@ difficulty making predictions near 0 and 1 because variance in the
 underlying base models will bias predictions that should be near zero or one
 away from these values. Because predictions are restricted to the interval
 [0,1], errors caused by variance tend to be one-sided near zero and one. For
-example, if a model should predict p = 0 for a case, the only way bagging
+example, if a model should predict :math:`p = 0` for a case, the only way bagging
 can achieve this is if all bagged trees predict zero. If we add noise to the
 trees that bagging is averaging over, this noise will cause some trees to
 predict values larger than 0 for this case, thus moving the average
@@ -146,7 +146,7 @@ Usage
 The :class:`CalibratedClassifierCV` class is used to calibrate a classifier.
 
 :class:`CalibratedClassifierCV` uses a cross-validation approach to ensure
-unbiased data is always used to fit the calibrator. The data is split into k
+unbiased data is always used to fit the calibrator. The data is split into :math:`k`
 `(train_set, test_set)` couples (as determined by `cv`). When `ensemble=True`
 (default), the following procedure is repeated independently for each
 cross-validation split:
@@ -157,13 +157,13 @@ cross-validation split:
    regressor) (when the data is multiclass, a calibrator is fit for every class)
 
 This results in an
-ensemble of k `(classifier, calibrator)` couples where each calibrator maps
+ensemble of :math:`k` `(classifier, calibrator)` couples where each calibrator maps
 the output of its corresponding classifier into [0, 1]. Each couple is exposed
 in the `calibrated_classifiers_` attribute, where each entry is a calibrated
 classifier with a :term:`predict_proba` method that outputs calibrated
 probabilities. The output of :term:`predict_proba` for the main
 :class:`CalibratedClassifierCV` instance corresponds to the average of the
-predicted probabilities of the `k` estimators in the `calibrated_classifiers_`
+predicted probabilities of the :math:`k` estimators in the `calibrated_classifiers_`
 list. The output of :term:`predict` is the class that has the highest
 probability.
 
@@ -244,12 +244,12 @@ subject to :math:`\hat{f}_i \geq \hat{f}_j` whenever
 :math:`f_i \geq f_j`. :math:`y_i` is the true
 label of sample :math:`i` and :math:`\hat{f}_i` is the output of the
 calibrated classifier for sample :math:`i` (i.e., the calibrated probability).
-This method is more general when compared to 'sigmoid' as the only restriction
+This method is more general when compared to `'sigmoid'` as the only restriction
 is that the mapping function is monotonically increasing. It is thus more
 powerful as it can correct any monotonic distortion of the un-calibrated model.
 However, it is more prone to overfitting, especially on small datasets [6]_.
 
-Overall, 'isotonic' will perform as well as or better than 'sigmoid' when
+Overall, `'isotonic'` will perform as well as or better than `'sigmoid'` when
 there is enough data (greater than ~ 1000 samples) to avoid overfitting [3]_.
 
 .. note:: Impact on ranking metrics like AUC
@@ -275,6 +275,35 @@ predicting
 probabilities, the calibrated probabilities for each class
 are predicted separately. As those probabilities do not necessarily sum to
 one, a postprocessing is performed to normalize them.
+
+On the other hand, temperature scaling naturally supports multiclass
+predictions by working with logits and finally applying the softmax function.
+
+Temperature Scaling
+^^^^^^^^^^^^^^^^^^^
+
+For a multi-class classification problem with :math:`n` classes, temperature scaling
+[9]_, `method="temperature"`, produces class probabilities by modifying the softmax
+function with a temperature parameter :math:`T`:
+
+.. math::
+       \mathrm{softmax}\left(\frac{z}{T}\right) \,,
+
+where, for a given sample, :math:`z` is the vector of logits for each class as predicted
+by the estimator to be calibrated. In terms of scikit-learn's API, this corresponds to
+the output of :term:`decision_function` or to the logarithm of :term:`predict_proba`.
+Probabilities are converted to logits by first adding a tiny positive constant to avoid
+numerical issues with logarithm of zero, and then applying the natural logarithm.
+
+The parameter :math:`T` is learned by minimizing :func:`~sklearn.metrics.log_loss`,
+i.e. cross-entropy loss, on a hold-out (calibration) set. Note that :math:`T` does not
+affect the location of the maximum in the softmax output. Therefore, temperature scaling
+does not alter the accuracy of the calibrating estimator.
+
+The main advantage of temperature scaling over other calibration methods is that it
+provides a natural way to obtain (better) calibrated multi-class probabilities with
+just one free parameter in contrast to using a "One-vs-Rest" scheme that adds more
+parameters for each single class.
 
 .. rubric:: Examples
 
@@ -324,3 +353,7 @@ one, a postprocessing is performed to normalize them.
        :doi:`"Statistical Foundations of Actuarial Learning and its Applications"
        <10.1007/978-3-031-12409-9>`
        Springer Actuarial
+
+.. [9] `On Calibration of Modern Neural Networks
+       <https://proceedings.mlr.press/v70/guo17a/guo17a.pdf>`_,
+       C. Guo, G. Pleiss, Y. Sun, & K. Q. Weinberger, ICML 2017.

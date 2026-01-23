@@ -14,8 +14,6 @@ if [[ "$scipy_doctest_installed" == "True" ]]; then
     # conda with putting conda in the PATH and source activate, rather than
     # source <conda_root>/etc/profile.d/conda.sh + conda activate.
     cd $TEST_DIR
-    # with scipy-doctest, --doctest-modules only runs doctests (in contrary to
-    # vanilla pytest where it runs doctests on top of normal tests)
-    python -m pytest --doctest-modules --pyargs sklearn
+    python -m pytest --doctest-modules --doctest-only-doctests=true  --pyargs sklearn
     python -m pytest --doctest-modules $doc_rst_files
 fi

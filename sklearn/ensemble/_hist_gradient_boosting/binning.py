@@ -11,15 +11,19 @@ approximately the same number of samples.
 
 import numpy as np
 
-from ...base import BaseEstimator, TransformerMixin
-from ...utils import check_array, check_random_state
-from ...utils._openmp_helpers import _openmp_effective_n_threads
-from ...utils.fixes import percentile
-from ...utils.parallel import Parallel, delayed
-from ...utils.validation import check_is_fitted
-from ._binning import _map_to_bins
-from ._bitset import set_bitset_memoryview
-from .common import ALMOST_INF, X_BINNED_DTYPE, X_BITSET_INNER_DTYPE, X_DTYPE
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.ensemble._hist_gradient_boosting._binning import _map_to_bins
+from sklearn.ensemble._hist_gradient_boosting._bitset import set_bitset_memoryview
+from sklearn.ensemble._hist_gradient_boosting.common import (
+    ALMOST_INF,
+    X_BINNED_DTYPE,
+    X_BITSET_INNER_DTYPE,
+    X_DTYPE,
+)
+from sklearn.utils import check_array, check_random_state
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import check_is_fitted
 
 
 def _find_binning_thresholds(col_data, max_bins):
@@ -62,7 +66,9 @@ def _find_binning_thresholds(col_data, max_bins):
         # work on a fixed-size subsample of the full data.
         percentiles = np.linspace(0, 100, num=max_bins + 1)
         percentiles = percentiles[1:-1]
-        midpoints = percentile(col_data, percentiles, method="midpoint").astype(X_DTYPE)
+        midpoints = np.percentile(col_data, percentiles, method="midpoint").astype(
+            X_DTYPE
+        )
         assert midpoints.shape[0] == max_bins - 1
 
     # We avoid having +inf thresholds: +inf thresholds are only allowed in

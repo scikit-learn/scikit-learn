@@ -51,8 +51,8 @@ Changelog
 ......................
 
 - |Fix| Fixed an issue in :class:`compose.ColumnTransformer` where using
-  DataFrames whose column order differs between :func:``fit`` and
-  :func:``transform`` could lead to silently passing incorrect columns to the
+  DataFrames whose column order differs between :func:`fit` and
+  :func:`transform` could lead to silently passing incorrect columns to the
   ``remainder`` transformer.
   :pr:`14237` by `Andreas Schuderer <schuderer>`.
 

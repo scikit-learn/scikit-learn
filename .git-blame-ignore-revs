@@ -32,5 +32,23 @@ d4aad64b1eb2e42e76f49db2ccfbe4b4660d092b
 # PR 26649: Add isort and ruff rules
 42173fdb34b5aded79664e045cada719dfbe39dc
 
-# PR #28802: Update black to 24.3.0
+# PR 28802: Update black to 24.3.0
 c4c546355667b070edd5c892b206aa4a97af9a0b
+
+# PR 30694: Enforce ruff rules (RUF)
+fe7c4176828af5231f526e76683fb9bdb9ea0367
+
+# PR 30695: Apply ruff/flake8-implicit-str-concat rules (ISC)
+5cdbbf15e3fade7cc2462ef66dc4ea0f37f390e3
+
+# PR 31015: black -> ruff format
+ff78e258ccf11068e2b3a433c51517ae56234f88
+
+# PR 31226: Enforce ruff/pygrep-hooks rules
+b98dc797c480b1b9495f918e201d45ee07f29feb
+
+# PR 31817: Consistently use relative imports
+4abf564cb4ac58d61fbbe83552c28f764284a69d
+
+# PR 31847 Switch to absolute imports enforced by ruff
+1fe659545c70d9f805c1c4097dd2fce9a6285a12

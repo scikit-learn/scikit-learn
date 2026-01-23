@@ -12,10 +12,11 @@ import numpy as np
 import scipy.linalg
 import scipy.optimize
 
-from ..._loss.loss import HalfSquaredError
-from ...exceptions import ConvergenceWarning
-from ...utils.optimize import _check_optimize_result
-from .._linear_loss import LinearModelLoss
+from sklearn._loss.loss import HalfSquaredError
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._linear_loss import LinearModelLoss
+from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
+from sklearn.utils.optimize import _check_optimize_result
 
 
 class NewtonSolver(ABC):
@@ -178,21 +179,22 @@ class NewtonSolver(ABC):
             - self.coef
             - self.converged
         """
+        max_iter = self.max_iter - self.iteration
         opt_res = scipy.optimize.minimize(
             self.linear_loss.loss_gradient,
             self.coef,
             method="L-BFGS-B",
             jac=True,
             options={
-                "maxiter": self.max_iter - self.iteration,
+                "maxiter": max_iter,
                 "maxls": 50,  # default is 20
-                "iprint": self.verbose - 1,
                 "gtol": self.tol,
                 "ftol": 64 * np.finfo(np.float64).eps,
+                **_get_additional_lbfgs_options_dict("iprint", self.verbose - 1),
             },
             args=(X, y, sample_weight, self.l2_reg_strength, self.n_threads),
         )
-        self.iteration += _check_optimize_result("lbfgs", opt_res)
+        self.iteration += _check_optimize_result("lbfgs", opt_res, max_iter=max_iter)
         self.coef = opt_res.x
         self.converged = opt_res.status == 0
 
@@ -254,7 +256,7 @@ class NewtonSolver(ABC):
             check = loss_improvement <= t * armijo_term
             if is_verbose:
                 print(
-                    f"    line search iteration={i+1}, step size={t}\n"
+                    f"    line search iteration={i + 1}, step size={t}\n"
                     f"      check loss improvement <= armijo term: {loss_improvement} "
                     f"<= {t * armijo_term} {check}"
                 )
@@ -300,7 +302,7 @@ class NewtonSolver(ABC):
         self.raw_prediction = raw
         if is_verbose:
             print(
-                f"    line search successful after {i+1} iterations with "
+                f"    line search successful after {i + 1} iterations with "
                 f"loss={self.loss_value}."
             )
 
@@ -467,6 +469,19 @@ class NewtonCholeskySolver(NewtonSolver):
         self.is_multinomial_no_penalty = (
             self.linear_loss.base_loss.is_multiclass and self.l2_reg_strength == 0
         )
+        if self.is_multinomial_no_penalty:
+            # See inner_solve. The provided coef might not adhere to the convention
+            # that the last class is set to zero.
+            # This is done by the usual freedom of a (overparametrized) multinomial to
+            # add a constant to all classes which doesn't change predictions.
+            n_classes = self.linear_loss.base_loss.n_classes
+            coef = self.coef.reshape(n_classes, -1, order="F")  # easier as 2d
+            coef -= coef[-1, :]  # coef -= coef of last class
+        elif self.is_multinomial_with_intercept:
+            # See inner_solve. Same as above, but only for the intercept.
+            n_classes = self.linear_loss.base_loss.n_classes
+            # intercept -= intercept of last class
+            self.coef[-n_classes:] -= self.coef[-1]
 
     def update_gradient_hessian(self, X, y, sample_weight):
         _, _, self.hessian_warning = self.linear_loss.gradient_hessian(
@@ -516,10 +531,10 @@ class NewtonCholeskySolver(NewtonSolver):
             #
             # We choose the standard approach and set all the coefficients of the last
             # class to zero, for all features including the intercept.
+            # Note that coef was already dealt with in setup.
             n_classes = self.linear_loss.base_loss.n_classes
             n_dof = self.coef.size // n_classes  # degree of freedom per class
             n = self.coef.size - n_dof  # effective size
-            self.coef[n_classes - 1 :: n_classes] = 0
             self.gradient[n_classes - 1 :: n_classes] = 0
             self.hessian[n_classes - 1 :: n_classes, :] = 0
             self.hessian[:, n_classes - 1 :: n_classes] = 0
@@ -542,7 +557,7 @@ class NewtonCholeskySolver(NewtonSolver):
         elif self.is_multinomial_with_intercept:
             # Here, only intercepts are unpenalized. We again choose the last class and
             # set its intercept to zero.
-            self.coef[-1] = 0
+            # Note that coef was already dealt with in setup.
             self.gradient[-1] = 0
             self.hessian[-1, :] = 0
             self.hessian[:, -1] = 0
@@ -595,7 +610,7 @@ class NewtonCholeskySolver(NewtonSolver):
             # Instead, we resort to lbfgs.
             if self.verbose:
                 print(
-                    "  The inner solver stumbled upon an singular or ill-conditioned "
+                    "  The inner solver stumbled upon a singular or ill-conditioned "
                     "Hessian matrix and resorts to LBFGS instead."
                 )
             self.use_fallback_lbfgs_solve = True

@@ -52,13 +52,13 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 # Fitting non-linear quantile and least squares regressors
 # --------------------------------------------------------
 #
-# Fit gradient boosting models trained with the quantile loss and
-# alpha=0.05, 0.5, 0.95.
+# Fit gradient boosting models trained with the quantile loss and `alpha=0.05`,
+# `alpha=0.5`, `alpha=0.95`.
 #
-# The models obtained for alpha=0.05 and alpha=0.95 produce a 90% confidence
-# interval (95% - 5% = 90%).
+# The models obtained for `alpha=0.05` and `alpha=0.95` produce a 90%
+# confidence interval (95% - 5% = 90%).
 #
-# The model trained with alpha=0.5 produces a regression of the median: on
+# The model trained with `alpha=0.5` produces a regression of the median: on
 # average, there should be the same number of target observations above and
 # below the predicted values.
 from sklearn.ensemble import GradientBoostingRegressor
@@ -241,10 +241,11 @@ coverage_fraction(
 # cross-validation on the pinball loss with alpha=0.05:
 
 # %%
-from sklearn.experimental import enable_halving_search_cv  # noqa
-from sklearn.model_selection import HalvingRandomSearchCV
-from sklearn.metrics import make_scorer
 from pprint import pprint
+
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
+from sklearn.metrics import make_scorer
+from sklearn.model_selection import HalvingRandomSearchCV
 
 param_grid = dict(
     learning_rate=[0.05, 0.1, 0.2],
@@ -297,8 +298,8 @@ pprint(search_95p.best_params_)
 
 # %%
 # The result shows that the hyper-parameters for the 95th percentile regressor
-# identified by the search procedure are roughly in the same range as the hand-
-# tuned hyper-parameters for the median regressor and the hyper-parameters
+# identified by the search procedure are roughly in the same range as the hand-tuned
+# hyper-parameters for the median regressor and the hyper-parameters
 # identified by the search procedure for the 5th percentile regressor. However,
 # the hyper-parameter searches did lead to an improved 90% confidence interval
 # that is comprised by the predictions of those two tuned quantile regressors.

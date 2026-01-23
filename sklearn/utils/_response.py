@@ -8,9 +8,9 @@ It allows to make uniform checks and validation.
 
 import numpy as np
 
-from ..base import is_classifier
-from .multiclass import type_of_target
-from .validation import _check_response_method, check_is_fitted
+from sklearn.base import is_classifier
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import _check_response_method, check_is_fitted
 
 
 def _process_predict_proba(*, y_pred, target_type, classes, pos_label):
@@ -125,7 +125,9 @@ def _get_response_values(
     The response values are predictions such that it follows the following shape:
 
     - for binary classification, it is a 1d array of shape `(n_samples,)`;
-    - for multiclass classification, it is a 2d array of shape `(n_samples, n_classes)`;
+    - for multiclass classification
+        - with response_method="predict", it is a 1d array of shape `(n_samples,)`;
+        - otherwise, it is a 2d array of shape `(n_samples, n_classes)`;
     - for multilabel classification, it is a 2d array of shape `(n_samples, n_outputs)`;
     - for outlier detection, it is a 1d array of shape `(n_samples,)`;
     - for regression, it is a 1d array of shape `(n_samples,)`.
@@ -195,7 +197,7 @@ def _get_response_values(
         If the response method can be applied to a classifier only and
         `estimator` is a regressor.
     """
-    from sklearn.base import is_classifier, is_outlier_detector  # noqa
+    from sklearn.base import is_classifier, is_outlier_detector
 
     if is_classifier(estimator):
         prediction_method = _check_response_method(estimator, response_method)

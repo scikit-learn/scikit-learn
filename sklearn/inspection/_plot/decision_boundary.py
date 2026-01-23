@@ -5,22 +5,21 @@ import warnings
 
 import numpy as np
 
-from ...base import is_regressor
-from ...preprocessing import LabelEncoder
-from ...utils import _safe_indexing
-from ...utils._optional_dependencies import check_matplotlib_support
-from ...utils._response import _get_response_values
-from ...utils._set_output import _get_adapter_from_container
-from ...utils.validation import (
+from sklearn.base import is_regressor
+from sklearn.preprocessing import LabelEncoder
+from sklearn.utils import _safe_indexing
+from sklearn.utils._dataframe import is_pandas_df, is_polars_df
+from sklearn.utils._optional_dependencies import check_matplotlib_support
+from sklearn.utils._response import _get_response_values
+from sklearn.utils._set_output import _get_adapter_from_container
+from sklearn.utils.validation import (
     _is_arraylike_not_scalar,
-    _is_pandas_df,
-    _is_polars_df,
     _num_features,
     check_is_fitted,
 )
 
 
-def _check_boundary_response_method(estimator, response_method, class_of_interest):
+def _check_boundary_response_method(estimator, response_method):
     """Validate the response methods to be used with the fitted estimator.
 
     Parameters
@@ -32,12 +31,6 @@ def _check_boundary_response_method(estimator, response_method, class_of_interes
         Specifies whether to use :term:`decision_function`, :term:`predict_proba`,
         :term:`predict` as the target response. If set to 'auto', the response method is
         tried in the before mentioned order.
-
-    class_of_interest : int, float, bool, str or None
-        The class considered when plotting the decision. Cannot be None if
-        multiclass and `response_method` is 'predict_proba' or 'decision_function'.
-
-        .. versionadded:: 1.4
 
     Returns
     -------
@@ -204,8 +197,8 @@ class DecisionBoundaryDisplay:
             Object that stores computed values.
         """
         check_matplotlib_support("DecisionBoundaryDisplay.plot")
-        import matplotlib as mpl  # noqa
-        import matplotlib.pyplot as plt  # noqa
+        import matplotlib as mpl
+        import matplotlib.pyplot as plt
 
         if plot_method not in ("contourf", "contour", "pcolormesh"):
             raise ValueError(
@@ -221,60 +214,66 @@ class DecisionBoundaryDisplay:
             self.surface_ = plot_func(self.xx0, self.xx1, self.response, **kwargs)
         else:  # self.response.ndim == 3
             n_responses = self.response.shape[-1]
-            if (
-                isinstance(self.multiclass_colors, str)
-                or self.multiclass_colors is None
+            for kwarg in ("cmap", "colors"):
+                if kwarg in kwargs:
+                    warnings.warn(
+                        f"'{kwarg}' is ignored in favor of 'multiclass_colors' "
+                        "in the multiclass case when the response method is "
+                        "'decision_function' or 'predict_proba'."
+                    )
+                    del kwargs[kwarg]
+
+            if self.multiclass_colors is None or isinstance(
+                self.multiclass_colors, str
             ):
-                if isinstance(self.multiclass_colors, str):
-                    cmap = self.multiclass_colors
+                if self.multiclass_colors is None:
+                    cmap = "tab10" if n_responses <= 10 else "gist_rainbow"
                 else:
-                    if n_responses <= 10:
-                        cmap = "tab10"
-                    else:
-                        cmap = "gist_rainbow"
+                    cmap = self.multiclass_colors
 
                 # Special case for the tab10 and tab20 colormaps that encode a
-                # discret set of colors that are easily distinguishable
+                # discrete set of colors that are easily distinguishable
                 # contrary to other colormaps that are continuous.
                 if cmap == "tab10" and n_responses <= 10:
                     colors = plt.get_cmap("tab10", 10).colors[:n_responses]
                 elif cmap == "tab20" and n_responses <= 20:
                     colors = plt.get_cmap("tab20", 20).colors[:n_responses]
                 else:
-                    colors = plt.get_cmap(cmap, n_responses).colors
-            elif isinstance(self.multiclass_colors, str):
-                colors = colors = plt.get_cmap(
-                    self.multiclass_colors, n_responses
-                ).colors
-            else:
+                    cmap = plt.get_cmap(cmap, n_responses)
+                    if not hasattr(cmap, "colors"):
+                        # For LinearSegmentedColormap
+                        colors = cmap(np.linspace(0, 1, n_responses))
+                    else:
+                        colors = cmap.colors
+            elif isinstance(self.multiclass_colors, list):
                 colors = [mpl.colors.to_rgba(color) for color in self.multiclass_colors]
+            else:
+                raise ValueError("'multiclass_colors' must be a list or a str.")
 
             self.multiclass_colors_ = colors
-            multiclass_cmaps = [
-                mpl.colors.LinearSegmentedColormap.from_list(
-                    f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
+            if plot_method == "contour":
+                # Plot only argmax map for contour
+                class_map = self.response.argmax(axis=2)
+                self.surface_ = plot_func(
+                    self.xx0, self.xx1, class_map, colors=colors, **kwargs
                 )
-                for class_idx, (r, g, b, _) in enumerate(colors)
-            ]
-
-            self.surface_ = []
-            for class_idx, cmap in enumerate(multiclass_cmaps):
-                response = np.ma.array(
-                    self.response[:, :, class_idx],
-                    mask=~(self.response.argmax(axis=2) == class_idx),
-                )
-                # `cmap` should not be in kwargs
-                safe_kwargs = kwargs.copy()
-                if "cmap" in safe_kwargs:
-                    del safe_kwargs["cmap"]
-                    warnings.warn(
-                        "Plotting max class of multiclass 'decision_function' or "
-                        "'predict_proba', thus 'multiclass_colors' used and "
-                        "'cmap' kwarg ignored."
+            else:
+                multiclass_cmaps = [
+                    mpl.colors.LinearSegmentedColormap.from_list(
+                        f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
                     )
-                self.surface_.append(
-                    plot_func(self.xx0, self.xx1, response, cmap=cmap, **safe_kwargs)
-                )
+                    for class_idx, (r, g, b, _) in enumerate(colors)
+                ]
+
+                self.surface_ = []
+                for class_idx, cmap in enumerate(multiclass_cmaps):
+                    response = np.ma.array(
+                        self.response[:, :, class_idx],
+                        mask=~(self.response.argmax(axis=2) == class_idx),
+                    )
+                    self.surface_.append(
+                        plot_func(self.xx0, self.xx1, response, cmap=cmap, **kwargs)
+                    )
 
         if xlabel is not None or not ax.get_xlabel():
             xlabel = self.xlabel if xlabel is None else xlabel
@@ -425,7 +424,7 @@ class DecisionBoundaryDisplay:
         """
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
         check_is_fitted(estimator)
-        import matplotlib as mpl  # noqa
+        import matplotlib as mpl
 
         if not grid_resolution > 1:
             raise ValueError(
@@ -490,7 +489,7 @@ class DecisionBoundaryDisplay:
         )
 
         X_grid = np.c_[xx0.ravel(), xx1.ravel()]
-        if _is_pandas_df(X) or _is_polars_df(X):
+        if is_pandas_df(X) or is_polars_df(X):
             adapter = _get_adapter_from_container(X)
             X_grid = adapter.create_container(
                 X_grid,
@@ -498,9 +497,7 @@ class DecisionBoundaryDisplay:
                 columns=X.columns,
             )
 
-        prediction_method = _check_boundary_response_method(
-            estimator, response_method, class_of_interest
-        )
+        prediction_method = _check_boundary_response_method(estimator, response_method)
         try:
             response, _, response_method_used = _get_response_values(
                 estimator,

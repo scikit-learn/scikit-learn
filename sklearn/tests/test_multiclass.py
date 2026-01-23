@@ -6,6 +6,7 @@ import scipy.sparse as sp
 from numpy.testing import assert_allclose
 
 from sklearn import datasets, svm
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.datasets import load_breast_cancer
 from sklearn.exceptions import NotFittedError
 from sklearn.impute import SimpleImputer
@@ -79,6 +80,25 @@ def test_check_classification_targets():
     msg = type_of_target(y)
     with pytest.raises(ValueError, match=msg):
         check_classification_targets(y)
+
+
+def test_ovr_ties():
+    """Check that ties-breaking matches np.argmax behavior
+
+    Non-regression test for issue #14124
+    """
+
+    class Dummy(BaseEstimator):
+        def fit(self, X, y):
+            return self
+
+        def decision_function(self, X):
+            return np.zeros(len(X))
+
+    X = np.array([[0], [0], [0], [0]])
+    y = np.array([0, 1, 2, 3])
+    clf = OneVsRestClassifier(Dummy()).fit(X, y)
+    assert_array_equal(clf.predict(X), np.argmax(clf.decision_function(X), axis=1))
 
 
 def test_ovr_fit_predict():
@@ -427,6 +447,31 @@ def test_ovr_single_label_predict_proba():
     # sample has the label with the greatest predictive probability.
     pred = Y_proba.argmax(axis=1)
     assert not (pred - Y_pred).any()
+
+
+def test_ovr_single_label_predict_proba_zero():
+    """Check that predic_proba returns all zeros when the base estimator
+    never predicts the positive class.
+    """
+
+    class NaiveBinaryClassifier(BaseEstimator, ClassifierMixin):
+        def fit(self, X, y):
+            self.classes_ = np.unique(y)
+            return self
+
+        def predict_proba(self, X):
+            proba = np.ones((len(X), 2))
+            # Probability of being the positive class is always 0
+            proba[:, 1] = 0
+            return proba
+
+    base_clf = NaiveBinaryClassifier()
+    X, y = iris.data, iris.target  # Three-class problem with 150 samples
+
+    clf = OneVsRestClassifier(base_clf).fit(X, y)
+    y_proba = clf.predict_proba(X)
+
+    assert_allclose(y_proba, 0.0)
 
 
 def test_ovr_multilabel_decision_function():

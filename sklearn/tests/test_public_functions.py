@@ -118,7 +118,7 @@ def _check_function_param_validation(
                 f"{func_name} does not raise an informative error message when the "
                 f"parameter {param_name} does not have a valid value.\n"
                 "Constraints should be disjoint. For instance "
-                "[StrOptions({'a_string'}), str] is not a acceptable set of "
+                "[StrOptions({'a_string'}), str] is not an acceptable set of "
                 "constraint because generating an invalid string for the first "
                 "constraint will always produce a valid string for the second "
                 "constraint."
@@ -223,7 +223,6 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.classification_report",
     "sklearn.metrics.cluster.adjusted_mutual_info_score",
     "sklearn.metrics.cluster.contingency_matrix",
-    "sklearn.metrics.cluster.entropy",
     "sklearn.metrics.cluster.fowlkes_mallows_score",
     "sklearn.metrics.cluster.homogeneity_completeness_v_measure",
     "sklearn.metrics.cluster.normalized_mutual_info_score",
@@ -231,9 +230,11 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.cluster.silhouette_score",
     "sklearn.metrics.cohen_kappa_score",
     "sklearn.metrics.confusion_matrix",
+    "sklearn.metrics.confusion_matrix_at_thresholds",
     "sklearn.metrics.consensus_score",
     "sklearn.metrics.coverage_error",
     "sklearn.metrics.d2_absolute_error_score",
+    "sklearn.metrics.d2_brier_score",
     "sklearn.metrics.d2_log_loss_score",
     "sklearn.metrics.d2_pinball_score",
     "sklearn.metrics.d2_tweedie_score",

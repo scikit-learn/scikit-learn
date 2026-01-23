@@ -606,8 +606,9 @@ for subset_label, X, df in [
             "predicted, frequency*severity model": np.sum(
                 exposure * glm_freq.predict(X) * glm_sev.predict(X)
             ),
-            "predicted, tweedie, power=%.2f"
-            % glm_pure_premium.power: np.sum(exposure * glm_pure_premium.predict(X)),
+            "predicted, tweedie, power=%.2f" % glm_pure_premium.power: np.sum(
+                exposure * glm_pure_premium.predict(X)
+            ),
         }
     )
 

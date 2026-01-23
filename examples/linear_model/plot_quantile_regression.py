@@ -231,7 +231,7 @@ _ = plt.title("Quantiles of asymmetric Pareto distributed target")
 # Comparing `QuantileRegressor` and `LinearRegression`
 # ----------------------------------------------------
 #
-# In this section, we will linger on the difference regarding the error that
+# In this section, we will linger on the difference regarding the loss functions that
 # :class:`~sklearn.linear_model.QuantileRegressor` and
 # :class:`~sklearn.linear_model.LinearRegression` are minimizing.
 #
@@ -241,7 +241,13 @@ _ = plt.title("Quantiles of asymmetric Pareto distributed target")
 # :class:`~sklearn.linear_model.QuantileRegressor` with `quantile=0.5`
 # minimizes the mean absolute error (MAE) instead.
 #
-# Let's first compute the training errors of such models in terms of mean
+# Why does it matter? The loss functions specify what exactly the model is aiming
+# to predict, see
+# :ref:`user guide on the choice of scoring function<which_scoring_function>`.
+# In short, a model minimizing MSE predicts the mean (expectation) and a model
+# minimizing MAE predicts the median.
+#
+# Let's compute the training errors of such models in terms of mean
 # squared error and mean absolute error. We will use the asymmetric Pareto
 # distributed target to make it more interesting as mean and median are not
 # equal.
@@ -255,14 +261,14 @@ y_pred_lr = linear_regression.fit(X, y_pareto).predict(X)
 y_pred_qr = quantile_regression.fit(X, y_pareto).predict(X)
 
 print(
-    f"""Training error (in-sample performance)
-    {linear_regression.__class__.__name__}:
-    MAE = {mean_absolute_error(y_pareto, y_pred_lr):.3f}
-    MSE = {mean_squared_error(y_pareto, y_pred_lr):.3f}
-    {quantile_regression.__class__.__name__}:
-    MAE = {mean_absolute_error(y_pareto, y_pred_qr):.3f}
-    MSE = {mean_squared_error(y_pareto, y_pred_qr):.3f}
-    """
+    "Training error (in-sample performance)\n"
+    f"{'model':<20}   MAE   MSE\n"
+    f"{linear_regression.__class__.__name__:<20} "
+    f"{mean_absolute_error(y_pareto, y_pred_lr):5.3f} "
+    f"{mean_squared_error(y_pareto, y_pred_lr):5.3f}\n"
+    f"{quantile_regression.__class__.__name__:<20} "
+    f"{mean_absolute_error(y_pareto, y_pred_qr):5.3f} "
+    f"{mean_squared_error(y_pareto, y_pred_qr):5.3f}"
 )
 
 # %%
@@ -294,14 +300,14 @@ cv_results_qr = cross_validate(
     scoring=["neg_mean_absolute_error", "neg_mean_squared_error"],
 )
 print(
-    f"""Test error (cross-validated performance)
-    {linear_regression.__class__.__name__}:
-    MAE = {-cv_results_lr["test_neg_mean_absolute_error"].mean():.3f}
-    MSE = {-cv_results_lr["test_neg_mean_squared_error"].mean():.3f}
-    {quantile_regression.__class__.__name__}:
-    MAE = {-cv_results_qr["test_neg_mean_absolute_error"].mean():.3f}
-    MSE = {-cv_results_qr["test_neg_mean_squared_error"].mean():.3f}
-    """
+    "Test error (cross-validated performance)\n"
+    f"{'model':<20}   MAE   MSE\n"
+    f"{linear_regression.__class__.__name__:<20} "
+    f"{-cv_results_lr['test_neg_mean_absolute_error'].mean():5.3f} "
+    f"{-cv_results_lr['test_neg_mean_squared_error'].mean():5.3f}\n"
+    f"{quantile_regression.__class__.__name__:<20} "
+    f"{-cv_results_qr['test_neg_mean_absolute_error'].mean():5.3f} "
+    f"{-cv_results_qr['test_neg_mean_squared_error'].mean():5.3f}"
 )
 
 # %%

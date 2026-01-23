@@ -30,7 +30,6 @@ iris = load_iris()
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sklearn.datasets import load_iris
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.tree import DecisionTreeClassifier
 
@@ -63,7 +62,7 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]])
 
     # Plot the training points
     for i, color in zip(range(n_classes), plot_colors):
-        idx = np.where(y == i)
+        idx = np.asarray(y == i).nonzero()
         plt.scatter(
             X[idx, 0],
             X[idx, 1],

@@ -3,9 +3,9 @@
 
 import numpy as np
 
-from ..utils._optional_dependencies import check_matplotlib_support
-from ..utils._plotting import _interval_max_min_ratio, _validate_score_name
-from ._validation import learning_curve, validation_curve
+from sklearn.model_selection._validation import learning_curve, validation_curve
+from sklearn.utils._optional_dependencies import check_matplotlib_support
+from sklearn.utils._plotting import _interval_max_min_ratio, _validate_score_name
 
 
 class _BaseCurveDisplay:
@@ -354,7 +354,7 @@ class LearningCurveDisplay(_BaseCurveDisplay):
             - None, to use the default 5-fold cross validation,
             - int, to specify the number of folds in a `(Stratified)KFold`,
             - :term:`CV splitter`,
-            - An iterable yielding (train, test) splits as arrays of indices.
+            - an iterable yielding (train, test) splits as arrays of indices.
 
             For int/None inputs, if the estimator is a classifier and `y` is
             either binary or multiclass,
@@ -488,7 +488,7 @@ class LearningCurveDisplay(_BaseCurveDisplay):
             random_state=random_state,
             error_score=error_score,
             return_times=False,
-            fit_params=fit_params,
+            params=fit_params,
         )
 
         viz = cls(
@@ -741,7 +741,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             - None, to use the default 5-fold cross validation,
             - int, to specify the number of folds in a `(Stratified)KFold`,
             - :term:`CV splitter`,
-            - An iterable yielding (train, test) splits as arrays of indices.
+            - an iterable yielding (train, test) splits as arrays of indices.
 
             For int/None inputs, if the estimator is a classifier and `y` is
             either binary or multiclass,
@@ -864,7 +864,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             pre_dispatch=pre_dispatch,
             verbose=verbose,
             error_score=error_score,
-            fit_params=fit_params,
+            params=fit_params,
         )
 
         viz = cls(
