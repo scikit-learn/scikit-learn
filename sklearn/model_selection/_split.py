@@ -2696,9 +2696,9 @@ def check_cv(cv=5, y=None, *, classifier=False):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
         - None, to use the default 5-fold cross validation,
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable that generates (train, test) splits as arrays of indices.
+        - an iterable that generates (train, test) splits as arrays of indices.
 
         For integer/None inputs, if classifier is True and ``y`` is either
         binary or multiclass, :class:`StratifiedKFold` is used. In all other
@@ -2714,8 +2714,10 @@ def check_cv(cv=5, y=None, *, classifier=False):
         The target variable for supervised learning problems.
 
     classifier : bool, default=False
-        Whether the task is a classification task, in which case
-        stratified KFold will be used.
+        Whether the task is a classification task. When ``True`` and `cv` is an
+        integer or ``None``, :class:`StratifiedKFold` is used if ``y`` is binary
+        or multiclass; otherwise :class:`KFold` is used. Ignored if `cv` is a
+        cross-validator instance or iterable.
 
     Returns
     -------
@@ -2745,9 +2747,9 @@ def check_cv(cv=5, y=None, *, classifier=False):
     if not hasattr(cv, "split") or isinstance(cv, str):
         if not isinstance(cv, Iterable) or isinstance(cv, str):
             raise ValueError(
-                "Expected cv as an integer, cross-validation "
-                "object (from sklearn.model_selection) "
-                "or an iterable. Got %s." % cv
+                "Expected `cv` as an integer, a cross-validation object "
+                "(from sklearn.model_selection), or an iterable yielding (train, test) "
+                f"splits as arrays of indices. Got {cv}."
             )
         return _CVIterableWrapper(cv)
 
