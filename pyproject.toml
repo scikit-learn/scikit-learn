@@ -288,7 +288,7 @@ package = "sklearn"  # name of your package
         enabled = true
         verify_pr_number = true
         changelog_noop_label = "No Changelog Needed"
-        whatsnew_pattern = 'doc/whatsnew/upcoming_changes/[^/]+/\d+\.[^.]+\.rst'
+        whatsnew_pattern = 'doc/whats_new/upcoming_changes/[^/]+/\d+\.[^.]+\.rst'
 
 [tool.codespell]
 skip = ["./.git", "*.svg", "./.mypy_cache", "*sklearn/feature_extraction/_stop_words.py", "*sklearn/feature_extraction/tests/test_text.py", "./doc/_build", "./doc/auto_examples", "./doc/modules/generated"]
