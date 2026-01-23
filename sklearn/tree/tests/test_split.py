@@ -79,8 +79,7 @@ class NaiveSplitter:
         for f in range(X.shape[1]):
             x = X[:, f]
             nan_mask = np.isnan(x)
-            xu = np.unique(x[~nan_mask], sorted=True)
-            thresholds = (xu[1:] + xu[:-1]) / 2
+            thresholds = np.unique(x[~nan_mask])
             for th in thresholds:
                 yield {
                     "feature": f,
