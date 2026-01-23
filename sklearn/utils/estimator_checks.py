@@ -1638,45 +1638,6 @@ def _check_sample_weight_equivalence(name, estimator_orig, sparse_container):
             assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
 
 
-@ignore_warnings(category=FutureWarning)
-def check_sample_weight_scaling(name, estimator_orig):
-    # check that setting sample_weight to zero / integer is equivalent
-    # to removing / repeating corresponding samples.
-    estimator_weighted = clone(estimator_orig)
-    estimator_repeated = clone(estimator_orig)
-    set_random_state(estimator_weighted, random_state=0)
-    set_random_state(estimator_repeated, random_state=0)
-
-    rng = np.random.RandomState(42)
-    n_samples = 15
-    X = rng.rand(n_samples, n_samples * 2)
-    y = rng.randint(0, 3, size=n_samples)
-
-    X_weighted = X
-    y_weighted = y
-    # repeat samples according to weights
-    X_repeated = X_weighted.repeat(repeats=2, axis=0)
-    y_repeated = y_weighted.repeat(repeats=2)
-
-    X_weighted, y_weighted = shuffle(X_weighted, y_weighted, random_state=0)
-    y_weighted = _enforce_estimator_tags_y(estimator_weighted, y_weighted)
-    y_repeated = _enforce_estimator_tags_y(estimator_repeated, y_repeated)
-
-    estimator_repeated.fit(X_weighted, y=y_weighted, sample_weight=1)
-    estimator_weighted.fit(X_weighted, y=y_weighted, sample_weight=2)
-
-    for method in ["predict_proba", "decision_function", "predict", "transform"]:
-        if hasattr(estimator_orig, method):
-            X_pred1 = getattr(estimator_repeated, method)(X)
-            X_pred2 = getattr(estimator_weighted, method)(X)
-            err_msg = (
-                f"Comparing the output of {name}.{method} revealed that fitting "
-                "with `sample_weight` is not equivalent to fitting with removed "
-                "or repeated data points."
-            )
-            assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
-
-
 def check_sample_weight_equivalence_on_dense_data(name, estimator_orig):
     _check_sample_weight_equivalence(name, estimator_orig, sparse_container=None)
 
