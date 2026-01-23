@@ -727,7 +727,7 @@ def test_sample_weight_effect(problem, global_random_seed):
     # Otherwise, this test would require being rewritten as a statistical test.
     # We also set `n_samples` large enough to ensure that columns have more than
     # 255 distinct values and that we test the impact of weight-aware binning.
-    n_samples = 200
+    n_samples = 300
     n_features = 2
     rng = np.random.RandomState(global_random_seed)
     if problem == "regression":
@@ -759,15 +759,15 @@ def test_sample_weight_effect(problem, global_random_seed):
 
     # Create dataset with repetitions and corresponding sample weights
     sample_weight = rng.randint(0, 3, size=X.shape[0])
-    X_resampled_by_weights = np.repeat(X, sample_weight, axis=0)
-    assert X_resampled_by_weights.shape[0] < 2e5
-    y_resampled_by_weights = np.repeat(y, sample_weight, axis=0)
+    X_repeated = np.repeat(X, sample_weight, axis=0)
+    assert X_repeated.shape[0] < 2e5
+    y_repeated = np.repeat(y, sample_weight, axis=0)
 
-    est_sw = clone(est).fit(X, y, sample_weight=sample_weight)
-    est_dup = clone(est).fit(X_resampled_by_weights, y_resampled_by_weights)
+    est_weighted = clone(est).fit(X, y, sample_weight=sample_weight)
+    est_repeated = clone(est).fit(X_repeated, y_repeated)
 
     # checking raw_predict is stricter than just predict for classification
-    assert_allclose(est_sw._raw_predict(X), est_dup._raw_predict(X))
+    assert_allclose(est_weighted._raw_predict(X), est_repeated._raw_predict(X))
 
 
 @pytest.mark.parametrize("Loss", (HalfSquaredError, AbsoluteError))

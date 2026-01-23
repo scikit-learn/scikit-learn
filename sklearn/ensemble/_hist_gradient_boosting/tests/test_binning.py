@@ -115,13 +115,15 @@ def test_map_to_bins(max_bins):
 
 
 def test_unique_bins_repeated_weighted():
+    # Test sample weight equivalence for the degenerate case
+    # when only one unique bin value exists and should be trimmed
+    # due to repeated values.
     col_data = np.asarray([1, 2, 3, 4, 5, 6]).reshape(-1, 1)
     sample_weight = np.asarray([1000, 1, 1, 1, 1, 1])
     col_data_repeated = np.asarray(([1] * 1000) + [2, 3, 4, 5, 6]).reshape(-1, 1)
 
     binmapper = _BinMapper(n_bins=4).fit(col_data, sample_weight=sample_weight)
     binmapper_repeated = _BinMapper(n_bins=4).fit(col_data_repeated)
-
     assert_array_equal(binmapper.bin_thresholds_, binmapper_repeated.bin_thresholds_)
 
 
@@ -210,18 +212,12 @@ def test_bin_mapper_repeated_values_invariance(n_distinct):
     assert_array_equal(binned_1, binned_2)
 
 
-@pytest.mark.parametrize("n_bins", [50, None])
+@pytest.mark.parametrize("n_bins", [50, 250])
 def test_binmapper_weighted_vs_repeated_equivalence(global_random_seed, n_bins):
     rng = np.random.RandomState(global_random_seed)
 
     n_samples = 200
     X = rng.randn(n_samples, 3)
-    if n_bins is None:
-        # Set n_bins to a value strictly larger than the number of unique values in at
-        # least one of the data columns: in this case, the bin thresholds should
-        # be set to midpoints between successive unique values.
-        n_bins = np.unique(X[:, rng.randint(X.shape[1])]).shape[0] + rng.randint(5) + 1
-
     sw = rng.randint(0, 5, size=n_samples)
     X_repeated = np.repeat(X, sw, axis=0)
 
