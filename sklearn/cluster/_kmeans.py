@@ -39,6 +39,7 @@ from sklearn.cluster._k_means_minibatch import (
 )
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics.pairwise import _euclidean_distances, euclidean_distances
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils import check_array, check_random_state
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
