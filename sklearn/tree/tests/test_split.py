@@ -158,17 +158,13 @@ def make_simple_dataset(
     [(False, False), (True, False), (False, True)],
     ids=["dense-without_missing", "sparse-without_missing", "dense-with_missing"],
 )
-def test_split_impurity(
-    Tree, criterion, sparse, missing_values, global_random_seed
-):
+def test_split_impurity(Tree, criterion, sparse, missing_values, global_random_seed):
     is_clf = criterion in CLF_CRITERIONS
-    with_nans = missing_values != "x"
-    is_sparse = sparse != "x"
 
     # TODO: (remove in PR #32119)
-    if with_nans and criterion == "absolute_error":
+    if missing_values and criterion == "absolute_error":
         pytest.skip("AE + missing values not supported yet")
-    if with_nans and criterion == "poisson":
+    if missing_values and criterion == "poisson":
         pytest.xfail("Poisson criterion is buggy for now")
     rng = np.random.default_rng(global_random_seed)
 
@@ -178,7 +174,7 @@ def test_split_impurity(
         d = rng.integers(1, 4)
         n_classes = rng.integers(2, 5)  # only used for classification
         X_dense, X, y, w = make_simple_dataset(
-            n, d, with_nans, is_sparse, is_clf, n_classes, rng
+            n, d, missing_values, sparse, is_clf, n_classes, rng
         )
 
         naive_splitter = NaiveSplitter(criterion, n_classes)
