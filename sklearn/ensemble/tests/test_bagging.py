@@ -711,16 +711,17 @@ def test_warning_bootstrap_sample_weight():
 def test_invalid_sample_weight_max_samples_bootstrap_combinations():
     X, y = iris.data, iris.target
 
-    # Case 1: small weights and fractional max_samples would lead to sampling
-    # less than 1 sample, which is not allowed.
+    # Case 1: small weights and fractional max_samples lead to a small
+    # number of bootstrap samples, which raises a UserWarning.
     clf = BaggingClassifier(max_samples=1.0)
     sample_weight = np.ones_like(y) / (2 * len(y))
     expected_msg = (
-        r"The total sum of sample weights is 0.5(\d*), which prevents resampling with "
-        r"a fractional value for max_samples=1\.0\. Either pass max_samples as an "
-        r"integer or use a larger sample_weight\."
+        "Using the fractional value max_samples=1.0 when "
+        r"the total sum of sample weights is 0.5(\d*) "
+        r"results in a low number \(1\) of bootstrap samples. "
+        "We recommend passing `max_samples` as an integer."
     )
-    with pytest.raises(ValueError, match=expected_msg):
+    with pytest.warns(UserWarning, match=expected_msg):
         clf.fit(X, y, sample_weight=sample_weight)
 
     # Case 2: large weights and bootstrap=False would lead to sampling without

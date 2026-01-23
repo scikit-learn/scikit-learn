@@ -12,9 +12,9 @@ more details.
 
 from __future__ import annotations
 
-from typing import Literal as L
-from typing import TypeAlias, overload
+from typing import Literal, TypeAlias, overload
 
+import dask.array as da
 from numpy import bool_ as bool
 from numpy import (
     complex64,
@@ -33,7 +33,7 @@ from numpy import (
     uint64,
 )
 
-from ...common._helpers import _DASK_DEVICE, _dask_device
+from ...common._helpers import _DASK_DEVICE, _check_device, _dask_device
 from ...common._typing import (
     Capabilities,
     DefaultDTypes,
@@ -49,8 +49,7 @@ from ...common._typing import (
     DTypesSigned,
     DTypesUnsigned,
 )
-
-_Device: TypeAlias = L["cpu"] | _dask_device
+Device: TypeAlias = Literal["cpu"] | _dask_device
 
 
 class __array_namespace_info__:
@@ -142,7 +141,7 @@ class __array_namespace_info__:
             "max dimensions": 64,
         }
 
-    def default_device(self) -> L["cpu"]:
+    def default_device(self) -> Device:
         """
         The default device used for new Dask arrays.
 
@@ -169,7 +168,7 @@ class __array_namespace_info__:
         """
         return "cpu"
 
-    def default_dtypes(self, /, *, device: _Device | None = None) -> DefaultDTypes:
+    def default_dtypes(self, /, *, device: Device | None = None) -> DefaultDTypes:
         """
         The default data types used for new Dask arrays.
 
@@ -208,11 +207,7 @@ class __array_namespace_info__:
          'indexing': dask.int64}
 
         """
-        if device not in ["cpu", _DASK_DEVICE, None]:
-            raise ValueError(
-                f'Device not understood. Only "cpu" or _DASK_DEVICE is allowed, '
-                f"but received: {device!r}"
-            )
+        _check_device(da, device)
         return {
             "real floating": dtype(float64),
             "complex floating": dtype(complex128),
@@ -222,38 +217,38 @@ class __array_namespace_info__:
 
     @overload
     def dtypes(
-        self, /, *, device: _Device | None = None, kind: None = None
+        self, /, *, device: Device | None = None, kind: None = None
     ) -> DTypesAll: ...
     @overload
     def dtypes(
-        self, /, *, device: _Device | None = None, kind: L["bool"]
+        self, /, *, device: Device | None = None, kind: Literal["bool"]
     ) -> DTypesBool: ...
     @overload
     def dtypes(
-        self, /, *, device: _Device | None = None, kind: L["signed integer"]
+        self, /, *, device: Device | None = None, kind: Literal["signed integer"]
     ) -> DTypesSigned: ...
     @overload
     def dtypes(
-        self, /, *, device: _Device | None = None, kind: L["unsigned integer"]
+        self, /, *, device: Device | None = None, kind: Literal["unsigned integer"]
     ) -> DTypesUnsigned: ...
     @overload
     def dtypes(
-        self, /, *, device: _Device | None = None, kind: L["integral"]
+        self, /, *, device: Device | None = None, kind: Literal["integral"]
     ) -> DTypesIntegral: ...
     @overload
     def dtypes(
-        self, /, *, device: _Device | None = None, kind: L["real floating"]
+        self, /, *, device: Device | None = None, kind: Literal["real floating"]
     ) -> DTypesReal: ...
     @overload
     def dtypes(
-        self, /, *, device: _Device | None = None, kind: L["complex floating"]
+        self, /, *, device: Device | None = None, kind: Literal["complex floating"]
     ) -> DTypesComplex: ...
     @overload
     def dtypes(
-        self, /, *, device: _Device | None = None, kind: L["numeric"]
+        self, /, *, device: Device | None = None, kind: Literal["numeric"]
     ) -> DTypesNumeric: ...
     def dtypes(
-        self, /, *, device: _Device | None = None, kind: DTypeKind | None = None
+        self, /, *, device: Device | None = None, kind: DTypeKind | None = None
     ) -> DTypesAny:
         """
         The array API data types supported by Dask.
@@ -308,11 +303,7 @@ class __array_namespace_info__:
          'int64': dask.int64}
 
         """
-        if device not in ["cpu", _DASK_DEVICE, None]:
-            raise ValueError(
-                'Device not understood. Only "cpu" or _DASK_DEVICE is allowed, but received:'
-                f" {device}"
-            )
+        _check_device(da, device)
         if kind is None:
             return {
                 "bool": dtype(bool),
@@ -381,14 +372,14 @@ class __array_namespace_info__:
                 "complex64": dtype(complex64),
                 "complex128": dtype(complex128),
             }
-        if isinstance(kind, tuple):  # type: ignore[reportUnnecessaryIsinstanceCall]
+        if isinstance(kind, tuple):
             res: dict[str, DType] = {}
             for k in kind:
                 res.update(self.dtypes(kind=k))
             return res
         raise ValueError(f"unsupported kind: {kind!r}")
 
-    def devices(self) -> list[_Device]:
+    def devices(self) -> list[Device]:
         """
         The devices supported by Dask.
 
