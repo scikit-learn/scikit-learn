@@ -116,7 +116,7 @@ def make_simple_dataset(
     is_sparse,
     is_clf,
     n_classes,
-    rng: np.random.Generator,
+    rng,
 ):
     X_dense = rng.random((n, d))
     y = rng.random(n) + X_dense.sum(axis=1)
@@ -154,9 +154,11 @@ def make_simple_dataset(
     ],
 )
 @pytest.mark.parametrize(
-    "sparse, missing_values", [("x", "x"), ("sparse", "x"), ("x", "missing_values")]
+    "sparse, missing_values",
+    [(False, False), (True, False), (False, True)],
+    ids=["dense-without_missing", "sparse-without_missing", "dense-with_missing"],
 )
-def test_best_split_optimality(
+def test_split_impurity(
     Tree, criterion, sparse, missing_values, global_random_seed
 ):
     is_clf = criterion in CLF_CRITERIONS
@@ -216,9 +218,17 @@ def test_best_split_optimality(
         assert_allclose(left_right_impurity, actual_impurity[1:], atol=1e-12)
 
         if "Extra" in Tree.__name__:
+            # The remainder of the test checks for optimality of the found split.
+            # However, randomized trees are not guaranteed to find an optimal split
+            # but only a "better-than-nothing" split. Therefore, end the test here
+            # for this combination of model type and dataset.
             continue
 
-        # check that the selected split was really the best possible split:
+        # Check that the selected split has the same impurity as the best split
+        # found by the naive splitter. Note that there could exist multiple splits
+        # with the same optimal impurity, so the assertion is made on the impurity
+        # value: the split value is only displayed to help debugging in case
+        # of assertion failure.
         best_impurity, excepted_split = naive_splitter.best_split_naive(X_dense, y, w)
         actual_split_impurity = actual_impurity[1:].sum()
         assert np.isclose(best_impurity, actual_split_impurity), (
