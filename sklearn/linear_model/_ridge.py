@@ -2203,7 +2203,6 @@ class _RidgeGCV(LinearModel):
         xp, is_array_api, device_ = get_namespace_and_device(X)
         y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
         # FIXME original_dtype can be int64 or int32
-        # we would like original_dtype to be float64 or float32
         if is_array_api or hasattr(getattr(X, "dtype", None), "kind"):
             original_dtype = X.dtype
         else:
@@ -2216,7 +2215,6 @@ class _RidgeGCV(LinearModel):
         # to float64 whenever possible before converting the results back to
         # float32.
         dtype = _max_precision_float_dtype(xp, device=device_)
-
         X, y = validate_data(
             self,
             X,
@@ -2246,6 +2244,7 @@ class _RidgeGCV(LinearModel):
             sample_weight=sample_weight,
             rescale_with_sw=True,
         )
+
         gcv_mode = _check_gcv_mode(X, self.gcv_mode)
 
         n_samples, n_features = X.shape
