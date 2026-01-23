@@ -88,6 +88,7 @@ def sag(
     tol=0,
     random_state=77,
     X_sparse=False,
+    callback=None,
 ):
     # Using dataset to emulate random draw of samples in cython sag_solver
     dataset = get_mock_dataset(X.shape, X.dtype, X_sparse, random_state)
@@ -141,6 +142,9 @@ def sag(
                     intercept -= (
                         intercept_gradient_correction * step_size * (1 - 1.0 / n_seen)
                     )
+        # callback for convergence analysis
+        if callback is not None:
+            callback(dict(weights=weights))
         # stopping criteria
         max_weight = np.abs(weights).max()
         max_change = np.abs(weights - previous_weights).max()
@@ -167,6 +171,7 @@ def sag_sparse(
     tol=0,
     random_state=77,
     X_sparse=False,
+    callback=None,
 ):
     # Using dataset to emulate random draw of samples in cython sag_solver
     dataset = get_mock_dataset(X.shape, X.dtype, X_sparse, random_state)
@@ -268,7 +273,9 @@ def sag_sparse(
                     c_sum[counter - 1] - c_sum[last_updated[j] - 1]
                 ) * sum_gradient[j]
         actual_weights *= wscale
-
+        # callback for convergence analysis
+        if callback is not None:
+            callback(dict(weights=actual_weights))
         # stopping criteria
         max_weight = np.abs(actual_weights).max()
         max_change = np.abs(actual_weights - previous_weights).max()
