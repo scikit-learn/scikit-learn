@@ -9,16 +9,14 @@ from sklearn.datasets import (
     make_classification,
     make_multilabel_classification,
     make_regression,
+    make_blobs,
 )
+from sklearn.cluster import KMeans
 from sklearn.ensemble import IsolationForest
-from sklearn.linear_model import (
-    LinearRegression,
-    LogisticRegression,
-)
+from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.multioutput import ClassifierChain
 from sklearn.preprocessing import scale
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.utils._mocking import _MockEstimatorOnOffPrediction
 from sklearn.utils._response import _get_response_values, _get_response_values_binary
 from sklearn.utils._testing import assert_allclose, assert_array_equal
 
@@ -28,34 +26,42 @@ X = scale(X, copy=False)
 X_binary, y_binary = X[:100], y[:100]
 
 
-@pytest.mark.parametrize(
-    "response_method", ["decision_function", "predict_proba", "predict_log_proba"]
-)
-def test_get_response_values_regressor_error(response_method):
-    """Check the error message with regressor an not supported response
-    method."""
-    my_estimator = _MockEstimatorOnOffPrediction(response_methods=[response_method])
-    X = "mocking_data", "mocking_target"
-    err_msg = f"{my_estimator.__class__.__name__} should either be a classifier"
-    with pytest.raises(ValueError, match=err_msg):
-        _get_response_values(my_estimator, X, response_method=response_method)
-
-
+@pytest.mark.parametrize("response_method", ["predict", "score"])
 @pytest.mark.parametrize("return_response_method_used", [True, False])
-def test_get_response_values_regressor(return_response_method_used):
+def test_get_response_values_regressor(response_method, return_response_method_used):
     """Check the behaviour of `_get_response_values` with regressor."""
     X, y = make_regression(n_samples=10, random_state=0)
     regressor = LinearRegression().fit(X, y)
     results = _get_response_values(
         regressor,
         X,
-        response_method="predict",
+        response_method=response_method,
         return_response_method_used=return_response_method_used,
     )
-    assert_array_equal(results[0], regressor.predict(X))
+    prediction_method = getattr(regressor, response_method)
+    assert_array_equal(results[0], prediction_method(X))
     assert results[1] is None
     if return_response_method_used:
-        assert results[2] == "predict"
+        assert results[2] == response_method
+
+
+@pytest.mark.parametrize("response_method", ["predict", "score"])
+@pytest.mark.parametrize("return_response_method_used", [True, False])
+def test_get_response_values_clusterer(response_method, return_response_method_used):
+    """Check the behaviour of `_get_response_values` with clusterer."""
+    X, y = make_blobs(n_samples=10, random_state=0)
+    clusterer = KMeans(n_clusters=2, n_init=1).fit(X, y)
+    results = _get_response_values(
+        clusterer,
+        X,
+        response_method=response_method,
+        return_response_method_used=return_response_method_used,
+    )
+    prediction_method = getattr(clusterer, response_method)
+    assert_array_equal(results[0], prediction_method(X))
+    assert results[1] is None
+    if return_response_method_used:
+        assert results[2] == response_method
 
 
 @pytest.mark.parametrize(

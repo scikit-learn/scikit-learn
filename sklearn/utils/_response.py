@@ -194,13 +194,12 @@ def _get_response_values(
     ValueError
         If `pos_label` is not a valid label.
         If the shape of `y_pred` is not consistent for binary classifier.
-        If the response method can be applied to a classifier only and
-        `estimator` is a regressor.
+        If `estimator` is not recognized as a classifier, an outlier detector,
+        a regressor or a clusterer.
     """
-    from sklearn.base import is_classifier, is_outlier_detector
+    prediction_method = _check_response_method(estimator, response_method)
 
     if is_classifier(estimator):
-        prediction_method = _check_response_method(estimator, response_method)
         classes = estimator.classes_
         target_type = type_of_target(classes)
 
@@ -229,18 +228,7 @@ def _get_response_values(
                 classes=classes,
                 pos_label=pos_label,
             )
-    elif is_outlier_detector(estimator):
-        prediction_method = _check_response_method(estimator, response_method)
-        y_pred, pos_label = prediction_method(X), None
-    else:  # estimator is a regressor
-        if response_method != "predict":
-            raise ValueError(
-                f"{estimator.__class__.__name__} should either be a classifier to be "
-                f"used with response_method={response_method} or the response_method "
-                "should be 'predict'. Got a regressor with response_method="
-                f"{response_method} instead."
-            )
-        prediction_method = estimator.predict
+    else:
         y_pred, pos_label = prediction_method(X), None
 
     if return_response_method_used:
