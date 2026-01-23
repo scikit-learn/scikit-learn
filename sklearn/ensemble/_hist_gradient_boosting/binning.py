@@ -246,7 +246,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             # `sample_weight is None` to make sure that passing no weights is
             # statistically equivalent to passing unit weights.
             subset = rng.choice(
-                X.shape[0], self.subsample, p=subsampling_probabilities, replace=False
+                X.shape[0], self.subsample, p=subsampling_probabilities, replace=True
             )
             X = X.take(subset, axis=0)
 
