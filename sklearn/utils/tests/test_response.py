@@ -7,10 +7,10 @@ from sklearn.base import clone
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
     load_iris,
+    make_blobs,
     make_classification,
     make_multilabel_classification,
     make_regression,
-    make_blobs,
 )
 from sklearn.ensemble import IsolationForest
 from sklearn.linear_model import LinearRegression, LogisticRegression
