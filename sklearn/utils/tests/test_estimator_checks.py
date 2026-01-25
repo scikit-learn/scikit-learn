@@ -12,6 +12,7 @@ from numbers import Integral, Real
 
 import joblib
 import numpy as np
+import pytest
 import scipy.sparse as sp
 
 from sklearn import config_context, get_config
@@ -808,6 +809,7 @@ def test_check_estimator_not_fail_fast():
     assert any(item["status"] == "passed" for item in check_results)
 
 
+@pytest.mark.no_check_spmatrix  # pickle breaks check_spmatrix
 # Some estimator checks rely on warnings in deep functions calls. This is not
 # automatically detected by pytest-run-parallel shallow AST inspection, so we
 # need to mark the test function as thread-unsafe.
@@ -912,6 +914,7 @@ def test_check_estimator_transformer_no_mixin():
         check_estimator(BadTransformerWithoutMixin())
 
 
+@pytest.mark.no_check_spmatrix  # pickle breaks check_spmatrix
 def test_check_estimator_clones():
     # check that check_estimator doesn't modify the estimator it receives
 

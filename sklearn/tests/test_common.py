@@ -111,6 +111,7 @@ def test_get_check_estimator_ids(val, expected):
     assert _get_check_estimator_ids(val) == expected
 
 
+@pytest.mark.no_check_spmatrix  # pickle breaks check_spmatrix
 @parametrize_with_checks(
     list(_tested_estimators()), expected_failed_checks=_get_expected_failed_checks
 )

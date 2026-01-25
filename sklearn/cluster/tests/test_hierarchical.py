@@ -177,6 +177,7 @@ def test_agglomerative_clustering_distances(
         assert not hasattr(clustering, "distances_")
 
 
+@pytest.mark.no_check_spmatrix  # pickle breaks check_spmatrix
 @pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
 def test_agglomerative_clustering(global_random_seed, lil_container):
     # Check that we obtain the correct number of clusters with

@@ -915,7 +915,7 @@ def test_csc_row_median(csc_container, csr_container):
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_inplace_normalize(csr_container, inplace_csr_row_normalize):
-    if csr_container is sp.csr_matrix:
+    if issubclass(sp.csr_matrix, csr_container):
         ones = np.ones((10, 1))
     else:
         ones = np.ones(10)

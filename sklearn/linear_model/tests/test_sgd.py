@@ -884,6 +884,7 @@ def test_sgd_proba(klass):
         assert_array_almost_equal(p[0], [1 / 3.0] * 3)
 
 
+@pytest.mark.no_check_spmatrix  # pickle breaks check_spmatrix
 @pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
 def test_sgd_l1(klass):
     # Test L1 regularization
