@@ -45,7 +45,7 @@ def manual_grid_search_warm_start(
     y_valid,
     max_features_grid,
     n_estimators_grid,
-    random_state=0
+    random_state=0,
 ):
     """Manual grid search reusing fitted trees when increasing n_estimators."""
     n_estimators_grid = sorted(n_estimators_grid)
@@ -59,7 +59,7 @@ def manual_grid_search_warm_start(
             warm_start=True,
             random_state=random_state,
             n_jobs=-1,
-            max_features=max_features
+            max_features=max_features,
         )
 
         # Reuse the fitted forest while increasing n_estimators.
@@ -79,7 +79,7 @@ def gridsearchcv_baseline(
     y_valid,
     max_features_grid,
     n_estimators_grid,
-    random_state=0
+    random_state=0,
 ):
     """Baseline GridSearchCV on the same train/validation split (fits from scratch)."""
     X_all = np.vstack([X_train, X_valid])
