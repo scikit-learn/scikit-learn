@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 Manual grid search with warm_start for tree ensembles.
 
@@ -23,12 +26,16 @@ from __future__ import annotations
 
 import time
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import GridSearchCV, PredefinedSplit, train_test_split
+from sklearn.model_selection import (
+    GridSearchCV,
+    PredefinedSplit,
+    train_test_split,
+)
 
 
 def manual_grid_search_warm_start(
