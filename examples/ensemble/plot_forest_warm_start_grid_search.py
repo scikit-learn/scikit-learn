@@ -159,7 +159,7 @@ if __name__ == "__main__":
         n_features=30,
         n_informative=10,
         n_redundant=10,
-        random_state=0
+        random_state=0,
     )
 
     # Split into train+valid and test, then split train+valid into train and valid.
