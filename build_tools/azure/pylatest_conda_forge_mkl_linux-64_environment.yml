@@ -27,6 +27,7 @@ dependencies:
   - pytorch-cpu
   - polars
   - pyarrow
+  - jax
   - array-api-strict
   - scipy-doctest
   - pytest-playwright
