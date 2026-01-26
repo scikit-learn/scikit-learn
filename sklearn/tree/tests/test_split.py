@@ -54,7 +54,11 @@ class NaiveSplitter:
             loss = np.average((y - pred) ** 2, weights=w)
         elif self.criterion == "absolute_error":
             pred = _weighted_percentile(
-                y[w > 0], w[w > 0], percentile_rank=50, average=True
+                # TODO: remove w > 0 masking when #33127 is merged
+                y[w > 0],
+                w[w > 0],
+                percentile_rank=50,
+                average=True,
             )
             loss = np.average(np.abs(y - pred), weights=w)
         elif self.criterion == "poisson":
