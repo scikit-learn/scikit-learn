@@ -194,8 +194,6 @@ def _get_response_values(
     ValueError
         If `pos_label` is not a valid label.
         If the shape of `y_pred` is not consistent for binary classifier.
-        If `estimator` is not recognized as a classifier, an outlier detector,
-        a regressor or a clusterer.
     """
     prediction_method = _check_response_method(estimator, response_method)
 
