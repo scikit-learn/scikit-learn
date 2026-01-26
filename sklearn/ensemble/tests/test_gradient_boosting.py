@@ -1644,7 +1644,7 @@ def test_multinomial_error_exact_backward_compat():
 
 
 def test_gb_denominator_zero(global_random_seed):
-    """Test _update_terminal_regions doesn't emit divide-by-zero/overflow warnings.
+    """Test _update_terminal_regions doesn't emit division-by-zero warnings.
 
     For instance for log loss based binary classification, the line search step might
     become nan/inf as denominator = hessian = prob * (1 - prob) and prob = 0 or 1 can
