@@ -920,7 +920,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         - None, to use true labels when fitting,
         - integer, to specify the number of folds in a (Stratified)KFold,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
     chain_method : {'predict', 'predict_proba', 'predict_log_proba', \
             'decision_function'} or list of such str's, default='predict'
@@ -1205,7 +1205,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         - None, to use true labels when fitting,
         - integer, to specify the number of folds in a (Stratified)KFold,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If ``order='random'``, determines random number generation for the

@@ -454,6 +454,9 @@ def ridge_regression(
         If an array is passed, penalties are assumed to be specific to the
         targets. Hence they must correspond in number.
 
+        For an illustration of the effect of alpha on the model coefficients, see
+        :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`.
+
     sample_weight : float or array-like of shape (n_samples,), default=None
         Individual weights for each sample. If given a float, every sample
         will have the same weight. If sample_weight is not None and
@@ -1054,6 +1057,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         If an array is passed, penalties are assumed to be specific to the
         targets. Hence they must correspond in number.
 
+        See :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`
+        for an illustration of the effect of alpha on the model coefficients.
+
     fit_intercept : bool, default=True
         Whether to fit the intercept for this model. If set
         to false, no intercept will be used in calculations
@@ -1395,6 +1401,9 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
         :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`.
+
+        For an illustration of the effect of alpha on the model coefficients, see
+        :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set to false, no
@@ -2622,6 +2631,9 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         :class:`~sklearn.svm.LinearSVC`.
         If using Leave-One-Out cross-validation, alphas must be strictly positive.
 
+        For an example on how regularization strength affects the model coefficients,
+        see :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`.
+
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
@@ -2642,9 +2654,9 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Possible inputs for cv are:
 
         - None, to use the efficient Leave-One-Out cross-validation
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`~sklearn.model_selection.StratifiedKFold` is used, else,
@@ -2812,6 +2824,9 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         :class:`~sklearn.svm.LinearSVC`.
         If using Leave-One-Out cross-validation, alphas must be strictly positive.
 
+        For an example on how regularization strength affects the model coefficients,
+        see :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`.
+
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
@@ -2832,9 +2847,9 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         Possible inputs for cv are:
 
         - None, to use the efficient Leave-One-Out cross-validation
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.

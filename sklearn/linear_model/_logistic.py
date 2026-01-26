@@ -761,8 +761,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         Specify the norm of the penalty:
 
         - `None`: no penalty is added;
-        - `'l2'`: add a L2 penalty term and it is the default choice;
-        - `'l1'`: add a L1 penalty term;
+        - `'l2'`: add an L2 penalty term and it is the default choice;
+        - `'l1'`: add an L1 penalty term;
         - `'elasticnet'`: both L1 and L2 penalty terms are added.
 
         .. warning::
@@ -1165,8 +1165,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         if penalty == "elasticnet" and self.l1_ratio is None:
             raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
 
-        if penalty is None:
-            if self.C != 1.0:  # default values
+        if self.penalty is None:
+            if self.C != 1.0:  # default value
                 warnings.warn(
                     "Setting penalty=None will ignore the C and l1_ratio parameters"
                 )
@@ -1432,8 +1432,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     penalty : {'l1', 'l2', 'elasticnet'}, default='l2'
         Specify the norm of the penalty:
 
-        - `'l2'`: add a L2 penalty term (used by default);
-        - `'l1'`: add a L1 penalty term;
+        - `'l2'`: add an L2 penalty term (used by default);
+        - `'l1'`: add an L1 penalty term;
         - `'elasticnet'`: both L1 and L2 penalty terms are added.
 
         .. warning::
