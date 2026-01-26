@@ -1638,6 +1638,13 @@ def _check_sample_weight_common(xp):
     with pytest.raises(ValueError, match=err_msg):
         _check_sample_weight(sample_weight, X, ensure_non_negative=True)
 
+    # check error raised when allow_all_zero_weights=False
+    X = xp.ones((5, 2))
+    sample_weight = xp.zeros(_num_samples(X))
+    err_msg = "Sample weights must contain at least one non-zero number."
+    with pytest.raises(ValueError, match=err_msg):
+        _check_sample_weight(sample_weight, X, allow_all_zero_weights=False)
+
 
 def test_check_sample_weight():
     # check array order
