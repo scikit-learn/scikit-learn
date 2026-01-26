@@ -120,7 +120,8 @@ def _get_response_values(
     pos_label=None,
     return_response_method_used=False,
 ):
-    """Compute the response values of a classifier, an outlier detector, or a regressor.
+    """Compute the response values of a classifier, an outlier detector, a regressor
+    or a clusterer.
 
     The response values are predictions such that it follows the following shape:
 
@@ -129,8 +130,8 @@ def _get_response_values(
         - with response_method="predict", it is a 1d array of shape `(n_samples,)`;
         - otherwise, it is a 2d array of shape `(n_samples, n_classes)`;
     - for multilabel classification, it is a 2d array of shape `(n_samples, n_outputs)`;
-    - for outlier detection, it is a 1d array of shape `(n_samples,)`;
-    - for regression, it is a 1d array of shape `(n_samples,)`.
+    - for outlier detection, a regressor or a clusterer, it is a 1d array of shape
+      `(n_samples,)`.
 
     If `estimator` is a binary classifier, also return the label for the
     effective positive class.
@@ -142,9 +143,9 @@ def _get_response_values(
     Parameters
     ----------
     estimator : estimator instance
-        Fitted classifier, outlier detector, or regressor or a
+        Fitted classifier, outlier detector, regressor, clusterer or a
         fitted :class:`~sklearn.pipeline.Pipeline` in which the last estimator is a
-        classifier, an outlier detector, or a regressor.
+        classifier, an outlier detector, a regressor or a clusterer.
 
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
@@ -180,8 +181,8 @@ def _get_response_values(
 
     pos_label : int, float, bool, str or None
         The class considered as the positive class when computing
-        the metrics. Returns `None` if `estimator` is a regressor or an outlier
-        detector.
+        the metrics. Returns `None` if `estimator` is a regressor, an outlier
+        detector or a regressor.
 
     response_method_used : str
         The response method used to compute the response values. Only returned

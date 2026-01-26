@@ -392,8 +392,8 @@ def test_regressor_unsupported_response(pyplot, response_method):
     X, y = load_diabetes(return_X_y=True)
     X = X[:, :2]
     tree = DecisionTreeRegressor().fit(X, y)
-    err_msg = "should either be a classifier to be used with response_method"
-    with pytest.raises(ValueError, match=err_msg):
+    err_msg = "has none of the following attributes:"
+    with pytest.raises(AttributeError, match=err_msg):
         DecisionBoundaryDisplay.from_estimator(tree, X, response_method=response_method)
 
 

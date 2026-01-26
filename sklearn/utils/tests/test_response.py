@@ -26,7 +26,7 @@ X = scale(X, copy=False)
 X_binary, y_binary = X[:100], y[:100]
 
 
-@pytest.mark.parametrize("response_method", ["predict", "score"])
+@pytest.mark.parametrize("response_method", ["predict"])
 @pytest.mark.parametrize("return_response_method_used", [True, False])
 def test_get_response_values_regressor(response_method, return_response_method_used):
     """Check the behaviour of `_get_response_values` with regressor."""

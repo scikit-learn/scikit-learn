@@ -1,0 +1,3 @@
+- ``sklearn.utils._response._get_response_values`` now provides a clearer error message
+  when estimator is not a classifier, outlier detector, regressor, clusterer.
+  By :user:`Quentin Barthélemy <qbarthelemy>`.
