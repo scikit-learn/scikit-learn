@@ -1064,7 +1064,7 @@ For instance, we can use the Pandas function :func:`pandas.cut`::
   >>> X = np.array([0.2, 2, 15, 25, 97])
   >>> transformer.fit_transform(X)
   ['infant', 'kid', 'teen', 'adult', 'senior citizen']
-  Categories (5, object): ['infant' < 'kid' < 'teen' < 'adult' < 'senior citizen']
+  Categories (5, str): ['infant' < 'kid' < 'teen' < 'adult' < 'senior citizen']
 
 .. rubric:: Examples
 
