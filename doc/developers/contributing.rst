@@ -249,12 +249,14 @@ feedback:
 - Please be tell us if you would be interested in opening a PR to resolve your issue
   once triaged by a project maintainer.
 
-Note that the scikit-learn tracker receives daily reports (sometimes with the help of
-automated assistants) by GitHub accounts that are mostly interested by increasing contribution
-statistics and show little interest for the expected end-user impact of their contributions.
-As project maintainers we want to be able to assess if our efforts are likely to have a
-meaningful and positive impact to our end users. Therefore, we ask you to avoid opening issues
-for things you don't actually care about.
+Note that the scikit-learn tracker receives `daily reports
+<https://github.com/scikit-learn/scikit-learn/issues?q=label%3Aspam>`_ by
+GitHub accounts that are mostly interested by increasing contribution
+statistics and show little interest for the expected end-user impact of their
+contributions. As project maintainers we want to be able to assess if our
+efforts are likely to have a meaningful and positive impact to our end users.
+Therefore, we ask you to avoid opening issues for things you don't actually
+care about.
 
 If you want to help curate issues, read about :ref:`bug_triaging`.
 
