@@ -6,6 +6,7 @@ import warnings
 import numpy as np
 
 from sklearn.base import is_regressor
+from sklearn.base import ClusterMixin
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import _safe_indexing
 from sklearn.utils._dataframe import is_pandas_df, is_polars_df
@@ -18,6 +19,39 @@ from sklearn.utils.validation import (
     check_is_fitted,
 )
 
+
+# def _check_boundary_response_method(estimator, response_method):
+#     """Validate the response methods to be used with the fitted estimator.
+
+#     Parameters
+#     ----------
+#     estimator : object
+#         Fitted estimator to check.
+
+#     response_method : {'auto', 'decision_function', 'predict_proba', 'predict'}
+#         Specifies whether to use :term:`decision_function`, :term:`predict_proba`,
+#         :term:`predict` as the target response. If set to 'auto', the response method is
+#         tried in the before mentioned order.
+
+#     Returns
+#     -------
+#     prediction_method : list of str or str
+#         The name or list of names of the response methods to use.
+#     """
+#     has_classes = hasattr(estimator, "classes_")
+#     if has_classes and _is_arraylike_not_scalar(estimator.classes_[0]):
+#         msg = "Multi-label and multi-output multi-class classifiers are not supported"
+#         raise ValueError(msg)
+
+#     if response_method == "auto":
+#         if is_regressor(estimator):
+#             prediction_method = "predict"
+#         else:
+#             prediction_method = ["decision_function", "predict_proba", "predict"]
+#     else:
+#         prediction_method = response_method
+
+#     return prediction_method
 
 def _check_boundary_response_method(estimator, response_method):
     """Validate the response methods to be used with the fitted estimator.
@@ -42,16 +76,20 @@ def _check_boundary_response_method(estimator, response_method):
         msg = "Multi-label and multi-output multi-class classifiers are not supported"
         raise ValueError(msg)
 
+    is_clusterer = isinstance(estimator, ClusterMixin)
+
     if response_method == "auto":
         if is_regressor(estimator):
             prediction_method = "predict"
+        elif is_clusterer:
+            # For clusterers: prefer predict when available, otherwise fall back to labels_.
+            prediction_method = "predict" if hasattr(estimator, "predict") else "labels_"
         else:
             prediction_method = ["decision_function", "predict_proba", "predict"]
     else:
         prediction_method = response_method
 
     return prediction_method
-
 
 class DecisionBoundaryDisplay:
     """Decisions boundary visualization.
@@ -498,6 +536,13 @@ class DecisionBoundaryDisplay:
             )
 
         prediction_method = _check_boundary_response_method(estimator, response_method)
+        
+        if prediction_method == "labels_":
+            raise ValueError(
+                "DecisionBoundaryDisplay.from_estimator does not support clusterers "
+                "that do not implement `predict` (e.g. DBSCAN)."
+            )
+
         try:
             response, _, response_method_used = _get_response_values(
                 estimator,

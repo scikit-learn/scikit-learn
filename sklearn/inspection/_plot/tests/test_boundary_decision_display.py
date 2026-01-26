@@ -2,6 +2,7 @@ import warnings
 
 import numpy as np
 import pytest
+pytest.importorskip("matplotlib")
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.datasets import (
@@ -10,6 +11,7 @@ from sklearn.datasets import (
     make_classification,
     make_multilabel_classification,
 )
+from sklearn.cluster import DBSCAN, KMeans
 from sklearn.ensemble import IsolationForest
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.inspection._plot.decision_boundary import _check_boundary_response_method
@@ -701,3 +703,18 @@ def test_subclass_named_constructors_return_type_is_subclass(pyplot):
     curve = SubclassOfDisplay.from_estimator(estimator=clf, X=X)
 
     assert isinstance(curve, SubclassOfDisplay)
+    
+def test_from_estimator_auto_clusterer_with_predict():
+    X = np.array([[0, 0], [0, 1], [1, 0], [5, 5], [5, 6], [6, 5]])
+    est = KMeans(n_clusters=2, random_state=0).fit(X)
+
+    disp = DecisionBoundaryDisplay.from_estimator(est, X, response_method="auto")
+    assert disp is not None
+
+
+def test_from_estimator_auto_clusterer_without_predict_raises():
+    X = np.array([[0, 0], [0, 1], [1, 0], [5, 5], [5, 6], [6, 5]])
+    est = DBSCAN(eps=1.5, min_samples=2).fit(X)
+
+    with pytest.raises(ValueError, match="do not implement `predict`"):
+        DecisionBoundaryDisplay.from_estimator(est, X, response_method="auto")
