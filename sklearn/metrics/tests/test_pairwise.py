@@ -1836,8 +1836,7 @@ def test_pairwise_argmin_correct_warnings_for_bool_and_nonbool(
     Y = [[False, True, False, True], [True, False, True, True]]
     X_arr = np.asarray(X)
     Y_arr = np.asarray(Y)
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("error", category=DataConversionWarning)
+    with warnings.catch_warnings(action="error", category=DataConversionWarning):
         pairwise_fn(X, Y, metric=metric)
         pairwise_fn(X_arr, Y_arr, metric=metric)
 
