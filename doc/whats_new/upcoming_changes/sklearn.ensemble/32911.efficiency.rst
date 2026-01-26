@@ -1,0 +1,5 @@
+- Part of the fit of :class:`sklearn.ensemble.GradientBoostingClassifier` was optimized.
+  The speed-up is mainly visible for deeper trees, which is not the primary use case
+  for gradient boosting but can occur in grid searches. For very deep trees, this can
+  be up to 10 times faster.
+  By :user:`Arthur Lacote <cakedev0>`
