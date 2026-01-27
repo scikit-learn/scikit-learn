@@ -40,12 +40,12 @@ https://conda.anaconda.org/conda-forge/linux-64/cython-3.2.4-py314h3f98dc2_0.con
 https://conda.anaconda.org/conda-forge/noarch/iniconfig-2.3.0-pyhd8ed1ab_0.conda#9614359868482abba1bd15ce465e3c42
 https://conda.anaconda.org/conda-forge/linux-64/libcblas-3.11.0-5_h0358290_openblas.conda#6636a2b6f1a87572df2970d3ebc87cc0
 https://conda.anaconda.org/conda-forge/linux-64/liblapack-3.11.0-5_h47877c9_openblas.conda#b38076eb5c8e40d0106beda6f95d7609
-https://conda.anaconda.org/conda-forge/noarch/meson-1.10.0-pyhcf101f3_0.conda#58d003cc46fba78516176732d6a19ede
-https://conda.anaconda.org/conda-forge/noarch/packaging-25.0-pyh29332c3_1.conda#58335b26c38bf4a20f399384c33cbcf9
+https://conda.anaconda.org/conda-forge/noarch/meson-1.10.1-pyhcf101f3_0.conda#6c07238c531b1f93603c6908d1a4ef4f
+https://conda.anaconda.org/conda-forge/noarch/packaging-26.0-pyhcf101f3_0.conda#b76541e68fea4d511b1ac46a28dcd2c6
 https://conda.anaconda.org/conda-forge/noarch/pip-25.3-pyh145f28c_0.conda#bf47878473e5ab9fdb4115735230e191
 https://conda.anaconda.org/conda-forge/noarch/pluggy-1.6.0-pyhf9edf01_1.conda#d7585b6550ad04c8c5e21097ada2888e
 https://conda.anaconda.org/conda-forge/noarch/pygments-2.19.2-pyhd8ed1ab_0.conda#6b6ece66ebcae2d5f326c77ef2c5a066
-https://conda.anaconda.org/conda-forge/noarch/setuptools-80.9.0-pyhff2d567_0.conda#4de79c071274a53dcaf2a8c749d1499e
+https://conda.anaconda.org/conda-forge/noarch/setuptools-80.10.1-pyh332efcf_0.conda#cb72cedd94dd923c6a9405a3d3b1c018
 https://conda.anaconda.org/conda-forge/noarch/threadpoolctl-3.6.0-pyhecae5ae_0.conda#9d64911b31d57ca443e9f1e36b04385f
 https://conda.anaconda.org/conda-forge/noarch/tomli-2.4.0-pyhcf101f3_0.conda#72e780e9aa2d0a3295f59b1874e3768b
 https://conda.anaconda.org/conda-forge/noarch/typing_extensions-4.15.0-pyhcf101f3_0.conda#0caa1af407ecff61170c9437a808404d
@@ -54,7 +54,7 @@ https://conda.anaconda.org/conda-forge/noarch/joblib-1.5.3-pyhd8ed1ab_0.conda#61
 https://conda.anaconda.org/conda-forge/linux-64/numpy-2.4.1-py314hd4f4903_0.conda#66c5cfbc84524e3eb553503b80874087
 https://conda.anaconda.org/conda-forge/noarch/pyproject-metadata-0.10.0-pyhd8ed1ab_0.conda#d9998bf52ced268eb83749ad65a2e061
 https://conda.anaconda.org/conda-forge/noarch/python-freethreading-3.14.2-h92d6c8b_0.conda#f4db4d53331f31ec695670d5b3cedabb
-https://conda.anaconda.org/conda-forge/noarch/meson-python-0.19.0-pyh613fae4_0.conda#cb08e589220418a0b894d515a406aec8
+https://conda.anaconda.org/conda-forge/noarch/meson-python-0.19.0-pyh7e86bf3_2.conda#369afcc2d4965e7a6a075ab82e2a26b8
 https://conda.anaconda.org/conda-forge/noarch/pytest-9.0.2-pyhcf101f3_0.conda#2b694bad8a50dc2f712f5368de866480
-https://conda.anaconda.org/conda-forge/linux-64/scipy-1.17.0-py314h529d2a9_0.conda#5c2d81fe28dd2bdcf502a070c58abc40
+https://conda.anaconda.org/conda-forge/linux-64/scipy-1.17.0-py314h529d2a9_1.conda#2548681b651d007d01368d98b3f8536e
 https://conda.anaconda.org/conda-forge/noarch/pytest-run-parallel-0.8.2-pyhd8ed1ab_0.conda#288250b7e539cddf52f39616deae278d

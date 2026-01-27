@@ -463,6 +463,9 @@ def test_error():
     assert not hasattr(BaggingClassifier(base).fit(X, y), "decision_function")
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_parallel_classification():
     # Check parallel classification.
     X_train, X_test, y_train, y_test = train_test_split(
