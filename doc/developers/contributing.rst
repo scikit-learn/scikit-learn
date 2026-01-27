@@ -243,7 +243,7 @@ feedback:
 
 - Please be explicit **how this issue impacts you as a scikit-learn user**. Giving
   some details (a short paragraph) about how you use scikit-learn and why you need
-  this issue resolved will help the project maintainers assess invest time and effort
+  this issue resolved will help the project maintainers invest time and effort
   on issues that actually impact users.
 
 - Please be tell us if you would be interested in opening a PR to resolve your issue
