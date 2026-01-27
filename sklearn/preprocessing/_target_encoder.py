@@ -634,13 +634,11 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         router = MetadataRouter(owner=self)
 
-        if hasattr(self.cv, "split"):
-            splitter = self.cv
-        else:
-            # Mock splitter if `self.cv` is not a cv generator (no routing needed)
-            splitter = KFold(self.cv)
         router.add(
-            splitter=splitter,
+            # This works, since none of {None, int, iterable} request any metadata
+            # and the machinery here would assign an empty MetadataRequest
+            # to it.
+            splitter=self.cv,
             method_mapping=MethodMapping().add(caller="fit_transform", callee="split"),
         )
 
