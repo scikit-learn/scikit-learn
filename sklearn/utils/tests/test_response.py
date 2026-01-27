@@ -60,11 +60,14 @@ def test_get_response_values_clusterer(response_method, return_response_method_u
         response_method=response_method,
         return_response_method_used=return_response_method_used,
     )
-    prediction_method = getattr(clusterer, response_method)
+    chosen_response_method = (
+        response_method[0] if isinstance(response_method, list) else response_method
+    )
+    prediction_method = getattr(clusterer, chosen_response_method)
     assert_array_equal(results[0], prediction_method(X))
     assert results[1] is None
     if return_response_method_used:
-        assert results[2] == response_method
+        assert results[2] == chosen_response_method
 
 
 @pytest.mark.parametrize(
