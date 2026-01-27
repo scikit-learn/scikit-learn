@@ -283,22 +283,25 @@ def test_pipeline_invalid_parameters():
 
 
 @pytest.mark.parametrize(
-    "meta_estimators",
+    "meta_estimators, class_name",
     [
-        Pipeline([("pca", PCA)]),
-        Pipeline([("pca", PCA), ("ident", None)]),
-        Pipeline([("passthrough", "passthrough"), ("pca", PCA)]),
-        Pipeline([("passthrough", None), ("pca", PCA)]),
-        Pipeline([("scale", StandardScaler), ("pca", PCA())]),
-        FeatureUnion([("pca", PCA), ("svd", TruncatedSVD())]),
-        FeatureUnion([("pca", PCA()), ("svd", TruncatedSVD)]),
-        FeatureUnion([("drop", "drop"), ("svd", TruncatedSVD)]),
-        FeatureUnion([("pca", PCA), ("passthrough", "passthrough")]),
+        (Pipeline([("pca", PCA)]), "PCA"),
+        (Pipeline([("pca", PCA), ("ident", None)]), "PCA"),
+        (Pipeline([("passthrough", "passthrough"), ("pca", PCA)]), "PCA"),
+        (Pipeline([("passthrough", None), ("pca", PCA)]), "PCA"),
+        (Pipeline([("scale", StandardScaler), ("pca", PCA())]), "StandardScaler"),
+        (FeatureUnion([("pca", PCA), ("svd", TruncatedSVD())]), "PCA"),
+        (FeatureUnion([("pca", PCA()), ("svd", TruncatedSVD)]), "TruncatedSVD"),
+        (FeatureUnion([("drop", "drop"), ("svd", TruncatedSVD)]), "TruncatedSVD"),
+        (FeatureUnion([("pca", PCA), ("passthrough", "passthrough")]), "PCA"),
     ],
 )
-def test_meta_estimator_raises_class_not_instance_error(meta_estimators):
+def test_meta_estimator_raises_class_not_instance_error(meta_estimators, class_name):
     # non-regression tests for https://github.com/scikit-learn/scikit-learn/issues/32719
-    msg = "Expected an estimator instance (.*()), got estimator class instead (.*)."
+    msg = re.escape(
+        f"Expected an estimator instance ({class_name}()), "
+        f"got estimator class instead ({class_name})."
+    )
     with pytest.raises(TypeError, match=msg):
         meta_estimators.fit([[1]])
 
@@ -1847,20 +1850,22 @@ def test_pipeline_set_output_integration():
     assert_array_equal(feature_names_in_, log_reg_feature_names)
 
 
-def test_feature_union_set_output():
+@pytest.mark.parametrize("df_library", ["pandas", "polars"])
+def test_feature_union_set_output(df_library):
     """Test feature union with set_output API."""
-    pd = pytest.importorskip("pandas")
+    lib = pytest.importorskip(df_library)
 
     X, _ = load_iris(as_frame=True, return_X_y=True)
     X_train, X_test = train_test_split(X, random_state=0)
     union = FeatureUnion([("scalar", StandardScaler()), ("pca", PCA())])
-    union.set_output(transform="pandas")
+    union.set_output(transform=df_library)
     union.fit(X_train)
 
     X_trans = union.transform(X_test)
-    assert isinstance(X_trans, pd.DataFrame)
+    assert isinstance(X_trans, lib.DataFrame)
     assert_array_equal(X_trans.columns, union.get_feature_names_out())
-    assert_array_equal(X_trans.index, X_test.index)
+    if df_library == "pandas":
+        assert_array_equal(X_trans.index, X_test.index)
 
 
 def test_feature_union_getitem():

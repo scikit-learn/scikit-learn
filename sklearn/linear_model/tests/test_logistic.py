@@ -1218,6 +1218,9 @@ def test_logreg_intercept_scaling_zero():
     assert clf.intercept_ == 0.0
 
 
+# XXX: investigate thread-safety bug that might be related to:
+# https://github.com/scikit-learn/scikit-learn/issues/31883
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_logreg_l1(global_random_seed, csr_container):
     # Because liblinear penalizes the intercept and saga does not, we do not
