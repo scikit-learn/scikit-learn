@@ -77,7 +77,7 @@ def _deprecate_positional_args(func=None, *, version="1.3"):
 
             # extra_args > 0
             args_msg = [
-                "{}={}".format(name, arg)
+                f"{name}={arg}"
                 for name, arg in zip(kwonly_args[:extra_args], args[-extra_args:])
             ]
             args_msg = ", ".join(args_msg)
@@ -437,7 +437,7 @@ def check_memory(memory):
         raise ValueError(
             "'memory' should be None, a string or have the same"
             " interface as joblib.Memory."
-            " Got memory='{}' instead.".format(memory)
+            f" Got memory='{memory}' instead."
         )
     return memory
 
@@ -1465,7 +1465,7 @@ def check_random_state(seed):
     if isinstance(seed, np.random.RandomState):
         return seed
     raise ValueError(
-        "%r cannot be used to seed a numpy.random.RandomState instance" % seed
+        f"{seed!r} cannot be used to seed a numpy.random.RandomState instance"
     )
 
 
