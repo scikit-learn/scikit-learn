@@ -633,7 +633,7 @@ def enet_path(
 
     # X should have been passed through _pre_fit already if function is called
     # from ElasticNet.fit
-    if check_input:
+    if check_input or precompute is not False:
         X, y, _, _, _, precompute, Xy = _pre_fit(
             X,
             y,
@@ -641,7 +641,7 @@ def enet_path(
             precompute,
             fit_intercept=False,
             copy=False,
-            check_gram=True,
+            check_gram=check_input,
         )
     if alphas is None:
         # fit_intercept and sample_weight have already been dealt with in calling
@@ -2046,9 +2046,9 @@ class LassoCV(RegressorMixin, LinearModelCV):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - int, to specify the number of folds.
+        - int, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For int/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
@@ -2316,9 +2316,9 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - int, to specify the number of folds.
+        - int, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For int/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
@@ -3014,9 +3014,9 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - int, to specify the number of folds.
+        - int, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For int/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
@@ -3272,9 +3272,9 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - int, to specify the number of folds.
+        - int, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For int/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
