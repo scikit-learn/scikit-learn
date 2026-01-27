@@ -270,6 +270,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         """
         self._fit_encodings_all(X, y)
         self._index_maps_ = _LazyIndexMaps(self.categories_)
+        self._init_int_lookup()
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -306,6 +307,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
         self._index_maps_ = _LazyIndexMaps(self.categories_)
+        self._init_int_lookup()
 
         # The cv splitter is voluntarily restricted to *KFold to enforce non
         # overlapping validation folds, otherwise the fit_transform output will
@@ -354,57 +356,107 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             )
         return X_out
 
-    def _transform_small_batch(self, X):
-        """Fast-path transform for small inputs.
-        This is called only when n_samples <= _small_batch_threshold.
+    def _init_int_lookup(self):
+        """Initialize per-feature integer lookup tables for small-batch transform.
+        Build a dense LUT only when categories are integer, reasonably dense, and
+        the LUT stays under a small per-feature memory budget.
         """
-        _, n_samples, n_features = self._check_X(X, ensure_all_finite="allow-nan")
+        MAX_LUT_BYTES = 8 * 1024 * 1024
+        max_allowed = MAX_LUT_BYTES // np.dtype(np.int32).itemsize
+        DENSITY_FACTOR = 4
 
+        self._int_lookup_ = []
+        for cats in self.categories_:
+            lut = None
+            offset = 0
+            if np.issubdtype(cats.dtype, np.integer) and cats.size:
+                cats64 = cats.astype(np.int64, copy=False)
+                n = cats64.shape[0]
+                min_cat = int(cats64.min())
+                max_cat = int(cats64.max())
+                lut_size = max_cat - min_cat + 1
+                if (
+                    lut_size > 0
+                    and lut_size <= max_allowed
+                    and lut_size <= DENSITY_FACTOR * n
+                ):
+                    lut = np.full(lut_size, -1, dtype=np.int32)
+                    lut[cats64 - min_cat] = np.arange(n, dtype=np.int32)
+                    offset = min_cat
+            self._int_lookup_.append((lut, offset))
+
+    def _transform_small_batch(self, X):
+        """Fast-path transform for small inputs (n_samples <= threshold)."""
+        _, n_samples, n_features = self._check_X(X, ensure_all_finite="allow-nan")
         _check_feature_names(self, X, reset=False)
         _check_n_features(self, X, reset=False)
-
-        X_arr = np.asarray(X, dtype=object)
-        n_samples, n_features = X_arr.shape
+        X_arr = np.asarray(X)
+        index_maps = self._index_maps_
         is_multi = self.target_type_ == "multiclass"
-
-        features_out = n_features
         if is_multi:
             n_classes = len(self.classes_)
-            features_out *= n_classes
-        X_out = np.empty((n_samples, features_out), dtype=np.float64)
+            X_out = np.empty((n_samples, n_features * n_classes), dtype=np.float64)
+            default_v = np.asarray(self.target_mean_, dtype=float)
+        else:
+            X_out = np.empty((n_samples, n_features), dtype=np.float64)
+            default = float(np.asarray(self.target_mean_))
 
-        index_maps = self._index_maps_
-        norm_key = _norm_key
+        # ---- Integer fast-path (per-feature LUT or fallback) ----
+        if np.issubdtype(X_arr.dtype, np.integer):
+            X_int = X_arr.astype(np.int64, copy=False)
+            for j in range(n_features):
+                col = X_int[:, j]
+                lut, offset = self._int_lookup_[j]
+                idx = np.full(n_samples, -1, dtype=np.int32)
+                if lut is not None:
+                    shifted = col - offset
+                    ok = (shifted >= 0) & (shifted < lut.shape[0])
+                    idx[ok] = lut[shifted[ok]]
+                else:
+                    for i in range(n_samples):
+                        idx[i] = index_maps.get_index(j, col[i])
+                known = idx >= 0
+                if is_multi:
+                    base = j * n_classes
+                    for c in range(n_classes):
+                        enc = np.asarray(self.encodings_[base + c], dtype=float)
+                        out = X_out[:, base + c]
+                        out[:] = default_v[c]
+                        out[known] = enc[idx[known]]
+                else:
+                    enc = np.asarray(self.encodings_[j], dtype=float)
+                    out = X_out[:, j]
+                    out[:] = default
+                    out[known] = enc[idx[known]]
+            return X_out
 
+        # ---- Generic object / mixed dtype fallback ----
+        if X_arr.dtype is not object:
+            X_obj = X_arr.astype(object, copy=False)
+        else:
+            X_obj = X_arr
         for j in range(n_features):
-            col = X_arr[:, j]
-
+            col = X_obj[:, j]
             if is_multi:
                 base = j * n_classes
-                default_v = np.asarray(self.target_mean_, dtype=float)
-
-                # Local block view from encodings_ (not stored on self)
-                enc_block = np.empty((n_classes, len(self.categories_[j])), dtype=float)
-                for c in range(n_classes):
-                    enc_block[c, :] = np.asarray(self.encodings_[base + c], dtype=float)
-
-                out_block = np.empty((n_samples, n_classes), dtype=float)
+                encs = [
+                    np.asarray(self.encodings_[base + c], dtype=float)
+                    for c in range(n_classes)
+                ]
                 for i in range(n_samples):
                     idx = index_maps.get_index(j, col[i])
-                    out_block[i, :] = enc_block[:, idx] if idx >= 0 else default_v
-
-                start = base
-                X_out[:, start : start + n_classes] = out_block
-
+                    if idx >= 0:
+                        for c in range(n_classes):
+                            X_out[i, base + c] = encs[c][idx]
+                    else:
+                        for c in range(n_classes):
+                            X_out[i, base + c] = default_v[c]
             else:
-                enc_vec = np.asarray(self.encodings_[j], dtype=float)
-                default = float(np.asarray(self.target_mean_))
-                out_col = np.empty(n_samples, dtype=float)
+                enc = np.asarray(self.encodings_[j], dtype=float)
+                out = X_out[:, j]
                 for i in range(n_samples):
                     idx = index_maps.get_index(j, col[i])
-                    out_col[i] = enc_vec[idx] if idx >= 0 else default
-                X_out[:, j] = out_col
-
+                    out[i] = enc[idx] if idx >= 0 else default
         return X_out
 
     def transform(self, X):
