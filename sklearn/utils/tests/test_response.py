@@ -45,7 +45,10 @@ def test_get_response_values_regressor(response_method, return_response_method_u
         assert results[2] == response_method
 
 
-@pytest.mark.parametrize("response_method", ["predict", "score"])
+@pytest.mark.parametrize(
+    "response_method",
+    ["predict", "score", ["predict", "score"]]
+)
 @pytest.mark.parametrize("return_response_method_used", [True, False])
 def test_get_response_values_clusterer(response_method, return_response_method_used):
     """Check the behaviour of `_get_response_values` with clusterer."""

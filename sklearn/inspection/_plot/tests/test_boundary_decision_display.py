@@ -385,10 +385,10 @@ def test_multioutput_regressor_error(pyplot):
 
 @pytest.mark.parametrize(
     "response_method",
-    ["predict_proba", "decision_function", ["predict_proba", "predict"]],
+    ["predict_proba", "decision_function", ["predict_proba", "decision_function"]],
 )
 def test_regressor_unsupported_response(pyplot, response_method):
-    """Check that we can display the decision boundary for a regressor."""
+    """Check the error message with regressor and not supported response method."""
     X, y = load_diabetes(return_X_y=True)
     X = X[:, :2]
     tree = DecisionTreeRegressor().fit(X, y)
