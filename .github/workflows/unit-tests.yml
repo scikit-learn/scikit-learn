@@ -212,7 +212,7 @@ jobs:
 
     env: ${{ matrix }}
 
-    steps: &unit-test-steps
+    steps: &unit-tests-steps
       - name: Checkout
         uses: actions/checkout@v6
 
@@ -281,7 +281,7 @@ jobs:
             --junit-file $TEST_DIR/$JUNITXML \
             --auto-close false \
             --job-name "${{ matrix.name }}"
- 
+
   free-threaded:
     name: Linux x86-64 pylatest_free_threaded
     runs-on: ubuntu-latest
@@ -293,4 +293,4 @@ jobs:
       COVERAGE: false
       # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
       PYTEST_XDIST_VERSION: none
-    steps: *unit-test-steps
+    steps: *unit-tests-steps
