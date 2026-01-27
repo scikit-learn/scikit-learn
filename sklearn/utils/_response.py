@@ -182,7 +182,7 @@ def _get_response_values(
     pos_label : int, float, bool, str or None
         The class considered as the positive class when computing
         the metrics. Returns `None` if `estimator` is a regressor, an outlier
-        detector or a regressor.
+        detector or a clusterer
 
     response_method_used : str
         The response method used to compute the response values. Only returned
