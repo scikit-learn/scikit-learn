@@ -1861,7 +1861,7 @@ def test_criterion_copy():
 
         for name, typename in CRITERIA_REG.items():
             args = (n_outputs, n_samples)
-            if name == "absolute_error" or name == "pinball":
+            if name == "absolute_error" or name == "quantile":
                 args = (*args, 0.5)
             criteria = typename(*args)
             result = copy_func(criteria).__reduce__()
@@ -2997,11 +2997,22 @@ def test_pinball_loss_precomputation_function(alpha, global_random_seed):
         assert_same_results(y, w, indices, reverse=True)
 
 
-# TODO: parametrize with q (as the test above)
-def test_absolute_error_accurately_predicts_weighted_median(global_random_seed):
+@pytest.mark.parametrize(
+    "criterion, quantile",
+    [
+        ("absolute_error", 0.5),
+        ("quantile", 0.1),
+        ("quantile", 0.5),
+        ("quantile", 0.9),
+    ],
+)
+def test_quantile_criterion_predicts_weighted_quantile(
+    criterion, quantile, global_random_seed
+):
     """
-    Test that the weighted-median computed under-the-hood when
-    building a tree with criterion="absolute_error" is correct.
+    Test that the weighted quantile computed under-the-hood when building a tree
+    with criterion="quantile" is correct. The absolute error criterion is the
+    special case with quantile=0.5.
     """
     rng = np.random.default_rng(global_random_seed)
     n = int(1e5)
@@ -3009,14 +3020,45 @@ def test_absolute_error_accurately_predicts_weighted_median(global_random_seed):
     # Large number of zeros and otherwise continuous weights:
     weights = rng.integers(0, 3, size=n) * rng.uniform(0, 1, size=n)
 
-    tree_leaf_weighted_median = (
-        DecisionTreeRegressor(criterion="absolute_error", max_depth=1)
+    tree_leaf_weighted_quantile = (
+        DecisionTreeRegressor(criterion=criterion, quantile=quantile, max_depth=1)
         .fit(np.ones(shape=(data.shape[0], 1)), data, sample_weight=weights)
         .tree_.value.ravel()[0]
     )
-    weighted_median = _weighted_percentile(data, weights, 50, average=True)
+    weighted_quantile = _weighted_percentile(
+        data, weights, quantile * 100, average=True
+    )
 
-    assert_allclose(tree_leaf_weighted_median, weighted_median)
+    assert_allclose(tree_leaf_weighted_quantile, weighted_quantile)
+
+
+def test_quantile_confidence_interval_coverage(global_random_seed):
+    """
+    Test that quantile regression confidence intervals have appropriate coverage.
+    """
+    rng = np.random.default_rng(global_random_seed)
+    n_samples = 2000
+    X = rng.uniform(0.0, 1.0, size=(n_samples, 1))
+    y = np.sin(2 * np.pi * X[:, 0])
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.4, random_state=0
+    )
+    common_params = dict(
+        criterion="quantile", max_depth=6, min_samples_leaf=30, random_state=0
+    )
+
+    lower = DecisionTreeRegressor(**common_params, quantile=0.1)
+    lower.fit(X_train, y_train)
+    upper = DecisionTreeRegressor(**common_params, quantile=0.9)
+    upper.fit(X_train, y_train)
+
+    lower_pred = lower.predict(X_test)
+    upper_pred = upper.predict(X_test)
+    coverage = np.mean((y_test >= lower_pred) & (y_test <= upper_pred))
+
+    # Trees are flexible but still approximate; allow some slack around 80%.
+    assert 0.75 <= coverage <= 0.85
 
 
 def test_splitting_with_missing_values():
