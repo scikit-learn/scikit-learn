@@ -146,6 +146,8 @@ def make_simple_dataset(
         q = np.linspace(0, 1, num=n_classes + 1)[1:-1]
         y = np.searchsorted(np.quantile(y, q), y)
 
+    # Internally, trees cast X to float32, we do the same here to avoid inconsistencies
+    # due to rounding error between trees impurity and naive splitter impurity
     return X_dense.astype("float32"), X, y, w
 
 
