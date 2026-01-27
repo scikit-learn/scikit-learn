@@ -275,7 +275,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         )
 
         xp, _, device_ = get_namespace_and_device(X, y)
-        self._xp = xp
+        self._xp_name = xp.__name__
         self._device = device_
 
         # Ensure y is floating point (required for linalg operations)
@@ -442,11 +442,11 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         # Get array namespace
         xp, _, device_ = get_namespace_and_device(X)
 
-        # Validate namespace matches training data if fitted
-        if hasattr(self, "_xp") and xp.__name__ != self._xp.__name__:
+        # Validate namespace matches training data, if fitted
+        if hasattr(self, "_xp_name") and xp.__name__ != self._xp_name:
             raise ValueError(
                 f"X has array namespace '{xp.__name__}' but the estimator was "
-                f"fitted with namespace '{self._xp.__name__}'. "
+                f"fitted with namespace '{self._xp_name}'. "
                 "The array namespace must match between fit and predict."
             )
 
