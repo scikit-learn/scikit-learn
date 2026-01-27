@@ -619,6 +619,7 @@ METRICS_WITH_LOG1P_Y = {
 
 # Metrics that support mixed array API inputs
 METRICS_SUPPORTING_MIXED_NAMESPACE = [
+    "average_precision_score",
     "brier_score_loss",
     "confusion_matrix_at_thresholds",
     "d2_brier_score",
@@ -2488,7 +2489,7 @@ def test_array_api_compliance(metric, array_namespace, device, dtype_name, check
     check_func(metric, array_namespace, device, dtype_name)
 
 
-def _check_output_type(out_np, out_xp, xp_to, y2_xp):
+def _check_output(out_np, out_xp, xp_to, y2_xp):
     if isinstance(out_np, float):
         assert isinstance(out_xp, float)
     elif hasattr(out_np, "shape"):
@@ -2513,14 +2514,13 @@ def test_mixed_array_api_namespace_input_compliance(
 ):
     """Check `y_true` and `sample_weight` follows `y_pred` for mixed namespace inputs.
 
-    If output is an array with all numpy inputs, checks that the output is also
-    a float with mixed inputs.
-    If output is array with all numpy inputs, checks it is of the same namespace and
-    device as `y_pred` (`to_ns_and_device`).
-
-    Classification metrics, excluding multilabel ranking metrics, which require
-    label indicator matrix inputs, are tested using string `y_true` when `array_input`
-    is NumPy.
+    Compares the output types for all-numpy vs mixed-type inputs.
+    If the output is a float, checks that both all-numpy and muxed-type inputs return
+    a float.
+    If output is an array, checks it is of the same namespace and device as `y_pred`
+    (`to_ns_and_device`).
+    If the output is a tuple, checks that each element, whether float or array,
+    is correct, as detailed above.
     """
     xp_to = _array_api_for_tests(to_ns_and_device.xp, to_ns_and_device.device)
     xp_from = _array_api_for_tests(from_ns_and_device.xp, from_ns_and_device.device)
@@ -2588,9 +2588,9 @@ def test_mixed_array_api_namespace_input_compliance(
 
             if isinstance(metric_np, Tuple):
                 for out_np, out_xp in zip(metric_np, metric_xp):
-                    _check_output_type(out_np, out_xp, xp_to, y2_xp)
+                    _check_output(out_np, out_xp, xp_to, y2_xp)
             else:
-                _check_output_type(metric_np, metric_xp, xp_to, y2_xp)
+                _check_output(metric_np, metric_xp, xp_to, y2_xp)
 
 
 # Check thresholded classification metrics, minus multilabel ranking metrics
@@ -2604,7 +2604,7 @@ def test_mixed_array_api_namespace_input_compliance(
     ),
 )
 def test_array_api_classification_string_input(metric_name):
-    """Check string inputs accepted with dispatch enabled.
+    """Check string inputs accepted with array API dispatch enabled.
 
     All thresholded classification metrics that do not require label indicator format
     input should work when both inputs (e.g.,`y_true` and `y_pred`) are string (numpy
@@ -2626,9 +2626,7 @@ def test_array_api_classification_string_input(metric_name):
     with config_context(array_api_dispatch=False):
         metric_disabled = metric(y_true, y_pred, **kwargs)
 
-    _check_output_type(
-        metric_enabled, metric_disabled, get_namespace(y_pred)[0], y_pred
-    )
+    _check_output(metric_enabled, metric_disabled, get_namespace(y_pred)[0], y_pred)
 
 
 @pytest.mark.parametrize(
@@ -2652,7 +2650,7 @@ def test_array_api_classification_string_input(metric_name):
 def test_array_api_classification_mixed_string_numeric_input(
     metric_name, array_namespace, device, dtype_name
 ):
-    """Check mixed string/numeric inputs accepted with dispatch enabled.
+    """Check mixed string/numeric inputs accepted with array API dispatch enabled.
 
     Non-thresholded (aka continuous/ranking) classification metrics should accept
     a mix of string and numeric inputs (numeric input should be able to be of
@@ -2676,9 +2674,9 @@ def test_array_api_classification_mixed_string_numeric_input(
 
         if isinstance(metric_np, Tuple):
             for out_np, out_xp in zip(metric_np, metric_xp):
-                _check_output_type(out_np, out_xp, xp, y_prob_xp)
+                _check_output(out_np, out_xp, xp, y_prob_xp)
         else:
-            _check_output_type(metric_np, metric_xp, xp, y_prob_xp)
+            _check_output(metric_np, metric_xp, xp, y_prob_xp)
 
     # Multiclass
     if metric_name not in METRIC_UNDEFINED_MULTICLASS:
@@ -2700,9 +2698,9 @@ def test_array_api_classification_mixed_string_numeric_input(
 
             if isinstance(metric_np, Tuple):
                 for out_np, out_xp in zip(metric_np, metric_xp):
-                    _check_output_type(out_np, out_xp, xp, y_prob_xp)
+                    _check_output(out_np, out_xp, xp, y_prob_xp)
             else:
-                _check_output_type(metric_np, metric_xp, xp, y_prob_xp)
+                _check_output(metric_np, metric_xp, xp, y_prob_xp)
 
 
 @pytest.mark.parametrize("df_lib_name", ["pandas", "polars"])
