@@ -47,7 +47,7 @@ def test_get_response_values_regressor(response_method, return_response_method_u
 
 @pytest.mark.parametrize(
     "response_method",
-    ["predict", "score", ["predict", "score"]]
+    ["predict", "score", ["predict", "score"]],
 )
 @pytest.mark.parametrize("return_response_method_used", [True, False])
 def test_get_response_values_clusterer(response_method, return_response_method_used):
