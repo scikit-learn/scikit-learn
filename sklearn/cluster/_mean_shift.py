@@ -13,7 +13,6 @@ Seeding is performed using a binning technique for scalability.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
-from collections import defaultdict
 from numbers import Integral, Real
 
 import numpy as np
@@ -276,17 +275,18 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     if bin_size == 0:
         return X
 
-    # Bin points
-    bin_sizes = defaultdict(int)
-    for point in X:
-        binned_point = np.round(point / bin_size)
-        bin_sizes[tuple(binned_point)] += 1
+    # Vectorized binning: compute bin coordinates for all points at once
+    binned_points = np.round(X / bin_size).astype(np.float32)
 
-    # Select only those bins as seeds which have enough members
-    bin_seeds = np.array(
-        [point for point, freq in bin_sizes.items() if freq >= min_bin_freq],
-        dtype=np.float32,
+    # Use numpy's unique with return_counts for efficient counting
+    unique_bins, inverse_indices, counts = np.unique(
+        binned_points, axis=0, return_inverse=True, return_counts=True
     )
+
+    # Filter bins by minimum frequency
+    valid_bins_mask = counts >= min_bin_freq
+    bin_seeds = unique_bins[valid_bins_mask]
+
     if len(bin_seeds) == len(X):
         warnings.warn(
             "Binning data failed with provided bin_size=%f, using data points as seeds."

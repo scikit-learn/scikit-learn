@@ -3,6 +3,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from collections import deque
+
 import numpy as np
 from scipy import sparse
 
@@ -62,14 +64,14 @@ def single_source_shortest_path_length(graph, source, *, cutoff=None):
         graph = sparse.lil_matrix(graph)
     seen = {}  # level (number of hops) when seen in BFS
     level = 0  # the current level
-    next_level = [source]  # dict of nodes to check at next level
+    next_level = deque([source])  # use deque for efficient pop from front
     while next_level:
         this_level = next_level  # advance to next level
-        next_level = set()  # and start a new list (fringe)
+        next_level = deque()  # and start a new deque (fringe)
         for v in this_level:
             if v not in seen:
                 seen[v] = level  # set the level of vertex v
-                next_level.update(graph.rows[v])
+                next_level.extend(graph.rows[v])
         if cutoff is not None and cutoff <= level:
             break
         level += 1
