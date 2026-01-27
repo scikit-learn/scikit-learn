@@ -630,7 +630,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        from sklearn.model_selection import KFold  # avoid circular import
 
         router = MetadataRouter(owner=self)
 
