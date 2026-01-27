@@ -2698,7 +2698,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
         - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable that generates (train, test) splits as arrays of indices.
+        - an iterable that generates (train, test) splits as arrays of indices.
 
         For integer/None inputs, if classifier is True and ``y`` is either
         binary or multiclass, :class:`StratifiedKFold` is used. In all other
@@ -2714,8 +2714,10 @@ def check_cv(cv=5, y=None, *, classifier=False):
         The target variable for supervised learning problems.
 
     classifier : bool, default=False
-        Whether the task is a classification task, in which case
-        :class:`StratifiedKFold` will be used over :class:`KFold`.
+        Whether the task is a classification task. When ``True`` and `cv` is an
+        integer or ``None``, :class:`StratifiedKFold` is used if ``y`` is binary
+        or multiclass; otherwise :class:`KFold` is used. Ignored if `cv` is a
+        cross-validator instance or iterable.
 
     Returns
     -------
