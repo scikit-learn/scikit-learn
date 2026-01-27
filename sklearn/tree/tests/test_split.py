@@ -94,7 +94,7 @@ class NaiveSplitter:
             if not nan_mask.any():
                 continue
             for th in [*thresholds, -np.inf]:
-                # include -inf to test all NaNs on the left
+                # include -inf to test the split with only NaNs on the left node
                 yield {
                     "feature": f,
                     "threshold": th,
@@ -169,7 +169,7 @@ def test_split_impurity(Tree, criterion, sparse, missing_values, global_random_s
     if missing_values and criterion == "absolute_error":
         pytest.skip("AE + missing values not supported yet")
     if missing_values and criterion == "poisson":
-        pytest.xfail("Poisson criterion is buggy for now")
+        pytest.xfail("Poisson criterion is faulty for now")
     rng = np.random.default_rng(global_random_seed)
 
     ns = [5] * 5 + [10] * 5 + [20, 30, 50, 100]
@@ -233,9 +233,9 @@ def test_split_impurity(Tree, criterion, sparse, missing_values, global_random_s
         # with the same optimal impurity, so the assertion is made on the impurity
         # value: the split value is only displayed to help debugging in case
         # of assertion failure.
-        best_impurity, excepted_split = naive_splitter.best_split_naive(X_dense, y, w)
+        best_impurity, best_split = naive_splitter.best_split_naive(X_dense, y, w)
         actual_split_impurity = actual_impurity[1:].sum()
         assert np.isclose(best_impurity, actual_split_impurity), (
-            excepted_split,
+            best_split,
             actual_split,
         )
