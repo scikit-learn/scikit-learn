@@ -131,7 +131,7 @@ def test_weighted_percentile_ignores_zero_weight(
 
 
 def test_weighted_percentile_average_zero_weight_plateau():
-    """Check average percentile ignores zero-weight plateaus."""
+    """Check zero weights just before `max_index` handled correctly."""
     score_without_zeros = _weighted_percentile([1, 3], [3, 3], average=True)
     score_with_zeros = _weighted_percentile([1, 2, 3], [3, 0, 3], average=True)
     assert approx(score_without_zeros) == score_with_zeros
