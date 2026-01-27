@@ -54,7 +54,7 @@ For more details, refer to SciPy's `Array API documentation
 
 The array API functionality assumes that the latest versions of scikit-learn's dependencies are
 installed. Older versions might work, but we make no promises. While array API support is marked
-as experimental backwards compatibility is not guaranteed. In particular when a newer version
+as experimental, backwards compatibility is not guaranteed. In particular, when a newer version
 of a dependency fixes a bug we will not introduce additional code to backport the fix or
 maintain compatibility with older versions.
 
