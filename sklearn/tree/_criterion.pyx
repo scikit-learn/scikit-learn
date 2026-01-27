@@ -1367,8 +1367,8 @@ cdef class Pinball(Criterion):
         * "activate" one sample at a time at its rank within a prefix sum tree,
           the `WeightedFenwickTree`: `tree.add(rank, y, weight)`
           The tree maintains cumulative sums of weights and of `weight * y`
-        * search for the target weight (1 - alpha) * total_weight in the tree:
-          `tree.search((1 - alpha) * current_total_weight)`.
+        * search for the target weight alpha * total_weight in the tree:
+          `tree.search(alpha * current_total_weight)`.
           This allows us to retrieve/compute:
             * the current weighted quantile value
             * the pinball loss contribution via the standard pinball-loss identity:

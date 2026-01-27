@@ -1,4 +1,5 @@
-- :class:`tree.DecisionTreeRegressor` now supports `criterion="pinball"`
-  for the pinball loss, also known as the quantile loss. This effectively
-  allows to do quantile regression.
+- :class:`tree.DecisionTreeRegressor` now supports `criterion="quantile"`
+  together with the `quantile` parameter to optimize the pinball loss (also
+  known as the quantile loss). This effectively allows to do quantile
+  regression.
   By :user:`Arthur Lacote <cakedev0>`
