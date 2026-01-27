@@ -1850,20 +1850,22 @@ def test_pipeline_set_output_integration():
     assert_array_equal(feature_names_in_, log_reg_feature_names)
 
 
-def test_feature_union_set_output():
+@pytest.mark.parametrize("df_library", ["pandas", "polars"])
+def test_feature_union_set_output(df_library):
     """Test feature union with set_output API."""
-    pd = pytest.importorskip("pandas")
+    lib = pytest.importorskip(df_library)
 
     X, _ = load_iris(as_frame=True, return_X_y=True)
     X_train, X_test = train_test_split(X, random_state=0)
     union = FeatureUnion([("scalar", StandardScaler()), ("pca", PCA())])
-    union.set_output(transform="pandas")
+    union.set_output(transform=df_library)
     union.fit(X_train)
 
     X_trans = union.transform(X_test)
-    assert isinstance(X_trans, pd.DataFrame)
+    assert isinstance(X_trans, lib.DataFrame)
     assert_array_equal(X_trans.columns, union.get_feature_names_out())
-    assert_array_equal(X_trans.index, X_test.index)
+    if df_library == "pandas":
+        assert_array_equal(X_trans.index, X_test.index)
 
 
 def test_feature_union_getitem():

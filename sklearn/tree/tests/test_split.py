@@ -53,13 +53,7 @@ class NaiveSplitter:
             pred = np.average(y, weights=w)
             loss = np.average((y - pred) ** 2, weights=w)
         elif self.criterion == "absolute_error":
-            pred = _weighted_percentile(
-                # TODO: remove w > 0 masking when #33127 is merged
-                y[w > 0],
-                w[w > 0],
-                percentile_rank=50,
-                average=True,
-            )
+            pred = _weighted_percentile(y, w, percentile_rank=50, average=True)
             loss = np.average(np.abs(y - pred), weights=w)
         elif self.criterion == "poisson":
             pred = np.average(y, weights=w)
@@ -100,7 +94,7 @@ class NaiveSplitter:
             if not nan_mask.any():
                 continue
             for th in [*thresholds, -np.inf]:
-                # include -inf to test all NaNs on the left
+                # include -inf to test the split with only NaNs on the left node
                 yield {
                     "feature": f,
                     "threshold": th,
@@ -152,6 +146,8 @@ def make_simple_dataset(
         q = np.linspace(0, 1, num=n_classes + 1)[1:-1]
         y = np.searchsorted(np.quantile(y, q), y)
 
+    # Trees cast X to float32 internally; match that dtype here to avoid
+    # routing/impurity mismatches from rounding with `<=`.
     return X_dense.astype("float32"), X, y, w
 
 
@@ -234,9 +230,9 @@ def test_split_impurity(Tree, criterion, sparse, missing_values, global_random_s
         # with the same optimal impurity, so the assertion is made on the impurity
         # value: the split value is only displayed to help debugging in case
         # of assertion failure.
-        best_impurity, excepted_split = naive_splitter.best_split_naive(X_dense, y, w)
+        best_impurity, best_split = naive_splitter.best_split_naive(X_dense, y, w)
         actual_split_impurity = actual_impurity[1:].sum()
         assert np.isclose(best_impurity, actual_split_impurity), (
-            excepted_split,
+            best_split,
             actual_split,
         )
