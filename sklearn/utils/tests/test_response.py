@@ -63,7 +63,7 @@ X_binary, y_binary = X[:100], y[:100]
 )
 def test_estimator_unsupported_response(pyplot, estimator, Xy, response_method):
     """Check the error message with not supported response method."""
-    X, y = *Xy
+    X, y = Xy[0], Xy[1]
     estimator.fit(X, y)
     err_msg = "has none of the following attributes:"
     with pytest.raises(AttributeError, match=err_msg):
