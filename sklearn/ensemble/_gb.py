@@ -220,6 +220,10 @@ def _update_terminal_regions(
 
         denominator = np.bincount(idx, weights=hessian, minlength=n_nodes)
 
+        # For the log-loss, if proba=0 or proba=1 exactly, then
+        # denominator = hessian = 0, and we should set the node value in the
+        # line search to zero as there is no improvement of the loss possible.
+        # For numerical safety, we do this already for extremely tiny values.
         nz = np.abs(denominator) > 1e-150
         tree.value[:, 0, 0] = 0
         tree.value[nz, 0, 0] = numerator[nz] / denominator[nz]
