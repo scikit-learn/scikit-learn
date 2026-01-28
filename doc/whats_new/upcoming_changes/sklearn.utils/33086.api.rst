@@ -1,0 +1,3 @@
+- :func:`utils.multiclass.unique_labels` now accepts `ys_types` parameter,
+  which allows avoiding duplicate calls to `type_of_target`.
+  By :user:`Lucy Liu <lucyleeow>`.
