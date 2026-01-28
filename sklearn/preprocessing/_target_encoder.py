@@ -431,10 +431,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             return X_out
 
         # ---- Generic object / mixed dtype fallback ----
-        if X_arr.dtype is not object:
-            X_obj = X_arr.astype(object, copy=False)
-        else:
-            X_obj = X_arr
+        X_obj = X_arr if X_arr.dtype is object else X_arr.astype(object, copy=False)
         for j in range(n_features):
             col = X_obj[:, j]
             if is_multi:

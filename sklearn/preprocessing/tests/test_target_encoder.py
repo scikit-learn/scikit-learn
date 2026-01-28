@@ -772,6 +772,46 @@ def test_fastpath_matches_vectorized_with_nans_and_nats(n_repeats):
     assert_allclose(te_fast.transform(X), te_vec.transform(X), rtol=0, atol=1e-9)
 
 
+@pytest.mark.parametrize("n_repeats", [1, 300])
+def test_fastpath_matches_vectorized_for_int_categories_small_batch(n_repeats):
+    cats = np.array([0, 10_000_000, 20_000_000], dtype=np.int64)
+
+    X_fit_i = np.array(
+        [[0], [10_000_000], [20_000_000], [0]],
+        dtype=np.int64,
+    )
+    y_fit_i = np.array([0, 1, 0, 1], dtype=np.int64)
+
+    te_fast_i = TargetEncoder(
+        target_type="binary",
+        categories=[cats],
+        random_state=0,
+    ).fit(X_fit_i, y_fit_i)
+
+    te_vec_i = TargetEncoder(
+        target_type="binary",
+        categories=[cats],
+        random_state=0,
+    ).fit(X_fit_i, y_fit_i)
+    te_vec_i._small_batch_threshold = -1
+
+    if hasattr(te_fast_i, "_int_lookup_"):
+        assert te_fast_i._int_lookup_[0][0] is None
+
+    X_small_i = np.array(
+        [[0], [10_000_000], [123_456_789]],
+        dtype=np.int64,
+    )
+    X_small_i = np.tile(X_small_i, (n_repeats, 1))
+
+    assert_allclose(
+        te_fast_i.transform(X_small_i),
+        te_vec_i.transform(X_small_i),
+        rtol=0,
+        atol=0,
+    )
+
+
 @pytest.mark.parametrize(
     "n_classes, n_cats, n_fit, rng_seed",
     [
