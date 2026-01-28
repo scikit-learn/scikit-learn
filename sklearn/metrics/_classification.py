@@ -883,10 +883,22 @@ def multilabel_confusion_matrix(
         "labels": ["array-like", None],
         "weights": [StrOptions({"linear", "quadratic"}), None],
         "sample_weight": ["array-like", None],
+        "replace_undefined_by": [
+            Interval(Real, -1.0, 1.0, closed="both"),
+            np.nan,
+        ],
     },
     prefer_skip_nested_validation=True,
 )
-def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
+def cohen_kappa_score(
+    y1,
+    y2,
+    *,
+    labels=None,
+    weights=None,
+    sample_weight=None,
+    replace_undefined_by=np.nan,
+):
     r"""Compute Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
@@ -927,11 +939,25 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+    replace_undefined_by : np.nan, float in [-1.0, 1.0], default=np.nan
+        Sets the return value when the metric is undefined. This can happen when no
+        label of interest (as defined in the `labels` param) is assigned by the second
+        annotator, or when both `y1` and `y2`only have one label in common that is also
+        in `labels`. In these cases, an
+        :class:`~sklearn.exceptions.UndefinedMetricWarning` is raised. Can take the
+        following values:
+
+        - `np.nan` to return `np.nan`
+        - a floating point value in the range of [-1.0, 1.0] to return a specific value
+
+        .. versionadded:: 1.9
+
     Returns
     -------
     kappa : float
-        The kappa statistic, which is a number between -1 and 1. The maximum
-        value means complete agreement; zero or lower means chance agreement.
+        The kappa statistic, which is a number between -1.0 and 1.0. The maximum value
+        means complete agreement; the minimum value means complete disagreement; 0.0
+        indicates no agreement beyond what would be expected by chance.
 
     References
     ----------
@@ -974,7 +1000,20 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     confusion = xp.astype(confusion, max_float_dtype, copy=False)
     sum0 = xp.sum(confusion, axis=0)
     sum1 = xp.sum(confusion, axis=1)
-    expected = xp.linalg.outer(sum0, sum1) / xp.sum(sum0)
+
+    numerator = xp.linalg.outer(sum0, sum1)
+    denominator = xp.sum(sum0)
+    msg_zero_division = (
+        "`y2` contains no labels that are present in both `y1` and `labels`."
+        "`cohen_kappa_score` is undefined and set to the value defined by "
+        f"the `replace_undefined_by` param, which is set to {replace_undefined_by}."
+    )
+    # exact equality is safe here, since denominator is a sum of positive terms:
+    if denominator == 0:
+        warnings.warn(msg_zero_division, UndefinedMetricWarning, stacklevel=2)
+        return replace_undefined_by
+
+    expected = numerator / denominator
 
     if weights is None:
         w_mat = xp.ones([n_classes, n_classes], dtype=max_float_dtype, device=device_)
@@ -987,7 +1026,19 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
         else:
             w_mat = (w_mat - w_mat.T) ** 2
 
-    k = xp.sum(w_mat * confusion) / xp.sum(w_mat * expected)
+    numerator = xp.sum(w_mat * confusion)
+    denominator = xp.sum(w_mat * expected)
+    msg_zero_division = (
+        "`y1`, `y2` and `labels` have only one label in common. "
+        "`cohen_kappa_score` is undefined and set to the value defined by the "
+        f"the `replace_undefined_by` param, which is set to {replace_undefined_by}."
+    )
+    # exact equality is safe here, since denominator is a sum of positive terms:
+    if denominator == 0:
+        warnings.warn(msg_zero_division, UndefinedMetricWarning, stacklevel=2)
+        return replace_undefined_by
+
+    k = numerator / denominator
     return float(1 - k)
 
 

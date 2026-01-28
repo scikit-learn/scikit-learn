@@ -895,6 +895,68 @@ def test_cohen_kappa():
     )
 
 
+@ignore_warnings(category=UndefinedMetricWarning)
+@pytest.mark.parametrize(
+    "test_case",
+    [
+        # annotator y2 does not assign any label specified in `labels` (note: also
+        # applicable if `labels` is default and `y2` does not contain any label that is
+        # in `y1`):
+        ([1] * 5 + [2] * 5, [3] * 10, [1, 2], None),
+        # both inputs (`y1` and `y2`) only have one label:
+        ([3] * 10, [3] * 10, None, None),
+        # both inputs only have one label in common that is also in `labels`:
+        ([1] * 5 + [2] * 5, [1] * 5 + [3] * 5, [1, 2], None),
+        # like the last test case, but with `weights="linear"` (note that
+        # weights="linear" and weights="quadratic" are different branches, though the
+        # latter is so similar to the former that the test case is skipped here):
+        ([1] * 5 + [2] * 5, [1] * 5 + [3] * 5, [1, 2], "linear"),
+    ],
+)
+@pytest.mark.parametrize("replace_undefined_by", [0.0, np.nan])
+def test_cohen_kappa_undefined(test_case, replace_undefined_by):
+    """Test that cohen_kappa_score handles divisions by 0 correctly by returning the
+    `replace_undefined_by` param. (The first test case covers the first possible
+    location in the function for an occurrence of a division by zero, the last three
+    test cases cover a zero division in the the second possible location in the
+    function."""
+
+    y1, y2, labels, weights = test_case
+    y1, y2 = np.array(y1), np.array(y2)
+
+    score = cohen_kappa_score(
+        y1,
+        y2,
+        labels=labels,
+        weights=weights,
+        replace_undefined_by=replace_undefined_by,
+    )
+    assert_allclose(score, replace_undefined_by, equal_nan=True)
+
+
+def test_cohen_kappa_zero_division_warning():
+    """Test that cohen_kappa_score raises UndefinedMetricWarning when a division by 0
+    occurs."""
+
+    labels = [1, 2]
+    y1 = np.array([1] * 5 + [2] * 5)
+    y2 = np.array([3] * 10)
+    with pytest.warns(
+        UndefinedMetricWarning,
+        match="`y2` contains no labels that are present in both `y1` and `labels`.",
+    ):
+        cohen_kappa_score(y1, y2, labels=labels)
+
+    labels = [1, 2]
+    y1 = np.array([1] * 5 + [2] * 5)
+    y2 = np.array([1] * 5 + [3] * 5)
+    with pytest.warns(
+        UndefinedMetricWarning,
+        match="`y1`, `y2` and `labels` have only one label in common.",
+    ):
+        cohen_kappa_score(y1, y2, labels=labels)
+
+
 def test_cohen_kappa_score_error_wrong_label():
     """Test that correct error is raised when users pass labels that are not in y1."""
     labels = [1, 2]
