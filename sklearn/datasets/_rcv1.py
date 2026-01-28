@@ -29,6 +29,7 @@ from sklearn.datasets._svmlight_format_io import load_svmlight_files
 from sklearn.utils import Bunch
 from sklearn.utils import shuffle as shuffle_
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils._sparse import _align_api_if_sparse
 
 # The original vectorized data can be found at:
 #    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt0.dat.gz
@@ -285,7 +286,7 @@ def fetch_rcv1(
         # reorder categories in lexicographic order
         order = np.argsort(categories)
         categories = categories[order]
-        y = sp.csr_matrix(y[:, order])
+        y = sp.csr_array(y[:, order])
 
         joblib.dump(y, sample_topics_path, compress=9)
         joblib.dump(categories, topics_path, compress=9)
@@ -314,6 +315,7 @@ def fetch_rcv1(
 
     fdescr = load_descr("rcv1.rst")
 
+    X = _align_api_if_sparse(X)
     if return_X_y:
         return X, y
 

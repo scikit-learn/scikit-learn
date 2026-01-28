@@ -12,7 +12,12 @@ from sklearn.utils._testing import (
     create_memmap_backed_data,
     ignore_warnings,
 )
-from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, LIL_CONTAINERS
+from sklearn.utils.fixes import (
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    LIL_CONTAINERS,
+    _sparse_random,
+)
 
 
 def test_sparse_coef():
@@ -390,7 +395,7 @@ def test_sparse_read_only_buffer(copy_X):
     rng = np.random.RandomState(0)
 
     clf = ElasticNet(alpha=0.1, copy_X=copy_X, random_state=rng)
-    X = sp.random(100, 20, format="csc", random_state=rng)
+    X = _sparse_random((100, 20), format="csc", rng=rng)
 
     # Make X.data read-only
     X.data = create_memmap_backed_data(X.data)
