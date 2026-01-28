@@ -59,7 +59,7 @@ plot_tree(
     class_names=class_names,
     filled=True,
     rounded=True,
-    fontsize=10
+    fontsize=10,
 )
 plt.title("Decision Tree trained on Wine Dataset")
 plt.show()
