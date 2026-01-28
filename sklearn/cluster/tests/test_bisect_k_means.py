@@ -156,3 +156,19 @@ def test_one_feature():
     # https://github.com/scikit-learn/scikit-learn/issues/27236
     X = np.random.normal(size=(128, 1))
     BisectingKMeans(bisecting_strategy="biggest_inertia", random_state=0).fit(X)
+
+def test_bisecting_kmeans_custom_init_validation():
+    """Test that BisectingKMeans validates center shape correctly with custom init.
+    
+    Regression test for issue where validation checked against global n_clusters
+    instead of the local split count (2).
+    """
+    rng = np.random.RandomState(42)
+    X = rng.rand(100, 2)
+
+    def my_init(X, n_clusters, random_state):
+        return X[:n_clusters]
+
+    # This used to raise ValueError because it checked for 3 seeds instead of 2
+    bisect = BisectingKMeans(n_clusters=3, init=my_init, n_init=1, random_state=rng)
+    bisect.fit(X)
