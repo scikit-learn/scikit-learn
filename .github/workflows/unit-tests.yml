@@ -286,7 +286,7 @@ jobs:
     name: Linux x86-64 pylatest_free_threaded
     runs-on: ubuntu-latest
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
-    if: ${{ contains(needs.retrieve-commit-message.outputs.message, '[free-threaded]') }}
+    if: contains(needs.retrieve-commit-message.outputs.message, '[free-threaded]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     env:
       DISTRIB: conda-free-threaded
       LOCK_FILE: ./build_tools/azure/pylatest_free_threaded_linux-64_conda.lock
