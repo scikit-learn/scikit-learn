@@ -36,9 +36,7 @@ y = np.concatenate((y1, -y2 + 1))
 # We use a DecisionTreeClassifier with max_depth=1 (Decision Stump) as the base
 # estimator.
 # We compare two AdaBoost classifiers with different numbers of estimators.
-bdt = AdaBoostClassifier(
-    DecisionTreeClassifier(max_depth=1), n_estimators=200
-)
+bdt = AdaBoostClassifier(DecisionTreeClassifier(max_depth=1), n_estimators=200)
 bdt.fit(X, y)
 
 # %%
