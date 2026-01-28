@@ -26,7 +26,58 @@ X = scale(X, copy=False)
 X_binary, y_binary = X[:100], y[:100]
 
 
-@pytest.mark.parametrize("response_method", ["predict"])
+@pytest.mark.parametrize(
+    "estimator, Xy, response_method",
+    [
+        (
+            DecisionTreeRegressor(),
+            make_regression(n_samples=10, random_state=0),
+            "predict_proba",
+        ),
+        (
+            DecisionTreeRegressor(),
+            make_regression(n_samples=10, random_state=0),
+            ["predict_proba", "decision_function"],
+        ),
+        (
+            KMeans(n_clusters=2, n_init=1),
+            make_blobs(n_samples=10, random_state=0),
+            "predict_proba",
+        ),
+        (
+            KMeans(n_clusters=2, n_init=1),
+            make_blobs(n_samples=10, random_state=0),
+            ["predict_proba", "decision_function"],
+        ),
+        (
+            IsolationForest(random_state=0),
+            make_classification(n_samples=50, random_state=0),
+            "predict_proba",
+        ),
+        (
+            IsolationForest(random_state=0),
+            make_classification(n_samples=50, random_state=0),
+            ["predict_proba", "score"],
+        ),
+    ],
+)
+def test_estimator_unsupported_response(pyplot, estimator, Xy, response_method):
+    """Check the error message with not supported response method."""
+    X, y = *Xy
+    estimator.fit(X, y)
+    err_msg = "has none of the following attributes:"
+    with pytest.raises(AttributeError, match=err_msg):
+        _get_response_values(
+            estimator,
+            X,
+            response_method=response_method,
+        )
+
+
+@pytest.mark.parametrize(
+    "response_method",
+    ["predict", ["predict", "not-a-valid-method"]],
+)
 @pytest.mark.parametrize("return_response_method_used", [True, False])
 def test_get_response_values_regressor(response_method, return_response_method_used):
     """Check the behaviour of `_get_response_values` with regressor."""
@@ -38,16 +89,19 @@ def test_get_response_values_regressor(response_method, return_response_method_u
         response_method=response_method,
         return_response_method_used=return_response_method_used,
     )
-    prediction_method = getattr(regressor, response_method)
+    chosen_response_method = (
+        response_method[0] if isinstance(response_method, list) else response_method
+    )
+    prediction_method = getattr(regressor, chosen_response_method)
     assert_array_equal(results[0], prediction_method(X))
     assert results[1] is None
     if return_response_method_used:
-        assert results[2] == response_method
+        assert results[2] == chosen_response_method
 
 
 @pytest.mark.parametrize(
     "response_method",
-    ["predict", "score", ["predict", "score"]],
+    ["predict", "score", ["predict", "score"], ["predict", "not-a-valid-method"]],
 )
 @pytest.mark.parametrize("return_response_method_used", [True, False])
 def test_get_response_values_clusterer(response_method, return_response_method_used):
@@ -429,6 +483,8 @@ def test_response_values_type_of_target_on_classes_no_warning():
         (IsolationForest(), "predict", "multiclass", (10,)),
         (DecisionTreeRegressor(), "predict", "binary", (10,)),
         (DecisionTreeRegressor(), "predict", "multiclass", (10,)),
+        (KMeans(n_clusters=2, n_init=1), "predict", "binary", (10,)),
+        (KMeans(n_clusters=2, n_init=1), "predict", "multiclass", (10,)),
     ],
 )
 def test_response_values_output_shape_(
@@ -443,7 +499,8 @@ def test_response_values_output_shape_(
         - otherwise, it is a 2d array of shape `(n_samples, n_classes)`;
     - for multilabel classification, it is a 2d array of shape `(n_samples, n_outputs)`;
     - for outlier detection, it is a 1d array of shape `(n_samples,)`;
-    - for regression, it is a 1d array of shape `(n_samples,)`.
+    - for regression, it is a 1d array of shape `(n_samples,)`;
+    - for clusterer, it is a 1d array of shape `(n_samples,)`.
     """
     X = np.random.RandomState(0).randn(10, 2)
     if target_type == "binary":

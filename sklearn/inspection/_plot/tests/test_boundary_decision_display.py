@@ -383,20 +383,6 @@ def test_multioutput_regressor_error(pyplot):
         DecisionBoundaryDisplay.from_estimator(tree, X, response_method="predict")
 
 
-@pytest.mark.parametrize(
-    "response_method",
-    ["predict_proba", "decision_function", ["predict_proba", "decision_function"]],
-)
-def test_regressor_unsupported_response(pyplot, response_method):
-    """Check the error message with regressor and not supported response method."""
-    X, y = load_diabetes(return_X_y=True)
-    X = X[:, :2]
-    tree = DecisionTreeRegressor().fit(X, y)
-    err_msg = "has none of the following attributes:"
-    with pytest.raises(AttributeError, match=err_msg):
-        DecisionBoundaryDisplay.from_estimator(tree, X, response_method=response_method)
-
-
 @pytest.mark.filterwarnings(
     # We expect to raise the following warning because the classifier is fit on a
     # NumPy array
