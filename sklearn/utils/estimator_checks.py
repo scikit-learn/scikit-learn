@@ -4473,6 +4473,7 @@ def check_requires_y_none(name, estimator_orig):
         "requires y to be passed, but the target y is None",
         "Expected array-like (array or non-string sequence), got None",
         "y should be a 1d array",
+        "must be an array-like. Got None instead",
     )
 
     try:

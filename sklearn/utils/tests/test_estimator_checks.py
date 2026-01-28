@@ -38,7 +38,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, NuSVC
 from sklearn.utils import _array_api, all_estimators, deprecated
-from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils._test_common.instance_generator import (
     _construct_instances,
     _get_expected_failed_checks,
@@ -1535,6 +1535,32 @@ def test_check_requires_y_none():
     )
     with raises(ValueError, match=err_msg):
         check_requires_y_none("estimator", EstimatorWithWrongError())
+
+
+def test_check_requires_y_none_with_validate_params():
+    """Check that estimators using validate_params pass check_requires_y_none.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/XXXXX
+    """
+
+    # Estimator using validate_params to validate y as array-like
+    class EstimatorWithValidateParams(BaseEstimator):
+        @validate_params(
+            {
+                "X": ["array-like"],
+                "y": ["array-like"],
+            },
+            prefer_skip_nested_validation=True,
+        )
+        def fit(self, X, y):
+            return self
+
+    with warnings.catch_warnings(record=True) as record:
+        check_requires_y_none("estimator", EstimatorWithValidateParams())
+
+    # no warnings are raised
+    assert not [r.message for r in record]
 
 
 def test_non_deterministic_estimator_skip_tests():
