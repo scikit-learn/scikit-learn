@@ -157,9 +157,10 @@ def test_one_feature():
     X = np.random.normal(size=(128, 1))
     BisectingKMeans(bisecting_strategy="biggest_inertia", random_state=0).fit(X)
 
+
 def test_bisecting_kmeans_custom_init_validation():
     """Test that BisectingKMeans validates center shape correctly with custom init.
-    
+
     Regression test for issue where validation checked against global n_clusters
     instead of the local split count (2).
     """
