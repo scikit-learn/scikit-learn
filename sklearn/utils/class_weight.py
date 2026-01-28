@@ -78,6 +78,17 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
 
         sample_weight = _check_sample_weight(sample_weight, y)
         weighted_class_counts = np.bincount(y_ind, weights=sample_weight)
+
+        # Check for classes with zero total weight - this would cause division by zero
+        zero_weight_classes_mask = weighted_class_counts == 0
+        if np.any(zero_weight_classes_mask):
+            zero_weight_classes = le.classes_[zero_weight_classes_mask]
+            raise ValueError(
+                f"The following classes have zero total sample_weight, which would "
+                f"result in undefined class weights: {zero_weight_classes.tolist()}. "
+                f"Ensure all classes have at least some positive sample_weight."
+            )
+
         recip_freq = weighted_class_counts.sum() / (
             len(le.classes_) * weighted_class_counts
         )
