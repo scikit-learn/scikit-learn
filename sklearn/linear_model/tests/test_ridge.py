@@ -818,7 +818,7 @@ def test_ridge_gcv_integer_arrays():
 @pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
-@pytest.mark.parametrize("X_shape", [(11, 8), (11, 20)])
+@pytest.mark.parametrize("X_shape", [(11, 8), (11, 20)], ids=["tall", "wide"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize(
     "y_shape, noise",
@@ -875,9 +875,12 @@ def test_ridge_gcv_vs_ridge_loo_cv(
 @pytest.mark.parametrize("alpha", [1e-12, 1e-16])
 @pytest.mark.parametrize("solver", ["svd", "cholesky", "lsqr", "sparse_cg"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.parametrize("X_shape", [(100, 50), (50, 100)])
+@pytest.mark.parametrize("X_shape", [(100, 50), (50, 100)], ids=["tall", "wide"])
 @pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
-def test_ridge_noiseless(alpha, solver, fit_intercept, X_shape, X_container):
+def test_near_zero_regularization_ridge(
+    alpha, solver, fit_intercept, X_shape, X_container
+):
+    # Ridge should recover LinearRegression for near-zero alpha.
     sparse_X = X_container in CSR_CONTAINERS
     if solver == "svd" and sparse_X:
         pytest.skip("solver='svd' does not support sparse data")
@@ -885,11 +888,9 @@ def test_ridge_noiseless(alpha, solver, fit_intercept, X_shape, X_container):
         pytest.skip(
             "solver='cholesky' does not support fitting the intercept on sparse data"
         )
-    # Ridge should recover LinearRegression in the noiseless case and
-    # near-zero alpha.
     n_samples, n_features = X_shape
     X, y = make_regression(
-        n_samples=n_samples, n_features=n_features, noise=0, random_state=42
+        n_samples=n_samples, n_features=n_features, noise=0.1, bias=10, random_state=42
     )
     lin_reg = LinearRegression(fit_intercept=fit_intercept)
     lin_reg.fit(X, y)
@@ -903,19 +904,22 @@ def test_ridge_noiseless(alpha, solver, fit_intercept, X_shape, X_container):
 @pytest.mark.parametrize("alpha", [1e-12, 1e-16])
 @pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.parametrize("X_shape", [(100, 50), (50, 50), (50, 100)])
+@pytest.mark.parametrize(
+    "X_shape",
+    [(100, 50), (50, 50), (50, 100)],
+    ids=["tall", "square", "wide"],
+)
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
-def test_ridge_gcv_noiseless(
+def test_near_zero_regularization_ridge_gcv(
     alpha, gcv_mode, fit_intercept, X_shape, dtype, X_container
 ):
+    # Ridge should recover LinearRegression for near-zero alpha.
     sparse_X = X_container in CSR_CONTAINERS
-    # Ridge should recover LinearRegression in the noiseless case and
-    # near-zero alpha.
     alphas = [alpha]
     n_samples, n_features = X_shape
     X, y = make_regression(
-        n_samples=n_samples, n_features=n_features, noise=0, random_state=42
+        n_samples=n_samples, n_features=n_features, noise=0.1, bias=10, random_state=42
     )
     lin_reg = LinearRegression(fit_intercept=fit_intercept)
     lin_reg.fit(X, y)
@@ -1046,7 +1050,11 @@ def test_ridge_gcv_sample_weights(
 
 
 @pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
-@pytest.mark.parametrize("X_shape", [(5, 2), (5, 5), (2, 5)])
+@pytest.mark.parametrize(
+    "X_shape",
+    [(5, 2), (5, 5), (2, 5)],
+    ids=["tall", "square", "wide"],
+)
 @pytest.mark.parametrize("gcv_mode", ["auto", "svd", "eigen"])
 def test_check_gcv_mode_choice(sparse_container, X_shape, gcv_mode):
     n, p = X_shape
@@ -2447,7 +2455,7 @@ def test_ridge_cv_results_predictions(
 
 
 @pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
-@pytest.mark.parametrize("X_shape", [(50, 10), (10, 50)])
+@pytest.mark.parametrize("X_shape", [(50, 10), (10, 50)], ids=["tall", "wide"])
 def test_ridge_cv_multioutput_sample_weight(gcv_mode, X_shape, global_random_seed):
     """Check that `RidgeCV` works properly with multioutput and sample_weight
     when `scoring != None`.
@@ -2482,7 +2490,7 @@ def test_ridge_cv_multioutput_sample_weight(gcv_mode, X_shape, global_random_see
     assert_allclose(ridge_cv.best_score_, -mean_squared_error(y, y_pred_loo))
 
 
-@pytest.mark.parametrize("X_shape", [(50, 10), (10, 50)])
+@pytest.mark.parametrize("X_shape", [(50, 10), (10, 50)], ids=["tall", "wide"])
 def test_ridge_cv_custom_multioutput_scorer(X_shape):
     """Check that `RidgeCV` works properly with a custom multioutput scorer."""
     n_samples, n_features = X_shape
