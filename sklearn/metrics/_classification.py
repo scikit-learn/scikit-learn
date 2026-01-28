@@ -1969,7 +1969,7 @@ def precision_recall_fscore_support(
     beta=1.0,
     labels=None,
     pos_label=1,
-    average=None,
+    average="binary",
     warn_for=("precision", "recall", "f-score"),
     sample_weight=None,
     zero_division="warn",
@@ -2036,7 +2036,7 @@ def precision_recall_fscore_support(
         `average != 'binary'` to report metrics for one label only.
 
     average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
-            default='binary'
+            default=None
         This parameter is required for multiclass/multilabel targets.
         If ``None``, the metrics for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
