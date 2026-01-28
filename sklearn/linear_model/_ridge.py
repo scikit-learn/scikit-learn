@@ -2120,10 +2120,10 @@ class _RidgeGCV(LinearModel):
 
         Long X case (n_features < n_samples).
         """
-        D = alpha / (singvals**2 + alpha) - 1
-        alpha_c = U @ self._diag_dot(D, UT_y) + y
-        alpha_d = self._decomp_diag(D, U) + 1
-        alpha_g = U @ self._diag_dot(D, UT_sqrt_sw) + sqrt_sw
+        alpha_Dm1 = alpha / (singvals**2 + alpha) - 1
+        alpha_c = U @ self._diag_dot(alpha_Dm1, UT_y) + y
+        alpha_d = self._decomp_diag(alpha_Dm1, U) + 1
+        alpha_g = U @ self._diag_dot(alpha_Dm1, UT_sqrt_sw) + sqrt_sw
         if self.fit_intercept:
             sw_sum = sqrt_sw @ sqrt_sw
             alpha_d -= alpha_g * sqrt_sw / sw_sum
@@ -2142,10 +2142,10 @@ class _RidgeGCV(LinearModel):
 
         Wide X case (n_samples < n_features).
         """
-        D = alpha / (singvals**2 + alpha)
-        alpha_c = U @ self._diag_dot(D, UT_y)
-        alpha_d = self._decomp_diag(D, U)
-        alpha_g = U @ self._diag_dot(D, UT_sqrt_sw)
+        alpha_D = alpha / (singvals**2 + alpha)
+        alpha_c = U @ self._diag_dot(alpha_D, UT_y)
+        alpha_d = self._decomp_diag(alpha_D, U)
+        alpha_g = U @ self._diag_dot(alpha_D, UT_sqrt_sw)
         if self.fit_intercept:
             sw_sum = sqrt_sw @ sqrt_sw
             alpha_d -= alpha_g * sqrt_sw / sw_sum
@@ -2202,14 +2202,15 @@ class _RidgeGCV(LinearModel):
         """
         xp, is_array_api, device_ = get_namespace_and_device(X)
         y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
-        # FIXME original_dtype can be int64 or int32
-        if is_array_api or hasattr(getattr(X, "dtype", None), "kind"):
-            original_dtype = X.dtype
+        if (is_array_api and xp.isdtype(X.dtype, "real floating")) or getattr(
+            getattr(X, "dtype", None), "kind", None
+        ) == "f":
+            original_floating_dtype = X.dtype
         else:
             # for X that does not have a simple dtype (e.g. pandas dataframe)
             # the attributes will be stored in the dtype chosen by
             # `validate_data``, i.e. np.float64
-            original_dtype = None
+            original_floating_dtype = None
         # Using float32 can be numerically unstable for this estimator. So if
         # the array API namespace and device allow, convert the input values
         # to float64 whenever possible before converting the results back to
@@ -2354,11 +2355,16 @@ class _RidgeGCV(LinearModel):
                 cv_results_shape = n_samples, n_y, n_alphas
             self.cv_results_ = xp.reshape(self.cv_results_, shape=cv_results_shape)
 
-        # FIXME original_dtype can be int64 or int32
-        if original_dtype == xp.float32:
+        if original_floating_dtype:
             if type(self.intercept_) is not float:
-                self.intercept_ = xp.astype(self.intercept_, original_dtype, copy=False)
-            self.coef_ = xp.astype(self.coef_, original_dtype, copy=False)
+                self.intercept_ = xp.astype(
+                    self.intercept_, original_floating_dtype, copy=False
+                )
+            self.coef_ = xp.astype(self.coef_, original_floating_dtype, copy=False)
+            if self.store_cv_results:
+                self.cv_results_ = xp.astype(
+                    self.cv_results_, original_floating_dtype, copy=False
+                )
 
         return self
 

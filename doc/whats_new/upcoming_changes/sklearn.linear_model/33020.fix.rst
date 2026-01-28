@@ -3,5 +3,7 @@
   regime for all `gcv_mode` options. The default `auto` option is now equivalent
   to `eigen` and picks the cheaper option: eigendecomposition of the covariance
   (resp Gram) matrix when `n_features <= n_samples` (resp `n_samples >
-  n_features`).
+  n_features`). When `store_cv_results=True` and `X` is an integer array, the
+  `cv_results_` attribute was wrongly coerced to the integer dtype of `X`, it
+  now always has a floating dtype.
   By :user:`Antoine Baker <antoinebaker>`
