@@ -1402,10 +1402,6 @@ class RandomForestClassifier(ForestClassifier):
 
         .. versionadded:: 1.4
 
-    quantile : float, default=0.5
-        The quantile to predict when ``criterion="quantile"``. It must be strictly
-        between 0 and 1.
-
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.DecisionTreeClassifier`
@@ -2576,6 +2572,10 @@ class ExtraTreesRegressor(ForestRegressor):
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
         .. versionadded:: 1.4
+
+    quantile : float, default=0.5
+        The quantile to predict when ``criterion="quantile"``. It must be strictly
+        between 0 and 1.
 
     Attributes
     ----------
