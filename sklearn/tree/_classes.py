@@ -25,9 +25,8 @@ from sklearn.base import (
     clone,
     is_classifier,
 )
-from sklearn.tree import _criterion, _splitter, _tree
+from sklearn.tree import _criterion, _splitter, _tree  # type: ignore[attr-defined]
 from sklearn.tree._criterion import Criterion
-from sklearn.tree._splitter import Splitter
 from sklearn.tree._tree import (
     BestFirstTreeBuilder,
     DepthFirstTreeBuilder,
@@ -436,7 +435,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             random_state,
             monotonic_cst,
         )
-        assert isinstance(splitter, Splitter)
 
         if is_classifier(self):
             self.tree_ = Tree(self.n_features_in_, self.n_classes_, self.n_outputs_)
