@@ -9,7 +9,12 @@ from numpy.testing import assert_allclose
 
 from sklearn._config import config_context
 from sklearn._loss import HalfMultinomialLoss
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, is_classifier
+from sklearn.datasets import make_classification, make_regression
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.linear_model import Ridge, RidgeClassifier
+from sklearn.model_selection import cross_validate
+from sklearn.pipeline import FunctionTransformer, make_pipeline
 from sklearn.utils._array_api import (
     _add_to_diagonal,
     _asarray_with_order,
@@ -928,3 +933,116 @@ def test_half_multinomial_loss(use_sample_weight, namespace, device_, dtype_name
         )
 
     assert numpy.isclose(np_loss, xp_loss)
+
+
+@pytest.mark.parametrize(
+    "estimator, n_classes, scoring, target_dtype",
+    [
+        (Ridge(), None, ["r2", "neg_mean_absolute_error"], numpy.float32),
+        (
+            LinearDiscriminantAnalysis(),
+            2,
+            ["d2_brier_score", "d2_log_loss_score", "accuracy"],
+            numpy.int32,
+        ),
+        (
+            RidgeClassifier(),
+            3,
+            ["accuracy"],
+            str,
+        ),
+    ],
+    ids=["Ridge", "LinearDiscriminantAnalysis", "RidgeClassifier"],
+)
+@pytest.mark.parametrize("cv", [None, 3, 5])
+@pytest.mark.parametrize(
+    "namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_cross_validate_array_api_pipeline(
+    estimator, n_classes, scoring, target_dtype, cv, namespace, device_, dtype_name
+):
+    """Integration test for `cross_validate` with array API arrays.
+
+    The goal of this test is to ensure that `cross_validate` works as expected
+    when using array API compatible estimators and multiple scorers at once.
+
+    It is a bit redundant with individual tests for array API compliance of
+    estimators and scorers but the purpose is to check that array API
+    compatibility is preserved when composing these building blocks together,
+    in particular when only X is moved to the array API namespace via the
+    pipeline usage pattern.
+    """
+
+    xp = _array_api_for_tests(namespace, device_)
+    if is_classifier(estimator):
+        X_np, y_np = make_classification(
+            n_samples=100,
+            n_features=5,
+            n_classes=n_classes,
+            n_informative=3,
+            random_state=42,
+        )
+    else:
+        X_np, y_np = make_regression(
+            n_samples=100, n_features=5, n_informative=3, random_state=42
+        )
+
+    X_np = X_np.astype(dtype_name)
+    y_np = y_np.astype(target_dtype)
+    X_xp = xp.asarray(X_np, device=device_)
+
+    xp_pipeline = make_pipeline(
+        FunctionTransformer(lambda X: xp.asarray(X, device=device_)),
+        estimator,
+    )
+
+    cv_params = dict(
+        cv=cv, return_estimator=True, return_train_score=True, error_score="raise"
+    )
+    cv_params["scoring"] = scoring
+
+    cv_results_np = cross_validate(estimator, X_np, y_np, **cv_params)
+    with config_context(array_api_dispatch=True):
+        cv_results_xp = cross_validate(xp_pipeline, X_np, y_np, **cv_params)
+        expected_device = device(X_xp)
+        expected_dtype = X_xp.dtype
+
+    for est_xp in cv_results_xp["estimator"]:
+        # Ensure that the estimators returned can predict when fed with the
+        # same kind of array API inputs they were trained on and that their
+        # predictions are consistent.
+        with config_context(array_api_dispatch=True):
+            if is_classifier(est_xp):
+                preds_xp = est_xp.predict(X_np)
+                # XXX: which namespace, dtype and device is expected for
+                # preds_xp? If we use string labels, this will be numpy arrays
+                # of object dtype and CPU device. But what about integer
+                # classes? Should this be the namespace/device of X_train or
+                # y_train?
+
+                if hasattr(est_xp, "predict_proba"):
+                    proba_xp = est_xp.predict_proba(X_np)
+                    assert device(proba_xp) == expected_device
+                    assert proba_xp.dtype == expected_dtype
+
+                raw_preds_xp = est_xp.decision_function(X_np)
+                assert device(raw_preds_xp) == expected_device
+                assert raw_preds_xp.dtype == expected_dtype
+            else:
+                # For regressors, also check that the prediction dtype is
+                # preserved.
+                preds_xp = est_xp.predict(X_np)
+                assert preds_xp.dtype == expected_dtype
+                assert device(preds_xp) == expected_device
+
+    for scoring in cv_params["scoring"]:
+        for key in [f"test_{scoring}", f"train_{scoring}"]:
+            assert_allclose(
+                cv_results_xp[key],
+                cv_results_np[key],
+                rtol=1e-4 if dtype_name == "float32" else 1e-6,
+                atol=_atol_for_type(dtype_name),
+                err_msg=key,
+            )
