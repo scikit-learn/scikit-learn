@@ -1,0 +1,3 @@
+- The `fit` and `fit_transform` methods of
+ :class:`preprocessing.TargetEncoder` now accepts sample weights.
+  by :user:`[DuarteSJ] <[DuarteSJ]>`.

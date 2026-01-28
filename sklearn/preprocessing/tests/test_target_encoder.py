@@ -24,32 +24,57 @@ from sklearn.preprocessing import (
 from sklearn.utils.fixes import parse_version
 
 
-def _encode_target(X_ordinal, y_numeric, n_categories, smooth):
+def _encode_target(X_ordinal, y_numeric, n_categories, smooth, sample_weight=None):
     """Simple Python implementation of target encoding."""
     cur_encodings = np.zeros(n_categories, dtype=np.float64)
-    y_mean = np.mean(y_numeric)
+    if sample_weight is not None:
+        y_mean = np.average(y_numeric, weights=sample_weight)
+    else:
+        y_mean = np.mean(y_numeric)
 
     if smooth == "auto":
-        y_variance = np.var(y_numeric)
+        if sample_weight is not None:
+            y_variance = np.average((y_numeric - y_mean) ** 2, weights=sample_weight)
+        else:
+            y_variance = np.var(y_numeric)
+
         for c in range(n_categories):
-            y_subset = y_numeric[X_ordinal == c]
-            n_i = y_subset.shape[0]
+            mask = X_ordinal == c
+            y_subset = y_numeric[mask]
 
-            if n_i == 0:
-                cur_encodings[c] = y_mean
-                continue
+            if sample_weight is not None:
+                weights_subset = sample_weight[mask]
+                n_i = np.sum(weights_subset)
+                y_subset_mean = np.average(y_subset, weights=weights_subset)
+                y_subset_variance = np.average(
+                    (y_subset - y_subset_mean) ** 2, weights=weights_subset
+                )
+            else:
+                n_i = y_subset.shape[0]
+                if n_i == 0:
+                    cur_encodings[c] = y_mean
+                    continue
 
-            y_subset_variance = np.var(y_subset)
+                y_subset_mean = np.mean(y_subset)
+                y_subset_variance = np.var(y_subset)
+
             m = y_subset_variance / y_variance
             lambda_ = n_i / (n_i + m)
+            cur_encodings[c] = lambda_ * y_subset_mean + (1 - lambda_) * y_mean
 
-            cur_encodings[c] = lambda_ * np.mean(y_subset) + (1 - lambda_) * y_mean
         return cur_encodings
+
     else:  # float
         for c in range(n_categories):
-            y_subset = y_numeric[X_ordinal == c]
-            current_sum = np.sum(y_subset) + y_mean * smooth
-            current_cnt = y_subset.shape[0] + smooth
+            mask = X_ordinal == c
+            y_subset = y_numeric[mask]
+            if sample_weight is not None:
+                weights_subset = sample_weight[mask]
+                current_sum = np.sum(y_subset * weights_subset) + y_mean * smooth
+                current_cnt = np.sum(weights_subset) + smooth
+            else:
+                current_sum = np.sum(y_subset) + y_mean * smooth
+                current_cnt = y_subset.shape[0] + smooth
             cur_encodings[c] = current_sum / current_cnt
         return cur_encodings
 
@@ -63,9 +88,12 @@ def _encode_target(X_ordinal, y_numeric, n_categories, smooth):
         ("auto", 3),
     ],
 )
+@pytest.mark.parametrize("sample_weight", [None, np.random.RandomState(42).rand(90)])
 @pytest.mark.parametrize("smooth", [5.0, "auto"])
 @pytest.mark.parametrize("target_type", ["binary", "continuous"])
-def test_encoding(categories, unknown_value, global_random_seed, smooth, target_type):
+def test_encoding(
+    categories, unknown_value, global_random_seed, smooth, target_type, sample_weight
+):
     """Check encoding for binary and continuous targets.
 
     Compare the values returned by `TargetEncoder.fit_transform` against the
@@ -119,7 +147,14 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
 
     for train_idx, test_idx in cv.split(X_train_int_array, y_train):
         X_, y_ = X_train_int_array[train_idx, 0], y_numeric[train_idx]
-        cur_encodings = _encode_target(X_, y_, n_categories, smooth)
+        if sample_weight is not None:
+            sample_weight_ = sample_weight[train_idx]
+            cur_encodings = _encode_target(
+                X_, y_, n_categories, smooth, sample_weight=sample_weight_
+            )
+        else:
+            cur_encodings = _encode_target(X_, y_, n_categories, smooth)
+
         expected_X_fit_transform[test_idx, 0] = cur_encodings[
             X_train_int_array[test_idx, 0]
         ]
@@ -133,21 +168,33 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
         random_state=global_random_seed,
     )
 
-    X_fit_transform = target_encoder.fit_transform(X_train, y_train)
+    X_fit_transform = target_encoder.fit_transform(
+        X_train, y_train, sample_weight=sample_weight
+    )
 
     assert target_encoder.target_type_ == target_type
     assert_allclose(X_fit_transform, expected_X_fit_transform)
     assert len(target_encoder.encodings_) == 1
+
     if target_type == "binary":
         assert_array_equal(target_encoder.classes_, target_names)
     else:
         assert target_encoder.classes_ is None
 
     # compute encodings for all data to validate `transform`
-    y_mean = np.mean(y_numeric)
-    expected_encodings = _encode_target(
-        X_train_int_array[:, 0], y_numeric, n_categories, smooth
+    y_mean = (
+        np.average(y_numeric, weights=sample_weight)
+        if sample_weight is not None
+        else np.mean(y_numeric)
     )
+    expected_encodings = _encode_target(
+        X_train_int_array[:, 0],
+        y_numeric,
+        n_categories,
+        smooth,
+        sample_weight=sample_weight,
+    )
+
     assert_allclose(target_encoder.encodings_[0], expected_encodings)
     assert target_encoder.target_mean_ == pytest.approx(y_mean)
 
