@@ -645,50 +645,50 @@ print(pd.DataFrame(res).set_index("subset").T)
 # directly fit on the pure premium is operationally simpler to develop and
 # maintain as it consists of a single scikit-learn estimator instead of a pair
 # of models, each with its own set of hyperparameters.
-from sklearn.metrics import auc
-
-
-def lorenz_curve(y_true, y_pred, exposure):
-    y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
-    exposure = np.asarray(exposure)
-
-    # order samples by increasing predicted risk:
-    ranking = np.argsort(y_pred)
-    ranked_exposure = exposure[ranking]
-    ranked_pure_premium = y_true[ranking]
-    cumulative_claim_amount = np.cumsum(ranked_pure_premium * ranked_exposure)
-    cumulative_claim_amount /= cumulative_claim_amount[-1]
-    cumulative_exposure = np.cumsum(ranked_exposure)
-    cumulative_exposure /= cumulative_exposure[-1]
-    return cumulative_exposure, cumulative_claim_amount
-
+from sklearn.metrics import CAPCurveDisplay, auc
 
 fig, ax = plt.subplots(figsize=(8, 8))
 
 y_pred_product = glm_freq.predict(X_test) * glm_sev.predict(X_test)
 y_pred_total = glm_pure_premium.predict(X_test)
+y_true = df_test["PurePremium"].values
+sample_weight = df_test["Exposure"].values
 
 for label, y_pred in [
     ("Frequency * Severity model", y_pred_product),
     ("Compound Poisson Gamma", y_pred_total),
 ]:
-    cum_exposure, cum_claims = lorenz_curve(
-        df_test["PurePremium"], y_pred, df_test["Exposure"]
+    disp = CAPCurveDisplay.from_predictions(
+        y_true,
+        y_pred,
+        sample_weight=sample_weight,
+        ax=ax,
+        plot_chance_level=False,
+        plot_perfect=False,
     )
-    gini = 1 - 2 * auc(cum_exposure, cum_claims)
-    label += " (Gini index: {:.3f})".format(gini)
-    ax.plot(cum_exposure, cum_claims, linestyle="-", label=label)
+
+    gini = 1 - 2 * auc(disp.cumulative_total, disp.y_true_cumulative)
+    label += f" (Gini={gini:.3f})"
+    disp.line_.set_label(label)
 
 # Oracle model: y_pred == y_test
-cum_exposure, cum_claims = lorenz_curve(
-    df_test["PurePremium"], df_test["PurePremium"], df_test["Exposure"]
+disp = CAPCurveDisplay.from_predictions(
+    y_true,
+    y_true,
+    sample_weight=sample_weight,
+    ax=ax,
+    plot_chance_level=False,
+    plot_perfect=False,
+    ls="--",
+    color="k",
 )
-gini = 1 - 2 * auc(cum_exposure, cum_claims)
-label = "Oracle (Gini index: {:.3f})".format(gini)
-ax.plot(cum_exposure, cum_claims, linestyle="-.", color="gray", label=label)
+
+gini = 1 - 2 * auc(disp.cumulative_total, disp.y_true_cumulative)
+label = f"Oracle (Gini={gini:.3f})"
+disp.line_.set_label(label)
 
 # Random baseline
-ax.plot([0, 1], [0, 1], linestyle="--", color="black", label="Random baseline")
+ax.plot([0, 1], [0, 1], linestyle="--", label="Random baseline")
 ax.set(
     title="Lorenz Curves",
     xlabel=(
@@ -698,3 +698,5 @@ ax.set(
 )
 ax.legend(loc="upper left")
 plt.plot()
+
+# %%
