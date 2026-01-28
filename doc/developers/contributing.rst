@@ -407,7 +407,7 @@ complies with the following rules before marking a PR as "ready for review". The
 2. **Pull requests are expected to resolve one or more issues**.
    Please **do not open PRs for issues that are labeled as "Needs triage"** or with
    other kinds of "Needs ..." labels. Please do not open PRs for issues for which:
-   - the discussion has not settled done to an explicit resolution plan,
+   - the discussion has not settled down to an explicit resolution plan,
    - the reporter has already expressed interest in opening a PR,
    - there already exists cross-referenced and active PRs.
 
