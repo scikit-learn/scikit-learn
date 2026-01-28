@@ -101,7 +101,7 @@ build_metadata_list = [
         "tag": "cuda",
         "folder": "build_tools/github",
         "platform": "linux-64",
-        "channels": ["conda-forge", "pytorch", "nvidia"],
+        "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies
         + [
             "ccache",
@@ -111,9 +111,6 @@ build_metadata_list = [
             "cupy",
             "array-api-strict",
         ],
-        "package_constraints": {
-            "blas": "[build=mkl]",
-        },
     },
     {
         "name": "pylatest_conda_forge_mkl_linux-64",

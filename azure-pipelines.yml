@@ -67,29 +67,6 @@ jobs:
         SKLEARN_WARNINGS_AS_ERRORS: '1'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
 
-- template: build_tools/azure/posix.yml
-  # CPython free-threaded build
-  parameters:
-    name: Linux_free_threaded
-    vmImage: ubuntu-22.04
-    dependsOn: [git_commit, linting]
-    condition: |
-      and(
-        succeeded(),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        or(eq(variables['Build.Reason'], 'Schedule'),
-           contains(dependencies['git_commit']['outputs']['commit.message'], '[free-threaded]'
-          )
-        )
-      )
-    matrix:
-      pylatest_free_threaded:
-        DISTRIB: 'conda-free-threaded'
-        LOCK_FILE: './build_tools/azure/pylatest_free_threaded_linux-64_conda.lock'
-        COVERAGE: 'false'
-        # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
-        PYTEST_XDIST_VERSION: 'none'
-
 # Will run all the time regardless of linting outcome.
 - template: build_tools/azure/posix.yml
   parameters:
