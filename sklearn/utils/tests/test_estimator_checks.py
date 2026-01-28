@@ -1536,6 +1536,27 @@ def test_check_requires_y_none():
     with raises(ValueError, match=err_msg):
         check_requires_y_none("estimator", EstimatorWithWrongError())
 
+    # Test that estimators using @validate_params also pass the check
+    from sklearn.utils._param_validation import validate_params
+
+    class EstimatorWithValidateParams(BaseEstimator):
+        @validate_params(
+            {
+                "X": ["array-like"],
+                "y": ["array-like"],
+            },
+            prefer_skip_nested_validation=True,
+        )
+        def fit(self, X, y):
+            return self
+
+    # Should pass without raising an error
+    with warnings.catch_warnings(record=True) as record:
+        check_requires_y_none("estimator", EstimatorWithValidateParams())
+
+    # no warnings are raised
+    assert not [r.message for r in record]
+
 
 def test_non_deterministic_estimator_skip_tests():
     # check estimators with non_deterministic tag set to True
