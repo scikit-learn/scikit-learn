@@ -74,6 +74,7 @@ from sklearn.metrics.pairwise import (
     paired_euclidean_distances,
     paired_manhattan_distances,
     pairwise_distances,
+    pairwise_distances_argmin,
     pairwise_kernels,
     polynomial_kernel,
     rbf_kernel,
@@ -2454,6 +2455,7 @@ array_api_metric_checkers = {
         check_array_api_binary_classification_metric,
     ],
     pairwise_distances: [check_array_api_metric_pairwise],
+    pairwise_distances_argmin: [check_array_api_metric_pairwise],
 }
 
 
