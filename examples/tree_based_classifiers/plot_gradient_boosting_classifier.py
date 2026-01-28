@@ -13,6 +13,7 @@ Out-of-Bag (OOB) error estimates at each iteration.
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 from sklearn.datasets import make_hastie_10_2
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import log_loss
