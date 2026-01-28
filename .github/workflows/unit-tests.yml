@@ -297,7 +297,7 @@ jobs:
 
   scipy-dev:
     name: Linux x86-64 pylatest_pip_scipy_dev
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
     if: contains(needs.retrieve-commit-message.outputs.message, '[scipy-dev]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     env:
