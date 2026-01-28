@@ -12,6 +12,7 @@ This example compares the training time of
 # SPDX-License-Identifier: BSD-3-Clause
 
 import time
+
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_classification
 from sklearn.ensemble import GradientBoostingClassifier, HistGradientBoostingClassifier
@@ -22,7 +23,9 @@ from sklearn.model_selection import train_test_split
 # -------------------
 # We generate 50,000 samples to make the speed difference noticeable.
 X, y = make_classification(n_samples=50000, n_features=20, random_state=42)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
 
 # %%
 # Train Gradient Boosting
@@ -55,8 +58,8 @@ print(f"HGB Accuracy: {hgb_score:.4f}")
 
 fig, ax = plt.subplots()
 times = [gb_time, hgb_time]
-names = ['GradientBoosting', 'HistGradientBoosting']
-ax.bar(names, times, color=['blue', 'orange'])
+names = ["GradientBoosting", "HistGradientBoosting"]
+ax.bar(names, times, color=["blue", "orange"])
 ax.set_ylabel("Training Time (s)")
 ax.set_title("Training Time Comparison")
 plt.show()

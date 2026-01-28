@@ -3,8 +3,9 @@
 Gradient Boosting Out-of-Bag estimates
 =========================================================
 
-This example demonstrates how to apply :class:`~sklearn.ensemble.GradientBoostingClassifier`
-and monitor the Out-of-Bag (OOB) error estimates at each iteration.
+This example demonstrates how to apply
+:class:`~sklearn.ensemble.GradientBoostingClassifier` and monitor the
+Out-of-Bag (OOB) error estimates at each iteration.
 """
 
 # Authors: The scikit-learn developers
@@ -12,6 +13,7 @@ and monitor the Out-of-Bag (OOB) error estimates at each iteration.
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 from sklearn.datasets import make_hastie_10_2
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.model_selection import train_test_split
@@ -50,11 +52,12 @@ plt.plot(
     "b-",
     label="Training Set Deviance",
 )
+plt.plot(np.arange(clf.n_estimators) + 1, test_score, "r-", label="Test Set Deviance")
 plt.plot(
-    np.arange(clf.n_estimators) + 1, test_score, "r-", label="Test Set Deviance"
-)
-plt.plot(
-    np.arange(clf.n_estimators) + 1, clf.oob_improvement_.cumsum(), "k-", label="OOB Deviance"
+    np.arange(clf.n_estimators) + 1,
+    clf.oob_improvement_.cumsum(),
+    "k-",
+    label="OOB Deviance",
 )
 plt.legend(loc="upper right")
 plt.xlabel("Boosting Iterations")

@@ -12,10 +12,11 @@ dataset consisting of Gaussian Quantiles, which is non-linearly separable.
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 from sklearn.datasets import make_gaussian_quantiles
 from sklearn.ensemble import AdaBoostClassifier
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.inspection import DecisionBoundaryDisplay
+from sklearn.tree import DecisionTreeClassifier
 
 # %%
 # Generate Data
@@ -32,7 +33,8 @@ y = np.concatenate((y1, -y2 + 1))
 # %%
 # Train AdaBoost
 # --------------
-# We use a DecisionTreeClassifier with max_depth=1 (Decision Stump) as the base estimator.
+# We use a DecisionTreeClassifier with max_depth=1 (Decision Stump) as the base
+# estimator.
 # We compare two AdaBoost classifiers with different numbers of estimators.
 bdt = AdaBoostClassifier(
     DecisionTreeClassifier(max_depth=1), algorithm="SAMME", n_estimators=200

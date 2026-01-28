@@ -38,8 +38,10 @@ importances = clf.feature_importances_
 importances = importances.reshape(data.images[0].shape)
 
 plt.figure(figsize=(8, 6))
-plt.imshow(importances, cmap=plt.cm.hot, interpolation='nearest')
-plt.title(f"Pixel importances using ExtraTreesClassifier\nAccuracy: {clf.score(X, y):.2f}")
-plt.colorbar(label='Importance')
-plt.axis('off')
+plt.imshow(importances, cmap=plt.cm.hot, interpolation="nearest")
+plt.title(
+    f"Pixel importances using ExtraTreesClassifier\nAccuracy: {clf.score(X, y):.2f}"
+)
+plt.colorbar(label="Importance")
+plt.axis("off")
 plt.show()
