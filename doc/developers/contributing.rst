@@ -246,13 +246,13 @@ feedback:
   this issue resolved will help the project maintainers invest time and effort
   on issues that actually impact users.
 
-- Please be tell us if you would be interested in opening a PR to resolve your issue
+- Please tell us if you would be interested in opening a PR to resolve your issue
   once triaged by a project maintainer.
 
 Note that the scikit-learn tracker receives `daily reports
 <https://github.com/scikit-learn/scikit-learn/issues?q=label%3Aspam>`_ by
-GitHub accounts that are mostly interested by increasing contribution
-statistics and show little interest for the expected end-user impact of their
+GitHub accounts that are mostly interested in increasing contribution
+statistics and show little interest in the expected end-user impact of their
 contributions. As project maintainers we want to be able to assess if our
 efforts are likely to have a meaningful and positive impact to our end users.
 Therefore, we ask you to avoid opening issues for things you don't actually
@@ -404,7 +404,7 @@ complies with the following rules before marking a PR as "ready for review". The
    cases "Fix <ISSUE TITLE>" is enough. "Fix #<ISSUE NUMBER>" is never a
    good title.
 
-2. **Pull requests are expected to resolve one or more other issues**.
+2. **Pull requests are expected to resolve one or more issues**.
    Please **do not open PRs for issues that are labeled as "Needs triage"** or with
    other kinds of "Needs ..." labels. Please do not open PRs for issues for which:
    - the discussion has not settled done to an explicit resolution plan,
