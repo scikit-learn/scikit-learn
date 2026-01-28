@@ -11,6 +11,7 @@ to visualize the importance of pixels in the Digits dataset classification.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
+
 from sklearn.datasets import load_digits
 from sklearn.ensemble import ExtraTreesClassifier
 

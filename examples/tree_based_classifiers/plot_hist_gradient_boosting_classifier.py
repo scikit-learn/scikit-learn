@@ -14,6 +14,7 @@ This example compares the training time of
 import time
 
 import matplotlib.pyplot as plt
+
 from sklearn.datasets import make_classification
 from sklearn.ensemble import GradientBoostingClassifier, HistGradientBoostingClassifier
 from sklearn.model_selection import train_test_split
