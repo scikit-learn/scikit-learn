@@ -1125,17 +1125,16 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : {"squared_error", "absolute_error", "poisson", "quantile"}, \
+    criterion : {"squared_error", "absolute_error", "quantile", "poisson"}, \
             default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
         loss using the mean of each terminal node, "absolute_error" for the mean
         absolute error, which minimizes the L1 loss using the median of each terminal
-        node, "poisson" which uses reduction in Poisson deviance to find splits,
-        also using the mean of each terminal node, and "quantile" for the pinball
-        loss, which minimizes the quantile loss using the specified `quantile` of
-        each terminal node.
+        node, "quantile" which minimizes the pinball loss using the quantile of each
+        terminal node (controlled by ``quantile``), and "poisson" which uses reduction
+        in Poisson deviance to find splits, also using the mean of each terminal node.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
@@ -1145,6 +1144,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
+
+        .. versionadded:: 1.9
+           Quantile/Pinball loss criterion
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
@@ -1785,17 +1787,16 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Parameters
     ----------
-    criterion : {"squared_error", "absolute_error", "poisson", "quantile"}, \
+    criterion : {"squared_error", "absolute_error", "quantile", "poisson"}, \
             default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
         loss using the mean of each terminal node, "absolute_error" for the mean
         absolute error, which minimizes the L1 loss using the median of each terminal
-        node, "poisson" which uses reduction in Poisson deviance to find splits,
-        also using the mean of each terminal node, and "quantile" for the pinball
-        loss, which minimizes the quantile loss using the specified `quantile` of
-        each terminal node.
+        node, "quantile" which minimizes the pinball loss using the quantile of each
+        terminal node (controlled by ``quantile``), and "poisson" which uses reduction
+        in Poisson deviance to find splits, also using the mean of each terminal node.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
@@ -1805,6 +1806,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
+
+        .. versionadded:: 1.9
+           Quantile/Pinball loss criterion
 
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported

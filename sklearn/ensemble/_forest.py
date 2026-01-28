@@ -1615,16 +1615,16 @@ class RandomForestRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "absolute_error", "poisson", "quantile"}, \
+    criterion : {"squared_error", "absolute_error", "quantile", "poisson"}, \
             default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
         loss using the mean of each terminal node, "absolute_error" for the mean
         absolute error, which minimizes the L1 loss using the median of each terminal
-        node, and "poisson" which uses reduction in Poisson deviance to find splits,
-        also using the mean of each terminal node. "quantile" uses the pinball loss
-        to predict a conditional quantile, controlled by the ``quantile`` parameter.
+        node, "quantile" which minimizes the pinball loss using the quantile of each
+        terminal node (controlled by ``quantile``), and "poisson" which uses reduction
+        in Poisson deviance to find splits, also using the mean of each terminal node.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
@@ -1634,6 +1634,9 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
+
+        .. versionadded:: 1.9
+           Quantile/Pinball loss criterion
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -2393,22 +2396,25 @@ class ExtraTreesRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "absolute_error", "poisson", "quantile"}, \
+    criterion : {"squared_error", "absolute_error", "quantile", "poisson"}, \
             default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
         loss using the mean of each terminal node, "absolute_error" for the mean
         absolute error, which minimizes the L1 loss using the median of each terminal
-        node, and "poisson" which uses reduction in Poisson deviance to find splits,
-        also using the mean of each terminal node. "quantile" uses the pinball loss
-        to predict a conditional quantile, controlled by the ``quantile`` parameter.
+        node, "quantile" which minimizes the pinball loss using the quantile of each
+        terminal node (controlled by ``quantile``), and "poisson" which uses reduction
+        in Poisson deviance to find splits, also using the mean of each terminal node.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
         .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
+
+        .. versionadded:: 1.9
+           Quantile/Pinball loss criterion
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
