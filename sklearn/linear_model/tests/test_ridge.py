@@ -872,15 +872,14 @@ def test_ridge_gcv_vs_ridge_loo_cv(
     assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, atol=atol)
 
 
-@pytest.mark.parametrize("alpha", [1e-12, 1e-16])
+@pytest.mark.parametrize("alpha", [1e-16, 1e16], ids=["zero_alpha", "inf_alpha"])
 @pytest.mark.parametrize("solver", ["svd", "cholesky", "lsqr", "sparse_cg"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("X_shape", [(100, 50), (50, 100)], ids=["tall", "wide"])
 @pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
-def test_near_zero_regularization_ridge(
+def test_regularization_limits_ridge(
     alpha, solver, fit_intercept, X_shape, X_container
 ):
-    # Ridge should recover LinearRegression for near-zero alpha.
     sparse_X = X_container in CSR_CONTAINERS
     if solver == "svd" and sparse_X:
         pytest.skip("solver='svd' does not support sparse data")
@@ -890,18 +889,30 @@ def test_near_zero_regularization_ridge(
         )
     n_samples, n_features = X_shape
     X, y = make_regression(
-        n_samples=n_samples, n_features=n_features, noise=0.1, bias=10, random_state=42
+        n_samples=n_samples, n_features=n_features, noise=0, bias=10, random_state=42
     )
-    lin_reg = LinearRegression(fit_intercept=fit_intercept)
-    lin_reg.fit(X, y)
+    if alpha < 1e-12:
+        # Ridge should recover LinearRegression for near-zero alpha.
+        lin_reg = LinearRegression(fit_intercept=fit_intercept)
+        lin_reg.fit(X, y)
+        expected_coef = lin_reg.coef_
+        expected_intercept = lin_reg.intercept_
+    elif alpha > 1e12:
+        # Ridge should recover zero coefficients for near-infinite alpha.
+        expected_coef = np.zeros(n_features)
+        expected_intercept = np.mean(y) if fit_intercept else 0.0
+    else:
+        raise ValueError(
+            "Pick a very small (<1e-12) or very large (>1e12) alpha, got {alpha:.2e}."
+        )
     X = X_container(X)
     ridge = Ridge(alpha=alpha, solver=solver, fit_intercept=fit_intercept, tol=1e-12)
     ridge.fit(X, y)
-    assert_allclose(ridge.coef_, lin_reg.coef_, atol=1e-10)
-    assert_allclose(ridge.intercept_, lin_reg.intercept_, atol=1e-10)
+    assert_allclose(ridge.coef_, expected_coef, atol=1e-10)
+    assert_allclose(ridge.intercept_, expected_intercept, atol=1e-10)
 
 
-@pytest.mark.parametrize("alpha", [1e-12, 1e-16])
+@pytest.mark.parametrize("alpha", [1e-16, 1e16], ids=["zero_alpha", "inf_alpha"])
 @pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize(
@@ -911,22 +922,32 @@ def test_near_zero_regularization_ridge(
 )
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
-def test_near_zero_regularization_ridge_gcv(
+def test_regularization_limits_ridge_gcv(
     alpha, gcv_mode, fit_intercept, X_shape, dtype, X_container
 ):
-    # Ridge should recover LinearRegression for near-zero alpha.
     sparse_X = X_container in CSR_CONTAINERS
     alphas = [alpha]
     n_samples, n_features = X_shape
     X, y = make_regression(
-        n_samples=n_samples, n_features=n_features, noise=0.1, bias=10, random_state=42
+        n_samples=n_samples, n_features=n_features, noise=0, bias=10, random_state=42
     )
-    lin_reg = LinearRegression(fit_intercept=fit_intercept)
-    lin_reg.fit(X, y)
+    if alpha < 1e-12:
+        # Ridge should recover LinearRegression for near-zero alpha.
+        lin_reg = LinearRegression(fit_intercept=fit_intercept)
+        lin_reg.fit(X, y)
+        expected_coef = lin_reg.coef_
+        expected_intercept = lin_reg.intercept_
+    elif alpha > 1e12:
+        # Ridge should recover zero coefficients for near-infinite alpha.
+        expected_coef = np.zeros(n_features)
+        expected_intercept = np.mean(y) if fit_intercept else 0.0
+    else:
+        raise ValueError(
+            "Pick a very small (<1e-12) or very large (>1e12) alpha, got {alpha:.2e}."
+        )
     X = X_container(X)
     X = X.astype(dtype)
     y = y.astype(dtype)
-    assert X.dtype == y.dtype == dtype
     gcv_ridge = RidgeCV(alphas=alphas, gcv_mode=gcv_mode, fit_intercept=fit_intercept)
     if gcv_mode == "svd" and sparse_X:
         # TODO(1.11) should raises ValueError
@@ -937,8 +958,8 @@ def test_near_zero_regularization_ridge_gcv(
         gcv_ridge.fit(X, y)
 
     atol = 1e-5 if dtype == np.float32 else 1e-10
-    assert_allclose(gcv_ridge.coef_, lin_reg.coef_, atol=atol)
-    assert_allclose(gcv_ridge.intercept_, lin_reg.intercept_, atol=atol)
+    assert_allclose(gcv_ridge.coef_, expected_coef, atol=atol)
+    assert_allclose(gcv_ridge.intercept_, expected_intercept, atol=atol)
 
 
 def test_ridge_loo_cv_asym_scoring():
