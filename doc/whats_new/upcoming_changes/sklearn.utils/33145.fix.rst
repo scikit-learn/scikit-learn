@@ -1,0 +1,5 @@
+- :func:`utils.estimator_checks.check_requires_y_none` now accepts error messages
+  from :func:`utils._param_validation.validate_params` decorator. This fixes
+  compatibility when estimators use ``@validate_params`` for ``y`` parameter
+  validation.
+  By :user:`Atheendra <atheendre130505>`.
