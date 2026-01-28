@@ -408,6 +408,7 @@ complies with the following rules before marking a PR as "ready for review". The
    Please **do not open PRs for issues that are labeled as "Needs triage"**
    (see :ref:`issues_tagged_needs_triage`) or with other kinds of "Needs ..."
    labels. Please do not open PRs for issues for which:
+
    - the discussion has not settled down to an explicit resolution plan,
    - the reporter has already expressed interest in opening a PR,
    - there already exists cross-referenced and active PRs.
