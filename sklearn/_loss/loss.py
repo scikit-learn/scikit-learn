@@ -1473,8 +1473,12 @@ class HalfMultinomialLossArrayAPI(ArrayAPILossMixin, HalfMultinomialLoss):
         # These instance variables are specifically to store certain
         # intermediate values in order to avoid having to recompute
         # them repeatedly.
+
+        # Used when computing the multinomial loss.
         self.class_indexing_offsets = None
         self.y_true_int = None
+
+        # Used when computing the gradient.
         self.y_true_one_hot = None
 
     def loss(
