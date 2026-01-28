@@ -13,9 +13,9 @@ Out-of-Bag (OOB) error estimates at each iteration.
 
 import matplotlib.pyplot as plt
 import numpy as np
-
 from sklearn.datasets import make_hastie_10_2
 from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.metrics import log_loss
 from sklearn.model_selection import train_test_split
 
 # %%
@@ -40,8 +40,8 @@ clf = GradientBoostingClassifier(
 # We compute the test error and the OOB error at each stage of boosting.
 test_score = np.zeros((clf.n_estimators,), dtype=np.float64)
 
-for i, y_pred in enumerate(clf.staged_predict(X_test)):
-    test_score[i] = clf.loss_(y_test, y_pred)
+for i, y_proba in enumerate(clf.staged_predict_proba(X_test)):
+    test_score[i] = log_loss(y_test, y_proba)
 
 plt.figure(figsize=(10, 6))
 plt.subplot(1, 1, 1)

@@ -37,7 +37,7 @@ y = np.concatenate((y1, -y2 + 1))
 # estimator.
 # We compare two AdaBoost classifiers with different numbers of estimators.
 bdt = AdaBoostClassifier(
-    DecisionTreeClassifier(max_depth=1), algorithm="SAMME", n_estimators=200
+    DecisionTreeClassifier(max_depth=1), n_estimators=200
 )
 bdt.fit(X, y)
 
