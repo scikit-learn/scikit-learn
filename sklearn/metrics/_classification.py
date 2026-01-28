@@ -1031,7 +1031,7 @@ def cohen_kappa_score(
     msg_zero_division = (
         "`y1`, `y2` and `labels` have only one label in common. "
         "`cohen_kappa_score` is undefined and set to the value defined by the "
-        "`replace_undefined_by` param, which defaults to `np.nan`."
+        f"the `replace_undefined_by` param, which is set to {replace_undefined_by}."
     )
     # exact equality is safe here, since denominator is a sum of positive terms:
     if denominator == 0:
