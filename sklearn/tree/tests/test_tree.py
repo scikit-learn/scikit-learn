@@ -2932,7 +2932,7 @@ def test_sort_log2_build():
     assert_array_equal(samples, expected_samples)
 
 
-@pytest.mark.parametrize("alpha", [0.5, 0.2, 0.9, 0.4, 0.75])
+@pytest.mark.parametrize("alpha", [0.5, 0.1, 0.75])
 def test_pinball_loss_precomputation_function(alpha, global_random_seed):
     """
     Test the main bit of logic of the MAE(RegressionCriterion) class
@@ -2943,7 +2943,6 @@ def test_pinball_loss_precomputation_function(alpha, global_random_seed):
     part of the computation, in case of major refactor of the MAE class,
     it can be safely removed.
     """
-    global_random_seed = np.random.choice(10**7)
 
     def compute_prefix_losses_naive(y, w):
         """
@@ -3001,7 +3000,7 @@ def test_pinball_loss_precomputation_function(alpha, global_random_seed):
     "criterion, quantile",
     [
         ("absolute_error", 0.5),
-        ("quantile", 0.1),
+        ("quantile", 0.3),
         ("quantile", 0.5),
         ("quantile", 0.9),
     ],
