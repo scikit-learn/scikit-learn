@@ -1419,7 +1419,7 @@ cdef class Pinball(Criterion):
     cdef intp_t[::1] ranks
     cdef WeightedFenwickTree prefix_sum_tree
 
-    def __cinit__(self, intp_t n_outputs, intp_t n_samples, float64_t alpha):
+    def __cinit__(self, intp_t n_outputs, intp_t n_samples, float64_t alpha=0.5):
         """Initialize parameters for this criterion.
 
         Parameters
@@ -1720,6 +1720,9 @@ cdef class MAE(Pinball):
         Pinball.children_impurity(self, p_impurity_left, p_impurity_right)
         p_impurity_left[0] *= 2
         p_impurity_right[0] *= 2
+
+    def __reduce__(self):
+        return (type(self), (self.n_outputs, self.n_samples), self.__getstate__())
 
 
 cdef class Poisson(RegressionCriterion):

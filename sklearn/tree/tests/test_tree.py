@@ -1861,7 +1861,7 @@ def test_criterion_copy():
 
         for name, typename in CRITERIA_REG.items():
             args = (n_outputs, n_samples)
-            if name == "absolute_error" or name == "quantile":
+            if name == "quantile":
                 args = (*args, 0.5)
             criteria = typename(*args)
             result = copy_func(criteria).__reduce__()
