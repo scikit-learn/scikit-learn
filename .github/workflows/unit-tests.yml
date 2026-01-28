@@ -212,7 +212,7 @@ jobs:
 
     env: ${{ matrix }}
 
-    steps:
+    steps: &unit-tests-steps
       - name: Checkout
         uses: actions/checkout@v6
 
@@ -281,3 +281,16 @@ jobs:
             --junit-file $TEST_DIR/$JUNITXML \
             --auto-close false \
             --job-name "${{ matrix.name }}"
+
+  free-threaded:
+    name: Linux x86-64 pylatest_free_threaded
+    runs-on: ubuntu-latest
+    needs: [lint, retrieve-commit-message, retrieve-selected-tests]
+    if: ${{ contains(needs.retrieve-commit-message.outputs.message, '[free-threaded]') }}
+    env:
+      DISTRIB: conda-free-threaded
+      LOCK_FILE: ./build_tools/azure/pylatest_free_threaded_linux-64_conda.lock
+      COVERAGE: false
+      # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+      PYTEST_XDIST_VERSION: none
+    steps: *unit-tests-steps

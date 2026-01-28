@@ -192,7 +192,7 @@ def _weighted_percentile(
                 )
                 # Handle case where there are trailing 0 sample weight samples
                 # and `percentile_indices` is already max index
-                if next_index >= max_idx:
+                if next_index > max_idx:
                     # use original `percentile_indices` again
                     next_index = percentile_indices[col_idx]
 
