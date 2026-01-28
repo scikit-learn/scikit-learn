@@ -33,12 +33,8 @@ jobs:
       - name: Install dependencies
         run: |
           source build_tools/shared.sh
-          # Include pytest compatibility with mypy
-          pip install pytest $(get_dep ruff min) $(get_dep mypy min) cython-lint
-          # we save the versions of the linters to be used in the error message later.
-          python -c "from importlib.metadata import version; print(f\"ruff={version('ruff')}\")" >> /tmp/versions.txt
-          python -c "from importlib.metadata import version; print(f\"mypy={version('mypy')}\")" >> /tmp/versions.txt
-          python -c "from importlib.metadata import version; print(f\"cython-lint={version('cython-lint')}\")" >> /tmp/versions.txt
+          pip install pre-commit
+          touch /tmp/versions.txt
 
       - name: Run linting
         run: |

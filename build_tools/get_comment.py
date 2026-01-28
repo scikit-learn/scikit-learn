@@ -20,8 +20,17 @@ def get_versions(versions_file):
     versions : dict
         A dictionary with the versions of the packages.
     """
+    if not os.path.exists(versions_file):
+        return {}
     with open(versions_file, "r") as f:
         return dict(line.strip().split("=") for line in f)
+
+
+def fmt_version(versions, key, label):
+    value = versions.get(key)
+    if value:
+        return f" Note that the installed `{label}` version is `{label}={value}`."
+    return ""
 
 
 def get_step_message(log, start, end, title, message, details):
@@ -99,8 +108,8 @@ def get_message(log_file, repo_str, pr_number, sha, run_id, details, versions):
         message=(
             "`ruff` detected issues. Please run "
             "`ruff check --fix --output-format=full` locally, fix the remaining "
-            "issues, and push the changes. Here you can see the detected issues. Note "
-            f"that the installed `ruff` version is `ruff={versions['ruff']}`."
+            "issues, and push the changes. Here you can see the detected issues."
+            + fmt_version(versions, "ruff", "ruff")
         ),
         details=details,
     )
@@ -113,8 +122,8 @@ def get_message(log_file, repo_str, pr_number, sha, run_id, details, versions):
         title="`ruff format`",
         message=(
             "`ruff` detected issues. Please run `ruff format` locally and push "
-            "the changes. Here you can see the detected issues. Note that the "
-            f"installed `ruff` version is `ruff={versions['ruff']}`."
+            "the changes. Here you can see the detected issues."
+            + fmt_version(versions, "ruff", "ruff")
         ),
         details=details,
     )
@@ -127,8 +136,8 @@ def get_message(log_file, repo_str, pr_number, sha, run_id, details, versions):
         title="`mypy`",
         message=(
             "`mypy` detected issues. Please fix them locally and push the changes. "
-            "Here you can see the detected issues. Note that the installed `mypy` "
-            f"version is `mypy={versions['mypy']}`."
+            "Here you can see the detected issues."
+            + fmt_version(versions, "mypy", "mypy")
         ),
         details=details,
     )
@@ -141,9 +150,8 @@ def get_message(log_file, repo_str, pr_number, sha, run_id, details, versions):
         title="`cython-lint`",
         message=(
             "`cython-lint` detected issues. Please fix them locally and push "
-            "the changes. Here you can see the detected issues. Note that the "
-            "installed `cython-lint` version is "
-            f"`cython-lint={versions['cython-lint']}`."
+            "the changes. Here you can see the detected issues."
+            + fmt_version(versions, "cython-lint", "cython-lint")
         ),
         details=details,
     )

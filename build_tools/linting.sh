@@ -11,7 +11,7 @@ set -o pipefail
 global_status=0
 
 echo -e "### Running the ruff linter ###\n"
-ruff check --output-format=full
+pre-commit run ruff-check --all-files --show-diff-on-failure --color=never
 status=$?
 if [[ $status -eq 0 ]]
 then
@@ -22,7 +22,7 @@ else
 fi
 
 echo -e "### Running the ruff formatter ###\n"
-ruff format --diff
+pre-commit run ruff-format --all-files --show-diff-on-failure --color=never
 status=$?
 if [[ $status -eq 0 ]]
 then
@@ -33,7 +33,7 @@ else
 fi
 
 echo -e "### Running mypy ###\n"
-mypy sklearn/
+pre-commit run mypy --all-files --color=never
 status=$?
 if [[ $status -eq 0 ]]
 then
@@ -44,7 +44,7 @@ else
 fi
 
 echo -e "### Running cython-lint ###\n"
-cython-lint --ban-relative-imports sklearn/
+pre-commit run cython-lint --all-files --color=never
 status=$?
 if [[ $status -eq 0 ]]
 then

@@ -37,9 +37,7 @@ jobs:
           cache: 'pip'
       - name: Install linters
         run: |
-          source build_tools/shared.sh
-          # Include pytest compatibility with mypy
-          pip install pytest $(get_dep ruff min) $(get_dep mypy min) cython-lint
+          pip install pre-commit
       - name: Run linters
         run: ./build_tools/linting.sh
       - name: Run Meson OpenMP checks
