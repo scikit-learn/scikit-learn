@@ -732,3 +732,160 @@ def test_pandas_copy_on_write():
             with pd.option_context("mode.copy_on_write", True):
                 df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
                 TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
+
+
+def _fit_target_encoder_fast_and_orig():
+    """
+    Fit two target encoders on the same tiny dataset, where one uses the small-batch
+    fast-path while the other uses the original path.
+    """
+    X = np.array(
+        [
+            ["u", "x"],
+            ["v", "y"],
+            ["u", "x"],
+            ["w", "y"],
+        ],
+        dtype=object,
+    )
+    y = np.array([0.0, 1.0, 1.0, 0.0])
+    te_fast = TargetEncoder(smooth=5.0).fit(X, y)
+    te_orig = TargetEncoder(smooth=5.0).fit(X, y)
+    # force `te_orig` to utilize the original vectorized path during `transform`
+    # by providing a negative threshold.
+    te_orig._small_batch_threshold = -1
+    return te_fast, te_orig
+
+
+@pytest.mark.parametrize("n_repeats", [1, 300])
+def test_fastpath_matches_vectorized_with_nans_and_nats(n_repeats):
+    te_fast, te_vec = _fit_target_encoder_fast_and_orig()
+
+    X = np.empty((5, 2), dtype=object)
+    X[0] = ["u", "x"]
+    X[1] = [float("nan"), "x"]
+    X[2] = [None, "x"]
+    X[3] = ["u", np.datetime64("NaT")]
+    X[4] = ["new_unseen", "x"]
+    X = np.tile(X, (n_repeats, 1))
+
+    assert_allclose(te_fast.transform(X), te_vec.transform(X), rtol=0, atol=1e-9)
+
+
+@pytest.mark.parametrize("n_repeats", [1, 300])
+def test_fastpath_matches_vectorized_for_int_categories_small_batch(n_repeats):
+    cats = np.array([0, 10_000_000, 20_000_000], dtype=np.int64)
+
+    X_fit_i = np.array(
+        [[0], [10_000_000], [20_000_000], [0]],
+        dtype=np.int64,
+    )
+    y_fit_i = np.array([0, 1, 0, 1], dtype=np.int64)
+
+    te_fast_i = TargetEncoder(
+        target_type="binary",
+        categories=[cats],
+        random_state=0,
+    ).fit(X_fit_i, y_fit_i)
+
+    te_vec_i = TargetEncoder(
+        target_type="binary",
+        categories=[cats],
+        random_state=0,
+    ).fit(X_fit_i, y_fit_i)
+    te_vec_i._small_batch_threshold = -1
+
+    if hasattr(te_fast_i, "_int_lookup_"):
+        assert te_fast_i._int_lookup_[0][0] is None
+
+    X_small_i = np.array(
+        [[0], [10_000_000], [123_456_789]],
+        dtype=np.int64,
+    )
+    X_small_i = np.tile(X_small_i, (n_repeats, 1))
+
+    assert_allclose(
+        te_fast_i.transform(X_small_i),
+        te_vec_i.transform(X_small_i),
+        rtol=0,
+        atol=0,
+    )
+
+
+@pytest.mark.parametrize(
+    "n_classes, n_cats, n_fit, rng_seed",
+    [
+        (2, 50_000, 150_000, 0),
+        (5, 30_000, 200_000, 1),
+    ],
+)
+@pytest.mark.parametrize("n_small", [1, 2, 8, 32])
+def test_small_batch_parity_and_missing(n_classes, n_cats, n_fit, rng_seed, n_small):
+    rng = np.random.default_rng(rng_seed)
+
+    X_fit = rng.integers(0, n_cats, size=(n_fit, 1)).astype(object)
+    X_fit[:100, 0] = None
+    y_fit = rng.integers(0, n_classes, size=(n_fit,))
+
+    enc = TargetEncoder(random_state=0).fit(X_fit, y_fit)
+
+    X_small = rng.integers(0, n_cats * 2, size=(n_small, 1)).astype(object)
+    if n_small >= 2:
+        X_small[0, 0] = None
+        X_small[-1, 0] = np.nan
+    else:
+        X_small[0, 0] = n_cats + 123
+
+    old_thresh = enc._small_batch_threshold
+    enc._small_batch_threshold = -1
+    try:
+        ref = enc.transform(X_small)
+    finally:
+        enc._small_batch_threshold = old_thresh
+
+    fast = enc.transform(X_small)
+
+    assert_allclose(fast, ref, rtol=0, atol=0)
+
+    if n_classes > 2:
+        assert fast.shape == ref.shape
+        assert fast.shape[1] % n_classes == 0
+
+
+def test_fit_dataframe_sets_feature_names_pandas():
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame(
+        [["a", "x"], ["b", "y"], ["a", "x"]],
+        columns=["feat_a", "feat_b"],
+        dtype=object,
+    )
+    y = np.array([0, 1, 1], dtype=float)
+
+    te = TargetEncoder(smooth=5.0).fit(X, y)
+    names = te.get_feature_names_out()
+    assert hasattr(te, "feature_names_in_")
+    assert_array_equal(names, np.array(["feat_a", "feat_b"], dtype=object))
+
+
+def test_fit_dataframe_sets_feature_names_polars():
+    pl = pytest.importorskip("polars")
+    X = pl.DataFrame({"feat_a": ["a", "b", "a"], "feat_b": ["x", "y", "x"]})
+    y = np.array([0, 1, 1], dtype=float)
+
+    te = TargetEncoder(smooth=5.0).fit(X, y)
+    names = te.get_feature_names_out()
+    assert_array_equal(names, np.array(["feat_a", "feat_b"], dtype=object))
+
+
+def test_smallbatch_index_maps_are_lazy_and_materialize_on_use():
+    X = np.array([["a"], ["b"]], dtype=object)
+    y = np.array([0.0, 1.0])
+
+    te = TargetEncoder(smooth=5.0).fit(X, y)
+
+    index_maps = te._index_maps_
+    assert index_maps.__class__.__name__ == "_LazyIndexMaps"
+    assert index_maps._maps[0] is None
+
+    te.transform(X)
+    assert index_maps._maps[0] is not None
