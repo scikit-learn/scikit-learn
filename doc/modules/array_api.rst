@@ -12,17 +12,6 @@ Scikit-learn vendors pinned copies of
 `array-api-compat <https://github.com/data-apis/array-api-compat>`__
 and `array-api-extra <https://github.com/data-apis/array-api-extra>`__.
 
-Scikit-learn's support for the array API standard requires the environment variable
-`SCIPY_ARRAY_API` to be set to `1` before importing `scipy` and `scikit-learn`:
-
-.. prompt:: bash $
-
-   export SCIPY_ARRAY_API=1
-
-Please note that this environment variable is intended for temporary use.
-For more details, refer to SciPy's `Array API documentation
-<https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html#using-array-api-standard-support>`_.
-
 Some scikit-learn estimators that primarily rely on NumPy (as opposed to using
 Cython) to implement the algorithmic logic of their `fit`, `predict` or
 `transform` methods can be configured to accept any Array API compatible input
@@ -51,6 +40,23 @@ behaviour and prevent accidental mixing of array namespaces.
 Note that in the examples below, we use a context manager (:func:`config_context`)
 to avoid having to reset it to `False` at the end of every code snippet, so as to
 not affect the rest of the documentation.
+
+Scikit-learn's support for the array API standard requires the environment variable
+`SCIPY_ARRAY_API` to be set to `1` before importing `scipy` and `scikit-learn`:
+
+.. prompt:: bash $
+
+   export SCIPY_ARRAY_API=1
+
+Please note that this environment variable is intended for temporary use.
+For more details, refer to SciPy's `Array API documentation
+<https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html#using-array-api-standard-support>`_.
+
+The array API functionality assumes that the latest versions of scikit-learn's dependencies are
+installed. Older versions might work, but we make no promises. While array API support is marked
+as experimental, backwards compatibility is not guaranteed. In particular, when a newer version
+of a dependency fixes a bug we will not introduce additional code to backport the fix or
+maintain compatibility with older versions.
 
 Scikit-learn accepts :term:`array-like` inputs for all :mod:`metrics`
 and some estimators. When `array_api_dispatch=False`, these inputs are converted
@@ -194,6 +200,7 @@ Metrics
 - :func:`sklearn.metrics.pairwise.cosine_similarity`
 - :func:`sklearn.metrics.pairwise.cosine_distances`
 - :func:`sklearn.metrics.pairwise.pairwise_distances` (only supports "cosine", "euclidean", "manhattan" and "l2" metrics)
+- :func:`sklearn.metrics.pairwise.pairwise_distances_argmin`
 - :func:`sklearn.metrics.pairwise.euclidean_distances` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.pairwise.laplacian_kernel`
 - :func:`sklearn.metrics.pairwise.linear_kernel`
