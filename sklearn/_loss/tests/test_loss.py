@@ -1486,7 +1486,6 @@ def test_log1pexp(namespace, device_, dtype_name):
             _log1pexp(
                 raw_prediction=x,
                 raw_prediction_exp=xp.exp(x),
-                neg_raw_prediction_exp=xp.exp(-x),
                 xp=xp,
             )
         )

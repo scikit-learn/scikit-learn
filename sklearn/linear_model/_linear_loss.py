@@ -208,7 +208,7 @@ class LinearModelLoss:
         # The `weights` and `intercept` are only converted internally to the
         # array API because the relevant `scipy.optimize` functions do not
         # currently support the array API and we have to ensure that the final
-        # values returned to the respestive `scipy.optimize` function are in
+        # values returned to the respective `scipy.optimize` function are in
         # the `numpy` namespace.
         weights_xp = xp.asarray(weights, dtype=X.dtype, device=device_)
         intercept_xp = xp.asarray(intercept, dtype=X.dtype, device=device_)
