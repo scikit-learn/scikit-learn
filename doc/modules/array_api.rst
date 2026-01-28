@@ -89,10 +89,19 @@ The example code snippet below demonstrates how to use `CuPy
     >>> X_trans.device
     <CUDA Device 0>
 
-After the model is trained, fitted attributes that are arrays will also be
-from the same Array API namespace as the training data. For example, if CuPy's
-Array API namespace was used for training, then fitted attributes will be on the
-GPU. We provide an experimental `_estimator_with_converted_arrays` utility that
+After the model is trained, fitted attributes that are arrays will also be from
+the same Array API namespace as the training data. For example, if CuPy's Array
+API namespace was used for training, then fitted attributes will be on the GPU.
+Passing data in a different namespace to ``transform`` or ``predict`` is an
+error::
+
+    >>> with config_context(array_api_dispatch=True):
+    ...     lda.transform(X_np)
+    Traceback (most recent call last):
+        ...
+    ValueError: Inputs passed to LinearDiscriminantAnalysis.transform() must use the same array library and the same device as those passed to fit()...
+
+We provide an experimental `_estimator_with_converted_arrays` utility that
 transfers an estimator attributes from Array API to an ndarray::
 
     >>> from sklearn.utils._array_api import _estimator_with_converted_arrays
@@ -286,6 +295,10 @@ be arrays from the same library as the input and stored on the same device.
 The `predict` and `transform` method subsequently expect
 inputs from the same array library and device as the data passed to the `fit`
 method.
+
+To help check that the inputs' namespace and device in `predict` and
+`transform`, we provide the experimental
+`sklearn.utils._array_api.check_same_namespace`.
 
 Scoring functions
 -----------------
