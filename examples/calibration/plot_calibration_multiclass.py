@@ -45,8 +45,8 @@ X_train_valid, y_train_valid = X[:1000], y[:1000]
 X_test, y_test = X[1000:], y[1000:]
 
 # %%
-# Fitting and calibration
-# -----------------------
+# Fitting and Sigmoid Calibration
+# -------------------------------
 #
 # First, we will train a :class:`~sklearn.ensemble.RandomForestClassifier`
 # with 25 base estimators (trees) on the concatenated train and validation
@@ -60,8 +60,8 @@ clf.fit(X_train_valid, y_train_valid)
 # %%
 # To train the calibrated classifier, we start with the same
 # :class:`~sklearn.ensemble.RandomForestClassifier` but train it using only
-# the train data subset (600 samples) then calibrate, with `method='sigmoid'`,
-# using the valid data subset (400 samples) in a 2-stage process.
+# the train data subset (600 samples) then calibrate, with sigmoid calibration
+# `method='sigmoid'`, using the valid data subset (400 samples) in a 2-stage process.
 
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.frozen import FrozenEstimator
@@ -72,116 +72,128 @@ cal_clf = CalibratedClassifierCV(FrozenEstimator(clf), method="sigmoid")
 cal_clf.fit(X_valid, y_valid)
 
 # %%
-# Compare probabilities
+# Compare Probabilities
 # ---------------------
-# Below we plot a 2-simplex with arrows showing the change in predicted
-# probabilities of the test samples.
+# To compare the probabilities before and after calibration on the testing set,
+# we plot a 2-simplex with arrows using the following helper function.
 
 import matplotlib.pyplot as plt
 
-plt.figure(figsize=(10, 10))
 colors = ["r", "g", "b"]
+
+
+def plot_simplex_calibration_arrows(clf_probs, cal_clf_probs, colors, title):
+    plt.figure(figsize=(10, 10))
+
+    # Plot arrows
+    for i in range(clf_probs.shape[0]):
+        plt.arrow(
+            clf_probs[i, 0],
+            clf_probs[i, 1],
+            cal_clf_probs[i, 0] - clf_probs[i, 0],
+            cal_clf_probs[i, 1] - clf_probs[i, 1],
+            color=colors[y_test[i]],
+            head_width=1e-2,
+        )
+
+    # Plot perfect predictions, at each vertex
+    plt.plot([1.0], [0.0], "ro", ms=20, label="Class 1")
+    plt.plot([0.0], [1.0], "go", ms=20, label="Class 2")
+    plt.plot([0.0], [0.0], "bo", ms=20, label="Class 3")
+
+    # Plot boundaries of unit simplex
+    plt.plot([0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], "k", label="Simplex")
+
+    # Annotate points 6 points around the simplex, and mid point inside simplex
+    plt.annotate(
+        r"($\frac{1}{3}$, $\frac{1}{3}$, $\frac{1}{3}$)",
+        xy=(1.0 / 3, 1.0 / 3),
+        xytext=(1.0 / 3, 0.23),
+        xycoords="data",
+        arrowprops=dict(facecolor="black", shrink=0.05),
+        horizontalalignment="center",
+        verticalalignment="center",
+    )
+    plt.plot([1.0 / 3], [1.0 / 3], "ko", ms=5)
+    plt.annotate(
+        r"($\frac{1}{2}$, $0$, $\frac{1}{2}$)",
+        xy=(0.5, 0.0),
+        xytext=(0.5, 0.1),
+        xycoords="data",
+        arrowprops=dict(facecolor="black", shrink=0.05),
+        horizontalalignment="center",
+        verticalalignment="center",
+    )
+    plt.annotate(
+        r"($0$, $\frac{1}{2}$, $\frac{1}{2}$)",
+        xy=(0.0, 0.5),
+        xytext=(0.1, 0.5),
+        xycoords="data",
+        arrowprops=dict(facecolor="black", shrink=0.05),
+        horizontalalignment="center",
+        verticalalignment="center",
+    )
+    plt.annotate(
+        r"($\frac{1}{2}$, $\frac{1}{2}$, $0$)",
+        xy=(0.5, 0.5),
+        xytext=(0.6, 0.6),
+        xycoords="data",
+        arrowprops=dict(facecolor="black", shrink=0.05),
+        horizontalalignment="center",
+        verticalalignment="center",
+    )
+    plt.annotate(
+        r"($0$, $0$, $1$)",
+        xy=(0, 0),
+        xytext=(0.1, 0.1),
+        xycoords="data",
+        arrowprops=dict(facecolor="black", shrink=0.05),
+        horizontalalignment="center",
+        verticalalignment="center",
+    )
+    plt.annotate(
+        r"($1$, $0$, $0$)",
+        xy=(1, 0),
+        xytext=(1, 0.1),
+        xycoords="data",
+        arrowprops=dict(facecolor="black", shrink=0.05),
+        horizontalalignment="center",
+        verticalalignment="center",
+    )
+    plt.annotate(
+        r"($0$, $1$, $0$)",
+        xy=(0, 1),
+        xytext=(0.1, 1),
+        xycoords="data",
+        arrowprops=dict(facecolor="black", shrink=0.05),
+        horizontalalignment="center",
+        verticalalignment="center",
+    )
+    # Add grid
+    plt.grid(False)
+    for x in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
+        plt.plot([0, x], [x, 0], "k", alpha=0.2)
+        plt.plot([0, 0 + (1 - x) / 2], [x, x + (1 - x) / 2], "k", alpha=0.2)
+        plt.plot([x, x + (1 - x) / 2], [0, 0 + (1 - x) / 2], "k", alpha=0.2)
+
+    plt.title(title)
+    plt.xlabel("Probability class 1")
+    plt.ylabel("Probability class 2")
+    plt.xlim(-0.05, 1.05)
+    plt.ylim(-0.05, 1.05)
+
+    plt.legend(loc="best")
+
+
+# %%
+# We now use this helper function to compare the predicted class
+# probabilities on the test set before and after calibration.
 
 clf_probs = clf.predict_proba(X_test)
 cal_clf_probs = cal_clf.predict_proba(X_test)
-# Plot arrows
-for i in range(clf_probs.shape[0]):
-    plt.arrow(
-        clf_probs[i, 0],
-        clf_probs[i, 1],
-        cal_clf_probs[i, 0] - clf_probs[i, 0],
-        cal_clf_probs[i, 1] - clf_probs[i, 1],
-        color=colors[y_test[i]],
-        head_width=1e-2,
-    )
+title = "Change of predicted probabilities on test samples after sigmoid calibration"
 
-# Plot perfect predictions, at each vertex
-plt.plot([1.0], [0.0], "ro", ms=20, label="Class 1")
-plt.plot([0.0], [1.0], "go", ms=20, label="Class 2")
-plt.plot([0.0], [0.0], "bo", ms=20, label="Class 3")
-
-# Plot boundaries of unit simplex
-plt.plot([0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], "k", label="Simplex")
-
-# Annotate points 6 points around the simplex, and mid point inside simplex
-plt.annotate(
-    r"($\frac{1}{3}$, $\frac{1}{3}$, $\frac{1}{3}$)",
-    xy=(1.0 / 3, 1.0 / 3),
-    xytext=(1.0 / 3, 0.23),
-    xycoords="data",
-    arrowprops=dict(facecolor="black", shrink=0.05),
-    horizontalalignment="center",
-    verticalalignment="center",
-)
-plt.plot([1.0 / 3], [1.0 / 3], "ko", ms=5)
-plt.annotate(
-    r"($\frac{1}{2}$, $0$, $\frac{1}{2}$)",
-    xy=(0.5, 0.0),
-    xytext=(0.5, 0.1),
-    xycoords="data",
-    arrowprops=dict(facecolor="black", shrink=0.05),
-    horizontalalignment="center",
-    verticalalignment="center",
-)
-plt.annotate(
-    r"($0$, $\frac{1}{2}$, $\frac{1}{2}$)",
-    xy=(0.0, 0.5),
-    xytext=(0.1, 0.5),
-    xycoords="data",
-    arrowprops=dict(facecolor="black", shrink=0.05),
-    horizontalalignment="center",
-    verticalalignment="center",
-)
-plt.annotate(
-    r"($\frac{1}{2}$, $\frac{1}{2}$, $0$)",
-    xy=(0.5, 0.5),
-    xytext=(0.6, 0.6),
-    xycoords="data",
-    arrowprops=dict(facecolor="black", shrink=0.05),
-    horizontalalignment="center",
-    verticalalignment="center",
-)
-plt.annotate(
-    r"($0$, $0$, $1$)",
-    xy=(0, 0),
-    xytext=(0.1, 0.1),
-    xycoords="data",
-    arrowprops=dict(facecolor="black", shrink=0.05),
-    horizontalalignment="center",
-    verticalalignment="center",
-)
-plt.annotate(
-    r"($1$, $0$, $0$)",
-    xy=(1, 0),
-    xytext=(1, 0.1),
-    xycoords="data",
-    arrowprops=dict(facecolor="black", shrink=0.05),
-    horizontalalignment="center",
-    verticalalignment="center",
-)
-plt.annotate(
-    r"($0$, $1$, $0$)",
-    xy=(0, 1),
-    xytext=(0.1, 1),
-    xycoords="data",
-    arrowprops=dict(facecolor="black", shrink=0.05),
-    horizontalalignment="center",
-    verticalalignment="center",
-)
-# Add grid
-plt.grid(False)
-for x in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
-    plt.plot([0, x], [x, 0], "k", alpha=0.2)
-    plt.plot([0, 0 + (1 - x) / 2], [x, x + (1 - x) / 2], "k", alpha=0.2)
-    plt.plot([x, x + (1 - x) / 2], [0, 0 + (1 - x) / 2], "k", alpha=0.2)
-
-plt.title("Change of predicted probabilities on test samples after sigmoid calibration")
-plt.xlabel("Probability class 1")
-plt.ylabel("Probability class 2")
-plt.xlim(-0.05, 1.05)
-plt.ylim(-0.05, 1.05)
-_ = plt.legend(loc="best")
-
+plot_simplex_calibration_arrows(clf_probs, cal_clf_probs, colors, title)
 # %%
 # In the figure above, each vertex of the simplex represents
 # a perfectly predicted class (e.g., 1, 0, 0). The mid point
