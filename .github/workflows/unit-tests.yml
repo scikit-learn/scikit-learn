@@ -286,11 +286,23 @@ jobs:
     name: Linux x86-64 pylatest_free_threaded
     runs-on: ubuntu-latest
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
-    if: ${{ contains(needs.retrieve-commit-message.outputs.message, '[free-threaded]') }}
+    if: contains(needs.retrieve-commit-message.outputs.message, '[free-threaded]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     env:
       DISTRIB: conda-free-threaded
-      LOCK_FILE: ./build_tools/azure/pylatest_free_threaded_linux-64_conda.lock
+      LOCK_FILE: build_tools/azure/pylatest_free_threaded_linux-64_conda.lock
       COVERAGE: false
       # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
       PYTEST_XDIST_VERSION: none
+    steps: *unit-tests-steps
+
+  scipy-dev:
+    name: Linux x86-64 pylatest_pip_scipy_dev
+    runs-on: ubuntu-22.04
+    needs: [lint, retrieve-commit-message, retrieve-selected-tests]
+    if: contains(needs.retrieve-commit-message.outputs.message, '[scipy-dev]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    env:
+      DISTRIB: conda-pip-scipy-dev
+      LOCK_FILE: build_tools/azure/pylatest_pip_scipy_dev_linux-64_conda.lock
+      SKLEARN_WARNINGS_AS_ERRORS: 1
+      CHECK_PYTEST_SOFT_DEPENDENCY: true
     steps: *unit-tests-steps
