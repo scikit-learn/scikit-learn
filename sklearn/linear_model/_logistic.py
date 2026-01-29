@@ -756,22 +756,20 @@ def _log_reg_scoring_path(
                 # TODO: How about issuing a warning?
                 # The call to scoring will fail if y_test does not contain all
                 # class labels.
-        elif is_binary and "labels" in sig and "pos_label" in sig:
+        elif (is_binary and "labels" in sig and "pos_label" in sig) or (
+            len(classes) >= 3 and "labels" in sig
+        ):
             # This seems like a hack and indeed it is one.
+            pos_label_kwarg = {}
+            if is_binary:
+                # see _logistic_regression_path
+                pos_label_kwarg["pos_label"] = classes[-1]
             scoring = make_scorer(
                 scoring._score_func,
                 greater_is_better=True if scoring._sign == 1 else False,
                 response_method=scoring._response_method,
                 labels=classes,
-                pos_label=classes[-1],  # see _logistic_regression_path
-                **getattr(scoring, "_kwargs", {}),
-            )
-        elif len(classes) >= 3 and "labels" in sig:
-            scoring = make_scorer(
-                scoring._score_func,
-                greater_is_better=True if scoring._sign == 1 else False,
-                response_method=scoring._response_method,
-                labels=classes,
+                **pos_label_kwarg,
                 **getattr(scoring, "_kwargs", {}),
             )
 
