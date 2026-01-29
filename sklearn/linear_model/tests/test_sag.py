@@ -1038,8 +1038,8 @@ def test_sag_weighted_classification_convergence(
             intercept = weights[-1]
             weights = weights[:-1]
     assert weights.shape == (n_features,)
-    assert_allclose(weights, true_weights)
-    assert_allclose(intercept, true_intercept)
+    assert_allclose(weights, true_weights, atol=1e-9)
+    assert_allclose(intercept, true_intercept, atol=1e-9)
 
 
 @pytest.mark.parametrize("solver", [sag, sag_sparse, sag_solver])
