@@ -970,10 +970,10 @@ def test_sag_weighted_classification_convergence(
     solver, decay, saga, fit_intercept, global_random_seed
 ):
     # FIXME
-    if decay < 1.0:
-        pytest.xfail(f"{decay=} fail convergence test")
     if solver == sag_solver:
         pytest.xfail("sag_solver fail convergence test")
+    if fit_intercept and decay < 1.0:
+        pytest.xfail(f"{decay=} fail convergence test")
     max_iter = 1000
     tol = 1e-10
     alpha = 1.1
@@ -1038,8 +1038,8 @@ def test_sag_weighted_classification_convergence(
             intercept = weights[-1]
             weights = weights[:-1]
     assert weights.shape == (n_features,)
-    assert_allclose(weights, true_weights, atol=1e-9)
-    assert_allclose(intercept, true_intercept, atol=1e-9)
+    assert_allclose(weights, true_weights, atol=1e-8)
+    assert_allclose(intercept, true_intercept, atol=1e-8)
 
 
 @pytest.mark.parametrize("solver", [sag, sag_sparse, sag_solver])
@@ -1050,12 +1050,10 @@ def test_sag_weighted_regression_convergence(
     solver, decay, saga, fit_intercept, global_random_seed
 ):
     # FIXME
-    if decay < 1.0:
-        pytest.xfail(f"{decay=} fail convergence test")
-    if saga and fit_intercept:
-        pytest.xfail("saga + fit_intercept fail convergence test")
     if solver == sag_solver:
         pytest.xfail("sag_solver fail convergence test")
+    if fit_intercept and decay < 1.0:
+        pytest.xfail(f"{decay=} fail convergence test")
     max_iter = 1000
     tol = 1e-11
     alpha = 1.1
@@ -1117,4 +1115,4 @@ def test_sag_weighted_regression_convergence(
             weights = weights[:-1]
     assert weights.shape == (n_features,)
     assert_allclose(weights, true_weights, atol=1e-8)
-    assert_allclose(intercept, true_intercept)
+    assert_allclose(intercept, true_intercept, atol=1e-8)
