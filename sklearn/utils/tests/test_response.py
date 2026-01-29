@@ -62,7 +62,9 @@ def test_estimator_unsupported_response(pyplot, estimator, response_method):
     ],
 )
 @pytest.mark.parametrize("return_response_method_used", [True, False])
-def test_estimator_get_response_values(estimator, response_method, return_response_method_used):
+def test_estimator_get_response_values(
+    estimator, response_method, return_response_method_used
+):
     """Check the behaviour of `_get_response_values`."""
     X, y = np.random.RandomState(0).randn(10, 2), np.array([0, 1] * 5)
     estimator.fit(X, y)
