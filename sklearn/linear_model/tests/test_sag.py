@@ -966,9 +966,7 @@ def test_sag_classifier_raises_error(solver):
 @pytest.mark.parametrize("decay", [1.0, SPARSE_INTERCEPT_DECAY])
 @pytest.mark.parametrize("saga", [True, False])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_sag_weighted_classification_convergence(
-    solver, decay, saga, fit_intercept, global_random_seed
-):
+def test_sag_weighted_classification_convergence(solver, decay, saga, fit_intercept):
     # FIXME
     if solver == sag_solver:
         pytest.xfail("sag_solver fail convergence test")
@@ -980,10 +978,10 @@ def test_sag_weighted_classification_convergence(
 
     n_samples, n_features = 100, 20
     X, y = make_classification(
-        n_samples=n_samples, n_features=n_features, random_state=global_random_seed
+        n_samples=n_samples, n_features=n_features, random_state=42
     )
     # Use random integers (including zero) as weights.
-    rng = np.random.RandomState(global_random_seed)
+    rng = np.random.RandomState(42)
     sample_weights = rng.randint(0, 5, size=n_samples)
 
     est = LogisticRegression(
@@ -1046,9 +1044,7 @@ def test_sag_weighted_classification_convergence(
 @pytest.mark.parametrize("decay", [1.0, SPARSE_INTERCEPT_DECAY])
 @pytest.mark.parametrize("saga", [True, False])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_sag_weighted_regression_convergence(
-    solver, decay, saga, fit_intercept, global_random_seed
-):
+def test_sag_weighted_regression_convergence(solver, decay, saga, fit_intercept):
     # FIXME
     if solver == sag_solver:
         pytest.xfail("sag_solver fail convergence test")
@@ -1059,11 +1055,9 @@ def test_sag_weighted_regression_convergence(
     alpha = 1.1
 
     n_samples, n_features = 100, 20
-    X, y = make_regression(
-        n_samples=n_samples, n_features=n_features, random_state=global_random_seed
-    )
+    X, y = make_regression(n_samples=n_samples, n_features=n_features, random_state=42)
     # Use random integers (including zero) as weights.
-    rng = np.random.RandomState(global_random_seed)
+    rng = np.random.RandomState(42)
     sample_weights = rng.randint(0, 5, size=n_samples)
 
     est = Ridge(
