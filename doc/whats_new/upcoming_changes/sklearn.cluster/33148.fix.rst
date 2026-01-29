@@ -1,0 +1,1 @@
+- Fixed a :exc:`ValueError` in :class:`cluster.BisectingKMeans` when using a custom `init` callable with `n_clusters > 2`.
