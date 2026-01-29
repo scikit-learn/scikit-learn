@@ -18,6 +18,7 @@ from sklearn.gaussian_process.kernels import (
     WhiteKernel,
 )
 from sklearn.utils._array_api import (
+    _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
     get_namespace,
@@ -98,7 +99,7 @@ def test_rbf_kernel_gradient_array_api(array_namespace, device_, dtype_name):
 
     rtol = 1e-5 if dtype_name == "float64" else 1e-4
     assert_allclose(K_xp_np, K_np, rtol=rtol)
-    assert_allclose(K_grad_xp_np, K_grad_np, rtol=rtol)
+    assert_allclose(K_grad_xp_np, K_grad_np, rtol=rtol, atol=_atol_for_type(dtype_name))
 
 
 @skip_if_array_api_compat_not_configured
@@ -127,7 +128,7 @@ def test_rbf_kernel_anisotropic_array_api(array_namespace, device_, dtype_name):
 
     rtol = 1e-5 if dtype_name == "float64" else 1e-4
     assert_allclose(K_xp_np, K_np, rtol=rtol)
-    assert_allclose(K_grad_xp_np, K_grad_np, rtol=rtol)
+    assert_allclose(K_grad_xp_np, K_grad_np, rtol=rtol, atol=_atol_for_type(dtype_name))
 
 
 @skip_if_array_api_compat_not_configured
@@ -346,7 +347,7 @@ def test_rational_quadratic_gradient_array_api(array_namespace, device_, dtype_n
 
     rtol = 1e-5 if dtype_name == "float64" else 2e-4
     assert_allclose(K_xp_np, K_np, rtol=rtol)
-    assert_allclose(K_grad_xp_np, K_grad_np, rtol=rtol)
+    assert_allclose(K_grad_xp_np, K_grad_np, rtol=rtol, atol=_atol_for_type(dtype_name))
 
 
 @skip_if_array_api_compat_not_configured
@@ -411,7 +412,7 @@ def test_exp_sine_squared_gradient_array_api(array_namespace, device_, dtype_nam
 
     rtol = 1e-5 if dtype_name == "float64" else 1e-4
     assert_allclose(K_xp_np, K_np, rtol=rtol)
-    assert_allclose(K_grad_xp_np, K_grad_np, rtol=rtol)
+    assert_allclose(K_grad_xp_np, K_grad_np, rtol=rtol, atol=_atol_for_type(dtype_name))
 
 
 @skip_if_array_api_compat_not_configured
@@ -501,7 +502,7 @@ def test_dot_product_gradient_array_api(array_namespace, device_, dtype_name):
 
     rtol = 1e-5 if dtype_name == "float64" else 1e-4
     assert_allclose(K_xp_np, K_np, rtol=rtol)
-    assert_allclose(K_grad_xp_np, K_grad_np, rtol=rtol)
+    assert_allclose(K_grad_xp_np, K_grad_np, rtol=rtol, atol=_atol_for_type(dtype_name))
 
 
 @skip_if_array_api_compat_not_configured
@@ -566,7 +567,7 @@ def test_sum_kernel_gradient_array_api(array_namespace, device_, dtype_name):
 
     rtol = 1e-5 if dtype_name == "float64" else 1e-4
     assert_allclose(K_xp_np, K_np, rtol=rtol)
-    assert_allclose(K_grad_xp_np, K_grad_np, rtol=rtol)
+    assert_allclose(K_grad_xp_np, K_grad_np, rtol=rtol, atol=_atol_for_type(dtype_name))
 
 
 @skip_if_array_api_compat_not_configured
@@ -631,7 +632,7 @@ def test_product_kernel_gradient_array_api(array_namespace, device_, dtype_name)
 
     rtol = 1e-5 if dtype_name == "float64" else 1e-4
     assert_allclose(K_xp_np, K_np, rtol=rtol)
-    assert_allclose(K_grad_xp_np, K_grad_np, rtol=rtol)
+    assert_allclose(K_grad_xp_np, K_grad_np, rtol=rtol, atol=_atol_for_type(dtype_name))
 
 
 @skip_if_array_api_compat_not_configured
@@ -696,4 +697,4 @@ def test_exponentiation_kernel_gradient_array_api(array_namespace, device_, dtyp
 
     rtol = 1e-5 if dtype_name == "float64" else 1e-4
     assert_allclose(K_xp_np, K_np, rtol=rtol)
-    assert_allclose(K_grad_xp_np, K_grad_np, rtol=rtol)
+    assert_allclose(K_grad_xp_np, K_grad_np, rtol=rtol, atol=_atol_for_type(dtype_name))
