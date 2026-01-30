@@ -112,6 +112,8 @@ build_metadata_list = [
             "polars",
             "pyarrow",
             "cupy",
+            # cuvs is needed for cupyx.scipy.spatial.distance.cdist and friends
+            "rapidsai::cuvs",
             "array-api-strict",
         ],
         "package_constraints": {
