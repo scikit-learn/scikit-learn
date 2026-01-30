@@ -1063,6 +1063,7 @@ def check_array_api_input(
     check_values=False,
     check_sample_weight=False,
     expect_only_array_outputs=True,
+    rtol=None,
 ):
     """Check that the estimator can work consistently with the Array API
 
@@ -1080,6 +1081,11 @@ def check_array_api_input(
     useful to test that enabling array API dispatch does not change the
     behavior of any estimator fed with NumPy inputs, even for estimators that
     do not support array API.
+
+    When rtol is provided, it overrides the default relative tolerance used
+    in numerical comparisons. This can be useful for estimators with
+    intermediate computations that may have larger numerical differences
+    between backends.
     """
     xp = _array_api_for_tests(array_namespace, device)
 
@@ -1133,6 +1139,7 @@ def check_array_api_input(
                 attribute,
                 est_xp_param_np,
                 err_msg=f"{key} not the same",
+                rtol=rtol,
                 atol=_atol_for_type(X.dtype),
             )
         else:
@@ -1226,6 +1233,7 @@ def check_array_api_input(
                     result,
                     result_xp_np,
                     err_msg=f"{method} did not the return the same result",
+                    rtol=rtol,
                     atol=_atol_for_type(X.dtype),
                 )
             elif hasattr(result, "shape"):
@@ -1253,6 +1261,7 @@ def check_array_api_input(
                         inverse_result,
                         inverse_result_xp_np,
                         err_msg="inverse_transform did not the return the same result",
+                        rtol=rtol,
                         atol=_atol_for_type(X.dtype),
                     )
                 elif hasattr(result, "shape"):
@@ -1267,6 +1276,7 @@ def check_array_api_input_and_values(
     device=None,
     dtype_name="float64",
     check_sample_weight=False,
+    rtol=None,
 ):
     return check_array_api_input(
         name,
@@ -1276,6 +1286,7 @@ def check_array_api_input_and_values(
         dtype_name=dtype_name,
         check_values=True,
         check_sample_weight=check_sample_weight,
+        rtol=rtol,
     )
 
 
