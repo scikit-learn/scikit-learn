@@ -241,6 +241,23 @@ feedback:
   <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_
   for more details.
 
+- Please be explicit **how this issue impacts you as a scikit-learn user**. Giving
+  some details (a short paragraph) about how you use scikit-learn and why you need
+  this issue resolved will help the project maintainers invest time and effort
+  on issues that actually impact users.
+
+- Please tell us if you would be interested in opening a PR to resolve your issue
+  once triaged by a project maintainer.
+
+Note that the scikit-learn tracker receives `daily reports
+<https://github.com/scikit-learn/scikit-learn/issues?q=label%3Aspam>`_ by
+GitHub accounts that are mostly interested in increasing contribution
+statistics and show little interest in the expected end-user impact of their
+contributions. As project maintainers we want to be able to assess if our
+efforts are likely to have a meaningful and positive impact to our end users.
+Therefore, we ask you to avoid opening issues for things you don't actually
+care about.
+
 If you want to help curate issues, read about :ref:`bug_triaging`.
 
 Contributing code and documentation
@@ -387,7 +404,25 @@ complies with the following rules before marking a PR as "ready for review". The
    cases "Fix <ISSUE TITLE>" is enough. "Fix #<ISSUE NUMBER>" is never a
    good title.
 
-2. **Make sure your code passes the tests**. The whole test suite can be run
+2. **Pull requests are expected to resolve one or more issues**.
+   Please **do not open PRs for issues that are labeled as "Needs triage"**
+   (see :ref:`issues_tagged_needs_triage`) or with other kinds of "Needs ..."
+   labels. Please do not open PRs for issues for which:
+
+   - the discussion has not settled down to an explicit resolution plan,
+   - the reporter has already expressed interest in opening a PR,
+   - there already exists cross-referenced and active PRs.
+
+   If merging your pull request means that some other issues/PRs should be closed,
+   you should `use keywords to create link to them
+   <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
+   (e.g., ``Fixes #1234``; multiple issues/PRs are allowed as long as each
+   one is preceded by a keyword). Upon merging, those issues/PRs will
+   automatically be closed by GitHub. If your pull request is simply
+   related to some other issues/PRs, or it only partially resolves the target
+   issue, create a link to them without using the keywords (e.g., ``Towards #1234``).
+
+3. **Make sure your code passes the tests**. The whole test suite can be run
    with `pytest`, but it is usually not recommended since it takes a long
    time. It is often enough to only run the test related to your changes:
    for example, if you changed something in
@@ -410,12 +445,12 @@ complies with the following rules before marking a PR as "ready for review". The
    you don't need to run the whole test suite locally. For guidelines on how
    to use ``pytest`` efficiently, see the :ref:`pytest_tips`.
 
-3. **Make sure your code is properly commented and documented**, and **make
+4. **Make sure your code is properly commented and documented**, and **make
    sure the documentation renders properly**. To build the documentation, please
    refer to our :ref:`contribute_documentation` guidelines. The CI will also
    build the docs: please refer to :ref:`generated_doc_CI`.
 
-4. **Tests are necessary for enhancements to be
+5. **Tests are necessary for enhancements to be
    accepted**. Bug-fixes or new features should be provided with non-regression tests.
    These tests verify the correct behavior of the fix or feature. In this manner,
    further modifications on the code base are granted to be consistent with the
@@ -423,26 +458,16 @@ complies with the following rules before marking a PR as "ready for review". The
    non-regression tests should fail for the code base in the ``main`` branch
    and pass for the PR code.
 
-5. If your PR is likely to affect users, you need to add a changelog entry describing
+6. If your PR is likely to affect users, you need to add a changelog entry describing
    your PR changes. See the
    `README <https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md>`_
    for more details.
 
-6. Follow the :ref:`coding-guidelines`.
+7. Follow the :ref:`coding-guidelines`.
 
-7. When applicable, use the validation tools and scripts in the :mod:`sklearn.utils`
+8. When applicable, use the validation tools and scripts in the :mod:`sklearn.utils`
    module. A list of utility routines available for developers can be found in the
    :ref:`developers-utils` page.
-
-8. Often pull requests resolve one or more other issues (or pull requests).
-   If merging your pull request means that some other issues/PRs should
-   be closed, you should `use keywords to create link to them
-   <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
-   (e.g., ``Fixes #1234``; multiple issues/PRs are allowed as long as each
-   one is preceded by a keyword). Upon merging, those issues/PRs will
-   automatically be closed by GitHub. If your pull request is simply
-   related to some other issues/PRs, or it only partially resolves the target
-   issue, create a link to them without using the keywords (e.g., ``Towards #1234``).
 
 9. PRs should often substantiate the change, through benchmarks of
    performance and efficiency (see :ref:`monitoring_performances`) or through
