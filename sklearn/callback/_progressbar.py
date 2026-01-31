@@ -9,7 +9,7 @@ from sklearn.utils._optional_dependencies import check_rich_support
 
 
 class ProgressBar:
-    """Callback that displays progress bars for each iterative steps of an estimator.
+    """Callback that displays progress bars for each iterative step of an estimator.
 
     Parameters
     ----------
