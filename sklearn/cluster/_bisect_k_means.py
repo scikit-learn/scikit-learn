@@ -104,7 +104,9 @@ class BisectingKMeans(_BaseKMeans):
         for the initial centroids.
 
         If a callable is passed, it should take arguments X, n_clusters and a
-        random state and return an initialization.
+        random state and return an initialization. Note that the bisecting
+        algorithm always performs a 2-way split, so the callable will be
+        called with  and must return exactly 2 centroids.
 
     n_init : int, default=1
         Number of time the inner k-means algorithm will be run with different
