@@ -9,7 +9,7 @@ from sklearn.callback._mixin import CallbackSupportMixin
 
 # TODO(callbacks): move these explanations into a dedicated user guide.
 #
-# The computations tasks performed by an estimator during fit have an inherent tree
+# The computation tasks performed by an estimator during fit have an inherent tree
 # structure, where each task can be decomposed into subtasks and so on. The root of the
 # tree represents the whole fit task.
 #
