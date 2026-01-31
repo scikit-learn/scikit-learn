@@ -16,14 +16,13 @@ from sklearn.base import MultiOutputMixin, RegressorMixin, _fit_context
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from sklearn.linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
-from sklearn.linear_model._base import LinearModel, _pre_fit, _preprocess_data
+from sklearn.linear_model._base import LinearModel, _pre_fit
 from sklearn.model_selection import check_cv
 from sklearn.utils import Bunch, check_array, check_scalar, metadata_routing
 from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
-    get_routing_for_object,
 )
 from sklearn.utils._param_validation import (
     Hidden,
@@ -41,7 +40,6 @@ from sklearn.utils.validation import (
     check_is_fitted,
     check_random_state,
     column_or_1d,
-    has_fit_parameter,
     validate_data,
 )
 
@@ -621,8 +619,7 @@ def enet_path(
     if multi_output and positive:
         raise ValueError("positive=True is not allowed for multi-output (y.ndim != 1)")
 
-    # MultiTaskElasticNet does not support sparse matrices
-    if not multi_output and sparse.issparse(X):
+    if sparse.issparse(X):
         if X_offset_param is not None:
             # As sparse matrices are not actually centered we need this to be passed to
             # the CD solver.
@@ -630,6 +627,8 @@ def enet_path(
             X_sparse_scaling = np.asarray(X_sparse_scaling, dtype=X.dtype)
         else:
             X_sparse_scaling = np.zeros(n_features, dtype=X.dtype)
+    else:
+        X_sparse_scaling = None
 
     # X should have been passed through _pre_fit already if function is called
     # from ElasticNet.fit
@@ -678,18 +677,28 @@ def enet_path(
     else:
         coef_ = np.asfortranarray(coef_init, dtype=X.dtype)
 
+    X_is_sparse = sparse.issparse(X)
+    if X_is_sparse:
+        X_data = X.data
+        X_indices = X.indices
+        X_indptr = X.indptr
+    else:
+        X_data = None
+        X_indices = None
+        X_indptr = None
+
     for i, alpha in enumerate(alphas):
         # account for n_samples scaling in objectives between here and cd_fast
         l1_reg = alpha * l1_ratio * n_samples
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
-        if not multi_output and sparse.issparse(X):
+        if not multi_output and X_is_sparse:
             model = cd_fast.sparse_enet_coordinate_descent(
                 w=coef_,
                 alpha=l1_reg,
                 beta=l2_reg,
-                X_data=X.data,
-                X_indices=X.indices,
-                X_indptr=X.indptr,
+                X_data=X_data,
+                X_indices=X_indices,
+                X_indptr=X_indptr,
                 y=y,
                 sample_weight=sample_weight,
                 X_mean=X_sparse_scaling,
@@ -702,7 +711,22 @@ def enet_path(
             )
         elif multi_output:
             model = cd_fast.enet_coordinate_descent_multi_task(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random, do_screening
+                W=coef_,
+                alpha=l1_reg,
+                beta=l2_reg,
+                X=None if X_is_sparse else X,
+                X_is_sparse=X_is_sparse,
+                X_data=X_data,
+                X_indices=X_indices,
+                X_indptr=X_indptr,
+                Y=y,
+                sample_weight=sample_weight,
+                X_mean=X_sparse_scaling,
+                max_iter=max_iter,
+                tol=tol,
+                rng=rng,
+                random=random,
+                do_screening=do_screening,
             )
         elif isinstance(precompute, np.ndarray):
             # We expect precompute to be already Fortran ordered when bypassing
@@ -1051,7 +1075,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             )
 
         n_samples, n_features = X.shape
-        alpha = self.alpha
 
         if isinstance(sample_weight, numbers.Number):
             sample_weight = None
@@ -1137,7 +1160,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 l1_ratio=self.l1_ratio,
                 eps=None,
                 n_alphas=None,
-                alphas=[alpha],
+                alphas=[self.alpha],
                 precompute=precompute,
                 Xy=this_Xy,
                 copy_X=True,
@@ -1626,7 +1649,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None, **params):
-        """Fit linear model with coordinate descent.
+        """Fit model with internal cross-validation and with coordinate descent.
 
         Fit is on grid of alphas and best alpha estimated by cross-validation.
 
@@ -1766,9 +1789,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 )
             y = column_or_1d(y, warn=True)
         else:
-            if sparse.issparse(X):
-                raise TypeError("X should be dense but a sparse matrix was passed.")
-            elif y.ndim == 1:
+            if y.ndim == 1:
                 raise ValueError(
                     "For mono-task outputs, use %sCV" % self.__class__.__name__[9:]
                 )
@@ -1842,29 +1863,12 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         cv = check_cv(self.cv)
 
         if _routing_enabled():
-            splitter_supports_sample_weight = get_routing_for_object(cv).consumes(
-                method="split", params=["sample_weight"]
+            routed_params = process_routing(
+                self,
+                "fit",
+                sample_weight=sample_weight,
+                **params,
             )
-            if (
-                sample_weight is not None
-                and not splitter_supports_sample_weight
-                and not has_fit_parameter(self, "sample_weight")
-            ):
-                raise ValueError(
-                    "The CV splitter and underlying estimator do not support"
-                    " sample weights."
-                )
-
-            if splitter_supports_sample_weight:
-                params["sample_weight"] = sample_weight
-
-            routed_params = process_routing(self, "fit", **params)
-
-            if sample_weight is not None and not has_fit_parameter(
-                self, "sample_weight"
-            ):
-                # MultiTaskElasticNetCV does not (yet) support sample_weight
-                sample_weight = None
         else:
             routed_params = Bunch()
             routed_params.splitter = Bunch(split=Bunch())
@@ -1975,7 +1979,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         multitask = self._is_multitask()
-        tags.input_tags.sparse = not multitask
+        tags.input_tags.sparse = True
+        tags.target_tags.single_output = not multitask
         tags.target_tags.multi_output = multitask
         return tags
 
@@ -2542,7 +2547,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 # Multi Task ElasticNet and Lasso models (with joint feature selection)
 
 
-class MultiTaskElasticNet(Lasso):
+class MultiTaskElasticNet(ElasticNet):
     """Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer.
 
     The optimization objective for MultiTaskElasticNet is::
@@ -2666,9 +2671,7 @@ class MultiTaskElasticNet(Lasso):
     [0.0872422 0.0872422]
     """
 
-    _parameter_constraints: dict = {
-        **ElasticNet._parameter_constraints,
-    }
+    _parameter_constraints: dict = {**ElasticNet._parameter_constraints}
     for param in ("precompute", "positive"):
         _parameter_constraints.pop(param)
 
@@ -2685,8 +2688,8 @@ class MultiTaskElasticNet(Lasso):
         random_state=None,
         selection="cyclic",
     ):
-        self.l1_ratio = l1_ratio
         self.alpha = alpha
+        self.l1_ratio = l1_ratio
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
         self.copy_X = copy_X
@@ -2696,15 +2699,26 @@ class MultiTaskElasticNet(Lasso):
         self.selection = selection
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit MultiTaskElasticNet model with coordinate descent.
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features)
-            Data.
+        X : {ndarray, sparse matrix, sparse array} of (n_samples, n_features)
+            Data. Pass directly as Fortran-contiguous data to avoid unnecessary memory
+            duplication.
+
+            Note that large sparse matrices and arrays requiring `int64`
+            indices are not accepted.
+
         y : ndarray of shape (n_samples, n_targets)
             Target. Will be cast to X's dtype if necessary.
+
+        sample_weight : float or array-like of shape (n_samples,), default=None
+            Sample weights. Internally, the `sample_weight` vector will be
+            rescaled to sum to `n_samples`.
+
+            .. versionadded:: 1.9
 
         Returns
         -------
@@ -2720,46 +2734,81 @@ class MultiTaskElasticNet(Lasso):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+        # Remember if X is copied
+        X_copied = self.copy_X and self.fit_intercept
         # Need to validate separately here.
         # We can't pass multi_output=True because that would allow y to be csr.
         check_X_params = dict(
+            accept_sparse="csc",
             dtype=[np.float64, np.float32],
             order="F",
             force_writeable=True,
-            copy=self.copy_X and self.fit_intercept,
+            accept_large_sparse=False,
+            copy=X_copied,
         )
-        check_y_params = dict(ensure_2d=False, order="F")
+        check_y_params = dict(
+            copy=False, dtype=[np.float64, np.float32], ensure_2d=False, order="F"
+        )
         X, y = validate_data(
             self, X, y, validate_separately=(check_X_params, check_y_params)
         )
         check_consistent_length(X, y)
-        y = y.astype(X.dtype)
 
-        if hasattr(self, "l1_ratio"):
-            model_str = "ElasticNet"
-        else:
-            model_str = "Lasso"
         if y.ndim == 1:
+            if hasattr(self, "l1_ratio"):
+                model_str = "ElasticNet"
+            else:
+                model_str = "Lasso"
             raise ValueError("For mono-task outputs, use %s" % model_str)
 
         n_samples, n_features = X.shape
         n_targets = y.shape[1]
 
-        X, y, X_offset, y_offset, X_scale, _ = _preprocess_data(
-            X, y, fit_intercept=self.fit_intercept, copy=False
+        if isinstance(sample_weight, numbers.Number):
+            sample_weight = None
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+            # TLDR: Rescale sw to sum up to n_samples.
+            # Long: See comment in ElasticNet.
+            sample_weight = sample_weight * (n_samples / np.sum(sample_weight))
+
+        X, y, X_offset, y_offset, X_scale, _, _ = _pre_fit(
+            X=X,
+            y=y,
+            Xy=None,
+            precompute=False,
+            fit_intercept=self.fit_intercept,
+            copy=False,  # TODO: improve
+            sample_weight=sample_weight,
         )
+        # coordinate descent needs F-ordered arrays and _pre_fit might have
+        # called _rescale_data
+        if sample_weight is not None:
+            X, y = _set_order(X, y, order="F")
 
         if not self.warm_start or not hasattr(self, "coef_"):
-            self.coef_ = np.zeros(
-                (n_targets, n_features), dtype=X.dtype.type, order="F"
-            )
+            self.coef_ = np.zeros((n_targets, n_features), dtype=X.dtype, order="F")
+        else:
+            self.coef_ = np.asfortranarray(self.coef_)  # coef F-contiguous in memory
 
+        X_is_sparse = sparse.issparse(X)
+        if X_is_sparse:
+            X_data = X.data
+            X_indices = X.indices
+            X_indptr = X.indptr
+            # As sparse matrices are not actually centered we need this to be passed to
+            # the CD solver.
+            X_mean = np.asarray(X_offset / X_scale, dtype=X.dtype)
+            X = None
+        else:
+            X_data = None
+            X_indices = None
+            X_indptr = None
+            X_mean = None
+
+        # account for n_samples scaling in objectives between here and cd_fast
         l1_reg = self.alpha * self.l1_ratio * n_samples
         l2_reg = self.alpha * (1.0 - self.l1_ratio) * n_samples
-
-        self.coef_ = np.asfortranarray(self.coef_)  # coef contiguous in memory
-
-        random = self.selection == "random"
 
         (
             self.coef_,
@@ -2767,15 +2816,21 @@ class MultiTaskElasticNet(Lasso):
             self.eps_,
             self.n_iter_,
         ) = cd_fast.enet_coordinate_descent_multi_task(
-            self.coef_,
-            l1_reg,
-            l2_reg,
-            X,
-            y,
-            self.max_iter,
-            self.tol,
-            check_random_state(self.random_state),
-            random,
+            W=self.coef_,
+            alpha=l1_reg,
+            beta=l2_reg,
+            X=X,
+            X_is_sparse=X_is_sparse,
+            X_data=X_data,
+            X_indices=X_indices,
+            X_indptr=X_indptr,
+            Y=y,
+            sample_weight=sample_weight,
+            X_mean=X_mean,
+            max_iter=self.max_iter,
+            tol=self.tol,
+            rng=check_random_state(self.random_state),
+            random=self.selection == "random",
             do_screening=True,
         )
 
@@ -2789,7 +2844,6 @@ class MultiTaskElasticNet(Lasso):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = False
         tags.target_tags.multi_output = True
         tags.target_tags.single_output = False
         return tags
@@ -3169,24 +3223,32 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     def _is_multitask(self):
         return True
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.target_tags.single_output = False
-        return tags
-
     # This is necessary as LinearModelCV now supports sample_weight while
     # MultiTaskElasticNetCV does not (yet).
-    def fit(self, X, y, **params):
+    def fit(self, X, y, sample_weight=None, **params):
         """Fit MultiTaskElasticNet model with coordinate descent.
 
         Fit is on grid of alphas and best alpha estimated by cross-validation.
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features)
-            Training data.
+         X : {ndarray, sparse matrix, sparse array} of (n_samples, n_features)
+            Data. Pass directly as Fortran-contiguous data to avoid unnecessary memory
+            duplication.
+
+            Note that large sparse matrices and arrays requiring `int64`
+            indices are not accepted.
+
         y : ndarray of shape (n_samples, n_targets)
             Training target variable. Will be cast to X's dtype if necessary.
+
+        sample_weight : float or array-like of shape (n_samples,), default=None
+            Sample weights used for fitting and evaluation of the weighted
+            mean squared error of each cv-fold. Note that the cross validated
+            MSE that is finally used to find the best model is the unweighted
+            mean over the (weighted) MSEs of each test fold.
+
+            .. versionadded:: 1.9
 
         **params : dict, default=None
             Parameters to be passed to the CV splitter.
@@ -3203,7 +3265,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         self : object
             Returns MultiTaskElasticNet instance.
         """
-        return super().fit(X, y, **params)
+        return super().fit(X, y, sample_weight=sample_weight, **params)
 
 
 class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
@@ -3421,14 +3483,10 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     def _is_multitask(self):
         return True
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.target_tags.single_output = False
-        return tags
-
+    # TODO: Can we remove this method now?
     # This is necessary as LinearModelCV now supports sample_weight while
     # MultiTaskLassoCV does not (yet).
-    def fit(self, X, y, **params):
+    def fit(self, X, y, sample_weight=None, **params):
         """Fit MultiTaskLasso model with coordinate descent.
 
         Fit is on grid of alphas and best alpha estimated by cross-validation.
@@ -3437,8 +3495,17 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         ----------
         X : ndarray of shape (n_samples, n_features)
             Data.
+
         y : ndarray of shape (n_samples, n_targets)
             Target. Will be cast to X's dtype if necessary.
+
+        sample_weight : float or array-like of shape (n_samples,), default=None
+            Sample weights used for fitting and evaluation of the weighted
+            mean squared error of each cv-fold. Note that the cross validated
+            MSE that is finally used to find the best model is the unweighted
+            mean over the (weighted) MSEs of each test fold.
+
+            .. versionadded:: 1.9
 
         **params : dict, default=None
             Parameters to be passed to the CV splitter.
@@ -3455,4 +3522,4 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         self : object
             Returns an instance of fitted model.
         """
-        return super().fit(X, y, **params)
+        return super().fit(X, y, sample_weight=sample_weight, **params)
