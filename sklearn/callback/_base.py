@@ -77,7 +77,7 @@ class Callback(Protocol):
 
 
 @runtime_checkable
-class AutoPropagatedCallback(Protocol):
+class AutoPropagatedCallback(Callback, Protocol):
     """Protocol for the auto-propagated callbacks
 
     An auto-propagated callback is a callback that is meant to be set on a top-level
