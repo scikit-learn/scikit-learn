@@ -32,6 +32,7 @@ import array
 import itertools
 import warnings
 from numbers import Integral, Real
+from sklearn.exceptions import ConvergenceWarning
 
 import numpy as np
 import scipy.sparse as sp
@@ -88,7 +89,12 @@ def _fit_binary(estimator, X, y, fit_params, classes=None):
             else:
                 c = y[0]
             warnings.warn(
-                "Label %s is present in all training examples." % str(classes[c])
+                (
+                    "Label %r is present in all training examples. "
+                    "A constant predictor will be used instead."
+                )
+                %(classes[c],),
+                ConvergenceWarning,
             )
         estimator = _ConstantPredictor().fit(X, unique_y)
     else:
