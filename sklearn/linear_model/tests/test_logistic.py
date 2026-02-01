@@ -516,18 +516,15 @@ def test_logistic_cv_mock_scorer():
         ("recall", ["_macro", "_weighted"]),
     ],
 )
-def test_logistic_cv_multinomial_score(
-    global_random_seed, scoring, multiclass_agg_list
-):
+def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
     # test that LogisticRegressionCV uses the right score to compute its
     # cross-validation scores when using a multinomial scoring
     # see https://github.com/scikit-learn/scikit-learn/issues/8720
     X, y = make_classification(
-        n_samples=100, random_state=global_random_seed, n_classes=3, n_informative=6
+        n_samples=100, random_state=42, n_classes=3, n_informative=6
     )
     train, test = np.arange(80), np.arange(80, 100)
-    lr = LogisticRegression(C=1.0)
-    # we use lbfgs to support multinomial
+    lr = LogisticRegression(C=1.0, solver="lbfgs")
     params = lr.get_params()
     # Replace default penalty='deprecated' in 1.8 by the equivalent value that
     # can be used by _log_reg_scoring_path
@@ -1450,7 +1447,7 @@ def test_warm_start(global_random_seed, solver, warm_start, fit_intercept):
 @pytest.mark.parametrize("solver", ["newton-cholesky", "newton-cg"])
 @pytest.mark.parametrize("fit_intercept", (True, False))
 @pytest.mark.parametrize("C", (1, np.inf))
-def test_warm_start_newton_solver(global_random_seed, solver, fit_intercept, C):
+def test_warm_start_newton_solver(solver, fit_intercept, C):
     """Test that 2 steps at once are the same as 2 single steps with warm start."""
     X, y = iris.data, iris.target
 
@@ -1459,7 +1456,6 @@ def test_warm_start_newton_solver(global_random_seed, solver, fit_intercept, C):
         max_iter=2,
         fit_intercept=fit_intercept,
         C=C,
-        random_state=global_random_seed,
     )
     with ignore_warnings(category=ConvergenceWarning):
         clf1.fit(X, y)
@@ -1470,7 +1466,6 @@ def test_warm_start_newton_solver(global_random_seed, solver, fit_intercept, C):
         warm_start=True,
         fit_intercept=fit_intercept,
         C=C,
-        random_state=global_random_seed,
     )
     with ignore_warnings(category=ConvergenceWarning):
         clf2.fit(X, y)
@@ -2222,7 +2217,7 @@ def test_scores_attribute_layout_elasticnet():
 
 @pytest.mark.parametrize("solver", ["lbfgs", "newton-cg", "newton-cholesky"])
 @pytest.mark.parametrize("fit_intercept", [False, True])
-def test_multinomial_identifiability_on_iris(global_random_seed, solver, fit_intercept):
+def test_multinomial_identifiability_on_iris(solver, fit_intercept):
     """Test that the multinomial classification is identifiable.
 
     A multinomial with c classes can be modeled with
@@ -2251,7 +2246,6 @@ def test_multinomial_identifiability_on_iris(global_random_seed, solver, fit_int
         C=len(iris.data),
         solver=solver,
         fit_intercept=fit_intercept,
-        random_state=global_random_seed,
     )
     # Scaling X to ease convergence.
     X_scaled = scale(iris.data)
@@ -2264,7 +2258,7 @@ def test_multinomial_identifiability_on_iris(global_random_seed, solver, fit_int
 
 
 @pytest.mark.parametrize("class_weight", [{0: 1.0, 1: 10.0, 2: 1.0}, "balanced"])
-def test_sample_weight_not_modified(global_random_seed, class_weight):
+def test_sample_weight_not_modified(class_weight):
     X, y = load_iris(return_X_y=True)
     n_features = len(X)
     W = np.ones(n_features)
@@ -2273,7 +2267,6 @@ def test_sample_weight_not_modified(global_random_seed, class_weight):
     expected = W.copy()
 
     clf = LogisticRegression(
-        random_state=global_random_seed,
         class_weight=class_weight,
         max_iter=200,
     )
@@ -2283,15 +2276,15 @@ def test_sample_weight_not_modified(global_random_seed, class_weight):
 
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_large_sparse_matrix(solver, global_random_seed, csr_container):
+def test_large_sparse_matrix(solver, csr_container):
     # Solvers either accept large sparse matrices, or raise helpful error.
     # Non-regression test for pull-request #21093.
 
     # generate sparse matrix with int64 indices
-    X = csr_container(sparse.rand(20, 10, random_state=global_random_seed))
+    X = csr_container(sparse.rand(20, 10, random_state=42))
     for attr in ["indices", "indptr"]:
         setattr(X, attr, getattr(X, attr).astype("int64"))
-    rng = np.random.RandomState(global_random_seed)
+    rng = np.random.RandomState(42)
     y = rng.randint(2, size=X.shape[0])
 
     if solver in ["liblinear", "sag", "saga"]:
@@ -2471,13 +2464,11 @@ def test_passing_params_without_enabling_metadata_routing():
             lr_cv.score(X, y, **params)
 
 
-def test_newton_cholesky_fallback_to_lbfgs(global_random_seed):
+def test_newton_cholesky_fallback_to_lbfgs():
     # Wide data matrix should lead to a rank-deficient Hessian matrix
     # hence make the Newton-Cholesky solver raise a warning and fallback to
     # lbfgs.
-    X, y = make_classification(
-        n_samples=10, n_features=20, random_state=global_random_seed
-    )
+    X, y = make_classification(n_samples=10, n_features=20, random_state=42)
     C = 1e30  # very high C to nearly disable regularization
 
     # Check that LBFGS can converge without any warning on this problem.
