@@ -289,7 +289,7 @@ class NewtonSolver(ABC):
             warnings.warn(
                 (
                     f"Line search of Newton solver {self.__class__.__name__} at"
-                    f" iteration #{self.iteration} did no converge after 21 line search"
+                    f" iteration #{self.iteration} did not converge after 21 line search"
                     " refinement iterations. It will now resort to lbfgs instead."
                 ),
                 ConvergenceWarning,
