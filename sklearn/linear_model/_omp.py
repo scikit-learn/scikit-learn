@@ -729,6 +729,10 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     0.9991
     >>> reg.predict(X[:1,])
     array([-78.3854])
+
+    For an example of using Orthogonal Matching Pursuit for sparse signal
+    recovery, see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_omp.py`.
     """
 
     _parameter_constraints: dict = {
