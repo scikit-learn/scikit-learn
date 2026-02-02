@@ -94,11 +94,9 @@ def test_max_iter():
     def ricker_function(resolution, center, width):
         """Discrete sub-sampled Ricker (Mexican hat) wavelet"""
         x = np.linspace(0, resolution - 1, resolution)
-        x = (
-            (2 / (np.sqrt(3 * width) * np.pi**0.25))
-            * (1 - (x - center) ** 2 / width**2)
-            * np.exp(-((x - center) ** 2) / (2 * width**2))
-        )
+        x = ((2 / (np.sqrt(3 * width) * np.pi**0.25)) *
+             (1 - (x - center) ** 2 / width**2) *
+             np.exp(-((x - center) ** 2) / (2 * width**2)))
         return x
 
     def ricker_matrix(width, resolution, n_components):
@@ -250,7 +248,7 @@ def test_dict_learning_reconstruction(X_data, global_random_seed):
     assert_array_almost_equal(dico.inverse_transform(code), X, decimal=2)
 
     # test error raised for wrong code size
-    with pytest.raises(ValueError, match="Expected 12, got 11."):
+    with pytest.raises(ValueError, match=r"Expected 12, got 11\."):
         dico.inverse_transform(code[:, :-1])
 
     # used to test lars here too, but there's no guarantee the number of
@@ -758,7 +756,7 @@ def test_sparse_encoder_feature_number_error():
     # on mismatch
     coder.fit(rng.uniform(size=(n_samples, n_features)))
     with pytest.raises(
-        ValueError, match="X has .* features, but .* is expecting .* features"
+        ValueError, match=r"X has .* features, but .* is expecting .* features"
     ):
         coder.transform(X_mismatch)
 
