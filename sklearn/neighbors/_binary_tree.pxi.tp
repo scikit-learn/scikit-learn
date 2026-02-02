@@ -231,6 +231,14 @@ CLASS_DOC = """{BinaryTree} for fast generalized N-point problems
 
 Read more in the :ref:`User Guide <unsupervised_neighbors>`.
 
+.. note::
+   {BinaryTree} computes node centroids by averaging sample coordinates
+   component-wise. This assumes that component-wise averaging produces
+   valid points in the sample space. For custom metrics where this
+   assumption does not hold (e.g., samples on manifolds or in non-Euclidean
+   spaces), consider using a brute-force approach or implementing a custom
+   data structure that uses representative points (medoids) instead of means.
+
 Parameters
 ----------
 X : array-like of shape (n_samples, n_features)
