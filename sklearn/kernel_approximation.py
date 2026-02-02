@@ -860,7 +860,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         Kernel map to be approximated. A callable should accept two arguments
         and the keyword arguments passed to this object as `kernel_params`, and
         should return a floating point number.
-        
+
         .. note::
            The 'precomputed' kernel is NOT supported. Despite appearing in some
            internal validation code, Nystroem cannot work with precomputed
