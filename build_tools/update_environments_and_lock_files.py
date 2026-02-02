@@ -112,6 +112,7 @@ build_metadata_list = [
             "rapidsai::cuvs",
             "array-api-strict",
         ],
+        "virtual_package_spec": True,
     },
     {
         "name": "pylatest_conda_forge_mkl_linux-64",
@@ -554,7 +555,9 @@ def write_all_conda_environments(build_metadata_list):
         write_conda_environment(build_metadata)
 
 
-def conda_lock(environment_path, lock_file_path, platform, virtual_package_spec=None):
+def conda_lock(
+    environment_path, lock_file_path, platform, virtual_package_spec_path=None
+):
     cmd = [
         "conda-lock",
         "lock",
@@ -568,8 +571,9 @@ def conda_lock(environment_path, lock_file_path, platform, virtual_package_spec=
         "--filename-template",
         str(lock_file_path),
     ]
-    if virtual_package_spec is not None:
-        cmd.extend(["--virtual-package-spec", str(virtual_package_spec)])
+    if virtual_package_spec_path is not None:
+        cmd.extend(["--virtual-package-spec", str(virtual_package_spec_path)])
+
     execute_command(cmd)
 
 
@@ -584,13 +588,13 @@ def create_conda_lock_file(build_metadata):
 
     lock_file_path = folder_path / f"{lock_file_basename}_conda.lock"
 
-    # Use virtual package spec for CUDA builds so that conda-lock also works
-    # on systems without CUDA.
-    virtual_package_spec = None
-    if build_metadata.get("tag") == "cuda":
-        virtual_package_spec = folder_path / "virtual-packages-cuda.yml"
+    virtual_package_spec_path = None
+    if build_metadata.get("virtual_package_spec"):
+        virtual_package_spec_path = (
+            folder_path / f"{lock_file_basename}_virtual_package_spec.yml"
+        )
 
-    conda_lock(environment_path, lock_file_path, platform, virtual_package_spec)
+    conda_lock(environment_path, lock_file_path, platform, virtual_package_spec_path)
 
 
 def write_all_conda_lock_files(build_metadata_list):
