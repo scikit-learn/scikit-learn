@@ -2907,6 +2907,9 @@ class MultiTaskLasso(MultiTaskElasticNet):
     [0.         0.94592424]]
     >>> print(clf.intercept_)
     [-0.41888636 -0.87382323]
+
+    For an example of joint feature selection across multiple tasks, see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_multi_task_lasso_support.py`.
     """
 
     _parameter_constraints: dict = {
