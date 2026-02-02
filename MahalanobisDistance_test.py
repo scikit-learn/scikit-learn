@@ -1,7 +1,13 @@
-import numpy as np
-from sklearn.neighbors import LocalOutlierFactor
-from sklearn.covariance import MinCovDet
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+
 import warnings
+
+import numpy as np
+
+from sklearn.covariance import MinCovDet
+from sklearn.neighbors import LocalOutlierFactor
 
 warnings.filterwarnings('ignore')
 rng = np.random.RandomState(42)
@@ -37,7 +43,7 @@ outliers_parallel = np.where(lof_parallel.fit_predict(X) == -1)[0]
 # Display results
 print(f"Outliers detected (n_jobs=1): {len(outliers_single)}")
 print(f"Outliers detected (n_jobs=4): {len(outliers_parallel)}")
-print(f"Expected outliers: 10")
+print("Expected outliers: 10")
 
 # Verify fix
 if len(outliers_parallel) > 0:
