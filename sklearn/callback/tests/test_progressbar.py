@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import re
+import sys
 
 import pytest
 
@@ -10,6 +11,11 @@ from sklearn.callback.tests._utils import Estimator, MetaEstimator, WhileEstimat
 from sklearn.utils._optional_dependencies import check_rich_support
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 12, 8),
+    reason="Race conditions can appear because of multiprocessing issues for python"
+    " < 3.12.8.",
+)
 @pytest.mark.parametrize("n_jobs", [1, 2])
 @pytest.mark.parametrize("prefer", ["threads", "processes"])
 @pytest.mark.parametrize("InnerEstimator", [Estimator, WhileEstimator])

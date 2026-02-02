@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import sys
+import warnings
 from multiprocessing import Manager
 from threading import Thread
 
@@ -20,6 +22,13 @@ class ProgressBar:
     """
 
     def __init__(self, max_estimator_depth=1):
+        if sys.version_info < (3, 12, 8):
+            warnings.warn(
+                "The use of the ProgressBar callback on python versions inferior "
+                "to 3.12.8 might lead to unexpected crashes related to multiprocessing "
+                "bugs on certain platforms."
+            )
+
         check_rich_support("Progressbar")
 
         self.max_estimator_depth = max_estimator_depth
