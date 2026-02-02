@@ -113,9 +113,9 @@ class DecisionBoundaryDisplay:
         * None: 'tab10' colormap is used to sample colors if the number of
           classes is less than or equal to 10, otherwise 'gist_rainbow' colormap.
 
-        Single color colormaps will be generated from the colors in the list or
-        colors taken from the colormap, and passed to the `cmap` parameter of
-        the `plot_method`.
+        Single color (fading to white) colormaps will be generated from the colors in
+        the list or colors taken from the colormap, and passed to the `cmap` parameter
+        of the `plot_method`.
 
         For :term:`binary` problems, this is ignored and `cmap` or `colors` can be
         passed as kwargs instead, otherwise, the default colormap ('viridis') is used.
@@ -417,9 +417,9 @@ class DecisionBoundaryDisplay:
                 classes is less than or equal to 10, otherwise 'gist_rainbow'
                 colormap.
 
-            Single color colormaps will be generated from the colors in the list or
-            colors taken from the colormap, and passed to the `cmap` parameter of
-            the `plot_method`.
+            Single color (fading to white) colormaps will be generated from the colors
+            in the list or colors taken from the colormap, and passed to the `cmap`
+            parameter of the `plot_method`.
 
             For :term:`binary` problems, this is ignored and `cmap` or `colors` can be
             passed as kwargs instead, otherwise, the default colormap ('viridis') is

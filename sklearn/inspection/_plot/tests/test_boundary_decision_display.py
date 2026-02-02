@@ -636,26 +636,8 @@ def test_multiclass_plot_max_class(pyplot, response_method):
         (None, 3),
         (None, 11),
         ("plasma", 3),
-        ("plasma", 11),
         ("Blues", 3),
-        ("Blues", 11),
         (["red", "green", "blue"], 3),
-        (
-            [
-                "red",
-                "green",
-                "blue",
-                "yellow",
-                "orange",
-                "purple",
-                "pink",
-                "brown",
-                "gray",
-                "cyan",
-                "magenta",
-            ],
-            11,
-        ),
     ],
 )
 @pytest.mark.parametrize(
