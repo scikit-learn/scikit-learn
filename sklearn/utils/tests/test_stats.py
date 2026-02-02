@@ -99,14 +99,12 @@ def test_weighted_percentile_equal():
     assert approx(score) == 0
 
 
-# XXX: is this really what we want? Shouldn't we raise instead?
-# https://github.com/scikit-learn/scikit-learn/issues/31032
 def test_weighted_percentile_all_zero_weights():
-    """Check `weighted_percentile` with all weights equal to 0 returns last index."""
+    """Check `weighted_percentile` with all weights equal to 0 returns `np.nan`."""
     y = np.arange(10)
     sw = np.zeros(10)
     value = _weighted_percentile(y, sw, 50)
-    assert approx(value) == 9.0
+    assert np.isnan(value)
 
 
 @pytest.mark.parametrize("average", [True, False])
@@ -130,6 +128,13 @@ def test_weighted_percentile_ignores_zero_weight(
     )
     for idx in range(2):
         assert approx(value[idx]) == expected_value
+
+
+def test_weighted_percentile_average_zero_weight_plateau():
+    """Check zero weights just before `max_index` handled correctly."""
+    score_without_zeros = _weighted_percentile([1, 3], [3, 3], average=True)
+    score_with_zeros = _weighted_percentile([1, 2, 3], [3, 0, 3], average=True)
+    assert approx(score_without_zeros) == score_with_zeros
 
 
 @pytest.mark.parametrize("average", [True, False])

@@ -34,30 +34,27 @@ _T_co = TypeVar("_T_co", covariant=True)
 # - docs: https://github.com/jorenham/optype/blob/master/README.md#just
 # - code: https://github.com/jorenham/optype/blob/master/optype/_core/_just.py
 @final
-class JustInt(Protocol):
-    @property
+class JustInt(Protocol):  # type: ignore[misc]
+    @property  # type: ignore[override]
     def __class__(self, /) -> type[int]: ...
     @__class__.setter
     def __class__(self, value: type[int], /) -> None: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
 
 @final
-class JustFloat(Protocol):
-    @property
+class JustFloat(Protocol):  # type: ignore[misc]
+    @property  # type: ignore[override]
     def __class__(self, /) -> type[float]: ...
     @__class__.setter
     def __class__(self, value: type[float], /) -> None: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
 
 @final
-class JustComplex(Protocol):
-    @property
+class JustComplex(Protocol):  # type: ignore[misc]
+    @property  # type: ignore[override]
     def __class__(self, /) -> type[complex]: ...
     @__class__.setter
     def __class__(self, value: type[complex], /) -> None: ...  # pyright: ignore[reportIncompatibleMethodOverride]
-
-
-#
 
 
 class NestedSequence(Protocol[_T_co]):

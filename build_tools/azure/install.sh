@@ -72,11 +72,14 @@ python_environment_install_and_activate() {
     if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
         echo "Installing development dependency wheels"
         dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
-        dev_packages="numpy scipy pandas Cython"
+        dev_packages="numpy scipy pandas"
         pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages --only-binary :all:
 
         check_packages_dev_version $dev_packages
 
+        echo "Installing Cython from latest sources"
+        # NO_CYTHON_COMPILE=true installs Cython as a pure Python package (faster install)
+        NO_CYTHON_COMPILE=true pip install https://github.com/cython/cython/archive/master.zip
         echo "Installing joblib from latest sources"
         pip install https://github.com/joblib/joblib/archive/master.zip
         echo "Installing pillow from latest sources"

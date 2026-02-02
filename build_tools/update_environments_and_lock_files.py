@@ -84,9 +84,6 @@ common_dependencies = common_dependencies_without_coverage + [
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
 default_package_constraints = {
-    # TODO: remove once https://github.com/numpy/numpydoc/issues/638 is fixed
-    # and released.
-    "numpydoc": "<1.9.0",
     # TODO: remove once when we're using the new way to enable coverage in subprocess
     # introduced in 7.0.0, see https://github.com/pytest-dev/pytest-cov?tab=readme-ov-file#upgrading-from-pytest-cov-63
     "pytest-cov": "<=6.3.0",
@@ -104,7 +101,7 @@ build_metadata_list = [
         "tag": "cuda",
         "folder": "build_tools/github",
         "platform": "linux-64",
-        "channels": ["conda-forge", "pytorch", "nvidia"],
+        "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies
         + [
             "ccache",
@@ -114,9 +111,6 @@ build_metadata_list = [
             "cupy",
             "array-api-strict",
         ],
-        "package_constraints": {
-            "blas": "[build=mkl]",
-        },
     },
     {
         "name": "pylatest_conda_forge_mkl_linux-64",
