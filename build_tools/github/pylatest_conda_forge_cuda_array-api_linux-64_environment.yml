@@ -3,7 +3,6 @@
 # build_tools/update_environments_and_lock_files.py
 channels:
   - conda-forge
-  - rapidsai
 dependencies:
   - python
   - numpy

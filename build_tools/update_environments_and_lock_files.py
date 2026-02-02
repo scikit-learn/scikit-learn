@@ -101,7 +101,7 @@ build_metadata_list = [
         "tag": "cuda",
         "folder": "build_tools/github",
         "platform": "linux-64",
-        "channels": ["conda-forge", "rapidsai"],
+        "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies
         + [
             "ccache",
