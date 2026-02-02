@@ -1384,6 +1384,13 @@ def _check_estimator_sparse_container(name, estimator_orig, sparse_type):
                 else:
                     expected_probs_shape = (X.shape[0], 4)
                 assert probs.shape == expected_probs_shape
+            if hasattr(estimator, "transform"):
+                X_trans = estimator.transform(X)
+                # Check that transform returns output with the correct number of samples
+                assert X_trans.shape[0] == X.shape[0], (
+                    f"Estimator {name} transform output has {X_trans.shape[0]} "
+                    f"samples, expected {X.shape[0]} samples."
+                )
 
 
 def check_estimator_sparse_matrix(name, estimator_orig):
