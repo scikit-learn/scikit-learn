@@ -5,6 +5,5 @@
 
 from sklearn.mixture._bayesian_mixture import BayesianGaussianMixture
 from sklearn.mixture._gaussian_mixture import GaussianMixture
-from sklearn.mixture._gaussian_mixture_ic import GaussianMixtureIC
 
-__all__ = ["BayesianGaussianMixture", "GaussianMixture", "GaussianMixtureIC"]
+__all__ = ["BayesianGaussianMixture", "GaussianMixture"]
