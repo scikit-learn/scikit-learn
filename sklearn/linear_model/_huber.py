@@ -141,6 +141,9 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     The Huber loss function has the advantage of not being heavily influenced
     by the outliers while not completely ignoring their effect.
 
+    See :ref:`sphx_glr_auto_examples_linear_model_plot_huber_vs_ridge.py`
+    for a comparison with Ridge regression on a dataset with outliers.
+
     Read more in the :ref:`User Guide <huber_regression>`
 
     .. versionadded:: 0.18
