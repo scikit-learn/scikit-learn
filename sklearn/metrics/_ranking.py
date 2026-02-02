@@ -2041,7 +2041,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
         )
     _check_dcg_target_type(y_true)
     gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
-    
+
     # Exclude samples where all items are irrelevant (all relevances are 0)
     # For these samples, NDCG is undefined (0/0) and should not contribute
     # to the average. This ensures ndcg_score(y, y) == 1.0 always holds.
@@ -2072,7 +2072,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
             if sample_weight is not None:
                 sample_weight = np.asarray(sample_weight)[mask]
             return float(np.average(gain[mask], weights=sample_weight))
-    
+
     return float(np.average(gain, weights=sample_weight))
 
 
