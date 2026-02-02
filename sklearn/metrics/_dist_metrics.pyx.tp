@@ -25,10 +25,6 @@ from sklearn.utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
 from sklearn.utils import check_array
 from sklearn.utils.fixes import parse_version, sp_base_version
 
-# from cpython.pythread cimport (
-    # Py_tss_t, PyThread_tss_alloc, PyThread_tss_free,
-    # PyThread_tss_create, PyThread_tss_delete,
-# )
 cdef extern from "Python.h":
     ctypedef struct Py_tss_t:
         pass
@@ -1645,7 +1641,7 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         self.size = self.mat.shape[0]
 
         # We need to create a buffer to store the vectors' coordinates' differences
-        self._init_thread_buffers()
+        self._init_thread_tss()
     
     cdef void* _init_thread_buffer_for_current_thread(self) except NULL:
         cdef unsigned long tid
@@ -1665,7 +1661,7 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         return p
 
 
-    cdef inline float64_t* _get_thread_buffer_ptr(self) except NULL nogil:
+    cdef inline float64_t* _get_or_create_thread_buffer_ptr(self) except NULL nogil:
         cdef void* p
 
         p = PyThread_tss_get(self._tss_key)
@@ -1677,7 +1673,7 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         return <float64_t*>p
 
-    cdef void _init_thread_buffers(self) except *:
+    cdef void _init_thread_tss(self) except *:
         # Must have GIL because there's a dict here and numpy allocations (or at least key allocation)        
         self._buffers = {}
 
@@ -1708,7 +1704,7 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     def __setstate__(self, state):
         super().__setstate__(state)
         self.size = self.mat.shape[0]
-        self._init_thread_buffers()
+        self._init_thread_tss()
 
     def __dealloc__(self):
         self._free_thread_buffers()
@@ -1723,7 +1719,7 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         const {{INPUT_DTYPE_t}}* x2,
         intp_t size,
     ) except -1 nogil:
-        cdef float64_t* buf = self._get_thread_buffer_ptr()
+        cdef float64_t* buf = self._get_or_create_thread_buffer_ptr()
         cdef float64_t tmp, d = 0
         cdef intp_t i, j
 
@@ -1770,7 +1766,7 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         const int32_t x2_end,
         const intp_t size,
     ) except -1 nogil:
-        cdef float64_t* buf = self._get_thread_buffer_ptr()
+        cdef float64_t* buf = self._get_or_create_thread_buffer_ptr()
 
         cdef:
             intp_t ix1, ix2
