@@ -849,7 +849,8 @@ def test_linear_regression_sample_weight_consistency(
 
 
 def test_predict_proba_lr_large_values():
-    """Test that _predict_proba_lr of LinearClassifierMixin deals with large values.
+    """Test that _predict_proba_lr of LinearClassifierMixin deals with large
+    negative values.
 
     Note that exp(-1000) = 0.
     """
