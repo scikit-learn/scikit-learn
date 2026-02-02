@@ -551,7 +551,7 @@ def get_namespace_and_device(
         return xp, False, arrays_device
 
 
-def move_to(*arrays, xp, device, dtype):
+def move_to(*arrays, xp, device):
     """Move all arrays to `xp` and `device`.
 
     Each array will be moved to the reference namespace and device if
@@ -611,10 +611,7 @@ def move_to(*arrays, xp, device, dtype):
         else:
             xp_array, _, device_array = get_namespace_and_device(array)
             if xp == xp_array and device == device_array:
-                if array.dtype == dtype:
-                    converted_arrays.append(array)
-                else:
-                    converted_arrays.append(xp.astype(array, dtype))
+                converted_arrays.append(array)
             else:
                 try:
                     # The dlpack protocol is the future proof and library agnostic

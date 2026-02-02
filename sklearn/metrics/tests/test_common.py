@@ -2515,7 +2515,7 @@ def test_mixed_array_api_namespace_input_compliance(
     """Check `y_true` and `sample_weight` follows `y_pred` for mixed namespace inputs.
 
     Compares the output types for all-numpy vs mixed-type inputs.
-    If the output is a float, checks that both all-numpy and muxed-type inputs return
+    If the output is a float, checks that both all-numpy and mixed-type inputs return
     a float.
     If output is an array, checks it is of the same namespace and device as `y_pred`
     (`to_ns_and_device`).
