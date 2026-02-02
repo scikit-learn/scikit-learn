@@ -316,6 +316,9 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     0.9884
     >>> reg.predict(X[:1,])
     array([-31.5871])
+
+    For a comparison with other robust estimators, see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_theilsen.py`.
     """
 
     _parameter_constraints: dict = {
