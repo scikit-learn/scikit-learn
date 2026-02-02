@@ -74,6 +74,7 @@ from sklearn.metrics.pairwise import (
     paired_euclidean_distances,
     paired_manhattan_distances,
     pairwise_distances,
+    pairwise_distances_argmin,
     pairwise_kernels,
     polynomial_kernel,
     rbf_kernel,
@@ -2106,6 +2107,18 @@ def check_array_api_multiclass_classification_metric(
     y_true_np = np.array([0, 1, 2, 3])
     y_pred_np = np.array([0, 1, 0, 2])
 
+    if metric.__name__ == "average_precision_score":
+        # we need y_pred_nd to be of shape (n_samples, n_classes)
+        y_pred_np = np.array(
+            [
+                [0.7, 0.2, 0.05, 0.05],
+                [0.1, 0.8, 0.05, 0.05],
+                [0.1, 0.1, 0.7, 0.1],
+                [0.05, 0.05, 0.1, 0.8],
+            ],
+            dtype=dtype_name,
+        )
+
     additional_params = {
         "average": ("micro", "macro", "weighted"),
         "beta": (0.2, 0.5, 0.8),
@@ -2307,6 +2320,11 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
+    average_precision_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
     balanced_accuracy_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
@@ -2445,6 +2463,7 @@ array_api_metric_checkers = {
         check_array_api_binary_classification_metric,
     ],
     pairwise_distances: [check_array_api_metric_pairwise],
+    pairwise_distances_argmin: [check_array_api_metric_pairwise],
 }
 
 

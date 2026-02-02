@@ -127,6 +127,17 @@ jobs:
             DISTRIB: conda
             LOCK_FILE: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
 
+          - name: Linuw x86-64 pylatest_conda_forge_mkl
+            os: ubuntu-22.04
+            DISTRIB: conda
+            LOCK_FILE: build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda.lock
+            COVERAGE: true
+            SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 42  # default global random seed
+            SCIPY_ARRAY_API: 1
+            # Tests that require large downloads over the networks are skipped in CI.
+            # Here we make sure, that they are still run on a regular basis.
+            SKLEARN_SKIP_NETWORK_TESTS: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '0' || '1' }}
+
           # Check compilation with Ubuntu 22.04 LTS (Jammy Jellyfish) and scipy from conda-forge
           - name: Linux x86-64 pymin_conda_forge_openblas_ubuntu_2204
             os: ubuntu-22.04
@@ -212,7 +223,7 @@ jobs:
 
     env: ${{ matrix }}
 
-    steps:
+    steps: &unit-tests-steps
       - name: Checkout
         uses: actions/checkout@v6
 
@@ -237,6 +248,7 @@ jobs:
       - name: Set random seed for nightly/manual runs
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: echo "SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$((RANDOM % 100))" >> $GITHUB_ENV
+        shell: bash
 
       - name: Run tests
         env:
@@ -267,6 +279,7 @@ jobs:
 
       - name: Update tracking issue
         if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
+        shell: bash
         run: |
           set -ex
 
@@ -279,3 +292,28 @@ jobs:
             --junit-file $TEST_DIR/$JUNITXML \
             --auto-close false \
             --job-name "${{ matrix.name }}"
+
+  free-threaded:
+    name: Linux x86-64 pylatest_free_threaded
+    runs-on: ubuntu-latest
+    needs: [lint, retrieve-commit-message, retrieve-selected-tests]
+    if: contains(needs.retrieve-commit-message.outputs.message, '[free-threaded]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    env:
+      DISTRIB: conda-free-threaded
+      LOCK_FILE: build_tools/azure/pylatest_free_threaded_linux-64_conda.lock
+      COVERAGE: false
+      # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
+      PYTEST_XDIST_VERSION: none
+    steps: *unit-tests-steps
+
+  scipy-dev:
+    name: Linux x86-64 pylatest_pip_scipy_dev
+    runs-on: ubuntu-22.04
+    needs: [lint, retrieve-commit-message, retrieve-selected-tests]
+    if: contains(needs.retrieve-commit-message.outputs.message, '[scipy-dev]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    env:
+      DISTRIB: conda-pip-scipy-dev
+      LOCK_FILE: build_tools/azure/pylatest_pip_scipy_dev_linux-64_conda.lock
+      SKLEARN_WARNINGS_AS_ERRORS: 1
+      CHECK_PYTEST_SOFT_DEPENDENCY: true
+    steps: *unit-tests-steps
