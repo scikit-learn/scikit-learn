@@ -210,7 +210,7 @@ def test_2d_y():
     y = rng.randint(0, 3, size=(n_samples,))
     y_2d = y.reshape(-1, 1)
     y_multilabel = rng.randint(0, 2, size=(n_samples, 3))
-    groups = rng.randint(0, 3, size=(n_samples,))
+    groups = rng.randint(0, 10, size=(n_samples,))
     splitters = [
         LeaveOneOut(),
         LeavePOut(p=2),
@@ -1785,7 +1785,7 @@ def test_group_kfold(kfold, shuffle, global_random_seed):
     groups = np.array([1, 1, 1, 2, 2])
     X = y = np.ones(len(groups))
     with pytest.raises(ValueError, match="Cannot have number of splits.*greater"):
-        next(GroupKFold(n_splits=3).split(X, y, groups))
+        next(kfold(n_splits=3).split(X, y, groups))
 
 
 def test_time_series_cv():
