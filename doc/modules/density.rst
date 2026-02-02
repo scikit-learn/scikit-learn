@@ -15,8 +15,38 @@ Gaussian Mixtures are discussed more fully in the context of
 :ref:`clustering <clustering>`, because the technique is also useful as
 an unsupervised clustering scheme.
 
-Density estimation is a very simple concept, and most people are already
-familiar with one common density estimation technique: the histogram.
+Connections to Other Machine Learning Tasks
+============================================
+
+Density estimation intersects with several fundamental machine learning
+paradigms:
+
+**Unsupervised Learning**: Density estimation learns the probability distribution
+of data without using labeled outputs. It reveals the underlying structure of
+the data, making it a core unsupervised learning technique. This learned
+distribution can be used for anomaly detection, where low-density regions
+indicate unusual observations.
+
+**Feature Engineering**: The estimated density or derived quantities (such as
+local density or distance to high-density regions) can be used as engineered
+features for supervised learning tasks. For example, adding a "density score"
+as a feature can help classifiers distinguish between common and rare patterns.
+
+**Data Modeling**: Density estimation provides a probabilistic model of the data
+generation process. This model can be used for tasks such as sampling (generating
+new synthetic data points), imputation (filling missing values), or compression
+(representing data more efficiently).
+
+**References**
+
+For more on these connections, see:
+
+* Hastie, T., Tibshirani, R., & Friedman, J. (2009). *The Elements of Statistical
+  Learning: Data Mining, Inference, and Prediction* (2nd ed.). Springer.
+  Chapters 6 (Kernel Smoothing Methods) and 14 (Unsupervised Learning).
+
+* Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*. Springer.
+  Chapter 2 (Probability Distributions) discusses density estimation foundations.
 
 Density Estimation: Histograms
 ==============================
