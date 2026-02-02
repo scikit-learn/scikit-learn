@@ -104,6 +104,9 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     >>> reg = QuantileRegressor(quantile=0.8).fit(X, y)
     >>> np.mean(y <= reg.predict(X))
     np.float64(0.8)
+
+    For an example of predicting non-trivial conditional quantiles, see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_quantile_regression.py`.
     """
 
     _parameter_constraints: dict = {
