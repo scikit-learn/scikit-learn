@@ -12,7 +12,7 @@ source "${HOME}/conda/etc/profile.d/conda.sh"
 source build_tools/shared.sh
 conda activate base
 
-# Run these "debug" commands before installing our specific conda environment.
+# Run these debug commands before installing our specific conda environment.
 # We want to see what is available on the runner before we make changes. But
 # we need to install miniforge before being able to look at the output of the
 # conda commands.
