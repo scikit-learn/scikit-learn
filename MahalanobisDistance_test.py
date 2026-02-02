@@ -9,7 +9,7 @@ import numpy as np
 from sklearn.covariance import MinCovDet
 from sklearn.neighbors import LocalOutlierFactor
 
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
 rng = np.random.RandomState(42)
 
 
@@ -24,19 +24,13 @@ VI = np.ascontiguousarray(mcd.precision_, dtype=np.float64)
 
 # Test with n_jobs=1
 lof_single = LocalOutlierFactor(
-    n_neighbors=20,
-    metric='mahalanobis',
-    metric_params={'VI': VI},
-    n_jobs=1
+    n_neighbors=20, metric="mahalanobis", metric_params={"VI": VI}, n_jobs=1
 )
 outliers_single = np.where(lof_single.fit_predict(X) == -1)[0]
 
 # Test with n_jobs=4
 lof_parallel = LocalOutlierFactor(
-    n_neighbors=20,
-    metric='mahalanobis',
-    metric_params={'VI': VI},
-    n_jobs=4
+    n_neighbors=20, metric="mahalanobis", metric_params={"VI": VI}, n_jobs=4
 )
 outliers_parallel = np.where(lof_parallel.fit_predict(X) == -1)[0]
 
