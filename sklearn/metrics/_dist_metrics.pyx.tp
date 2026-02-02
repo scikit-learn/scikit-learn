@@ -25,6 +25,23 @@ from sklearn.utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
 from sklearn.utils import check_array
 from sklearn.utils.fixes import parse_version, sp_base_version
 
+# from cpython.pythread cimport (
+    # Py_tss_t, PyThread_tss_alloc, PyThread_tss_free,
+    # PyThread_tss_create, PyThread_tss_delete,
+# )
+cdef extern from "Python.h":
+    ctypedef struct Py_tss_t:
+        pass
+
+    Py_tss_t* PyThread_tss_alloc() nogil
+    void PyThread_tss_free(Py_tss_t* key) nogil
+    int PyThread_tss_create(Py_tss_t* key) nogil
+    int PyThread_tss_delete(Py_tss_t* key) nogil
+
+    void* PyThread_tss_get(Py_tss_t *key) nogil
+    int PyThread_tss_set(Py_tss_t *key, void *value) nogil
+    unsigned long PyThread_get_thread_ident() nogil
+
 cdef inline double fmax(double a, double b) noexcept nogil:
     return max(a, b)
 
@@ -1611,7 +1628,8 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         optionally specify the inverse directly.  If VI is passed,
         then V is not referenced.
     """
-    cdef float64_t[::1] buffer
+    cdef Py_tss_t* _tss_key
+    cdef dict _buffers
 
     def __init__(self, V=None, VI=None):
         if VI is None:
@@ -1627,12 +1645,73 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         self.size = self.mat.shape[0]
 
         # We need to create a buffer to store the vectors' coordinates' differences
-        self.buffer = np.zeros(self.size, dtype=np.float64)
+        self._init_thread_buffers()
+    
+    cdef void* _init_thread_buffer_for_current_thread(self) except NULL:
+        cdef unsigned long tid
+        cdef object arr
+        cdef float64_t[::1] buf_view
+        cdef void* p
 
+        tid = PyThread_get_thread_ident()
+        arr = self._buffers.get(tid)
+        if arr is None:
+            arr = np.zeros(self.size, dtype=np.float64)
+            self._buffers[tid] = arr
+
+        buf_view = arr
+        p = <void*>&buf_view[0]
+        PyThread_tss_set(self._tss_key, p)
+        return p
+
+
+    cdef inline float64_t* _get_thread_buffer_ptr(self) except NULL nogil:
+        cdef void* p
+
+        p = PyThread_tss_get(self._tss_key)
+        if p != NULL:
+            return <float64_t*>p
+
+        with gil:
+            p = self._init_thread_buffer_for_current_thread()
+
+        return <float64_t*>p
+
+    cdef void _init_thread_buffers(self) except *:
+        # Must have GIL because there's a dict here and numpy allocations (or at least key allocation)        
+        self._buffers = {}
+
+        if self._tss_key != NULL:
+            PyThread_tss_delete(self._tss_key)
+            PyThread_tss_free(self._tss_key)
+            self._tss_key = NULL
+
+        self._tss_key = PyThread_tss_alloc()
+        if self._tss_key == NULL:
+            raise MemoryError("Could not allocate TSS key for MahalanobisDistance")
+
+        if PyThread_tss_create(self._tss_key) != 0:
+            PyThread_tss_free(self._tss_key)
+            self._tss_key = NULL
+            raise MemoryError("Could not create TSS key for MahalanobisDistance")
+
+    cdef void _free_thread_buffers(self) noexcept:
+        # Cleanup under GIL: dict is Python
+        if self._buffers is not None:
+            self._buffers.clear()
+
+        if self._tss_key != NULL:
+            PyThread_tss_delete(self._tss_key)
+            PyThread_tss_free(self._tss_key)
+            self._tss_key = NULL
+    
     def __setstate__(self, state):
         super().__setstate__(state)
         self.size = self.mat.shape[0]
-        self.buffer = np.zeros(self.size, dtype=np.float64)
+        self._init_thread_buffers()
+
+    def __dealloc__(self):
+        self._free_thread_buffers()
 
     def _validate_data(self, X):
         if X.shape[1] != self.size:
@@ -1644,18 +1723,19 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         const {{INPUT_DTYPE_t}}* x2,
         intp_t size,
     ) except -1 nogil:
+        cdef float64_t* buf = self._get_thread_buffer_ptr()
         cdef float64_t tmp, d = 0
         cdef intp_t i, j
 
         # compute (x1 - x2).T * VI * (x1 - x2)
         for i in range(size):
-            self.buffer[i] = x1[i] - x2[i]
+            buf[i] = x1[i] - x2[i]
 
         for i in range(size):
             tmp = 0
             for j in range(size):
-                tmp += self.mat[i, j] * self.buffer[j]
-            d += tmp * self.buffer[i]
+                tmp += self.mat[i, j] * buf[j]
+            d += tmp * buf[i]
         return d
 
     cdef inline {{INPUT_DTYPE_t}} dist(
@@ -1690,6 +1770,7 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         const int32_t x2_end,
         const intp_t size,
     ) except -1 nogil:
+        cdef float64_t* buf = self._get_thread_buffer_ptr()
 
         cdef:
             intp_t ix1, ix2
@@ -1703,32 +1784,32 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             ix2 = x2_indices[i2]
 
             if ix1 == ix2:
-                self.buffer[ix1] = x1_data[i1] - x2_data[i2]
+                buf[ix1] = x1_data[i1] - x2_data[i2]
                 i1 = i1 + 1
                 i2 = i2 + 1
             elif ix1 < ix2:
-                self.buffer[ix1] = x1_data[i1]
+                buf[ix1] = x1_data[i1]
                 i1 = i1 + 1
             else:
-                self.buffer[ix2] = - x2_data[i2]
+                buf[ix2] = - x2_data[i2]
                 i2 = i2 + 1
 
         if i1 == x1_end:
             while i2 < x2_end:
                 ix2 = x2_indices[i2]
-                self.buffer[ix2] = - x2_data[i2]
+                buf[ix2] = - x2_data[i2]
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
                 ix1 = x1_indices[i1]
-                self.buffer[ix1] = x1_data[i1]
+                buf[ix1] = x1_data[i1]
                 i1 = i1 + 1
 
         for i in range(size):
             tmp = 0
             for j in range(size):
-                tmp += self.mat[i, j] * self.buffer[j]
-            d += tmp * self.buffer[i]
+                tmp += self.mat[i, j] * buf[j]
+            d += tmp * buf[i]
 
         return d
 
