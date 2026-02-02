@@ -180,6 +180,17 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
        "Gaussian Processes for Machine Learning",
        MIT Press 2006 <https://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_
 
+    Notes
+    -----
+    For multi-output (multi-dimensional target values), the implementation
+    treats each output dimension independently. The model does **not** assume
+    correlations between different output dimensions (i.e., it does not perform
+    co-kriging or multi-task learning). Instead, it fits a separate Gaussian
+    Process for each target dimension by maximizing the sum of the
+    log-marginal likelihoods across all outputs (see equation 5.8 in [RW2006]_).
+    This approach is computationally efficient but does not model inter-output
+    dependencies.
+
     Examples
     --------
     >>> from sklearn.datasets import make_friedman2
