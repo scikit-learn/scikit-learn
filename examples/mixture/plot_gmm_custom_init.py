@@ -18,10 +18,6 @@ hierarchical initialization:
 - Run Ward clustering on the whitened data and cut it to obtain cluster labels.
 - Turn those clusters into ``weights_init``, ``means_init``, and
   ``precisions_init`` for :class:`~sklearn.mixture.GaussianMixture`.
-
-We report the final ``lower_bound_`` reached by EM (higher is better). Since the
-dataset is synthetic, we also show ARI for illustration.
-
 """
 
 # Authors: The scikit-learn developers
@@ -31,17 +27,14 @@ dataset is synthetic, we also show ARI for illustration.
 # Imports
 # -------
 
-import numpy as np
-
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.patches import Ellipse
-
 from scipy import linalg
 
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.metrics import adjusted_rand_score
 from sklearn.mixture import GaussianMixture
-
 
 # %%
 # Generate a dataset where Mahalanobis-aware initialization helps
@@ -328,7 +321,7 @@ plot_gmm(
     axes[0],
     gmm_kpp,
     X,
-    title=f"GaussianMixture\n(k-means++, 1 start; seed={worst_seed})\n(ARI = {ari_kpp:.2f})",
+    title=f"GaussianMixture\n(k-means++, 1 start)\n(ARI={ari_kpp:.2f})",
 )
 plot_gmm(
     axes[1],
