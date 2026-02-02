@@ -26,6 +26,7 @@ from sklearn.utils import check_array, check_random_state
 from sklearn.utils._array_api import (
     _asarray_with_order,
     _average,
+    check_same_namespace,
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
@@ -286,6 +287,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
     def _decision_function(self, X):
         check_is_fitted(self)
+        check_same_namespace(X, self, attribute="coef_", method="predict")
 
         X = validate_data(self, X, accept_sparse=["csr", "csc", "coo"], reset=False)
         coef_ = self.coef_
@@ -359,6 +361,7 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         check_is_fitted(self)
         xp, _ = get_namespace(X)
+        check_same_namespace(X, self, attribute="coef_", method="decision_function")
 
         X = validate_data(self, X, accept_sparse="csr", reset=False)
         coef_T = self.coef_.T if self.coef_.ndim == 2 else self.coef_
