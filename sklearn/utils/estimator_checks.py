@@ -240,7 +240,6 @@ def _yield_classifier_checks(classifier):
     # test if predict_proba is a monotonic transformation of decision_function
     yield check_decision_proba_consistency
 
-
     if (
         isinstance(classifier, LinearClassifierMixin)
         and "class_weight" in classifier.get_params().keys()
