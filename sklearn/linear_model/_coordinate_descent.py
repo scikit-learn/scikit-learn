@@ -1247,6 +1247,9 @@ class Lasso(ElasticNet):
         calculations. The Gram matrix can also be passed as argument.
         For sparse input this option is always ``False`` to preserve sparsity.
 
+        See :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_dense_vs_sparse_data.py`
+        for a comparison of dense and sparse data performance.
+
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
