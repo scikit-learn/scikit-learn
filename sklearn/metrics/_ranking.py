@@ -1937,6 +1937,12 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
         to be ranked. Negative values in `y_true` may result in an output
         that is not between 0 and 1.
 
+        .. versionchanged:: 1.9
+            Samples where all ground truth relevances are zero are now excluded
+            from the NDCG computation, as NDCG is undefined (0/0) for such samples.
+            A warning is raised when such samples are encountered. This ensures
+            ``ndcg_score(y, y) == 1.0`` always holds for any valid input.
+
     y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates, confidence values,
         or non-thresholded measure of decisions (as returned by
@@ -1949,14 +1955,23 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights. If `None`, all samples are given the same weight.
 
+        .. note::
+            Sample weights for samples where all ground truth relevances are
+            zero are ignored, as these samples are excluded from the computation.
+
     ignore_ties : bool, default=False
         Assume that there are no ties in y_score (which is likely to be the
         case if y_score is continuous) for efficiency gains.
 
     Returns
     -------
-    normalized_discounted_cumulative_gain : float in [0., 1.]
-        The averaged NDCG scores for all samples.
+    normalized_discounted_cumulative_gain : float in [0., 1.] or nan
+        The averaged NDCG scores for all samples. Returns `nan` if all samples
+        have all-zero ground truth relevances.
+
+        .. versionchanged:: 1.9
+            Now returns `nan` instead of 0.0 when all samples have all-zero
+            ground truth relevances.
 
     See Also
     --------
@@ -2026,6 +2041,38 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
         )
     _check_dcg_target_type(y_true)
     gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
+    
+    # Exclude samples where all items are irrelevant (all relevances are 0)
+    # For these samples, NDCG is undefined (0/0) and should not contribute
+    # to the average. This ensures ndcg_score(y, y) == 1.0 always holds.
+    if y_true.ndim == 1:
+        # For 1D arrays (single sample), check if all values are zero
+        all_irrelevant = np.all(y_true == 0)
+        if all_irrelevant:
+            warnings.warn(
+                "All ground truth relevances are zero for at least one sample. "
+                "Such samples are excluded from NDCG computation since NDCG is "
+                "undefined when there are no relevant items.",
+                UserWarning,
+            )
+            # Return NaN for clarity that NDCG is undefined
+            return np.nan
+    else:
+        # For 2D arrays, check per sample (row)
+        all_irrelevant = np.all(y_true == 0, axis=1)
+        if np.any(all_irrelevant):
+            warnings.warn(
+                "All ground truth relevances are zero for at least one sample. "
+                "Such samples are excluded from NDCG computation since NDCG is "
+                "undefined when there are no relevant items.",
+                UserWarning,
+            )
+            # Exclude all-irrelevant samples from averaging
+            mask = ~all_irrelevant
+            if sample_weight is not None:
+                sample_weight = np.asarray(sample_weight)[mask]
+            return float(np.average(gain[mask], weights=sample_weight))
+    
     return float(np.average(gain, weights=sample_weight))
 
 
