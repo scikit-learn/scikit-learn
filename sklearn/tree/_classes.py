@@ -35,7 +35,6 @@ from sklearn.tree._tree import (
     _build_pruned_tree_ccp,
     ccp_pruning_path,
 )
-from sklearn.tree._utils import _any_isnan_axis0
 from sklearn.utils import (
     Bunch,
     check_random_state,
@@ -228,7 +227,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if not np.isnan(overall_sum):
             return None
 
-        missing_values_in_feature_mask = _any_isnan_axis0(X)
+        missing_values_in_feature_mask = np.isnan(X.sum(axis=0))
         return missing_values_in_feature_mask
 
     def _fit(

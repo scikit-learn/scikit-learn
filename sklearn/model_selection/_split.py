@@ -2687,7 +2687,7 @@ class _CVIterableWrapper(BaseCrossValidator):
             yield train, test
 
 
-def check_cv(cv=5, y=None, *, classifier=False):
+def check_cv(cv=5, y=None, *, classifier=False, shuffle=False, random_state=None):
     """Input checker utility for building a cross-validator.
 
     Parameters
@@ -2719,6 +2719,19 @@ def check_cv(cv=5, y=None, *, classifier=False):
         or multiclass; otherwise :class:`KFold` is used. Ignored if `cv` is a
         cross-validator instance or iterable.
 
+    shuffle : bool, default=False
+        Whether to shuffle the data before splitting into batches. Note that the samples
+        within each split will not be shuffled. Only applies if `cv` is an int or
+        `None`. If `cv` is a cross-validation generator or an iterable, `shuffle` is
+        ignored.
+
+    random_state : int, RandomState instance or None, default=None
+        When `shuffle` is True and `cv` is an integer or `None`, `random_state` affects
+        the ordering of the indices, which controls the randomness of each fold.
+        Otherwise, this parameter has no effect.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
     Returns
     -------
     checked_cv : a cross-validator instance.
@@ -2740,9 +2753,9 @@ def check_cv(cv=5, y=None, *, classifier=False):
             and (y is not None)
             and (type_of_target(y, input_name="y") in ("binary", "multiclass"))
         ):
-            return StratifiedKFold(cv)
+            return StratifiedKFold(cv, shuffle=shuffle, random_state=random_state)
         else:
-            return KFold(cv)
+            return KFold(cv, shuffle=shuffle, random_state=random_state)
 
     if not hasattr(cv, "split") or isinstance(cv, str):
         if not isinstance(cv, Iterable) or isinstance(cv, str):
