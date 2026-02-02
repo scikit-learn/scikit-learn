@@ -101,7 +101,7 @@ build_metadata_list = [
         "tag": "cuda",
         "folder": "build_tools/github",
         "platform": "linux-64",
-        "channels": ["conda-forge"],
+        "channels": ["conda-forge", "rapidsai"],
         "conda_dependencies": common_dependencies
         + [
             "ccache",
@@ -109,6 +109,7 @@ build_metadata_list = [
             "polars",
             "pyarrow",
             "cupy",
+            "rapidsai::cuvs",
             "array-api-strict",
         ],
     },
@@ -553,22 +554,23 @@ def write_all_conda_environments(build_metadata_list):
         write_conda_environment(build_metadata)
 
 
-def conda_lock(environment_path, lock_file_path, platform):
-    execute_command(
-        [
-            "conda-lock",
-            "lock",
-            "--mamba",
-            "--kind",
-            "explicit",
-            "--platform",
-            platform,
-            "--file",
-            str(environment_path),
-            "--filename-template",
-            str(lock_file_path),
-        ]
-    )
+def conda_lock(environment_path, lock_file_path, platform, virtual_package_spec=None):
+    cmd = [
+        "conda-lock",
+        "lock",
+        "--mamba",
+        "--kind",
+        "explicit",
+        "--platform",
+        platform,
+        "--file",
+        str(environment_path),
+        "--filename-template",
+        str(lock_file_path),
+    ]
+    if virtual_package_spec is not None:
+        cmd.extend(["--virtual-package-spec", str(virtual_package_spec)])
+    execute_command(cmd)
 
 
 def create_conda_lock_file(build_metadata):
@@ -581,7 +583,14 @@ def create_conda_lock_file(build_metadata):
         lock_file_basename = f"{lock_file_basename}_{platform}"
 
     lock_file_path = folder_path / f"{lock_file_basename}_conda.lock"
-    conda_lock(environment_path, lock_file_path, platform)
+
+    # Use virtual package spec for CUDA builds so that conda-lock also works
+    # on systems without CUDA.
+    virtual_package_spec = None
+    if build_metadata.get("tag") == "cuda":
+        virtual_package_spec = folder_path / "virtual-packages-cuda.yml"
+
+    conda_lock(environment_path, lock_file_path, platform, virtual_package_spec)
 
 
 def write_all_conda_lock_files(build_metadata_list):

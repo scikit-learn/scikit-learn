@@ -1,0 +1,5 @@
+subdirs:
+  linux-64:
+    packages:
+      __cuda: "12.4"
+      __glibc: "2.28"
