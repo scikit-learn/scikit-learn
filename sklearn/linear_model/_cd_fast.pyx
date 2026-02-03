@@ -378,9 +378,10 @@ def enet_coordinate_descent(
                     excluded_set[j] = 0
                     n_active += 1
                 else:
-                    # R += w[j] * X[:,j]
-                    _axpy(n_samples, w[j], &X[0, j], 1, &R[0], 1)
-                    w[j] = 0
+                    if w[j] != 0:
+                        # R += w[j] * X[:,j]
+                        _axpy(n_samples, w[j], &X[0, j], 1, &R[0], 1)
+                        w[j] = 0
                     excluded_set[j] = 1
 
         for n_iter in range(max_iter):
@@ -448,9 +449,10 @@ def enet_coordinate_descent(
                             excluded_set[j] = 0
                             n_active += 1
                         else:
-                            # R += w[j] * X[:,j]
-                            _axpy(n_samples, w[j], &X[0, j], 1, &R[0], 1)
-                            w[j] = 0
+                            if w[j] != 0:
+                                # R += w[j] * X[:,j]
+                                _axpy(n_samples, w[j], &X[0, j], 1, &R[0], 1)
+                                w[j] = 0
                             excluded_set[j] = 1
 
         else:
@@ -809,21 +811,22 @@ def sparse_enet_coordinate_descent(
                     excluded_set[j] = 0
                     n_active += 1
                 else:
-                    # R += w[j] * X[:,j]
-                    R_plus_wj_Xj(
-                        n_samples,
-                        R,
-                        X_data,
-                        X_indices,
-                        X_indptr,
-                        X_mean,
-                        center,
-                        sample_weight,
-                        no_sample_weights,
-                        w[j],
-                        j,
-                    )
-                    w[j] = 0
+                    if w[j] != 0:
+                        # R += w[j] * X[:,j]
+                        R_plus_wj_Xj(
+                            n_samples,
+                            R,
+                            X_data,
+                            X_indices,
+                            X_indptr,
+                            X_mean,
+                            center,
+                            sample_weight,
+                            no_sample_weights,
+                            w[j],
+                            j,
+                        )
+                        w[j] = 0
                     excluded_set[j] = 1
 
         for n_iter in range(max_iter):
@@ -925,21 +928,22 @@ def sparse_enet_coordinate_descent(
                             excluded_set[j] = 0
                             n_active += 1
                         else:
-                            # R += w[j] * X[:,j]
-                            R_plus_wj_Xj(
-                                n_samples,
-                                R,
-                                X_data,
-                                X_indices,
-                                X_indptr,
-                                X_mean,
-                                center,
-                                sample_weight,
-                                no_sample_weights,
-                                w[j],
-                                j,
-                            )
-                            w[j] = 0
+                            if w[j] != 0:
+                                # R += w[j] * X[:,j]
+                                R_plus_wj_Xj(
+                                    n_samples,
+                                    R,
+                                    X_data,
+                                    X_indices,
+                                    X_indptr,
+                                    X_mean,
+                                    center,
+                                    sample_weight,
+                                    no_sample_weights,
+                                    w[j],
+                                    j,
+                                )
+                                w[j] = 0
                             excluded_set[j] = 1
 
         else:
@@ -1150,9 +1154,10 @@ def enet_coordinate_descent_gram(
                     excluded_set[j] = 0
                     n_active += 1
                 else:
-                    # Qw -= w[j] * Q[j]  # Update Qw = Q @ w
-                    _axpy(n_features, -w[j], &Q[j, 0], 1, &Qw[0], 1)
-                    w[j] = 0
+                    if w[j] != 0:
+                        # Qw -= w[j] * Q[j]  # Update Qw = Q @ w
+                        _axpy(n_features, -w[j], &Q[j, 0], 1, &Qw[0], 1)
+                        w[j] = 0
                     excluded_set[j] = 1
 
         for n_iter in range(max_iter):
@@ -1221,9 +1226,10 @@ def enet_coordinate_descent_gram(
                             excluded_set[j] = 0
                             n_active += 1
                         else:
-                            # Qw -= w[j] * Q[j]  # Update Qw = Q @ w
-                            _axpy(n_features, -w[j], &Q[j, 0], 1, &Qw[0], 1)
-                            w[j] = 0
+                            if w[j] != 0:
+                                # Qw -= w[j] * Q[j]  # Update Qw = Q @ w
+                                _axpy(n_features, -w[j], &Q[j, 0], 1, &Qw[0], 1)
+                                w[j] = 0
                             excluded_set[j] = 1
 
         else:
@@ -1462,8 +1468,9 @@ def enet_coordinate_descent_multi_task(
                 else:
                     # R += W[:, 1] * X[:, 1][:, None]
                     for t in range(n_tasks):
-                        _axpy(n_samples, W[t, j], &X[0, j], 1, &R[0, t], 1)
-                        W[t, j] = 0
+                        if W[t, j] != 0:
+                            _axpy(n_samples, W[t, j], &X[0, j], 1, &R[0, t], 1)
+                            W[t, j] = 0
                     excluded_set[j] = 1
 
         for n_iter in range(max_iter):
@@ -1559,8 +1566,9 @@ def enet_coordinate_descent_multi_task(
                         else:
                             # R += W[:, 1] * X[:, 1][:, None]
                             for t in range(n_tasks):
-                                _axpy(n_samples, W[t, j], &X[0, j], 1, &R[0, t], 1)
-                                W[t, j] = 0
+                                if W[t, j] != 0:
+                                    _axpy(n_samples, W[t, j], &X[0, j], 1, &R[0, t], 1)
+                                    W[t, j] = 0
                             excluded_set[j] = 1
 
         else:
