@@ -228,7 +228,6 @@ more details.
 - |Feature| :class:`ensemble.StackingClassifier` and
   :class:`ensemble.StackingRegressor` now support metadata routing and pass
   ``**fit_params`` to the underlying estimators via their `fit` methods.
-  
   By :user:`Stefanie Senger <StefanieSenger>` :pr:`28701`
 
 - |Feature| :func:`model_selection.learning_curve` now supports metadata routing for the
@@ -264,7 +263,6 @@ more details.
   default scoring.
   By :user:`Stefanie Senger <StefanieSenger>` :pr:`29634`
 
-
 - |Fix| Many method arguments which shouldn't be included in the routing mechanism are
   now excluded and the `set_{method}_request` methods are not generated for them.
   By `Adrin Jalali`_ :pr:`29920`
@@ -285,7 +283,6 @@ removed. Meson is the only supported way to build scikit-learn.
 By :user:`Loïc Estève <lesteve>` :pr:`29400`
 
 Free-threaded CPython 3.13 support
-
 ----------------------------------
 
 scikit-learn has preliminary support for free-threaded CPython, in particular
@@ -350,7 +347,6 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
 :mod:`sklearn.cross_decomposition`
 ----------------------------------
 
-
 - |Fix| :class:`cross_decomposition.PLSRegression` properly raises an error when
   `n_components` is larger than `n_samples`.
   By :user:`Thomas Fan <thomasjpfan>` :pr:`29710`
@@ -380,7 +376,6 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
   no longer face this restriction.
   By :user:`Thomas Gessey-Jones <ThomasGesseyJonesPX>` :pr:`30224`
 
-
 :mod:`sklearn.discriminant_analysis`
 ------------------------------------
 
@@ -408,12 +403,6 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
   during :term:`predict` offering a speedup of up to 2-4x on sample sizes
   larger than 2000 using `joblib`.
   By :user:`Adam Li <adam2392>` and :user:`Sérgio Pereira <sergiormpereira>` :pr:`28622`
-
-- |Efficiency| :class:`ensemble.IsolationForest` now runs parallel jobs
-  during :term:`predict` offering a speedup of up to 2-4x on sample sizes
-  larger than 2000 using `joblib`.
-  :pr:`28622` by :user:`Adam Li <adam2392>` and
-  :user:`Sérgio Pereira <sergiormpereira>`.
 
 - |Enhancement| The verbosity of :class:`ensemble.HistGradientBoostingClassifier`
   and :class:`ensemble.HistGradientBoostingRegressor` got a more granular control. Now,
@@ -577,13 +566,6 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
   :func:`metrics.make_scorer` will change from `None` to `"predict"` and `None` will be
   removed in 1.8. In the meantime, `None` is equivalent to `"predict"`.
   By :user:`Jérémie du Boisberranger <jeremiedb>` :pr:`30001`
-
-:mod:`sklearn.mixture`
-..............................
-
-- |Feature| Add  :class:`mixture.GaussianMixtureIC` to perform Gaussian mixture
-  model selection.
-  :pr:`26735` by :user:`Tingshan Liu <tingshanL>`.
 
 :mod:`sklearn.model_selection`
 ------------------------------
