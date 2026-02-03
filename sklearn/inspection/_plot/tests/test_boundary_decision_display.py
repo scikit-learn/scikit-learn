@@ -3,10 +3,15 @@ import warnings
 import numpy as np
 import pytest
 
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import (
+    BaseEstimator,
+    ClassifierMixin,
+)
+from sklearn.cluster import KMeans
 from sklearn.datasets import (
     load_diabetes,
     load_iris,
+    make_blobs,
     make_classification,
     make_multilabel_classification,
 )
@@ -232,7 +237,7 @@ def test_decision_boundary_display_classifier(
 
 
 @pytest.mark.parametrize("response_method", ["auto", "predict", "decision_function"])
-@pytest.mark.parametrize("plot_method", ["contourf", "contour"])
+@pytest.mark.parametrize("plot_method", ["contourf", "contour", "pcolormesh"])
 def test_decision_boundary_display_outlier_detector(
     pyplot, response_method, plot_method
 ):
@@ -249,7 +254,10 @@ def test_decision_boundary_display_outlier_detector(
         eps=eps,
         ax=ax,
     )
-    assert isinstance(disp.surface_, pyplot.matplotlib.contour.QuadContourSet)
+    if plot_method == "pcolormesh":
+        assert isinstance(disp.surface_, pyplot.matplotlib.collections.QuadMesh)
+    else:
+        assert isinstance(disp.surface_, pyplot.matplotlib.contour.QuadContourSet)
     assert disp.ax_ == ax
     assert disp.figure_ == fig
 
@@ -281,7 +289,12 @@ def test_decision_boundary_display_regressor(pyplot, response_method, plot_metho
         eps=eps,
         plot_method=plot_method,
     )
-    assert isinstance(disp.surface_, pyplot.matplotlib.contour.QuadContourSet)
+    if disp.n_classes == 2 or plot_method == "contour":
+        assert isinstance(disp.surface_, pyplot.matplotlib.contour.QuadContourSet)
+    else:
+        assert isinstance(disp.surface_, list)
+        for surface in disp.surface_:
+            assert isinstance(surface, pyplot.matplotlib.contour.QuadContourSet)
     assert disp.ax_ == ax
     assert disp.figure_ == fig
 
@@ -611,15 +624,26 @@ def test_multiclass_plot_max_class(pyplot, response_method):
 
 
 @pytest.mark.parametrize(
-    "multiclass_colors",
+    "multiclass_colors, n_classes",
     [
-        "plasma",
-        "Blues",
-        ["red", "green", "blue"],
+        (None, 3),
+        (None, 11),
+        ("plasma", 3),
+        ("Blues", 3),
+        (["red", "green", "blue"], 3),
     ],
 )
+@pytest.mark.parametrize(
+    "response_method", ["decision_function", "predict_proba", "predict"]
+)
 @pytest.mark.parametrize("plot_method", ["contourf", "contour", "pcolormesh"])
-def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
+def test_multiclass_colors_cmap(
+    pyplot,
+    n_classes,
+    response_method,
+    plot_method,
+    multiclass_colors,
+):
     """Check correct cmap used for all `multiclass_colors` inputs."""
     import matplotlib as mpl
 
@@ -628,17 +652,24 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
             "Matplotlib >= 3.5 is needed for `==` to check equivalence of colormaps"
         )
 
-    X, y = load_iris_2d_scaled()
+    X, y = make_blobs(n_samples=150, centers=n_classes, n_features=2, random_state=42)
     clf = LogisticRegression().fit(X, y)
 
     disp = DecisionBoundaryDisplay.from_estimator(
         clf,
         X,
+        response_method=response_method,
         plot_method=plot_method,
         multiclass_colors=multiclass_colors,
     )
 
-    if multiclass_colors == "plasma":
+    if multiclass_colors is None:
+        if len(clf.classes_) <= 10:
+            colors = mpl.pyplot.get_cmap("tab10", 10).colors[: len(clf.classes_)]
+        else:
+            cmap = mpl.pyplot.get_cmap("gist_rainbow", len(clf.classes_))
+            colors = cmap(np.linspace(0, 1, len(clf.classes_)))
+    elif multiclass_colors == "plasma":
         colors = mpl.pyplot.get_cmap(multiclass_colors, len(clf.classes_)).colors
     elif multiclass_colors == "Blues":
         cmap = mpl.pyplot.get_cmap(multiclass_colors, len(clf.classes_))
@@ -646,17 +677,58 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
     else:
         colors = [mpl.colors.to_rgba(color) for color in multiclass_colors]
 
-    if plot_method != "contour":
+    # Make sure the colormap has enough distinct colors.
+    assert disp.n_classes == len(np.unique(colors, axis=0))
+
+    if response_method == "predict":
+        cmap = mpl.colors.ListedColormap(colors)
+        assert disp.surface_.cmap == cmap
+    elif plot_method != "contour":
         cmaps = [
             mpl.colors.LinearSegmentedColormap.from_list(
                 f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
             )
             for class_idx, (r, g, b, _) in enumerate(colors)
         ]
+        # Make sure every class has its own surface.
+        assert len(disp.surface_) == disp.n_classes
+
         for idx, quad in enumerate(disp.surface_):
             assert quad.cmap == cmaps[idx]
     else:
         assert_allclose(disp.surface_.colors, colors)
+
+    # non-regression test for issue #32866 (currently still fails)
+    # if hasattr(disp.surface_, "levels"):
+    #    assert len(disp.surface_.levels) >= disp.n_classes
+
+
+@pytest.mark.parametrize(
+    "estimator, n_blobs, expected_n_classes",
+    [
+        (DecisionTreeClassifier(random_state=0), 7, 7),
+        (DecisionTreeClassifier(random_state=0), 2, 2),
+        (KMeans(n_clusters=7, random_state=0), 7, 7),
+        (KMeans(n_clusters=2, random_state=0), 2, 2),
+        (DecisionTreeRegressor(random_state=0), 7, 2),
+        (IsolationForest(random_state=0), 7, 2),
+    ],
+)
+def test_n_classes_attribute(pyplot, estimator, n_blobs, expected_n_classes):
+    """Check that `n_classes` is set correctly.
+
+    Introduced in https://github.com/scikit-learn/scikit-learn/pull/33015"""
+
+    X, y = make_blobs(n_samples=150, centers=n_blobs, n_features=2, random_state=42)
+    clf = estimator.fit(X, y)
+    disp = DecisionBoundaryDisplay.from_estimator(clf, X, response_method="predict")
+    assert disp.n_classes == expected_n_classes
+
+    # Test that setting class_of_interest always converts to a binary problem.
+    disp_coi = DecisionBoundaryDisplay.from_estimator(
+        clf, X, class_of_interest=y[0], response_method="predict"
+    )
+    assert disp_coi.n_classes == 2
 
 
 def test_cmap_and_colors_logic(pyplot):
