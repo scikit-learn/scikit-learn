@@ -704,6 +704,34 @@ def test_multiclass_colors_cmap(
     #    assert len(disp.surface_.levels) >= disp.n_classes
 
 
+# estimator classes for non-regression test cases for issue #33194
+class CustomBinaryEstimator(BaseEstimator):
+    def fit(self, X, y):
+        self.fitted_ = True
+        return self
+
+    def predict(self, X):
+        return np.arange(X.shape[0]) % 2
+
+
+class CustomMulticlassEstimator(BaseEstimator):
+    def fit(self, X, y):
+        self.fitted_ = True
+        return self
+
+    def predict(self, X):
+        return np.arange(X.shape[0]) % 7
+
+
+class CustomContinuousEstimator(BaseEstimator):
+    def fit(self, X, y):
+        self.fitted_ = True
+        return self
+
+    def predict(self, X):
+        return np.arange(X.shape[0]) * 0.5
+
+
 @pytest.mark.parametrize(
     "estimator, n_blobs, expected_n_classes",
     [
@@ -713,6 +741,9 @@ def test_multiclass_colors_cmap(
         (KMeans(n_clusters=2, random_state=0), 2, 2),
         (DecisionTreeRegressor(random_state=0), 7, 2),
         (IsolationForest(random_state=0), 7, 2),
+        (CustomBinaryEstimator(), 2, 2),
+        (CustomMulticlassEstimator(), 7, 7),
+        (CustomContinuousEstimator(), 7, 2),
         (
             Pipeline(
                 [
