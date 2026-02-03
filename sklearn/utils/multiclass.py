@@ -113,7 +113,7 @@ def unique_labels(*ys, ys_types=None):
         raise ValueError("Unknown label type: %s" % repr(ys))
 
     if is_array_api_compliant and not _is_numpy_namespace(xp):
-        # array_api does not allow for mixed dtypes
+        # non-NumPy array API inputs do not allow for mixed dtypes
         unique_ys = xp.concat([_unique_labels(y, xp=xp) for y in ys])
         return xp.unique_values(unique_ys)
 
