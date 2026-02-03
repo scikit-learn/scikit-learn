@@ -405,7 +405,14 @@ class LinearClassifierMixin(ClassifierMixin):
             return np.vstack([1 - prob, prob]).T
         else:
             # OvR normalization, like LibLinear's predict_probability
-            prob /= prob.sum(axis=1).reshape((prob.shape[0], -1))
+            prob_sum = prob.sum(axis=1)
+            all_zero = prob_sum == 0
+            if np.any(all_zero):
+                # The above might assign zero to all classes, which doesn't
+                # normalize neatly; work around this to produce uniform probabilities.
+                prob[all_zero, :] = 1
+                prob_sum[all_zero] = prob.shape[1]  # n_classes
+            prob /= prob_sum.reshape((prob.shape[0], -1))
             return prob
 
 
