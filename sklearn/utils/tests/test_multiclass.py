@@ -20,6 +20,7 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
+    skip_if_array_api_compat_not_configured,
 )
 from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.utils.fixes import (
@@ -297,6 +298,7 @@ def test_unique_labels():
     assert_array_equal(unique_labels(np.ones((4, 5)), np.ones((5, 5))), np.arange(5))
 
 
+@skip_if_array_api_compat_not_configured
 def test_unique_labels_mixed_str_numerical_array_api():
     """Test error correct for mixed string and numerical input and dispatch enabled.
 
@@ -304,11 +306,13 @@ def test_unique_labels_mixed_str_numerical_array_api():
     the correct error.
     """
     y_string = np.array(["a", "b", "a", "a"])
+    y_object = np.array(["a", "b", "a", "a"], dtype=object)
     y_numerical = np.array([1, 0, 0, 1])
 
     with config_context(array_api_dispatch=True):
         with pytest.raises(ValueError, match="Mix of label input types"):
             unique_labels(y_string, y_numerical)
+            unique_labels(y_object, y_numerical)
 
 
 @pytest.mark.parametrize(
