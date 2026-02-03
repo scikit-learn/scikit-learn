@@ -127,7 +127,7 @@ jobs:
             DISTRIB: conda
             LOCK_FILE: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
 
-          - name: Linuw x86-64 pylatest_conda_forge_mkl
+          - name: Linux x86-64 pylatest_conda_forge_mkl
             os: ubuntu-22.04
             DISTRIB: conda
             LOCK_FILE: build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda.lock
