@@ -292,7 +292,7 @@ jobs:
             https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID \
             --junit-file $TEST_DIR/$JUNITXML \
             --auto-close false \
-            --job-name $JOB_NAME
+            --job-name "$JOB_NAME"
 
   free-threaded:
     name: Linux x86-64 pylatest_free_threaded
