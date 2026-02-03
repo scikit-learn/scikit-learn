@@ -136,7 +136,7 @@ def _check_targets(y_true, y_pred, sample_weight=None):
             )
         )
 
-    # We can't have more than one value on y_type => The set is no more needed
+    # We can't have more than one value in y_type => The set is no more needed
     y_type = y_type.pop()
 
     # No metrics support "multiclass-multioutput" format

@@ -10,7 +10,7 @@ from itertools import chain
 import numpy as np
 from scipy.sparse import issparse
 
-from sklearn.utils._array_api import get_namespace
+from sklearn.utils._array_api import _is_numpy_namespace, get_namespace
 from sklearn.utils._unique import attach_unique, cached_unique
 from sklearn.utils.fixes import VisibleDeprecationWarning
 from sklearn.utils.validation import _assert_all_finite, _num_samples, check_array
@@ -19,7 +19,9 @@ from sklearn.utils.validation import _assert_all_finite, _num_samples, check_arr
 def _unique_multiclass(y, xp=None):
     xp, is_array_api_compliant = get_namespace(y, xp=xp)
     if hasattr(y, "__array__") or is_array_api_compliant:
-        return cached_unique(xp.asarray(y), xp=xp)
+        a = cached_unique(xp.asarray(y), xp=xp)
+        return a
+        # return cached_unique(xp.asarray(y), xp=xp)
     else:
         return set(y)
 
@@ -88,7 +90,7 @@ def unique_labels(*ys, ys_types=None):
     if len(ys_types) > 1:
         raise ValueError("Mix type of y not allowed, got types %s" % ys_types)
 
-    # We can't have more than one value on y_type => The set is no more needed
+    # We can't have more than one value in y_type => The set is no more needed
     label_type = ys_types.pop()
 
     # Check consistency for the indicator format
@@ -110,7 +112,7 @@ def unique_labels(*ys, ys_types=None):
     if not _unique_labels:
         raise ValueError("Unknown label type: %s" % repr(ys))
 
-    if is_array_api_compliant:
+    if is_array_api_compliant and not _is_numpy_namespace(xp):
         # array_api does not allow for mixed dtypes
         unique_ys = xp.concat([_unique_labels(y, xp=xp) for y in ys])
         return xp.unique_values(unique_ys)
