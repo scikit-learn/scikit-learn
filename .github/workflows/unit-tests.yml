@@ -282,7 +282,7 @@ jobs:
         shell: bash
         run: |
           set -ex
-          if [[ -z "$JOB_NAME" ]]; then JOB_NAME="${{ matrix.name }}""; fi
+          if [[ -z "$JOB_NAME" ]]; then JOB_NAME="${{ matrix.name }}"; fi
 
           pip install defusedxml PyGithub
           python maint_tools/update_tracking_issue.py \
