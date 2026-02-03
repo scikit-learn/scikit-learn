@@ -20,8 +20,6 @@ cimport numpy as cnp
 cnp.import_array()
 from scipy.sparse import issparse
 
-# from sklearn.tree._utils cimport swap_array_slices
-
 
 # Constant to switch between algorithm non zero value extract algorithm
 # in SparsePartitioner
