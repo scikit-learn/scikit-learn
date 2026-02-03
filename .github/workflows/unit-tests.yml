@@ -371,6 +371,7 @@ jobs:
           -e SKLEARN_SKIP_NETWORK_TESTS
           -e SELECTED_TESTS
           -e CCACHE_COMPRESS
+          -e COMMIT_MESSAGE
           $DOCKER_CONTAINER
           sleep 1000000
 
