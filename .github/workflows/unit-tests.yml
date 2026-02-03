@@ -282,7 +282,7 @@ jobs:
         shell: bash
         run: |
           set -ex
-          JOB_NAME=${ ${{ matrix.name }}:-${{ github.jobs[github.job].name }} }
+          if [[ -z "$JOB_NAME" ]]; then JOB_NAME="${{ matrix.name }}""; fi
 
           pip install defusedxml PyGithub
           python maint_tools/update_tracking_issue.py \
@@ -299,16 +299,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
     if: contains(needs.retrieve-commit-message.outputs.message, '[free-threaded]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    # strategy:
-    #   matrix:
-    #     include:
-    #       - name: Linux x86-64 pylatest_free_threaded
     env:
       DISTRIB: conda-free-threaded
       LOCK_FILE: build_tools/azure/pylatest_free_threaded_linux-64_conda.lock
       COVERAGE: false
       # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
       PYTEST_XDIST_VERSION: none
+      JOB_NAME: "Linux x86-64 pylatest_free_threaded"
     steps: *unit-tests-steps
 
   scipy-dev:
@@ -321,4 +318,5 @@ jobs:
       LOCK_FILE: build_tools/azure/pylatest_pip_scipy_dev_linux-64_conda.lock
       SKLEARN_WARNINGS_AS_ERRORS: 1
       CHECK_PYTEST_SOFT_DEPENDENCY: true
+      JOB_NAME: "Linux x86-64 pylatest_pip_scipy_dev"
     steps: *unit-tests-steps
