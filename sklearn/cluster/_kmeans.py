@@ -2154,10 +2154,11 @@ class MiniBatchKMeans(_BaseKMeans):
         self._n_since_last_reassign = 0
 
         n_effective_samples = np.sum(sample_weight)
-        # Rescaling step for sample weights otherwise doesn not pass test_scaled_weights
-        n_steps = int((self.max_iter * n_effective_samples)) // (self._batch_size)
-        normalized_sample_weight = sample_weight / np.sum(sample_weight)
+
+        n_steps = (self.max_iter * n_samples) // self._batch_size
+        normalized_sample_weight = sample_weight / n_effective_samples
         unit_sample_weight = np.ones_like(sample_weight, shape=(self._batch_size,))
+
         with _get_threadpool_controller().limit(limits=1, user_api="blas"):
             # Perform the iterative optimization until convergence
             for i in range(n_steps):
@@ -2197,7 +2198,7 @@ class MiniBatchKMeans(_BaseKMeans):
 
                 # Monitor convergence and do early stopping if necessary
                 if self._mini_batch_convergence(
-                    i, n_steps, n_effective_samples, centers_squared_diff, batch_inertia
+                    i, n_steps, n_samples, centers_squared_diff, batch_inertia
                 ):
                     break
 
@@ -2205,7 +2206,7 @@ class MiniBatchKMeans(_BaseKMeans):
         self._n_features_out = self.cluster_centers_.shape[0]
 
         self.n_steps_ = i + 1
-        self.n_iter_ = int(np.ceil(((i + 1) * self._batch_size) / n_effective_samples))
+        self.n_iter_ = int(np.ceil(((i + 1) * self._batch_size) / n_samples))
 
         if self.compute_labels:
             self.labels_, self.inertia_ = _labels_inertia_threadpool_limit(
@@ -2215,10 +2216,6 @@ class MiniBatchKMeans(_BaseKMeans):
                 n_threads=self._n_threads,
             )
         else:
-            # In essence since the mini batch step is considering a
-            # weighted subselection of the data we need to pass on
-            # effective sampled into all computations within, feel
-            # free to correct me however if wrong.
             self.inertia_ = self._ewa_inertia * n_effective_samples
 
         return self
