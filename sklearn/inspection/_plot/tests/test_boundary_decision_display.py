@@ -804,6 +804,26 @@ def test_n_classes_attribute(pyplot, estimator, n_blobs, expected_n_classes):
     assert disp_coi.n_classes == 2
 
 
+def test_n_classes_raises_if_not_inferrable(pyplot):
+    """Check behaviour if `n_classes` can't be inferred.
+
+    Non-regression test for issue #33194"""
+
+    class CustomUnknownEstimator(BaseEstimator):
+        def fit(self, X, y):
+            self.fitted_ = True
+            return self
+
+        def predict(self, X):
+            return np.array(0)
+
+    X, y = load_iris_2d_scaled()
+    est = CustomUnknownEstimator().fit(X, y)
+    msg = "Number of classes or labels cannot be inferred from CustomUnknownEstimator"
+    with pytest.raises(ValueError, match=msg):
+        DecisionBoundaryDisplay.from_estimator(est, X, response_method="predict")
+
+
 def test_cmap_and_colors_logic(pyplot):
     """Check the handling logic for `cmap` and `colors`."""
     X, y = load_iris_2d_scaled()
