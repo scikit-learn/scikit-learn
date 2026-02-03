@@ -602,13 +602,13 @@ class DecisionBoundaryDisplay:
                     n_classes = 2
                 elif target_type == "multiclass":
                     n_classes = len(np.unique(response))
-
-        if n_classes is None:
-            raise ValueError(
-                f"'n_classes' cannot be inferred from {estimator.__class__.__name__}. "
-                "Please provide the expected number of unique classes or "
-                "labels via the 'n_classes' parameter."
-            )
+                else:
+                    raise ValueError(
+                        "'n_classes' cannot be inferred from "
+                        f"{estimator.__class__.__name__}. "
+                        "Please provide the expected number of unique classes or "
+                        "labels via the 'n_classes' parameter."
+                    )
 
         if response.ndim == 1:
             response = response.reshape(*xx0.shape)
