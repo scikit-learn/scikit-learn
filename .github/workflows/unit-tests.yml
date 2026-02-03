@@ -320,14 +320,7 @@ jobs:
   Linux-docker_debian_32bit:
     name: Linux docker_debian_32bit
     runs-on: ubuntu-24.04
-    # needs: [lint, retrieve-commit-message, retrieve-selected-tests]
-    # container:
-    #   image: i386/debian:trixie
-    #   env:
-    #     DISTRIB: debian-32
-    #     LOCK_FILE: build_tools/azure/debian_32bit_lock.txt
-    #     SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 4  # non-default seed
-
+    needs: [lint, retrieve-commit-message, retrieve-selected-tests]
     env:
       DISTRIB: debian-32
       LOCK_FILE: build_tools/azure/debian_32bit_lock.txt
@@ -352,6 +345,8 @@ jobs:
           activate-environment: ""
 
       - name: Start container
+        # Environment variable are passed when starting the container rather
+        # than in "Run tests step" for more standard jobs
         env:
           COMMIT_MESSAGE: ${{ needs.retrieve-commit-message.outputs.message }}
           SELECTED_TESTS: ${{ needs.retrieve-selected-tests.outputs.tests }}
