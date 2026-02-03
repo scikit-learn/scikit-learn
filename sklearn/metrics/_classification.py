@@ -102,7 +102,8 @@ def _check_targets(y_true, y_pred, sample_weight=None):
         ``utils.multiclass.type_of_target``.
 
     unique_labels : array
-        An ordered array of unique labels.
+        An ordered array of unique labels occurring either in `y_true`, `y_pred` or
+        both.
 
     y_true : array or indicator matrix
 
