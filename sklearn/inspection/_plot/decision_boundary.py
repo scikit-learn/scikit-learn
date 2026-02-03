@@ -12,6 +12,7 @@ from sklearn.utils._dataframe import is_pandas_df, is_polars_df
 from sklearn.utils._optional_dependencies import check_matplotlib_support
 from sklearn.utils._response import _get_response_values
 from sklearn.utils._set_output import _get_adapter_from_container
+from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import (
     _is_arraylike_not_scalar,
     _num_features,
@@ -341,6 +342,7 @@ class DecisionBoundaryDisplay:
         eps=1.0,
         plot_method="contourf",
         response_method="auto",
+        n_classes=None,
         class_of_interest=None,
         multiclass_colors=None,
         xlabel=None,
@@ -385,6 +387,12 @@ class DecisionBoundaryDisplay:
 
             .. versionchanged:: 1.6
                 For multiclass problems, 'auto' no longer defaults to 'predict'.
+
+        n_classes : int, default=None
+            Expected number of unique classes or labels.
+            If None, it is inferred from the estimator.
+
+            .. versionadded:: 1.9
 
         class_of_interest : int, float, bool or str, default=None
             The class to be plotted. For :term:`binary` classifiers, if None,
@@ -576,6 +584,32 @@ class DecisionBoundaryDisplay:
             encoder.classes_ = estimator.classes_
             response = encoder.transform(response)
 
+        if n_classes is None:
+            # try to infer n_classes from the estimator
+            if (
+                class_of_interest is not None
+                or is_regressor(estimator)
+                or is_outlier_detector(estimator)
+            ):
+                n_classes = 2
+            elif is_classifier(estimator) and hasattr(estimator, "classes_"):
+                n_classes = len(estimator.classes_)
+            elif is_clusterer(estimator) and hasattr(estimator, "labels_"):
+                n_classes = len(np.unique(estimator.labels_))
+            else:
+                target_type = type_of_target(response)
+                if target_type in ("binary", "continuous"):
+                    n_classes = 2
+                elif target_type == "multiclass":
+                    n_classes = len(np.unique(response))
+
+        if n_classes is None:
+            raise ValueError(
+                f"'n_classes' cannot be inferred from {estimator.__class__.__name__}. "
+                "Please provide the expected number of unique classes or "
+                "labels via the 'n_classes' parameter."
+            )
+
         if response.ndim == 1:
             response = response.reshape(*xx0.shape)
         else:
@@ -590,17 +624,6 @@ class DecisionBoundaryDisplay:
                 response = response[:, col_idx].reshape(*xx0.shape)
             else:
                 response = response.reshape(*xx0.shape, response.shape[-1])
-
-        if (
-            class_of_interest is not None
-            or is_regressor(estimator)
-            or is_outlier_detector(estimator)
-        ):
-            n_classes = 2
-        elif is_classifier(estimator):
-            n_classes = len(estimator.classes_)
-        elif is_clusterer(estimator):
-            n_classes = len(np.unique(estimator.labels_))
 
         if xlabel is None:
             xlabel = X.columns[0] if hasattr(X, "columns") else ""
