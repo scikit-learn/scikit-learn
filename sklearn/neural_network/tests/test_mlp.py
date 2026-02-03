@@ -1083,7 +1083,6 @@ def test_mlp_vs_poisson_glm_equivalent(global_random_seed):
         tol=1e-7,
         random_state=np.random.RandomState(global_random_seed + 1),
     ).fit(X, y)
-    assert False
     assert not np.allclose(mlp.predict(X), glm.predict(X), rtol=1e-4)
 
 
