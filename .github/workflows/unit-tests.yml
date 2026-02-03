@@ -282,26 +282,27 @@ jobs:
         shell: bash
         run: |
           set -ex
+          JOB_NAME=${{ matrix.name }:-{ job.name }}
 
           pip install defusedxml PyGithub
           python maint_tools/update_tracking_issue.py \
             ${{ secrets.BOT_GITHUB_TOKEN }} \
-            "$GITHUB_WORKFLOW ${{ matrix.name }}" \
+            "$GITHUB_WORKFLOW $JOB_NAME" \
             "$GITHUB_REPOSITORY" \
             https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID \
             --junit-file $TEST_DIR/$JUNITXML \
             --auto-close false \
-            --job-name "${{ matrix.name }}"
+            --job-name $JOB_NAME
 
   free-threaded:
     name: Linux x86-64 pylatest_free_threaded
     runs-on: ubuntu-latest
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
     if: contains(needs.retrieve-commit-message.outputs.message, '[free-threaded]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    strategy:
-      matrix:
-        include:
-          - name: Linux x86-64 pylatest_free_threaded
+    # strategy:
+    #   matrix:
+    #     include:
+    #       - name: Linux x86-64 pylatest_free_threaded
     env:
       DISTRIB: conda-free-threaded
       LOCK_FILE: build_tools/azure/pylatest_free_threaded_linux-64_conda.lock
