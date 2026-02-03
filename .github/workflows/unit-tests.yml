@@ -398,7 +398,7 @@ jobs:
         if: ${{ env.CHECK_PYTEST_SOFT_DEPENDENCY == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
 
       - name: Combine coverage reports from parallel test runners
-        run: docker exec bash -l build_tools/azure/combine_coverage_reports.sh
+        run: docker exec skcontainer bash -l build_tools/azure/combine_coverage_reports.sh
         if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
 
       - name: Upload coverage report to Codecov
