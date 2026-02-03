@@ -122,7 +122,12 @@ plot_scatter(X_new, probable_clusters)
 
 # Plotting decision regions
 DecisionBoundaryDisplay.from_estimator(
-    inductive_learner, X, response_method="predict", alpha=0.4, ax=ax
+    inductive_learner,
+    X,
+    response_method="predict",
+    multiclass_colors="viridis",
+    alpha=0.4,
+    ax=ax,
 )
 plt.title("Classify unknown instances")
 
