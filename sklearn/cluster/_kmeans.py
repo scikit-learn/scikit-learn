@@ -933,16 +933,17 @@ class _BaseKMeans(
             if has_vcomp and has_mkl:
                 self._warn_mkl_vcomp(n_active_threads)
 
-    def _validate_center_shape(self, X, centers, n_centers=None):
-        """Check if centers is compatible with X and n_clusters."""
-        if n_centers is None:
-            n_centers = self.n_clusters
+    def _validate_center_shape(self, X, centers, n_centroids=None):
+        """Check if the shape of the centers is correct."""
+        if n_centroids is None:
+            n_centroids = self.n_clusters
 
-        if centers.shape[0] != n_centers:
+        if centers.shape[0] != n_centroids:
             raise ValueError(
                 f"The shape of the initial centers {centers.shape} does not "
-                f"match the number of clusters {n_centers}."
+                f"match the number of clusters {n_centroids}."
             )
+
         if centers.shape[1] != X.shape[1]:
             raise ValueError(
                 f"The shape of the initial centers {centers.shape} does not "

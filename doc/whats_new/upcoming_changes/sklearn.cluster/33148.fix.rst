@@ -1,1 +1,1 @@
-- Fixed a :exc:`ValueError` in :class:`cluster.BisectingKMeans` when using a custom `init` callable with `n_clusters > 2`.
+- Fixed a bug in :class:`cluster.BisectingKMeans` when using a custom callable `init` with `n_clusters > 2`. By :user:`Mohammad Ahmadullah Khan <MAUK9086>`.
