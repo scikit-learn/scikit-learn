@@ -282,7 +282,7 @@ jobs:
         shell: bash
         run: |
           set -ex
-          JOB_NAME=${${{ matrix.name }}:-${{ job.name }}}
+          JOB_NAME=${ ${{ matrix.name }}:-${{ github.jobs[github.job].name }} }
 
           pip install defusedxml PyGithub
           python maint_tools/update_tracking_issue.py \
