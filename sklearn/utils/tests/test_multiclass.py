@@ -312,6 +312,7 @@ def test_unique_labels_mixed_str_numerical_array_api():
     with config_context(array_api_dispatch=True):
         with pytest.raises(ValueError, match="Mix of label input types"):
             unique_labels(y_string, y_numerical)
+        with pytest.raises(ValueError, match="Mix of label input types"):
             unique_labels(y_object, y_numerical)
 
 
@@ -337,7 +338,7 @@ def test_unique_labels_array_api(array_namespace, device, dtype_name):
 
 
 def test_unique_labels_torch_array_api_disabled():
-    """Check PyTorch cpu input with array API dispatch disabled."""
+    """Check PyTorch cpu input to `unique_labels` with array API dispatch disabled."""
     xp = _array_api_for_tests("torch", "cpu")
     y1_np = np.array([1, 2, 3])
     y2_np = np.array([2, 3, 4])
