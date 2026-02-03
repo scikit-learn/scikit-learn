@@ -352,6 +352,10 @@ jobs:
           activate-environment: ""
 
       - name: Start container
+        env:
+          COMMIT_MESSAGE: ${{ needs.retrieve-commit-message.outputs.message }}
+          SELECTED_TESTS: ${{ needs.retrieve-selected-tests.outputs.tests }}
+          COVERAGE: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
         run: >
           docker container run --rm
           --volume $TEST_DIR:/temp_dir
@@ -383,10 +387,6 @@ jobs:
         run: echo "SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$((RANDOM % 100))" >> $GITHUB_ENV
 
       - name: Run tests
-        env:
-          COMMIT_MESSAGE: ${{ needs.retrieve-commit-message.outputs.message }}
-          SELECTED_TESTS: ${{ needs.retrieve-selected-tests.outputs.tests }}
-          COVERAGE: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
         run: docker exec skcontainer bash -l build_tools/azure/test_script.sh
 
       - name: Run doctests in .py and .rst files
