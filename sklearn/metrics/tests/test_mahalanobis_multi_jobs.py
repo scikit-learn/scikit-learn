@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from sklearn.neighbors import LocalOutlierFactor
 from sklearn.metrics import DistanceMetric
+from sklearn.neighbors import LocalOutlierFactor
 
 
 def make_dataset(rng, n_inliers, n_outliers, n_features, outlier_shift):
@@ -52,7 +52,9 @@ def test_lof_mahalanobis_parallel_matches_serial(
 @pytest.mark.parametrize("n_jobs", [2, 4, 8])
 def test_lof_mahalanobis_parallel_stable_across_runs(n_jobs):
     rng = np.random.RandomState(123)
-    X = make_dataset(rng, n_inliers=400, n_outliers=20, n_features=5, outlier_shift=11.0)
+    X = make_dataset(
+        rng, n_inliers=400, n_outliers=20, n_features=5, outlier_shift=11.0
+    )
     metric = mahalanobis_metric(X)
 
     y1 = fit_predict_lof(X, metric, n_neighbors=30, n_jobs=n_jobs)
