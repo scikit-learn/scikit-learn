@@ -11,6 +11,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.externals import array_api_extra as xpx
 from sklearn.utils import column_or_1d
 from sklearn.utils._array_api import (
     _convert_to_numpy,
@@ -21,7 +22,6 @@ from sklearn.utils._array_api import (
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
-    xpx,
 )
 from sklearn.utils._encode import _encode, _unique
 from sklearn.utils._param_validation import Interval, validate_params
