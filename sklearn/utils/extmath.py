@@ -1259,7 +1259,7 @@ def _incremental_mean_and_var(
             # avoid NaN in updated variance when last_sample_count is zero
             updated_unnormalized_variance = xpx.at(
                 updated_unnormalized_variance, zeros
-            ).set(new_unnormalized_variance)
+            ).set(new_unnormalized_variance[zeros])
         updated_variance = updated_unnormalized_variance / updated_sample_count
 
     return updated_mean, updated_variance, updated_sample_count
