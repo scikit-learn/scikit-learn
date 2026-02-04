@@ -22,7 +22,7 @@ from sklearn.linear_model._base import (
 from sklearn.linear_model._glm.glm import NewtonCholeskySolver
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.linear_model._sag import sag_solver
-from sklearn.metrics import get_scorer, get_scorer_names
+from sklearn.metrics import brier_score_loss, get_scorer, get_scorer_names
 from sklearn.model_selection import check_cv
 from sklearn.preprocessing import LabelEncoder
 from sklearn.svm._base import _fit_liblinear
@@ -712,6 +712,13 @@ def _log_reg_scoring_path(
     scores = list()
 
     scoring = get_scorer(scoring)
+    if (
+        scoring is not None
+        and getattr(scoring, "_score_func", None) is brier_score_loss
+    ):
+        scorer_kwargs = getattr(scoring, "_kwargs", None)
+        if isinstance(scorer_kwargs, dict) and "labels" not in scorer_kwargs:
+            scoring._kwargs = {**scorer_kwargs, "labels": classes}
     for w in coefs:
         if fit_intercept:
             log_reg.coef_ = w[..., :-1]
@@ -723,11 +730,8 @@ def _log_reg_scoring_path(
         if scoring is None:
             scores.append(log_reg.score(X_test, y_test, sample_weight=sw_test))
         else:
-            score_params = score_params or {}
+            score_params = {} if score_params is None else dict(score_params)
             score_params = _check_method_params(X=X, params=score_params, indices=test)
-            # FIXME: If scoring = "neg_brier_score" and if not all class labels
-            # are present in y_test, the following fails. Maybe we can pass
-            # "labels=classes" to the call of scoring.
             scores.append(scoring(log_reg, X_test, y_test, **score_params))
     return coefs, Cs, np.array(scores), n_iter
 
