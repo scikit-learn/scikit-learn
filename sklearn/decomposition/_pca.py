@@ -13,6 +13,7 @@ from scipy.sparse.linalg import svds
 
 from sklearn.base import _fit_context
 from sklearn.decomposition._base import _BasePCA
+from sklearn.externals import array_api_extra as xpx
 from sklearn.utils import check_random_state
 from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._array_api import device, get_namespace
@@ -627,7 +628,7 @@ class PCA(_BasePCA):
             # construction. However, the eigenvalues returned by xp.linalg.eigh
             # can be slightly negative due to numerical errors. This would be
             # an issue for the subsequent sqrt, hence the manual clipping.
-            eigenvals = xp.clip(eigenvals, 0, None)
+            eigenvals = xpx.at(eigenvals)[eigenvals < 0.0].set(0.0)
             explained_variance_ = eigenvals
 
             # Re-construct SVD of centered X indirectly and make it consistent
