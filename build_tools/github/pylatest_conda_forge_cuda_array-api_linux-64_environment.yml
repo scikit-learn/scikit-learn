@@ -27,4 +27,5 @@ dependencies:
   - polars
   - pyarrow
   - cupy
+  - rapidsai::cuvs
   - array-api-strict
