@@ -1,0 +1,1 @@
+Fix nondeterministic results in LocalOutlierFactor with Mahalanobis distance when using ``n_jobs > 1`` while preserving the buffer-based performance optimization.
