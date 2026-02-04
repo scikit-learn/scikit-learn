@@ -153,7 +153,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
                 "implementation."
             )
 
-        return hstack((X_imputed, X_indicator))
+        return _align_api_if_sparse(hstack((X_imputed, X_indicator)))
 
     def _concatenate_indicator_feature_names_out(self, names, input_features):
         if not self.add_indicator:

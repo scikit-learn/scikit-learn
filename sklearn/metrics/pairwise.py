@@ -40,6 +40,7 @@ from sklearn.utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import row_norms, safe_sparse_dot
 from sklearn.utils.fixes import parse_version, sp_base_version
 from sklearn.utils.parallel import Parallel, delayed
@@ -1748,7 +1749,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
 
     K = safe_sparse_dot(X_normalized, Y_normalized.T, dense_output=dense_output)
 
-    return K
+    return _align_api_if_sparse(K)
 
 
 @validate_params(

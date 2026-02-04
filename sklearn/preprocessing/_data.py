@@ -34,6 +34,7 @@ from sklearn.utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import _incremental_mean_and_var, row_norms
 from sklearn.utils.sparsefuncs import (
     incr_mean_variance_axis,
@@ -2629,7 +2630,8 @@ def add_dummy_feature(X, value=1.0):
             row = np.concatenate((np.arange(n_samples), X.row))
             # Prepend the dummy feature n_samples times.
             data = np.concatenate((np.full(n_samples, value), X.data))
-            return X.__class__((data, (row, col)), shape)
+            result = sparse.coo_array((data, (row, col)), shape)
+            return _align_api_if_sparse(result)
         elif X.format == "csc":
             # Shift index pointers since we need to add n_samples elements.
             indptr = X.indptr + n_samples
@@ -2639,9 +2641,10 @@ def add_dummy_feature(X, value=1.0):
             indices = np.concatenate((np.arange(n_samples), X.indices))
             # Prepend the dummy feature n_samples times.
             data = np.concatenate((np.full(n_samples, value), X.data))
-            return X.__class__((data, indices, indptr), shape)
-        else:
-            return X.__class__(add_dummy_feature(X.tocoo(), value))
+            result = sparse.csc_array((data, indices, indptr), shape)
+            return _align_api_if_sparse(result)
+        else:  # "csr" format
+            return _align_api_if_sparse(add_dummy_feature(X.tocoo(), value).tocsr())
     else:
         return np.hstack((np.full((n_samples, 1), value), X))
 
