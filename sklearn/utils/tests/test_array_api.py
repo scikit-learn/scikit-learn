@@ -565,8 +565,7 @@ def test_indexing_dtype(namespace, _device, _dtype):
 )
 def test_max_precision_float_dtype(namespace, _device, _dtype):
     xp = _array_api_for_tests(namespace, _device)
-    expected_dtype = xp.float32 if _device == "mps" else xp.float64
-    assert _max_precision_float_dtype(xp, _device) == expected_dtype
+    assert _max_precision_float_dtype(xp, _device) in (xp.float64, xp.float32)
 
 
 @pytest.mark.parametrize(

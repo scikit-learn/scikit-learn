@@ -1114,6 +1114,27 @@ def check_array_api_input(
         est_xp.fit(X_xp, y_xp, **fit_kwargs_xp)
         input_ns = get_namespace(X_xp)[0].__name__
 
+    def accepted_dtypes(reference_numpy_dtype):
+        if array_namespace == "jax.numpy":
+            import jax
+
+            if not jax.config.x64_enabled:
+                if reference_numpy_dtype == np.float64:
+                    return (np.float32, np.float64)
+                if reference_numpy_dtype == np.int64:
+                    return (np.int32, np.int64)
+
+        elif array_namespace in ("torch", "array_api_compat.torch"):
+            if device == "mps":
+                # For mps devices the maximum supported floating dtype is float32.
+                if reference_numpy_dtype == np.float64:
+                    return (np.float32,)
+            elif device == "xpu":
+                # Some Intel XPU devices do not support float64.
+                if reference_numpy_dtype == np.float64:
+                    return (np.float32, np.float64)
+        return (reference_numpy_dtype,)
+
     # Fitted attributes which are arrays must have the same
     # namespace as the one of the training data.
     for key, attribute in array_attributes.items():
@@ -1138,11 +1159,7 @@ def check_array_api_input(
             )
         else:
             assert attribute.shape == est_xp_param_np.shape
-            if device == "mps" and np.issubdtype(est_xp_param_np.dtype, np.floating):
-                # for mps devices the maximum supported floating dtype is float32
-                assert est_xp_param_np.dtype == np.float32
-            else:
-                assert est_xp_param_np.dtype == attribute.dtype
+            assert est_xp_param_np.dtype in accepted_dtypes(attribute.dtype)
 
     # Check estimator methods, if supported, give the same results
     methods = (
@@ -1224,14 +1241,14 @@ def check_array_api_input(
             result_xp_np = _convert_to_numpy(result_xp, xp=xp)
             if check_values:
                 assert_allclose(
-                    result,
                     result_xp_np,
+                    result,
                     err_msg=f"{method} did not the return the same result",
                     atol=_atol_for_type(X.dtype),
                 )
             elif hasattr(result, "shape"):
-                assert result.shape == result_xp_np.shape
-                assert result.dtype == result_xp_np.dtype
+                assert result_xp_np.shape == result.shape
+                assert result_xp_np.dtype in accepted_dtypes(result.dtype)
 
         if method_name == "transform" and hasattr(est, "inverse_transform"):
             inverse_result = est.inverse_transform(result)
@@ -1251,14 +1268,16 @@ def check_array_api_input(
                 inverse_result_xp_np = _convert_to_numpy(inverse_result_xp, xp=xp)
                 if check_values:
                     assert_allclose(
-                        inverse_result,
                         inverse_result_xp_np,
+                        inverse_result,
                         err_msg="inverse_transform did not the return the same result",
                         atol=_atol_for_type(X.dtype),
                     )
                 elif hasattr(result, "shape"):
-                    assert inverse_result.shape == inverse_result_xp_np.shape
-                    assert inverse_result.dtype == inverse_result_xp_np.dtype
+                    assert inverse_result_xp_np.shape == inverse_result.shape
+                    assert inverse_result_xp_np.dtype in accepted_dtypes(
+                        inverse_result.dtype
+                    )
 
 
 def check_array_api_input_and_values(
