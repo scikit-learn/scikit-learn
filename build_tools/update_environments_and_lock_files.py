@@ -101,7 +101,7 @@ build_metadata_list = [
         "tag": "cuda",
         "folder": "build_tools/github",
         "platform": "linux-64",
-        "channels": ["conda-forge", "pytorch", "nvidia"],
+        "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies
         + [
             "ccache",
@@ -112,9 +112,6 @@ build_metadata_list = [
             "jax",
             "array-api-strict",
         ],
-        "package_constraints": {
-            "blas": "[build=mkl]",
-        },
     },
     {
         "name": "pylatest_conda_forge_mkl_linux-64",
@@ -652,6 +649,9 @@ def write_pip_lock_file(build_metadata):
             "-n",
             f"pip-tools-python{python_version}",
             f"python={python_version}",
+            # TODO remove the following line once pip-tools is compatible with pip 26.0,
+            # see https://github.com/jazzband/pip-tools/issues/2319
+            "pip=25.3",
             "pip-tools",
             "-y",
         ]
