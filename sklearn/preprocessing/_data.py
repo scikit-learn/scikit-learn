@@ -16,6 +16,7 @@ from sklearn.base import (
     TransformerMixin,
     _fit_context,
 )
+from sklearn.externals import array_api_extra as xpx
 from sklearn.preprocessing._encoders import OneHotEncoder
 from sklearn.utils import _array_api, check_array, metadata_routing, resample
 from sklearn.utils._array_api import (
@@ -127,7 +128,8 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
         if copy:
             # New array to avoid side-effects
             scale = xp.asarray(scale, copy=True)
-        return xp.where(constant_mask, 1.0, scale)
+        scale = xpx.at(scale)[constant_mask].set(1.0)
+        return scale
 
 
 @validate_params(
