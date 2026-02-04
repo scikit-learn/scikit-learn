@@ -807,7 +807,8 @@ def test_n_classes_attribute(pyplot, estimator, n_blobs, expected_n_classes):
 def test_n_classes_raises_if_not_inferrable(pyplot):
     """Check behaviour if `n_classes` can't be inferred.
 
-    Non-regression test for issue #33194"""
+    Non-regression test for issue #33194.
+    """
 
     class CustomUnknownEstimator(BaseEstimator):
         def fit(self, X, y):
