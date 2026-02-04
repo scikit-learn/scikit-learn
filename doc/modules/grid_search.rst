@@ -536,7 +536,7 @@ additional information related to the successive halving process.
 
   .. [1] K. Jamieson, A. Talwalkar,
      `Non-stochastic Best Arm Identification and Hyperparameter
-     Optimization <http://proceedings.mlr.press/v51/jamieson16.html>`_, in
+     Optimization <https://proceedings.mlr.press/v51/jamieson16.html>`_, in
      proc. of Machine Learning Research, 2016.
 
   .. [2] L. Li, K. Jamieson, G. DeSalvo, A. Rostamizadeh, A. Talwalkar,
