@@ -2271,8 +2271,8 @@ def binarize(X, *, threshold=0.0, copy=True):
         float_dtype = _find_matching_floating_dtype(X, threshold, xp=xp)
         cond = xp.astype(X, float_dtype, copy=False) > threshold
         not_cond = xp.logical_not(cond)
-        X = xp.where(cond, 1, X)
-        X = xp.where(not_cond, 0, X)
+        X = xpx.at(X)[cond].set(1)
+        X = xpx.at(X)[not_cond].set(0)
     return X
 
 

@@ -667,10 +667,10 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
     if not sparse_output:
         if neg_label != 0:
-            Y = xp.where(Y == 0, neg_label, Y)
+            Y = xpx.at(Y)[Y == 0].set(neg_label)
 
         if pos_switch:
-            Y = xp.where(Y == pos_label, 0, Y)
+            Y = xpx.at(Y)[Y == pos_label].set(0)
 
         Y = xp.astype(Y, int_dtype_, copy=False)
     else:
