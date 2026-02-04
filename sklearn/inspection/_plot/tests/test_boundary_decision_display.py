@@ -790,7 +790,8 @@ class CustomContinuousEstimator(BaseEstimator):
 def test_n_classes_attribute(pyplot, estimator, n_blobs, expected_n_classes):
     """Check that `n_classes` is set correctly.
 
-    Introduced in https://github.com/scikit-learn/scikit-learn/pull/33015"""
+    Introduced in https://github.com/scikit-learn/scikit-learn/pull/33015.
+    """
 
     X, y = make_blobs(n_samples=150, centers=n_blobs, n_features=2, random_state=42)
     clf = estimator.fit(X, y)
