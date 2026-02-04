@@ -254,9 +254,7 @@ def test_subsampled_weighted_vs_repeated_equivalence(seed, n_bins):
     for _ in range(n_subsample):
         params = dict(n_bins=n_bins, subsample=300, random_state=rng)
         est_weighted = _BinMapper(**params).fit(X, sample_weight=sw)
-        est_repeated = _BinMapper(**params).fit(
-            X_repeated, sample_weight=None
-        )
+        est_repeated = _BinMapper(**params).fit(X_repeated, sample_weight=None)
         bins_weighted.append(np.hstack(est_weighted.bin_thresholds_))
         bins_repeated.append(np.hstack(est_repeated.bin_thresholds_))
 
