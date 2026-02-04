@@ -708,7 +708,8 @@ def _argmin_reduce(dist, start):
     # `start` is specified in the signature but not used. This is because the higher
     # order `pairwise_distances_chunked` function needs reduction functions that are
     # passed as argument to have a two arguments signature.
-    return dist.argmin(axis=1)
+    xp, _ = get_namespace(dist)
+    return xp.argmin(dist, axis=1)
 
 
 _VALID_METRICS = [
@@ -1001,6 +1002,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     if metric not in PAIRWISE_BOOLEAN_FUNCTIONS:
         ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
         check_pairwise_arrays(X, Y, ensure_all_finite=ensure_all_finite)
+    xp, _ = get_namespace(X, Y)
 
     if axis == 0:
         X, Y = Y, X
@@ -1008,7 +1010,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     if metric_kwargs is None:
         metric_kwargs = {}
 
-    if ArgKmin.is_usable_for(X, Y, metric):
+    if ArgKmin.is_usable_for(X, Y, metric) and _is_numpy_namespace(xp):
         # This is an adaptor for one "sqeuclidean" specification.
         # For this backend, we can directly use "sqeuclidean".
         if metric_kwargs.get("squared", False) and metric == "euclidean":
@@ -1036,14 +1038,13 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         # Turn off check for finiteness because this is costly and because arrays
         # have already been validated.
         with config_context(assume_finite=True):
-            indices = np.concatenate(
+            indices = xp.concat(
                 list(
-                    # This returns an np.ndarray generator whose arrays we need
-                    # to flatten into one.
                     pairwise_distances_chunked(
                         X, Y, reduce_func=_argmin_reduce, metric=metric, **metric_kwargs
                     )
-                )
+                ),
+                axis=0,
             )
 
     return indices
