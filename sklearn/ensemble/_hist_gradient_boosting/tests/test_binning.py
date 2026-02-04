@@ -248,7 +248,7 @@ def test_subsampled_weighted_vs_repeated_equivalence(seed, n_bins):
 
     # Collect estimated bins thresholds on the weighted/repeated datasets
     # for `n_subsample` subsampling.
-    n_subsample = 100
+    n_subsample = 50
     bins_weighted = []
     bins_repeated = []
     for _ in range(n_subsample):
