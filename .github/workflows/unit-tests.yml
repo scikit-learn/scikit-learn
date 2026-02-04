@@ -239,7 +239,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ccache-v1-$JOB_NAME-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp', format('{0}', $LOCK_FILE)) }}
+          key: ccache-v1-$JOB_NAME-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp', format('{0}', env.LOCK_FILE)) }}
           restore-keys: ccache-$JOB_NAME
 
       - name: Set up conda
