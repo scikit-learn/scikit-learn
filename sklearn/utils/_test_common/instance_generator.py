@@ -1144,6 +1144,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     PCA: {
+        # TODO: see gh-33205 for details
         "check_array_api_input": "`linalg.inv` fails because input is singular",
     },
     Perceptron: {
