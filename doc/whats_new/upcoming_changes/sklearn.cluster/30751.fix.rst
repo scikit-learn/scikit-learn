@@ -1,6 +1,6 @@
 - :class:`cluster.MiniBatchKMeans` now correctly handles sample weights
     during fitting. When sample weights are not None, mini-batch
-    indices are created by sampling with replacement using the
+    indices are created by sub-sampling with replacement using the
     normalized sample weights as probabilities. Sample weights are
     then set to one in the mini-batch step calculation to avoid
     double weighting.
