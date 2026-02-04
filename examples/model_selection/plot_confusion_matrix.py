@@ -74,12 +74,12 @@ plt.show()
 # Binary Classification
 # =====================
 #
-# For binary problems, :func:`sklearn.metrics.confusion_matrix` has the `ravel` method
-# we can use get counts of true negatives, false positives, false negatives and
-# true positives.
+# For binary classification, use :func:`sklearn.metrics.confusion_matrix` with
+# the `ravel` method to get counts of true negatives, false positives, false
+# negatives, and true positives.
 #
-# To obtain true negatives, false positives, false negatives and true
-# positives counts at different thresholds, one can use
+# To obtain counts of true negatives, false positives, false negatives, and true
+# positives at different thresholds, one can use
 # :func:`sklearn.metrics.confusion_matrix_at_thresholds`.
 # This is fundamental for binary classification
 # metrics like :func:`~sklearn.metrics.roc_auc_score` and
@@ -106,15 +106,15 @@ classifier.fit(X_train, y_train)
 
 y_score = classifier.predict_proba(X_test)[:, 1]
 
-tns, fps, fns, tps, threshold = confusion_matrix_at_thresholds(y_test, y_score)
+tns, fps, fns, tps, thresholds = confusion_matrix_at_thresholds(y_test, y_score)
 
 # Plot TNs, FPs, FNs and TPs vs Thresholds
 plt.figure(figsize=(10, 6))
 
-plt.plot(threshold, tns, label="True Negatives (TNs)")
-plt.plot(threshold, fps, label="False Positives (FPs)")
-plt.plot(threshold, fns, label="False Negatives (FNs)")
-plt.plot(threshold, tps, label="True Positives (TPs)")
+plt.plot(thresholds, tns, label="True Negatives (TNs)")
+plt.plot(thresholds, fps, label="False Positives (FPs)")
+plt.plot(thresholds, fns, label="False Negatives (FNs)")
+plt.plot(thresholds, tps, label="True Positives (TPs)")
 plt.xlabel("Thresholds")
 plt.ylabel("Count")
 plt.title("TNs, FPs, FNs and TPs vs Thresholds")
