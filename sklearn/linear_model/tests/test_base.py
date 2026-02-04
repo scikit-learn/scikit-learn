@@ -749,23 +749,14 @@ def test_fused_types_make_dataset(csr_container):
     assert_array_equal(yi_64, yicsr_64)
 
 
-@pytest.mark.parametrize("X_shape", [(10, 5), (10, 20), (100, 100)])
 @pytest.mark.parametrize(
-    "sparse_container",
-    [None]
-    + [
-        pytest.param(
-            container,
-            marks=pytest.mark.xfail(
-                reason="Known to fail for CSR arrays, see issue #30131."
-            ),
-        )
-        for container in CSR_CONTAINERS
-    ],
+    "X_shape", [(10, 5), (10, 20), (10, 10)], ids=["long", "wide", "square"]
 )
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_linear_regression_sample_weight_consistency(
-    X_shape, sparse_container, fit_intercept, global_random_seed
+    X_shape, sparse_container, fit_intercept, dtype, global_random_seed
 ):
     """Test that the impact of sample_weight is consistent.
 
@@ -780,8 +771,14 @@ def test_linear_regression_sample_weight_consistency(
     y = rng.rand(n_samples)
     if sparse_container is not None:
         X = sparse_container(X)
-    params = dict(fit_intercept=fit_intercept)
+    X = X.astype(dtype)
+    y = y.astype(dtype)
 
+    params = dict(fit_intercept=fit_intercept)
+    if sparse_container is not None:
+        # On sparse data we specify the `tol` argument used by the
+        # underlying solver (scipy.sparse.linalg), see issue #30131.
+        params["tol"] = 1e-12
     reg = LinearRegression(**params).fit(X, y, sample_weight=None)
     coef = reg.coef_.copy()
     if fit_intercept:
