@@ -1,4 +1,5 @@
 import re
+import sys
 from pprint import PrettyPrinter
 
 import numpy as np
@@ -691,3 +692,20 @@ def test_complexity_print_changed_only():
         nb_repr_print_changed_only_true = DummyEstimator.nb_times_repr_called
 
     assert nb_repr_print_changed_only_false == nb_repr_print_changed_only_true
+
+
+def test_do_not_sort_dicts():
+    pp = _EstimatorPrettyPrinter(sort_dicts=False)
+
+    d = dict.fromkeys("cba")
+    assert pp.pformat(d) == "{'c': None, 'b': None, 'a': None}"
+    assert pp.pformat([d, d]) == (
+        "[{'c': None, 'b': None, 'a': None}, {'c': None, 'b': None, 'a': None}]"
+    )
+
+
+@pytest.mark.skipif(sys.version_info < (3, 10), reason="requires python3.10 or higher")
+def test_underscore_numbers():
+    pp = _EstimatorPrettyPrinter(underscore_numbers=True)
+
+    assert pp.pformat(1234567) == "1_234_567"
