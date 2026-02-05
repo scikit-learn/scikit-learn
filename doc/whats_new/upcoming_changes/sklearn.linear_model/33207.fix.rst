@@ -1,0 +1,4 @@
+- :class:`linear_model.LogisticRegressionCV` now correctly handles probabilistic 
+  scorers (like ``neg_brier_score`` or ``neg_log_loss``) when some cross-validation 
+  folds are missing class labels.
+  By :user:`unique <un1u3>`

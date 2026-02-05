@@ -5,13 +5,13 @@ Logistic Regression
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import copy
 import numbers
 import warnings
+from inspect import signature
 from numbers import Integral, Real
 
 import numpy as np
-import copy
-from inspect import signature
 from scipy import optimize
 
 from sklearn._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
@@ -720,8 +720,9 @@ def _log_reg_scoring_path(
             try:
                 if "labels" in signature(scorer_func).parameters:
                     if "labels" not in scorer._kwargs:
-                        # Mutate a copy to avoid affecting the original user-provided scorer
-                        # which might be used later with different classes.
+                        # Mutate a copy to avoid affecting the original
+                        # user-provided scorer which might be used later
+                        # with different classes.
                         scorer = copy.copy(scorer)
                         scorer._kwargs = scorer._kwargs.copy()
                         scorer._kwargs["labels"] = classes
@@ -729,8 +730,9 @@ def _log_reg_scoring_path(
                 pass
         else:
             # For other callables (like the MockScorer in tests), we check if they
-            # accept 'labels' and pass it in current_score_params. We avoid copying
-            # to allow the caller to track state if they desire (e.g. counting calls).
+            # accept 'labels' and pass it in current_score_params. We avoid
+            # copying to allow the caller to track state if they desire
+            # (e.g. counting calls).
             try:
                 if "labels" in signature(scorer).parameters:
                     score_params = score_params or {}

@@ -229,7 +229,7 @@ def test_elasticnet_l1_ratio_err_helpful(LR, arg):
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
 def test_sparsify(coo_container):
     # Test sparsify and densify members.
-    n_samples, n_features = iris.data.shape
+    _, _ = iris.data.shape
     target = iris.target_names[iris.target]
     X = scale(iris.data)
     clf = LogisticRegression().fit(X, target)
@@ -289,7 +289,7 @@ def test_nan():
     Xnan[0, 1] = np.nan
     clf = LogisticRegression()
 
-    with pytest.raises(ValueError, match="Input X contains NaN."):
+    with pytest.raises(ValueError, match=r"Input X contains NaN."):
         clf.fit(Xnan, Y1)
 
 
@@ -615,7 +615,7 @@ def test_multinomial_logistic_regression_string_inputs():
 def test_multinomial_cv_iris(use_legacy_attributes):
     # Test that multinomial LogisticRegressionCV is correct using the iris dataset.
     X, y = iris.data, iris.target
-    n_samples, n_features = X.shape
+    _, n_features = X.shape
 
     # The cv indices from stratified kfold
     n_cv = 2
@@ -859,7 +859,7 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
     )
     if fit_intercept:
         X[:, -1] = 1
-    U, s, Vt = svd(X)
+    _, s, _ = svd(X)
     assert np.all(s > 1e-3)  # to be sure that X is not singular
     assert np.max(s) / np.min(s) < 100  # condition number of X
     if fit_intercept:
@@ -2587,10 +2587,11 @@ def test_lr_penalty_l1ratio_incompatible(penalty, l1_ratio):
     with pytest.warns(UserWarning, match=msg):
         lr.fit(X, y)
 
+
 def test_logistic_regression_cv_brier_score_missing_classes():
     # Test that LogisticRegressionCV works with neg_brier_score when some
     # classes are missing in a fold's test set.
-    # This is a regression test for ##33207
+    # This is a regression test for #33207
     X, y = make_classification(
         n_samples=90,
         n_features=8,
