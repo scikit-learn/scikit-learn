@@ -10,6 +10,8 @@ import warnings
 from numbers import Integral, Real
 
 import numpy as np
+import copy
+from inspect import signature
 from scipy import optimize
 
 from sklearn._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
@@ -709,9 +711,34 @@ def _log_reg_scoring_path(
     # The score method of Logistic Regression has a classes_ attribute.
     log_reg.classes_ = classes
 
-    scores = list()
+    scorer = get_scorer(scoring)
+    if scorer is not None:
+        # If the scorer is a scikit-learn scorer, we might need to inject 'labels'
+        # into its internal kwargs to avoid metadata routing restrictions.
+        if hasattr(scorer, "_score_func") and hasattr(scorer, "_kwargs"):
+            scorer_func = scorer._score_func
+            try:
+                if "labels" in signature(scorer_func).parameters:
+                    if "labels" not in scorer._kwargs:
+                        # Mutate a copy to avoid affecting the original user-provided scorer
+                        # which might be used later with different classes.
+                        scorer = copy.copy(scorer)
+                        scorer._kwargs = scorer._kwargs.copy()
+                        scorer._kwargs["labels"] = classes
+            except (ValueError, TypeError):
+                pass
+        else:
+            # For other callables (like the MockScorer in tests), we check if they
+            # accept 'labels' and pass it in current_score_params. We avoid copying
+            # to allow the caller to track state if they desire (e.g. counting calls).
+            try:
+                if "labels" in signature(scorer).parameters:
+                    score_params = score_params or {}
+                    score_params.setdefault("labels", classes)
+            except (ValueError, TypeError):
+                pass
 
-    scoring = get_scorer(scoring)
+    scores = list()
     for w in coefs:
         if fit_intercept:
             log_reg.coef_ = w[..., :-1]
@@ -720,15 +747,13 @@ def _log_reg_scoring_path(
             log_reg.coef_ = w
             log_reg.intercept_ = 0.0
 
-        if scoring is None:
+        if scorer is None:
             scores.append(log_reg.score(X_test, y_test, sample_weight=sw_test))
         else:
-            score_params = score_params or {}
-            score_params = _check_method_params(X=X, params=score_params, indices=test)
-            # FIXME: If scoring = "neg_brier_score" and if not all class labels
-            # are present in y_test, the following fails. Maybe we can pass
-            # "labels=classes" to the call of scoring.
-            scores.append(scoring(log_reg, X_test, y_test, **score_params))
+            current_score_params = _check_method_params(
+                X=X, params=score_params or {}, indices=test
+            )
+            scores.append(scorer(log_reg, X_test, y_test, **current_score_params))
     return coefs, Cs, np.array(scores), n_iter
 
 

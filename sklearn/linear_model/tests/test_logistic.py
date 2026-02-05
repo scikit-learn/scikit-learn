@@ -2586,3 +2586,46 @@ def test_lr_penalty_l1ratio_incompatible(penalty, l1_ratio):
     msg = f"Inconsistent values: penalty={penalty} with l1_ratio={l1_ratio}"
     with pytest.warns(UserWarning, match=msg):
         lr.fit(X, y)
+
+def test_logistic_regression_cv_brier_score_missing_classes():
+    # Test that LogisticRegressionCV works with neg_brier_score when some
+    # classes are missing in a fold's test set.
+    # This is a regression test for #24448.
+    X, y = make_classification(
+        n_samples=90,
+        n_features=8,
+        n_informative=6,
+        n_redundant=0,
+        n_classes=3,
+        n_clusters_per_class=1,
+        random_state=0,
+    )
+
+    idx0 = np.flatnonzero(y == 0)
+    idx1 = np.flatnonzero(y == 1)
+    idx2 = np.flatnonzero(y == 2)
+
+    # Fold 0 test set has only classes 0 and 1
+    test0 = np.concatenate([idx0[:10], idx1[:10]])
+    train0 = np.setdiff1d(np.arange(len(y)), test0)
+
+    # Fold 1 test set has only class 2
+    test1 = idx2[:10]
+    train1 = np.setdiff1d(np.arange(len(y)), test1)
+
+    cv = [(train0, test0), (train1, test1)]
+
+    for scoring in ["neg_brier_score", "neg_log_loss"]:
+        clf = LogisticRegressionCV(
+            cv=cv,
+            scoring=scoring,
+            solver="lbfgs",
+            max_iter=200,
+        )
+        # Should not raise ValueError
+        clf.fit(X, y)
+        # Check that scores_ exists and corresponds to the number of classes,
+        # folds, and Cs.
+        assert len(clf.scores_) == 3  # one for each class (legacy behavior)
+        for cls_scores in clf.scores_.values():
+            assert cls_scores.shape == (2, 10)  # (n_folds, n_Cs)
