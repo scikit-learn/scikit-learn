@@ -1,0 +1,3 @@
+- :func:`utils.estimator_checks.estimator_checks_generator` no longer yields
+  `check_estimator_cloneable` twice.
+  By :user:`Stefanie Senger <StefanieSenger>`.
