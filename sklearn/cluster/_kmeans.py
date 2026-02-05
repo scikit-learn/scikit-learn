@@ -2153,10 +2153,10 @@ class MiniBatchKMeans(_BaseKMeans):
         # Initialize number of samples seen since last reassignment
         self._n_since_last_reassign = 0
 
-        n_effective_samples = np.sum(sample_weight)
+        sum_of_weights = np.sum(sample_weight)
 
         n_steps = (self.max_iter * n_samples) // self._batch_size
-        normalized_sample_weight = sample_weight / n_effective_samples
+        normalized_sample_weight = sample_weight / sum_of_weights
         unit_sample_weight = np.ones_like(sample_weight, shape=(self._batch_size,))
 
         with _get_threadpool_controller().limit(limits=1, user_api="blas"):
@@ -2216,7 +2216,7 @@ class MiniBatchKMeans(_BaseKMeans):
                 n_threads=self._n_threads,
             )
         else:
-            self.inertia_ = self._ewa_inertia * n_effective_samples
+            self.inertia_ = self._ewa_inertia * sum_of_weights
 
         return self
 
