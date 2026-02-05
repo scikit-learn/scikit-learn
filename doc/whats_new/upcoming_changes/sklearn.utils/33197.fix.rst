@@ -1,0 +1,4 @@
+- :func:`utils.estimator_checks.estimator_checks_generator` and
+  :func:`utils.estimator_checks.check_estimator` no longer yield
+  ``check_class_weight_balanced_linear_classifier`` twice.
+  By :user:`Atheendra <atheendre130505>`.
