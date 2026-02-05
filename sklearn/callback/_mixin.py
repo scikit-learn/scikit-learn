@@ -13,7 +13,7 @@ class CallbackSupportMixin:
         Parameters
         ----------
         callbacks : callback or list of callbacks
-            the callbacks to set.
+            The callbacks to set.
 
         Returns
         -------
