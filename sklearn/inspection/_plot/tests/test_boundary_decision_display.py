@@ -820,3 +820,29 @@ def test_xlim_ylim_validation_errors_plot(pyplot, lim, msg):
     error_msg = "`ylim` " + msg
     with pytest.raises(ValueError, match=error_msg):
         disp.plot(ylim=lim)
+
+
+def test_xlim_ylim():
+    """Check that xlim and ylim parameters work as expected."""
+    X = np.array([[0, 0], [1, 1], [1, 0], [0, 1]])
+    y = np.array([0, 1, 2, 3])
+    clf = LogisticRegression().fit(X, y)
+
+    xlim = (-3, 0)
+    ylim = (-1, 2)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        clf,
+        X,
+        xlim=xlim,
+        ylim=ylim,
+    )
+
+    # check that the grid is correctly extended to cover the requested limits
+    assert disp.xx0.min() <= xlim[0]
+    assert disp.xx0.max() >= xlim[1]
+    assert disp.xx1.min() <= ylim[0]
+    assert disp.xx1.max() >= ylim[1]
+
+    assert disp.ax_.get_xlim() == xlim
+    assert disp.ax_.get_ylim() == ylim
