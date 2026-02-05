@@ -773,3 +773,50 @@ def test_subclass_named_constructors_return_type_is_subclass(pyplot):
     curve = SubclassOfDisplay.from_estimator(estimator=clf, X=X)
 
     assert isinstance(curve, SubclassOfDisplay)
+
+
+@pytest.mark.parametrize("lim", [[1, 2], (1,), (0, 1, 2), (2, 2), (5, 2)])
+def test_xlim_ylim_validation_errors_from_estimator(pyplot, fitted_clf, lim):
+    """Check input validation in `from_estimator` for xlim and ylim parameters."""
+    msg = r"`xlim` must be a tuple of \(min, max\) with min < max"
+    with pytest.raises(ValueError, match=msg):
+        DecisionBoundaryDisplay.from_estimator(fitted_clf, X, xlim=lim)
+    msg = r"`ylim` must be a tuple of \(min, max\) with min < max"
+    with pytest.raises(ValueError, match=msg):
+        DecisionBoundaryDisplay.from_estimator(fitted_clf, X, ylim=lim)
+
+
+@pytest.mark.parametrize(
+    "lim, msg",
+    [
+        ([1, 2], r"must be a tuple of \(min, max\) with min < max"),
+        ((1,), r"must be a tuple of \(min, max\) with min < max"),
+        ((0, 1, 2), r"must be a tuple of \(min, max\) with min < max"),
+        ((2, 2), r"must be a tuple of \(min, max\) with min < max"),
+        ((5, 2), r"must be a tuple of \(min, max\) with min < max"),
+        ((-2, -1), "values are outside the grid range."),
+        ((-2, 0), "values are outside the grid range."),
+        ((2, 3), "values are outside the grid range."),
+        ((0, 3), "values are outside the grid range."),
+    ],
+)
+def test_xlim_ylim_validation_errors_plot(pyplot, lim, msg):
+    """Check input validation in `plot()` for xlim and ylim parameters."""
+    X = np.array([[0, 0], [1, 1], [1, 0], [0, 1]])
+    y = np.array([0, 1, 2, 3])
+    clf = LogisticRegression().fit(X, y)
+    feature_1, feature_2 = np.meshgrid(
+        np.linspace(X[:, 0].min(), X[:, 0].max()),
+        np.linspace(X[:, 1].min(), X[:, 1].max()),
+    )
+    grid = np.vstack([feature_1.ravel(), feature_2.ravel()]).T
+    y_pred = clf.predict(grid).reshape(feature_1.shape)
+    disp = DecisionBoundaryDisplay(
+        xx0=feature_1, xx1=feature_2, n_classes=4, response=y_pred
+    )
+    error_msg = "`xlim` " + msg
+    with pytest.raises(ValueError, match=error_msg):
+        disp.plot(xlim=lim)
+    error_msg = "`ylim` " + msg
+    with pytest.raises(ValueError, match=error_msg):
+        disp.plot(ylim=lim)
