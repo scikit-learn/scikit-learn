@@ -429,6 +429,10 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
   `clone(frozenestimator)` returns the same estimator instead of an unfitted clone.
   :pr:`29705` By `Adrin Jalali`_ :pr:`29705`
 
+- |Enhancement| :class:`ensemble.VotingClassifier` now supports multilabel-indicator
+  target ``y`` in its `fit`, `predict`, `predict_proba`, and `transform` methods.
+  :pr:`29238` by :user:`Adam Li <adam2392>`.
+
 :mod:`sklearn.impute`
 ---------------------
 

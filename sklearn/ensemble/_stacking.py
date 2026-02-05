@@ -699,6 +699,9 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
                 ]
             ).T
         else:
+            # if not multilabel indicator, then it must be a multiclass, or binary
+            # classification problem
+            # XXX: multi-output multi-class is not supported yet
             self._label_encoder = LabelEncoder().fit(y)
             self.classes_ = self._label_encoder.classes_
             y_encoded = self._label_encoder.transform(y)

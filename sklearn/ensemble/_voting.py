@@ -20,6 +20,7 @@ from sklearn.base import (
     TransformerMixin,
     _fit_context,
     clone,
+    is_classifier,
 )
 from sklearn.ensemble._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
 from sklearn.exceptions import NotFittedError
@@ -71,8 +72,28 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         return [w for est, w in zip(self.estimators, self.weights) if est[1] != "drop"]
 
     def _predict(self, X):
-        """Collect results from clf.predict calls."""
-        return np.asarray([est.predict(X) for est in self.estimators_]).T
+        """Collect results from clf.predict calls.
+
+        Returns
+        -------
+        avg : array-like of shape (n_samples, n_estimators) or \
+            ndarray of shape (n_samples, n_outputs, n_estimators)
+            Predictions for each estimator.
+        """
+        # Handle the multilabel-indicator case
+        if is_classifier(self) and isinstance(self.classes_, list):
+            predictions = np.zeros(
+                (X.shape[0], len(self.classes_), len(self.estimators_)),
+                dtype=int,
+            )
+            for i in range(len(self.classes_)):
+                label_preds = np.asarray(
+                    [est.predict(X)[:, i] for est in self.estimators_]
+                ).T
+                predictions[:, i, :] = label_preds
+            return predictions
+        else:
+            return np.asarray([est.predict(X) for est in self.estimators_]).T
 
     @abstractmethod
     def fit(self, X, y, **fit_params):
@@ -253,12 +274,13 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         .. versionadded:: 0.20
 
-    le_ : :class:`~sklearn.preprocessing.LabelEncoder`
-        Transformer used to encode the labels during fit and decode during
-        prediction.
+    le_ : :class:`~sklearn.preprocessing.LabelEncoder`, or list
+        Transformer, or list of transformers used to encode the labels
+        during fit and decode during prediction.
 
-    classes_ : ndarray of shape (n_classes,)
-        The classes labels.
+    classes_ : ndarray of shape (n_classes,) or list of ndarray if `y` \
+        is of type `"multilabel-indicator"`.
+        Class labels.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
@@ -382,25 +404,26 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         _raise_for_params(fit_params, self, "fit", allow=["sample_weight"])
 
         y_type = type_of_target(y, input_name="y")
-        if y_type in ("unknown", "continuous"):
+        if y_type in ("binary", "multiclass"):
+            self.le_ = LabelEncoder().fit(y)
+            self.classes_ = self.le_.classes_
+            transformed_y = self.le_.transform(y)
+        elif y_type == "multilabel-indicator":
+            self.le_ = [LabelEncoder().fit(yk) for yk in y.T]
+            self.classes_ = [le.classes_ for le in self.le_]
+            transformed_y = np.array(
+                [
+                    self.le_[target_idx].transform(target)
+                    for target_idx, target in enumerate(y.T)
+                ]
+            ).T
+        else:
             # raise a specific ValueError for non-classification tasks
             raise ValueError(
                 f"Unknown label type: {y_type}. Maybe you are trying to fit a "
                 "classifier, which expects discrete classes on a "
                 "regression target with continuous values."
             )
-        elif y_type not in ("binary", "multiclass"):
-            # raise a NotImplementedError for backward compatibility for non-supported
-            # classification tasks
-            raise NotImplementedError(
-                f"{self.__class__.__name__} only supports binary or multiclass "
-                "classification. Multilabel and multi-output classification are not "
-                "supported."
-            )
-
-        self.le_ = LabelEncoder().fit(y)
-        self.classes_ = self.le_.classes_
-        transformed_y = self.le_.transform(y)
 
         return super().fit(X, transformed_y, **fit_params)
 
@@ -419,23 +442,63 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         """
         check_is_fitted(self)
         if self.voting == "soft":
-            maj = np.argmax(self.predict_proba(X), axis=1)
-
+            maj = np.argmax(self.predict_proba(X), axis=-1)
         else:  # 'hard' voting
-            predictions = self._predict(X)
+            predictions = self._predict(X).astype(int)
             maj = np.apply_along_axis(
                 lambda x: np.argmax(np.bincount(x, weights=self._weights_not_none)),
-                axis=1,
+                axis=-1,
                 arr=predictions,
-            )
+            ).T
 
-        maj = self.le_.inverse_transform(maj)
+        if isinstance(self.le_, list):
+            # Handle the multilabel-indicator case
+            maj = np.array(
+                [
+                    self.le_[target_idx].inverse_transform(target)
+                    for target_idx, target in enumerate(maj)
+                ]
+            ).T
+        else:
+            maj = self.le_.inverse_transform(maj)
 
         return maj
 
-    def _collect_probas(self, X):
-        """Collect results from clf.predict calls."""
-        return np.asarray([clf.predict_proba(X) for clf in self.estimators_])
+    def _collect_probas(self, X, collapse_classes=True):
+        """Collect results from clf.predict_proba calls.
+
+        Output is array-like of shape (n_estimators, n_classes, n_samples)
+        or list of arrays of these shapes.
+
+        When `y` type is `"multilabel-indicator"``, predicted probabilities
+        can be either a `ndarray` of shape `(n_samples, n_class)` or for some estimators
+        a list of `ndarray`. This function will drop one of the probability column,
+        since there is only two classes per output.
+        """
+        if isinstance(self.classes_, list):
+            probas = [
+                np.zeros((len(self.estimators_), len(self.classes_[idx]), X.shape[0]))
+                for idx in range(len(self.classes_))
+            ]
+            for est_idx, clf in enumerate(self.estimators_):
+                clf_predict_probas = clf.predict_proba(X)
+                for idx in range(len(self.classes_)):
+                    if isinstance(clf_predict_probas, list):
+                        # `clf_predict_probas` is here a list of `n_targets` 2D
+                        # ndarrays of `n_classes` columns. The k-th column contains
+                        # the probabilities of the samples belonging the k-th class.
+                        #
+                        # Since those probabilities must sum to one for each sample,
+                        # we can work with probabilities of `n_classes - 1` classes.
+                        # Hence we drop the first column.
+
+                        probas[idx][est_idx, ...] = clf_predict_probas[idx].T
+                    else:
+                        # `clf_predict_probas` is a 2D ndarray
+                        probas[idx][est_idx, ...] = clf_predict_probas[:, idx]
+            return probas
+        else:
+            return np.asarray([clf.predict_proba(X) for clf in self.estimators_])
 
     def _check_voting(self):
         if self.voting == "hard":
@@ -455,13 +518,25 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         Returns
         -------
-        avg : array-like of shape (n_samples, n_classes)
+        avg : array-like of shape (n_samples, n_classes) or \
+            list of ndarray of shape (n_output,)
             Weighted average probability for each class per sample.
         """
         check_is_fitted(self)
-        avg = np.average(
-            self._collect_probas(X), axis=0, weights=self._weights_not_none
-        )
+
+        # n_estimators, n_samples, n_classes
+        if isinstance(self.classes_, list):
+            # multi-label indicator case, where we will output a list of
+            # n_output ndarrays of shape (n_samples, n_classes)
+            avg = []
+            for output_proba in self._collect_probas(X):
+                avg.append(
+                    np.average(output_proba, axis=0, weights=self._weights_not_none).T
+                )
+        else:
+            avg = np.average(
+                self._collect_probas(X), axis=0, weights=self._weights_not_none
+            )
         return avg
 
     def transform(self, X):
@@ -477,24 +552,53 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         -------
         probabilities_or_labels
             If `voting='soft'` and `flatten_transform=True`:
-                returns ndarray of shape (n_samples, n_classifiers * n_classes),
-                being class probabilities calculated by each classifier.
+                returns ndarray of shape (n_samples, n_classifiers * n_classes)
+                for binary output or,
+                ndarray of shape (n_samples, n_classifiers * n_outputs)
+                for multilabel-indicator,
+                being class probabilities calculated by each classifier for each output.
             If `voting='soft' and `flatten_transform=False`:
                 ndarray of shape (n_classifiers, n_samples, n_classes)
+                for binary output or,
+                ndarray of shape (n_classifiers, n_samples, n_outputs)
+                for multilabel-indicator
             If `voting='hard'`:
-                ndarray of shape (n_samples, n_classifiers), being
-                class labels predicted by each classifier.
+                ndarray of shape (n_samples, n_classifiers) for binary output or,
+                ndarray of shape (n_samples, n_outputs, n_classifiers) for multi-output
+                being class labels predicted by each classifier.
         """
         check_is_fitted(self)
-
         if self.voting == "soft":
-            probas = self._collect_probas(X)
-            if not self.flatten_transform:
-                return probas
-            return np.hstack(probas)
+            # multi-label indicator case
+            if isinstance(self.classes_, list):
 
+                # collect predicted probabilities per estimator
+                predictions = self._collect_probas(X)
+
+                # convert list of n_outputs of shape
+                # (n_estimators, n_classes, n_samples)
+                # to (n_estimators, n_classes, n_samples) by only keeping the
+                # second idx per class
+                probas = np.zeros(
+                    (len(self.estimators_), len(self.classes_), X.shape[0])
+                )
+                for idx, preds in enumerate(predictions):
+                    probas[:, idx, :] = preds[:, 1:, :]
+                predictions = probas
+
+                if self.flatten_transform:
+                    predictions = np.hstack(predictions).T
+                else:
+                    predictions = predictions.swapaxes(1, 2)
+            else:
+                # collect predicted probabilities per estimator
+                predictions = self._collect_probas(X)
+                if self.flatten_transform:
+                    predictions = np.hstack(predictions)
         else:
-            return self._predict(X)
+            predictions = self._predict(X)
+
+        return predictions
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
