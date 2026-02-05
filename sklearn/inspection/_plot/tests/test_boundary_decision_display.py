@@ -824,6 +824,7 @@ def test_xlim_ylim_validation_errors_plot(pyplot, lim, msg):
 
 def test_xlim_ylim():
     """Check that xlim and ylim parameters work as expected."""
+
     X = np.array([[0, 0], [1, 1], [1, 0], [0, 1]])
     y = np.array([0, 1, 2, 3])
     clf = LogisticRegression().fit(X, y)
@@ -838,11 +839,16 @@ def test_xlim_ylim():
         ylim=ylim,
     )
 
-    # check that the grid is correctly extended to cover the requested limits
+    # Check that the grid is correctly extended to cover the requested limits
     assert disp.xx0.min() <= xlim[0]
     assert disp.xx0.max() >= xlim[1]
     assert disp.xx1.min() <= ylim[0]
     assert disp.xx1.max() >= ylim[1]
 
+    assert disp.ax_.get_xlim() == xlim
+    assert disp.ax_.get_ylim() == ylim
+
+    # Check that adding scatter plot does not change the limits
+    disp.ax_.scatter(X[:, 0], X[:, 1], c=y, edgecolor="k")
     assert disp.ax_.get_xlim() == xlim
     assert disp.ax_.get_ylim() == ylim
