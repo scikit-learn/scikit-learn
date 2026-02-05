@@ -1,0 +1,4 @@
+- :class:`~sklearn.model_selection.GroupKFold` now uses `stable` sorting when doing
+  the group distribution. This ensures that the splits are consistent across
+  runs.
+  By :user:`marikabergengren <marikabergengren>` and `Adrin Jalali`_
