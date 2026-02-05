@@ -28,4 +28,5 @@ dependencies:
   - pyarrow
   - cupy
   - jax
+  - rapidsai::cuvs
   - array-api-strict

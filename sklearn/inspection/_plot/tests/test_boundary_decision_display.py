@@ -19,7 +19,8 @@ from sklearn.ensemble import IsolationForest
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.inspection._plot.decision_boundary import _check_boundary_response_method
 from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import scale
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, scale
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._testing import (
     _convert_container,
@@ -703,6 +704,34 @@ def test_multiclass_colors_cmap(
     #    assert len(disp.surface_.levels) >= disp.n_classes
 
 
+# estimator classes for non-regression test cases for issue #33194
+class CustomBinaryEstimator(BaseEstimator):
+    def fit(self, X, y):
+        self.fitted_ = True
+        return self
+
+    def predict(self, X):
+        return np.arange(X.shape[0]) % 2
+
+
+class CustomMulticlassEstimator(BaseEstimator):
+    def fit(self, X, y):
+        self.fitted_ = True
+        return self
+
+    def predict(self, X):
+        return np.arange(X.shape[0]) % 7
+
+
+class CustomContinuousEstimator(BaseEstimator):
+    def fit(self, X, y):
+        self.fitted_ = True
+        return self
+
+    def predict(self, X):
+        return np.arange(X.shape[0]) * 0.5
+
+
 @pytest.mark.parametrize(
     "estimator, n_blobs, expected_n_classes",
     [
@@ -712,12 +741,57 @@ def test_multiclass_colors_cmap(
         (KMeans(n_clusters=2, random_state=0), 2, 2),
         (DecisionTreeRegressor(random_state=0), 7, 2),
         (IsolationForest(random_state=0), 7, 2),
+        (CustomBinaryEstimator(), 2, 2),
+        (CustomMulticlassEstimator(), 7, 7),
+        (CustomContinuousEstimator(), 7, 2),
+        (
+            Pipeline(
+                [
+                    ("scale", StandardScaler()),
+                    ("dt", DecisionTreeClassifier(random_state=0)),
+                ]
+            ),
+            7,
+            7,
+        ),
+        # non-regression test case for issue #33194
+        (
+            Pipeline(
+                [
+                    ("scale", StandardScaler()),
+                    ("kmeans", KMeans(n_clusters=7, random_state=0)),
+                ]
+            ),
+            7,
+            7,
+        ),
+        (
+            Pipeline(
+                [
+                    ("scale", StandardScaler()),
+                    ("reg", DecisionTreeRegressor(random_state=0)),
+                ]
+            ),
+            7,
+            2,
+        ),
+        (
+            Pipeline(
+                [
+                    ("scale", StandardScaler()),
+                    ("kmeans", IsolationForest(random_state=0)),
+                ]
+            ),
+            7,
+            2,
+        ),
     ],
 )
 def test_n_classes_attribute(pyplot, estimator, n_blobs, expected_n_classes):
     """Check that `n_classes` is set correctly.
 
-    Introduced in https://github.com/scikit-learn/scikit-learn/pull/33015"""
+    Introduced in https://github.com/scikit-learn/scikit-learn/pull/33015.
+    """
 
     X, y = make_blobs(n_samples=150, centers=n_blobs, n_features=2, random_state=42)
     clf = estimator.fit(X, y)
@@ -729,6 +803,27 @@ def test_n_classes_attribute(pyplot, estimator, n_blobs, expected_n_classes):
         clf, X, class_of_interest=y[0], response_method="predict"
     )
     assert disp_coi.n_classes == 2
+
+
+def test_n_classes_raises_if_not_inferrable(pyplot):
+    """Check behaviour if `n_classes` can't be inferred.
+
+    Non-regression test for issue #33194.
+    """
+
+    class CustomUnknownEstimator(BaseEstimator):
+        def fit(self, X, y):
+            self.fitted_ = True
+            return self
+
+        def predict(self, X):
+            return np.array(0)
+
+    X, y = load_iris_2d_scaled()
+    est = CustomUnknownEstimator().fit(X, y)
+    msg = "Number of classes or labels cannot be inferred from CustomUnknownEstimator"
+    with pytest.raises(ValueError, match=msg):
+        DecisionBoundaryDisplay.from_estimator(est, X, response_method="predict")
 
 
 def test_cmap_and_colors_logic(pyplot):
