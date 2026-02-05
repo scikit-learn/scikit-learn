@@ -2590,7 +2590,7 @@ def test_lr_penalty_l1ratio_incompatible(penalty, l1_ratio):
 def test_logistic_regression_cv_brier_score_missing_classes():
     # Test that LogisticRegressionCV works with neg_brier_score when some
     # classes are missing in a fold's test set.
-    # This is a regression test for #24448.
+    # This is a regression test for ##33207
     X, y = make_classification(
         n_samples=90,
         n_features=8,
