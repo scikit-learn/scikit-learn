@@ -422,7 +422,7 @@ def get_context_path(context):
 
     Returns
     -------
-    list of dict
+    list of `CallbackContext` instances
         The list of the ancestors (itself included) of the given context. The list is
         ordered from the root context to the given context.
     """
