@@ -230,10 +230,9 @@ jobs:
       - name: Set env variables
         shell: bash
         run: |
-          if [[ -z "$JOB_NAME" ]]; then JOB_NAME="${{ matrix.name }}"; fi
-          echo "JOB_NAME=$JOB_NAME" >> $GITHUB_ENV
-          if [[ -z "$LOCK_FILE" ]]; then LOCK_FILE="${{ matrix.LOCK_FILE }}"; fi
-          echo "LOCK_FILE=$LOCK_FILE" >> $GITHUB_ENV
+          if [[ -z "$JOB_NAME" ]]; then
+	          echo "JOB_NAME=${{ matrix.name }}" >> $GITHUB_ENV
+          fi
 
       - name: Create cache for ccache
         uses: actions/cache@v5
