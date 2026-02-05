@@ -822,7 +822,7 @@ def test_xlim_ylim_validation_errors_plot(pyplot, lim, msg):
         disp.plot(ylim=lim)
 
 
-def test_xlim_ylim():
+def test_xlim_ylim(pyplot):
     """Check that xlim and ylim parameters work as expected."""
 
     X = np.array([[0, 0], [1, 1], [1, 0], [0, 1]])
