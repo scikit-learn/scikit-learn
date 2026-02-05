@@ -21,10 +21,6 @@ https://conda.anaconda.org/conda-forge/noarch/cuda-cudart-static_linux-64-12.9.7
 https://conda.anaconda.org/conda-forge/noarch/cuda-cudart_linux-64-12.9.79-h3f2d84a_0.conda#64508631775fbbf9eca83c84b1df0cae
 https://conda.anaconda.org/conda-forge/noarch/cuda-nvvm-dev_linux-64-12.9.86-ha770c72_2.conda#7b386291414c7eea113d25ac28a33772
 https://conda.anaconda.org/conda-forge/noarch/fonts-conda-forge-1-hc364b38_1.conda#a7970cd949a077b7cb9696379d338681
-https://conda.anaconda.org/nvidia/linux-64/libcublas-dev-11.11.3.6-0.tar.bz2#d2097d064d1437dbbcce39c3e8018a4e
-https://conda.anaconda.org/nvidia/linux-64/libcurand-dev-10.3.0.86-0.tar.bz2#5639b483c7c51ce2acb578444c0e10ce
-https://conda.anaconda.org/nvidia/linux-64/libcusolver-dev-11.4.1.48-0.tar.bz2#eef8b2209666925de40dc52dc2bd0036
-https://conda.anaconda.org/nvidia/linux-64/libcusparse-dev-11.7.5.86-0.tar.bz2#e0c8805b9b08087d1cce37bcc270a3e4
 https://conda.anaconda.org/conda-forge/linux-64/libglvnd-1.7.0-ha4b6fd6_2.conda#434ca7e50e40f4918ab701e3facd59a0
 https://conda.anaconda.org/conda-forge/noarch/libnvptxcompiler-dev_linux-64-12.9.86-ha770c72_2.conda#a66a909acf08924aced622903832a937
 https://conda.anaconda.org/conda-forge/linux-64/llvm-openmp-21.1.8-h4922eb0_0.conda#f8640b709b37dc7758ddce45ea18d000
