@@ -240,7 +240,7 @@ jobs:
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ccache-v1-${{ env.JOB_NAME }}-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp', format('{0}', env.LOCK_FILE)) }}
-          restore-keys: ccache-$JOB_NAME
+          restore-keys: ccache-${{ env.JOB_NAME }}
 
       - name: Set up conda
         uses: conda-incubator/setup-miniconda@v3
