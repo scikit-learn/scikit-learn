@@ -376,6 +376,10 @@ Python and CPython ecosystem, for example :user:`Nathan Goldbaum <ngoldbaum>`,
   no longer face this restriction.
   By :user:`Thomas Gessey-Jones <ThomasGesseyJonesPX>` :pr:`30224`
 
+- |Enhancement| Allow :func:`datasets.make_spd_matrix` to generate several
+  matrices at once adding parameter n_samples.
+  :pr:`26437` by :user:`Quentin Barthélemy <qbarthelemy>`.
+
 :mod:`sklearn.discriminant_analysis`
 ------------------------------------
 
