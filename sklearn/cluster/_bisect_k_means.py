@@ -94,7 +94,7 @@ class BisectingKMeans(_BaseKMeans):
         centroids to generate.
 
     init : {'k-means++', 'random'} or callable, default='random'
-        Method for initialization:
+        Method for initialization for each bisection.
 
         'k-means++' : selects initial cluster centers for k-mean
         clustering in a smart way to speed up convergence. See section
@@ -104,9 +104,9 @@ class BisectingKMeans(_BaseKMeans):
         for the initial centroids.
 
         If a callable is passed, it should take arguments X, n_clusters and a
-        random state and return an initialization. Note that the bisecting
-        algorithm always performs a 2-way split, so the callable will always return 2
-        centroids.
+        random state and return an initialization. Note that the bisecting algorithm
+        always performs a 2-way split, so the callable will always be called with
+        `n_clusters=2` and should return 2 centroids.
 
     n_init : int, default=1
         Number of time the inner k-means algorithm will be run with different

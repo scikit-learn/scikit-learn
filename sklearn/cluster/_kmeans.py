@@ -943,7 +943,6 @@ class _BaseKMeans(
                 f"The shape of the initial centers {centers.shape} does not "
                 f"match the number of clusters {n_centroids}."
             )
-
         if centers.shape[1] != X.shape[1]:
             raise ValueError(
                 f"The shape of the initial centers {centers.shape} does not "
@@ -1041,7 +1040,7 @@ class _BaseKMeans(
         elif callable(init):
             centers = init(X, n_clusters, random_state=random_state)
             centers = check_array(centers, dtype=X.dtype, copy=False, order="C")
-            self._validate_center_shape(X, centers, n_centers=n_clusters)
+            self._validate_center_shape(X, centers, n_centroids=n_clusters)
 
         if sp.issparse(centers):
             centers = centers.toarray()
