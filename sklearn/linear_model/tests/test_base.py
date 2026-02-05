@@ -7,9 +7,11 @@ import numpy as np
 import pytest
 from scipy import linalg, sparse
 
+from sklearn.base import BaseEstimator
 from sklearn.datasets import load_iris, make_regression, make_sparse_uncorrelated
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model._base import (
+    LinearClassifierMixin,
     _preprocess_data,
     _rescale_data,
     make_dataset,
@@ -844,3 +846,28 @@ def test_linear_regression_sample_weight_consistency(
     assert_allclose(reg1.coef_, reg2.coef_, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg1.intercept_, reg2.intercept_)
+
+
+def test_predict_proba_lr_large_values():
+    """Test that _predict_proba_lr of LinearClassifierMixin deals with large
+    negative values.
+
+    Note that exp(-1000) = 0.
+    """
+
+    class MockClassifier(LinearClassifierMixin, BaseEstimator):
+        def __init__(self):
+            pass
+
+        def fit(self, X, y):
+            self.__sklearn_is_fitted__ = True
+
+        def decision_function(self, X):
+            n_samples = X.shape[0]
+            return np.tile([-1000.0] * 4, [n_samples, 1])
+
+    clf = MockClassifier()
+    clf.fit(X=None, y=None)
+
+    proba = clf._predict_proba_lr(np.ones(5))
+    assert_allclose(np.sum(proba, axis=1), 1)
