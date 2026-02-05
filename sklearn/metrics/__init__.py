@@ -28,6 +28,7 @@ from sklearn.metrics._classification import (
     zero_one_loss,
 )
 from sklearn.metrics._dist_metrics import DistanceMetric
+from sklearn.metrics._plot.cap_curve import CAPCurveDisplay
 from sklearn.metrics._plot.confusion_matrix import ConfusionMatrixDisplay
 from sklearn.metrics._plot.det_curve import DetCurveDisplay
 from sklearn.metrics._plot.precision_recall_curve import PrecisionRecallDisplay
@@ -102,6 +103,7 @@ from sklearn.metrics.pairwise import (
 )
 
 __all__ = [
+    "CAPCurveDisplay",
     "ConfusionMatrixDisplay",
     "DetCurveDisplay",
     "DistanceMetric",

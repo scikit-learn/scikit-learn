@@ -1,12 +1,12 @@
 """
-====================================
-Detection error tradeoff (DET) curve
-====================================
+=================================
+Comparing ROC, DET and CAP curves
+=================================
 
-In this example, we compare two binary classification multi-threshold metrics:
-the Receiver Operating Characteristic (ROC) and the Detection Error Tradeoff
-(DET). For such purpose, we evaluate two different classifiers for the same
-classification task.
+In this example, we compare three binary classification multi-threshold metrics:
+the Receiver Operating Characteristic (ROC), Detection Error Tradeoff (DET)
+and the Cumulative Accuracy Profile (CAP). For such purpose, we evaluate
+two different classifiers for the same classification task.
 
 ROC curves feature true positive rate (TPR) on the Y axis, and false positive
 rate (FPR) on the X axis. This means that the top left corner of the plot is the
@@ -15,6 +15,12 @@ rate (FPR) on the X axis. This means that the top left corner of the plot is the
 DET curves are a variation of ROC curves where False Negative Rate (FNR) is
 plotted on the y-axis instead of the TPR. In this case the origin (bottom left
 corner) is the "ideal" point.
+
+CAP curves display the cumulative proportion of true positives on the Y axis
+versus the cumulative proportion of the dataset (ranked by predicted probability)
+on the X axis. In contrast to ROC and DET curves, the "ideal" classifier does not
+correspond to a point, but a curve in the diagram, where each examined case perfectly
+leads to a true positive.
 
 .. note::
 
@@ -40,6 +46,8 @@ corner) is the "ideal" point.
 # Generate synthetic data
 # -----------------------
 
+import numpy as np
+
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -52,6 +60,9 @@ X, y = make_classification(
     random_state=1,
     n_clusters_per_class=1,
 )
+# Use string labels for the classes to illustrate the use of the `pos_label` parameter
+# to identify which class should be considered as the "positive" class.
+y = np.array(["Class A", "Class B"])[y]
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_state=0)
 
@@ -60,7 +71,9 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_
 # ----------------------
 #
 # Here we define two different classifiers. The goal is to visually compare their
-# statistical performance across thresholds using the ROC and DET curves.
+# statistical performance across thresholds using the ROC, CAP and DET curves. There
+# is no particular reason why these classifiers are chosen over other classifiers
+# available in scikit-learn.
 
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -76,8 +89,8 @@ classifiers = {
 }
 
 # %%
-# Compare ROC and DET curves
-# --------------------------
+# Compare ROC, DET and CAP curves
+# -------------------------------
 #
 # DET curves are commonly plotted in normal deviate scale. To achieve this the
 # DET display transforms the error rates as returned by the
@@ -86,13 +99,47 @@ classifiers = {
 
 import matplotlib.pyplot as plt
 
-from sklearn.dummy import DummyClassifier
-from sklearn.metrics import DetCurveDisplay, RocCurveDisplay
+from sklearn.metrics import CAPCurveDisplay, DetCurveDisplay, RocCurveDisplay
 
-fig, [ax_roc, ax_det] = plt.subplots(1, 2, figsize=(11, 5))
+fig, [ax_roc, ax_det, ax_cap] = plt.subplots(
+    1, 3, figsize=(15, 5), constrained_layout=True
+)
+pos_label = "Class A"
+for clf_idx, (name, clf) in enumerate(classifiers.items()):
+    is_last = clf_idx == len(classifiers) - 1
+    clf.fit(X_train, y_train)
+
+    RocCurveDisplay.from_estimator(
+        clf,
+        X_test,
+        y_test,
+        ax=ax_roc,
+        name=name,
+        pos_label=pos_label,
+        plot_chance_level=is_last,
+    )
+    DetCurveDisplay.from_estimator(
+        clf,
+        X_test,
+        y_test,
+        ax=ax_det,
+        name=name,
+        pos_label=pos_label,
+    )
+    CAPCurveDisplay.from_estimator(
+        clf,
+        X_test,
+        y_test,
+        ax=ax_cap,
+        name=name,
+        pos_label=pos_label,
+        plot_perfect=is_last,
+        plot_chance_level=is_last,
+    )
 
 ax_roc.set_title("Receiver Operating Characteristic (ROC) curves")
 ax_det.set_title("Detection Error Tradeoff (DET) curves")
+ax_cap.set_title("Cumulative Accuracy Profile (CAP) curves")
 
 ax_roc.grid(linestyle="--")
 ax_det.grid(linestyle="--")
@@ -117,30 +164,44 @@ for name, clf in classifiers.items():
 plt.legend()
 plt.show()
 
-# %%
-# Notice that it is easier to visually assess the overall performance of
-# different classification algorithms using DET curves than using ROC curves. As
-# ROC curves are plot in a linear scale, different classifiers usually appear
+# %% Analysis
+# --------
+#
+# All curves agree that the Random Forest classifier has more discriminative
+# power than the Linear SVM:
+#
+# - the area under the ROC and CAP curves is larger for the Random Forest
+#   classifier,
+# - the ROC and CAP curves are uniformly closer to the top left corner for the
+#   Random Forest classifier,
+# - the DET curve is uniformly closer to the origin for the Random Forest
+#   classifier.
+#
+# Notice that it is easier to visually assess that the Random Forest classifier
+# performs better than the Linear SVM classifier using DET curves. As ROC and
+# CAP curves are plotted with a linear scale, different classifiers usually appear
 # similar for a large part of the plot and differ the most in the top left
 # corner of the graph. On the other hand, because DET curves represent straight
 # lines in normal deviate scale, they tend to be distinguishable as a whole and
 # the area of interest spans a large part of the plot.
 #
 # DET curves give direct feedback of the detection error tradeoff to aid in
-# operating point analysis. The user can then decide the FNR they are willing to
-# accept at the expense of the FPR (or vice-versa).
+# operating point analysis. The user can then decide the FNR they are willing
+# to accept at the expense of the FPR (or vice-versa).
 #
-# Non-informative classifier baseline for the ROC and DET curves
-# --------------------------------------------------------------
+# Non-informative classifier baseline
+# -----------------------------------
 #
-# The diagonal black-dotted lines in the plots above correspond to a
-# :class:`~sklearn.dummy.DummyClassifier` using the default "prior" strategy, to
-# serve as baseline for comparison with other classifiers. This classifier makes
-# constant predictions, independent of the input features in `X`, making it a
-# non-informative classifier.
+# The diagonal black-dotted lines named "chance level" in the plots above
+# correspond to a the expected value of a non-informative classifier on an
+# infinite evaluation set.
 #
-# To further understand the non-informative baseline of the ROC and DET curves,
-# we recall the following mathematical definitions:
+# The :class:`~sklearn.dummy.DummyClassifier` model makes constant predictions,
+# independently of the input features in `X`, making it a canonical example of
+# such a non-informative classifier. We observe that the ROC and DET curves of
+# the non-informative classifier exactly match the theoretical chance level
+# line. This can be explained as follows. First recall the following
+# mathematical definitions:
 #
 # :math:`\text{FPR} = \frac{\text{FP}}{\text{FP} + \text{TN}}`
 #
@@ -161,3 +222,14 @@ plt.show()
 #
 # - a single point in the lower left corner of the ROC plane,
 # - a single point in the upper left corner of the DET plane.
+#
+# For the non-informative classifier with strategy "prior", the value returned
+# by `predict_proba` is the observed frequency of the positive class in the
+# training set. If the threshold is above this value, the classifier always
+# predicts the negative class, and if the threshold is below this value, the
+# classifier always predicts the positive class. Both ROC and DET curves
+# linearly interpolate between these two points, hence the diagonal line.
+#
+# The CAP curve of the non-informative classifier only approximately lies
+# on the diagonal. The match would be better in the limit of an infinite
+# evaluation set.
