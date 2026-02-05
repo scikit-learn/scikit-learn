@@ -255,12 +255,20 @@ attributes for you.
 
 Rolling your own estimator
 ==========================
+.. warning::
+
+   Estimator compatibility in scikit-learn is defined by passing
+   :func:`~sklearn.utils.estimator_checks.check_estimator`.
+   Failing these checks usually means your estimator will break when used
+   inside pipelines, meta-estimators, model selection, or cloning — even if
+   it appears to work in isolation.
+
 If you want to implement a new estimator that is scikit-learn compatible, there are
 several internals of scikit-learn that you should be aware of in addition to
-the scikit-learn API outlined above. You can check whether your estimator
-adheres to the scikit-learn interface and standards by running
-:func:`~sklearn.utils.estimator_checks.check_estimator` on an instance. The
-:func:`~sklearn.utils.estimator_checks.parametrize_with_checks` pytest
+the scikit-learn API outlined above. You can check whether your estimator adheres to the scikit-learn interface
+and standards by running :func:`~sklearn.utils.estimator_checks.check_estimator`
+on an instance. Passing these checks is required for full compatibility with
+scikit-learn tools. The :func:`~sklearn.utils.estimator_checks.parametrize_with_checks` pytest
 decorator can also be used (see its docstring for details and possible
 interactions with `pytest`)::
 
@@ -268,9 +276,12 @@ interactions with `pytest`)::
   >>> from sklearn.tree import DecisionTreeClassifier
   >>> check_estimator(DecisionTreeClassifier())  # passes
   [...]
+Running these checks early on a minimal implementation is strongly recommended,
+as failing checks often indicate fundamental design constraints rather than
+small implementation bugs.
 
 The main motivation to make a class compatible to the scikit-learn estimator
-interface might be that you want to use it together with model evaluation and
+interface is to ensure that it works reliably with model evaluation and
 selection tools such as :class:`~model_selection.GridSearchCV` and
 :class:`~pipeline.Pipeline`.
 
@@ -343,6 +354,12 @@ the correct interface more easily.
       ...
       ...         closest = np.argmin(euclidean_distances(X, self.X_), axis=1)
       ...         return self.y_[closest]
+
+Setting at least one fitted attribute (for example ``classes_`` or
+``n_features_in_``) during ``fit`` is a hard requirement. Without fitted
+attributes, :func:`~sklearn.utils.validation.check_is_fitted` will fail and
+meta-estimators or nested pipelines may incorrectly treat the estimator as
+unfitted.
 
 And you can check that the above estimator passes all common checks::
 
