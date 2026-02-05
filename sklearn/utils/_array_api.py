@@ -1481,7 +1481,7 @@ def _cho_solve(L, b, xp=None):
 
     # Two triangular solves: L @ y = b, then L.T @ x = y
     y = _solve_triangular(L, b, lower=True, xp=xp)
-    return _solve_triangular(L.mT, y, lower=False, xp=xp)
+    return _solve_triangular(xp.matrix_transpose(L), y, lower=False, xp=xp)
 
 
 def _kv(nu, x, xp=None):
