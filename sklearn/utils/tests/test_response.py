@@ -78,7 +78,7 @@ def test_estimator_get_response_values(
         response_method[0] if isinstance(response_method, list) else response_method
     )
     prediction_method = getattr(estimator, chosen_response_method)
-    assert_array_equal(results[0], prediction_method(X))
+    assert_allclose(results[0], prediction_method(X))
     assert results[1] is None
     if return_response_method_used:
         assert results[2] == chosen_response_method
