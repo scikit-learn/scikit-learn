@@ -75,8 +75,8 @@ cdef int simultaneous_sort(
         # Partition indices about pivot.  At the end of this operation,
         # pivot_idx will contain the pivot value, everything to the left
         # will be smaller, and everything to the right will be larger.
-        i = 1
-        j = size - 2
+        i = 1  # the median-of-three step ensures values[0] <= pivot
+        j = size - 2  # the median-of-three step ensures values[-1] >= pivot
         while True:
             # Find element >= pivot from left
             while i <= j and values[i] < pivot_val:
