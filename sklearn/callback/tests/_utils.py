@@ -198,7 +198,7 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
                 self.estimator,
                 X,
                 y,
-                callback_ctx=callback_ctx.subcontext(
+                outer_callback_ctx=callback_ctx.subcontext(
                     task_name="outer", task_id=i, max_subtasks=self.n_inner
                 ),
             )
@@ -208,11 +208,11 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
         return self
 
 
-def _func(meta_estimator, inner_estimator, X, y, *, callback_ctx):
+def _func(meta_estimator, inner_estimator, X, y, *, outer_callback_ctx):
     for i in range(meta_estimator.n_inner):
         est = clone(inner_estimator)
 
-        inner_ctx = callback_ctx.subcontext(
+        inner_ctx = outer_callback_ctx.subcontext(
             task_name="inner", task_id=i
         ).propagate_callbacks(sub_estimator=est)
 
@@ -223,7 +223,7 @@ def _func(meta_estimator, inner_estimator, X, y, *, callback_ctx):
             data={"X_train": X, "y_train": y},
         )
 
-    callback_ctx.eval_on_fit_task_end(
+    outer_callback_ctx.eval_on_fit_task_end(
         estimator=meta_estimator,
         data={"X_train": X, "y_train": y},
     )
