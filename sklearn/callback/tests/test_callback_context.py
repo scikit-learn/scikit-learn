@@ -97,13 +97,15 @@ def test_task_tree():
         assert child.parent is root
         assert len(get_context_path(child)) == 2
         assert len(child._children_map) == 5
-        assert root.max_subtasks == 3
 
         for grandchild in child._children_map.values():
             assert grandchild.parent is child
             assert len(get_context_path(grandchild)) == 3
             assert len(grandchild._children_map) == 0
-            assert child.max_subtasks == 5
+
+    # all _children_map lengths should match the max_subtasks attribute.
+    for node in root:
+        assert len(node._children_map) == node.max_subtasks
 
     # 1 root + 1 * 3 children + 1 * 3 * 5 grandchildren
     expected_n_nodes = np.sum(np.cumprod([1, 3, 5]))
