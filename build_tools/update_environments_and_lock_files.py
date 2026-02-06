@@ -101,7 +101,7 @@ build_metadata_list = [
         "tag": "cuda",
         "folder": "build_tools/github",
         "platform": "linux-64",
-        "channels": ["conda-forge"],
+        "channels": ["rapidsai", "conda-forge"],
         "conda_dependencies": common_dependencies
         + [
             "ccache",
@@ -111,7 +111,7 @@ build_metadata_list = [
             "cupy",
             "jax",
             # cuvs is needed for cupyx.scipy.spatial.distance.cdist and friends
-            "rapidsai::cuvs",
+            "cuvs",
             "array-api-strict",
         ],
         "virtual_package_spec": True,
