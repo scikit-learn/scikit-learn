@@ -8,7 +8,7 @@ from scipy.integrate import trapezoid
 from sklearn import clone
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_breast_cancer, make_classification
-from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
+from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import RocCurveDisplay, auc, roc_curve
 from sklearn.model_selection import cross_validate, train_test_split
@@ -197,135 +197,6 @@ def test_roc_curve_plot_parameter_length_validation(pyplot, params, err_msg):
         display.plot()
 
 
-def test_validate_plot_params(pyplot):
-    """Check `_validate_plot_params` returns the correct variables."""
-    fpr = np.array([0, 0.5, 1])
-    tpr = [np.array([0, 0.5, 1])]
-    roc_auc = None
-    name = "test_curve"
-
-    # Initialize display with test inputs
-    display = RocCurveDisplay(
-        fpr=fpr,
-        tpr=tpr,
-        roc_auc=roc_auc,
-        name=name,
-        pos_label=None,
-    )
-    fpr_out, tpr_out, roc_auc_out, name_out = display._validate_plot_params(
-        ax=None, name=None
-    )
-
-    assert isinstance(fpr_out, list)
-    assert isinstance(tpr_out, list)
-    assert len(fpr_out) == 1
-    assert len(tpr_out) == 1
-    assert roc_auc_out is None
-    assert name_out == ["test_curve"]
-
-
-def test_roc_curve_from_cv_results_param_validation(pyplot, data_binary):
-    """Check parameter validation is correct."""
-    X, y = data_binary
-
-    # `cv_results` missing key
-    cv_results_no_est = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=False
-    )
-    cv_results_no_indices = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=False
-    )
-    for cv_results in (cv_results_no_est, cv_results_no_indices):
-        with pytest.raises(
-            ValueError,
-            match="`cv_results` does not contain one of the following required",
-        ):
-            RocCurveDisplay.from_cv_results(cv_results, X, y)
-
-    cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
-    )
-
-    # `X` wrong length
-    with pytest.raises(ValueError, match="`X` does not contain the correct"):
-        RocCurveDisplay.from_cv_results(cv_results, X[:10, :], y)
-
-    # `y` not binary
-    y_multi = y.copy()
-    y_multi[0] = 2
-    with pytest.raises(ValueError, match="The target `y` is not binary."):
-        RocCurveDisplay.from_cv_results(cv_results, X, y_multi)
-
-    # input inconsistent length
-    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
-        RocCurveDisplay.from_cv_results(cv_results, X, y[:10])
-    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
-        RocCurveDisplay.from_cv_results(cv_results, X, y, sample_weight=[1, 2])
-
-    # `pos_label` inconsistency
-    y_multi[y_multi == 1] = 2
-    with pytest.warns(UndefinedMetricWarning, match="No positive samples in y_true"):
-        RocCurveDisplay.from_cv_results(cv_results, X, y_multi)
-
-    # `name` is list while `curve_kwargs` is None or dict
-    for curve_kwargs in (None, {"alpha": 0.2}):
-        with pytest.raises(ValueError, match="To avoid labeling individual curves"):
-            RocCurveDisplay.from_cv_results(
-                cv_results,
-                X,
-                y,
-                name=["one", "two", "three"],
-                curve_kwargs=curve_kwargs,
-            )
-
-    # `curve_kwargs` incorrect length
-    with pytest.raises(ValueError, match="`curve_kwargs` must be None, a dictionary"):
-        RocCurveDisplay.from_cv_results(cv_results, X, y, curve_kwargs=[{"alpha": 1}])
-
-    # `curve_kwargs` both alias provided
-    with pytest.raises(TypeError, match="Got both c and"):
-        RocCurveDisplay.from_cv_results(
-            cv_results, X, y, curve_kwargs={"c": "blue", "color": "red"}
-        )
-
-
-@pytest.mark.parametrize(
-    "curve_kwargs",
-    [None, {"alpha": 0.2}, [{"alpha": 0.2}, {"alpha": 0.3}, {"alpha": 0.4}]],
-)
-def test_roc_curve_display_from_cv_results_curve_kwargs(
-    pyplot, data_binary, curve_kwargs
-):
-    """Check `curve_kwargs` correctly passed."""
-    X, y = data_binary
-    n_cv = 3
-    cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=n_cv, return_estimator=True, return_indices=True
-    )
-    display = RocCurveDisplay.from_cv_results(
-        cv_results,
-        X,
-        y,
-        curve_kwargs=curve_kwargs,
-    )
-    if curve_kwargs is None:
-        # Default `alpha` used
-        assert all(line.get_alpha() == 0.5 for line in display.line_)
-    elif isinstance(curve_kwargs, Mapping):
-        # `alpha` from dict used for all curves
-        assert all(line.get_alpha() == 0.2 for line in display.line_)
-    else:
-        # Different `alpha` used for each curve
-        assert all(
-            line.get_alpha() == curve_kwargs[i]["alpha"]
-            for i, line in enumerate(display.line_)
-        )
-    # Other default kwargs should be the same
-    for line in display.line_:
-        assert line.get_linestyle() == "--"
-        assert line.get_color() == "blue"
-
-
 # TODO(1.9): Remove in 1.9
 @pytest.mark.parametrize(
     "constructor_name", ["from_estimator", "from_predictions", "plot"]
@@ -459,112 +330,6 @@ def test_roc_curve_display_plotting_from_cv_results(
             assert line.get_label() == aggregate_expected_labels[idx]
 
 
-@pytest.mark.parametrize("roc_auc", [[1.0, 1.0, 1.0], None])
-@pytest.mark.parametrize(
-    "curve_kwargs",
-    [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
-)
-@pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
-def test_roc_curve_plot_legend_label(pyplot, data_binary, name, curve_kwargs, roc_auc):
-    """Check legend label correct with all `curve_kwargs`, `name` combinations."""
-    fpr = [np.array([0, 0.5, 1]), np.array([0, 0.5, 1]), np.array([0, 0.5, 1])]
-    tpr = [np.array([0, 0.5, 1]), np.array([0, 0.5, 1]), np.array([0, 0.5, 1])]
-    if not isinstance(curve_kwargs, list) and isinstance(name, list):
-        with pytest.raises(ValueError, match="To avoid labeling individual curves"):
-            RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc).plot(
-                name=name, curve_kwargs=curve_kwargs
-            )
-
-    else:
-        display = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc).plot(
-            name=name, curve_kwargs=curve_kwargs
-        )
-        legend = display.ax_.get_legend()
-        if legend is None:
-            # No legend is created, exit test early
-            assert name is None
-            assert roc_auc is None
-            return
-        else:
-            legend_labels = [text.get_text() for text in legend.get_texts()]
-
-        if isinstance(curve_kwargs, list):
-            # Multiple labels in legend
-            assert len(legend_labels) == 3
-            for idx, label in enumerate(legend_labels):
-                if name is None:
-                    expected_label = "AUC = 1.00" if roc_auc else None
-                    assert label == expected_label
-                elif isinstance(name, str):
-                    expected_label = "single (AUC = 1.00)" if roc_auc else "single"
-                    assert label == expected_label
-                else:
-                    # `name` is a list of different strings
-                    expected_label = (
-                        f"{name[idx]} (AUC = 1.00)" if roc_auc else f"{name[idx]}"
-                    )
-                    assert label == expected_label
-        else:
-            # Single label in legend
-            assert len(legend_labels) == 1
-            if name is None:
-                expected_label = "AUC = 1.00 +/- 0.00" if roc_auc else None
-                assert legend_labels[0] == expected_label
-            else:
-                # name is single string
-                expected_label = "single (AUC = 1.00 +/- 0.00)" if roc_auc else "single"
-                assert legend_labels[0] == expected_label
-
-
-@pytest.mark.parametrize(
-    "curve_kwargs",
-    [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
-)
-@pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
-def test_roc_curve_from_cv_results_legend_label(
-    pyplot, data_binary, name, curve_kwargs
-):
-    """Check legend label correct with all `curve_kwargs`, `name` combinations."""
-    X, y = data_binary
-    n_cv = 3
-    cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=n_cv, return_estimator=True, return_indices=True
-    )
-
-    if not isinstance(curve_kwargs, list) and isinstance(name, list):
-        with pytest.raises(ValueError, match="To avoid labeling individual curves"):
-            RocCurveDisplay.from_cv_results(
-                cv_results, X, y, name=name, curve_kwargs=curve_kwargs
-            )
-    else:
-        display = RocCurveDisplay.from_cv_results(
-            cv_results, X, y, name=name, curve_kwargs=curve_kwargs
-        )
-
-        legend = display.ax_.get_legend()
-        legend_labels = [text.get_text() for text in legend.get_texts()]
-        if isinstance(curve_kwargs, list):
-            # Multiple labels in legend
-            assert len(legend_labels) == 3
-            auc = ["0.62", "0.66", "0.55"]
-            for idx, label in enumerate(legend_labels):
-                if name is None:
-                    assert label == f"AUC = {auc[idx]}"
-                elif isinstance(name, str):
-                    assert label == f"single (AUC = {auc[idx]})"
-                else:
-                    # `name` is a list of different strings
-                    assert label == f"{name[idx]} (AUC = {auc[idx]})"
-        else:
-            # Single label in legend
-            assert len(legend_labels) == 1
-            if name is None:
-                assert legend_labels[0] == "AUC = 0.61 +/- 0.05"
-            else:
-                # name is single string
-                assert legend_labels[0] == "single (AUC = 0.61 +/- 0.05)"
-
-
 @pytest.mark.parametrize(
     "curve_kwargs",
     [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
@@ -590,18 +355,6 @@ def test_roc_curve_from_cv_results_curve_kwargs(pyplot, data_binary, curve_kwarg
             assert color == "red"
         else:
             assert color == curve_kwargs[idx]["c"]
-
-
-def test_roc_curve_from_cv_results_pos_label_inferred(pyplot, data_binary):
-    """Check `pos_label` inferred correctly by `from_cv_results(pos_label=None)`."""
-    X, y = data_binary
-    cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
-    )
-
-    disp = RocCurveDisplay.from_cv_results(cv_results, X, y, pos_label=None)
-    # Should be `estimator.classes_[1]`
-    assert disp.pos_label == 1
 
 
 def _check_chance_level(plot_chance_level, chance_level_kw, display):

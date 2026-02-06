@@ -1,11 +1,13 @@
+from collections.abc import Mapping
+
 import numpy as np
 import pytest
 
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.calibration import CalibrationDisplay
 from sklearn.compose import make_column_transformer
-from sklearn.datasets import load_iris
-from sklearn.exceptions import NotFittedError
+from sklearn.datasets import load_iris, make_classification
+from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     ConfusionMatrixDisplay,
@@ -14,6 +16,7 @@ from sklearn.metrics import (
     PredictionErrorDisplay,
     RocCurveDisplay,
 )
+from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
@@ -300,6 +303,391 @@ def test_classifier_display_curve_named_constructor_return_type(
         curve = SubclassOfDisplay.from_estimator(classifier, X, y)
 
     assert isinstance(curve, SubclassOfDisplay)
+
+
+@pytest.mark.parametrize(
+    "Display, display_args",
+    [
+        (
+            RocCurveDisplay,
+            {
+                "fpr": np.array([0, 0.5, 1]),
+                "tpr": [np.array([0, 0.5, 1])],
+                "roc_auc": None,
+                "name": "test_curve",
+            },
+        ),
+    ],
+)
+def test_display_validate_plot_params(pyplot, Display, display_args):
+    """Check `_validate_plot_params` returns the correct variables.
+
+    `display_args` should be given in the same order as output by
+    `_validate_plot_params`. All `display_args` should be for a single curve.
+    """
+    display = Display(**display_args)
+    results = display._validate_plot_params(ax=None, name=None)
+
+    # Check if the number of parameters match
+    assert len(results) == len(display_args)
+
+    for idx, (param, value) in enumerate(display_args.items()):
+        if param == "name":
+            assert results[idx] == [value] if isinstance(value, str) else value
+        elif value is None:
+            assert results[idx] is None
+        else:
+            assert isinstance(results[idx], list)
+            assert len(results[idx]) == 1
+
+
+auc_metrics = [[1.0, 1.0, 1.0], None]
+
+
+@pytest.mark.parametrize(
+    "Display, auc_metric_name, display_args",
+    [
+        pytest.param(
+            RocCurveDisplay,
+            "AUC",
+            {
+                "fpr": [
+                    np.array([0, 0.5, 1]),
+                    np.array([0, 0.5, 1]),
+                    np.array([0, 0.5, 1]),
+                ],
+                "tpr": [
+                    np.array([0, 0.5, 1]),
+                    np.array([0, 0.5, 1]),
+                    np.array([0, 0.5, 1]),
+                ],
+                "roc_auc": auc_metric,
+            },
+        )
+        for auc_metric in auc_metrics
+    ],
+)
+@pytest.mark.parametrize(
+    "curve_kwargs",
+    [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
+)
+@pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
+def test_display_plot_legend_label(
+    pyplot, Display, auc_metric_name, display_args, name, curve_kwargs
+):
+    """Check legend label correct with all `curve_kwargs`, `name` combinations.
+
+    Checks `from_estimator` and `from_predictions` methods, when plotting multiple
+    curves.
+    """
+    if not isinstance(curve_kwargs, list) and isinstance(name, list):
+        with pytest.raises(ValueError, match="To avoid labeling individual curves"):
+            Display(**display_args).plot(name=name, curve_kwargs=curve_kwargs)
+        return
+
+    display = Display(**display_args).plot(name=name, curve_kwargs=curve_kwargs)
+    legend = display.ax_.get_legend()
+    if Display == PrecisionRecallDisplay:
+        auc_metric = display_args["average_precision"]
+    elif Display == RocCurveDisplay:
+        auc_metric = display_args["roc_auc"]
+
+    if legend is None:
+        # No legend is created, exit test early
+        assert name is None
+        assert auc_metric is None
+        return
+    else:
+        legend_labels = [text.get_text() for text in legend.get_texts()]
+
+    if isinstance(curve_kwargs, list):
+        # Multiple labels in legend
+        assert len(legend_labels) == 3
+        for idx, label in enumerate(legend_labels):
+            if name is None:
+                expected_label = f"{auc_metric_name} = 1.00" if auc_metric else None
+                assert label == expected_label
+            elif isinstance(name, str):
+                expected_label = (
+                    f"single ({auc_metric_name} = 1.00)" if auc_metric else "single"
+                )
+                assert label == expected_label
+            else:
+                # `name` is a list of different strings
+                expected_label = (
+                    f"{name[idx]} ({auc_metric_name} = 1.00)"
+                    if auc_metric
+                    else f"{name[idx]}"
+                )
+                assert label == expected_label
+    else:
+        # Single label in legend
+        assert len(legend_labels) == 1
+        if name is None:
+            expected_label = (
+                f"{auc_metric_name} = 1.00 +/- 0.00" if auc_metric else None
+            )
+            assert legend_labels[0] == expected_label
+        else:
+            # name is single string
+            expected_label = (
+                f"single ({auc_metric_name} = 1.00 +/- 0.00)"
+                if auc_metric
+                else "single"
+            )
+            assert legend_labels[0] == expected_label
+    # Close plots, prevents "more than 20 figures" opened warning
+    pyplot.close("all")
+
+
+@pytest.mark.parametrize(
+    "Display, auc_metrics, auc_metric_name",
+    [
+        (RocCurveDisplay, [0.96, 1.00, 1.00], "AUC"),
+    ],
+)
+@pytest.mark.parametrize(
+    "curve_kwargs",
+    [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
+)
+@pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
+def test_display_from_cv_results_legend_label(
+    pyplot, Display, auc_metrics, auc_metric_name, name, curve_kwargs
+):
+    """Check legend label correct with all `curve_kwargs`, `name` combinations.
+
+    This function verifies that the legend labels in a Display object created from
+    cross-validation results are correctly formatted based on the provided parameters.
+    """
+    X, y = X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+
+    if not isinstance(curve_kwargs, list) and isinstance(name, list):
+        with pytest.raises(ValueError, match="To avoid labeling individual curves"):
+            Display.from_cv_results(
+                cv_results, X, y, name=name, curve_kwargs=curve_kwargs
+            )
+    else:
+        display = Display.from_cv_results(
+            cv_results, X, y, name=name, curve_kwargs=curve_kwargs
+        )
+
+        legend = display.ax_.get_legend()
+        legend_labels = [text.get_text() for text in legend.get_texts()]
+        if isinstance(curve_kwargs, list):
+            # Multiple labels in legend
+            assert len(legend_labels) == 3
+            for idx, label in enumerate(legend_labels):
+                if name is None:
+                    assert label == f"{auc_metric_name} = {auc_metrics[idx]:.2f}"
+                elif isinstance(name, str):
+                    assert (
+                        label == f"single ({auc_metric_name} = {auc_metrics[idx]:.2f})"
+                    )
+                else:
+                    # `name` is a list of different strings
+                    assert (
+                        label
+                        == f"{name[idx]} ({auc_metric_name} = {auc_metrics[idx]:.2f})"
+                    )
+        else:
+            # Single label in legend
+            assert len(legend_labels) == 1
+            if name is None:
+                assert legend_labels[0] == (
+                    f"{auc_metric_name} = {np.mean(auc_metrics):.2f} +/- "
+                    f"{np.std(auc_metrics):.2f}"
+                )
+            else:
+                # name is single string
+                assert legend_labels[0] == (
+                    f"single ({auc_metric_name} = {np.mean(auc_metrics):.2f} +/- "
+                    f"{np.std(auc_metrics):.2f})"
+                )
+    # Close plots, prevents "more than 20 figures" opened warning
+    pyplot.close("all")
+
+
+@pytest.mark.parametrize("Display", [RocCurveDisplay])
+def test_display_from_cv_results_param_validation(pyplot, data_binary, Display):
+    """Check parameter validation is correct."""
+    X, y = data_binary
+
+    # `cv_results` missing key
+    cv_results_no_est = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=False
+    )
+    cv_results_no_indices = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=False
+    )
+    for cv_results in (cv_results_no_est, cv_results_no_indices):
+        with pytest.raises(
+            ValueError,
+            match="`cv_results` does not contain one of the following required",
+        ):
+            Display.from_cv_results(cv_results, X, y)
+
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+
+    # `X` wrong length
+    with pytest.raises(ValueError, match="`X` does not contain the correct"):
+        Display.from_cv_results(cv_results, X[:10, :], y)
+
+    # `y` not binary
+    y_multi = y.copy()
+    y_multi[0] = 2
+    with pytest.raises(ValueError, match="The target `y` is not binary."):
+        Display.from_cv_results(cv_results, X, y_multi)
+
+    # input inconsistent length
+    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
+        Display.from_cv_results(cv_results, X, y[:10])
+    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
+        Display.from_cv_results(cv_results, X, y, sample_weight=[1, 2])
+
+    # `pos_label` inconsistency
+    y_multi[y_multi == 1] = 2
+    if Display == RocCurveDisplay:
+        # This warning is raised by `roc_curve`
+        with pytest.warns(
+            UndefinedMetricWarning, match="No positive samples in y_true"
+        ):
+            Display.from_cv_results(cv_results, X, y_multi)
+    elif Display == PrecisionRecallDisplay:
+        # in `average_precision` default `pos_label=1`, thus following error is raised
+        with pytest.raises(ValueError, match="pos_label=1 is not a valid label"):
+            # `precision_recall_curve` also raises a warning
+            with pytest.warns(UserWarning, match="No positive class found in y_true"):
+                Display.from_cv_results(cv_results, X, y_multi)
+
+    # `name` is list while `curve_kwargs` is None or dict
+    for curve_kwargs in (None, {"alpha": 0.2}):
+        with pytest.raises(ValueError, match="To avoid labeling individual curves"):
+            Display.from_cv_results(
+                cv_results,
+                X,
+                y,
+                name=["one", "two", "three"],
+                curve_kwargs=curve_kwargs,
+            )
+
+    # `curve_kwargs` incorrect length
+    with pytest.raises(ValueError, match="`curve_kwargs` must be None, a dictionary"):
+        Display.from_cv_results(cv_results, X, y, curve_kwargs=[{"alpha": 1}])
+
+    # `curve_kwargs` both alias provided
+    with pytest.raises(TypeError, match="Got both c and"):
+        Display.from_cv_results(
+            cv_results, X, y, curve_kwargs={"c": "blue", "color": "red"}
+        )
+
+
+@pytest.mark.parametrize("Display", [RocCurveDisplay])
+def test_display_from_cv_results_pos_label_inferred(pyplot, data_binary, Display):
+    """Check `pos_label` inferred correctly by `from_cv_results(pos_label=None)`."""
+    X, y = data_binary
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+
+    disp = Display.from_cv_results(cv_results, X, y, pos_label=None)
+    # Should be `estimator.classes_[1]`
+    assert disp.pos_label == 1
+
+
+@pytest.mark.parametrize("Display", [RocCurveDisplay])
+@pytest.mark.parametrize(
+    "constructor_name, expected_clf_name",
+    [
+        ("from_estimator", "LogisticRegression"),
+        ("from_predictions", "Classifier"),
+    ],
+)
+def test_display_default_name(
+    pyplot,
+    data_binary,
+    constructor_name,
+    expected_clf_name,
+    Display,
+):
+    """Check the default name display in the figure when `name` is not provided."""
+    X, y = data_binary
+
+    lr = LogisticRegression().fit(X, y)
+    y_score = lr.predict_proba(X)[:, 1]
+
+    if constructor_name == "from_estimator":
+        disp = Display.from_estimator(lr, X, y)
+    else:
+        disp = Display.from_predictions(y, y_score)
+
+    assert expected_clf_name in disp.name
+    assert expected_clf_name in disp.line_.get_label()
+
+
+@pytest.mark.parametrize("Display", [RocCurveDisplay])
+@pytest.mark.parametrize(
+    "curve_kwargs",
+    [None, {"alpha": 0.2}, [{"alpha": 0.2}, {"alpha": 0.3}, {"alpha": 0.4}]],
+)
+def test_display_from_cv_results_curve_kwargs(
+    pyplot, data_binary, curve_kwargs, Display
+):
+    """Check `curve_kwargs` correctly passed."""
+    X, y = data_binary
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+    display = Display.from_cv_results(
+        cv_results,
+        X,
+        y,
+        curve_kwargs=curve_kwargs,
+    )
+    if curve_kwargs is None:
+        # Default `alpha` used
+        assert all(line.get_alpha() == 0.5 for line in display.line_)
+    elif isinstance(curve_kwargs, Mapping):
+        # `alpha` from dict used for all curves
+        assert all(line.get_alpha() == 0.2 for line in display.line_)
+    else:
+        # Different `alpha` used for each curve
+        assert all(
+            line.get_alpha() == curve_kwargs[i]["alpha"]
+            for i, line in enumerate(display.line_)
+        )
+
+
+@pytest.mark.parametrize("Display", [RocCurveDisplay])
+@pytest.mark.parametrize(
+    "curve_kwargs",
+    [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
+)
+def test_display_from_cv_results_curve_kwargs_default_kwargs(
+    pyplot, data_binary, curve_kwargs, Display
+):
+    """Check `curve_kwargs` and default color handled correctly in `from_cv_results`."""
+
+    X, y = data_binary
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+    display = Display.from_cv_results(cv_results, X, y, curve_kwargs=curve_kwargs)
+
+    for idx, line in enumerate(display.line_):
+        color = line.get_color()
+        if curve_kwargs is None:
+            # Default color
+            assert color == "blue"
+        elif isinstance(curve_kwargs, Mapping):
+            # All curves "red"
+            assert color == "red"
+        else:
+            assert color == curve_kwargs[idx]["c"]
 
 
 # TODO(1.10): Remove once deprecated in all Displays
