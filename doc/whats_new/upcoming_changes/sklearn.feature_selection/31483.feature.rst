@@ -1,0 +1,4 @@
+- Add method :meth:`get_final_cv_score` to
+  :class:`feature_selection.SequentialFeatureSelector`, which calculates the
+  cross-validation score of the selected feature set on demand.
+  By :user:`Chris Boseak <cboseak>`
