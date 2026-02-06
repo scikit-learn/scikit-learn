@@ -1123,7 +1123,7 @@ def manhattan_distances(X, Y=None):
             block_dist = xp.sum(
                 xp.abs(batch_X[:, None, :] - batch_Y[None, :, :]), axis=2
             )
-            out[i:i_end, j:j_end] = block_dist
+            out = xpx.at(out)[i:i_end, j:j_end].set(block_dist)
 
     return out
 
@@ -1961,7 +1961,7 @@ def distance_metrics():
 
 def _transposed_dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
     """Write in-place to a slice of a distance matrix."""
-    dist_matrix[slice_, ...] = dist_func(*args, **kwargs).T
+    dist_matrix = xpx.at(dist_matrix)[slice_, ...].set(dist_func(*args, **kwargs).T)
 
 
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
@@ -2031,7 +2031,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         for i, j in iterator:
             x = _get_slice(X, i)
             y = _get_slice(Y, j)
-            out[i, j] = metric(x, y, **kwds)
+            out = xpx.at(out)[i, j].set(metric(x, y, **kwds))
 
         # Make symmetric
         # NB: out += out.T will produce incorrect results
@@ -2041,7 +2041,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         # NB: nonzero diagonals are allowed for both metrics and kernels
         for i in range(X.shape[0]):
             x = _get_slice(X, i)
-            out[i, i] = metric(x, x, **kwds)
+            out = xpx.at(out)[i, i].set(metric(x, x, **kwds))
 
     else:
         # Calculate all cells
@@ -2050,7 +2050,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         for i, j in iterator:
             x = _get_slice(X, i)
             y = _get_slice(Y, j)
-            out[i, j] = metric(x, y, **kwds)
+            out = xpx.at(out)[i, j].set(metric(x, y, **kwds))
 
     return out
 

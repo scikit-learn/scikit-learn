@@ -841,7 +841,7 @@ class _CalibratedClassifier:
             proba = self.calibrators[0].predict(predictions)
 
         # Deal with cases where the predicted probability minimally exceeds 1.0
-        proba[(1.0 < proba) & (proba <= 1.0 + 1e-5)] = 1.0
+        proba = xpx.at(proba)[(1.0 < proba) & (proba <= 1.0 + 1e-5)].set(1.0)
 
         return proba
 

@@ -798,7 +798,9 @@ class LinearDiscriminantAnalysis(
         prediction = self.predict_proba(X)
 
         smallest_normal = xp.finfo(prediction.dtype).smallest_normal
-        prediction[prediction == 0.0] += smallest_normal
+        prediction = xpx.at(prediction)[prediction == 0.0].set(
+            prediction[prediction == 0.0] + smallest_normal
+        )
         return xp.log(prediction)
 
     def decision_function(self, X):
