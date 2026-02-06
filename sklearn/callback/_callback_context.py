@@ -15,7 +15,7 @@ from sklearn.callback._mixin import CallbackSupportMixin
 #
 # Each loop in the estimator represents a parent task and each iteration of that loop
 # represents a child task. To allow callbacks to be generic and reusable across
-# estimators, the smallest tasks, i.e. the leaves of the task tree, correspond to
+# estimators, the innermost tasks, i.e. the leaves of the task tree, correspond to
 # operations on the full input data (or batch for incremental estimators).
 #
 # For instance, KMeans has two nested loops: the outer loop is controlled by `n_init`
