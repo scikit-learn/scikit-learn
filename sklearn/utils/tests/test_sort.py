@@ -3,6 +3,7 @@
 from time import perf_counter
 
 import numpy as np
+from numpy.testing import assert_array_equal
 
 from sklearn.utils._sorting import _py_simultaneous_sort
 
@@ -22,16 +23,17 @@ def test_simultaneous_sort_correctness():
         x_sorted = x.copy()
         _py_simultaneous_sort(x_sorted, ind, n)
         assert (x_sorted[:-1] <= x_sorted[1:]).all()
-        assert (x[ind] == x_sorted).all()
+        assert_array_equal(x[ind], x_sorted)
+        assert_array_equal(np.sort(ind), np.arange(n, dtype=np.intp))
 
 
 def test_simultaneous_sort_not_quadratic():
-    dist = np.zeros(100000, dtype=np.float64)
-    ind = np.arange(dist.shape[0], dtype=np.intp)
-
+    n = 10**6
+    dist = np.zeros(n)
+    ind = np.arange(n, dtype=np.intp)
     t0 = perf_counter()
     _py_simultaneous_sort(dist, ind, dist.shape[0])
     dt = perf_counter() - t0
-    # sorting 100k elements should take less than 10ms
-    # unless the sort goes quadratic
-    assert dt < 1e-2
+    # sorting 1M elements should take less than 10s unless the sort goes quadratic
+    # (it should take something like ~10-100ms)
+    assert dt < 10
