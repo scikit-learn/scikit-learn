@@ -1117,18 +1117,12 @@ def test_unfitted():
         clf.predict(X)
 
 
-# ignore convergence warnings from max_iter=1
-# XXX: this test is thread-unsafe because it uses probability=True:
-# https://github.com/scikit-learn/scikit-learn/issues/31885
-@pytest.mark.thread_unsafe
-@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 # TODO(1.10): remove test entirely.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
-def test_consistent_proba(global_random_seed):
-    a = svm.SVC(probability=True, max_iter=1, random_state=global_random_seed)
-    proba_1 = a.fit(X, Y).predict_proba(X)
-    a = svm.SVC(probability=True, max_iter=1, random_state=global_random_seed)
-    proba_2 = a.fit(X, Y).predict_proba(X)
+def test_consistent_decision_function(global_random_seed):
+    a = svm.SVC(max_iter=1, random_state=global_random_seed)
+    proba_1 = a.fit(X, Y).decision_function(X)
+    a = svm.SVC(max_iter=1, random_state=global_random_seed)
+    proba_2 = a.fit(X, Y).decision_function(X)
     assert_array_almost_equal(proba_1, proba_2)
 
 

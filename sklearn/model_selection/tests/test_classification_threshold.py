@@ -3,7 +3,6 @@ import pytest
 
 from sklearn import config_context
 from sklearn.base import clone
-from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import (
     load_breast_cancer,
     load_iris,
@@ -232,7 +231,7 @@ def test_tuned_threshold_classifier_conflict_cv_refit(params, err_type, err_msg)
     "estimator",
     [
         LogisticRegression(),
-        CalibratedClassifierCV(SVC(), ensemble=True),
+        SVC(),
         GradientBoostingClassifier(n_estimators=4),
     ],
 )

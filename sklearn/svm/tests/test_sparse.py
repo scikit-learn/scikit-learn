@@ -94,6 +94,7 @@ def check_svm_model_equal(dense_svm, X_train, y_train, X_test):
 
 # XXX: probability=True is not thread-safe:
 # https://github.com/scikit-learn/scikit-learn/issues/31885
+# TODO(1.10): remove probability=True and adapt check_svm_model_equal accordingly.
 @pytest.mark.thread_unsafe
 @skip_if_32bit
 @pytest.mark.parametrize(
@@ -107,7 +108,6 @@ def check_svm_model_equal(dense_svm, X_train, y_train, X_test):
 )
 @pytest.mark.parametrize("kernel", ["linear", "poly", "rbf", "sigmoid"])
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + LIL_CONTAINERS)
-# TODO(1.10): remove probability=True and adapt check_svm_model_equal accordingly.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_svc(X_train, y_train, X_test, kernel, sparse_container):
     """Check that sparse SVC gives the same result as SVC."""
@@ -494,15 +494,11 @@ def test_timeout(lil_container):
         sp.fit(lil_container(X), Y)
 
 
-# TODO(1.10): remove this test.
-# XXX: probability=True is not thread-safe
-@pytest.mark.thread_unsafe
-@pytest.mark.filterwarnings("ignore::FutureWarning")
-def test_consistent_proba():
-    a = svm.SVC(probability=True, max_iter=1, random_state=0)
+def test_consistent_decision_function():
+    a = svm.SVC(max_iter=1, random_state=0)
     with ignore_warnings(category=ConvergenceWarning):
-        proba_1 = a.fit(X, Y).predict_proba(X)
-    a = svm.SVC(probability=True, max_iter=1, random_state=0)
+        proba_1 = a.fit(X, Y).decision_function(X)
+    a = svm.SVC(max_iter=1, random_state=0)
     with ignore_warnings(category=ConvergenceWarning):
-        proba_2 = a.fit(X, Y).predict_proba(X)
+        proba_2 = a.fit(X, Y).decision_function(X)
     assert_allclose(proba_1, proba_2)
