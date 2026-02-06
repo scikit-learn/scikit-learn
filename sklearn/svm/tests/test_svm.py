@@ -66,6 +66,7 @@ def test_libsvm_parameters():
 
 # XXX: this test is thread-unsafe because it uses _libsvm.cross_validation:
 # https://github.com/scikit-learn/scikit-learn/issues/31885
+# TODO(1.10): investigate why assertion on L148 fails.
 @pytest.mark.thread_unsafe
 def test_libsvm_iris(global_random_seed):
     # Check consistency on dataset iris.
@@ -378,8 +379,8 @@ def test_tweak_params():
 
 # XXX: this test is thread-unsafe because it uses probability=True:
 # https://github.com/scikit-learn/scikit-learn/issues/31885
+# TODO(1.10): remove this test entirely
 @pytest.mark.thread_unsafe
-# TODO(1.10): remove this test entirely.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_probability(global_random_seed):
     # Predict probabilities using SVC
@@ -1046,9 +1047,6 @@ def test_linearsvc_verbose():
     os.dup2(stdout, 1)  # restore original stdout
 
 
-# XXX: this test is thread-unsafe because it uses probability=True
-# https://github.com/scikit-learn/scikit-learn/issues/31885
-@pytest.mark.thread_unsafe
 def test_svc_clone_with_callable_kernel():
     iris = get_iris_dataset(42)
 
@@ -1087,9 +1085,6 @@ def test_svc_bad_kernel():
         svc.fit(X, Y)
 
 
-# XXX: this test is thread-unsafe because it uses probability=True:
-# https://github.com/scikit-learn/scikit-learn/issues/31885
-@pytest.mark.thread_unsafe
 def test_libsvm_convergence_warnings(global_random_seed):
     a = svm.SVC(
         kernel=lambda x, y: np.dot(x, y.T),
