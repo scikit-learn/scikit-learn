@@ -23,6 +23,7 @@ from sklearn.utils import (
     check_random_state,
     indexable,
     metadata_routing,
+    shuffle,
 )
 from sklearn.utils._array_api import (
     _convert_to_numpy,
@@ -2090,19 +2091,21 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
     The difference between :class:`LeavePGroupsOut` and ``GroupShuffleSplit`` is that
     the former generates splits using all subsets of size ``p`` unique groups,
     whereas ``GroupShuffleSplit`` generates a user-determined number of random
-    test splits, each with a user-determined fraction of unique groups.
+    test splits, each with a user-determined fraction.
 
     For example, a less computationally intensive alternative to
     ``LeavePGroupsOut(p=10)`` would be
     ``GroupShuffleSplit(test_size=10, n_splits=100)``.
 
+    The parameters ``test_size`` and ``train_size`` can refer either to the groups or
+    the samples. Use the ``split_size`` parameter to distribute the groups based on the
+    number of groups (``groups``) or by the groups' sizes (``samples``), i.e. the number
+    of samples in the groups. The default is ``groups``.
+
     Contrary to other cross-validation strategies, the random splits
     do not guarantee that test sets across all folds will be mutually exclusive,
     and might include overlapping samples. However, this is still very likely for
     sizeable datasets.
-
-    Note: The parameters ``test_size`` and ``train_size`` refer to groups, and
-    not to samples as in :class:`ShuffleSplit`.
 
     Read more in the :ref:`User Guide <group_shuffle_split>`.
 
@@ -2128,6 +2131,11 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
         int, represents the absolute number of train groups. If None,
         the value is automatically set to the complement of the test size.
 
+    split_size : str, default="groups"
+        If "groups", the values of the ``test_size`` and `train_size` parameters
+        refer to the number of groups. If ``samples``, they refer to the number of
+        samples, i.e. the size of the groups.
+
     random_state : int, RandomState instance or None, default=None
         Controls the randomness of the training and testing indices produced.
         Pass an int for reproducible output across multiple function calls.
@@ -2146,7 +2154,8 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
     >>> gss.get_n_splits()
     2
     >>> print(gss)
-    GroupShuffleSplit(n_splits=2, random_state=42, test_size=None, train_size=0.7)
+    GroupShuffleSplit(n_splits=2, random_state=42, split_size='groups', test_size=None,
+                      train_size=0.7)
     >>> for i, (train_index, test_index) in enumerate(gss.split(X, y, groups)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}, group={groups[train_index]}")
@@ -2158,6 +2167,16 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
       Train: index=[0 1 5 6 7], group=[1 1 3 3 3]
       Test:  index=[2 3 4], group=[2 2 2]
 
+    For unbalanced group sizes, ``split_size=samples`` can be used:
+    >>> groups = np.array([1, 1, 1, 1, 1, 2, 3, 4])
+    >>> gss = GroupShuffleSplit(n_splits=1, train_size=.7, split_size="samples",
+    ...                         random_state=42)
+    >>> train_index, test_index = next(gss.split(X, y, groups))
+    >>> print(f"Train: index={train_index}, group={groups[train_index]}")
+    Train: index=[5 0 3 4 2 1], group=[2 1 1 1 1 1]
+    >>> print(f"Test:  index={test_index}, group={groups[test_index]}")
+    Test:  index=[6 7], group=[3 4]
+
     See Also
     --------
     ShuffleSplit : Shuffles samples to create independent test/train sets.
@@ -2166,7 +2185,13 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
     """
 
     def __init__(
-        self, n_splits=5, *, test_size=None, train_size=None, random_state=None
+        self,
+        n_splits=5,
+        *,
+        test_size=None,
+        train_size=None,
+        split_size="groups",
+        random_state=None,
     ):
         super().__init__(
             n_splits=n_splits,
@@ -2175,20 +2200,93 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
             random_state=random_state,
         )
         self._default_test_size = 0.2
+        if split_size not in ["groups", "samples"]:
+            raise ValueError(
+                "Bad parameter 'split_size'. Allowed are 'groups' and 'samples'."
+            )
+        self.split_size = split_size
+
+    def _iter_indices_split_size_samples(self, X, groups):
+        n_samples = _num_samples(X)
+        n_train, n_test = _validate_shuffle_split(
+            n_samples,
+            self.test_size,
+            self.train_size,
+            default_test_size=self._default_test_size,
+        )
+        rng = check_random_state(self.random_state)
+
+        classes, group_indices, group_counts = np.unique(
+            groups,
+            return_inverse=True,
+            return_counts=True,
+        )
+        class_indices = np.arange(len(classes))
+
+        for i in range(self.n_splits):
+
+            # pre-compute random assignments to train or test set for each group
+            random_bucket_assignments = rng.randint(0, 2, size=len(classes))
+
+            # randomize the group order for assignment to train/test
+            group_counts_shuffled, class_indices_shuffled = shuffle(
+                group_counts, class_indices, random_state=rng
+            )
+
+            # track train and test sets in arrays of length 2
+            samples_sizes = np.array([n_train, n_test], dtype=np.int_)
+            bucket_sizes = np.zeros(2, dtype=np.int_)
+            bucket_elements = [[], []]
+
+            for class_index, group_size, bucket_index in zip(
+                class_indices_shuffled, group_counts_shuffled, random_bucket_assignments
+            ):
+                first_bucket_size = bucket_sizes[bucket_index] + group_size
+                second_bucket_size = bucket_sizes[1 - bucket_index] + group_size
+
+                # first, try to assign the group randomly to a bucket
+                bucket_selection = bucket_index
+                if first_bucket_size <= samples_sizes[bucket_index]:
+                    bucket_selection = bucket_index
+                elif second_bucket_size <= samples_sizes[1 - bucket_index]:
+                    bucket_selection = 1 - bucket_index
+                else:
+                    # the group does not fit in any bucket. It is assigned to the bucket
+                    # which will be closer to its target sample sizes.
+                    first_diff = first_bucket_size - samples_sizes[bucket_index]
+                    second_diff = second_bucket_size - samples_sizes[1 - bucket_index]
+                    if second_diff < first_diff:
+                        bucket_selection = 1 - bucket_index
+
+                bucket_elements[bucket_selection].append(class_index)
+                bucket_sizes[bucket_selection] += group_size
+
+            # map group indices back to sample indices
+            train = np.flatnonzero(np.isin(group_indices, bucket_elements[0]))
+            test = np.flatnonzero(np.isin(group_indices, bucket_elements[1]))
+
+            train = rng.permutation(train)
+            test = rng.permutation(test)
+
+            yield train, test
 
     def _iter_indices(self, X, y, groups):
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
         groups = check_array(groups, input_name="groups", ensure_2d=False, dtype=None)
-        classes, group_indices = np.unique(groups, return_inverse=True)
-        for group_train, group_test in super()._iter_indices(X=classes):
-            # these are the indices of classes in the partition
-            # invert them into data indices
 
-            train = np.flatnonzero(np.isin(group_indices, group_train))
-            test = np.flatnonzero(np.isin(group_indices, group_test))
+        if self.split_size == "groups":
+            classes, group_indices = np.unique(groups, return_inverse=True)
+            for group_train, group_test in super()._iter_indices(X=classes):
+                # these are the indices of classes in the partition
+                # invert them into data indices
 
-            yield train, test
+                train = np.flatnonzero(np.isin(group_indices, group_train))
+                test = np.flatnonzero(np.isin(group_indices, group_test))
+
+                yield train, test
+        else:
+            yield from self._iter_indices_split_size_samples(X, groups)
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
