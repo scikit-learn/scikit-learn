@@ -794,10 +794,10 @@ def test_xlim_ylim_validation_errors_from_estimator(pyplot, fitted_clf, lim):
         ((0, 1, 2), r"must be a tuple of \(min, max\) with min < max"),
         ((2, 2), r"must be a tuple of \(min, max\) with min < max"),
         ((5, 2), r"must be a tuple of \(min, max\) with min < max"),
-        ((-2, -1), "values are outside the grid range."),
-        ((-2, 0), "values are outside the grid range."),
-        ((2, 3), "values are outside the grid range."),
-        ((0, 3), "values are outside the grid range."),
+        ((-2, -1), "values are outside the meshgrid range"),
+        ((-2, 0), "values are outside the meshgrid range"),
+        ((2, 3), "values are outside the meshgrid range"),
+        ((0, 3), "values are outside the meshgrid range"),
     ],
 )
 def test_xlim_ylim_validation_errors_plot(pyplot, lim, msg):
