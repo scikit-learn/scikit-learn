@@ -10,6 +10,7 @@ from collections.abc import Sequence
 from contextlib import suppress
 from functools import reduce, wraps
 from inspect import Parameter, isclass, signature
+from math import floor, log10
 
 import joblib
 import numpy as np
@@ -2897,6 +2898,22 @@ def validate_data(
 
     if no_val_X and no_val_y:
         raise ValueError("Validation should be done on X, y or both.")
+
+    # Add warning for very small data range
+    def _check_data_range(data, name):
+        if data is not None and isinstance(data, (np.ndarray, list)):
+            max_val = np.max(data)
+            # Calculate the order of magnitude
+            order_of_magnitude = floor(log10(abs(max_val)))
+            if order_of_magnitude <= -8:
+                warnings.warn(
+                    f"The data in '{name}' has a very small range, which may "
+                    "cause numerical issues. Consider scaling your data.",
+                    UserWarning,
+                )
+
+    if not no_val_y:
+        _check_data_range(y, "y")
 
     default_check_params = {"estimator": _estimator}
     check_params = {**default_check_params, **check_params}
