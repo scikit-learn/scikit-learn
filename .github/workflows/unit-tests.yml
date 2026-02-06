@@ -335,7 +335,7 @@ jobs:
 
   debian-32bit:
     name: &debian-32bit-job-name
-      Linux debian_32bit
+      Linux i386 debian_32bit
     runs-on: ubuntu-24.04
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
     env:
