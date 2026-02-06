@@ -42,7 +42,7 @@ cdef int simultaneous_sort(
     # an Array of Structures (AoS) instead of the Structure of Arrays (SoA)
     # currently used.
     cdef:
-        intp_t pivot_idx, i, j, store_idx
+        intp_t pivot_idx, i, j
         floating pivot_val
 
     # in the small-array case, do things efficiently
@@ -75,8 +75,8 @@ cdef int simultaneous_sort(
         # Partition indices about pivot.  At the end of this operation,
         # pivot_idx will contain the pivot value, everything to the left
         # will be smaller, and everything to the right will be larger.
-        i = 0
-        j = size - 1
+        i = 1
+        j = size - 2
         while True:
             # Find element >= pivot from left
             while i <= j and values[i] < pivot_val:
@@ -90,8 +90,9 @@ cdef int simultaneous_sort(
             i += 1
             j -= 1
 
-        dual_swap(values, indices, store_idx, size - 1)
+        # Put pivot at pivot_idx
         pivot_idx = i
+        dual_swap(values, indices, pivot_idx, size - 1)
 
         # Recursively sort each side of the pivot
         if pivot_idx > 1:
