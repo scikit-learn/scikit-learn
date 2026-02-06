@@ -91,3 +91,12 @@ cdef int simultaneous_sort(
                               indices + pivot_idx + 1,
                               size - pivot_idx - 1)
     return 0
+
+
+def _py_simultaneous_sort(
+    floating[::1] values,
+    intp_t[::1] indices,
+    intp_t size,
+):
+    """Python wrapper used for testing."""
+    simultaneous_sort(&values[0], &indices[0], size)
