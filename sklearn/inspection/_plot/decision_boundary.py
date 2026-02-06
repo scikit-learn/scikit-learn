@@ -269,7 +269,7 @@ class DecisionBoundaryDisplay:
                         f"`{name}` must be a tuple of (min, max) with min < max"
                     )
                 range_msg = (
-                    f"`{name}` values are outside the grid range. "
+                    f"`{name}` values are outside the meshgrid range (`xx0` and `xx1`). "
                     "Extend the range of the grid and the corresponding "
                     "predictions or use `from_estimator()` instead."
                 )
