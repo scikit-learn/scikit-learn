@@ -152,6 +152,13 @@ the corresponding solver is chosen.
 * :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
 * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`
+Example Use Case:
+Linear Regression can be effectively used for predicting continuous values such as
+energy consumption, housing prices, or student performance scores.
+
+In industrial datasets, it helps identify relationships between machine parameters
+and energy usage, enabling better forecasting and optimization.
+
 
 Classification
 --------------
@@ -1926,3 +1933,11 @@ And the classifier "predictions" are perfect::
     array([0, 1, 1, 0])
     >>> clf.score(X, y)
     1.0
+Example Use Case:
+Linear Regression can be effectively used for predicting continuous values such as
+energy consumption, housing prices, or student performance scores.
+
+In industrial datasets, it helps identify relationships between machine parameters
+and energy usage, enabling better forecasting and optimization.
+
+
