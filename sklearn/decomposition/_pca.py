@@ -85,7 +85,7 @@ def _assess_dimension(spectrum, rank, n_samples):
 
     pa = 0.0
     spectrum_ = xp.asarray(spectrum, copy=True)
-    spectrum_[rank:n_features] = v
+    spectrum_ = xpx.at(spectrum_)[rank:n_features].set(v)
     for i in range(rank):
         for j in range(i + 1, spectrum.shape[0]):
             pa += log(
@@ -105,9 +105,9 @@ def _infer_dimension(spectrum, n_samples):
     xp, _ = get_namespace(spectrum)
 
     ll = xp.empty_like(spectrum)
-    ll[0] = -xp.inf  # we don't want to return n_components = 0
+    ll = xpx.at(ll)[0].set(-xp.inf)  # we don't want to return n_components = 0
     for rank in range(1, spectrum.shape[0]):
-        ll[rank] = _assess_dimension(spectrum, rank, n_samples)
+        ll = xpx.at(ll)[rank].set(_assess_dimension(spectrum, rank, n_samples))
     return xp.argmax(ll)
 
 
