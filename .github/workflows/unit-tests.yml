@@ -331,8 +331,8 @@ jobs:
       JOB_NAME: *scipy-dev-job-name
     steps: *unit-tests-steps
 
-  Linux-docker_debian_32bit:
-    name: Linux docker_debian_32bit
+  debian-32bit:
+    name: &debian-32bit-job-name Linux debian_32bit
     runs-on: ubuntu-24.04
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
     env:
@@ -340,6 +340,8 @@ jobs:
       LOCK_FILE: build_tools/azure/debian_32bit_lock.txt
       SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 4  # non-default seed
       DOCKER_CONTAINER: i386/debian:trixie
+      # To be able to access the job name in the steps, it must be set as an env variable.
+      JOB_NAME: *debian-32bit-job-name
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -385,6 +387,7 @@ jobs:
           -e SELECTED_TESTS
           -e CCACHE_COMPRESS
           -e COMMIT_MESSAGE
+          -e JOB_NAME
           $DOCKER_CONTAINER
           sleep 1000000
 
