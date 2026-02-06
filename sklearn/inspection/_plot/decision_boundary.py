@@ -12,6 +12,7 @@ from sklearn.utils._dataframe import is_pandas_df, is_polars_df
 from sklearn.utils._optional_dependencies import check_matplotlib_support
 from sklearn.utils._response import _get_response_values
 from sklearn.utils._set_output import _get_adapter_from_container
+from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import (
     _is_arraylike_not_scalar,
     _num_features,
@@ -576,6 +577,31 @@ class DecisionBoundaryDisplay:
             encoder.classes_ = estimator.classes_
             response = encoder.transform(response)
 
+        # infer n_classes from the estimator
+        if (
+            class_of_interest is not None
+            or is_regressor(estimator)
+            or is_outlier_detector(estimator)
+        ):
+            n_classes = 2
+        elif is_classifier(estimator) and hasattr(estimator, "classes_"):
+            n_classes = len(estimator.classes_)
+        elif is_clusterer(estimator) and hasattr(estimator, "labels_"):
+            n_classes = len(np.unique(estimator.labels_))
+        else:
+            target_type = type_of_target(response)
+            if target_type in ("binary", "continuous"):
+                n_classes = 2
+            elif target_type == "multiclass":
+                n_classes = len(np.unique(response))
+            else:
+                raise ValueError(
+                    "Number of classes or labels cannot be inferred from "
+                    f"{estimator.__class__.__name__}. Please make sure your estimator "
+                    "follows scikit-learn's estimator API as described here: "
+                    "https://scikit-learn.org/stable/developers/develop.html#rolling-your-own-estimator"
+                )
+
         if response.ndim == 1:
             response = response.reshape(*xx0.shape)
         else:
@@ -590,17 +616,6 @@ class DecisionBoundaryDisplay:
                 response = response[:, col_idx].reshape(*xx0.shape)
             else:
                 response = response.reshape(*xx0.shape, response.shape[-1])
-
-        if (
-            class_of_interest is not None
-            or is_regressor(estimator)
-            or is_outlier_detector(estimator)
-        ):
-            n_classes = 2
-        elif is_classifier(estimator):
-            n_classes = len(estimator.classes_)
-        elif is_clusterer(estimator):
-            n_classes = len(np.unique(estimator.labels_))
 
         if xlabel is None:
             xlabel = X.columns[0] if hasattr(X, "columns") else ""
