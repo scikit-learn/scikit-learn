@@ -132,6 +132,7 @@ def _create_importances_bunch(baseline_score, permuted_score):
             Interval(Integral, 1, None, closed="left"),
             Interval(RealNotInt, 0, 1, closed="right"),
         ],
+        "feature_indices": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -146,6 +147,7 @@ def permutation_importance(
     random_state=None,
     sample_weight=None,
     max_samples=1.0,
+    feature_indices=None,
 ):
     """Permutation importance for feature evaluation [BRE]_.
 
@@ -230,6 +232,11 @@ def permutation_importance(
 
         .. versionadded:: 1.0
 
+    feature_indices : a list of feature indices to calculate permutation importance
+        for only these features. If None, all features will be used.
+
+        .. versionadded:: 1.7
+
     Returns
     -------
     result : :class:`~sklearn.utils.Bunch` or dict of such instances
@@ -277,6 +284,19 @@ def permutation_importance(
     random_state = check_random_state(random_state)
     random_seed = random_state.randint(np.iinfo(np.int32).max + 1)
 
+    if feature_indices is not None:
+        feature_indices = check_array(
+            feature_indices, ensure_2d=False, ensure_min_features=0, dtype=None
+        )
+        if feature_indices.ndim != 1:
+            raise ValueError("feature_indices must be 1D array-like")
+        if not np.issubdtype(feature_indices.dtype, np.integer):
+            raise ValueError("feature_indices must be array-like of integers")
+        if np.any(feature_indices < 0) or np.any(feature_indices >= X.shape[1]):
+            raise ValueError("feature_indices must be within [0, n_features]")
+    else:
+        feature_indices = np.arange(X.shape[1])
+
     if not isinstance(max_samples, numbers.Integral):
         max_samples = int(max_samples * X.shape[0])
     elif max_samples > X.shape[0]:
@@ -297,7 +317,7 @@ def permutation_importance(
             scorer,
             max_samples,
         )
-        for col_idx in range(X.shape[1])
+        for col_idx in feature_indices
     )
 
     if isinstance(baseline_score, dict):
