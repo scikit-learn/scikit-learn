@@ -4,7 +4,6 @@ pull_request_target event."""
 import json
 import os
 import re
-
 from github import Github
 
 context_dict = json.loads(os.getenv("CONTEXT_GITHUB"))
@@ -18,7 +17,6 @@ title = issue.title
 
 
 regex_to_labels = [(r"\bDOC\b", "Documentation"), (r"\bCI\b", "Build / CI")]
-
 labels_to_add = [label for regex, label in regex_to_labels if re.search(regex, title)]
 
 if labels_to_add:
