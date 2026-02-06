@@ -232,8 +232,8 @@ def test_binmapper_weighted_vs_repeated_equivalence(global_random_seed, n_bins):
 
 # Note: we use a small number of RNG seeds to check that the tests is not seed
 # dependent while keeping the statistical test valid. If we had used the
-# global_random_seed fixture, it would have been expected to get some failed
-# rejections of the null hypothesis rejections because of the large number of
+# global_random_seed fixture, it would have been expected to get some wrong
+# rejections of the null hypothesis because of the large number of
 # tests run by the fixture.
 @pytest.mark.parametrize("seed", [0, 1, 42])
 @pytest.mark.parametrize("n_bins", [3, 5])
