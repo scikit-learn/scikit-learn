@@ -37,9 +37,8 @@ def data_binary(data):
     "Display",
     [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
 )
-def test_display_curve_error_classifier(pyplot, data, data_binary, Display):
-    """Check that a proper error is raised when only binary classification is
-    supported."""
+def test_display_curve_error_binary_classifier(pyplot, data, data_binary, Display):
+    """Check correct error raised when only binary classification supported."""
     X, y = data
     X_binary, y_binary = data_binary
     clf = DecisionTreeClassifier().fit(X, y)
@@ -113,15 +112,14 @@ def test_display_curve_error_regression(pyplot, data_binary, Display):
 @pytest.mark.parametrize(
     "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
 )
-def test_display_curve_error_no_response(
+def test_display_curve_error_no_response_method(
     pyplot,
     data_binary,
     response_method,
     msg,
     Display,
 ):
-    """Check that a proper error is raised when the response method requested
-    is not defined for the given trained classifier."""
+    """Check error raised when `response_method` not defined for `estimator`."""
     X, y = data_binary
 
     class MyClassifier(ClassifierMixin, BaseEstimator):
@@ -136,17 +134,17 @@ def test_display_curve_error_no_response(
 
 
 @pytest.mark.parametrize(
-    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+    "Display",
+    [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
 )
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
-def test_display_curve_estimator_name_multiple_calls(
+def test_display_curve_name_overwritten_by_plot_multiple_calls(
     pyplot,
     data_binary,
     Display,
     constructor_name,
 ):
-    """Check that passing `name` when calling `plot` will overwrite the original name
-    in the legend."""
+    """Check passing `name` in `plot` overwrites name passed in `from_*` method."""
     X, y = data_binary
     clf_name = "my hand-crafted name"
     clf = LogisticRegression().fit(X, y)
@@ -184,11 +182,11 @@ def test_display_curve_estimator_name_multiple_calls(
     ],
 )
 @pytest.mark.parametrize(
-    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+    "Display",
+    [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
 )
-def test_display_curve_not_fitted_errors_old_name(pyplot, data_binary, clf, Display):
-    """Check that a proper error is raised when the classifier is not
-    fitted."""
+def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
+    """Check correct error raised when `estimator` is not fitted."""
     X, y = data_binary
     # clone since we parametrize the test and the classifier will be fitted
     # when testing the second and subsequent plotting function
@@ -206,36 +204,11 @@ def test_display_curve_not_fitted_errors_old_name(pyplot, data_binary, clf, Disp
 
 
 @pytest.mark.parametrize(
-    "clf",
-    [
-        LogisticRegression(),
-        make_pipeline(StandardScaler(), LogisticRegression()),
-        make_pipeline(
-            make_column_transformer((StandardScaler(), [0, 1])), LogisticRegression()
-        ),
-    ],
-)
-@pytest.mark.parametrize("Display", [RocCurveDisplay])
-def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
-    """Check that a proper error is raised when the classifier is not fitted."""
-    X, y = data_binary
-    # clone since we parametrize the test and the classifier will be fitted
-    # when testing the second and subsequent plotting function
-    model = clone(clf)
-    with pytest.raises(NotFittedError):
-        Display.from_estimator(model, X, y)
-    model.fit(X, y)
-    disp = Display.from_estimator(model, X, y)
-    assert model.__class__.__name__ in disp.line_.get_label()
-    assert disp.name == model.__class__.__name__
-
-
-@pytest.mark.parametrize(
-    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+    "Display",
+    [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
 )
 def test_display_curve_n_samples_consistency(pyplot, data_binary, Display):
-    """Check the error raised when `y_pred` or `sample_weight` have inconsistent
-    length."""
+    """Check error raised when `y_pred` or `sample_weight` have inconsistent length."""
     X, y = data_binary
     classifier = DecisionTreeClassifier().fit(X, y)
 
@@ -244,15 +217,20 @@ def test_display_curve_n_samples_consistency(pyplot, data_binary, Display):
         Display.from_estimator(classifier, X[:-2], y)
     with pytest.raises(ValueError, match=msg):
         Display.from_estimator(classifier, X, y[:-2])
-    with pytest.raises(ValueError, match=msg):
-        Display.from_estimator(classifier, X, y, sample_weight=np.ones(X.shape[0] - 2))
+    # `CalibrationDisplay` does not support `sample_weight`
+    if Display != CalibrationDisplay:
+        with pytest.raises(ValueError, match=msg):
+            Display.from_estimator(
+                classifier, X, y, sample_weight=np.ones(X.shape[0] - 2)
+            )
 
 
 @pytest.mark.parametrize(
-    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+    "Display",
+    [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
 )
 def test_display_curve_error_pos_label(pyplot, data_binary, Display):
-    """Check consistence of error message when `pos_label` should be specified."""
+    """Check consistency of error message when `pos_label` should be specified."""
     X, y = data_binary
     y = y + 10
 
@@ -690,7 +668,6 @@ def test_display_from_cv_results_curve_kwargs_default_kwargs(
             assert color == curve_kwargs[idx]["c"]
 
 
-# TODO(1.10): Remove once deprecated in all Displays
 @pytest.mark.parametrize(
     "Display, display_kwargs",
     [
