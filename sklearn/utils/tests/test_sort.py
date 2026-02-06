@@ -8,12 +8,14 @@ from sklearn.utils._sorting import _py_simultaneous_sort
 
 
 def test_simultaneous_sort_correctness():
+    rng = np.random.default_rng(0)
     for x in [
-        np.random.rand(10**3),
-        np.random.rand(3),
-        np.random.rand(10),
-        np.random.geometric(0.2, 10**2).astype("float32"),
-        np.random.choice(2, size=10**3).astype("float32"),
+        rng.uniform(size=3),
+        rng.uniform(size=10),
+        rng.uniform(size=1000),
+        # with duplicates:
+        rng.geometric(0.2, size=100).astype("float32"),
+        rng.integers(0, 2, size=1000).astype("float32"),
     ]:
         n = x.size
         ind = np.arange(n, dtype=np.intp)
@@ -30,4 +32,6 @@ def test_simultaneous_sort_not_quadratic():
     t0 = perf_counter()
     _py_simultaneous_sort(dist, ind, dist.shape[0])
     dt = perf_counter() - t0
+    # sorting 100k elements should take less than 10ms
+    # unless the sort goes quadratic
     assert dt < 1e-2
