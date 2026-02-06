@@ -66,7 +66,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         with the same name.
 
         If a list is provided, it will be used to label each curve. Only compatible
-        with `curve_kwargs` also being a list to avoid labeling individual curves 
+        with `curve_kwargs` also being a list to avoid labeling individual curves
         that have the same appearance.
 
         If `None`, no name is shown in the legend.
@@ -196,7 +196,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             with the same name.
 
             If a list is provided, it will be used to label each curve. Only compatible
-            with `curve_kwargs` also being a list to avoid labeling individual curves 
+            with `curve_kwargs` also being a list to avoid labeling individual curves
             that have the same appearance.
 
             If `None`, set to `name` provided at `RocCurveDisplay` initialization. If
@@ -694,7 +694,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             with the same name.
 
             If a list is provided, it will be used to label each curve. Only compatible
-            with `curve_kwargs` also being a list to avoid labeling individual curves 
+            with `curve_kwargs` also being a list to avoid labeling individual curves
             that have the same appearance.
 
             If `None`, no name is shown in the legend.
