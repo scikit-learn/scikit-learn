@@ -29,14 +29,14 @@ X_binary, y_binary = X[:100], y[:100]
     [
         (DecisionTreeRegressor(), "predict_proba"),
         (DecisionTreeRegressor(), ["predict_proba", "decision_function"]),
-        (KMeans(n_clusters=2, n_init=1), "predict_proba"),
-        (KMeans(n_clusters=2, n_init=1), ["predict_proba", "decision_function"]),
+        (KMeans(n_clusters=2), "predict_proba"),
+        (KMeans(n_clusters=2), ["predict_proba", "decision_function"]),
         (DBSCAN(), "predict"),
         (IsolationForest(), "predict_proba"),
         (IsolationForest(), ["predict_proba", "score"]),
     ],
 )
-def test_estimator_unsupported_response(pyplot, estimator, response_method):
+def test_estimator_unsupported_response(estimator, response_method):
     """Check the error message with not supported response method."""
     X, y = np.random.RandomState(0).randn(10, 2), np.array([0, 1] * 5)
     estimator = clone(estimator).fit(X, y)  # clone to make test execution thread-safe
