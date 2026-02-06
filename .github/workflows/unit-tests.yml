@@ -358,6 +358,7 @@ jobs:
 
       - name: Set up conda
         uses: conda-incubator/setup-miniconda@v3
+        if: ${{ startsWith(env.DISTRIB, 'conda') }}
         with:
           miniforge-version: latest
           auto-activate-base: true
