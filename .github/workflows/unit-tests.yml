@@ -350,8 +350,8 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ccache-v1-linux-debian32-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp', format('{0}', env.LOCK_FILE)) }}
-          restore-keys: ccache-linux-debian32
+          key: ccache-v1-${{ env.JOB_NAME }}-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp', format('{0}', env.LOCK_FILE)) }}
+          restore-keys: ccache-${{ env.JOB_NAME }}
 
       - name: Set up conda
         uses: conda-incubator/setup-miniconda@v3
@@ -359,6 +359,10 @@ jobs:
           miniforge-version: latest
           auto-activate-base: true
           activate-environment: ""
+
+      - name: Set random seed for nightly/manual runs
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: echo "SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$((RANDOM % 100))" >> $GITHUB_ENV
 
       - name: Start container
         # Environment variable are passed when starting the container rather
@@ -388,15 +392,12 @@ jobs:
           -e CCACHE_COMPRESS
           -e COMMIT_MESSAGE
           -e JOB_NAME
+          -e SKLEARN_TESTS_GLOBAL_RANDOM_SEED
           $DOCKER_CONTAINER
           sleep 1000000
 
       - name: Build scikit-learn
         run: docker exec skcontainer bash -l build_tools/azure/install.sh
-
-      - name: Set random seed for nightly/manual runs
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        run: echo "SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$((RANDOM % 100))" >> $GITHUB_ENV
 
       - name: Run tests
         run: docker exec skcontainer bash -l build_tools/azure/test_script.sh
@@ -429,9 +430,9 @@ jobs:
           pip install defusedxml PyGithub
           python maint_tools/update_tracking_issue.py \
             ${{ secrets.BOT_GITHUB_TOKEN }} \
-            "$GITHUB_WORKFLOW linux-debian32" \
+            "$GITHUB_WORKFLOW $JOB_NAME" \
             "$GITHUB_REPOSITORY" \
             https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID \
             --junit-file $TEST_DIR/$JUNITXML \
             --auto-close false \
-            --job-name "linux-debian32"
+            --job-name "$JOB_NAME"
