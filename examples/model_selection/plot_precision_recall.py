@@ -140,10 +140,12 @@ classifier.fit(X_train, y_train)
 # methods available:
 #
 # * for plotting a single curve:
+#
 #   * :func:`~sklearn.metrics.PrecisionRecallDisplay.from_estimator` for when you
 #     have not computed the predictions
 #   * :func:`~sklearn.metrics.PrecisionRecallDisplay.from_predictions` for when
 #     you already have the predictions
+#
 # * for plotting multiple curves using cross-validation results;
 #   :func:`~sklearn.metrics.PrecisionRecallDisplay.from_cv_results`
 #

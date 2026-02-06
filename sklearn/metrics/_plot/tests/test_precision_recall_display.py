@@ -2,7 +2,6 @@ from collections import Counter
 
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
 
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_breast_cancer, make_classification
@@ -21,6 +20,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import _safe_indexing
 from sklearn.utils._response import _get_response_values_binary
+from sklearn.utils._testing import assert_allclose
 
 
 def _check_figure_axes_and_labels(display, pos_label):
@@ -403,7 +403,7 @@ def test_precision_recall_display_name(pyplot, constructor_name, default_label):
         display = PrecisionRecallDisplay.from_predictions(
             y, y_score, pos_label=pos_label
         )
-    else:
+    else:  # constructor_name = "from_cv_results"
         display = PrecisionRecallDisplay.from_cv_results(cv_results, X, y)
 
     if constructor_name == "from_cv_results":

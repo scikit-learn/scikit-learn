@@ -39,14 +39,14 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         Precision values. Each ndarray should contain values for a single curve.
         If plotting multiple curves, list should be of same length as `recall`.
 
-        .. versionchanged:: 1.8
+        .. versionchanged:: 1.9
             Now accepts a list for plotting multiple curves.
 
     recall : ndarray or list of ndarrays
         Recall values. Each ndarray should contain values for a single curve.
         If plotting multiple curves, list should be of same length as `precision`.
 
-        .. versionchanged:: 1.8
+        .. versionchanged:: 1.9
             Now accepts a list for plotting multiple curves.
 
     average_precision : float or list of floats, default=None
@@ -54,7 +54,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         If plotting multiple curves, should be a list of the same length as `precision`
         and `recall`. If `None`, average precision values are not shown in the legend.
 
-        .. versionchanged:: 1.8
+        .. versionchanged:: 1.9
             Now accepts a list for plotting multiple curves.
 
     name : str or list of str, default=None
@@ -84,6 +84,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         .. versionadded:: 1.3
 
+        .. versionchanged:: 1.9
+            May now be list of floats when multiple curves plotted.
+
     estimator_name : str, default=None
         Name of estimator. If None, the estimator name is not shown.
 
@@ -94,18 +97,18 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     Attributes
     ----------
     line_ : matplotlib Artist or list of Artists
-        Precision recall curve.
+        Precision recall curve(s).
 
-        .. versionchanged:: 1.8
+        .. versionchanged:: 1.9
             This attribute can now be a list of Artists, for when multiple curves
             are plotted.
 
     chance_level_ : matplotlib Artist or list of Artists or None
-        Chance level lines. It is `None` if the chance level is not plotted.
+        Chance level line(s). It is `None` if the chance level is not plotted.
 
         .. versionadded:: 1.3
 
-        .. versionchanged:: 1.7
+        .. versionchanged:: 1.9
             This attribute can now be a list of Artists, for when multiple curves
             are plotted.
 
@@ -755,7 +758,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Plot multi-fold precision-recall curves given cross-validation results.
 
-        .. versionadded:: 1.8
+        .. versionadded:: 1.9
 
         Parameters
         ----------
