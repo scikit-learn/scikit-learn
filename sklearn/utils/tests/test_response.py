@@ -32,14 +32,14 @@ X_binary, y_binary = X[:100], y[:100]
         (KMeans(n_clusters=2, n_init=1), "predict_proba"),
         (KMeans(n_clusters=2, n_init=1), ["predict_proba", "decision_function"]),
         (DBSCAN(), "predict"),
-        (IsolationForest(random_state=0), "predict_proba"),
-        (IsolationForest(random_state=0), ["predict_proba", "score"]),
+        (IsolationForest(), "predict_proba"),
+        (IsolationForest(), ["predict_proba", "score"]),
     ],
 )
 def test_estimator_unsupported_response(pyplot, estimator, response_method):
     """Check the error message with not supported response method."""
     X, y = np.random.RandomState(0).randn(10, 2), np.array([0, 1] * 5)
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)  # clone to make test execution thread-safe
     err_msg = "has none of the following attributes:"
     with pytest.raises(AttributeError, match=err_msg):
         _get_response_values(
@@ -53,9 +53,9 @@ def test_estimator_unsupported_response(pyplot, estimator, response_method):
     "estimator, response_method",
     [
         (LinearRegression(), "predict"),
-        (KMeans(n_clusters=2, n_init=1), "predict"),
-        (KMeans(n_clusters=2, n_init=1), "score"),
-        (KMeans(n_clusters=2, n_init=1), ["predict", "score"]),
+        (KMeans(n_clusters=2, random_state=0), "predict"),
+        (KMeans(n_clusters=2, random_state=0), "score"),
+        (KMeans(n_clusters=2, random_state=0), ["predict", "score"]),
         (IsolationForest(random_state=0), "predict"),
         (IsolationForest(random_state=0), "decision_function"),
         (IsolationForest(random_state=0), ["decision_function", "predict"]),
@@ -67,7 +67,7 @@ def test_estimator_get_response_values(
 ):
     """Check the behaviour of `_get_response_values`."""
     X, y = np.random.RandomState(0).randn(10, 2), np.array([0, 1] * 5)
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)  # clone to make test execution thread-safe
     results = _get_response_values(
         estimator,
         X,
@@ -310,8 +310,7 @@ def test_get_response_values_multiclass(estimator, response_method):
     """Check that we can call `_get_response_values` with a multiclass estimator.
     It should return the predictions untouched.
     """
-    estimator = clone(estimator)
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)  # clone to make test execution thread-safe
     predictions, pos_label = _get_response_values(
         estimator, X, response_method=response_method
     )
@@ -416,8 +415,8 @@ def test_response_values_type_of_target_on_classes_no_warning():
         (IsolationForest(), "predict", "multiclass", (10,)),
         (DecisionTreeRegressor(), "predict", "binary", (10,)),
         (DecisionTreeRegressor(), "predict", "multiclass", (10,)),
-        (KMeans(n_clusters=2, n_init=1), "predict", "binary", (10,)),
-        (KMeans(n_clusters=2, n_init=1), "predict", "multiclass", (10,)),
+        (KMeans(n_clusters=2), "predict", "binary", (10,)),
+        (KMeans(n_clusters=4), "predict", "multiclass", (10,)),
     ],
 )
 def test_response_values_output_shape_(
@@ -442,8 +441,8 @@ def test_response_values_output_shape_(
     else:  # multilabel
         y = np.array([[0, 1], [1, 0]] * 5)
 
-    clf = clone(estimator).fit(X, y)
+    estimator = clone(estimator).fit(X, y)  # clone to make test execution thread-safe
 
-    y_pred, _ = _get_response_values(clf, X, response_method=response_method)
+    y_pred, _ = _get_response_values(estimator, X, response_method=response_method)
 
     assert y_pred.shape == expected_shape
