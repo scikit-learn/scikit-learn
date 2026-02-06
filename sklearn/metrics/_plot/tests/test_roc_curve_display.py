@@ -825,18 +825,6 @@ def test_roc_curve_display_default_labels(
         assert disp.line_[idx].get_label() == expected_label
 
 
-def _check_auc(display, constructor_name):
-    roc_auc_limit = 0.95679
-    roc_auc_limit_multi = [0.97007, 0.985915, 0.980952]
-
-    if constructor_name == "from_cv_results":
-        for idx, roc_auc in enumerate(display.roc_auc):
-            assert roc_auc == pytest.approx(roc_auc_limit_multi[idx])
-    else:
-        assert display.roc_auc == pytest.approx(roc_auc_limit)
-        assert trapezoid(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
-
-
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
 @pytest.mark.parametrize(
     "constructor_name", ["from_estimator", "from_predictions", "from_cv_results"]
