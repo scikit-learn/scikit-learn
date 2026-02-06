@@ -594,12 +594,11 @@ class DecisionBoundaryDisplay:
                         f"`{name}` must be a tuple of (min, max) with min < max"
                     )
 
-        # Create meshgrid for data range (possibly extended by given limits).
-        # Note: If we only calculate responses between `xlim` and `ylim`, we might not
-        # see all classes and different colors might be selected to represent them.
-        # This is only relevant when we need `type_of_target` to infer `n_classes`, but
-        # since we support these cases, we also need to ensure that the display is
-        # consistent in this case.
+        # Create meshgrid for data range.
+        # Extend if required by `xlim` and `ylim` but never shrink as we need to
+        # calculate responses for all `X`, such that we see all classes, to maintain
+        # class color consistency. Note this is only relevant when we need
+        # `type_of_target` to infer `n_classes`.
         x0 = _safe_indexing(X, 0, axis=1)
         x0_min = min(x0.min() - eps, xlim[0]) if xlim is not None else x0.min() - eps
         x0_max = max(x0.max() + eps, xlim[1]) if xlim is not None else x0.max() + eps
