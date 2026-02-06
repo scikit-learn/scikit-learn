@@ -303,7 +303,8 @@ jobs:
             --job-name "$JOB_NAME"
 
   free-threaded:
-    name: &free-threaded-job-name Linux x86-64 pylatest_free_threaded
+    name: &free-threaded-job-name
+      Linux x86-64 pylatest_free_threaded
     runs-on: ubuntu-latest
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
     if: contains(needs.retrieve-commit-message.outputs.message, '[free-threaded]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -318,7 +319,8 @@ jobs:
     steps: *unit-tests-steps
 
   scipy-dev:
-    name: &scipy-dev-job-name Linux x86-64 pylatest_pip_scipy_dev
+    name: &scipy-dev-job-name
+      Linux x86-64 pylatest_pip_scipy_dev
     runs-on: ubuntu-22.04
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
     if: contains(needs.retrieve-commit-message.outputs.message, '[scipy-dev]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -332,7 +334,8 @@ jobs:
     steps: *unit-tests-steps
 
   debian-32bit:
-    name: &debian-32bit-job-name Linux debian_32bit
+    name: &debian-32bit-job-name
+      Linux debian_32bit
     runs-on: ubuntu-24.04
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
     env:
