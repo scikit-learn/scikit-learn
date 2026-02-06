@@ -239,6 +239,11 @@ def average_precision_score(
         sample_weight=None,
         xp=xp,
     ):
+        if y_true.shape[0] < 2:
+            raise ValueError(
+                "Average precision requires at least 2 samples to compute a meaningful "
+                f"score, but got array with shape = {y_true.shape}"
+            )
         precision, recall, _ = precision_recall_curve(
             y_true,
             y_score,
