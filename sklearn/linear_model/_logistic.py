@@ -728,7 +728,7 @@ def _log_reg_scoring_path(
         # We need to pass the classes as "labels" argument to scorers that support
         # it, e.g. scoring = "neg_brier_score", because y_test may not contain all
         # class labels.
-        # There now 2 routes:
+        # There are 2 routes:
         #  - metadata routing is enabled: A try except clause is possible with
         #    adding labels to score_params.
         # - metadata routing is disabled: We have to reconstruct the scorer and
