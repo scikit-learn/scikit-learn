@@ -68,8 +68,10 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         the same name. If `None`, no name is shown in the legend.
 
         .. versionchanged:: 1.8
-            `estimator_name` was deprecated in favor of `name`, which can now take
-            a list of str.
+            `estimator_name` was deprecated in favor of `name`.
+
+        .. versionchanged:: 1.9
+            `estimator_name` can now take a list of str for multiple curves.
 
     pos_label : int, float, bool or str, default=None
         The class considered the positive class when precision and recall metrics
@@ -85,7 +87,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         .. versionadded:: 1.3
 
         .. versionchanged:: 1.9
-            May now be list of floats when multiple curves plotted.
+            May now be list of floats for when multiple curves plotted.
 
     estimator_name : str, default=None
         Name of estimator. If None, the estimator name is not shown.
@@ -231,7 +233,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             the same name. If `None`, set to `name` provided at `PrecisionRecallDisplay`
             initialization. If still `None`, no name is shown in the legend.
 
-            .. versionchanged:: 1.8
+            .. versionchanged:: 1.9
                 Now accepts a list for plotting multiple curves.
 
         curve_kwargs : dict or list of dict, default=None
@@ -244,7 +246,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             to all curves and a single legend entry for all curves is added,
             labeled with the mean average precision.
 
-            .. versionadded:: 1.8
+            .. versionadded:: 1.9
 
         plot_chance_level : bool, default=False
             Whether to plot the chance level. The chance level is the prevalence
@@ -267,8 +269,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
 
-            .. deprecated:: 1.8
-                kwargs is deprecated and will be removed in 1.10. Pass matplotlib
+            .. deprecated:: 1.9
+                kwargs is deprecated and will be removed in 1.11. Pass matplotlib
                 arguments to `curve_kwargs` as a dictionary instead.
 
         Returns
@@ -307,7 +309,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
                 "linestyle": "--",
                 "color": "blue",
             },
-            removed_version="1.10",
+            removed_version="1.11",
             **kwargs,
         )
         self.line_ = []
@@ -464,7 +466,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         curve_kwargs : dict, default=None
             Keywords arguments to be passed to matplotlib's `plot` function.
 
-            .. versionadded:: 1.8
+            .. versionadded:: 1.9
 
         plot_chance_level : bool, default=False
             Whether to plot the chance level. The chance level is the prevalence
@@ -487,8 +489,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
 
-            .. deprecated:: 1.8
-                kwargs is deprecated and will be removed in 1.10. Pass matplotlib
+            .. deprecated:: 1.9
+                kwargs is deprecated and will be removed in 1.11. Pass matplotlib
                 arguments to `curve_kwargs` as a dictionary instead.
 
         Returns
@@ -615,7 +617,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         curve_kwargs : dict, default=None
             Keywords arguments to be passed to matplotlib's `plot` function.
 
-            .. versionadded:: 1.8
+            .. versionadded:: 1.9
 
         plot_chance_level : bool, default=False
             Whether to plot the chance level. The chance level is the prevalence
@@ -645,8 +647,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
 
-            .. deprecated:: 1.8
-                kwargs is deprecated and will be removed in 1.10. Pass matplotlib
+            .. deprecated:: 1.9
+                kwargs is deprecated and will be removed in 1.11. Pass matplotlib
                 arguments to `curve_kwargs` as a dictionary instead.
 
         Returns
