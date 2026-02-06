@@ -117,7 +117,10 @@ def test_map_to_bins(max_bins):
 def test_unique_bins_repeated_weighted():
     # Test sample weight equivalence for the degenerate case
     # when only one unique bin value exists and should be trimmed
-    # due to repeated values.
+    # due to repeated values. Since the first discrete value of 1
+    # is repeated/weighted 1000 times we expect the quantile bin
+    # threshold values found to be repeated values of 1, which are
+    # trimmed to return a single unique bin threshold of [1.]
     col_data = np.asarray([1, 2, 3, 4, 5, 6]).reshape(-1, 1)
     sample_weight = np.asarray([1000, 1, 1, 1, 1, 1])
     col_data_repeated = np.asarray(([1] * 1000) + [2, 3, 4, 5, 6]).reshape(-1, 1)
