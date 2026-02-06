@@ -686,7 +686,17 @@ class MetadataRequest:
         names : set of str
             A set of strings with the names of all metadata.
         """
-        return getattr(self, method)._get_param_names(return_alias=return_alias)
+        if method in COMPOSITE_METHODS:
+            methods = COMPOSITE_METHODS[method]
+        else:
+            methods = [method]
+
+        res = set()
+        for method in methods:
+            res = res.union(
+                getattr(self, method)._get_param_names(return_alias=return_alias)
+            )
+        return res
 
     def _route_params(self, *, params, method, parent, caller):
         """Prepare the given parameters to be passed to the method.
@@ -1051,9 +1061,14 @@ class MetadataRouter:
                 )
             )
 
+        if method in COMPOSITE_METHODS:
+            methods = COMPOSITE_METHODS[method]
+        else:
+            methods = [method]
+
         for name, route_mapping in self._route_mappings.items():
             for caller, callee in route_mapping.mapping:
-                if caller == method:
+                if caller in methods:
                     res = res.union(
                         route_mapping.router._get_param_names(
                             method=callee, return_alias=True, ignore_self_request=False
