@@ -107,6 +107,19 @@ class _BinaryClassifierCurveDisplayMixin:
         check_consistent_length(X, y, sample_weight)
 
     @staticmethod
+    def _get_legend_metric(curve_kwargs, n_curves, metric):
+        """Generate legend information dictionary and expand `metric` if required."""
+        if not isinstance(curve_kwargs, list) and n_curves > 1:
+            if metric:
+                legend_metric = {"mean": np.mean(metric), "std": np.std(metric)}
+            else:
+                legend_metric = {"mean": None, "std": None}
+        else:
+            metric = metric if metric is not None else [None] * n_curves
+            legend_metric = {"metric": metric}
+        return metric, legend_metric
+
+    @staticmethod
     def _get_legend_label(curve_legend_metric, curve_name, legend_metric_name):
         """Helper to get legend label using `name` and `legend_metric`"""
         if curve_legend_metric is not None and curve_name is not None:

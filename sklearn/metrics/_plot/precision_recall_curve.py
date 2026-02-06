@@ -291,21 +291,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             self._validate_plot_params(ax=ax, name=name)
         )
         n_curves = len(precision)
-        if not isinstance(curve_kwargs, list) and n_curves > 1:
-            if average_precision:
-                legend_metric = {
-                    "mean": np.mean(average_precision),
-                    "std": np.std(average_precision),
-                }
-            else:
-                legend_metric = {"mean": None, "std": None}
-        else:
-            average_precision = (
-                average_precision
-                if average_precision is not None
-                else [None] * n_curves
-            )
-            legend_metric = {"metric": average_precision}
+        average_precision, legend_metric = self._get_legend_metric(
+            curve_kwargs, n_curves, average_precision
+        )
 
         curve_kwargs = self._validate_curve_kwargs(
             n_curves,
