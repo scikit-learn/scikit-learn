@@ -16,7 +16,7 @@ from sklearn.multioutput import ClassifierChain
 from sklearn.preprocessing import scale
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._response import _get_response_values, _get_response_values_binary
-from sklearn.utils._testing import assert_allclose, assert_array_equal
+from sklearn.utils._testing import assert_allclose
 
 X, y = load_iris(return_X_y=True)
 # scale the data to avoid ConvergenceWarning with LogisticRegression
