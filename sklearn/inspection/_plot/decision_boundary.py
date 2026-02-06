@@ -225,14 +225,14 @@ class DecisionBoundaryDisplay:
             created.
 
         xlim : tuple of float, default=None
-            The x-axis limits for the plot. If None, limits are determined
-            from the data range. Should be a tuple of (min, max) values.
+            Tuple of (min, max) x-axis limits for the plot. If None, limits are
+            determined from the data range.
 
             .. versionadded:: 1.9
 
         ylim : tuple of float, default=None
-            The y-axis limits for the plot. If None, limits are determined
-            from the data range. Should be a tuple of (min, max) values.
+            Tuple of (min, max) y-axis limits for the plot. If None, limits are
+            determined from the data range.
 
             .. versionadded:: 1.9
 
@@ -269,9 +269,9 @@ class DecisionBoundaryDisplay:
                         f"`{name}` must be a tuple of (min, max) with min < max"
                     )
                 range_msg = (
-                    f"`{name}` values are outside the meshgrid range (`xx0` and `xx1`). "
-                    "Extend the range of the grid and the corresponding "
-                    "predictions or use `from_estimator()` instead."
+                    f"`{name}` values are outside the meshgrid range (`xx0` and `xx1`)."
+                    " Extend the range of the grid and the corresponding"
+                    " predictions or use `from_estimator()` instead."
                 )
                 if name == "xlim":
                     if lim[0] < self.xx0.min() or lim[1] > self.xx0.max():
@@ -416,14 +416,14 @@ class DecisionBoundaryDisplay:
             response function. Ignored if both `xlim` and `ylim` are provided.
 
         xlim : tuple of float, default=None
-            The x-axis limits for the plot. If None, limits are determined
-            from the data range. Should be a tuple of (min, max) values.
+            Tuple of (min, max) x-axis limits for the plot. If None, limits are
+            determined from the data range.
 
             .. versionadded:: 1.9
 
         ylim : tuple of float, default=None
-            The y-axis limits for the plot. If None, limits are determined
-            from the data range. Should be a tuple of (min, max) values.
+            Tuple of (min, max) y-axis limits for the plot. If None, limits are
+            determined from the data range.
 
             .. versionadded:: 1.9
 
