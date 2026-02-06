@@ -1,0 +1,2 @@
+- Make :class:`gaussian_process.GaussianProcessRegressor` array API compatible.
+  By :user:`Tim Head <betatim>`.
