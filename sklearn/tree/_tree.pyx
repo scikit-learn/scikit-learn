@@ -75,22 +75,18 @@ cdef inline void _update_interaction_constraints_after_split(
     intp_t split_feature,
 ) noexcept nogil:
     """Move newly forbidden non-constant features to tail in-place."""
-    cdef intp_t n_features = splitter.n_features
-    cdef intp_t n_total_constants = parent_record.n_constant_features
-    cdef intp_t n_known_forbidden = parent_record.n_forbidden_features
-    cdef intp_t n_total_forbidden
-    cdef intp_t[::1] features = splitter.features
-    cdef const intp_t[:] feature_to_groups_indptr = splitter.feature_to_groups_indptr
-    cdef const intp_t[:] feature_to_groups_indices = splitter.feature_to_groups_indices
-    cdef const intp_t[:] group_to_features_indptr = splitter.group_to_features_indptr
-    cdef const intp_t[:] group_to_features_indices = splitter.group_to_features_indices
-    cdef int32_t[::1] feature_marks = splitter.feature_marks
-    cdef int32_t feature_mark_token
-    cdef intp_t group_pos
-    cdef intp_t group_idx
-    cdef intp_t feature_pos
-    cdef intp_t feature_idx
-    cdef intp_t candidate_end
+    cdef:
+        intp_t n_features = splitter.n_features
+        intp_t n_total_constants = parent_record.n_constant_features
+        intp_t n_total_forbidden = parent_record.n_forbidden_features
+        intp_t[::1] features = splitter.features
+        const intp_t[:] feature_to_groups_indptr = splitter.feature_to_groups_indptr
+        const intp_t[:] feature_to_groups_indices = splitter.feature_to_groups_indices
+        const intp_t[:] group_to_features_indptr = splitter.group_to_features_indptr
+        const intp_t[:] group_to_features_indices = splitter.group_to_features_indices
+        int32_t[::1] feature_marks = splitter.feature_marks
+        int32_t feature_mark_token
+        intp_t group_pos, group_idx, feature_pos, feature_idx, candidate_end
 
     if not splitter.with_interaction_cst:
         return
@@ -115,7 +111,6 @@ cdef inline void _update_interaction_constraints_after_split(
     # Step 2: scan non-constant, non-already-forbidden features
     # and move each newly forbidden feature to the tail in-place.
     # Complexity: O(#candidate features)
-    n_total_forbidden = n_known_forbidden
     candidate_end = n_features - n_total_forbidden
     feature_pos = n_total_constants
     while feature_pos < n_features - n_total_forbidden:
