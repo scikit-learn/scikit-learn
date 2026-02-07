@@ -62,11 +62,7 @@ cdef Node dummy
 NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
 
 
-cdef inline void _swap_intp(
-    intp_t[::1] values,
-    intp_t i,
-    intp_t j,
-) noexcept nogil:
+cdef inline void _swap_intp(intp_t[::1] values, intp_t i, intp_t j) noexcept nogil:
     values[i], values[j] = values[j], values[i]
 
 
@@ -77,6 +73,7 @@ cdef inline void _init_parent_record(ParentInfo* record) noexcept nogil:
     record.impurity = INFINITY
     record.lower_bound = -INFINITY
     record.upper_bound = INFINITY
+
 
 cdef inline void _update_interaction_constraints_after_split(
     Splitter splitter,
