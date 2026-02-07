@@ -1937,3 +1937,19 @@ def test_non_supported_criterion_raises_error_with_missing_values(Forest):
 def test_friedman_mse_deprecation(Forest):
     with pytest.warns(FutureWarning, match="friedman_mse"):
         _ = Forest(criterion="friedman_mse")
+
+
+def test_random_forest_interaction_constraints_smoke():
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(300, 6))
+    y = X[:, 0] + 0.1 * X[:, 1]
+    interaction_cst = [{0, 1}, {1, 2}, {3, 4, 5}]
+
+    forest = RandomForestRegressor(
+        n_estimators=5,
+        max_depth=4,
+        random_state=0,
+        interaction_cst=interaction_cst,
+    )
+    forest.fit(X, y)
+    assert forest.predict(X[:5]).shape == (5,)
