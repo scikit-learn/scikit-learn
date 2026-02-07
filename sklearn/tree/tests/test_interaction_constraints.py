@@ -115,6 +115,29 @@ def test_interaction_cst_tree_structure(Tree, sparse_input):
     )
 
 
+def test_interaction_cst_overlapping_groups_tree_structure():
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(60, 4))
+    y = (
+        10 * (X[:, 2] > 0.5)
+        + 5 * (X[:, 0] > 0.6)
+        + 3 * (X[:, 1] > 0.7)
+        + 2 * (X[:, 3] > 0.4)
+        + 4 * X[:, 0] * X[:, 2]
+        + 2 * X[:, 1] * X[:, 3]
+    )
+
+    interaction_cst = [{0, 1, 3}, {1, 2, 3}, {0, 2}]
+    est = DecisionTreeRegressor(
+        max_depth=4, max_features=4, random_state=0, interaction_cst=interaction_cst
+    )
+    est.fit(X, y)
+
+    _assert_tree_respects_interaction_constraints(
+        est.tree_, est._check_interaction_cst(X.shape[1])
+    )
+
+
 def test_no_interactions_numerically():
     rng = np.random.RandomState(42)
     X = rng.uniform(size=(1000, 2))
