@@ -1396,6 +1396,27 @@ class RandomForestClassifier(ForestClassifier):
 
         .. versionadded:: 1.4
 
+    interaction_cst : {"pairwise", "no_interactions"} or sequence of \
+            lists/tuples/sets of int, default=None
+        Specify interaction constraints, the sets of features which can
+        interact with each other in child node splits.
+
+        Each item specifies the set of feature indices that are allowed
+        to interact with each other. If there are more features than
+        specified in these constraints, they are treated as if they were
+        specified as an additional set.
+
+        The strings "pairwise" and "no_interactions" are shorthands for
+        allowing only pairwise or no interactions, respectively.
+
+        For instance, with 5 features in total, ``interaction_cst=[{0, 1}]``
+        is equivalent to ``interaction_cst=[{0, 1}, {2, 3, 4}]``,
+        and specifies that each branch of a tree will either only split
+        on features 0 and 1 or only split on features 2, 3 and 4.
+
+        Interaction constraints are currently supported only when
+        ``max_leaf_nodes=None`` (depth-first tree building).
+
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.DecisionTreeClassifier`
@@ -1536,6 +1557,7 @@ class RandomForestClassifier(ForestClassifier):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
+        interaction_cst=None,
     ):
         super().__init__(
             estimator=DecisionTreeClassifier(),
@@ -1552,6 +1574,7 @@ class RandomForestClassifier(ForestClassifier):
                 "random_state",
                 "ccp_alpha",
                 "monotonic_cst",
+                "interaction_cst",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -1572,6 +1595,7 @@ class RandomForestClassifier(ForestClassifier):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.monotonic_cst = monotonic_cst
+        self.interaction_cst = interaction_cst
         self.ccp_alpha = ccp_alpha
 
 
@@ -1786,6 +1810,27 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionadded:: 1.4
 
+    interaction_cst : {"pairwise", "no_interactions"} or sequence of \
+            lists/tuples/sets of int, default=None
+        Specify interaction constraints, the sets of features which can
+        interact with each other in child node splits.
+
+        Each item specifies the set of feature indices that are allowed
+        to interact with each other. If there are more features than
+        specified in these constraints, they are treated as if they were
+        specified as an additional set.
+
+        The strings "pairwise" and "no_interactions" are shorthands for
+        allowing only pairwise or no interactions, respectively.
+
+        For instance, with 5 features in total, ``interaction_cst=[{0, 1}]``
+        is equivalent to ``interaction_cst=[{0, 1}, {2, 3, 4}]``,
+        and specifies that each branch of a tree will either only split
+        on features 0 and 1 or only split on features 2, 3 and 4.
+
+        Interaction constraints are currently supported only when
+        ``max_leaf_nodes=None`` (depth-first tree building).
+
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.DecisionTreeRegressor`
@@ -1913,6 +1958,7 @@ class RandomForestRegressor(ForestRegressor):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
+        interaction_cst=None,
     ):
         super().__init__(
             estimator=DecisionTreeRegressor(),
@@ -1929,6 +1975,7 @@ class RandomForestRegressor(ForestRegressor):
                 "random_state",
                 "ccp_alpha",
                 "monotonic_cst",
+                "interaction_cst",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -1959,6 +2006,7 @@ class RandomForestRegressor(ForestRegressor):
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
+        self.interaction_cst = interaction_cst
 
 
 class ExtraTreesClassifier(ForestClassifier):
