@@ -79,28 +79,55 @@ cdef inline void _update_interaction_constraints_after_split(
         intp_t n_features = splitter.n_features
         intp_t n_total_constants = parent_record.n_constant_features
         intp_t n_total_forbidden = parent_record.n_forbidden_features
+        intp_t n_active_interaction_groups = parent_record.n_active_interaction_groups
         intp_t[::1] features = splitter.features
+        intp_t[::1] interaction_groups = splitter.interaction_groups
         const intp_t[:] feature_to_groups_indptr = splitter.feature_to_groups_indptr
         const intp_t[:] feature_to_groups_indices = splitter.feature_to_groups_indices
         const intp_t[:] group_to_features_indptr = splitter.group_to_features_indptr
         const intp_t[:] group_to_features_indices = splitter.group_to_features_indices
+        int32_t[::1] group_marks = splitter.group_marks
+        int32_t group_mark_token
         int32_t[::1] feature_marks = splitter.feature_marks
         int32_t feature_mark_token
-        intp_t group_pos, group_idx, feature_pos, feature_idx, candidate_end
+        intp_t p, group_idx, feature_pos, feature_idx, candidate_end
+        intp_t new_n_active_interaction_groups
 
     if not splitter.with_interaction_cst:
         return
 
-    # Step 1: mark features that are allowed by at least one interaction group
-    # containing the split feature.
-    # Complexity: O(sum of sizes of groups containing split_feature).
-    feature_mark_token = splitter.feature_mark_token + 1
-    splitter.feature_mark_token = feature_mark_token
-    for group_pos in range(
+    # Step 1: mark groups containing the split feature.
+    # Complexity: O(#groups containing split_feature)
+    group_mark_token = splitter.group_mark_token + 1
+    splitter.group_mark_token = group_mark_token
+    for p in range(
         feature_to_groups_indptr[split_feature],
         feature_to_groups_indptr[split_feature + 1],
     ):
-        group_idx = feature_to_groups_indices[group_pos]
+        group_idx = feature_to_groups_indices[p]
+        group_marks[group_idx] = group_mark_token
+
+    # Step 2: keep only groups that are both active on the path and contain
+    # split_feature. Active groups are stored as a prefix of interaction_groups.
+    # Complexity: O(#active groups)
+    new_n_active_interaction_groups = 0
+    for p in range(n_active_interaction_groups):
+        group_idx = interaction_groups[p]
+        if group_marks[group_idx] == group_mark_token:
+            interaction_groups[new_n_active_interaction_groups], interaction_groups[
+                p
+            ] = (
+                interaction_groups[p],
+                interaction_groups[new_n_active_interaction_groups],
+            )
+            new_n_active_interaction_groups += 1
+
+    # Step 3: mark features allowed by the remaining active interaction groups.
+    # Complexity: O(sum of sizes of active groups).
+    feature_mark_token = splitter.feature_mark_token + 1
+    splitter.feature_mark_token = feature_mark_token
+    for p in range(new_n_active_interaction_groups):
+        group_idx = interaction_groups[p]
         for feature_pos in range(
             group_to_features_indptr[group_idx],
             group_to_features_indptr[group_idx + 1],
@@ -108,7 +135,7 @@ cdef inline void _update_interaction_constraints_after_split(
             feature_idx = group_to_features_indices[feature_pos]
             feature_marks[feature_idx] = feature_mark_token
 
-    # Step 2: scan non-constant, non-already-forbidden features
+    # Step 4: scan non-constant, non-already-forbidden features
     # and move each newly forbidden feature to the tail in-place.
     # Complexity: O(#candidate features)
     candidate_end = n_features - n_total_forbidden
@@ -125,8 +152,8 @@ cdef inline void _update_interaction_constraints_after_split(
             continue
         feature_pos += 1
 
-    # Step 3: persist the child state summary for both children stack records.
-    parent_record.n_active_interaction_groups = 0
+    # Step 5: persist the child state summary for both children stack records.
+    parent_record.n_active_interaction_groups = new_n_active_interaction_groups
     parent_record.n_forbidden_features = n_total_forbidden
 
 # =============================================================================
@@ -254,6 +281,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef bint is_leaf
         cdef bint first = 1
         cdef intp_t max_depth_seen = -1
+        cdef intp_t root_n_active_interaction_groups = 0
         cdef int rc = 0
 
         cdef stack[StackRecord] builder_stack
@@ -261,6 +289,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
         cdef ParentInfo parent_record
         _init_parent_record(&parent_record)
+        if splitter.with_interaction_cst:
+            root_n_active_interaction_groups = splitter.n_interaction_groups
 
         with nogil:
             # push root node onto stack
@@ -272,7 +302,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 "is_left": 0,
                 "impurity": INFINITY,
                 "n_constant_features": 0,
-                "n_active_interaction_groups": 0,
+                "n_active_interaction_groups": root_n_active_interaction_groups,
                 "n_forbidden_features": 0,
                 "lower_bound": -INFINITY,
                 "upper_bound": INFINITY,

@@ -210,9 +210,16 @@ cdef class Splitter:
 
         if self.with_interaction_cst:
             self.feature_marks = np.zeros(n_features, dtype=np.int32)
+            self.interaction_groups = np.arange(
+                self.n_interaction_groups, dtype=np.intp
+            )
+            self.group_marks = np.zeros(self.n_interaction_groups, dtype=np.int32)
         else:
+            self.interaction_groups = np.empty(0, dtype=np.intp)
+            self.group_marks = np.empty(0, dtype=np.int32)
             self.feature_marks = np.empty(0, dtype=np.int32)
         self.feature_mark_token = 0
+        self.group_mark_token = 0
 
         self.y = y
 
