@@ -69,6 +69,123 @@ cdef inline void _init_parent_record(ParentInfo* record) noexcept nogil:
     record.lower_bound = -INFINITY
     record.upper_bound = INFINITY
 
+cdef inline void _update_interaction_constraints_after_split(
+    Splitter splitter,
+    ParentInfo* parent_record,
+    intp_t split_feature,
+) noexcept nogil:
+    """Update active groups and move newly forbidden non-constant features to tail."""
+    cdef intp_t n_features = splitter.n_features
+    cdef intp_t n_interaction_groups = splitter.n_interaction_groups
+    cdef intp_t n_total_constants = parent_record.n_constant_features
+    cdef intp_t n_known_forbidden = parent_record.n_forbidden_features
+    cdef intp_t n_total_forbidden
+    cdef intp_t n_known_active_interaction_groups = (
+        parent_record.n_active_interaction_groups
+    )
+    cdef intp_t n_known_inactive_interaction_groups = (
+        n_interaction_groups - n_known_active_interaction_groups
+    )
+    cdef intp_t n_child_active_interaction_groups = 0
+    cdef intp_t next_inactive_group_pos = n_known_inactive_interaction_groups
+    cdef intp_t active_group_start
+    cdef intp_t[::1] features = splitter.features
+    cdef intp_t[::1] forbidden_features = splitter.forbidden_features
+    cdef intp_t[::1] interaction_groups = splitter.interaction_groups
+    cdef intp_t[::1] interaction_groups_buffer = splitter.interaction_groups_buffer
+    cdef const intp_t[:] feature_to_groups_indptr = splitter.feature_to_groups_indptr
+    cdef const intp_t[:] feature_to_groups_indices = splitter.feature_to_groups_indices
+    cdef const intp_t[:] group_to_features_indptr = splitter.group_to_features_indptr
+    cdef const intp_t[:] group_to_features_indices = splitter.group_to_features_indices
+    cdef int32_t[::1] group_marks = splitter.group_marks
+    cdef int32_t[::1] feature_marks = splitter.feature_marks
+    cdef int32_t[::1] forbidden_marks = splitter.forbidden_marks
+    cdef int32_t group_mark_token
+    cdef int32_t feature_mark_token
+    cdef int32_t forbidden_mark_token
+    cdef intp_t group_pos
+    cdef intp_t group_idx
+    cdef intp_t feature_pos
+    cdef intp_t feature_idx
+    cdef intp_t candidate_end
+
+    if not splitter.with_interaction_cst:
+        return
+
+    # Step 1: mark the groups that contain the selected split feature.
+    # Complexity: O(#groups containing split_feature).
+    group_mark_token = splitter.group_mark_token + 1
+    splitter.group_mark_token = group_mark_token
+    for group_pos in range(
+        feature_to_groups_indptr[split_feature],
+        feature_to_groups_indptr[split_feature + 1],
+    ):
+        group_idx = feature_to_groups_indices[group_pos]
+        group_marks[group_idx] = group_mark_token
+
+    # Step 2: partition the suffix of interaction_groups so child-active groups
+    # are moved to the tail, preserving the shared-buffer depth-first layout.
+    # Complexity: O(#currently inactive groups).
+    for group_pos in range(n_known_inactive_interaction_groups, n_interaction_groups):
+        group_idx = interaction_groups[group_pos]
+        if group_marks[group_idx] == group_mark_token:
+            interaction_groups_buffer[n_child_active_interaction_groups] = group_idx
+            n_child_active_interaction_groups += 1
+        else:
+            interaction_groups[next_inactive_group_pos] = group_idx
+            next_inactive_group_pos += 1
+
+    for group_pos in range(n_child_active_interaction_groups):
+        interaction_groups[next_inactive_group_pos + group_pos] = (
+            interaction_groups_buffer[group_pos]
+        )
+    active_group_start = next_inactive_group_pos
+
+    # Step 3: mark all features allowed by the child-active interaction groups.
+    # Complexity: O(total features listed in child-active groups CSR rows).
+    feature_mark_token = splitter.feature_mark_token + 1
+    splitter.feature_mark_token = feature_mark_token
+    for group_pos in range(active_group_start, n_interaction_groups):
+        group_idx = interaction_groups[group_pos]
+        for feature_pos in range(
+            group_to_features_indptr[group_idx],
+            group_to_features_indptr[group_idx + 1],
+        ):
+            feature_idx = group_to_features_indices[feature_pos]
+            feature_marks[feature_idx] = feature_mark_token
+
+    forbidden_mark_token = splitter.forbidden_mark_token + 1
+    splitter.forbidden_mark_token = forbidden_mark_token
+    for feature_pos in range(n_known_forbidden):
+        forbidden_marks[forbidden_features[feature_pos]] = forbidden_mark_token
+
+    # Step 4: scan non-constant, non-already-forbidden candidates and move each
+    # newly forbidden feature to the tail in-place.
+    # Complexity: O(#candidate features) with O(1) work per visited position.
+    n_total_forbidden = n_known_forbidden
+    candidate_end = n_features - n_total_forbidden
+    feature_pos = n_total_constants
+    while feature_pos < candidate_end:
+        feature_idx = features[feature_pos]
+        if (
+            feature_marks[feature_idx] != feature_mark_token and
+            forbidden_marks[feature_idx] != forbidden_mark_token
+        ):
+            forbidden_features[n_total_forbidden] = feature_idx
+            forbidden_marks[feature_idx] = forbidden_mark_token
+            n_total_forbidden += 1
+            candidate_end -= 1
+            # Keep scanning the swapped-in value at current position.
+            features[feature_pos], features[candidate_end] = (
+                features[candidate_end], features[feature_pos]
+            )
+            continue
+        feature_pos += 1
+
+    # Step 5: persist the child state summary for both children stack records.
+    parent_record.n_active_interaction_groups = n_child_active_interaction_groups
+    parent_record.n_forbidden_features = n_total_forbidden
+
 # =============================================================================
 # TreeBuilder
 # =============================================================================
@@ -262,6 +379,12 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     is_leaf = (is_leaf or split.pos >= end or
                                (split.improvement + EPSILON <
                                 min_impurity_decrease))
+                    if not is_leaf:
+                        _update_interaction_constraints_after_split(
+                            splitter,
+                            &parent_record,
+                            split.feature,
+                        )
 
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
                                          split.threshold, parent_record.impurity,

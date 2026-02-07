@@ -22,7 +22,7 @@ of splitting strategies:
 
 from libc.string cimport memcpy
 
-from sklearn.utils._typedefs cimport int8_t, int32_t
+from sklearn.utils._typedefs cimport int8_t
 from sklearn.tree._criterion cimport Criterion
 from sklearn.tree._partitioner cimport (
     FEATURE_THRESHOLD, DensePartitioner, SparsePartitioner,
@@ -316,8 +316,6 @@ cdef inline int node_split_best(
     """
     cdef const int8_t[:] monotonic_cst = splitter.monotonic_cst
     cdef bint with_monotonic_cst = splitter.with_monotonic_cst
-    cdef bint with_interaction_cst = splitter.with_interaction_cst
-
     # Find the best split
     cdef intp_t start = splitter.start
     cdef intp_t end = splitter.end
@@ -331,22 +329,7 @@ cdef inline int node_split_best(
     cdef intp_t[::1] samples = splitter.samples
     cdef intp_t[::1] features = splitter.features
     cdef intp_t[::1] constant_features = splitter.constant_features
-    cdef intp_t[::1] forbidden_features = splitter.forbidden_features
     cdef intp_t n_features = splitter.n_features
-
-    cdef intp_t n_interaction_groups = splitter.n_interaction_groups
-    cdef const intp_t[:] feature_to_groups_indptr = splitter.feature_to_groups_indptr
-    cdef const intp_t[:] feature_to_groups_indices = splitter.feature_to_groups_indices
-    cdef const intp_t[:] group_to_features_indptr = splitter.group_to_features_indptr
-    cdef const intp_t[:] group_to_features_indices = splitter.group_to_features_indices
-    cdef intp_t[::1] interaction_groups = splitter.interaction_groups
-    cdef intp_t[::1] interaction_groups_buffer = splitter.interaction_groups_buffer
-    cdef int32_t[::1] group_marks = splitter.group_marks
-    cdef int32_t[::1] feature_marks = splitter.feature_marks
-    cdef int32_t[::1] forbidden_marks = splitter.forbidden_marks
-    cdef int32_t group_mark_token = splitter.group_mark_token
-    cdef int32_t feature_mark_token = splitter.feature_mark_token
-    cdef int32_t forbidden_mark_token = splitter.forbidden_mark_token
 
     cdef float32_t[::1] feature_values = splitter.feature_values
     cdef intp_t max_features = splitter.max_features
@@ -366,11 +349,6 @@ cdef inline int node_split_best(
     cdef intp_t f_j
     cdef intp_t p
     cdef intp_t p_prev
-    cdef intp_t group_idx
-    cdef intp_t group_pos
-    cdef intp_t feature_idx
-    cdef intp_t feature_pos
-    cdef intp_t middle_feature_pos
 
     cdef intp_t n_visited_features = 0
     # Number of features discovered to be constant during the split search
@@ -381,48 +359,10 @@ cdef inline int node_split_best(
     # n_total_constants = n_known_constants + n_found_constants
     cdef intp_t n_total_constants = n_known_constants
     cdef intp_t n_known_forbidden = parent_record.n_forbidden_features
-    cdef intp_t n_total_forbidden = n_known_forbidden
-    cdef intp_t n_known_active_interaction_groups = (
-        parent_record.n_active_interaction_groups
-    )
-    cdef intp_t n_known_inactive_interaction_groups = (
-        n_interaction_groups - n_known_active_interaction_groups
-    )
-    cdef intp_t n_child_active_interaction_groups = 0
-    cdef intp_t active_group_start = 0
-    cdef intp_t next_inactive_group_pos = 0
 
     _init_split(&best_split, end)
 
     partitioner.init_node_split(start, end)
-
-    # Restore and keep forbidden features at the end of the features array.
-    if with_interaction_cst and n_known_forbidden > 0:
-        forbidden_mark_token += 1
-        for feature_pos in range(n_known_forbidden):
-            forbidden_marks[forbidden_features[feature_pos]] = forbidden_mark_token
-
-        feature_mark_token += 1
-        for feature_pos in range(n_known_constants):
-            feature_marks[constant_features[feature_pos]] = feature_mark_token
-
-        # Rebuild a clean feature permutation so forbidden features are only
-        # present in the tail and therefore excluded from candidate sampling.
-        memcpy(&features[0], &constant_features[0], sizeof(intp_t) * n_known_constants)
-        middle_feature_pos = n_known_constants
-        for feature_idx in range(n_features):
-            if (
-                feature_marks[feature_idx] != feature_mark_token and
-                forbidden_marks[feature_idx] != forbidden_mark_token
-            ):
-                features[middle_feature_pos] = feature_idx
-                middle_feature_pos += 1
-
-        memcpy(
-            &features[n_features - n_known_forbidden],
-            &forbidden_features[0],
-            sizeof(intp_t) * n_known_forbidden,
-        )
 
     # Candidate features are sampled from features[:f_i], excluding forbidden
     # features cached at the end of the array.
@@ -637,70 +577,6 @@ cdef inline int node_split_best(
     memcpy(&constant_features[n_known_constants],
            &features[n_known_constants],
            sizeof(intp_t) * n_found_constants)
-
-    if with_interaction_cst and best_split.pos < end:
-        group_mark_token += 1
-        for group_pos in range(
-            feature_to_groups_indptr[best_split.feature],
-            feature_to_groups_indptr[best_split.feature + 1],
-        ):
-            group_idx = feature_to_groups_indices[group_pos]
-            group_marks[group_idx] = group_mark_token
-
-        next_inactive_group_pos = n_known_inactive_interaction_groups
-        n_child_active_interaction_groups = 0
-        for group_pos in range(n_known_inactive_interaction_groups, n_interaction_groups):
-            group_idx = interaction_groups[group_pos]
-            if group_marks[group_idx] == group_mark_token:
-                interaction_groups_buffer[n_child_active_interaction_groups] = group_idx
-                n_child_active_interaction_groups += 1
-            else:
-                interaction_groups[next_inactive_group_pos] = group_idx
-                next_inactive_group_pos += 1
-
-        for group_pos in range(n_child_active_interaction_groups):
-            interaction_groups[next_inactive_group_pos + group_pos] = (
-                interaction_groups_buffer[group_pos]
-            )
-        active_group_start = next_inactive_group_pos
-
-        feature_mark_token += 1
-        for group_pos in range(active_group_start, n_interaction_groups):
-            group_idx = interaction_groups[group_pos]
-            for feature_pos in range(
-                group_to_features_indptr[group_idx],
-                group_to_features_indptr[group_idx + 1],
-            ):
-                feature_idx = group_to_features_indices[feature_pos]
-                feature_marks[feature_idx] = feature_mark_token
-
-        forbidden_mark_token += 1
-        for feature_pos in range(n_known_forbidden):
-            forbidden_marks[forbidden_features[feature_pos]] = forbidden_mark_token
-        for feature_pos in range(n_total_constants):
-            forbidden_marks[constant_features[feature_pos]] = forbidden_mark_token
-
-        n_total_forbidden = n_known_forbidden
-        for feature_idx in range(n_features):
-            if (
-                feature_marks[feature_idx] != feature_mark_token and
-                forbidden_marks[feature_idx] != forbidden_mark_token
-            ):
-                forbidden_features[n_total_forbidden] = feature_idx
-                n_total_forbidden += 1
-
-        memcpy(
-            &features[n_features - n_total_forbidden],
-            &forbidden_features[0],
-            sizeof(intp_t) * n_total_forbidden,
-        )
-
-        parent_record.n_active_interaction_groups = n_child_active_interaction_groups
-        parent_record.n_forbidden_features = n_total_forbidden
-
-    splitter.group_mark_token = group_mark_token
-    splitter.feature_mark_token = feature_mark_token
-    splitter.forbidden_mark_token = forbidden_mark_token
 
     # Return values
     parent_record.n_constant_features = n_total_constants
