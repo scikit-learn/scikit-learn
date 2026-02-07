@@ -55,10 +55,6 @@ cdef class Splitter:
     cdef const intp_t[:] group_to_features_indptr
     cdef const intp_t[:] group_to_features_indices
     cdef bint with_interaction_cst
-    cdef intp_t[::1] interaction_groups
-    cdef intp_t[::1] interaction_groups_buffer
-    cdef int32_t[::1] group_marks
-    cdef int32_t group_mark_token
     cdef int32_t[::1] feature_marks
     cdef int32_t feature_mark_token
     cdef int32_t[::1] forbidden_marks
