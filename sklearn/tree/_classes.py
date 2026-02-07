@@ -7,6 +7,7 @@ randomized trees. Single and multi-output problems are both handled.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import copy
+import itertools
 import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -124,6 +125,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         "min_impurity_decrease": [Interval(Real, 0.0, None, closed="left")],
         "ccp_alpha": [Interval(Real, 0.0, None, closed="left")],
         "monotonic_cst": ["array-like", None],
+        "interaction_cst": [
+            StrOptions({"pairwise", "no_interactions"}),
+            "array-like",
+            None,
+        ],
     }
 
     @abstractmethod
@@ -143,6 +149,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         class_weight=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        interaction_cst=None,
     ):
         self.criterion = criterion
         self.splitter = splitter
@@ -157,6 +164,76 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.class_weight = class_weight
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
+        self.interaction_cst = interaction_cst
+
+    def _check_interaction_cst(self, n_features):
+        """Check and validate interaction constraints."""
+        if self.interaction_cst is None:
+            return None
+
+        if self.interaction_cst == "no_interactions":
+            interaction_cst = [[i] for i in range(n_features)]
+        elif self.interaction_cst == "pairwise":
+            interaction_cst = itertools.combinations(range(n_features), 2)
+        else:
+            interaction_cst = self.interaction_cst
+
+        try:
+            constraints = [set(group) for group in interaction_cst]
+        except TypeError:
+            raise ValueError(
+                "Interaction constraints must be a sequence of tuples or lists, got:"
+                f" {self.interaction_cst!r}."
+            )
+
+        for group in constraints:
+            for x in group:
+                if not (isinstance(x, Integral) and 0 <= x < n_features):
+                    raise ValueError(
+                        "Interaction constraints must consist of integer indices in"
+                        f" [0, n_features - 1] = [0, {n_features - 1}], specifying"
+                        f" the position of features, got invalid indices: {group!r}"
+                    )
+
+        all_features_in_constraints = (
+            set().union(*constraints) if constraints else set()
+        )
+
+        # Add all not listed features as one group by default.
+        rest = set(range(n_features)) - all_features_in_constraints
+        if rest:
+            constraints.append(rest)
+        return constraints
+
+    def _interaction_cst_to_csr(self, constraints, n_features):
+        """Convert interaction constraints to CSR-like arrays."""
+        if constraints is None:
+            return None, None, None, None
+
+        feature_to_groups = [[] for _ in range(n_features)]
+        group_to_features_indices = []
+        group_to_features_indptr = [0]
+
+        for group_idx, group in enumerate(constraints):
+            sorted_group = sorted(group)
+            group_to_features_indices.extend(sorted_group)
+            group_to_features_indptr.append(len(group_to_features_indices))
+
+            for feature_idx in sorted_group:
+                feature_to_groups[feature_idx].append(group_idx)
+
+        feature_to_groups_indices = []
+        feature_to_groups_indptr = [0]
+        for groups in feature_to_groups:
+            feature_to_groups_indices.extend(groups)
+            feature_to_groups_indptr.append(len(feature_to_groups_indices))
+
+        return (
+            np.asarray(feature_to_groups_indptr, dtype=np.intp),
+            np.asarray(feature_to_groups_indices, dtype=np.intp),
+            np.asarray(group_to_features_indptr, dtype=np.intp),
+            np.asarray(group_to_features_indices, dtype=np.intp),
+        )
 
     def get_depth(self):
         """Return the depth of the decision tree.
@@ -352,6 +429,18 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.max_features_ = max_features
 
         max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
+        interaction_cst = self._check_interaction_cst(X.shape[1])
+
+        if interaction_cst is not None:
+            if max_leaf_nodes >= 0:
+                raise ValueError(
+                    "Interaction constraints are only supported for depth-first "
+                    "tree building. Set max_leaf_nodes=None."
+                )
+            if self.splitter != "best":
+                raise ValueError(
+                    "Interaction constraints are only supported for splitter='best'."
+                )
 
         if len(y) != n_samples:
             raise ValueError(
@@ -431,6 +520,13 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 monotonic_cst *= -1
 
         if not isinstance(self.splitter, Splitter):
+            (
+                feature_to_groups_indptr,
+                feature_to_groups_indices,
+                group_to_features_indptr,
+                group_to_features_indices,
+            ) = self._interaction_cst_to_csr(interaction_cst, X.shape[1])
+
             splitter = SPLITTERS[self.splitter](
                 criterion,
                 self.max_features_,
@@ -438,6 +534,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 min_weight_leaf,
                 random_state,
                 monotonic_cst,
+                feature_to_groups_indptr,
+                feature_to_groups_indices,
+                group_to_features_indptr,
+                group_to_features_indices,
             )
 
         if is_classifier(self):
@@ -975,6 +1075,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         class_weight=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        interaction_cst=None,
     ):
         super().__init__(
             criterion=criterion,
@@ -989,6 +1090,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             random_state=random_state,
             min_impurity_decrease=min_impurity_decrease,
             monotonic_cst=monotonic_cst,
+            interaction_cst=interaction_cst,
             ccp_alpha=ccp_alpha,
         )
 
@@ -1358,6 +1460,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         min_impurity_decrease=0.0,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        interaction_cst=None,
     ):
         if isinstance(criterion, str) and criterion == "friedman_mse":
             # TODO(1.11): remove support of "friedman_mse" criterion.
@@ -1382,6 +1485,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             min_impurity_decrease=min_impurity_decrease,
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
+            interaction_cst=interaction_cst,
         )
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -1720,6 +1824,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         class_weight=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        interaction_cst=None,
     ):
         super().__init__(
             criterion=criterion,
@@ -1735,6 +1840,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             random_state=random_state,
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
+            interaction_cst=interaction_cst,
         )
 
     def __sklearn_tags__(self):
@@ -1981,6 +2087,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         max_leaf_nodes=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        interaction_cst=None,
     ):
         super().__init__(
             criterion=criterion,
@@ -1995,6 +2102,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             random_state=random_state,
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
+            interaction_cst=interaction_cst,
         )
 
     def __sklearn_tags__(self):

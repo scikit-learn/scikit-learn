@@ -32,6 +32,8 @@ cdef struct ParentInfo:
     float64_t upper_bound           # the upper bound of the parent's impurity
     float64_t impurity              # the impurity of the parent
     intp_t n_constant_features      # the number of constant features found in parent
+    intp_t n_active_interaction_groups  # active interaction groups inherited by child
+    intp_t n_forbidden_features     # number of forbidden features inherited by child
 
 cdef class Tree:
     # The Tree object is a binary tree structure constructed by the

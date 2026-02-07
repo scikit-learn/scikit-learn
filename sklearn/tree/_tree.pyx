@@ -63,6 +63,8 @@ NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
 
 cdef inline void _init_parent_record(ParentInfo* record) noexcept nogil:
     record.n_constant_features = 0
+    record.n_active_interaction_groups = 0
+    record.n_forbidden_features = 0
     record.impurity = INFINITY
     record.lower_bound = -INFINITY
     record.upper_bound = INFINITY
@@ -122,6 +124,8 @@ cdef struct StackRecord:
     bint is_left
     float64_t impurity
     intp_t n_constant_features
+    intp_t n_active_interaction_groups
+    intp_t n_forbidden_features
     float64_t lower_bound
     float64_t upper_bound
 
@@ -208,6 +212,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 "is_left": 0,
                 "impurity": INFINITY,
                 "n_constant_features": 0,
+                "n_active_interaction_groups": splitter.n_interaction_groups,
+                "n_forbidden_features": 0,
                 "lower_bound": -INFINITY,
                 "upper_bound": INFINITY,
             })
@@ -223,6 +229,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 is_left = stack_record.is_left
                 parent_record.impurity = stack_record.impurity
                 parent_record.n_constant_features = stack_record.n_constant_features
+                parent_record.n_active_interaction_groups = (
+                    stack_record.n_active_interaction_groups
+                )
+                parent_record.n_forbidden_features = stack_record.n_forbidden_features
                 parent_record.lower_bound = stack_record.lower_bound
                 parent_record.upper_bound = stack_record.upper_bound
 
@@ -310,6 +320,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         "is_left": 0,
                         "impurity": split.impurity_right,
                         "n_constant_features": parent_record.n_constant_features,
+                        "n_active_interaction_groups": (
+                            parent_record.n_active_interaction_groups
+                        ),
+                        "n_forbidden_features": parent_record.n_forbidden_features,
                         "lower_bound": right_child_min,
                         "upper_bound": right_child_max,
                     })
@@ -323,6 +337,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         "is_left": 1,
                         "impurity": split.impurity_left,
                         "n_constant_features": parent_record.n_constant_features,
+                        "n_active_interaction_groups": (
+                            parent_record.n_active_interaction_groups
+                        ),
+                        "n_forbidden_features": parent_record.n_forbidden_features,
                         "lower_bound": left_child_min,
                         "upper_bound": left_child_max,
                     })
@@ -586,6 +604,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
         # reset n_constant_features for this specific split before beginning split search
         parent_record.n_constant_features = 0
+        parent_record.n_active_interaction_groups = 0
+        parent_record.n_forbidden_features = 0
 
         if is_first:
             parent_record.impurity = splitter.node_impurity()
