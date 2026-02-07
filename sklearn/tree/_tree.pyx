@@ -80,15 +80,12 @@ cdef inline void _update_interaction_constraints_after_split(
     cdef intp_t n_known_forbidden = parent_record.n_forbidden_features
     cdef intp_t n_total_forbidden
     cdef intp_t[::1] features = splitter.features
-    cdef intp_t[::1] forbidden_features = splitter.forbidden_features
     cdef const intp_t[:] feature_to_groups_indptr = splitter.feature_to_groups_indptr
     cdef const intp_t[:] feature_to_groups_indices = splitter.feature_to_groups_indices
     cdef const intp_t[:] group_to_features_indptr = splitter.group_to_features_indptr
     cdef const intp_t[:] group_to_features_indices = splitter.group_to_features_indices
     cdef int32_t[::1] feature_marks = splitter.feature_marks
-    cdef int32_t[::1] forbidden_marks = splitter.forbidden_marks
     cdef int32_t feature_mark_token
-    cdef int32_t forbidden_mark_token
     cdef intp_t group_pos
     cdef intp_t group_idx
     cdef intp_t feature_pos
@@ -115,25 +112,15 @@ cdef inline void _update_interaction_constraints_after_split(
             feature_idx = group_to_features_indices[feature_pos]
             feature_marks[feature_idx] = feature_mark_token
 
-    forbidden_mark_token = splitter.forbidden_mark_token + 1
-    splitter.forbidden_mark_token = forbidden_mark_token
-    for feature_pos in range(n_known_forbidden):
-        forbidden_marks[forbidden_features[feature_pos]] = forbidden_mark_token
-
-    # Step 2: scan non-constant, non-already-forbidden candidates and move each
-    # newly forbidden feature to the tail in-place.
-    # Complexity: O(#candidate features) with O(1) work per visited position.
+    # Step 2: scan non-constant, non-already-forbidden features
+    # and move each newly forbidden feature to the tail in-place.
+    # Complexity: O(#candidate features)
     n_total_forbidden = n_known_forbidden
     candidate_end = n_features - n_total_forbidden
     feature_pos = n_total_constants
-    while feature_pos < candidate_end:
+    while feature_pos < n_features - n_total_forbidden:
         feature_idx = features[feature_pos]
-        if (
-            feature_marks[feature_idx] != feature_mark_token and
-            forbidden_marks[feature_idx] != forbidden_mark_token
-        ):
-            forbidden_features[n_total_forbidden] = feature_idx
-            forbidden_marks[feature_idx] = forbidden_mark_token
+        if feature_marks[feature_idx] != feature_mark_token:
             n_total_forbidden += 1
             candidate_end -= 1
             # Keep scanning the swapped-in value at current position.

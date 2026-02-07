@@ -47,7 +47,6 @@ cdef class Splitter:
     cdef intp_t[::1] constant_features   # Constant features indices
     cdef intp_t n_features               # X.shape[1]
     cdef float32_t[::1] feature_values   # temp. array holding feature values
-    cdef intp_t[::1] forbidden_features  # Forbidden features indices
 
     cdef intp_t n_interaction_groups
     cdef const intp_t[:] feature_to_groups_indptr
@@ -57,8 +56,6 @@ cdef class Splitter:
     cdef bint with_interaction_cst
     cdef int32_t[::1] feature_marks
     cdef int32_t feature_mark_token
-    cdef int32_t[::1] forbidden_marks
-    cdef int32_t forbidden_mark_token
 
     cdef intp_t start                    # Start position for the current node
     cdef intp_t end                      # End position for the current node

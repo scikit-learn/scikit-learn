@@ -207,16 +207,12 @@ cdef class Splitter:
 
         self.feature_values = np.empty(n_samples, dtype=np.float32)
         self.constant_features = np.empty(n_features, dtype=np.intp)
-        self.forbidden_features = np.empty(n_features, dtype=np.intp)
 
         if self.with_interaction_cst:
             self.feature_marks = np.zeros(n_features, dtype=np.int32)
-            self.forbidden_marks = np.zeros(n_features, dtype=np.int32)
         else:
             self.feature_marks = np.empty(0, dtype=np.int32)
-            self.forbidden_marks = np.empty(0, dtype=np.int32)
         self.feature_mark_token = 0
-        self.forbidden_mark_token = 0
 
         self.y = y
 
