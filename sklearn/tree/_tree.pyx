@@ -141,6 +141,11 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
     cdef const intp_t[:] feature_to_groups_indices
     cdef const intp_t[:] group_to_features_indptr
     cdef const intp_t[:] group_to_features_indices
+    cdef intp_t[::1] interaction_groups
+    cdef int32_t[::1] group_marks
+    cdef int32_t[::1] feature_marks
+    cdef int32_t group_mark_token
+    cdef int32_t feature_mark_token
     cdef bint with_interaction_cst
     cdef intp_t n_interaction_groups
 
@@ -172,11 +177,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         intp_t[::1] features,
         ParentInfo* parent_record,
         intp_t split_feature,
-        intp_t[::1] interaction_groups,
-        int32_t[::1] group_marks,
-        int32_t* group_mark_token,
-        int32_t[::1] feature_marks,
-        int32_t* feature_mark_token,
     ) noexcept nogil:
         """Move newly forbidden non-constant features to tail in-place."""
         cdef:
@@ -184,10 +184,13 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
             const intp_t[:] feature_to_groups_indices = self.feature_to_groups_indices
             const intp_t[:] group_to_features_indptr = self.group_to_features_indptr
             const intp_t[:] group_to_features_indices = self.group_to_features_indices
+            intp_t[::1] interaction_groups = self.interaction_groups
+            int32_t[::1] group_marks = self.group_marks
+            int32_t[::1] feature_marks = self.feature_marks
             intp_t n_allowed_features = parent_record.n_allowed_features
             intp_t n_active_groups = parent_record.n_active_interaction_groups
-            int32_t current_group_mark_token
-            int32_t current_feature_mark_token
+            int32_t current_group_mark_token = self.group_mark_token + 1
+            int32_t current_feature_mark_token = self.feature_mark_token + 1
             intp_t g_pos, group_idx, f_pos, feature_idx
 
         if n_active_groups == 1:
@@ -197,8 +200,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
         # Step 1: mark groups containing the split feature.
         # Complexity: O(#groups containing split_feature)
-        current_group_mark_token = group_mark_token[0] + 1
-        group_mark_token[0] = current_group_mark_token
+        self.group_mark_token = current_group_mark_token
         for g_pos in range(
             feature_to_groups_indptr[split_feature],
             feature_to_groups_indptr[split_feature + 1],
@@ -225,8 +227,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
         # Step 3: mark features allowed by the remaining active interaction groups.
         # Complexity: O(sum of sizes of active groups).
-        current_feature_mark_token = feature_mark_token[0] + 1
-        feature_mark_token[0] = current_feature_mark_token
+        self.feature_mark_token = current_feature_mark_token
         for g_pos in range(n_active_groups):
             group_idx = interaction_groups[g_pos]
             for f_pos in range(
@@ -305,11 +306,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef bint is_leaf
         cdef bint first = 1
         cdef intp_t max_depth_seen = -1
-        cdef intp_t[::1] interaction_groups
-        cdef int32_t[::1] group_marks
-        cdef int32_t[::1] feature_marks
-        cdef int32_t group_mark_token = 0
-        cdef int32_t feature_mark_token = 0
         cdef bint with_interaction_cst = self.with_interaction_cst
         cdef int rc = 0
 
@@ -319,13 +315,11 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef ParentInfo parent_record
         _init_parent_record(&parent_record)
         if with_interaction_cst:
-            interaction_groups = np.arange(self.n_interaction_groups, dtype=np.intp)
-            group_marks = np.zeros(self.n_interaction_groups, dtype=np.int32)
-            feature_marks = np.zeros(splitter.n_features, dtype=np.int32)
-        else:
-            interaction_groups = np.empty(0, dtype=np.intp)
-            group_marks = np.empty(0, dtype=np.int32)
-            feature_marks = np.empty(0, dtype=np.int32)
+            self.interaction_groups = np.arange(self.n_interaction_groups, dtype=np.intp)
+            self.group_marks = np.zeros(self.n_interaction_groups, dtype=np.int32)
+            self.feature_marks = np.zeros(splitter.n_features, dtype=np.int32)
+        self.group_mark_token = 0
+        self.feature_mark_token = 0
 
         with nogil:
             # push root node onto stack
@@ -392,11 +386,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                             splitter.features,
                             &parent_record,
                             split.feature,
-                            interaction_groups,
-                            group_marks,
-                            &group_mark_token,
-                            feature_marks,
-                            &feature_mark_token,
                         )
 
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
