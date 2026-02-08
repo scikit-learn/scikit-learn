@@ -76,41 +76,39 @@ cdef inline void _init_parent_record(ParentInfo* record) noexcept nogil:
 
 
 cdef inline void _update_interaction_constraints_after_split(
-    Splitter splitter,
+    intp_t[::1] features,
+    intp_t n_features,
     ParentInfo* parent_record,
     intp_t split_feature,
+    intp_t[::1] interaction_groups,
+    const intp_t[:] feature_to_groups_indptr,
+    const intp_t[:] feature_to_groups_indices,
+    const intp_t[:] group_to_features_indptr,
+    const intp_t[:] group_to_features_indices,
+    int32_t[::1] group_marks,
+    int32_t* group_mark_token,
+    int32_t[::1] feature_marks,
+    int32_t* feature_mark_token,
 ) noexcept nogil:
     """Move newly forbidden non-constant features to tail in-place."""
     cdef:
-        intp_t n_features = splitter.n_features
         intp_t n_total_constants = parent_record.n_constant_features
         intp_t n_total_forbidden = parent_record.n_forbidden_features
         intp_t n_active_groups = parent_record.n_active_interaction_groups
-        intp_t[::1] features = splitter.features
-        intp_t[::1] interaction_groups = splitter.interaction_groups
-        const intp_t[:] feature_to_groups_indptr = splitter.feature_to_groups_indptr
-        const intp_t[:] feature_to_groups_indices = splitter.feature_to_groups_indices
-        const intp_t[:] group_to_features_indptr = splitter.group_to_features_indptr
-        const intp_t[:] group_to_features_indices = splitter.group_to_features_indices
-        int32_t[::1] group_marks = splitter.group_marks
-        int32_t group_mark_token
-        int32_t[::1] feature_marks = splitter.feature_marks
-        int32_t feature_mark_token
+        int32_t current_group_mark_token
+        int32_t current_feature_mark_token
         intp_t g_pos, group_idx, f_pos, feature_idx, candidate_end
-
-    if not splitter.with_interaction_cst:
-        return
 
     # Step 1: mark groups containing the split feature.
     # Complexity: O(#groups containing split_feature)
-    group_mark_token = splitter.group_mark_token + 1
-    splitter.group_mark_token = group_mark_token
+    current_group_mark_token = group_mark_token[0] + 1
+    group_mark_token[0] = current_group_mark_token
     for g_pos in range(
         feature_to_groups_indptr[split_feature],
         feature_to_groups_indptr[split_feature + 1],
     ):
         group_idx = feature_to_groups_indices[g_pos]
-        group_marks[group_idx] = group_mark_token
+        group_marks[group_idx] = current_group_mark_token
 
     # Step 2: keep only groups that are both active on the path and contain
     # split_feature. Active groups are stored as a prefix of interaction_groups.
@@ -118,7 +116,7 @@ cdef inline void _update_interaction_constraints_after_split(
     g_pos = n_active_groups - 1
     while g_pos >= 0:
         group_idx = interaction_groups[g_pos]
-        if group_marks[group_idx] != group_mark_token:
+        if group_marks[group_idx] != current_group_mark_token:
             # this group doesn't contain split_feature -> move it at the end
             # and decrease the number of active groups
             n_active_groups -= 1
@@ -127,8 +125,8 @@ cdef inline void _update_interaction_constraints_after_split(
 
     # Step 3: mark features allowed by the remaining active interaction groups.
     # Complexity: O(sum of sizes of active groups).
-    feature_mark_token = splitter.feature_mark_token + 1
-    splitter.feature_mark_token = feature_mark_token
+    current_feature_mark_token = feature_mark_token[0] + 1
+    feature_mark_token[0] = current_feature_mark_token
     for g_pos in range(n_active_groups):
         group_idx = interaction_groups[g_pos]
         for f_pos in range(
@@ -136,7 +134,7 @@ cdef inline void _update_interaction_constraints_after_split(
             group_to_features_indptr[group_idx + 1],
         ):
             feature_idx = group_to_features_indices[f_pos]
-            feature_marks[feature_idx] = feature_mark_token
+            feature_marks[feature_idx] = current_feature_mark_token
 
     # Step 4: scan non-constant, non-already-forbidden features
     # and move each newly forbidden feature to the tail in-place.
@@ -145,7 +143,7 @@ cdef inline void _update_interaction_constraints_after_split(
     f_pos = n_total_constants
     while f_pos < n_features - n_total_forbidden:
         feature_idx = features[f_pos]
-        if feature_marks[feature_idx] != feature_mark_token:
+        if feature_marks[feature_idx] != current_feature_mark_token:
             n_total_forbidden += 1
             candidate_end -= 1
             _swap_intp(features, f_pos, candidate_end)
@@ -219,16 +217,35 @@ cdef struct StackRecord:
 
 cdef class DepthFirstTreeBuilder(TreeBuilder):
     """Build a decision tree in depth-first fashion."""
+    cdef const intp_t[:] feature_to_groups_indptr
+    cdef const intp_t[:] feature_to_groups_indices
+    cdef const intp_t[:] group_to_features_indptr
+    cdef const intp_t[:] group_to_features_indices
+    cdef bint with_interaction_cst
+    cdef intp_t n_interaction_groups
 
     def __cinit__(self, Splitter splitter, intp_t min_samples_split,
                   intp_t min_samples_leaf, float64_t min_weight_leaf,
-                  intp_t max_depth, float64_t min_impurity_decrease):
+                  intp_t max_depth, float64_t min_impurity_decrease,
+                  const intp_t[:] feature_to_groups_indptr=None,
+                  const intp_t[:] feature_to_groups_indices=None,
+                  const intp_t[:] group_to_features_indptr=None,
+                  const intp_t[:] group_to_features_indices=None):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.max_depth = max_depth
         self.min_impurity_decrease = min_impurity_decrease
+        self.feature_to_groups_indptr = feature_to_groups_indptr
+        self.feature_to_groups_indices = feature_to_groups_indices
+        self.group_to_features_indptr = group_to_features_indptr
+        self.group_to_features_indices = group_to_features_indices
+        self.with_interaction_cst = feature_to_groups_indptr is not None
+        if self.with_interaction_cst:
+            self.n_interaction_groups = group_to_features_indptr.shape[0] - 1
+        else:
+            self.n_interaction_groups = 0
 
     cpdef build(
         self,
@@ -283,6 +300,16 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef bint first = 1
         cdef intp_t max_depth_seen = -1
         cdef intp_t root_n_active_interaction_groups = 0
+        cdef intp_t[::1] interaction_groups
+        cdef int32_t[::1] group_marks
+        cdef int32_t[::1] feature_marks
+        cdef int32_t group_mark_token = 0
+        cdef int32_t feature_mark_token = 0
+        cdef bint with_interaction_cst = self.with_interaction_cst
+        cdef const intp_t[:] feature_to_groups_indptr = self.feature_to_groups_indptr
+        cdef const intp_t[:] feature_to_groups_indices = self.feature_to_groups_indices
+        cdef const intp_t[:] group_to_features_indptr = self.group_to_features_indptr
+        cdef const intp_t[:] group_to_features_indices = self.group_to_features_indices
         cdef int rc = 0
 
         cdef stack[StackRecord] builder_stack
@@ -290,8 +317,15 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
         cdef ParentInfo parent_record
         _init_parent_record(&parent_record)
-        if splitter.with_interaction_cst:
-            root_n_active_interaction_groups = splitter.n_interaction_groups
+        if with_interaction_cst:
+            interaction_groups = np.arange(self.n_interaction_groups, dtype=np.intp)
+            group_marks = np.zeros(self.n_interaction_groups, dtype=np.int32)
+            feature_marks = np.zeros(splitter.n_features, dtype=np.int32)
+            root_n_active_interaction_groups = self.n_interaction_groups
+        else:
+            interaction_groups = np.empty(0, dtype=np.intp)
+            group_marks = np.empty(0, dtype=np.int32)
+            feature_marks = np.empty(0, dtype=np.int32)
 
         with nogil:
             # push root node onto stack
@@ -353,11 +387,21 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     is_leaf = (is_leaf or split.pos >= end or
                                (split.improvement + EPSILON <
                                 min_impurity_decrease))
-                    if not is_leaf:
+                    if not is_leaf and with_interaction_cst:
                         _update_interaction_constraints_after_split(
-                            splitter,
+                            splitter.features,
+                            splitter.n_features,
                             &parent_record,
                             split.feature,
+                            interaction_groups,
+                            feature_to_groups_indptr,
+                            feature_to_groups_indices,
+                            group_to_features_indptr,
+                            group_to_features_indices,
+                            group_marks,
+                            &group_mark_token,
+                            feature_marks,
+                            &feature_mark_token,
                         )
 
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,

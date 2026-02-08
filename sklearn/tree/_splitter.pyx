@@ -70,10 +70,6 @@ cdef class Splitter:
         float64_t min_weight_leaf,
         object random_state,
         const int8_t[:] monotonic_cst,
-        const intp_t[:] feature_to_groups_indptr=None,
-        const intp_t[:] feature_to_groups_indices=None,
-        const intp_t[:] group_to_features_indptr=None,
-        const intp_t[:] group_to_features_indices=None,
     ):
         """
         Parameters
@@ -113,15 +109,6 @@ cdef class Splitter:
         self.random_state = random_state
         self.monotonic_cst = monotonic_cst
         self.with_monotonic_cst = monotonic_cst is not None
-        self.feature_to_groups_indptr = feature_to_groups_indptr
-        self.feature_to_groups_indices = feature_to_groups_indices
-        self.group_to_features_indptr = group_to_features_indptr
-        self.group_to_features_indices = group_to_features_indices
-        self.with_interaction_cst = feature_to_groups_indptr is not None
-        if self.with_interaction_cst:
-            self.n_interaction_groups = group_to_features_indptr.shape[0] - 1
-        else:
-            self.n_interaction_groups = 0
 
     def __getstate__(self):
         return {}
@@ -135,11 +122,7 @@ cdef class Splitter:
                              self.min_samples_leaf,
                              self.min_weight_leaf,
                              self.random_state,
-                             self.monotonic_cst,
-                             self.feature_to_groups_indptr,
-                             self.feature_to_groups_indices,
-                             self.group_to_features_indptr,
-                             self.group_to_features_indices), self.__getstate__())
+                             self.monotonic_cst), self.__getstate__())
 
     cdef int init(
         self,
@@ -207,19 +190,6 @@ cdef class Splitter:
 
         self.feature_values = np.empty(n_samples, dtype=np.float32)
         self.constant_features = np.empty(n_features, dtype=np.intp)
-
-        if self.with_interaction_cst:
-            self.feature_marks = np.zeros(n_features, dtype=np.int32)
-            self.interaction_groups = np.arange(
-                self.n_interaction_groups, dtype=np.intp
-            )
-            self.group_marks = np.zeros(self.n_interaction_groups, dtype=np.int32)
-        else:
-            self.interaction_groups = np.empty(0, dtype=np.intp)
-            self.group_marks = np.empty(0, dtype=np.int32)
-            self.feature_marks = np.empty(0, dtype=np.int32)
-        self.feature_mark_token = 0
-        self.group_mark_token = 0
 
         self.y = y
 
@@ -323,7 +293,6 @@ cdef inline int node_split_best(
     cdef intp_t[::1] samples = splitter.samples
     cdef intp_t[::1] features = splitter.features
     cdef intp_t[::1] constant_features = splitter.constant_features
-    cdef intp_t n_features = splitter.n_features
 
     cdef float32_t[::1] feature_values = splitter.feature_values
     cdef intp_t max_features = splitter.max_features
@@ -352,7 +321,6 @@ cdef inline int node_split_best(
     cdef intp_t n_known_constants = parent_record.n_constant_features
     # n_total_constants = n_known_constants + n_found_constants
     cdef intp_t n_total_constants = n_known_constants
-    cdef intp_t n_forbidden = parent_record.n_forbidden_features
 
     _init_split(&best_split, end)
 
@@ -360,7 +328,7 @@ cdef inline int node_split_best(
 
     # Candidate features are sampled from features[:f_i], excluding forbidden
     # features cached at the end of the array.
-    f_i = n_features - n_forbidden
+    f_i = splitter.n_features - parent_record.n_forbidden_features
 
     # Sample up to max_features without replacement using a
     # Fisher-Yates-based algorithm (using the local variables `f_i` and
@@ -605,7 +573,6 @@ cdef inline int node_split_random(
     cdef intp_t[::1] samples = splitter.samples
     cdef intp_t[::1] features = splitter.features
     cdef intp_t[::1] constant_features = splitter.constant_features
-    cdef intp_t n_features = splitter.n_features
 
     cdef intp_t max_features = splitter.max_features
     cdef intp_t min_samples_leaf = splitter.min_samples_leaf
@@ -629,7 +596,6 @@ cdef inline int node_split_random(
     cdef intp_t n_known_constants = parent_record.n_constant_features
     # n_total_constants = n_known_constants + n_found_constants
     cdef intp_t n_total_constants = n_known_constants
-    cdef intp_t n_forbidden = parent_record.n_forbidden_features
     cdef intp_t n_visited_features = 0
     cdef float32_t min_feature_value
     cdef float32_t max_feature_value
@@ -640,7 +606,7 @@ cdef inline int node_split_random(
 
     # Candidate features are sampled from features[:f_i], excluding forbidden
     # features cached at the end of the array.
-    f_i = n_features - n_forbidden
+    f_i = splitter.n_features - parent_record.n_forbidden_features
 
     # Sample up to max_features without replacement using a
     # Fisher-Yates-based algorithm (using the local variables `f_i` and

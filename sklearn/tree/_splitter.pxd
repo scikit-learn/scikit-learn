@@ -4,7 +4,7 @@
 # See _splitter.pyx for details.
 
 from sklearn.utils._typedefs cimport (
-    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t
+    float32_t, float64_t, int8_t, intp_t, uint8_t, uint32_t
 )
 from sklearn.tree._criterion cimport Criterion
 from sklearn.tree._tree cimport ParentInfo
@@ -47,18 +47,6 @@ cdef class Splitter:
     cdef intp_t[::1] constant_features   # Constant features indices
     cdef intp_t n_features               # X.shape[1]
     cdef float32_t[::1] feature_values   # temp. array holding feature values
-
-    cdef intp_t n_interaction_groups
-    cdef const intp_t[:] feature_to_groups_indptr
-    cdef const intp_t[:] feature_to_groups_indices
-    cdef const intp_t[:] group_to_features_indptr
-    cdef const intp_t[:] group_to_features_indices
-    cdef bint with_interaction_cst
-    cdef intp_t[::1] interaction_groups
-    cdef int32_t[::1] group_marks
-    cdef int32_t group_mark_token
-    cdef int32_t[::1] feature_marks
-    cdef int32_t feature_mark_token
 
     cdef intp_t start                    # Start position for the current node
     cdef intp_t end                      # End position for the current node

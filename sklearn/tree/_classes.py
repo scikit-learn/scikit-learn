@@ -521,14 +521,14 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 # *positive class*, all signs must be flipped.
                 monotonic_cst *= -1
 
-        if not isinstance(self.splitter, Splitter):
-            (
-                feature_to_groups_indptr,
-                feature_to_groups_indices,
-                group_to_features_indptr,
-                group_to_features_indices,
-            ) = self._interaction_cst_to_csr(interaction_cst, X.shape[1])
+        (
+            feature_to_groups_indptr,
+            feature_to_groups_indices,
+            group_to_features_indptr,
+            group_to_features_indices,
+        ) = self._interaction_cst_to_csr(interaction_cst, X.shape[1])
 
+        if not isinstance(self.splitter, Splitter):
             splitter = SPLITTERS[self.splitter](
                 criterion,
                 self.max_features_,
@@ -536,10 +536,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 min_weight_leaf,
                 random_state,
                 monotonic_cst,
-                feature_to_groups_indptr,
-                feature_to_groups_indices,
-                group_to_features_indptr,
-                group_to_features_indices,
             )
 
         if is_classifier(self):
@@ -561,6 +557,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 min_weight_leaf,
                 max_depth,
                 self.min_impurity_decrease,
+                feature_to_groups_indptr,
+                feature_to_groups_indices,
+                group_to_features_indptr,
+                group_to_features_indices,
             )
         else:
             builder = BestFirstTreeBuilder(
