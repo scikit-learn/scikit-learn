@@ -437,13 +437,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
         interaction_cst = self._check_interaction_cst(X.shape[1])
 
-        if interaction_cst is not None:
-            if max_leaf_nodes >= 0:
-                raise ValueError(
-                    "Interaction constraints are only supported for depth-first "
-                    "tree building. Set max_leaf_nodes=None."
-                )
-
         if len(y) != n_samples:
             raise ValueError(
                 "Number of labels=%d does not match number of samples=%d"
@@ -571,6 +564,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 max_depth,
                 max_leaf_nodes,
                 self.min_impurity_decrease,
+                feature_to_groups_indptr,
+                feature_to_groups_indices,
+                group_to_features_indptr,
+                group_to_features_indices,
             )
 
         builder.build(self.tree_, X, y, sample_weight, missing_values_in_feature_mask)

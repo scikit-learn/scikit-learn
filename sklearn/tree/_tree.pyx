@@ -523,11 +523,28 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     highest impurity improvement.
     """
     cdef intp_t max_leaf_nodes
+    cdef const intp_t[:] feature_to_groups_indptr
+    cdef const intp_t[:] feature_to_groups_indices
+    cdef const intp_t[:] group_to_features_indptr
+    cdef const intp_t[:] group_to_features_indices
+    cdef intp_t[::1] interaction_groups
+    cdef int32_t[::1] group_marks
+    cdef int32_t[::1] feature_marks
+    cdef int32_t group_mark_token
+    cdef int32_t feature_mark_token
+    cdef bint with_interaction_cst
+    cdef intp_t n_interaction_groups
+    cdef intp_t[::1] parent_node_ids
+    cdef intp_t[::1] ancestor_node_ids
 
     def __cinit__(self, Splitter splitter, intp_t min_samples_split,
                   intp_t min_samples_leaf,  min_weight_leaf,
                   intp_t max_depth, intp_t max_leaf_nodes,
-                  float64_t min_impurity_decrease):
+                  float64_t min_impurity_decrease,
+                  const intp_t[:] feature_to_groups_indptr=None,
+                  const intp_t[:] feature_to_groups_indices=None,
+                  const intp_t[:] group_to_features_indptr=None,
+                  const intp_t[:] group_to_features_indices=None):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -535,6 +552,120 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         self.max_depth = max_depth
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
+        self.feature_to_groups_indptr = feature_to_groups_indptr
+        self.feature_to_groups_indices = feature_to_groups_indices
+        self.group_to_features_indptr = group_to_features_indptr
+        self.group_to_features_indices = group_to_features_indices
+        self.with_interaction_cst = feature_to_groups_indptr is not None
+        if self.with_interaction_cst:
+            self.n_interaction_groups = group_to_features_indptr.shape[0] - 1
+        else:
+            self.n_interaction_groups = 0
+
+    cdef inline void _update_interaction_constraints_after_split(
+        self,
+        intp_t[::1] features,
+        ParentInfo* parent_record,
+        intp_t split_feature,
+    ) noexcept nogil:
+        cdef:
+            const intp_t[:] feature_to_groups_indptr = self.feature_to_groups_indptr
+            const intp_t[:] feature_to_groups_indices = self.feature_to_groups_indices
+            const intp_t[:] group_to_features_indptr = self.group_to_features_indptr
+            const intp_t[:] group_to_features_indices = self.group_to_features_indices
+            intp_t[::1] interaction_groups = self.interaction_groups
+            int32_t[::1] group_marks = self.group_marks
+            int32_t[::1] feature_marks = self.feature_marks
+            intp_t n_allowed_features = parent_record.n_allowed_features
+            intp_t n_active_groups = parent_record.n_active_interaction_groups
+            int32_t current_group_mark_token = self.group_mark_token + 1
+            int32_t current_feature_mark_token
+            intp_t g_pos, group_idx, f_pos, feature_idx
+
+        if n_active_groups == 1:
+            return
+
+        self.group_mark_token = current_group_mark_token
+        for g_pos in range(
+            feature_to_groups_indptr[split_feature],
+            feature_to_groups_indptr[split_feature + 1],
+        ):
+            group_idx = feature_to_groups_indices[g_pos]
+            group_marks[group_idx] = current_group_mark_token
+
+        g_pos = n_active_groups - 1
+        while g_pos >= 0:
+            group_idx = interaction_groups[g_pos]
+            if group_marks[group_idx] != current_group_mark_token:
+                n_active_groups -= 1
+                _swap_intp(interaction_groups, g_pos, n_active_groups)
+            g_pos -= 1
+
+        if n_active_groups == parent_record.n_active_interaction_groups:
+            return
+
+        current_feature_mark_token = self.feature_mark_token + 1
+        self.feature_mark_token = current_feature_mark_token
+        for g_pos in range(n_active_groups):
+            group_idx = interaction_groups[g_pos]
+            for f_pos in range(
+                group_to_features_indptr[group_idx],
+                group_to_features_indptr[group_idx + 1],
+            ):
+                feature_idx = group_to_features_indices[f_pos]
+                feature_marks[feature_idx] = current_feature_mark_token
+
+        f_pos = parent_record.n_constant_features
+        while f_pos < n_allowed_features:
+            feature_idx = features[f_pos]
+            if feature_marks[feature_idx] != current_feature_mark_token:
+                n_allowed_features -= 1
+                _swap_intp(features, f_pos, n_allowed_features)
+                continue
+            f_pos += 1
+
+        parent_record.n_active_interaction_groups = n_active_groups
+        parent_record.n_allowed_features = n_allowed_features
+
+    cdef inline void _rebuild_interaction_state_for_node(
+        self,
+        Splitter splitter,
+        Tree tree,
+        intp_t parent_node_id,
+        ParentInfo* parent_record,
+    ) noexcept nogil:
+        cdef:
+            intp_t[::1] parent_node_ids = self.parent_node_ids
+            intp_t[::1] ancestor_node_ids = self.ancestor_node_ids
+            intp_t ancestor_count = 0
+            intp_t node_id
+            intp_t group_id
+            intp_t feature_id
+
+        # Reset split-search ordering and interaction state.
+        for feature_id in range(splitter.n_features):
+            splitter.features[feature_id] = feature_id
+        for group_id in range(self.n_interaction_groups):
+            self.interaction_groups[group_id] = group_id
+
+        parent_record.n_active_interaction_groups = self.n_interaction_groups
+        parent_record.n_allowed_features = splitter.n_features
+
+        node_id = parent_node_id
+        while node_id != _TREE_UNDEFINED:
+            ancestor_node_ids[ancestor_count] = node_id
+            ancestor_count += 1
+            node_id = parent_node_ids[node_id]
+
+        while ancestor_count > 0:
+            ancestor_count -= 1
+            node_id = ancestor_node_ids[ancestor_count]
+            if tree.nodes[node_id].feature >= 0:
+                self._update_interaction_constraints_after_split(
+                    splitter.features,
+                    parent_record,
+                    tree.nodes[node_id].feature,
+                )
 
     cpdef build(
         self,
@@ -569,6 +700,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef intp_t max_split_nodes = max_leaf_nodes - 1
         cdef bint is_leaf
         cdef intp_t max_depth_seen = -1
+        cdef bint with_interaction_cst = self.with_interaction_cst
         cdef int rc = 0
         cdef Node* node
 
@@ -578,6 +710,20 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         # Initial capacity
         cdef intp_t init_capacity = max_split_nodes + max_leaf_nodes
         tree._resize(init_capacity)
+        if with_interaction_cst:
+            self.interaction_groups = np.arange(self.n_interaction_groups, dtype=np.intp)
+            self.group_marks = np.zeros(self.n_interaction_groups, dtype=np.int32)
+            self.feature_marks = np.zeros(splitter.n_features, dtype=np.int32)
+            self.group_mark_token = 0
+            self.feature_mark_token = 0
+        else:
+            self.interaction_groups = np.empty(0, dtype=np.intp)
+            self.group_marks = np.empty(0, dtype=np.int32)
+            self.feature_marks = np.empty(0, dtype=np.int32)
+            self.group_mark_token = 0
+            self.feature_mark_token = 0
+        self.parent_node_ids = np.empty(init_capacity, dtype=np.intp)
+        self.ancestor_node_ids = np.empty(init_capacity, dtype=np.intp)
 
         with nogil:
             # add root to frontier
@@ -589,6 +735,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                 is_first=IS_FIRST,
                 is_left=IS_LEFT,
                 parent=NULL,
+                parent_node_id=_TREE_UNDEFINED,
                 depth=0,
                 parent_record=&parent_record,
                 res=&split_node_left,
@@ -659,6 +806,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                         is_first=IS_NOT_FIRST,
                         is_left=IS_LEFT,
                         parent=node,
+                        parent_node_id=record.node_id,
                         depth=record.depth + 1,
                         parent_record=&parent_record,
                         res=&split_node_left,
@@ -681,6 +829,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                         is_first=IS_NOT_FIRST,
                         is_left=IS_NOT_LEFT,
                         parent=node,
+                        parent_node_id=record.node_id,
                         depth=record.depth + 1,
                         parent_record=&parent_record,
                         res=&split_node_right,
@@ -713,6 +862,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         bint is_first,
         bint is_left,
         Node* parent,
+        intp_t parent_node_id,
         intp_t depth,
         ParentInfo* parent_record,
         FrontierRecord* res
@@ -729,8 +879,16 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
         # reset n_constant_features for this specific split before beginning split search
         parent_record.n_constant_features = 0
-        parent_record.n_active_interaction_groups = 0
-        parent_record.n_allowed_features = splitter.n_features
+        if self.with_interaction_cst:
+            self._rebuild_interaction_state_for_node(
+                splitter,
+                tree,
+                parent_node_id,
+                parent_record,
+            )
+        else:
+            parent_record.n_active_interaction_groups = 0
+            parent_record.n_allowed_features = splitter.n_features
 
         if is_first:
             parent_record.impurity = splitter.node_impurity()
@@ -762,6 +920,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                  split.missing_go_to_left)
         if node_id == INTPTR_MAX:
             return -1
+        self.parent_node_ids[node_id] = parent_node_id
 
         # compute values also for split nodes (might become leafs later).
         splitter.node_value(tree.value + node_id * tree.value_stride)

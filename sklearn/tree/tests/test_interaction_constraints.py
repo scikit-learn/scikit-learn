@@ -72,17 +72,36 @@ def test_invalid_string_interaction_cst_raises():
         est._check_interaction_cst(n_features=2)
 
 
-def test_interaction_cst_best_first_raises():
+@pytest.mark.parametrize("Tree", [DecisionTreeRegressor, DecisionTreeClassifier])
+@pytest.mark.parametrize("splitter", ["best", "random"])
+@pytest.mark.parametrize("sparse_input", [False, True])
+def test_interaction_cst_best_first_tree_structure(Tree, splitter, sparse_input):
     rng = np.random.RandomState(0)
-    X = rng.randn(40, 2)
-    y = rng.randn(40)
-
-    est = DecisionTreeRegressor(
-        max_leaf_nodes=8, interaction_cst=[{0, 1}], random_state=0
+    X = rng.uniform(size=(400, 6))
+    y = (
+        X[:, 0] * X[:, 1]
+        + X[:, 1] * X[:, 2]
+        + X[:, 3] * X[:, 4]
+        + 0.1 * X[:, 5]
+        + 0.01 * rng.randn(X.shape[0])
     )
-    msg = "Interaction constraints are only supported for depth-first tree building."
-    with pytest.raises(ValueError, match=msg):
-        est.fit(X, y)
+    if Tree is DecisionTreeClassifier:
+        y = y > np.median(y)
+
+    interaction_cst = [{0, 1}, {1, 2}, {3, 4, 5}]
+    est = Tree(
+        splitter=splitter,
+        max_leaf_nodes=12,
+        random_state=0,
+        interaction_cst=interaction_cst,
+    )
+    X_fit = csc_matrix(X) if sparse_input else X
+    est.fit(X_fit, y)
+
+    assert est.tree_.node_count > 1
+    _assert_tree_respects_interaction_constraints(
+        est.tree_, est._check_interaction_cst(X.shape[1])
+    )
 
 
 @pytest.mark.parametrize("Tree", [DecisionTreeRegressor, DecisionTreeClassifier])
