@@ -9,6 +9,18 @@
 #include <stdlib.h>  /* memory allocation */
 #include <string.h>  /* memset */
 
+#if defined(_MSC_VER)  /* TODO: Which version do we require? */
+#include <malloc.h>
+#define _sk_aligned_alloc(alignment, size) _aligned_malloc(size, alignment)
+#define _sk_aligned_free(ptr) _aligned_free(ptr)
+#define _sk_aligned_realloc(ptr, alignment, size) _aligned_realloc(ptr, size, alignment)
+#else
+// Use <stdlib.h> functions, available as of C11.
+#define _sk_aligned_alloc(alignment, size) aligned_alloc(alignment, size)
+#define _sk_aligned_free(ptr) free(ptr)
+#define _sk_aligned_realloc(ptr, alignment, size) realloc(ptr, size)
+#endif
+
 
 static inline void *
 aligned_64_malloc(void *ctx, size_t size)
@@ -17,7 +29,7 @@ aligned_64_malloc(void *ctx, size_t size)
     if (rest > 0) {
         size += 64 - rest;  /* allocate a bit more than we need */
     }
-    return aligned_alloc(64, size);
+    return _sk_aligned_alloc(64, size);
 }
 
 
@@ -38,17 +50,16 @@ aligned_64_calloc(void *ctx, size_t nelem, size_t elsize)
 
 
 static inline void *
-std_realloc(void *ctx, void *ptr, size_t new_size)
+aligned_64_realloc(void *ctx, void *ptr, size_t new_size)
 {
     /* TODO: Do we need aligned realloc? */
-    return realloc(ptr, new_size);
+    return _sk_aligned_realloc(ptr, 64, new_size);
 }
 
 static inline void
-std_free(void *ctx, void *ptr, size_t size)
+algiend_64_free(void *ctx, void *ptr, size_t size)
 {
-    /* TODO: Deal with MSCV incompatibility of aligned_alloc. */
-    free(ptr);
+    _sk_aligned_free(ptr);
 }
 
 
@@ -56,11 +67,11 @@ static PyDataMem_Handler aligned_handler = {
     "aligned_allocator",    /* name */
     1,                      /* version */
     {
-        NULL,               /* ctx */
-        aligned_64_malloc,  /* malloc */
-        aligned_64_calloc,  /* calloc */
-        std_realloc,        /* realloc */
-        std_free            /* free */
+        NULL,                /* ctx */
+        aligned_64_malloc,   /* malloc */
+        aligned_64_calloc,   /* calloc */
+        aligned_64_realloc,  /* realloc */
+        algiend_64_free      /* free */
     }
 };
 
