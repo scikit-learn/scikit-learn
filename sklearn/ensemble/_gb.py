@@ -399,6 +399,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         alpha=0.9,
         verbose=0,
         max_leaf_nodes=None,
+        interaction_cst=None,
         warm_start=False,
         validation_fraction=0.1,
         n_iter_no_change=None,
@@ -422,6 +423,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.alpha = alpha
         self.verbose = verbose
         self.max_leaf_nodes = max_leaf_nodes
+        self.interaction_cst = interaction_cst
         self.warm_start = warm_start
         self.validation_fraction = validation_fraction
         self.n_iter_no_change = n_iter_no_change
@@ -488,6 +490,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 min_impurity_decrease=self.min_impurity_decrease,
                 max_features=self.max_features,
                 max_leaf_nodes=self.max_leaf_nodes,
+                interaction_cst=self.interaction_cst,
                 random_state=random_state,
                 ccp_alpha=self.ccp_alpha,
             )
@@ -1300,6 +1303,27 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         Values must be in the range `[2, inf)`.
         If `None`, then unlimited number of leaf nodes.
 
+    interaction_cst : {"pairwise", "no_interactions"} or sequence of \
+            lists/tuples/sets of int, default=None
+        Specify interaction constraints, the sets of features which can
+        interact with each other in child node splits.
+
+        Each item specifies the set of feature indices that are allowed
+        to interact with each other. If there are more features than
+        specified in these constraints, they are treated as if they were
+        specified as an additional set.
+
+        The strings "pairwise" and "no_interactions" are shorthands for
+        allowing only pairwise or no interactions, respectively.
+
+        For instance, with 5 features in total, ``interaction_cst=[{0, 1}]``
+        is equivalent to ``interaction_cst=[{0, 1}, {2, 3, 4}]``,
+        and specifies that each branch of a tree will either only split
+        on features 0 and 1 or only split on features 2, 3 and 4.
+
+        Interaction constraints are currently supported only when
+        ``max_leaf_nodes=None`` (depth-first tree building).
+
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
@@ -1499,6 +1523,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         max_features=None,
         verbose=0,
         max_leaf_nodes=None,
+        interaction_cst=None,
         warm_start=False,
         validation_fraction=0.1,
         n_iter_no_change=None,
@@ -1520,6 +1545,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             random_state=random_state,
             verbose=verbose,
             max_leaf_nodes=max_leaf_nodes,
+            interaction_cst=interaction_cst,
             min_impurity_decrease=min_impurity_decrease,
             warm_start=warm_start,
             validation_fraction=validation_fraction,
@@ -1917,6 +1943,27 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         Values must be in the range `[2, inf)`.
         If None, then unlimited number of leaf nodes.
 
+    interaction_cst : {"pairwise", "no_interactions"} or sequence of \
+            lists/tuples/sets of int, default=None
+        Specify interaction constraints, the sets of features which can
+        interact with each other in child node splits.
+
+        Each item specifies the set of feature indices that are allowed
+        to interact with each other. If there are more features than
+        specified in these constraints, they are treated as if they were
+        specified as an additional set.
+
+        The strings "pairwise" and "no_interactions" are shorthands for
+        allowing only pairwise or no interactions, respectively.
+
+        For instance, with 5 features in total, ``interaction_cst=[{0, 1}]``
+        is equivalent to ``interaction_cst=[{0, 1}, {2, 3, 4}]``,
+        and specifies that each branch of a tree will either only split
+        on features 0 and 1 or only split on features 2, 3 and 4.
+
+        Interaction constraints are currently supported only when
+        ``max_leaf_nodes=None`` (depth-first tree building).
+
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
@@ -2105,6 +2152,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         alpha=0.9,
         verbose=0,
         max_leaf_nodes=None,
+        interaction_cst=None,
         warm_start=False,
         validation_fraction=0.1,
         n_iter_no_change=None,
@@ -2128,6 +2176,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             alpha=alpha,
             verbose=verbose,
             max_leaf_nodes=max_leaf_nodes,
+            interaction_cst=interaction_cst,
             warm_start=warm_start,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change,

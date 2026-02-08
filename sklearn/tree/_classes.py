@@ -437,10 +437,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     "Interaction constraints are only supported for depth-first "
                     "tree building. Set max_leaf_nodes=None."
                 )
-            if self.splitter != "best":
-                raise ValueError(
-                    "Interaction constraints are only supported for splitter='best'."
-                )
 
         if len(y) != n_samples:
             raise ValueError(
@@ -976,9 +972,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
 
-        Interaction constraints are currently supported only for
-        ``splitter="best"`` and when ``max_leaf_nodes=None`` (depth-first
-        tree building).
+        Interaction constraints are currently supported only when
+        ``max_leaf_nodes=None`` (depth-first tree building).
 
     Attributes
     ----------
@@ -1397,9 +1392,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
 
-        Interaction constraints are currently supported only for
-        ``splitter="best"`` and when ``max_leaf_nodes=None`` (depth-first
-        tree building).
+        Interaction constraints are currently supported only when
+        ``max_leaf_nodes=None`` (depth-first tree building).
 
     Attributes
     ----------
@@ -1785,9 +1779,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
 
-        Interaction constraints are currently supported only for
-        ``splitter="best"`` and when ``max_leaf_nodes=None`` (depth-first
-        tree building).
+        Interaction constraints are currently supported only when
+        ``max_leaf_nodes=None`` (depth-first tree building).
 
     Attributes
     ----------
@@ -2087,9 +2080,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
 
-        Interaction constraints are currently supported only for
-        ``splitter="best"`` and when ``max_leaf_nodes=None`` (depth-first
-        tree building).
+        Interaction constraints are currently supported only when
+        ``max_leaf_nodes=None`` (depth-first tree building).
 
     Attributes
     ----------

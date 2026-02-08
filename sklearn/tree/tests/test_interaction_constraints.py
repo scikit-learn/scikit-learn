@@ -63,19 +63,6 @@ def test_invalid_interaction_cst_raises(interaction_cst, expected_error):
         est.fit(X, y)
 
 
-def test_interaction_cst_random_splitter_raises():
-    rng = np.random.RandomState(0)
-    X = rng.randn(40, 2)
-    y = rng.randn(40)
-
-    est = DecisionTreeRegressor(
-        splitter="random", interaction_cst=[{0, 1}], random_state=0
-    )
-    msg = "Interaction constraints are only supported for splitter='best'."
-    with pytest.raises(ValueError, match=msg):
-        est.fit(X, y)
-
-
 def test_interaction_cst_best_first_raises():
     rng = np.random.RandomState(0)
     X = rng.randn(40, 2)
@@ -90,8 +77,9 @@ def test_interaction_cst_best_first_raises():
 
 
 @pytest.mark.parametrize("Tree", [DecisionTreeRegressor, DecisionTreeClassifier])
+@pytest.mark.parametrize("splitter", ["best", "random"])
 @pytest.mark.parametrize("sparse_input", [False, True])
-def test_interaction_cst_tree_structure(Tree, sparse_input):
+def test_interaction_cst_tree_structure(Tree, splitter, sparse_input):
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(400, 6))
     y = (
@@ -105,7 +93,9 @@ def test_interaction_cst_tree_structure(Tree, sparse_input):
         y = y > np.median(y)
 
     interaction_cst = [{0, 1}, {1, 2}, {3, 4, 5}]
-    est = Tree(max_depth=5, random_state=0, interaction_cst=interaction_cst)
+    est = Tree(
+        splitter=splitter, max_depth=5, random_state=0, interaction_cst=interaction_cst
+    )
     X_fit = csc_matrix(X) if sparse_input else X
     est.fit(X_fit, y)
 

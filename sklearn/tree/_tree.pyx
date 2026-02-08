@@ -148,8 +148,8 @@ cdef inline void _update_interaction_constraints_after_split(
         if feature_marks[feature_idx] != feature_mark_token:
             n_total_forbidden += 1
             candidate_end -= 1
-            # Keep scanning the swapped-in value at current position.
             _swap_intp(features, f_pos, candidate_end)
+            # Keep scanning the swapped-in value at current position.
             continue
         f_pos += 1
 

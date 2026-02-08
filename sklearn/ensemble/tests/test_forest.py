@@ -1939,13 +1939,25 @@ def test_friedman_mse_deprecation(Forest):
         _ = Forest(criterion="friedman_mse")
 
 
-def test_random_forest_interaction_constraints_smoke():
+@pytest.mark.parametrize(
+    "Forest, is_classifier",
+    [
+        (RandomForestRegressor, False),
+        (ExtraTreesRegressor, False),
+        (RandomForestClassifier, True),
+        (ExtraTreesClassifier, True),
+    ],
+)
+def test_forest_interaction_constraints_smoke(Forest, is_classifier):
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(300, 6))
-    y = X[:, 0] + 0.1 * X[:, 1]
+    y = X[:, 0] + 0.1 * X[:, 1] + 0.1 * rng.randn(X.shape[0])
+    if is_classifier:
+        y = y > np.median(y)
+
     interaction_cst = [{0, 1}, {1, 2}, {3, 4, 5}]
 
-    forest = RandomForestRegressor(
+    forest = Forest(
         n_estimators=5,
         max_depth=4,
         random_state=0,
