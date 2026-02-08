@@ -1414,9 +1414,6 @@ class RandomForestClassifier(ForestClassifier):
         and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
 
-        Interaction constraints are currently supported only when
-        ``max_leaf_nodes=None`` (depth-first tree building).
-
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.DecisionTreeClassifier`
@@ -1827,9 +1824,6 @@ class RandomForestRegressor(ForestRegressor):
         is equivalent to ``interaction_cst=[{0, 1}, {2, 3, 4}]``,
         and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
-
-        Interaction constraints are currently supported only when
-        ``max_leaf_nodes=None`` (depth-first tree building).
 
     Attributes
     ----------
@@ -2249,9 +2243,6 @@ class ExtraTreesClassifier(ForestClassifier):
         and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
 
-        Interaction constraints are currently supported only when
-        ``max_leaf_nodes=None`` (depth-first tree building).
-
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.ExtraTreeClassifier`
@@ -2645,9 +2636,6 @@ class ExtraTreesRegressor(ForestRegressor):
         is equivalent to ``interaction_cst=[{0, 1}, {2, 3, 4}]``,
         and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
-
-        Interaction constraints are currently supported only when
-        ``max_leaf_nodes=None`` (depth-first tree building).
 
     Attributes
     ----------

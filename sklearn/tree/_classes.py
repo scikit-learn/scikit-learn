@@ -975,9 +975,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
 
-        Interaction constraints are currently supported only when
-        ``max_leaf_nodes=None`` (depth-first tree building).
-
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,) or list of ndarray
@@ -1395,9 +1392,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
 
-        Interaction constraints are currently supported only when
-        ``max_leaf_nodes=None`` (depth-first tree building).
-
     Attributes
     ----------
     feature_importances_ : ndarray of shape (n_features,)
@@ -1782,9 +1776,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
 
-        Interaction constraints are currently supported only when
-        ``max_leaf_nodes=None`` (depth-first tree building).
-
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,) or list of ndarray
@@ -2082,9 +2073,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         is equivalent to ``interaction_cst=[{0, 1}, {2, 3, 4}]``,
         and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
-
-        Interaction constraints are currently supported only when
-        ``max_leaf_nodes=None`` (depth-first tree building).
 
     Attributes
     ----------
