@@ -120,23 +120,6 @@ cdef class TreeBuilder:
 
         return X, y, sample_weight
 
-    cdef inline void _init_interaction_cst(
-        self,
-        const intp_t[:] feature_to_groups_indptr,
-        const intp_t[:] feature_to_groups_indices,
-        const intp_t[:] group_to_features_indptr,
-        const intp_t[:] group_to_features_indices,
-    ):
-        self.feature_to_groups_indptr = feature_to_groups_indptr
-        self.feature_to_groups_indices = feature_to_groups_indices
-        self.group_to_features_indptr = group_to_features_indptr
-        self.group_to_features_indices = group_to_features_indices
-        self.with_interaction_cst = feature_to_groups_indptr is not None
-        if self.with_interaction_cst:
-            self.n_interaction_groups = group_to_features_indptr.shape[0] - 1
-        else:
-            self.n_interaction_groups = 0
-
     cdef inline void _init_interaction_cst_fit_state(self, Splitter splitter):
         if self.with_interaction_cst:
             self.interaction_groups = np.arange(self.n_interaction_groups, dtype=np.intp)
@@ -261,12 +244,15 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         self.min_weight_leaf = min_weight_leaf
         self.max_depth = max_depth
         self.min_impurity_decrease = min_impurity_decrease
-        self._init_interaction_cst(
-            feature_to_groups_indptr,
-            feature_to_groups_indices,
-            group_to_features_indptr,
-            group_to_features_indices,
-        )
+        self.feature_to_groups_indptr = feature_to_groups_indptr
+        self.feature_to_groups_indices = feature_to_groups_indices
+        self.group_to_features_indptr = group_to_features_indptr
+        self.group_to_features_indices = group_to_features_indices
+        self.with_interaction_cst = feature_to_groups_indptr is not None
+        if self.with_interaction_cst:
+            self.n_interaction_groups = group_to_features_indptr.shape[0] - 1
+        else:
+            self.n_interaction_groups = 0
 
     cpdef build(
         self,
@@ -549,12 +535,15 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         self.max_depth = max_depth
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
-        self._init_interaction_cst(
-            feature_to_groups_indptr,
-            feature_to_groups_indices,
-            group_to_features_indptr,
-            group_to_features_indices,
-        )
+        self.feature_to_groups_indptr = feature_to_groups_indptr
+        self.feature_to_groups_indices = feature_to_groups_indices
+        self.group_to_features_indptr = group_to_features_indptr
+        self.group_to_features_indices = group_to_features_indices
+        self.with_interaction_cst = feature_to_groups_indptr is not None
+        if self.with_interaction_cst:
+            self.n_interaction_groups = group_to_features_indptr.shape[0] - 1
+        else:
+            self.n_interaction_groups = 0
 
     cpdef build(
         self,

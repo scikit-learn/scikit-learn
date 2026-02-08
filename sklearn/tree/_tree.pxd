@@ -127,13 +127,6 @@ cdef class TreeBuilder:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
     )
-    cdef void _init_interaction_cst(
-        self,
-        const intp_t[:] feature_to_groups_indptr,
-        const intp_t[:] feature_to_groups_indices,
-        const intp_t[:] group_to_features_indptr,
-        const intp_t[:] group_to_features_indices,
-    )
     cdef void _init_interaction_cst_fit_state(self, Splitter splitter)
     cdef void _update_interaction_constraints_after_split(
         self,
