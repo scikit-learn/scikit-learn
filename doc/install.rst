@@ -114,7 +114,7 @@ Installing the latest release
 
           .. prompt:: bash
 
-            python -m venv sklearn-env
+            python3 -m venv sklearn-env
             source sklearn-env/bin/activate  # activate
             pip install -U scikit-learn
 
