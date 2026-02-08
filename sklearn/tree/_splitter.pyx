@@ -326,9 +326,9 @@ cdef inline int node_split_best(
 
     partitioner.init_node_split(start, end)
 
-    # Candidate features are sampled from features[:f_i], excluding forbidden
+    # Candidate features are sampled from features[:f_i], with forbidden
     # features cached at the end of the array.
-    f_i = splitter.n_features - parent_record.n_forbidden_features
+    f_i = parent_record.n_allowed_features
 
     # Sample up to max_features without replacement using a
     # Fisher-Yates-based algorithm (using the local variables `f_i` and
@@ -355,9 +355,9 @@ cdef inline int node_split_best(
         #   features;
         # - [n_total_constant:f_i[ holds features that haven't been drawn
         #   yet and aren't constant apriori.
-        # - [f_i:n_features - n_forbidden[ holds features that have been drawn
+        # - [f_i:n_allowed_features[ holds features that have been drawn
         #   and aren't constant.
-        # - [n_features - n_forbidden:n_features[ holds known forbidden
+        # - [n_allowed_features:n_features[ holds known forbidden
         #   features inherited from the parent node.
 
         # Draw a feature at random
@@ -604,9 +604,9 @@ cdef inline int node_split_random(
 
     partitioner.init_node_split(start, end)
 
-    # Candidate features are sampled from features[:f_i], excluding forbidden
+    # Candidate features are sampled from features[:f_i], with forbidden
     # features cached at the end of the array.
-    f_i = splitter.n_features - parent_record.n_forbidden_features
+    f_i = parent_record.n_allowed_features
 
     # Sample up to max_features without replacement using a
     # Fisher-Yates-based algorithm (using the local variables `f_i` and
@@ -632,9 +632,9 @@ cdef inline int node_split_random(
         #   features;
         # - [n_total_constant:f_i[ holds features that haven't been drawn
         #   yet and aren't constant apriori.
-        # - [f_i:n_features - n_forbidden[ holds features that have been
+        # - [f_i:n_allowed_features[ holds features that have been
         #   drawn and aren't constant.
-        # - [n_features - n_forbidden:n_features[ holds known forbidden
+        # - [n_allowed_features:n_features[ holds known forbidden
         #   features inherited from the parent node.
 
         # Draw a feature at random

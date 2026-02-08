@@ -69,7 +69,7 @@ cdef inline void _swap_intp(intp_t[::1] values, intp_t i, intp_t j) noexcept nog
 cdef inline void _init_parent_record(ParentInfo* record) noexcept nogil:
     record.n_constant_features = 0
     record.n_active_interaction_groups = 0
-    record.n_forbidden_features = 0
+    record.n_allowed_features = 0
     record.impurity = INFINITY
     record.lower_bound = -INFINITY
     record.upper_bound = INFINITY
@@ -131,7 +131,7 @@ cdef struct StackRecord:
     float64_t impurity
     intp_t n_constant_features
     intp_t n_active_interaction_groups
-    intp_t n_forbidden_features
+    intp_t n_allowed_features
     float64_t lower_bound
     float64_t upper_bound
 
@@ -170,7 +170,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
     cdef inline void _update_interaction_constraints_after_split(
         self,
         intp_t[::1] features,
-        intp_t n_features,
         ParentInfo* parent_record,
         intp_t split_feature,
         intp_t[::1] interaction_groups,
@@ -185,12 +184,11 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
             const intp_t[:] feature_to_groups_indices = self.feature_to_groups_indices
             const intp_t[:] group_to_features_indptr = self.group_to_features_indptr
             const intp_t[:] group_to_features_indices = self.group_to_features_indices
-            intp_t n_total_constants = parent_record.n_constant_features
-            intp_t n_total_forbidden = parent_record.n_forbidden_features
+            intp_t n_allowed_features = parent_record.n_allowed_features
             intp_t n_active_groups = parent_record.n_active_interaction_groups
             int32_t current_group_mark_token
             int32_t current_feature_mark_token
-            intp_t g_pos, group_idx, f_pos, feature_idx, candidate_end
+            intp_t g_pos, group_idx, f_pos, feature_idx
 
         # Step 1: mark groups containing the split feature.
         # Complexity: O(#groups containing split_feature)
@@ -231,22 +229,20 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
         # Step 4: scan non-constant, non-already-forbidden features
         # and move each newly forbidden feature to the tail in-place.
-        # Complexity: O(#candidate features)
-        candidate_end = n_features - n_total_forbidden
-        f_pos = n_total_constants
-        while f_pos < n_features - n_total_forbidden:
+        # Complexity: O(n_allowed_features - n_constants_features)
+        f_pos = parent_record.n_constant_features
+        while f_pos < n_allowed_features:
             feature_idx = features[f_pos]
             if feature_marks[feature_idx] != current_feature_mark_token:
-                n_total_forbidden += 1
-                candidate_end -= 1
-                _swap_intp(features, f_pos, candidate_end)
+                n_allowed_features -= 1
+                _swap_intp(features, f_pos, n_allowed_features)
                 # Keep scanning the swapped-in value at current position.
                 continue
             f_pos += 1
 
         # Step 5: persist the child state summary for both children stack records.
         parent_record.n_active_interaction_groups = n_active_groups
-        parent_record.n_forbidden_features = n_total_forbidden
+        parent_record.n_allowed_features = n_allowed_features
 
     cpdef build(
         self,
@@ -333,7 +329,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 "impurity": INFINITY,
                 "n_constant_features": 0,
                 "n_active_interaction_groups": self.n_interaction_groups,
-                "n_forbidden_features": 0,
+                "n_allowed_features": splitter.n_features,
                 "lower_bound": -INFINITY,
                 "upper_bound": INFINITY,
             })
@@ -352,7 +348,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 parent_record.n_active_interaction_groups = (
                     stack_record.n_active_interaction_groups
                 )
-                parent_record.n_forbidden_features = stack_record.n_forbidden_features
+                parent_record.n_allowed_features = stack_record.n_allowed_features
                 parent_record.lower_bound = stack_record.lower_bound
                 parent_record.upper_bound = stack_record.upper_bound
 
@@ -385,7 +381,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     if not is_leaf and with_interaction_cst:
                         self._update_interaction_constraints_after_split(
                             splitter.features,
-                            splitter.n_features,
                             &parent_record,
                             split.feature,
                             interaction_groups,
@@ -455,7 +450,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         "n_active_interaction_groups": (
                             parent_record.n_active_interaction_groups
                         ),
-                        "n_forbidden_features": parent_record.n_forbidden_features,
+                        "n_allowed_features": parent_record.n_allowed_features,
                         "lower_bound": right_child_min,
                         "upper_bound": right_child_max,
                     })
@@ -472,7 +467,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         "n_active_interaction_groups": (
                             parent_record.n_active_interaction_groups
                         ),
-                        "n_forbidden_features": parent_record.n_forbidden_features,
+                        "n_allowed_features": parent_record.n_allowed_features,
                         "lower_bound": left_child_min,
                         "upper_bound": left_child_max,
                     })
@@ -737,7 +732,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         # reset n_constant_features for this specific split before beginning split search
         parent_record.n_constant_features = 0
         parent_record.n_active_interaction_groups = 0
-        parent_record.n_forbidden_features = 0
+        parent_record.n_allowed_features = splitter.n_features
 
         if is_first:
             parent_record.impurity = splitter.node_impurity()
