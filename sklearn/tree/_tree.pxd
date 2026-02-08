@@ -100,6 +100,17 @@ cdef class TreeBuilder:
     cdef float64_t min_weight_leaf         # Minimum weight in a leaf
     cdef intp_t max_depth               # Maximal tree depth
     cdef float64_t min_impurity_decrease   # Impurity threshold for early stopping
+    cdef const intp_t[:] feature_to_groups_indptr
+    cdef const intp_t[:] feature_to_groups_indices
+    cdef const intp_t[:] group_to_features_indptr
+    cdef const intp_t[:] group_to_features_indices
+    cdef intp_t[::1] interaction_groups
+    cdef int32_t[::1] group_marks
+    cdef int32_t[::1] feature_marks
+    cdef int32_t group_mark_token
+    cdef int32_t feature_mark_token
+    cdef bint with_interaction_cst
+    cdef intp_t n_interaction_groups
 
     cpdef build(
         self,
@@ -116,6 +127,20 @@ cdef class TreeBuilder:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
     )
+    cdef void _init_interaction_cst(
+        self,
+        const intp_t[:] feature_to_groups_indptr,
+        const intp_t[:] feature_to_groups_indices,
+        const intp_t[:] group_to_features_indptr,
+        const intp_t[:] group_to_features_indices,
+    )
+    cdef void _init_interaction_cst_fit_state(self, Splitter splitter)
+    cdef void _update_interaction_constraints_after_split(
+        self,
+        intp_t[::1] features,
+        ParentInfo* parent_record,
+        intp_t split_feature,
+    ) noexcept nogil
 
 
 # =============================================================================

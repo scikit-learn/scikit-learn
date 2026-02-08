@@ -120,48 +120,13 @@ cdef class TreeBuilder:
 
         return X, y, sample_weight
 
-# Depth first builder ---------------------------------------------------------
-# A record on the stack for depth-first tree growing
-cdef struct StackRecord:
-    intp_t start
-    intp_t end
-    intp_t depth
-    intp_t parent
-    bint is_left
-    float64_t impurity
-    intp_t n_constant_features
-    intp_t n_active_interaction_groups
-    intp_t n_allowed_features
-    float64_t lower_bound
-    float64_t upper_bound
-
-cdef class DepthFirstTreeBuilder(TreeBuilder):
-    """Build a decision tree in depth-first fashion."""
-    cdef const intp_t[:] feature_to_groups_indptr
-    cdef const intp_t[:] feature_to_groups_indices
-    cdef const intp_t[:] group_to_features_indptr
-    cdef const intp_t[:] group_to_features_indices
-    cdef intp_t[::1] interaction_groups
-    cdef int32_t[::1] group_marks
-    cdef int32_t[::1] feature_marks
-    cdef int32_t group_mark_token
-    cdef int32_t feature_mark_token
-    cdef bint with_interaction_cst
-    cdef intp_t n_interaction_groups
-
-    def __cinit__(self, Splitter splitter, intp_t min_samples_split,
-                  intp_t min_samples_leaf, float64_t min_weight_leaf,
-                  intp_t max_depth, float64_t min_impurity_decrease,
-                  const intp_t[:] feature_to_groups_indptr=None,
-                  const intp_t[:] feature_to_groups_indices=None,
-                  const intp_t[:] group_to_features_indptr=None,
-                  const intp_t[:] group_to_features_indices=None):
-        self.splitter = splitter
-        self.min_samples_split = min_samples_split
-        self.min_samples_leaf = min_samples_leaf
-        self.min_weight_leaf = min_weight_leaf
-        self.max_depth = max_depth
-        self.min_impurity_decrease = min_impurity_decrease
+    cdef inline void _init_interaction_cst(
+        self,
+        const intp_t[:] feature_to_groups_indptr,
+        const intp_t[:] feature_to_groups_indices,
+        const intp_t[:] group_to_features_indptr,
+        const intp_t[:] group_to_features_indices,
+    ):
         self.feature_to_groups_indptr = feature_to_groups_indptr
         self.feature_to_groups_indices = feature_to_groups_indices
         self.group_to_features_indptr = group_to_features_indptr
@@ -172,13 +137,24 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         else:
             self.n_interaction_groups = 0
 
+    cdef inline void _init_interaction_cst_fit_state(self, Splitter splitter):
+        if self.with_interaction_cst:
+            self.interaction_groups = np.arange(self.n_interaction_groups, dtype=np.intp)
+            self.group_marks = np.zeros(self.n_interaction_groups, dtype=np.int32)
+            self.feature_marks = np.zeros(splitter.n_features, dtype=np.int32)
+        else:
+            self.interaction_groups = np.empty(0, dtype=np.intp)
+            self.group_marks = np.empty(0, dtype=np.int32)
+            self.feature_marks = np.empty(0, dtype=np.int32)
+        self.group_mark_token = 0
+        self.feature_mark_token = 0
+
     cdef inline void _update_interaction_constraints_after_split(
         self,
         intp_t[::1] features,
         ParentInfo* parent_record,
         intp_t split_feature,
     ) noexcept nogil:
-        """Move newly forbidden non-constant features to tail in-place."""
         cdef:
             const intp_t[:] feature_to_groups_indptr = self.feature_to_groups_indptr
             const intp_t[:] feature_to_groups_indices = self.feature_to_groups_indices
@@ -254,6 +230,44 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         parent_record.n_active_interaction_groups = n_active_groups
         parent_record.n_allowed_features = n_allowed_features
 
+# Depth first builder ---------------------------------------------------------
+# A record on the stack for depth-first tree growing
+cdef struct StackRecord:
+    intp_t start
+    intp_t end
+    intp_t depth
+    intp_t parent
+    bint is_left
+    float64_t impurity
+    intp_t n_constant_features
+    intp_t n_active_interaction_groups
+    intp_t n_allowed_features
+    float64_t lower_bound
+    float64_t upper_bound
+
+cdef class DepthFirstTreeBuilder(TreeBuilder):
+    """Build a decision tree in depth-first fashion."""
+
+    def __cinit__(self, Splitter splitter, intp_t min_samples_split,
+                  intp_t min_samples_leaf, float64_t min_weight_leaf,
+                  intp_t max_depth, float64_t min_impurity_decrease,
+                  const intp_t[:] feature_to_groups_indptr=None,
+                  const intp_t[:] feature_to_groups_indices=None,
+                  const intp_t[:] group_to_features_indptr=None,
+                  const intp_t[:] group_to_features_indices=None):
+        self.splitter = splitter
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
+        self.min_weight_leaf = min_weight_leaf
+        self.max_depth = max_depth
+        self.min_impurity_decrease = min_impurity_decrease
+        self._init_interaction_cst(
+            feature_to_groups_indptr,
+            feature_to_groups_indices,
+            group_to_features_indptr,
+            group_to_features_indices,
+        )
+
     cpdef build(
         self,
         Tree tree,
@@ -314,12 +328,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
         cdef ParentInfo parent_record
         _init_parent_record(&parent_record)
-        if with_interaction_cst:
-            self.interaction_groups = np.arange(self.n_interaction_groups, dtype=np.intp)
-            self.group_marks = np.zeros(self.n_interaction_groups, dtype=np.int32)
-            self.feature_marks = np.zeros(splitter.n_features, dtype=np.int32)
-        self.group_mark_token = 0
-        self.feature_mark_token = 0
+        self._init_interaction_cst_fit_state(splitter)
 
         with nogil:
             # push root node onto stack
@@ -523,17 +532,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     highest impurity improvement.
     """
     cdef intp_t max_leaf_nodes
-    cdef const intp_t[:] feature_to_groups_indptr
-    cdef const intp_t[:] feature_to_groups_indices
-    cdef const intp_t[:] group_to_features_indptr
-    cdef const intp_t[:] group_to_features_indices
-    cdef intp_t[::1] interaction_groups
-    cdef int32_t[::1] group_marks
-    cdef int32_t[::1] feature_marks
-    cdef int32_t group_mark_token
-    cdef int32_t feature_mark_token
-    cdef bint with_interaction_cst
-    cdef intp_t n_interaction_groups
     cdef intp_t[::1] parent_node_ids
     cdef intp_t[::1] ancestor_node_ids
 
@@ -552,80 +550,12 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         self.max_depth = max_depth
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
-        self.feature_to_groups_indptr = feature_to_groups_indptr
-        self.feature_to_groups_indices = feature_to_groups_indices
-        self.group_to_features_indptr = group_to_features_indptr
-        self.group_to_features_indices = group_to_features_indices
-        self.with_interaction_cst = feature_to_groups_indptr is not None
-        if self.with_interaction_cst:
-            self.n_interaction_groups = group_to_features_indptr.shape[0] - 1
-        else:
-            self.n_interaction_groups = 0
-
-    cdef inline void _update_interaction_constraints_after_split(
-        self,
-        intp_t[::1] features,
-        ParentInfo* parent_record,
-        intp_t split_feature,
-    ) noexcept nogil:
-        cdef:
-            const intp_t[:] feature_to_groups_indptr = self.feature_to_groups_indptr
-            const intp_t[:] feature_to_groups_indices = self.feature_to_groups_indices
-            const intp_t[:] group_to_features_indptr = self.group_to_features_indptr
-            const intp_t[:] group_to_features_indices = self.group_to_features_indices
-            intp_t[::1] interaction_groups = self.interaction_groups
-            int32_t[::1] group_marks = self.group_marks
-            int32_t[::1] feature_marks = self.feature_marks
-            intp_t n_allowed_features = parent_record.n_allowed_features
-            intp_t n_active_groups = parent_record.n_active_interaction_groups
-            int32_t current_group_mark_token = self.group_mark_token + 1
-            int32_t current_feature_mark_token
-            intp_t g_pos, group_idx, f_pos, feature_idx
-
-        if n_active_groups == 1:
-            return
-
-        self.group_mark_token = current_group_mark_token
-        for g_pos in range(
-            feature_to_groups_indptr[split_feature],
-            feature_to_groups_indptr[split_feature + 1],
-        ):
-            group_idx = feature_to_groups_indices[g_pos]
-            group_marks[group_idx] = current_group_mark_token
-
-        g_pos = n_active_groups - 1
-        while g_pos >= 0:
-            group_idx = interaction_groups[g_pos]
-            if group_marks[group_idx] != current_group_mark_token:
-                n_active_groups -= 1
-                _swap_intp(interaction_groups, g_pos, n_active_groups)
-            g_pos -= 1
-
-        if n_active_groups == parent_record.n_active_interaction_groups:
-            return
-
-        current_feature_mark_token = self.feature_mark_token + 1
-        self.feature_mark_token = current_feature_mark_token
-        for g_pos in range(n_active_groups):
-            group_idx = interaction_groups[g_pos]
-            for f_pos in range(
-                group_to_features_indptr[group_idx],
-                group_to_features_indptr[group_idx + 1],
-            ):
-                feature_idx = group_to_features_indices[f_pos]
-                feature_marks[feature_idx] = current_feature_mark_token
-
-        f_pos = parent_record.n_constant_features
-        while f_pos < n_allowed_features:
-            feature_idx = features[f_pos]
-            if feature_marks[feature_idx] != current_feature_mark_token:
-                n_allowed_features -= 1
-                _swap_intp(features, f_pos, n_allowed_features)
-                continue
-            f_pos += 1
-
-        parent_record.n_active_interaction_groups = n_active_groups
-        parent_record.n_allowed_features = n_allowed_features
+        self._init_interaction_cst(
+            feature_to_groups_indptr,
+            feature_to_groups_indices,
+            group_to_features_indptr,
+            group_to_features_indices,
+        )
 
     cdef inline void _rebuild_interaction_state_for_node(
         self,
@@ -700,7 +630,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef intp_t max_split_nodes = max_leaf_nodes - 1
         cdef bint is_leaf
         cdef intp_t max_depth_seen = -1
-        cdef bint with_interaction_cst = self.with_interaction_cst
         cdef int rc = 0
         cdef Node* node
 
@@ -710,18 +639,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         # Initial capacity
         cdef intp_t init_capacity = max_split_nodes + max_leaf_nodes
         tree._resize(init_capacity)
-        if with_interaction_cst:
-            self.interaction_groups = np.arange(self.n_interaction_groups, dtype=np.intp)
-            self.group_marks = np.zeros(self.n_interaction_groups, dtype=np.int32)
-            self.feature_marks = np.zeros(splitter.n_features, dtype=np.int32)
-            self.group_mark_token = 0
-            self.feature_mark_token = 0
-        else:
-            self.interaction_groups = np.empty(0, dtype=np.intp)
-            self.group_marks = np.empty(0, dtype=np.int32)
-            self.feature_marks = np.empty(0, dtype=np.int32)
-            self.group_mark_token = 0
-            self.feature_mark_token = 0
+        self._init_interaction_cst_fit_state(splitter)
         self.parent_node_ids = np.empty(init_capacity, dtype=np.intp)
         self.ancestor_node_ids = np.empty(init_capacity, dtype=np.intp)
 
