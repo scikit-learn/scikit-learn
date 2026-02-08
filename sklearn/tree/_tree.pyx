@@ -557,46 +557,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             group_to_features_indices,
         )
 
-    cdef inline void _rebuild_interaction_state_for_node(
-        self,
-        Splitter splitter,
-        Tree tree,
-        intp_t parent_node_id,
-        ParentInfo* parent_record,
-    ) noexcept nogil:
-        cdef:
-            intp_t[::1] parent_node_ids = self.parent_node_ids
-            intp_t[::1] ancestor_node_ids = self.ancestor_node_ids
-            intp_t ancestor_count = 0
-            intp_t node_id
-            intp_t group_id
-            intp_t feature_id
-
-        # Reset split-search ordering and interaction state.
-        for feature_id in range(splitter.n_features):
-            splitter.features[feature_id] = feature_id
-        for group_id in range(self.n_interaction_groups):
-            self.interaction_groups[group_id] = group_id
-
-        parent_record.n_active_interaction_groups = self.n_interaction_groups
-        parent_record.n_allowed_features = splitter.n_features
-
-        node_id = parent_node_id
-        while node_id != _TREE_UNDEFINED:
-            ancestor_node_ids[ancestor_count] = node_id
-            ancestor_count += 1
-            node_id = parent_node_ids[node_id]
-
-        while ancestor_count > 0:
-            ancestor_count -= 1
-            node_id = ancestor_node_ids[ancestor_count]
-            if tree.nodes[node_id].feature >= 0:
-                self._update_interaction_constraints_after_split(
-                    splitter.features,
-                    parent_record,
-                    tree.nodes[node_id].feature,
-                )
-
     cpdef build(
         self,
         Tree tree,
@@ -797,16 +757,19 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
         # reset n_constant_features for this specific split before beginning split search
         parent_record.n_constant_features = 0
+
+        # rebuild/restore interactions constraints state:
+        parent_record.n_allowed_features = splitter.n_features
         if self.with_interaction_cst:
-            self._rebuild_interaction_state_for_node(
-                splitter,
-                tree,
-                parent_node_id,
-                parent_record,
-            )
-        else:
-            parent_record.n_active_interaction_groups = 0
-            parent_record.n_allowed_features = splitter.n_features
+            parent_record.n_active_interaction_groups = self.n_interaction_groups
+            node_id = parent_node_id
+            while node_id != _TREE_UNDEFINED:
+                self._update_interaction_constraints_after_split(
+                    splitter.features,
+                    parent_record,
+                    tree.nodes[node_id].feature,
+                )
+                node_id = self.parent_node_ids[node_id]
 
         if is_first:
             parent_record.impurity = splitter.node_impurity()
