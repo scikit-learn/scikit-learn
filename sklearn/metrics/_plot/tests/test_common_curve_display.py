@@ -367,7 +367,7 @@ def test_display_plot_legend_label(
 
     display = Display(**display_args).plot(name=name, curve_kwargs=curve_kwargs)
     legend = display.ax_.get_legend()
-    auc_metric = display_args["auc_arg_name"]
+    auc_metric = display_args[auc_arg_name]
 
     if legend is None:
         # No legend is created, exit test early
