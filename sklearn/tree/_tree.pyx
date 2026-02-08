@@ -533,7 +533,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     """
     cdef intp_t max_leaf_nodes
     cdef intp_t[::1] parent_node_ids
-    cdef intp_t[::1] ancestor_node_ids
 
     def __cinit__(self, Splitter splitter, intp_t min_samples_split,
                   intp_t min_samples_leaf,  min_weight_leaf,
@@ -601,7 +600,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         tree._resize(init_capacity)
         self._init_interaction_cst_fit_state(splitter)
         self.parent_node_ids = np.empty(init_capacity, dtype=np.intp)
-        self.ancestor_node_ids = np.empty(init_capacity, dtype=np.intp)
 
         with nogil:
             # add root to frontier
@@ -769,6 +767,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     parent_record,
                     tree.nodes[node_id].feature,
                 )
+                if parent_record.n_active_interaction_groups == 1:
+                    break
                 node_id = self.parent_node_ids[node_id]
 
         if is_first:
