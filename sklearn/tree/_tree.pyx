@@ -190,6 +190,11 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
             int32_t current_feature_mark_token
             intp_t g_pos, group_idx, f_pos, feature_idx
 
+        if n_active_groups == 1:
+            # if only one group is active, the split feature will be in this group
+            # and it will remain the only active group
+            return
+
         # Step 1: mark groups containing the split feature.
         # Complexity: O(#groups containing split_feature)
         current_group_mark_token = group_mark_token[0] + 1
@@ -213,6 +218,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 n_active_groups -= 1
                 _swap_intp(interaction_groups, g_pos, n_active_groups)
             g_pos -= 1
+
+        if n_active_groups == parent_record.n_active_interaction_groups:
+            # active groups are the same => allowed features will remain the same
+            return
 
         # Step 3: mark features allowed by the remaining active interaction groups.
         # Complexity: O(sum of sizes of active groups).
