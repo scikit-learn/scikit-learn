@@ -63,6 +63,15 @@ def test_invalid_interaction_cst_raises(interaction_cst, expected_error):
         est.fit(X, y)
 
 
+def test_invalid_string_interaction_cst_raises():
+    est = DecisionTreeRegressor(interaction_cst="invalid")
+    msg = (
+        "Interaction constraints string must be either 'pairwise' or 'no_interactions'"
+    )
+    with pytest.raises(ValueError, match=msg):
+        est._check_interaction_cst(n_features=2)
+
+
 def test_interaction_cst_best_first_raises():
     rng = np.random.RandomState(0)
     X = rng.randn(40, 2)
@@ -120,6 +129,22 @@ def test_interaction_cst_overlapping_groups_tree_structure():
     interaction_cst = [{0, 1, 3}, {1, 2, 3}, {0, 2}]
     est = DecisionTreeRegressor(
         max_depth=4, max_features=4, random_state=0, interaction_cst=interaction_cst
+    )
+    est.fit(X, y)
+
+    _assert_tree_respects_interaction_constraints(
+        est.tree_, est._check_interaction_cst(X.shape[1])
+    )
+
+
+def test_interaction_cst_array_like_tree_structure():
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(400, 6))
+    y = rng.uniform(size=400)
+
+    interaction_cst = np.array([[0, 1], [1, 2], [3, 4]])
+    est = DecisionTreeRegressor(
+        max_depth=5, random_state=0, interaction_cst=interaction_cst
     )
     est.fit(X, y)
 

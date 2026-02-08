@@ -171,10 +171,16 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.interaction_cst is None:
             return None
 
-        if self.interaction_cst == "no_interactions":
-            interaction_cst = [[i] for i in range(n_features)]
-        elif self.interaction_cst == "pairwise":
-            interaction_cst = itertools.combinations(range(n_features), 2)
+        if isinstance(self.interaction_cst, str):
+            if self.interaction_cst == "no_interactions":
+                interaction_cst = [[i] for i in range(n_features)]
+            elif self.interaction_cst == "pairwise":
+                interaction_cst = itertools.combinations(range(n_features), 2)
+            else:
+                raise ValueError(
+                    "Interaction constraints string must be either 'pairwise' or "
+                    f"'no_interactions', got: {self.interaction_cst!r}."
+                )
         else:
             interaction_cst = self.interaction_cst
 
