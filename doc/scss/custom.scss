@@ -271,3 +271,25 @@ div.sk-text-image-grid-large {
     height: 130%;
   }
 }
+
+
+/* ------------------------------------------------------------
+   Clickable images hint in the user guide
+   See issue #30596
+------------------------------------------------------------ */
+
+/* Add a visible hover effect for clickable images */
+figure > a:hover > img {
+  border-radius: 0.3rem;
+  box-shadow: 0 0 0 0.15rem var(--pst-color-secondary);
+}
+
+/* Add helper text below clickable images */
+figure > a::after {
+  content: "Click to see the code that generated this plot";
+  display: block;
+  font-weight: var(--pst-font-weight-caption);
+  font-size: 0.9em;
+  margin-top: 0.3rem;
+  opacity: 0.8;
+}
