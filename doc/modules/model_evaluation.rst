@@ -2219,7 +2219,7 @@ of 0.0.
 
     \text{dev}(y, \hat{y}) = \text{brier_score_loss}(y, \hat{y}).
 
-  This is also referred to as the Brier Skill Score (BSS).
+  This is also referred to as the Brier Skill Score (BSS) and scaled Brier score.
 
   Here are some usage examples of the :func:`d2_brier_score` function::
 
