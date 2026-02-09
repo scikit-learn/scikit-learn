@@ -1468,6 +1468,41 @@ def test_column_transformer_with_make_column_selector():
     assert_allclose(X_selector, X_direct)
 
 
+def test_make_column_selector_with_cardinality():
+    pd = pytest.importorskip("pandas")
+
+    X_df = pd.DataFrame(
+        {
+            "col_low": ["a", "a", "b", "b"],
+            "col_mid": ["a", "b", "c", "c"],
+            "col_high": ["a", "b", "c", "d"],
+            "col_num": [1, 2, 3, 4],
+        }
+    )
+
+    # max_cardinality: select columns with <= 2 unique values
+    selector = make_column_selector(max_cardinality=2)
+    assert selector(X_df) == ["col_low"]
+
+    # min_cardinality: select columns with >= 4 unique values
+    selector = make_column_selector(min_cardinality=4)
+    assert selector(X_df) == ["col_high", "col_num"]
+
+    # both min and max cardinality
+    selector = make_column_selector(min_cardinality=2, max_cardinality=3)
+    assert selector(X_df) == ["col_low", "col_mid"]
+
+    # combined with dtype_include
+    selector = make_column_selector(
+        dtype_include=object, max_cardinality=3
+    )
+    assert selector(X_df) == ["col_low", "col_mid"]
+
+    # combined with pattern
+    selector = make_column_selector(pattern="col_", min_cardinality=3)
+    assert selector(X_df) == ["col_mid", "col_high", "col_num"]
+
+
 def test_make_column_selector_error():
     selector = make_column_selector(dtype_include=np.number)
     X = np.array([[0.1, 0.2]])
