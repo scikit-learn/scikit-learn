@@ -73,7 +73,8 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
     from sklearn.preprocessing import LabelEncoder
 
     xp, _, device_ = get_namespace_and_device(y, classes)
-    if set(_convert_to_numpy(y, xp)) - set(_convert_to_numpy(classes, xp)):
+    unique_y = xp.unique_values(y)
+    if set(_convert_to_numpy(unique_y, xp)) - set(_convert_to_numpy(classes, xp)):
         raise ValueError("classes should include all valid labels that can be in y")
     if class_weight is None or len(class_weight) == 0:
         # uniform class weights

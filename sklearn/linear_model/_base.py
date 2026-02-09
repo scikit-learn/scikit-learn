@@ -412,7 +412,7 @@ class LinearClassifierMixin(ClassifierMixin):
         prob = self.decision_function(X)
         prob = _expit(prob, out=prob, xp=xp)
         if prob.ndim == 1:
-            return xp.stack([1 - prob, prob]).T
+            return xp.stack([1 - prob, prob], axis=1)
         else:
             # OvR normalization, like LibLinear's predict_probability
             prob_sum = prob.sum(axis=1)

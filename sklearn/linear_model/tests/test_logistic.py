@@ -2590,6 +2590,7 @@ def test_logisticregression_warns_with_n_jobs():
     yield_namespace_device_dtype_combinations(),
     ids=_get_namespace_device_dtype_ids,
 )
+@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_logistic_regression_array_api_compliance(
     binary,
     use_str_y,
@@ -2600,7 +2601,7 @@ def test_logistic_regression_array_api_compliance(
     dtype_name,
 ):
     xp = _array_api_for_tests(array_namespace, device_)
-    X_np = iris.data.astype(dtype_name)
+    X_np = iris.data.astype(dtype_name, copy=True)
     n_samples, _ = X_np.shape
     X_xp = xp.asarray(X_np, device=device_)
     if use_str_y:
@@ -2639,29 +2640,30 @@ def test_logistic_regression_array_api_compliance(
 
     # Use a strong regularization to ensure coef_ can be identified to a higher
     # precision even when taking into account the iterated discrepancies when
-    # the gradient is computed in float32.
-    lr_params = dict(
-        C=1e-2, solver="lbfgs", tol=1e-12, max_iter=500, class_weight=class_weight
-    )
-    with warnings.catch_warnings():
-        # Make sure that we converge in the reference fit.
-        warnings.simplefilter("error", ConvergenceWarning)
-        lr_np = LogisticRegression(**lr_params).fit(
-            X_np, y_np, sample_weight=sample_weight
-        )
-        assert lr_np.n_iter_ < lr_np.max_iter
-
+    # the gradient is computed in float32. This is only necessary because the
+    # iris dataset is perfectly separable.
     # We selected a low value of C (high coef_ regularization) to be able
     # to identify coef_ to some strict enough precision level. However we
     # also want to make sure that this choice of regularization does not
     # constrain the fitted models to a trivial baseline classifier where only
     # the intercept would be non-zero.
+    lr_params = dict(
+        C=1e-2, solver="lbfgs", tol=1e-12, max_iter=500, class_weight=class_weight
+    )
+    with warnings.catch_warnings():
+        # Make sure that we converge in the reference fit.
+        lr_np = LogisticRegression(**lr_params).fit(
+            X_np, y_np, sample_weight=sample_weight
+        )
+        assert lr_np.n_iter_ < lr_np.max_iter
+
+    # Test that C was not too large for meaningful testing.
     assert np.abs(lr_np.coef_).max() > 0.1
 
     predict_proba_np = lr_np.predict_proba(X_np)
     preditct_log_proba_np = lr_np.predict_log_proba(X_np)
     prediction_np = lr_np.predict(X_np)
-    # XXX: those tolerance levels seem quite high. Investigate further if we
+    # TODO: those tolerance levels seem quite high. Investigate further if we
     # can hunt down the numerical discrepancies more precisely.
     atol = _atol_for_type(dtype_name) * 10
     rtol = 5e-3 if dtype_name == "float32" else 1e-5

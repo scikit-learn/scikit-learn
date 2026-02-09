@@ -592,8 +592,8 @@ def move_to(*arrays, xp, device):
 
 
 def _expit(X, out=None, xp=None):
-    # The `out` argument is only valid in the case of `NumPy` as the array api
-    # specification does not allow in-place `exp`.
+    # The out argument for exp and hence expit is only supported for numpy,
+    # but not in the Array API specification.
     xp, _ = get_namespace(X, xp=xp)
     if _is_numpy_namespace(xp):
         if out is not None:

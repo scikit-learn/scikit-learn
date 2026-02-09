@@ -3,5 +3,5 @@
   data (`X`) to improve training speed and memory efficiency. Previously, the input
   data would be implicitly cast to `float64`. If you relied on the previous
   behavior for numerical reasons, you can explicitly cast your data to
-  `float64` before fitting to restore it.
+  `float64` before fitting to reproduce it.
   By :user:`Omar Salman <OmarManzoor>` and :user:`Olivier Grisel <ogrisel>`.
