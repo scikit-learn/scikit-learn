@@ -913,6 +913,70 @@ def test_regularization_limits_ridge(
 
 
 @pytest.mark.parametrize("alpha", [1e-16, 1e16], ids=["zero_alpha", "inf_alpha"])
+@pytest.mark.parametrize("gcv_mode", ["ignored"])
+@pytest.mark.parametrize("fit_intercept", [True, False])
+@pytest.mark.parametrize(
+    "X_shape",
+    [(100, 50), (50, 50), (50, 100)],
+    ids=["tall", "square", "wide"],
+)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
+def test_regularization_limits_ridge_classifier_gcv(
+    alpha, gcv_mode, fit_intercept, X_shape, dtype, X_container
+):
+    sparse_X = X_container in CSR_CONTAINERS
+    alphas = [alpha]
+    n_samples, n_features = X_shape
+    X, y = make_classification(
+        n_samples=n_samples, n_features=n_features, random_state=42
+    )
+    # RidgeClassifier is Ridge with y mapped to {-1, +1}
+    y = 2 * y - 1
+    if alpha < 1e-12:
+        # Ridge should recover LinearRegression for near-zero alpha.
+        lin_reg = LinearRegression(fit_intercept=fit_intercept)
+        lin_reg.fit(X, y)
+        expected_coef = lin_reg.coef_
+        expected_intercept = lin_reg.intercept_
+        # FIXME : test fails on square or tall X
+        if n_features < n_samples:
+            pytest.xfail(
+                "RidgeClassifierCV does not recover LinearRegression "
+                "on tall X in the small alpha limit"
+            )
+        elif n_features == n_samples:
+            pytest.xfail(
+                "RidgeClassifierCV does not recover LinearRegression "
+                "on square X in the small alpha limit"
+            )
+    elif alpha > 1e12:
+        # Ridge should recover zero coefficients for near-infinite alpha.
+        expected_coef = np.zeros(n_features)
+        expected_intercept = np.mean(y) if fit_intercept else 0.0
+    else:
+        raise ValueError(
+            "Pick a very small (<1e-12) or very large (>1e12) alpha, got {alpha:.2e}."
+        )
+    X = X_container(X)
+    X = X.astype(dtype)
+    y = y.astype(dtype)
+    # FIXME : add `gcv_mode` parameter to RidgeClassifierCV
+    gcv_ridge = RidgeClassifierCV(alphas=alphas, fit_intercept=fit_intercept)
+    if gcv_mode == "svd" and sparse_X:
+        # TODO(1.11) should raises ValueError
+        expected_msg = "The `'svd'` mode is not supported for sparse X"
+        with pytest.warns(FutureWarning, match=expected_msg):
+            gcv_ridge.fit(X, y)
+    else:
+        gcv_ridge.fit(X, y)
+
+    atol = 1e-5 if dtype == np.float32 else 1e-10
+    assert_allclose(gcv_ridge.coef_, expected_coef, atol=atol)
+    assert_allclose(gcv_ridge.intercept_, expected_intercept, atol=atol)
+
+
+@pytest.mark.parametrize("alpha", [1e-16, 1e16], ids=["zero_alpha", "inf_alpha"])
 @pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize(

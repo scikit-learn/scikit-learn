@@ -1,9 +1,9 @@
 - The leave-one out errors and model parameters estimated in
-  :class:`linear_model.RidgeCV` are now numerically stable in the small `alpha`
-  regime for all `gcv_mode` options. The default `auto` option is now equivalent
-  to `eigen` and picks the cheaper option: eigendecomposition of the covariance
-  (resp Gram) matrix when `n_features <= n_samples` (resp `n_samples >
-  n_features`). When `store_cv_results=True` and `X` is an integer array, the
-  `cv_results_` attribute was wrongly coerced to the integer dtype of `X`, it
-  now always has a floating dtype.
+  :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV` when
+  `cv=None` are now numerically stable in the small `alpha` regime. The default
+  `auto` option is now equivalent to `eigen` and picks the cheaper option:
+  eigendecomposition of the covariance (resp Gram) matrix when `n_features <=
+  n_samples` (resp `n_samples > n_features`). When `store_cv_results=True` and
+  `X` is an integer array, the `cv_results_` attribute was wrongly coerced to
+  the integer dtype of `X`, it now always has a floating dtype.
   By :user:`Antoine Baker <antoinebaker>`
