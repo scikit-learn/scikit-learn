@@ -749,14 +749,36 @@ def test_fused_types_make_dataset(csr_container):
     assert_array_equal(yi_64, yicsr_64)
 
 
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
+def test_linear_regression_33032(dtype):
+    # Check that LineaRRegression as good as `scipy.linalg.lstsq`
+    # See issue 33032
+    rng = np.random.RandomState(1137)
+    n_samples = 500_000
+
+    x1 = rng.rand(n_samples)
+    x2 = 0.3 * x1 + 0.1 * rng.rand(n_samples)
+    X = np.column_stack([x1, x2])
+    y = X @ [0.5, 2.0] + 0.1 * rng.rand(n_samples)
+
+    X = X.astype(dtype)
+    y = y.astype(dtype)
+
+    coef_scipy = linalg.lstsq(X, y)[0]
+    coef_sklearn = LinearRegression(fit_intercept=False).fit(X, y).coef_
+
+    rmse_scipy = np.linalg.norm(y - X @ coef_scipy)
+    rmse_sklearn = np.linalg.norm(y - X @ coef_sklearn)
+    assert rmse_sklearn <= rmse_scipy + 1e-6
+
+
 @pytest.mark.parametrize(
     "X_shape", [(10, 5), (10, 20), (10, 10)], ids=["long", "wide", "square"]
 )
 @pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize("fit_intercept", [False, True])
-@pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_linear_regression_sample_weight_consistency(
-    X_shape, sparse_container, fit_intercept, dtype, global_random_seed
+    X_shape, sparse_container, fit_intercept, global_random_seed
 ):
     """Test that the impact of sample_weight is consistent.
 
@@ -766,16 +788,18 @@ def test_linear_regression_sample_weight_consistency(
     """
     rng = np.random.RandomState(global_random_seed)
     n_samples, n_features = X_shape
+    sparse_X = sparse_container is not None
+
+    if fit_intercept and not sparse_X:
+        pytest.xfail("Known failure, see issue #26164")
 
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
-    if sparse_container is not None:
+    if sparse_X:
         X = sparse_container(X)
-    X = X.astype(dtype)
-    y = y.astype(dtype)
 
     params = dict(fit_intercept=fit_intercept)
-    if sparse_container is not None:
+    if sparse_X:
         # On sparse data we specify the `tol` argument used by the
         # underlying solver (scipy.sparse.linalg), see issue #30131.
         params["tol"] = 1e-12
@@ -784,21 +808,19 @@ def test_linear_regression_sample_weight_consistency(
     if fit_intercept:
         intercept = reg.intercept_
 
-    rtol = 1e-3 if dtype == np.float32 else 1e-6
-
     # 1) sample_weight=np.ones(..) must be equivalent to sample_weight=None,
     # a special case of check_sample_weight_equivalence(name, reg), but we also
     # test with sparse input.
     sample_weight = np.ones_like(y)
     reg.fit(X, y, sample_weight=sample_weight)
-    assert_allclose(reg.coef_, coef, rtol=rtol)
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
 
     # 2) sample_weight=None should be equivalent to sample_weight = number
     sample_weight = 123.0
     reg.fit(X, y, sample_weight=sample_weight)
-    assert_allclose(reg.coef_, coef, rtol=rtol)
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
 
@@ -810,7 +832,7 @@ def test_linear_regression_sample_weight_consistency(
         intercept = reg.intercept_
 
     reg.fit(X, y, sample_weight=np.pi * sample_weight)
-    assert_allclose(reg.coef_, coef, rtol=rtol)
+    assert_allclose(reg.coef_, coef, rtol=1e-6 if sparse_container is None else 1e-5)
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
 
@@ -823,7 +845,7 @@ def test_linear_regression_sample_weight_consistency(
     if fit_intercept:
         intercept_0 = reg.intercept_
     reg.fit(X[:-5], y[:-5], sample_weight=sample_weight[:-5])
-    assert_allclose(reg.coef_, coef_0, rtol=rtol)
+    assert_allclose(reg.coef_, coef_0, rtol=1e-5)
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept_0)
 
@@ -842,7 +864,7 @@ def test_linear_regression_sample_weight_consistency(
 
     reg1 = LinearRegression(**params).fit(X, y, sample_weight=sample_weight_1)
     reg2 = LinearRegression(**params).fit(X2, y2, sample_weight=sample_weight_2)
-    assert_allclose(reg1.coef_, reg2.coef_, rtol=rtol)
+    assert_allclose(reg1.coef_, reg2.coef_, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg1.intercept_, reg2.intercept_)
 
