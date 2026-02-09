@@ -3,12 +3,14 @@
 from time import perf_counter
 
 import numpy as np
+import pytest
 from numpy.testing import assert_array_equal
 
-from sklearn.utils._sorting import _py_simultaneous_sort
+from sklearn.utils._sorting import _py_sort
 
 
-def test_simultaneous_sort_correctness():
+@pytest.mark.parametrize("kind", ["2-way", "3-way"])
+def test_simultaneous_sort_correctness(kind):
     rng = np.random.default_rng(0)
     for x in [
         rng.uniform(size=3),
@@ -21,19 +23,52 @@ def test_simultaneous_sort_correctness():
         n = x.size
         ind = np.arange(n, dtype=np.intp)
         x_sorted = x.copy()
-        _py_simultaneous_sort(x_sorted, ind, n)
+        _py_sort(x_sorted, ind, n, use_three_way_partition=kind == "3-way")
         assert (x_sorted[:-1] <= x_sorted[1:]).all()
         assert_array_equal(x[ind], x_sorted)
         assert_array_equal(np.sort(ind), np.arange(n, dtype=np.intp))
 
 
-def test_simultaneous_sort_not_quadratic():
+@pytest.mark.parametrize("kind", ["2-way", "3-way"])
+def test_simultaneous_sort_not_quadratic(kind):
     n = 10**6
     dist = np.zeros(n)
     ind = np.arange(n, dtype=np.intp)
     t0 = perf_counter()
-    _py_simultaneous_sort(dist, ind, dist.shape[0])
+    _py_sort(dist, ind, dist.shape[0], use_three_way_partition=kind == "3-way")
     dt = perf_counter() - t0
     # sorting 1M elements should take less than 10s unless the sort goes quadratic
     # (it should take something like ~10-100ms)
     assert dt < 10
+
+    n = 10**5
+    dist = np.roll(np.arange(n), -1).astype(np.float32)
+    ind = np.arange(n, dtype=np.intp)
+    t0 = perf_counter()
+    _py_sort(dist, ind, dist.shape[0], use_three_way_partition=kind == "3-way")
+    dt = perf_counter() - t0
+    # sorting 1M elements should take less than 10s unless the sort goes quadratic
+    # (it should take something like ~10-100ms)
+    assert dt < 0.1
+
+
+def test_sort_log2_build():
+    """Non-regression test for gh-30554.
+
+    Using log2 and log in sort correctly sorts feature_values, but the tie breaking is
+    different which can results in placing samples in a different order.
+    """
+    rng = np.random.default_rng(75)
+    some = rng.normal(loc=0.0, scale=10.0, size=10).astype(np.float32)
+    feature_values = np.concatenate([some] * 5)
+    samples = np.arange(50, dtype=np.intp)
+    _py_sort(feature_values, samples, 50, use_three_way_partition=True)
+    # fmt: off
+    # no black reformatting for this specific array
+    expected_samples = [
+        0, 40, 30, 20, 10, 29, 39, 19, 49,  9, 45, 15, 35,  5, 25, 11, 31,
+        41,  1, 21, 22, 12,  2, 42, 32, 23, 13, 43,  3, 33,  6, 36, 46, 16,
+        26,  4, 14, 24, 34, 44, 27, 47,  7, 37, 17,  8, 38, 48, 28, 18
+    ]
+    # fmt: on
+    assert_array_equal(samples, expected_samples)
