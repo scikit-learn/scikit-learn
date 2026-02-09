@@ -15,7 +15,7 @@ from math import ceil
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import issparse
+from scipy.sparse import issparse, csr_matrix
 
 from sklearn.base import (
     BaseEstimator,
@@ -216,29 +216,21 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if constraints is None:
             return None, None, None, None
 
-        feature_to_groups = [[] for _ in range(n_features)]
-        group_to_features_indices = []
-        group_to_features_indptr = [0]
-
-        for group_idx, group in enumerate(constraints):
-            sorted_group = sorted(group)
-            group_to_features_indices.extend(sorted_group)
-            group_to_features_indptr.append(len(group_to_features_indices))
-
-            for feature_idx in sorted_group:
-                feature_to_groups[feature_idx].append(group_idx)
-
-        feature_to_groups_indices = []
-        feature_to_groups_indptr = [0]
-        for groups in feature_to_groups:
-            feature_to_groups_indices.extend(groups)
-            feature_to_groups_indptr.append(len(feature_to_groups_indices))
+        contraint_idx = np.repeat(
+            np.arange(len(constraints)),
+            [len(cst) for cst in constraints]
+        )
+        group_to_features = csr_matrix((
+            np.ones(contraint_idx.size),
+            (contraint_idx, list(itertools.chain(*constraints)))
+        ))
+        feature_to_groups = group_to_features.tocsc()
 
         return (
-            np.asarray(feature_to_groups_indptr, dtype=np.intp),
-            np.asarray(feature_to_groups_indices, dtype=np.intp),
-            np.asarray(group_to_features_indptr, dtype=np.intp),
-            np.asarray(group_to_features_indices, dtype=np.intp),
+            feature_to_groups.indptr.astype(np.intp),
+            feature_to_groups.indices.astype(np.intp),
+            group_to_features.indptr.astype(np.intp),
+            group_to_features.indices.astype(np.intp),
         )
 
     def get_depth(self):
