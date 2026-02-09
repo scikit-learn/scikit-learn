@@ -1,6 +1,6 @@
 .. currentmodule:: sklearn.model_selection
 
-.. _TunedThresholdClassifierCV:
+.. _threshold_tunning:
 
 ==================================================
 Tuning the decision threshold for class prediction
@@ -63,7 +63,7 @@ Post-tuning the decision threshold
 
 One solution to address the problem stated in the introduction is to tune the decision
 threshold of the classifier once the model has been trained. The
-:class:`~sklearn.model_selection.TunedThresholdClassifierCV` tunes this threshold using
+:class:`TunedThresholdClassifierCV` tunes this threshold using
 an internal cross-validation. The optimum threshold is chosen to maximize a given
 metric.
 
@@ -79,6 +79,17 @@ a utility metric defined by the business (in this case an insurance company).
 .. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cost_sensitive_learning_002.png
    :target: ../auto_examples/model_selection/plot_cost_sensitive_learning.html
    :align: center
+
+.. _decision_threshold_curve:
+
+Plotting metric across thresholds
+---------------------------------
+
+The final plot above shows the value of a utility metric of interest across a range
+of threshold values. This can be a useful visualization when tuning decision
+threshold, especially if there is more than one metric of interest. The
+:func:`decision_threshold_curve` allows you to easily generate such plots as it
+computes the values required for each axis, scores per threshold and threshold values.
 
 Options to tune the decision threshold
 --------------------------------------
