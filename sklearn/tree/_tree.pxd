@@ -85,41 +85,6 @@ cdef class Tree:
 # Tree builder
 # =============================================================================
 
-cdef class InteractionConstraints:
-    cdef const intp_t[:] feature_to_groups_indptr
-    cdef const intp_t[:] feature_to_groups_indices
-    cdef const intp_t[:] group_to_features_indptr
-    cdef const intp_t[:] group_to_features_indices
-    cdef intp_t[::1] interaction_groups
-    cdef int32_t[::1] group_marks
-    cdef int32_t[::1] feature_marks
-    cdef int32_t group_mark_token
-    cdef int32_t feature_mark_token
-    cdef intp_t n_interaction_groups
-
-    cdef void init_fit_state(self, Splitter splitter)
-    cdef void reset_node_state(
-        self,
-        ParentInfo* parent_record,
-        intp_t n_features,
-    ) noexcept nogil
-    cdef void update_after_split(
-        self,
-        intp_t[::1] features,
-        ParentInfo* parent_record,
-        intp_t split_feature,
-    ) noexcept nogil
-    cdef void restore_state_from_path(
-        self,
-        intp_t[::1] features,
-        ParentInfo* parent_record,
-        Node* nodes,
-        intp_t[::1] parent_node_ids,
-        intp_t parent_node_id,
-        intp_t n_features,
-    ) noexcept nogil
-
-
 cdef class TreeBuilder:
     # The TreeBuilder recursively builds a Tree object from training samples,
     # using a Splitter object for splitting internal nodes and assigning
@@ -135,7 +100,6 @@ cdef class TreeBuilder:
     cdef float64_t min_weight_leaf         # Minimum weight in a leaf
     cdef intp_t max_depth               # Maximal tree depth
     cdef float64_t min_impurity_decrease   # Impurity threshold for early stopping
-    cdef InteractionConstraints interaction_constraints
 
     cpdef build(
         self,

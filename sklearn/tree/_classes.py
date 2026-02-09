@@ -32,7 +32,6 @@ from sklearn.tree._splitter import Splitter
 from sklearn.tree._tree import (
     BestFirstTreeBuilder,
     DepthFirstTreeBuilder,
-    InteractionConstraints,
     Tree,
     _build_pruned_tree_ccp,
     ccp_pruning_path,
@@ -503,11 +502,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 monotonic_cst *= -1
 
         group_to_features = self._interaction_cst_to_csr(interaction_cst, X.shape[1])
-        interaction_constraints = (
-            None
-            if group_to_features is None
-            else InteractionConstraints(group_to_features)
-        )
 
         if not isinstance(self.splitter, Splitter):
             splitter = SPLITTERS[self.splitter](
@@ -538,7 +532,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 min_weight_leaf,
                 max_depth,
                 self.min_impurity_decrease,
-                interaction_constraints,
+                group_to_features,
             )
         else:
             builder = BestFirstTreeBuilder(
@@ -549,7 +543,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 max_depth,
                 max_leaf_nodes,
                 self.min_impurity_decrease,
-                interaction_constraints,
+                group_to_features,
             )
 
         builder.build(self.tree_, X, y, sample_weight, missing_values_in_feature_mask)

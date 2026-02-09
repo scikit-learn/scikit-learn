@@ -81,6 +81,16 @@ cdef inline void _init_parent_record(ParentInfo* record) noexcept nogil:
 
 cdef class InteractionConstraints:
     """Owns interaction-constraint state and update logic during tree growth."""
+    cdef const intp_t[:] feature_to_groups_indptr
+    cdef const intp_t[:] feature_to_groups_indices
+    cdef const intp_t[:] group_to_features_indptr
+    cdef const intp_t[:] group_to_features_indices
+    cdef intp_t[::1] interaction_groups
+    cdef int32_t[::1] group_marks
+    cdef int32_t[::1] feature_marks
+    cdef int32_t group_mark_token
+    cdef int32_t feature_mark_token
+    cdef intp_t n_interaction_groups
 
     def __cinit__(self, object group_to_features):
         cdef object feature_to_groups
@@ -277,18 +287,22 @@ cdef struct StackRecord:
 
 cdef class DepthFirstTreeBuilder(TreeBuilder):
     """Build a decision tree in depth-first fashion."""
+    cdef InteractionConstraints interaction_constraints
 
     def __cinit__(self, Splitter splitter, intp_t min_samples_split,
                   intp_t min_samples_leaf, float64_t min_weight_leaf,
                   intp_t max_depth, float64_t min_impurity_decrease,
-                  InteractionConstraints interaction_constraints=None):
+                  object group_to_features=None):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.max_depth = max_depth
         self.min_impurity_decrease = min_impurity_decrease
-        self.interaction_constraints = interaction_constraints
+        if group_to_features is None:
+            self.interaction_constraints = None
+        else:
+            self.interaction_constraints = InteractionConstraints(group_to_features)
 
     cpdef build(
         self,
@@ -559,6 +573,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     The best node to expand is given by the node at the frontier that has the
     highest impurity improvement.
     """
+    cdef InteractionConstraints interaction_constraints
     cdef intp_t max_leaf_nodes
     cdef intp_t[::1] parent_node_ids
 
@@ -566,7 +581,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                   intp_t min_samples_leaf,  min_weight_leaf,
                   intp_t max_depth, intp_t max_leaf_nodes,
                   float64_t min_impurity_decrease,
-                  InteractionConstraints interaction_constraints=None):
+                  object group_to_features=None):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -574,7 +589,10 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         self.max_depth = max_depth
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
-        self.interaction_constraints = interaction_constraints
+        if group_to_features is None:
+            self.interaction_constraints = None
+        else:
+            self.interaction_constraints = InteractionConstraints(group_to_features)
 
     cpdef build(
         self,
@@ -639,6 +657,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                 parent_node_id=_TREE_UNDEFINED,
                 depth=0,
                 parent_record=&parent_record,
+                interaction_constraints=interaction_constraints,
                 res=&split_node_left,
             )
             if rc >= 0:
@@ -710,6 +729,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                         parent_node_id=record.node_id,
                         depth=record.depth + 1,
                         parent_record=&parent_record,
+                        interaction_constraints=interaction_constraints,
                         res=&split_node_left,
                     )
                     if rc == -1:
@@ -733,6 +753,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                         parent_node_id=record.node_id,
                         depth=record.depth + 1,
                         parent_record=&parent_record,
+                        interaction_constraints=interaction_constraints,
                         res=&split_node_right,
                     )
                     if rc == -1:
@@ -766,6 +787,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         intp_t parent_node_id,
         intp_t depth,
         ParentInfo* parent_record,
+        InteractionConstraints interaction_constraints,
         FrontierRecord* res
     ) except -1 nogil:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
@@ -782,11 +804,11 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         parent_record.n_constant_features = 0
 
         # Rebuild interaction-constraint state from the path root -> parent.
-        if self.interaction_constraints is None:
+        if interaction_constraints is None:
             parent_record.n_allowed_features = splitter.n_features
             parent_record.n_active_interaction_groups = 0
         else:
-            self.interaction_constraints.restore_state_from_path(
+            interaction_constraints.restore_state_from_path(
                 splitter.features,
                 parent_record,
                 tree.nodes,
