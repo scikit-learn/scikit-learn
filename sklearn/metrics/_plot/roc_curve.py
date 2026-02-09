@@ -65,9 +65,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         entry or if there are multiple legend entries, label each individual curve
         with the same name.
 
-        If a list is provided, it will be used to label each curve. Only compatible
-        with `curve_kwargs` also being a list to avoid labeling individual curves
-        that have the same appearance.
+        If a list is provided, it will be used to label each curve individually.
+        Passing a list will raise an error if `curve_kwargs` is not a list to avoid
+        labeling individual curves that have the same appearance.
 
         If `None`, no name is shown in the legend.
 
@@ -195,9 +195,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             entry or if there are multiple legend entries, label each individual curve
             with the same name.
 
-            If a list is provided, it will be used to label each curve. Only compatible
-            with `curve_kwargs` also being a list to avoid labeling individual curves
-            that have the same appearance.
+            If a list is provided, it will be used to label each curve individually.
+            Passing a list will raise an error if `curve_kwargs` is not a list to avoid
+            labeling individual curves that have the same appearance.
 
             If `None`, set to `name` provided at `RocCurveDisplay` initialization. If
             still `None`, no name is shown in the legend.
@@ -693,9 +693,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             entry or if there are multiple legend entries, label each individual curve
             with the same name.
 
-            If a list is provided, it will be used to label each curve. Only compatible
-            with `curve_kwargs` also being a list to avoid labeling individual curves
-            that have the same appearance.
+            If a list is provided, it will be used to label each curve individually.
+            Passing a list will raise an error if `curve_kwargs` is not a list to avoid
+            labeling individual curves that have the same appearance.
 
             If `None`, no name is shown in the legend.
 
