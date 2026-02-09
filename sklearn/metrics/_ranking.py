@@ -865,10 +865,21 @@ def _multiclass_roc_auc_score(
         )
 
 
-def _validate_inputs_for_classification_thresholds(
+def _sort_inputs_and_compute_classification_thresholds(
     y_true, y_score, pos_label=None, sample_weight=None
 ):
-    """Validate and sort inputs for calculations at classification thresholds."""
+    """Validate and sort inputs, and compute classification thresholds.
+
+    Performs the following functions:
+
+    * Ensures `y_true` is 'binary' or 'multiclass' with a set `pos_label`
+    * Array validation on `y_true`, `y_score` are and ensures all finite
+    * Filters out 0-weighted samples
+    * Ensure `pos_label` consistency and uses `pos_label` to convert `y_true` to
+      boolean
+    * Sorts `y_score`
+    * Computes thresholds as distinct `y_score` values
+    """
     xp, _, device = get_namespace_and_device(y_true, y_score, sample_weight)
 
     # Check to make sure y_true is valid
@@ -997,7 +1008,7 @@ def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weigh
     xp, _, device = get_namespace_and_device(y_true, y_score, sample_weight)
 
     y_true, y_score, threshold_idxs, weight = (
-        _validate_inputs_for_classification_thresholds(
+        _sort_inputs_and_compute_classification_thresholds(
             y_true, y_score, pos_label, sample_weight
         )
     )
@@ -2222,3 +2233,88 @@ def top_k_accuracy_score(
         return float(np.sum(hits))
     else:
         return float(np.dot(hits, sample_weight))
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "metric_func": [callable],
+        "pos_label": [Real, str, "boolean", None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def decision_threshold_curve(
+    y_true,
+    y_score,
+    metric_func,
+    pos_label=None,
+    **kwargs,
+):
+    """Compute `metric_func` per threshold.
+
+    Read more in the :ref:`User Guide <threshold_tunning>`.
+
+    .. versionadded:: 1.9
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        Ground truth (correct) target labels.
+
+    y_score : array-like of shape (n_samples,)
+        Continuous response scores.
+
+    metric_func : callable
+        The metric function to use. It will be called as
+        `metric_func(y_true, y_pred, **kwargs)`.
+
+    pos_label : int, float, bool or str, default=None
+        The label of the positive class.
+
+    **kwargs : dict
+        Parameters to pass to `metric_func`.
+
+    Returns
+    -------
+    metric_values : ndarray of shape (n_thresholds,)
+        The scores associated with each threshold.
+
+    thresholds : ndarray of shape (n_thresholds,)
+        The thresholds used to compute the scores.
+
+    See Also
+    --------
+    precision_recall_curve : Compute precision-recall pairs for different
+        probability thresholds.
+    det_curve : Compute error rates for different probability thresholds.
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import accuracy_score, decision_threshold_curve
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> scores, thresholds = decision_threshold_curve(
+    ...     accuracy_score, y_true, y_score)
+    >>> thresholds
+    array([0.8 , 0.4 , 0.35, 0.1 ])
+    >>> scores
+    array([0.75, 0.5 , 0.75, 0.5 ])
+    """
+    # `y_true` gets converted into a boolean vector
+    y_true, y_score, threshold_idxs, _ = (
+        _sort_inputs_and_compute_classification_thresholds(
+            y_true, y_score, pos_label=pos_label
+        )
+    )
+    y_true = y_true.astype(np.int32)
+
+    thresholds = y_score[threshold_idxs]
+    metric_values = np.empty(thresholds.shape[0])
+    for idx, threshold in enumerate(thresholds):
+        y_pred = (y_score >= threshold).astype(np.int32)
+        metric_values[idx] = metric_func(y_true, y_pred, **kwargs)
+
+    return metric_values, thresholds

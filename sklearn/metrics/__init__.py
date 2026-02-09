@@ -39,6 +39,7 @@ from sklearn.metrics._ranking import (
     confusion_matrix_at_thresholds,
     coverage_error,
     dcg_score,
+    decision_threshold_curve,
     det_curve,
     label_ranking_average_precision_score,
     label_ranking_loss,
@@ -91,7 +92,6 @@ from sklearn.metrics.cluster import (
     silhouette_score,
     v_measure_score,
 )
-from sklearn.metrics.decision_threshold import decision_threshold_curve
 from sklearn.metrics.pairwise import (
     euclidean_distances,
     nan_euclidean_distances,
