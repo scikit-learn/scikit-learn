@@ -95,7 +95,6 @@ cdef class InteractionConstraints:
     cdef int32_t[::1] feature_marks
     cdef int32_t group_mark_token
     cdef int32_t feature_mark_token
-    cdef bint with_interaction_cst
     cdef intp_t n_interaction_groups
 
     cdef void init_fit_state(self, Splitter splitter)
