@@ -1493,9 +1493,7 @@ def test_make_column_selector_with_cardinality():
     assert selector(X_df) == ["col_low", "col_mid"]
 
     # combined with dtype_include
-    selector = make_column_selector(
-        dtype_include=object, max_cardinality=3
-    )
+    selector = make_column_selector(dtype_include=object, max_cardinality=3)
     assert selector(X_df) == ["col_low", "col_mid"]
 
     # combined with pattern

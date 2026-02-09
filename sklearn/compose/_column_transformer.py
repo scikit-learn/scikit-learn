@@ -1623,13 +1623,9 @@ class make_column_selector:
         if self.min_cardinality is not None or self.max_cardinality is not None:
             cardinalities = df[cols].nunique()
             if self.min_cardinality is not None:
-                cardinalities = cardinalities[
-                    cardinalities >= self.min_cardinality
-                ]
+                cardinalities = cardinalities[cardinalities >= self.min_cardinality]
             if self.max_cardinality is not None:
-                cardinalities = cardinalities[
-                    cardinalities <= self.max_cardinality
-                ]
+                cardinalities = cardinalities[cardinalities <= self.max_cardinality]
             cols = cardinalities.index.tolist()
         return cols
 
