@@ -200,31 +200,6 @@ cdef class InteractionConstraints:
         parent_record.n_active_interaction_groups = n_active_groups
         parent_record.n_allowed_features = n_allowed_features
 
-    cdef inline void restore_state_from_path(
-        self,
-        intp_t[::1] features,
-        ParentInfo* parent_record,
-        Node* nodes,
-        intp_t[::1] parent_node_ids,
-        intp_t parent_node_id,
-        intp_t n_features,
-    ) noexcept nogil:
-        cdef intp_t node_id
-
-        self.reset_node_state(parent_record, n_features)
-
-        node_id = parent_node_id
-        while node_id != _TREE_UNDEFINED:
-            self.update_after_split(
-                features,
-                parent_record,
-                nodes[node_id].feature,
-            )
-            if parent_record.n_active_interaction_groups == 1:
-                return
-            node_id = parent_node_ids[node_id]
-
-
 # =============================================================================
 # TreeBuilder
 # =============================================================================
@@ -803,19 +778,22 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         # reset n_constant_features for this specific split before beginning split search
         parent_record.n_constant_features = 0
 
-        # Rebuild interaction-constraint state from the path root -> parent.
         if interaction_constraints is None:
             parent_record.n_allowed_features = splitter.n_features
             parent_record.n_active_interaction_groups = 0
         else:
-            interaction_constraints.restore_state_from_path(
-                splitter.features,
-                parent_record,
-                tree.nodes,
-                self.parent_node_ids,
-                parent_node_id,
-                splitter.n_features,
-            )
+            # Rebuild interaction-constraint state from the path parent -> root.
+            interaction_constraints.reset_node_state(parent_record, splitter.n_features)
+            node_id = parent_node_id
+            while node_id != _TREE_UNDEFINED:
+                interaction_constraints.update_after_split(
+                    splitter.features,
+                    parent_record,
+                    tree.nodes[node_id].feature,
+                )
+                if parent_record.n_active_interaction_groups == 1:
+                    break
+                node_id = self.parent_node_ids[node_id]
 
         if is_first:
             parent_record.impurity = splitter.node_impurity()
