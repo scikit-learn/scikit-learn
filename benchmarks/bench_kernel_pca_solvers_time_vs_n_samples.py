@@ -38,7 +38,8 @@ Solvers comparison benchmark: time vs n_components", where this time the number
 of examples is fixed, and the desired number of components varies.
 """
 
-# Author: Sylvain MARIE, Schneider Electric
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import time
 

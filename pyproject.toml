@@ -81,7 +81,7 @@ tests = [
     "pandas>=1.5.0",
     "pytest>=7.1.2",
     "pytest-cov>=2.9.0",
-    "ruff>=0.11.7",
+    "ruff>=0.12.2",
     "mypy>=1.15",
     "pyamg>=5.0.0",
     "polars>=0.20.30",
@@ -96,7 +96,7 @@ build-backend = "mesonpy"
 # Minimum requirements for the build system to execute.
 requires = [
     "meson-python>=0.17.1",
-    "Cython>=3.1.2",
+    "cython>=3.1.2",
     "numpy>=2",
     "scipy>=1.10.0",
 ]
@@ -115,6 +115,12 @@ thread_unsafe_fixtures = [
   "tmp_path",  # does not isolate temporary directories across threads
   "pyplot",  # some tests might mutate some shared state of pyplot.
 ]
+# 10 min timeout per test: in case of timeout, dump the tracebacks of all
+# threads and terminate the whole test session if a test hangs for more than 10
+# min (likely due to a deadlock).
+# The second option requires pytest 9.0+ to be active.
+faulthandler_timeout = 600
+faulthandler_exit_on_timeout = true
 
 
 [tool.ruff]
@@ -285,12 +291,12 @@ package = "sklearn"  # name of your package
         whatsnew_pattern = 'doc/whatsnew/upcoming_changes/[^/]+/\d+\.[^.]+\.rst'
 
 [tool.codespell]
-skip = ["./.git", "*.svg", "./.mypy_cache", "./sklearn/feature_extraction/_stop_words.py", "./sklearn/feature_extraction/tests/test_text.py", "./doc/_build", "./doc/auto_examples", "./doc/modules/generated"]
+skip = ["./.git", "*.svg", "./.mypy_cache", "*sklearn/feature_extraction/_stop_words.py", "*sklearn/feature_extraction/tests/test_text.py", "./doc/_build", "./doc/auto_examples", "./doc/modules/generated"]
 ignore-words = "build_tools/codespell_ignore_words.txt"
 
 [tool.towncrier]
     package = "sklearn"
-    filename = "doc/whats_new/v1.8.rst"
+    filename = "doc/whats_new/v1.9.rst"
     single_file = true
     directory = "doc/whats_new/upcoming_changes"
     issue_format = ":pr:`{issue}`"

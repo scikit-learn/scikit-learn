@@ -42,14 +42,13 @@ from sklearn.utils import (
     compute_sample_weight,
 )
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     _is_numpy_namespace,
     _max_precision_float_dtype,
     _ravel,
     device,
-    ensure_common_namespace_device,
     get_namespace,
     get_namespace_and_device,
+    move_to,
 )
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.extmath import row_norms, safe_sparse_dot
@@ -454,6 +453,9 @@ def ridge_regression(
 
         If an array is passed, penalties are assumed to be specific to the
         targets. Hence they must correspond in number.
+
+        For an illustration of the effect of alpha on the model coefficients, see
+        :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`.
 
     sample_weight : float or array-like of shape (n_samples,), default=None
         Individual weights for each sample. If given a float, every sample
@@ -1055,6 +1057,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         If an array is passed, penalties are assumed to be specific to the
         targets. Hence they must correspond in number.
 
+        See :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`
+        for an illustration of the effect of alpha on the model coefficients.
+
     fit_intercept : bool, default=True
         Whether to fit the intercept for this model. If set
         to false, no intercept will be used in calculations
@@ -1307,8 +1312,8 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             The binarized version of `y`.
         """
         accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
-        sample_weight = ensure_common_namespace_device(X, sample_weight)[0]
-        original_X = X
+        xp, _, device_ = get_namespace_and_device(X)
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
         X, y = validate_data(
             self,
             X,
@@ -1321,17 +1326,12 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         xp_y, y_is_array_api = get_namespace(y)
-        # TODO: Update this line to avoid calling `_convert_to_numpy`
-        # once LabelBinarizer has been updated to accept non-NumPy array API
-        # compatible inputs.
-        Y = self._label_binarizer.fit_transform(
-            _convert_to_numpy(y, xp_y) if y_is_array_api else y
-        )
-        Y = ensure_common_namespace_device(original_X, Y)[0]
+        Y = self._label_binarizer.fit_transform(y)
+        Y = move_to(Y, xp=xp, device=device_)
         if y_is_array_api and xp_y.isdtype(y.dtype, "numeric"):
-            self.classes_ = ensure_common_namespace_device(
-                original_X, self._label_binarizer.classes_
-            )[0]
+            self.classes_ = move_to(
+                self._label_binarizer.classes_, xp=xp, device=device_
+            )
         else:
             self.classes_ = self._label_binarizer.classes_
         if not self._label_binarizer.y_type_.startswith("multilabel"):
@@ -1340,7 +1340,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         if self.class_weight:
             reweighting = compute_sample_weight(self.class_weight, y)
-            reweighting = ensure_common_namespace_device(original_X, reweighting)[0]
+            reweighting = move_to(reweighting, xp=xp, device=device_)
             sample_weight = sample_weight * reweighting
         return X, y, sample_weight, Y
 
@@ -1366,10 +1366,8 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             # is 1 to use the inverse transform of the label binarizer fitted
             # during fit.
             decision = self.decision_function(X)
-            xp, is_array_api = get_namespace(decision)
+            xp, _ = get_namespace(decision)
             scores = 2.0 * xp.astype(decision > 0, decision.dtype) - 1.0
-            if is_array_api:
-                scores = _convert_to_numpy(scores, xp)
             return self._label_binarizer.inverse_transform(scores)
         return super().predict(X)
 
@@ -1403,6 +1401,9 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
         :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`.
+
+        For an illustration of the effect of alpha on the model coefficients, see
+        :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set to false, no
@@ -2167,7 +2168,7 @@ class _RidgeGCV(LinearModel):
         self : object
         """
         xp, is_array_api, device_ = get_namespace_and_device(X)
-        y, sample_weight = ensure_common_namespace_device(X, y, sample_weight)
+        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
         if is_array_api or hasattr(getattr(X, "dtype", None), "kind"):
             original_dtype = X.dtype
         else:
@@ -2630,6 +2631,9 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         :class:`~sklearn.svm.LinearSVC`.
         If using Leave-One-Out cross-validation, alphas must be strictly positive.
 
+        For an example on how regularization strength affects the model coefficients,
+        see :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`.
+
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
@@ -2650,9 +2654,9 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Possible inputs for cv are:
 
         - None, to use the efficient Leave-One-Out cross-validation
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`~sklearn.model_selection.StratifiedKFold` is used, else,
@@ -2820,6 +2824,9 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         :class:`~sklearn.svm.LinearSVC`.
         If using Leave-One-Out cross-validation, alphas must be strictly positive.
 
+        For an example on how regularization strength affects the model coefficients,
+        see :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_coeffs.py`.
+
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
@@ -2840,9 +2847,9 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         Possible inputs for cv are:
 
         - None, to use the efficient Leave-One-Out cross-validation
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.

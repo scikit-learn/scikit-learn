@@ -16,12 +16,18 @@ from sklearn._config import get_config
 from sklearn.externals import array_api_compat
 from sklearn.externals import array_api_extra as xpx
 from sklearn.externals.array_api_compat import numpy as np_compat
+from sklearn.utils._dataframe import is_df_or_series
 from sklearn.utils.fixes import parse_version
 
 # TODO: complete __all__
 __all__ = ["xpx"]  # we import xpx here just to re-export it, need this to appease ruff
 
 _NUMPY_NAMESPACE_NAMES = {"numpy", "sklearn.externals.array_api_compat.numpy"}
+REMOVE_TYPES_DEFAULT = (
+    str,
+    list,
+    tuple,
+)
 
 
 def yield_namespaces(include_numpy_namespaces=True):
@@ -166,7 +172,7 @@ def _single_array_device(array):
         return array.device
 
 
-def device(*array_list, remove_none=True, remove_types=(str,)):
+def device(*array_list, remove_none=True, remove_types=REMOVE_TYPES_DEFAULT):
     """Hardware device where the array data resides on.
 
     If the hardware device is not the same for all arrays, an error is raised.
@@ -179,7 +185,7 @@ def device(*array_list, remove_none=True, remove_types=(str,)):
     remove_none : bool, default=True
         Whether to ignore None objects passed in array_list.
 
-    remove_types : tuple or list, default=(str,)
+    remove_types : tuple or list, default=(str, list, tuple)
         Types to ignore in array_list.
 
     Returns
@@ -289,38 +295,7 @@ def supported_float_dtypes(xp, device=None):
     return tuple(valid_float_dtypes)
 
 
-def ensure_common_namespace_device(reference, *arrays):
-    """Ensure that all arrays use the same namespace and device as reference.
-
-    If necessary the arrays are moved to the same namespace and device as
-    the reference array.
-
-    Parameters
-    ----------
-    reference : array
-        Reference array.
-
-    *arrays : array
-        Arrays to check.
-
-    Returns
-    -------
-    arrays : list
-        Arrays with the same namespace and device as reference.
-    """
-    xp, is_array_api = get_namespace(reference)
-
-    if is_array_api:
-        device_ = device(reference)
-        # Move arrays to the same namespace and device as the reference array.
-        return [
-            xp.asarray(a, device=device_) if a is not None else None for a in arrays
-        ]
-    else:
-        return arrays
-
-
-def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
+def _remove_non_arrays(*arrays, remove_none=True, remove_types=REMOVE_TYPES_DEFAULT):
     """Filter arrays to exclude None and/or specific types.
 
     Sparse arrays are always filtered out.
@@ -333,7 +308,7 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
     remove_none : bool, default=True
         Whether to ignore None objects passed in arrays.
 
-    remove_types : tuple or list, default=(str,)
+    remove_types : tuple or list, default=(str, list, tuple)
         Types to ignore in the arrays.
 
     Returns
@@ -351,12 +326,34 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
             continue
         if sp.issparse(array):
             continue
+        if is_df_or_series(array):
+            continue
         filtered_arrays.append(array)
 
     return filtered_arrays
 
 
-def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
+def _unwrap_memoryviewslices(*arrays):
+    # Since _cyutility._memoryviewslice is an implementation detail of the
+    # Cython runtime, we would rather not introduce a possibly brittle
+    # import statement to run `isinstance`-based filtering, hence the
+    # attribute-based type inspection.
+    unwrapped = []
+    for a in arrays:
+        a_type = type(a)
+        if (
+            a_type.__module__ == "_cyutility"
+            and a_type.__name__ == "_memoryviewslice"
+            and hasattr(a, "base")
+        ):
+            a = a.base
+        unwrapped.append(a)
+    return unwrapped
+
+
+def get_namespace(
+    *arrays, remove_none=True, remove_types=REMOVE_TYPES_DEFAULT, xp=None
+):
     """Get namespace of arrays.
 
     Introspect `arrays` arguments and return their common Array API compatible
@@ -392,7 +389,7 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     remove_none : bool, default=True
         Whether to ignore None objects passed in arrays.
 
-    remove_types : tuple or list, default=(str,)
+    remove_types : tuple or list, default=(str, list, tuple)
         Types to ignore in the arrays.
 
     xp : module, default=None
@@ -427,12 +424,19 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
         remove_types=remove_types,
     )
 
+    # get_namespace can be called by helper functions that are used both in
+    # array API compatible code and non-array API Cython related code. To
+    # support the latter on NumPy inputs without raising a TypeError, we
+    # unwrap potential Cython memoryview slices here.
+    arrays = _unwrap_memoryviewslices(*arrays)
+
     if not arrays:
         return np_compat, False
 
     _check_array_api_dispatch(array_api_dispatch)
 
-    namespace, is_array_api_compliant = array_api_compat.get_namespace(*arrays), True
+    namespace = array_api_compat.get_namespace(*arrays)
+    is_array_api_compliant = True
 
     if namespace.__name__ == "array_api_strict" and hasattr(
         namespace, "set_array_api_strict_flags"
@@ -443,7 +447,7 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
 
 
 def get_namespace_and_device(
-    *array_list, remove_none=True, remove_types=(str,), xp=None
+    *array_list, remove_none=True, remove_types=REMOVE_TYPES_DEFAULT, xp=None
 ):
     """Combination into one single function of `get_namespace` and `device`.
 
@@ -453,7 +457,7 @@ def get_namespace_and_device(
         Array objects.
     remove_none : bool, default=True
         Whether to ignore None objects passed in arrays.
-    remove_types : tuple or list, default=(str,)
+    remove_types : tuple or list, default=(str, list, tuple)
         Types to ignore in the arrays.
     xp : module, default=None
         Precomputed array namespace module. When passed, typically from a caller
@@ -489,6 +493,102 @@ def get_namespace_and_device(
         return xp, is_array_api, arrays_device
     else:
         return xp, False, arrays_device
+
+
+def move_to(*arrays, xp, device):
+    """Move all arrays to `xp` and `device`.
+
+    Each array will be moved to the reference namespace and device if
+    it is not already using it. Otherwise the array is left unchanged.
+
+    `array` may contain `None` entries, these are left unchanged.
+
+    Sparse arrays are accepted (as pass through) if the reference namespace is
+    NumPy, in which case they are returned unchanged. Otherwise a `TypeError`
+    is raised.
+
+    Parameters
+    ----------
+    *arrays : iterable of arrays
+        Arrays to (potentially) move.
+
+    xp : namespace
+        Array API namespace to move arrays to.
+
+    device : device
+        Array API device to move arrays to.
+
+    Returns
+    -------
+    arrays : tuple or array
+        Tuple of arrays with the same namespace and device as reference. Single array
+        returned if only one `arrays` input.
+    """
+    sparse_mask = [sp.issparse(array) for array in arrays]
+    none_mask = [array is None for array in arrays]
+    if any(sparse_mask) and not _is_numpy_namespace(xp):
+        raise TypeError(
+            "Sparse arrays are only accepted (and passed through) when the target "
+            "namespace is Numpy"
+        )
+
+    converted_arrays = []
+
+    for array, is_sparse, is_none in zip(arrays, sparse_mask, none_mask):
+        if is_none:
+            converted_arrays.append(None)
+        elif is_sparse:
+            converted_arrays.append(array)
+        else:
+            xp_array, _, device_array = get_namespace_and_device(array)
+            if xp == xp_array and device == device_array:
+                converted_arrays.append(array)
+            else:
+                try:
+                    # The dlpack protocol is the future proof and library agnostic
+                    # method to transfer arrays across namespace and device boundaries
+                    # hence this method is attempted first and going through NumPy is
+                    # only used as fallback in case of failure.
+                    # Note: copy=None is the default since array-api 2023.12. Namespace
+                    # libraries should only trigger a copy automatically if needed.
+                    array_converted = xp.from_dlpack(array, device=device)
+                    # `AttributeError` occurs when `__dlpack__` and `__dlpack_device__`
+                    # methods are not present on the input array
+                    # `TypeError` and `NotImplementedError` for packages that do not
+                    # yet support dlpack 1.0
+                    # (i.e. the `device`/`copy` kwargs, e.g., torch <= 2.8.0)
+                    # See https://github.com/data-apis/array-api/pull/741 for
+                    # more details about the introduction of the `copy` and `device`
+                    # kwargs in the from_dlpack method and their expected
+                    # meaning by namespaces implementing the array API spec.
+                    # TODO: try removing this once DLPack v1 more widely supported
+                    # TODO: ValueError should not be needed but is in practice:
+                    # https://github.com/numpy/numpy/issues/30341
+                except (
+                    AttributeError,
+                    TypeError,
+                    NotImplementedError,
+                    BufferError,
+                    ValueError,
+                ):
+                    # Converting to numpy is tricky, handle this via dedicated function
+                    if _is_numpy_namespace(xp):
+                        array_converted = _convert_to_numpy(array, xp_array)
+                    # Convert from numpy, all array libraries can do this
+                    elif _is_numpy_namespace(xp_array):
+                        array_converted = xp.asarray(array, device=device)
+                    else:
+                        # There is no generic way to convert from namespace A to B
+                        # So we first convert from A to numpy and then from numpy to B
+                        # The way to avoid this round trip is to lobby for DLpack
+                        # support in libraries A and B
+                        array_np = _convert_to_numpy(array, xp_array)
+                        array_converted = xp.asarray(array_np, device=device)
+                converted_arrays.append(array_converted)
+
+    return (
+        converted_arrays[0] if len(converted_arrays) == 1 else tuple(converted_arrays)
+    )
 
 
 def _expit(X, xp=None):
@@ -1034,14 +1134,6 @@ def _bincount(array, weights=None, minlength=None, xp=None):
         weights_np = None
     bin_out = numpy.bincount(array_np, weights=weights_np, minlength=minlength)
     return xp.asarray(bin_out, device=device(array))
-
-
-def _tolist(array, xp=None):
-    xp, _ = get_namespace(array, xp=xp)
-    if _is_numpy_namespace(xp):
-        return array.tolist()
-    array_np = _convert_to_numpy(array, xp=xp)
-    return [element.item() for element in array_np]
 
 
 def _logsumexp(array, axis=None, xp=None):
