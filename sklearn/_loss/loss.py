@@ -1584,7 +1584,7 @@ class HalfMultinomialLossArrayAPI(ArrayAPILossMixin, HalfMultinomialLoss):
                 self.y_true_one_hot, raw_prediction.dtype, copy=False
             )
         grad = softmax(raw_prediction)
-        # XXX: once incremental assignment for multiple integer array
+        # TODO: once incremental assignment for multiple integer array
         # indices is part of a released version of the array API
         # spec and array-api-strict has been updated accordingly,
         # we can further avoid allocating a big (n_samples, n_classes)
