@@ -15,7 +15,7 @@ from math import ceil
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import issparse, csr_matrix
+from scipy.sparse import csr_matrix, issparse
 
 from sklearn.base import (
     BaseEstimator,
@@ -32,6 +32,7 @@ from sklearn.tree._splitter import Splitter
 from sklearn.tree._tree import (
     BestFirstTreeBuilder,
     DepthFirstTreeBuilder,
+    InteractionConstraints,
     Tree,
     _build_pruned_tree_ccp,
     ccp_pruning_path,
@@ -217,13 +218,14 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             return None, None, None, None
 
         contraint_idx = np.repeat(
-            np.arange(len(constraints)),
-            [len(cst) for cst in constraints]
+            np.arange(len(constraints)), [len(cst) for cst in constraints]
         )
-        group_to_features = csr_matrix((
-            np.ones(contraint_idx.size),
-            (contraint_idx, list(itertools.chain(*constraints)))
-        ))
+        group_to_features = csr_matrix(
+            (
+                np.ones(contraint_idx.size),
+                (contraint_idx, list(itertools.chain(*constraints))),
+            )
+        )
         feature_to_groups = group_to_features.tocsc()
 
         return (
@@ -512,6 +514,12 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             group_to_features_indptr,
             group_to_features_indices,
         ) = self._interaction_cst_to_csr(interaction_cst, X.shape[1])
+        interaction_constraints = InteractionConstraints(
+            feature_to_groups_indptr,
+            feature_to_groups_indices,
+            group_to_features_indptr,
+            group_to_features_indices,
+        )
 
         if not isinstance(self.splitter, Splitter):
             splitter = SPLITTERS[self.splitter](
@@ -542,10 +550,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 min_weight_leaf,
                 max_depth,
                 self.min_impurity_decrease,
-                feature_to_groups_indptr,
-                feature_to_groups_indices,
-                group_to_features_indptr,
-                group_to_features_indices,
+                interaction_constraints,
             )
         else:
             builder = BestFirstTreeBuilder(
@@ -556,10 +561,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 max_depth,
                 max_leaf_nodes,
                 self.min_impurity_decrease,
-                feature_to_groups_indptr,
-                feature_to_groups_indices,
-                group_to_features_indptr,
-                group_to_features_indices,
+                interaction_constraints,
             )
 
         builder.build(self.tree_, X, y, sample_weight, missing_values_in_feature_mask)

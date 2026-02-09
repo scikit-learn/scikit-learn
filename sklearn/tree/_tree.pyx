@@ -76,51 +76,30 @@ cdef inline void _init_parent_record(ParentInfo* record) noexcept nogil:
 
 
 # =============================================================================
-# TreeBuilder
+# Interaction constraints
 # =============================================================================
 
-cdef class TreeBuilder:
-    """Interface for different tree building strategies."""
+cdef class InteractionConstraints:
+    """Owns interaction-constraint state and update logic during tree growth."""
 
-    cpdef build(
+    def __cinit__(
         self,
-        Tree tree,
-        object X,
-        const float64_t[:, ::1] y,
-        const float64_t[:] sample_weight=None,
-        const uint8_t[::1] missing_values_in_feature_mask=None,
+        const intp_t[:] feature_to_groups_indptr=None,
+        const intp_t[:] feature_to_groups_indices=None,
+        const intp_t[:] group_to_features_indptr=None,
+        const intp_t[:] group_to_features_indices=None,
     ):
-        """Build a decision tree from the training set (X, y)."""
-        pass
+        self.feature_to_groups_indptr = feature_to_groups_indptr
+        self.feature_to_groups_indices = feature_to_groups_indices
+        self.group_to_features_indptr = group_to_features_indptr
+        self.group_to_features_indices = group_to_features_indices
+        self.with_interaction_cst = feature_to_groups_indptr is not None
+        if self.with_interaction_cst:
+            self.n_interaction_groups = group_to_features_indptr.shape[0] - 1
+        else:
+            self.n_interaction_groups = 0
 
-    cdef inline _check_input(
-        self,
-        object X,
-        const float64_t[:, ::1] y,
-        const float64_t[:] sample_weight,
-    ):
-        """Check input dtype, layout and format"""
-        if issparse(X):
-            X = X.tocsc()
-            X.sort_indices()
-
-            if X.data.dtype != DTYPE:
-                X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
-
-            if X.indices.dtype != np.int32 or X.indptr.dtype != np.int32:
-                raise ValueError("No support for np.int64 index based "
-                                 "sparse matrices")
-
-        elif X.dtype != DTYPE:
-            # since we have to copy we will make it fortran for efficiency
-            X = np.asfortranarray(X, dtype=DTYPE)
-
-        if sample_weight is not None and not sample_weight.base.flags.contiguous:
-            sample_weight = np.asarray(sample_weight, dtype=DOUBLE, order="C")
-
-        return X, y, sample_weight
-
-    cdef inline void _init_interaction_cst_fit_state(self, Splitter splitter):
+    cdef inline void init_fit_state(self, Splitter splitter):
         if self.with_interaction_cst:
             self.interaction_groups = np.arange(self.n_interaction_groups, dtype=np.intp)
             self.group_marks = np.zeros(self.n_interaction_groups, dtype=np.int32)
@@ -132,7 +111,18 @@ cdef class TreeBuilder:
         self.group_mark_token = 0
         self.feature_mark_token = 0
 
-    cdef inline void _update_interaction_constraints_after_split(
+    cdef inline void reset_node_state(
+        self,
+        ParentInfo* parent_record,
+        intp_t n_features,
+    ) noexcept nogil:
+        parent_record.n_allowed_features = n_features
+        if self.with_interaction_cst:
+            parent_record.n_active_interaction_groups = self.n_interaction_groups
+        else:
+            parent_record.n_active_interaction_groups = 0
+
+    cdef inline void update_after_split(
         self,
         intp_t[::1] features,
         ParentInfo* parent_record,
@@ -213,6 +203,78 @@ cdef class TreeBuilder:
         parent_record.n_active_interaction_groups = n_active_groups
         parent_record.n_allowed_features = n_allowed_features
 
+    cdef inline void restore_state_from_path(
+        self,
+        intp_t[::1] features,
+        ParentInfo* parent_record,
+        Node* nodes,
+        intp_t[::1] parent_node_ids,
+        intp_t parent_node_id,
+        intp_t n_features,
+    ) noexcept nogil:
+        cdef intp_t node_id
+
+        self.reset_node_state(parent_record, n_features)
+        if not self.with_interaction_cst:
+            return
+
+        node_id = parent_node_id
+        while node_id != _TREE_UNDEFINED:
+            self.update_after_split(
+                features,
+                parent_record,
+                nodes[node_id].feature,
+            )
+            if parent_record.n_active_interaction_groups == 1:
+                return
+            node_id = parent_node_ids[node_id]
+
+
+# =============================================================================
+# TreeBuilder
+# =============================================================================
+
+cdef class TreeBuilder:
+    """Interface for different tree building strategies."""
+
+    cpdef build(
+        self,
+        Tree tree,
+        object X,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight=None,
+        const uint8_t[::1] missing_values_in_feature_mask=None,
+    ):
+        """Build a decision tree from the training set (X, y)."""
+        pass
+
+    cdef inline _check_input(
+        self,
+        object X,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
+    ):
+        """Check input dtype, layout and format"""
+        if issparse(X):
+            X = X.tocsc()
+            X.sort_indices()
+
+            if X.data.dtype != DTYPE:
+                X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
+
+            if X.indices.dtype != np.int32 or X.indptr.dtype != np.int32:
+                raise ValueError("No support for np.int64 index based "
+                                 "sparse matrices")
+
+        elif X.dtype != DTYPE:
+            # since we have to copy we will make it fortran for efficiency
+            X = np.asfortranarray(X, dtype=DTYPE)
+
+        if sample_weight is not None and not sample_weight.base.flags.contiguous:
+            sample_weight = np.asarray(sample_weight, dtype=DOUBLE, order="C")
+
+        return X, y, sample_weight
+
 # Depth first builder ---------------------------------------------------------
 # A record on the stack for depth-first tree growing
 cdef struct StackRecord:
@@ -234,25 +296,14 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
     def __cinit__(self, Splitter splitter, intp_t min_samples_split,
                   intp_t min_samples_leaf, float64_t min_weight_leaf,
                   intp_t max_depth, float64_t min_impurity_decrease,
-                  const intp_t[:] feature_to_groups_indptr=None,
-                  const intp_t[:] feature_to_groups_indices=None,
-                  const intp_t[:] group_to_features_indptr=None,
-                  const intp_t[:] group_to_features_indices=None):
+                  InteractionConstraints interaction_constraints=None):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.max_depth = max_depth
         self.min_impurity_decrease = min_impurity_decrease
-        self.feature_to_groups_indptr = feature_to_groups_indptr
-        self.feature_to_groups_indices = feature_to_groups_indices
-        self.group_to_features_indptr = group_to_features_indptr
-        self.group_to_features_indices = group_to_features_indices
-        self.with_interaction_cst = feature_to_groups_indptr is not None
-        if self.with_interaction_cst:
-            self.n_interaction_groups = group_to_features_indptr.shape[0] - 1
-        else:
-            self.n_interaction_groups = 0
+        self.interaction_constraints = interaction_constraints
 
     cpdef build(
         self,
@@ -306,7 +357,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef bint is_leaf
         cdef bint first = 1
         cdef intp_t max_depth_seen = -1
-        cdef bint with_interaction_cst = self.with_interaction_cst
+        cdef InteractionConstraints interaction_constraints = (
+            self.interaction_constraints
+        )
+        cdef bint with_interaction_cst = interaction_constraints.with_interaction_cst
         cdef int rc = 0
 
         cdef stack[StackRecord] builder_stack
@@ -314,7 +368,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
         cdef ParentInfo parent_record
         _init_parent_record(&parent_record)
-        self._init_interaction_cst_fit_state(splitter)
+        interaction_constraints.init_fit_state(splitter)
 
         with nogil:
             # push root node onto stack
@@ -326,7 +380,9 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 "is_left": 0,
                 "impurity": INFINITY,
                 "n_constant_features": 0,
-                "n_active_interaction_groups": self.n_interaction_groups,
+                "n_active_interaction_groups": (
+                    interaction_constraints.n_interaction_groups
+                ),
                 "n_allowed_features": splitter.n_features,
                 "lower_bound": -INFINITY,
                 "upper_bound": INFINITY,
@@ -377,7 +433,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                (split.improvement + EPSILON <
                                 min_impurity_decrease))
                     if not is_leaf and with_interaction_cst:
-                        self._update_interaction_constraints_after_split(
+                        interaction_constraints.update_after_split(
                             splitter.features,
                             &parent_record,
                             split.feature,
@@ -524,10 +580,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                   intp_t min_samples_leaf,  min_weight_leaf,
                   intp_t max_depth, intp_t max_leaf_nodes,
                   float64_t min_impurity_decrease,
-                  const intp_t[:] feature_to_groups_indptr=None,
-                  const intp_t[:] feature_to_groups_indices=None,
-                  const intp_t[:] group_to_features_indptr=None,
-                  const intp_t[:] group_to_features_indices=None):
+                  InteractionConstraints interaction_constraints=None):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -535,15 +588,9 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         self.max_depth = max_depth
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
-        self.feature_to_groups_indptr = feature_to_groups_indptr
-        self.feature_to_groups_indices = feature_to_groups_indices
-        self.group_to_features_indptr = group_to_features_indptr
-        self.group_to_features_indices = group_to_features_indices
-        self.with_interaction_cst = feature_to_groups_indptr is not None
-        if self.with_interaction_cst:
-            self.n_interaction_groups = group_to_features_indptr.shape[0] - 1
-        else:
-            self.n_interaction_groups = 0
+        if interaction_constraints is None:
+            interaction_constraints = InteractionConstraints()
+        self.interaction_constraints = interaction_constraints
 
     cpdef build(
         self,
@@ -583,11 +630,14 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
         cdef ParentInfo parent_record
         _init_parent_record(&parent_record)
+        cdef InteractionConstraints interaction_constraints = (
+            self.interaction_constraints
+        )
 
         # Initial capacity
         cdef intp_t init_capacity = max_split_nodes + max_leaf_nodes
         tree._resize(init_capacity)
-        self._init_interaction_cst_fit_state(splitter)
+        interaction_constraints.init_fit_state(splitter)
         self.parent_node_ids = np.empty(init_capacity, dtype=np.intp)
 
         with nogil:
@@ -745,20 +795,15 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         # reset n_constant_features for this specific split before beginning split search
         parent_record.n_constant_features = 0
 
-        # rebuild/restore interactions constraints state:
-        parent_record.n_allowed_features = splitter.n_features
-        if self.with_interaction_cst:
-            parent_record.n_active_interaction_groups = self.n_interaction_groups
-            node_id = parent_node_id
-            while node_id != _TREE_UNDEFINED:
-                self._update_interaction_constraints_after_split(
-                    splitter.features,
-                    parent_record,
-                    tree.nodes[node_id].feature,
-                )
-                if parent_record.n_active_interaction_groups == 1:
-                    break
-                node_id = self.parent_node_ids[node_id]
+        # Rebuild interaction-constraint state from the path root -> parent.
+        self.interaction_constraints.restore_state_from_path(
+            splitter.features,
+            parent_record,
+            tree.nodes,
+            self.parent_node_ids,
+            parent_node_id,
+            splitter.n_features,
+        )
 
         if is_first:
             parent_record.impurity = splitter.node_impurity()
