@@ -36,8 +36,8 @@ good a classifier is calibrated.
     decomposition of Murphy [1]_. As it is not clear which term dominates, the score is
     of limited use for assessing calibration alone (unless one computes each term of
     the decomposition). A lower Brier loss, for instance, does not necessarily
-    mean a better calibrated model, it could also mean a worse calibrated model with much
-    more discriminatory power, e.g. using many more features.
+    mean a better calibrated model, it could also mean a worse calibrated model with
+    much more discriminatory power, e.g. using many more features.
 
 .. _calibration_curve:
 
