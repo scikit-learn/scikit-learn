@@ -213,9 +213,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return constraints
 
     def _interaction_cst_to_csr(self, constraints, n_features):
-        """Convert interaction constraints to CSR-like arrays."""
+        """Convert interaction constraints to a group-to-features CSR matrix."""
         if constraints is None:
-            return None, None, None, None
+            return None
 
         contraint_idx = np.repeat(
             np.arange(len(constraints)), [len(cst) for cst in constraints]
@@ -224,16 +224,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             (
                 np.ones(contraint_idx.size),
                 (contraint_idx, list(itertools.chain(*constraints))),
-            )
+            ),
+            shape=(len(constraints), n_features),
         )
-        feature_to_groups = group_to_features.tocsc()
-
-        return (
-            feature_to_groups.indptr.astype(np.intp),
-            feature_to_groups.indices.astype(np.intp),
-            group_to_features.indptr.astype(np.intp),
-            group_to_features.indices.astype(np.intp),
-        )
+        return group_to_features
 
     def get_depth(self):
         """Return the depth of the decision tree.
@@ -508,17 +502,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 # *positive class*, all signs must be flipped.
                 monotonic_cst *= -1
 
-        (
-            feature_to_groups_indptr,
-            feature_to_groups_indices,
-            group_to_features_indptr,
-            group_to_features_indices,
-        ) = self._interaction_cst_to_csr(interaction_cst, X.shape[1])
-        interaction_constraints = InteractionConstraints(
-            feature_to_groups_indptr,
-            feature_to_groups_indices,
-            group_to_features_indptr,
-            group_to_features_indices,
+        group_to_features = self._interaction_cst_to_csr(interaction_cst, X.shape[1])
+        interaction_constraints = (
+            None
+            if group_to_features is None
+            else InteractionConstraints(group_to_features)
         )
 
         if not isinstance(self.splitter, Splitter):
