@@ -413,7 +413,7 @@ def _logistic_regression_path(
         warm_start_sag = {"coef": w0.T}
 
     coefs = list()
-    n_iter = np.zeros(len(Cs), dtype=np.int32)
+    n_iter = xp.zeros(len(Cs), dtype=xp.int32, device=device_)
     coefs_order = "C" if not _is_numpy_namespace(xp) else "K"
     for i, C in enumerate(Cs):
         if solver == "lbfgs":
@@ -1316,7 +1316,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             n_threads=n_threads,
         )
 
-        self.n_iter_ = np.asarray(n_iter, dtype=np.int32)
+        self.n_iter_ = xp.asarray(n_iter, dtype=xp.int32)
 
         self.coef_ = coefs[0, ...]
         if self.fit_intercept:
