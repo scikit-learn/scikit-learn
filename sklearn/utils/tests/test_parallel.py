@@ -195,3 +195,34 @@ def test_filter_warning_propagates_no_side_effect_with_loky_backend():
             joblib.delayed(warnings.warn)("Convergence warning", ConvergenceWarning)
             for _ in range(10)
         )
+
+
+@pytest.mark.thread_unsafe
+def test_filter_warning_no_implicit_third_party_import_in_loky_workers(
+    tmp_path, monkeypatch, capfd
+):
+    """Avoid importing third-party modules when restoring warning filters."""
+    module_name = "mock_warning_category_module"
+    module_path = tmp_path / f"{module_name}.py"
+    module_path.write_text(
+        "import warnings\n"
+        "warnings.warn('module imported', UserWarning)\n"
+        "\n"
+        "class CustomWarning(Warning):\n"
+        "    pass\n",
+        encoding="utf-8",
+    )
+    monkeypatch.syspath_prepend(str(tmp_path))
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", message="module imported", category=UserWarning
+        )
+        module = __import__(module_name)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=module.CustomWarning)
+        Parallel(n_jobs=2, backend="loky")(delayed(time.sleep)(0) for _ in range(4))
+
+    captured = capfd.readouterr()
+    assert "module imported" not in captured.err
