@@ -272,19 +272,14 @@ div.sk-text-image-grid-large {
   }
 }
 
-/* ------------------------------------------------------------
-   Hint that example gallery images are clickable
-   See issue #30596
------------------------------------------------------------- */
+/* Hint that example gallery images are clickable */
 
-/* Hover effect on clickable thumbnails */
-.sphx-glr-thumbcontainer figure > a:hover img {
+.sphx-glr-thumbcontainer a.reference.internal:hover img {
   border-radius: 0.3rem;
   box-shadow: 0 0 0 0.15rem var(--pst-color-secondary);
 }
 
-/* Put the [source] label ONLY under the thumbnail image */
-.sphx-glr-thumbcontainer figure > a::after {
+.sphx-glr-thumbcontainer a.reference.internal::after {
   content: "[source]";
   display: block;
   text-align: center;
