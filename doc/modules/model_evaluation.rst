@@ -2001,9 +2001,10 @@ two above definitions to follow.
 
 .. rubric:: References
 
-.. [Brier1950] G. Brier, `Verification of forecasts expressed in terms of probability
-  <ftp://ftp.library.noaa.gov/docs.lib/htdocs/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
-  Monthly weather review 78.1 (1950)
+.. [Brier1950] G. Brier (1950).
+  :doi:`"Verification of forecasts expressed in terms of probability"
+  <10.1175/1520-0493(1950)078%3C0001:VOFEIT%3E2.0.CO;2>`.
+  Monthly Weather Review 78(1), 1-3
 
 .. [Murphy1973] Allan H. Murphy (1973).
   :doi:`"A New Vector Partition of the Probability Score"
@@ -2212,7 +2213,7 @@ of 0.0.
 
     \text{dev}(y, \hat{y}) = \text{brier_score_loss}(y, \hat{y}).
 
-  This is also referred to as the Brier Skill Score (BSS).
+  This is also referred to as the Brier Skill Score (BSS) and scaled Brier score.
 
   Here are some usage examples of the :func:`d2_brier_score` function::
 
