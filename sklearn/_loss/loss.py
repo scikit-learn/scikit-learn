@@ -1555,12 +1555,12 @@ class HalfMultinomialLossArrayAPI(ArrayAPILossMixin, HalfMultinomialLoss):
 
         if self.class_indexing_offsets is None:
             self.class_indexing_offsets = (
-                xp.arange(y_true.shape[0], device=device_) * raw_prediction.shape[1]
+                xp.arange(y_true.shape[0], device=device_) * self.n_classes
             )
-        label_predictions = xp.take(
+        true_label_probs = xp.take(
             _ravel(raw_prediction), self.y_true_int + self.class_indexing_offsets
         )
-        loss = log_sum_exp - label_predictions
+        loss = log_sum_exp - true_label_probs
         if sample_weight is not None:
             loss *= sample_weight
         return loss
@@ -1578,7 +1578,7 @@ class HalfMultinomialLossArrayAPI(ArrayAPILossMixin, HalfMultinomialLoss):
                 self.y_true_int = xp.asarray(y_true, dtype=xp.int64, device=device_)
 
             self.y_true_one_hot = self.y_true_int[:, None] == xp.arange(
-                raw_prediction.shape[1], device=device_
+                self.n_classes, device=device_
             )
             self.y_true_one_hot = xp.astype(
                 self.y_true_one_hot, raw_prediction.dtype, copy=False

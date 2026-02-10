@@ -300,10 +300,10 @@ def _logistic_regression_path(
         class_weight_ = compute_class_weight(
             class_weight, classes=classes, y=y, sample_weight=sample_weight
         )
-        labels_class_weight = xp.asarray(
+        class_weight_ = xp.asarray(
             class_weight_[le.transform(y)], dtype=X.dtype, device=device_
         )
-        sample_weight *= labels_class_weight
+        sample_weight *= class_weight_
 
     if is_binary:
         w0 = np.zeros(
@@ -321,8 +321,7 @@ def _logistic_regression_path(
         # All solvers capable of a multinomial need LabelEncoder, not LabelBinarizer,
         # i.e. y as a 1d-array of integers. LabelEncoder also saves memory
         # compared to LabelBinarizer, especially when n_classes is large.
-        Y_multi = xp.asarray(le.transform(y), device=device_)
-        Y_multi = xp.astype(Y_multi, X.dtype, copy=False)
+        Y_multi = xp.asarray(le.transform(y), dtype=X.dtype, device=device_)
         # It is important that w0 is F-contiguous.
         w0 = np.zeros(
             (size(classes), n_features + int(fit_intercept)),
