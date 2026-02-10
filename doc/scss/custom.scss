@@ -277,16 +277,20 @@ div.sk-text-image-grid-large {
    See issue #30596
 ------------------------------------------------------------ */
 
-.sphx-glr-thumbcontainer a.reference.internal:hover img {
+/* Hover effect on clickable thumbnails */
+.sphx-glr-thumbcontainer figure > a:hover img {
   border-radius: 0.3rem;
   box-shadow: 0 0 0 0.15rem var(--pst-color-secondary);
 }
 
-.sphx-glr-thumbcontainer a.reference.internal::after {
+/* Put the [source] label ONLY under the thumbnail image */
+.sphx-glr-thumbcontainer figure > a::after {
   content: "[source]";
   display: block;
+  text-align: center;
   font-weight: var(--pst-font-weight-caption);
   font-size: 0.85em;
   margin-top: 0.2rem;
   opacity: 0.7;
 }
+
