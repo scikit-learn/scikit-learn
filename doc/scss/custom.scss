@@ -272,14 +272,16 @@ div.sk-text-image-grid-large {
   }
 }
 
-/* Hint that example gallery images are clickable */
+/* Hint that example gallery images are clickable
+   See issue #30596
+*/
 
-.sphx-glr-thumbcontainer a.reference.internal:hover img {
+.sphx-glr-thumbcontainer .figure a:hover img {
   border-radius: 0.3rem;
   box-shadow: 0 0 0 0.15rem var(--pst-color-secondary);
 }
 
-.sphx-glr-thumbcontainer a.reference.internal::after {
+.sphx-glr-thumbcontainer .figure a::after {
   content: "[source]";
   display: block;
   text-align: center;
@@ -288,4 +290,5 @@ div.sk-text-image-grid-large {
   margin-top: 0.2rem;
   opacity: 0.7;
 }
+
 
