@@ -234,9 +234,7 @@ def test_filter_warning_no_implicit_third_party_import_in_loky_workers(
 
 
 def test_pack_warning_filter_with_warning_category():
-    packed_filter = _pack_warning_filter(
-        ("ignore", None, ConvergenceWarning, None, 0)
-    )
+    packed_filter = _pack_warning_filter(("ignore", None, ConvergenceWarning, None, 0))
     assert packed_filter[2] == ("sklearn.exceptions", "ConvergenceWarning")
 
 
