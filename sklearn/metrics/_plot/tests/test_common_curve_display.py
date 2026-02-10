@@ -331,16 +331,8 @@ auc_metrics = [[1.0, 1.0, 1.0], None]
             "AUC",
             "roc_auc",
             {
-                "fpr": [
-                    np.array([0, 0.5, 1]),
-                    np.array([0, 0.5, 1]),
-                    np.array([0, 0.5, 1]),
-                ],
-                "tpr": [
-                    np.array([0, 0.5, 1]),
-                    np.array([0, 0.5, 1]),
-                    np.array([0, 0.5, 1]),
-                ],
+                "fpr": [np.array([0, 0.5, 1])] * 3,
+                "tpr": [np.array([0, 0.5, 1])] * 3,
                 "roc_auc": auc_metric,
             },
         )
@@ -353,7 +345,7 @@ auc_metrics = [[1.0, 1.0, 1.0], None]
 )
 @pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
 def test_display_plot_legend_label(
-    pyplot, Display, auc_metric_name, auc_arg_name, display_args, name, curve_kwargs
+    pyplot, Display, auc_metric_name, auc_arg_name, display_args, curve_kwargs, name
 ):
     """Check legend label correct with all `curve_kwargs`, `name` combinations.
 
@@ -429,7 +421,7 @@ def test_display_plot_legend_label(
 )
 @pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
 def test_display_from_cv_results_legend_label(
-    pyplot, Display, auc_metrics, auc_metric_name, name, curve_kwargs
+    pyplot, Display, auc_metrics, auc_metric_name, curve_kwargs, name
 ):
     """Check legend label correct with all `curve_kwargs`, `name` combinations.
 
