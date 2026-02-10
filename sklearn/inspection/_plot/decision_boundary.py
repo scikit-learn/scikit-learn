@@ -326,6 +326,9 @@ class DecisionBoundaryDisplay:
             self.multiclass_colors_ = colors
 
             if self.response.ndim == 2:  # predict
+                # Select colors consistently according to classes to be plotted
+                # (given limits might not contain all class regions)
+                colors = [colors[i] for i in np.unique(self.response)]
                 # `pcolormesh` requires cmap, for the others it makes no difference
                 cmap = mpl.colors.ListedColormap(colors)
                 self.surface_ = plot_func(
@@ -596,17 +599,13 @@ class DecisionBoundaryDisplay:
                     )
 
         # Create meshgrid for data range.
-        # Extend if required by `xlim` and `ylim` but never shrink as we need to
-        # calculate responses for all `X`, such that we see all classes, to maintain
-        # class color consistency. Note this is only relevant when we need
-        # `type_of_target` to infer `n_classes`.
         x0 = _safe_indexing(X, 0, axis=1)
-        x0_min = min(x0.min() - eps, xlim[0]) if xlim is not None else x0.min() - eps
-        x0_max = max(x0.max() + eps, xlim[1]) if xlim is not None else x0.max() + eps
+        x0_min = xlim[0] if xlim is not None else x0.min() - eps
+        x0_max = xlim[1] if xlim is not None else x0.max() + eps
 
         x1 = _safe_indexing(X, 1, axis=1)
-        x1_min = min(x1.min() - eps, ylim[0]) if ylim is not None else x1.min() - eps
-        x1_max = max(x1.max() + eps, ylim[1]) if ylim is not None else x1.max() + eps
+        x1_min = ylim[0] if ylim is not None else x1.min() - eps
+        x1_max = ylim[1] if ylim is not None else x1.max() + eps
 
         xx0, xx1 = np.meshgrid(
             np.linspace(x0_min, x0_max, grid_resolution),
@@ -662,7 +661,11 @@ class DecisionBoundaryDisplay:
         elif is_clusterer(estimator) and hasattr(estimator, "labels_"):
             n_classes = len(np.unique(estimator.labels_))
         else:
-            target_type = type_of_target(response)
+            response_all, _ = _get_response_values(
+                estimator, X, response_method="predict", pos_label=class_of_interest
+            )
+            target_type = type_of_target(response_all)
+
             if target_type in ("binary", "continuous"):
                 n_classes = 2
             elif target_type == "multiclass":

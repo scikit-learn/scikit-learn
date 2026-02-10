@@ -903,28 +903,43 @@ def test_xlim_ylim_validation_errors_plot(pyplot, lim, msg):
         disp.plot(ylim=lim)
 
 
-def test_xlim_ylim(pyplot):
+@pytest.mark.parametrize(
+    "xlim, ylim",
+    [
+        (None, None),
+        ((0, 1), (0, 1)),
+        ((-5, 5), (-5, 5)),
+        ((0.25, 0.75), (0.25, 0.75)),
+        ((-3, 0), (1, 2)),
+        (None, (-5, 5)),
+        ((-5, 5), None),
+    ],
+)
+def test_xlim_ylim(pyplot, xlim, ylim):
     """Check that xlim and ylim parameters work as expected."""
 
     X = np.array([[0, 0], [1, 1], [1, 0], [0, 1]])
     y = np.array([0, 1, 2, 3])
     clf = LogisticRegression().fit(X, y)
 
-    xlim = (-3, 0)
-    ylim = (-1, 2)
-
     disp = DecisionBoundaryDisplay.from_estimator(
         clf,
         X,
+        eps=0.0,
         xlim=xlim,
         ylim=ylim,
     )
 
+    if xlim is None:
+        xlim = (X[:, 0].min(), X[:, 0].max())
+    if ylim is None:
+        ylim = (X[:, 1].min(), X[:, 1].max())
+
     # Check that the grid is correctly extended to cover the requested limits
-    assert disp.xx0.min() <= xlim[0]
-    assert disp.xx0.max() >= xlim[1]
-    assert disp.xx1.min() <= ylim[0]
-    assert disp.xx1.max() >= ylim[1]
+    assert disp.xx0.min() == xlim[0]
+    assert disp.xx0.max() == xlim[1]
+    assert disp.xx1.min() == ylim[0]
+    assert disp.xx1.max() == ylim[1]
 
     assert disp.ax_.get_xlim() == xlim
     assert disp.ax_.get_ylim() == ylim
