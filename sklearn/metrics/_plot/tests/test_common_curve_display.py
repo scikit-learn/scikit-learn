@@ -35,9 +35,9 @@ def data_binary(data):
 def _check_pos_label_statistics(
     display_class, response_method, constructor_name, check_metric
 ):
-    """Check switching `pos_label` give correct statistics, using imbalanced data."""
+    """Test switching `pos_label` gives correct statistics, using imbalanced data."""
     X, y = load_breast_cancer(return_X_y=True)
-    # create a highly imbalanced classes
+    # create highly imbalanced classes
     idx_positive = np.flatnonzero(y == 1)
     idx_negative = np.flatnonzero(y == 0)
     idx_selected = np.hstack([idx_negative, idx_positive[:25]])
@@ -59,9 +59,9 @@ def _check_pos_label_statistics(
         LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
     )
 
-    # Sanity check to be sure the positive class is `classes_[0]`
+    # Sanity check to be sure the positive class is `classes_[0]`.
     # Class imbalance ensures a large difference in prediction values between classes,
-    # allowing us to catch errors when we switch `pos_label`
+    # allowing us to catch errors when we switch `pos_label`.
     assert classifier.classes_.tolist() == ["cancer", "not cancer"]
 
     y_score = getattr(classifier, response_method)(X_test)
