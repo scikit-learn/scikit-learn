@@ -272,23 +272,39 @@ div.sk-text-image-grid-large {
   }
 }
 
-/* Hint that example gallery images are clickable
+/* ------------------------------------------------------------
+   Hint that example gallery images are clickable
    See issue #30596
-*/
+------------------------------------------------------------ */
 
-.sphx-glr-thumbcontainer .figure a:hover img {
+.sphx-glr-thumbcontainer a:hover img {
   border-radius: 0.3rem;
   box-shadow: 0 0 0 0.15rem var(--pst-color-secondary);
 }
 
-.sphx-glr-thumbcontainer .figure a::after {
+/* Make the [source] hint clearly visible and prevent overlap */
+.sphx-glr-thumbcontainer {
+  padding-bottom: 1rem;
+}
+
+.sphx-glr-thumbcontainer a::after {
   content: "[source]";
   display: block;
-  text-align: center;
+
+  font-size: 0.8em;
   font-weight: var(--pst-font-weight-caption);
-  font-size: 0.85em;
-  margin-top: 0.2rem;
-  opacity: 0.7;
+
+  text-align: center;
+
+  margin-top: 0.4rem;
+  padding-bottom: 0.3rem;
+
+  color: var(--pst-color-primary);
+  opacity: 1;
+
+  position: relative;
+  z-index: 20;
 }
+
 
 
