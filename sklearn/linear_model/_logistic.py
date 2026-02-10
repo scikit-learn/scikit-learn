@@ -263,7 +263,6 @@ def _logistic_regression_path(
 
     solver = _check_solver(solver, penalty, dual)
     xp, _, device_ = get_namespace_and_device(X)
-    xp_y, _ = get_namespace(y)
 
     # Preprocessing.
     if check_input:
@@ -414,7 +413,7 @@ def _logistic_regression_path(
         warm_start_sag = {"coef": w0.T}
 
     coefs = list()
-    n_iter = xp.zeros(len(Cs), dtype=xp.int32, device=device_)
+    n_iter = np.zeros(len(Cs), dtype=np.int32)
     coefs_order = "C" if not _is_numpy_namespace(xp) else "K"
     for i, C in enumerate(Cs):
         if solver == "lbfgs":
@@ -1237,7 +1236,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         n_features = X.shape[1]
         check_classification_targets(y)
         self.classes_ = xp_y.unique_values(y)
-        n_classes = self.classes_.shape[0]
+        n_classes = size(self.classes_)
         is_binary = n_classes == 2
 
         if solver == "liblinear":
@@ -1289,7 +1288,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             warm_start_coef = None
         if warm_start_coef is not None and self.fit_intercept:
             warm_start_coef = xp.concat(
-                [warm_start_coef, self.intercept_[:, xp.newaxis]], axis=1
+                [warm_start_coef, self.intercept_[:, None]], axis=1
             )
 
         # TODO: enable multi-threading if benchmarks show a positive effect,
@@ -1317,7 +1316,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             n_threads=n_threads,
         )
 
-        self.n_iter_ = xp.asarray(n_iter, dtype=xp.int32)
+        self.n_iter_ = np.asarray(n_iter, dtype=np.int32)
 
         self.coef_ = coefs[0, ...]
         if self.fit_intercept:

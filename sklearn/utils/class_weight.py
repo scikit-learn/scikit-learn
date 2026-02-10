@@ -13,6 +13,7 @@ from sklearn.utils._array_api import (
     _isin,
     get_namespace,
     get_namespace_and_device,
+    size,
 )
 from sklearn.utils._param_validation import StrOptions, validate_params
 from sklearn.utils.validation import _check_sample_weight
@@ -93,12 +94,12 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
         sample_weight = _check_sample_weight(sample_weight, y)
         weighted_class_counts = _bincount(y_ind, weights=sample_weight, xp=xp)
         recip_freq = xp.sum(weighted_class_counts) / (
-            le.classes_.shape[0] * weighted_class_counts
+            size(le.classes_) * weighted_class_counts
         )
         weight = recip_freq[le.transform(classes)]
     else:
         # user-defined dictionary
-        weight = xp.ones(classes.shape[0], device=device_)
+        weight = xp.ones(size(classes), device=device_)
         unweighted_classes = []
         for i, c in enumerate(classes):
             try:
@@ -110,7 +111,7 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
             else:
                 unweighted_classes.append(c)
 
-        n_weighted_classes = classes.shape[0] - len(unweighted_classes)
+        n_weighted_classes = size(classes) - len(unweighted_classes)
         if unweighted_classes and n_weighted_classes != len(class_weight):
             unweighted_classes_user_friendly_str = np.array(unweighted_classes).tolist()
             raise ValueError(
