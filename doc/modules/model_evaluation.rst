@@ -1987,11 +1987,11 @@ two above definitions to follow.
     the Brier score assesses calibration (reliability) and
     discriminative power (resolution) of a model, as well as the randomness of the data
     (uncertainty) at the same time. This follows from the well-known Brier score
-    decomposition of Murphy [1]_. As it is not clear which term dominates, the score is
-    of limited use for assessing calibration alone (unless one computes each term of
-    the decomposition). A lower Brier loss, for instance, does not necessarily
-    mean a better calibrated model, it could also mean a worse calibrated model with
-    much more discriminatory power, e.g. using many more features.
+    decomposition of Murphy [Murphy1973]_. As it is not clear which term dominates,
+    the score is of limited use for assessing calibration alone (unless one computes
+    each term of the decomposition). A lower Brier loss, for instance, does not
+    necessarily mean a better calibrated model, it could also mean a worse calibrated
+    model with much more discriminatory power, e.g. using many more features.
 
 .. rubric:: Examples
 
