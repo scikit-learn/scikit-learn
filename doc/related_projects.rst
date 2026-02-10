@@ -65,7 +65,7 @@ enhance the functionality of scikit-learn's estimators.
   organize, log and reproduce experiments
 
 - `Scikit-Learn Laboratory
-  <https://skll.readthedocs.io/en/latest/index.html>`_  A command-line
+  <https://skll.readthedocs.io/en/latest/index.html>`_ A command-line
   wrapper around scikit-learn that makes it easy to run machine learning
   experiments with multiple learners and large feature sets.
 
