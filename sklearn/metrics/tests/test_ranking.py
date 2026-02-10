@@ -16,6 +16,7 @@ from sklearn.metrics import (
     confusion_matrix_at_thresholds,
     coverage_error,
     dcg_score,
+    decision_threshold_curve,
     det_curve,
     label_ranking_average_precision_score,
     label_ranking_loss,
@@ -2305,3 +2306,10 @@ def test_roc_curve_with_probablity_estimates(global_random_seed):
     y_score = rng.rand(10)
     _, _, thresholds = roc_curve(y_true, y_score)
     assert np.isinf(thresholds[0])
+
+
+def test_decision_threshold_curve():
+    """Dummy test, just to check function works."""
+    y_true = np.array([0, 0, 1, 1])
+    y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    scores, thresholds = decision_threshold_curve(y_true, y_score, accuracy_score)
