@@ -22,6 +22,7 @@ from sklearn.compose import (
 from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import VarianceThreshold
+from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import (
     FunctionTransformer,
     Normalizer,
@@ -2823,6 +2824,16 @@ def test_unused_transformer_request_present():
     )
     router = ct.get_metadata_routing()
     assert router.consumes("fit", ["metadata"]) == set(["metadata"])
+
+
+def test_integer_column_names_warns():
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame([[1, 3], [2, 4]], columns=[0, 1])
+
+    ct = ColumnTransformer(transformers=[("num", SimpleImputer(), [0, 1])])
+
+    with pytest.warns(UserWarning, match="integer column names"):
+        ct.fit(df)
 
 
 # End of Metadata Routing Tests
