@@ -359,10 +359,17 @@ def _spectral_embedding(
             # to spare a memory allocation of a possibly very large array
             tol = 0 if eigen_tol == "auto" else eigen_tol
 
-            # The following two lines transform laplacian L into I-L
-            # because the diagonal of L is filled with 1s (see line above)
+            # The following transforms laplacian L into I-L
             laplacian *= -1
-            laplacian = _set_diag(laplacian, 0, norm_laplacian)
+            if sparse.issparse(laplacian):
+                I = sparse.identity(
+                    laplacian.shape[0],
+                    dtype=laplacian.dtype,
+                    format=laplacian.format,
+                )
+            else:
+                I = np.eye(laplacian.shape[0]).astype(laplacian.dtype)
+            laplacian = laplacian + I
 
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
             laplacian = check_array(
@@ -381,7 +388,7 @@ def _spectral_embedding(
             warnings.warn("ARPACK has failed, falling back to LOBPCG.")
             eigen_solver = "lobpcg"
             # Revert the laplacian to what it was to have lobpcg work
-            laplacian = _set_diag(laplacian, -1, norm_laplacian)
+            laplacian = laplacian - I
             laplacian *= -1
 
     elif eigen_solver == "amg":
