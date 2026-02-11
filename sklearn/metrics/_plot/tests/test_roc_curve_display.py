@@ -517,7 +517,7 @@ def test_roc_curve_display_default_labels(
     "constructor_name", ["from_estimator", "from_predictions", "from_cv_results"]
 )
 def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
-    """Check switching `pos_label` give correct statistics, using imbalanced data."""
+    """Test switching `pos_label` gives correct statistics, using imbalanced data."""
 
     def _check_auc(display, constructor_name, pos_label):
         roc_auc_limit = 0.95679

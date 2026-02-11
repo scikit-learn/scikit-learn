@@ -34,6 +34,99 @@ def data_binary(data):
     return X[y < 2], y[y < 2]
 
 
+def _check_pos_label_statistics(
+    display_class, response_method, constructor_name, check_metric
+):
+    """Test switching `pos_label` gives correct statistics, using imbalanced data."""
+    X, y = load_breast_cancer(return_X_y=True)
+    # create highly imbalanced classes
+    idx_positive = np.flatnonzero(y == 1)
+    idx_negative = np.flatnonzero(y == 0)
+    idx_selected = np.hstack([idx_negative, idx_positive[:25]])
+    X, y = X[idx_selected], y[idx_selected]
+    X, y = shuffle(X, y, random_state=42)
+    # only use 2 features to make the problem even harder
+    X = X[:, :2]
+    y = np.array(["cancer" if c == 1 else "not cancer" for c in y], dtype=object)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        stratify=y,
+        random_state=0,
+    )
+
+    classifier = LogisticRegression()
+    classifier.fit(X_train, y_train)
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+
+    # Sanity check to be sure the positive class is `classes_[0]`.
+    # Class imbalance ensures a large difference in prediction values between classes,
+    # allowing us to catch errors when we switch `pos_label`.
+    assert classifier.classes_.tolist() == ["cancer", "not cancer"]
+
+    y_score = getattr(classifier, response_method)(X_test)
+    # we select the corresponding probability columns or reverse the decision
+    # function otherwise
+    y_score_cancer = -1 * y_score if y_score.ndim == 1 else y_score[:, 0]
+    y_score_not_cancer = y_score if y_score.ndim == 1 else y_score[:, 1]
+
+    pos_label = "cancer"
+    y_score = y_score_cancer
+    if constructor_name == "from_estimator":
+        display = display_class.from_estimator(
+            classifier,
+            X_test,
+            y_test,
+            pos_label=pos_label,
+            response_method=response_method,
+        )
+    elif constructor_name == "from_predictions":
+        display = display_class.from_predictions(
+            y_test,
+            y_score,
+            pos_label=pos_label,
+        )
+    else:
+        display = display_class.from_cv_results(
+            cv_results,
+            X,
+            y,
+            response_method=response_method,
+            pos_label=pos_label,
+        )
+
+    check_metric(display, constructor_name, pos_label)
+
+    pos_label = "not cancer"
+    y_score = y_score_not_cancer
+    if constructor_name == "from_estimator":
+        display = display_class.from_estimator(
+            classifier,
+            X_test,
+            y_test,
+            response_method=response_method,
+            pos_label=pos_label,
+        )
+    elif constructor_name == "from_predictions":
+        display = display_class.from_predictions(
+            y_test,
+            y_score,
+            pos_label=pos_label,
+        )
+    else:
+        display = display_class.from_cv_results(
+            cv_results,
+            X,
+            y,
+            response_method=response_method,
+            pos_label=pos_label,
+        )
+
+    check_metric(display, constructor_name, pos_label)
+
+
 @pytest.mark.parametrize(
     "Display",
     [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
@@ -356,43 +449,28 @@ auc_metrics = [[1.0, 1.0, 1.0], None]
 
 
 @pytest.mark.parametrize(
-    "Display, auc_metric_name, display_args",
+    "Display, auc_metric_name, auc_arg_name, display_args",
     [
         pytest.param(
-            PrecisionRecallDisplay,
-            "AP",
+            RocCurveDisplay,
+            "AUC",
+            "roc_auc",
             {
-                "precision": [
-                    np.array([1, 0.5, 0]),
-                    np.array([1, 0.5, 0]),
-                    np.array([1, 0.5, 0]),
-                ],
-                "recall": [
-                    np.array([0, 0.5, 1]),
-                    np.array([0, 0.5, 1]),
-                    np.array([0, 0.5, 1]),
-                ],
-                "average_precision": auc_metric,
+                "fpr": [np.array([0, 0.5, 1])] * 3,
+                "tpr": [np.array([0, 0.5, 1])] * 3,
+                "roc_auc": auc_metric,
             },
         )
         for auc_metric in auc_metrics
     ]
     + [
         pytest.param(
-            RocCurveDisplay,
-            "AUC",
+            PrecisionRecallDisplay,
+            "AP",
             {
-                "fpr": [
-                    np.array([0, 0.5, 1]),
-                    np.array([0, 0.5, 1]),
-                    np.array([0, 0.5, 1]),
-                ],
-                "tpr": [
-                    np.array([0, 0.5, 1]),
-                    np.array([0, 0.5, 1]),
-                    np.array([0, 0.5, 1]),
-                ],
-                "roc_auc": auc_metric,
+                "precision": [np.array([1, 0.5, 0])] * 3,
+                "recall": [np.array([0, 0.5, 1])] * 3,
+                "average_precision": auc_metric,
             },
         )
         for auc_metric in auc_metrics
@@ -404,7 +482,7 @@ auc_metrics = [[1.0, 1.0, 1.0], None]
 )
 @pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
 def test_display_plot_legend_label(
-    pyplot, Display, auc_metric_name, display_args, name, curve_kwargs
+    pyplot, Display, auc_metric_name, auc_arg_name, display_args, curve_kwargs, name
 ):
     """Check legend label correct with all `curve_kwargs`, `name` combinations.
 
@@ -418,10 +496,7 @@ def test_display_plot_legend_label(
 
     display = Display(**display_args).plot(name=name, curve_kwargs=curve_kwargs)
     legend = display.ax_.get_legend()
-    if Display == PrecisionRecallDisplay:
-        auc_metric = display_args["average_precision"]
-    elif Display == RocCurveDisplay:
-        auc_metric = display_args["roc_auc"]
+    auc_metric = display_args[auc_arg_name]
 
     if legend is None:
         # No legend is created, exit test early
@@ -469,6 +544,36 @@ def test_display_plot_legend_label(
             assert legend_labels[0] == expected_label
     # Close plots, prevents "more than 20 figures" opened warning
     pyplot.close("all")
+
+
+@pytest.mark.parametrize("Display", [PrecisionRecallDisplay, RocCurveDisplay])
+@pytest.mark.parametrize(
+    "constructor_name, expected_clf_name",
+    [
+        ("from_estimator", "LogisticRegression"),
+        ("from_predictions", "Classifier"),
+    ],
+)
+def test_display_default_name(
+    pyplot,
+    data_binary,
+    constructor_name,
+    expected_clf_name,
+    Display,
+):
+    # Check the default name display in the figure when `name` is not provided
+    X, y = data_binary
+
+    lr = LogisticRegression().fit(X, y)
+    y_score = lr.predict_proba(X)[:, 1]
+
+    if constructor_name == "from_estimator":
+        disp = Display.from_estimator(lr, X, y)
+    else:
+        disp = Display.from_predictions(y, y_score)
+
+    assert expected_clf_name in disp.name
+    assert expected_clf_name in disp.line_.get_label()
 
 
 @pytest.mark.parametrize(
@@ -540,100 +645,6 @@ def test_display_from_cv_results_legend_label(
                 )
     # Close plots, prevents "more than 20 figures" opened warning
     pyplot.close("all")
-
-
-def _check_pos_label_statistics(
-    display_class, response_method, constructor_name, check_metric
-):
-    # check that we can provide the positive label and display the proper
-    # statistics
-    X, y = load_breast_cancer(return_X_y=True)
-    # create an highly imbalanced
-    idx_positive = np.flatnonzero(y == 1)
-    idx_negative = np.flatnonzero(y == 0)
-    idx_selected = np.hstack([idx_negative, idx_positive[:25]])
-    X, y = X[idx_selected], y[idx_selected]
-    X, y = shuffle(X, y, random_state=42)
-    # only use 2 features to make the problem even harder
-    X = X[:, :2]
-    y = np.array(["cancer" if c == 1 else "not cancer" for c in y], dtype=object)
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        stratify=y,
-        random_state=0,
-    )
-
-    classifier = LogisticRegression()
-    classifier.fit(X_train, y_train)
-    cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
-    )
-
-    # Sanity check to be sure the positive class is `classes_[0]`
-    # Class imbalance ensures a large difference in prediction values between classes,
-    # allowing us to catch errors when we switch `pos_label`
-    assert classifier.classes_.tolist() == ["cancer", "not cancer"]
-
-    y_score = getattr(classifier, response_method)(X_test)
-    # we select the corresponding probability columns or reverse the decision
-    # function otherwise
-    y_score_cancer = -1 * y_score if y_score.ndim == 1 else y_score[:, 0]
-    y_score_not_cancer = y_score if y_score.ndim == 1 else y_score[:, 1]
-
-    pos_label = "cancer"
-    y_score = y_score_cancer
-    if constructor_name == "from_estimator":
-        display = display_class.from_estimator(
-            classifier,
-            X_test,
-            y_test,
-            pos_label=pos_label,
-            response_method=response_method,
-        )
-    elif constructor_name == "from_predictions":
-        display = display_class.from_predictions(
-            y_test,
-            y_score,
-            pos_label=pos_label,
-        )
-    else:
-        display = display_class.from_cv_results(
-            cv_results,
-            X,
-            y,
-            response_method=response_method,
-            pos_label=pos_label,
-        )
-
-    check_metric(display, constructor_name, pos_label)
-
-    pos_label = "not cancer"
-    y_score = y_score_not_cancer
-    if constructor_name == "from_estimator":
-        display = display_class.from_estimator(
-            classifier,
-            X_test,
-            y_test,
-            response_method=response_method,
-            pos_label=pos_label,
-        )
-    elif constructor_name == "from_predictions":
-        display = display_class.from_predictions(
-            y_test,
-            y_score,
-            pos_label=pos_label,
-        )
-    else:
-        display = display_class.from_cv_results(
-            cv_results,
-            X,
-            y,
-            response_method=response_method,
-            pos_label=pos_label,
-        )
-
-    check_metric(display, constructor_name, pos_label)
 
 
 @pytest.mark.parametrize("Display", [PrecisionRecallDisplay, RocCurveDisplay])
@@ -723,36 +734,6 @@ def test_display_from_cv_results_pos_label_inferred(pyplot, data_binary, Display
     disp = Display.from_cv_results(cv_results, X, y, pos_label=None)
     # Should be `estimator.classes_[1]`
     assert disp.pos_label == 1
-
-
-@pytest.mark.parametrize("Display", [PrecisionRecallDisplay, RocCurveDisplay])
-@pytest.mark.parametrize(
-    "constructor_name, expected_clf_name",
-    [
-        ("from_estimator", "LogisticRegression"),
-        ("from_predictions", "Classifier"),
-    ],
-)
-def test_display_default_name(
-    pyplot,
-    data_binary,
-    constructor_name,
-    expected_clf_name,
-    Display,
-):
-    # Check the default name display in the figure when `name` is not provided
-    X, y = data_binary
-
-    lr = LogisticRegression().fit(X, y)
-    y_score = lr.predict_proba(X)[:, 1]
-
-    if constructor_name == "from_estimator":
-        disp = Display.from_estimator(lr, X, y)
-    else:
-        disp = Display.from_predictions(y, y_score)
-
-    assert expected_clf_name in disp.name
-    assert expected_clf_name in disp.line_.get_label()
 
 
 @pytest.mark.parametrize("Display", [PrecisionRecallDisplay, RocCurveDisplay])
