@@ -468,6 +468,7 @@ auc_metrics = [[1.0, 1.0, 1.0], None]
         pytest.param(
             PrecisionRecallDisplay,
             "AP",
+            "average_precision",
             {
                 "precision": [np.array([1, 0.5, 0])] * 3,
                 "recall": [np.array([0, 0.5, 1])] * 3,
