@@ -361,29 +361,29 @@ def _spectral_embedding(
 
             # The following transforms laplacian L into I-L
             laplacian *= -1
-            if sparse.issparse(laplacian):
-                if sparse.isspmatrix(laplacian):
-                    I = sparse.identity(
-                        laplacian.shape[0],
-                        dtype=laplacian.dtype,
-                        format=laplacian.format,
-                    )
-                else:
-                    I = sparse.eye_array(
-                        laplacian.shape[0],
-                        dtype=laplacian.dtype,
-                        format=laplacian.format,
-                    )
-            else:
-                I = np.eye(laplacian.shape[0]).astype(laplacian.dtype)
-            laplacian = laplacian + I
+            #            if sparse.issparse(laplacian):
+            #                if sparse.isspmatrix(laplacian):
+            #                    I = sparse.eye(
+            #                        laplacian.shape[0],
+            #                        dtype=laplacian.dtype,
+            #                        format=laplacian.format,
+            #                    )
+            #                else:
+            #                    I = sparse.eye_array(
+            #                        laplacian.shape[0],
+            #                        dtype=laplacian.dtype,
+            #                        format=laplacian.format,
+            #                    )
+            #            else:
+            #                I = np.eye(laplacian.shape[0]).astype(laplacian.dtype)
+            #            laplacian = laplacian + I
 
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
             laplacian = check_array(
                 laplacian, accept_sparse="csr", accept_large_sparse=False
             )
             _, diffusion_map = eigsh(
-                laplacian, k=n_components, sigma=1.0, which="LM", tol=tol, v0=v0
+                laplacian, k=n_components, sigma=0.0, which="LM", tol=tol, v0=v0
             )
             embedding = diffusion_map.T[n_components::-1]
             if norm_laplacian:
@@ -395,7 +395,7 @@ def _spectral_embedding(
             warnings.warn("ARPACK has failed, falling back to LOBPCG.")
             eigen_solver = "lobpcg"
             # Revert the laplacian to what it was to have lobpcg work
-            laplacian = laplacian - I
+            #            laplacian = laplacian - I
             laplacian *= -1
 
     elif eigen_solver == "amg":
