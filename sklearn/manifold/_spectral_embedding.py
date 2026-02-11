@@ -383,7 +383,7 @@ def _spectral_embedding(
                 laplacian, accept_sparse="csr", accept_large_sparse=False
             )
             _, diffusion_map = eigsh(
-                laplacian, k=n_components, sigma=0.0, which="LM", tol=tol, v0=v0
+                laplacian, k=n_components, sigma=1.0, which="LM", tol=tol, v0=v0
             )
             embedding = diffusion_map.T[n_components::-1]
             if norm_laplacian:
