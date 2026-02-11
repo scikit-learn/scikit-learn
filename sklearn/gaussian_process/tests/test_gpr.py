@@ -859,3 +859,19 @@ def test_gpr_predict_no_cov_no_std_return(kernel):
     y_pred = gpr.predict(X, return_cov=False, return_std=False)
 
     assert_allclose(y_pred, y)
+
+
+def test_gpr_copy_X_train_false():
+    """Check that GPR works with copy_X_train=False."""
+    X_train = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
+    y_train = np.array([1.0, 2.0, 3.0])
+
+    gpr = GaussianProcessRegressor(kernel=RBF(), copy_X_train=False, optimizer=None)
+    gpr.fit(X_train, y_train)
+
+    # With copy_X_train=False, training data should be the same object
+    assert gpr.X_train_ is X_train
+    assert gpr.y_train_ is y_train
+
+    y_pred = gpr.predict(X_train)
+    assert y_pred.shape == (3,)

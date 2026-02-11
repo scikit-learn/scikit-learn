@@ -1027,6 +1027,76 @@ def test_squareform_matches_scipy(array_namespace, device_, dtype_name):
 
 
 @skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize("func_name", ["_cdist", "_pdist"])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    [
+        combo
+        for combo in yield_namespace_device_dtype_combinations()
+        if combo[0] in ("array_api_strict", "torch")
+    ],
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_cdist_pdist_unsupported_metric(
+    func_name, array_namespace, device_, dtype_name
+):
+    """Check _cdist/_pdist raise ValueError for unsupported metrics."""
+    xp = _array_api_for_tests(array_namespace, device_)
+
+    X_np = numpy.random.RandomState(42).rand(5, 3).astype(dtype_name or "float64")
+    X_xp = xp.asarray(X_np, device=device_)
+
+    func = _cdist if func_name == "_cdist" else _pdist
+
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(ValueError, match="not supported"):
+            if func_name == "_cdist":
+                func(X_xp, X_xp, metric="cosine", xp=xp)
+            else:
+                func(X_xp, metric="cosine", xp=xp)
+
+
+@pytest.mark.parametrize("metric", ["euclidean", "sqeuclidean"])
+def test_cdist_cupy(metric):
+    """Check _cdist works with CuPy arrays."""
+    cupy = pytest.importorskip("cupy")
+
+    rng = numpy.random.RandomState(42)
+    X_np = rng.rand(10, 4).astype("float64")
+    Y_np = rng.rand(8, 4).astype("float64")
+
+    X_cu = cupy.asarray(X_np)
+    Y_cu = cupy.asarray(Y_np)
+
+    expected = scipy_cdist(X_np, Y_np, metric=metric)
+
+    with config_context(array_api_dispatch=True):
+        result_cu = _cdist(X_cu, Y_cu, metric=metric, xp=cupy)
+
+    result_np = cupy.asnumpy(result_cu)
+    assert_allclose(result_np, expected, rtol=1e-10)
+
+
+@pytest.mark.parametrize("metric", ["euclidean", "sqeuclidean"])
+def test_pdist_cupy(metric):
+    """Check _pdist works with CuPy arrays."""
+    cupy = pytest.importorskip("cupy")
+
+    rng = numpy.random.RandomState(42)
+    X_np = rng.rand(10, 4).astype("float64")
+
+    X_cu = cupy.asarray(X_np)
+
+    expected = scipy_pdist(X_np, metric=metric)
+
+    with config_context(array_api_dispatch=True):
+        result_cu = _pdist(X_cu, metric=metric, xp=cupy)
+
+    result_np = cupy.asnumpy(result_cu)
+    assert_allclose(result_np, expected, rtol=1e-10)
+
+
+@skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype_name",
     yield_namespace_device_dtype_combinations(),
