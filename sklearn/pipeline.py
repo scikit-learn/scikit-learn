@@ -1995,7 +1995,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         adapter = _get_container_adapter("transform", self)
         if adapter and all(adapter.is_supported_container(X) for X in Xs):
-            return adapter.hstack(Xs)
+            return adapter.hstack(Xs, self.get_feature_names_out())
 
         if any(sparse.issparse(f) for f in Xs):
             return sparse.hstack(Xs).tocsr()
