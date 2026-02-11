@@ -341,7 +341,7 @@ def _spectral_embedding(
         laplacian = _set_diag(laplacian, 1, norm_laplacian)
 
         # Here we'll use shift-invert mode for fast eigenvalues
-        # (see https://docs.scipy.org/doc/scipy/reference/tutorial/arpack.html
+        # (see https://docs.scipy.org/doc/scipy/tutorial/arpack.html
         #  for a short explanation of what this means)
         # Because the normalized Laplacian has eigenvalues between 0 and 2,
         # I - L has eigenvalues between -1 and 1.  ARPACK is most efficient
@@ -361,22 +361,22 @@ def _spectral_embedding(
 
             # The following transforms laplacian L into I-L
             laplacian *= -1
-            #            if sparse.issparse(laplacian):
-            #                if sparse.isspmatrix(laplacian):
-            #                    I = sparse.eye(
-            #                        laplacian.shape[0],
-            #                        dtype=laplacian.dtype,
-            #                        format=laplacian.format,
-            #                    )
-            #                else:
-            #                    I = sparse.eye_array(
-            #                        laplacian.shape[0],
-            #                        dtype=laplacian.dtype,
-            #                        format=laplacian.format,
-            #                    )
-            #            else:
-            #                I = np.eye(laplacian.shape[0]).astype(laplacian.dtype)
-            #            laplacian = laplacian + I
+            if sparse.issparse(laplacian):
+                if sparse.isspmatrix(laplacian):
+                    I = sparse.eye(
+                        laplacian.shape[0],
+                        dtype=laplacian.dtype,
+                        format=laplacian.format,
+                    )
+                else:
+                    I = sparse.eye_array(
+                        laplacian.shape[0],
+                        dtype=laplacian.dtype,
+                        format=laplacian.format,
+                    )
+            else:
+                I = np.eye(laplacian.shape[0]).astype(laplacian.dtype)
+            laplacian = laplacian + I
 
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
             laplacian = check_array(
@@ -395,7 +395,7 @@ def _spectral_embedding(
             warnings.warn("ARPACK has failed, falling back to LOBPCG.")
             eigen_solver = "lobpcg"
             # Revert the laplacian to what it was to have lobpcg work
-            #            laplacian = laplacian - I
+            laplacian = laplacian - I
             laplacian *= -1
 
     elif eigen_solver == "amg":
