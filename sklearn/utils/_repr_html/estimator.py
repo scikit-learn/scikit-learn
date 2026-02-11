@@ -347,8 +347,6 @@ def _write_estimator_html(
                 attrs = "".join(
                     [
                         estimator._get_fitted_attr_html(doc_link)._repr_html_inner(),
-                        "estimator's sizeof :",
-                        str(estimator.__sizeof__()),
                     ]
                 )
 
@@ -422,8 +420,6 @@ def _write_estimator_html(
             attrs = "".join(
                 [
                     estimator._get_fitted_attr_html(doc_link)._repr_html_inner(),
-                    "estimator's sizeof :",
-                    str(estimator.__sizeof__()),
                 ]
             )
 

@@ -50,8 +50,7 @@ def _fitted_attr_html_repr(fitted_attributes):
                         <th>Name</th>
                         <th>Type</th>
                         <th>Shape</th>
-                        <th>Dtype</th>
-                        <th>Memory (Mb)</th>
+                        <th>dtype</th>
                         <th>Value</th>
                         </tr>
                         {rows}
@@ -67,7 +66,6 @@ def _fitted_attr_html_repr(fitted_attributes):
            <td>{1}</td>
            <td>{2}</td>
            <td>{3}</td>
-           <td>{4}</td>
        </tr>
     """
 
@@ -105,13 +103,12 @@ def _fitted_attr_html_repr(fitted_attributes):
             # Just show the parameter name without link
             fitted_attr_display = html.escape(name)
         if len(value) == 2:
-            html_row_values = (value[0], "", "", "", _read_fitted_attr(value[1]))
+            html_row_values = (value[0], "", "", _read_fitted_attr(value[1]))
         else:
             html_row_values = (
                 value[0],
                 value[1],
                 value[2],
-                _read_fitted_attr(value[3]),
                 "",
             )
         rows.append(
