@@ -281,18 +281,17 @@ def test_enet_toy():
     assert_almost_equal(clf.dual_gap_, 0)
 
 
-def test_lasso_dual_gap(global_random_seed):
+def test_lasso_dual_gap():
     """
     Check that Lasso.dual_gap_ matches its objective formulation, with the
     datafit normalized by n_samples
     """
-    X, y, _, _ = build_dataset(
-        n_samples=10, n_features=30, random_state=global_random_seed
-    )
+    X, y, _, _ = build_dataset(n_samples=10, n_features=30)
     n_samples = len(y)
     alpha = 0.01 * np.max(np.abs(X.T @ y)) / n_samples
     clf = Lasso(alpha=alpha, fit_intercept=False).fit(X, y)
     w = clf.coef_
+    assert np.count_nonzero(w) > 0
     R = y - X @ w
     primal = 0.5 * np.mean(R**2) + clf.alpha * np.sum(np.abs(w))
     # dual pt: R / n_samples, dual constraint: norm(X.T @ theta, inf) <= alpha
@@ -695,12 +694,12 @@ def test_lasso_readonly_data():
         assert_almost_equal(clf.dual_gap_, 0)
 
 
-def test_multi_task_lasso_readonly_data(global_random_seed):
-    X, y, _, _ = build_dataset(random_state=global_random_seed)
+def test_multi_task_lasso_readonly_data():
+    X, y, X_test, y_test = build_dataset()
     Y = np.c_[y, y]
-
-    with TempMemmap((X, Y)) as (X_mm, Y_mm):
-        clf = MultiTaskLasso(alpha=1, tol=1e-8).fit(X_mm, Y_mm)
+    with TempMemmap((X, Y)) as (X, Y):
+        Y = np.c_[y, y]
+        clf = MultiTaskLasso(alpha=1, tol=1e-8).fit(X, Y)
         assert 0 < clf.dual_gap_ < 1e-5
         assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
