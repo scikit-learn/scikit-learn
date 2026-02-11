@@ -60,18 +60,22 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     name : str or list of str, default=None
         Name for labeling legend entries. The number of legend entries is determined
         by the `curve_kwargs` passed to `plot`, and is not affected by `name`.
-        To label each curve, provide a list of strings. To avoid labeling
-        individual curves that have the same appearance, this cannot be used in
-        conjunction with `curve_kwargs` being a dictionary or None. If a
-        string is provided, it will be used to either label the single legend entry
-        or if there are multiple legend entries, label each individual curve with
-        the same name. If `None`, no name is shown in the legend.
+
+        If a string is provided, it will be used to either label the single legend
+        entry or if there are multiple legend entries, label each individual curve
+        with the same name.
+
+        If a list is provided, it will be used to label each curve individually.
+        Passing a list will raise an error if `curve_kwargs` is not a list to avoid
+        labeling individual curves that have the same appearance.
+
+        If `None`, no name is shown in the legend.
 
         .. versionchanged:: 1.8
             `estimator_name` was deprecated in favor of `name`.
 
         .. versionchanged:: 1.9
-            `estimator_name` can now take a list of str for multiple curves.
+            `name` can now take a list of str for multiple curves.
 
     pos_label : int, float, bool or str, default=None
         The class considered the positive class when precision and recall metrics
@@ -224,14 +228,17 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         name : str or list of str, default=None
             Name for labeling legend entries. The number of legend entries
-            is determined by `curve_kwargs`.
-            To label each curve, provide a list of strings. To avoid labeling
-            individual curves that have the same appearance, this cannot be used in
-            conjunction with `curve_kwargs` being a dictionary or None. If a
-            string is provided, it will be used to either label the single legend entry
-            or if there are multiple legend entries, label each individual curve with
-            the same name. If `None`, set to `name` provided at `PrecisionRecallDisplay`
-            initialization. If still `None`, no name is shown in the legend.
+            is determined by `curve_kwargs`, and is not affected by `name`.
+
+            If a string is provided, it will be used to either label the single legend
+            entry or if there are multiple legend entries, label each individual curve
+            with the same name.
+
+            If a list is provided, it will be used to label each curve individually.
+            Passing a list will raise an error if `curve_kwargs` is not a list to avoid
+            labeling individual curves that have the same appearance.
+
+            If `None`, no name is shown in the legend.
 
             .. versionchanged:: 1.9
                 Now accepts a list for plotting multiple curves.
@@ -786,12 +793,16 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         name : str or list of str, default=None
             Name for labeling legend entries. The number of legend entries
             is determined by `curve_kwargs`, and is not affected by `name`.
-            To label each curve, provide a list of strings. To avoid labeling
-            individual curves that have the same appearance, this cannot be used in
-            conjunction with `curve_kwargs` being a dictionary or None. If a
-            string is provided, it will be used to either label the single legend entry
-            or if there are multiple legend entries, label each individual curve with
-            the same name. If `None`, no name is shown in the legend.
+
+            If a string is provided, it will be used to either label the single legend
+            entry or if there are multiple legend entries, label each individual curve
+            with the same name.
+
+            If a list is provided, it will be used to label each curve individually.
+            Passing a list will raise an error if `curve_kwargs` is not a list to avoid
+            labeling individual curves that have the same appearance.
+
+            If `None`, no name is shown in the legend.
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
