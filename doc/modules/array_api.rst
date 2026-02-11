@@ -157,6 +157,7 @@ Meta-estimators that accept Array API inputs conditioned on the fact that the
 base estimator also does:
 
 - :class:`calibration.CalibratedClassifierCV` (with `method="temperature"`)
+- :class:`pipeline.FeatureUnion`
 - :class:`model_selection.GridSearchCV`
 - :class:`model_selection.RandomizedSearchCV`
 - :class:`model_selection.HalvingGridSearchCV`
