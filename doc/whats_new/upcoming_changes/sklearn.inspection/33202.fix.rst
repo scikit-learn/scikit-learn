@@ -1,0 +1,4 @@
+- In :class:`inspection.DecisionBoundaryDisplay`, `n_classes` is now inferred more
+  robustly from the estimator. If it fails for custom estimators, a comprehensive error
+  message is shown.
+  By :user:`Anne Beyer <AnneBeyer>`.
