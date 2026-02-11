@@ -282,29 +282,48 @@ div.sk-text-image-grid-large {
   box-shadow: 0 0 0 0.15rem var(--pst-color-secondary);
 }
 
-/* Make the [source] hint clearly visible and prevent overlap */
-.sphx-glr-thumbcontainer {
-  padding-bottom: 1rem;
+/* ------------------------------------------------------------
+   Hint that example gallery images are clickable
+   See issue #30596
+------------------------------------------------------------ */
+
+.sphx-glr-thumbcontainer a {
+  position: relative;
+  display: inline-block;
 }
 
+/* Hover highlight */
+.sphx-glr-thumbcontainer a:hover img {
+  border-radius: 0.3rem;
+  box-shadow: 0 0 0 0.15rem var(--pst-color-secondary);
+}
+
+/* Overlay [source] badge (NO overlap possible) */
 .sphx-glr-thumbcontainer a::after {
   content: "[source]";
-  display: block;
 
-  font-size: 0.8em;
-  font-weight: var(--pst-font-weight-caption);
+  position: absolute;
+  bottom: 0.4rem;
+  right: 0.4rem;
 
-  text-align: center;
+  background: rgba(0, 0, 0, 0.65);
+  color: white;
 
-  margin-top: 0.4rem;
-  padding-bottom: 0.3rem;
+  font-size: 0.75em;
+  font-weight: 600;
 
-  color: var(--pst-color-primary);
-  opacity: 1;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.25rem;
 
-  position: relative;
-  z-index: 20;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
 }
+
+/* Show badge on hover */
+.sphx-glr-thumbcontainer a:hover::after {
+  opacity: 1;
+}
+
 
 
 
