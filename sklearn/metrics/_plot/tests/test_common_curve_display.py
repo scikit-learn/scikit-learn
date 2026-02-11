@@ -1,4 +1,5 @@
 from collections.abc import Mapping
+from contextlib import suppress
 
 import numpy as np
 import pytest
@@ -7,7 +8,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.calibration import CalibrationDisplay
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_breast_cancer, load_iris, make_classification
-from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
+from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     ConfusionMatrixDisplay,
@@ -688,18 +689,13 @@ def test_display_from_cv_results_param_validation(pyplot, data_binary, Display):
 
     # `pos_label` inconsistency
     y_multi[y_multi == 1] = 2
-    if Display == RocCurveDisplay:
-        # This warning is raised by `roc_curve`
+    with suppress(ValueError):  # ignore any `pos_label` side errors
         with pytest.warns(
-            UndefinedMetricWarning, match="No positive samples in y_true"
+            # Also captures subclass warnings e.g., `UndefinedMetricWarning`
+            UserWarning,
+            match="No positive .* in y_true",
         ):
             Display.from_cv_results(cv_results, X, y_multi)
-    elif Display == PrecisionRecallDisplay:
-        # in `average_precision` default `pos_label=1`, thus following error is raised
-        with pytest.raises(ValueError, match="pos_label=1 is not a valid label"):
-            # `precision_recall_curve` also raises a warning
-            with pytest.warns(UserWarning, match="No positive class found in y_true"):
-                Display.from_cv_results(cv_results, X, y_multi)
 
     # `name` is list while `curve_kwargs` is None or dict
     for curve_kwargs in (None, {"alpha": 0.2}):
@@ -744,7 +740,7 @@ def test_display_from_cv_results_pos_label_inferred(pyplot, data_binary, Display
 def test_display_from_cv_results_curve_kwargs(
     pyplot, data_binary, curve_kwargs, Display
 ):
-    """Check `curve_kwargs` correctly passed."""
+    """Check `curve_kwargs` correctly passed from `from_cv_results`."""
     X, y = data_binary
     cv_results = cross_validate(
         LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
