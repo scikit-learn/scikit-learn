@@ -2003,9 +2003,10 @@ the same does a lower Brier score loss always mean better calibration"
 
 .. rubric:: References
 
-.. [Brier1950] G. Brier, `Verification of forecasts expressed in terms of probability
-  <ftp://ftp.library.noaa.gov/docs.lib/htdocs/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
-  Monthly weather review 78.1 (1950)
+.. [Brier1950] G. Brier (1950).
+  :doi:`"Verification of forecasts expressed in terms of probability"
+  <10.1175/1520-0493(1950)078%3C0001:VOFEIT%3E2.0.CO;2>`.
+  Monthly Weather Review 78(1), 1-3
 
 .. [Bella2012] Bella, Ferri, Hernández-Orallo, and Ramírez-Quintana
   `"Calibration of Machine Learning Models"
@@ -2219,7 +2220,7 @@ of 0.0.
 
     \text{dev}(y, \hat{y}) = \text{brier_score_loss}(y, \hat{y}).
 
-  This is also referred to as the Brier Skill Score (BSS).
+  This is also referred to as the Brier Skill Score (BSS) and scaled Brier score.
 
   Here are some usage examples of the :func:`d2_brier_score` function::
 
@@ -2987,7 +2988,7 @@ quantile regressor via cross-validation:
   ...     random_state=0,
   ... )
   >>> cross_val_score(estimator, X, y, cv=5, scoring=mean_pinball_loss_95p)
-  array([13.6, 9.7, 23.3, 9.5, 10.4])
+  array([14.3,  9.8, 23.9,  9.4, 10.8])
 
 It is also possible to build scorer objects for hyper-parameter tuning. The
 sign of the loss must be switched to ensure that greater means better as
