@@ -173,6 +173,20 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
            In Proceedings of the 2000 ACM SIGMOD International Conference on
            Management of Data, pp. 93-104.
 
+    Notes
+    -----
+    The binary labeling of samples as inliers or outliers is determined by
+    comparing the negative LOF scores against a threshold derived from the
+    `contamination` parameter. In rare cases, particularly when many samples
+    have identical LOF scores near the contamination threshold, the number of
+    samples labeled as outliers may not exactly match the expected proportion.
+    If you observe unexpected labeling behavior, it is recommended to:
+
+    - Examine the raw LOF scores via `negative_outlier_factor_` to verify
+      which samples truly have outlier characteristics.
+    - Adjust the `contamination` parameter if needed.
+    - Apply custom thresholding based on the LOF scores for more control.
+
     Examples
     --------
     >>> import numpy as np
