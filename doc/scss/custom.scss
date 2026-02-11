@@ -287,41 +287,26 @@ div.sk-text-image-grid-large {
    See issue #30596
 ------------------------------------------------------------ */
 
-.sphx-glr-thumbcontainer a {
-  position: relative;
-  display: inline-block;
-}
-
-/* Hover highlight */
+/* Hover highlight around clickable thumbnails */
 .sphx-glr-thumbcontainer a:hover img {
   border-radius: 0.3rem;
   box-shadow: 0 0 0 0.15rem var(--pst-color-secondary);
 }
 
-/* Overlay [source] badge (NO overlap possible) */
-.sphx-glr-thumbcontainer a::after {
-  content: "[source]";
-
-  position: absolute;
-  bottom: 0.4rem;
-  right: 0.4rem;
-
-  background: rgba(0, 0, 0, 0.65);
-  color: white;
-
-  font-size: 0.75em;
-  font-weight: 600;
-
-  padding: 0.15rem 0.4rem;
-  border-radius: 0.25rem;
-
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out;
+/* Hide the existing [source] label (it overlaps) */
+.sphx-glr-thumbcontainer a span.doc {
+  display: none !important;
 }
 
-/* Show badge on hover */
-.sphx-glr-thumbcontainer a:hover::after {
-  opacity: 1;
+/* Add a cleaner replacement hint */
+.sphx-glr-thumbcontainer a::after {
+  content: "Click for source code";
+  display: block;
+  font-size: 0.8em;
+  font-weight: var(--pst-font-weight-caption);
+  opacity: 0.75;
+  margin-top: 0.3rem;
+  text-align: center;
 }
 
 
