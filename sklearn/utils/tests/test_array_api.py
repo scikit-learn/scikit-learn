@@ -7,8 +7,6 @@ import scipy
 import scipy.sparse as sp
 from numpy.testing import assert_allclose
 from scipy.spatial.distance import cdist as scipy_cdist
-from scipy.spatial.distance import pdist as scipy_pdist
-from scipy.spatial.distance import squareform as scipy_squareform
 
 from sklearn._config import config_context
 from sklearn._loss import HalfMultinomialLoss
@@ -36,9 +34,7 @@ from sklearn.utils._array_api import (
     _nanmax,
     _nanmean,
     _nanmin,
-    _pdist,
     _ravel,
-    _squareform,
     _validate_diagonal_args,
     device,
     get_namespace,
@@ -970,64 +966,6 @@ def test_cdist_matches_scipy(array_namespace, device_, dtype_name, metric):
 
 
 @skip_if_array_api_compat_not_configured
-@pytest.mark.parametrize("metric", ["euclidean", "sqeuclidean"])
-@pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
-)
-def test_pdist_matches_scipy(array_namespace, device_, dtype_name, metric):
-    """Check that _pdist matches scipy.spatial.distance.pdist."""
-    xp = _array_api_for_tests(array_namespace, device_)
-
-    rng = numpy.random.RandomState(42)
-    dtype = dtype_name if dtype_name else "float64"
-    X_np = rng.rand(12, 4).astype(dtype)
-
-    X_xp = xp.asarray(X_np, device=device_)
-
-    expected = scipy_pdist(X_np, metric=metric)
-
-    with config_context(array_api_dispatch=True):
-        result_xp = _pdist(X_xp, metric=metric, xp=xp)
-
-    result_np = _convert_to_numpy(result_xp, xp)
-
-    rtol = 1e-5 if "float32" in str(dtype) else 1e-10
-    assert_allclose(result_np, expected, rtol=rtol)
-
-
-@skip_if_array_api_compat_not_configured
-@pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
-)
-def test_squareform_matches_scipy(array_namespace, device_, dtype_name):
-    """Check that _squareform matches scipy.spatial.distance.squareform."""
-    xp = _array_api_for_tests(array_namespace, device_)
-
-    rng = numpy.random.RandomState(42)
-    dtype = dtype_name if dtype_name else "float64"
-    X_np = rng.rand(10, 4).astype(dtype)
-
-    # Create condensed distance matrix
-    condensed_np = scipy_pdist(X_np, metric="euclidean").astype(dtype)
-    condensed_xp = xp.asarray(condensed_np, device=device_)
-
-    expected = scipy_squareform(condensed_np)
-
-    with config_context(array_api_dispatch=True):
-        result_xp = _squareform(condensed_xp, xp=xp)
-
-    result_np = _convert_to_numpy(result_xp, xp)
-
-    rtol = 1e-5 if "float32" in str(dtype) else 1e-10
-    assert_allclose(result_np, expected, rtol=rtol)
-
-
-@skip_if_array_api_compat_not_configured
-@pytest.mark.parametrize("func_name", ["_cdist", "_pdist"])
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype_name",
     [
@@ -1037,23 +975,16 @@ def test_squareform_matches_scipy(array_namespace, device_, dtype_name):
     ],
     ids=_get_namespace_device_dtype_ids,
 )
-def test_cdist_pdist_unsupported_metric(
-    func_name, array_namespace, device_, dtype_name
-):
-    """Check _cdist/_pdist raise ValueError for unsupported metrics."""
+def test_cdist_unsupported_metric(array_namespace, device_, dtype_name):
+    """Check _cdist raises ValueError for unsupported metrics."""
     xp = _array_api_for_tests(array_namespace, device_)
 
     X_np = numpy.random.RandomState(42).rand(5, 3).astype(dtype_name or "float64")
     X_xp = xp.asarray(X_np, device=device_)
 
-    func = _cdist if func_name == "_cdist" else _pdist
-
     with config_context(array_api_dispatch=True):
         with pytest.raises(ValueError, match="not supported"):
-            if func_name == "_cdist":
-                func(X_xp, X_xp, metric="cosine", xp=xp)
-            else:
-                func(X_xp, metric="cosine", xp=xp)
+            _cdist(X_xp, X_xp, metric="cosine", xp=xp)
 
 
 @pytest.mark.parametrize("metric", ["euclidean", "sqeuclidean"])
@@ -1072,25 +1003,6 @@ def test_cdist_cupy(metric):
 
     with config_context(array_api_dispatch=True):
         result_cu = _cdist(X_cu, Y_cu, metric=metric, xp=cupy)
-
-    result_np = cupy.asnumpy(result_cu)
-    assert_allclose(result_np, expected, rtol=1e-10)
-
-
-@pytest.mark.parametrize("metric", ["euclidean", "sqeuclidean"])
-def test_pdist_cupy(metric):
-    """Check _pdist works with CuPy arrays."""
-    cupy = pytest.importorskip("cupy")
-
-    rng = numpy.random.RandomState(42)
-    X_np = rng.rand(10, 4).astype("float64")
-
-    X_cu = cupy.asarray(X_np)
-
-    expected = scipy_pdist(X_np, metric=metric)
-
-    with config_context(array_api_dispatch=True):
-        result_cu = _pdist(X_cu, metric=metric, xp=cupy)
 
     result_np = cupy.asnumpy(result_cu)
     assert_allclose(result_np, expected, rtol=1e-10)

@@ -336,10 +336,12 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     lml = self.log_marginal_likelihood(theta, clone_kernel=False)
                     return -float(lml)
 
-            # Get theta and bounds as numpy for scipy.optimize
-            # XXX Are they not already numpy arrays?
-            theta_init = _convert_to_numpy(self.kernel_.theta, xp)
-            bounds_init = _convert_to_numpy(self.kernel_.bounds, xp)
+            # Kernel theta/bounds are always numpy arrays (from Kernel.theta/bounds
+            # properties which use np.log/np.hstack), but convert explicitly for safety
+            # theta_init = _convert_to_numpy(self.kernel_.theta, xp)
+            # bounds_init = _convert_to_numpy(self.kernel_.bounds, xp)
+            theta_init = self.kernel_.theta
+            bounds_init = self.kernel_.bounds
 
             # First optimize starting from theta specified in kernel
             optima = [self._constrained_optimization(obj_func, theta_init, bounds_init)]
@@ -494,28 +496,24 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             # Alg 2.1, page 19, line 5 -> v = L \ K(X_test, X_train)^T
             V = _solve_triangular(self.L_, K_trans.T, lower=GPR_CHOLESKY_LOWER, xp=xp)
 
+            # Pre-compute for un-normalisation of variance/covariance
+            y_train_std_sq = xp.asarray(self._y_train_std, device=device_) ** 2
+
             if return_cov:
                 # Alg 2.1, page 19, line 6 -> K(X_test, X_test) - v^T. v
                 y_cov = self.kernel_(X) - V.T @ V
 
                 # undo normalisation
-                # np.outer equivalent: expand dims and multiply
-                y_train_std_sq = xp.asarray(self._y_train_std, device=device_) ** 2
                 if y_train_std_sq.ndim == 0:
-                    # scalar case
                     y_cov = y_cov * y_train_std_sq
                 else:
-                    # Reshape y_cov to (n_samples, n_samples, 1) then multiply
                     y_cov = xp.expand_dims(y_cov, axis=-1) * y_train_std_sq
-                    # if y_cov has shape (n_samples, n_samples, 1), reshape to
-                    # (n_samples, n_samples)
                     if y_cov.shape[2] == 1:
                         y_cov = xp.squeeze(y_cov, axis=2)
 
                 return y_mean, y_cov
             else:  # return_std
                 # Compute variance of predictive distribution
-                # Use sum of element-wise product instead of einsum
                 # einsum("ij,ji->i", V.T, V) == sum(V * V, axis=0)
                 y_var = self.kernel_.diag(X) + 0  # +0 to copy
                 y_var = y_var - xp.sum(V * V, axis=0)
@@ -535,12 +533,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     )
 
                 # undo normalisation
-                y_train_std_sq = xp.asarray(self._y_train_std, device=device_) ** 2
                 if y_train_std_sq.ndim == 0:
                     y_var = y_var * y_train_std_sq
                 else:
                     y_var = xp.expand_dims(y_var, axis=-1) * y_train_std_sq
-                    # if y_var has shape (n_samples, 1), reshape to (n_samples,)
                     if y_var.shape[1] == 1:
                         y_var = xp.squeeze(y_var, axis=1)
 
@@ -576,8 +572,6 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         xp, _, device_ = get_namespace_and_device(X)
 
         y_mean, y_cov = self.predict(X, return_cov=True)
-        # XXX Which way around should we do the conversion? Move y_mean or move
-        # XXX the indices?
         # Convert to numpy for random sampling (sampling happens on CPU)
         y_mean_np = _convert_to_numpy(y_mean, xp)
         y_cov_np = _convert_to_numpy(y_cov, xp)

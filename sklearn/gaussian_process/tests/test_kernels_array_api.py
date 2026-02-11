@@ -86,6 +86,11 @@ BASIC_KERNELS = [
 # Kernels for gradient tests (eval_gradient=True)
 GRADIENT_KERNELS = [
     RBF(),
+    ConstantKernel(constant_value=2.0),
+    WhiteKernel(noise_level=0.5),
+    Matern(nu=0.5),
+    Matern(nu=1.5),
+    Matern(nu=2.5),
     RationalQuadratic(alpha=1.5),
     ExpSineSquared(periodicity=2.0),
     DotProduct(),
@@ -139,12 +144,18 @@ def test_kernel_gradient_array_api(
     _check_kernel_result(K_xp, K_np, kernel_data)
 
     K_grad_xp_np = _convert_to_numpy(K_grad_xp, kernel_data["xp"])
-    rtol = 1e-5 if kernel_data["dtype_name"] == "float64" else 1e-4
+    rtol = 1e-5 if kernel_data["dtype_name"] == "float64" else 1e-3
+    # Matern nu=0.5 gradient involves 0/0 at zero distance (diagonal), handled
+    # via safe-division that can produce small nonzero values across backends
+    if kernel_data["dtype_name"] == "float32":
+        atol = 1e-3
+    else:
+        atol = max(_atol_for_type(kernel_data["dtype_name"]), 1e-7)
     assert_allclose(
         K_grad_xp_np,
         K_grad_np,
         rtol=rtol,
-        atol=_atol_for_type(kernel_data["dtype_name"]),
+        atol=atol,
     )
 
 

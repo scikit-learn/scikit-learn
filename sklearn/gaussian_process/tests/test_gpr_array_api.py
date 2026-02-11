@@ -244,6 +244,113 @@ def test_gpr_normalize_y_array_api(array_namespace, device_, dtype_name, gpr_dat
 @skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize("n_targets", [1, 3])
+@pytest.mark.parametrize("return_type", ["mean", "std", "cov"])
+def test_gpr_multi_output_array_api(
+    array_namespace, device_, dtype_name, n_targets, return_type
+):
+    """Test GPR with multi-output y works with array API inputs."""
+    xp = _array_api_for_tests(array_namespace, device_)
+
+    rng = np.random.RandomState(42)
+    X_np = rng.randn(20, 3).astype(dtype_name)
+    y_np = rng.randn(20, n_targets).astype(dtype_name)
+    X_test_np = rng.randn(5, 3).astype(dtype_name)
+
+    kernel = RBF(length_scale=1.0)
+
+    # Fit with numpy
+    gpr_np = GaussianProcessRegressor(kernel=kernel, random_state=42, optimizer=None)
+    gpr_np.fit(X_np, y_np)
+
+    # Fit with array API
+    gpr_xp = GaussianProcessRegressor(kernel=kernel, random_state=42, optimizer=None)
+    X_xp = xp.asarray(X_np, device=device_)
+    y_xp = xp.asarray(y_np, device=device_)
+    X_test_xp = xp.asarray(X_test_np, device=device_)
+
+    with config_context(array_api_dispatch=True):
+        gpr_xp.fit(X_xp, y_xp)
+
+        if return_type == "mean":
+            y_pred_np = gpr_np.predict(X_test_np)
+            y_pred_xp = gpr_xp.predict(X_test_xp)
+        elif return_type == "std":
+            y_pred_np, std_np = gpr_np.predict(X_test_np, return_std=True)
+            y_pred_xp, std_xp = gpr_xp.predict(X_test_xp, return_std=True)
+        else:
+            y_pred_np, cov_np = gpr_np.predict(X_test_np, return_cov=True)
+            y_pred_xp, cov_xp = gpr_xp.predict(X_test_xp, return_cov=True)
+
+    # GPR intermediate computations (Cholesky, triangular solves) accumulate
+    # larger numerical differences in float32
+    rtol = 1e-3 if dtype_name == "float32" else 1e-6
+
+    y_pred_xp_np = _convert_to_numpy(y_pred_xp, xp)
+    assert_allclose(y_pred_xp_np, y_pred_np, rtol=rtol)
+    assert y_pred_xp.shape == y_pred_np.shape
+
+    if return_type == "std":
+        std_xp_np = _convert_to_numpy(std_xp, xp)
+        assert_allclose(std_xp_np, std_np, rtol=rtol)
+        assert std_xp.shape == std_np.shape
+    elif return_type == "cov":
+        cov_xp_np = _convert_to_numpy(cov_xp, xp)
+        assert_allclose(cov_xp_np, cov_np, rtol=rtol)
+        assert cov_xp.shape == cov_np.shape
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize("return_type", ["std", "cov"])
+def test_gpr_normalize_y_uncertainty_array_api(
+    array_namespace, device_, dtype_name, return_type, gpr_data
+):
+    """Test GPR with normalize_y=True and return_std/return_cov."""
+    rng = np.random.RandomState(42)
+    y_np = (rng.randn(20) * 100 + 500).astype(dtype_name)
+    y_xp = gpr_data["xp"].asarray(y_np, device=gpr_data["device"])
+
+    kernel = RBF(length_scale=1.0)
+
+    predict_kwargs = (
+        {"return_std": True} if return_type == "std" else {"return_cov": True}
+    )
+
+    # Fit with numpy
+    gpr_np = GaussianProcessRegressor(
+        kernel=kernel, random_state=42, normalize_y=True, optimizer=None
+    )
+    gpr_np.fit(gpr_data["X_np"], y_np)
+    y_pred_np, uncertainty_np = gpr_np.predict(gpr_data["X_test_np"], **predict_kwargs)
+
+    # Fit with array API
+    gpr_xp = GaussianProcessRegressor(
+        kernel=kernel, random_state=42, normalize_y=True, optimizer=None
+    )
+    with config_context(array_api_dispatch=True):
+        gpr_xp.fit(gpr_data["X_xp"], y_xp)
+        y_pred_xp, uncertainty_xp = gpr_xp.predict(
+            gpr_data["X_test_xp"], **predict_kwargs
+        )
+
+    # GPR covariance with large y-values and normalize_y accumulates more
+    # numerical error on GPU backends (MPS), so use a looser tolerance
+    rtol = 1e-3 if gpr_data["dtype_name"] == "float32" else None
+    _check_array_api_result(y_pred_xp, y_pred_np, gpr_data, rtol=rtol)
+    _check_array_api_result(uncertainty_xp, uncertainty_np, gpr_data, rtol=rtol)
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
     [
         combo
         for combo in yield_namespace_device_dtype_combinations()
