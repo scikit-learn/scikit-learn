@@ -358,7 +358,12 @@ def _spectral_embedding(
             # We are computing the opposite of the laplacian inplace so as
             # to spare a memory allocation of a possibly very large array
             tol = 0 if eigen_tol == "auto" else eigen_tol
+
+            # The following two lines transform laplacian L into I-L
+            # because the diagonal of L is filled with 1s (see line above)
             laplacian *= -1
+            laplacian = _set_diag(laplacian, 0, norm_laplacian)
+
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
             laplacian = check_array(
                 laplacian, accept_sparse="csr", accept_large_sparse=False
@@ -373,8 +378,10 @@ def _spectral_embedding(
         except RuntimeError:
             # When submatrices are exactly singular, an LU decomposition
             # in arpack fails. We fallback to lobpcg
+            warnings.warn("ARPACK has failed, falling back to LOBPCG.")
             eigen_solver = "lobpcg"
-            # Revert the laplacian to its opposite to have lobpcg work
+            # Revert the laplacian to what it was to have lobpcg work
+            laplacian = _set_diag(laplacian, -1, norm_laplacian)
             laplacian *= -1
 
     elif eigen_solver == "amg":
