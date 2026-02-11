@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from collections import Counter
-from contextlib import suppress
 from typing import NamedTuple
 
 import numpy as np
@@ -342,6 +341,12 @@ class _NaNCounter(Counter):
             return self.nan_count
         raise KeyError(key)
 
+    def get(self, key, default=None):
+        """Get value with default, handling NaN values."""
+        if is_scalar_nan(key):
+            return getattr(self, "nan_count", default)
+        return super().get(key, default)
+
 
 def _get_counts(values, uniques):
     """Get the count of each of the `uniques` in `values`.
@@ -352,9 +357,9 @@ def _get_counts(values, uniques):
     if values.dtype.kind in "OU":
         counter = _NaNCounter(values)
         output = np.zeros(len(uniques), dtype=np.int64)
+        # Use .get() to avoid KeyError handling overhead
         for i, item in enumerate(uniques):
-            with suppress(KeyError):
-                output[i] = counter[item]
+            output[i] = counter.get(item, 0)
         return output
 
     unique_values, counts = _unique_np(values, return_counts=True)
