@@ -858,7 +858,10 @@ def test_subclass_named_constructors_return_type_is_subclass(pyplot):
 
 @pytest.mark.parametrize("lim", [[1, 2], (1,), (0, 1, 2), (2, 2), (5, 2)])
 def test_xlim_ylim_validation_errors_from_estimator(pyplot, fitted_clf, lim):
-    """Check input validation in `from_estimator` for xlim and ylim parameters."""
+    """Check input validation in `from_estimator()` for xlim and ylim parameters.
+
+    Non-regression test for PR #33211.
+    """
     msg = r"`xlim` must be a tuple of \(min, max\) with min < max"
     with pytest.raises(ValueError, match=msg):
         DecisionBoundaryDisplay.from_estimator(fitted_clf, X, xlim=lim)
@@ -882,7 +885,10 @@ def test_xlim_ylim_validation_errors_from_estimator(pyplot, fitted_clf, lim):
     ],
 )
 def test_xlim_ylim_validation_errors_plot(pyplot, lim, msg):
-    """Check input validation in `plot()` for xlim and ylim parameters."""
+    """Check input validation in `plot()` for xlim and ylim parameters.
+
+    Non-regression test for PR #33211.
+    """
     X = np.array([[0, 0], [1, 1], [1, 0], [0, 1]])
     y = np.array([0, 1, 2, 3])
     clf = LogisticRegression().fit(X, y)
@@ -915,8 +921,11 @@ def test_xlim_ylim_validation_errors_plot(pyplot, lim, msg):
         ((-5, 5), None),
     ],
 )
-def test_xlim_ylim(pyplot, xlim, ylim):
-    """Check that xlim and ylim parameters work as expected."""
+def test_xlim_ylim_boundaries(pyplot, xlim, ylim):
+    """Check that xlim and ylim parameters set display boundaries as expected.
+
+    Non-regression test for PR #33211.
+    """
 
     X = np.array([[0, 0], [1, 1], [1, 0], [0, 1]])
     y = np.array([0, 1, 2, 3])
@@ -935,7 +944,7 @@ def test_xlim_ylim(pyplot, xlim, ylim):
     if ylim is None:
         ylim = (X[:, 1].min(), X[:, 1].max())
 
-    # Check that the grid is correctly extended to cover the requested limits
+    # Check that the grid is correctly adapted to cover the requested limits
     assert disp.xx0.min() == xlim[0]
     assert disp.xx0.max() == xlim[1]
     assert disp.xx1.min() == ylim[0]
@@ -948,3 +957,58 @@ def test_xlim_ylim(pyplot, xlim, ylim):
     disp.ax_.scatter(X[:, 0], X[:, 1], c=y, edgecolor="k")
     assert disp.ax_.get_xlim() == xlim
     assert disp.ax_.get_ylim() == ylim
+
+
+@pytest.mark.parametrize(
+    "xlim, ylim",
+    [
+        (None, None),
+        ((-1, 0.4), (0.6, 2)),
+        ((0.6, 2), None),
+        (None, (0.6, 2)),
+    ],
+)
+def test_xlim_ylim_colors(pyplot, xlim, ylim):
+    """Check color consistency when xlim and ylim parameters are set.
+
+    Non-regression test for PR #33211.
+    Note: Currently only works for multiclass classifiers with response_method="predict"
+    See discussion in the PR for more details.
+    """
+
+    X = np.array([[0, 0], [1, 1], [1, 0], [0, 1]])
+    y = np.array([0, 1, 2, 3])
+    est = LogisticRegression().fit(X, y)
+    cmap = "viridis"
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        est,
+        X,
+        eps=0.0,
+        xlim=xlim,
+        ylim=ylim,
+        response_method="predict",
+        multiclass_colors=cmap,
+    )
+
+    # Check that scatter plot uses the same colors for all classes
+    scatter = disp.ax_.scatter(X[:, 0], X[:, 1], c=y, edgecolor="k", cmap=cmap)
+
+    if xlim is None:
+        xlim = (X[:, 0].min(), X[:, 0].max())
+    if ylim is None:
+        ylim = (X[:, 1].min(), X[:, 1].max())
+    in_view = (
+        (X[:, 0] >= xlim[0])
+        & (X[:, 0] <= xlim[1])
+        & (X[:, 1] >= ylim[0])
+        & (X[:, 1] <= ylim[1])
+    )
+    used_classes = np.unique(y[in_view])
+    # TODO possibly adapt color selection once it is unified in decision_boundary.py for
+    # all colormaps
+    colors = pyplot.get_cmap(cmap, len(est.classes_)).colors
+    expected_colors = np.asarray(colors)[used_classes]
+    assert_allclose(scatter.to_rgba(used_classes), expected_colors)
+    assert_allclose(np.asarray(disp.surface_.cmap.colors), expected_colors)
+    # TODO add adapted check for other response_methods
