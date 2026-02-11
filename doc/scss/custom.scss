@@ -272,52 +272,33 @@ div.sk-text-image-grid-large {
   }
 }
 
-/* ------------------------------------------------------------
-   Hint that example gallery images are clickable
-   See issue #30596
------------------------------------------------------------- */
+/* ============================================
+   Fix: Example gallery hover overlay blocks
+   "Click for source code" link
+   ============================================ */
 
-.sphx-glr-thumbcontainer a:hover img {
-  border-radius: 0.3rem;
-  box-shadow: 0 0 0 0.15rem var(--pst-color-secondary);
+.sphx-glr-thumbnailcontainer {
+  position: relative;
 }
 
-/* ------------------------------------------------------------
-   Hint that example gallery images are clickable
-   See issue #30596
------------------------------------------------------------- */
-
-/* Hover highlight around clickable thumbnails */
-.sphx-glr-thumbcontainer a:hover img {
-  border-radius: 0.3rem;
-  box-shadow: 0 0 0 0.15rem var(--pst-color-secondary);
+/* The overlay text block that appears on hover */
+.sphx-glr-thumbnailcontainer::after {
+  pointer-events: none; /* overlay will NOT block clicks */
 }
 
-/* Hide the existing [source] label */
-.sphx-glr-thumbcontainer a span.doc {
-  display: none !important;
+/* The "Click for source code" link */
+.sphx-glr-thumbnailcontainer a.reference.internal {
+  position: relative;
+  z-index: 10; /* bring link ABOVE overlay */
+  display: inline-block;
 }
 
-/* Stack thumbnail + title + hint vertically */
-.sphx-glr-thumbcontainer a.reference.internal {
-  display: flex;
-  flex-direction: column;
+/* Optional: ensure caption area stays clickable */
+.sphx-glr-thumbnailcontainer p {
+  position: relative;
+  z-index: 10;
 }
 
-/* Add hint at the bottom of the card */
-.sphx-glr-thumbcontainer a.reference.internal::after {
-  content: "Click for source code";
-  display: block;
-
-  margin-top: auto;
-  padding-top: 0.4rem;
-
-  font-size: 0.75em;
-  font-weight: var(--pst-font-weight-caption);
-  opacity: 0.7;
-
-  text-align: center;
-}
 
 
 
