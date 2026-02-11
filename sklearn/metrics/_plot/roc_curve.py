@@ -72,7 +72,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         If `None`, no name is shown in the legend.
 
         .. versionchanged:: 1.7
-            `estimator_name` was deprecated in favor of `name`.
+            `estimator_name` was deprecated in favor of `name` and now accepts
+            a list for plotting multiple curves.
 
     pos_label : int, float, bool or str, default=None
         The class considered the positive class when ROC AUC metrics computed.
