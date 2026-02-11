@@ -293,19 +293,29 @@ div.sk-text-image-grid-large {
   box-shadow: 0 0 0 0.15rem var(--pst-color-secondary);
 }
 
-/* Hide the existing [source] label (it overlaps) */
+/* Hide the existing [source] label */
 .sphx-glr-thumbcontainer a span.doc {
   display: none !important;
 }
 
-/* Add a cleaner replacement hint */
-.sphx-glr-thumbcontainer a::after {
+/* Stack thumbnail + title + hint vertically */
+.sphx-glr-thumbcontainer a.reference.internal {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Add hint at the bottom of the card */
+.sphx-glr-thumbcontainer a.reference.internal::after {
   content: "Click for source code";
   display: block;
-  font-size: 0.8em;
+
+  margin-top: auto;
+  padding-top: 0.4rem;
+
+  font-size: 0.75em;
   font-weight: var(--pst-font-weight-caption);
-  opacity: 0.75;
-  margin-top: 0.3rem;
+  opacity: 0.7;
+
   text-align: center;
 }
 
