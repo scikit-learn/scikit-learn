@@ -362,11 +362,18 @@ def _spectral_embedding(
             # The following transforms laplacian L into I-L
             laplacian *= -1
             if sparse.issparse(laplacian):
-                I = sparse.identity(
-                    laplacian.shape[0],
-                    dtype=laplacian.dtype,
-                    format=laplacian.format,
-                )
+                if sparse.isspmatrix(laplacian):
+                    I = sparse.identity(
+                        laplacian.shape[0],
+                        dtype=laplacian.dtype,
+                        format=laplacian.format,
+                    )
+                else:
+                    I = sparse.eye_array(
+                        laplacian.shape[0],
+                        dtype=laplacian.dtype,
+                        format=laplacian.format,
+                    )
             else:
                 I = np.eye(laplacian.shape[0]).astype(laplacian.dtype)
             laplacian = laplacian + I
