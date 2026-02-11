@@ -273,31 +273,23 @@ div.sk-text-image-grid-large {
 }
 
 /* ============================================
-   Fix: Example gallery hover overlay blocks
-   "Click for source code" link
+   Fix: Gallery thumbnail link overlay issue
    ============================================ */
 
-.sphx-glr-thumbnailcontainer {
-  position: relative;
+/* The caption <p> must not be fully clickable */
+.sphx-glr-thumbcontainer p a.reference.internal {
+  display: inline !important;     /* shrink link to text only */
+  position: static !important;    /* remove overlay positioning */
+  width: auto !important;
+  height: auto !important;
 }
 
-/* The overlay text block that appears on hover */
-.sphx-glr-thumbnailcontainer::after {
-  pointer-events: none; /* overlay will NOT block clicks */
+/* Optional: keep normal hover underline */
+.sphx-glr-thumbcontainer p a.reference.internal:hover {
+  text-decoration: underline;
 }
 
-/* The "Click for source code" link */
-.sphx-glr-thumbnailcontainer a.reference.internal {
-  position: relative;
-  z-index: 10; /* bring link ABOVE overlay */
-  display: inline-block;
-}
 
-/* Optional: ensure caption area stays clickable */
-.sphx-glr-thumbnailcontainer p {
-  position: relative;
-  z-index: 10;
-}
 
 
 
