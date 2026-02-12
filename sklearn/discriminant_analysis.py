@@ -20,7 +20,14 @@ from sklearn.base import (
 from sklearn.covariance import empirical_covariance, ledoit_wolf, shrunk_covariance
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils._array_api import _expit, device, get_namespace, size
+from sklearn.utils._array_api import (
+    _expit,
+    device,
+    get_namespace,
+    get_namespace_and_device,
+    move_to,
+    size,
+)
 from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
 from sklearn.utils.extmath import softmax
 from sklearn.utils.multiclass import check_classification_targets, unique_labels
@@ -105,16 +112,18 @@ def _class_means(X, y):
     means : array-like of shape (n_classes, n_features)
         Class means.
     """
-    xp, is_array_api_compliant = get_namespace(X)
-    classes, y = xp.unique_inverse(y)
-    means = xp.zeros((classes.shape[0], X.shape[1]), device=device(X), dtype=X.dtype)
+    xp, is_array_api_compliant, device_ = get_namespace_and_device(X)
+    xp_y, _ = get_namespace(y)
+    classes, y = xp_y.unique_inverse(y)
+    y = move_to(y, xp=xp, device=device_)
+    means = xp.zeros((classes.shape[0], X.shape[1]), device=device_, dtype=X.dtype)
 
     if is_array_api_compliant:
         for i in range(classes.shape[0]):
             means[i, :] = xp.mean(X[y == i], axis=0)
     else:
-        # TODO: Explore the choice of using bincount + add.at as it seems sub optimal
-        # from a performance-wise
+        # TODO: check if the choice of using bincount + add.at is actually the
+        # most efficient way to do this with NumPy.
         cnt = np.bincount(y)
         np.add.at(means, y, X)
         means /= cnt[:, None]
@@ -569,8 +578,7 @@ class LinearDiscriminantAnalysis(
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
         """
-        xp, is_array_api_compliant = get_namespace(X)
-
+        xp, is_array_api_compliant, device_ = get_namespace_and_device(X)
         if is_array_api_compliant:
             svd = xp.linalg.svd
         else:
@@ -579,13 +587,16 @@ class LinearDiscriminantAnalysis(
         n_samples, _ = X.shape
         n_classes = self.classes_.shape[0]
 
+        # XXX: _class_means and _class_cov performs redundant computation
+        # (unique values of y). Instead they should take classes as input.
         self.means_ = _class_means(X, y)
         if self.store_covariance:
+            # XXX: _class_cov does not support array API yet.
             self.covariance_ = _class_cov(X, y, self.priors_)
 
         Xc = []
         for idx, group in enumerate(self.classes_):
-            Xg = X[y == group]
+            Xg = X[move_to(y == group, xp=xp, device=device_)]
             Xc.append(Xg - self.means_[idx, :])
 
         self.xbar_ = self.priors_ @ self.means_
@@ -655,7 +666,8 @@ class LinearDiscriminantAnalysis(
         self : object
             Fitted estimator.
         """
-        xp, _ = get_namespace(X)
+        xp, _, device_ = get_namespace_and_device(X)
+        xp_y, _ = get_namespace(y)
 
         X, y = validate_data(
             self, X, y, ensure_min_samples=2, dtype=[xp.float64, xp.float32]
@@ -670,10 +682,11 @@ class LinearDiscriminantAnalysis(
             )
 
         if self.priors is None:  # estimate priors from sample
-            _, cnts = xp.unique_counts(y)  # non-negative ints
+            _, cnts = xp_y.unique_counts(y)  # non-negative ints
+            cnts = move_to(cnts, xp=xp, device=device_)
             self.priors_ = xp.astype(cnts, X.dtype) / float(n_samples)
         else:
-            self.priors_ = xp.asarray(self.priors, dtype=X.dtype)
+            self.priors_ = xp.asarray(self.priors, dtype=X.dtype, device=device_)
 
         if xp.any(self.priors_ < 0):
             raise ValueError("priors must be non-negative")
