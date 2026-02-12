@@ -255,12 +255,14 @@ def test_spectral_embedding_lobpcg_solver(dtype, seed=36):
         n_components=2,
         affinity="rbf",
         eigen_solver="lobpcg",
+        eigen_tol=1e-5,
         random_state=np.random.RandomState(seed),
     )
     se_arpack = SpectralEmbedding(
         n_components=2,
         affinity="rbf",
         eigen_solver="arpack",
+        eigen_tol=0,
         random_state=np.random.RandomState(seed),
     )
     embed_lobpcg = se_lobpcg.fit_transform(S.astype(dtype))
@@ -282,12 +284,14 @@ def test_spectral_embedding_amg_solver(dtype, coo_container, seed=36):
         n_components=2,
         affinity="rbf",
         eigen_solver="amg",
+        eigen_tol=1e-5,
         random_state=np.random.RandomState(seed),
     )
     se_arpack = SpectralEmbedding(
         n_components=2,
         affinity="rbf",
         eigen_solver="arpack",
+        eigen_tol=0,
         random_state=np.random.RandomState(seed),
     )
     embed_amg = se_amg.fit_transform(S.astype(dtype))
