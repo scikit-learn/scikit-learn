@@ -1537,6 +1537,10 @@ class LarsCV(Lars):
         calculations. If set to ``'auto'`` let us decide. The Gram matrix
         cannot be passed as argument since we will use only subsets of X.
 
+    refit : bool, default=True
+        If ``True``, refit an estimator using the best found parameters
+        on the whole dataset.
+
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -1652,6 +1656,7 @@ class LarsCV(Lars):
     _parameter_constraints: dict = {
         **Lars._parameter_constraints,
         "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "refit": ["boolean"],
         "cv": ["cv_object"],
         "max_n_alphas": [Interval(Integral, 1, None, closed="left")],
         "n_jobs": [Integral, None],
@@ -1669,6 +1674,7 @@ class LarsCV(Lars):
         verbose=False,
         max_iter=500,
         precompute="auto",
+        refit=True,
         cv=None,
         max_n_alphas=1000,
         n_jobs=None,
@@ -1676,6 +1682,7 @@ class LarsCV(Lars):
         copy_X=True,
     ):
         self.max_iter = max_iter
+        self.refit = refit
         self.cv = cv
         self.max_n_alphas = max_n_alphas
         self.n_jobs = n_jobs
@@ -1794,6 +1801,9 @@ class LarsCV(Lars):
         self.cv_alphas_ = all_alphas
         self.mse_path_ = mse_path
 
+        if not self.refit:
+            return self
+
         # Now compute the full model using best_alpha
         # it will call a lasso internally when self if LassoLarsCV
         # as self.method == 'lasso'
@@ -1856,6 +1866,10 @@ class LassoLarsCV(LarsCV):
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram matrix
         cannot be passed as argument since we will use only subsets of X.
+
+    refit : bool, default=True
+        If ``True``, refit an estimator using the best found parameters
+        on the whole dataset.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -2005,6 +2019,7 @@ class LassoLarsCV(LarsCV):
         verbose=False,
         max_iter=500,
         precompute="auto",
+        refit=True,
         cv=None,
         max_n_alphas=1000,
         n_jobs=None,
@@ -2016,6 +2031,7 @@ class LassoLarsCV(LarsCV):
         self.verbose = verbose
         self.max_iter = max_iter
         self.precompute = precompute
+        self.refit = refit
         self.cv = cv
         self.max_n_alphas = max_n_alphas
         self.n_jobs = n_jobs
