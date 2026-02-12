@@ -1168,7 +1168,7 @@ def test_lsvc_intercept_scaling_zero():
     assert lsvc.intercept_ == 0.0
 
 
-# TODO(1.10): remove test entirely.
+# TODO(1.11): remove test entirely.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_hasattr_predict_proba(global_random_seed):
     iris = get_iris_dataset(global_random_seed)
