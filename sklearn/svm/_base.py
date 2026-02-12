@@ -864,7 +864,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     # probabilities are not available depending on a setting, introduce two
     # estimators.
     def _check_proba(self):
-        if not self.probability or self.probability == "deprecated":
+        if not self._effective_probability:
             raise AttributeError(
                 "predict_proba is not available when probability=False"
             )
