@@ -401,3 +401,23 @@ def test_rational_quadratic_kernel():
     )
     with pytest.raises(AttributeError, match=message):
         kernel(X)
+
+
+@pytest.mark.parametrize(
+    "kernel",
+    [
+        RBF(),
+        Matern(nu=1.5),
+        RationalQuadratic(),
+        ExpSineSquared(),
+        DotProduct(),
+    ],
+)
+def test_kernel_1d_input(kernel):
+    """Check that kernels handle 1D input by reshaping to (1, n_features)."""
+    x_1d = np.array([1.0, 2.0])
+    K = kernel(x_1d)
+    assert K.shape == (1, 1)
+
+    K_xy = kernel(x_1d, X)
+    assert K_xy.shape == (1, X.shape[0])

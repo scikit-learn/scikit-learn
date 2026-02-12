@@ -11,6 +11,7 @@ import numpy
 import scipy
 import scipy.sparse as sp
 import scipy.special as special
+from scipy.spatial import distance as sp_distance
 
 from sklearn._config import get_config
 from sklearn.externals import array_api_compat
@@ -932,6 +933,9 @@ def _ravel(array, xp=None):
 
 def _convert_to_numpy(array, xp):
     """Convert X into a NumPy ndarray on the CPU."""
+    if isinstance(array, numpy.ndarray):
+        return array
+
     if _is_xp_namespace(xp, "torch"):
         return array.cpu().numpy()
     elif _is_xp_namespace(xp, "cupy"):  # pragma: nocover
@@ -1173,7 +1177,9 @@ def _logsumexp(array, axis=None, xp=None):
 
 def _cholesky(covariance, xp):
     if _is_numpy_namespace(xp):
-        return scipy.linalg.cholesky(covariance, lower=True)
+        # scipy may upcast float32 to float64; cast back to preserve input dtype
+        result = scipy.linalg.cholesky(covariance, lower=True)
+        return result.astype(covariance.dtype, copy=False)
     else:
         return xp.linalg.cholesky(covariance)
 
@@ -1183,6 +1189,53 @@ def _linalg_solve(cov_chol, eye_matrix, xp):
         return scipy.linalg.solve_triangular(cov_chol, eye_matrix, lower=True)
     else:
         return xp.linalg.solve(cov_chol, eye_matrix)
+
+
+def _solve_triangular(L, b, lower=True, xp=None):
+    """Solve a triangular linear system L @ x = b.
+
+    Uses optimized triangular solvers when available (O(n²) vs O(n³) for general solve).
+
+    Parameters
+    ----------
+    L : array of shape (n, n)
+        Triangular matrix (lower by default).
+    b : array of shape (n,) or (n, m)
+        Right-hand side.
+    lower : bool, default=True
+        Whether L is lower triangular (True) or upper triangular (False).
+    xp : module, optional
+        Array namespace.
+
+    Returns
+    -------
+    x : array
+        Solution to L @ x = b.
+    """
+    xp, _ = get_namespace(L, b, xp=xp)
+
+    if _is_numpy_namespace(xp):
+        result = scipy.linalg.solve_triangular(L, b, lower=lower, check_finite=False)
+        if numpy.issubdtype(b.dtype, numpy.floating):
+            result = result.astype(b.dtype, copy=False)
+        return result
+
+    if _is_xp_namespace(xp, "torch"):
+        import torch
+
+        # torch.linalg.solve_triangular requires 2D input
+        squeeze_result = False
+        if b.ndim == 1:
+            b = xp.expand_dims(b, axis=-1)
+            squeeze_result = True
+        result = torch.linalg.solve_triangular(L, b, upper=not lower)
+        if squeeze_result:
+            result = xp.squeeze(result, axis=-1)
+        return result
+
+    # Fallback for backends without triangular solve (e.g., array_api_strict)
+    # This is O(n³) instead of O(n²), but maintains correctness
+    return xp.linalg.solve(L, b)
 
 
 def _half_multinomial_loss(y, pred, sample_weight=None, xp=None):
@@ -1195,3 +1248,147 @@ def _half_multinomial_loss(y, pred, sample_weight=None, xp=None):
     return float(
         _average(log_sum_exp - label_predictions, weights=sample_weight, xp=xp)
     )
+
+
+def _cdist_euclidean_fallback(X, Y, xp):
+    """Pure array API fallback for squared Euclidean pairwise distances.
+
+    Uses the expanded form: ||x - y||^2 = ||x||^2 + ||y||^2 - 2 * x.y
+    This avoids creating a large (n, m, d) intermediate array.
+    """
+    _, _, device_ = get_namespace_and_device(X, Y, xp=xp)
+    X_sqnorm = xp.sum(X**2, axis=1, keepdims=True)
+    Y_sqnorm = xp.sum(Y**2, axis=1, keepdims=True)
+    sq_dist = X_sqnorm + Y_sqnorm.T - 2 * (X @ Y.T)
+    # Ensure non-negative due to numerical precision
+    sq_dist = xp.where(
+        sq_dist < 0, xp.asarray(0.0, dtype=sq_dist.dtype, device=device_), sq_dist
+    )
+    return sq_dist
+
+
+def _cdist(X, Y, metric="euclidean", xp=None):
+    """Compute pairwise distance between rows of X and Y.
+
+    This function dispatches to backend-specific implementations when available,
+    falling back to pure array API operations otherwise.
+
+    Parameters
+    ----------
+    X : array of shape (n_samples_X, n_features)
+        First input array.
+    Y : array of shape (n_samples_Y, n_features)
+        Second input array.
+    metric : str, default="euclidean"
+        Distance metric. Supported: "euclidean", "sqeuclidean".
+    xp : module, optional
+        Array namespace.
+
+    Returns
+    -------
+    distances : array of shape (n_samples_X, n_samples_Y)
+        Pairwise distances.
+    """
+    xp, _, device_ = get_namespace_and_device(X, Y, xp=xp)
+
+    if _is_numpy_namespace(xp):
+        # scipy may upcast float32 to float64; cast back to preserve input dtype
+        result = sp_distance.cdist(X, Y, metric=metric)
+        return xp.asarray(result, dtype=X.dtype)
+
+    if _is_xp_namespace(xp, "torch"):
+        # torch.cdist computes p-norm distances
+        if metric == "sqeuclidean":
+            return xp.cdist(X, Y, p=2) ** 2
+        elif metric == "euclidean":
+            return xp.cdist(X, Y, p=2)
+        else:
+            raise ValueError(f"Metric {metric!r} not supported for torch backend")
+
+    if _is_xp_namespace(xp, "cupy"):
+        from cupyx.scipy.spatial.distance import cdist
+
+        return cdist(X, Y, metric=metric)
+
+    # Fallback for array-api-strict and other backends
+    sq_dist = _cdist_euclidean_fallback(X, Y, xp)
+    if metric == "sqeuclidean":
+        return sq_dist
+    elif metric == "euclidean":
+        return xp.sqrt(sq_dist)
+    else:
+        raise ValueError(
+            f"Metric {metric!r} not supported in fallback. "
+            "Use 'euclidean' or 'sqeuclidean'."
+        )
+
+
+def _cho_solve(L, b, xp=None):
+    """Solve L @ L.T @ x = b given lower-triangular Cholesky factor L.
+
+    Parameters
+    ----------
+    L : array of shape (n, n)
+        Lower-triangular Cholesky factor.
+    b : array of shape (n,) or (n, m)
+        Right-hand side.
+    xp : module, optional
+        Array namespace.
+
+    Returns
+    -------
+    x : array of shape (n,) or (n, m)
+        Solution to L @ L.T @ x = b.
+    """
+    xp, _ = get_namespace(L, b, xp=xp)
+
+    if _is_numpy_namespace(xp):
+        result = scipy.linalg.cho_solve((L, True), b, check_finite=False)
+        # scipy may upcast float32 to float64; cast back to preserve input dtype
+        # Only cast if input is floating point (not for integer inputs)
+        if numpy.issubdtype(b.dtype, numpy.floating):
+            result = result.astype(b.dtype, copy=False)
+        return result
+
+    # Two triangular solves: L @ y = b, then L.T @ x = y
+    y = _solve_triangular(L, b, lower=True, xp=xp)
+    return _solve_triangular(xp.matrix_transpose(L), y, lower=False, xp=xp)
+
+
+def _kv(nu, x, xp=None):
+    """Modified Bessel function of the second kind K_nu(x).
+
+    Used by Matern kernel for general nu values. For nu in {0.5, 1.5, 2.5, inf},
+    closed-form expressions exist in the kernel and this function is not called.
+
+    Parameters
+    ----------
+    nu : float
+        Order of the Bessel function (scalar).
+    x : array
+        Argument array (distances).
+    xp : module, optional
+        Array namespace.
+
+    Returns
+    -------
+    result : array
+        K_nu(x) evaluated element-wise.
+
+    Notes
+    -----
+    This function falls back to scipy.special.kv via CPU for all non-NumPy
+    backends. PyTorch only provides K_0 and K_1, not general K_nu.
+    Users needing full GPU acceleration should use nu in {0.5, 1.5, 2.5, inf}
+    which have closed-form expressions in the Matern kernel.
+    """
+    xp, _, device_ = get_namespace_and_device(x, xp=xp)
+
+    if _is_numpy_namespace(xp):
+        return xp.asarray(special.kv(nu, numpy.asarray(x)))
+
+    # All other backends: fall back to CPU via scipy
+    # Note: PyTorch only has modified_bessel_k0/k1, not general kv
+    x_np = _convert_to_numpy(x, xp)
+    result_np = special.kv(nu, x_np)
+    return xp.asarray(result_np, device=device_)

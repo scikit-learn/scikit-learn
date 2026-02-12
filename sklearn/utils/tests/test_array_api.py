@@ -6,6 +6,7 @@ import pytest
 import scipy
 import scipy.sparse as sp
 from numpy.testing import assert_allclose
+from scipy.spatial.distance import cdist as scipy_cdist
 
 from sklearn._config import config_context
 from sklearn._loss import HalfMultinomialLoss
@@ -15,6 +16,9 @@ from sklearn.utils._array_api import (
     _asarray_with_order,
     _atol_for_type,
     _average,
+    _cdist,
+    _cho_solve,
+    _cholesky,
     _convert_to_numpy,
     _count_nonzero,
     _estimator_with_converted_arrays,
@@ -23,6 +27,7 @@ from sklearn.utils._array_api import (
     _half_multinomial_loss,
     _is_numpy_namespace,
     _isin,
+    _kv,
     _logsumexp,
     _max_precision_float_dtype,
     _median,
@@ -928,3 +933,173 @@ def test_half_multinomial_loss(use_sample_weight, namespace, device_, dtype_name
         )
 
     assert numpy.isclose(np_loss, xp_loss)
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize("metric", ["euclidean", "sqeuclidean"])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_cdist_matches_scipy(array_namespace, device_, dtype_name, metric):
+    """Check that _cdist matches scipy.spatial.distance.cdist."""
+    xp = _array_api_for_tests(array_namespace, device_)
+
+    rng = numpy.random.RandomState(42)
+    dtype = dtype_name if dtype_name else "float64"
+    X_np = rng.rand(15, 5).astype(dtype)
+    Y_np = rng.rand(10, 5).astype(dtype)
+
+    X_xp = xp.asarray(X_np, device=device_)
+    Y_xp = xp.asarray(Y_np, device=device_)
+
+    expected = scipy_cdist(X_np, Y_np, metric=metric)
+
+    with config_context(array_api_dispatch=True):
+        result_xp = _cdist(X_xp, Y_xp, metric=metric, xp=xp)
+
+    result_np = _convert_to_numpy(result_xp, xp)
+
+    rtol = 1e-5 if "float32" in str(dtype) else 1e-10
+    assert_allclose(result_np, expected, rtol=rtol)
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    [
+        combo
+        for combo in yield_namespace_device_dtype_combinations()
+        if combo[0] in ("array_api_strict", "torch")
+    ],
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_cdist_unsupported_metric(array_namespace, device_, dtype_name):
+    """Check _cdist raises ValueError for unsupported metrics."""
+    xp = _array_api_for_tests(array_namespace, device_)
+
+    X_np = numpy.random.RandomState(42).rand(5, 3).astype(dtype_name or "float64")
+    X_xp = xp.asarray(X_np, device=device_)
+
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(ValueError, match="not supported"):
+            _cdist(X_xp, X_xp, metric="cosine", xp=xp)
+
+
+@pytest.mark.parametrize("metric", ["euclidean", "sqeuclidean"])
+def test_cdist_cupy(metric):
+    """Check _cdist works with CuPy arrays."""
+    cupy = pytest.importorskip("cupy")
+
+    rng = numpy.random.RandomState(42)
+    X_np = rng.rand(10, 4).astype("float64")
+    Y_np = rng.rand(8, 4).astype("float64")
+
+    X_cu = cupy.asarray(X_np)
+    Y_cu = cupy.asarray(Y_np)
+
+    expected = scipy_cdist(X_np, Y_np, metric=metric)
+
+    with config_context(array_api_dispatch=True):
+        result_cu = _cdist(X_cu, Y_cu, metric=metric, xp=cupy)
+
+    result_np = cupy.asnumpy(result_cu)
+    assert_allclose(result_np, expected, rtol=1e-10)
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_cho_solve_matches_scipy(array_namespace, device_, dtype_name):
+    """Check that _cho_solve matches scipy.linalg.cho_solve."""
+    xp = _array_api_for_tests(array_namespace, device_)
+
+    rng = numpy.random.RandomState(42)
+    dtype = dtype_name if dtype_name else "float64"
+
+    # Create a positive definite matrix
+    A_np = rng.rand(8, 8).astype(dtype)
+    A_np = A_np @ A_np.T + 3 * numpy.eye(8, dtype=dtype)
+    b_np = rng.rand(8).astype(dtype)
+
+    # Expected result using numpy/scipy
+    L_np = scipy.linalg.cholesky(A_np, lower=True)
+    expected = scipy.linalg.cho_solve((L_np, True), b_np)
+
+    A_xp = xp.asarray(A_np, device=device_)
+    b_xp = xp.asarray(b_np, device=device_)
+
+    with config_context(array_api_dispatch=True):
+        L_xp = _cholesky(A_xp, xp)
+        result_xp = _cho_solve(L_xp, b_xp, xp=xp)
+
+    result_np = _convert_to_numpy(result_xp, xp)
+
+    rtol = 1e-4 if "float32" in str(dtype) else 1e-10
+    assert_allclose(result_np, expected, rtol=rtol)
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_cho_solve_multi_rhs(array_namespace, device_, dtype_name):
+    """Check that _cho_solve works with multiple right-hand sides."""
+    xp = _array_api_for_tests(array_namespace, device_)
+
+    rng = numpy.random.RandomState(42)
+    dtype = dtype_name if dtype_name else "float64"
+
+    # Create a positive definite matrix
+    A_np = rng.rand(6, 6).astype(dtype)
+    A_np = A_np @ A_np.T + 3 * numpy.eye(6, dtype=dtype)
+    B_np = rng.rand(6, 3).astype(dtype)
+
+    L_np = scipy.linalg.cholesky(A_np, lower=True)
+    expected = scipy.linalg.cho_solve((L_np, True), B_np)
+
+    A_xp = xp.asarray(A_np, device=device_)
+    B_xp = xp.asarray(B_np, device=device_)
+
+    with config_context(array_api_dispatch=True):
+        L_xp = _cholesky(A_xp, xp)
+        result_xp = _cho_solve(L_xp, B_xp, xp=xp)
+
+    result_np = _convert_to_numpy(result_xp, xp)
+
+    rtol = 1e-4 if "float32" in str(dtype) else 1e-10
+    assert_allclose(result_np, expected, rtol=rtol)
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize("nu", [0.5, 1.5, 2.5, 3.0])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_kv_matches_scipy(array_namespace, device_, dtype_name, nu):
+    """Check that _kv matches scipy.special.kv."""
+    xp = _array_api_for_tests(array_namespace, device_)
+
+    rng = numpy.random.RandomState(42)
+    dtype = dtype_name if dtype_name else "float64"
+    x_np = rng.rand(20).astype(dtype) * 5 + 0.1  # Avoid x=0 where kv diverges
+
+    x_xp = xp.asarray(x_np, device=device_)
+
+    expected = scipy.special.kv(nu, x_np)
+
+    with config_context(array_api_dispatch=True):
+        result_xp = _kv(nu, x_xp, xp=xp)
+
+    result_np = _convert_to_numpy(result_xp, xp)
+
+    rtol = 1e-4 if "float32" in str(dtype) else 1e-10
+    assert_allclose(result_np, expected, rtol=rtol)

@@ -28,20 +28,45 @@ from collections import namedtuple
 from inspect import signature
 
 import numpy as np
-from scipy.spatial.distance import cdist, pdist, squareform
-from scipy.special import gamma, kv
+from scipy.special import gamma
 
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics.pairwise import pairwise_kernels
+from sklearn.utils._array_api import (
+    _cdist,
+    _fill_diagonal,
+    _kv,
+    get_namespace,
+)
+from sklearn.utils._array_api import (
+    device as array_device,
+)
 from sklearn.utils.validation import _num_samples
 
 
-def _check_length_scale(X, length_scale):
-    length_scale = np.squeeze(length_scale).astype(float)
-    if np.ndim(length_scale) > 1:
+def _check_length_scale(X, length_scale, xp=None):
+    if xp is None:
+        xp, _ = get_namespace(X)
+
+    # Convert length_scale to array in the same namespace as X
+    # This handles cases where length_scale is a scalar, numpy array, or array API array
+    length_scale = xp.asarray(length_scale, dtype=X.dtype, device=array_device(X))
+
+    # Squeeze all dimensions of size 1
+    # Array API squeeze requires explicit axis, so we squeeze one axis at a time
+    squeezed = True
+    while squeezed:
+        squeezed = False
+        for axis in range(length_scale.ndim):
+            if length_scale.shape[axis] == 1:
+                length_scale = xp.squeeze(length_scale, axis=axis)
+                squeezed = True
+                break
+
+    if length_scale.ndim > 1:
         raise ValueError("length_scale cannot be of dimension greater than 1")
-    if np.ndim(length_scale) == 1 and X.shape[1] != length_scale.shape[0]:
+    if length_scale.ndim == 1 and X.shape[1] != length_scale.shape[0]:
         raise ValueError(
             "Anisotropic kernel must have the same number of "
             "dimensions as data (%d!=%d)" % (length_scale.shape[0], X.shape[1])
@@ -482,7 +507,8 @@ class NormalizedKernelMixin:
         K_diag : ndarray of shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
-        return np.ones(X.shape[0])
+        xp, _ = get_namespace(X)
+        return xp.ones(X.shape[0], dtype=X.dtype, device=array_device(X))
 
 
 class StationaryKernelMixin:
@@ -861,7 +887,8 @@ class Sum(KernelOperator):
         if eval_gradient:
             K1, K1_gradient = self.k1(X, Y, eval_gradient=True)
             K2, K2_gradient = self.k2(X, Y, eval_gradient=True)
-            return K1 + K2, np.dstack((K1_gradient, K2_gradient))
+            xp, _ = get_namespace(K1, K2)
+            return K1 + K2, xp.concat((K1_gradient, K2_gradient), axis=-1)
         else:
             return self.k1(X, Y) + self.k2(X, Y)
 
@@ -959,8 +986,13 @@ class Product(KernelOperator):
         if eval_gradient:
             K1, K1_gradient = self.k1(X, Y, eval_gradient=True)
             K2, K2_gradient = self.k2(X, Y, eval_gradient=True)
-            return K1 * K2, np.dstack(
-                (K1_gradient * K2[:, :, np.newaxis], K2_gradient * K1[:, :, np.newaxis])
+            xp, _ = get_namespace(K1, K2)
+            return K1 * K2, xp.concat(
+                (
+                    K1_gradient * xp.expand_dims(K2, axis=-1),
+                    K2_gradient * xp.expand_dims(K1, axis=-1),
+                ),
+                axis=-1,
             )
         else:
             return self.k1(X, Y) * self.k2(X, Y)
@@ -1141,11 +1173,15 @@ class Exponentiation(Kernel):
         """
         if eval_gradient:
             K, K_gradient = self.kernel(X, Y, eval_gradient=True)
-            K_gradient *= self.exponent * K[:, :, np.newaxis] ** (self.exponent - 1)
-            return K**self.exponent, K_gradient
+            xp, _ = get_namespace(K)
+            exponent = float(self.exponent)
+            K_gradient = (
+                K_gradient * exponent * xp.expand_dims(K, axis=-1) ** (exponent - 1)
+            )
+            return K**exponent, K_gradient
         else:
             K = self.kernel(X, Y, eval_gradient=False)
-            return K**self.exponent
+            return K ** float(self.exponent)
 
     def diag(self, X):
         """Returns the diagonal of the kernel k(X, X).
@@ -1265,28 +1301,35 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
+        xp, _ = get_namespace(X, Y)
+        device_ = array_device(X)
+
         if Y is None:
             Y = X
         elif eval_gradient:
             raise ValueError("Gradient can only be evaluated when Y is None.")
 
-        K = np.full(
-            (_num_samples(X), _num_samples(Y)),
-            self.constant_value,
-            dtype=np.array(self.constant_value).dtype,
+        n_samples_X = _num_samples(X)
+        n_samples_Y = _num_samples(Y)
+        # Use input dtype to preserve precision (MPS doesn't support float64)
+        dtype = X.dtype
+
+        K = xp.full(
+            (n_samples_X, n_samples_Y), self.constant_value, dtype=dtype, device=device_
         )
         if eval_gradient:
             if not self.hyperparameter_constant_value.fixed:
-                return (
-                    K,
-                    np.full(
-                        (_num_samples(X), _num_samples(X), 1),
-                        self.constant_value,
-                        dtype=np.array(self.constant_value).dtype,
-                    ),
+                K_gradient = xp.full(
+                    (n_samples_X, n_samples_X, 1),
+                    self.constant_value,
+                    dtype=dtype,
+                    device=device_,
                 )
+                return K, K_gradient
             else:
-                return K, np.empty((_num_samples(X), _num_samples(X), 0))
+                return K, xp.empty(
+                    (n_samples_X, n_samples_X, 0), dtype=dtype, device=device_
+                )
         else:
             return K
 
@@ -1307,10 +1350,9 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
         K_diag : ndarray of shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
-        return np.full(
-            _num_samples(X),
-            self.constant_value,
-            dtype=np.array(self.constant_value).dtype,
+        xp, _ = get_namespace(X)
+        return xp.full(
+            _num_samples(X), self.constant_value, dtype=X.dtype, device=array_device(X)
         )
 
     def __repr__(self):
@@ -1395,23 +1437,34 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
+        xp, _ = get_namespace(X, Y)
+        device_ = array_device(X)
+
         if Y is not None and eval_gradient:
             raise ValueError("Gradient can only be evaluated when Y is None.")
 
+        n_samples_X = _num_samples(X)
+        dtype = X.dtype
+
         if Y is None:
-            K = self.noise_level * np.eye(_num_samples(X))
+            K = self.noise_level * xp.eye(n_samples_X, dtype=dtype, device=device_)
             if eval_gradient:
                 if not self.hyperparameter_noise_level.fixed:
-                    return (
-                        K,
-                        self.noise_level * np.eye(_num_samples(X))[:, :, np.newaxis],
+                    K_gradient = xp.expand_dims(
+                        self.noise_level
+                        * xp.eye(n_samples_X, dtype=dtype, device=device_),
+                        axis=-1,
                     )
+                    return K, K_gradient
                 else:
-                    return K, np.empty((_num_samples(X), _num_samples(X), 0))
+                    return K, xp.empty(
+                        (n_samples_X, n_samples_X, 0), dtype=dtype, device=device_
+                    )
             else:
                 return K
         else:
-            return np.zeros((_num_samples(X), _num_samples(Y)))
+            n_samples_Y = _num_samples(Y)
+            return xp.zeros((n_samples_X, n_samples_Y), dtype=dtype, device=device_)
 
     def diag(self, X):
         """Returns the diagonal of the kernel k(X, X).
@@ -1430,8 +1483,9 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
         K_diag : ndarray of shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
-        return np.full(
-            _num_samples(X), self.noise_level, dtype=np.array(self.noise_level).dtype
+        xp, _ = get_namespace(X)
+        return xp.full(
+            _num_samples(X), self.noise_level, dtype=X.dtype, device=array_device(X)
         )
 
     def __repr__(self):
@@ -1550,33 +1604,44 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
-        X = np.atleast_2d(X)
-        length_scale = _check_length_scale(X, self.length_scale)
+        xp, _ = get_namespace(X, Y)
+
+        X = xp.asarray(X)
+        if X.ndim == 1:
+            X = xp.reshape(X, (1, -1))
+        length_scale = _check_length_scale(X, self.length_scale, xp=xp)
+
         if Y is None:
-            dists = pdist(X / length_scale, metric="sqeuclidean")
-            K = np.exp(-0.5 * dists)
-            # convert from upper-triangular matrix to square matrix
-            K = squareform(K)
-            np.fill_diagonal(K, 1)
+            # Use cdist(X, X) instead of pdist + squareform for better performance
+            # on GPU backends (torch.cdist is much faster than
+            # torch.nn.functional.pdist)
+            X_scaled = X / length_scale
+            dists = _cdist(X_scaled, X_scaled, metric="sqeuclidean", xp=xp)
+            K = xp.exp(-0.5 * dists)
+            _fill_diagonal(K, xp.asarray(1.0, dtype=K.dtype), xp)
         else:
             if eval_gradient:
                 raise ValueError("Gradient can only be evaluated when Y is None.")
-            dists = cdist(X / length_scale, Y / length_scale, metric="sqeuclidean")
-            K = np.exp(-0.5 * dists)
+            Y = xp.asarray(Y)
+            dists = _cdist(
+                X / length_scale, Y / length_scale, metric="sqeuclidean", xp=xp
+            )
+            K = xp.exp(-0.5 * dists)
 
         if eval_gradient:
             if self.hyperparameter_length_scale.fixed:
                 # Hyperparameter l kept fixed
-                return K, np.empty((X.shape[0], X.shape[0], 0))
+                return K, xp.empty((X.shape[0], X.shape[0], 0), dtype=K.dtype)
             elif not self.anisotropic or length_scale.shape[0] == 1:
-                K_gradient = (K * squareform(dists))[:, :, np.newaxis]
+                # dists is already in square form from cdist above
+                K_gradient = xp.expand_dims(K * dists, axis=-1)
                 return K, K_gradient
             elif self.anisotropic:
                 # We need to recompute the pairwise dimension-wise distances
-                K_gradient = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 / (
-                    length_scale**2
-                )
-                K_gradient *= K[..., np.newaxis]
+                K_gradient = (
+                    xp.expand_dims(X, axis=1) - xp.expand_dims(X, axis=0)
+                ) ** 2 / (length_scale**2)
+                K_gradient *= xp.expand_dims(K, axis=-1)
                 return K, K_gradient
         else:
             return K
@@ -1705,67 +1770,85 @@ class Matern(RBF):
             hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
-        X = np.atleast_2d(X)
-        length_scale = _check_length_scale(X, self.length_scale)
+        xp, _ = get_namespace(X, Y)
+
+        X = xp.asarray(X)
+        if X.ndim == 1:
+            X = xp.reshape(X, (1, -1))
+        length_scale = _check_length_scale(X, self.length_scale, xp=xp)
+        device_ = array_device(X)
+
+        # Use cdist(X, X) instead of pdist + squareform for better performance
+        # on GPU backends (torch.cdist is much faster than torch.nn.functional.pdist)
+        X_scaled = X / length_scale
         if Y is None:
-            dists = pdist(X / length_scale, metric="euclidean")
+            dists = _cdist(X_scaled, X_scaled, metric="euclidean", xp=xp)
         else:
             if eval_gradient:
                 raise ValueError("Gradient can only be evaluated when Y is None.")
-            dists = cdist(X / length_scale, Y / length_scale, metric="euclidean")
+            Y = xp.asarray(Y)
+            dists = _cdist(X_scaled, Y / length_scale, metric="euclidean", xp=xp)
 
         if self.nu == 0.5:
-            K = np.exp(-dists)
+            K = xp.exp(-dists)
         elif self.nu == 1.5:
             K = dists * math.sqrt(3)
-            K = (1.0 + K) * np.exp(-K)
+            K = (1.0 + K) * xp.exp(-K)
         elif self.nu == 2.5:
             K = dists * math.sqrt(5)
-            K = (1.0 + K + K**2 / 3.0) * np.exp(-K)
+            K = (1.0 + K + K**2 / 3.0) * xp.exp(-K)
         elif self.nu == np.inf:
-            K = np.exp(-(dists**2) / 2.0)
+            K = xp.exp(-(dists**2) / 2.0)
         else:  # general case; expensive to evaluate
-            K = dists
-            K[K == 0.0] += np.finfo(float).eps  # strict zeros result in nan
-            tmp = math.sqrt(2 * self.nu) * K
-            K.fill((2 ** (1.0 - self.nu)) / gamma(self.nu))
-            K *= tmp**self.nu
-            K *= kv(self.nu, tmp)
+            # Replace zeros with eps to avoid NaN
+            eps = xp.asarray(np.finfo(float).eps, dtype=dists.dtype, device=device_)
+            dists_safe = xp.where(dists == 0.0, eps, dists)
+            tmp = math.sqrt(2 * self.nu) * dists_safe
+            # gamma() returns numpy.float64, convert to Python float to preserve device
+            coef = float((2 ** (1.0 - self.nu)) / gamma(self.nu))
+            K = coef * (tmp**self.nu) * _kv(self.nu, tmp, xp=xp)
 
         if Y is None:
-            # convert from upper-triangular matrix to square matrix
-            K = squareform(K)
-            np.fill_diagonal(K, 1)
+            # K is already in square form from cdist, just set diagonal
+            _fill_diagonal(K, xp.asarray(1.0, dtype=K.dtype), xp)
 
         if eval_gradient:
             if self.hyperparameter_length_scale.fixed:
                 # Hyperparameter l kept fixed
-                K_gradient = np.empty((X.shape[0], X.shape[0], 0))
+                K_gradient = xp.empty(
+                    (X.shape[0], X.shape[0], 0), dtype=K.dtype, device=device_
+                )
                 return K, K_gradient
 
             # We need to recompute the pairwise dimension-wise distances
             if self.anisotropic:
-                D = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 / (length_scale**2)
+                D = (xp.expand_dims(X, axis=1) - xp.expand_dims(X, axis=0)) ** 2 / (
+                    length_scale**2
+                )
             else:
-                D = squareform(dists**2)[:, :, np.newaxis]
+                # dists is already in square form from cdist above
+                D = xp.expand_dims(dists**2, axis=-1)
 
             if self.nu == 0.5:
-                denominator = np.sqrt(D.sum(axis=2))[:, :, np.newaxis]
-                divide_result = np.zeros_like(D)
-                np.divide(
-                    D,
-                    denominator,
-                    out=divide_result,
-                    where=denominator != 0,
+                denominator = xp.expand_dims(xp.sqrt(xp.sum(D, axis=2)), axis=-1)
+                # Safe divide: where denominator is 0, result is 0
+                divide_result = xp.where(
+                    denominator != 0,
+                    D / denominator,
+                    xp.zeros_like(D),
                 )
-                K_gradient = K[..., np.newaxis] * divide_result
+                K_gradient = xp.expand_dims(K, axis=-1) * divide_result
             elif self.nu == 1.5:
-                K_gradient = 3 * D * np.exp(-np.sqrt(3 * D.sum(-1)))[..., np.newaxis]
+                K_gradient = (
+                    3
+                    * D
+                    * xp.expand_dims(xp.exp(-xp.sqrt(3 * xp.sum(D, axis=-1))), axis=-1)
+                )
             elif self.nu == 2.5:
-                tmp = np.sqrt(5 * D.sum(-1))[..., np.newaxis]
-                K_gradient = 5.0 / 3.0 * D * (tmp + 1) * np.exp(-tmp)
+                tmp = xp.expand_dims(xp.sqrt(5 * xp.sum(D, axis=-1)), axis=-1)
+                K_gradient = 5.0 / 3.0 * D * (tmp + 1) * xp.exp(-tmp)
             elif self.nu == np.inf:
-                K_gradient = D * K[..., np.newaxis]
+                K_gradient = D * xp.expand_dims(K, axis=-1)
             else:
                 # approximate gradient numerically
                 def f(theta):  # helper function
@@ -1774,7 +1857,7 @@ class Matern(RBF):
                 return K, _approx_fprime(self.theta, f, 1e-10)
 
             if not self.anisotropic:
-                return K, K_gradient[:, :].sum(-1)[:, :, np.newaxis]
+                return K, xp.expand_dims(xp.sum(K_gradient, axis=-1), axis=-1)
             else:
                 return K, K_gradient
         else:
@@ -1903,43 +1986,58 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
-        if len(np.atleast_1d(self.length_scale)) > 1:
+        xp, _ = get_namespace(X, Y)
+
+        length_scale_arr = xp.asarray(self.length_scale)
+        if length_scale_arr.ndim > 0 and length_scale_arr.shape[0] > 1:
             raise AttributeError(
                 "RationalQuadratic kernel only supports isotropic version, "
                 "please use a single scalar for length_scale"
             )
-        X = np.atleast_2d(X)
+
+        X = xp.asarray(X)
+        if X.ndim == 1:
+            X = xp.reshape(X, (1, -1))
+
+        alpha = float(self.alpha)
+        length_scale = float(self.length_scale)
+
         if Y is None:
-            dists = squareform(pdist(X, metric="sqeuclidean"))
-            tmp = dists / (2 * self.alpha * self.length_scale**2)
+            # Use cdist(X, X) instead of pdist + squareform for better performance
+            # on GPU backends (torch.cdist is much faster than
+            # torch.nn.functional.pdist)
+            dists = _cdist(X, X, metric="sqeuclidean", xp=xp)
+            tmp = dists / (2 * alpha * length_scale**2)
             base = 1 + tmp
-            K = base**-self.alpha
-            np.fill_diagonal(K, 1)
+            K = base ** (-alpha)
+            _fill_diagonal(K, xp.asarray(1.0, dtype=K.dtype), xp)
         else:
             if eval_gradient:
                 raise ValueError("Gradient can only be evaluated when Y is None.")
-            dists = cdist(X, Y, metric="sqeuclidean")
-            K = (1 + dists / (2 * self.alpha * self.length_scale**2)) ** -self.alpha
+            Y = xp.asarray(Y)
+            dists = _cdist(X, Y, metric="sqeuclidean", xp=xp)
+            K = (1 + dists / (2 * alpha * length_scale**2)) ** (-alpha)
 
         if eval_gradient:
             # gradient with respect to length_scale
             if not self.hyperparameter_length_scale.fixed:
-                length_scale_gradient = dists * K / (self.length_scale**2 * base)
-                length_scale_gradient = length_scale_gradient[:, :, np.newaxis]
+                length_scale_gradient = dists * K / (length_scale**2 * base)
+                length_scale_gradient = xp.expand_dims(length_scale_gradient, axis=-1)
             else:  # l is kept fixed
-                length_scale_gradient = np.empty((K.shape[0], K.shape[1], 0))
+                length_scale_gradient = xp.empty(
+                    (K.shape[0], K.shape[1], 0), dtype=K.dtype
+                )
 
             # gradient with respect to alpha
             if not self.hyperparameter_alpha.fixed:
                 alpha_gradient = K * (
-                    -self.alpha * np.log(base)
-                    + dists / (2 * self.length_scale**2 * base)
+                    -alpha * xp.log(base) + dists / (2 * length_scale**2 * base)
                 )
-                alpha_gradient = alpha_gradient[:, :, np.newaxis]
+                alpha_gradient = xp.expand_dims(alpha_gradient, axis=-1)
             else:  # alpha is kept fixed
-                alpha_gradient = np.empty((K.shape[0], K.shape[1], 0))
+                alpha_gradient = xp.empty((K.shape[0], K.shape[1], 0), dtype=K.dtype)
 
-            return K, np.dstack((alpha_gradient, length_scale_gradient))
+            return K, xp.concat((alpha_gradient, length_scale_gradient), axis=-1)
         else:
             return K
 
@@ -2053,38 +2151,52 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
-        X = np.atleast_2d(X)
+        xp, _ = get_namespace(X, Y)
+        pi = float(np.pi)
+        length_scale = float(self.length_scale)
+        periodicity = float(self.periodicity)
+
+        X = xp.asarray(X)
+        if X.ndim == 1:
+            X = xp.reshape(X, (1, -1))
+
         if Y is None:
-            dists = squareform(pdist(X, metric="euclidean"))
-            arg = np.pi * dists / self.periodicity
-            sin_of_arg = np.sin(arg)
-            K = np.exp(-2 * (sin_of_arg / self.length_scale) ** 2)
+            # Use cdist(X, X) instead of pdist + squareform for better performance
+            # on GPU backends (torch.cdist is much faster than
+            # torch.nn.functional.pdist)
+            dists = _cdist(X, X, metric="euclidean", xp=xp)
+            arg = pi * dists / periodicity
+            sin_of_arg = xp.sin(arg)
+            K = xp.exp(-2 * (sin_of_arg / length_scale) ** 2)
         else:
             if eval_gradient:
                 raise ValueError("Gradient can only be evaluated when Y is None.")
-            dists = cdist(X, Y, metric="euclidean")
-            K = np.exp(
-                -2 * (np.sin(np.pi / self.periodicity * dists) / self.length_scale) ** 2
-            )
+            Y = xp.asarray(Y)
+            dists = _cdist(X, Y, metric="euclidean", xp=xp)
+            K = xp.exp(-2 * (xp.sin(pi / periodicity * dists) / length_scale) ** 2)
 
         if eval_gradient:
-            cos_of_arg = np.cos(arg)
+            cos_of_arg = xp.cos(arg)
             # gradient with respect to length_scale
             if not self.hyperparameter_length_scale.fixed:
-                length_scale_gradient = 4 / self.length_scale**2 * sin_of_arg**2 * K
-                length_scale_gradient = length_scale_gradient[:, :, np.newaxis]
+                length_scale_gradient = 4 / length_scale**2 * sin_of_arg**2 * K
+                length_scale_gradient = xp.expand_dims(length_scale_gradient, axis=-1)
             else:  # length_scale is kept fixed
-                length_scale_gradient = np.empty((K.shape[0], K.shape[1], 0))
+                length_scale_gradient = xp.empty(
+                    (K.shape[0], K.shape[1], 0), dtype=K.dtype
+                )
             # gradient with respect to p
             if not self.hyperparameter_periodicity.fixed:
                 periodicity_gradient = (
-                    4 * arg / self.length_scale**2 * cos_of_arg * sin_of_arg * K
+                    4 * arg / length_scale**2 * cos_of_arg * sin_of_arg * K
                 )
-                periodicity_gradient = periodicity_gradient[:, :, np.newaxis]
+                periodicity_gradient = xp.expand_dims(periodicity_gradient, axis=-1)
             else:  # p is kept fixed
-                periodicity_gradient = np.empty((K.shape[0], K.shape[1], 0))
+                periodicity_gradient = xp.empty(
+                    (K.shape[0], K.shape[1], 0), dtype=K.dtype
+                )
 
-            return K, np.dstack((length_scale_gradient, periodicity_gradient))
+            return K, xp.concat((length_scale_gradient, periodicity_gradient), axis=-1)
         else:
             return K
 
@@ -2187,21 +2299,32 @@ class DotProduct(Kernel):
             hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
-        X = np.atleast_2d(X)
+        xp, _ = get_namespace(X, Y)
+        sigma_0 = float(self.sigma_0)
+
+        X = xp.asarray(X)
+        if X.ndim == 1:
+            X = xp.reshape(X, (1, -1))
+
         if Y is None:
-            K = np.inner(X, X) + self.sigma_0**2
+            # X @ X.T is equivalent to np.inner(X, X) for 2D arrays
+            K = X @ X.T + sigma_0**2
         else:
             if eval_gradient:
                 raise ValueError("Gradient can only be evaluated when Y is None.")
-            K = np.inner(X, Y) + self.sigma_0**2
+            Y = xp.asarray(Y)
+            K = X @ Y.T + sigma_0**2
 
         if eval_gradient:
             if not self.hyperparameter_sigma_0.fixed:
-                K_gradient = np.empty((K.shape[0], K.shape[1], 1))
-                K_gradient[..., 0] = 2 * self.sigma_0**2
+                K_gradient = xp.full(
+                    (K.shape[0], K.shape[1], 1),
+                    2 * sigma_0**2,
+                    dtype=K.dtype,
+                )
                 return K, K_gradient
             else:
-                return K, np.empty((X.shape[0], X.shape[0], 0))
+                return K, xp.empty((X.shape[0], X.shape[0], 0), dtype=K.dtype)
         else:
             return K
 
@@ -2222,7 +2345,11 @@ class DotProduct(Kernel):
         K_diag : ndarray of shape (n_samples_X,)
             Diagonal of kernel k(X, X).
         """
-        return np.einsum("ij,ij->i", X, X) + self.sigma_0**2
+        xp, _ = get_namespace(X)
+        X = xp.asarray(X)
+        sigma_0 = float(self.sigma_0)
+        # Sum of squares along axis 1: equivalent to np.einsum("ij,ij->i", X, X)
+        return xp.sum(X * X, axis=1) + sigma_0**2
 
     def is_stationary(self):
         """Returns whether the kernel is stationary."""
