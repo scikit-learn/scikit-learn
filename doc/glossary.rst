@@ -592,6 +592,26 @@ General Concepts
 
             import numpy as np
 
+    ovo
+    One-vs-one
+    one-vs-one
+        Method of decomposing a :term:`multiclass` problem into
+        `n_classes * (n_classes - 1) / 2` :term:`binary` problems, one for each
+        pairwise combination of classes. A metric is computed or a classifier is
+        fitted for each pair combination.
+        :class:`~sklearn.multiclass.OneVsOneClassifier` implements this
+        method for binary classifiers.
+
+    ovr
+    One-vs-Rest
+    one-vs-rest
+        Method for decomposing a :term:`multiclass` problem into `n_classes`
+        :term:`binary` problems. For each class a metric is computed or classifier
+        fitted, with that class being treated as the positive class while all other
+        classes are negative.
+        :class:`~sklearn.multiclass.OneVsRestClassifier` implements this
+        method for binary classifiers.
+
     online learning
         Where a model is iteratively updated by receiving each batch of ground
         truth :term:`targets` soon after making predictions on corresponding

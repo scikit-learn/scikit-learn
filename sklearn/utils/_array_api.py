@@ -23,6 +23,11 @@ from sklearn.utils.fixes import parse_version
 __all__ = ["xpx"]  # we import xpx here just to re-export it, need this to appease ruff
 
 _NUMPY_NAMESPACE_NAMES = {"numpy", "sklearn.externals.array_api_compat.numpy"}
+REMOVE_TYPES_DEFAULT = (
+    str,
+    list,
+    tuple,
+)
 
 
 def yield_namespaces(include_numpy_namespaces=True):
@@ -167,7 +172,7 @@ def _single_array_device(array):
         return array.device
 
 
-def device(*array_list, remove_none=True, remove_types=(str,)):
+def device(*array_list, remove_none=True, remove_types=REMOVE_TYPES_DEFAULT):
     """Hardware device where the array data resides on.
 
     If the hardware device is not the same for all arrays, an error is raised.
@@ -180,7 +185,7 @@ def device(*array_list, remove_none=True, remove_types=(str,)):
     remove_none : bool, default=True
         Whether to ignore None objects passed in array_list.
 
-    remove_types : tuple or list, default=(str,)
+    remove_types : tuple or list, default=(str, list, tuple)
         Types to ignore in array_list.
 
     Returns
@@ -290,7 +295,7 @@ def supported_float_dtypes(xp, device=None):
     return tuple(valid_float_dtypes)
 
 
-def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
+def _remove_non_arrays(*arrays, remove_none=True, remove_types=REMOVE_TYPES_DEFAULT):
     """Filter arrays to exclude None and/or specific types.
 
     Sparse arrays are always filtered out.
@@ -303,7 +308,7 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
     remove_none : bool, default=True
         Whether to ignore None objects passed in arrays.
 
-    remove_types : tuple or list, default=(str,)
+    remove_types : tuple or list, default=(str, list, tuple)
         Types to ignore in the arrays.
 
     Returns
@@ -328,7 +333,27 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
     return filtered_arrays
 
 
-def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
+def _unwrap_memoryviewslices(*arrays):
+    # Since _cyutility._memoryviewslice is an implementation detail of the
+    # Cython runtime, we would rather not introduce a possibly brittle
+    # import statement to run `isinstance`-based filtering, hence the
+    # attribute-based type inspection.
+    unwrapped = []
+    for a in arrays:
+        a_type = type(a)
+        if (
+            a_type.__module__ == "_cyutility"
+            and a_type.__name__ == "_memoryviewslice"
+            and hasattr(a, "base")
+        ):
+            a = a.base
+        unwrapped.append(a)
+    return unwrapped
+
+
+def get_namespace(
+    *arrays, remove_none=True, remove_types=REMOVE_TYPES_DEFAULT, xp=None
+):
     """Get namespace of arrays.
 
     Introspect `arrays` arguments and return their common Array API compatible
@@ -364,7 +389,7 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     remove_none : bool, default=True
         Whether to ignore None objects passed in arrays.
 
-    remove_types : tuple or list, default=(str,)
+    remove_types : tuple or list, default=(str, list, tuple)
         Types to ignore in the arrays.
 
     xp : module, default=None
@@ -399,12 +424,19 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
         remove_types=remove_types,
     )
 
+    # get_namespace can be called by helper functions that are used both in
+    # array API compatible code and non-array API Cython related code. To
+    # support the latter on NumPy inputs without raising a TypeError, we
+    # unwrap potential Cython memoryview slices here.
+    arrays = _unwrap_memoryviewslices(*arrays)
+
     if not arrays:
         return np_compat, False
 
     _check_array_api_dispatch(array_api_dispatch)
 
-    namespace, is_array_api_compliant = array_api_compat.get_namespace(*arrays), True
+    namespace = array_api_compat.get_namespace(*arrays)
+    is_array_api_compliant = True
 
     if namespace.__name__ == "array_api_strict" and hasattr(
         namespace, "set_array_api_strict_flags"
@@ -415,7 +447,7 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
 
 
 def get_namespace_and_device(
-    *array_list, remove_none=True, remove_types=(str,), xp=None
+    *array_list, remove_none=True, remove_types=REMOVE_TYPES_DEFAULT, xp=None
 ):
     """Combination into one single function of `get_namespace` and `device`.
 
@@ -425,7 +457,7 @@ def get_namespace_and_device(
         Array objects.
     remove_none : bool, default=True
         Whether to ignore None objects passed in arrays.
-    remove_types : tuple or list, default=(str,)
+    remove_types : tuple or list, default=(str, list, tuple)
         Types to ignore in the arrays.
     xp : module, default=None
         Precomputed array namespace module. When passed, typically from a caller
@@ -559,10 +591,16 @@ def move_to(*arrays, xp, device):
     )
 
 
-def _expit(X, xp=None):
+def _expit(X, out=None, xp=None):
+    # The out argument for exp and hence expit is only supported for numpy,
+    # but not in the Array API specification.
     xp, _ = get_namespace(X, xp=xp)
     if _is_numpy_namespace(xp):
-        return xp.asarray(special.expit(numpy.asarray(X)))
+        if out is not None:
+            special.expit(X, out=out)
+        else:
+            out = special.expit(X)
+        return out
 
     return 1.0 / (1.0 + xp.exp(-X))
 
@@ -1088,7 +1126,7 @@ def _modify_in_place_if_numpy(xp, func, *args, out=None, **kwargs):
     return out
 
 
-def _bincount(array, weights=None, minlength=None, xp=None):
+def _bincount(array, weights=None, minlength=0, xp=None):
     # TODO: update if bincount is ever adopted in a future version of the standard:
     # https://github.com/data-apis/array-api/issues/812
     xp, _ = get_namespace(array, xp=xp)
@@ -1124,11 +1162,7 @@ def _logsumexp(array, axis=None, xp=None):
     i_max_dt = xp.astype(index_max, array.dtype)
     m = xp.sum(i_max_dt, axis=axis, keepdims=True, dtype=array.dtype)
     # Specifying device explicitly is the fix for https://github.com/scipy/scipy/issues/22680
-    shift = xp.where(
-        xp.isfinite(array_max),
-        array_max,
-        xp.asarray(0, dtype=array_max.dtype, device=device),
-    )
+    shift = xp.where(xp.isfinite(array_max), array_max, 0)
     exp = xp.exp(array - shift)
     s = xp.sum(exp, axis=axis, keepdims=True, dtype=exp.dtype)
     s = xp.where(s == 0, s, s / m)
@@ -1163,3 +1197,14 @@ def _half_multinomial_loss(y, pred, sample_weight=None, xp=None):
     return float(
         _average(log_sum_exp - label_predictions, weights=sample_weight, xp=xp)
     )
+
+
+def _matching_numpy_dtype(X, xp=None):
+    xp, _ = get_namespace(X, xp=xp)
+    if _is_numpy_namespace(xp):
+        return X.dtype
+
+    dtypes_dict = xp.__array_namespace_info__().dtypes()
+    reversed_dtypes_dict = {dtype: name for name, dtype in dtypes_dict.items()}
+    dtype_name = reversed_dtypes_dict[X.dtype]
+    return numpy.__array_namespace_info__().dtypes()[dtype_name]

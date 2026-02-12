@@ -24,6 +24,7 @@ from sklearn.utils._array_api import (
     _is_numpy_namespace,
     _isin,
     _logsumexp,
+    _matching_numpy_dtype,
     _max_precision_float_dtype,
     _median,
     _nanmax,
@@ -50,8 +51,8 @@ from sklearn.utils._testing import (
 from sklearn.utils.fixes import _IS_32BIT, CSR_CONTAINERS, np_version, parse_version
 
 
-@pytest.mark.parametrize("X", [numpy.asarray([1, 2, 3]), [1, 2, 3]])
-def test_get_namespace_ndarray_default(X):
+@pytest.mark.parametrize("X", [numpy.asarray([1, 2, 3]), [1, 2, 3], (1, 2, 3)])
+def test_get_namespace_ndarray_or_similar_default(X):
     """Check that get_namespace returns NumPy wrapper"""
     xp_out, is_array_api_compliant = get_namespace(X)
     assert xp_out is np_compat
@@ -71,14 +72,13 @@ def test_get_namespace_ndarray_creation_device():
 
 
 @skip_if_array_api_compat_not_configured
-def test_get_namespace_ndarray_with_dispatch():
+@pytest.mark.parametrize("X", [numpy.asarray([1, 2, 3]), [1, 2, 3], (1, 2, 3)])
+def test_get_namespace_ndarray_or_similar_default_with_dispatch(X):
     """Test get_namespace on NumPy ndarrays."""
 
-    X_np = numpy.asarray([[1, 2, 3]])
-
     with config_context(array_api_dispatch=True):
-        xp_out, is_array_api_compliant = get_namespace(X_np)
-        assert is_array_api_compliant
+        xp_out, is_array_api_compliant = get_namespace(X)
+        assert is_array_api_compliant == isinstance(X, numpy.ndarray)
 
         # In the future, NumPy should become API compliant library and we should have
         # assert xp_out is numpy
@@ -929,3 +929,14 @@ def test_half_multinomial_loss(use_sample_weight, namespace, device_, dtype_name
         )
 
     assert numpy.isclose(np_loss, xp_loss)
+
+
+@pytest.mark.parametrize(
+    "namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_matching_numpy_dtype(namespace, device_, dtype_name):
+    xp = _array_api_for_tests(namespace, device_)
+    X_np = numpy.arange(1000).astype(dtype_name)
+    X_xp = xp.asarray(X_np, device=device_)
+    ret_dtype = _matching_numpy_dtype(X_xp, xp=xp)
+    assert ret_dtype == X_np.dtype
