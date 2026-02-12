@@ -94,7 +94,7 @@ def check_svm_model_equal(dense_svm, X_train, y_train, X_test):
 
 # XXX: probability=True is not thread-safe:
 # https://github.com/scikit-learn/scikit-learn/issues/31885
-# TODO(1.10): remove probability=True and adapt check_svm_model_equal accordingly.
+# TODO(1.11): remove probability=True and adapt check_svm_model_equal accordingly.
 @pytest.mark.thread_unsafe
 @skip_if_32bit
 @pytest.mark.parametrize(
