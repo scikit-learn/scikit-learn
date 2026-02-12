@@ -42,7 +42,7 @@ from sklearn.datasets._base import (
 from sklearn.utils import Bunch
 from sklearn.utils._param_validation import Interval, validate_params
 
-# The original data can be found at:
+# Archived copy of the original dataset:
 # https://web.archive.org/web/20160205030432/http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz
 ARCHIVE = RemoteFileMetadata(
     filename="cal_housing.tgz",
