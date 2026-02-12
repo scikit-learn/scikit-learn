@@ -49,7 +49,7 @@ centers = np.array(
 n_samples = 100
 n_clusters, n_features = centers.shape
 S, true_labels = make_blobs(
-    n_samples=n_samples, centers=centers, cluster_std=0.1, random_state=42
+    n_samples=n_samples, centers=centers, cluster_std=1.0, random_state=42
 )
 
 
@@ -245,24 +245,49 @@ def test_spectral_embedding_callable_affinity(sparse_container, seed=36):
     _assert_equal_with_sign_flipping(embed_rbf, embed_callable, 0.05)
 
 
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
+def test_spectral_embedding_lobpcg_solver(dtype, seed=36):
+    # Tests that the results are the same when using arpack
+    # and lobpcg solvers. Note that we use RBF kernel here
+    # to make the graph connected, so that eigenvectors
+    # are non-trivial and eigenvalues are non-repeated.
+    se_lobpcg = SpectralEmbedding(
+        n_components=2,
+        affinity="rbf",
+        eigen_solver="lobpcg",
+        random_state=np.random.RandomState(seed),
+    )
+    se_arpack = SpectralEmbedding(
+        n_components=2,
+        affinity="rbf",
+        eigen_solver="arpack",
+        random_state=np.random.RandomState(seed),
+    )
+    embed_lobpcg = se_lobpcg.fit_transform(S.astype(dtype))
+    embed_arpack = se_arpack.fit_transform(S.astype(dtype))
+    _assert_equal_with_sign_flipping(embed_lobpcg, embed_arpack, 1e-5)
+
+
 @pytest.mark.skipif(
     not pyamg_available, reason="PyAMG is required for the tests in this function."
 )
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
 def test_spectral_embedding_amg_solver(dtype, coo_container, seed=36):
+    # Tests that the results are the same when using arpack
+    # and amg solvers. Note that we use RBF kernel here
+    # to make the graph connected, so that eigenvectors
+    # are non-trivial and eigenvalues are non-repeated.
     se_amg = SpectralEmbedding(
         n_components=2,
-        affinity="nearest_neighbors",
+        affinity="rbf",
         eigen_solver="amg",
-        n_neighbors=10,
         random_state=np.random.RandomState(seed),
     )
     se_arpack = SpectralEmbedding(
         n_components=2,
-        affinity="nearest_neighbors",
+        affinity="rbf",
         eigen_solver="arpack",
-        n_neighbors=10,
         random_state=np.random.RandomState(seed),
     )
     embed_amg = se_amg.fit_transform(S.astype(dtype))
