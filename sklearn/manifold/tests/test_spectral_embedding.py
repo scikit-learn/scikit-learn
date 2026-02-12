@@ -38,11 +38,12 @@ skip_if_no_pyamg = pytest.mark.skipif(
     not pyamg_available, reason="PyAMG is required for the tests in this function."
 )
 
-# non centered, sparse centers to check the
+# non centered, sparse centers
 centers = np.array(
     [
         [0.0, 5.0, 0.0, 0.0, 0.0],
         [0.0, 0.0, 5.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 5.0, 0.0],
     ]
 )
 n_samples = 100
