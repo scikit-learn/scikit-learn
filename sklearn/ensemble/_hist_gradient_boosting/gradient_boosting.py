@@ -42,6 +42,10 @@ from sklearn.preprocessing import FunctionTransformer, LabelEncoder, OrdinalEnco
 from sklearn.utils import check_random_state, compute_sample_weight, resample
 from sklearn.utils._dataframe import is_pandas_df
 from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._numpy_aligned_allocator import (
+    set_aligned_allocation,
+    set_numpy_default_allocation,
+)
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
@@ -563,6 +567,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         acc_compute_hist_time = 0.0  # time spent computing histograms
         # time spent predicting X for gradient and hessians update
         acc_prediction_time = 0.0
+
+        set_aligned_allocation()
+
         X, known_categories = self._preprocess_X(X, reset=True)
         y = _check_y(y, estimator=self)
         y = self._encode_y(y)
@@ -1068,6 +1075,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.train_score_ = np.asarray(self.train_score_)
         self.validation_score_ = np.asarray(self.validation_score_)
         del self._in_fit  # hard delete so we're sure it can't be used anymore
+        set_numpy_default_allocation()
         return self
 
     def _is_fitted(self):
