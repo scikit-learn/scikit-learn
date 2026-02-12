@@ -811,12 +811,6 @@ def test_normal_ridge_comparison(
         noise=0.5,
         random_state=42,
     )
-
-    if n_samples > n_features:
-        ridge_params = {"solver": "svd"}
-    else:
-        ridge_params = {"solver": "saga", "max_iter": 1000000, "tol": 1e-7}
-
     (
         X_train,
         X_test,
@@ -833,12 +827,7 @@ def test_normal_ridge_comparison(
         alpha_ridge = alpha * sw_train.sum()
 
     # GLM has 1/(2*n) * Loss + 1/2*L2, Ridge has Loss + L2
-    ridge = Ridge(
-        alpha=alpha_ridge,
-        random_state=42,
-        fit_intercept=fit_intercept,
-        **ridge_params,
-    )
+    ridge = Ridge(alpha=alpha_ridge, fit_intercept=fit_intercept, solver="svd")
     ridge.fit(X_train, y_train, sample_weight=sw_train)
 
     glm = _GeneralizedLinearRegressor(
