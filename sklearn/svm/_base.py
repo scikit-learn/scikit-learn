@@ -228,8 +228,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 est_dep = "SVC"
             if self.probability != "deprecated":
                 warnings.warn(
-                    f"parameter `probability` will be deprecated in version 1.8, "
-                    f"use `CalibratedClassifierCV({est_dep}(), ensemble=False)` "
+                    f"The `probability` parameter was deprecated in 1.9 and will be removed in version 1.11. "
+                    f"Use `CalibratedClassifierCV({est_dep}(), ensemble=False)` "
                     f"instead of `{est_dep}(probability=True)`",
                     FutureWarning,
                 )
