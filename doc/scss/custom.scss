@@ -272,29 +272,29 @@ div.sk-text-image-grid-large {
   }
 }
 
-/* ============================================
-   Fix: Gallery thumbnail overlay blocks
-   "Click for source code" link
+//* ============================================
+   Fix: Gallery thumbnail overlay blocks clicks
    Related issue: #30596
    ============================================ */
 
-/* 1. The hover overlay must not intercept clicks */
+/* Hover overlay must not intercept clicks */
 .sphx-glr-thumbcontainer::after {
-  pointer-events: none;
+  pointer-events: none !important;
 }
 
-/* 2. The title link should NOT cover the whole caption area */
+/* The title link must not stretch over the whole card */
 .sphx-glr-thumbcontainer p a.reference.internal {
-  display: inline !important;   /* shrink link to text only */
-  position: static !important;  /* remove overlay-like positioning */
-  width: auto !important;
-  height: auto !important;
+  display: inline !important;
+  position: static !important;
 }
 
-/* 3. Keep hover styling normal */
-.sphx-glr-thumbcontainer p a.reference.internal:hover {
-  text-decoration: underline;
+/* Ensure "Click for source code" stays clickable */
+.sphx-glr-thumbcontainer .sphx-glr-thumbnail-title a {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 5;
 }
+
 
 
 
