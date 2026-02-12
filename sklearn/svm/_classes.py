@@ -956,9 +956,9 @@ class NuSVC(BaseSVC):
         5-fold cross-validation, and `predict_proba` may be inconsistent with
         `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
 
-        ..deprecated:: 1.8
-          Parameter `probability` will be removed in version 1.10, use
-          `CalibratedClassifierCV(NuSVC(), ensemble=False)`
+        ..deprecated:: 1.9
+          The `probability` parameter is deprecated and will be removed in version 1.11.
+          Use `CalibratedClassifierCV(NuSVC(), ensemble=False)`
           instead of `NuSVC(probability=True)`.
 
     tol : float, default=1e-3
