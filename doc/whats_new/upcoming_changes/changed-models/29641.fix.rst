@@ -1,5 +1,5 @@
-- Fixed the way :class:`HistGradientBoostingClassifier` and
-  `HistGradientBoostingRegressor` compute their bin edges to properly and
+- Fixed the way :class:`ensemble.HistGradientBoostingClassifier` and
+  `ensemble.HistGradientBoostingRegressor` compute their bin edges to properly and
   consistently handle :term:`sample_weight`. When `sample_weights=None` is
   passed to `fit` and the number of distinct feature values is less than the
   specified `max_bins`, the edges are calculated using a sliding window of shape
