@@ -219,6 +219,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         )
         solver_type = LIBSVM_IMPL.index(self._impl)
 
+        # TODO(1.11): remove probability
         self._effective_probability = self.probability
         if self._impl in ["c_svc", "nu_svc"]:
             if self._impl == "nu_scv":
