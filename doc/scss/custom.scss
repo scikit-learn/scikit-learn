@@ -273,31 +273,29 @@ div.sk-text-image-grid-large {
 }
 
 /* ============================================
-   Fix: Gallery thumbnail link overlay issue
+   Fix: Gallery thumbnail overlay blocks
+   "Click for source code" link
+   Related issue: #30596
    ============================================ */
 
-/*
-Problem:
-The caption link inside sphinx-gallery thumbnails is being stretched,
-making the entire <p> area clickable and blocking the
-"Click for source code" link.
+/* 1. The hover overlay must not intercept clicks */
+.sphx-glr-thumbcontainer::after {
+  pointer-events: none;
+}
 
-Fix:
-Force the caption link to behave like normal inline text.
-Only the text should be clickable, not the whole card.
-*/
-
+/* 2. The title link should NOT cover the whole caption area */
 .sphx-glr-thumbcontainer p a.reference.internal {
-  display: inline !important;     /* shrink link to text only */
-  position: static !important;    /* remove overlay positioning */
+  display: inline !important;   /* shrink link to text only */
+  position: static !important;  /* remove overlay-like positioning */
   width: auto !important;
   height: auto !important;
 }
 
-/* Optional: normal underline on hover */
+/* 3. Keep hover styling normal */
 .sphx-glr-thumbcontainer p a.reference.internal:hover {
   text-decoration: underline;
 }
+
 
 
 
