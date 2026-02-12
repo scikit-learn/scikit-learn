@@ -690,8 +690,8 @@ class SVC(BaseSVC):
         5-fold cross-validation, and `predict_proba` may be inconsistent with
         `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
 
-        ..deprecated:: 1.8
-          Parameter `probability` will be removed in 1.10.
+        ..deprecated:: 1.9
+          The `probability` parameter is deprecated and will be removed in 1.11.
           Use `CalibratedClassifierCV(SVC(), ensemble=False)` instead of
           `SVC(probability=True)`.
 
