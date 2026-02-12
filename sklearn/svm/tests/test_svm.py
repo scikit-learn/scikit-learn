@@ -379,7 +379,7 @@ def test_tweak_params():
 
 # XXX: this test is thread-unsafe because it uses probability=True:
 # https://github.com/scikit-learn/scikit-learn/issues/31885
-# TODO(1.10): remove this test entirely
+# TODO(1.11): remove this test entirely
 @pytest.mark.thread_unsafe
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_probability(global_random_seed):
