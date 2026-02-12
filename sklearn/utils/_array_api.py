@@ -591,10 +591,16 @@ def move_to(*arrays, xp, device):
     )
 
 
-def _expit(X, xp=None):
+def _expit(X, out=None, xp=None):
+    # The out argument for exp and hence expit is only supported for numpy,
+    # but not in the Array API specification.
     xp, _ = get_namespace(X, xp=xp)
     if _is_numpy_namespace(xp):
-        return xp.asarray(special.expit(numpy.asarray(X)))
+        if out is not None:
+            special.expit(X, out=out)
+        else:
+            out = special.expit(X)
+        return out
 
     return 1.0 / (1.0 + xp.exp(-X))
 
@@ -1120,7 +1126,7 @@ def _modify_in_place_if_numpy(xp, func, *args, out=None, **kwargs):
     return out
 
 
-def _bincount(array, weights=None, minlength=None, xp=None):
+def _bincount(array, weights=None, minlength=0, xp=None):
     # TODO: update if bincount is ever adopted in a future version of the standard:
     # https://github.com/data-apis/array-api/issues/812
     xp, _ = get_namespace(array, xp=xp)
@@ -1156,11 +1162,7 @@ def _logsumexp(array, axis=None, xp=None):
     i_max_dt = xp.astype(index_max, array.dtype)
     m = xp.sum(i_max_dt, axis=axis, keepdims=True, dtype=array.dtype)
     # Specifying device explicitly is the fix for https://github.com/scipy/scipy/issues/22680
-    shift = xp.where(
-        xp.isfinite(array_max),
-        array_max,
-        xp.asarray(0, dtype=array_max.dtype, device=device),
-    )
+    shift = xp.where(xp.isfinite(array_max), array_max, 0)
     exp = xp.exp(array - shift)
     s = xp.sum(exp, axis=axis, keepdims=True, dtype=exp.dtype)
     s = xp.where(s == 0, s, s / m)
@@ -1195,3 +1197,14 @@ def _half_multinomial_loss(y, pred, sample_weight=None, xp=None):
     return float(
         _average(log_sum_exp - label_predictions, weights=sample_weight, xp=xp)
     )
+
+
+def _matching_numpy_dtype(X, xp=None):
+    xp, _ = get_namespace(X, xp=xp)
+    if _is_numpy_namespace(xp):
+        return X.dtype
+
+    dtypes_dict = xp.__array_namespace_info__().dtypes()
+    reversed_dtypes_dict = {dtype: name for name, dtype in dtypes_dict.items()}
+    dtype_name = reversed_dtypes_dict[X.dtype]
+    return numpy.__array_namespace_info__().dtypes()[dtype_name]
