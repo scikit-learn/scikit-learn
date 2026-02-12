@@ -209,8 +209,8 @@ def test_no_unlabeled():
 
 
 def test_early_stopping():
-    svc = LogisticRegression()
-    st = SelfTrainingClassifier(svc)
+    lr = LogisticRegression()
+    st = SelfTrainingClassifier(lr)
     X_train_easy = [[1], [0], [1], [0.5]]
     y_train_easy = [1, 0, -1, -1]
     # X = [[0.5]] cannot be predicted on with a high confidence, so training
