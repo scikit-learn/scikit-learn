@@ -3392,7 +3392,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         transform_function = {
             "box-cox": boxcox,
-            "yeo-johnson": self._yeo_johnson_transform,
+            "yeo-johnson": stats.yeojohnson,
         }[self.method]
 
         with np.errstate(invalid="ignore"):  # hide NaN warnings
