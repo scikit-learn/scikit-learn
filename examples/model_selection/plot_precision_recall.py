@@ -146,7 +146,7 @@ classifier.fit(X_train, y_train)
 #   * :func:`~sklearn.metrics.PrecisionRecallDisplay.from_predictions` for when
 #     you already have the predictions
 #
-# * for plotting multiple curves using cross-validation results;
+# * for plotting multiple curves using cross-validation results:
 #   :func:`~sklearn.metrics.PrecisionRecallDisplay.from_cv_results`
 #
 # Let's first plot the precision-recall curve without the classifier

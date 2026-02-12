@@ -140,10 +140,10 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     this metric, the precision-recall curve is plotted without any
     interpolation as well (step-wise style).
 
-    You can change this style by passing the keyword argument
-    `drawstyle="default"` in :meth:`plot`, :meth:`from_estimator`, or
-    :meth:`from_predictions`. However, the curve will not be strictly
-    consistent with the reported average precision.
+    To enable interpolation, pass `curve_kwargs={"drawstyle": "default"}` to
+    meth:`plot`, :meth:`from_estimator`, or :meth:`from_predictions`.
+    However, the curve will not be strictly consistent with the reported
+    average precision.
 
     Examples
     --------
@@ -238,7 +238,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             Passing a list will raise an error if `curve_kwargs` is not a list to avoid
             labeling individual curves that have the same appearance.
 
-            If `None`, no name is shown in the legend.
+            If `None`, set to `name` provided at `PrecisionRecallDisplay`
+            initialization. If still `None`, no name is shown in the legend.
 
             .. versionchanged:: 1.9
                 Now accepts a list for plotting multiple curves.
@@ -292,9 +293,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         with this metric, the precision-recall curve is plotted without any
         interpolation as well (step-wise style).
 
-        You can change this style by passing the keyword argument
-        `drawstyle="default"`. However, the curve will not be strictly
-        consistent with the reported average precision.
+        To enable interpolation, pass `curve_kwargs={"drawstyle": "default"}`.
+        However, the curve will not be strictly consistent with the reported
+        average precision.
         """
         precision, recall, average_precision, name, prevalence_pos_label = (
             self._validate_plot_params(ax=ax, name=name)
@@ -516,9 +517,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         with this metric, the precision-recall curve is plotted without any
         interpolation as well (step-wise style).
 
-        You can change this style by passing the keyword argument
-        `drawstyle="default"`. However, the curve will not be strictly
-        consistent with the reported average precision.
+        To enable interpolation, pass `curve_kwargs={"drawstyle": "default"}`.
+        However, the curve will not be strictly consistent with the reported
+        average precision.
 
         Examples
         --------
@@ -674,9 +675,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         with this metric, the precision-recall curve is plotted without any
         interpolation as well (step-wise style).
 
-        You can change this style by passing the keyword argument
-        `drawstyle="default"`. However, the curve will not be strictly
-        consistent with the reported average precision.
+        To enable interpolation, pass `curve_kwargs={"drawstyle": "default"}`.
+        However, the curve will not be strictly consistent with the reported
+        average precision.
 
         Examples
         --------
@@ -846,9 +847,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         with this metric, the precision-recall curve is plotted without any
         interpolation as well (step-wise style).
 
-        You can change this style by passing the keyword argument
-        `drawstyle="default"`. However, the curve will not be strictly
-        consistent with the reported average precision.
+        To enable interpolation, pass `curve_kwargs={"drawstyle": "default"}`.
+        However, the curve will not be strictly consistent with the reported
+        average precision.
 
         Examples
         --------

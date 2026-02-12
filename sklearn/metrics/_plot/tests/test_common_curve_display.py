@@ -89,7 +89,7 @@ def _check_pos_label_statistics(
             y_score,
             pos_label=pos_label,
         )
-    else:
+    else:  # constructor_name = "from_cv_results"
         display = display_class.from_cv_results(
             cv_results,
             X,
@@ -116,7 +116,7 @@ def _check_pos_label_statistics(
             y_score,
             pos_label=pos_label,
         )
-    else:
+    else:  # constructor_name = "from_cv_results"
         display = display_class.from_cv_results(
             cv_results,
             X,
@@ -254,7 +254,7 @@ def test_display_curve_name_overwritten_by_plot_multiple_calls(
         disp = Display.from_estimator(clf, X, y, name=clf_name)
     elif constructor_name == "from_predictions":
         disp = Display.from_predictions(y, y_pred, name=clf_name)
-    else:
+    else:  # constructor_name = "from_cv_results"
         if Display in (RocCurveDisplay, PrecisionRecallDisplay):
             disp = Display.from_cv_results(cv_results, X, y, name=clf_name)
         else:
@@ -571,7 +571,7 @@ def test_display_default_name(
 
     if constructor_name == "from_estimator":
         disp = Display.from_estimator(lr, X, y)
-    else:
+    else:  # constructor_name = "from_predictions"
         disp = Display.from_predictions(y, y_score)
 
     assert expected_clf_name in disp.name
@@ -591,7 +591,7 @@ def test_display_default_name(
 )
 @pytest.mark.parametrize("name", [None, "single", ["one", "two", "three"]])
 def test_display_from_cv_results_legend_label(
-    pyplot, Display, auc_metrics, auc_metric_name, name, curve_kwargs
+    pyplot, Display, auc_metrics, auc_metric_name, curve_kwargs, name
 ):
     """Check legend label correct with all `curve_kwargs`, `name` combinations.
 
@@ -815,7 +815,7 @@ def test_display_estimator_name_deprecation(pyplot, Display, display_kwargs):
 @pytest.mark.parametrize(
     "Display, display_kwargs",
     [
-        # TODO(1.10): Remove
+        # TODO(1.11): Remove
         (
             PrecisionRecallDisplay,
             {"precision": np.array([1, 0.5, 0]), "recall": np.array([0, 0.5, 1])},
@@ -841,7 +841,7 @@ def test_display_kwargs_deprecation(
             Display.from_estimator(lr, X, y, curve_kwargs={"alpha": 1}, label="test")
         elif constructor_name == "from_predictions":
             Display.from_predictions(y, y, curve_kwargs={"alpha": 1}, label="test")
-        else:
+        else:  # constructor_name = "plot"
             Display(**display_kwargs).plot(curve_kwargs={"alpha": 1}, label="test")
 
     # Warning when `**kwargs`` provided
@@ -850,5 +850,5 @@ def test_display_kwargs_deprecation(
             Display.from_estimator(lr, X, y, label="test")
         elif constructor_name == "from_predictions":
             Display.from_predictions(y, y, label="test")
-        else:
+        else:  # constructor_name = "plot"
             Display(**display_kwargs).plot(label="test")
