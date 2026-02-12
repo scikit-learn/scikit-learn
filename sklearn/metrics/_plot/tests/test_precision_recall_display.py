@@ -49,6 +49,8 @@ def test_precision_recall_display_plotting(
     with_sample_weight,
 ):
     """Check the overall plotting rendering."""
+    import matplotlib as mpl
+
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     pos_label = 1
 
@@ -100,8 +102,6 @@ def test_precision_recall_display_plotting(
     assert_allclose(display.recall, recall)
     assert display.average_precision == pytest.approx(average_precision)
 
-    import matplotlib as mpl
-
     _check_figure_axes_and_labels(display, pos_label)
     assert isinstance(display.line_, mpl.lines.Line2D)
     # Check default curve kwarg
@@ -124,6 +124,8 @@ def test_precision_recall_display_from_cv_results_plotting(
     pyplot, response_method, drop_intermediate, with_sample_weight
 ):
     """Check the overall plotting of `from_cv_results`."""
+    import matplotlib as mpl
+
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     pos_label = 1
 
@@ -172,8 +174,6 @@ def test_precision_recall_display_from_cv_results_plotting(
         assert_allclose(display.precision[idx], precision)
         assert_allclose(display.recall[idx], recall)
         assert display.average_precision[idx] == pytest.approx(average_precision)
-
-        import matplotlib as mpl
 
         assert isinstance(display.line_[idx], mpl.lines.Line2D)
         # Check default curve kwarg
@@ -277,6 +277,8 @@ def test_precision_recall_chance_level_line(
     pyplot, plot_chance_level, chance_level_kw, constructor_name
 ):
     """Check chance level plotting behavior, for `from_estimator`/`from_predictions`."""
+    import matplotlib as mpl
+
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     pos_prevalence = Counter(y)[1] / len(y)
 
@@ -298,8 +300,6 @@ def test_precision_recall_chance_level_line(
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
         )
-
-    import matplotlib as mpl
 
     if not plot_chance_level:
         assert display.chance_level_ is None
@@ -325,6 +325,8 @@ def test_precision_recall_chance_level_line_from_cv_results(
     pyplot, plot_chance_level, chance_level_kw
 ):
     """Check chance level plotting behavior for `from_cv_results`."""
+    import matplotlib as mpl
+
     # Note a separate chance line is plotted for each cv split
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     n_cv = 3
@@ -339,8 +341,6 @@ def test_precision_recall_chance_level_line_from_cv_results(
         plot_chance_level=plot_chance_level,
         chance_level_kwargs=chance_level_kw,
     )
-
-    import matplotlib as mpl
 
     if not plot_chance_level:
         assert display.chance_level_ is None
@@ -585,6 +585,9 @@ def test_precision_recall_prevalence_pos_label_reusable(pyplot, constructor_name
     # Check that even if one passes plot_chance_level=False the first time
     # one can still call disp.plot with plot_chance_level=True and get the
     # chance level line
+
+    import matplotlib as mpl
+
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
     lr = LogisticRegression()
@@ -607,8 +610,6 @@ def test_precision_recall_prevalence_pos_label_reusable(pyplot, constructor_name
             cv_results, X, y, plot_chance_level=False
         )
     assert display.chance_level_ is None
-
-    import matplotlib as mpl
 
     # When calling from_estimator or from_predictions,
     # prevalence_pos_label should have been set, so that directly
