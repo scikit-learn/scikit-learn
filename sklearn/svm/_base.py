@@ -23,7 +23,7 @@ from sklearn.utils import (
     column_or_1d,
     compute_class_weight,
 )
-from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.metaestimators import available_if
 from sklearn.utils.multiclass import (
@@ -228,7 +228,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 est_dep = "SVC"
             if self.probability != "deprecated":
                 warnings.warn(
-                    f"The `probability` parameter was deprecated in 1.9 and will be removed in version 1.11. "
+                    f"The `probability` parameter was deprecated in 1.9 and "
+                    f"will be removed in version 1.11. "
                     f"Use `CalibratedClassifierCV({est_dep}(), ensemble=False)` "
                     f"instead of `{est_dep}(probability=True)`",
                     FutureWarning,
@@ -342,9 +343,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 ConvergenceWarning,
             )
 
-    def _dense_fit(
-        self, X, y, sample_weight, solver_type, kernel, probability, random_seed
-    ):
+    def _dense_fit(self, X, y, sample_weight, solver_type, kernel, random_seed):
         if callable(self.kernel):
             # you must store a reference to X to compute the kernel in predict
             # TODO: add keyword copy to copy on demand
@@ -391,9 +390,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         self._warn_from_fit_status()
 
-    def _sparse_fit(
-        self, X, y, sample_weight, solver_type, kernel, probability, random_seed
-    ):
+    def _sparse_fit(self, X, y, sample_weight, solver_type, kernel, random_seed):
         X.data = np.asarray(X.data, dtype=np.float64, order="C")
         X.sort_indices()
 
@@ -430,7 +427,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.cache_size,
             self.epsilon,
             int(self.shrinking),
-            int(probability),
+            int(self._effective_probability),
             self.max_iter,
             random_seed,
         )
