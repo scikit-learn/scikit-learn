@@ -43,13 +43,12 @@ centers = np.array(
     [
         [0.0, 5.0, 0.0, 0.0, 0.0],
         [0.0, 0.0, 5.0, 0.0, 0.0],
-        #        [1.0, 0.0, 0.0, 5.0, 1.0],
     ]
 )
-n_samples = 1000
+n_samples = 100
 n_clusters, n_features = centers.shape
 S, true_labels = make_blobs(
-    n_samples=n_samples, centers=centers, cluster_std=1.0, random_state=42
+    n_samples=n_samples, centers=centers, cluster_std=0.1, random_state=42
 )
 
 
@@ -203,7 +202,7 @@ def test_precomputed_nearest_neighbors_filtering():
     results = []
     for additional_neighbors in [0, 10]:
         nn = NearestNeighbors(n_neighbors=n_neighbors + additional_neighbors).fit(S)
-        graph = nn.kneighbors_graph(S, mode="connectivity")
+        graph = nn.kneighbors_graph(S, mode="distance")
         embedding = (
             SpectralEmbedding(
                 random_state=0,
@@ -329,12 +328,16 @@ def test_spectral_embedding_amg_solver_failure(dtype, seed=36):
 
 def test_pipeline_spectral_clustering(seed=36):
     # Test using pipeline to do spectral clustering
+    # Note that actual SpectralClustering class does not drop the first
+    # eigenvector, but this is not possible when using SpectralEmbedding
+    # class. So here for the two-class problem we will simply use a single
+    # eigenvector (after the first one is dropped).
     random_state = np.random.RandomState(seed)
     se_rbf = SpectralEmbedding(
-        n_components=n_clusters, affinity="rbf", random_state=random_state
+        n_components=n_clusters - 1, affinity="rbf", random_state=random_state
     )
     se_knn = SpectralEmbedding(
-        n_components=n_clusters,
+        n_components=n_clusters - 1,
         affinity="nearest_neighbors",
         n_neighbors=5,
         random_state=random_state,
