@@ -199,7 +199,7 @@ def test_spectral_embedding_precomputed_affinity(
 
 def test_precomputed_nearest_neighbors_filtering():
     # Test precomputed graph filtering when containing too many neighbors
-    n_neighbors = 2
+    n_neighbors = 10
     results = []
     for additional_neighbors in [0, 10]:
         nn = NearestNeighbors(n_neighbors=n_neighbors + additional_neighbors).fit(S)

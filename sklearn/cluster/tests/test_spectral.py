@@ -110,7 +110,7 @@ def test_precomputed_nearest_neighbors_filtering(global_random_seed):
         cluster_std=0.01,
     )
 
-    n_neighbors = 2
+    n_neighbors = 10
     results = []
     for additional_neighbors in [0, 10]:
         nn = NearestNeighbors(n_neighbors=n_neighbors + additional_neighbors).fit(X)
