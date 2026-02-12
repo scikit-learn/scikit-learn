@@ -344,10 +344,10 @@ def _spectral_embedding(
         # (see https://docs.scipy.org/doc/scipy/tutorial/arpack.html
         # for a short explanation of what this means)
         # Laplacian (normalized or not) has non-negative eigenvalues
-        # and we need to find the smallest one, i.e. closest to 0.
+        # and we need to find the smallest ones, i.e. closest to 0.
         # The efficient way to do it, according to the scipy docs,
         # is to use which="LM" and sigma=0.
-        # Andrew Kniazev recommended to set small negative sigma:
+        # Andrew Kniazev recommends to set small negative sigma:
         # https://github.com/scikit-learn/scikit-learn/
         # pull/14647#issuecomment-521304431
         try:

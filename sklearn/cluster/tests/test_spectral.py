@@ -106,7 +106,7 @@ def test_precomputed_nearest_neighbors_filtering(global_random_seed):
     X, y = make_blobs(
         n_samples=250,
         random_state=global_random_seed,
-        centers=[[1, 1, 1], [-1, -1, -1]],
+        centers=[[5, 5, 5], [-5, -5, -5]],
         cluster_std=0.01,
     )
 
