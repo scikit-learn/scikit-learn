@@ -74,12 +74,12 @@ class _BasePCA(
             return xp.eye(n_features) / self.noise_variance_
 
         if is_array_api_compliant:
-            linalg_inv = xp.linalg.inv
+            linalg_pinv = xp.linalg.pinv
         else:
-            linalg_inv = linalg.inv
+            linalg_pinv = linalg.pinv
 
         if self.noise_variance_ == 0.0:
-            return linalg_inv(self.get_covariance())
+            return linalg_pinv(self.get_covariance())
 
         # Get precision using matrix inversion lemma
         components_ = self.components_
@@ -94,7 +94,7 @@ class _BasePCA(
         )
         precision = components_ @ components_.T / self.noise_variance_
         _add_to_diagonal(precision, 1.0 / exp_var_diff, xp)
-        precision = components_.T @ linalg_inv(precision) @ components_
+        precision = components_.T @ linalg_pinv(precision) @ components_
         precision /= -(self.noise_variance_**2)
         _add_to_diagonal(precision, 1.0 / self.noise_variance_, xp)
         return precision

@@ -1,0 +1,5 @@
+- Fix :class:`~sklearn.decomposition.PCA` now uses the pseudo-inverse (pinv)
+  instead of the standard inverse (inv) in :meth:`~sklearn.decomposition.PCA.get_precision`
+  to ensure numerical stability when dealing with singular or rank-deficient
+  matrices, especially in Array API dispatching.
+  By :user:`Mohammad Ahmadullah Khan <MAUK9086>`.

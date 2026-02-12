@@ -1153,3 +1153,20 @@ def test_array_api_error_and_warnings_on_unsupported_params():
     with pytest.warns(UserWarning, match=expected_msg):
         with config_context(array_api_dispatch=True):
             pca.fit(iris_xp)
+
+
+def test_pca_get_precision_singular_matrix():
+    """Test that get_precision works even with singular covariance matrices.
+    Regression test for gh-33205.
+    """
+    # Perfectly singular data (col 1 == col 2)
+    X = np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]])
+    pca = PCA()
+    pca.fit(X)
+
+    # This used to raise a LinAlgError (or singular matrix error)
+    precision = pca.get_precision()
+
+    assert precision.shape == (2, 2)
+    # The precision matrix should be symmetric
+    assert np.allclose(precision, precision.T)
