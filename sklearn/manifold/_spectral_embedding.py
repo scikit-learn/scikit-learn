@@ -342,50 +342,25 @@ def _spectral_embedding(
 
         # Here we'll use shift-invert mode for fast eigenvalues
         # (see https://docs.scipy.org/doc/scipy/tutorial/arpack.html
-        #  for a short explanation of what this means)
-        # Because the normalized Laplacian has eigenvalues between 0 and 2,
-        # I - L has eigenvalues between -1 and 1.  ARPACK is most efficient
-        # when finding eigenvalues of largest magnitude (keyword which='LM')
-        # and when these eigenvalues are very large compared to the rest.
-        # For very large, very sparse graphs, I - L can have many, many
-        # eigenvalues very near 1.0.  This leads to slow convergence.  So
-        # instead, we'll use ARPACK's shift-invert mode, asking for the
-        # eigenvalues near 1.0.  This effectively spreads-out the spectrum
-        # near 1.0 and leads to much faster convergence: potentially an
-        # orders-of-magnitude speedup over simply using keyword which='LA'
-        # in standard mode.
+        # for a short explanation of what this means)
+        # Laplacian (normalized or not) has non-negative eigenvalues
+        # and we need to find the smallest one, i.e. closest to 0.
+        # The efficient way to do it, according to the scipy docs,
+        # is to use which="LM" and sigma=0.
+        # Andrew Kniazev recommended to set small negative sigma:
+        # https://github.com/scikit-learn/scikit-learn/
+        # pull/14647#issuecomment-521304431
         try:
-            # We are computing the opposite of the laplacian inplace so as
-            # to spare a memory allocation of a possibly very large array
             tol = 0 if eigen_tol == "auto" else eigen_tol
-
-            # The following transforms laplacian L into I-L
-            laplacian *= -1
-            if sparse.issparse(laplacian):
-                if sparse.isspmatrix(laplacian):
-                    I = sparse.eye(
-                        laplacian.shape[0],
-                        dtype=laplacian.dtype,
-                        format=laplacian.format,
-                    )
-                else:
-                    I = sparse.eye_array(
-                        laplacian.shape[0],
-                        dtype=laplacian.dtype,
-                        format=laplacian.format,
-                    )
-            else:
-                I = np.eye(laplacian.shape[0]).astype(laplacian.dtype)
-            laplacian = laplacian + I
 
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
             laplacian = check_array(
                 laplacian, accept_sparse="csr", accept_large_sparse=False
             )
             _, diffusion_map = eigsh(
-                laplacian, k=n_components, sigma=1.0, which="LM", tol=tol, v0=v0
+                laplacian, k=n_components, sigma=-1e-5, which="LM", tol=tol, v0=v0
             )
-            embedding = diffusion_map.T[n_components::-1]
+            embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
                 # recover u = D^-1/2 x from the eigenvector output x
                 embedding = embedding / dd
@@ -394,9 +369,6 @@ def _spectral_embedding(
             # in arpack fails. We fallback to lobpcg
             warnings.warn("ARPACK has failed, falling back to LOBPCG.")
             eigen_solver = "lobpcg"
-            # Revert the laplacian to what it was to have lobpcg work
-            laplacian = laplacian - I
-            laplacian *= -1
 
     elif eigen_solver == "amg":
         # Use AMG to get a preconditioner and speed up the eigenvalue
