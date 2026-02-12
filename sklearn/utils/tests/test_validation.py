@@ -18,6 +18,7 @@ from sklearn.base import BaseEstimator
 from sklearn.datasets import make_blobs
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
+from sklearn.externals import array_api_extra as xpx
 from sklearn.linear_model import ARDRegression
 
 # TODO: add this estimator into the _mocking module in a further refactoring
@@ -1623,7 +1624,7 @@ def _check_sample_weight_common(xp):
     # check negative weight when ensure_non_negative=True
     X = xp.ones((5, 2))
     sample_weight = xp.ones(_num_samples(X))
-    sample_weight[-1] = -10
+    sample_weight = xpx.at(sample_weight)[-1].set(-10)
     err_msg = "Negative values in data passed to `sample_weight`"
     with pytest.raises(ValueError, match=err_msg):
         _check_sample_weight(sample_weight, X, ensure_non_negative=True)

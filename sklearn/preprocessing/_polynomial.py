@@ -16,6 +16,7 @@ from scipy.interpolate import BSpline
 from scipy.special import comb
 
 from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.externals import array_api_extra as xpx
 from sklearn.preprocessing._csr_polynomial_expansion import (
     _calc_expanded_nnz,
     _calc_total_nnz,
@@ -514,7 +515,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
             # degree 0 term
             if self.include_bias:
-                XP[:, 0] = 1
+                XP = xpx.at(XP)[:, 0].set(1)
                 current_col = 1
             else:
                 current_col = 0
@@ -523,7 +524,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 return XP
 
             # degree 1 term
-            XP[:, current_col : current_col + n_features] = X
+            XP = xpx.at(XP)[:, current_col : current_col + n_features].set(X)
             index = list(range(current_col, current_col + n_features))
             current_col += n_features
             index.append(current_col)
@@ -551,8 +552,10 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                             casting="no",
                         )
                     else:
-                        XP[:, current_col:next_col] = xp.multiply(
-                            XP[:, start:end], X[:, feature_idx : feature_idx + 1]
+                        XP = xpx.at(XP)[:, current_col:next_col].set(
+                            xp.multiply(
+                                XP[:, start:end], X[:, feature_idx : feature_idx + 1]
+                            )
                         )
                     current_col = next_col
 
@@ -568,8 +571,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                         device=device_,
                         **order_kwargs,
                     )
-                    Xout[:, 0] = 1
-                    Xout[:, 1:] = XP[:, n_XP - n_Xout + 1 :]
+                    Xout = xpx.at(Xout)[:, 0].set(1)
+                    Xout = xpx.at(Xout)[:, 1:].set(XP[:, n_XP - n_Xout + 1 :])
                 else:
                     Xout = xp.asarray(XP[:, n_XP - n_Xout :], copy=True)
                 XP = Xout

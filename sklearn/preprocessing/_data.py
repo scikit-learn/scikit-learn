@@ -16,6 +16,7 @@ from sklearn.base import (
     TransformerMixin,
     _fit_context,
 )
+from sklearn.externals import array_api_extra as xpx
 from sklearn.preprocessing._encoders import OneHotEncoder
 from sklearn.utils import _array_api, check_array, metadata_routing, resample
 from sklearn.utils._array_api import (
@@ -127,7 +128,7 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
         if copy:
             # New array to avoid side-effects
             scale = xp.asarray(scale, copy=True)
-        scale[constant_mask] = 1.0
+        scale = xpx.at(scale)[constant_mask].set(1.0)
         return scale
 
 
@@ -2270,8 +2271,8 @@ def binarize(X, *, threshold=0.0, copy=True):
         float_dtype = _find_matching_floating_dtype(X, threshold, xp=xp)
         cond = xp.astype(X, float_dtype, copy=False) > threshold
         not_cond = xp.logical_not(cond)
-        X[cond] = 1
-        X[not_cond] = 0
+        X = xpx.at(X)[cond].set(1)
+        X = xpx.at(X)[not_cond].set(0)
     return X
 
 

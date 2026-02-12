@@ -16,6 +16,7 @@ from scipy.spatial import distance
 
 from sklearn import config_context
 from sklearn.exceptions import DataConversionWarning
+from sklearn.externals import array_api_extra as xpx
 from sklearn.metrics._pairwise_distances_reduction import ArgKmin
 from sklearn.metrics._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from sklearn.preprocessing import normalize
@@ -417,7 +418,7 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
     # Ensure that distances between vectors and themselves are set to 0.0.
     # This may not be the case due to floating point rounding errors.
     if X is Y:
-        _fill_diagonal(distances, 0, xp=xp)
+        distances = _fill_diagonal(distances, 0, xp=xp)
 
     if squared:
         return distances
@@ -632,7 +633,9 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
                 d += XX_chunk
                 d += YY_chunk
 
-            distances[x_slice, y_slice] = xp.astype(d, xp.float32, copy=False)
+            distances = xpx.at(distances)[x_slice, y_slice].set(
+                xp.astype(d, xp.float32, copy=False)
+            )
 
     return distances
 
@@ -1120,7 +1123,7 @@ def manhattan_distances(X, Y=None):
             block_dist = xp.sum(
                 xp.abs(batch_X[:, None, :] - batch_Y[None, :, :]), axis=2
             )
-            out[i:i_end, j:j_end] = block_dist
+            out = xpx.at(out)[i:i_end, j:j_end].set(block_dist)
 
     return out
 
@@ -1177,7 +1180,7 @@ def cosine_distances(X, Y=None):
     if X is Y or Y is None:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
-        _fill_diagonal(S, 0.0, xp)
+        S = _fill_diagonal(S, 0.0, xp)
     return S
 
 
@@ -1958,7 +1961,7 @@ def distance_metrics():
 
 def _transposed_dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
     """Write in-place to a slice of a distance matrix."""
-    dist_matrix[slice_, ...] = dist_func(*args, **kwargs).T
+    dist_matrix = xpx.at(dist_matrix)[slice_, ...].set(dist_func(*args, **kwargs).T)
 
 
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
@@ -1989,7 +1992,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     if (X is Y or Y is None) and func is euclidean_distances:
         # zeroing diagonal for euclidean norm.
         # TODO: do it also for other norms.
-        _fill_diagonal(ret, 0, xp=xp)
+        ret = _fill_diagonal(ret, 0, xp=xp)
 
     # Transform output back
     return ret.T
@@ -2028,7 +2031,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         for i, j in iterator:
             x = _get_slice(X, i)
             y = _get_slice(Y, j)
-            out[i, j] = metric(x, y, **kwds)
+            out = xpx.at(out)[i, j].set(metric(x, y, **kwds))
 
         # Make symmetric
         # NB: out += out.T will produce incorrect results
@@ -2038,7 +2041,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         # NB: nonzero diagonals are allowed for both metrics and kernels
         for i in range(X.shape[0]):
             x = _get_slice(X, i)
-            out[i, i] = metric(x, x, **kwds)
+            out = xpx.at(out)[i, i].set(metric(x, x, **kwds))
 
     else:
         # Calculate all cells
@@ -2047,7 +2050,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         for i, j in iterator:
             x = _get_slice(X, i)
             y = _get_slice(Y, j)
-            out[i, j] = metric(x, y, **kwds)
+            out = xpx.at(out)[i, j].set(metric(x, y, **kwds))
 
     return out
 

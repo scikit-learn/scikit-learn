@@ -19,6 +19,7 @@ import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix, issparse
 
 from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.externals import array_api_extra as xpx
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder
 from sklearn.utils import (
     assert_all_finite,
@@ -44,7 +45,6 @@ from sklearn.utils._array_api import (
     get_namespace_and_device,
     move_to,
     supported_float_dtypes,
-    xpx,
 )
 from sklearn.utils._param_validation import (
     Hidden,
@@ -1017,7 +1017,7 @@ def cohen_kappa_score(
 
     if weights is None:
         w_mat = xp.ones([n_classes, n_classes], dtype=max_float_dtype, device=device_)
-        _fill_diagonal(w_mat, 0, xp=xp)
+        w_mat = _fill_diagonal(w_mat, 0, xp=xp)
     else:  # "linear" or "quadratic"
         w_mat = xp.zeros([n_classes, n_classes], dtype=max_float_dtype, device=device_)
         w_mat += xp.arange(n_classes)
@@ -1862,7 +1862,7 @@ def _prf_divide(
     dtype_float = _find_matching_floating_dtype(numerator, denominator, xp=xp)
     mask = denominator == 0
     denominator = xp.asarray(denominator, copy=True, dtype=dtype_float)
-    denominator[mask] = 1  # avoid infs/nans
+    denominator = xpx.at(denominator)[mask].set(1)  # avoid infs/nans
     result = xp.asarray(numerator, dtype=dtype_float) / denominator
 
     if not xp.any(mask):
@@ -1870,7 +1870,9 @@ def _prf_divide(
 
     # set those with 0 denominator to `zero_division`, and 0 when "warn"
     zero_division_value = _check_zero_division(zero_division)
-    result[mask] = zero_division_value
+    result = xpx.at(result)[mask].set(
+        xp.asarray(zero_division_value, dtype=dtype_float)
+    )
 
     # we assume the user will be removing warnings if zero_division is set
     # to something different than "warn". If we are computing only f-score

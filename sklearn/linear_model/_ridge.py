@@ -23,6 +23,7 @@ from sklearn.base import (
     is_classifier,
 )
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.externals import array_api_extra as xpx
 from sklearn.linear_model._base import (
     LinearClassifierMixin,
     LinearModel,
@@ -304,7 +305,7 @@ def _solve_svd(X, y, alpha, xp=None):
     s_nnz = s[idx][:, None]
     UTy = U.T @ y
     d = xp.zeros((s.shape[0], alpha.shape[0]), dtype=X.dtype, device=device(X))
-    d[idx] = s_nnz / (s_nnz**2 + alpha)
+    d = xpx.at(d)[idx].set(s_nnz / (s_nnz**2 + alpha))
     d_UT_y = d * UTy
     return (Vt.T @ d_UT_y).T
 
@@ -2131,7 +2132,7 @@ class _RidgeGCV(LinearModel):
             normalized_sw = sqrt_sw / xp.linalg.vector_norm(sqrt_sw)
             intercept_dim = int(_find_smallest_angle(normalized_sw, U))
             # cancel the regularization for the intercept
-            w[intercept_dim] = -(alpha**-1)
+            w = xpx.at(w)[intercept_dim].set(-(alpha**-1))
         c = U @ self._diag_dot(w, UT_y) + (alpha**-1) * y
         G_inverse_diag = self._decomp_diag(w, U) + (alpha**-1)
         if len(y.shape) != 1:

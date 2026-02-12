@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from sklearn.externals import array_api_extra as xpx
 from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
     get_namespace_and_device,
@@ -146,8 +147,10 @@ def _weighted_percentile(
         # Ignore leading `sample_weight=0` observations
         # when `percentile_rank=0` (#20528)
         mask = adjusted_percentile_rank == 0
-        adjusted_percentile_rank[mask] = xp.nextafter(
-            adjusted_percentile_rank[mask], adjusted_percentile_rank[mask] + 1
+        adjusted_percentile_rank = xpx.at(adjusted_percentile_rank)[mask].set(
+            xp.nextafter(
+                adjusted_percentile_rank[mask], adjusted_percentile_rank[mask] + 1
+            )
         )
         # For each feature with index j, find sample index i of the scalar value
         # `adjusted_percentile_rank[j]` in 1D array `weight_cdf[j]`, such that:
@@ -198,17 +201,21 @@ def _weighted_percentile(
 
                 percentile_plus_one_in_sorted[col_idx] = sorted_idx[next_index, col_idx]
 
-            result[..., p_idx] = xp.where(
-                is_fraction_above,
-                array[percentile_in_sorted, col_indices],
-                (
-                    array[percentile_in_sorted, col_indices]
-                    + array[percentile_plus_one_in_sorted, col_indices]
+            result = xpx.at(result)[..., p_idx].set(
+                xp.where(
+                    is_fraction_above,
+                    array[percentile_in_sorted, col_indices],
+                    (
+                        array[percentile_in_sorted, col_indices]
+                        + array[percentile_plus_one_in_sorted, col_indices]
+                    )
+                    / 2,
                 )
-                / 2,
             )
         else:
-            result[..., p_idx] = array[percentile_in_sorted, col_indices]
+            result = xpx.at(result)[..., p_idx].set(
+                array[percentile_in_sorted, col_indices]
+            )
 
     if n_dim_percentile == 0:
         result = result[..., 0]
