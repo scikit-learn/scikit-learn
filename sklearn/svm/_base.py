@@ -281,15 +281,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             print("[LibSVM]", end="")
 
         seed = rnd.randint(np.iinfo("i").max)
-        fit(
-            X,
-            y,
-            sample_weight,
-            solver_type,
-            kernel,
-            self._effective_probability,
-            random_seed=seed,
-        )
+        fit(X, y, sample_weight, solver_type, kernel, random_seed=seed)
         # see comment on the other call to np.iinfo in this file
 
         self.shape_fit_ = X.shape if hasattr(X, "shape") else (n_samples,)
