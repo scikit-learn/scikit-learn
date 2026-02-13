@@ -2695,8 +2695,8 @@ def test_array_api_classification_mixed_string_numeric_input(
         y_prob_xp = xp.asarray(y_prob_np, device=device)
 
         with config_context(array_api_dispatch=True):
-            metric_np = metric(y_true, y_prob_np, **kwargs)
-            metric_xp = metric(y_true, y_prob_xp, **kwargs)
+            metric_np = metric(y_true, y_prob_np)
+            metric_xp = metric(y_true, y_prob_xp)
 
             if isinstance(metric_np, Tuple):
                 for out_np, out_xp in zip(metric_np, metric_xp):
