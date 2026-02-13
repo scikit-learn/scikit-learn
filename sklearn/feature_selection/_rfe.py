@@ -119,13 +119,23 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         For example, give `regressor_.coef_` in case of
         :class:`~sklearn.compose.TransformedTargetRegressor`  or
         `named_steps.clf.feature_importances_` in case of
-        class:`~sklearn.pipeline.Pipeline` with its last step named `clf`.
+        :class:`~sklearn.pipeline.Pipeline` with its last step named `clf`.
 
         If `callable`, overrides the default feature importance getter.
         The callable is passed with the fitted estimator and it should
-        return importance for each feature.
+        return importance for each feature. When the callable also accepts
+        `feature_indices` in its signature, it will be passed the index of the features
+        of the full dataset that remain after elimination in previous iterations.
+
+        `feature_indices` allows `RFE` to be used with permutation importance, as
+        shown on `RFECV` at the end of
+        :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`.
 
         .. versionadded:: 0.24
+
+        .. versionchanged:: 1.8
+            Add support for passing `feature_indices` to the callable when part of its
+            signature.
 
     Attributes
     ----------
@@ -345,6 +355,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             importances = _get_feature_importances(
                 estimator,
                 self.importance_getter,
+                features,
                 transform_func="square",
             )
             ranks = np.argsort(importances)
@@ -645,9 +656,19 @@ class RFECV(RFE):
 
         If `callable`, overrides the default feature importance getter.
         The callable is passed with the fitted estimator and it should
-        return importance for each feature.
+        return importance for each feature. When the callable also accepts
+        `feature_indices` in its signature, it will be passed the index of the features
+        of the full dataset that remain after elimination in previous iterations.
+
+        `feature_indices` allows `RFE` to be used with permutation importance, as
+        shown on `RFECV` at the end of
+        :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`.
 
         .. versionadded:: 0.24
+
+        .. versionchanged:: 1.8
+            Add support for passing `feature_indices` to the callable when part of its
+            signature.
 
     Attributes
     ----------
