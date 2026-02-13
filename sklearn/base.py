@@ -223,13 +223,11 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             return AttrsDict(fitted_attrs="")
 
         attributes = inspect.getmembers(init)
-
         fitted_attributes = {
             name: value
             for name, value in attributes
             if not name.startswith("_") and name.endswith("_")
         }
-
         fitted_attr_out = {}
         for name, value in fitted_attributes.items():
             if _is_arraylike_not_scalar(value) and hasattr(value, "shape"):

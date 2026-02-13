@@ -112,7 +112,7 @@ def _fitted_attr_html_repr(fitted_attributes):
         else:
             # Just show the parameter name without link
             fitted_attr_display = html.escape(name)
-        breakpoint()
+
         if len(value) == 2:
             html_row_values = (value[0], "", "", _read_fitted_attr(value[1]))
         else:
