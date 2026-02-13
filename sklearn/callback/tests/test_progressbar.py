@@ -58,9 +58,8 @@ def test_progressbar_requires_rich_error():
     """Check that we raise an informative error when rich is not installed."""
     try:
         check_rich_support("test_progressbar_requires_rich_error")
+        pytest.skip("This test requires rich to not be installed.")
     except ImportError:
         err_msg = "Progressbar requires rich"
         with pytest.raises(ImportError, match=err_msg):
             ProgressBar()
-    else:
-        pytest.skip("This test requires rich to not be installed.")
