@@ -5,6 +5,8 @@ import html
 import reprlib
 from collections import UserDict
 
+import numpy as np
+
 from sklearn.utils._repr_html._common import (
     _generate_link_to_param_doc,
     _get_docstring,
@@ -23,11 +25,19 @@ def _read_fitted_attr(value):
         "maxdeque",
         "maxarray",
     ):
-        setattr(r, attr, 2)
+        setattr(r, attr, 4)
     r.maxstring = 9
 
     if isinstance(value, float):
         value = round(value, 3)
+
+    if isinstance(value, np.ndarray):
+        value = np.array2string(
+            value, precision=2, separator=",", suppress_small=True, threshold=4
+        )
+        r.maxstring = 18
+
+        return html.escape(value)
 
     return html.escape(r.repr(value))
 
@@ -102,6 +112,7 @@ def _fitted_attr_html_repr(fitted_attributes):
         else:
             # Just show the parameter name without link
             fitted_attr_display = html.escape(name)
+        breakpoint()
         if len(value) == 2:
             html_row_values = (value[0], "", "", _read_fitted_attr(value[1]))
         else:
@@ -109,7 +120,7 @@ def _fitted_attr_html_repr(fitted_attributes):
                 value[0],
                 value[1],
                 value[2],
-                "",
+                _read_fitted_attr(value[3]),
             )
         rows.append(
             FITTED_ATTR_ROW_TEMPLATE.format(
