@@ -101,7 +101,7 @@ build_metadata_list = [
         "tag": "cuda",
         "folder": "build_tools/github",
         "platform": "linux-64",
-        "channels": ["conda-forge"],
+        "channels": ["rapidsai", "conda-forge"],
         "conda_dependencies": common_dependencies
         + [
             "ccache",
@@ -109,8 +109,11 @@ build_metadata_list = [
             "polars",
             "pyarrow",
             "cupy",
+            # cuvs is needed for cupyx.scipy.spatial.distance.cdist and friends
+            "cuvs",
             "array-api-strict",
         ],
+        "virtual_package_spec": True,
     },
     {
         "name": "pylatest_conda_forge_mkl_linux-64",
@@ -553,22 +556,26 @@ def write_all_conda_environments(build_metadata_list):
         write_conda_environment(build_metadata)
 
 
-def conda_lock(environment_path, lock_file_path, platform):
-    execute_command(
-        [
-            "conda-lock",
-            "lock",
-            "--mamba",
-            "--kind",
-            "explicit",
-            "--platform",
-            platform,
-            "--file",
-            str(environment_path),
-            "--filename-template",
-            str(lock_file_path),
-        ]
-    )
+def conda_lock(
+    environment_path, lock_file_path, platform, virtual_package_spec_path=None
+):
+    cmd = [
+        "conda-lock",
+        "lock",
+        "--mamba",
+        "--kind",
+        "explicit",
+        "--platform",
+        platform,
+        "--file",
+        str(environment_path),
+        "--filename-template",
+        str(lock_file_path),
+    ]
+    if virtual_package_spec_path is not None:
+        cmd.extend(["--virtual-package-spec", str(virtual_package_spec_path)])
+
+    execute_command(cmd)
 
 
 def create_conda_lock_file(build_metadata):
@@ -581,7 +588,14 @@ def create_conda_lock_file(build_metadata):
         lock_file_basename = f"{lock_file_basename}_{platform}"
 
     lock_file_path = folder_path / f"{lock_file_basename}_conda.lock"
-    conda_lock(environment_path, lock_file_path, platform)
+
+    virtual_package_spec_path = None
+    if build_metadata.get("virtual_package_spec"):
+        virtual_package_spec_path = (
+            folder_path / f"{lock_file_basename}_virtual_package_spec.yml"
+        )
+
+    conda_lock(environment_path, lock_file_path, platform, virtual_package_spec_path)
 
 
 def write_all_conda_lock_files(build_metadata_list):
@@ -647,6 +661,9 @@ def write_pip_lock_file(build_metadata):
             "-n",
             f"pip-tools-python{python_version}",
             f"python={python_version}",
+            # TODO remove the following line once pip-tools is compatible with pip 26.0,
+            # see https://github.com/jazzband/pip-tools/issues/2319
+            "pip=25.3",
             "pip-tools",
             "-y",
         ]

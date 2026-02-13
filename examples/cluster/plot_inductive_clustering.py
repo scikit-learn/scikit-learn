@@ -25,7 +25,7 @@ extends clustering by inducing a classifier from the cluster labels.
 
 import matplotlib.pyplot as plt
 
-from sklearn.base import BaseEstimator, clone
+from sklearn.base import BaseEstimator, ClusterMixin, clone
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets import make_blobs
 from sklearn.ensemble import RandomForestClassifier
@@ -50,7 +50,7 @@ def _classifier_has(attr):
     )
 
 
-class InductiveClusterer(BaseEstimator):
+class InductiveClusterer(ClusterMixin, BaseEstimator):
     def __init__(self, clusterer, classifier):
         self.clusterer = clusterer
         self.classifier = classifier
@@ -60,6 +60,7 @@ class InductiveClusterer(BaseEstimator):
         self.classifier_ = clone(self.classifier)
         y = self.clusterer_.fit_predict(X)
         self.classifier_.fit(X, y)
+        self.labels_ = y
         return self
 
     @available_if(_classifier_has("predict"))
@@ -122,7 +123,12 @@ plot_scatter(X_new, probable_clusters)
 
 # Plotting decision regions
 DecisionBoundaryDisplay.from_estimator(
-    inductive_learner, X, response_method="predict", alpha=0.4, ax=ax
+    inductive_learner,
+    X,
+    response_method="predict",
+    multiclass_colors="viridis",
+    alpha=0.4,
+    ax=ax,
 )
 plt.title("Classify unknown instances")
 
