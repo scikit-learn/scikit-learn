@@ -2992,7 +2992,13 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         **BaseDecisionTree._parameter_constraints,
         "sparse_output": ["boolean"],
     }
-    for param in ("max_features", "ccp_alpha", "splitter", "monotonic_cst"):
+    for param in (
+        "max_features",
+        "ccp_alpha",
+        "splitter",
+        "monotonic_cst",
+        "interaction_cst",
+    ):
         _parameter_constraints.pop(param)
 
     criterion = "squared_error"
