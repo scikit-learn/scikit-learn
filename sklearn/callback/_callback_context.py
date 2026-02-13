@@ -116,11 +116,11 @@ class CallbackContext:
     estimator_name : str
         The name of the estimator.
 
-    prev_estimator_name : str or None
+    source_estimator_name : str or None
         The estimator name of the parent task this task was merged with. None if it
         was not merged with another context.
 
-    prev_task_name : str or None
+    source_task_name : str or None
         The task name of the parent task this task was merged with. None if it
         was not merged with another context.
 
@@ -151,8 +151,8 @@ class CallbackContext:
         new_ctx.parent = None
         new_ctx._children_map = {}
         new_ctx.max_subtasks = None
-        new_ctx.prev_estimator_name = None
-        new_ctx.prev_task_name = None
+        new_ctx.source_estimator_name = None
+        new_ctx.source_task_name = None
         new_ctx._has_called_on_fit_begin = False
 
         if hasattr(estimator, "_parent_callback_ctx"):
@@ -199,8 +199,8 @@ class CallbackContext:
         new_ctx.parent = None
         new_ctx._children_map = {}
         new_ctx.max_subtasks = max_subtasks
-        new_ctx.prev_estimator_name = None
-        new_ctx.prev_task_name = None
+        new_ctx.source_estimator_name = None
+        new_ctx.source_task_name = None
         new_ctx._has_called_on_fit_begin = parent_context._has_called_on_fit_begin
 
         # This task is a subtask of another task of a same estimator
@@ -261,8 +261,8 @@ class CallbackContext:
         other_context.parent._children_map[self.task_id] = self
 
         # Keep information about the context it was merged with
-        self.prev_task_name = other_context.task_name
-        self.prev_estimator_name = other_context.estimator_name
+        self.source_task_name = other_context.task_name
+        self.source_estimator_name = other_context.estimator_name
 
     def subcontext(self, task_name="", task_id=0, max_subtasks=0):
         """Create a context for a subtask of the current task.

@@ -113,8 +113,8 @@ def test_task_tree():
     assert actual_n_nodes == expected_n_nodes
 
     # None of the nodes should have been merged with another node
-    assert all(node.prev_estimator_name is None for node in root)
-    assert all(node.prev_task_name is None for node in root)
+    assert all(node.source_estimator_name is None for node in root)
+    assert all(node.source_task_name is None for node in root)
 
 
 def test_add_child():
@@ -169,8 +169,8 @@ def test_merge_with():
     assert inner_root in outer_root._children_map.values()
 
     # The name and estimator name of the tasks it was merged with are stored
-    assert inner_root.prev_task_name == outer_child.task_name
-    assert inner_root.prev_estimator_name == outer_child.estimator_name
+    assert inner_root.source_task_name == outer_child.task_name
+    assert inner_root.source_estimator_name == outer_child.estimator_name
 
 
 def test_merge_with_error_not_leaf():

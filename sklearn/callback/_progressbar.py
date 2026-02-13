@@ -214,13 +214,13 @@ class RichTask:
 
         task_desc = f"{context.estimator_name} - {context.task_name}"
         id_mark = f" #{context.task_id}" if context.parent is not None else ""
-        prev_task_desc = (
-            f"{context.prev_estimator_name} - {context.prev_task_name} | "
-            if context.prev_estimator_name is not None
+        source_task_desc = (
+            f"{context.source_estimator_name} - {context.source_task_name} | "
+            if context.source_estimator_name is not None
             else ""
         )
 
-        return f"{style}{indent}{prev_task_desc}{task_desc}{id_mark}"
+        return f"{style}{indent}{source_task_desc}{task_desc}{id_mark}"
 
     def __iter__(self):
         """Pre-order depth-first traversal, excluding leaves."""
