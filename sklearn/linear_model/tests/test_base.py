@@ -557,15 +557,14 @@ def test_preprocess_copy_data_no_checks(sparse_container, to_copy, use_sample_we
         check_input=False,
     )
 
-    if to_copy and sparse_container is not None:
-        assert not np.may_share_memory(X_.data, X.data)
-    elif to_copy:
-        assert not np.may_share_memory(X_, X)
-    elif sparse_container is not None:
-        # sparse X, y always copied when use_sample_weight, regardless of to_copy
-        assert np.may_share_memory(X_.data, X.data) != use_sample_weight
+    if sparse_container is not None:
+        if to_copy or use_sample_weight:
+            # sparse X, y always copied when use_sample_weight, regardless of to_copy
+            assert not np.may_share_memory(X_.data, X.data)
+        else:
+            assert np.may_share_memory(X_.data, X.data)
     else:
-        assert np.may_share_memory(X_, X)
+        assert np.may_share_memory(X_, X) == (not to_copy)
 
 
 @pytest.mark.parametrize("rescale_with_sw", [False, True])
