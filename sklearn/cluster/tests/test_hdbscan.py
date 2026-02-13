@@ -603,3 +603,58 @@ def test_hdbscan_default_copy_warning():
     with pytest.warns(FutureWarning, match=msg):
         hdb = HDBSCAN(min_cluster_size=20)
         hdb.fit(X)
+
+
+def test_hdbscan_cluster_selection_epsilon_tied_distances():
+    """Non-regression test for #33219.
+
+    When the input data contains tied distances, the condensed tree can have
+    duplicate child entries. `traverse_upwards` and `epsilon_search` used to
+    assume that filtering the condensed tree by child id always returns a
+    single row; with ties that assumption is violated and the lookup returned
+    an array instead of a scalar, causing a TypeError.
+    """
+    # Minimal reproducer from the issue (precomputed distance matrix).
+    X_precomputed = np.array(
+        [
+            [0.0, 0.0144234, 0.014608, 0.018432, 0.2028331, 1e-06, 0.0146122, 0.0108745, 0.0238127, 0.0289057, 0.0292668],
+            [0.0144234, 0.0, 0.030085, 0.0341493, 0.2174494, 0.0185183, 0.0300855, 0.0261329, 0.0444496, 0.0499432, 0.0506157],
+            [0.014608, 0.030085, 0.0, 0.0224902, 0.2284748, 0.0188262, 0.022492, 0.0147419, 0.029195, 0.0344591, 0.0349043],
+            [0.018432, 0.0341493, 0.0224902, 0.0, 0.2288503, 0.0238127, 0.0035258, 0.0147674, 1e-06, 0.0045079, 0.0045573],
+            [0.2028331, 0.2174494, 0.2284748, 0.2288503, 0.0, 0.2061707, 0.220841, 0.2293228, 0.2397258, 0.2299638, 0.2552726],
+            [1e-06, 0.0185183, 0.0188262, 0.0238127, 0.2061707, 0.0, 0.0188313, 0.013986, 0.0238127, 0.0289057, 0.0292668],
+            [0.0146122, 0.0300855, 0.022492, 0.0035258, 0.220841, 0.0188313, 0.0, 0.0186034, 0.0044997, 0.0091034, 0.0092055],
+            [0.0108745, 0.0261329, 0.0147419, 0.0147674, 0.2293228, 0.013986, 0.0186034, 0.0, 0.0190924, 0.0241502, 0.0244496],
+            [0.0238127, 0.0444496, 0.029195, 1e-06, 0.2397258, 0.0238127, 0.0044997, 0.0190924, 0.0, 0.0045079, 0.0045573],
+            [0.0289057, 0.0499432, 0.0344591, 0.0045079, 0.2299638, 0.0289057, 0.0091034, 0.0241502, 0.0045079, 0.0, 0.0092227],
+            [0.0292668, 0.0506157, 0.0349043, 0.0045573, 0.2552726, 0.0292668, 0.0092055, 0.0244496, 0.0045573, 0.0092227, 0.0],
+        ]
+    )
+
+    hdb = HDBSCAN(
+        min_cluster_size=5,
+        min_samples=1,
+        metric="precomputed",
+        allow_single_cluster=True,
+        cluster_selection_epsilon=0.015,
+        copy=False,
+    )
+    # Should not raise TypeError
+    labels = hdb.fit_predict(X_precomputed)
+    assert labels.shape == (X_precomputed.shape[0],)
+
+    # Reproducer with synthetic Euclidean data from the issue.
+    rng = np.random.default_rng(0)
+    X_euclidean = np.vstack([
+        rng.normal(0, 0.2, size=(20, 2)),
+        rng.normal(1, 0.2, size=(21, 2)),
+    ])
+    hdb2 = HDBSCAN(
+        min_cluster_size=5,
+        min_samples=1,
+        allow_single_cluster=True,
+        cluster_selection_epsilon=1,
+        copy=False,
+    )
+    labels2 = hdb2.fit_predict(X_euclidean)
+    assert labels2.shape == (X_euclidean.shape[0],)
