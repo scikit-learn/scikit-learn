@@ -284,7 +284,7 @@ def test_sparse_classification(sparse_container, expected_internal_type):
     # Check classification with sparse input.
 
     class CustomProbabilisticClassifier(LogisticRegression):
-        """SVC variant that records the nature of the training set."""
+        """LogisticRegression variant that records the nature of the training set."""
 
         def fit(self, X, y, sample_weight=None):
             """Modification on fit caries data type for later verification."""
