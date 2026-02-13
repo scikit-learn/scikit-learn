@@ -462,7 +462,7 @@ def test_sparse_realdata(csr_container):
 
 
 @pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
-# TODO(1.10): remove probability=True and calls to predict_proba.
+# TODO(1.11): remove probability=True and calls to predict_proba.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_sparse_svc_clone_with_callable_kernel(lil_container):
     # Test that the "dense_fit" is called even though we use sparse input
