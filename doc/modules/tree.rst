@@ -634,6 +634,20 @@ Mean Absolute Error:
 
 Note that it is 3–6× slower to fit than the MSE criterion as of version 1.8.
 
+Quantile (pinball loss):
+
+.. math::
+
+    q_{\alpha}(y)_m = \underset{y \in Q_m}{\mathrm{quantile}_{\alpha}}(y)
+
+    H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m}
+    \left(\alpha \max(y - q_{\alpha}(y)_m, 0) +
+    (1-\alpha) \max(q_{\alpha}(y)_m - y, 0)\right)
+
+Use ``criterion="quantile"`` together with the ``quantile`` parameter to
+choose :math:`\alpha \in (0, 1)`. The special case ``quantile=0.5`` corresponds
+to the median.
+
 .. _tree_missing_value_support:
 
 Missing Values Support

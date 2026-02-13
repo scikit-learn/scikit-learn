@@ -294,12 +294,12 @@ def test_probability(name):
     "name, criterion",
     itertools.chain(
         product(FOREST_CLASSIFIERS, ["gini", "log_loss"]),
-        product(FOREST_REGRESSORS, ["squared_error", "absolute_error"]),
+        product(FOREST_REGRESSORS, ["squared_error", "absolute_error", "quantile"]),
     ),
 )
 def test_importances(dtype, name, criterion):
     tolerance = 0.01
-    if name in FOREST_REGRESSORS and criterion == "absolute_error":
+    if name in FOREST_REGRESSORS and criterion in {"absolute_error", "quantile"}:
         tolerance = 0.05
 
     # cast as dtype
