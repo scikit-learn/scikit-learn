@@ -210,15 +210,19 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
 
     def _get_fitted_attr_html(self, doc_link=""):
         """Get fitted attributes of the estimator."""
-        # TODO add deprecation tests
-        # see https://github.com/scikit-learn/scikit-learn/pull/31442#discussion_r2789253415
+        # fetch the constructor or the original constructor before
+        # deprecation wrapping if any
+        init = getattr(self.__init__, "deprecated_original", self)
+        if init is object.__init__:
+            # No explicit constructor to introspect
+            return []
 
         # It raises when inspecting an empty Pipeline. So we need
         # to check that a Pipeline is not empty.
         if hasattr(self, "steps") and len(self.steps) == 0:
             return AttrsDict(fitted_attrs="")
 
-        attributes = inspect.getmembers(self)
+        attributes = inspect.getmembers(init)
 
         fitted_attributes = {
             name: value
