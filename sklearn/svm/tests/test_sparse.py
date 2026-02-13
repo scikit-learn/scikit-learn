@@ -124,7 +124,7 @@ def test_svc(X_train, y_train, X_test, kernel, sparse_container):
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-# TODO(1.10): remove probability=True and calls to predict_proba.
+# TODO(1.11): remove probability=True and calls to predict_proba.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_unsorted_indices(csr_container):
     # test that the result with sorted and unsorted indices in csr is the same
