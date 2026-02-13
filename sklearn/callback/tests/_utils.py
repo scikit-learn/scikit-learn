@@ -74,7 +74,8 @@ class Estimator(CallbackSupportMixin, BaseEstimator):
 class WhileEstimator(CallbackSupportMixin, BaseEstimator):
     """A class that mimics the behavior of an estimator.
 
-    The iterative part uses a loop with a max number of iterations known in advance.
+    The iterative part uses a while loop with a number of iterations unknown in
+    advance.
     """
 
     _parameter_constraints: dict = {}
