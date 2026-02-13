@@ -154,13 +154,9 @@ def test_merge_with():
     estimator = Estimator()
     meta_estimator = MetaEstimator(estimator)
     outer_root = CallbackContext._from_estimator(meta_estimator, "root")
-    outer_root.max_subtasks = 2
 
     # Add a child task within the same estimator
-    outer_child = CallbackContext._from_estimator(meta_estimator, "child")
-    outer_child.task_id = "id"
-    outer_child.max_subtasks = 1
-    outer_root._add_child(outer_child)
+    outer_child = outer_root.subcontext(task_name="child", task_id=0, max_subtasks=0)
 
     # The root task of the inner estimator is merged with (and effectively replaces)
     # a leaf of the outer estimator because they correspond to the same formal task.
@@ -175,6 +171,21 @@ def test_merge_with():
     # The name and estimator name of the tasks it was merged with are stored
     assert inner_root.prev_task_name == outer_child.task_name
     assert inner_root.prev_estimator_name == outer_child.estimator_name
+
+
+def test_merge_with_error_not_leaf():
+    """Check that merging with a non-leaf node raises an error."""
+    estimator = Estimator()
+    inner_root = CallbackContext._from_estimator(estimator, "root")
+
+    meta_estimator = MetaEstimator(estimator)
+    outer_root = CallbackContext._from_estimator(meta_estimator, "root")
+
+    # Add a child task within the same estimator
+    outer_root.subcontext(task_name="child", task_id=0, max_subtasks=1)
+
+    with pytest.raises(ValueError, match=r"Cannot merge callback context"):
+        inner_root._merge_with(outer_root)
 
 
 @pytest.mark.parametrize(

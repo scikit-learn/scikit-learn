@@ -84,7 +84,9 @@ class WhileEstimator(CallbackSupportMixin, BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X=None, y=None):
-        callback_ctx = self._callback_fit_ctx.eval_on_fit_begin(estimator=self)
+        callback_ctx = self._callback_fit_ctx
+        callback_ctx.max_subtasks = None
+        callback_ctx.eval_on_fit_begin(estimator=self)
 
         i = 0
         while True:

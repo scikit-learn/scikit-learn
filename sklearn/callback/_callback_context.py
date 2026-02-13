@@ -103,28 +103,28 @@ class CallbackContext:
 
     Attributes
     ----------
-    - task_name : str
+    task_name : str
         The name of the task this context is responsible for.
 
-    - task_id : int
+    task_id : int
         The identifier of the task this context is responsible for.
 
-    - max_subtasks : int or None
+    max_subtasks : int or None
         The maximum number of children tasks for this task. 0 means it's a leaf.
         None means the maximum number of subtasks is not known in advance.
 
-    - estimator_name : str
+    estimator_name : str
         The name of the estimator.
 
-    - prev_estimator_name : str or None
+    prev_estimator_name : str or None
         The estimator name of the parent task this task was merged with. None if it
         was not merged with another context.
 
-    - prev_task_name : str or None
+    prev_task_name : str or None
         The task name of the parent task this task was merged with. None if it
         was not merged with another context.
 
-    - parent : CallbackContext or None
+    parent : CallbackContext or None
         The parent context of this context. None if this context is the root.
     """
 
@@ -223,7 +223,10 @@ class CallbackContext:
                 f"task_id={child_context.task_id}."
             )
 
-        if len(self._children_map) == self.max_subtasks:
+        if (
+            self.max_subtasks is not None
+            and len(self._children_map) >= self.max_subtasks
+        ):
             raise ValueError(
                 f"Cannot add child to callback context {self.task_name} of estimator "
                 f"{self.estimator_name} because it already has its maximum "
@@ -234,7 +237,23 @@ class CallbackContext:
         child_context.parent = self
 
     def _merge_with(self, other_context):
-        """Merge this context with `other_context`."""
+        """Merge this context with `other_context`.
+
+        This method is called on a sub-estimator's root task to merge it with a
+        meta-estimator's leaf task. The sub-estimator's task tree is therefore attached
+        to the meta-estimator's task tree. The root node of the sub-estimator's task
+        tree and the leaf node of the meta-estimator's task tree are both represented
+        by a single node in this combined task tree.
+        """
+        print(other_context.max_subtasks)
+        if other_context.max_subtasks != 0:
+            raise ValueError(
+                f"Cannot merge callback context (task {self.task_name!r} of estimator "
+                f"{self.estimator_name}) with callback context "
+                f"(task {other_context.task_name!r} of estimator "
+                f"{other_context.estimator_name}) because the latter is not a leaf."
+            )
+
         # Set the parent of the sub-estimator's root context to the parent of the
         # meta-estimator's leaf context
         self.parent = other_context.parent
@@ -245,7 +264,7 @@ class CallbackContext:
         self.prev_task_name = other_context.task_name
         self.prev_estimator_name = other_context.estimator_name
 
-    def subcontext(self, task_name="", task_id=0, max_subtasks=None):
+    def subcontext(self, task_name="", task_id=0, max_subtasks=0):
         """Create a context for a subtask of the current task.
 
         Parameters
@@ -258,7 +277,7 @@ class CallbackContext:
             number of sibling contexts, but can be any identifier as long as it's unique
             among the siblings.
 
-        max_subtasks : int or None, default=None
+        max_subtasks : int or None, default=0
             The maximum number of tasks that can be children of the subtask. 0 means
             it's a leaf. None means the maximum number of subtasks is not known in
             advance.
