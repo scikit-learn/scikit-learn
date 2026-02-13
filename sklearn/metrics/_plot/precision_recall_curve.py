@@ -364,7 +364,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             if chance_level_kw is None:
                 chance_level_kw = {}
 
-            chance_level_line_kw = _validate_style_kwargs(
+            chance_level_kw = _validate_style_kwargs(
                 default_chance_level_kwargs, chance_level_kw
             )
             self.chance_level_ = []
@@ -373,24 +373,23 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
                     self.ax_.plot(
                         (0, 1),
                         (prevalence, prevalence),
-                        **chance_level_line_kw,
+                        **chance_level_kw,
                     )
                 )
 
-            if len(self.chance_level_) == 1:
+            if "label" not in chance_level_kw:
+                label = (
+                    f"Chance level (AP = {prevalence_pos_label[0]:0.2f})"
+                    if n_curves == 1
+                    else f"Chance level (AP = {np.mean(prevalence_pos_label):0.2f} "
+                    f"+/- {np.std(prevalence_pos_label):0.2f})"
+                )
+                # Only label first curve with mean AP, to get single legend entry
+                self.chance_level_[0].set_label(label)
+
+            if n_curves == 1:
                 # Return single artist if only one curve is plotted
                 self.chance_level_ = self.chance_level_[0]
-                if "label" not in chance_level_line_kw:
-                    self.chance_level_.set_label(
-                        f"Chance level (AP = {prevalence_pos_label[0]:0.2f})"
-                    )
-            else:
-                if "label" not in chance_level_line_kw:
-                    # Only label first curve with mean AP, to get single legend entry
-                    self.chance_level_[0].set_label(
-                        f"Chance level (AP = {np.mean(prevalence_pos_label):0.2f} "
-                        f"+/- {np.std(prevalence_pos_label):0.2f})"
-                    )
         else:
             self.chance_level_ = None
 
