@@ -272,28 +272,15 @@ div.sk-text-image-grid-large {
   }
 }
 
-//* ============================================
+/* ============================================
    Fix: Gallery thumbnail overlay blocks clicks
    Related issue: #30596
    ============================================ */
 
-/* Hover overlay must not intercept clicks */
 .sphx-glr-thumbcontainer::after {
-  pointer-events: none !important;
+  pointer-events: none;
 }
 
-/* The title link must not stretch over the whole card */
-.sphx-glr-thumbcontainer p a.reference.internal {
-  display: inline !important;
-  position: static !important;
-}
-
-/* Ensure "Click for source code" stays clickable */
-.sphx-glr-thumbcontainer .sphx-glr-thumbnail-title a {
-  pointer-events: auto !important;
-  position: relative;
-  z-index: 5;
-}
 
 
 
