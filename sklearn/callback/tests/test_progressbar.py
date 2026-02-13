@@ -51,7 +51,7 @@ def test_progressbar(n_jobs, prefer, InnerEstimator, max_estimator_depth, capsys
 
     # Check that all bars are 100% complete
     assert re.search(r"100%", captured.out)
-    assert not re.search(r"[1-9]%", captured.out)
+    assert not re.search(r"\b[0-9]{1,2}%", captured.out)
 
 
 def test_progressbar_requires_rich_error():
