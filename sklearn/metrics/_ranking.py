@@ -955,7 +955,7 @@ def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weigh
     xp_y_true, _ = get_namespace(y_true)
     # Make `y_true` a boolean vector. Use `asarray` as `y_true` could be a list
     y_true = xp_y_true.asarray(
-        xp_y_true.asarray(y_true) == pos_label, dtype=xp_y_true.int64
+        xp_y_true.asarray(y_true) == pos_label, dtype=xp_y_true.int32
     )
     y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 

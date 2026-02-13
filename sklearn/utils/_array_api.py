@@ -574,9 +574,6 @@ def move_to(*arrays, xp, device):
     device : device
         Array API device to move arrays to.
 
-    dtype : dtype
-        Data type to convert to.
-
     Returns
     -------
     arrays : tuple or array
