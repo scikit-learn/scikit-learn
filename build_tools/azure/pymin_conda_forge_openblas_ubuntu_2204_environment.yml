@@ -12,6 +12,7 @@ dependencies:
   - joblib
   - threadpoolctl
   - pandas
+  - rich
   - pyamg
   - pytest
   - pytest-xdist
