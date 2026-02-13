@@ -174,7 +174,7 @@ def _preprocess_data(
         )
         y = check_array(y, dtype=X.dtype, copy=True, ensure_2d=False)
     else:
-        y = xp.astype(y, X.dtype, copy=True)
+        y = xp.astype(y, X.dtype)
         if copy:
             if X_is_sparse:
                 X = X.copy()
