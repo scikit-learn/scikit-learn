@@ -77,7 +77,7 @@ def _deprecate_positional_args(func=None, *, version="1.3"):
 
             # extra_args > 0
             args_msg = [
-                "{}={}".format(name, arg)
+                f"{name}={arg}"
                 for name, arg in zip(kwonly_args[:extra_args], args[-extra_args:])
             ]
             args_msg = ", ".join(args_msg)
@@ -437,7 +437,7 @@ def check_memory(memory):
         raise ValueError(
             "'memory' should be None, a string or have the same"
             " interface as joblib.Memory."
-            " Got memory='{}' instead.".format(memory)
+            f" Got memory='{memory}' instead."
         )
     return memory
 
@@ -1465,7 +1465,7 @@ def check_random_state(seed):
     if isinstance(seed, np.random.RandomState):
         return seed
     raise ValueError(
-        "%r cannot be used to seed a numpy.random.RandomState instance" % seed
+        f"{seed!r} cannot be used to seed a numpy.random.RandomState instance"
     )
 
 
@@ -1686,7 +1686,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     >>> check_is_fitted(lr)
     """
     if isclass(estimator):
-        raise TypeError("{} is a class, not an instance.".format(estimator))
+        raise TypeError(f"{estimator} is a class, not an instance.")
     if msg is None:
         msg = (
             "This %(name)s instance is not fitted yet. Call 'fit' with "
@@ -1694,7 +1694,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
         )
 
     if not hasattr(estimator, "fit"):
-        raise TypeError("%s is not an estimator instance." % (estimator))
+        raise TypeError(f"{estimator} is not an estimator instance.")
 
     tags = get_tags(estimator)
 
