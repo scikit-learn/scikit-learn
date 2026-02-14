@@ -6,6 +6,7 @@
 import itertools
 import math
 import os
+from collections import namedtuple
 
 import numpy
 import scipy
@@ -127,6 +128,61 @@ def _get_namespace_device_dtype_ids(param):
             return "device1"
         if param == array_api_strict.Device("device2"):
             return "device2"
+
+
+def yield_mixed_namespace_input_permutations():
+    """Yield mixed namespace and device inputs for testing.
+
+    We do not test for all possible permutations of namespace/device from
+    `yield_namespace_device_dtype_combinations` (excluding dtype variations, this is
+    P(8,2)=56), to avoid slow testing and maintenance burden.
+
+    The included selection ensures that the following conversions are tested:
+
+    * non-NumPy to NumPy (including GPU to CPU)
+    * NumPy to non-NumPy (including CPU to GPU)
+    * non-NumPy to non-NumPy (GPU to GPU)
+    * array-api-strict to non-NumPy (this pair also has no special hardware
+      requirements to allow for local testing)
+    """
+
+    NamespaceAndDevice = namedtuple("NamespaceAndDevice", ["xp", "device"])
+
+    yield (
+        NamespaceAndDevice("cupy", None),
+        NamespaceAndDevice("torch", "cuda"),
+        "cupy to torch cuda",
+    )
+    yield (
+        NamespaceAndDevice("torch", "mps"),
+        NamespaceAndDevice("numpy", None),
+        "torch mps to numpy",
+    )
+    yield (
+        NamespaceAndDevice("numpy", None),
+        NamespaceAndDevice("torch", "cuda"),
+        "numpy to torch cuda",
+    )
+    yield (
+        NamespaceAndDevice("numpy", None),
+        NamespaceAndDevice("torch", "mps"),
+        "numpy to torch mps",
+    )
+
+    try:
+        import array_api_strict
+
+        device = array_api_strict.Device("device1")
+    except ImportError:
+        # This case will generally be skipped when `array_api_strict` is not installed
+        # but we still include it so it shows in the test output.
+        device = None
+
+    yield (
+        NamespaceAndDevice("array_api_strict", device),
+        NamespaceAndDevice("torch", "cpu"),
+        "array_api_strict to torch cpu",
+    )
 
 
 def _check_array_api_dispatch(array_api_dispatch):
@@ -532,8 +588,18 @@ def move_to(*arrays, xp, device):
             "namespace is Numpy"
         )
 
-    converted_arrays = []
+    arrays_ = arrays
+    # Down cast float64 `arrays` when highest precision of `xp`/`device` is float32
+    if _max_precision_float_dtype(xp, device) == xp.float32:
+        arrays_ = []
+        for array in arrays:
+            xp_array, _ = get_namespace(array)
+            if getattr(array, "dtype", None) == xp_array.float64:
+                arrays_.append(xp_array.astype(array, xp_array.float32))
+            else:
+                arrays_.append(array)
 
+    converted_arrays = []
     for array, is_sparse, is_none in zip(arrays, sparse_mask, none_mask):
         if is_none:
             converted_arrays.append(None)
