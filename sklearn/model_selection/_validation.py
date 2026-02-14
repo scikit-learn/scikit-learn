@@ -6,6 +6,7 @@ functions to validate the model.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import copy
 import numbers
 import time
 import warnings
@@ -1968,7 +1969,6 @@ def learning_curve(
                 method_mapping=MethodMapping().add(caller="fit", callee="score"),
             )
         )
-
         try:
             routed_params = process_routing(router, "fit", **params)
         except UnsetMetadataPassedError as e:
@@ -2160,9 +2160,6 @@ def _incremental_fit_estimator(
         partial_fit_func = partial(estimator.partial_fit, **fit_params)
     else:
         partial_fit_func = partial(estimator.partial_fit, classes=classes, **fit_params)
-    score_params = score_params if score_params is not None else {}
-    score_params_train = _check_method_params(X, params=score_params, indices=train)
-    score_params_test = _check_method_params(X, params=score_params, indices=test)
 
     for n_train_samples, partial_train in partitions:
         train_subset = train[:n_train_samples]
@@ -2170,14 +2167,36 @@ def _incremental_fit_estimator(
         X_partial_train, y_partial_train = _safe_split(estimator, X, y, partial_train)
         X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
         start_fit = time.time()
-        if y_partial_train is None:
-            partial_fit_func(X_partial_train)
+
+        if "sample_weight" in fit_params:
+            fit_params_iter = copy.deepcopy(fit_params)
+            fit_params_iter["sample_weight"] = fit_params["sample_weight"][
+                partial_train
+            ]
         else:
-            partial_fit_func(X_partial_train, y_partial_train)
+            fit_params_iter = {}
+
+        if y_partial_train is None:
+            partial_fit_func(X_partial_train, **fit_params_iter)
+        else:
+            partial_fit_func(X_partial_train, y_partial_train, **fit_params_iter)
         fit_time = time.time() - start_fit
         fit_times.append(fit_time)
 
         start_score = time.time()
+
+        if "sample_weight" in score_params:
+            score_params_train_iter = copy.deepcopy(score_params)
+            score_params_train_iter["sample_weight"] = score_params["sample_weight"][
+                train_subset
+            ]
+            score_params_test_iter = copy.deepcopy(score_params)
+            score_params_test_iter["sample_weight"] = score_params["sample_weight"][
+                test
+            ]
+        else:
+            score_params_train_iter = {}
+            score_params_test_iter = {}
 
         test_scores.append(
             _score(
@@ -2185,7 +2204,7 @@ def _incremental_fit_estimator(
                 X_test,
                 y_test,
                 scorer,
-                score_params=score_params_test,
+                score_params=score_params_test_iter,
                 error_score=error_score,
             )
         )
@@ -2195,7 +2214,7 @@ def _incremental_fit_estimator(
                 X_train,
                 y_train,
                 scorer,
-                score_params=score_params_train,
+                score_params=score_params_train_iter,
                 error_score=error_score,
             )
         )

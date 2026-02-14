@@ -1560,30 +1560,6 @@ def test_learning_curve_incremental_learning_params():
             error_score="raise",
         )
 
-    err_msg = "Fit parameter sample_weight has length 3; expected"
-    with pytest.raises(AssertionError, match=err_msg):
-        learning_curve(
-            estimator,
-            X,
-            y,
-            cv=3,
-            exploit_incremental_learning=True,
-            train_sizes=np.linspace(0.1, 1.0, 10),
-            error_score="raise",
-            params={"sample_weight": np.ones(3)},
-        )
-
-    learning_curve(
-        estimator,
-        X,
-        y,
-        cv=3,
-        exploit_incremental_learning=True,
-        train_sizes=np.linspace(0.1, 1.0, 10),
-        error_score="raise",
-        params={"sample_weight": np.ones(2)},
-    )
-
 
 def test_validation_curve():
     X, y = make_classification(
@@ -2584,8 +2560,12 @@ def test_validation_functions_routing(func, extra_args):
         groups="split_groups", metadata="split_metadata"
     )
     estimator_registry = _Registry()
-    estimator = ConsumingClassifier(registry=estimator_registry).set_fit_request(
-        sample_weight="fit_sample_weight", metadata="fit_metadata"
+    estimator = (
+        ConsumingClassifier(registry=estimator_registry)
+        .set_fit_request(sample_weight="fit_sample_weight", metadata="fit_metadata")
+        .set_partial_fit_request(
+            sample_weight="fit_sample_weight", metadata="fit_metadata"
+        )
     )
 
     n_samples = _num_samples(X)
@@ -2657,6 +2637,16 @@ def test_validation_functions_routing(func, extra_args):
         check_recorded_metadata(
             obj=_estimator,
             method="fit",
+            parent=func.__name__,
+            split_params=("sample_weight", "metadata"),
+            sample_weight=fit_sample_weight,
+            metadata=fit_metadata,
+        )
+
+    for _estimator in estimator_registry:
+        check_recorded_metadata(
+            obj=_estimator,
+            method="partial_fit",
             parent=func.__name__,
             split_params=("sample_weight", "metadata"),
             sample_weight=fit_sample_weight,
