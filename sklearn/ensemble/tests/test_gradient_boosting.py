@@ -1684,6 +1684,25 @@ def test_gb_denominator_zero(global_random_seed):
 
 
 @pytest.mark.parametrize("GradientBoosting", GRADIENT_BOOSTING_ESTIMATORS)
+def test_interaction_constraints_smoke(GradientBoosting):
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(300, 6))
+    y = X[:, 0] + 0.1 * X[:, 1] + 0.1 * rng.randn(X.shape[0])
+    if GradientBoosting is GradientBoostingClassifier:
+        y = y > np.median(y)
+
+    interaction_cst = [{0, 1}, {1, 2}, {3, 4, 5}]
+    est = GradientBoosting(
+        n_estimators=5,
+        max_depth=3,
+        random_state=0,
+        interaction_cst=interaction_cst,
+    )
+    est.fit(X, y)
+    assert est.predict(X[:5]).shape == (5,)
+
+
+@pytest.mark.parametrize("GradientBoosting", GRADIENT_BOOSTING_ESTIMATORS)
 def test_criterion_param_deprecation(GradientBoosting):
     with pytest.warns(FutureWarning, match="criterion"):
         reg = GradientBoosting(criterion="friedman_mse")
