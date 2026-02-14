@@ -17,7 +17,12 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.fixes import _IS_WASM
-from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.parallel import (
+    Parallel,
+    _pack_warning_filter,
+    _unpack_warning_filter,
+    delayed,
+)
 
 
 def get_working_memory():
@@ -195,3 +200,67 @@ def test_filter_warning_propagates_no_side_effect_with_loky_backend():
             joblib.delayed(warnings.warn)("Convergence warning", ConvergenceWarning)
             for _ in range(10)
         )
+
+
+@pytest.mark.thread_unsafe
+def test_filter_warning_no_implicit_third_party_import_in_loky_workers(
+    tmp_path, monkeypatch, capfd
+):
+    """Avoid importing third-party modules when restoring warning filters."""
+    module_name = "mock_warning_category_module"
+    module_path = tmp_path / f"{module_name}.py"
+    module_path.write_text(
+        "import warnings\n"
+        "warnings.warn('module imported', UserWarning)\n"
+        "\n"
+        "class CustomWarning(Warning):\n"
+        "    pass\n",
+        encoding="utf-8",
+    )
+    monkeypatch.syspath_prepend(str(tmp_path))
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", message="module imported", category=UserWarning
+        )
+        module = __import__(module_name)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=module.CustomWarning)
+        Parallel(n_jobs=2, backend="loky")(delayed(time.sleep)(0) for _ in range(4))
+
+    captured = capfd.readouterr()
+    assert "module imported" not in captured.err
+
+
+def test_pack_warning_filter_with_warning_category():
+    packed_filter = _pack_warning_filter(("ignore", None, ConvergenceWarning, None, 0))
+    assert packed_filter[2] == ("sklearn.exceptions", "ConvergenceWarning")
+
+
+def test_unpack_warning_filter_from_loaded_warning_module():
+    unpacked_filter = _unpack_warning_filter(
+        ("ignore", None, ("sklearn.exceptions", "ConvergenceWarning"), None, 0)
+    )
+    assert unpacked_filter["category"] is ConvergenceWarning
+
+
+def test_unpack_warning_filter_with_unloaded_module_returns_none():
+    unpacked_filter = _unpack_warning_filter(
+        ("ignore", None, ("this.module.does.not.exist", "X"), None, 0)
+    )
+    assert unpacked_filter is None
+
+
+def test_unpack_warning_filter_with_unknown_attr_returns_none():
+    unpacked_filter = _unpack_warning_filter(
+        ("ignore", None, ("time", "MissingWarningClass"), None, 0)
+    )
+    assert unpacked_filter is None
+
+
+def test_unpack_warning_filter_with_non_warning_class_returns_none():
+    unpacked_filter = _unpack_warning_filter(
+        ("ignore", None, ("collections", "Counter"), None, 0)
+    )
+    assert unpacked_filter is None
