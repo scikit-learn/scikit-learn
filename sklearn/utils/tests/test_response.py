@@ -5,17 +5,15 @@ import pytest
 
 from sklearn.base import clone
 from sklearn.cluster import DBSCAN, KMeans
-from sklearn.datasets import (
-    load_iris,
-    make_classification,
-    make_multilabel_classification,
-)
+from sklearn.datasets import (load_iris, make_classification,
+                              make_multilabel_classification)
 from sklearn.ensemble import IsolationForest
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.multioutput import ClassifierChain
 from sklearn.preprocessing import scale
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.utils._response import _get_response_values, _get_response_values_binary
+from sklearn.utils._response import (_get_response_values,
+                                     _get_response_values_binary)
 from sklearn.utils._testing import assert_allclose
 
 X, y = load_iris(return_X_y=True)
