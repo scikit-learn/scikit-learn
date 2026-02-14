@@ -10,45 +10,51 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     ClusterMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..exceptions import ConvergenceWarning
-from ..metrics.pairwise import _euclidean_distances, euclidean_distances
-from ..utils import check_array, check_random_state
-from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.extmath import row_norms, stable_cumsum
-from ..utils.parallel import (
-    _get_threadpool_controller,
-    _threadpool_controller_decorator,
-)
-from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.sparsefuncs_fast import assign_rows_csr
-from ..utils.validation import (
-    _check_sample_weight,
-    _is_arraylike_not_scalar,
-    check_is_fitted,
-    validate_data,
-)
-from ._k_means_common import (
+from sklearn.cluster._k_means_common import (
     CHUNK_SIZE,
     _inertia_dense,
     _inertia_sparse,
     _is_same_clustering,
 )
-from ._k_means_elkan import (
+from sklearn.cluster._k_means_elkan import (
     elkan_iter_chunked_dense,
     elkan_iter_chunked_sparse,
     init_bounds_dense,
     init_bounds_sparse,
 )
-from ._k_means_lloyd import lloyd_iter_chunked_dense, lloyd_iter_chunked_sparse
-from ._k_means_minibatch import _minibatch_update_dense, _minibatch_update_sparse
+from sklearn.cluster._k_means_lloyd import (
+    lloyd_iter_chunked_dense,
+    lloyd_iter_chunked_sparse,
+)
+from sklearn.cluster._k_means_minibatch import (
+    _minibatch_update_dense,
+    _minibatch_update_sparse,
+)
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics.pairwise import _euclidean_distances, euclidean_distances
+from sklearn.utils import check_array, check_random_state
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.extmath import row_norms
+from sklearn.utils.parallel import (
+    _get_threadpool_controller,
+    _threadpool_controller_decorator,
+)
+from sklearn.utils.sparsefuncs import mean_variance_axis
+from sklearn.utils.sparsefuncs_fast import assign_rows_csr
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    _is_arraylike_not_scalar,
+    check_is_fitted,
+    validate_data,
+)
 
 ###############################################################################
 # Initialization heuristic
@@ -242,7 +248,7 @@ def _kmeans_plusplus(
         # to the squared distance to the closest existing center
         rand_vals = random_state.uniform(size=n_local_trials) * current_pot
         candidate_ids = np.searchsorted(
-            stable_cumsum(sample_weight * closest_dist_sq), rand_vals
+            np.cumsum(sample_weight * closest_dist_sq), rand_vals
         )
         # XXX: numerical imprecision can result in a candidate_id out of range
         np.clip(candidate_ids, None, closest_dist_sq.size - 1, out=candidate_ids)
@@ -1717,8 +1723,9 @@ class MiniBatchKMeans(_BaseKMeans):
 
     batch_size : int, default=1024
         Size of the mini batches.
-        For faster computations, you can set the ``batch_size`` greater than
-        256 * number of cores to enable parallelism on all cores.
+        For faster computations, you can set `batch_size > 256 * number_of_cores`
+        to enable :ref:`parallelism <lower-level-parallelism-with-openmp>`
+        on all cores.
 
         .. versionchanged:: 1.0
            `batch_size` default changed from 100 to 1024.
@@ -1869,10 +1876,13 @@ class MiniBatchKMeans(_BaseKMeans):
     ...                          max_iter=10,
     ...                          n_init="auto").fit(X)
     >>> kmeans.cluster_centers_
-    array([[3.55102041, 2.48979592],
-           [1.06896552, 1.        ]])
+    array([[3.20967742, 3.56451613],
+           [1.32758621, 0.77586207]])
     >>> kmeans.predict([[0, 0], [4, 4]])
     array([1, 0], dtype=int32)
+
+    For a comparison of Mini-Batch K-Means clustering with other clustering algorithms,
+    see :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {
@@ -2143,18 +2153,32 @@ class MiniBatchKMeans(_BaseKMeans):
         # Initialize number of samples seen since last reassignment
         self._n_since_last_reassign = 0
 
+        sum_of_weights = np.sum(sample_weight)
+
         n_steps = (self.max_iter * n_samples) // self._batch_size
+        normalized_sample_weight = sample_weight / sum_of_weights
+        unit_sample_weight = np.ones_like(sample_weight, shape=(self._batch_size,))
 
         with _get_threadpool_controller().limit(limits=1, user_api="blas"):
             # Perform the iterative optimization until convergence
             for i in range(n_steps):
                 # Sample a minibatch from the full dataset
-                minibatch_indices = random_state.randint(0, n_samples, self._batch_size)
-
+                minibatch_indices = random_state.choice(
+                    n_samples,
+                    self._batch_size,
+                    p=normalized_sample_weight,
+                    replace=True,
+                )
                 # Perform the actual update step on the minibatch data
+                # Note: since the sampling of the minibatch is sample_weight aware,
+                # we pass fixed unit weights to the `_mini_batch_step` call to avoid
+                # accounting for the weights twice. Also note that `_mini_batch_step`
+                # can be called with non-unit weights when the caller constructs
+                # the batches explicitly by calling the public `partial_fit` method
+                # instead.
                 batch_inertia = _mini_batch_step(
                     X=X[minibatch_indices],
-                    sample_weight=sample_weight[minibatch_indices],
+                    sample_weight=unit_sample_weight,
                     centers=centers,
                     centers_new=centers_new,
                     weight_sums=self._counts,
@@ -2192,7 +2216,7 @@ class MiniBatchKMeans(_BaseKMeans):
                 n_threads=self._n_threads,
             )
         else:
-            self.inertia_ = self._ewa_inertia * n_samples
+            self.inertia_ = self._ewa_inertia * sum_of_weights
 
         return self
 

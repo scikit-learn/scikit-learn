@@ -149,7 +149,7 @@ facilitate the conversion of the data models between different machine learning
 frameworks, and to improve their portability on different computing
 architectures. More details are available from the `ONNX tutorial
 <https://onnx.ai/get-started.html>`__. To convert scikit-learn model to `ONNX`
-`sklearn-onnx <http://onnx.ai/sklearn-onnx/>`__ has been developed. However,
+`sklearn-onnx <https://onnx.ai/sklearn-onnx/>`__ has been developed. However,
 not all scikit-learn models are supported, and it is limited to the core
 scikit-learn and does not support most third party estimators. One can write a
 custom converter for third party or custom estimators, but the documentation to
@@ -159,7 +159,7 @@ do that is sparse and it might be challenging to do so.
 
   To convert the model to `ONNX` format, you need to give the converter some
   information about the input as well, about which you can read more `here
-  <http://onnx.ai/sklearn-onnx/index.html>`__::
+  <https://onnx.ai/sklearn-onnx/index.html>`__::
 
       from skl2onnx import to_onnx
       onx = to_onnx(clf, X[:1].astype(numpy.float32), target_opset=12)
@@ -257,7 +257,7 @@ come with slight variations:
 Security & Maintainability Limitations
 --------------------------------------
 
-:mod:`pickle` (and :mod:`joblib` and :mod:`clouldpickle` by extension), has
+:mod:`pickle` (and :mod:`joblib` and :mod:`cloudpickle` by extension), has
 many documented security vulnerabilities by design and should only be used if
 the artifact, i.e. the pickle-file, is coming from a trusted and verified
 source. You should never load a pickle file from an untrusted source, similarly
@@ -324,7 +324,7 @@ environment for the updated software.
 .. dropdown:: InconsistentVersionWarning
 
   When an estimator is loaded with a scikit-learn version that is inconsistent
-  with the version the estimator was pickled with, a
+  with the version the estimator was pickled with, an
   :class:`~sklearn.exceptions.InconsistentVersionWarning` is raised. This warning
   can be caught to obtain the original version the estimator was pickled with::
 

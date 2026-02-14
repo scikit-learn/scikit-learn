@@ -8,7 +8,12 @@ Loss functions for linear models with raw_prediction = X @ coef
 import numpy as np
 from scipy import sparse
 
-from ..utils.extmath import squared_norm
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    get_namespace,
+    get_namespace_and_device,
+)
+from sklearn.utils.extmath import safe_sparse_dot, squared_norm
 
 
 def sandwich_dot(X, W):
@@ -24,12 +29,14 @@ def sandwich_dot(X, W):
     # which (might) detect the symmetry and use BLAS SYRK under the hood.
     n_samples = X.shape[0]
     if sparse.issparse(X):
-        return (
-            X.T @ sparse.dia_matrix((W, 0), shape=(n_samples, n_samples)) @ X
-        ).toarray()
+        return safe_sparse_dot(
+            X.T,
+            sparse.dia_matrix((W, 0), shape=(n_samples, n_samples)) @ X,
+            dense_output=True,
+        )
     else:
         # np.einsum may use less memory but the following, using BLAS matrix
-        # multiplication (gemm), is by far faster.
+        # multiplication (GEMM), is by far faster.
         WX = W[:, None] * X
         return X.T @ WX
 
@@ -69,7 +76,7 @@ class LinearModelLoss:
             if coef.shape (n_classes, n_dof):
                 intercept = coef[:, -1]
             if coef.shape (n_classes * n_dof,)
-                intercept = coef[n_features::n_dof] = coef[(n_dof-1)::n_dof]
+                intercept = coef[n_classes * n_features:] = coef[(n_dof-1):]
             intercept.shape = (n_classes,)
         else:
             intercept = coef[-1]
@@ -83,7 +90,8 @@ class LinearModelLoss:
         else:
             hessian.shape = (n_dof, n_dof)
 
-    Note: If coef has shape (n_classes * n_dof,), the 2d-array can be reconstructed as
+    Note: if coef has shape (n_classes * n_dof,), the classes are expected to be
+    contiguous, i.e. the 2d-array can be reconstructed as
 
         coef.reshape((n_classes, -1), order="F")
 
@@ -195,12 +203,20 @@ class LinearModelLoss:
             (n_samples, n_classes)
         """
         weights, intercept = self.weight_intercept(coef)
+        xp, _, device_ = get_namespace_and_device(X)
 
+        # The `weights` and `intercept` are only converted internally to the
+        # array API because the relevant `scipy.optimize` functions do not
+        # currently support the array API and we have to ensure that the final
+        # values returned to the respective `scipy.optimize` function are in
+        # the `numpy` namespace.
+        weights_xp = xp.asarray(weights, dtype=X.dtype, device=device_)
+        intercept_xp = xp.asarray(intercept, dtype=X.dtype, device=device_)
         if not self.base_loss.is_multiclass:
-            raw_prediction = X @ weights + intercept
+            raw_prediction = X @ weights_xp + intercept_xp
         else:
             # weights has shape (n_classes, n_dof)
-            raw_prediction = X @ weights.T + intercept  # ndarray, likely C-contiguous
+            raw_prediction = X @ weights_xp.T + intercept_xp
 
         return weights, intercept, raw_prediction
 
@@ -319,23 +335,33 @@ class LinearModelLoss:
             sample_weight=sample_weight,
             n_threads=n_threads,
         )
-        sw_sum = n_samples if sample_weight is None else np.sum(sample_weight)
-        loss = loss.sum() / sw_sum
+        xp, _ = get_namespace(X, y, sample_weight)
+        sw_sum = n_samples if sample_weight is None else xp.sum(sample_weight)
+        loss = float(xp.sum(loss) / sw_sum)
         loss += self.l2_penalty(weights, l2_reg_strength)
 
         grad_pointwise /= sw_sum
 
         if not self.base_loss.is_multiclass:
             grad = np.empty_like(coef, dtype=weights.dtype)
-            grad[:n_features] = X.T @ grad_pointwise + l2_reg_strength * weights
+            X_grad = X.T @ grad_pointwise
+            grad[:n_features] = (
+                _convert_to_numpy(X_grad, xp=xp) + l2_reg_strength * weights
+            )
             if self.fit_intercept:
-                grad[-1] = grad_pointwise.sum()
+                grad[-1] = xp.sum(grad_pointwise)
         else:
+            # The final value of `grad` needs to be in the `numpy` namespace
+            # because the relevant `scipy.optimize` functions do not currently
+            # support the array API.
             grad = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
             # grad_pointwise.shape = (n_samples, n_classes)
-            grad[:, :n_features] = grad_pointwise.T @ X + l2_reg_strength * weights
+            grad_X = grad_pointwise.T @ X
+            grad[:, :n_features] = (
+                _convert_to_numpy(grad_X, xp) + l2_reg_strength * weights
+            )
             if self.fit_intercept:
-                grad[:, -1] = grad_pointwise.sum(axis=0)
+                grad[:, -1] = _convert_to_numpy(xp.sum(grad_pointwise, axis=0), xp=xp)
             if coef.ndim == 1:
                 grad = grad.ravel(order="F")
 
@@ -537,9 +563,9 @@ class LinearModelLoss:
                 # The L2 penalty enters the Hessian on the diagonal only. To add those
                 # terms, we use a flattened view of the array.
                 order = "C" if hess.flags.c_contiguous else "F"
-                hess.reshape(-1, order=order)[
-                    : (n_features * n_dof) : (n_dof + 1)
-                ] += l2_reg_strength
+                hess.reshape(-1, order=order)[: (n_features * n_dof) : (n_dof + 1)] += (
+                    l2_reg_strength
+                )
 
             if self.fit_intercept:
                 # With intercept included as added column to X, the hessian becomes
@@ -795,7 +821,7 @@ class LinearModelLoss:
             #   = sum_{i, m} (X')_{ji} * p_i_k
             #                * (X_{im} * s_k_m - sum_l p_i_l * X_{im} * s_l_m)
             #
-            # See also https://github.com/scikit-learn/scikit-learn/pull/3646#discussion_r17461411  # noqa
+            # See also https://github.com/scikit-learn/scikit-learn/pull/3646#discussion_r17461411
             def hessp(s):
                 s = s.reshape((n_classes, -1), order="F")  # shape = (n_classes, n_dof)
                 if self.fit_intercept:
@@ -804,7 +830,7 @@ class LinearModelLoss:
                 else:
                     s_intercept = 0
                 tmp = X @ s.T + s_intercept  # X_{im} * s_k_m
-                tmp += (-proba * tmp).sum(axis=1)[:, np.newaxis]  # - sum_l ..
+                tmp -= (proba * tmp).sum(axis=1)[:, np.newaxis]  # - sum_l ..
                 tmp *= proba  # * p_i_k
                 if sample_weight is not None:
                     tmp *= sample_weight[:, np.newaxis]

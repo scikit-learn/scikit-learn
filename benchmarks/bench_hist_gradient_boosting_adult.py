@@ -46,7 +46,7 @@ def predict(est, data_test, target_test):
     toc = time()
     roc_auc = roc_auc_score(target_test, predicted_proba_test[:, 1])
     acc = accuracy_score(target_test, predicted_test)
-    print(f"predicted in {toc - tic:.3f}s, ROC AUC: {roc_auc:.4f}, ACC: {acc :.4f}")
+    print(f"predicted in {toc - tic:.3f}s, ROC AUC: {roc_auc:.4f}, ACC: {acc:.4f}")
 
 
 data = fetch_openml(data_id=179, as_frame=True)  # adult dataset

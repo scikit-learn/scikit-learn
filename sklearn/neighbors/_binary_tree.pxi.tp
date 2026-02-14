@@ -166,8 +166,7 @@ from libc.string cimport memcpy
 
 import numpy as np
 import warnings
-
-from ..metrics._dist_metrics cimport (
+from sklearn.metrics._dist_metrics cimport (
     DistanceMetric,
     DistanceMetric64,
     DistanceMetric32,
@@ -179,12 +178,13 @@ from ..metrics._dist_metrics cimport (
     euclidean_dist_to_rdist32,
 )
 
-from ._partition_nodes cimport partition_node_indices
+from sklearn.neighbors._partition_nodes cimport partition_node_indices
 
-from ..utils import check_array
-from ..utils._typedefs cimport float32_t, float64_t, intp_t
-from ..utils._heap cimport heap_push
-from ..utils._sorting cimport simultaneous_sort as _simultaneous_sort
+from sklearn.metrics._dist_metrics import get_valid_metric_ids
+from sklearn.utils import check_array
+from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t
+from sklearn.utils._heap cimport heap_push
+from sklearn.utils._sorting cimport simultaneous_sort as _simultaneous_sort
 
 cnp.import_array()
 
@@ -252,8 +252,8 @@ leaf_size : positive int, default=40
 metric : str or DistanceMetric64 object, default='minkowski'
     Metric to use for distance computation. Default is "minkowski", which
     results in the standard Euclidean distance when p = 2.
-    A list of valid metrics for {BinaryTree} is given by the attribute
-    `valid_metrics`.
+    A :ref:`list of valid metrics <kdtree_and_balltree_classes>` for
+    {BinaryTree} is given by the attribute `valid_metrics`.
     See the documentation of `scipy.spatial.distance
     <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
     the metrics listed in :class:`~sklearn.metrics.pairwise.distance_metrics` for
@@ -788,7 +788,6 @@ def newObj(obj):
 
 ######################################################################
 # define the reverse mapping of VALID_METRICS{{name_suffix}}
-from sklearn.metrics._dist_metrics import get_valid_metric_ids
 VALID_METRIC_IDS{{name_suffix}} = get_valid_metric_ids(VALID_METRICS{{name_suffix}})
 
 

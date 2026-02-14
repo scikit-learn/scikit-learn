@@ -8,9 +8,8 @@ from typing import Protocol, runtime_checkable
 import numpy as np
 from scipy.sparse import issparse
 
-from .._config import get_config
-from ._available_if import available_if
-from .fixes import _create_pandas_dataframe_from_non_pandas_container
+from sklearn._config import get_config
+from sklearn.utils._available_if import available_if
 
 
 def check_library_installed(library):
@@ -96,13 +95,17 @@ class ContainerAdapterProtocol(Protocol):
             Container with new names.
         """
 
-    def hstack(self, Xs):
+    def hstack(self, Xs, feature_names=None):
         """Stack containers horizontally (column-wise).
 
         Parameters
         ----------
         Xs : list of containers
             List of containers to stack.
+
+        feature_names : array-like of str, default=None
+            The feature names for the stacked container. If provided, the
+            columns of the result will be renamed to these names.
 
         Returns
         -------
@@ -125,16 +128,14 @@ class PandasAdapter:
             # because `list` exposes an `index` attribute.
             if isinstance(X_output, pd.DataFrame):
                 index = X_output.index
-            elif isinstance(X_original, pd.DataFrame):
+            elif isinstance(X_original, (pd.DataFrame, pd.Series)):
                 index = X_original.index
             else:
                 index = None
 
             # We don't pass columns here because it would intend columns selection
             # instead of renaming.
-            X_output = _create_pandas_dataframe_from_non_pandas_container(
-                X=X_output, index=index, copy=not inplace
-            )
+            X_output = pd.DataFrame(X_output, index=index, copy=not inplace)
 
         if columns is not None:
             return self.rename_columns(X_output, columns)
@@ -150,9 +151,12 @@ class PandasAdapter:
         X.columns = columns
         return X
 
-    def hstack(self, Xs):
+    def hstack(self, Xs, feature_names=None):
         pd = check_library_installed("pandas")
-        return pd.concat(Xs, axis=1)
+        result = pd.concat(Xs, axis=1)
+        if feature_names is not None:
+            self.rename_columns(result, feature_names)
+        return result
 
 
 class PolarsAdapter:
@@ -181,8 +185,16 @@ class PolarsAdapter:
         X.columns = columns
         return X
 
-    def hstack(self, Xs):
+    def hstack(self, Xs, feature_names=None):
         pl = check_library_installed("polars")
+        if feature_names is not None:
+            # Rename columns in each X before concat to avoid duplicates
+            start = 0
+            for X in Xs:
+                n_features = X.shape[1]
+                names = feature_names[start : start + n_features]
+                self.rename_columns(X, names)
+                start += n_features
         return pl.concat(Xs, how="horizontal")
 
 
@@ -447,10 +459,8 @@ def _safe_set_output(estimator, *, transform=None):
     estimator : estimator instance
         Estimator instance.
     """
-    set_output_for_transform = (
-        hasattr(estimator, "transform")
-        or hasattr(estimator, "fit_transform")
-        and transform is not None
+    set_output_for_transform = hasattr(estimator, "transform") or (
+        hasattr(estimator, "fit_transform") and transform is not None
     )
     if not set_output_for_transform:
         # If estimator can not transform, then `set_output` does not need to be

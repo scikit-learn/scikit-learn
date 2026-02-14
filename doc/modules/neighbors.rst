@@ -4,8 +4,6 @@
 Nearest Neighbors
 =================
 
-.. sectionauthor:: Jake Vanderplas <vanderplas@astro.washington.edu>
-
 .. currentmodule:: sklearn.neighbors
 
 :mod:`sklearn.neighbors` provides functionality for unsupervised and
@@ -113,6 +111,8 @@ circumstances which make use of spatial relationships between points for
 unsupervised learning: in particular, see :class:`~sklearn.manifold.Isomap`,
 :class:`~sklearn.manifold.LocallyLinearEmbedding`, and
 :class:`~sklearn.cluster.SpectralClustering`.
+
+.. _kdtree_and_balltree_classes:
 
 KDTree and BallTree Classes
 ---------------------------
@@ -347,7 +347,7 @@ Alternatively, the user can work with the :class:`BallTree` class directly.
 .. dropdown:: References
 
   * `"Five Balltree Construction Algorithms"
-    <https://citeseerx.ist.psu.edu/doc_view/pid/17ac002939f8e950ffb32ec4dc8e86bdd8cb5ff1>`_,
+    <https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=17ac002939f8e950ffb32ec4dc8e86bdd8cb5ff1>`_,
     Omohundro, S.M., International Computer Science Institute
     Technical Report (1989)
 
@@ -636,8 +636,6 @@ implementation with special data types. The precomputed neighbors
 Neighborhood Components Analysis
 ================================
 
-.. sectionauthor:: William de Vazelhes <william.de-vazelhes@inria.fr>
-
 Neighborhood Components Analysis (NCA, :class:`NeighborhoodComponentsAnalysis`)
 is a distance metric learning algorithm which aims to improve the accuracy of
 nearest neighbors classification compared to the standard Euclidean distance.
@@ -835,7 +833,7 @@ added space complexity in the operation.
 .. rubric:: References
 
 .. [1] `"Neighbourhood Components Analysis"
-  <http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf>`_,
+  <https://papers.nips.cc/paper_files/paper/2004/file/42fe880812925e520249e808937738d2-Paper.pdf>`_,
   J. Goldberger, S. Roweis, G. Hinton, R. Salakhutdinov, Advances in
   Neural Information Processing Systems, Vol. 17, May 2005, pp. 513-520.
 

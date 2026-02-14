@@ -6,8 +6,8 @@ import pytest
 
 # make it possible to discover experimental estimators when calling `all_estimators`
 from sklearn.experimental import (
-    enable_halving_search_cv,  # noqa
-    enable_iterative_imputer,  # noqa
+    enable_halving_search_cv,  # noqa: F401
+    enable_iterative_imputer,  # noqa: F401
 )
 from sklearn.utils.discovery import all_displays, all_estimators, all_functions
 
@@ -51,7 +51,7 @@ def filter_errors(errors, method, Klass=None):
         # We ignore following error code,
         #  - RT02: The first line of the Returns section
         #    should contain only the type, ..
-        #   (as we may need refer to the name of the returned
+        #   (as we may need to refer to the name of the returned
         #    object)
         #  - GL01: Docstring text (summary) should start in the line
         #    immediately after the opening quotes (not in the same line,

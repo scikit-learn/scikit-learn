@@ -10,7 +10,7 @@ _dist_metrics_pxd = custom_target(
   '_dist_metrics_pxd',
   output: '_dist_metrics.pxd',
   input: '_dist_metrics.pxd.tp',
-  command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+  command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
   # Need to install the generated pxd because it is needed in other subpackages
   # Cython code, e.g. sklearn.cluster
   install_dir: sklearn_dir / 'metrics',
@@ -22,7 +22,7 @@ _dist_metrics_pyx = custom_target(
   '_dist_metrics_pyx',
   output: '_dist_metrics.pyx',
   input: '_dist_metrics.pyx.tp',
-  command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+  command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
   # TODO in principle this should go in py.exension_module below. This is
   # temporary work-around for dependency issue with .pyx.tp files. For more
   # details, see https://github.com/mesonbuild/meson/issues/13212
@@ -31,18 +31,16 @@ _dist_metrics_pyx = custom_target(
 
 _dist_metrics = py.extension_module(
   '_dist_metrics',
-  _dist_metrics_pyx,
+  cython_gen.process(_dist_metrics_pyx),
   dependencies: [np_dep],
-  cython_args: cython_args,
   subdir: 'sklearn/metrics',
   install: true
 )
 
 py.extension_module(
   '_pairwise_fast',
-  ['_pairwise_fast.pyx', metrics_cython_tree],
+  [cython_gen.process('_pairwise_fast.pyx'), metrics_cython_tree],
   dependencies: [openmp_dep],
-  cython_args: cython_args,
   subdir: 'sklearn/metrics',
   install: true
 )

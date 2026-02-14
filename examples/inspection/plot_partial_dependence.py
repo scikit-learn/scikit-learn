@@ -365,8 +365,11 @@ _ = display.figure_.suptitle(
 # However, it is worth noting that we are creating potential meaningless
 # synthetic samples if features are correlated.
 #
+# .. _ice-vs-pdp:
+#
 # ICE vs. PDP
 # ~~~~~~~~~~~
+#
 # PDP is an average of the marginal effects of the features. We are averaging the
 # response of all samples of the provided set. Thus, some effects could be hidden. In
 # this regard, it is possible to plot each individual response. This representation is
@@ -458,7 +461,7 @@ _ = display.figure_.suptitle(
 # The two-way partial dependence plot shows the dependence of the number of bike rentals
 # on joint values of temperature and humidity.
 # We clearly see an interaction between the two features. For a temperature higher than
-# 20 degrees Celsius, the humidity has a impact on the number of bike rentals
+# 20 degrees Celsius, the humidity has an impact on the number of bike rentals
 # that seems independent on the temperature.
 #
 # On the other hand, for temperatures lower than 20 degrees Celsius, both the

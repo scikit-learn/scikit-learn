@@ -98,10 +98,10 @@ plt.ylabel("Classification accuracy")
 plt.legend(loc="lower left")
 plt.ylim((0.65, 1.0))
 plt.suptitle(
-    "LDA (Linear Discriminant Analysis) vs. "
-    + "\n"
-    + "LDA with Ledoit Wolf vs. "
-    + "\n"
-    + "LDA with OAS (1 discriminative feature)"
+    "LDA (Linear Discriminant Analysis) vs."
+    "\n"
+    "LDA with Ledoit Wolf vs."
+    "\n"
+    "LDA with OAS (1 discriminative feature)"
 )
 plt.show()

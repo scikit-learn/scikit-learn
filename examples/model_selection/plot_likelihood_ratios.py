@@ -40,7 +40,7 @@ prevalence of the positive class.
 from sklearn.datasets import make_classification
 
 X, y = make_classification(n_samples=10_000, weights=[0.9, 0.1], random_state=0)
-print(f"Percentage of people carrying the disease: {100*y.mean():.2f}%")
+print(f"Percentage of people carrying the disease: {100 * y.mean():.2f}%")
 
 # %%
 # A machine learning model is built to diagnose if a person with some given

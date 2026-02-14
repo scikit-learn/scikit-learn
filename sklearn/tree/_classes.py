@@ -8,6 +8,7 @@ randomized trees. Single and multi-output problems are both handled.
 
 import copy
 import numbers
+import warnings
 from abc import ABCMeta, abstractmethod
 from math import ceil
 from numbers import Integral, Real
@@ -15,9 +16,7 @@ from numbers import Integral, Real
 import numpy as np
 from scipy.sparse import issparse
 
-from sklearn.utils import metadata_routing
-
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     MultiOutputMixin,
@@ -26,10 +25,25 @@ from ..base import (
     clone,
     is_classifier,
 )
-from ..utils import Bunch, check_random_state, compute_sample_weight
-from ..utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import (
+from sklearn.tree import _criterion, _splitter, _tree
+from sklearn.tree._criterion import Criterion
+from sklearn.tree._splitter import Splitter
+from sklearn.tree._tree import (
+    BestFirstTreeBuilder,
+    DepthFirstTreeBuilder,
+    Tree,
+    _build_pruned_tree_ccp,
+    ccp_pruning_path,
+)
+from sklearn.utils import (
+    Bunch,
+    check_random_state,
+    compute_sample_weight,
+    metadata_routing,
+)
+from sklearn.utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.validation import (
     _assert_all_finite_element_wise,
     _check_n_features,
     _check_sample_weight,
@@ -37,17 +51,6 @@ from ..utils.validation import (
     check_is_fitted,
     validate_data,
 )
-from . import _criterion, _splitter, _tree
-from ._criterion import Criterion
-from ._splitter import Splitter
-from ._tree import (
-    BestFirstTreeBuilder,
-    DepthFirstTreeBuilder,
-    Tree,
-    _build_pruned_tree_ccp,
-    ccp_pruning_path,
-)
-from ._utils import _any_isnan_axis0
 
 __all__ = [
     "DecisionTreeClassifier",
@@ -71,7 +74,6 @@ CRITERIA_CLF = {
 }
 CRITERIA_REG = {
     "squared_error": _criterion.MSE,
-    "friedman_mse": _criterion.FriedmanMSE,
     "absolute_error": _criterion.MAE,
     "poisson": _criterion.Poisson,
 }
@@ -225,7 +227,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if not np.isnan(overall_sum):
             return None
 
-        missing_values_in_feature_mask = _any_isnan_axis0(X)
+        missing_values_in_feature_mask = np.isnan(X.sum(axis=0))
         return missing_values_in_feature_mask
 
     def _fit(
@@ -322,12 +324,12 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if isinstance(self.min_samples_leaf, numbers.Integral):
             min_samples_leaf = self.min_samples_leaf
         else:  # float
-            min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
+            min_samples_leaf = ceil(self.min_samples_leaf * n_samples)
 
         if isinstance(self.min_samples_split, numbers.Integral):
             min_samples_split = self.min_samples_split
         else:  # float
-            min_samples_split = int(ceil(self.min_samples_split * n_samples))
+            min_samples_split = ceil(self.min_samples_split * n_samples)
             min_samples_split = max(2, min_samples_split)
 
         min_samples_split = max(min_samples_split, 2 * min_samples_leaf)
@@ -358,7 +360,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, DOUBLE)
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=DOUBLE)
 
         if expanded_class_weight is not None:
             if sample_weight is not None:
@@ -942,8 +944,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     >>> cross_val_score(clf, iris.data, iris.target, cv=10)
     ...                             # doctest: +SKIP
     ...
-    array([ 1.     ,  0.93...,  0.86...,  0.93...,  0.93...,
-            0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
+    array([ 1.     ,  0.93,  0.86,  0.93,  0.93,
+            0.93,  0.93,  1.     ,  0.93,  1.      ])
     """
 
     # "check_input" is used for optimisation and isn't something to be passed
@@ -1096,8 +1098,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # XXX: nan is only support for dense arrays, but we set this for common test to
-        # pass, specifically: check_estimators_nan_inf
+        # XXX: nan is only supported for dense arrays, but we set this for
+        # common test to pass, specifically: check_estimators_nan_inf
         allow_nan = self.splitter in ("best", "random") and self.criterion in {
             "gini",
             "log_loss",
@@ -1115,22 +1117,23 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : {"squared_error", "friedman_mse", "absolute_error", \
-            "poisson"}, default="squared_error"
+    criterion : {"squared_error", "absolute_error", "poisson"}, default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
-        loss using the mean of each terminal node, "friedman_mse", which uses
-        mean squared error with Friedman's improvement score for potential
-        splits, "absolute_error" for the mean absolute error, which minimizes
-        the L1 loss using the median of each terminal node, and "poisson" which
-        uses reduction in the half mean Poisson deviance to find splits.
+        loss using the mean of each terminal node, "absolute_error" for the mean
+        absolute error, which minimizes the L1 loss using the median of each terminal
+        node, and "poisson" which uses reduction in Poisson deviance to find splits,
+        also using the mean of each terminal node.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
         .. versionadded:: 0.24
             Poisson deviance criterion.
+
+        .. versionchanged:: 1.9
+            Criterion `"friedman_mse"` was deprecated.
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
@@ -1324,8 +1327,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     >>> cross_val_score(regressor, X, y, cv=10)
     ...                    # doctest: +SKIP
     ...
-    array([-0.39..., -0.46...,  0.02...,  0.06..., -0.50...,
-           0.16...,  0.11..., -0.73..., -0.30..., -0.00...])
+    array([-0.39, -0.46,  0.02,  0.06, -0.50,
+           0.16,  0.11, -0.73, -0.30, -0.00])
     """
 
     # "check_input" is used for optimisation and isn't something to be passed
@@ -1335,7 +1338,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
         "criterion": [
-            StrOptions({"squared_error", "friedman_mse", "absolute_error", "poisson"}),
+            StrOptions({"squared_error", "absolute_error", "poisson"}),
             Hidden(Criterion),
         ],
     }
@@ -1356,6 +1359,16 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         ccp_alpha=0.0,
         monotonic_cst=None,
     ):
+        if isinstance(criterion, str) and criterion == "friedman_mse":
+            # TODO(1.11): remove support of "friedman_mse" criterion.
+            criterion = "squared_error"
+            warnings.warn(
+                'Value `"friedman_mse"` for `criterion` is deprecated and will be '
+                'removed in 1.11. It maps to `"squared_error"` as both '
+                'were always equivalent. Use `criterion="squared_error"` '
+                "to remove this warning.",
+                FutureWarning,
+            )
         super().__init__(
             criterion=criterion,
             splitter=splitter,
@@ -1439,11 +1452,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # XXX: nan is only support for dense arrays, but we set this for common test to
-        # pass, specifically: check_estimators_nan_inf
+        # XXX: nan is only supported for dense arrays, but we set this for
+        # common test to pass, specifically: check_estimators_nan_inf
         allow_nan = self.splitter in ("best", "random") and self.criterion in {
             "squared_error",
-            "friedman_mse",
             "poisson",
         }
         tags.input_tags.allow_nan = allow_nan
@@ -1689,7 +1701,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     >>> cls = BaggingClassifier(extra_tree, random_state=0).fit(
     ...    X_train, y_train)
     >>> cls.score(X_test, y_test)
-    0.8947...
+    0.8947
     """
 
     def __init__(
@@ -1755,22 +1767,23 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Parameters
     ----------
-    criterion : {"squared_error", "friedman_mse", "absolute_error", "poisson"}, \
-            default="squared_error"
+    criterion : {"squared_error", "absolute_error", "poisson"}, default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
-        loss using the mean of each terminal node, "friedman_mse", which uses
-        mean squared error with Friedman's improvement score for potential
-        splits, "absolute_error" for the mean absolute error, which minimizes
-        the L1 loss using the median of each terminal node, and "poisson" which
-        uses reduction in Poisson deviance to find splits.
+        loss using the mean of each terminal node, "absolute_error" for the mean
+        absolute error, which minimizes the L1 loss using the median of each terminal
+        node, and "poisson" which uses reduction in Poisson deviance to find splits,
+        also using the mean of each terminal node.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
         .. versionadded:: 0.24
             Poisson deviance criterion.
+
+        .. versionchanged:: 1.9
+            Criterion `"friedman_mse"` was deprecated.
 
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
@@ -1950,7 +1963,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     >>> reg = BaggingRegressor(extra_tree, random_state=0).fit(
     ...     X_train, y_train)
     >>> reg.score(X_test, y_test)
-    0.33...
+    0.33
     """
 
     def __init__(
@@ -1990,8 +2003,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         # common test to pass, specifically: check_estimators_nan_inf
         allow_nan = self.splitter == "random" and self.criterion in {
             "squared_error",
-            "friedman_mse",
             "poisson",
         }
-        tags.input_tags.allow_nan: allow_nan
+        tags.input_tags.allow_nan = allow_nan
         return tags

@@ -106,7 +106,7 @@ for subplot, (D, title) in enumerate(
         dictionary=D, transform_algorithm="threshold", transform_alpha=20
     )
     x = coder.transform(y.reshape(1, -1))
-    _, idx = np.where(x != 0)
+    _, idx = (x != 0).nonzero()
     x[0, idx], _, _, _ = np.linalg.lstsq(D[idx, :].T, y, rcond=None)
     x = np.ravel(np.dot(x, D))
     squared_error = np.sum((y - x) ** 2)

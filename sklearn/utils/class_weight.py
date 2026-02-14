@@ -6,7 +6,17 @@
 import numpy as np
 from scipy import sparse
 
-from ._param_validation import StrOptions, validate_params
+from sklearn.utils._array_api import (
+    _bincount,
+    _convert_to_numpy,
+    _is_numpy_namespace,
+    _isin,
+    get_namespace,
+    get_namespace_and_device,
+    size,
+)
+from sklearn.utils._param_validation import StrOptions, validate_params
+from sklearn.utils.validation import _check_sample_weight
 
 
 @validate_params(
@@ -14,17 +24,19 @@ from ._param_validation import StrOptions, validate_params
         "class_weight": [dict, StrOptions({"balanced"}), None],
         "classes": [np.ndarray],
         "y": ["array-like"],
+        "sample_weight": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
-def compute_class_weight(class_weight, *, classes, y):
+def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
     """Estimate class weights for unbalanced datasets.
 
     Parameters
     ----------
     class_weight : dict, "balanced" or None
         If "balanced", class weights will be given by
-        `n_samples / (n_classes * np.bincount(y))`.
+        `n_samples / (n_classes * np.bincount(y))` or their weighted equivalent if
+        `sample_weight` is provided.
         If a dictionary is given, keys are classes and values are corresponding class
         weights.
         If `None` is given, the class weights will be uniform.
@@ -35,6 +47,10 @@ def compute_class_weight(class_weight, *, classes, y):
 
     y : array-like of shape (n_samples,)
         Array of original class labels per sample.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Array of weights that are assigned to individual samples. Only used when
+        `class_weight='balanced'`.
 
     Returns
     -------
@@ -55,33 +71,47 @@ def compute_class_weight(class_weight, *, classes, y):
     array([1.5 , 0.75])
     """
     # Import error caused by circular imports.
-    from ..preprocessing import LabelEncoder
+    from sklearn.preprocessing import LabelEncoder
 
-    if set(y) - set(classes):
+    xp, _, device_ = get_namespace_and_device(y, classes)
+    unique_y = xp.unique_values(y)
+    if set(_convert_to_numpy(unique_y, xp)) - set(_convert_to_numpy(classes, xp)):
         raise ValueError("classes should include all valid labels that can be in y")
     if class_weight is None or len(class_weight) == 0:
         # uniform class weights
-        weight = np.ones(classes.shape[0], dtype=np.float64, order="C")
+        weight = xp.ones(classes.shape[0], device=device_)
     elif class_weight == "balanced":
         # Find the weight of each class as present in y.
         le = LabelEncoder()
         y_ind = le.fit_transform(y)
-        if not all(np.isin(classes, le.classes_)):
+        if not all(_isin(classes, xp.astype(le.classes_, classes.dtype), xp=xp)):
             raise ValueError("classes should have valid labels that are in y")
 
-        recip_freq = len(y) / (len(le.classes_) * np.bincount(y_ind).astype(np.float64))
+        if _is_numpy_namespace(xp) and sample_weight is not None:
+            xp_sw, _ = get_namespace(sample_weight)
+            sample_weight = _convert_to_numpy(sample_weight, xp_sw)
+
+        sample_weight = _check_sample_weight(sample_weight, y)
+        weighted_class_counts = _bincount(y_ind, weights=sample_weight, xp=xp)
+        recip_freq = xp.sum(weighted_class_counts) / (
+            size(le.classes_) * weighted_class_counts
+        )
         weight = recip_freq[le.transform(classes)]
     else:
         # user-defined dictionary
-        weight = np.ones(classes.shape[0], dtype=np.float64, order="C")
+        weight = xp.ones(size(classes), device=device_)
         unweighted_classes = []
         for i, c in enumerate(classes):
+            try:
+                c = int(c)
+            except ValueError:  # `classes` contains strings
+                c = str(c)
             if c in class_weight:
                 weight[i] = class_weight[c]
             else:
                 unweighted_classes.append(c)
 
-        n_weighted_classes = len(classes) - len(unweighted_classes)
+        n_weighted_classes = size(classes) - len(unweighted_classes)
         if unweighted_classes and n_weighted_classes != len(class_weight):
             unweighted_classes_user_friendly_str = np.array(unweighted_classes).tolist()
             raise ValueError(

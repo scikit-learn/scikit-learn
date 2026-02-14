@@ -408,15 +408,15 @@ Changelog
   :class:`decomposition.DictionaryLearning`, and
   :class:`decomposition.MiniBatchDictionaryLearning` now take a
   `transform_max_iter` parameter and pass it to either
-  :func:`decomposition.dict_learning()` or
-  :func:`decomposition.sparse_encode()`. :issue:`12650` by `Adrin Jalali`_.
+  :func:`decomposition.dict_learning` or
+  :func:`decomposition.sparse_encode`. :issue:`12650` by `Adrin Jalali`_.
 
 - |Enhancement| :class:`decomposition.IncrementalPCA` now accepts sparse
   matrices as input, converting them to dense in batches thereby avoiding the
   need to store the entire dense matrix at once.
   :pr:`13960` by :user:`Scott Gigante <scottgigante>`.
 
-- |Fix| :func:`decomposition.sparse_encode()` now passes the `max_iter` to the
+- |Fix| :func:`decomposition.sparse_encode` now passes the `max_iter` to the
   underlying :class:`linear_model.LassoLars` when `algorithm='lasso_lars'`.
   :issue:`12650` by `Adrin Jalali`_.
 
@@ -1004,7 +1004,7 @@ Changelog
   For example, the outcomes ``1``, ``10`` and ``100`` are all equally likely
   for ``loguniform(1, 100)``. See :issue:`11232` by
   :user:`Scott Sievert <stsievert>` and :user:`Nathaniel Saul <sauln>`,
-  and `SciPy PR 10815 <https://github.com/scipy/scipy/pull/10815>`.
+  and `SciPy PR 10815 <https://github.com/scipy/scipy/pull/10815>`_.
 
 - |Enhancement| `utils.safe_indexing` (now deprecated) accepts an
   ``axis`` parameter to index array-like across rows and columns. The column

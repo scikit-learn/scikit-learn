@@ -42,7 +42,7 @@ if m_dep.found()
   add_project_link_arguments('-lm', language : 'c')
 endif
 
-tempita = files('sklearn/_build_utils/tempita.py')
+tempita = find_program('sklearn/_build_utils/tempita.py')
 
 py = import('python').find_installation(pure: false)
 

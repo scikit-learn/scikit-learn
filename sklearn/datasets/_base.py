@@ -27,10 +27,10 @@ from urllib.request import urlretrieve
 
 import numpy as np
 
-from ..preprocessing import scale
-from ..utils import Bunch, check_random_state
-from ..utils._optional_dependencies import check_pandas_support
-from ..utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.preprocessing import scale
+from sklearn.utils import Bunch, check_random_state
+from sklearn.utils._optional_dependencies import check_pandas_support
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 
 DATA_MODULE = "sklearn.datasets.data"
 DESCR_MODULE = "sklearn.datasets.descr"
@@ -673,7 +673,7 @@ def load_iris(*, return_X_y=False, as_frame=False):
             a pandas Series.
         feature_names: list
             The names of the dataset columns.
-        target_names: list
+        target_names: ndarray of shape (3, )
             The names of target classes.
         frame: DataFrame of shape (150, 5)
             Only present when `as_frame=True`. DataFrame with `data` and
@@ -702,10 +702,11 @@ def load_iris(*, return_X_y=False, as_frame=False):
 
     >>> from sklearn.datasets import load_iris
     >>> data = load_iris()
-    >>> data.target[[10, 25, 50]]
+    >>> samples = [10, 25, 50]
+    >>> data.target[samples]
     array([0, 0, 1])
-    >>> list(data.target_names)
-    [np.str_('setosa'), np.str_('versicolor'), np.str_('virginica')]
+    >>> data.target_names[data.target[samples]]
+    array(['setosa', 'setosa', 'versicolor'], dtype='<U10')
 
     See :ref:`sphx_glr_auto_examples_decomposition_plot_pca_iris.py` for a more
     detailed example of how to work with the iris dataset.
@@ -751,7 +752,7 @@ def load_iris(*, return_X_y=False, as_frame=False):
     prefer_skip_nested_validation=True,
 )
 def load_breast_cancer(*, return_X_y=False, as_frame=False):
-    """Load and return the breast cancer wisconsin dataset (classification).
+    """Load and return the breast cancer Wisconsin dataset (classification).
 
     The breast cancer dataset is a classic and very easy binary classification
     dataset.
@@ -991,8 +992,7 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
         >>> print(digits.data.shape)
         (1797, 64)
         >>> import matplotlib.pyplot as plt
-        >>> plt.gray()
-        >>> plt.matshow(digits.images[0])
+        >>> plt.matshow(digits.images[0], cmap="gray")
         <...>
         >>> plt.show()
     """

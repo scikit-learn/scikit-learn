@@ -81,10 +81,12 @@ def random_X_y_coef(
 @pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("n_features", [0, 1, 10])
 @pytest.mark.parametrize("dtype", [None, np.float32, np.float64, np.int64])
-def test_init_zero_coef(base_loss, fit_intercept, n_features, dtype):
+def test_init_zero_coef(
+    base_loss, fit_intercept, n_features, dtype, global_random_seed
+):
     """Test that init_zero_coef initializes coef correctly."""
     loss = LinearModelLoss(base_loss=base_loss(), fit_intercept=fit_intercept)
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.normal(size=(5, n_features))
     coef = loss.init_zero_coef(X, dtype=dtype)
     if loss.base_loss.is_multiclass:
@@ -108,12 +110,17 @@ def test_init_zero_coef(base_loss, fit_intercept, n_features, dtype):
 @pytest.mark.parametrize("l2_reg_strength", [0, 1])
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_loss_grad_hess_are_the_same(
-    base_loss, fit_intercept, sample_weight, l2_reg_strength, csr_container
+    base_loss,
+    fit_intercept,
+    sample_weight,
+    l2_reg_strength,
+    csr_container,
+    global_random_seed,
 ):
     """Test that loss and gradient are the same across different functions."""
     loss = LinearModelLoss(base_loss=base_loss(), fit_intercept=fit_intercept)
     X, y, coef = random_X_y_coef(
-        linear_model_loss=loss, n_samples=10, n_features=5, seed=42
+        linear_model_loss=loss, n_samples=10, n_features=5, seed=global_random_seed
     )
     X_old, y_old, coef_old = X.copy(), y.copy(), coef.copy()
 
@@ -198,14 +205,17 @@ def test_loss_grad_hess_are_the_same(
 @pytest.mark.parametrize("l2_reg_strength", [0, 1])
 @pytest.mark.parametrize("X_container", CSR_CONTAINERS + [None])
 def test_loss_gradients_hessp_intercept(
-    base_loss, sample_weight, l2_reg_strength, X_container
+    base_loss, sample_weight, l2_reg_strength, X_container, global_random_seed
 ):
     """Test that loss and gradient handle intercept correctly."""
     loss = LinearModelLoss(base_loss=base_loss(), fit_intercept=False)
     loss_inter = LinearModelLoss(base_loss=base_loss(), fit_intercept=True)
     n_samples, n_features = 10, 5
     X, y, coef = random_X_y_coef(
-        linear_model_loss=loss, n_samples=n_samples, n_features=n_features, seed=42
+        linear_model_loss=loss,
+        n_samples=n_samples,
+        n_features=n_features,
+        seed=global_random_seed,
     )
 
     X[:, -1] = 1  # make last column of 1 to mimic intercept term
@@ -241,7 +251,7 @@ def test_loss_gradients_hessp_intercept(
     g_inter_corrected.T[-1] += l2_reg_strength * coef.T[-1]
     assert_allclose(g, g_inter_corrected)
 
-    s = np.random.RandomState(42).randn(*coef.shape)
+    s = np.random.RandomState(global_random_seed).randn(*coef.shape)
     h = hessp(s)
     h_inter = hessp_inter(s)
     h_inter_corrected = h_inter
@@ -254,7 +264,7 @@ def test_loss_gradients_hessp_intercept(
 @pytest.mark.parametrize("sample_weight", [None, "range"])
 @pytest.mark.parametrize("l2_reg_strength", [0, 1])
 def test_gradients_hessians_numerically(
-    base_loss, fit_intercept, sample_weight, l2_reg_strength
+    base_loss, fit_intercept, sample_weight, l2_reg_strength, global_random_seed
 ):
     """Test gradients and hessians with numerical derivatives.
 
@@ -264,7 +274,10 @@ def test_gradients_hessians_numerically(
     loss = LinearModelLoss(base_loss=base_loss(), fit_intercept=fit_intercept)
     n_samples, n_features = 10, 5
     X, y, coef = random_X_y_coef(
-        linear_model_loss=loss, n_samples=n_samples, n_features=n_features, seed=42
+        linear_model_loss=loss,
+        n_samples=n_samples,
+        n_features=n_features,
+        seed=global_random_seed,
     )
     coef = coef.ravel(order="F")  # this is important only for multinomial loss
 
@@ -335,14 +348,17 @@ def test_gradients_hessians_numerically(
 
 
 @pytest.mark.parametrize("fit_intercept", [False, True])
-def test_multinomial_coef_shape(fit_intercept):
+def test_multinomial_coef_shape(fit_intercept, global_random_seed):
     """Test that multinomial LinearModelLoss respects shape of coef."""
     loss = LinearModelLoss(base_loss=HalfMultinomialLoss(), fit_intercept=fit_intercept)
     n_samples, n_features = 10, 5
     X, y, coef = random_X_y_coef(
-        linear_model_loss=loss, n_samples=n_samples, n_features=n_features, seed=42
+        linear_model_loss=loss,
+        n_samples=n_samples,
+        n_features=n_features,
+        seed=global_random_seed,
     )
-    s = np.random.RandomState(42).randn(*coef.shape)
+    s = np.random.RandomState(global_random_seed).randn(*coef.shape)
 
     l, g = loss.loss_gradient(coef, X, y)
     g1 = loss.gradient(coef, X, y)
@@ -373,7 +389,7 @@ def test_multinomial_coef_shape(fit_intercept):
 
 
 @pytest.mark.parametrize("sample_weight", [None, "range"])
-def test_multinomial_hessian_3_classes(sample_weight):
+def test_multinomial_hessian_3_classes(sample_weight, global_random_seed):
     """Test multinomial hessian for 3 classes and 2 points.
 
     For n_classes = 3 and n_samples = 2, we have
@@ -391,7 +407,10 @@ def test_multinomial_hessian_3_classes(sample_weight):
         base_loss=HalfMultinomialLoss(n_classes=n_classes), fit_intercept=False
     )
     X, y, coef = random_X_y_coef(
-        linear_model_loss=loss, n_samples=n_samples, n_features=n_features, seed=42
+        linear_model_loss=loss,
+        n_samples=n_samples,
+        n_features=n_features,
+        seed=global_random_seed,
     )
     coef = coef.ravel(order="F")  # this is important only for multinomial loss
 

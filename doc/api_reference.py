@@ -41,8 +41,8 @@ API_REFERENCE maps each module name to a dictionary that consists of the followi
 components:
 
 short_summary (required)
-    The text to be printed on the index page; it has nothing to do the API reference
-    page of each module.
+    The text to be printed on the index page; it has nothing to do with
+    the API reference page of each module.
 description (required, `None` if not needed)
     The additional description for the module to be placed under the module
     docstring, before the sections start.
@@ -587,7 +587,7 @@ API_REFERENCE = {
                 "autosummary": [
                     "LogisticRegression",
                     "LogisticRegressionCV",
-                    "PassiveAggressiveClassifier",
+                    "PassiveAggressiveClassifier",  # TODO(1.10): remove
                     "Perceptron",
                     "RidgeClassifier",
                     "RidgeClassifierCV",
@@ -603,7 +603,7 @@ API_REFERENCE = {
                 "title": "Regressors with variable selection",
                 "description": (
                     "The following estimators have built-in variable selection fitting "
-                    "procedures, but any estimator using a L1 or elastic-net penalty "
+                    "procedures, but any estimator using an L1 or elastic-net penalty "
                     "also performs variable selection: typically "
                     ":class:`~linear_model.SGDRegressor` or "
                     ":class:`~sklearn.linear_model.SGDClassifier` with an appropriate "
@@ -672,7 +672,7 @@ API_REFERENCE = {
             {
                 "title": "Miscellaneous",
                 "autosummary": [
-                    "PassiveAggressiveRegressor",
+                    "PassiveAggressiveRegressor",  # TODO(1.10): remove
                     "enet_path",
                     "lars_path",
                     "lars_path_gram",
@@ -691,6 +691,7 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
+                    "ClassicalMDS",
                     "Isomap",
                     "LocallyLinearEmbedding",
                     "MDS",
@@ -731,6 +732,8 @@ API_REFERENCE = {
                     "classification_report",
                     "cohen_kappa_score",
                     "confusion_matrix",
+                    "confusion_matrix_at_thresholds",
+                    "d2_brier_score",
                     "d2_log_loss_score",
                     "dcg_score",
                     "det_curve",
@@ -1349,9 +1352,4 @@ DEPRECATED_API_REFERENCE = {
 }
 """
 
-DEPRECATED_API_REFERENCE = {
-    "1.7": [
-        "utils.parallel_backend",
-        "utils.register_parallel_backend",
-    ]
-}  # type: ignore
+DEPRECATED_API_REFERENCE = {}  # type: ignore[var-annotated]

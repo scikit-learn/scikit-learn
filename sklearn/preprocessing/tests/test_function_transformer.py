@@ -36,13 +36,13 @@ def test_delegate_to_func():
     )
 
     # The function should only have received X.
-    assert args_store == [
-        X
-    ], "Incorrect positional arguments passed to func: {args}".format(args=args_store)
+    assert args_store == [X], (
+        "Incorrect positional arguments passed to func: {args}".format(args=args_store)
+    )
 
-    assert (
-        not kwargs_store
-    ), "Unexpected keyword arguments passed to func: {args}".format(args=kwargs_store)
+    assert not kwargs_store, (
+        "Unexpected keyword arguments passed to func: {args}".format(args=kwargs_store)
+    )
 
     # reset the argument stores.
     args_store[:] = []
@@ -56,13 +56,13 @@ def test_delegate_to_func():
     )
 
     # The function should have received X
-    assert args_store == [
-        X
-    ], "Incorrect positional arguments passed to func: {args}".format(args=args_store)
+    assert args_store == [X], (
+        "Incorrect positional arguments passed to func: {args}".format(args=args_store)
+    )
 
-    assert (
-        not kwargs_store
-    ), "Unexpected keyword arguments passed to func: {args}".format(args=kwargs_store)
+    assert not kwargs_store, (
+        "Unexpected keyword arguments passed to func: {args}".format(args=kwargs_store)
+    )
 
 
 def test_np_log():
@@ -468,7 +468,7 @@ def test_set_output_func():
     assert isinstance(X_trans, pd.DataFrame)
     assert_array_equal(X_trans.columns, ["a", "b"])
 
-    # Warning is raised when func returns a ndarray
+    # Warning is raised when func returns an ndarray
     ft_np = FunctionTransformer(lambda x: np.asarray(x))
 
     for transform in ("pandas", "polars"):
