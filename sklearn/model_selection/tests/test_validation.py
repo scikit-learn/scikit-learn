@@ -2702,6 +2702,40 @@ def test_learning_curve_exploit_incremental_learning_routing():
         )
 
 
+@config_context(enable_metadata_routing=True)
+def test_learning_curve_exploit_incremental_learning_score_params():
+    """Test that learning_curve with exploit_incremental_learning=True correctly
+    subsets score_params per training subset size.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/33283
+    """
+    X, y = make_classification(n_samples=150, n_features=10, random_state=42)
+    sample_weight = np.ones(X.shape[0])
+
+    scorer = make_scorer(accuracy_score).set_score_request(sample_weight=True)
+    estimator = SGDClassifier(random_state=42)
+    estimator.set_fit_request(sample_weight=False)
+    estimator.set_partial_fit_request(sample_weight=False)
+
+    _, train_scores, test_scores = learning_curve(
+        estimator,
+        X,
+        y,
+        cv=3,
+        train_sizes=np.linspace(0.3, 1.0, 3),
+        scoring=scorer,
+        exploit_incremental_learning=True,
+        params={"sample_weight": sample_weight},
+        error_score=np.nan,
+    )
+
+    assert not np.isnan(train_scores).any(), (
+        "Training scores should not be NaN when score_params are provided"
+        " with exploit_incremental_learning=True"
+    )
+    assert not np.isnan(test_scores).any()
+
+
 # End of metadata routing tests
 # =============================
 

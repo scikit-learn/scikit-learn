@@ -1,0 +1,5 @@
+- :func:`model_selection.learning_curve` with
+  ``exploit_incremental_learning=True`` no longer returns NaN training scores
+  when scorer metadata (e.g. ``sample_weight``) is provided via the metadata
+  routing API.
+  By :user:`Juan Flores <juanf-0gravity>`.

@@ -2161,12 +2161,14 @@ def _incremental_fit_estimator(
     else:
         partial_fit_func = partial(estimator.partial_fit, classes=classes, **fit_params)
     score_params = score_params if score_params is not None else {}
-    score_params_train = _check_method_params(X, params=score_params, indices=train)
     score_params_test = _check_method_params(X, params=score_params, indices=test)
 
     for n_train_samples, partial_train in partitions:
         train_subset = train[:n_train_samples]
         X_train, y_train = _safe_split(estimator, X, y, train_subset)
+        score_params_train = _check_method_params(
+            X, params=score_params, indices=train_subset
+        )
         X_partial_train, y_partial_train = _safe_split(estimator, X, y, partial_train)
         X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
         start_fit = time.time()
