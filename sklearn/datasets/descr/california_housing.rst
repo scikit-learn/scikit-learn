@@ -21,8 +21,8 @@ California Housing dataset
 
 :Missing Attribute Values: None
 
-This dataset was obtained from the StatLib repository (archived copy).
-https://web.archive.org/web/20160205030432/http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.html
+This dataset was obtained from the StatLib repository listed on the DATASETS page under the name house.zip (archived copy).
+https://lib.stat.cmu.edu/
 
 The target variable is the median house value for California districts,
 expressed in hundreds of thousands of dollars ($100,000).
