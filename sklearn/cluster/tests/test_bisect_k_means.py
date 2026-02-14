@@ -156,3 +156,53 @@ def test_one_feature():
     # https://github.com/scikit-learn/scikit-learn/issues/27236
     X = np.random.normal(size=(128, 1))
     BisectingKMeans(bisecting_strategy="biggest_inertia", random_state=0).fit(X)
+
+
+def test_callable_init_with_bisecting_kmeans():
+    """Check that callable `init` receives n_clusters=2 at each bisection step.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/33146
+    """
+    X = np.array(
+        [[1, 1], [10, 1], [3, 1], [10, 0], [2, 1], [10, 2], [10, 8], [10, 9], [10, 10]]
+    )
+
+    n_clusters_values = []
+
+    def custom_init(X, n_clusters, random_state):
+        n_clusters_values.append(n_clusters)
+        # Return n_clusters random points from X
+        indices = random_state.choice(X.shape[0], size=n_clusters, replace=False)
+        return X[indices]
+
+    bkm = BisectingKMeans(n_clusters=4, init=custom_init, random_state=0)
+    bkm.fit(X)
+
+    # BisectingKMeans always bisects into 2, so the callable should
+    # always receive n_clusters=2 and the validation should not fail.
+    assert all(
+        n == 2 for n in n_clusters_values
+    ), f"Expected all n_clusters values to be 2, got {n_clusters_values}"
+
+    # Check that we get the expected number of clusters
+    assert len(np.unique(bkm.labels_)) == 4
+
+
+def test_callable_init_wrong_shape_raises():
+    """Check that callable `init` returning wrong number of centers raises ValueError.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/33146
+    """
+    X = np.array(
+        [[1, 1], [10, 1], [3, 1], [10, 0], [2, 1], [10, 2], [10, 8], [10, 9], [10, 10]]
+    )
+
+    def bad_init(X, n_clusters, random_state):
+        # Deliberately return 5 centers instead of the requested n_clusters (2)
+        return X[:5]
+
+    bkm = BisectingKMeans(n_clusters=4, init=bad_init, random_state=0)
+    with pytest.raises(ValueError, match="does not match the number of clusters 2"):
+        bkm.fit(X)
