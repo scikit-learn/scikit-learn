@@ -18,7 +18,11 @@ from docutils import nodes, utils
 from sphinx.util.nodes import split_explicit_title
 
 
-def reference_role(typ, rawtext, text, lineno, inliner, options={}, content=[]):
+def reference_role(typ, rawtext, text, lineno, inliner, options=None, content=None):
+    if options is None:
+        options = {}
+    if content is None:
+        content = []
     text = utils.unescape(text)
     has_explicit_title, title, part = split_explicit_title(text)
     if typ in ["arXiv", "arxiv"]:
