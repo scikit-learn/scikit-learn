@@ -231,6 +231,8 @@ In general this method is most effective for small sample sizes or when the
 un-calibrated model is under-confident and has similar calibration errors for both
 high and low outputs.
 
+.. _isotonic_regressor:
+
 Isotonic
 ^^^^^^^^
 
@@ -278,6 +280,8 @@ one, a postprocessing is performed to normalize them.
 
 On the other hand, temperature scaling naturally supports multiclass
 predictions by working with logits and finally applying the softmax function.
+
+.. _temperature_scaling:
 
 Temperature Scaling
 ^^^^^^^^^^^^^^^^^^^
