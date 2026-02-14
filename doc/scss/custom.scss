@@ -273,55 +273,14 @@ div.sk-text-image-grid-large {
 }
 
 /* ============================================
-   Fix: Gallery thumbnail title link covers card
+   Fix: Gallery hover overlay blocks clicks
    Related issue: #30596
    ============================================ */
 
-/* The title link must NOT stretch over the whole thumbnail */
-.sphx-glr-thumbcontainer p a.reference.internal {
-  display: inline !important;
-  position: static !important;
-  width: auto !important;
-  height: auto !important;
-}
-
-/* The hover overlay must not intercept clicks */
 .sphx-glr-thumbcontainer::after {
   pointer-events: none !important;
 }
 
-/* Keep "Click for source code" clickable */
-.sphx-glr-thumbnail-title {
-  position: relative;
-  z-index: 5;
-}
-
-
-/* Make the "Click for source code" link always clickable with higher priority */
-.sphx-glr-thumbnail-title {
-  position: relative;
-  z-index: 10;
-  pointer-events: auto !important;
-  
-  a {
-    pointer-events: auto !important;
-    position: relative;
-    z-index: 1;
-    display: inline-block;
-  }
-}
-
-/* Alternative fix: If the issue is with the paragraph containing the title */
-.sphx-glr-thumbcontainer > p {
-  position: relative;
-  z-index: 1;
-  pointer-events: none;
-  
-  /* But allow the text/link itself to be clicked */
-  > * {
-    pointer-events: auto;
-  }
-}
 
 
 
