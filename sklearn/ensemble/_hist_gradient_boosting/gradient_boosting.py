@@ -19,6 +19,7 @@ from sklearn._loss.loss import (
     HalfGammaLoss,
     HalfMultinomialLoss,
     HalfPoissonLoss,
+    HuberLoss,
     PinballLoss,
 )
 from sklearn.base import (
@@ -40,6 +41,7 @@ from sklearn.metrics._scorer import _SCORERS
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
 from sklearn.utils import check_random_state, compute_sample_weight, resample
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils._dataframe import is_pandas_df
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
@@ -61,6 +63,7 @@ _LOSSES.update(
         "poisson": HalfPoissonLoss,
         "gamma": HalfGammaLoss,
         "quantile": PinballLoss,
+        "huber": HuberLoss,
     }
 )
 
@@ -902,6 +905,26 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # Update gradients and hessians, inplace
             # Note that self._loss expects shape (n_samples,) for
             # n_trees_per_iteration = 1 else shape (n_samples, n_trees_per_iteration).
+
+            # For Huber loss, re-estimate delta as the quantile of absolute
+            # residuals at each iteration, following Friedman (2001).
+            if isinstance(self._loss, HuberLoss):
+                abserr = np.abs(
+                    y_train - raw_predictions.ravel()
+                )
+                if sample_weight_train is None:
+                    self._loss.closs.delta = float(
+                        np.percentile(abserr, self._loss.quantile * 100)
+                    )
+                else:
+                    self._loss.closs.delta = float(
+                        _weighted_percentile(
+                            abserr,
+                            sample_weight_train,
+                            self._loss.quantile * 100,
+                        )
+                    )
+
             if self._loss.constant_hessian:
                 self._loss.gradient(
                     y_true=y_train,
@@ -1495,8 +1518,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'squared_error', 'absolute_error', 'gamma', 'poisson', 'quantile'}, \
-            default='squared_error'
+    loss : {'squared_error', 'absolute_error', 'gamma', 'poisson', 'quantile', \
+            'huber'}, default='squared_error'
         The loss function to use in the boosting process. Note that the
         "squared error", "gamma" and "poisson" losses actually implement
         "half least squares loss", "half gamma deviance" and "half poisson
@@ -1504,6 +1527,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         "gamma" and "poisson" losses internally use a log-link, "gamma"
         requires ``y > 0`` and "poisson" requires ``y >= 0``.
         "quantile" uses the pinball loss.
+        "huber" uses the Huber loss, which is quadratic for small residuals
+        and linear for large ones. The transition threshold `delta` is
+        re-estimated at each boosting iteration as the ``quantile``-th
+        percentile of the absolute residuals (default 0.9).
 
         .. versionchanged:: 0.23
            Added option 'poisson'.
@@ -1514,9 +1541,15 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.3
            Added option 'gamma'.
 
+        .. versionadded:: 1.7
+           Added option 'huber'.
+
     quantile : float, default=None
         If loss is "quantile", this parameter specifies which quantile to be estimated
         and must be between 0 and 1.
+        If loss is "huber", this parameter specifies the quantile used to
+        estimate the transition threshold `delta` at each iteration
+        (default 0.9 if not specified).
     learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
@@ -1749,6 +1782,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
                     "poisson",
                     "gamma",
                     "quantile",
+                    "huber",
                 }
             ),
             BaseLoss,
@@ -1867,6 +1901,11 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         if self.loss == "quantile":
             return _LOSSES[self.loss](
                 sample_weight=sample_weight, quantile=self.quantile
+            )
+        elif self.loss == "huber":
+            quantile = self.quantile if self.quantile is not None else 0.9
+            return _LOSSES[self.loss](
+                sample_weight=sample_weight, quantile=quantile
             )
         else:
             return _LOSSES[self.loss](sample_weight=sample_weight)

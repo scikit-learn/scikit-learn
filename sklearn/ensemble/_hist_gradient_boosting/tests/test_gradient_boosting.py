@@ -240,6 +240,66 @@ def test_absolute_error_sample_weight():
     gbdt.fit(X, y, sample_weight=sample_weight)
 
 
+def test_huber():
+    """Test that Huber loss works and is more robust to outliers than squared error."""
+    X, y = make_regression(n_samples=500, random_state=0)
+    # Add outliers
+    y[:25] += 5000
+
+    gbdt_huber = HistGradientBoostingRegressor(loss="huber", random_state=0)
+    gbdt_huber.fit(X, y)
+
+    gbdt_se = HistGradientBoostingRegressor(loss="squared_error", random_state=0)
+    gbdt_se.fit(X, y)
+
+    # Huber should have a better score on clean data
+    X_clean, y_clean = make_regression(n_samples=200, random_state=1)
+    assert gbdt_huber.score(X_clean, y_clean) > gbdt_se.score(X_clean, y_clean)
+
+
+def test_huber_sample_weight():
+    """Test Huber loss with sample weights."""
+    rng = np.random.RandomState(0)
+    n_samples = 200
+    X = rng.uniform(-1, 1, size=(n_samples, 2))
+    y = rng.uniform(-1, 1, size=n_samples)
+    sample_weight = rng.uniform(0, 1, size=n_samples)
+    gbdt = HistGradientBoostingRegressor(loss="huber")
+    gbdt.fit(X, y, sample_weight=sample_weight)
+
+
+def test_huber_quantile_parameter():
+    """Test that the quantile parameter affects Huber loss behavior."""
+    X, y = make_regression(n_samples=500, random_state=0)
+    y[:25] += 5000  # outliers
+
+    # Lower quantile = more aggressive outlier handling (smaller delta)
+    gbdt_low_q = HistGradientBoostingRegressor(
+        loss="huber", quantile=0.5, max_iter=50, random_state=0
+    )
+    gbdt_low_q.fit(X, y)
+
+    gbdt_high_q = HistGradientBoostingRegressor(
+        loss="huber", quantile=0.99, max_iter=50, random_state=0
+    )
+    gbdt_high_q.fit(X, y)
+
+    # Both should fit without error; predictions should differ
+    pred_low = gbdt_low_q.predict(X[:5])
+    pred_high = gbdt_high_q.predict(X[:5])
+    assert not np.allclose(pred_low, pred_high)
+
+
+def test_huber_early_stopping():
+    """Test that Huber loss works with early stopping."""
+    X, y = make_regression(n_samples=500, random_state=0)
+    gbdt = HistGradientBoostingRegressor(
+        loss="huber", max_iter=200, early_stopping=True, random_state=0
+    )
+    gbdt.fit(X, y)
+    assert gbdt.n_iter_ < 200  # Should stop early
+
+
 @pytest.mark.parametrize("y", [([1.0, -2.0, 0.0]), ([0.0, 1.0, 2.0])])
 def test_gamma_y_positive(y):
     # Test that ValueError is raised if any y_i <= 0.
