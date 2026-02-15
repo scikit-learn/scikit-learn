@@ -1,3 +1,4 @@
+import io
 import re
 import subprocess
 import sys
@@ -8,7 +9,8 @@ import pandas as pd
 import requests
 from packaging import version
 
-df_list = pd.read_html("https://devguide.python.org/versions/")
+req = requests.get("https://devguide.python.org/versions/")
+df_list = pd.read_html(io.StringIO(req.content.decode("utf-8")))
 df = pd.concat(df_list).astype({"Branch": str})
 release_dates = {}
 python_version_info = {
@@ -74,7 +76,9 @@ def get_min_python_version(scikit_learn_release_date_str="today"):
     ]
 
 
-def get_min_version_pure_python(package_name, scikit_learn_release_date_str="today"):
+def get_min_version_pure_python_or_example_dependency(
+    package_name, scikit_learn_release_date_str="today"
+):
     # for pure Python dependencies we want the most recent minor release that
     # is at least 2 years old
     if scikit_learn_release_date_str == "today":
@@ -136,7 +140,15 @@ def get_current_min_python_version():
 def show_versions_update(scikit_learn_release_date="today"):
     future_versions = {"python": get_min_python_version(scikit_learn_release_date)}
 
-    compiled_dependencies = ["numpy", "scipy", "pandas", "matplotlib", "pyamg"]
+    compiled_dependencies = [
+        "numpy",
+        "scipy",
+        "pandas",
+        "matplotlib",
+        "pyamg",
+        "polars",
+        "pyarrow",
+    ]
     future_versions.update(
         {
             dep: get_min_version_with_wheel(dep, future_versions["python"])
@@ -144,11 +156,22 @@ def show_versions_update(scikit_learn_release_date="today"):
         }
     )
 
-    pure_python_dependencies = ["joblib", "threadpoolctl"]
+    pure_python_or_example_dependencies = [
+        "joblib",
+        "threadpoolctl",
+        "scikit-image",
+        "seaborn",
+        "polars",
+        "Pillow",
+        "pooch",
+        "plotly",
+    ]
     future_versions.update(
         {
-            dep: get_min_version_pure_python(dep, scikit_learn_release_date)
-            for dep in pure_python_dependencies
+            dep: get_min_version_pure_python_or_example_dependency(
+                dep, scikit_learn_release_date
+            )
+            for dep in pure_python_or_example_dependencies
         }
     )
 
@@ -156,7 +179,7 @@ def show_versions_update(scikit_learn_release_date="today"):
     current_versions.update(
         {
             dep: get_current_dependencies_version(dep)
-            for dep in compiled_dependencies + pure_python_dependencies
+            for dep in compiled_dependencies + pure_python_or_example_dependencies
         }
     )
 

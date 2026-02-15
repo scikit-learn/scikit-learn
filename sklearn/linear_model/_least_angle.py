@@ -918,7 +918,7 @@ def _lars_path_solver(
 
 
 class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
-    """Least Angle Regression model a.k.a. LAR.
+    """Least Angle Regression model aka LAR.
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
@@ -1208,7 +1208,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
 
 
 class LassoLars(Lars):
-    """Lasso model fit with Least Angle Regression a.k.a. Lars.
+    """Lasso model fit with Least Angle Regression aka Lars.
 
     It is a Linear Model trained with an L1 prior as regularizer.
 
@@ -1542,9 +1542,9 @@ class LarsCV(Lars):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
@@ -1862,9 +1862,9 @@ class LassoLarsCV(LarsCV):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
@@ -2178,6 +2178,9 @@ class LassoLarsIC(LassoLars):
     LassoLarsIC(criterion='bic')
     >>> print(reg.coef_)
     [ 0.  -1.11]
+
+    For a detailed example of using this class, see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lars_ic.py`.
     """
 
     _parameter_constraints: dict = {

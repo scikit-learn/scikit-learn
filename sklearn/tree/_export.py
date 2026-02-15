@@ -334,9 +334,7 @@ class _BaseTreeExporter:
 
         # Write impurity
         if self.impurity:
-            if isinstance(criterion, _criterion.FriedmanMSE):
-                criterion = "friedman_mse"
-            elif isinstance(criterion, _criterion.MSE) or criterion == "squared_error":
+            if isinstance(criterion, _criterion.MSE) or criterion == "squared_error":
                 criterion = "squared_error"
             elif not isinstance(criterion, str):
                 criterion = "impurity"
@@ -908,6 +906,8 @@ def export_graphviz(
     'digraph Tree {...
     """
     if feature_names is not None:
+        if any((not isinstance(name, str) for name in feature_names)):
+            raise ValueError("All feature names must be strings.")
         feature_names = check_array(
             feature_names, ensure_2d=False, dtype=None, ensure_min_samples=0
         )
