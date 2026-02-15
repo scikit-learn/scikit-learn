@@ -2616,7 +2616,7 @@ def test_validation_functions_routing(func, extra_args):
         "cross_validate": ("_score", "__call__"),
         "cross_val_score": ("_score", "__call__"),
         "learning_curve": ("_score", "__call__"),
-        "permutation_test_score": ("_score", "_permutation_test_score"),  # this breaks!
+        "permutation_test_score": ("_score", "_permutation_test_score"),
         "validation_curve": ("_score", "__call__"),
     }
     for _scorer in scorer_registry:

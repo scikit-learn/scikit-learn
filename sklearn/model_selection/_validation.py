@@ -1969,6 +1969,7 @@ def learning_curve(
                 method_mapping=MethodMapping().add(caller="fit", callee="score"),
             )
         )
+
         try:
             routed_params = process_routing(router, "fit", **params)
         except UnsetMetadataPassedError as e:
