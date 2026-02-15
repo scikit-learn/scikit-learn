@@ -2833,3 +2833,40 @@ def test_yeojohnson_for_different_scipy_version():
     """Check that the results are consistent across different SciPy versions."""
     pt = PowerTransformer(method="yeo-johnson").fit(X_1col)
     pt.lambdas_[0] == pytest.approx(0.99546157, rel=1e-7)
+
+
+def test_transformer_inverse_transform_feature_names_warning():
+    # Regression test for gh-31947
+    # We check that inverse_transform does not raise a warning about feature names
+    # when the transformer was fitted with feature names.
+    pd = pytest.importorskip("pandas")
+    from sklearn.compose import TransformedTargetRegressor
+    from sklearn.linear_model import LinearRegression
+    from sklearn.preprocessing import PowerTransformer, QuantileTransformer
+
+    X, y = datasets.load_iris(return_X_y=True, as_frame=True)
+
+    # Check both transformers that had this issue
+    for TransformerClass in [PowerTransformer, QuantileTransformer]:
+        transformer = TransformerClass().set_output(transform="pandas")
+        pipeline = TransformedTargetRegressor(
+            regressor=LinearRegression(),
+            transformer=transformer,
+        )
+
+        with warnings.catch_warnings(record=True) as record:
+            warnings.simplefilter("always")
+            pipeline.fit(X, y)
+            pipeline.predict(X)
+
+        # Filter for the specific warning about feature names
+        relevant_warnings = [
+            str(w.message)
+            for w in record
+            if "X has feature names, but" in str(w.message)
+            and "was fitted without" in str(w.message)
+        ]
+        assert not relevant_warnings, (
+            f"{TransformerClass.__name__} raised unexpected warnings: "
+            f"{relevant_warnings}"
+        )
