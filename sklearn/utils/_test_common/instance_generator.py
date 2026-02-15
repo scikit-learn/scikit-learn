@@ -1066,6 +1066,12 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     KNeighborsTransformer: {
         "check_methods_sample_order_invariance": "check is not applicable."
     },
+    LinearRegression: {
+        # TODO: need to find a good default for `cond`, see issues #26164 #33032
+        "check_sample_weight_equivalence_on_dense_data": (
+            "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
     LinearSVC: {
         # TODO: replace by a statistical test when _dual=True, see meta-issue #16298
         "check_sample_weight_equivalence_on_dense_data": (
