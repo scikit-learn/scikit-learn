@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
+from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.datasets import make_regression
 from sklearn.exceptions import ConvergenceWarning, UndefinedMetricWarning
 from sklearn.linear_model import (
@@ -168,6 +169,49 @@ def test_ransac_no_undefined_metric_warning_when_inlier_subset_too_small(monkeyp
     with warnings.catch_warnings():
         warnings.filterwarnings("error", category=UndefinedMetricWarning)
         ransac_estimator.fit(X, y)
+
+
+def test_ransac_skip_invalid_score(monkeypatch):
+    class _EstimatorWithInvalidScore(BaseEstimator, RegressorMixin):
+        def __init__(self):
+            self._score_calls = 0
+
+        def fit(self, X, y):
+            self.n_features_in_ = X.shape[1]
+            return self
+
+        def predict(self, X):
+            return np.zeros(X.shape[0])
+
+        def score(self, X, y):
+            self._score_calls += 1
+            # First score is invalid, second is fine.
+            return np.nan if self._score_calls == 1 else 0.0
+
+    # Make subset selection deterministic so we always get 2 trials.
+    idxs = iter([np.array([0, 1]), np.array([2, 3])])
+
+    def _fixed_sample_without_replacement(n_population, n_samples, random_state=None):
+        return next(idxs)
+
+    monkeypatch.setattr(
+        "sklearn.linear_model._ransac.sample_without_replacement",
+        _fixed_sample_without_replacement,
+    )
+
+    X = np.arange(4)[:, None]
+    y = np.array([0.0, 1.0, 2.0, 3.0])
+
+    ransac_estimator = RANSACRegressor(
+        _EstimatorWithInvalidScore(),
+        min_samples=2,
+        residual_threshold=np.inf,  # all points are inliers
+        max_trials=2,
+        stop_n_inliers=4,
+        random_state=0,
+    )
+    ransac_estimator.fit(X, y)
+    assert ransac_estimator.n_skips_invalid_model_ >= 1
 
 
 def test_ransac_score():
