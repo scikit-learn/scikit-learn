@@ -1535,7 +1535,7 @@ def test_svm_with_infinite_C(Estimator, make_dataset, C_inf, global_random_seed)
 )
 def test_probability_raises_futurewarning(Estimator, name):
     X, y = make_classification()
-    with pytest.warns(FutureWarning, match="parameter.+probability.+deprecated"):
+    with pytest.warns(FutureWarning, match="probability.+parameter.+deprecated"):
         Estimator(probability=True).fit(X, y)
-    with pytest.warns(FutureWarning, match="parameter.+probability.+deprecated"):
+    with pytest.warns(FutureWarning, match="probability.+parameter.+deprecated"):
         Estimator(probability=False).fit(X, y)
