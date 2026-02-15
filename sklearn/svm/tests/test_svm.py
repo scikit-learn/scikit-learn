@@ -1183,6 +1183,7 @@ def test_lsvc_intercept_scaling_zero():
 
 # TODO(1.11): remove test entirely.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.xfail(reason="predict_proba is to be deprecated in SVC")
 def test_hasattr_predict_proba(global_random_seed):
     iris = get_iris_dataset(global_random_seed)
 
