@@ -196,7 +196,7 @@ def test_get_legend_label(curve_legend_metric, curve_name, expected_label):
     assert label == expected_label
 
 
-# TODO(1.9) : Remove
+# TODO: Remove once kwargs deprecated on all displays
 @pytest.mark.parametrize("curve_kwargs", [{"alpha": 1.0}, None])
 @pytest.mark.parametrize("kwargs", [{}, {"alpha": 1.0}])
 def test_validate_curve_kwargs_deprecate_kwargs(curve_kwargs, kwargs):
@@ -266,8 +266,7 @@ def test_validate_curve_kwargs_error():
 
 @pytest.mark.parametrize("name", [None, "curve_name", ["curve_name"]])
 @pytest.mark.parametrize(
-    "legend_metric",
-    [{"mean": 0.8, "std": 0.2}, {"mean": None, "std": None}],
+    "legend_metric", [{"mean": 0.8, "std": 0.2}, {"mean": None, "std": None}]
 )
 @pytest.mark.parametrize("legend_metric_name", ["AUC", "AP"])
 @pytest.mark.parametrize("curve_kwargs", [None, {"color": "red"}])
