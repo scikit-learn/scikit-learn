@@ -1329,9 +1329,9 @@ def calibration_curve(
 
     binids = np.searchsorted(bins[1:-1], y_prob)
 
-    bin_sums = np.bincount(binids, weights=y_prob, minlength=len(bins))
-    bin_true = np.bincount(binids, weights=y_true, minlength=len(bins))
-    bin_total = np.bincount(binids, minlength=len(bins))
+    bin_sums = np.bincount(binids, weights=y_prob, minlength=n_bins)
+    bin_true = np.bincount(binids, weights=y_true, minlength=n_bins)
+    bin_total = np.bincount(binids, minlength=n_bins)
 
     nonzero = bin_total != 0
     prob_true = bin_true[nonzero] / bin_total[nonzero]
