@@ -145,7 +145,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         self.epsilon = epsilon
         self.shrinking = shrinking
         self.probability = probability
-        self._effective_probability = self.probability
         self.cache_size = cache_size
         self.class_weight = class_weight
         self.verbose = verbose
@@ -221,6 +220,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         solver_type = LIBSVM_IMPL.index(self._impl)
 
         # TODO(1.11): remove probability
+        self._effective_probability = self.probability
         if self._impl in ["c_svc", "nu_svc"]:
             if self._impl == "nu_scv":
                 est_dep = "NuSVC"
@@ -854,7 +854,10 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     # estimators.
     def _check_proba(self):
         # TODO: remove this method and the @available_if decorator in 1.11
-        if self.probability != "deprecated":
+        if (
+            self.probability != self._effective_probability
+            and self.probability != "deprecated"
+        ):
             self._effective_probability = self.probability
         if not self._effective_probability:
             raise AttributeError(
