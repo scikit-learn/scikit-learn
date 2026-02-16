@@ -2411,10 +2411,12 @@ def test_onehotencoder_handle_unknown_warn_maps_to_infrequent():
         min_frequency=2,
         drop="first",
     )
+
     encoder_infreq.fit(train_data)
-    result_infreq = encoder_infreq.transform(test_data)
 
     warning_match = "unknown categories will be encoded as the infrequent category"
+    with pytest.warns(UserWarning, match=warning_match):
+        result_infreq = encoder_infreq.transform(test_data)
 
     with pytest.warns(UserWarning, match=warning_match):
         result_warn = encoder_warn.transform(test_data)
