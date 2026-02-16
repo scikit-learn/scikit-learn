@@ -771,20 +771,6 @@ def test_svc_nonfinite_params(global_random_seed):
         clf.fit(X, y)
 
 
-# TODO(1.11): remove test entirely
-@pytest.mark.filterwarnings("ignore::FutureWarning")
-def test_unicode_kernel(global_random_seed):
-    # Test that a unicode kernel name does not cause a TypeError
-    iris = get_iris_dataset(global_random_seed)
-
-    clf = svm.SVC(kernel="linear", probability=True)
-    clf.fit(X, Y)
-    clf.predict_proba(T)
-    _libsvm.cross_validation(
-        iris.data, iris.target.astype(np.float64), 5, kernel="linear", random_seed=0
-    )
-
-
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_sparse_precomputed(csr_container):
     clf = svm.SVC(kernel="precomputed")
@@ -1183,7 +1169,6 @@ def test_lsvc_intercept_scaling_zero():
 
 # TODO(1.11): remove test entirely.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.xfail(reason="predict_proba is to be deprecated in SVC")
 def test_hasattr_predict_proba(global_random_seed):
     iris = get_iris_dataset(global_random_seed)
 
@@ -1534,9 +1519,8 @@ def test_svm_with_infinite_C(Estimator, make_dataset, C_inf, global_random_seed)
     "Estimator, name",
     [(svm.SVC, "SVC"), (svm.NuSVC, "NuSVC")],
 )
-def test_probability_raises_futurewarning(Estimator, name):
+@pytest.mark.parametrize("probability", [True, False])
+def test_probability_raises_futurewarning(Estimator, name, probability):
     X, y = make_classification()
     with pytest.warns(FutureWarning, match="probability.+parameter.+deprecated"):
-        Estimator(probability=True).fit(X, y)
-    with pytest.warns(FutureWarning, match="probability.+parameter.+deprecated"):
-        Estimator(probability=False).fit(X, y)
+        Estimator(probability=probability).fit(X, y)
