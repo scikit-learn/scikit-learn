@@ -3957,6 +3957,8 @@ def d2_brier_score(
 ):
     """:math:`D^2` score function, fraction of Brier score explained.
 
+    This is also known as Brier Skill Score (BSS) and scaled Brier score.
+
     Best possible score is 1.0 and it can be negative because the model can
     be arbitrarily worse than the null model. The null model, also known as the
     optimal intercept model, is a model that constantly predicts the per-class
