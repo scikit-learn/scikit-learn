@@ -287,6 +287,12 @@ class DecisionBoundaryDisplay:
             self.multiclass_colors_ = colors
 
             if self.response.ndim == 2:  # predict
+                # Set `levels` to ensure all classes are displayed in different colors
+                if "levels" not in kwargs:
+                    if plot_method == "contour":
+                        kwargs["levels"] = self.n_classes
+                    elif plot_method == "contourf":
+                        kwargs["levels"] = np.arange(self.n_classes + 1) - 0.5
                 # `pcolormesh` requires cmap, for the others it makes no difference
                 cmap = mpl.colors.ListedColormap(colors)
                 self.surface_ = plot_func(
@@ -295,6 +301,9 @@ class DecisionBoundaryDisplay:
 
             # predict_proba and decision_function differ for plotting methods
             elif plot_method == "contour":
+                # Set `levels` to ensure all classes are displayed in different colors
+                if "levels" not in kwargs:
+                    kwargs["levels"] = self.n_classes
                 # Plot only integer class values
                 self.surface_ = plot_func(
                     self.xx0,
