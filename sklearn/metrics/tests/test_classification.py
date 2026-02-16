@@ -918,7 +918,7 @@ def test_cohen_kappa_undefined(test_case, replace_undefined_by):
     """Test that cohen_kappa_score handles divisions by 0 correctly by returning the
     `replace_undefined_by` param. (The first test case covers the first possible
     location in the function for an occurrence of a division by zero, the last three
-    test cases cover a zero division in the the second possible location in the
+    test cases cover a zero division in the second possible location in the
     function."""
 
     y1, y2, labels, weights = test_case
