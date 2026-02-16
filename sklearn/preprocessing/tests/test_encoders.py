@@ -2415,6 +2415,7 @@ def test_onehotencoder_handle_unknown_warn_maps_to_infrequent():
     encoder_infreq.fit(train_data)
 
     warning_match = "unknown categories will be encoded as the infrequent category"
+    # The warning is raised because `drop is not None`.
     with pytest.warns(UserWarning, match=warning_match):
         result_infreq = encoder_infreq.transform(test_data)
 
