@@ -332,16 +332,18 @@ def _write_estimator_html(
         dashed_wrapped = first_call or est_block.dash_wrapped
         dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
         out.write(f'<div class="sk-item{dash_cls}">')
-
         if estimator_label:
-            if hasattr(estimator, "get_params") and hasattr(
-                estimator, "_get_params_html"
+            if (
+                hasattr(estimator, "get_params")
+                and not est_block.names == "passthrough"
+                and hasattr(estimator, "_get_params_html")
             ):
                 params = estimator._get_params_html(False, doc_link)._repr_html_inner()
             else:
                 params = ""
             if (
                 hasattr(estimator, "_get_fitted_attr_html")
+                and not est_block.names == "passthrough"
                 and is_fitted_css_class == "fitted"
             ):
                 attrs = estimator._get_fitted_attr_html(doc_link)._repr_html_inner()
@@ -402,6 +404,8 @@ def _write_estimator_html(
 
         out.write("</div></div>")
     elif est_block.kind == "single":
+        if est_block.names == "NoneType(...)":
+            est_block.names = "passthrough"
         if (
             hasattr(estimator, "_get_params_html")
             and not est_block.names == "passthrough"
@@ -411,6 +415,7 @@ def _write_estimator_html(
             params = ""
         if (
             hasattr(estimator, "_get_fitted_attr_html")
+            and not est_block.names == "passthrough"
             and is_fitted_css_class == "fitted"
         ):
             attrs = estimator._get_fitted_attr_html(doc_link)._repr_html_inner()
