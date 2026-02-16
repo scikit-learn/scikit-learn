@@ -154,7 +154,7 @@ def _preprocess_data(
         inplace.
         If input X is dense, then X_out is centered.
     y_out : {ndarray, sparse matrix} of shape (n_samples,) or (n_samples, n_targets)
-        Centered version of y. Never performed inplace on input y.
+        Centered copy of y.
     X_offset : ndarray of shape (n_features,)
         The mean per column of input X.
     y_offset : float or ndarray of shape (n_features,)
