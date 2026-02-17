@@ -2,14 +2,11 @@ from cython cimport floating
 from libc.math cimport log2
 
 
-# This file implements
+# This file contains 2 Cython implementation of:
 #   def simultaneous_sort(dist, idx):
 #       i = np.argsort(dist)
 #       return dist[i], idx[i]
 
-# The functions in this file  simultaneously performs the sorting on both the values and the indices arrays.
-# Sort n-element arrays pointed to by values and indices, simultaneously,
-# by the values of `values`.
 # Algorithm: Introsort (Musser, SP&E, 1997) with two variants for the quicksort part:
 # - "2-way" partitioning: at each step, partition the current array in... 3 parts:
 #   [x <= pivot] [pivot] [x >= pivot] (the middle part is only one element)
