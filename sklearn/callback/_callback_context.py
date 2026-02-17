@@ -245,7 +245,6 @@ class CallbackContext:
         tree and the leaf node of the meta-estimator's task tree are both represented
         by a single node in this combined task tree.
         """
-        print(other_context.max_subtasks)
         if other_context.max_subtasks != 0:
             raise ValueError(
                 f"Cannot merge callback context (task {self.task_name!r} of estimator "
