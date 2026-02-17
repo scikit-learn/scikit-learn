@@ -30,30 +30,9 @@ class Callback(Protocol):
             Context of the corresponding task.
 
         **kwargs : dict
-            Information about the state of the fitting process at this task. Possible
-            keys are:
-
-            - "data": dict
-                Dictionary containing the training and validation data. The possible
-                keys are "X_train", "y_train", "sample_weight_train", "X_val", "y_val",
-                "sample_weight_val".
-
-            - "stopping_criterion": float
-                Usually iterations stop when `stopping_criterion <= tol`.
-                This is only provided at the innermost level of iterations.
-
-            - "tol": float
-                Tolerance for the stopping criterion.
-                This is only provided at the innermost level of iterations.
-
-            - "from_reconstruction_attributes": estimator instance
-                A ready to predict, transform, etc ... estimator as if the fit stopped
-                at the end of this task.
-
-            - "fit_state": dict
-                Model specific quantities updated during fit. This is not meant to be
-                used by generic callbacks but by a callback designed for a specific
-                estimator instead.
+            Additional optional arguments holding information about the state of the
+            fitting process at this task. The list of possible keys and corresponding
+            values are described in detail at <TODO: add link>.
 
         Returns
         -------

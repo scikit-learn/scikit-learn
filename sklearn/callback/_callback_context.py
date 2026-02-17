@@ -317,32 +317,8 @@ class CallbackContext:
             The estimator calling this callback hook.
 
         **kwargs : dict
-            arguments passed to the callback. Possible keys are
-
-            - data: dict
-                Dictionary containing the training and validation data. The possible
-                keys are "X_train", "y_train", "sample_weight_train", "X_val", "y_val",
-                and "sample_weight_val". The values are the corresponding data.
-
-            - stopping_criterion: float
-                Usually iterations stop when `stopping_criterion <= tol`.
-                This is only provided at the innermost level of iterations, i.e. for
-                leaf tasks.
-
-            - tol: float
-                Tolerance for the stopping criterion.
-                This is only provided at the innermost level of iterations, i.e. for
-                leaf tasks.
-
-            - from_reconstruction_attributes: estimator instance
-                A ready to predict, transform, etc ... estimator as if the fit stopped
-                at the end of this task. Usually it's a copy of the caller estimator
-                with the necessary attributes set.
-
-            - fit_state: dict
-                Model specific quantities updated during fit. This is not meant to be
-                used by generic callbacks but by a callback designed for a specific
-                estimator instead.
+            Additional optional arguments passed to the callback. The list of possible
+            keys and corresponding values are described in detail at <TODO: add link>.
 
         Returns
         -------
