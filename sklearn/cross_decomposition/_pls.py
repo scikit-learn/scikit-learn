@@ -650,6 +650,11 @@ class PLSRegression(_PLS):
         self : object
             Fitted model.
         """
+        if np.any(np.var(X, axis = 0) == 0):
+            raise ValueError(
+                "PLSRegression does not support predictors with zero variance." \
+                "Please remove constant before fitting."
+            )
         super().fit(X, y)
         # expose the fitted attributes `x_scores_` and `y_scores_`
         self.x_scores_ = self._x_scores
