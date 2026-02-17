@@ -14,6 +14,7 @@ from sklearn.base import TransformerMixin, _fit_context, clone
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import Bunch
+from sklearn.utils._array_api import get_namespace, get_namespace_and_device
 from sklearn.utils._metadata_requests import METHODS
 from sklearn.utils._param_validation import HasMethods, Hidden
 from sklearn.utils._repr_html.estimator import _VisualBlock
@@ -1909,7 +1910,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         results = self._parallel_func(X, y, _fit_transform_one, routed_params)
         if not results:
             # All transformers are None
-            return np.zeros((X.shape[0], 0))
+            xp, _, device = get_namespace_and_device(X)
+            return xp.zeros((X.shape[0], 0), device=device)
 
         Xs, transformers = zip(*results)
         self._update_transformer_list(transformers)
@@ -1979,11 +1981,13 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         )
         if not Xs:
             # All transformers are None
-            return np.zeros((X.shape[0], 0))
+            xp, _, device = get_namespace_and_device(X)
+            return xp.zeros((X.shape[0], 0), device=device)
 
         return self._hstack(Xs)
 
     def _hstack(self, Xs):
+        xp, _ = get_namespace(*Xs)
         # Check if Xs dimensions are valid
         for X, (name, _) in zip(Xs, self.transformer_list):
             if hasattr(X, "shape") and len(X.shape) != 2:
@@ -2000,7 +2004,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         if any(sparse.issparse(f) for f in Xs):
             return sparse.hstack(Xs).tocsr()
 
-        return np.hstack(Xs)
+        return xp.concat(Xs, axis=1)
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)
@@ -2074,6 +2078,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 get_tags(trans).input_tags.sparse
                 for name, trans in self.transformer_list
                 if trans not in {"passthrough", "drop"}
+            )
+            tags.array_api_support = all(
+                True
+                if trans in {"passthrough", "drop"}
+                else get_tags(trans).array_api_support
+                for name, trans in self.transformer_list
             )
         except Exception:
             # If `transformer_list` does not comply with our API (list of tuples)
