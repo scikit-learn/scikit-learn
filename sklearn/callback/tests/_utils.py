@@ -28,7 +28,7 @@ class TestingAutoPropagatedCallback(TestingCallback):
 
 
 class NotValidCallback:
-    """Invalid callback since it's missing a method from the protocol.'"""
+    """Invalid callback since it's missing a method from the protocol."""
 
     def on_fit_begin(self, estimator):
         pass  # pragma: no cover
