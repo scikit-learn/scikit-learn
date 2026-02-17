@@ -114,7 +114,7 @@ class BaseLoss:
         Indicates whether or not loss function is differentiable in
         raw_prediction everywhere.
     need_update_leaves_values : bool
-        Indicates whether decision trees in gradient boosting need to uptade
+        Indicates whether decision trees in gradient boosting need to update
         leave values after having been fit to the (negative) gradients.
     approx_hessian : bool
         Indicates whether the hessian is approximated or exact. If,
