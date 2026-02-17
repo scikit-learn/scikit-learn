@@ -290,7 +290,7 @@ class DecisionBoundaryDisplay:
                 # Set `levels` to ensure all classes are displayed in different colors
                 if "levels" not in kwargs:
                     if plot_method == "contour":
-                        kwargs["levels"] = self.n_classes
+                        kwargs["levels"] = np.arange(self.n_classes)
                     elif plot_method == "contourf":
                         kwargs["levels"] = np.arange(self.n_classes + 1) - 0.5
                 # `pcolormesh` requires cmap, for the others it makes no difference
@@ -303,7 +303,7 @@ class DecisionBoundaryDisplay:
             elif plot_method == "contour":
                 # Set `levels` to ensure all classes are displayed in different colors
                 if "levels" not in kwargs:
-                    kwargs["levels"] = self.n_classes
+                    kwargs["levels"] = np.arange(self.n_classes)
                 # Plot only integer class values
                 self.surface_ = plot_func(
                     self.xx0,
