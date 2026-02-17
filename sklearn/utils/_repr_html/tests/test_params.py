@@ -5,9 +5,9 @@ import pytest
 from sklearn import config_context
 from sklearn.utils._repr_html.params import (
     ParamsDict,
-    _generate_link_to_param_doc,
     _params_html_repr,
     _read_params,
+    generate_link_to_param_doc,
 )
 
 
@@ -182,10 +182,10 @@ def test_generate_link_to_param_doc_basic():
         """
 
     doc_link = "mock_module.MockEstimator.html"
-    url = _generate_link_to_param_doc(MockEstimator, "alpha", doc_link)
+    url = generate_link_to_param_doc(MockEstimator, "alpha", doc_link)
     assert url == "mock_module.MockEstimator.html#:~:text=alpha,-float"
 
-    url = _generate_link_to_param_doc(MockEstimator, "beta", doc_link)
+    url = generate_link_to_param_doc(MockEstimator, "beta", doc_link)
     assert url == "mock_module.MockEstimator.html#:~:text=beta,-int"
 
 
@@ -202,7 +202,7 @@ def test_generate_link_to_param_doc_param_not_found():
         """
 
     doc_link = "mock_module.MockEstimator.html"
-    url = _generate_link_to_param_doc(MockEstimator, "gamma", doc_link)
+    url = generate_link_to_param_doc(MockEstimator, "gamma", doc_link)
 
     assert url is None
 
@@ -214,5 +214,5 @@ def test_generate_link_to_param_doc_empty_docstring():
         pass
 
     doc_link = "mock_module.MockEstimator.html"
-    url = _generate_link_to_param_doc(MockEstimator, "alpha", doc_link)
+    url = generate_link_to_param_doc(MockEstimator, "alpha", doc_link)
     assert url is None
