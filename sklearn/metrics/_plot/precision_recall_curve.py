@@ -894,8 +894,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
                 sample_weight=sample_weight_fold,
                 drop_intermediate=drop_intermediate,
             )
-            # Note `pos_label` cannot be `None` (default=1), unlike other metrics
-            # such as roc_auc
+            # `average_precision_score` is only metric where default `pos_label=1`,
+            # thus `pos_label` cannot be None and we use `pos_label_` from
+            # `_get_response_values_binary`
             average_precision = average_precision_score(
                 y_true, y_pred, pos_label=pos_label_, sample_weight=sample_weight_fold
             )
