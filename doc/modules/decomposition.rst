@@ -950,7 +950,7 @@ is not readily available from the start, or when the data does not fit into memo
 .. rubric:: References
 
 .. [1] `"Learning the parts of objects by non-negative matrix factorization"
-  <http://www.cs.columbia.edu/~blei/fogm/2020F/readings/LeeSeung1999.pdf>`_
+  <https://www.cs.columbia.edu/~blei/fogm/2020F/readings/LeeSeung1999.pdf>`_
   D. Lee, S. Seung, 1999
 
 .. [2] `"Non-negative Matrix Factorization with Sparseness Constraints"
@@ -959,7 +959,7 @@ is not readily available from the start, or when the data does not fit into memo
 
 .. [4] `"SVD based initialization: A head start for nonnegative
   matrix factorization"
-  <https://www.boutsidis.org/Boutsidis_PRE_08.pdf>`_
+  <https://user.it.uu.se/~milga730/histo/before2011august/Boutsidis.pdf>`_
   C. Boutsidis, E. Gallopoulos, 2008
 
 .. [5] `"Fast local algorithms for large scale nonnegative matrix and tensor
@@ -993,7 +993,7 @@ Note on notations presented in the graphical model above, which can be found in
 Hoffman et al. (2013):
 
 * The corpus is a collection of :math:`D` documents.
-* A document is a sequence of :math:`N` words.
+* A document :math:`d \in D` is a sequence of :math:`N_d` words.
 * There are :math:`K` topics in the corpus.
 * The boxes represent repeated sampling.
 
@@ -1020,12 +1020,12 @@ structure.
        :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha`
        corresponds to `doc_topic_prior`.
 
-    3. For each word :math:`i` in document :math:`d`:
+    3. For each word :math:`n=1,\cdots,N_d` in document :math:`d`:
 
-       a. Draw the topic assignment :math:`z_{di} \sim \mathrm{Multinomial}
+       a. Draw the topic assignment :math:`z_{dn} \sim \mathrm{Multinomial}
           (\theta_d)`
-       b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}
-          (\beta_{z_{di}})`
+       b. Draw the observed word :math:`w_{dn} \sim \mathrm{Multinomial}
+          (\beta_{z_{dn}})`
 
     For parameter estimation, the posterior distribution is:
 

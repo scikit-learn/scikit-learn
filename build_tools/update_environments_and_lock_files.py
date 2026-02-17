@@ -84,9 +84,6 @@ common_dependencies = common_dependencies_without_coverage + [
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
 default_package_constraints = {
-    # TODO: remove once https://github.com/numpy/numpydoc/issues/638 is fixed
-    # and released.
-    "numpydoc": "<1.9.0",
     # TODO: remove once when we're using the new way to enable coverage in subprocess
     # introduced in 7.0.0, see https://github.com/pytest-dev/pytest-cov?tab=readme-ov-file#upgrading-from-pytest-cov-63
     "pytest-cov": "<=6.3.0",
@@ -104,7 +101,7 @@ build_metadata_list = [
         "tag": "cuda",
         "folder": "build_tools/github",
         "platform": "linux-64",
-        "channels": ["conda-forge", "pytorch", "nvidia"],
+        "channels": ["rapidsai", "conda-forge"],
         "conda_dependencies": common_dependencies
         + [
             "ccache",
@@ -112,8 +109,11 @@ build_metadata_list = [
             "polars",
             "pyarrow",
             "cupy",
+            # cuvs is needed for cupyx.scipy.spatial.distance.cdist and friends
+            "cuvs",
             "array-api-strict",
         ],
+        "virtual_package_spec": True,
     },
     {
         "name": "pylatest_conda_forge_mkl_linux-64",
@@ -131,27 +131,28 @@ build_metadata_list = [
             "pyarrow",
             "array-api-strict",
             "scipy-doctest",
+            "pytest-playwright",
         ],
         "package_constraints": {
             "blas": "[build=mkl]",
         },
     },
     {
-        "name": "pylatest_conda_forge_mkl_osx-64",
+        "name": "pylatest_conda_forge_osx-arm64",
         "type": "conda",
         "tag": "main-ci",
         "folder": "build_tools/azure",
-        "platform": "osx-64",
+        "platform": "osx-arm64",
         "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies
         + [
             "ccache",
             "compilers",
             "llvm-openmp",
+            "pytorch",
+            "pytorch-cpu",
+            "array-api-strict",
         ],
-        "package_constraints": {
-            "blas": "[build=mkl]",
-        },
     },
     {
         "name": "pylatest_conda_forge_mkl_no_openmp",
@@ -172,9 +173,13 @@ build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channels": ["conda-forge"],
-        "conda_dependencies": common_dependencies + ["ccache", "polars", "pyarrow"],
+        "conda_dependencies": remove_from(common_dependencies, ["pandas"])
+        + ["ccache", "polars", "pyarrow"],
+        # TODO: move pandas to conda_dependencies when pandas 1.5.1 is the minimum
+        # supported version
+        "pip_dependencies": ["pandas"],
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
             "blas": "[build=openblas]",
             "numpy": "min",
             "scipy": "min",
@@ -202,7 +207,7 @@ build_metadata_list = [
             + ["ccache"]
         ),
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
             "blas": "[build=openblas]",
         },
     },
@@ -214,11 +219,16 @@ build_metadata_list = [
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": ["python", "ccache"],
+        "package_constraints": {
+            # TODO: remove this constraint once pyamg provide binary
+            # wheels for Python 3.14 (or later) on PyPI.
+            "python": "3.13",
+        },
         "pip_dependencies": (
             remove_from(common_dependencies, ["python", "blas", "pip"])
             + docstring_test_dependencies
             # Test with some optional dependencies
-            + ["lightgbm", "scikit-image"]
+            + ["lightgbm"]
             # Test array API on CPU without PyTorch
             + ["array-api-strict"]
             # doctests dependencies
@@ -265,7 +275,7 @@ build_metadata_list = [
         "tag": "free-threaded",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channels": ["conda-forge", "conda-forge/label/python_rc"],
+        "channels": ["conda-forge"],
         "conda_dependencies": [
             "python-freethreading",
             "meson-python",
@@ -293,7 +303,7 @@ build_metadata_list = [
             "pip",
         ],
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
             "blas": "[build=openblas]",
         },
     },
@@ -304,7 +314,9 @@ build_metadata_list = [
         "folder": "build_tools/circle",
         "platform": "linux-64",
         "channels": ["conda-forge"],
-        "conda_dependencies": common_dependencies_without_coverage
+        "conda_dependencies": remove_from(
+            common_dependencies_without_coverage, ["pandas"]
+        )
         + [
             "scikit-image",
             "seaborn",
@@ -326,9 +338,12 @@ build_metadata_list = [
         ],
         "pip_dependencies": [
             "sphinxcontrib-sass",
+            # TODO: move pandas to conda_dependencies when pandas 1.5.1 is the minimum
+            # supported version
+            "pandas",
         ],
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
             "numpy": "min",
             "scipy": "min",
             "matplotlib": "min",
@@ -385,7 +400,10 @@ build_metadata_list = [
             "sphinxcontrib-sass",
         ],
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
+            # Pinned while https://github.com/pola-rs/polars/issues/25039 is
+            # not fixed.
+            "polars": "1.34.0",
         },
     },
     {
@@ -398,7 +416,10 @@ build_metadata_list = [
         "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
         + ["pip", "ccache"],
         "package_constraints": {
-            "python": "3.10",
+            "python": "3.11",
+            # The following is needed to avoid getting libnvpl build for blas for some
+            # reason.
+            "blas": "[build=openblas]",
         },
     },
     {
@@ -439,7 +460,7 @@ build_metadata_list = [
             "threadpoolctl": "min",
             "cython": "min",
         },
-        "python_version": "3.10.4",
+        "python_version": "3.12.3",
     },
 ]
 
@@ -535,22 +556,26 @@ def write_all_conda_environments(build_metadata_list):
         write_conda_environment(build_metadata)
 
 
-def conda_lock(environment_path, lock_file_path, platform):
-    execute_command(
-        [
-            "conda-lock",
-            "lock",
-            "--mamba",
-            "--kind",
-            "explicit",
-            "--platform",
-            platform,
-            "--file",
-            str(environment_path),
-            "--filename-template",
-            str(lock_file_path),
-        ]
-    )
+def conda_lock(
+    environment_path, lock_file_path, platform, virtual_package_spec_path=None
+):
+    cmd = [
+        "conda-lock",
+        "lock",
+        "--mamba",
+        "--kind",
+        "explicit",
+        "--platform",
+        platform,
+        "--file",
+        str(environment_path),
+        "--filename-template",
+        str(lock_file_path),
+    ]
+    if virtual_package_spec_path is not None:
+        cmd.extend(["--virtual-package-spec", str(virtual_package_spec_path)])
+
+    execute_command(cmd)
 
 
 def create_conda_lock_file(build_metadata):
@@ -563,7 +588,14 @@ def create_conda_lock_file(build_metadata):
         lock_file_basename = f"{lock_file_basename}_{platform}"
 
     lock_file_path = folder_path / f"{lock_file_basename}_conda.lock"
-    conda_lock(environment_path, lock_file_path, platform)
+
+    virtual_package_spec_path = None
+    if build_metadata.get("virtual_package_spec"):
+        virtual_package_spec_path = (
+            folder_path / f"{lock_file_basename}_virtual_package_spec.yml"
+        )
+
+    conda_lock(environment_path, lock_file_path, platform, virtual_package_spec_path)
 
 
 def write_all_conda_lock_files(build_metadata_list):
@@ -629,6 +661,9 @@ def write_pip_lock_file(build_metadata):
             "-n",
             f"pip-tools-python{python_version}",
             f"python={python_version}",
+            # TODO remove the following line once pip-tools is compatible with pip 26.0,
+            # see https://github.com/jazzband/pip-tools/issues/2319
+            "pip=25.3",
             "pip-tools",
             "-y",
         ]

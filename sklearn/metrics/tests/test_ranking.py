@@ -13,6 +13,7 @@ from sklearn.metrics import (
     accuracy_score,
     auc,
     average_precision_score,
+    confusion_matrix_at_thresholds,
     coverage_error,
     dcg_score,
     det_curve,
@@ -47,6 +48,7 @@ from sklearn.utils.validation import (
 # Utilities for testing
 
 CURVE_FUNCS = [
+    confusion_matrix_at_thresholds,
     det_curve,
     precision_recall_curve,
     roc_curve,
@@ -54,7 +56,7 @@ CURVE_FUNCS = [
 
 
 def make_prediction(dataset=None, binary=False):
-    """Make some classification predictions on a toy dataset using a SVC
+    """Make some classification predictions on a toy dataset using an SVC
 
     If binary is True restrict to a binary classification problem instead of a
     multiclass classification problem
@@ -191,6 +193,25 @@ def _partial_roc_auc_score(y_true, y_predict, max_fpr):
     min_area = 0.5 * (fpr2 - fpr1) * (fpr2 + fpr1)
     max_area = fpr2 - fpr1
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
+
+
+def test_confusion_matrix_at_thresholds(global_random_seed):
+    """Smoke test for confusion_matrix_at_thresholds."""
+    rng = np.random.RandomState(global_random_seed)
+
+    n_samples = 100
+    y_true = rng.randint(0, 2, size=100)
+    y_score = rng.uniform(size=100)
+
+    n_pos = np.sum(y_true)
+    n_neg = n_samples - n_pos
+
+    tns, fps, fns, tps, thresholds = confusion_matrix_at_thresholds(y_true, y_score)
+
+    assert len(tns) == len(fps) == len(fns) == len(tps) == len(thresholds)
+    assert_allclose(tps + fns, n_pos)
+    assert_allclose(tns + fps, n_neg)
+    assert_allclose(tns + fps + fns + tps, n_samples)
 
 
 @pytest.mark.parametrize("drop", [True, False])
@@ -839,7 +860,7 @@ def test_auc_score_non_binary_class():
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
-def test_binary_clf_curve_multiclass_error(curve_func):
+def test_confusion_matrix_at_thresholds_multiclass_error(curve_func):
     rng = check_random_state(404)
     y_true = rng.randint(0, 3, size=10)
     y_pred = rng.rand(10)
@@ -849,7 +870,7 @@ def test_binary_clf_curve_multiclass_error(curve_func):
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
-def test_binary_clf_curve_implicit_pos_label(curve_func):
+def test_confusion_matrix_at_thresholds_implicit_pos_label(curve_func):
     # Check that using string class labels raises an informative
     # error for any supported string dtype:
     msg = (
@@ -876,7 +897,9 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
 @pytest.mark.filterwarnings("ignore:Support for labels represented as bytes")
 @pytest.mark.parametrize("curve_func", [precision_recall_curve, roc_curve])
 @pytest.mark.parametrize("labels_type", ["list", "array"])
-def test_binary_clf_curve_implicit_bytes_pos_label(curve_func, labels_type):
+def test_confusion_matrix_at_thresholds_implicit_bytes_pos_label(
+    curve_func, labels_type
+):
     # Check that using bytes class labels raises an informative
     # error for any supported string dtype:
     labels = _convert_container([b"a", b"b"], labels_type)
@@ -886,7 +909,7 @@ def test_binary_clf_curve_implicit_bytes_pos_label(curve_func, labels_type):
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
-def test_binary_clf_curve_zero_sample_weight(curve_func):
+def test_confusion_matrix_at_thresholds_zero_sample_weight(curve_func):
     y_true = [0, 0, 1, 1, 1]
     y_score = [0.1, 0.2, 0.3, 0.4, 0.5]
     sample_weight = [1, 1, 1, 0.5, 0]
@@ -1168,7 +1191,7 @@ def test_average_precision_score_binary_pos_label_errors():
     # Raise an error when pos_label is not in binary y_true
     y_true = np.array([0, 1])
     y_pred = np.array([0, 1])
-    err_msg = r"pos_label=2 is not a valid label. It should be one of \[0, 1\]"
+    err_msg = re.escape("pos_label=2 is not a valid label. It should be one of [0 1]")
     with pytest.raises(ValueError, match=err_msg):
         average_precision_score(y_true, y_pred, pos_label=2)
 
@@ -1189,7 +1212,7 @@ def test_average_precision_score_multilabel_pos_label_errors():
 def test_average_precision_score_multiclass_pos_label_errors():
     # Raise an error for multiclass y_true with pos_label other than 1
     y_true = np.array([0, 1, 2, 0, 1, 2])
-    y_pred = np.array(
+    y_score = np.array(
         [
             [0.5, 0.2, 0.1],
             [0.4, 0.5, 0.3],
@@ -1204,7 +1227,21 @@ def test_average_precision_score_multiclass_pos_label_errors():
         "Do not set pos_label or set pos_label to 1."
     )
     with pytest.raises(ValueError, match=err_msg):
-        average_precision_score(y_true, y_pred, pos_label=3)
+        average_precision_score(y_true, y_score, pos_label=3)
+
+
+def test_multiclass_ranking_metrics_raise_for_incorrect_shape_of_y_score():
+    """Test ranking metrics, with multiclass support, raise if shape `y_score` is 1D."""
+    y_true = np.array([0, 1, 2, 0, 1, 2])
+    y_score = np.array([0.5, 0.4, 0.8, 0.9, 0.8, 0.7])
+
+    msg = re.escape("`y_score` needs to be of shape `(n_samples, n_classes)`")
+    with pytest.raises(ValueError, match=msg):
+        average_precision_score(y_true, y_score)
+    with pytest.raises(ValueError, match=msg):
+        roc_auc_score(y_true, y_score, multi_class="ovr")
+    with pytest.raises(ValueError, match=msg):
+        top_k_accuracy_score(y_true, y_score)
 
 
 def test_score_scale_invariance():

@@ -315,18 +315,19 @@ def test_optimization_minimizes_kl_divergence():
 
 
 @pytest.mark.parametrize("method", ["exact", "barnes_hut"])
+@pytest.mark.parametrize("init", ["random", "pca"])
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_fit_transform_csr_matrix(method, csr_container):
+def test_fit_transform_csr_matrix(method, init, csr_container):
     # TODO: compare results on dense and sparse data as proposed in:
     # https://github.com/scikit-learn/scikit-learn/pull/23585#discussion_r968388186
     # X can be a sparse matrix.
     rng = check_random_state(0)
-    X = rng.randn(50, 2)
-    X[(rng.randint(0, 50, 25), rng.randint(0, 2, 25))] = 0.0
+    X = rng.randn(50, 3)
+    X[(rng.randint(0, 50, 25), rng.randint(0, 3, 25))] = 0.0
     X_csr = csr_container(X)
     tsne = TSNE(
         n_components=2,
-        init="random",
+        init=init,
         perplexity=10,
         learning_rate=100.0,
         random_state=0,
@@ -482,14 +483,6 @@ def test_pca_initialization_not_compatible_with_precomputed_kernel():
         match='The parameter init="pca" cannot be used with metric="precomputed".',
     ):
         tsne.fit_transform(np.array([[0.0], [1.0]]))
-
-
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_pca_initialization_not_compatible_with_sparse_input(csr_container):
-    # Sparse input matrices cannot use PCA initialization.
-    tsne = TSNE(init="pca", learning_rate=100.0, perplexity=1)
-    with pytest.raises(TypeError, match="PCA initialization.*"):
-        tsne.fit_transform(csr_container([[0, 5], [5, 0]]))
 
 
 def test_n_components_range():

@@ -10,7 +10,6 @@ import pkgutil
 import re
 import warnings
 from functools import partial
-from inspect import isgenerator
 from itertools import chain
 
 import pytest
@@ -46,6 +45,7 @@ from sklearn.utils._testing import (
     ignore_warnings,
 )
 from sklearn.utils.estimator_checks import (
+    check_all_zero_sample_weights_error,
     check_dataframe_column_names_consistency,
     check_estimator,
     check_get_feature_names_out_error,
@@ -60,6 +60,7 @@ from sklearn.utils.estimator_checks import (
     check_transformer_get_feature_names_out_pandas,
     parametrize_with_checks,
 )
+from sklearn.utils.validation import has_fit_parameter
 
 
 @pytest.mark.thread_unsafe  # import side-effects
@@ -123,24 +124,9 @@ def test_estimators(estimator, check, request):
         check(estimator)
 
 
-# TODO(1.8): remove test when generate_only is removed
-def test_check_estimator_generate_only_deprecation():
-    """Check that check_estimator with generate_only=True raises a deprecation
-    warning."""
-    with pytest.warns(FutureWarning, match="`generate_only` is deprecated in 1.6"):
-        all_instance_gen_checks = check_estimator(
-            LogisticRegression(), generate_only=True
-        )
-    assert isgenerator(all_instance_gen_checks)
-
-
 @pytest.mark.filterwarnings(
     "ignore:Since version 1.0, it is not needed to import "
     "enable_hist_gradient_boosting anymore"
-)
-# TODO(1.8): remove this filter
-@pytest.mark.filterwarnings(
-    "ignore:Importing from sklearn.utils._estimator_html_repr is deprecated."
 )
 @pytest.mark.thread_unsafe  # import side-effects
 def test_import_all_consistency():
@@ -415,3 +401,17 @@ def test_check_inplace_ensure_writeable(estimator):
         estimator.set_params(kernel="precomputed")
 
     check_inplace_ensure_writeable(name, estimator)
+
+
+ESTIMATORS_ACCEPTING_SAMPLE_WEIGHTS = [
+    est for est in _tested_estimators() if has_fit_parameter(est, "sample_weight")
+]
+
+
+@pytest.mark.parametrize(
+    "estimator", ESTIMATORS_ACCEPTING_SAMPLE_WEIGHTS, ids=_get_check_estimator_ids
+)
+def test_check_all_zero_sample_weights_error(estimator):
+    name = estimator.__class__.__name__
+
+    check_all_zero_sample_weights_error(name, estimator)

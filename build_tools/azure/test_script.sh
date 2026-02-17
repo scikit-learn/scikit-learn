@@ -22,7 +22,15 @@ if [[ "$BUILD_REASON" == "Schedule" ]]; then
     export SKLEARN_RUN_FLOAT32_TESTS=1
 fi
 
-COMMIT_MESSAGE=$(python build_tools/azure/get_commit_message.py --only-show-message)
+# In GitHub Action (especially in `.github/workflows/unit-tests.yml` which
+# calls this script), the environment variable `COMMIT_MESSAGE` is already set
+# to the latest commit message.
+if [[ -z "${COMMIT_MESSAGE+x}" ]]; then
+    # If 'COMMIT_MESSAGE' is unset we are in Azure, and we retrieve the commit
+    # message via the get_commit_message.py script which uses Azure-specific
+    # variables, for example 'BUILD_SOURCEVERSIONMESSAGE'.
+    COMMIT_MESSAGE=$(python build_tools/azure/get_commit_message.py --only-show-message)
+fi
 
 if [[ "$COMMIT_MESSAGE" =~ \[float32\] ]]; then
     echo "float32 tests will be run due to commit message"
@@ -39,6 +47,7 @@ python -c "import joblib; print(f'Number of cores (physical): \
 python -c "import sklearn; sklearn.show_versions()"
 
 show_installed_libraries
+show_cpu_info
 
 NUM_CORES=$(python -c "import joblib; print(joblib.cpu_count())")
 TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML -o junit_family=legacy"
@@ -70,23 +79,6 @@ if [[ -n "$SELECTED_TESTS" ]]; then
 
     # Override to make selected tests run on all random seeds
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
-fi
-
-if [ -x "$(command -v lscpu)" ] ; then
-    lscpu
-elif [ -x "$(command -v system_profiler)" ] ; then
-    system_profiler SPHardwareDataType
-elif [ -x "$(command -v powershell)" ] ; then
-    powershell -c 'Write-Host "=== CPU Information ==="
-          $cpu = Get-WmiObject -Class Win32_Processor
-          Write-Host "CPU Model: $($cpu.Name)"
-          Write-Host "Architecture: $($cpu.Architecture)"
-          Write-Host "Physical Cores: $($cpu.NumberOfCores)"
-          Write-Host "Logical Processors: $($cpu.NumberOfLogicalProcessors)"
-          Write-Host "==========================="
-    '
-else
-    echo "Could not inspect CPU architecture."
 fi
 
 if [[ "$DISTRIB" == "conda-free-threaded" ]]; then

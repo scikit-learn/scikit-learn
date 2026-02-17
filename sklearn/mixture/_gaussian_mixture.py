@@ -335,7 +335,7 @@ def _compute_precision_cholesky(covariances, covariance_type, xp=None):
     Returns
     -------
     precisions_cholesky : array-like
-        The cholesky decomposition of sample precisions of the current
+        The Cholesky decomposition of sample precisions of the current
         components. The shape depends of the covariance_type.
     """
     xp, _, device_ = get_namespace_and_device(covariances, xp=xp)
@@ -422,7 +422,7 @@ def _compute_precision_cholesky_from_precisions(precisions, covariance_type, xp=
     Returns
     -------
     precisions_cholesky : array-like
-        The cholesky decomposition of sample precisions of the current
+        The Cholesky decomposition of sample precisions of the current
         components. The shape depends on the covariance_type.
     """
     if covariance_type == "full":
@@ -446,7 +446,7 @@ def _compute_precision_cholesky_from_precisions(precisions, covariance_type, xp=
 ###############################################################################
 # Gaussian mixture probability estimators
 def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features, xp=None):
-    """Compute the log-det of the cholesky decomposition of matrices.
+    """Compute the log-det of the Cholesky decomposition of matrices.
 
     Parameters
     ----------
@@ -690,7 +690,7 @@ class GaussianMixture(BaseMixture):
             (n_components, n_features, n_features) if 'full'
 
     precisions_cholesky_ : array-like
-        The cholesky decomposition of the precision matrices of each mixture
+        The Cholesky decomposition of the precision matrices of each mixture
         component. A precision matrix is the inverse of a covariance matrix.
         A covariance matrix is symmetric positive definite so the mixture of
         Gaussian can be equivalently parameterized by the precision matrices.
@@ -746,7 +746,11 @@ class GaussianMixture(BaseMixture):
     array([1, 0])
 
     For a comparison of Gaussian Mixture with other clustering algorithms, see
-    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`.
+
+    For an illustration of the negative log-likelihood surface of a
+    :class:`~sklearn.mixture.GaussianMixture` Model,
+    see :ref:`sphx_glr_auto_examples_mixture_plot_gmm_pdf.py`.
     """
 
     _parameter_constraints: dict = {

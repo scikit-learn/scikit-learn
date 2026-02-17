@@ -1360,7 +1360,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         if X.shape[1] != self.dictionary.shape[1]:
             raise ValueError(
                 "Dictionary and X have different numbers of features:"
-                f"dictionary.shape: {self.dictionary.shape} X.shape{X.shape}"
+                f"dictionary.shape: {self.dictionary.shape} X.shape: {X.shape}"
             )
         return self
 

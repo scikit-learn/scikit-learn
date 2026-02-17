@@ -783,7 +783,7 @@ cdef tuple _get_clusters(
             else:
                 is_cluster[c] = False
 
-    clusters = set([c for c in is_cluster if is_cluster[c]])
+    clusters = {c for c in is_cluster if is_cluster[c]}
     cluster_map = {c: n for n, c in enumerate(sorted(list(clusters)))}
     reverse_cluster_map = {n: c for c, n in cluster_map.items()}
 

@@ -203,7 +203,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
     def fit_predict(self, X, y=None):
         """Estimate model parameters using X and predict the labels for X.
 
-        The method fits the model n_init times and sets the parameters with
+        The method fits the model ``n_init`` times and sets the parameters with
         which the model has the largest likelihood or lower bound. Within each
         trial, the method iterates between E-step and M-step for `max_iter`
         times until the change of likelihood or lower bound is less than
