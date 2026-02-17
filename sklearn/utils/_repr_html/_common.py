@@ -51,7 +51,7 @@ def get_docstring(estimator_class, section_name, field):
     section_name : str
         The numpydoc section to search in (e.g., "Parameters", "Attributes").
 
-    item : str
+    field : str
         The name of the parameter or attribute to retrieve documentation for.
 
     Returns
