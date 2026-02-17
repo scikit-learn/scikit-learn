@@ -7,7 +7,11 @@ import sys
 import pytest
 
 from sklearn.callback import ProgressBar
-from sklearn.callback.tests._utils import Estimator, MetaEstimator, WhileEstimator
+from sklearn.callback.tests._utils import (
+    MaxIterEstimator,
+    MetaEstimator,
+    WhileEstimator,
+)
 from sklearn.utils._optional_dependencies import check_rich_support
 
 
@@ -18,7 +22,7 @@ from sklearn.utils._optional_dependencies import check_rich_support
 )
 @pytest.mark.parametrize("n_jobs", [1, 2])
 @pytest.mark.parametrize("prefer", ["threads", "processes"])
-@pytest.mark.parametrize("InnerEstimator", [Estimator, WhileEstimator])
+@pytest.mark.parametrize("InnerEstimator", [MaxIterEstimator, WhileEstimator])
 @pytest.mark.parametrize("max_estimator_depth", [1, 2, None])
 def test_progressbar(n_jobs, prefer, InnerEstimator, max_estimator_depth, capsys):
     """Check the output of the progress bars and their completion."""

@@ -4,7 +4,7 @@
 import pytest
 
 from sklearn.callback.tests._utils import (
-    Estimator,
+    MaxIterEstimator,
     NotValidCallback,
     TestingAutoPropagatedCallback,
     TestingCallback,
@@ -21,7 +21,7 @@ from sklearn.callback.tests._utils import (
 )
 def test_set_callbacks(callbacks):
     """Sanity check for the `set_callbacks` method."""
-    estimator = Estimator()
+    estimator = MaxIterEstimator()
 
     set_callbacks_return = estimator.set_callbacks(callbacks)
     assert hasattr(estimator, "_skl_callbacks")
@@ -35,7 +35,7 @@ def test_set_callbacks(callbacks):
 @pytest.mark.parametrize("callbacks", [None, NotValidCallback()])
 def test_set_callbacks_error(callbacks):
     """Check the error message when not passing a valid callback to `set_callbacks`."""
-    estimator = Estimator()
+    estimator = MaxIterEstimator()
 
     with pytest.raises(TypeError, match="callbacks must follow the Callback protocol."):
         estimator.set_callbacks(callbacks)
