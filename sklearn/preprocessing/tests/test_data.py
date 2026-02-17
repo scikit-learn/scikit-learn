@@ -2835,38 +2835,36 @@ def test_yeojohnson_for_different_scipy_version():
     pt.lambdas_[0] == pytest.approx(0.99546157, rel=1e-7)
 
 
-def test_transformer_inverse_transform_feature_names_warning():
-    # Regression test for gh-31947
-    # We check that inverse_transform does not raise a warning about feature names
-    # when the transformer was fitted with feature names.
+@pytest.mark.parametrize("TransformerClass", [PowerTransformer, QuantileTransformer])
+def test_transformer_inverse_transform_feature_names_warning(TransformerClass):
+    """Check that inverse_transform does not raise a warning about feature
+    names when fitted on a DataFrame and transforming a NumPy array.
+    Regression test for gh-31947.
+    """
     pd = pytest.importorskip("pandas")
-    from sklearn.compose import TransformedTargetRegressor
-    from sklearn.linear_model import LinearRegression
-    from sklearn.preprocessing import PowerTransformer, QuantileTransformer
 
-    X, y = datasets.load_iris(return_X_y=True, as_frame=True)
+    # 1. Fit on a pandas DataFrame (which has feature names)
+    X_df = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [4.0, 5.0, 6.0]})
+    transformer = TransformerClass()
+    transformer.fit(X_df)
 
-    # Check both transformers that had this issue
-    for TransformerClass in [PowerTransformer, QuantileTransformer]:
-        transformer = TransformerClass().set_output(transform="pandas")
-        pipeline = TransformedTargetRegressor(
-            regressor=LinearRegression(),
-            transformer=transformer,
-        )
+    # 2. Transform a plain NumPy array (no feature names)
+    X_np = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
 
-        with warnings.catch_warnings(record=True) as record:
-            warnings.simplefilter("always")
-            pipeline.fit(X, y)
-            pipeline.predict(X)
+    # 3. This should NOT raise any feature name warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # Turns any warning into an exception
+        transformer.inverse_transform(X_np)
 
-        # Filter for the specific warning about feature names
-        relevant_warnings = [
-            str(w.message)
-            for w in record
-            if "X has feature names, but" in str(w.message)
-            and "was fitted without" in str(w.message)
-        ]
-        assert not relevant_warnings, (
-            f"{TransformerClass.__name__} raised unexpected warnings: "
-            f"{relevant_warnings}"
-        )
+    # 4. Check that the correct ValueError is raised for wrong input shape
+    # This directly addresses the maintainer's request to test the error message
+    X_wrong = np.array([[1.0], [2.0], [3.0]])
+
+    # PowerTransformer's error message is slightly different than QuantileTransformer's
+    if TransformerClass is PowerTransformer:
+        msg = f"is expecting {transformer.n_features_in_} features"
+    else:
+        msg = f"is expecting {transformer.n_features_in_} features as input"
+
+    with pytest.raises(ValueError, match=msg):
+        transformer.inverse_transform(X_wrong)

@@ -3069,7 +3069,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             dtype=FLOAT_DTYPES,
             force_writeable=True,
             ensure_all_finite="allow-nan",
-            ensure_2d=True,
         )
 
         if not X.shape[1] == self.n_features_in_:
@@ -3494,17 +3493,16 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         check_is_fitted(self)
         X = check_array(
             X,
-            ensure_2d=True,
             copy=self.copy,
             dtype=FLOAT_DTYPES,
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
 
-        if not X.shape[1] == len(self.lambdas_):
+        if not X.shape[1] == self.n_features_in_:
             raise ValueError(
                 f"X has {X.shape[1]} features, but PowerTransformer "
-                f"is expecting {len(self.lambdas_)} features"
+                f"is expecting {self.n_features_in_} features as input."
             )
 
         if self.standardize:
