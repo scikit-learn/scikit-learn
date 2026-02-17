@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
+from typing import Any
 
 
 class Bunch(dict):
@@ -27,7 +28,7 @@ class Bunch(dict):
     6
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(kwargs)
 
         # Map from deprecated key to warning message
@@ -46,7 +47,7 @@ class Bunch(dict):
         self.__dict__["_deprecated_key_to_warnings"][deprecated_key] = warning_message
         self[new_key] = self[deprecated_key] = value
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key: Any, value: Any) -> None:
         self[key] = value
 
     def __dir__(self):
