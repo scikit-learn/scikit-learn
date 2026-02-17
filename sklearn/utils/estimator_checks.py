@@ -130,7 +130,11 @@ def _yield_api_checks(estimator):
         )
 
     tags = get_tags(estimator)
-    yield check_estimator_cloneable
+    # This is commented out since it's the first check both
+    # `parametrize_with_checks` and `check_esitmator` do
+    # anyway. But leaving it here as commented out to know
+    # it's a part of the basic API.
+    # yield check_estimator_cloneable
     yield check_estimator_tags_renamed
     yield check_valid_tag_types
     yield check_estimator_repr
@@ -240,9 +244,6 @@ def _yield_classifier_checks(classifier):
     # test if predict_proba is a monotonic transformation of decision_function
     yield check_decision_proba_consistency
 
-    if isinstance(classifier, LinearClassifierMixin):
-        if "class_weight" in classifier.get_params().keys():
-            yield check_class_weight_balanced_linear_classifier
     if (
         isinstance(classifier, LinearClassifierMixin)
         and "class_weight" in classifier.get_params().keys()

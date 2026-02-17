@@ -130,6 +130,13 @@ def test_weighted_percentile_ignores_zero_weight(
         assert approx(value[idx]) == expected_value
 
 
+def test_weighted_percentile_average_zero_weight_plateau():
+    """Check zero weights just before `max_index` handled correctly."""
+    score_without_zeros = _weighted_percentile([1, 3], [3, 3], average=True)
+    score_with_zeros = _weighted_percentile([1, 2, 3], [3, 0, 3], average=True)
+    assert approx(score_without_zeros) == score_with_zeros
+
+
 @pytest.mark.parametrize("average", [True, False])
 @pytest.mark.parametrize("percentile_rank", [20, 35, 50, 61])
 def test_weighted_percentile_frequency_weight_semantics(
