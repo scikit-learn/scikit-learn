@@ -12,7 +12,8 @@ from sklearn.utils.deprecation import _is_deprecated, deprecated
 
 @deprecated("qwerty")
 class MockClass1:
-    pass
+    def __init__(self, a, b=1, c=2):
+        pass
 
 
 class MockClass2:
@@ -40,8 +41,8 @@ class MockClass4:
 class MockClass5(MockClass1):
     """Inherit from deprecated class but does not call super().__init__."""
 
-    def __init__(self, a):
-        self.a = a
+    def __init__(self, a, b=1, d=2):
+        pass
 
 
 @deprecated("a message")
@@ -60,7 +61,7 @@ def mock_function():
 
 def test_deprecated():
     with pytest.warns(FutureWarning, match="qwerty"):
-        MockClass1()
+        MockClass1(42)
     with pytest.warns(FutureWarning, match="mockclass2_method"):
         MockClass2().method()
     with pytest.warns(FutureWarning, match="deprecated"):
@@ -90,9 +91,7 @@ def test_pickle():
 
 
 def test_deprecated_class_signature():
-    @deprecated()
-    class MockClass:
-        def __init__(self, a, b=1, c=2):
-            pass
-
-    assert list(signature(MockClass).parameters.keys()) == ["a", "b", "c"]
+    """Check that we can inspect the signature of a deprecated class."""
+    assert list(signature(MockClass1).parameters.keys()) == ["a", "b", "c"]
+    # And of a subclass of a deprecated class.
+    assert list(signature(MockClass5).parameters.keys()) == ["a", "b", "d"]
