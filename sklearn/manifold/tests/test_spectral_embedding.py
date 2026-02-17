@@ -360,8 +360,8 @@ def test_pipeline_spectral_clustering(seed=36):
     # Test using pipeline to do spectral clustering
     # Note that actual SpectralClustering class does not drop the first
     # eigenvector, but this is not possible when using SpectralEmbedding
-    # class. So here for the two-class problem we will simply use a single
-    # eigenvector (after the first one is dropped).
+    # class. So here for the three-class problem we will use two
+    # eigenvectors (after the first one is dropped).
     random_state = np.random.RandomState(seed)
     se_rbf = SpectralEmbedding(
         n_components=n_clusters - 1, affinity="rbf", random_state=random_state

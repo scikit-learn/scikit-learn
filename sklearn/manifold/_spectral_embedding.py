@@ -347,9 +347,11 @@ def _spectral_embedding(
         # and we need to find the smallest ones, i.e. closest to 0.
         # The efficient way to do it, according to the scipy docs,
         # is to use which="LM" and sigma=0.
-        # Andrew Kniazev recommends to set small negative sigma:
-        # https://github.com/scikit-learn/scikit-learn/
-        # pull/14647#issuecomment-521304431
+        # Andrew Kniazev recommends to set small negative sigma
+        # (see https://github.com/scikit-learn/scikit-learn/
+        # pull/14647#issuecomment-521304431) because a Laplacian
+        # has exact at least one exact zero eigenvalue, so sigma=0
+        # can lead to problems.
         try:
             tol = 0 if eigen_tol == "auto" else eigen_tol
 
