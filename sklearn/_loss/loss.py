@@ -114,7 +114,7 @@ class BaseLoss:
         Indicates whether or not loss function is differentiable in
         raw_prediction everywhere.
     need_update_leaves_values : bool
-        Indicates whether decision trees in gradient boosting need to uptade
+        Indicates whether decision trees in gradient boosting need to update
         leave values after having been fit to the (negative) gradients.
     approx_hessian : bool
         Indicates whether the hessian is approximated or exact. If,
@@ -1352,7 +1352,7 @@ def _log1pexp(raw_prediction, raw_prediction_exp, xp):
 
 
 class HalfBinomialLossArrayAPI(ArrayAPILossMixin, HalfBinomialLoss):
-    """A version of the the HalfBinomialLoss that is compatible with
+    """A version of the HalfBinomialLoss that is compatible with
     the array API.
     """
 
@@ -1456,7 +1456,7 @@ class HalfBinomialLossArrayAPI(ArrayAPILossMixin, HalfBinomialLoss):
 
 
 class HalfMultinomialLossArrayAPI(ArrayAPILossMixin, HalfMultinomialLoss):
-    """A version of the the HalfMultinomialLoss that is compatible with
+    """A version of the HalfMultinomialLoss that is compatible with
     the array API.
 
     Parameters
