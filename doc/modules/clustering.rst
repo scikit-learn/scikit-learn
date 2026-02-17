@@ -237,7 +237,7 @@ clustering algorithms, see :func:`sklearn.cluster.kmeans_plusplus` for details
 and example usage.
 
 The algorithm supports sample weights, which can be given by a parameter
-``sample_weight``. This allows to assign more weight to some samples when
+``sample_weight``. This allows assigning more weight to some samples when
 computing cluster centers and values of inertia. For example, assigning a
 weight of 2 to a sample is equivalent to adding a duplicate of that sample
 to the dataset :math:`X`.
@@ -320,9 +320,9 @@ small, as shown in the example and cited reference.
 .. dropdown:: References
 
   * `"Web Scale K-Means clustering"
-    <https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf>`_
+    <https://www.ccs.neu.edu/home/vip/teach/DMcourse/2_cluster_EM_mixt/notes_slides/sculey_webscale_kmeans_approx.pdf>`_
     D. Sculley, *Proceedings of the 19th international conference on World
-    wide web* (2010)
+    wide web* (2010).
 
 .. _affinity_propagation:
 
@@ -706,8 +706,8 @@ An interesting aspect of :class:`AgglomerativeClustering` is that
 connectivity constraints can be added to this algorithm (only adjacent
 clusters can be merged together), through a connectivity matrix that defines
 for each sample the neighboring samples following a given structure of the
-data. For instance, in the swiss-roll example below, the connectivity
-constraints forbid the merging of points that are not adjacent on the swiss
+data. For instance, in the Swiss-roll example below, the connectivity
+constraints forbid the merging of points that are not adjacent on the Swiss
 roll, and thus avoid forming clusters that extend across overlapping folds of
 the roll.
 
@@ -721,11 +721,11 @@ the roll.
 
 .. centered:: |unstructured| |structured|
 
-These constraint are useful to impose a certain local structure, but they
-also make the algorithm faster, especially when the number of the samples
+These constraints are not only useful to impose a certain local structure, but
+they also make the algorithm faster, especially when the number of the samples
 is high.
 
-The connectivity constraints are imposed via an connectivity matrix: a
+The connectivity constraints are imposed via a connectivity matrix: a
 scipy sparse matrix that has elements only at the intersection of a row
 and a column with indices of the dataset that should be connected. This
 matrix can be constructed from a-priori information: for instance, you
@@ -733,7 +733,7 @@ may wish to cluster web pages by only merging pages with a link pointing
 from one to another. It can also be learned from the data, for instance
 using :func:`sklearn.neighbors.kneighbors_graph` to restrict
 merging to nearest neighbors as in :ref:`this example
-<sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py>`, or
+<sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py>`, or
 using :func:`sklearn.feature_extraction.image.grid_to_graph` to
 enable only merging of neighboring pixels on an image, as in the
 :ref:`coin <sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py>` example.
@@ -746,23 +746,11 @@ enable only merging of neighboring pixels on an image, as in the
     :func:`sklearn.neighbors.kneighbors_graph`. In the limit of a small
     number of clusters, they tend to give a few macroscopically occupied
     clusters and almost empty ones. (see the discussion in
-    :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`).
+    :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`).
     Single linkage is the most brittle linkage option with regard to this issue.
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_001.png
-    :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
-    :scale: 38
-
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_002.png
-    :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
-    :scale: 38
-
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_003.png
-    :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
-    :scale: 38
-
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_004.png
-    :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_003.png
+    :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
     :scale: 38
 
 .. rubric:: Examples
@@ -771,14 +759,12 @@ enable only merging of neighboring pixels on an image, as in the
   clustering to split the image of coins in regions.
 
 * :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`: Example
-  of Ward algorithm on a swiss-roll, comparison of structured approaches
+  of Ward algorithm on a Swiss-roll, comparison of structured approaches
   versus unstructured approaches.
 
 * :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`: Example
   of dimensionality reduction with feature agglomeration based on Ward
   hierarchical clustering.
-
-* :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`
 
 
 Varying the metric
@@ -861,7 +847,7 @@ clusters from Bisecting K-Means are well ordered and create quite a visible hier
 .. dropdown:: References
 
   * `"A Comparison of Document Clustering Techniques"
-    <http://www.philippe-fournier-viger.com/spmf/bisectingkmeans.pdf>`_ Michael
+    <https://www.philippe-fournier-viger.com/spmf/bisectingkmeans.pdf>`_ Michael
     Steinbach, George Karypis and Vipin Kumar, Department of Computer Science and
     Egineering, University of Minnesota (June 2000)
   * `"Performance Analysis of K-Means and Bisecting K-Means Algorithms in Weblog
@@ -1214,7 +1200,7 @@ The branching factor limits the number of subclusters in a node and the
 threshold limits the distance between the entering sample and the existing
 subclusters.
 
-This algorithm can be viewed as an instance or data reduction method,
+This algorithm can be viewed as an instance of a data reduction method,
 since it reduces the input data to a set of subclusters which are obtained directly
 from the leaves of the CFT. This reduced data can be further processed by feeding
 it into a global clusterer. This global clusterer can be set by ``n_clusters``.
@@ -1506,7 +1492,7 @@ Bad (e.g. independent labelings) have non-positive scores::
 
 .. topic:: Advantages:
 
-  - **Random (uniform) label assignments have a AMI score close to 0.0** for any
+  - **Random (uniform) label assignments have an AMI score close to 0.0** for any
     value of ``n_clusters`` and ``n_samples`` (which is not the case for raw
     Mutual Information or the V-measure for instance).
 
@@ -1598,7 +1584,7 @@ Bad (e.g. independent labelings) have non-positive scores::
   * Strehl, Alexander, and Joydeep Ghosh (2002). "Cluster ensembles - a
     knowledge reuse framework for combining multiple partitions". Journal of
     Machine Learning Research 3: 583-617. `doi:10.1162/153244303321897735
-    <http://strehl.com/download/strehl-jmlr02.pdf>`_.
+    <https://strehl.com/download/strehl-jmlr02.pdf>`_.
 
   * `Wikipedia entry for the (normalized) Mutual Information
     <https://en.wikipedia.org/wiki/Mutual_Information>`_
@@ -1783,7 +1769,7 @@ homogeneous but not complete::
   Hirschberg, 2007
 
 .. [B2011] `Identification and Characterization of Events in Social Media
-  <http://www.cs.columbia.edu/~hila/hila-thesis-distributed.pdf>`_, Hila
+  <https://www.cs.columbia.edu/~hila/hila-thesis-distributed.pdf>`_, Hila
   Becker, PhD Thesis.
 
 
@@ -2134,7 +2120,7 @@ of classes.
 
 .. topic:: Advantages:
 
-  - Allows to examine the spread of each true cluster across predicted clusters
+  - Allows examining the spread of each true cluster across predicted clusters
     and vice versa.
 
   - The contingency table calculated is typically utilized in the calculation of

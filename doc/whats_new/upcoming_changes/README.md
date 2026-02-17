@@ -22,7 +22,8 @@ This file needs to be added to the right folder like `sklearn.linear_model` or
 `sklearn.tree` depending on which part of scikit-learn your PR changes. There
 are also a few folders for some topics like `array-api`, `metadata-routing` or `security`.
 
-In almost all cases, your fragment should be formatted as a bullet point.
+In almost all cases, your fragment should be formatted as a **single** bullet point.
+Note the aggregation software cannot handle more than one bullet point per entry.
 
 For example, `28268.feature.rst` would be added to the `sklearn.ensemble`
 folder with the following content::
@@ -32,7 +33,7 @@ folder with the following content::
   now supports missing values in the data matrix `X`. Missing-values are
   handled by randomly moving all of the samples to the left, or right child
   node as the tree is traversed.
-  By :user:`Adam Li <adam2392>`
+  By :user:`Adam Li <adam2392>`.
 ```
 
 If you are unsure how to name the news fragment or which folder to use, don't

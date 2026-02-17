@@ -63,11 +63,9 @@ Here is a list of incremental estimators for different tasks:
     + :class:`sklearn.naive_bayes.BernoulliNB`
     + :class:`sklearn.linear_model.Perceptron`
     + :class:`sklearn.linear_model.SGDClassifier`
-    + :class:`sklearn.linear_model.PassiveAggressiveClassifier`
     + :class:`sklearn.neural_network.MLPClassifier`
 - Regression
     + :class:`sklearn.linear_model.SGDRegressor`
-    + :class:`sklearn.linear_model.PassiveAggressiveRegressor`
     + :class:`sklearn.neural_network.MLPRegressor`
 - Clustering
     + :class:`sklearn.cluster.MiniBatchKMeans`
@@ -91,7 +89,7 @@ classes to the first ``partial_fit`` call using the ``classes=`` parameter.
 Another aspect to consider when choosing a proper algorithm is that not all of
 them put the same importance on each example over time. Namely, the
 ``Perceptron`` is still sensitive to badly labeled examples even after many
-examples whereas the ``SGD*`` and ``PassiveAggressive*`` families are more
+examples whereas the ``SGD*`` family is more
 robust to this kind of artifacts. Conversely, the latter also tend to give less
 importance to remarkably different, yet properly labeled examples when they
 come late in the stream as their learning rate decreases over time.
@@ -130,7 +128,7 @@ Notes
 ......
 
 .. [1] Depending on the algorithm the mini-batch size can influence results or
-       not. SGD*, PassiveAggressive*, and discrete NaiveBayes are truly online
+       not. SGD* and discrete NaiveBayes are truly online
        and are not affected by batch size. Conversely, MiniBatchKMeans
        convergence rate is affected by the batch size. Also, its memory
        footprint can vary dramatically with batch size.

@@ -1329,18 +1329,19 @@ def test_vectorizer_stop_words_inconsistent():
             vec.fit_transform(["hello world"])
         # reset stop word validation
         del vec._stop_words_id
-        assert _check_stop_words_consistency(vec) is False
+        with pytest.warns(UserWarning, match=message):
+            assert _check_stop_words_consistency(vec) is False
 
-    # Only one warning per stop list
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
-        vec.fit_transform(["hello world"])
-    assert _check_stop_words_consistency(vec) is None
+        # Only one warning per stop list
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            vec.fit_transform(["hello world"])
+        assert _check_stop_words_consistency(vec) is None
 
-    # Test caching of inconsistency assessment
-    vec.set_params(stop_words=["you've", "you", "you'll", "blah", "AND"])
-    with pytest.warns(UserWarning, match=message):
-        vec.fit_transform(["hello world"])
+        # Test caching of inconsistency assessment
+        vec.set_params(stop_words=["you've", "you", "you'll", "blah", "AND"])
+        with pytest.warns(UserWarning, match=message):
+            vec.fit_transform(["hello world"])
 
 
 @skip_if_32bit

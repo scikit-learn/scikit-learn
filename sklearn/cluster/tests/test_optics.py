@@ -258,6 +258,12 @@ def test_warn_if_metric_bool_data_no_bool():
     msg = f"Data will be converted to boolean for metric {pairwise_metric}"
 
     with pytest.warns(DataConversionWarning, match=msg) as warn_record:
+        # Silence a DeprecationWarning from joblib <= 1.5.1 in Python 3.14+.
+        warnings.filterwarnings(
+            "ignore",
+            message="'asyncio.iscoroutinefunction' is deprecated",
+            category=DeprecationWarning,
+        )
         OPTICS(metric=pairwise_metric).fit(X)
         assert len(warn_record) == 1
 

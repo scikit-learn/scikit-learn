@@ -155,6 +155,9 @@ def _weight_func(dist):
 WEIGHTS = ["uniform", "distance", _weight_func]
 
 
+# XXX: probably related to the thread-safety bug tracked at:
+# https://github.com/scikit-learn/scikit-learn/issues/31884
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize(
     "n_samples, n_features, n_query_pts, n_neighbors",
     [
@@ -2096,6 +2099,9 @@ def test_same_radius_neighbors_parallel(algorithm):
     assert_allclose(graph, graph_parallel)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize("backend", ["threading", "loky"])
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
 def test_knn_forcing_backend(backend, algorithm):

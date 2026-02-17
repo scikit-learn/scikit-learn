@@ -35,7 +35,7 @@ jobs:
       build: ${{ steps.check_build_trigger.outputs.build }}
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
@@ -63,23 +63,21 @@ jobs:
     if: needs.check_build_trigger.outputs.build
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
-      - uses: pypa/cibuildwheel@9e4e50bd76b3190f55304387e333f6234823ea9b
+      - uses: pypa/cibuildwheel@298ed2fb2c105540f5ed055e8a6ad78d82dd3a7e # v3.3.1
         env:
           CIBW_PLATFORM: pyodide
           SKLEARN_SKIP_OPENMP_TEST: "true"
           SKLEARN_SKIP_NETWORK_TESTS: 1
-          # Temporary work-around to avoid joblib 1.5.0 until there is a joblib
-          # release with https://github.com/joblib/joblib/pull/1721
-          CIBW_TEST_REQUIRES: "pytest pandas joblib!=1.5.0"
+          CIBW_TEST_REQUIRES: "pytest pandas"
           # -s pytest argument is needed to avoid an issue in pytest output capturing with Pyodide
-          CIBW_TEST_COMMAND: "python -m pytest -svra --pyargs sklearn --durations 20 --showlocals"
+          CIBW_TEST_COMMAND: "python -m pytest -sra --pyargs sklearn --durations 20 --showlocals"
 
       - name: Upload wheel artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: pyodide_wheel
           path: ./wheelhouse/*.whl
@@ -96,13 +94,13 @@ jobs:
     if: github.repository == 'scikit-learn/scikit-learn' && github.event_name != 'pull_request'
     steps:
       - name: Download wheel artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: wheelhouse/
           merge-multiple: true
 
       - name: Push to Anaconda PyPI index
-        uses: scientific-python/upload-nightly-action@b36e8c0c10dbcfd2e05bf95f17ef8c14fd708dbf # 0.6.2
+        uses: scientific-python/upload-nightly-action@5748273c71e2d8d3a61f3a11a16421c8954f9ecf # 0.6.3
         with:
           artifacts_path: wheelhouse/
           anaconda_nightly_upload_token: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}

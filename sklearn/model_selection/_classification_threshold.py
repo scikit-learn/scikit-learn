@@ -392,7 +392,7 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             estimator=self.estimator,
             method_mapping=MethodMapping().add(callee="fit", caller="fit"),
         )
@@ -502,7 +502,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
     used for converting posterior probability estimates (i.e. output of
     `predict_proba`) or decision scores (i.e. output of `decision_function`)
     into a class label. The tuning is done by optimizing a binary metric,
-    potentially constrained by a another metric.
+    potentially constrained by another metric.
 
     Read more in the :ref:`User Guide <TunedThresholdClassifierCV>`.
 
@@ -858,7 +858,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
             routing information.
         """
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add(
                 estimator=self.estimator,
                 method_mapping=MethodMapping().add(callee="fit", caller="fit"),

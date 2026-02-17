@@ -63,12 +63,14 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
+from sklearn.preprocessing import TargetEncoder
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
     ConsumingRegressor,
     ConsumingScorer,
     ConsumingSplitter,
+    ConsumingSplitterInheritingFromGroupKFold,
     NonConsumingClassifier,
     NonConsumingRegressor,
     _Registry,
@@ -135,6 +137,7 @@ METAESTIMATORS: list = [
     },
     {
         "metaestimator": LogisticRegressionCV,
+        "init_args": {"use_legacy_attributes": False, "l1_ratios": (0,)},
         "X": X,
         "y": y,
         "scorer_name": "scoring",
@@ -306,7 +309,7 @@ METAESTIMATORS: list = [
         "metaestimator": RANSACRegressor,
         "estimator_name": "estimator",
         "estimator": "regressor",
-        "init_args": {"min_samples": 0.5},
+        "init_args": {"min_samples": 0.5, "max_trials": 10},
         "X": X,
         "y": y,
         "preserves_metadata": "subset",
@@ -447,6 +450,13 @@ METAESTIMATORS: list = [
         "X": X,
         "y": y,
     },
+    {
+        "metaestimator": TargetEncoder,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit_transform"],
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -526,7 +536,9 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
     (cv, cv_registry) : (CV splitter, registry)
         The CV splitter and the corresponding registry.
     """
-    kwargs = metaestimator_info.get("init_args", {})
+    # Avoid mutating the original init_args dict to keep the test execution
+    # thread-safe.
+    kwargs = metaestimator_info.get("init_args", {}).copy()
     estimator, estimator_registry = None, None
     scorer, scorer_registry = None, None
     cv, cv_registry = None, None
@@ -557,7 +569,10 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
     if "cv_name" in metaestimator_info:
         cv_name = metaestimator_info["cv_name"]
         cv_registry = _Registry()
-        cv = ConsumingSplitter(registry=cv_registry)
+        if metaestimator_info["metaestimator"] is TargetEncoder:
+            cv = ConsumingSplitterInheritingFromGroupKFold(registry=cv_registry)
+        else:
+            cv = ConsumingSplitter(registry=cv_registry)
         kwargs[cv_name] = cv
 
     return (

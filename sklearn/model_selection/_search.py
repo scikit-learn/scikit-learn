@@ -45,6 +45,7 @@ from sklearn.model_selection._validation import (
     _warn_or_raise_about_fit_failures,
 )
 from sklearn.utils import Bunch, check_random_state
+from sklearn.utils._array_api import xpx
 from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
 from sklearn.utils._repr_html.estimator import _VisualBlock
 from sklearn.utils._tags import get_tags
@@ -482,11 +483,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self.error_score = error_score
         self.return_train_score = return_train_score
 
-    @property
-    # TODO(1.8) remove this property
-    def _estimator_type(self):
-        return self.estimator._estimator_type
-
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         sub_estimator_tags = get_tags(self.estimator)
@@ -722,7 +718,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Only available when `refit=True`.
         """
-        # For consistency with other estimators we raise a AttributeError so
+        # For consistency with other estimators we raise an AttributeError so
         # that hasattr() fails if the search estimator isn't fitted.
         try:
             check_is_fitted(self)
@@ -1163,7 +1159,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                     rank_result = np.ones_like(array_means, dtype=np.int32)
                 else:
                     min_array_means = np.nanmin(array_means) - 1
-                    array_means = np.nan_to_num(array_means, nan=min_array_means)
+                    array_means = xpx.nan_to_num(
+                        array_means, fill_value=min_array_means
+                    )
                     rank_result = rankdata(-array_means, method="min").astype(
                         np.int32, copy=False
                     )
@@ -1212,7 +1210,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
         router.add(
             estimator=self.estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
@@ -1349,7 +1347,7 @@ class GridSearchCV(BaseSearchCV):
         - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -1362,14 +1360,15 @@ class GridSearchCV(BaseSearchCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    verbose : int
-        Controls the verbosity: the higher, the more messages.
+    verbose : int, default=0
+        Controls the verbosity of information printed during fitting, with higher
+        values yielding more detailed logging.
 
-        - >1 : the computation time for each fold and parameter candidate is
-          displayed;
-        - >2 : the score is also displayed;
-        - >3 : the fold and candidate parameter indexes are also displayed
-          together with the starting time of the computation.
+        - 0 : no messages are printed;
+        - >=1 : summary of the total number of fits;
+        - >=2 : computation time for each fold and parameter candidate;
+        - >=3 : fold indices and scores;
+        - >=10 : parameter candidate indices and START messages before each fit.
 
     pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
@@ -1447,6 +1446,9 @@ class GridSearchCV(BaseSearchCV):
             'std_score_time'     : [0.00, 0.00, 0.00, 0.01],
             'params'             : [{'kernel': 'poly', 'degree': 2}, ...],
             }
+
+        For an example of visualization and interpretation of GridSearch results,
+        see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
 
         NOTE
 
@@ -1730,7 +1732,7 @@ class RandomizedSearchCV(BaseSearchCV):
         - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -1743,14 +1745,15 @@ class RandomizedSearchCV(BaseSearchCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    verbose : int
-        Controls the verbosity: the higher, the more messages.
+    verbose : int, default = 0
+        Controls the verbosity of information printed during fitting, with higher
+        values yielding more detailed logging.
 
-        - >1 : the computation time for each fold and parameter candidate is
-          displayed;
-        - >2 : the score is also displayed;
-        - >3 : the fold and candidate parameter indexes are also displayed
-          together with the starting time of the computation.
+        - 0 : no messages are printed;
+        - >=1 : summary of the total number of fits;
+        - >=2 : computation time for each fold and parameter candidate;
+        - >=3 : fold indices and scores;
+        - >=10 : parameter candidate indices and START messages before each fit.
 
     pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
@@ -1830,6 +1833,9 @@ class RandomizedSearchCV(BaseSearchCV):
             'std_score_time'     : [0.00, 0.00, 0.00],
             'params'             : [{'kernel' : 'rbf', 'gamma' : 0.1}, ...],
             }
+
+        For an example of analysing ``cv_results_``,
+        see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
 
         NOTE
 
@@ -1948,11 +1954,11 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> logistic = LogisticRegression(solver='saga', tol=1e-2, max_iter=200,
     ...                               random_state=0)
     >>> distributions = dict(C=uniform(loc=0, scale=4),
-    ...                      penalty=['l2', 'l1'])
+    ...                      l1_ratio=[0, 1])
     >>> clf = RandomizedSearchCV(logistic, distributions, random_state=0)
     >>> search = clf.fit(iris.data, iris.target)
     >>> search.best_params_
-    {'C': np.float64(2.195...), 'penalty': 'l1'}
+    {'C': np.float64(2.195...), 'l1_ratio': 1}
     """
 
     _parameter_constraints: dict = {

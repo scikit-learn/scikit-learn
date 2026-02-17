@@ -19,11 +19,13 @@ setup_ccache() {
         echo "Setting up ccache with CCACHE_DIR=${CCACHE_DIR}"
         mkdir ${CCACHE_LINKS_DIR}
         which ccache
-        for name in gcc g++ cc c++ clang clang++ i686-linux-gnu-gcc i686-linux-gnu-c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++ x86_64-apple-darwin13.4.0-clang x86_64-apple-darwin13.4.0-clang++; do
+        for name in gcc g++ cc c++ clang clang++ i686-linux-gnu-gcc i686-linux-gnu-c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++ \
+                    x86_64-apple-darwin13.4.0-clang x86_64-apple-darwin13.4.0-clang++ \
+                    arm64-apple-darwin20.0.0-clang arm64-apple-darwin20.0.0-clang++; do
         ln -s ${CCACHE_BIN} "${CCACHE_LINKS_DIR}/${name}"
         done
         export PATH="${CCACHE_LINKS_DIR}:${PATH}"
-        ccache -M 256M
+        ccache -M 512M
 
         # Zeroing statistics so that ccache statistics are shown only for this build
         ccache -z
@@ -70,11 +72,14 @@ python_environment_install_and_activate() {
     if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
         echo "Installing development dependency wheels"
         dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
-        dev_packages="numpy scipy pandas Cython"
+        dev_packages="numpy scipy pandas"
         pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages --only-binary :all:
 
         check_packages_dev_version $dev_packages
 
+        echo "Installing Cython from latest sources"
+        # NO_CYTHON_COMPILE=true installs Cython as a pure Python package (faster install)
+        NO_CYTHON_COMPILE=true pip install https://github.com/cython/cython/archive/master.zip
         echo "Installing joblib from latest sources"
         pip install https://github.com/joblib/joblib/archive/master.zip
         echo "Installing pillow from latest sources"
@@ -97,9 +102,7 @@ scikit_learn_install() {
         # the conda environment.
         find $CONDA_PREFIX -name omp.h -delete -print
         # meson >= 1.5 detects OpenMP installed with brew and OpenMP may be installed
-        # with brew in CI runner. OpenMP was installed with brew in macOS-12 CI
-        # runners which doesn't seem to be the case in macOS-13 runners anymore,
-        # but we keep the next line just to be safe ...
+        # with brew in CI runner
         brew uninstall --ignore-dependencies --force libomp
     fi
 
@@ -129,10 +132,17 @@ scikit_learn_install() {
     ccache -s || echo "ccache not installed, skipping ccache statistics"
 }
 
+setup_playwright_if_installed() {
+    if python -c "import playwright" &>/dev/null; then
+        python -m playwright install --with-deps
+    fi
+}
+
 main() {
     pre_python_environment_install
     python_environment_install_and_activate
     scikit_learn_install
+    setup_playwright_if_installed
 }
 
 main

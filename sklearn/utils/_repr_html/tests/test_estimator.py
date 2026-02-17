@@ -11,7 +11,7 @@ import numpy as np
 import pytest
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, clone
 from sklearn.cluster import AgglomerativeClustering, Birch
 from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.datasets import load_iris
@@ -415,6 +415,7 @@ def test_estimator_html_repr_unfitted_vs_fitted():
     ],
 )
 def test_estimator_html_repr_fitted_icon(estimator):
+    estimator = clone(estimator)  # Avoid side effects from previous tests.
     """Check that we are showing the fitted status icon only once."""
     pattern = '<span class="sk-estimator-doc-link ">i<span>Not fitted</span></span>'
     assert estimator_html_repr(estimator).count(pattern) == 1

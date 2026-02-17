@@ -4,8 +4,8 @@
 from cython.parallel import prange
 import numpy as np
 
-from .common import Y_DTYPE
-from .common cimport Y_DTYPE_C
+from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
 
 
 def _update_raw_predictions(

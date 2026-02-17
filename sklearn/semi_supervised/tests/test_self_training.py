@@ -4,9 +4,12 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
+from sklearn.base import clone
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import load_iris, make_blobs
 from sklearn.ensemble import StackingClassifier
 from sklearn.exceptions import NotFittedError
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
@@ -45,10 +48,11 @@ def test_warns_k_best():
 
 @pytest.mark.parametrize(
     "estimator",
-    [KNeighborsClassifier(), SVC(gamma="scale", probability=True, random_state=0)],
+    [KNeighborsClassifier(), LogisticRegression()],
 )
 @pytest.mark.parametrize("selection_crit", ["threshold", "k_best"])
 def test_classification(estimator, selection_crit):
+    estimator = clone(estimator)  # Avoid side effects from previous tests.
     # Check classification for various parameter settings.
     # Also assert that predictions for strings and numerical labels are equal.
     # Also test for multioutput classification
@@ -113,7 +117,7 @@ def test_k_best():
 
 
 def test_sanity_classification():
-    estimator = SVC(gamma="scale", probability=True)
+    estimator = CalibratedClassifierCV(SVC(gamma="scale"), ensemble=False)
     estimator.fit(X_train[n_labeled_samples:], y_train[n_labeled_samples:])
 
     st = SelfTrainingClassifier(estimator)
@@ -139,10 +143,14 @@ def test_none_iter():
 
 @pytest.mark.parametrize(
     "estimator",
-    [KNeighborsClassifier(), SVC(gamma="scale", probability=True, random_state=0)],
+    [
+        KNeighborsClassifier(),
+        CalibratedClassifierCV(SVC(gamma="scale", random_state=0), ensemble=False),
+    ],
 )
 @pytest.mark.parametrize("y", [y_train_missing_labels, y_train_missing_strings])
 def test_zero_iterations(estimator, y):
+    estimator = clone(estimator)  # Avoid side effects from previous tests.
     # Check classification for zero iterations.
     # Fitting a SelfTrainingClassifier with zero iterations should give the
     # same results as fitting a supervised classifier.
@@ -201,8 +209,8 @@ def test_no_unlabeled():
 
 
 def test_early_stopping():
-    svc = SVC(gamma="scale", probability=True)
-    st = SelfTrainingClassifier(svc)
+    lr = LogisticRegression()
+    st = SelfTrainingClassifier(lr)
     X_train_easy = [[1], [0], [1], [0.5]]
     y_train_easy = [1, 0, -1, -1]
     # X = [[0.5]] cannot be predicted on with a high confidence, so training
@@ -263,21 +271,21 @@ def test_verbose_k_best(capsys):
 
 def test_k_best_selects_best():
     # Tests that the labels added by st really are the 10 best labels.
-    svc = SVC(gamma="scale", probability=True, random_state=0)
-    st = SelfTrainingClassifier(svc, criterion="k_best", max_iter=1, k_best=10)
+    est = LogisticRegression(random_state=0)
+    st = SelfTrainingClassifier(est, criterion="k_best", max_iter=1, k_best=10)
     has_label = y_train_missing_labels != -1
     st.fit(X_train, y_train_missing_labels)
 
     got_label = ~has_label & (st.transduction_ != -1)
 
-    svc.fit(X_train[has_label], y_train_missing_labels[has_label])
-    pred = svc.predict_proba(X_train[~has_label])
+    est.fit(X_train[has_label], y_train_missing_labels[has_label])
+    pred = est.predict_proba(X_train[~has_label])
     max_proba = np.max(pred, axis=1)
 
-    most_confident_svc = X_train[~has_label][np.argsort(max_proba)[-10:]]
+    most_confident_est = X_train[~has_label][np.argsort(max_proba)[-10:]]
     added_by_st = X_train[np.where(got_label)].tolist()
 
-    for row in most_confident_svc.tolist():
+    for row in most_confident_est.tolist():
         assert row in added_by_st
 
 
@@ -290,10 +298,10 @@ def test_estimator_meta_estimator():
 
     estimator = StackingClassifier(
         estimators=[
-            ("svc_1", SVC(probability=True)),
-            ("svc_2", SVC(probability=True)),
+            ("clf_1", LogisticRegression()),
+            ("clf_2", LogisticRegression()),
         ],
-        final_estimator=SVC(probability=True),
+        final_estimator=LogisticRegression(),
         cv=2,
     )
 
@@ -304,10 +312,10 @@ def test_estimator_meta_estimator():
 
     estimator = StackingClassifier(
         estimators=[
-            ("svc_1", SVC(probability=False)),
-            ("svc_2", SVC(probability=False)),
+            ("svc_1", SVC()),
+            ("svc_2", SVC()),
         ],
-        final_estimator=SVC(probability=False),
+        final_estimator=SVC(),
         cv=2,
     )
 
@@ -328,7 +336,7 @@ def test_self_training_estimator_attribute_error():
     # `SVC` with `probability=False` does not implement 'predict_proba' that
     # is required internally in `fit` of `SelfTrainingClassifier`. We expect
     # an AttributeError to be raised.
-    estimator = SVC(probability=False, gamma="scale")
+    estimator = SVC(gamma="scale")
     self_training = SelfTrainingClassifier(estimator)
 
     with pytest.raises(AttributeError, match="has no attribute 'predict_proba'"):
@@ -344,25 +352,6 @@ def test_self_training_estimator_attribute_error():
         self_training.fit(X_train, y_train_missing_labels).decision_function(X_train)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
-
-
-# TODO(1.8): remove in 1.8
-def test_deprecation_warning_base_estimator():
-    warn_msg = "`base_estimator` has been deprecated in 1.6 and will be removed"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        SelfTrainingClassifier(base_estimator=DecisionTreeClassifier()).fit(
-            X_train, y_train_missing_labels
-        )
-
-    error_msg = "You must pass an estimator to SelfTrainingClassifier"
-    with pytest.raises(ValueError, match=error_msg):
-        SelfTrainingClassifier().fit(X_train, y_train_missing_labels)
-
-    error_msg = "You must pass only one estimator to SelfTrainingClassifier."
-    with pytest.raises(ValueError, match=error_msg):
-        SelfTrainingClassifier(
-            base_estimator=DecisionTreeClassifier(), estimator=DecisionTreeClassifier()
-        ).fit(X_train, y_train_missing_labels)
 
 
 # Metadata routing tests

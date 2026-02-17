@@ -92,7 +92,7 @@ mode                no consistent one exists                             reals
 ==================  ===================================================  ====================  =================================
 
 :sup:`1` The Brier score is just a different name for the squared error in case of
-classification.
+classification with one-hot encoded targets.
 
 :sup:`2` The zero-one loss is only consistent but not strictly consistent for the mode.
 The zero-one loss is equivalent to one minus the accuracy score, meaning it gives
@@ -217,7 +217,7 @@ Scoring string name                    Function                                 
 'balanced_accuracy'                    :func:`metrics.balanced_accuracy_score`
 'top_k_accuracy'                       :func:`metrics.top_k_accuracy_score`
 'average_precision'                    :func:`metrics.average_precision_score`
-'neg_brier_score'                      :func:`metrics.brier_score_loss`
+'neg_brier_score'                      :func:`metrics.brier_score_loss`                   requires ``predict_proba`` support
 'f1'                                   :func:`metrics.f1_score`                           for binary targets
 'f1_micro'                             :func:`metrics.f1_score`                           micro-averaged
 'f1_macro'                             :func:`metrics.f1_score`                           macro-averaged
@@ -232,8 +232,8 @@ Scoring string name                    Function                                 
 'roc_auc_ovo'                          :func:`metrics.roc_auc_score`
 'roc_auc_ovr_weighted'                 :func:`metrics.roc_auc_score`
 'roc_auc_ovo_weighted'                 :func:`metrics.roc_auc_score`
-'d2_log_loss_score'                    :func:`metrics.d2_log_loss_score`
-'d2_brier_score'                       :func:`metrics.d2_brier_score`
+'d2_log_loss_score'                    :func:`metrics.d2_log_loss_score`                  requires ``predict_proba`` support
+'d2_brier_score'                       :func:`metrics.d2_brier_score`                     requires ``predict_proba`` support
 
 **Clustering**
 'adjusted_mutual_info_score'           :func:`metrics.adjusted_mutual_info_score`
@@ -344,7 +344,7 @@ Creating a custom scorer object
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can create your own custom scorer object using
-:func:`make_scorer` or for the most flexibility, from scratch. See below for details.
+:func:`make_scorer`.
 
 .. dropdown:: Custom scorer objects using `make_scorer`
 
@@ -393,32 +393,6 @@ You can create your own custom scorer object using
       0.69
       >>> score(clf, X, y)
       -0.69
-
-.. dropdown:: Custom scorer objects from scratch
-
-  You can generate even more flexible model scorers by constructing your own
-  scoring object from scratch, without using the :func:`make_scorer` factory.
-
-  For a callable to be a scorer, it needs to meet the protocol specified by
-  the following two rules:
-
-  - It can be called with parameters ``(estimator, X, y)``, where ``estimator``
-    is the model that should be evaluated, ``X`` is validation data, and ``y`` is
-    the ground truth target for ``X`` (in the supervised case) or ``None`` (in the
-    unsupervised case).
-
-  - It returns a floating point number that quantifies the
-    ``estimator`` prediction quality on ``X``, with reference to ``y``.
-    Again, by convention higher numbers are better, so if your scorer
-    returns loss, that value should be negated.
-
-  - Advanced: If it requires extra metadata to be passed to it, it should expose
-    a ``get_metadata_routing`` method returning the requested metadata. The user
-    should be able to set the requested metadata via a ``set_score_request``
-    method. Please see :ref:`User Guide <metadata_routing>` and :ref:`Developer
-    Guide <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>` for
-    more details.
-
 
 .. dropdown:: Using custom scorers in functions where n_jobs > 1
 
@@ -507,6 +481,7 @@ Some of these are restricted to the binary classification case:
    roc_curve
    class_likelihood_ratios
    det_curve
+   confusion_matrix_at_thresholds
 
 
 Others also work in the multiclass case:
@@ -732,7 +707,7 @@ defined as:
 With ``adjusted=True``, balanced accuracy reports the relative increase from
 :math:`\texttt{balanced-accuracy}(y, \mathbf{0}, w) =
 \frac{1}{n\_classes}`.  In the binary case, this is also known as
-`*Youden's J statistic* <https://en.wikipedia.org/wiki/Youden%27s_J_statistic>`_,
+`Youden's J statistic <https://en.wikipedia.org/wiki/Youden%27s_J_statistic>`_,
 or *informedness*.
 
 .. note::
@@ -743,7 +718,7 @@ or *informedness*.
 
     * Our definition: [Mosley2013]_, [Kelleher2015]_ and [Guyon2015]_, where
       [Guyon2015]_ adopt the adjusted version to ensure that random predictions
-      have a score of :math:`0` and perfect predictions have a score of :math:`1`..
+      have a score of :math:`0` and perfect predictions have a score of :math:`1`.
     * Class balanced accuracy as described in [Mosley2013]_: the minimum between the precision
       and the recall for each class is computed. Those values are then averaged over the total
       number of classes to get the balanced accuracy.
@@ -841,6 +816,26 @@ false negatives and true positives as follows::
   >>> tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel().tolist()
   >>> tn, fp, fn, tp
   (2, 1, 2, 3)
+
+With :func:`confusion_matrix_at_thresholds` we can get true negatives, false positives,
+false negatives and true positives for different thresholds::
+
+  >>> from sklearn.metrics import confusion_matrix_at_thresholds
+  >>> y_true = np.array([0., 0., 1., 1.])
+  >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
+  >>> tns, fps, fns, tps, thresholds = confusion_matrix_at_thresholds(y_true, y_score)
+  >>> tns
+  array([2., 1., 1., 0.])
+  >>> fps
+  array([0., 1., 1., 2.])
+  >>> fns
+  array([1., 1., 0., 0.])
+  >>> tps
+  array([1., 1., 2., 2.])
+  >>> thresholds
+  array([0.8, 0.4, 0.35, 0.1])
+
+Note that the thresholds consist of distinct `y_score` values, in decreasing order.
 
 .. rubric:: Examples
 
@@ -978,7 +973,8 @@ AP that interpolate the precision-recall curve. Currently,
 References [Davis2006]_ and [Flach2015]_ describe why a linear interpolation of
 points on the precision-recall curve provides an overly-optimistic measure of
 classifier performance. This linear interpolation is used when computing area
-under the curve with the trapezoidal rule in :func:`auc`.
+under the curve with the trapezoidal rule in :func:`auc`. [Chen2024]_
+benchmarks different interpolation strategies to demonstrate the effects.
 
 Several functions allow you to analyze the precision, recall and F-measures
 score:
@@ -1032,6 +1028,9 @@ precision-recall curve as follows.
 .. [Flach2015] P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
     <https://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
     NIPS 2015.
+.. [Chen2024] W. Chen, C. Miao, Z. Zhang, C.S. Fung, R. Wang, Y. Chen, Y. Qian, L. Cheng, K.Y. Yip, S.K
+   Tsui, Q. Cao, `Commonly used software tools produce conflicting and overly-optimistic AUPRC values
+   <https://doi.org/10.1186/s13059-024-03266-y>`_, Genome Biology 2024.
 
 Binary classification
 ^^^^^^^^^^^^^^^^^^^^^
@@ -1135,7 +1134,7 @@ Note the following behaviors when averaging:
 
 * If all labels are included, "micro"-averaging in a multiclass setting will produce
   precision, recall and :math:`F` that are all identical to accuracy.
-* "weighted" averaging may produce a F-score that is not between precision and recall.
+* "weighted" averaging may produce an F-score that is not between precision and recall.
 * "macro" averaging for F-measures is calculated as the arithmetic mean over
   per-label/class F-measures, not the harmonic mean over the arithmetic precision and
   recall means. Both calculations can be seen in the literature but are not equivalent,
@@ -1303,7 +1302,7 @@ is defined by:
   - w_{i, y_i}, 0\right\}
 
 Here is a small example demonstrating the use of the :func:`hinge_loss` function
-with a svm classifier in a binary class problem::
+with an svm classifier in a binary class problem::
 
   >>> from sklearn import svm
   >>> from sklearn.metrics import hinge_loss
@@ -1319,7 +1318,7 @@ with a svm classifier in a binary class problem::
   0.3
 
 Here is an example demonstrating the use of the :func:`hinge_loss` function
-with a svm classifier in a multiclass problem::
+with an svm classifier in a multiclass problem::
 
   >>> X = np.array([[0], [1], [2], [3]])
   >>> Y = np.array([0, 1, 2, 3])
@@ -1677,7 +1676,7 @@ class. The OvO and OvR algorithms support weighting uniformly
   where :math:`c` is the number of classes and :math:`\text{AUC}(j | k)` is the
   AUC with class :math:`j` as the positive class and class :math:`k` as the
   negative class. In general,
-  :math:`\text{AUC}(j | k) \neq \text{AUC}(k | j))` in the multiclass
+  :math:`\text{AUC}(j | k) \neq \text{AUC}(k | j)` in the multiclass
   case. This algorithm is used by setting the keyword argument ``multiclass``
   to ``'ovo'`` and ``average`` to ``'macro'``.
 
@@ -1983,18 +1982,16 @@ two above definitions to follow.
     ... )
     0.146
 
-The Brier score can be used to assess how well a classifier is calibrated.
-However, a lower Brier score loss does not always mean a better calibration.
-This is because, by analogy with the bias-variance decomposition of the mean
-squared error, the Brier score loss can be decomposed as the sum of calibration
-loss and refinement loss [Bella2012]_. Calibration loss is defined as the mean
-squared deviation from empirical probabilities derived from the slope of ROC
-segments. Refinement loss can be defined as the expected optimal loss as
-measured by the area under the optimal cost curve. Refinement loss can change
-independently from calibration loss, thus a lower Brier score loss does not
-necessarily mean a better calibrated model. "Only when refinement loss remains
-the same does a lower Brier score loss always mean better calibration"
-[Bella2012]_, [Flach2008]_.
+.. note::
+    As a strictly proper scoring rules for probabilistic predictions,
+    the Brier score assesses calibration (reliability) and
+    discriminative power (resolution) of a model, as well as the randomness of the data
+    (uncertainty) at the same time. This follows from the well-known Brier score
+    decomposition of Murphy [Murphy1973]_. As it is not clear which term dominates,
+    the score is of limited use for assessing calibration alone (unless one computes
+    each term of the decomposition). A lower Brier loss, for instance, does not
+    necessarily mean a better calibrated model, it could also mean a worse calibrated
+    model with much more discriminatory power, e.g. using many more features.
 
 .. rubric:: Examples
 
@@ -2004,19 +2001,15 @@ the same does a lower Brier score loss always mean better calibration"
 
 .. rubric:: References
 
-.. [Brier1950] G. Brier, `Verification of forecasts expressed in terms of probability
-  <ftp://ftp.library.noaa.gov/docs.lib/htdocs/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
-  Monthly weather review 78.1 (1950)
+.. [Brier1950] G. Brier (1950).
+  :doi:`"Verification of forecasts expressed in terms of probability"
+  <10.1175/1520-0493(1950)078%3C0001:VOFEIT%3E2.0.CO;2>`.
+  Monthly Weather Review 78(1), 1-3
 
-.. [Bella2012] Bella, Ferri, Hernández-Orallo, and Ramírez-Quintana
-  `"Calibration of Machine Learning Models"
-  <http://dmip.webs.upv.es/papers/BFHRHandbook2010.pdf>`_
-  in Khosrow-Pour, M. "Machine learning: concepts, methodologies, tools
-  and applications." Hershey, PA: Information Science Reference (2012).
-
-.. [Flach2008] Flach, Peter, and Edson Matsubara. `"On classification, ranking,
-  and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
-  Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum für Informatik (2008).
+.. [Murphy1973] Allan H. Murphy (1973).
+  :doi:`"A New Vector Partition of the Probability Score"
+  <10.1175/1520-0450(1973)012%3C0595:ANVPOT%3E2.0.CO;2>`
+  Journal of Applied Meteorology and Climatology, 12(4), 595-600
 
 .. _class_likelihood_ratios:
 
@@ -2211,49 +2204,45 @@ of 0.0.
     -0.552
 
 
-|details-start|
-**D2 Brier score**
-|details-split|
+.. dropdown:: D2 Brier score
 
-The :func:`d2_brier_score` function implements the special case
-of D² with the Brier score, see :ref:`brier_score_loss`, i.e.:
+  The :func:`d2_brier_score` function implements the special case
+  of D² with the Brier score, see :ref:`brier_score_loss`, i.e.:
 
-.. math::
+  .. math::
 
-  \text{dev}(y, \hat{y}) = \text{brier_score_loss}(y, \hat{y}).
+    \text{dev}(y, \hat{y}) = \text{brier_score_loss}(y, \hat{y}).
 
-This is also referred to as the Brier Skill Score (BSS).
+  This is also referred to as the Brier Skill Score (BSS) and scaled Brier score.
 
-Here are some usage examples of the :func:`d2_brier_score` function::
+  Here are some usage examples of the :func:`d2_brier_score` function::
 
-  >>> from sklearn.metrics import d2_brier_score
-  >>> y_true = [1, 1, 2, 3]
-  >>> y_pred = [
-  ...    [0.5, 0.25, 0.25],
-  ...    [0.5, 0.25, 0.25],
-  ...    [0.5, 0.25, 0.25],
-  ...    [0.5, 0.25, 0.25],
-  ... ]
-  >>> d2_brier_score(y_true, y_pred)
-  0.0
-  >>> y_true = [1, 2, 3]
-  >>> y_pred = [
-  ...    [0.98, 0.01, 0.01],
-  ...    [0.01, 0.98, 0.01],
-  ...    [0.01, 0.01, 0.98],
-  ... ]
-  >>> d2_brier_score(y_true, y_pred)
-  0.9991
-  >>> y_true = [1, 2, 3]
-  >>> y_pred = [
-  ...    [0.1, 0.6, 0.3],
-  ...    [0.1, 0.6, 0.3],
-  ...    [0.4, 0.5, 0.1],
-  ... ]
-  >>> d2_brier_score(y_true, y_pred)
-  -0.370...
-
-|details-end|
+    >>> from sklearn.metrics import d2_brier_score
+    >>> y_true = [1, 1, 2, 3]
+    >>> y_pred = [
+    ...    [0.5, 0.25, 0.25],
+    ...    [0.5, 0.25, 0.25],
+    ...    [0.5, 0.25, 0.25],
+    ...    [0.5, 0.25, 0.25],
+    ... ]
+    >>> d2_brier_score(y_true, y_pred)
+    0.0
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [
+    ...    [0.98, 0.01, 0.01],
+    ...    [0.01, 0.98, 0.01],
+    ...    [0.01, 0.01, 0.98],
+    ... ]
+    >>> d2_brier_score(y_true, y_pred)
+    0.9991
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [
+    ...    [0.1, 0.6, 0.3],
+    ...    [0.1, 0.6, 0.3],
+    ...    [0.4, 0.5, 0.1],
+    ... ]
+    >>> d2_brier_score(y_true, y_pred)
+    -0.370...
 
 .. _multilabel_ranking_metrics:
 
@@ -2992,7 +2981,7 @@ quantile regressor via cross-validation:
   ...     random_state=0,
   ... )
   >>> cross_val_score(estimator, X, y, cv=5, scoring=mean_pinball_loss_95p)
-  array([13.6, 9.7, 23.3, 9.5, 10.4])
+  array([14.3,  9.8, 23.9,  9.4, 10.8])
 
 It is also possible to build scorer objects for hyper-parameter tuning. The
 sign of the loss must be switched to ensure that greater means better as

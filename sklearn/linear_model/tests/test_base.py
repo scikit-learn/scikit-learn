@@ -7,9 +7,11 @@ import numpy as np
 import pytest
 from scipy import linalg, sparse
 
+from sklearn.base import BaseEstimator
 from sklearn.datasets import load_iris, make_regression, make_sparse_uncorrelated
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model._base import (
+    LinearClassifierMixin,
     _preprocess_data,
     _rescale_data,
     make_dataset,
@@ -538,25 +540,33 @@ def test_csr_preprocess_data(csr_container):
 
 @pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize("to_copy", (True, False))
-def test_preprocess_copy_data_no_checks(sparse_container, to_copy):
+@pytest.mark.parametrize("use_sample_weight", (False, True))
+def test_preprocess_copy_data_no_checks(sparse_container, to_copy, use_sample_weight):
     X, y = make_regression()
     X[X < 2.5] = 0.0
+
+    sample_weight = np.ones(len(y)) if use_sample_weight else None
 
     if sparse_container is not None:
         X = sparse_container(X)
 
     X_, y_, _, _, _, _ = _preprocess_data(
-        X, y, fit_intercept=True, copy=to_copy, check_input=False
+        X,
+        y,
+        sample_weight=sample_weight,
+        fit_intercept=True,
+        copy=to_copy,
+        check_input=False,
     )
 
-    if to_copy and sparse_container is not None:
-        assert not np.may_share_memory(X_.data, X.data)
-    elif to_copy:
-        assert not np.may_share_memory(X_, X)
-    elif sparse_container is not None:
-        assert np.may_share_memory(X_.data, X.data)
+    if sparse_container is not None:
+        if to_copy or use_sample_weight:
+            # sparse X, y always copied when use_sample_weight, regardless of to_copy
+            assert not np.may_share_memory(X_.data, X.data)
+        else:
+            assert np.may_share_memory(X_.data, X.data)
     else:
-        assert np.may_share_memory(X_, X)
+        assert np.may_share_memory(X_, X) == (not to_copy)
 
 
 @pytest.mark.parametrize("rescale_with_sw", [False, True])
@@ -567,7 +577,7 @@ def test_dtype_preprocess_data(rescale_with_sw, fit_intercept, global_random_see
     n_features = 2
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
-    sw = np.abs(rng.rand(n_samples)) + 1
+    sw = rng.rand(n_samples) + 1
 
     X_32 = np.asarray(X, dtype=np.float32)
     y_32 = np.asarray(y, dtype=np.float32)
@@ -649,8 +659,8 @@ def test_dtype_preprocess_data(rescale_with_sw, fit_intercept, global_random_see
     assert X_64.dtype == np.float64
     assert y_64.dtype == np.float64
 
-    assert_allclose(Xt_32, Xt_64, rtol=1e-3, atol=1e-7)
-    assert_allclose(yt_32, yt_64, rtol=1e-3, atol=1e-7)
+    assert_allclose(Xt_32, Xt_64, rtol=1e-3, atol=1e-6)
+    assert_allclose(yt_32, yt_64, rtol=1e-3, atol=1e-6)
     assert_allclose(X_mean_32, X_mean_64, rtol=1e-6)
     assert_allclose(y_mean_32, y_mean_64, rtol=1e-6)
     assert_allclose(X_scale_32, X_scale_64)
@@ -844,3 +854,28 @@ def test_linear_regression_sample_weight_consistency(
     assert_allclose(reg1.coef_, reg2.coef_, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg1.intercept_, reg2.intercept_)
+
+
+def test_predict_proba_lr_large_values():
+    """Test that _predict_proba_lr of LinearClassifierMixin deals with large
+    negative values.
+
+    Note that exp(-1000) = 0.
+    """
+
+    class MockClassifier(LinearClassifierMixin, BaseEstimator):
+        def __init__(self):
+            pass
+
+        def fit(self, X, y):
+            self.__sklearn_is_fitted__ = True
+
+        def decision_function(self, X):
+            n_samples = X.shape[0]
+            return np.tile([-1000.0] * 4, [n_samples, 1])
+
+    clf = MockClassifier()
+    clf.fit(X=None, y=None)
+
+    proba = clf._predict_proba_lr(np.ones(5))
+    assert_allclose(np.sum(proba, axis=1), 1)

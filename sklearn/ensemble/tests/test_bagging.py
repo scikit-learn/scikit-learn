@@ -14,6 +14,7 @@ import pytest
 
 from sklearn import config_context
 from sklearn.base import BaseEstimator
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import (
@@ -125,9 +126,8 @@ def test_classification():
 )
 def test_sparse_classification(sparse_container, params, method):
     # Check classification for various parameter settings on sparse input.
-
-    class CustomSVC(SVC):
-        """SVC variant that records the nature of the training set"""
+    class CustomClassifier(LogisticRegression):
+        """LogisticRegression variant that records the nature of the training set"""
 
         def fit(self, X, y):
             super().fit(X, y)
@@ -141,17 +141,19 @@ def test_sparse_classification(sparse_container, params, method):
 
     X_train_sparse = sparse_container(X_train)
     X_test_sparse = sparse_container(X_test)
+
     # Trained on sparse format
     sparse_classifier = BaggingClassifier(
-        estimator=CustomSVC(kernel="linear", decision_function_shape="ovr"),
+        estimator=CustomClassifier(),
         random_state=1,
         **params,
     ).fit(X_train_sparse, y_train)
+    print(sparse_classifier, method)
     sparse_results = getattr(sparse_classifier, method)(X_test_sparse)
 
     # Trained on dense format
     dense_classifier = BaggingClassifier(
-        estimator=CustomSVC(kernel="linear", decision_function_shape="ovr"),
+        estimator=CustomClassifier(),
         random_state=1,
         **params,
     ).fit(X_train, y_train)
@@ -371,7 +373,10 @@ def test_oob_score_classification():
         iris.data, iris.target, random_state=rng
     )
 
-    for estimator in [DecisionTreeClassifier(), SVC()]:
+    for estimator in [
+        DecisionTreeClassifier(),
+        CalibratedClassifierCV(SVC(), ensemble=False),
+    ]:
         clf = BaggingClassifier(
             estimator=estimator,
             n_estimators=100,
@@ -463,6 +468,9 @@ def test_error():
     assert not hasattr(BaggingClassifier(base).fit(X, y), "decision_function")
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_parallel_classification():
     # Check parallel classification.
     X_train, X_test, y_train, y_test = train_test_split(
@@ -504,6 +512,9 @@ def test_parallel_classification():
     assert_array_almost_equal(decisions1, decisions3)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_parallel_regression():
     # Check parallel regression.
     rng = check_random_state(0)
@@ -542,6 +553,9 @@ def test_gridsearch():
     GridSearchCV(BaggingClassifier(SVC()), parameters, scoring="roc_auc").fit(X, y)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_estimator():
     # Check estimator and its default values.
     rng = check_random_state(0)
@@ -700,16 +714,17 @@ def test_warning_bootstrap_sample_weight():
 def test_invalid_sample_weight_max_samples_bootstrap_combinations():
     X, y = iris.data, iris.target
 
-    # Case 1: small weights and fractional max_samples would lead to sampling
-    # less than 1 sample, which is not allowed.
+    # Case 1: small weights and fractional max_samples lead to a small
+    # number of bootstrap samples, which raises a UserWarning.
     clf = BaggingClassifier(max_samples=1.0)
     sample_weight = np.ones_like(y) / (2 * len(y))
     expected_msg = (
-        r"The total sum of sample weights is 0.5(\d*), which prevents resampling with "
-        r"a fractional value for max_samples=1\.0\. Either pass max_samples as an "
-        r"integer or use a larger sample_weight\."
+        "Using the fractional value max_samples=1.0 when "
+        r"the total sum of sample weights is 0.5(\d*) "
+        r"results in a low number \(1\) of bootstrap samples. "
+        "We recommend passing `max_samples` as an integer."
     )
-    with pytest.raises(ValueError, match=expected_msg):
+    with pytest.warns(UserWarning, match=expected_msg):
         clf.fit(X, y, sample_weight=sample_weight)
 
     # Case 2: large weights and bootstrap=False would lead to sampling without

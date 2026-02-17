@@ -2,11 +2,9 @@
 
 import os
 import re
-import sys
 import tempfile
 import warnings
 from functools import partial
-from io import StringIO
 from time import sleep
 
 import numpy as np
@@ -14,7 +12,7 @@ import pytest
 from scipy.sparse import issparse
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator, ClassifierMixin, clone
+from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
     load_diabetes,
@@ -24,12 +22,12 @@ from sklearn.datasets import (
     make_multilabel_classification,
     make_regression,
 )
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.exceptions import FitFailedWarning, UnsetMetadataPassedError
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import (
     LogisticRegression,
-    PassiveAggressiveClassifier,
     Ridge,
     RidgeClassifier,
     SGDClassifier,
@@ -84,8 +82,15 @@ from sklearn.tests.metadata_routing_common import (
     check_recorded_metadata,
 )
 from sklearn.utils import shuffle
+from sklearn.utils._array_api import (
+    _atol_for_type,
+    _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
@@ -1209,7 +1214,7 @@ def test_learning_curve():
         assert_array_almost_equal(test_scores.mean(axis=1), np.linspace(0.1, 1.0, 10))
 
         # Cannot use assert_array_almost_equal for fit and score times because
-        # the values are hardware-dependant
+        # the values are hardware-dependent
         assert fit_times.dtype == "float64"
         assert score_times.dtype == "float64"
 
@@ -1248,7 +1253,7 @@ def test_learning_curve_unsupervised():
     assert_array_almost_equal(test_scores.mean(axis=1), np.linspace(0.1, 1.0, 10))
 
 
-def test_learning_curve_verbose():
+def test_learning_curve_verbose(capsys):
     X, y = make_classification(
         n_samples=30,
         n_features=1,
@@ -1259,19 +1264,8 @@ def test_learning_curve_verbose():
         random_state=0,
     )
     estimator = MockImprovingEstimator(20)
-
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        train_sizes, train_scores, test_scores = learning_curve(
-            estimator, X, y, cv=3, verbose=1
-        )
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
-
-    assert "[learning_curve]" in out
+    learning_curve(estimator, X, y, cv=3, verbose=1)
+    assert "[learning_curve]" in capsys.readouterr().out
 
 
 def test_learning_curve_incremental_learning_not_possible():
@@ -1351,7 +1345,7 @@ def test_learning_curve_batch_and_incremental_learning_are_equal():
         random_state=0,
     )
     train_sizes = np.linspace(0.2, 1.0, 5)
-    estimator = PassiveAggressiveClassifier(max_iter=1, tol=None, shuffle=False)
+    estimator = SGDClassifier(max_iter=1, tol=None, shuffle=False)
 
     train_sizes_inc, train_scores_inc, test_scores_inc = learning_curve(
         estimator,
@@ -1470,7 +1464,9 @@ def test_learning_curve_with_shuffle():
     groups = np.array([1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 4, 4, 4, 4])
     # Splits on these groups fail without shuffle as the first iteration
     # of the learning curve doesn't contain label 4 in the training set.
-    estimator = PassiveAggressiveClassifier(max_iter=5, tol=None, shuffle=False)
+    estimator = SGDClassifier(
+        max_iter=5, tol=None, shuffle=False, learning_rate="pa1", eta0=1
+    )
 
     cv = GroupKFold(n_splits=2)
     train_sizes_batch, train_scores_batch, test_scores_batch = learning_curve(
@@ -2468,35 +2464,6 @@ def test_cross_validate_return_indices(global_random_seed):
 # ======================================================
 
 
-# TODO(1.8): remove `learning_curve`, `validation_curve` and `permutation_test_score`.
-@pytest.mark.parametrize(
-    "func, extra_args",
-    [
-        (learning_curve, {}),
-        (permutation_test_score, {}),
-        (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
-    ],
-)
-def test_fit_param_deprecation(func, extra_args):
-    """Check that we warn about deprecating `fit_params`."""
-    with pytest.warns(FutureWarning, match="`fit_params` is deprecated"):
-        func(
-            estimator=ConsumingClassifier(), X=X, y=y, cv=2, fit_params={}, **extra_args
-        )
-
-    with pytest.raises(
-        ValueError, match="`params` and `fit_params` cannot both be provided"
-    ):
-        func(
-            estimator=ConsumingClassifier(),
-            X=X,
-            y=y,
-            fit_params={},
-            params={},
-            **extra_args,
-        )
-
-
 @pytest.mark.parametrize(
     "func, extra_args",
     [
@@ -2737,3 +2704,44 @@ def test_learning_curve_exploit_incremental_learning_routing():
 
 # End of metadata routing tests
 # =============================
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [Ridge(), LinearDiscriminantAnalysis()],
+    ids=["Ridge", "LinearDiscriminantAnalysis"],
+)
+@pytest.mark.parametrize("cv", [None, 3, 5])
+@pytest.mark.parametrize(
+    "namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_cross_val_predict_array_api_compliance(
+    estimator, cv, namespace, device_, dtype_name
+):
+    """Test that `cross_val_predict` functions correctly with the array API
+    with both a classifier and a regressor."""
+
+    xp = _array_api_for_tests(namespace, device_)
+    if is_classifier(estimator):
+        X, y = make_classification(
+            n_samples=1000, n_features=5, n_classes=3, n_informative=3, random_state=42
+        )
+    else:
+        X, y = make_regression(
+            n_samples=1000, n_features=5, n_informative=3, random_state=42
+        )
+
+    X_np = X.astype(dtype_name)
+    y_np = y.astype(dtype_name)
+    X_xp = xp.asarray(X_np, device=device_)
+    y_xp = xp.asarray(y_np, device=device_)
+
+    with config_context(array_api_dispatch=True):
+        pred_xp = cross_val_predict(estimator, X_xp, y_xp, cv=cv)
+
+    pred_np = cross_val_predict(estimator, X_np, y_np, cv=cv)
+    assert_allclose(
+        _convert_to_numpy(pred_xp, xp), pred_np, atol=_atol_for_type(dtype_name)
+    )

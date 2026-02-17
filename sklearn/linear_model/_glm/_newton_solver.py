@@ -289,8 +289,8 @@ class NewtonSolver(ABC):
             warnings.warn(
                 (
                     f"Line search of Newton solver {self.__class__.__name__} at"
-                    f" iteration #{self.iteration} did no converge after 21 line search"
-                    " refinement iterations. It will now resort to lbfgs instead."
+                    f" iteration #{self.iteration} did not converge after 21 line "
+                    "search refinement iterations. It will now resort to lbfgs instead."
                 ),
                 ConvergenceWarning,
             )
@@ -610,7 +610,7 @@ class NewtonCholeskySolver(NewtonSolver):
             # Instead, we resort to lbfgs.
             if self.verbose:
                 print(
-                    "  The inner solver stumbled upon an singular or ill-conditioned "
+                    "  The inner solver stumbled upon a singular or ill-conditioned "
                     "Hessian matrix and resorts to LBFGS instead."
                 )
             self.use_fallback_lbfgs_solve = True

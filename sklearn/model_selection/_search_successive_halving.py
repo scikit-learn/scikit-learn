@@ -370,6 +370,13 @@ class BaseSuccessiveHalving(BaseSearchCV):
     def _generate_candidate_params(self):
         pass
 
+    def __sklearn_tags__(self):
+        # TODO: remove this when we add array API support to
+        # `BaseSuccessiveHalving`
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = False
+        return tags
+
 
 class HalvingGridSearchCV(BaseSuccessiveHalving):
     """Search over specified parameter values with successive halving.
@@ -461,7 +468,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -584,6 +591,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         for analysing the results of a search.
         Please refer to the :ref:`User guide<successive_halving_cv_results>`
         for details.
+        For an example of analysing ``cv_results_``,
+        see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
 
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
@@ -818,7 +827,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -943,6 +952,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         for analysing the results of a search.
         Please refer to the :ref:`User guide<successive_halving_cv_results>`
         for details.
+        For an example of analysing ``cv_results_``,
+        see :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`.
 
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
