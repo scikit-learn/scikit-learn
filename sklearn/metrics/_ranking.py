@@ -228,7 +228,6 @@ def average_precision_score(
     0.77
     """
     xp, _, device = get_namespace_and_device(y_score)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
@@ -253,7 +252,8 @@ def average_precision_score(
         return float(max(0.0, -xp.sum(xp.diff(recall) * precision[:-1])))
 
     y_type = type_of_target(y_true, input_name="y_true")
-    present_labels = xp.unique_values(y_true)
+    xp_y_true = get_namespace(y_true)
+    present_labels = xp_y_true.unique_values(y_true)
 
     if y_type == "binary":
         if present_labels.shape[0] == 2 and pos_label not in present_labels:
@@ -281,6 +281,8 @@ def average_precision_score(
                 "`y_true` contains multiple classes. Got "
                 f"`y_score.shape={y_score.shape}`."
             )
+
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     average_precision = partial(
         _binary_uninterpolated_average_precision, pos_label=pos_label, xp=xp
