@@ -475,7 +475,7 @@ def test_fastica_deflation_logcosh_vectorization():
     ica_custom = FastICA(
         algorithm="deflation",
         fun="logcosh",
-        fun_args={"alpha": 0.5},
+        fun_args={"alpha": 1.5},
         random_state=rng,
         tol=1e-5,
     )
