@@ -470,7 +470,7 @@ def test_fastica_deflation_logcosh_vectorization():
     ica_default.fit(X)
     assert ica_default.n_iter_ > 0
 
-    # 2. Test the custom alpha path (e.g., alpha=0.5)
+    # 2. Test the custom alpha path (e.g., alpha=1.5)
     # This ensures the 'else' branch in our optimization is covered
     ica_custom = FastICA(
         algorithm="deflation",
