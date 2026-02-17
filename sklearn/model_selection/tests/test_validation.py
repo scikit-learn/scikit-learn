@@ -2543,7 +2543,7 @@ def test_passed_unrequested_metadata(func, extra_args):
         (cross_val_score, {}),
         (cross_val_predict, {}),
         (learning_curve, {}),
-        (permutation_test_score, {}),
+        (permutation_test_score, {"n_permutations": 20}),
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
@@ -2616,7 +2616,7 @@ def test_validation_functions_routing(func, extra_args):
         "cross_validate": ("_score", "__call__"),
         "cross_val_score": ("_score", "__call__"),
         "learning_curve": ("_score", "__call__"),
-        "permutation_test_score": ("_score", "_permutation_test_score"),
+        "permutation_test_score": ("_score", "__call__"),
         "validation_curve": ("_score", "__call__"),
     }
     for _scorer in scorer_registry:
@@ -2653,7 +2653,7 @@ def test_validation_functions_routing(func, extra_args):
         "cross_val_score": ("fit", "_fit_and_score"),
         "cross_val_predict": ("fit", "_fit_and_predict"),
         "learning_curve": ("fit", "_fit_and_score"),
-        "permutation_test_score": ("fit", "_fit_and_score"),
+        "permutation_test_score": ("fit", "_permutation_test_score"),
         "validation_curve": ("fit", "_fit_and_score"),
     }
     for _estimator in estimator_registry:
