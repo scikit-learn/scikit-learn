@@ -10,7 +10,7 @@ from urllib.parse import quote
 from sklearn.externals._numpydoc import docscrape
 
 
-def _generate_link_to_param_doc(estimator_class, param_name, doc_link):
+def generate_link_to_param_doc(estimator_class, param_name, doc_link):
     """URL to the relevant section of the docstring using a Text Fragment
 
     https://developer.mozilla.org/en-US/docs/Web/URI/Reference/Fragment/Text_fragments
@@ -33,11 +33,11 @@ def _generate_link_to_param_doc(estimator_class, param_name, doc_link):
 
 
 @lru_cache
-def _scrape_estimator_docstring(docstring):
+def scrape_estimator_docstring(docstring):
     return docscrape.NumpyDocString(docstring)
 
 
-def _get_docstring(estimator_class, section_name, item):
+def get_docstring(estimator_class, section_name, field):
     """Extract and format docstring information for a specific item.
 
     Parses the estimator's docstring to retrieve documentation for a
@@ -63,7 +63,7 @@ def _get_docstring(estimator_class, section_name, item):
     """
     estimator_class_docs = inspect.getdoc(estimator_class)
     if estimator_class_docs and (
-        structured_docstring := _scrape_estimator_docstring(estimator_class_docs)
+        structured_docstring := scrape_estimator_docstring(estimator_class_docs)
     ):
         docstring_map = {
             item_docstring.name: item_docstring
@@ -71,7 +71,7 @@ def _get_docstring(estimator_class, section_name, item):
         }
     else:
         docstring_map = {}
-    if item_numpydoc := docstring_map.get(item, None):
+    if item_numpydoc := docstring_map.get(field, None):
         item_description = (
             f"{html.escape(item_numpydoc.name)}: "
             f"{html.escape(item_numpydoc.type)}<br><br>"
