@@ -1540,6 +1540,17 @@ class make_column_selector:
         A selection of dtypes to exclude. For more details, see
         :meth:`pandas.DataFrame.select_dtypes`.
 
+    cardinality : {"low", "high"}, default=None
+        Select columns based on the number of unique values. When set to
+        "low", columns with a cardinality less than or equal to
+        ``cardinality_threshold`` are selected. When set to "high", columns
+        with a cardinality strictly greater than ``cardinality_threshold``
+        are selected.
+
+    cardinality_threshold : int, default=7
+        Threshold used to compare a column's cardinality when
+        ``cardinality`` is not None.
+
     Returns
     -------
     selector : callable
@@ -1573,10 +1584,36 @@ class make_column_selector:
            [ 0.90453403,  0.        ,  0.        ,  1.        ]])
     """
 
-    def __init__(self, pattern=None, *, dtype_include=None, dtype_exclude=None):
+    def __init__(
+        self,
+        pattern=None,
+        *,
+        dtype_include=None,
+        dtype_exclude=None,
+        cardinality=None,
+        cardinality_threshold=7,
+    ):
         self.pattern = pattern
         self.dtype_include = dtype_include
         self.dtype_exclude = dtype_exclude
+        self.cardinality = cardinality
+        self.cardinality_threshold = cardinality_threshold
+
+        if cardinality not in (None, "low", "high"):
+            raise ValueError(
+                "cardinality must be None or one of {'low', 'high'}, "
+                f"got {cardinality!r}."
+            )
+        if cardinality is not None:
+            if not isinstance(cardinality_threshold, Integral):
+                raise ValueError(
+                    "cardinality_threshold must be an integer when "
+                    "cardinality is set."
+                )
+            if cardinality_threshold < 1:
+                raise ValueError(
+                    "cardinality_threshold must be >= 1 when cardinality is set."
+                )
 
     def __call__(self, df):
         """Callable for column selection to be used by a
@@ -1599,6 +1636,12 @@ class make_column_selector:
         cols = df_row.columns
         if self.pattern is not None:
             cols = cols[cols.str.contains(self.pattern, regex=True)]
+        if self.cardinality is not None and len(cols) > 0:
+            n_unique = df[cols].nunique()
+            if self.cardinality == "high":
+                cols = n_unique[n_unique > self.cardinality_threshold].index
+            else:
+                cols = n_unique[n_unique <= self.cardinality_threshold].index
         return cols.tolist()
 
 

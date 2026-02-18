@@ -1437,6 +1437,46 @@ def test_make_column_selector_with_select_dtypes(cols, pattern, include, exclude
     assert_array_equal(selector(X_df), cols)
 
 
+def test_make_column_selector_with_cardinality():
+    pd = pytest.importorskip("pandas")
+
+    X_df = pd.DataFrame(
+        {
+            "col_low": ["a", "a", "b", "b"],
+            "col_high": ["a", "b", "c", "d"],
+            "col_num": [1, 2, 3, 4],
+        }
+    )
+
+    low_selector = make_column_selector(
+        dtype_include=["object", "string"],
+        cardinality="low",
+        cardinality_threshold=2,
+    )
+    high_selector = make_column_selector(
+        dtype_include=["object", "string"],
+        cardinality="high",
+        cardinality_threshold=2,
+    )
+
+    assert_array_equal(low_selector(X_df), ["col_low"])
+    assert_array_equal(high_selector(X_df), ["col_high"])
+
+
+def test_make_column_selector_cardinality_validation():
+    msg = "cardinality must be None or one of {'low', 'high'}"
+    with pytest.raises(ValueError, match=msg):
+        make_column_selector(cardinality="medium")
+
+    msg = "cardinality_threshold must be an integer when cardinality is set"
+    with pytest.raises(ValueError, match=msg):
+        make_column_selector(cardinality="low", cardinality_threshold=1.5)
+
+    msg = "cardinality_threshold must be >= 1 when cardinality is set"
+    with pytest.raises(ValueError, match=msg):
+        make_column_selector(cardinality="high", cardinality_threshold=0)
+
+
 def test_column_transformer_with_make_column_selector():
     # Functional test for column transformer + column selector
     pd = pytest.importorskip("pandas")

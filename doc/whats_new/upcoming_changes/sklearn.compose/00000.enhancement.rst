@@ -1,0 +1,3 @@
+- Added cardinality-based selection options to :func:`compose.make_column_selector`
+  via the new ``cardinality`` and ``cardinality_threshold`` parameters.
+  By :user:`nandanadileep`.
