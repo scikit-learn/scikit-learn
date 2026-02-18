@@ -149,6 +149,26 @@ pipeline slicing to get the feature names going into each step::
       >>> pipe[:-1].get_feature_names_out(iris.feature_names)
       array(['petal length (cm)', 'petal width (cm)'], ...)
 
+Dataframe outputs with `set_output`
+..................................
+
+Transformers and composite estimators such as :class:`Pipeline` and
+:class:`~sklearn.compose.ColumnTransformer` can be configured to return pandas
+or polars dataframes using the :meth:`set_output` API. This keeps feature names
+attached to the transformed data via :term:`get_feature_names_out`::
+
+    >>> import pandas as pd
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> X, y = load_iris(return_X_y=True, as_frame=True)
+    >>> pipe = make_pipeline(StandardScaler()).set_output(transform="pandas")
+    >>> X_scaled = pipe.fit_transform(X, y)
+    >>> X_scaled.head()
+
+See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py` for a
+complete example.
+
 .. _pipeline_nested_parameters:
 
 Access to nested parameters

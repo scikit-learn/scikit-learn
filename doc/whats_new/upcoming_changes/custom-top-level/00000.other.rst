@@ -1,0 +1,2 @@
+- Added a short user guide section on the `set_output` API in the pipelines and
+  composite estimators documentation. By :user:`nandanadileep`.
