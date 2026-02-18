@@ -356,6 +356,6 @@ ci = test_coverage_bs.confidence_interval
 print(f"Test coverage 90% interval: [{ci.low:.1%}, {ci.high:.1%}]")
 
 # %%
-# The calibration of the tuned models is sadly not well-calibrated on the test
-# set: the width of the estimated confidence interval is too narrow even when
-# taking it's variations into account.
+# The confidence interval of the tuned models is sadly not well-calibrated on
+# the test set: the width of the estimated confidence interval is too narrow
+# even when taking it's variations into account.
