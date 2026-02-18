@@ -390,8 +390,6 @@ def _spectral_embedding(
     elif eigen_solver == "amg":
         # Use AMG to get a preconditioner and speed up the eigenvalue
         # problem.
-        if not sparse.issparse(laplacian):
-            warnings.warn("AMG works better for sparse matrices")
         laplacian = check_array(
             laplacian, dtype=[np.float64, np.float32], accept_sparse=True
         )
@@ -435,9 +433,8 @@ def _spectral_embedding(
             laplacian, dtype=[np.float64, np.float32], accept_sparse=True
         )
         if n_nodes < 5 * n_components + 1:
-            # see note above under arpack why lobpcg has problems with small
-            # number of nodes
-            # lobpcg will fallback to eigh, so we short circuit it
+            # See note above why lobpcg has problems with small number of nodes.
+            # lobpcg will fallback to eigh, so we short-circuit it
             if sparse.issparse(laplacian):
                 laplacian = laplacian.toarray()
             _, diffusion_map = eigh(laplacian, check_finite=False)
