@@ -20,31 +20,60 @@ ctypedef fused integral2:
     int64_t
 
 
-def csr_row_norms(X):
-    """Squared L2 norm of each row in CSR matrix X."""
-    if X.dtype not in [np.float32, np.float64]:
-        X = X.astype(np.float64)
-    return _sqeuclidean_row_norms_sparse(X.data, X.indptr)
+def _sqeuclidean_outer_norms(
+    const floating[::1] data,
+    const integral[::1] indptr,
+):
+    cdef:
+        integral n_outer = indptr.shape[0] - 1
+        integral i, j
+
+    dtype = np.float32 if floating is float else np.float64
+
+    cdef floating[::1] squared_norms = np.zeros(n_outer, dtype=dtype)
+
+    with nogil:
+        for i in range(n_outer):
+            for j in range(indptr[i], indptr[i + 1]):
+                squared_norms[i] += data[j] * data[j]
+
+    return np.asarray(squared_norms)
 
 
 def _sqeuclidean_row_norms_sparse(
     const floating[::1] X_data,
     const integral[::1] X_indptr,
 ):
-    cdef:
-        integral n_samples = X_indptr.shape[0] - 1
-        integral i, j
+    """
+    Compute squared Euclidean norms over rows of a CSR sparse matrix
+    by redirecting to the generic outer norms function.
+    """
+    return _sqeuclidean_outer_norms(X_data, X_indptr)
 
-    dtype = np.float32 if floating is float else np.float64
 
-    cdef floating[::1] squared_row_norms = np.zeros(n_samples, dtype=dtype)
+def _sqeuclidean_col_norms_csc(
+    const floating[::1] X_data,
+    const integral[::1] X_indptr,
+):
+    """
+    Compute squared Euclidean norms over columns of a CSC sparse matrix
+    by redirecting to the generic outer norms function.
+    """
+    return _sqeuclidean_outer_norms(X_data, X_indptr)
 
-    with nogil:
-        for i in range(n_samples):
-            for j in range(X_indptr[i], X_indptr[i + 1]):
-                squared_row_norms[i] += X_data[j] * X_data[j]
 
-    return np.asarray(squared_row_norms)
+def csr_row_norms(X):
+    """Squared L2 norm of each row in CSR matrix X."""
+    if X.dtype not in [np.float32, np.float64]:
+        X = X.astype(np.float64)
+    return _sqeuclidean_outer_norms(X.data, X.indptr)
+
+
+def csc_col_norms(X):
+    """Squared L2 norm of each column in CSC matrix X."""
+    if X.dtype not in [np.float32, np.float64]:
+        X = X.astype(np.float64)
+    return _sqeuclidean_outer_norms(X.data, X.indptr)
 
 
 def csr_mean_variance_axis0(X, weights=None, return_sum_weights=False):
