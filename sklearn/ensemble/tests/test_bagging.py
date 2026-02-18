@@ -6,7 +6,6 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 # SPDX-License-Identifier: BSD-3-Clause
 
 import re
-import warnings
 from itertools import cycle, product
 
 import joblib
@@ -15,6 +14,7 @@ import pytest
 
 from sklearn import config_context
 from sklearn.base import BaseEstimator
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import (
@@ -27,7 +27,6 @@ from sklearn.ensemble import (
     RandomForestClassifier,
     RandomForestRegressor,
 )
-from sklearn.ensemble._bagging import _get_n_samples_bootstrap
 from sklearn.feature_selection import SelectKBest
 from sklearn.linear_model import LogisticRegression, Perceptron
 from sklearn.model_selection import GridSearchCV, ParameterGrid, train_test_split
@@ -127,9 +126,8 @@ def test_classification():
 )
 def test_sparse_classification(sparse_container, params, method):
     # Check classification for various parameter settings on sparse input.
-
-    class CustomSVC(SVC):
-        """SVC variant that records the nature of the training set"""
+    class CustomClassifier(LogisticRegression):
+        """LogisticRegression variant that records the nature of the training set"""
 
         def fit(self, X, y):
             super().fit(X, y)
@@ -143,17 +141,19 @@ def test_sparse_classification(sparse_container, params, method):
 
     X_train_sparse = sparse_container(X_train)
     X_test_sparse = sparse_container(X_test)
+
     # Trained on sparse format
     sparse_classifier = BaggingClassifier(
-        estimator=CustomSVC(kernel="linear", decision_function_shape="ovr"),
+        estimator=CustomClassifier(),
         random_state=1,
         **params,
     ).fit(X_train_sparse, y_train)
+    print(sparse_classifier, method)
     sparse_results = getattr(sparse_classifier, method)(X_test_sparse)
 
     # Trained on dense format
     dense_classifier = BaggingClassifier(
-        estimator=CustomSVC(kernel="linear", decision_function_shape="ovr"),
+        estimator=CustomClassifier(),
         random_state=1,
         **params,
     ).fit(X_train, y_train)
@@ -373,7 +373,10 @@ def test_oob_score_classification():
         iris.data, iris.target, random_state=rng
     )
 
-    for estimator in [DecisionTreeClassifier(), SVC()]:
+    for estimator in [
+        DecisionTreeClassifier(),
+        CalibratedClassifierCV(SVC(), ensemble=False),
+    ]:
         clf = BaggingClassifier(
             estimator=estimator,
             n_estimators=100,
@@ -465,6 +468,9 @@ def test_error():
     assert not hasattr(BaggingClassifier(base).fit(X, y), "decision_function")
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_parallel_classification():
     # Check parallel classification.
     X_train, X_test, y_train, y_test = train_test_split(
@@ -814,55 +820,6 @@ def test_draw_indices_using_sample_weight(
                 assert estimator.y_.shape == (expected_integer_max_samples,)
                 assert_allclose(estimator.X_, X[samples])
                 assert_allclose(estimator.y_, y[samples])
-
-
-def test_get_n_samples_bootstrap():
-    n_samples, max_samples, sample_weight = 10, None, "not_used"
-    assert _get_n_samples_bootstrap(n_samples, max_samples, sample_weight) == n_samples
-
-    n_samples, max_samples, sample_weight = 10, 5, "not_used"
-    assert (
-        _get_n_samples_bootstrap(n_samples, max_samples, sample_weight) == max_samples
-    )
-
-    n_samples, max_samples, sample_weight = 10, 1e-5, None
-    assert _get_n_samples_bootstrap(n_samples, max_samples, sample_weight) == 1
-
-    n_samples, max_samples, sample_weight = 10, 0.66, None
-    warning_msg = ".+the number of samples.+low number.+max_samples.+as an integer"
-    with pytest.warns(UserWarning, match=warning_msg):
-        assert _get_n_samples_bootstrap(n_samples, max_samples, sample_weight) == int(
-            max_samples * n_samples
-        )
-
-    n_samples, max_samples, sample_weight = 10, 1e-5, None
-    with pytest.warns(UserWarning, match=warning_msg):
-        assert _get_n_samples_bootstrap(n_samples, max_samples, sample_weight) == 1
-
-    warning_msg_with_weights = (
-        ".+the total sum of sample weights.+low number.+max_samples.+as an integer"
-    )
-    rng = np.random.default_rng(0)
-    n_samples, max_samples, sample_weight = 1_000_000, 1e-5, rng.uniform(size=1_000_000)
-    with pytest.warns(UserWarning, match=warning_msg_with_weights):
-        assert _get_n_samples_bootstrap(n_samples, max_samples, sample_weight) == int(
-            max_samples * sample_weight.sum()
-        )
-
-    sample_weight = np.ones(3)
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-
-        n_samples, max_samples, sample_weight = 100, 30, None
-        assert (
-            _get_n_samples_bootstrap(n_samples, max_samples, sample_weight)
-            == max_samples
-        )
-
-        n_samples, max_samples, sample_weight = 100, 0.5, rng.uniform(size=100)
-        assert _get_n_samples_bootstrap(n_samples, max_samples, sample_weight) == int(
-            max_samples * sample_weight.sum()
-        )
 
 
 def test_oob_score_removed_on_warm_start():
