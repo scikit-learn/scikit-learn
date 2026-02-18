@@ -170,6 +170,27 @@ def make_classification(
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+        The random state is sampled in the following order:
+
+            - The placement of cluster centroids in the informative feature
+              subspace.
+            - The random linear transformations applied to each cluster.
+            - The generation of redundant, repeated, and random features.
+            - The random flipping of class labels (if `flip_y > 0`).
+            - The random shift (if `shift=None`) and scale (if `scale=None`).
+            - The random shuffling of samples and features (if `shuffle=True`).
+
+        .. note::
+            Reproducibility holds only when parameters that affect the sequence
+            or shape of random sampling (i.e. `n_samples`, `n_features`,
+            `n_informative`, `n_redundant`, `n_repeated`, `n_clusters`,
+            `n_clusters_per_class`) remain unchanged.
+
+            The exact value of parameters such as `flip_y`, `shift`, or `scale`,
+            do not affect the sequence of random draws, provided that
+            randomization is active (i.e., `flip_y` > 0 or `shift` and `scale`
+            are not `None`).
+
     return_X_y : bool, default=True
         If True, a tuple ``(X, y)`` instead of a Bunch object is returned.
 
