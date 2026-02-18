@@ -5,7 +5,6 @@ import warnings
 from contextlib import contextmanager
 
 from sklearn.callback._base import AutoPropagatedCallback
-from sklearn.callback._mixin import CallbackSupportMixin
 
 # TODO(callbacks): move these explanations into a dedicated user guide.
 #
@@ -67,8 +66,7 @@ from sklearn.callback._mixin import CallbackSupportMixin
 #
 #     @with_callback_context
 #     def fit(self, X, y):
-#         callback_ctx = self._callback_fit_ctx
-#         callback_ctx.max_subtasks = self.max_iter
+#         callback_ctx = self._init_callback_context(max_subtasks=self.max_iter)
 #         callback_ctx.eval_on_fit_begin(estimator=self)
 #
 #         for i in range(self.max_iter):
@@ -129,7 +127,7 @@ class CallbackContext:
     """
 
     @classmethod
-    def _from_estimator(cls, estimator, task_name):
+    def _from_estimator(cls, estimator, task_name, task_id, max_subtasks):
         """Private constructor to create a root context.
 
         Parameters
@@ -138,7 +136,15 @@ class CallbackContext:
             The estimator this context is responsible for.
 
         task_name : str
-            The name of the task this context is responsible for.
+            The name of the root task.
+
+        task_id : int or str
+            Identifier for the root task.
+
+        max_subtasks : int or None
+            The maximum number of subtasks that can be children of the root task. None
+            means the maximum number of subtasks is not known in advance. 0 means it's a
+            leaf.
         """
         new_ctx = cls.__new__(cls)
 
@@ -147,10 +153,10 @@ class CallbackContext:
         new_ctx._callbacks = getattr(estimator, "_skl_callbacks", [])
         new_ctx.estimator_name = estimator.__class__.__name__
         new_ctx.task_name = task_name
-        new_ctx.task_id = 0
+        new_ctx.task_id = task_id
+        new_ctx.max_subtasks = max_subtasks
         new_ctx.parent = None
         new_ctx._children_map = {}
-        new_ctx.max_subtasks = None
         new_ctx.source_estimator_name = None
         new_ctx.source_task_name = None
         new_ctx._has_called_on_fit_begin = False
@@ -170,7 +176,7 @@ class CallbackContext:
         return new_ctx
 
     @classmethod
-    def _from_parent(cls, parent_context, *, task_name, task_id, max_subtasks=None):
+    def _from_parent(cls, parent_context, *, task_name, task_id, max_subtasks):
         """Private constructor to create a sub-context.
 
         Parameters
@@ -182,9 +188,9 @@ class CallbackContext:
             The name of the task this context is responsible for.
 
         task_id : int
-            The id of the task this context is responsible for.
+            The identifier of the task this context is responsible for.
 
-        max_subtasks : int or None, default=None
+        max_subtasks : int or None
             The maximum number of tasks that can be children of the task this context is
             responsible for. 0 means it's a leaf. None means the maximum number of
             subtasks is not known in advance.
@@ -196,9 +202,9 @@ class CallbackContext:
         new_ctx._estimator_depth = parent_context._estimator_depth
         new_ctx.task_name = task_name
         new_ctx.task_id = task_id
+        new_ctx.max_subtasks = max_subtasks
         new_ctx.parent = None
         new_ctx._children_map = {}
-        new_ctx.max_subtasks = max_subtasks
         new_ctx.source_estimator_name = None
         new_ctx.source_task_name = None
         new_ctx._has_called_on_fit_begin = parent_context._has_called_on_fit_begin
@@ -387,7 +393,7 @@ class CallbackContext:
         if not callbacks_to_propagate:
             return self
 
-        if not isinstance(sub_estimator, CallbackSupportMixin):
+        if not hasattr(sub_estimator, "set_callbacks"):
             warnings.warn(
                 f"The estimator {sub_estimator.__class__.__name__} does not support "
                 f"callbacks. The callbacks attached to {self.estimator_name} will not "
@@ -429,7 +435,11 @@ def get_context_path(context):
 
 @contextmanager
 def callback_management_context(estimator, fit_method_name):
-    """Context manager to setup and teardown the callback context for an estimator.
+    """Context manager to manage the callback context's teardown for an estimator.
+
+    The context manager is also responsible for calling the callback context's
+    `eval_on_fit_end` method, which guarantees the callbacks' `on_fit_end` hook will
+    always be evaluated, whether the estimator's fit exits successfully or not.
 
     Parameters
     ----------
@@ -443,10 +453,6 @@ def callback_management_context(estimator, fit_method_name):
     ------
     None.
     """
-    estimator._callback_fit_ctx = CallbackContext._from_estimator(
-        estimator, task_name=fit_method_name
-    )
-
     try:
         yield
     finally:
