@@ -5,11 +5,11 @@ import html
 import reprlib
 from collections import UserDict
 
+from sklearn.utils._repr_html.base import ReprHTMLMixin
 from sklearn.utils._repr_html.common import (
     generate_link_to_param_doc,
     get_docstring,
 )
-from sklearn.utils._repr_html.base import ReprHTMLMixin
 
 
 def _read_params(name, value, non_default_params):
