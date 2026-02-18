@@ -9,23 +9,23 @@ predicted probabilities for a 3-class classification problem. Illustrated is
 the standard 2-simplex, where the three corners correspond to the three
 classes. Arrows point from the probability vectors predicted by an uncalibrated
 classifier to the probability vectors predicted by the same classifier after
-sigmoid calibration on a hold-out validation set. Colors indicate the true
+calibration on a hold-out validation set. Colors indicate the true
 class of an instance (red: class 1, green: class 2, blue: class 3).
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
-# Generating the Dataset and Training the Classifier and Calibrators
-# -------------------------------------------------------------------
+# Generating the Dataset and Training the Classifier and Calibrated Classifiers
+# -----------------------------------------------------------------------------
 # Below, we generate a classification dataset with 2000 samples, 2 features
 # and 3 target classes. We then split the data as follows:
 #
 # * train: 600 samples (for training the classifier)
 # * valid: 400 samples (for calibrating predicted probabilities)
 # * test: 1000 samples
-#
-# Authors: The scikit-learn developers
-# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 
@@ -41,9 +41,9 @@ X_valid, y_valid = X[600:1000], y[600:1000]
 X_test, y_test = X[1000:], y[1000:]
 
 # %%
-# To train the calibrated classifier, we start with the same
-# :class:`~sklearn.ensemble.RandomForestClassifier` but train it using only
-# the train data subset (600 samples):
+# To train the calibrated classifier, we start with a
+# :class:`~sklearn.ensemble.RandomForestClassifier` but train it using only the train
+# data subset (600 samples):
 
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.ensemble import RandomForestClassifier
@@ -53,8 +53,8 @@ clf = RandomForestClassifier(n_estimators=25)
 clf.fit(X_train, y_train)
 
 # %%
-# Then calibrate, with sigmoid calibration
-# `method="sigmoid"` and temperature scaling `method="temperature"` separately, using
+# Then, calibrate with sigmoid calibration
+# `method="sigmoid"` and temperature scaling `method="temperature"` respectively using
 # the valid data subset (400 samples) in a 2-stage process.
 #
 # Sigmoid calibration:
@@ -78,7 +78,7 @@ cal_clf_ts.fit(X_valid, y_valid)
 
 def _plot_simplex_boundary(ax):
     """Plot the boundary of the standard 2-simplex"""
-    ax.plot([0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], "k", label="Simplex")
+    ax.plot([0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], "k", alpha=0.5, label="Simplex")
     ax.set_aspect("equal", adjustable="box")
     ax.set_xlim(-0.25, 1.1)
     ax.set_ylim(-0.1, 1.1)
@@ -236,36 +236,39 @@ _ = plt.show()
 # %%
 # In the figure above:
 #
-# * Each vertex of the simplex represents a perfectly predicted class (e.g., 1, 0, 0).
-# * The mid point inside the simplex represents predicting the three classes with equal
+# * Each vertex of the simplex represents assigning all probability mass to one class
+#   (e.g., 1, 0, 0).
+# * The midpoint inside the simplex represents predicting the three classes with equal
 #   probability (i.e., 1/3, 1/3, 1/3).
-# * Each arrow starts at the predicted probabilities and end with the arrow head at the
-#   calibrated probability.
+# * Each arrow starts at the uncalibrated predicted probabilities and ends at the
+#   calibrated probabilities.
 # * The color of the arrow represents the true class of that test sample.
 #
-# The uncalibrated classifier is overly confident in its predictions and
-# incurs a large :ref:`log loss <log_loss>`, which we will see below.
+# Notice that many arrows start near the edges or corners of the simplex, meaning that
+# the uncalibrated classifier often produces highly confident predictions. When such
+# extreme predictions occur frequently, the model tends to be over-confident. This can
+# also be observed from the :ref:`log loss <log_loss>` reported below.
 #
-# For sigmoid calibration, the calibrated classifier incurs a lower
-# :ref:`log loss <log_loss>` due to two factors. First, notice in the
-# sigmoid calibration figure that the arrows generally point away from the edges of the
-# simplex, where the probability of one class is 0. Second, a large proportion
-# of the arrows point towards the true class, e.g., green arrows (samples where
-# the true class is 'green') generally point towards the green vertex. This
-# results in fewer over-confident, 0 predicted probabilities and at the same
-# time an increase in the predicted probabilities of the correct class.
-# Thus, the calibrated classifier produces more accurate predicted probabilities
-# that incur a lower :ref:`log loss <log_loss>`
+# Both sigmoid calibration and temperature scaling pull probabilities away from the
+# boundaries, resulting in less extreme (less peaked) predictions. Specifically:
 #
+# * Sigmoid calibration tends to move points toward one of the three vertices.
+#   This reduces the number of near-zero predicted probabilities for the true class and
+#   often increases the predicted probability assigned to the correct class.
+#   Consequently, the sigmoid-calibrated classifier generally yields better calibrated
+#   probabilities and lower :ref:`log loss <log_loss>`.
+#
+# * Temperature scaling produces a near-radial contraction of the simplex. Points near
+#   the vertices move the most, while interior points change only slightly. This reduces
+#   over-confidence by softening highly confident predictions, including confidently
+#   wrong ones, without changing the predicted class (argmax is preserved).
 #
 # Log Loss and Brier Score
 # ^^^^^^^^^^^^^^^^^^^^^^^^
-# We can show this objectively by comparing the :ref:`log loss <log_loss>` of
-# the uncalibrated and calibrated classifiers on the predictions of the 1000
-# test samples. Note that an alternative would have been to increase the number
-# of base estimators (trees) of the
-# :class:`~sklearn.ensemble.RandomForestClassifier` which would have resulted
-# in a similar decrease in :ref:`log loss <log_loss>`.
+# :ref:`Log loss <log_loss>` and :ref:`Brier score <brier_score_loss>` show the effect
+# of calibration on the 1000 test samples. An alternative would have been to increase
+# the number of trees in the :class:`~sklearn.ensemble.RandomForestClassifier`, which
+# would also reduce :ref:`log loss <log_loss>` but not illustrate calibration behavior.
 
 from sklearn.metrics import log_loss
 
@@ -279,8 +282,8 @@ print(f" - sigmoid calibrated classifier: {cal_loss_sig:.3f}")
 print(f" - calibrated classifier by temperature scaling: {cal_loss_ts:.3f}")
 
 # %%
-# We can also assess calibration with the Brier score for probabilistics predictions
-# (lower is better, possible range is [0, 2]):
+# We can also assess calibration with the :ref:`Brier score <brier_score_loss>` for
+# probabilistics predictions (lower is better, possible range is [0, 2]):
 
 from sklearn.metrics import brier_score_loss
 
@@ -294,12 +297,12 @@ print(f" - sigmoid calibrated classifier: {cal_loss_sig:.3f}")
 print(f" - calibrated classifier by temperature scaling: {cal_loss_ts:.3f}")
 
 # %%
-# According to the Brier score, the calibrated classifier is not better than
-# the original model.
+# According to the :ref:`Brier score <brier_score_loss>`, the calibrated classifier is
+# not better than the original model.
 #
 # Probability Flow From Arbitrary Probabilities to Calibrated Probabilities
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-# Finally we generate a grid of possible uncalibrated probabilities over
+# Finally we generate a grid of arbitrary 3-class probabilities over
 # the 2-simplex, compute the corresponding calibrated probabilities and
 # plot arrows for each. The arrows are colored according the highest
 # uncalibrated probability. This illustrates the learned calibration map:
@@ -321,13 +324,22 @@ fig.suptitle("Calibration of Arbitrary Probabilities on the Simplex", fontsize=1
 _ = plt.show()
 
 # %%
-# One can observe that, on average, the calibrator is pushing highly confident
-# predictions away from the boundaries of the simplex while simultaneously
-# moving uncertain predictions towards one of three modes, one for each class.
-# We can also observe that the mapping is not symmetric. Furthermore some
-# arrows seem to cross class assignment boundaries which is not necessarily
-# what one would expect from a calibration map as it means that some predicted
-# classes will change after calibration.
+# One can observe that, on average, both calibrators push highly confident
+# predictions away from the boundaries of the simplex. In particular:
+#
+# 1. Sigmoid calibration moves points towards vertices, while temperature scaling
+#    contracts probabilities towards the simplex center or edge midpoints.
+#
+# 2. Sigmoid calibration is not symmetric, whereas temperature scaling is
+#    permutation-symmetric with respect to class labels.
+#
+# 3. Sigmoid calibration can cross decision boundaries, which might be unexpected,
+#    as predicted classes are generally assumed to remain unchanged after calibration.
+#    This occurs due to the One-vs-Rest multiclass strategy implemented in
+#    :class:`~sklearn.calibration.CalibratedClassifierCV`: each class has its own
+#    calibrator with separate parameters, allowing argmax to change.
+#    In contrast, temperature scaling preserves argmax, so points cannot cross
+#    decision boundaries.
 #
 # All in all, the One-vs-Rest multiclass-calibration strategy implemented in
-# `CalibratedClassifierCV` should not be trusted blindly.
+# :class:`~sklearn.calibration.CalibratedClassifierCV` should not be trusted blindly.
