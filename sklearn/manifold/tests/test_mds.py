@@ -305,10 +305,12 @@ def test_classical_mds_init_to_mds():
     assert_allclose(Z1, Z2)
 
 
-def test_classical_mds_init_correct_components():
+@pytest.mark.parametrize("init", ["random", "classical_mds"])
+@pytest.mark.parametrize("n_components", [1, 2, 3])
+def test_correct_n_components(init, n_components):
     X, _ = load_iris(return_X_y=True)
 
-    mds1 = mds.MDS(init="classical_mds", n_components=3, n_init=1)
-    Z1 = mds1.fit_transform(X)
+    model = mds.MDS(init=init, n_components=n_components, n_init=1)
+    Z = model.fit_transform(X)
 
-    assert Z1.shape[1] == 3
+    assert Z.shape[1] == n_components
