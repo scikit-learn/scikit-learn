@@ -2,7 +2,8 @@
     font-family: monospace;
 }
 
-.estimator-table summary {
+.estimator-table summary,
+.methods-table summary {
     padding: .5rem;
     cursor: pointer;
 }
@@ -17,25 +18,29 @@
     padding-bottom: 0.3rem;
 }
 
-.estimator-table .parameters-table {
+.estimator-table .parameters-table
+{
     margin-left: auto !important;
     margin-right: auto !important;
     margin-top: 0;
 }
 
-.estimator-table .parameters-table tr:nth-child(odd) {
+.estimator-table .parameters-table tr:nth-child(odd),
+.methods-table tr:nth-child(odd) {
     background-color: #fff;
 }
 
-.estimator-table .parameters-table tr:nth-child(even) {
+.estimator-table tr:nth-child(even),
+.methods-table tr:nth-child(even) {
     background-color: #f6f6f6;
 }
 
-.estimator-table .parameters-table tr:hover {
+.estimator-table tr:hover,
+.methods-table tr:hover td {
     background-color: #e0e0e0;
 }
 
-.estimator-table table td {
+.estimator-table table :is(td, th) {
     border: 1px solid rgba(106, 105, 104, 0.232);
 }
 
@@ -59,7 +64,7 @@
     background-color: transparent;
 }
 
-.default td {
+.default td, .estimator-table th {
     color: black;
     text-align: left !important;
 }
@@ -145,4 +150,18 @@ a.param-doc-link::before {
     width: 14px;
     height: 14px;
     cursor: pointer;
+}
+
+.methods-table table {
+    margin-left: auto;
+    margin-right: auto;
+    width: fit-content;
+}
+.method-signature {
+    text-align: left;
+    padding: 0;
+}
+
+.methods td{
+    margin: 0;
 }

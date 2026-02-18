@@ -8,28 +8,20 @@ from io import StringIO
 from pathlib import Path
 
 from sklearn import config_context
-
-
-class _IDCounter:
-    """Generate sequential ids with a prefix."""
-
-    def __init__(self, prefix):
-        self.prefix = prefix
-        self.count = 0
-
-    def get_id(self):
-        self.count += 1
-        return f"{self.prefix}-{self.count}"
+from sklearn.utils._repr_html.base import _IDCounter
+from sklearn.utils._repr_html.features import _features_html
 
 
 def _get_css_style():
     estimator_css_file = Path(__file__).parent / "estimator.css"
     params_css_file = Path(__file__).parent / "params.css"
+    features_css_file = Path(__file__).parent / "features.css"
 
     estimator_css = estimator_css_file.read_text(encoding="utf-8")
     params_css = params_css_file.read_text(encoding="utf-8")
+    features_css = features_css_file.read_text(encoding="utf-8")
 
-    return f"{estimator_css}\n{params_css}"
+    return f"{estimator_css}\n{params_css}\n{features_css}"
 
 
 _CONTAINER_ID_COUNTER = _IDCounter("sk-container-id")
@@ -107,10 +99,13 @@ class _VisualBlock:
 def _write_label_html(
     out,
     params,
+    attrs,
+    methods,
     name,
     name_details,
     name_caption=None,
     doc_link_label=None,
+    features="",
     outer_class="sk-label-container",
     inner_class="sk-label",
     checked=False,
@@ -129,6 +124,13 @@ def _write_label_html(
         If estimator has `get_params` method, this is the HTML representation
         of the estimator's parameters and their values. When the estimator
         does not have `get_params`, it is an empty string.
+    attrs: str
+        If estimator is fitted, this is the HTML representation of its
+        the fitted attributes.
+    methods: str
+        HTML representation of the estimator's methods with their
+        signatures and links to their docs, as returned by
+        `estimator._get_methods_html()`.
     name : str
         The label for the estimator. It corresponds either to the estimator class name
         for a simple estimator or in the case of a `Pipeline` and `ColumnTransformer`,
@@ -191,6 +193,7 @@ def _write_label_html(
             else f'<div class="caption">{html.escape(name_caption)}</div>'
         )
         name_caption_div = f"<div><div>{name}</div>{name_caption_div}</div>"
+
         links_div = (
             f"<div>{doc_link}{is_fitted_icon}</div>"
             if doc_link or is_fitted_icon
@@ -214,16 +217,28 @@ def _write_label_html(
         )
 
         if params:
-            fmt_str = "".join([fmt_str, f"{params}</div>"])
+            fmt_str = "".join([fmt_str, f"{params}{methods}{attrs}</div>"])
         elif name_details and ("Pipeline" not in name):
             if name == "passthrough" or name_details == "[]":
                 name_details = ""
             fmt_str = "".join([fmt_str, f"<pre>{name_details}</pre></div>"])
 
+        if len(features) == 0:
+            features_div = ""
+        else:
+            features_div = _features_html(features, is_fitted_css_class)
+
+        fmt_str = "".join(
+            [
+                fmt_str,
+                "</div></div>",
+                features_div,
+            ]
+        )
         out.write(fmt_str)
     else:
         out.write(f"<label>{name}</label>")
-    out.write("</div></div>")  # outer_class inner_class
+        out.write("</div></div>")  # outer_class inner_class
 
 
 def _get_visual_block(estimator):
@@ -312,6 +327,7 @@ def _write_estimator_html(
         The prefix to prepend to parameter names for nested estimators.
         For example, in a pipeline this might be "pipeline__stepname__".
     """
+
     if first_call:
         est_block = _get_visual_block(estimator)
     else:
@@ -323,6 +339,7 @@ def _write_estimator_html(
         doc_link = estimator._get_doc_link()
     else:
         doc_link = ""
+
     if est_block.kind in ("serial", "parallel"):
         dashed_wrapped = first_call or est_block.dash_wrapped
         dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
@@ -335,13 +352,35 @@ def _write_estimator_html(
                 params = estimator._get_params_html(False, doc_link)._repr_html_inner()
             else:
                 params = ""
+            if (
+                hasattr(estimator, "_get_fitted_attr_html")
+                and is_fitted_css_class == "fitted"
+            ):
+                attrs = "".join(
+                    [
+                        estimator._get_fitted_attr_html(doc_link)._repr_html_inner(),
+                        # "estimator's sizeof :",
+                        # str(estimator.__sizeof__()),
+                    ]
+                )
+
+            else:
+                attrs = ""
+
+            if hasattr(estimator, "_get_methods_html"):
+                methods = estimator._get_methods_html(deep=False)._repr_html_inner()
+            else:
+                methods = ""
 
             _write_label_html(
                 out,
                 params,
+                attrs,
+                methods,
                 estimator_label,
                 estimator_label_details,
                 doc_link=doc_link,
+                features="",
                 is_fitted_css_class=is_fitted_css_class,
                 is_fitted_icon=is_fitted_icon,
                 param_prefix=param_prefix,
@@ -389,16 +428,48 @@ def _write_estimator_html(
         out.write("</div></div>")
     elif est_block.kind == "single":
         if (
+            callable(getattr(estimator, "get_feature_names_out", None))
+            and not hasattr(estimator, "steps")
+            and hasattr(estimator, "n_features_in_")
+        ):
+            features = estimator.get_feature_names_out()
+        else:
+            features = ""
+
+        if est_block.names == "NoneType(...)":
+            est_block.names = "passthrough"
+
+        if (
             hasattr(estimator, "_get_params_html")
             and not est_block.names == "passthrough"
         ):
             params = estimator._get_params_html(doc_link=doc_link)._repr_html_inner()
         else:
             params = ""
+        if (
+            hasattr(estimator, "_get_fitted_attr_html")
+            and is_fitted_css_class == "fitted"
+        ):
+            attrs = "".join(
+                [
+                    estimator._get_fitted_attr_html(doc_link)._repr_html_inner(),
+                    # "estimator's sizeof :",
+                    # str(estimator.__sizeof__()),
+                ]
+            )
+
+        else:
+            attrs = ""
+        if hasattr(estimator, "_get_methods_html"):
+            methods = estimator._get_methods_html()._repr_html_inner()
+        else:
+            methods = ""
 
         _write_label_html(
             out,
             params,
+            attrs,
+            methods,
             est_block.names,
             est_block.name_details,
             est_block.name_caption,
@@ -407,6 +478,7 @@ def _write_estimator_html(
             inner_class="sk-estimator",
             checked=first_call,
             doc_link=doc_link,
+            features=features,
             is_fitted_css_class=is_fitted_css_class,
             is_fitted_icon=is_fitted_icon,
             param_prefix=param_prefix,
@@ -482,7 +554,6 @@ def estimator_html_repr(estimator):
             "</div>"
             '<div class="sk-container" hidden>'
         )
-
         out.write(html_template)
         _write_estimator_html(
             out,
