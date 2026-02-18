@@ -2039,7 +2039,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         until it is smaller or equal to ``tol``.
 
     copy_X : bool, default=True
-        If ``True``, X will be copied; otherwise, it may be overwritten.
+        If ``True``, `X` will be copied; otherwise, it may be overwritten.
 
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
