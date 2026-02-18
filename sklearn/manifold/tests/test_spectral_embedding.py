@@ -104,6 +104,20 @@ def test_sparse_graph_connected_component(coo_container):
         assert_array_equal(component_1, component_2)
 
 
+@pytest.mark.skipif(
+    not pyamg_available, reason="PyAMG is required for the tests in this function."
+)
+def test_fallback_amg():
+    random_state = np.random.RandomState(36)
+    data = random_state.randn(10, 30)
+    sims = rbf_kernel(data)
+    with pytest.warns(RuntimeWarning, match="dense matrices"):
+        _ = spectral_embedding(sims.toarray(), eigen_solver="amg", n_components=2)
+
+    with pytest.warns(RuntimeWarning, match="small graphs"):
+        _ = spectral_embedding(sims, eigen_solver="amg", n_components=5)
+
+
 # TODO: investigate why this test is seed-sensitive on 32-bit Python
 # runtimes. Is this revealing a numerical stability problem ? Or is it
 # expected from the test numerical design ? In the latter case the test

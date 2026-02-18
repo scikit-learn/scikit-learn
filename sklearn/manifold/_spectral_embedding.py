@@ -328,16 +328,26 @@ def _spectral_embedding(
     laplacian, dd = csgraph_laplacian(
         adjacency, normed=norm_laplacian, return_diag=True
     )
-    if eigen_solver == "arpack" or (
-        eigen_solver != "lobpcg"
-        and (not sparse.issparse(laplacian) or n_nodes < 5 * n_components)
-    ):
-        # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
+
+    if eigen_solver == "amg" and n_nodes < 5 * n_components:
+        # LOBPCG used with eigen_solver='amg' has bugs for low number of nodes
         # for details see the source code in scipy:
         # https://github.com/scipy/scipy/blob/v0.11.0/scipy/sparse/linalg/eigen
         # /lobpcg/lobpcg.py#L237
         # or matlab:
         # https://www.mathworks.com/matlabcentral/fileexchange/48-lobpcg-m
+        warnings.warn(
+            "AMG solver does not work well with small graphs, using ARPACK instead."
+        )
+        eigen_solver = "arpack"
+
+    if eigen_solver == "amg" and not sparse.issparse(laplacian):
+        warnings.warn(
+            "AMG solver does not work well with dense matrices, using ARPACK instead."
+        )
+        eigen_solver = "arpack"
+
+    if eigen_solver == "arpack":
         laplacian = _set_diag(laplacian, 1, norm_laplacian)
 
         # Here we'll use shift-invert mode for fast eigenvalues
@@ -366,9 +376,14 @@ def _spectral_embedding(
             if norm_laplacian:
                 # recover u = D^-1/2 x from the eigenvector output x
                 embedding = embedding / dd
-        except RuntimeError:
-            # When submatrices are exactly singular, an LU decomposition
-            # in arpack fails. We fallback to lobpcg
+        except RuntimeError:  # pragma: no cover
+            # When submatrices are exactly singular, the LU decomposition
+            # in ARPACK can fail. In this case, we fallback to LOBPCG.
+            # Note: this should actually never happen with sigma < 0,
+            # so the entire `try ... except` structure could be removed.
+            # There is no unit test for this (hence `pragma: no cover`)
+            # because it is unclear how to trigger this RuntimeError.
+            # (https://github.com/scikit-learn/scikit-learn/pull/33262)
             warnings.warn("ARPACK has failed, falling back to LOBPCG.")
             eigen_solver = "lobpcg"
 
