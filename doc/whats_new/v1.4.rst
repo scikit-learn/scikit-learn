@@ -925,6 +925,12 @@ Changelog
 - |Fix| :class:`preprocessing.OneHotEncoder` and :class:`preprocessing.OrdinalEncoder`
   raise an exception if the user provided categories contain duplicates.
   :pr:`27328` by :user:`Xuefeng Xu <xuefeng-xu>`.
+  
+- |Enhancement| Added support for passing `max_categories` as `array-like` or
+  `dict` in :class:`preprocessing.OrdinalEncoder`. This allows specifying the
+  maximum number of output categories for each input feature instead of being
+  restricted to setting a global maximum number of output categories.
+  :pr:`26284` by :user:`Andrew Wang <Andrew-Wang-IB45>`.
 
 - |Fix| :class:`preprocessing.FunctionTransformer` raises an error at `transform` if
   the output of `get_feature_names_out` is not consistent with the column names of the
