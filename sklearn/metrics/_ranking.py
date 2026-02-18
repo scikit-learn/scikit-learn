@@ -228,6 +228,9 @@ def average_precision_score(
     0.77
     """
     xp, _, device = get_namespace_and_device(y_score)
+    # To allow mixed string `y_true`/numeric `y_score` input, cannot move `y_true`
+    # until it has been converted to an integer (e.g., via `label_binarize`)
+    sample_weight = move_to(sample_weight, xp=xp, device=device)
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
@@ -252,7 +255,7 @@ def average_precision_score(
         return float(max(0.0, -xp.sum(xp.diff(recall) * precision[:-1])))
 
     y_type = type_of_target(y_true, input_name="y_true")
-    xp_y_true = get_namespace(y_true)
+    xp_y_true, _ = get_namespace(y_true)
     present_labels = xp_y_true.unique_values(y_true)
 
     if y_type == "binary":
@@ -275,14 +278,13 @@ def average_precision_score(
                 "Do not set pos_label or set pos_label to 1."
             )
         y_true = label_binarize(y_true, classes=present_labels)
+        y_true = move_to(y_true, xp=xp, device=device)
         if not y_score.shape == y_true.shape:
             raise ValueError(
                 "`y_score` needs to be of shape `(n_samples, n_classes)`, since "
                 "`y_true` contains multiple classes. Got "
                 f"`y_score.shape={y_score.shape}`."
             )
-
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     average_precision = partial(
         _binary_uninterpolated_average_precision, pos_label=pos_label, xp=xp
@@ -1124,7 +1126,7 @@ def precision_recall_curve(
     >>> thresholds
     array([0.1 , 0.35, 0.4 , 0.8 ])
     """
-    xp, _, device = get_namespace_and_device(y_true, y_score)
+    xp, _, device = get_namespace_and_device(y_score)
 
     _, fps, _, tps, thresholds = confusion_matrix_at_thresholds(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
