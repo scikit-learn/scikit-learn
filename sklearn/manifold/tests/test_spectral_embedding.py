@@ -112,7 +112,7 @@ def test_fallback_amg():
     data = random_state.randn(10, 30)
     sims = rbf_kernel(data)
     with pytest.warns(RuntimeWarning, match="dense matrices"):
-        _ = spectral_embedding(sims.toarray(), eigen_solver="amg", n_components=2)
+        _ = spectral_embedding(sims, eigen_solver="amg", n_components=1)
 
     with pytest.warns(RuntimeWarning, match="small graphs"):
         _ = spectral_embedding(sims, eigen_solver="amg", n_components=5)
