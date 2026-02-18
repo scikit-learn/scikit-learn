@@ -49,7 +49,7 @@ def check_pandas_support(caller_name):
 def check_rich_support(caller_name):
     """Raise ImportError with detailed error message if rich is not installed.
 
-    caller should lazily import rich and call this helper before any computation.
+    Caller should lazily import rich and call this helper before any computation.
 
     Parameters
     ----------

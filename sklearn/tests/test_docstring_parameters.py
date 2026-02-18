@@ -115,7 +115,10 @@ def test_docstring_parameters():
             this_incorrect += check_docstring_parameters(cls.__init__, cdoc)
 
             for method_name in cdoc.methods:
-                # Skip callback hooks
+                # Skip callback hooks: the callbacks hooks are documented in the
+                # Callback protocol, so there is no need for callback implementations
+                # to duplicate this information. Since we use a protocol rather than
+                # class inheritance, docstrings for those methods are not inherited.
                 if isinstance(cls, Callback) and method_name in (
                     "on_fit_begin",
                     "on_fit_end",

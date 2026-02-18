@@ -9,7 +9,11 @@ from sklearn.utils.parallel import Parallel, delayed
 
 
 class TestingCallback:
-    """A minimal callback used for smoke testing purposes."""
+    """A minimal callback used for smoke testing purposes.
+
+    This callback doesn't define `max_estimator_depth` and is therefore not an
+    `AutoPropagatedCallback`: it should not be propagated to sub-estimators.
+    """
 
     def on_fit_begin(self, estimator):
         pass

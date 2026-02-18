@@ -15,13 +15,17 @@ class ProgressBar:
 
     Parameters
     ----------
-    max_estimator_depth : int, default=1
+    max_estimator_depth : int, default=2
         The maximum number of nested levels of estimators to display progress bars for.
-        By default, only the progress bars of the outermost estimator are displayed.
         If set to None, all levels are displayed.
+
+    Notes
+    -----
+    The use of this callback on python versions inferior to 3.12.8 might lead to
+    unexpected crashes related to multiprocessing bugs on certain platforms.
     """
 
-    def __init__(self, max_estimator_depth=1):
+    def __init__(self, max_estimator_depth=2):
         if sys.version_info < (3, 12, 8):
             warnings.warn(
                 "The use of the ProgressBar callback on python versions inferior "
@@ -82,7 +86,7 @@ class RichProgressMonitor(Thread):
     """
 
     def __init__(self, *, queue):
-        Thread.__init__(self)
+        super().__init__()
         self.queue = queue
 
     def run(self):
