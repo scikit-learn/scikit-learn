@@ -51,8 +51,7 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X=None, y=None):
-        callback_ctx = self._callback_fit_ctx
-        callback_ctx.max_subtasks = self.max_iter
+        callback_ctx = self._init_callback_context(max_subtasks=self.max_iter)
         callback_ctx.eval_on_fit_begin(estimator=self)
 
         for i in range(self.max_iter):
@@ -85,8 +84,7 @@ class WhileEstimator(CallbackSupportMixin, BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X=None, y=None):
-        callback_ctx = self._callback_fit_ctx
-        callback_ctx.max_subtasks = None
+        callback_ctx = self._init_callback_context(max_subtasks=None)
         callback_ctx.eval_on_fit_begin(estimator=self)
 
         i = 0
@@ -120,8 +118,7 @@ class ThirdPartyEstimator(CallbackSupportMixin, BaseEstimator):
 
     @with_callback_context
     def fit(self, X=None, y=None):
-        callback_ctx = self._callback_fit_ctx
-        callback_ctx.max_subtasks = self.max_iter
+        callback_ctx = self._init_callback_context(max_subtasks=self.max_iter)
         callback_ctx.eval_on_fit_begin(estimator=self)
 
         for i in range(self.max_iter):
@@ -188,8 +185,7 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X=None, y=None):
-        callback_ctx = self._callback_fit_ctx
-        callback_ctx.max_subtasks = self.n_outer
+        callback_ctx = self._init_callback_context(max_subtasks=self.n_outer)
         callback_ctx.eval_on_fit_begin(estimator=self)
 
         Parallel(n_jobs=self.n_jobs, prefer=self.prefer)(
@@ -227,3 +223,15 @@ def _func(meta_estimator, inner_estimator, X, y, *, outer_callback_ctx):
         estimator=meta_estimator,
         data={"X_train": X, "y_train": y},
     )
+
+
+class NoSubtaskEstimator(CallbackSupportMixin, BaseEstimator):
+    """A class mimicking an estimator without subtasks in fit."""
+
+    @with_callback_context
+    def fit(self, X=None, y=None):
+        callback_ctx = self._init_callback_context().eval_on_fit_begin(estimator=self)
+
+        # No task performed
+
+        return self
