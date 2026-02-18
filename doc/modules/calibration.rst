@@ -231,8 +231,6 @@ In general this method is most effective for small sample sizes or when the
 un-calibrated model is under-confident and has similar calibration errors for both
 high and low outputs.
 
-.. _isotonic_regressor:
-
 Isotonic
 ^^^^^^^^
 
