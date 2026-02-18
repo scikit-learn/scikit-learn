@@ -303,3 +303,12 @@ def test_classical_mds_init_to_mds():
     Z2 = mds1.fit_transform(X, init=Z_classical)
 
     assert_allclose(Z1, Z2)
+
+
+def test_classical_mds_init_correct_components():
+    X, _ = load_iris(return_X_y=True)
+
+    mds1 = mds.MDS(init="classical_mds", n_components=3, n_init=1)
+    Z1 = mds1.fit_transform(X)
+
+    assert Z1.shape[1] == 3
