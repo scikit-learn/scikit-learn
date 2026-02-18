@@ -633,7 +633,7 @@ def enet_path(
 
     # X should have been passed through _pre_fit already if function is called
     # from ElasticNet.fit
-    if check_input:
+    if check_input or precompute is not False:
         X, y, _, _, _, precompute, Xy = _pre_fit(
             X,
             y,
@@ -641,7 +641,7 @@ def enet_path(
             precompute,
             fit_intercept=False,
             copy=False,
-            check_gram=True,
+            check_gram=check_input,
         )
     if alphas is None:
         # fit_intercept and sample_weight have already been dealt with in calling

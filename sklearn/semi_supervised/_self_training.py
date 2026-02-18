@@ -137,13 +137,13 @@ class SelfTrainingClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     >>> import numpy as np
     >>> from sklearn import datasets
     >>> from sklearn.semi_supervised import SelfTrainingClassifier
-    >>> from sklearn.svm import SVC
+    >>> from sklearn.linear_model import LogisticRegression
     >>> rng = np.random.RandomState(42)
     >>> iris = datasets.load_iris()
     >>> random_unlabeled_points = rng.rand(iris.target.shape[0]) < 0.3
     >>> iris.target[random_unlabeled_points] = -1
-    >>> svc = SVC(probability=True, gamma="auto")
-    >>> self_training_model = SelfTrainingClassifier(svc)
+    >>> clf = LogisticRegression()
+    >>> self_training_model = SelfTrainingClassifier(clf)
     >>> self_training_model.fit(iris.data, iris.target)
     SelfTrainingClassifier(...)
     """
