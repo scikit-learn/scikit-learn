@@ -1,0 +1,3 @@
+- Clarified in the glossary that `partial_fit` can be called without a prior
+  `fit` call and noted the `classes` requirement for classifiers on the first
+  call. By :user:`nandanadileep`.

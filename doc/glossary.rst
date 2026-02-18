@@ -1393,6 +1393,10 @@ Methods
         provided to ``partial_fit`` may be called a mini-batch.
         Each mini-batch must be of consistent shape, etc. In iterative
         estimators, ``partial_fit`` often only performs a single iteration.
+        Unlike ``fit``, calling ``partial_fit`` does not require a prior call
+        to ``fit``; a fresh estimator can be initialized directly with
+        ``partial_fit`` (classifiers typically require ``classes`` on the first
+        call).
 
         ``partial_fit`` may also be used for :term:`out-of-core` learning,
         although usually limited to the case where learning can be performed
