@@ -225,7 +225,7 @@ neg_mean_pinball_loss_05p_scorer = make_scorer(
     alpha=0.05,
     greater_is_better=False,  # maximize the negative loss
 )
-gbr = GradientBoostingRegressor(loss="quantile", alpha=alpha, random_state=0)
+gbr = GradientBoostingRegressor(loss="quantile", alpha=0.05, random_state=0)
 search_05p = HalvingRandomSearchCV(
     gbr,
     param_grid,
@@ -255,7 +255,7 @@ neg_mean_pinball_loss_95p_scorer = make_scorer(
     greater_is_better=False,  # maximize the negative loss
 )
 search_95p = clone(search_05p).set_params(
-    estimator__alpha=alpha,
+    estimator__alpha=0.95,
     scoring=neg_mean_pinball_loss_95p_scorer,
 )
 search_95p.fit(X_train, y_train)
