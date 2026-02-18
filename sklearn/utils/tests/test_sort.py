@@ -28,12 +28,12 @@ def test_simultaneous_sort_correctness():
 
 
 def test_simultaneous_sort_not_quadratic():
-    n = 10**6
+    n = int(3e5)
     dist = np.zeros(n)
     ind = np.arange(n, dtype=np.intp)
     t0 = perf_counter()
     _py_simultaneous_sort(dist, ind, dist.shape[0])
     dt = perf_counter() - t0
-    # sorting 1M elements should take less than 10s unless the sort goes quadratic
-    # (it should take something like ~10-100ms)
-    assert dt < 10
+    # sorting 300k elements should take less than 1s unless the sort goes quadratic
+    # (it should take something like ~10ms)
+    assert dt < 1
