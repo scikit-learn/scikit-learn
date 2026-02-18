@@ -17,6 +17,23 @@ be more appropriate. The behaviors of the different scalers, transformers, and
 normalizers on a dataset containing marginal outliers are highlighted in
 :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py`.
 
+Feature names in preprocessing
+==============================
+
+Many preprocessing transformers expose :term:`get_feature_names_out` to help
+track output feature names. For one-to-one transformers such as
+:class:`StandardScaler`, the output feature names match the input feature names.
+With :meth:`set_output`, you can keep those names attached to the transformed
+data::
+
+  >>> import pandas as pd
+  >>> from sklearn.preprocessing import StandardScaler
+  >>> X = pd.DataFrame({"height": [1.0, 2.0], "width": [3.0, 4.0]})
+  >>> scaler = StandardScaler().set_output(transform="pandas")
+  >>> X_scaled = scaler.fit_transform(X)
+  >>> X_scaled.columns
+  Index(['height', 'width'], dtype='object')
+
 
 .. _preprocessing_scaler:
 

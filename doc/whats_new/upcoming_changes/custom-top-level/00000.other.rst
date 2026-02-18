@@ -1,0 +1,3 @@
+- Added a short preprocessing example showing how `get_feature_names_out` and
+  `set_output` preserve feature names for one-to-one transformers. By
+  :user:`nandanadileep`.
