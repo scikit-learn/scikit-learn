@@ -337,13 +337,15 @@ def _spectral_embedding(
         # or matlab:
         # https://www.mathworks.com/matlabcentral/fileexchange/48-lobpcg-m
         warnings.warn(
-            "AMG solver does not work well with small graphs, using ARPACK instead."
+            "AMG solver does not work well with small graphs, using ARPACK instead.",
+            RuntimeWarning,
         )
         eigen_solver = "arpack"
 
     if eigen_solver == "amg" and not sparse.issparse(laplacian):
         warnings.warn(
-            "AMG solver does not work well with dense matrices, using ARPACK instead."
+            "AMG solver does not work well with dense matrices, using ARPACK instead.",
+            RuntimeWarning,
         )
         eigen_solver = "arpack"
 
