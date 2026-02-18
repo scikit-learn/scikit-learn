@@ -1199,6 +1199,8 @@ API_REFERENCE = {
                     "validation.column_or_1d",
                     "validation.has_fit_parameter",
                     "validation.validate_data",
+                    "validation.check_feature_names",
+                    "validation.check_n_features",
                 ],
             },
             {

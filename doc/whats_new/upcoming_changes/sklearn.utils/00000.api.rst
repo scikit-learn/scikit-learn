@@ -1,0 +1,4 @@
+- Added public :func:`utils.validation.check_feature_names` and
+  :func:`utils.validation.check_n_features` helpers to manage
+  `feature_names_in_` and `n_features_in_` without calling
+  :func:`utils.validation.validate_data`. By :user:`nandanadileep`.

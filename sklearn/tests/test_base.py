@@ -36,7 +36,12 @@ from sklearn.utils._testing import (
     _convert_container,
     assert_array_equal,
 )
-from sklearn.utils.validation import _check_n_features, validate_data
+from sklearn.utils.validation import (
+    _check_n_features,
+    check_feature_names,
+    check_n_features,
+    validate_data,
+)
 
 
 #############################################################################
@@ -729,6 +734,43 @@ def test_n_features_in_no_validation():
 
     # does not raise
     _check_n_features(est, "invalid X", reset=False)
+
+
+def test_check_n_features_public():
+    """Check that public `check_n_features` mirrors `_check_n_features`."""
+    est = MyEstimator()
+    X_train = [[1, 2, 3], [4, 5, 6]]
+    check_n_features(est, X_train, reset=True)
+
+    assert est.n_features_in_ == 3
+
+    msg = "X does not contain any features, but MyEstimator is expecting 3 features"
+    with pytest.raises(ValueError, match=msg):
+        check_n_features(est, "invalid X", reset=False)
+
+
+def test_check_feature_names_public():
+    """Check that public `check_feature_names` mirrors `_check_feature_names`."""
+    pd = pytest.importorskip("pandas")
+    iris = datasets.load_iris()
+    X_np = iris.data
+    df = pd.DataFrame(X_np, columns=iris.feature_names)
+
+    est = MyEstimator()
+    check_feature_names(est, df, reset=True)
+    assert_array_equal(est.feature_names_in_, df.columns)
+
+    df_bad = pd.DataFrame(X_np, columns=iris.feature_names[::-1])
+    msg = "The feature names should match those that were passed"
+    with pytest.raises(ValueError, match=msg):
+        check_feature_names(est, df_bad, reset=False)
+
+    msg = (
+        "X does not have valid feature names, but MyEstimator was "
+        "fitted with feature names"
+    )
+    with pytest.warns(UserWarning, match=msg):
+        check_feature_names(est, X_np, reset=False)
 
 
 def test_feature_names_in():

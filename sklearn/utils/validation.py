@@ -2739,6 +2739,32 @@ def _check_feature_names(estimator, X, *, reset):
         raise ValueError(message)
 
 
+def check_feature_names(estimator, X, *, reset):
+    """Set or check the `feature_names_in_` attribute of an estimator.
+
+    This is the public counterpart to :func:`_check_feature_names`, intended for
+    third-party estimators that want to manage `feature_names_in_` without using
+    :func:`validate_data`.
+
+    .. versionadded:: 1.9
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        The estimator to validate the input for.
+
+    X : {ndarray, dataframe} of shape (n_samples, n_features)
+        The input samples.
+
+    reset : bool
+        Whether to reset the `feature_names_in_` attribute.
+        If True, resets the `feature_names_in_` attribute as inferred from `X`.
+        If False, the input will be checked for consistency with
+        feature names of data provided when reset was last True.
+    """
+    _check_feature_names(estimator, X, reset=reset)
+
+
 def _check_n_features(estimator, X, reset):
     """Set the `n_features_in_` attribute, or check against it on an estimator.
 
@@ -2798,6 +2824,33 @@ def _check_n_features(estimator, X, reset):
             f"X has {n_features} features, but {estimator.__class__.__name__} "
             f"is expecting {estimator.n_features_in_} features as input."
         )
+
+
+def check_n_features(estimator, X, reset):
+    """Set the `n_features_in_` attribute, or check against it on an estimator.
+
+    This is the public counterpart to :func:`_check_n_features`, intended for
+    third-party estimators that want to manage `n_features_in_` without using
+    :func:`validate_data`.
+
+    .. versionadded:: 1.9
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        The estimator to validate the input for.
+
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        The input samples.
+
+    reset : bool
+        Whether to reset the `n_features_in_` attribute.
+        If True, the `n_features_in_` attribute is set to `X.shape[1]`.
+        If False and the attribute exists, then check that it is equal to
+        `X.shape[1]`. If False and the attribute does *not* exist, then
+        the check is skipped.
+    """
+    _check_n_features(estimator, X, reset=reset)
 
 
 def validate_data(
