@@ -1024,6 +1024,7 @@ def test_get_fitted_attr_html():
     )
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_deprecated_get_fitted_attr_html():
     @deprecated()
     class MyEstimator(BaseEstimator):
