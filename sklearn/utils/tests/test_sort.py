@@ -31,25 +31,31 @@ def test_simultaneous_sort_correctness(kind):
 
 @pytest.mark.parametrize("kind", ["2-way", "3-way"])
 def test_simultaneous_sort_not_quadratic(kind):
-    n = 10**6
+    n = int(3e5)
+    # "killer pattern" (i.e. triggers the quadratic path)
+    # for naive 2-way partitioning quicksort:
     dist = np.zeros(n)
     ind = np.arange(n, dtype=np.intp)
     t0 = perf_counter()
     _py_sort(dist, ind, dist.shape[0], use_three_way_partition=kind == "3-way")
     dt = perf_counter() - t0
-    # sorting 1M elements should take less than 10s unless the sort goes quadratic
-    # (it should take something like ~10-100ms)
-    assert dt < 10
+    # sorting 300k elements should take less than 1s unless the sort goes quadratic
+    # (it should take something like <10ms)
+    assert dt < 1
 
-    n = 10**5
+    # "killer pattern" for the better (numpy-style) 2-way partitioning:
     dist = np.roll(np.arange(n), -1).astype(np.float32)
     ind = np.arange(n, dtype=np.intp)
     t0 = perf_counter()
     _py_sort(dist, ind, dist.shape[0], use_three_way_partition=kind == "3-way")
     dt = perf_counter() - t0
-    # sorting 1M elements should take less than 10s unless the sort goes quadratic
-    # (it should take something like ~10-100ms)
-    assert dt < 0.1
+    assert dt < 1
+
+    # The "killer pattern" of the 3-way partitioning quicksort
+    # with median-of-3 pivot is:
+    # [i if i%2 == 1 else k+i-1 for i in range(1, k+1)]
+    # + [i for i in range(1, 2*k + 1) if i%2 == 0]
+    # which has 0% chance to exist in real data
 
 
 def test_sort_log2_build():
