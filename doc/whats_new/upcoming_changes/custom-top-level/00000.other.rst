@@ -1,0 +1,3 @@
+- Added a short "Beginner resources" section to the Getting Started guide with
+  pointers to the scikit-learn MOOC, the machine learning map, and the user
+  guide. By :user:`nandanadileep`.

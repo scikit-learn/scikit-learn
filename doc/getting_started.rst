@@ -13,6 +13,18 @@ our :ref:`installation instructions <installation-instructions>` to install
 ``scikit-learn``, or jump to the :ref:`next_steps` section for additional
 guidance on using ``scikit-learn``.
 
+Beginner resources
+------------------
+
+If you are new to machine learning or scikit-learn, these resources can help
+you get started quickly:
+
+- The `scikit-learn MOOC <https://inria.github.io/scikit-learn-mooc/>`_ is a free
+  course created by scikit-learn contributors that introduces core concepts and
+  practical workflows.
+- The :ref:`ml_map` helps you choose an estimator based on your task and data.
+- The :ref:`user_guide` provides in-depth explanations and tutorials.
+
 Fitting and predicting: estimator basics
 ----------------------------------------
 
