@@ -1607,8 +1607,7 @@ class make_column_selector:
         if cardinality is not None:
             if not isinstance(cardinality_threshold, Integral):
                 raise ValueError(
-                    "cardinality_threshold must be an integer when "
-                    "cardinality is set."
+                    "cardinality_threshold must be an integer when cardinality is set."
                 )
             if cardinality_threshold < 1:
                 raise ValueError(
