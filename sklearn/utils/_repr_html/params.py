@@ -5,7 +5,7 @@ import html
 import reprlib
 from collections import UserDict
 
-from sklearn.utils._repr_html._common import (
+from sklearn.utils._repr_html.common import (
     generate_link_to_param_doc,
     get_docstring,
 )

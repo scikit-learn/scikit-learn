@@ -37,7 +37,7 @@ def scrape_estimator_docstring(docstring):
     return docscrape.NumpyDocString(docstring)
 
 
-def get_docstring(estimator_class, section_name, field):
+def get_docstring(estimator_class, section_name, item):
     """Extract and format docstring information for a specific item.
 
     Parses the estimator's docstring to retrieve documentation for a
@@ -51,12 +51,12 @@ def get_docstring(estimator_class, section_name, field):
     section_name : str
         The numpydoc section to search in (e.g., "Parameters", "Attributes").
 
-    field : str
+    item : str
         The name of the parameter or attribute to retrieve documentation for.
 
     Returns
     -------
-    str or None
+    item_description : str or None
         HTML-formatted docstring to be used as a tooltip. Returns None if the
         estimator has no docstring or if the item is not found in the
         specified section.
@@ -71,7 +71,7 @@ def get_docstring(estimator_class, section_name, field):
         }
     else:
         docstring_map = {}
-    if item_numpydoc := docstring_map.get(field, None):
+    if item_numpydoc := docstring_map.get(item, None):
         item_description = (
             f"{html.escape(item_numpydoc.name)}: "
             f"{html.escape(item_numpydoc.type)}<br><br>"

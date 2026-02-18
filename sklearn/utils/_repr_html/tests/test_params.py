@@ -3,12 +3,8 @@ import re
 import pytest
 
 from sklearn import config_context
-from sklearn.utils._repr_html.params import (
-    ParamsDict,
-    _params_html_repr,
-    _read_params,
-    generate_link_to_param_doc,
-)
+from sklearn.utils._repr_html.common import generate_link_to_param_doc
+from sklearn.utils._repr_html.params import ParamsDict, _params_html_repr, _read_params
 
 
 def test_params_dict_content():
