@@ -241,8 +241,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         Xi = Xi.copy()
 
                     Xi[~valid_mask] = self.categories_[i][0]
-            # We use check_unknown=False, since _check_unknown was
-            # already called above.
+            # check_unknown is set to False to prevent duplicate validation, 
+            # as the input has already been verified by the previous call to _check_unknown.
             X_int[:, i] = _encode(Xi, uniques=self.categories_[i], check_unknown=False)
         if columns_with_unknown:
             if handle_unknown == "infrequent_if_exist":
