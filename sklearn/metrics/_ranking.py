@@ -2244,7 +2244,7 @@ def metric_at_thresholds(
     y_true,
     y_score,
     metric_func,
-    **kwargs,
+    **metric_params,
 ):
     """Compute `metric_func` per threshold.
 
@@ -2264,7 +2264,7 @@ def metric_at_thresholds(
         The metric function to use. It will be called as
         `metric_func(y_true, y_pred, **kwargs)`.
 
-    **kwargs : dict
+    **metric_params : dict
         Parameters to pass to `metric_func`.
 
     Returns
@@ -2304,6 +2304,6 @@ def metric_at_thresholds(
     metric_values = np.empty(thresholds.shape[0])
     for idx, threshold in enumerate(thresholds):
         y_pred = (y_score >= threshold).astype(np.int32)
-        metric_values[idx] = metric_func(y_true, y_pred, **kwargs)
+        metric_values[idx] = metric_func(y_true, y_pred, **metric_params)
 
     return metric_values, thresholds
