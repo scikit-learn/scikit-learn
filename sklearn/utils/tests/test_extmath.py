@@ -39,10 +39,10 @@ from sklearn.utils.extmath import (
     _randomized_eigsh,
     _safe_accumulator_op,
     cartesian,
+    col_norms,
     density,
     randomized_range_finder,
     randomized_svd,
-    col_norms,
     row_norms,
     safe_sparse_dot,
     softmax,
@@ -362,7 +362,7 @@ def test_col_norms(dtype, csc_container):
 
     for csc_index_dtype in [np.int32, np.int64]:
         Xcsc = csc_container(X, dtype=dtype)
-        # csc_matrix will use int32 indices by default,
+        # csc_matrix will use int32 indice by default,
         # up-casting those to int64 when necessary
         if csc_index_dtype is np.int64:
             Xcsc.indptr = Xcsc.indptr.astype(csc_index_dtype, copy=False)
