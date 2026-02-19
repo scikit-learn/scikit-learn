@@ -13,7 +13,7 @@ from scipy.sparse import issparse
 from sklearn.base import BaseEstimator, _fit_context
 from sklearn.feature_selection._base import SelectorMixin
 from sklearn.preprocessing import LabelBinarizer
-from sklearn.utils import as_float_array, check_array, check_X_y, safe_mask, safe_sqr
+from sklearn.utils import as_float_array, check_array, check_X_y, safe_mask
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.extmath import row_norms, safe_sparse_dot, axis_norms
 from sklearn.utils.validation import check_is_fitted, validate_data
