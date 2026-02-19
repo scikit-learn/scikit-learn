@@ -813,6 +813,7 @@ def test_ridge_gcv_integer_arrays():
 
     assert_allclose(ridge_gcv.coef_, ridge_gcv_float.coef_)
     assert_allclose(ridge_gcv.cv_results_, ridge_gcv_float.cv_results_)
+    assert ridge_gcv.cv_results_.dtype == np.float64
 
 
 @pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
