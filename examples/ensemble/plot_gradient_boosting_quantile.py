@@ -338,7 +338,13 @@ train_coverage_bs = bootstrap(
     n_resamples=1000,
 )
 ci = train_coverage_bs.confidence_interval
-print(f"Train coverage 90% interval: [{ci.low:.1%}, {ci.high:.1%}]")
+print(
+    f"Training-set coverage lies between {ci.low:.1%} and {ci.high:.1%}, "
+    f"based on a 90% bootstrap confidence interval."
+)
+
+# %%
+# Notice that the interval contains the target value of 90% coverage.
 
 # %%
 test_coverage_bs = bootstrap(
@@ -353,7 +359,11 @@ test_coverage_bs = bootstrap(
     n_resamples=1000,
 )
 ci = test_coverage_bs.confidence_interval
-print(f"Test coverage 90% interval: [{ci.low:.1%}, {ci.high:.1%}]")
+print(
+    f"Test-set coverage lies between {ci.low:.1%} and {ci.high:.1%}, "
+    f"based on a 90% bootstrap confidence interval."
+)
+
 
 # %%
 # The confidence interval of the tuned models is sadly not well-calibrated on
