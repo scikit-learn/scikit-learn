@@ -46,6 +46,8 @@ class ProgressBar:
         self._queue.put(context)
 
     def on_fit_end(self, estimator, context):
+        # This is called by the root context. We signal that the root task is finished
+        # and the queue won't receive any more tasks.
         self._queue.put(context)
         self._queue.put(None)
         self.progress_monitor.join()
