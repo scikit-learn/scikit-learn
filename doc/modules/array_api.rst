@@ -22,8 +22,8 @@ At this stage, this support is **considered experimental** and must be enabled
 explicitly by the `array_api_dispatch` configuration. See below for details.
 
 .. note::
-    Currently, only `array-api-strict`, `cupy`, and `PyTorch` are known to work
-    with scikit-learn's estimators.
+    Currently, scikit-learn array API support is only regularly tested against
+    array-api-strict, CuPy, PyTorch and JAX.
 
 The following video provides an overview of the standard's design principles
 and how it facilitates interoperability between array libraries:
@@ -322,11 +322,11 @@ vanilla NumPy and array API inputs.
 To run these checks you need to install
 `array-api-strict <https://data-apis.org/array-api-strict/>`_ in your
 test environment. This allows you to run checks without having a
-GPU. To run the full set of checks you also need to install
-`PyTorch <https://pytorch.org/>`_, `CuPy <https://cupy.dev/>`_ and have
-a GPU. Checks that can not be executed or have missing dependencies will be
-automatically skipped. Therefore it's important to run the tests with the
-`-v` flag to see which checks are skipped:
+GPU. To run the full set of checks you also need to install `PyTorch
+<https://pytorch.org/>`_, `CuPy <https://cupy.dev/>`_, `JAX
+<https://docs.jax.dev>`_ and have a GPU. Checks that can not be executed or
+have missing dependencies will be automatically skipped. Therefore it's
+important to run the tests with the `-v` flag to see which checks are skipped:
 
 .. prompt:: bash $
 
