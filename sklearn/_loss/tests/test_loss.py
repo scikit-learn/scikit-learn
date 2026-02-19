@@ -12,23 +12,38 @@ from scipy.optimize import (
 )
 from scipy.special import logsumexp
 
+from sklearn import config_context
 from sklearn._loss.link import IdentityLink, _inclusive_low_high
 from sklearn._loss.loss import (
     _LOSSES,
     AbsoluteError,
     BaseLoss,
     HalfBinomialLoss,
+    HalfBinomialLossArrayAPI,
     HalfGammaLoss,
     HalfMultinomialLoss,
+    HalfMultinomialLossArrayAPI,
     HalfPoissonLoss,
     HalfSquaredError,
     HalfTweedieLoss,
     HalfTweedieLossIdentity,
     HuberLoss,
     PinballLoss,
+    _log1pexp,
 )
 from sklearn.utils import assert_all_finite
-from sklearn.utils._testing import create_memmap_backed_data, skip_if_32bit
+from sklearn.utils._array_api import (
+    _atol_for_type,
+    _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
+    device,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._testing import (
+    _array_api_for_tests,
+    create_memmap_backed_data,
+    skip_if_32bit,
+)
 
 ALL_LOSSES = list(_LOSSES.values())
 
@@ -1356,3 +1371,129 @@ def test_tweedie_log_identity_consistency(p):
     assert_allclose(
         hessian_log, y_pred * gradient_identity + y_pred**2 * hessian_identity
     )
+
+
+@pytest.mark.parametrize(
+    "array_api_loss_class, loss_class",
+    [
+        (HalfBinomialLossArrayAPI, HalfBinomialLoss),
+        (HalfMultinomialLossArrayAPI, HalfMultinomialLoss),
+    ],
+    ids=["HalfBinomialLoss", "HalfMultinomialLoss"],
+)
+@pytest.mark.parametrize(
+    "method_name", ["__call__", "gradient", "loss", "loss_gradient"]
+)
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize(
+    "namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_loss_array_api(
+    array_api_loss_class,
+    loss_class,
+    method_name,
+    use_sample_weight,
+    namespace,
+    device_,
+    dtype_name,
+):
+    def _assert_array_api_result(result_xp, result_np, raw_prediction_xp, xp, atol):
+        assert_allclose(_convert_to_numpy(result_xp, xp=xp), result_np, atol=atol)
+        assert result_xp.dtype == raw_prediction_xp.dtype
+        assert device(result_xp) == device(raw_prediction_xp)
+
+    xp = _array_api_for_tests(namespace, device_)
+    atol = _atol_for_type(dtype_name)
+    random_seed = 42
+    n_samples = 100
+    array_api_loss_instance = array_api_loss_class()
+    loss_instance = loss_class()
+    y_true, raw_prediction = random_y_true_raw_prediction(
+        loss=loss_instance,
+        n_samples=n_samples,
+        y_bound=(-100, 100),
+        raw_bound=(-50, 50),
+        seed=random_seed,
+    )
+    y_true = y_true.astype(dtype_name)
+    raw_prediction = raw_prediction.astype(dtype_name)
+    y_true_xp = xp.asarray(y_true, device=device_)
+    raw_prediction_xp = xp.asarray(raw_prediction, device=device_)
+    if use_sample_weight:
+        rng = np.random.RandomState(random_seed)
+        sample_weight_np = (
+            rng.uniform(-1, 5, size=n_samples).clip(0, None).astype(dtype_name)
+        )
+        sample_weight_xp = xp.asarray(sample_weight_np, device=device_)
+    else:
+        sample_weight_np = None
+        sample_weight_xp = None
+
+    method = getattr(loss_instance, method_name)
+    array_api_method = getattr(array_api_loss_instance, method_name)
+    result_np = method(
+        y_true=y_true, raw_prediction=raw_prediction, sample_weight=sample_weight_np
+    )
+    with config_context(array_api_dispatch=True):
+        result_xp = array_api_method(
+            y_true=y_true_xp,
+            raw_prediction=raw_prediction_xp,
+            sample_weight=sample_weight_xp,
+        )
+        if (
+            method_name == "__call__"
+        ):  # The `__call__` method just returns a float scalar
+            assert np.isclose(result_xp, result_np)
+        else:
+            if isinstance(result_xp, tuple):
+                for res_xp, res_np in zip(result_xp, result_np):
+                    _assert_array_api_result(
+                        result_xp=res_xp,
+                        result_np=res_np,
+                        raw_prediction_xp=raw_prediction_xp,
+                        xp=xp,
+                        atol=atol,
+                    )
+            else:
+                _assert_array_api_result(
+                    result_xp=result_xp,
+                    result_np=result_np,
+                    raw_prediction_xp=raw_prediction_xp,
+                    xp=xp,
+                    atol=atol,
+                )
+
+
+@pytest.mark.parametrize(
+    "namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_log1pexp(namespace, device_, dtype_name):
+    mpmath = pytest.importorskip("mpmath")
+    mpmath.mp.prec = 100  # Significantly more precise reference than float64.
+    values_to_test = np.linspace(-40, 40, 300)
+    xp = _array_api_for_tests(namespace, device_)
+    for value in values_to_test:
+        if dtype_name == "float32":
+            x = xp.asarray(value, dtype=xp.float32, device=device_)
+        else:
+            x = xp.asarray(value, dtype=xp.float64, device=device_)
+
+        result_xp = float(
+            _log1pexp(
+                raw_prediction=x,
+                raw_prediction_exp=xp.exp(x),
+                xp=xp,
+            )
+        )
+        result_mpmath = float(mpmath.log(1 + mpmath.exp(value)))
+        assert result_mpmath > 0
+        # Check that the relative error is within float32 or float64 precision.
+        assert result_xp == pytest.approx(
+            result_mpmath,
+            rel=1e-5 if dtype_name == "float32" else 1e-12,
+            abs=0,
+        )

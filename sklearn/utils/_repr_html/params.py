@@ -5,11 +5,11 @@ import html
 import reprlib
 from collections import UserDict
 
-from sklearn.utils._repr_html._common import (
-    _generate_link_to_param_doc,
-    _get_docstring,
-)
 from sklearn.utils._repr_html.base import ReprHTMLMixin
+from sklearn.utils._repr_html.common import (
+    generate_link_to_param_doc,
+    get_docstring,
+)
 
 
 def _read_params(name, value, non_default_params):
@@ -73,9 +73,9 @@ def _params_html_repr(params):
     rows = []
     for row in params:
         param = _read_params(row, params[row], params.non_default)
-        link = _generate_link_to_param_doc(params.estimator_class, row, params.doc_link)
+        link = generate_link_to_param_doc(params.estimator_class, row, params.doc_link)
 
-        param_description = _get_docstring(params.estimator_class, "Parameters", row)
+        param_description = get_docstring(params.estimator_class, "Parameters", row)
 
         if params.doc_link and link and param_description:
             # Create clickable parameter name with documentation link
