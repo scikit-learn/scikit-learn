@@ -20,7 +20,6 @@ from sklearn._loss.loss import (
     HalfMultinomialLossArrayAPI,
 )
 from sklearn.base import _fit_context
-from sklearn.dummy import DummyClassifier
 from sklearn.linear_model._base import (
     BaseEstimator,
     LinearClassifierMixin,
@@ -766,38 +765,21 @@ def _log_reg_scoring_path(
         # We need to pass the classes as "labels" argument to scorers that support
         # it, e.g. scoring = "neg_brier_score", because y_test may not contain all
         # class labels.
-        # There are 2 routes:
-        #  - metadata routing is enabled: A try except clause is possible with
-        #    adding labels to score_params.
-        # - metadata routing is disabled: We have to reconstruct the scorer and
-        #   pass labels as kwargs explicitly.
+        # There are at least 2 possibilities:
+        # 1. Metadata routing is enabled: A try except clause is possible with
+        #   adding labels to score_params. We could then pass the already instantiated
+        #   log_reg instance to scoring.
+        # 2. We reconstruct the scorer and pass labels as kwargs explicitly.
+        # We implement the 2nd option even if it seems a bit hacky because it works
+        # with and without metadata routing.
         if hasattr(scoring, "_score_func"):
             sig = inspect.signature(scoring._score_func).parameters
         else:
             sig = []
 
-        if _routing_enabled():
-            dc = DummyClassifier(strategy="prior").fit(None, classes)
-            if "labels" not in score_params:
-                delete_labels = True
-                score_params["labels"] = classes
-            if is_binary and "pos_label" not in score_params:
-                delete_pos_label = True
-                score_params["pos_label"] = classes[-1]
-            try:
-                scoring(dc, X_test, y_test, **score_params)
-            except TypeError:
-                if delete_labels:
-                    del score_params["labels"]
-                if delete_pos_label:
-                    del score_params["pos_label"]
-                # TODO: How about issuing a warning?
-                # The call to scoring will fail if y_test does not contain all
-                # class labels.
-        elif (is_binary and "labels" in sig and "pos_label" in sig) or (
+        if (is_binary and "labels" in sig and "pos_label" in sig) or (
             len(classes) >= 3 and "labels" in sig
         ):
-            # This seems like a hack and indeed it is one.
             pos_label_kwarg = {}
             if is_binary:
                 # see _logistic_regression_path
