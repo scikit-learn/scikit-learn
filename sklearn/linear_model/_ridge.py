@@ -2125,10 +2125,10 @@ class _RidgeGCV(LinearModel):
 
         Long X case (n_features < n_samples).
         """
-        alpha_Dm1 = alpha / (singvals**2 + alpha) - 1
-        alpha_c = U @ self._diag_dot(alpha_Dm1, UT_y) + y
-        alpha_d = self._decomp_diag(alpha_Dm1, U) + 1
-        alpha_g = U @ self._diag_dot(alpha_Dm1, UT_sqrt_sw) + sqrt_sw
+        M = alpha / (singvals**2 + alpha) - 1
+        alpha_c = U @ self._diag_dot(M, UT_y) + y
+        alpha_d = self._decomp_diag(M, U) + 1
+        alpha_g = U @ self._diag_dot(M, UT_sqrt_sw) + sqrt_sw
         if self.fit_intercept:
             sw_sum = sqrt_sw @ sqrt_sw
             alpha_d -= alpha_g * sqrt_sw / sw_sum
