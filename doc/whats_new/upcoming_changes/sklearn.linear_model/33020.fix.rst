@@ -2,8 +2,9 @@
   :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV` when
   `cv=None` are now numerically stable in the small `alpha` regime. The default
   `auto` option is now equivalent to `eigen` and picks the cheaper option:
-  eigendecomposition of the covariance matrix when `n_features <=
-  n_samples` (resp `n_samples > n_features`). When `store_cv_results=True` and
-  `X` is an integer array, the `cv_results_` attribute was wrongly coerced to
-  the integer dtype of `X`, it now always has a float dtype.
+  eigendecomposition of the covariance matrix when `n_features <= n_samples`,
+  respectively of the Gram matrix when `n_samples > n_features`. When
+  `store_cv_results=True` and `X` is an integer array, the `cv_results_`
+  attribute was wrongly coerced to the integer dtype of `X`, it now always has a
+  float dtype.
   By :user:`Antoine Baker <antoinebaker>`
