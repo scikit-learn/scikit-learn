@@ -67,6 +67,7 @@ common_dependencies_without_coverage = [
     "threadpoolctl",
     "matplotlib",
     "pandas",
+    "rich",
     "pyamg",
     "pytest",
     "pytest-xdist",
@@ -258,6 +259,7 @@ build_metadata_list = [
                     "numpy",
                     "scipy",
                     "pandas",
+                    "rich",
                     "cython",
                     "joblib",
                     "pillow",
@@ -298,7 +300,9 @@ build_metadata_list = [
         "folder": "build_tools/github",
         "platform": "win-64",
         "channels": ["conda-forge"],
-        "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
+        "conda_dependencies": remove_from(
+            common_dependencies, ["pandas", "rich", "pyamg"]
+        )
         + [
             "wheel",
             "pip",
@@ -414,7 +418,9 @@ build_metadata_list = [
         "folder": "build_tools/github",
         "platform": "linux-aarch64",
         "channels": ["conda-forge"],
-        "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
+        "conda_dependencies": remove_from(
+            common_dependencies, ["pandas", "rich", "pyamg"]
+        )
         + ["pip", "ccache"],
         "package_constraints": {
             "python": "3.11",

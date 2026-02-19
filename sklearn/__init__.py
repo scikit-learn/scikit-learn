@@ -72,6 +72,7 @@ from sklearn.utils._show_versions import show_versions  # noqa: E402
 
 _submodules = [
     "calibration",
+    "callback",
     "cluster",
     "covariance",
     "cross_decomposition",
