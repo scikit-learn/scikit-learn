@@ -783,7 +783,7 @@ def sparse_matmul_to_dense(A, B, out=None):
         if out.shape[0] != n1 or out.shape[1] != n3:
             raise ValueError("Shape of out must be ({n1}, {n3}), got {out.shape}.")
         if out.dtype != A.data.dtype:
-            raise ValueError("Dtype of out must match that of input A..")
+            raise ValueError("Dtype of out must match that of input A.")
 
     transpose_out = False
     if A.format == "csc":

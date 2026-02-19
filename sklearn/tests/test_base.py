@@ -237,6 +237,7 @@ def test_clone_class_rather_than_instance():
         clone(MyEstimator)
 
 
+# TODO (1.11): remove svc test for predict_proba after it is deprecated
 def test_conditional_attrs_not_in_dir():
     # Test that __dir__ includes only relevant attributes. #28558
 

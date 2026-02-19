@@ -74,6 +74,7 @@ from sklearn.metrics.pairwise import (
     paired_euclidean_distances,
     paired_manhattan_distances,
     pairwise_distances,
+    pairwise_distances_argmin,
     pairwise_kernels,
     polynomial_kernel,
     rbf_kernel,
@@ -215,7 +216,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
     """
     The dimensions of precision-recall pairs and the threshold array as
     returned by the precision_recall_curve do not match. See
-    func:`sklearn.metrics.precision_recall_curve`
+    :func:`sklearn.metrics.precision_recall_curve`
 
     This prevents implicit conversion of return value triple to a higher
     dimensional np.array of dtype('float64') (it will be of dtype('object)
@@ -2454,6 +2455,7 @@ array_api_metric_checkers = {
         check_array_api_binary_classification_metric,
     ],
     pairwise_distances: [check_array_api_metric_pairwise],
+    pairwise_distances_argmin: [check_array_api_metric_pairwise],
 }
 
 
