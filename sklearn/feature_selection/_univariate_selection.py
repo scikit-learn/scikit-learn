@@ -91,7 +91,7 @@ def f_oneway(*args):
     args = [as_float_array(a) for a in args]
     n_samples_per_class = np.array([a.shape[0] for a in args])
     n_samples = np.sum(n_samples_per_class)
-    ss_alldata = sum(axis_norms(a, squared=False, axis=0) for a in args)
+    ss_alldata = sum(axis_norms(a, squared=True, axis=0) for a in args)
     sums_args = [np.asarray(a.sum(axis=0)) for a in args]
     square_of_sums_alldata = sum(sums_args) ** 2
     square_of_sums_args = [s**2 for s in sums_args]
