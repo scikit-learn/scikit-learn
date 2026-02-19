@@ -1493,6 +1493,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
           ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
         - `None`: :ref:`accuracy <accuracy_score>` is used.
 
+        .. versionchanged:: 1.11
+           The default will change from None, i.e. accuracy, to 'neg_log_loss' in
+           version 1.11.
+
     solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'}, \
             default='lbfgs'
 
@@ -1735,7 +1739,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             "Cs": [Interval(Integral, 1, None, closed="left"), "array-like"],
             "l1_ratios": ["array-like", None, Hidden(StrOptions({"warn"}))],
             "cv": ["cv_object"],
-            "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+            "scoring": [
+                StrOptions(set(get_scorer_names())),
+                callable,
+                None,
+                Hidden(StrOptions({"warn"})),
+            ],
             "refit": ["boolean"],
             "penalty": [
                 StrOptions({"l1", "l2", "elasticnet"}),
@@ -1754,7 +1763,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         cv=None,
         dual=False,
         penalty="deprecated",
-        scoring=None,
+        scoring="warn",
         solver="lbfgs",
         tol=1e-4,
         max_iter=100,
@@ -1856,6 +1865,19 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 ),
                 FutureWarning,
             )
+
+        if self.scoring == "warn":
+            warnings.warn(
+                "The default value of the parameter 'scoring' will change from None, "
+                "i.e. accuracy, to 'neg_log_loss' in version 1.11. To silence this "
+                "warning, explicitly set the scoring parameter: "
+                "scoring='neg_log_loss' for the new, scoring='accuracy' or "
+                "scoring='None' for the old default.",
+                FutureWarning,
+            )
+            scoring = None
+        else:
+            scoring = self.scoring
 
         if self.use_legacy_attributes == "warn":
             warnings.warn(
@@ -2003,7 +2025,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 max_iter=self.max_iter,
                 verbose=self.verbose,
                 class_weight=class_weight,
-                scoring=self.scoring,
+                scoring=scoring,
                 intercept_scaling=self.intercept_scaling,
                 random_state=self.random_state,
                 max_squared_sum=max_squared_sum,
