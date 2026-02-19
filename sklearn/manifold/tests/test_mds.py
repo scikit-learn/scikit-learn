@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_almost_equal, assert_equal
 
-from sklearn.datasets import load_digits, load_iris
+from sklearn.datasets import load_digits, load_iris, make_blobs
 from sklearn.manifold import ClassicalMDS
 from sklearn.manifold import _mds as mds
 from sklearn.metrics import euclidean_distances
@@ -306,9 +306,9 @@ def test_classical_mds_init_to_mds():
 
 
 @pytest.mark.parametrize("init", ["random", "classical_mds"])
-@pytest.mark.parametrize("n_components", [1, 2, 3])
+@pytest.mark.parametrize("n_components", [1, 2, 5, 10])
 def test_correct_n_components(init, n_components):
-    X, _ = load_iris(return_X_y=True)
+    X, _ = make_blobs(n_features=10)
 
     model = mds.MDS(init=init, n_components=n_components, n_init=1)
     Z = model.fit_transform(X)
