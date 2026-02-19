@@ -92,10 +92,9 @@ def axis_norms(X, squared=False, axis=0):
         xp, _ = get_namespace(X)
         if _is_numpy_namespace(xp):
             X = np.asarray(X)
-            if axis == 0:
-                norms = np.einsum("ij,ij->j", X, X)
-            else:
-                norms = np.einsum("ij,ij->i", X, X)
+            axis = axis % X.ndim
+            Xview = np.moveaxis(X, axis, 0)
+            norms = np.einsum("i...,i...->...", Xview, Xview)
             norms = xp.asarray(norms)
         else:
             norms = xp.sum(xp.multiply(X, X), axis=axis)
