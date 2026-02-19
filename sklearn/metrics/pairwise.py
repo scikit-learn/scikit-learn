@@ -1959,9 +1959,9 @@ def distance_metrics():
     return PAIRWISE_DISTANCE_FUNCTIONS
 
 
-def _transposed_dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
+def _transposed_dist_wrapper(dist_func, slice_, *args, **kwargs):
     """Write in-place to a slice of a distance matrix."""
-    dist_matrix = xpx.at(dist_matrix)[slice_, ...].set(dist_func(*args, **kwargs).T)
+    return slice_, dist_func(*args, **kwargs).T
 
 
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
@@ -1984,10 +1984,14 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     # We assume that currently (April 2025) all array API compatible namespaces
     # allocate 2D arrays using the C-contiguity convention by default.
     ret = xp.empty((X.shape[0], Y.shape[0]), device=device, dtype=dtype_float).T
-    Parallel(backend="threading", n_jobs=n_jobs)(
-        fd(func, ret, s, X, Y[s, ...], **kwds)
+    chunk_generator = Parallel(
+        backend="threading", n_jobs=n_jobs, return_as="generator"
+    )(
+        fd(func, s, X, Y[s, ...], **kwds)
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
     )
+    for slice_, chunk in chunk_generator:
+        ret = xpx.at(ret)[slice_, ...].set(chunk)
 
     if (X is Y or Y is None) and func is euclidean_distances:
         # zeroing diagonal for euclidean norm.
