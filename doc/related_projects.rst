@@ -65,7 +65,7 @@ enhance the functionality of scikit-learn's estimators.
   organize, log and reproduce experiments
 
 - `Scikit-Learn Laboratory
-  <https://skll.readthedocs.io/en/latest/index.html>`_  A command-line
+  <https://skll.readthedocs.io/en/latest/index.html>`_ A command-line
   wrapper around scikit-learn that makes it easy to run machine learning
   experiments with multiple learners and large feature sets.
 
@@ -76,11 +76,6 @@ enhance the functionality of scikit-learn's estimators.
 
 - `model-diagnostics <https://lorentzenchr.github.io/model-diagnostics/>`_ Tools for
   diagnostics and assessment of (machine learning) models (in Python).
-
-- `sklearn-evaluation <https://github.com/ploomber/sklearn-evaluation>`_
-  Machine learning model evaluation made easy: plots, tables, HTML reports,
-  experiment tracking and Jupyter notebook analysis. Visual analysis, model
-  selection, evaluation and diagnostics.
 
 - `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
   custom matplotlib visualizers for scikit-learn estimators to support visual feature

@@ -237,7 +237,7 @@ clustering algorithms, see :func:`sklearn.cluster.kmeans_plusplus` for details
 and example usage.
 
 The algorithm supports sample weights, which can be given by a parameter
-``sample_weight``. This allows to assign more weight to some samples when
+``sample_weight``. This allows assigning more weight to some samples when
 computing cluster centers and values of inertia. For example, assigning a
 weight of 2 to a sample is equivalent to adding a duplicate of that sample
 to the dataset :math:`X`.
@@ -2120,7 +2120,7 @@ of classes.
 
 .. topic:: Advantages:
 
-  - Allows to examine the spread of each true cluster across predicted clusters
+  - Allows examining the spread of each true cluster across predicted clusters
     and vice versa.
 
   - The contingency table calculated is typically utilized in the calculation of
