@@ -866,26 +866,18 @@ def _multiclass_roc_auc_score(
 
 
 def _sort_inputs_and_compute_classification_thresholds(
-    y_true, y_score, pos_label=None, sample_weight=None
+    y_true, y_score, sample_weight=None
 ):
     """Validate and sort inputs, and compute classification thresholds.
 
     Performs the following functions:
 
-    * Ensures `y_true` is 'binary' or 'multiclass' with a set `pos_label`
     * Array validation on `y_true`, `y_score` are and ensures all finite
     * Filters out 0-weighted samples
-    * Ensure `pos_label` consistency and uses `pos_label` to convert `y_true` to
-      boolean
-    * Sorts `y_score`
-    * Computes thresholds as distinct `y_score` values
+    * Sorts `y_score` and `y_true` according to descending `y_score`
+    * Computes distinct `y_score` values as thresholds indices
     """
     xp, _, device = get_namespace_and_device(y_true, y_score, sample_weight)
-
-    # Check to make sure y_true is valid
-    y_type = type_of_target(y_true, input_name="y_true")
-    if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
-        raise ValueError("{0} format is not supported".format(y_type))
 
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = column_or_1d(y_true)
@@ -901,11 +893,6 @@ def _sort_inputs_and_compute_classification_thresholds(
         y_true = y_true[nonzero_weight_mask]
         y_score = y_score[nonzero_weight_mask]
         sample_weight = sample_weight[nonzero_weight_mask]
-
-    pos_label = _check_pos_label_consistency(pos_label, y_true)
-
-    # make y_true a boolean vector
-    y_true = y_true == pos_label
 
     # sort scores and corresponding truth values
     desc_score_indices = xp.argsort(y_score, stable=True, descending=True)
@@ -1007,11 +994,20 @@ def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weigh
     """
     xp, _, device = get_namespace_and_device(y_true, y_score, sample_weight)
 
+    # Check to make sure y_true is valid
+    y_type = type_of_target(y_true, input_name="y_true")
+    if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
+        raise ValueError("{0} format is not supported".format(y_type))
+
     y_true, y_score, threshold_idxs, weight = (
         _sort_inputs_and_compute_classification_thresholds(
             y_true, y_score, pos_label, sample_weight
         )
     )
+
+    # make y_true a boolean vector
+    pos_label = _check_pos_label_consistency(pos_label, y_true)
+    y_true = y_true == pos_label
 
     # accumulate the true positives with decreasing threshold
     max_float_dtype = _max_precision_float_dtype(xp, device)
@@ -2248,7 +2244,6 @@ def metric_at_thresholds(
     y_true,
     y_score,
     metric_func,
-    pos_label=None,
     **kwargs,
 ):
     """Compute `metric_func` per threshold.
@@ -2268,9 +2263,6 @@ def metric_at_thresholds(
     metric_func : callable
         The metric function to use. It will be called as
         `metric_func(y_true, y_pred, **kwargs)`.
-
-    pos_label : int, float, bool or str, default=None
-        The label of the positive class.
 
     **kwargs : dict
         Parameters to pass to `metric_func`.
@@ -2303,11 +2295,8 @@ def metric_at_thresholds(
     >>> scores
     array([0.75, 0.5 , 0.75, 0.5 ])
     """
-    # `y_true` gets converted into a boolean vector
     y_true, y_score, threshold_idxs, _ = (
-        _sort_inputs_and_compute_classification_thresholds(
-            y_true, y_score, pos_label=pos_label
-        )
+        _sort_inputs_and_compute_classification_thresholds(y_true, y_score)
     )
     y_true = y_true.astype(np.int32)
 
