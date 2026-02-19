@@ -18,7 +18,7 @@ from sklearn.linear_model._base import (
     make_dataset,
 )
 from sklearn.preprocessing import add_dummy_feature
-from sklearn.utils._array_api import convert_estimator
+from sklearn.utils._array_api import get_namespace_and_device, move_estimator_to
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
@@ -860,7 +860,7 @@ def test_linear_regression_sample_weight_consistency(
 
 
 @skip_if_array_api_compat_not_configured
-def test_array_api_fitted_attribute():
+def test_array_api_move_estimator_to():
     xp = pytest.importorskip("array_api_strict")
     rng = np.random.default_rng(0)
     X = rng.normal(size=(10, 5))
@@ -871,9 +871,10 @@ def test_array_api_fitted_attribute():
     reg.predict(X_xp)
 
     with config_context(array_api_dispatch=True):
-        with pytest.raises(ValueError, match=".*must use the same array library"):
+        with pytest.raises(ValueError, match=".*must use the same namespace"):
             reg.predict(X_xp)
-        reg = convert_estimator(reg, X_xp)
+        xp_target, _, device = get_namespace_and_device(X_xp)
+        reg = move_estimator_to(reg, xp_target, device)
         reg.predict(X_xp)
 
 

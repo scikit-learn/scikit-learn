@@ -90,12 +90,12 @@ def skip_if_matplotlib_not_installed(fname):
         raise SkipTest(f"Skipping doctests for {basename}, matplotlib not installed")
 
 
-def skip_if_cupy_not_installed(fname):
+def skip_if_torch_not_installed(fname):
     try:
-        import cupy  # noqa: F401
+        import torch  # noqa: F401
     except ImportError:
         basename = os.path.basename(fname)
-        raise SkipTest(f"Skipping doctests for {basename}, cupy not installed")
+        raise SkipTest(f"Skipping doctests for {basename}, torch not installed")
 
 
 def pytest_runtest_setup(item):
@@ -131,7 +131,7 @@ def pytest_runtest_setup(item):
             skip_if_matplotlib_not_installed(fname)
 
     if fname.endswith("array_api.rst"):
-        skip_if_cupy_not_installed(fname)
+        skip_if_torch_not_installed(fname)
 
 
 def pytest_configure(config):

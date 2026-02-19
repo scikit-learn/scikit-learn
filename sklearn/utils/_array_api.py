@@ -1006,8 +1006,8 @@ def _estimator_with_converted_arrays(estimator, converter):
     return new_estimator
 
 
-def convert_estimator(estimator, reference_array):
-    """Convert attributes of estimator to namespace and device of reference array.
+def move_estimator_to(estimator, xp, device):
+    """Move estimator array attributes to the given namespace and device.
 
     Attributes which are not arrays are left unchanged.
 
@@ -1016,19 +1016,19 @@ def convert_estimator(estimator, reference_array):
     estimator : estimator object
         The estimator whose attributes should be converted.
 
-    reference_array : array-like
-        The reference array whose namespace and device will be used for conversion.
-        If this is a NumPy array, estimator attributes will be converted to NumPy.
+    xp : array namespace
+        The target array API namespace.
+
+    device : device or None
+        The target device.
 
     Returns
     -------
     new_estimator : estimator object
-        A clone of the estimator with array attributes converted.
+        A clone of the estimator with array attributes moved.
     """
-    xp, _, device_ = get_namespace_and_device(reference_array)
-
     return _estimator_with_converted_arrays(
-        estimator, partial(move_to, xp=xp, device=device_)
+        estimator, partial(move_to, xp=xp, device=device)
     )
 
 
@@ -1077,11 +1077,12 @@ def check_same_namespace(X, estimator, *, attribute, method):
 
     raise ValueError(
         f"Inputs passed to {estimator.__class__.__name__}.{method}() "
-        "must use the same array library and the same device as those passed to fit(). "
+        "must use the same namespace and the same device as those passed to fit(). "
         f"{msg} "
-        "You can convert the estimator to the same library and device as X with: "
-        "'from sklearn.utils._array_api import convert_estimator; "
-        "estimator = convert_estimator(estimator, X)'"
+        "You can move the estimator to the same namespace and device as X with: "
+        "'from sklearn.utils._array_api import move_estimator_to; "
+        "xp, _, device = get_namespace_and_device(X); "
+        "estimator = move_estimator_to(estimator, xp, device)'"
     )
 
 

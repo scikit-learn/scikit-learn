@@ -33,11 +33,11 @@ from sklearn.utils._array_api import (
     _ravel,
     _validate_diagonal_args,
     check_same_namespace,
-    convert_estimator,
     device,
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
+    move_estimator_to,
     move_to,
     np_compat,
     supported_float_dtypes,
@@ -561,7 +561,7 @@ def test_convert_estimator_to_ndarray(array_namespace, converter):
 
         new_est = _estimator_with_converted_arrays(est, converter)
         assert isinstance(new_est.X_, numpy.ndarray)
-        new_est = convert_estimator(est, numpy.asarray([0]))
+        new_est = move_estimator_to(est, numpy, device=None)
         assert isinstance(new_est.X_, numpy.ndarray)
 
 
@@ -575,7 +575,7 @@ def test_convert_estimator_with_custom_logic():
     new_est = _estimator_with_converted_arrays(est, lambda array: xp.asarray(array))
     assert hasattr(new_est.X_, "__array_namespace__")
     with config_context(array_api_dispatch=True):
-        new_est = convert_estimator(est, xp.asarray([0]))
+        new_est = move_estimator_to(est, xp, device=None)
 
         assert get_namespace(new_est.X_)[0] == xp
         assert get_namespace(new_est.X_dict_["X"])[0] == xp
@@ -590,7 +590,7 @@ def test_custom_conversion_estimator_to_array_api_strict():
     est = SimpleEstimatorCustomLogic().fit(X_np)
 
     with config_context(array_api_dispatch=True):
-        new_est = convert_estimator(est, xp.asarray([0]))
+        new_est = move_estimator_to(est, xp, device=None)
 
         new_est.predict(xp.asarray([[1.3, 4.5]]))
 
@@ -607,7 +607,7 @@ def test_convert_estimator_to_array_api_strict():
     est = SimpleEstimator().fit(X_np)
 
     with config_context(array_api_dispatch=True):
-        new_est = convert_estimator(est, xp.asarray([0]))
+        new_est = move_estimator_to(est, xp, device=None)
 
         assert get_namespace(new_est.X_)[0] == xp
         assert get_namespace(new_est.X_dict_["X"])[0] == xp
@@ -621,7 +621,7 @@ def test_check_fitted_attribute():
     with config_context(array_api_dispatch=True):
         est = SimpleEstimator().fit(xp.asarray([[1.3, 4.5]]))
 
-        with pytest.raises(ValueError, match=".*must use the same array library"):
+        with pytest.raises(ValueError, match=".*must use the same namespace"):
             est.predict(numpy.asarray([0]))
 
 

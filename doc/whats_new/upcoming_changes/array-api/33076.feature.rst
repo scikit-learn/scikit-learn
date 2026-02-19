@@ -1,4 +1,4 @@
 - :class:`linear_model.Ridge` now raises a more informative error message when
   arrays passed at fit and prediction time are of different types (array API
   namespaces) or are on different devices.
-  By :user:`Jérôme Dockès <jeromedockes>`
+  By :user:`Jérôme Dockès <jeromedockes>` and :user:`Tim Head <betatim>`.
