@@ -2036,7 +2036,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         names, transformers = zip(*self.transformer_list)
 
         detailed_names = [
-            f"{str(transformers[x]).split('(')[0]} : {n}" for x, n in enumerate(names)
+            f"{str(transformers[idx]).split('(')[0]} : {name}"
+            for idx, name in enumerate(names)
         ]
         return _VisualBlock("parallel", transformers, names=detailed_names)
 
