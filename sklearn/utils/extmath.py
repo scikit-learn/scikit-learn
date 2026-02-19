@@ -25,7 +25,7 @@ from sklearn.utils._array_api import (
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.deprecation import deprecated
 from sklearn.utils.sparsefuncs import sparse_matmul_to_dense
-from sklearn.utils.sparsefuncs_fast import csr_row_norms
+from sklearn.utils.sparsefuncs_fast import csr_row_norms, csc_col_norms
 from sklearn.utils.validation import check_array, check_random_state
 
 
@@ -93,6 +93,99 @@ def row_norms(X, squared=False):
         if not squared:
             norms = xp.sqrt(norms)
     return norms
+
+
+def axis_norms(X, squared=False, axis=0):
+    """Axis-wise (squared) Euclidean norm of X.
+
+    Equivalent to np.sqrt((X * X).sum(axis=axis)), but also supports sparse
+    matrices and does not create an X.shape-sized temporary.
+
+    Performs no input validation.
+
+    Parameters
+    ----------
+    X : array-like
+        The input array.
+    squared : bool, default=False
+        If True, return squared norms.
+    axis : int, default=0
+        Axis to sum over.
+
+    Returns
+    -------
+    array-like
+        The axis-wise (squared) Euclidean norm of X.
+    """
+    if sparse.issparse(X):
+        if axis == 0:
+            X = X.tocsc()
+            norms = csc_col_norms(X)
+        else:
+            X = X.tocsr()
+            norms = csr_row_norms(X)
+        if not squared:
+            norms = np.sqrt(norms)
+    else:
+        xp, _ = get_namespace(X)
+        if _is_numpy_namespace(xp):
+            X = np.asarray(X)
+            if axis == 0:
+                norms = np.einsum("ij,ij->j", X, X)
+            else:
+                norms = np.einsum("ij,ij->i", X, X)
+            norms = xp.asarray(norms)
+        else:
+            norms = xp.sum(xp.multiply(X, X), axis=axis)
+        if not squared:
+            norms = xp.sqrt(norms)
+    return norms
+
+
+def row_norms(X, squared=False):
+    """Row-wise (squared) Euclidean norm of X.
+
+    Equivalent to np.sqrt((X * X).sum(axis=1)), but also supports sparse
+    matrices and does not create an X.shape-sized temporary.
+
+    Performs no input validation.
+
+    Parameters
+    ----------
+    X : array-like
+        The input array.
+    squared : bool, default=False
+        If True, return squared norms.
+
+    Returns
+    -------
+    array-like
+        The row-wise (squared) Euclidean norm of X.
+    """
+    return axis_norms(X, squared=squared, axis=1)
+
+
+def col_norms(X, squared=False):
+    """Column-wise (squared) Euclidean norm of X.
+
+    Equivalent to np.sqrt((X * X).sum(axis=0)), but also supports sparse
+    matrices and does not create an X.shape-sized temporary.
+
+    Performs no input validation.
+
+    Parameters
+    ----------
+    X : array-like
+        The input array.
+    squared : bool, default=False
+        If True, return squared norms.
+
+    Returns
+    -------
+    array-like
+        The column-wise (squared) Euclidean norm of X.
+    """
+    return axis_norms(X, squared=squared, axis=0)
 
 
 def fast_logdet(A):
