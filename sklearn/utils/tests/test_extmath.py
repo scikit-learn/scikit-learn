@@ -362,7 +362,7 @@ def test_col_norms(dtype, csc_container):
 
     for csc_index_dtype in [np.int32, np.int64]:
         Xcsc = csc_container(X, dtype=dtype)
-        # csc_matrix will use int32 indice by default,
+        # csc_matrix will use int32 indices by default,
         # up-casting those to int64 when necessary
         if csc_index_dtype is np.int64:
             Xcsc.indptr = Xcsc.indptr.astype(csc_index_dtype, copy=False)
