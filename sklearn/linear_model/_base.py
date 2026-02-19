@@ -116,7 +116,6 @@ def _preprocess_data(
     *,
     fit_intercept,
     copy=True,
-    copy_y=True,
     sample_weight=None,
     check_input=True,
     rescale_with_sw=True,
@@ -155,8 +154,7 @@ def _preprocess_data(
         inplace.
         If input X is dense, then X_out is centered.
     y_out : {ndarray, sparse matrix} of shape (n_samples,) or (n_samples, n_targets)
-        Centered version of y. Possibly performed inplace on input y depending
-        on the copy_y parameter.
+        Centered copy of y.
     X_offset : ndarray of shape (n_features,)
         The mean per column of input X.
     y_offset : float or ndarray of shape (n_features,)
@@ -174,9 +172,9 @@ def _preprocess_data(
         X = check_array(
             X, copy=copy, accept_sparse=["csr", "csc"], dtype=supported_float_dtypes(xp)
         )
-        y = check_array(y, dtype=X.dtype, copy=copy_y, ensure_2d=False)
+        y = check_array(y, dtype=X.dtype, copy=True, ensure_2d=False)
     else:
-        y = xp.astype(y, X.dtype, copy=copy_y)
+        y = xp.astype(y, X.dtype)
         if copy:
             if X_is_sparse:
                 X = X.copy()
