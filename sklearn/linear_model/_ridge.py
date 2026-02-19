@@ -2136,8 +2136,7 @@ class _RidgeGCV(LinearModel):
             # handle case where y is 2-d
             alpha_d = alpha_d[:, None]
         looe = alpha_c / alpha_d
-        H = singvals / (singvals**2 + alpha)
-        coef = V @ self._diag_dot(H, UT_y)
+        coef = V @ self._diag_dot(singvals / (singvals**2 + alpha), UT_y)
         return looe, coef
 
     def _solve_svd_design_matrix_wide(
@@ -2158,8 +2157,7 @@ class _RidgeGCV(LinearModel):
             # handle case where y is 2-d
             alpha_d = alpha_d[:, None]
         looe = alpha_c / alpha_d
-        H = singvals / (singvals**2 + alpha)
-        coef = V @ self._diag_dot(H, UT_y)
+        coef = V @ self._diag_dot(singvals / (singvals**2 + alpha), UT_y)
         return looe, coef
 
     def _solve_svd_design_matrix(
