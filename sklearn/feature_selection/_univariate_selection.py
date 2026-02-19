@@ -15,7 +15,7 @@ from sklearn.feature_selection._base import SelectorMixin
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import as_float_array, check_array, check_X_y, safe_mask
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
-from sklearn.utils.extmath import row_norms, safe_sparse_dot, axis_norms
+from sklearn.utils.extmath import axis_norms, row_norms, safe_sparse_dot
 from sklearn.utils.validation import check_is_fitted, validate_data
 
 
@@ -35,7 +35,7 @@ def _clean_nans(scores):
 # Scoring functions
 
 
-# The following function is a rewriting of scipy.stats.f_oneway
+# The following function is rewriting of scipy.stats.f_oneway
 # Contrary to the scipy.stats.f_oneway implementation it does not
 # copy the data while keeping the inputs unchanged.
 def f_oneway(*args):
