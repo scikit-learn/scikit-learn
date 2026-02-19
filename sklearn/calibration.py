@@ -1222,6 +1222,49 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
     },
     prefer_skip_nested_validation=True,
 )
+def calibration_stats(
+    y_true,
+    y_prob,
+    *,
+    pos_label=None,
+    n_bins=5,
+    strategy="uniform",
+):
+    y_true = column_or_1d(y_true)
+    y_prob = column_or_1d(y_prob)
+    check_consistent_length(y_true, y_prob)
+    pos_label = _check_pos_label_consistency(pos_label, y_true)
+
+    if y_prob.min() < 0 or y_prob.max() > 1:
+        raise ValueError("y_prob has values outside [0, 1].")
+
+    labels = np.unique(y_true)
+    if len(labels) > 2:
+        raise ValueError(
+            f"Only binary classification is supported. Provided labels {labels}."
+        )
+    y_true = y_true == pos_label
+
+    if strategy == "quantile":  # Determine bin edges by distribution of data
+        quantiles = np.linspace(0, 1, n_bins + 1)
+        bins = np.percentile(y_prob, quantiles * 100)
+    elif strategy == "uniform":
+        bins = np.linspace(0.0, 1.0, n_bins + 1)
+    else:
+        raise ValueError(
+            "Invalid entry to 'strategy' input. Strategy "
+            "must be either 'quantile' or 'uniform'."
+        )
+
+    binids = np.searchsorted(bins[1:-1], y_prob)
+
+    bin_sums = np.bincount(binids, weights=y_prob, minlength=len(bins))
+    bin_true = np.bincount(binids, weights=y_true, minlength=len(bins))
+    bin_total = np.bincount(binids, minlength=len(bins))
+
+    return bin_sums, bin_true, bin_total
+
+
 def calibration_curve(
     y_true,
     y_prob,
@@ -1301,43 +1344,61 @@ def calibration_curve(
     >>> prob_pred
     array([0.2  , 0.525, 0.85 ])
     """
-    y_true = column_or_1d(y_true)
-    y_prob = column_or_1d(y_prob)
-    check_consistent_length(y_true, y_prob)
-    pos_label = _check_pos_label_consistency(pos_label, y_true)
 
-    if y_prob.min() < 0 or y_prob.max() > 1:
-        raise ValueError("y_prob has values outside [0, 1].")
-
-    labels = np.unique(y_true)
-    if len(labels) > 2:
-        raise ValueError(
-            f"Only binary classification is supported. Provided labels {labels}."
-        )
-    y_true = y_true == pos_label
-
-    if strategy == "quantile":  # Determine bin edges by distribution of data
-        quantiles = np.linspace(0, 1, n_bins + 1)
-        bins = np.percentile(y_prob, quantiles * 100)
-    elif strategy == "uniform":
-        bins = np.linspace(0.0, 1.0, n_bins + 1)
-    else:
-        raise ValueError(
-            "Invalid entry to 'strategy' input. Strategy "
-            "must be either 'quantile' or 'uniform'."
-        )
-
-    binids = np.searchsorted(bins[1:-1], y_prob)
-
-    bin_sums = np.bincount(binids, weights=y_prob, minlength=len(bins))
-    bin_true = np.bincount(binids, weights=y_true, minlength=len(bins))
-    bin_total = np.bincount(binids, minlength=len(bins))
+    bin_sums, bin_true, bin_total = calibration_stats(
+        y_true, y_prob, pos_label=pos_label, n_bins=n_bins, strategy=strategy
+    )
 
     nonzero = bin_total != 0
     prob_true = bin_true[nonzero] / bin_total[nonzero]
     prob_pred = bin_sums[nonzero] / bin_total[nonzero]
 
     return prob_true, prob_pred
+
+
+def expected_calibration_error(
+    y_true, y_prob, *, pos_label=None, n_bins=5, strategy="uniform"
+):
+    """
+    Compute the Expected Calibration Error (ECE).
+
+    The method assumes the inputs come from a binary classifier, and
+    discretize the [0, 1] interval into bins.
+
+    The ECE is defined as the expected value of the difference between the
+    predicted probability and the true probability in each bin. It's a summary
+    of the calibration curve, and a lower ECE indicates better calibration.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        True targets.
+    y_prob : array-like of shape (n_samples,)
+        Probabilities of the positive class.
+    pos_label : int, float, bool or str, default=None
+        The label of the positive class.
+    n_bins : int, default=5
+        Number of bins to discretize the [0, 1] interval.
+    strategy : {'uniform', 'quantile'}, default='uniform'
+        Strategy used to define the widths of the bins.
+
+    Returns
+    -------
+    ece : float
+        The Expected Calibration Error (ECE).
+    """
+    bin_sums, bin_true, bin_total = calibration_stats(
+        y_true, y_prob, pos_label=pos_label, n_bins=n_bins, strategy=strategy
+    )
+
+    nonzero = bin_total != 0
+    prob_true = bin_true[nonzero] / bin_total[nonzero]
+    prob_pred = bin_sums[nonzero] / bin_total[nonzero]
+
+    # ece = np.abs(prob_pred - prob_true).dot(bin_total[nonzero]) / y_true.size
+    ece = (bin_total[nonzero] * np.abs(prob_pred - prob_true)).sum() / bin_total.sum()
+
+    return ece
 
 
 class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
