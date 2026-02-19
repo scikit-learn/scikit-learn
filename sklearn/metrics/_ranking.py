@@ -1001,7 +1001,7 @@ def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weigh
 
     y_true, y_score, threshold_idxs, weight = (
         _sort_inputs_and_compute_classification_thresholds(
-            y_true, y_score, pos_label, sample_weight
+            y_true, y_score, sample_weight
         )
     )
 
