@@ -2236,7 +2236,6 @@ def top_k_accuracy_score(
         "y_true": ["array-like"],
         "y_score": ["array-like"],
         "metric_func": [callable],
-        "pos_label": [Real, str, "boolean", None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -2244,7 +2243,7 @@ def metric_at_thresholds(
     y_true,
     y_score,
     metric_func,
-    **metric_params,
+    metric_params=None,
 ):
     """Compute `metric_func` per threshold.
 
@@ -2264,7 +2263,7 @@ def metric_at_thresholds(
         The metric function to use. It will be called as
         `metric_func(y_true, y_pred, **kwargs)`.
 
-    **metric_params : dict
+    metric_params : dict, default=None
         Parameters to pass to `metric_func`.
 
     Returns
@@ -2300,10 +2299,12 @@ def metric_at_thresholds(
     )
     y_true = y_true.astype(np.int32)
 
+    metric_params = {} if metric_params is None else metric_params
     thresholds = y_score[threshold_idxs]
-    metric_values = np.empty(thresholds.shape[0])
-    for idx, threshold in enumerate(thresholds):
+    metric_values = []
+    for threshold in thresholds:
         y_pred = (y_score >= threshold).astype(np.int32)
-        metric_values[idx] = metric_func(y_true, y_pred, **metric_params)
+        metric_values.append(metric_func(y_true, y_pred, **metric_params))
 
+    metric_values = np.asarray(metric_values)
     return metric_values, thresholds

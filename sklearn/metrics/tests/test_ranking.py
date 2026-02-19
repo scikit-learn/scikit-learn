@@ -22,11 +22,16 @@ from sklearn.metrics import (
     metric_at_thresholds,
     ndcg_score,
     precision_recall_curve,
+    precision_score,
     roc_auc_score,
     roc_curve,
     top_k_accuracy_score,
 )
-from sklearn.metrics._ranking import _dcg_sample_scores, _ndcg_sample_scores
+from sklearn.metrics._ranking import (
+    _dcg_sample_scores,
+    _ndcg_sample_scores,
+    _sort_inputs_and_compute_classification_thresholds,
+)
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import label_binarize
 from sklearn.random_projection import _sparse_random_matrix
@@ -194,25 +199,6 @@ def _partial_roc_auc_score(y_true, y_predict, max_fpr):
     min_area = 0.5 * (fpr2 - fpr1) * (fpr2 + fpr1)
     max_area = fpr2 - fpr1
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
-
-
-def test_confusion_matrix_at_thresholds(global_random_seed):
-    """Smoke test for confusion_matrix_at_thresholds."""
-    rng = np.random.RandomState(global_random_seed)
-
-    n_samples = 100
-    y_true = rng.randint(0, 2, size=100)
-    y_score = rng.uniform(size=100)
-
-    n_pos = np.sum(y_true)
-    n_neg = n_samples - n_pos
-
-    tns, fps, fns, tps, thresholds = confusion_matrix_at_thresholds(y_true, y_score)
-
-    assert len(tns) == len(fps) == len(fns) == len(tps) == len(thresholds)
-    assert_allclose(tps + fns, n_pos)
-    assert_allclose(tns + fps, n_neg)
-    assert_allclose(tns + fps + fns + tps, n_samples)
 
 
 @pytest.mark.parametrize("drop", [True, False])
@@ -858,6 +844,106 @@ def test_auc_score_non_binary_class():
     y_true = np.full(10, -1, dtype="int")
     with pytest.warns(UndefinedMetricWarning, match=warn_message):
         roc_auc_score(y_true, y_pred)
+
+
+def test_sort_inputs_and_compute_classification_thresholds_input_validation():
+    """Test `_sort_inputs_and_compute_classification_thresholds` input validation."""
+    # Inconsistent lengths
+    y_true = np.array([0, 1, 0])
+    y_score = np.array([0.1, 0.9])
+
+    with pytest.raises(ValueError, match="inconsistent numbers of samples"):
+        _sort_inputs_and_compute_classification_thresholds(y_true, y_score)
+
+    # Non-finite value
+    y_true = np.array([0, 1, 0, 1])
+    y_score = np.array([0.1, np.nan, 0.3, 0.7])
+
+    with pytest.raises(ValueError, match="Input.*contains NaN"):
+        _sort_inputs_and_compute_classification_thresholds(y_true, y_score)
+
+
+def test_sort_inputs_and_compute_classification_thresholds_zero_weights():
+    """Test zero weights in `_sort_inputs_and_compute_classification_thresholds`."""
+    y_true = np.array([0, 1, 0, 1, 0, 1])
+    y_score = np.array([0.1, 0.9, 0.3, 0.7, 0.5, 0.2])
+    # Indices 0 and 4 zero weight
+    sample_weight = np.array([0.0, 2.0, 1.0, 1.5, 0.0, 0.8])
+
+    y_true_sorted, y_score_sorted, threshold_idxs, weight_sorted = (
+        _sort_inputs_and_compute_classification_thresholds(
+            y_true, y_score, sample_weight
+        )
+    )
+
+    assert len(y_true_sorted) == len(y_score_sorted) == len(weight_sorted) == 4
+    assert 0.1 not in y_score_sorted
+    assert 0.5 not in y_score_sorted
+
+    # Check default `sample_weight=None` gives unit weights
+    _, _, _, weight = _sort_inputs_and_compute_classification_thresholds(
+        y_true, y_score
+    )
+    assert weight == 1
+
+    # All zero weights raises error
+    y_true = np.array([0, 1, 0])
+    y_score = np.array([0.1, 0.9, 0.3])
+    sample_weight = np.array([0.0, 0.0, 0.0])
+
+    with pytest.raises(ValueError, match="Sample weights must contain at least"):
+        y_true_sorted, y_score_sorted, threshold_idxs, weight_sorted = (
+            _sort_inputs_and_compute_classification_thresholds(
+                y_true, y_score, sample_weight
+            )
+        )
+
+
+def test_sort_inputs_and_compute_classification_thresholds_sorting():
+    """Test sorting in `_sort_inputs_and_compute_classification_thresholds`."""
+    y_true = np.array([0, 1, 0, 1, 1])
+    y_score = np.array([0.1, 0.9, 0.3, 0.7, 0.3])
+    sample_weight = sample_weight = np.array([1.0, 2.0, 1.5, 0.5, 0.3])
+
+    y_true_sorted, y_score_sorted, threshold_idxs, weight_sorted = (
+        _sort_inputs_and_compute_classification_thresholds(
+            y_true, y_score, sample_weight
+        )
+    )
+    # Check descending sort
+    assert np.all(y_score_sorted[:-1] >= y_score_sorted[1:])
+    assert_array_equal(weight_sorted, np.array([2.0, 0.5, 1.5, 0.3, 1.0]))
+    assert_array_equal(threshold_idxs, np.array([0, 1, 3, 4]))
+    # Check stable sort
+    assert_array_equal(y_score_sorted[2:4], [0.3, 0.3])
+    assert_array_equal(y_true_sorted[2:4], [0, 1])
+
+    # All identical scores
+    y_score_same = np.array([0.5, 0.5, 0.5, 0.5, 0.5])
+    _, _, threshold_idxs, _ = _sort_inputs_and_compute_classification_thresholds(
+        y_true, y_score_same
+    )
+    # Threshold is the final index
+    assert_array_equal(threshold_idxs, np.array([4]))
+
+
+def test_confusion_matrix_at_thresholds(global_random_seed):
+    """Smoke test for confusion_matrix_at_thresholds."""
+    rng = np.random.RandomState(global_random_seed)
+
+    n_samples = 100
+    y_true = rng.randint(0, 2, size=100)
+    y_score = rng.uniform(size=100)
+
+    n_pos = np.sum(y_true)
+    n_neg = n_samples - n_pos
+
+    tns, fps, fns, tps, thresholds = confusion_matrix_at_thresholds(y_true, y_score)
+
+    assert len(tns) == len(fps) == len(fns) == len(tps) == len(thresholds)
+    assert_allclose(tps + fns, n_pos)
+    assert_allclose(tns + fps, n_neg)
+    assert_allclose(tns + fps + fns + tps, n_samples)
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
@@ -2308,8 +2394,86 @@ def test_roc_curve_with_probablity_estimates(global_random_seed):
     assert np.isinf(thresholds[0])
 
 
-def test_metric_at_thresholds():
-    """Dummy test, just to check function works."""
-    y_true = np.array([0, 0, 1, 1])
-    y_score = np.array([0.1, 0.4, 0.35, 0.8])
-    scores, thresholds = metric_at_thresholds(y_true, y_score, accuracy_score)
+def _dummy_metric_returns_tuple(y_true, y_pred):
+    """Dummy metric that returns a tuple of two values."""
+    return (np.sum(y_pred), np.sum(y_true))
+
+
+@pytest.mark.parametrize(
+    "metric_func, expected_scores",
+    [
+        (accuracy_score, [0.6, 0.8, 0.8, 0.6]),
+        (precision_score, [1.0, 1.0, 0.75, 0.6]),
+        (roc_auc_score, [2 / 3, 5 / 6, 0.75, 0.5]),
+        # Test metric that returns tuple instead of single float
+        (
+            _dummy_metric_returns_tuple,
+            [[1, 3], [2, 3], [4, 3], [5, 3]],
+        ),
+    ],
+)
+def test_metric_at_thresholds(metric_func, expected_scores):
+    """Test `metric_at_thresholds` outputs correct."""
+    y_true = np.array([0, 0, 1, 1, 1])
+    y_score = np.array([0.1, 0.4, 0.4, 0.6, 0.9])
+
+    metric_values, thresholds = metric_at_thresholds(y_true, y_score, metric_func)
+
+    assert len(metric_values) == len(thresholds)
+    # Thresholds are descending
+    assert np.all(np.diff(thresholds) <= 0)
+    assert_allclose(metric_values, expected_scores)
+
+
+@pytest.mark.parametrize("normalize", [True, False])
+def test_metric_at_thresholds_metric_params(normalize):
+    """Test `metric_params` passed correctly to `metric_at_thresholds`."""
+    y_true = np.array([0, 0, 1, 1, 1])
+    y_score = np.array([0.1, 0.4, 0.35, 0.6, 0.9])
+
+    metric_values, thresholds = metric_at_thresholds(
+        y_true, y_score, accuracy_score, metric_params={"normalize": normalize}
+    )
+
+    expected_values = []
+    for threshold in thresholds:
+        y_pred = (y_score >= threshold).astype(int)
+        expected_values.append(accuracy_score(y_true, y_pred, normalize=normalize))
+
+    assert_allclose(metric_values, expected_values)
+    assert len(thresholds) == len(np.unique(y_score))
+
+
+@pytest.mark.parametrize("pos_label", [0, 1])
+def test_metric_at_thresholds_consistency_with_confusion_matrix(pos_label):
+    """Test `metric_at_thresholds` consistency with `confusion_matrix_at_thresholds`.
+
+    This also checks output when `metric_func` returns a tuple of arrays.
+    """
+    y_true = np.array([0, 0, 1, 1, 1])
+    y_score = np.array([0.1, 0.4, 0.4, 0.6, 0.9])
+
+    tns, fps, fns, tps, thresholds_cm = confusion_matrix_at_thresholds(
+        y_true, y_score, pos_label=pos_label
+    )
+
+    def compute_confusion_matrix_components(y_true, y_pred, pos_label):
+        """Compute (tn, fp, fn, tp) from binary predictions."""
+        # Apply `pos_label`
+        y_true = y_true == pos_label
+
+        tn = np.sum((y_true == 0) & (y_pred == 0))
+        fp = np.sum((y_true == 0) & (y_pred == 1))
+        fn = np.sum((y_true == 1) & (y_pred == 0))
+        tp = np.sum((y_true == 1) & (y_pred == 1))
+        return np.array([tn, fp, fn, tp])
+
+    confusion_values, thresholds = metric_at_thresholds(
+        y_true,
+        y_score,
+        compute_confusion_matrix_components,
+        metric_params={"pos_label": pos_label},
+    )
+
+    assert_array_equal(thresholds, thresholds_cm)
+    assert_array_equal(confusion_values, np.column_stack([tns, fps, fns, tps]))
