@@ -7,11 +7,11 @@ from collections import UserDict
 
 import numpy as np
 
-from sklearn.utils._repr_html._common import (
-    _generate_link_to_param_doc,
-    _get_docstring,
-)
 from sklearn.utils._repr_html.base import ReprHTMLMixin
+from sklearn.utils._repr_html.common import (
+    generate_link_to_param_doc,
+    get_docstring,
+)
 
 
 def _read_fitted_attr(value):
@@ -93,12 +93,12 @@ def _fitted_attr_html_repr(fitted_attributes):
     rows = []
     # for fitted_attr_name, attr_info in fitted_attributes.items():
     for name, value in fitted_attributes.items():
-        link = _generate_link_to_param_doc(
+        link = generate_link_to_param_doc(
             fitted_attributes.estimator_class,
             name,
             fitted_attributes.doc_link,
         )
-        fitted_attr_description = _get_docstring(
+        fitted_attr_description = get_docstring(
             fitted_attributes.estimator_class, "Attributes", name
         )
 
