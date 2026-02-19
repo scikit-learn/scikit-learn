@@ -212,8 +212,10 @@ def test_estimator_html_repr_pipeline():
             assert f"<pre>{html.escape(str(cols))}</pre>" in html_output
 
         # feature union
-        for name, _ in feat_u.transformer_list:
-            assert f"<label>{html.escape(name)}</label>" in html_output
+
+        detailed_name_label = "<label>PCA : pca</label>"
+
+        assert detailed_name_label in html_output
 
         pca = feat_u.transformer_list[0][1]
 
