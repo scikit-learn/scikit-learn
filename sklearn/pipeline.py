@@ -2034,7 +2034,11 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     def _sk_visual_block_(self):
         names, transformers = zip(*self.transformer_list)
-        return _VisualBlock("parallel", transformers, names=names)
+
+        detailed_names = [
+            f"{str(transformers[x]).split('(')[0]} : {n}" for x, n in enumerate(names)
+        ]
+        return _VisualBlock("parallel", transformers, names=detailed_names)
 
     def __getitem__(self, name):
         """Return transformer with name."""
