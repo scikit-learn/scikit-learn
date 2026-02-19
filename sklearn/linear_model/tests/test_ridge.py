@@ -2506,7 +2506,7 @@ def test_ridge_cv_results_predictions(
     else:
         sample_weight = None
 
-    # XXX: widening the range of alphas causes failures in the test, in
+    # TODO: widening the range of alphas causes failures in the test, in
     # particular for wide datasets. Not sure if this is an intrinsic limitation
     # of the underlying linear algebra or if this points to a numerical issue
     # in RidgeCV or in Ridge(solver="svd").
