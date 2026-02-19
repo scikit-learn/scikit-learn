@@ -35,7 +35,7 @@ def _clean_nans(scores):
 # Scoring functions
 
 
-# The following function is rewriting of scipy.stats.f_oneway
+# The following function is a rewriting of scipy.stats.f_oneway
 # Contrary to the scipy.stats.f_oneway implementation it does not
 # copy the data while keeping the inputs unchanged.
 def f_oneway(*args):
