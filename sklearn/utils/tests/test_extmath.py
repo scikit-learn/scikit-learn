@@ -42,6 +42,7 @@ from sklearn.utils.extmath import (
     density,
     randomized_range_finder,
     randomized_svd,
+    col_norms,
     row_norms,
     safe_sparse_dot,
     softmax,
@@ -342,6 +343,34 @@ def test_row_norms(dtype, csr_container):
         assert Xcsr.indptr.dtype == csr_index_dtype
         assert_array_almost_equal(sq_norm, row_norms(Xcsr, squared=True), precision)
         assert_array_almost_equal(np.sqrt(sq_norm), row_norms(Xcsr), precision)
+
+
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_col_norms(dtype, csc_container):
+    X = np.random.RandomState(42).randn(100, 100)
+    if dtype is np.float32:
+        precision = 4
+    else:
+        precision = 5
+
+    X = X.astype(dtype, copy=False)
+    sq_norm = (X**2).sum(axis=0)
+
+    assert_array_almost_equal(sq_norm, col_norms(X, squared=True), precision)
+    assert_array_almost_equal(np.sqrt(sq_norm), col_norms(X), precision)
+
+    for csc_index_dtype in [np.int32, np.int64]:
+        Xcsc = csc_container(X, dtype=dtype)
+        # csc_matrix will use int32 indices by default,
+        # up-casting those to int64 when necessary
+        if csc_index_dtype is np.int64:
+            Xcsc.indptr = Xcsc.indptr.astype(csc_index_dtype, copy=False)
+            Xcsc.indices = Xcsc.indices.astype(csc_index_dtype, copy=False)
+        assert Xcsc.indices.dtype == csc_index_dtype
+        assert Xcsc.indptr.dtype == csc_index_dtype
+        assert_array_almost_equal(sq_norm, col_norms(Xcsc, squared=True), precision)
+        assert_array_almost_equal(np.sqrt(sq_norm), col_norms(Xcsc), precision)
 
 
 def test_randomized_svd_low_rank_with_noise():
