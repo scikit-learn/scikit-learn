@@ -80,7 +80,7 @@ a utility metric defined by the business (in this case an insurance company).
    :target: ../auto_examples/model_selection/plot_cost_sensitive_learning.html
    :align: center
 
-.. _decision_threshold_curve:
+.. _metric_at_thresholds:
 
 Plotting metric across thresholds
 ---------------------------------
@@ -88,7 +88,7 @@ Plotting metric across thresholds
 The final plot above shows the value of a utility metric of interest across a range
 of threshold values. This can be a useful visualization when tuning decision
 threshold, especially if there is more than one metric of interest. The
-:func:`decision_threshold_curve` allows you to easily generate such plots as it
+:func:`metric_at_thresholds` allows you to easily generate such plots as it
 computes the values required for each axis, scores per threshold and threshold values.
 
 Options to tune the decision threshold

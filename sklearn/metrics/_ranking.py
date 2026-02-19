@@ -2244,7 +2244,7 @@ def top_k_accuracy_score(
     },
     prefer_skip_nested_validation=True,
 )
-def decision_threshold_curve(
+def metric_at_thresholds(
     y_true,
     y_score,
     metric_func,
@@ -2293,10 +2293,10 @@ def decision_threshold_curve(
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.metrics import accuracy_score, decision_threshold_curve
+    >>> from sklearn.metrics import accuracy_score, metric_at_thresholds
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> scores, thresholds = decision_threshold_curve(
+    >>> scores, thresholds = metric_at_thresholds(
     ...     y_true, y_score, accuracy_score)
     >>> thresholds
     array([0.8 , 0.4 , 0.35, 0.1 ])
