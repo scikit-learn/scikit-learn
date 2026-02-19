@@ -28,6 +28,7 @@ dependent_packages = {
     "matplotlib": ("3.6.1", "benchmark, docs, examples, tests"),
     "scikit-image": ("0.22.0", "docs, examples"),
     "pandas": ("1.5.0", "benchmark, docs, examples, tests"),
+    "rich": ("13.6.0", "docs, examples, tests"),
     "seaborn": ("0.13.0", "docs, examples"),
     "memory_profiler": ("0.57.0", "benchmark, docs"),
     "pytest": (PYTEST_MIN_VERSION, "tests"),
