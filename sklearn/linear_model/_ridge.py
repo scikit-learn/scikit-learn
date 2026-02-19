@@ -1784,8 +1784,13 @@ class _RidgeGCV(LinearModel):
     The other cases (see below) reduce to this one after proper scaling/centering
     of the design matrix X.
 
-    Let G = (K + alpha*Id_n) where K = X X^T is the Gram matrix
-    and H = (C + alpha*Id_p) where C = X^T X is the covariance matrix.
+    The design matrix X has shape (n, p) where n=n_samples and p=n_features.
+
+    Let G = (K + alpha*Id_n) where K = X X^T is the Gram matrix and Id_n is the
+    identity matrix of size n.
+
+    Let H = (C + alpha*Id_p) where C = X^T X is the covariance matrix and Id_p
+    is the identity matrix of size p.
 
     The solution of the regularized least square (fitted `coef_`) is given by:
     w = H^-1 X^T y = X^T c where c = G^-1 y.
@@ -2038,10 +2043,10 @@ class _RidgeGCV(LinearModel):
         self, alpha, y, sqrt_sw, eigvals, Q, QT_y, QT_sqrt_sw, XT, X_mean
     ):
         """Compute looe and coef when we have a decomposition of X.X^T"""
-        w = 1.0 / (eigvals + alpha)
-        c = Q @ self._diag_dot(w, QT_y)
-        d = self._decomp_diag(w, Q)
-        g = Q @ self._diag_dot(w, QT_sqrt_sw)
+        D = 1.0 / (eigvals + alpha)
+        c = Q @ self._diag_dot(D, QT_y)
+        d = self._decomp_diag(D, Q)
+        g = Q @ self._diag_dot(D, QT_sqrt_sw)
         if self.fit_intercept:
             sw_sum = sqrt_sw @ sqrt_sw
             d -= g * sqrt_sw / sw_sum
@@ -2078,29 +2083,29 @@ class _RidgeGCV(LinearModel):
         self, alpha, y, sqrt_sw, eigvals, V, X, X_mean, XT_y, XT_sqrt_sw
     ):
         """Compute looe and coef when we have a decomposition of X^T.X"""
-        w = 1 / (eigvals + alpha)
-        A = (V * w) @ V.T
-        AXT_y = A @ XT_y
-        AXT_sqrt_sw = A @ XT_sqrt_sw
-        XAXT_y = safe_sparse_dot(X, AXT_y, dense_output=True)
-        XAXT_sqrt_sw = safe_sparse_dot(X, AXT_sqrt_sw, dense_output=True)
+        D = 1 / (eigvals + alpha)
+        Hinv = (V * D) @ V.T
+        Hinv_XT_y = Hinv @ XT_y
+        Hinv_XT_sqrt_sw = Hinv @ XT_sqrt_sw
+        X_Hinv_XT_y = safe_sparse_dot(X, Hinv_XT_y, dense_output=True)
+        X_Hinv_XT_sqrt_sw = safe_sparse_dot(X, Hinv_XT_sqrt_sw, dense_output=True)
         if self.fit_intercept and sparse.issparse(X):
             # centered = X - sqrt_sw X_mean^T
             if y.ndim == 2:
-                XAXT_y -= sqrt_sw[:, None] * (X_mean @ AXT_y)
+                X_Hinv_XT_y -= sqrt_sw[:, None] * (X_mean @ Hinv_XT_y)
             else:
-                XAXT_y -= sqrt_sw * (X_mean @ AXT_y)
-            XAXT_sqrt_sw -= sqrt_sw * (X_mean @ AXT_sqrt_sw)
-        alpha_c = y - XAXT_y
-        alpha_g = sqrt_sw - XAXT_sqrt_sw
-        alpha_d = 1 - self._sparse_multidot_diag(X, A, X_mean, sqrt_sw)
+                X_Hinv_XT_y -= sqrt_sw * (X_mean @ Hinv_XT_y)
+            X_Hinv_XT_sqrt_sw -= sqrt_sw * (X_mean @ Hinv_XT_sqrt_sw)
+        alpha_c = y - X_Hinv_XT_y
+        alpha_g = sqrt_sw - X_Hinv_XT_sqrt_sw
+        alpha_d = 1 - self._sparse_multidot_diag(X, Hinv, X_mean, sqrt_sw)
         if self.fit_intercept:
             sw_sum = sqrt_sw @ sqrt_sw
             alpha_d -= alpha_g * sqrt_sw / sw_sum
         if y.ndim == 2:
             alpha_d = alpha_d[:, None]
         looe = alpha_c / alpha_d
-        coef = AXT_y
+        coef = Hinv_XT_y
         return looe, coef
 
     def _svd_decompose_design_matrix(self, X, X_mean, y, sqrt_sw):
