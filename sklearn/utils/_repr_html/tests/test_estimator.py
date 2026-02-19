@@ -112,7 +112,7 @@ def test_get_visual_block_feature_union():
     f_union = FeatureUnion([("pca", PCA()), ("svd", TruncatedSVD())])
     est_html_info = _get_visual_block(f_union)
     assert est_html_info.kind == "parallel"
-    assert est_html_info.names == ("pca", "svd")
+    assert est_html_info.names == ["PCA : pca", "TruncatedSVD : svd"]
     assert est_html_info.estimators == tuple(
         trans[1] for trans in f_union.transformer_list
     )
