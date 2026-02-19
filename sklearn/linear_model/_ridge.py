@@ -2048,8 +2048,8 @@ class _RidgeGCV(LinearModel):
         d = self._decomp_diag(D, Q)
         if self.fit_intercept:
             sw_sum = sqrt_sw @ sqrt_sw
-            g = Q @ self._diag_dot(D, QT_sqrt_sw)
-            d -= g * sqrt_sw / sw_sum
+            f = Q @ self._diag_dot(D, QT_sqrt_sw)
+            d -= f * sqrt_sw / sw_sum
         if y.ndim == 2:
             d = d[:, None]
         XT_c = XT @ c
@@ -2100,8 +2100,8 @@ class _RidgeGCV(LinearModel):
         alpha_d = 1 - self._sparse_multidot_diag(X, Hinv, X_mean, sqrt_sw)
         if self.fit_intercept:
             sw_sum = sqrt_sw @ sqrt_sw
-            alpha_g = sqrt_sw - X_Hinv_XT_sqrt_sw
-            alpha_d -= alpha_g * sqrt_sw / sw_sum
+            alpha_f = sqrt_sw - X_Hinv_XT_sqrt_sw
+            alpha_d -= alpha_f * sqrt_sw / sw_sum
         if y.ndim == 2:
             alpha_d = alpha_d[:, None]
         looe = alpha_c / alpha_d
@@ -2130,8 +2130,8 @@ class _RidgeGCV(LinearModel):
         alpha_d = self._decomp_diag(M, U) + 1
         if self.fit_intercept:
             sw_sum = sqrt_sw @ sqrt_sw
-            alpha_g = U @ self._diag_dot(M, UT_sqrt_sw) + sqrt_sw
-            alpha_d -= alpha_g * sqrt_sw / sw_sum
+            alpha_f = U @ self._diag_dot(M, UT_sqrt_sw) + sqrt_sw
+            alpha_d -= alpha_f * sqrt_sw / sw_sum
         if y.ndim == 2:
             # handle case where y is 2-d
             alpha_d = alpha_d[:, None]
@@ -2151,8 +2151,8 @@ class _RidgeGCV(LinearModel):
         alpha_d = self._decomp_diag(alpha_D, U)
         if self.fit_intercept:
             sw_sum = sqrt_sw @ sqrt_sw
-            alpha_g = U @ self._diag_dot(alpha_D, UT_sqrt_sw)
-            alpha_d -= alpha_g * sqrt_sw / sw_sum
+            alpha_f = U @ self._diag_dot(alpha_D, UT_sqrt_sw)
+            alpha_d -= alpha_f * sqrt_sw / sw_sum
         if y.ndim == 2:
             # handle case where y is 2-d
             alpha_d = alpha_d[:, None]
