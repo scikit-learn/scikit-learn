@@ -127,7 +127,7 @@ def _weighted_percentile(
     # NaN values get sorted to end (largest value)
     if xp.any(xp.isnan(largest_value_per_column)):
         sorted_nan_mask = xp.take_along_axis(xp.isnan(array), sorted_idx, axis=0)
-        sorted_weights[sorted_nan_mask] = 0
+        sorted_weights = xpx.at(sorted_weights)[sorted_nan_mask].set(0)
 
     # Compute the weighted cumulative distribution function (CDF) based on
     # `sample_weight` and scale `percentile_rank` along it.
