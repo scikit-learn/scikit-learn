@@ -395,11 +395,17 @@ def _write_estimator_html(
                 out.write("</div>")  # sk-parallel-item
 
         out.write("</div>")
-
         if (
             is_fitted_css_class
             and hasattr(estimator, "get_feature_names_out")
             and not hasattr(estimator, "steps")
+            and not (
+                (
+                    estimator_label
+                    in ("ColumnTransformer", "transformer: ColumnTransformer")
+                )
+                and len(est_block.estimators) == 1
+            )
         ):
             features_div = _features_html(
                 estimator.get_feature_names_out(), is_fitted_css_class
