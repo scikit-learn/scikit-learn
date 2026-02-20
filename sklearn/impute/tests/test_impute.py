@@ -1831,6 +1831,104 @@ def test_imputation_custom(csc_container):
     assert_array_equal(X_trans.toarray(), X_true)
 
 
+def test_bool_array_most_frequent_with_nan():
+    X = np.array([[True], [False], [True], [np.nan]], dtype=object)
+    imputer = SimpleImputer(strategy="most_frequent")
+    result = imputer.fit_transform(X)
+    assert result.dtype == object
+    expected = np.array([[True], [False], [True], [True]])
+    assert_array_equal(result, expected)
+
+
+def test_bool_array_most_frequent_without_nan():
+    X = np.array([[True], [False], [True]], dtype=bool)
+    imputer = SimpleImputer(strategy="most_frequent")
+    result = imputer.fit_transform(X)
+    assert result.dtype == bool
+    expected = np.array([[True], [False], [True]])
+    assert_array_equal(result, expected)
+
+
+def test_bool_array_constant_imputation_true():
+    X = np.array([[True], [False], [False], [np.nan]])
+    imputer = SimpleImputer(strategy="constant", fill_value=True)
+    result = imputer.fit_transform(X)
+    assert result.dtype == float
+    expected = np.array([[True], [False], [False], [True]])
+    assert_array_equal(result, expected)
+
+
+def test_bool_array_constant_imputation_false():
+    X = np.array([[True], [np.nan], [True], [False]])
+    imputer = SimpleImputer(strategy="constant", fill_value=False)
+    result = imputer.fit_transform(X)
+    assert result.dtype == float
+    expected = np.array([[True], [False], [True], [False]])
+    assert_array_equal(result, expected)
+
+
+def test_pandas_bool_most_frequent_with_nan_float():
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"flag": [True, False, True, np.nan]})
+    imputer = SimpleImputer(strategy="most_frequent")
+    result = imputer.fit_transform(df)
+    assert result.dtype == object
+
+    expected = np.array([[True], [False], [True], [True]])
+    assert_array_equal(result, expected)
+
+
+def test_pandas_bool_most_frequent_without_nan():
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"flag": [True, False, True]}, dtype=bool)
+
+    imputer = SimpleImputer(strategy="most_frequent")
+    result = imputer.fit_transform(df)
+    assert result.dtype == "bool"
+    expected = np.array([[True], [False], [True]])
+    assert_array_equal(result, expected)
+
+
+def test_pandas_boolean_most_frequent_with_pandas_na():
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"flag": pd.Series([True, False, True, pd.NA], dtype="boolean")})
+    imputer = SimpleImputer(strategy="most_frequent")
+    result = imputer.fit_transform(df)
+    assert result.dtype == float
+    expected = np.array([[True], [False], [True], [True]])
+    assert_array_equal(result, expected)
+
+
+def test_pandas_boolean_constant_with_pandas_na():
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"flag": pd.Series([True, pd.NA, False, True], dtype="boolean")})
+
+    imputer = SimpleImputer(strategy="constant", fill_value=False)
+    result = imputer.fit_transform(df)
+    assert result.dtype == float
+    expected = np.array([[True], [False], [False], [True]])
+    assert_array_equal(result, expected)
+
+
+def test_numpy_boolean_mean_without_nan():
+    X = np.array([[True], [False], [True]], dtype=bool)
+    imputer = SimpleImputer(strategy="mean")
+    result = imputer.fit_transform(X)
+    assert result.dtype == bool
+    expected = np.array([[True], [False], [True]])
+    assert_array_equal(result, expected)
+
+
+def test_pandas_boolean_mean_without_nan():
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"flag": pd.Series([True, False, True])})
+    imputer = SimpleImputer(strategy="mean")
+    result = imputer.fit_transform(df)
+    assert result.dtype == bool
+    expected = np.array([[True], [False], [True]])
+    assert_array_equal(result, expected)
+
+
 def test_simple_imputer_constant_fill_value_casting():
     """Check that we raise a proper error message when we cannot cast the fill value
     to the input data type. Otherwise, check that the casting is done properly.
