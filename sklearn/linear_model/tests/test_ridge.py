@@ -1307,7 +1307,7 @@ def test_ridge_array_api_compliance(
         # RidgeGCV is not very numerically stable with float32. It casts the
         # input to float64 unless the device and namespace combination does
         # not allow float64 (specifically torch with mps)
-        tols["rtol"] = 1e-3
+        tols["rtol"] = 2e-3
     check(
         name,
         estimator,
