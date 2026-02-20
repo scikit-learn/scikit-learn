@@ -165,7 +165,7 @@ def test_safe_indexing_array_api_support(
     with sklearn.config_context(array_api_dispatch=True):
         indexed_array_xp = _safe_indexing(array_to_index_xp, indexing_key, axis=axis)
         assert indexed_array_xp.dtype == array_to_index_xp.dtype
-        if array_namespace == "jax.numpy" and expected_result.shape == (0,):
+        if array_namespace == "jax.numpy" and expected_result.size == 0:
             # https://github.com/jax-ml/jax/issues/35273
             pytest.xfail(
                 "JAX can return the default device instead of the same device "
