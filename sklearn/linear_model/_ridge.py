@@ -1789,11 +1789,11 @@ class _RidgeGCV(LinearModel):
     Let G = (K + alpha*Id_n) where K = X X' is the Gram matrix and Id_n is the
     identity matrix of size n.
 
-    Let H = (C + alpha*Id_p) where C = X^T X is the covariance matrix and Id_p
+    Let H = (C + alpha*Id_p) where C = X' X is the covariance matrix and Id_p
     is the identity matrix of size p.
 
     The solution of the regularized least square (fitted `coef_`) is given by:
-    w = H^-1 X^T y = X^T c where c = G^-1 y.
+    w = H^-1 X' y = X' c where c = G^-1 y.
 
     Let loov (resp looe) be the leave-one-out values (resp errors), that is the
     vector of predictions (resp errors) for each single observation when the model
@@ -1807,31 +1807,31 @@ class _RidgeGCV(LinearModel):
     2. Leveraging a precomputed matrix decomposition
 
     The leave-one-out errors and coefficients can be efficiently computed for any
-    alpha from the SVD of X, or the eigendecomposition of K = X X^T or C = X^T X.
+    alpha from the SVD of X, or the eigendecomposition of K = X X' or C = X' X.
 
-    Reduced SVD X = U S V^T when n < p (wide X)
+    Reduced SVD X = U S V' when n < p (wide X)
     Let D = 1 / (S^2 + alpha)
-    c = U D U^T y
-    d = diag(U D U^T)
-    w = V S / (S^2 + alpha) U^T y
+    c = U D U' y
+    d = diag(U D U')
+    w = V S / (S^2 + alpha) U' y
 
-    Eigendecomposition K = U L U^T
+    Eigendecomposition K = U L U'
     Let D = 1 / (L + alpha)
-    c = U D U^T y
-    d = diag(U D U^T)
-    w = X^T c.
+    c = U D U' y
+    d = diag(U D U')
+    w = X' c.
 
-    Reduced SVD X = U S V^T when p < n (long X)
+    Reduced SVD X = U S V' when p < n (long X)
     Let M = alpha / (S^2 + alpha) - 1
-    alpha c = y + U M U^T y
-    alpha d = 1 + diag(U M U^T)
-    w = V S / (S^2 + alpha) U^T y
+    alpha c = y + U M U' y
+    alpha d = 1 + diag(U M U')
+    w = V S / (S^2 + alpha) U' y
 
-    Eigendecomposition C = V L V^T
-    H^-1 = V 1 / (L + alpha) V^T
-    alpha c = y - X H^-1 X^T y
-    alpha d = 1 - diag(X H^-1 X^T)
-    w = H^-1 X^T y
+    Eigendecomposition C = V L V'
+    H^-1 = V 1 / (L + alpha) V'
+    alpha c = y - X H^-1 X' y
+    alpha d = 1 - diag(X H^-1 X')
+    w = H^-1 X' y
 
     3. Fitting with intercept or sample weights
 
@@ -1876,7 +1876,7 @@ class _RidgeGCV(LinearModel):
 
     @staticmethod
     def _decomp_diag(v_prime, Q):
-        # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q^T))
+        # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q.T))
         xp, _ = get_namespace(v_prime, Q)
         return xp.sum(v_prime * Q**2, axis=1)
 
@@ -1890,7 +1890,7 @@ class _RidgeGCV(LinearModel):
         return D * B
 
     def _compute_gram(self, X, X_mean, sqrt_sw):
-        """Computes the Gram matrix X X^T with possible centering.
+        """Computes the Gram matrix X X' with possible centering.
 
         Parameters
         ----------
@@ -1913,7 +1913,7 @@ class _RidgeGCV(LinearModel):
         When self.fit_intercept is False no centering is done.
 
         When X is dense the centering has been done in preprocessing
-        so the mean is 0 and we just compute X X^T.
+        so the mean is 0 and we just compute X X'.
 
         When X is sparse it has not been centered in preprocessing, but
         it has been scaled by sqrt_sw. The centered X is never actually
@@ -1925,7 +1925,7 @@ class _RidgeGCV(LinearModel):
             # or we are not fitting an intercept.
             return safe_sparse_dot(X, X.T, dense_output=True)
         # X is sparse and fit_intercept is True
-        # centered matrix = X - sqrt_sw X_mean^T
+        # centered matrix = X - sqrt_sw X_mean'
         X_Xm = safe_sparse_dot(X, X_mean, dense_output=True)
         return (
             safe_sparse_dot(X, X.T, dense_output=True)
@@ -1935,7 +1935,7 @@ class _RidgeGCV(LinearModel):
         )
 
     def _compute_covariance(self, X, X_mean, sqrt_sw):
-        """Computes covariance matrix X^T X with possible centering.
+        """Computes covariance matrix X' X with possible centering.
 
         Parameters
         ----------
@@ -1958,7 +1958,7 @@ class _RidgeGCV(LinearModel):
         When self.fit_intercept is False no centering is done.
 
         When X is dense the centering has been done in preprocessing
-        so the mean is 0 and we just compute X^T X.
+        so the mean is 0 and we just compute X' X.
 
         When X is sparse it has not been centered in preprocessing, but
         it has been scaled by sqrt_sw. The centered X is never actually
@@ -1970,7 +1970,7 @@ class _RidgeGCV(LinearModel):
             # or we are not fitting an intercept.
             return safe_sparse_dot(X.T, X, dense_output=True)
         # X is sparse and fit_intercept is True
-        # centered matrix = X - sqrt_sw X_mean^T
+        # centered matrix = X - sqrt_sw X_mean'
         sw_sum = sqrt_sw @ sqrt_sw
         return (
             safe_sparse_dot(X.T, X, dense_output=True)
@@ -1978,7 +1978,7 @@ class _RidgeGCV(LinearModel):
         )
 
     def _sparse_multidot_diag(self, X, A, X_mean, sqrt_sw):
-        """Compute the diagonal of X A X^T with possible centering.
+        """Compute the diagonal of X A X' with possible centering.
 
         Parameters
         ----------
@@ -2004,7 +2004,7 @@ class _RidgeGCV(LinearModel):
         When self.fit_intercept is False no centering is done.
 
         When X is dense the centering has been done in preprocessing
-        so the mean is 0 and we just compute diag(X A X^T).
+        so the mean is 0 and we just compute diag(X A X').
 
         When X is sparse it has not been centered in preprocessing, but
         it has been scaled by sqrt_sw. The centered X is never actually
@@ -2023,14 +2023,14 @@ class _RidgeGCV(LinearModel):
             # or we are not fitting an intercept.
             return XAX
         # X is sparse and fit_intercept is True
-        # centered matrix = X - sqrt_sw X_mean^T
+        # centered matrix = X - sqrt_sw X_mean'
         XA_Xm = XA @ X_mean
         A_Xm = A @ X_mean
         sw = sqrt_sw * sqrt_sw
         return XAX - 2 * sqrt_sw * XA_Xm + sw * (X_mean @ A_Xm)
 
     def _eigen_decompose_gram(self, X, X_mean, y, sqrt_sw):
-        """Eigendecomposition of Gram matrix X.X^T"""
+        """Eigendecomposition of Gram matrix X X'"""
         xp, is_array_api = get_namespace(X)
         K = self._compute_gram(X, X_mean, sqrt_sw)
         eigvals, Q = xp.linalg.eigh(K)
@@ -2042,7 +2042,7 @@ class _RidgeGCV(LinearModel):
     def _solve_eigen_gram(
         self, alpha, y, sqrt_sw, eigvals, Q, QT_y, QT_sqrt_sw, XT, X_mean
     ):
-        """Compute looe and coef when we have a decomposition of X.X^T"""
+        """Compute looe and coef when we have a decomposition of X X'"""
         D = 1.0 / (eigvals + alpha)
         c = Q @ self._diag_dot(D, QT_y)
         d = self._decomp_diag(D, Q)
@@ -2054,7 +2054,7 @@ class _RidgeGCV(LinearModel):
             d = d[:, None]
         XT_c = XT @ c
         if self.fit_intercept and sparse.issparse(XT):
-            # centered matrix = X - sqrt_sw X_mean^T
+            # centered matrix = X - sqrt_sw X_mean'
             if y.ndim == 2:
                 XT_c -= X_mean[:, None] * (sqrt_sw @ c)
             else:
@@ -2064,14 +2064,14 @@ class _RidgeGCV(LinearModel):
         return looe, coef
 
     def _eigen_decompose_covariance(self, X, X_mean, y, sqrt_sw):
-        """Eigendecomposition of covariance matrix X^T.X"""
+        """Eigendecomposition of covariance matrix X' X"""
         xp, is_array_api = get_namespace(X)
         cov = self._compute_covariance(X, X_mean, sqrt_sw)
         eigvals, V = xp.linalg.eigh(cov)
         XT_y = safe_sparse_dot(X.T, y, dense_output=True)
         XT_sqrt_sw = safe_sparse_dot(X.T, sqrt_sw, dense_output=True)
         if self.fit_intercept and sparse.issparse(X):
-            # centered matrix = X - sqrt_sw X_mean^T
+            # centered matrix = X - sqrt_sw X_mean'
             if y.ndim == 2:
                 XT_y -= X_mean[:, None] * (sqrt_sw @ y)
             else:
@@ -2082,7 +2082,7 @@ class _RidgeGCV(LinearModel):
     def _solve_eigen_covariance(
         self, alpha, y, sqrt_sw, eigvals, V, X, X_mean, XT_y, XT_sqrt_sw
     ):
-        """Compute looe and coef when we have a decomposition of X^T.X"""
+        """Compute looe and coef when we have a decomposition of X' X"""
         D = 1 / (eigvals + alpha)
         Hinv = (V * D) @ V.T
         Hinv_XT_y = Hinv @ XT_y
@@ -2090,7 +2090,7 @@ class _RidgeGCV(LinearModel):
         X_Hinv_XT_y = safe_sparse_dot(X, Hinv_XT_y, dense_output=True)
         X_Hinv_XT_sqrt_sw = safe_sparse_dot(X, Hinv_XT_sqrt_sw, dense_output=True)
         if self.fit_intercept and sparse.issparse(X):
-            # centered = X - sqrt_sw X_mean^T
+            # centered = X - sqrt_sw X_mean'
             if y.ndim == 2:
                 X_Hinv_XT_y -= sqrt_sw[:, None] * (X_mean @ Hinv_XT_y)
             else:
@@ -2708,8 +2708,8 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
             'auto' : same as 'eigen'
             'svd' : use singular value decomposition of X when X is dense,
                 fallback to 'eigen' when X is sparse
-            'eigen' : use eigendecomposition of X X^T when n_samples <= n_features
-                or X^T X when n_features < n_samples
+            'eigen' : use eigendecomposition of X X' when n_samples <= n_features
+                or X' X when n_features < n_samples
 
         The 'auto' mode is the default and is intended to pick the cheaper
         option depending on the shape and sparsity of the training data.

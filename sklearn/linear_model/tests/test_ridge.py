@@ -958,7 +958,7 @@ def test_regularization_limits_ridge_classifier_gcv(
     gcv_ridge = RidgeClassifierCV(alphas=alphas, fit_intercept=fit_intercept)
     if gcv_mode == "svd" and sparse_X:
         # TODO(1.11) should raises ValueError
-        expected_msg = "The `'svd'` mode is not supported for sparse X"
+        expected_msg = "The 'svd' mode is not supported for sparse X"
         with pytest.warns(FutureWarning, match=expected_msg):
             gcv_ridge.fit(X, y)
     else:
@@ -1004,7 +1004,7 @@ def test_regularization_limits_ridge_gcv(
     gcv_ridge = RidgeCV(alphas=alphas, gcv_mode=gcv_mode, fit_intercept=fit_intercept)
     if gcv_mode == "svd" and sparse_X:
         # TODO(1.11) should raises ValueError
-        expected_msg = "The `'svd'` mode is not supported for sparse X"
+        expected_msg = "The 'svd' mode is not supported for sparse X"
         with pytest.warns(FutureWarning, match=expected_msg):
             gcv_ridge.fit(X, y)
     else:
@@ -1142,7 +1142,7 @@ def test_check_gcv_mode_choice(sparse_container, X_shape, gcv_mode):
         assert _check_gcv_mode(X, gcv_mode) == "svd"
     elif gcv_mode == "svd" and sparse_X:
         # TODO(1.11) should raises ValueError
-        expected_msg = "The `'svd'` mode is not supported for sparse X"
+        expected_msg = "The 'svd' mode is not supported for sparse X"
         with pytest.warns(FutureWarning, match=expected_msg):
             actual_gcv_mode = _check_gcv_mode(X, gcv_mode)
         assert actual_gcv_mode == eigen_mode
