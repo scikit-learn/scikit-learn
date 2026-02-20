@@ -381,3 +381,34 @@ certain combinations of array namespaces and devices, such as `PyTorch on MPS`
 scikit-learn will revert to using the `float32` data type instead. This can result in
 different behavior (typically numerically unstable results) compared to not using array
 API dispatching or using a device with `float64` support.
+
+
+.. _inplace_updates_via_xpx:
+
+Note inplace updates via array-api-extra
+----------------------------------------
+
+While `jax.numpy` is array API compliant, it does not allow for in-place
+updates using the `__setitem__` or `__iadd__` operators contrary to most other
+array libraries. More concretely this means that the following lines of code
+raise an error with JAX arrays:
+
+.. code-block:: python
+
+    array[start:end] = new_value
+    array[start:end] += increment
+
+Since scikit-learn supports JAX arrays, any array API compliant code that needs
+to modify arrays inplace should instead use the vendored `array-api-extra`
+library as follows:
+
+.. code-block:: python
+
+    import sklearn.externals.array_api_extra as xpx
+
+    array = xpx.at(array)[start:end].set(new_value)
+    array = xpx.at(array)[start:end].add(increment)
+
+For most array libraries, this internally calls the equivalent
+`__setitem__`/`__iadd__` operators while this leverages the JAX `at[]` operator
+to simulate in-place updates on JAX inputs.
