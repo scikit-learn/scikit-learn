@@ -111,7 +111,7 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
                 mins, maxes = min_max_axis(X, axis=0)
                 peak_to_peaks = maxes - mins
         else:
-            self.variances_ = np.nanvar(X, axis=0)
+            self.variances_ = np.nan_to_num(np.nanvar(X, axis=0), nan=0)
             if self.threshold == 0:
                 peak_to_peaks = np.ptp(X, axis=0)
 
