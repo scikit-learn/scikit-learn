@@ -237,6 +237,7 @@ def test_error_zero_variances(array_constructor):
     with pytest.raises(ValueError, match="All features have zero variance"):
         clf.fit(X, y)
 
+
 def test_manhattan_single_class_raises():
     """Manhattan fit raises if only one class."""
     X = np.array([[1, 2], [3, 4]])
