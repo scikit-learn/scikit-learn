@@ -66,8 +66,6 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     """Yield supported namespace, device, dtype tuples for testing.
 
     Use this to test that an estimator works with all combinations.
-    Use in conjunction with `ids=_get_namespace_device_dtype_ids` to give
-    clearer pytest parametrization ID names.
 
     Parameters
     ----------
@@ -98,54 +96,16 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
             yield array_namespace, "mps", "float32"
 
         elif array_namespace == "jax.numpy":
-            # XXX: this will dynamically and implicitly pick-up any non-default
-            # device if JAX is configured to use it, contrary to PyTorch for
-            # which we explicitly list all the devices we want to test against
-            # and then later skip in in the tests if it is not available.
-            #
-            # TODO: make yield_namespace_device_dtype_combinations return
-            # device names instead and let _array_api_for_tests return the
-            # actual device objects and skip the tests if the device is not
-            # available.
-            try:
-                import jax
-
-                for device in jax.devices():
-                    yield array_namespace, device, "float32"
-            except ImportError:
-                continue
+            for device, dtype in itertools.product(
+                ("cpu", "gpu", "tpu"), ("float64", "float32")
+            ):
+                yield array_namespace, device, dtype
 
         elif array_namespace == "array_api_strict":
-            try:
-                import array_api_strict
-
-                yield array_namespace, array_api_strict.Device("CPU_DEVICE"), "float64"
-                yield array_namespace, array_api_strict.Device("device1"), "float32"
-            except ImportError:
-                # Those combinations will typically be skipped by pytest if
-                # array_api_strict is not installed but we still need to see them in
-                # the test output.
-                yield array_namespace, "CPU_DEVICE", "float64"
-                yield array_namespace, "device1", "float32"
+            yield array_namespace, "CPU_DEVICE", "float64"
+            yield array_namespace, "device1", "float32"
         else:
             yield array_namespace, None, None
-
-
-def _get_namespace_device_dtype_ids(param):
-    """Get pytest parametrization IDs for `yield_namespace_device_dtype_combinations`"""
-    # Gives clearer IDs for array-api-strict devices, see #31042 for details
-    try:
-        import array_api_strict
-    except ImportError:
-        # `None` results in the default pytest representation
-        return None
-    else:
-        if param == array_api_strict.Device("CPU_DEVICE"):
-            return "CPU_DEVICE"
-        if param == array_api_strict.Device("device1"):
-            return "device1"
-        if param == array_api_strict.Device("device2"):
-            return "device2"
 
 
 def _check_array_api_dispatch(array_api_dispatch):

@@ -83,7 +83,6 @@ from sklearn.tests.metadata_routing_common import (
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._array_api import (
-    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
@@ -2863,16 +2862,17 @@ def test_cv_results_multi_size_array():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
-def test_array_api_search_cv_classifier(SearchCV, array_namespace, device, dtype):
-    xp = _array_api_for_tests(array_namespace, device)
+def test_array_api_search_cv_classifier(
+    SearchCV, array_namespace, device_name, dtype_name
+):
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     X = np.arange(100).reshape((10, 10))
-    X_np = X.astype(dtype)
+    X_np = X.astype(dtype_name)
     X_xp = xp.asarray(X_np, device=device)
 
     # y should always be an integer, no matter what `dtype` is

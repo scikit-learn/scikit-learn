@@ -1302,7 +1302,7 @@ class MinimalTransformer:
         )
 
 
-def _array_api_for_tests(array_namespace, device):
+def _array_api_for_tests(array_namespace, device_name=None, dtype_name=None):
     try:
         array_mod = importlib.import_module(array_namespace)
     except (ModuleNotFoundError, ImportError):
@@ -1319,14 +1319,15 @@ def _array_api_for_tests(array_namespace, device):
     # corresponding (compatibility wrapped) array namespace based on it.
     # This is because `cupy` is not the same as the compatibility wrapped
     # namespace of a CuPy array.
+    device = None
     xp = get_namespace(array_mod.asarray(1))
     if (
         array_namespace == "torch"
-        and device == "cuda"
+        and device_name == "cuda"
         and not xp.backends.cuda.is_built()
     ):
         raise SkipTest("PyTorch test requires cuda, which is not available")
-    elif array_namespace == "torch" and device == "mps":
+    elif array_namespace == "torch" and device_name == "mps":
         if os.getenv("PYTORCH_ENABLE_MPS_FALLBACK") != "1":
             # For now we need PYTORCH_ENABLE_MPS_FALLBACK=1 for all estimators to work
             # when using the MPS device.
@@ -1339,7 +1340,7 @@ def _array_api_for_tests(array_namespace, device):
                 "MPS is not available because the current PyTorch install was not "
                 "built with MPS enabled."
             )
-    elif array_namespace == "torch" and device == "xpu":  # pragma: nocover
+    elif array_namespace == "torch" and device_name == "xpu":  # pragma: nocover
         if not hasattr(xp, "xpu"):
             # skip xpu testing for PyTorch <2.4
             raise SkipTest(
@@ -1355,7 +1356,27 @@ def _array_api_for_tests(array_namespace, device):
 
         if cupy.cuda.runtime.getDeviceCount() == 0:
             raise SkipTest("CuPy test requires cuda, which is not available")
-    return xp
+    elif array_namespace == "jax.numpy":
+        import jax
+
+        if dtype_name == "float64" and not jax.config.x64_enabled:
+            raise SkipTest(
+                "JAX test requires float64, which is not available, "
+                "run with JAX_ENABLE_X64=1 to enable it."
+            )
+        try:
+            available_devices = jax.devices(backend=device_name)
+            if len(available_devices) == 0:
+                raise SkipTest(
+                    f"JAX test requires {device_name}, which is not available"
+                )
+            device = available_devices[0]
+        except RuntimeError:
+            raise SkipTest(f"JAX test requires {device_name}, which is not available")
+    elif array_namespace == "array_api_strict":
+        device = xp.Device(device_name) if device_name is not None else None
+
+    return xp, device_name if device is None else device
 
 
 def _get_warnings_filters_info_list():

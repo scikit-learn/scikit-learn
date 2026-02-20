@@ -19,10 +19,7 @@ from sklearn.metrics.cluster import (
     v_measure_score,
 )
 from sklearn.metrics.tests.test_common import check_array_api_metric
-from sklearn.utils._array_api import (
-    _get_namespace_device_dtype_ids,
-    yield_namespace_device_dtype_combinations,
-)
+from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
 from sklearn.utils._testing import assert_allclose
 
 # Dictionaries of metrics
@@ -272,7 +269,6 @@ def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers)
 @pytest.mark.parametrize(
     "array_namespace, device, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
 def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):

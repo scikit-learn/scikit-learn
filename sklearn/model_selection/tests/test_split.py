@@ -43,7 +43,6 @@ from sklearn.svm import SVC
 from sklearn.tests.metadata_routing_common import assert_request_is_empty
 from sklearn.utils._array_api import (
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     get_namespace,
     yield_namespace_device_dtype_combinations,
 )
@@ -1342,9 +1341,8 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "shuffle,stratify",
@@ -1356,9 +1354,9 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
     ),
 )
 def test_array_api_train_test_split(
-    shuffle, stratify, array_namespace, device, dtype_name
+    shuffle, stratify, array_namespace, device_name, dtype_name
 ):
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     X = np.arange(100).reshape((10, 10))
     y = np.arange(10)

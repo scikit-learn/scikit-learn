@@ -355,14 +355,14 @@ def _yield_array_api_checks(estimator, only_numpy=False):
         # array API support in their tags.
         for (
             array_namespace,
-            device,
+            device_name,
             dtype_name,
         ) in yield_namespace_device_dtype_combinations():
             yield partial(
                 check_array_api_input,
                 array_namespace=array_namespace,
+                device_name=device_name,
                 dtype_name=dtype_name,
-                device=device,
             )
 
 
@@ -1060,7 +1060,7 @@ def check_array_api_input(
     name,
     estimator_orig,
     array_namespace,
-    device=None,
+    device_name=None,
     dtype_name="float64",
     check_values=False,
     check_sample_weight=False,
@@ -1083,7 +1083,7 @@ def check_array_api_input(
     behavior of any estimator fed with NumPy inputs, even for estimators that
     do not support array API.
     """
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     X, y = make_classification(n_samples=30, n_features=10, random_state=42)
     X = X.astype(dtype_name, copy=False)
@@ -1285,7 +1285,7 @@ def check_array_api_input_and_values(
     name,
     estimator_orig,
     array_namespace,
-    device=None,
+    device_name=None,
     dtype_name="float64",
     check_sample_weight=False,
 ):
@@ -1293,7 +1293,7 @@ def check_array_api_input_and_values(
         name,
         estimator_orig,
         array_namespace=array_namespace,
-        device=device,
+        device_name=device_name,
         dtype_name=dtype_name,
         check_values=True,
         check_sample_weight=check_sample_weight,

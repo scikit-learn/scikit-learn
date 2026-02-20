@@ -32,7 +32,6 @@ from sklearn.mixture._gaussian_mixture import (
 )
 from sklearn.utils._array_api import (
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     device,
     get_namespace,
     yield_namespace_device_dtype_combinations,
@@ -1486,32 +1485,31 @@ def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(
 @pytest.mark.parametrize("init_params", ["random", "random_from_data"])
 @pytest.mark.parametrize("covariance_type", ["full", "tied", "diag", "spherical"])
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("use_gmm_array_constructor_arguments", [False, True])
 def test_gaussian_mixture_array_api_compliance(
     init_params,
     covariance_type,
     array_namespace,
-    device_,
-    dtype,
+    device_name,
+    dtype_name,
     use_gmm_array_constructor_arguments,
 ):
     """Test that array api works in GaussianMixture.fit()."""
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device_ = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     rng = np.random.RandomState(0)
     rand_data = RandomData(rng)
     X = rand_data.X[covariance_type]
-    X = X.astype(dtype)
+    X = X.astype(dtype_name)
 
     if use_gmm_array_constructor_arguments:
         additional_kwargs = {
-            "means_init": rand_data.means.astype(dtype),
-            "precisions_init": rand_data.precisions[covariance_type].astype(dtype),
-            "weights_init": rand_data.weights.astype(dtype),
+            "means_init": rand_data.means.astype(dtype_name),
+            "precisions_init": rand_data.precisions[covariance_type].astype(dtype_name),
+            "weights_init": rand_data.weights.astype(dtype_name),
         }
     else:
         additional_kwargs = {}
@@ -1563,9 +1561,9 @@ def test_gaussian_mixture_array_api_compliance(
             assert isinstance(score, float)
 
     # Define specific rtol to make tests pass
-    default_rtol = 1e-4 if dtype == "float32" else 1e-7
-    increased_atol = 5e-4 if dtype == "float32" else 0
-    increased_rtol = 1e-3 if dtype == "float32" else 1e-7
+    default_rtol = 1e-4 if dtype_name == "float32" else 1e-7
+    increased_atol = 5e-4 if dtype_name == "float32" else 0
+    increased_rtol = 1e-3 if dtype_name == "float32" else 1e-7
 
     # Check fitted attributes
     assert_allclose(gmm.means_, _convert_to_numpy(gmm_xp.means_, xp=xp))
@@ -1616,14 +1614,7 @@ def test_gaussian_mixture_array_api_compliance(
 
 @skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize("init_params", ["kmeans", "k-means++"])
-@pytest.mark.parametrize(
-    "array_namespace, device_, dtype",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
-)
-def test_gaussian_mixture_raises_where_array_api_not_implemented(
-    init_params, array_namespace, device_, dtype
-):
+def test_gaussian_mixture_raises_where_array_api_not_implemented(init_params):
     X, _ = make_blobs(
         n_samples=100,
         n_features=2,

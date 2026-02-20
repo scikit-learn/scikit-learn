@@ -9,7 +9,6 @@ from sklearn import config_context, datasets
 from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVC
 from sklearn.utils._array_api import (
-    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -404,12 +403,11 @@ def test_is_multilabel():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
-def test_is_multilabel_array_api_compliance(array_namespace, device, dtype_name):
-    xp = _array_api_for_tests(array_namespace, device)
+def test_is_multilabel_array_api_compliance(array_namespace, device_name, dtype_name):
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     for group, group_examples in ARRAY_API_EXAMPLES.items():
         dense_exp = group == "multilabel-indicator"

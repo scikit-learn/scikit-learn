@@ -39,7 +39,6 @@ from sklearn.utils import compute_class_weight, shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     device,
     yield_namespace_device_dtype_combinations,
 )
@@ -802,9 +801,10 @@ def test_logistic_regression_solvers_multiclass(fit_intercept):
         for solver in set(SOLVERS) - set(["liblinear"])
     }
     for solver, clf in classifiers.items():
-        assert clf.coef_.shape == (n_classes, n_features), (
-            f"Solver {solver} generates coef_ with wrong shape."
-        )
+        assert clf.coef_.shape == (
+            n_classes,
+            n_features,
+        ), f"Solver {solver} generates coef_ with wrong shape."
 
     for solver_1, solver_2 in itertools.combinations(classifiers, r=2):
         assert_allclose(
@@ -2577,9 +2577,8 @@ def test_logisticregression_warns_with_n_jobs():
 @pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize("class_weight", [None, "balanced", "dict"])
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_logistic_regression_array_api_compliance(
@@ -2588,10 +2587,10 @@ def test_logistic_regression_array_api_compliance(
     use_sample_weight,
     class_weight,
     array_namespace,
-    device_,
+    device_name,
     dtype_name,
 ):
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device_ = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X_np = iris.data.astype(dtype_name, copy=True)
     n_samples, _ = X_np.shape
     X_xp = xp.asarray(X_np, device=device_)

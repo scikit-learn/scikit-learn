@@ -35,7 +35,6 @@ from sklearn.utils import assert_all_finite
 from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     device,
     yield_namespace_device_dtype_combinations,
 )
@@ -1386,9 +1385,7 @@ def test_tweedie_log_identity_consistency(p):
 )
 @pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize(
-    "namespace, device_, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
+    "namespace, device_name, dtype_name", yield_namespace_device_dtype_combinations()
 )
 def test_loss_array_api(
     array_api_loss_class,
@@ -1396,7 +1393,7 @@ def test_loss_array_api(
     method_name,
     use_sample_weight,
     namespace,
-    device_,
+    device_name,
     dtype_name,
 ):
     def _assert_array_api_result(result_xp, result_np, raw_prediction_xp, xp, atol):
@@ -1404,7 +1401,7 @@ def test_loss_array_api(
         assert result_xp.dtype == raw_prediction_xp.dtype
         assert device(result_xp) == device(raw_prediction_xp)
 
-    xp = _array_api_for_tests(namespace, device_)
+    xp, device_ = _array_api_for_tests(namespace, device_name, dtype_name)
     atol = _atol_for_type(dtype_name)
     random_seed = 42
     n_samples = 100
@@ -1467,15 +1464,13 @@ def test_loss_array_api(
 
 
 @pytest.mark.parametrize(
-    "namespace, device_, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
+    "namespace, device_name, dtype_name", yield_namespace_device_dtype_combinations()
 )
-def test_log1pexp(namespace, device_, dtype_name):
+def test_log1pexp(namespace, device_name, dtype_name):
     mpmath = pytest.importorskip("mpmath")
     mpmath.mp.prec = 100  # Significantly more precise reference than float64.
     values_to_test = np.linspace(-40, 40, 300)
-    xp = _array_api_for_tests(namespace, device_)
+    xp, device_ = _array_api_for_tests(namespace, device_name, dtype_name)
     for value in values_to_test:
         if dtype_name == "float32":
             x = xp.asarray(value, dtype=xp.float32, device=device_)

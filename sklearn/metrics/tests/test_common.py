@@ -85,7 +85,6 @@ from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -1980,9 +1979,9 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
 
 
 def check_array_api_metric(
-    metric, array_namespace, device, dtype_name, a_np, b_np, **metric_kwargs
+    metric, array_namespace, device_name, dtype_name, a_np, b_np, **metric_kwargs
 ):
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     a_xp = xp.asarray(a_np, device=device)
     b_xp = xp.asarray(b_np, device=device)
@@ -2466,13 +2465,14 @@ def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers)
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
-def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):
-    check_func(metric, array_namespace, device, dtype_name)
+def test_array_api_compliance(
+    metric, array_namespace, device_name, dtype_name, check_func
+):
+    check_func(metric, array_namespace, device_name, dtype_name)
 
 
 @pytest.mark.parametrize("df_lib_name", ["pandas", "polars"])
