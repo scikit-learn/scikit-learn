@@ -300,10 +300,6 @@ The `predict` and `transform` method subsequently expect
 inputs from the same array library and device as the data passed to the `fit`
 method.
 
-To help check that the inputs' namespace and device in `predict` and
-`transform`, we provide the experimental
-`sklearn.utils._array_api.check_same_namespace`.
-
 Scoring functions
 -----------------
 
