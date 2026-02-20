@@ -1,0 +1,6 @@
+- :class:`calibration.CalibratedClassifierCV` now supports the Array API for
+  ``method="sigmoid"`` and ``method="isotonic"`` in addition to the
+  previously supported ``method="temperature"``. Predictions are converted to
+  NumPy internally for calibration fitting and prediction, while the
+  underlying estimator can still operate on Array API arrays.
+  By :user:`veeceey <veeceey>`.
