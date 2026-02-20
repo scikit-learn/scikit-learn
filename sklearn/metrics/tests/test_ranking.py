@@ -2394,30 +2394,40 @@ def test_roc_curve_with_probablity_estimates(global_random_seed):
     assert np.isinf(thresholds[0])
 
 
-def _dummy_metric_returns_tuple(y_true, y_pred):
+def _dummy_metric(y_true, y_pred, sample_weight=None):
     """Dummy metric that returns a tuple of two values."""
-    return (np.sum(y_pred), np.sum(y_true))
+    if sample_weight is None:
+        sample_weight = np.ones_like(y_pred)
+    y_pred_sum = np.sum(y_pred * sample_weight)
+    y_true_sum = np.sum(y_true * sample_weight)
+    return (y_pred_sum, y_true_sum)
 
 
 @pytest.mark.parametrize(
-    "metric_func, expected_scores",
+    "metric_func",
     [
-        (accuracy_score, [0.6, 0.8, 0.8, 0.6]),
-        (precision_score, [1.0, 1.0, 0.75, 0.6]),
-        (roc_auc_score, [2 / 3, 5 / 6, 0.75, 0.5]),
+        accuracy_score,
+        precision_score,
+        roc_auc_score,
         # Test metric that returns tuple instead of single float
-        (
-            _dummy_metric_returns_tuple,
-            [[1, 3], [2, 3], [4, 3], [5, 3]],
-        ),
+        _dummy_metric,
     ],
 )
-def test_metric_at_thresholds(metric_func, expected_scores):
+@pytest.mark.parametrize("sample_weight", [None, np.array([1, 2, 1, 0, 2])])
+def test_metric_at_thresholds(metric_func, sample_weight):
     """Test `metric_at_thresholds` outputs correct."""
     y_true = np.array([0, 0, 1, 1, 1])
-    y_score = np.array([0.1, 0.4, 0.4, 0.6, 0.9])
+    y_score = np.array([0.1, 0.6, 0.4, 0.9, 0.4])
 
-    metric_values, thresholds = metric_at_thresholds(y_true, y_score, metric_func)
+    metric_values, thresholds = metric_at_thresholds(
+        y_true, y_score, metric_func, sample_weight=sample_weight
+    )
+
+    # Calculate expected scores manually at each threshold
+    expected_scores = []
+    for threshold in thresholds:
+        y_pred = (y_score >= threshold).astype(int)
+        expected_scores.append(metric_func(y_true, y_pred, sample_weight=sample_weight))
 
     assert len(metric_values) == len(thresholds)
     # Thresholds are descending
@@ -2444,11 +2454,78 @@ def test_metric_at_thresholds_metric_params(normalize):
     assert len(thresholds) == len(np.unique(y_score))
 
 
+@pytest.mark.parametrize("sample_weight", [None, np.array([1, 2, 3, 1, 2])])
+def test_metric_at_thresholds_y_score_order(sample_weight):
+    """Test `y_score` order does not effect `metric_at_thresholds`."""
+    y_true = np.array([0, 0, 1, 1, 1])
+    y_score = np.array([0.9, 0.6, 0.5, 0.1, 0.4])
+    # Permutate `y_true`, `y_score` and `sample_weight`
+    rng = check_random_state(42)
+    perm_indices = rng.permutation(len(y_score))
+    y_true_perm = y_true[perm_indices]
+    y_score_perm = y_score[perm_indices]
+    if sample_weight is not None:
+        sample_weight_perm = sample_weight[perm_indices]
+    else:
+        sample_weight_perm = None
+
+    metric_1, thresh_1 = metric_at_thresholds(
+        y_true, y_score, accuracy_score, sample_weight=sample_weight
+    )
+    metric_2, thresh_2 = metric_at_thresholds(
+        y_true_perm, y_score_perm, accuracy_score, sample_weight=sample_weight_perm
+    )
+
+    assert_allclose(metric_1, metric_2)
+    assert_allclose(thresh_1, thresh_2)
+
+
+def test_metric_at_thresholds_y_score_order_duplicate_y_score():
+    """Test duplicate `y_score` edge cases in `metric_at_thresholds`.
+
+    If there are duplicate `y_score` values and `y_true` differs between
+    these duplicate values, `y_score` order will not affect metric output.
+
+    However, if there are duplicate `y_score` values and `sample_weight` differs
+    between these duplicate values, `y_score` order can affect metric output,
+    as stable sort preserves relative order.
+    """
+    # duplicate scores
+    y_score = np.array([0.6, 0.9, 0.1, 0.4, 0.6])
+    # `y_true` differs between duplicates
+    y_true_1 = np.array([1, 0, 1, 1, 0])
+    y_true_2 = np.array([0, 0, 1, 1, 1])
+
+    metric_1, thresh_1 = metric_at_thresholds(y_true_1, y_score, accuracy_score)
+    metric_2, thresh_2 = metric_at_thresholds(y_true_2, y_score, accuracy_score)
+
+    assert_allclose(thresh_1, thresh_2)
+    assert_allclose(metric_1, metric_2)
+
+    # `sample_weight` differs between duplicates
+    sample_weight_1 = np.array([1, 2, 1, 0, 2])
+    sample_weight_2 = np.array([2, 2, 1, 0, 1])
+
+    metric_1, thresh_1 = metric_at_thresholds(
+        y_true_1, y_score, accuracy_score, sample_weight=sample_weight_1
+    )
+    metric_2, thresh_2 = metric_at_thresholds(
+        y_true_1, y_score, accuracy_score, sample_weight=sample_weight_2
+    )
+
+    # Thresholds should still be the same
+    assert_allclose(thresh_1, thresh_2)
+    # Metric output should difffer
+    with pytest.raises(AssertionError):
+        assert_allclose(metric_1, metric_2)
+
+
 @pytest.mark.parametrize("pos_label", [0, 1])
 def test_metric_at_thresholds_consistency_with_confusion_matrix(pos_label):
     """Test `metric_at_thresholds` consistency with `confusion_matrix_at_thresholds`.
 
-    This also checks output when `metric_func` returns a tuple of arrays.
+    This also checks output when `metric_func` returns a tuple of arrays and that
+    `pos_label` is passed correctly to the `metric_func`.
     """
     y_true = np.array([0, 0, 1, 1, 1])
     y_score = np.array([0.1, 0.4, 0.4, 0.6, 0.9])

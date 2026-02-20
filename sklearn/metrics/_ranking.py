@@ -872,10 +872,10 @@ def _sort_inputs_and_compute_classification_thresholds(
 
     Performs the following functions:
 
-    * Array validation on `y_true`, `y_score` are and ensures all finite
+    * Array validation on `y_true`, `y_score` and `sample_weight`
     * Filters out 0-weighted samples
-    * Sorts `y_score` and `y_true` according to descending `y_score`
-    * Computes distinct `y_score` values as thresholds indices
+    * Sorts `y_score`, `y_true` and `sample_weight` according to descending `y_score`
+    * Computes thresholds i.e. indices where sorted `y_score` changes
     """
     xp, _, device = get_namespace_and_device(y_true, y_score, sample_weight)
 
@@ -2236,6 +2236,7 @@ def top_k_accuracy_score(
         "y_true": ["array-like"],
         "y_score": ["array-like"],
         "metric_func": [callable],
+        "metric_params": [dict, None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -2243,9 +2244,10 @@ def metric_at_thresholds(
     y_true,
     y_score,
     metric_func,
+    sample_weight=None,
     metric_params=None,
 ):
-    """Compute `metric_func` per threshold.
+    """Compute `metric_func` per threshold for :term:`binary` data.
 
     Read more in the :ref:`User Guide <threshold_tunning>`.
 
@@ -2261,7 +2263,10 @@ def metric_at_thresholds(
 
     metric_func : callable
         The metric function to use. It will be called as
-        `metric_func(y_true, y_pred, **kwargs)`.
+        `metric_func(y_true, y_pred, **metric_params)`.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights. If not `None`, will be passed to `metric_func`.
 
     metric_params : dict, default=None
         Parameters to pass to `metric_func`.
@@ -2276,6 +2281,7 @@ def metric_at_thresholds(
 
     See Also
     --------
+    confusion_matrix_at_thresholds : Compute binary confusion matrix per threshold
     precision_recall_curve : Compute precision-recall pairs for different
         probability thresholds.
     det_curve : Compute error rates for different probability thresholds.
@@ -2294,12 +2300,17 @@ def metric_at_thresholds(
     >>> scores
     array([0.75, 0.5 , 0.75, 0.5 ])
     """
-    y_true, y_score, threshold_idxs, _ = (
-        _sort_inputs_and_compute_classification_thresholds(y_true, y_score)
+    pass_sample_weight = False if sample_weight is None else True
+    y_true, y_score, threshold_idxs, sample_weight = (
+        _sort_inputs_and_compute_classification_thresholds(
+            y_true, y_score, sample_weight
+        )
     )
-    y_true = y_true.astype(np.int32)
+    metric_params = {
+        **(metric_params or {}),
+        **({"sample_weight": sample_weight} if pass_sample_weight else {}),
+    }
 
-    metric_params = {} if metric_params is None else metric_params
     thresholds = y_score[threshold_idxs]
     metric_values = []
     for threshold in thresholds:
