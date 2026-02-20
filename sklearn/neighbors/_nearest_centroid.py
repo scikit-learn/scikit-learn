@@ -79,8 +79,34 @@ class NearestCentroid(
     See Also
     --------
     KNeighborsClassifier : Nearest neighbors classifier.
-    """
 
+    Notes
+    -----
+    When used for text classification with tf-idf vectors, this classifier is
+    also known as the Rocchio classifier.
+
+    References
+    ----------
+    [1] Tibshirani, R., Hastie, T., Narasimhan, B., & Chu, G. (2002). Diagnosis of
+    multiple cancer types by shrunken centroids of gene expression. Proceedings
+    of the National Academy of Sciences of the United States of America,
+    99(10), 6567-6572. The National Academy of Sciences.
+
+    [2] Hastie, T., Tibshirani, R., Friedman, J. (2009). The Elements of Statistical
+    Learning Data Mining, Inference, and Prediction. 2nd Edition. New York, Springer.
+
+    Examples
+    --------
+    >>> from sklearn.neighbors import NearestCentroid
+    >>> import numpy as np
+    >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
+    >>> y = np.array([1, 1, 1, 2, 2, 2])
+    >>> clf = NearestCentroid()
+    >>> clf.fit(X, y)
+    NearestCentroid()
+    >>> print(clf.predict([[-0.8, -1]]))
+    [1]
+    """
     _parameter_constraints: dict = {
         "metric": [StrOptions({"manhattan", "euclidean"})],
         "shrink_threshold": [Interval(Real, 0, None, closed="neither"), None],
