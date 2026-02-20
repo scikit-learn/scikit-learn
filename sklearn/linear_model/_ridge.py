@@ -1849,8 +1849,10 @@ class _RidgeGCV(LinearModel):
 
     References
     ----------
-    [1] https://dspace.mit.edu/bitstream/handle/1721.1/37318/MIT-CSAIL-TR-2007-025.pdf
-    [2] https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
+    .. [1] R. Rifkin and R. Lippert (2007). "Notes on Regularized Least Squares."
+           https://dspace.mit.edu/bitstream/handle/1721.1/37318/MIT-CSAIL-TR-2007-025.pdf
+    .. [2] R. Rifkin (2007). "Regularized Least Squares."
+           https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
     def __init__(
