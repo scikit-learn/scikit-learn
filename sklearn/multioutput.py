@@ -1234,7 +1234,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         A list of clones of base_estimator.
 
     order_ : list
-        The order of labels in the classifier chain.
+        The order of labels in the regressor chain.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
