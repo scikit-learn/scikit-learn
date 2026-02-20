@@ -397,13 +397,9 @@ def _write_estimator_html(
         out.write("</div>")
 
         if (
-            hasattr(estimator_label, "endswith")
-            and (
-                estimator_label.endswith("ColumnTransformer")
-                or estimator_label.endswith("FeatureUnion")
-            )
-            and is_fitted_css_class
-            and len(est_block.estimators) > 1
+            is_fitted_css_class
+            and hasattr(estimator, "get_feature_names_out")
+            and not hasattr(estimator, "steps")
         ):
             features_div = _features_html(
                 estimator.get_feature_names_out(), is_fitted_css_class
@@ -415,7 +411,7 @@ def _write_estimator_html(
         out.write("</div>")
     elif est_block.kind == "single":
         if (
-            callable(getattr(estimator, "get_feature_names_out", None))
+            hasattr(estimator, "get_feature_names_out")
             and not hasattr(estimator, "steps")
             and hasattr(estimator, "n_features_in_")
             and is_fitted_css_class
