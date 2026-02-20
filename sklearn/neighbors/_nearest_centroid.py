@@ -139,7 +139,7 @@ class NearestCentroid(
         if n_classes < 2:
             raise ValueError(
                 "The number of classes has to be greater than one; ",
-                "got {n_classes} class"
+                "got {n_classes} class",
             )
 
         if self.priors == "empirical":
@@ -242,9 +242,7 @@ class NearestCentroid(
 
         first_call = not hasattr(self, "classes_")
 
-        ensure_all_finite = (
-            "allow-nan" if get_tags(self).input_tags.allow_nan else True
-        )
+        ensure_all_finite = "allow-nan" if get_tags(self).input_tags.allow_nan else True
         X, y = validate_data(
             self,
             X,
@@ -329,8 +327,10 @@ class NearestCentroid(
 
             if is_X_sparse:
                 batch_mean = np.asarray(X_class.mean(axis=0)).ravel()
-                batch_var = np.asarray(
-                    X_class.multiply(X_class).mean(axis=0)).ravel() - batch_mean ** 2
+                batch_var = (
+                    np.asarray(X_class.multiply(X_class).mean(axis=0)).ravel()
+                    - batch_mean**2
+                )
             else:
                 batch_mean = np.mean(X_class, axis=0)
                 batch_var = np.var(X_class, axis=0)
@@ -346,10 +346,9 @@ class NearestCentroid(
                 old_var = self._variance[cur_class]
 
                 new_mean = (N_old * old_mean + N_new * batch_mean) / N_total
-                new_var = (
-                    (N_old * old_var + N_new * batch_var) / N_total
-                    + (N_old * N_new * (old_mean - batch_mean) ** 2) / (N_total ** 2)
-                )
+                new_var = (N_old * old_var + N_new * batch_var) / N_total + (
+                    N_old * N_new * (old_mean - batch_mean) ** 2
+                ) / (N_total**2)
 
                 self._true_centroids[cur_class] = new_mean
                 self._variance[cur_class] = new_var
@@ -368,10 +367,10 @@ class NearestCentroid(
 
         if total_samples > n_classes:
             self.within_class_std_dev_ = np.sqrt(
-                total_sse / (total_samples - n_classes))
+                total_sse / (total_samples - n_classes)
+            )
         else:
-            self.within_class_std_dev_ = np.zeros(
-                self._true_centroids.shape[1])
+            self.within_class_std_dev_ = np.zeros(self._true_centroids.shape[1])
 
         if any(self.within_class_std_dev_ == 0) and total_samples > n_classes:
             warnings.warn(
@@ -425,9 +424,7 @@ class NearestCentroid(
         """
         check_is_fitted(self, ["centroids_", "classes_"])
 
-        ensure_all_finite = (
-            "allow-nan" if get_tags(self).input_tags.allow_nan else True
-        )
+        ensure_all_finite = "allow-nan" if get_tags(self).input_tags.allow_nan else True
 
         X = validate_data(
             self,

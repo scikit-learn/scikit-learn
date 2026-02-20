@@ -307,6 +307,7 @@ def test_partial_fit_predict_proba():
 def test_partial_fit_sparse():
     """Test partial_fit works with sparse input."""
     from scipy.sparse import csr_matrix
+
     X, y = load_iris(return_X_y=True)
     X_sparse = csr_matrix(X)
     clf = NearestCentroid()
