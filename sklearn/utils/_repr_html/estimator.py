@@ -395,17 +395,19 @@ def _write_estimator_html(
                 out.write("</div>")  # sk-parallel-item
 
         out.write("</div>")
+
+        has_feature_names_out = hasattr(estimator, "get_feature_names_out")
+        is_not_pipeline_step = not hasattr(estimator, "steps")
+        is_column_transformer = estimator_label in (
+            "ColumnTransformer",
+            "transformer: ColumnTransformer",
+        )
+        has_single_estimator = len(est_block.estimators) == 1
         if (
             is_fitted_css_class
-            and hasattr(estimator, "get_feature_names_out")
-            and not hasattr(estimator, "steps")
-            and not (
-                (
-                    estimator_label
-                    in ("ColumnTransformer", "transformer: ColumnTransformer")
-                )
-                and len(est_block.estimators) == 1
-            )
+            and has_feature_names_out
+            and is_not_pipeline_step
+            and not (is_column_transformer and has_single_estimator)
         ):
             features_div = _features_html(
                 estimator.get_feature_names_out(), is_fitted_css_class
@@ -414,6 +416,7 @@ def _write_estimator_html(
                 f"<div class='total_features'>{features_div}</div>"
             )
             out.write(total_output_features_item)
+
         out.write("</div>")
     elif est_block.kind == "single":
         if (
