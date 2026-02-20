@@ -881,6 +881,10 @@ def test_ridge_gcv_vs_ridge_loo_cv(
 def test_regularization_limits_ridge(
     alpha, solver, fit_intercept, X_shape, X_container
 ):
+    """We check Ridge for extreme alpha values:
+    * near-zero alpha should recover LinearRegression
+    * near-infinite alpha should give zero coefficients
+    """
     sparse_X = X_container in CSR_CONTAINERS
     if solver == "svd" and sparse_X:
         pytest.skip("solver='svd' does not support sparse data")
@@ -922,6 +926,10 @@ def test_regularization_limits_ridge(
 def test_regularization_limits_ridge_classifier_gcv(
     alpha, gcv_mode, fit_intercept, X_shape, dtype, X_container
 ):
+    """We check RidgeClassifierCV for extreme alpha values:
+    * near-zero alpha should recover LinearRegression
+    * near-infinite alpha should give zero coefficients
+    """
     sparse_X = X_container in CSR_CONTAINERS
     alphas = [alpha]
     n_samples, n_features = X_shape
@@ -982,6 +990,10 @@ def test_regularization_limits_ridge_classifier_gcv(
 def test_regularization_limits_ridge_gcv(
     alpha, gcv_mode, fit_intercept, X_shape, dtype, X_container
 ):
+    """We check _RidgeGCV for extreme alpha values:
+    * near-zero alpha should recover LinearRegression
+    * near-infinite alpha should give zero coefficients
+    """
     sparse_X = X_container in CSR_CONTAINERS
     alphas = [alpha]
     n_samples, n_features = X_shape
