@@ -590,9 +590,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         tags = super().__sklearn_tags__()
         estimator_tags = get_tags(self._get_estimator())
         tags.input_tags.sparse = estimator_tags.input_tags.sparse
-        tags.array_api_support = (
-            estimator_tags.array_api_support and self.method == "temperature"
-        )
+        tags.array_api_support = estimator_tags.array_api_support
         return tags
 
 
@@ -724,15 +722,37 @@ def _fit_calibrator(clf, predictions, y, classes, method, xp, sample_weight=None
     calibrators = []
 
     if method in ("isotonic", "sigmoid"):
-        Y = label_binarize(y, classes=classes)
-        label_encoder = LabelEncoder().fit(classes)
-        pos_class_indices = label_encoder.transform(clf.classes_)
-        for class_idx, this_pred in zip(pos_class_indices, predictions.T):
+        # Sigmoid and isotonic calibrators are numpy-only (sigmoid uses
+        # scipy.optimize.minimize with L-BFGS-B; isotonic is implemented in
+        # Cython). Convert predictions, y, and sample_weight to numpy arrays
+        # before fitting. This still allows Array API inputs to be used for the
+        # underlying estimator's fit/predict.
+        if not _is_numpy_namespace(xp):
+            predictions_np = _convert_to_numpy(predictions, xp=xp)
+            y_np = _convert_to_numpy(y, xp=xp)
+            sw_np = (
+                _convert_to_numpy(sample_weight, xp=xp)
+                if sample_weight is not None
+                else None
+            )
+            classes_np = _convert_to_numpy(classes, xp=xp)
+            clf_classes_np = _convert_to_numpy(clf.classes_, xp=xp)
+        else:
+            predictions_np = predictions
+            y_np = y
+            sw_np = sample_weight
+            classes_np = classes
+            clf_classes_np = clf.classes_
+
+        Y = label_binarize(y_np, classes=classes_np)
+        label_encoder = LabelEncoder().fit(classes_np)
+        pos_class_indices = label_encoder.transform(clf_classes_np)
+        for class_idx, this_pred in zip(pos_class_indices, predictions_np.T):
             if method == "isotonic":
                 calibrator = IsotonicRegression(out_of_bounds="clip")
             else:  # "sigmoid"
                 calibrator = _SigmoidCalibration()
-            calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
+            calibrator.fit(this_pred, Y[:, class_idx], sw_np)
             calibrators.append(calibrator)
     elif method == "temperature":
         if classes.shape[0] == 2 and predictions.shape[-1] == 1:
@@ -800,19 +820,35 @@ class _CalibratedClassifier:
             X,
             response_method=["decision_function", "predict_proba"],
         )
+        xp, is_array_api, device_ = get_namespace_and_device(predictions)
+
         if predictions.ndim == 1:
             # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
             predictions = predictions.reshape(-1, 1)
 
         n_classes = self.classes.shape[0]
 
-        proba = np.zeros((_num_samples(X), n_classes))
-
         if self.method in ("sigmoid", "isotonic"):
-            label_encoder = LabelEncoder().fit(self.classes)
-            pos_class_indices = label_encoder.transform(self.estimator.classes_)
+            # Sigmoid and isotonic calibrators are numpy-only. Convert
+            # predictions to numpy, apply calibration, then convert back
+            # to the original namespace if needed.
+            if not _is_numpy_namespace(xp):
+                predictions_np = _convert_to_numpy(predictions, xp=xp)
+                classes_np = _convert_to_numpy(self.classes, xp=xp)
+                estimator_classes_np = _convert_to_numpy(
+                    self.estimator.classes_, xp=xp
+                )
+            else:
+                predictions_np = predictions
+                classes_np = self.classes
+                estimator_classes_np = self.estimator.classes_
+
+            proba = np.zeros((_num_samples(X), n_classes))
+
+            label_encoder = LabelEncoder().fit(classes_np)
+            pos_class_indices = label_encoder.transform(estimator_classes_np)
             for class_idx, this_pred, calibrator in zip(
-                pos_class_indices, predictions.T, self.calibrators
+                pos_class_indices, predictions_np.T, self.calibrators
             ):
                 if n_classes == 2:
                     # When binary, `predictions` consists only of predictions for
@@ -831,8 +867,11 @@ class _CalibratedClassifier:
                 proba = np.divide(
                     proba, denominator, out=uniform_proba, where=denominator != 0
                 )
+
+            # Convert back to the original array namespace if needed
+            if not _is_numpy_namespace(xp):
+                proba = xp.asarray(proba, device=device_)
         elif self.method == "temperature":
-            xp, _ = get_namespace(predictions)
             if n_classes == 2 and predictions.shape[-1] == 1:
                 response_method_name = _check_response_method(
                     self.estimator,
@@ -843,7 +882,13 @@ class _CalibratedClassifier:
             proba = self.calibrators[0].predict(predictions)
 
         # Deal with cases where the predicted probability minimally exceeds 1.0
-        proba[(1.0 < proba) & (proba <= 1.0 + 1e-5)] = 1.0
+        # Use xp.where for Array API compatibility instead of boolean index
+        # assignment.
+        proba = xp.where(
+            (proba > 1.0) & (proba <= 1.0 + 1e-5),
+            xp.asarray(1.0, dtype=proba.dtype, device=device_),
+            proba,
+        )
 
         return proba
 
