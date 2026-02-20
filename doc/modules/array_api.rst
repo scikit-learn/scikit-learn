@@ -70,81 +70,65 @@ Example usage
 
 The example code snippet below demonstrates how to use `CuPy
 <https://cupy.dev/>`_ to run
-:class:`~discriminant_analysis.LinearDiscriminantAnalysis` on a GPU:
+:class:`~discriminant_analysis.LinearDiscriminantAnalysis` on a GPU::
 
-.. code-block:: python
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn import config_context
+    >>> from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+    >>> import cupy
 
-    from sklearn.datasets import make_classification
-    from sklearn import config_context
-    from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-    import cupy
+    >>> X_np, y_np = make_classification(random_state=0)
+    >>> X_cu = cupy.asarray(X_np)
+    >>> y_cu = cupy.asarray(y_np)
+    >>> X_cu.device
+    <CUDA Device 0>
 
-    X_np, y_np = make_classification(random_state=0)
-    X_cu = cupy.asarray(X_np)
-    y_cu = cupy.asarray(y_np)
-    X_cu.device
-    # <CUDA Device 0>
-
-    with config_context(array_api_dispatch=True):
-        lda = LinearDiscriminantAnalysis()
-        X_trans = lda.fit_transform(X_cu, y_cu)
-    X_trans.device
-    # <CUDA Device 0>
+    >>> with config_context(array_api_dispatch=True):
+    ...     lda = LinearDiscriminantAnalysis()
+    ...     X_trans = lda.fit_transform(X_cu, y_cu)
+    >>> X_trans.device
+    <CUDA Device 0>
 
 After the model is trained, fitted attributes that are arrays will also be from
 the same Array API namespace as the training data. For example, if CuPy's Array
 API namespace was used for training, then fitted attributes will be on the GPU.
 Passing data in a different namespace to ``transform`` or ``predict`` is an
-error:
+error::
 
-.. code-block:: python
-
-    with config_context(array_api_dispatch=True):
-        lda.transform(X_np)
-    # ValueError: Inputs passed to LinearDiscriminantAnalysis.transform()
-    # must use the same namespace and the same device as those passed
-    # to fit()...
+    >>> with config_context(array_api_dispatch=True):
+    ...     lda.transform(X_np)
+    Traceback (most recent call last):
+        ...
+    ValueError: Inputs passed to LinearDiscriminantAnalysis.transform() must use the same namespace and the same device as those passed to fit()...
 
 We provide ``move_estimator_to`` to transfer an estimator's array attributes
-to a different namespace and device. Here is an example using PyTorch on CPU::
+to a different namespace and device::
 
-    >>> import numpy as np
-    >>> import torch
-    >>> from sklearn import config_context
-    >>> from sklearn.datasets import make_classification
-    >>> from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
     >>> from sklearn.utils._array_api import move_estimator_to, get_namespace_and_device
-    >>> X_np, y_np = make_classification(random_state=0)
-    >>> X_torch = torch.asarray(X_np, dtype=torch.float64)
-    >>> y_torch = torch.asarray(y_np, dtype=torch.float64)
+    >>> import numpy as np
+    >>> xp, _, dev = get_namespace_and_device(np.empty(0))
+    >>> lda_np = move_estimator_to(lda, xp, dev)
     >>> with config_context(array_api_dispatch=True):
-    ...     lda = LinearDiscriminantAnalysis()
-    ...     lda.fit(X_torch, y_torch)
-    ...     xp, _, dev = get_namespace_and_device(np.empty(0))
-    ...     lda_np = move_estimator_to(lda, xp, dev)
     ...     X_trans = lda_np.transform(X_np)
-    LinearDiscriminantAnalysis()
     >>> type(X_trans)
     <class 'numpy.ndarray'>
 
 PyTorch Support
 ---------------
 
-PyTorch Tensors can also be passed directly:
+PyTorch Tensors can also be passed directly::
 
-.. code-block:: python
+    >>> import torch
+    >>> X_torch = torch.asarray(X_np, device="cuda", dtype=torch.float32)
+    >>> y_torch = torch.asarray(y_np, device="cuda", dtype=torch.float32)
 
-    import torch
-    X_torch = torch.asarray(X_np, device="cuda", dtype=torch.float32)
-    y_torch = torch.asarray(y_np, device="cuda", dtype=torch.float32)
-
-    with config_context(array_api_dispatch=True):
-        lda = LinearDiscriminantAnalysis()
-        X_trans = lda.fit_transform(X_torch, y_torch)
-    type(X_trans)
-    # <class 'torch.Tensor'>
-    X_trans.device.type
-    # 'cuda'
+    >>> with config_context(array_api_dispatch=True):
+    ...     lda = LinearDiscriminantAnalysis()
+    ...     X_trans = lda.fit_transform(X_torch, y_torch)
+    >>> type(X_trans)
+    <class 'torch.Tensor'>
+    >>> X_trans.device.type
+    'cuda'
 
 .. _array_api_supported:
 
@@ -275,7 +259,7 @@ For scoring functions the rule is **"everything follows** `y_pred` **"** - mixed
 inputs are converted so that they all match the array library and device of `y_pred`.
 
 When a function or method has been called with array API compatible inputs, the
-convention is to return arrays from the same namespace and on the same
+convention is to return arrays from the same array library and on the same
 device as the input data.
 
 Estimators
@@ -313,7 +297,7 @@ this is not a problem and the pipeline is able to be run.
 The fitted attributes of an estimator fitted with an array API compatible `X`, will
 be arrays from the same library as the input and stored on the same device.
 The `predict` and `transform` method subsequently expect
-inputs from the same namespace and device as the data passed to the `fit`
+inputs from the same array library and device as the data passed to the `fit`
 method.
 
 To help check that the inputs' namespace and device in `predict` and
@@ -339,7 +323,7 @@ The output type of scoring functions depends on the number of output values.
 When a scoring function returns a scalar value, it will return a Python
 scalar (typically a `float` instance) instead of an array scalar value.
 For scoring functions that support :term:`multiclass` or :term:`multioutput`,
-an array from the same namespace and device as `y_pred` will be returned when
+an array from the same array library and device as `y_pred` will be returned when
 multiple values need to be output.
 
 Common estimator checks

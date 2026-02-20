@@ -69,3 +69,9 @@ jobs:
           SCIPY_ARRAY_API=1 pytest --pyargs sklearn -k 'array_api' -vl
         # Run in /home/runner to not load sklearn from the checkout repo
         working-directory: /home/runner
+
+      - name: Run doctests in doc/modules/array_api.rst
+        run: |
+          source "${HOME}/conda/etc/profile.d/conda.sh"
+          conda activate sklearn
+          python -m pytest --doctest-modules doc/modules/array_api.rst
