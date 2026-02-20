@@ -3,8 +3,10 @@
 
 import pytest
 
+from sklearn.base import clone
 from sklearn.callback.tests._utils import (
     MaxIterEstimator,
+    MetaEstimator,
     NotValidCallback,
     TestingAutoPropagatedCallback,
     TestingCallback,
@@ -39,3 +41,31 @@ def test_set_callbacks_error(callbacks):
 
     with pytest.raises(TypeError, match="callbacks must follow the Callback protocol."):
         estimator.set_callbacks(callbacks)
+
+
+def test_clone_warning():
+    """Test the warning when cloning an estimator with callback registered to it."""
+    estimator = MaxIterEstimator()
+    estimator.set_callbacks(TestingCallback())
+    with pytest.warns(
+        UserWarning, match="Some callbacks are registered to the estimator"
+    ):
+        clone(estimator)
+
+
+def test_no_clone_warning_with_meta_est(recwarn):
+    """Test that the warning is not raised with callback-compatible meta-estimator.
+
+    When the cloning is done inside of a callback-compatible meta-estimator, the warning
+    about callbacks not being cloned should not be raised.
+    """
+    estimator = MaxIterEstimator()
+    estimator.set_callbacks(TestingCallback())
+    meta_est = MetaEstimator(estimator=estimator)
+    meta_est.fit()
+    warning_not_raised = not any(
+        w.category is UserWarning
+        and "Some callbacks are registered to the estimator" in str(w.message)
+        for w in recwarn
+    )
+    assert warning_not_raised

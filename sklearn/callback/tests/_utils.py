@@ -3,7 +3,7 @@
 
 import time
 
-from sklearn.base import BaseEstimator, _fit_context, clone
+from sklearn.base import BaseEstimator, _fit_context
 from sklearn.callback import CallbackSupportMixin, with_callback_context
 from sklearn.utils.parallel import Parallel, delayed
 
@@ -210,11 +210,10 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
 
 def _func(meta_estimator, inner_estimator, X, y, *, outer_callback_ctx):
     for i in range(meta_estimator.n_inner):
-        est = clone(inner_estimator)
-
-        inner_ctx = outer_callback_ctx.subcontext(
-            task_name="inner", task_id=i
-        ).propagate_callbacks(sub_estimator=est)
+        inner_ctx = outer_callback_ctx.subcontext(task_name="inner", task_id=i)
+        est = inner_ctx.propagate_callbacks(
+            sub_estimator=inner_estimator, clone_estimator=True
+        )
 
         est.fit(X, y)
 

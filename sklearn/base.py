@@ -135,11 +135,12 @@ def _clone_parametrized(estimator, *, safe=True):
 
     params_set = new_object.get_params(deep=False)
 
-    # attach callbacks to the new estimator
     if hasattr(estimator, "_skl_callbacks"):
-        # TODO(callbacks): Figure out the exact behavior we want when cloning an
-        # estimator with callbacks.
-        new_object._skl_callbacks = clone(estimator._skl_callbacks, safe=False)
+        warnings.warn(
+            "Some callbacks are registered to the estimator "
+            f"{estimator.__class__.__name__} being cloned. The callbacks will be "
+            "discarded in the clone."
+        )  # TODO: add a link to some documentation for callback support.
 
     # quick sanity check of the parameters of the clone
     for name in new_object_params:
