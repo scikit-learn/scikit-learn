@@ -1786,7 +1786,7 @@ class _RidgeGCV(LinearModel):
 
     The design matrix X has shape (n, p) = (n_samples, n_features).
 
-    Let G = (K + alpha*Id_n) where K = X X^T is the Gram matrix and Id_n is the
+    Let G = (K + alpha*Id_n) where K = X X' is the Gram matrix and Id_n is the
     identity matrix of size n.
 
     Let H = (C + alpha*Id_p) where C = X^T X is the covariance matrix and Id_p
@@ -1796,7 +1796,7 @@ class _RidgeGCV(LinearModel):
     w = H^-1 X^T y = X^T c where c = G^-1 y.
 
     Let loov (resp looe) be the leave-one-out values (resp errors), that is the
-    vector of prediction values (resp errors) for each example when the model
+    vector of predictions (resp errors) for each single observation when the model
     was fitted with all examples but this example. As shown in [1]:
     looe = y - loov = c / d where d = diag(G^-1).
 
@@ -1807,7 +1807,7 @@ class _RidgeGCV(LinearModel):
     2. Leveraging a precomputed matrix decomposition
 
     The leave-one-out errors and coefficients can be efficiently computed for any
-    alpha from the SVD of X, the eigendecomposition of K = X X^T or C = X^T X.
+    alpha from the SVD of X, or the eigendecomposition of K = X X^T or C = X^T X.
 
     Reduced SVD X = U S V^T when n < p (wide X)
     Let D = 1 / (S^2 + alpha)
@@ -2109,7 +2109,7 @@ class _RidgeGCV(LinearModel):
         return looe, coef
 
     def _svd_decompose_design_matrix(self, X, X_mean, y, sqrt_sw):
-        """SVD decomposition of X"""
+        """Reduced SVD decomposition of X"""
         xp, _ = get_namespace(X)
         # reduced svd
         U, singvals, VT = xp.linalg.svd(X, full_matrices=False)

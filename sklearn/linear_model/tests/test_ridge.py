@@ -892,20 +892,16 @@ def test_regularization_limits_ridge(
     X, y = make_regression(
         n_samples=n_samples, n_features=n_features, noise=0, bias=10, random_state=42
     )
-    if alpha < 1e-12:
+    if np.isclose(alpha, 0):
         # Ridge should recover LinearRegression for near-zero alpha.
         lin_reg = LinearRegression(fit_intercept=fit_intercept)
         lin_reg.fit(X, y)
         expected_coef = lin_reg.coef_
         expected_intercept = lin_reg.intercept_
-    elif alpha > 1e12:
+    else:
         # Ridge should recover zero coefficients for near-infinite alpha.
         expected_coef = np.zeros(n_features)
         expected_intercept = np.mean(y) if fit_intercept else 0.0
-    else:
-        raise ValueError(
-            "Pick a very small (<1e-12) or very large (>1e12) alpha, got {alpha:.2e}."
-        )
     X = X_container(X)
     ridge = Ridge(alpha=alpha, solver=solver, fit_intercept=fit_intercept, tol=1e-12)
     ridge.fit(X, y)
@@ -934,7 +930,7 @@ def test_regularization_limits_ridge_classifier_gcv(
     )
     # RidgeClassifier is Ridge with y mapped to {-1, +1}
     y = 2 * y - 1
-    if alpha < 1e-12:
+    if np.isclose(alpha, 0):
         # Ridge should recover LinearRegression for near-zero alpha.
         lin_reg = LinearRegression(fit_intercept=fit_intercept)
         lin_reg.fit(X, y)
@@ -951,14 +947,10 @@ def test_regularization_limits_ridge_classifier_gcv(
                 "RidgeClassifierCV does not recover LinearRegression "
                 "on square X in the small alpha limit"
             )
-    elif alpha > 1e12:
+    else:
         # Ridge should recover zero coefficients for near-infinite alpha.
         expected_coef = np.zeros(n_features)
         expected_intercept = np.mean(y) if fit_intercept else 0.0
-    else:
-        raise ValueError(
-            "Pick a very small (<1e-12) or very large (>1e12) alpha, got {alpha:.2e}."
-        )
     X = X_container(X)
     X = X.astype(dtype)
     y = y.astype(dtype)
@@ -996,20 +988,16 @@ def test_regularization_limits_ridge_gcv(
     X, y = make_regression(
         n_samples=n_samples, n_features=n_features, noise=0, bias=10, random_state=42
     )
-    if alpha < 1e-12:
+    if np.isclose(alpha, 0):
         # Ridge should recover LinearRegression for near-zero alpha.
         lin_reg = LinearRegression(fit_intercept=fit_intercept)
         lin_reg.fit(X, y)
         expected_coef = lin_reg.coef_
         expected_intercept = lin_reg.intercept_
-    elif alpha > 1e12:
+    else:
         # Ridge should recover zero coefficients for near-infinite alpha.
         expected_coef = np.zeros(n_features)
         expected_intercept = np.mean(y) if fit_intercept else 0.0
-    else:
-        raise ValueError(
-            "Pick a very small (<1e-12) or very large (>1e12) alpha, got {alpha:.2e}."
-        )
     X = X_container(X)
     X = X.astype(dtype)
     y = y.astype(dtype)
