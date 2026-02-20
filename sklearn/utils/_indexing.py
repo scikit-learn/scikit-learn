@@ -40,10 +40,6 @@ def _array_indexing(array, key, key_dtype, axis):
     if is_array_api:
         if hasattr(key, "shape"):
             key = move_to(key, xp=xp, device=device_)
-        elif isinstance(key, (int, slice)):
-            # Passthrough for valid __getitem__ inputs as noted in the array
-            # API spec.
-            pass
         else:
             key = xp.asarray(key, device=device_)
 
