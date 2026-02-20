@@ -330,7 +330,6 @@ def _write_estimator_html(
         doc_link = estimator._get_doc_link()
     else:
         doc_link = ""
-
     if est_block.kind in ("serial", "parallel"):
         dashed_wrapped = first_call or est_block.dash_wrapped
         dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
@@ -419,6 +418,7 @@ def _write_estimator_html(
             callable(getattr(estimator, "get_feature_names_out", None))
             and not hasattr(estimator, "steps")
             and hasattr(estimator, "n_features_in_")
+            and is_fitted_css_class
         ):
             output_features = estimator.get_feature_names_out()
         else:
