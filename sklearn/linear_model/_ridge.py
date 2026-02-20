@@ -1623,7 +1623,7 @@ def _check_gcv_mode(X, gcv_mode):
         if sparse.issparse(X):
             # TODO(1.11) raise ValueError
             msg = (
-                "The `'svd'` mode is not supported for sparse X, we fallback to "
+                "The 'svd' mode is not supported for sparse X, we fallback to "
                 "`gcv_mode='eigen'`. Passing `gcv_mode='svd'` on sparse X will raise "
                 "an error in 1.11, use the default or pass `gcv_mode='eigen'` to "
                 "suppress this warning."
@@ -1632,7 +1632,7 @@ def _check_gcv_mode(X, gcv_mode):
         else:
             return "svd"
 
-    # All other cases ("auto", "eigen", "svd" with sparse X)
+    # All other cases ("auto", "eigen")
     # fallbacks to gram (n <= p) or cov (p < n)
     n, p = X.shape
     return "gram" if n <= p else "cov"
@@ -1784,7 +1784,7 @@ class _RidgeGCV(LinearModel):
     The other cases (see below) reduce to this one after proper scaling/centering
     of the design matrix X.
 
-    The design matrix X has shape (n, p) where n=n_samples and p=n_features.
+    The design matrix X has shape (n, p) = (n_samples, n_features).
 
     Let G = (K + alpha*Id_n) where K = X X^T is the Gram matrix and Id_n is the
     identity matrix of size n.
