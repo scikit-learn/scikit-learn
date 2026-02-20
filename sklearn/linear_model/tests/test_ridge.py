@@ -1304,10 +1304,17 @@ def test_ridge_array_api_compliance(
         and check is check_array_api_attributes
         and _max_precision_float_dtype(xp, device) == xp.float32
     ):
+        if array_namespace == "jax.numpy" and device_name == "gpu":
+            # XXX: check if this is still the case once the following PR is
+            # merged: https://github.com/scikit-learn/scikit-learn/pull/33020
+            pytest.skip(
+                "RidgeGCV is extremely numerically unstable with float32 on JAX GPU"
+            )
+
         # RidgeGCV is not very numerically stable with float32. It casts the
         # input to float64 unless the device and namespace combination does
         # not allow float64 (specifically torch with mps)
-        tols["rtol"] = 2e-3
+        tols["rtol"] = 1e-3
     check(
         name,
         estimator,
