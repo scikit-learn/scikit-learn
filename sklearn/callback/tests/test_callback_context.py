@@ -229,3 +229,15 @@ def test_estimator_without_subtask():
     estimator = NoSubtaskEstimator()
     estimator.set_callbacks([TestingCallback()])
     estimator.fit()
+
+
+def test_propgate_callback_forwards_callbacks_when_cloning():
+    """Test propagate_callbacks for callback preservation when cloning."""
+    estimator = MaxIterEstimator()
+    callback_ctx = CallbackContext._from_estimator(
+        estimator, task_name="", task_id=0, max_subtasks=0
+    )
+    callback = TestingCallback()
+    estimator.set_callbacks(callback)
+    cloned_estimator = callback_ctx.propagate_callbacks(estimator, clone_estimator=True)
+    assert cloned_estimator._skl_callbacks == estimator._skl_callbacks == [callback]
