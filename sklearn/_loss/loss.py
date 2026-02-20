@@ -1348,9 +1348,7 @@ def _log1pexp(raw_prediction, raw_prediction_exp, xp):
 
 
 class HalfBinomialLossArrayAPI(ArrayAPILossMixin, HalfBinomialLoss):
-    """A version of the HalfBinomialLoss that is compatible with
-    the array API.
-    """
+    """A version of the HalfBinomialLoss that is compatible with the array API."""
 
     def loss(
         self,
@@ -1452,8 +1450,7 @@ class HalfBinomialLossArrayAPI(ArrayAPILossMixin, HalfBinomialLoss):
 
 
 class HalfMultinomialLossArrayAPI(ArrayAPILossMixin, HalfMultinomialLoss):
-    """A version of the HalfMultinomialLoss that is compatible with
-    the array API.
+    """A version of the HalfMultinomialLoss that is compatible with the array API.
 
     Parameters
     ----------
