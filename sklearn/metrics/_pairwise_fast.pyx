@@ -10,8 +10,8 @@ from sklearn.utils._typedefs cimport intp_t
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
 
-def _chi2_kernel_fast(floating[:, :] X,
-                      floating[:, :] Y,
+def _chi2_kernel_fast(const floating[:, :] X,
+                      const floating[:, :] Y,
                       floating[:, :] result):
     cdef intp_t i, j, k
     cdef intp_t n_samples_X = X.shape[0]
