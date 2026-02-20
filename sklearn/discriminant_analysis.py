@@ -801,6 +801,7 @@ class LinearDiscriminantAnalysis(
         C : ndarray of shape (n_samples, n_classes)
             Estimated log probabilities.
         """
+        check_same_namespace(X, self, attribute="coef_", method="predict_log_proba")
         xp, _ = get_namespace(X)
         prediction = self.predict_proba(X)
 

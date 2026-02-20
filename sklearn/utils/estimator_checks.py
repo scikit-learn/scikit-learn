@@ -1327,7 +1327,9 @@ def check_array_api_same_namespace(name, estimator_orig, array_namespace, device
             try:
                 method(X)
             except ValueError as e:
-                if "must use the same namespace" in str(e):
+                if "must use the same namespace" in str(
+                    e
+                ) and f"{name}.{method_name}()" in str(e):
                     continue
                 raise
             raise AssertionError(

@@ -288,7 +288,6 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
     def _decision_function(self, X):
         check_is_fitted(self)
-        check_same_namespace(X, self, attribute="coef_", method="predict")
 
         X = validate_data(self, X, accept_sparse=["csr", "csc", "coo"], reset=False)
         coef_ = self.coef_
@@ -311,6 +310,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         C : array, shape (n_samples,)
             Returns predicted values.
         """
+        check_same_namespace(X, self, attribute="coef_", method="predict")
         return self._decision_function(X)
 
     def _set_intercept(self, X_offset, y_offset, X_scale=None):
@@ -387,6 +387,7 @@ class LinearClassifierMixin(ClassifierMixin):
         y_pred : ndarray of shape (n_samples,)
             Vector containing the class labels for each sample.
         """
+        check_same_namespace(X, self, attribute="coef_", method="predict")
         xp, _ = get_namespace(X)
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
