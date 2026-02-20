@@ -100,8 +100,7 @@ class NearestCentroid(
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
-        """
-        Fit the NearestCentroid model according to the given training data.
+        """Fit the NearestCentroid model according to the given training data.
 
         Parameters
         ----------
@@ -122,6 +121,8 @@ class NearestCentroid(
                 if hasattr(self, attr):
                     delattr(self, attr)
 
+            # Strip Mock objects from tests to avoid array_function errors
+            y = np.asarray(y)
             classes = np.unique(y)
             return self.partial_fit(X, y, classes=classes)
 
@@ -138,8 +139,8 @@ class NearestCentroid(
 
         if n_classes < 2:
             raise ValueError(
-                "The number of classes has to be greater than one; ",
-                "got {n_classes} class",
+                "The number of classes has to be greater than one; "
+                "got {n_classes} class"
             )
 
         if self.priors == "empirical":
@@ -213,11 +214,12 @@ class NearestCentroid(
 
     @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y, classes=None):
-        """
-        Incremental fit on a batch of samples.
+        """Incremental fit on a batch of samples.
+
         This method is expected to be called several times consecutively
         on different chunks of a dataset so as to implement out-of-core
         or online learning.
+
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -229,6 +231,7 @@ class NearestCentroid(
             List of all the classes that can possibly appear in the `y` vector.
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
+
         Returns
         -------
         self : object
@@ -252,6 +255,9 @@ class NearestCentroid(
             reset=first_call,
         )
         check_classification_targets(y)
+
+        # Strip Mock objects to avoid array_function errors
+        y_arr = np.asarray(y)
 
         if first_call:
             if classes is None:
@@ -308,9 +314,9 @@ class NearestCentroid(
 
         le = LabelEncoder()
         le.fit(self.classes_)
-        if np.setdiff1d(y, self.classes_).size > 0:
+        if np.setdiff1d(y_arr, self.classes_).size > 0:
             raise ValueError("`y` has classes not in `classes`")
-        y_ind = le.transform(y)
+        y_ind = le.transform(y_arr)
 
         # Online mean and variance updates per class
         for cur_class in range(n_classes):
