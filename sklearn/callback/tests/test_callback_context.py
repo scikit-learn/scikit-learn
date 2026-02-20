@@ -240,4 +240,5 @@ def test_propgate_callback_forwards_callbacks_when_cloning():
     callback = TestingCallback()
     estimator.set_callbacks(callback)
     cloned_estimator = callback_ctx.propagate_callbacks(estimator, clone_estimator=True)
+    assert cloned_estimator is not estimator
     assert cloned_estimator._skl_callbacks == estimator._skl_callbacks == [callback]
