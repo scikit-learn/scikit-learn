@@ -28,7 +28,7 @@ def test_interval_raises():
 
 
 @pytest.mark.parametrize(
-    "namespace, device, dtype",
+    "namespace, device, dtype_name",
     yield_namespace_device_dtype_combinations(),
     ids=_get_namespace_device_dtype_ids,
 )
@@ -49,9 +49,10 @@ def test_interval_raises():
         Interval(-10, -1, True, True),
     ],
 )
-def test_is_in_range(namespace, device, dtype, interval):
+def test_is_in_range(namespace, device, dtype_name, interval):
     """Test that low and high are always within the interval used for linspace."""
     xp = _array_api_for_tests(namespace, device)
+    dtype = xp.float32 if dtype_name == "float32" else xp.float64
 
     low, high = _inclusive_low_high(interval, dtype=dtype, xp=xp)
 
@@ -59,13 +60,13 @@ def test_is_in_range(namespace, device, dtype, interval):
     assert interval.includes(x)
 
     # x contains lower bound
-    assert interval.includes(xp.concat(x, [interval.low])) == interval.low_inclusive
+    assert interval.includes(xp.concat((x, [interval.low]))) == interval.low_inclusive
 
     # x contains upper bound
-    assert interval.includes(xp.concat(x, [interval.high])) == interval.high_inclusive
+    assert interval.includes(xp.concat((x, [interval.high]))) == interval.high_inclusive
 
     # x contains upper and lower bound
-    assert interval.includes(xp.concat(x, [interval.low, interval.high])) == (
+    assert interval.includes(xp.concat((x, [interval.low, interval.high]))) == (
         interval.low_inclusive and interval.high_inclusive
     )
 
@@ -94,17 +95,19 @@ def test_link_inverse_identity(namespace, device, dtype_name, link, global_rando
     else:
         raw_prediction = rng.uniform(low=-20, high=20, size=(n_samples))
 
+    if dtype_name == "float32":
+        raw_prediction *= 0.5  # avoid overflow
     raw_prediction = xp.asarray(raw_prediction, dtype=dtype, device=device)
 
     if isinstance(link, MultinomialLogit):
         raw_prediction = link.symmetrize_raw_prediction(raw_prediction)
 
     assert_allclose(
-        _convert_to_numpy(link.link(link.inverse(raw_prediction))),
-        _convert_to_numpy(raw_prediction),
+        _convert_to_numpy(link.link(link.inverse(raw_prediction)), xp=xp),
+        _convert_to_numpy(raw_prediction, xp=xp),
     )
     y_pred = link.inverse(raw_prediction)
     assert_allclose(
-        _convert_to_numpy(link.inverse(link.link(y_pred))),
-        _convert_to_numpy(y_pred),
+        _convert_to_numpy(link.inverse(link.link(y_pred)), xp=xp),
+        _convert_to_numpy(y_pred, xp=xp),
     )
