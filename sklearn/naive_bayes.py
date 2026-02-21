@@ -179,7 +179,13 @@ class GaussianNB(_BaseNB):
 
     var_smoothing : float, default=1e-9
         Portion of the largest variance of all features that is added to
-        variances for calculation stability.
+        variances for calculation stability. This parameter prevents zero
+        or very small variances that can cause numerical issues during
+        probability calculations. The absolute value added to variances
+        is computed as `var_smoothing * max(var(X, axis=0))` and stored
+        in the `epsilon_` attribute. Larger values provide more smoothing
+        but may reduce model accuracy. The default value of 1e-9 works well
+        for most use cases.
 
         .. versionadded:: 0.20
 
