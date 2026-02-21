@@ -538,10 +538,6 @@ class BaseLoss:
         return gradient, hessian
 
 
-# Note: Naturally, we would inherit in the following order
-#         class HalfSquaredError(IdentityLink, CyHalfSquaredError, BaseLoss)
-#       But because of https://github.com/cython/cython/issues/4350 we
-#       set BaseLoss as the last one. This, of course, changes the MRO.
 class HalfSquaredError(BaseLoss):
     """Half squared error with identity link, for regression.
 
@@ -1352,9 +1348,7 @@ def _log1pexp(raw_prediction, raw_prediction_exp, xp):
 
 
 class HalfBinomialLossArrayAPI(ArrayAPILossMixin, HalfBinomialLoss):
-    """A version of the HalfBinomialLoss that is compatible with
-    the array API.
-    """
+    """A version of the HalfBinomialLoss that is compatible with the array API."""
 
     def loss(
         self,
@@ -1456,8 +1450,7 @@ class HalfBinomialLossArrayAPI(ArrayAPILossMixin, HalfBinomialLoss):
 
 
 class HalfMultinomialLossArrayAPI(ArrayAPILossMixin, HalfMultinomialLoss):
-    """A version of the HalfMultinomialLoss that is compatible with
-    the array API.
+    """A version of the HalfMultinomialLoss that is compatible with the array API.
 
     Parameters
     ----------
