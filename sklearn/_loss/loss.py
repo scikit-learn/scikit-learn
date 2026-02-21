@@ -1581,3 +1581,62 @@ class HalfMultinomialLossArrayAPI(ArrayAPILossMixin, HalfMultinomialLoss):
         if sample_weight is not None:
             grad *= sample_weight[:, None]
         return grad
+
+
+class HalfPoissonLossArrayAPI(ArrayAPILossMixin, HalfPoissonLoss):
+    """A version of the HalfPoissonLoss that is compatible with the array API."""
+
+    def loss_gradient(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+        loss_out=None,
+        gradient_out=None,
+        n_threads=1,
+    ):
+        xp = self.xp
+        raw_prediction_exp = xp.exp(raw_prediction)
+        loss = self._compute_loss(
+            xp=xp,
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+            raw_prediction_exp=raw_prediction_exp,
+        )
+        gradient = self._compute_gradient(
+            xp=xp,
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+            raw_prediction_exp=raw_prediction_exp,
+        )
+        return loss, gradient
+
+    def _compute_loss(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+        raw_prediction_exp=None,
+    ):
+        if raw_prediction_exp is None:
+            raw_prediction_exp = self.xp.exp(raw_prediction)
+        loss = raw_prediction_exp - y_true * raw_prediction
+        if sample_weight is not None:
+            loss *= sample_weight
+        return loss
+
+    def _compute_gradient(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+        raw_prediction_exp=None,
+    ):
+        if raw_prediction_exp is None:
+            raw_prediction_exp = self.xp.exp(raw_prediction)
+        grad = raw_prediction_exp - y_true
+        if sample_weight is not None:
+            grad *= sample_weight
+        return grad

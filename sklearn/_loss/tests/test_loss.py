@@ -24,6 +24,7 @@ from sklearn._loss.loss import (
     HalfMultinomialLoss,
     HalfMultinomialLossArrayAPI,
     HalfPoissonLoss,
+    HalfPoissonLossArrayAPI,
     HalfSquaredError,
     HalfTweedieLoss,
     HalfTweedieLossIdentity,
@@ -1378,8 +1379,9 @@ def test_tweedie_log_identity_consistency(p):
     [
         (HalfBinomialLossArrayAPI, HalfBinomialLoss),
         (HalfMultinomialLossArrayAPI, HalfMultinomialLoss),
+        (HalfPoissonLossArrayAPI, HalfPoissonLoss),
     ],
-    ids=["HalfBinomialLoss", "HalfMultinomialLoss"],
+    ids=["HalfBinomialLoss", "HalfMultinomialLoss", "HalfPoissonLoss"],
 )
 @pytest.mark.parametrize(
     "method_name", ["__call__", "gradient", "loss", "loss_gradient"]
