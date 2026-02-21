@@ -11,6 +11,7 @@ import scipy
 from scipy import linalg
 from scipy.optimize import minimize, root
 
+from sklearn import config_context
 from sklearn._loss import HalfBinomialLoss, HalfPoissonLoss, HalfTweedieLoss
 from sklearn._loss.link import IdentityLink, LogLink
 from sklearn.base import clone
@@ -27,7 +28,13 @@ from sklearn.linear_model._glm._newton_solver import NewtonCholeskySolver
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.metrics import d2_tweedie_score, mean_poisson_deviance
 from sklearn.model_selection import train_test_split
-from sklearn.utils._testing import assert_allclose
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
+    device,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 
 SOLVERS = ["lbfgs", "newton-cholesky"]
 
@@ -1140,3 +1147,66 @@ def test_newton_solver_verbosity(capsys, verbose):
             "The inner solver detected a pointwise Hessian with many negative values"
             " and resorts to lbfgs instead." in captured.out
         )
+
+
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
+def test_poisson_regressor_array_api_compliance(
+    use_sample_weight,
+    array_namespace,
+    device_,
+    dtype_name,
+    regression_data,
+):
+    xp = _array_api_for_tests(array_namespace, device_)
+    X_np, y_np = regression_data
+    # make y positive
+    y_np = np.abs(y_np) + 1.0
+    n_samples = X_np.shape[0]
+    X_xp = xp.asarray(X_np, device=device_)
+    y_xp = xp.asarray(y_np, device=device_)
+
+    if use_sample_weight:
+        sample_weight = (
+            np.random.default_rng(0)
+            .uniform(-1, 5, size=n_samples)
+            .clip(0, None)
+            .astype(dtype_name)
+        )
+    else:
+        sample_weight = None
+
+    params = dict(alpha=1, solver="lbfgs", tol=1e-12, max_iter=500)
+    glm_np = PoissonRegressor(**params).fit(X_np, y_np, sample_weight=sample_weight)
+    assert glm_np.n_iter_ < glm_np.max_iter
+
+    # Test that alpha was not too large for meaningful testing.
+    assert np.abs(glm_np.coef_).max() > 0.1
+
+    predict_np = glm_np.predict(X_np)
+    rtol = 1e-4 if dtype_name == "float32" else 1e-6
+
+    with config_context(array_api_dispatch=True):
+        glm_xp = PoissonRegressor(**params).fit(X_xp, y_xp, sample_weight=sample_weight)
+        assert glm_xp.n_iter_ == glm_np.n_iter_
+
+        for attr_name in ("coef_", "intercept_"):
+            attr_xp = getattr(glm_xp, attr_name)
+            attr_np = getattr(glm_np, attr_name)
+            assert_allclose(_convert_to_numpy(attr_xp, xp=xp), attr_np, rtol=rtol)
+            assert attr_xp.dtype == X_xp.dtype
+            assert device(attr_xp) == device(X_xp)
+
+        predict_xp = glm_xp.predict(X_xp)
+        assert_allclose(
+            _convert_to_numpy(predict_xp, xp=xp),
+            predict_np,
+            rtol=rtol,
+        )
+        assert predict_xp.dtype == X_xp.dtype
+        assert device(predict_xp) == device(X_xp)
