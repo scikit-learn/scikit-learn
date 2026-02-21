@@ -209,10 +209,10 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,), 
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
-    labels_pred : array-like of shape (n_samples,), 
+    labels_pred : array-like of shape (n_samples,)
         Cluster labels to evaluate.
 
     Returns
@@ -295,7 +295,7 @@ def rand_score(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,), 
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,), 
@@ -1218,7 +1218,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse="deprecated"):
 
     Parameters
     ----------
-    labels_true : array-like of shape (n_samples,), 
+    labels_true : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
     labels_pred : array-like of shape (n_samples,), 
