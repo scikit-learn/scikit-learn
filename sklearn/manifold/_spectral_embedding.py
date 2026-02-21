@@ -343,30 +343,24 @@ def _spectral_embedding(
         # Here we'll use shift-invert mode for fast eigenvalues
         # (see https://docs.scipy.org/doc/scipy/reference/tutorial/arpack.html
         #  for a short explanation of what this means)
-        # Because the normalized Laplacian has eigenvalues between 0 and 2,
-        # I - L has eigenvalues between -1 and 1.  ARPACK is most efficient
-        # when finding eigenvalues of largest magnitude (keyword which='LM')
-        # and when these eigenvalues are very large compared to the rest.
-        # For very large, very sparse graphs, I - L can have many, many
-        # eigenvalues very near 1.0.  This leads to slow convergence.  So
-        # instead, we'll use ARPACK's shift-invert mode, asking for the
-        # eigenvalues near 1.0.  This effectively spreads-out the spectrum
-        # near 1.0 and leads to much faster convergence: potentially an
-        # orders-of-magnitude speedup over simply using keyword which='LA'
-        # in standard mode.
+        # The Laplacian has eigenvalues >= 0. We seek the smallest ones
+        # (near 0). Using ARPACK's shift-invert mode with sigma=-1 (a shift
+        # strictly below the spectrum of L) transforms the problem so that
+        # eigenvalues of interest (near 0) map to the largest in magnitude
+        # (near 1/(0-(-1))=1), allowing efficient convergence with which='LM'.
+        # The factorization (L - sigma*I) = (L + I) is well-conditioned since
+        # all eigenvalues of L are >= 0, giving a condition number of
+        # (max_L + 1) / (0 + 1) which is typically small.
         try:
-            # We are computing the opposite of the laplacian inplace so as
-            # to spare a memory allocation of a possibly very large array
             tol = 0 if eigen_tol == "auto" else eigen_tol
-            laplacian *= -1
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
             laplacian = check_array(
                 laplacian, accept_sparse="csr", accept_large_sparse=False
             )
             _, diffusion_map = eigsh(
-                laplacian, k=n_components, sigma=1.0, which="LM", tol=tol, v0=v0
+                laplacian, k=n_components, sigma=-1.0, which="LM", tol=tol, v0=v0
             )
-            embedding = diffusion_map.T[n_components::-1]
+            embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
                 # recover u = D^-1/2 x from the eigenvector output x
                 embedding = embedding / dd
@@ -374,8 +368,6 @@ def _spectral_embedding(
             # When submatrices are exactly singular, an LU decomposition
             # in arpack fails. We fallback to lobpcg
             eigen_solver = "lobpcg"
-            # Revert the laplacian to its opposite to have lobpcg work
-            laplacian *= -1
 
     elif eigen_solver == "amg":
         # Use AMG to get a preconditioner and speed up the eigenvalue
