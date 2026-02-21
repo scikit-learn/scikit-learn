@@ -751,7 +751,7 @@ def _log_reg_scoring_path(
 
     scores = list()
 
-    # Prepare the call the get the score per fold: calc_score
+    # Prepare the call to get the score per fold: calc_score
     scoring = get_scorer(scoring)
     if scoring is None:
 
