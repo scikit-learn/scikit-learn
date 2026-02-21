@@ -32,39 +32,61 @@ from sklearn.utils.estimator_checks import (
 )
 from sklearn.utils.parallel import Parallel
 
-rng_global = np.random.RandomState(0)
+
+@pytest.fixture
+def rng_global(global_random_seed):
+    return np.random.RandomState(global_random_seed)
+
+
+@pytest.fixture
+def X_data(rng_global):
+    n_samples, n_features = 10, 8
+    return rng_global.randn(n_samples, n_features)
+
+
 n_samples, n_features = 10, 8
-X = rng_global.randn(n_samples, n_features)
+
+# Global deterministic data for tests that do not request a fixture
+rng0 = np.random.RandomState(0)
+X = rng0.randn(n_samples, n_features)
 
 
 # TODO: remove mark once loky bug is fixed:
 # https://github.com/joblib/loky/issues/458
 @pytest.mark.thread_unsafe
-def test_sparse_encode_shapes_omp():
-    rng = np.random.RandomState(0)
+def test_sparse_encode_shapes_omp(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     algorithms = ["omp", "lasso_lars", "lasso_cd", "lars", "threshold"]
     for n_components, n_samples in itertools.product([1, 5], [1, 9]):
         X_ = rng.randn(n_samples, n_features)
         dictionary = rng.randn(n_components, n_features)
         for algorithm, n_jobs in itertools.product(algorithms, [1, 2]):
-            code = sparse_encode(X_, dictionary, algorithm=algorithm, n_jobs=n_jobs)
+            code = sparse_encode(
+                X_, dictionary, algorithm=algorithm, n_jobs=n_jobs
+            )
             assert code.shape == (n_samples, n_components)
 
 
-def test_dict_learning_shapes():
+def test_dict_learning_shapes(X_data, global_random_seed):
     n_components = 5
-    dico = DictionaryLearning(n_components, random_state=0).fit(X)
+    dico = DictionaryLearning(
+        n_components, random_state=global_random_seed
+    ).fit(X_data)
     assert dico.components_.shape == (n_components, n_features)
 
     n_components = 1
-    dico = DictionaryLearning(n_components, random_state=0).fit(X)
+    dico = DictionaryLearning(
+        n_components, random_state=global_random_seed
+    ).fit(X_data)
     assert dico.components_.shape == (n_components, n_features)
-    assert dico.transform(X).shape == (X.shape[0], n_components)
+    assert dico.transform(X_data).shape == (X_data.shape[0], n_components)
 
 
-def test_dict_learning_overcomplete():
+def test_dict_learning_overcomplete(X_data, global_random_seed):
     n_components = 12
-    dico = DictionaryLearning(n_components, random_state=0).fit(X)
+    dico = DictionaryLearning(
+        n_components, random_state=global_random_seed
+    ).fit(X_data)
     assert dico.components_.shape == (n_components, n_features)
 
 
@@ -72,11 +94,9 @@ def test_max_iter():
     def ricker_function(resolution, center, width):
         """Discrete sub-sampled Ricker (Mexican hat) wavelet"""
         x = np.linspace(0, resolution - 1, resolution)
-        x = (
-            (2 / (np.sqrt(3 * width) * np.pi**0.25))
-            * (1 - (x - center) ** 2 / width**2)
-            * np.exp(-((x - center) ** 2) / (2 * width**2))
-        )
+        x = ((2 / (np.sqrt(3 * width) * np.pi**0.25)) *
+             (1 - (x - center) ** 2 / width**2) *
+             np.exp(-((x - center) ** 2) / (2 * width**2)))
         return x
 
     def ricker_matrix(width, resolution, n_components):
@@ -112,7 +132,9 @@ def test_max_iter():
     # check that the underlying model fails to converge
     with pytest.warns(ConvergenceWarning):
         model = SparseCoder(
-            D_multi, transform_algorithm=transform_algorithm, transform_max_iter=1
+            D_multi,
+            transform_algorithm=transform_algorithm,
+            transform_max_iter=1,
         )
         model.fit_transform(X)
 
@@ -120,7 +142,9 @@ def test_max_iter():
     with warnings.catch_warnings():
         warnings.simplefilter("error", ConvergenceWarning)
         model = SparseCoder(
-            D_multi, transform_algorithm=transform_algorithm, transform_max_iter=500
+            D_multi,
+            transform_algorithm=transform_algorithm,
+            transform_max_iter=500,
         )
         model.fit_transform(X)
 
@@ -143,7 +167,13 @@ def test_dict_learning_lars_positive_parameter():
 )
 @pytest.mark.parametrize("positive_code", [False, True])
 @pytest.mark.parametrize("positive_dict", [False, True])
-def test_dict_learning_positivity(transform_algorithm, positive_code, positive_dict):
+def test_dict_learning_positivity(
+    X_data,
+    transform_algorithm,
+    positive_code,
+    positive_dict,
+    global_random_seed,
+):
     n_components = 5
     dico = DictionaryLearning(
         n_components,
@@ -166,15 +196,17 @@ def test_dict_learning_positivity(transform_algorithm, positive_code, positive_d
 
 
 @pytest.mark.parametrize("positive_dict", [False, True])
-def test_dict_learning_lars_dict_positivity(positive_dict):
+def test_dict_learning_lars_dict_positivity(
+    X_data, positive_dict, global_random_seed
+):
     n_components = 5
     dico = DictionaryLearning(
         n_components,
         transform_algorithm="lars",
-        random_state=0,
+        random_state=global_random_seed,
         positive_dict=positive_dict,
         fit_algorithm="cd",
-    ).fit(X)
+    ).fit(X_data)
 
     if positive_dict:
         assert (dico.components_ >= 0).all()
@@ -182,26 +214,29 @@ def test_dict_learning_lars_dict_positivity(positive_dict):
         assert (dico.components_ < 0).any()
 
 
-def test_dict_learning_lars_code_positivity():
+def test_dict_learning_lars_code_positivity(X_data, global_random_seed):
     n_components = 5
     dico = DictionaryLearning(
         n_components,
         transform_algorithm="lars",
-        random_state=0,
+        random_state=global_random_seed,
         positive_code=True,
         fit_algorithm="cd",
-    ).fit(X)
+    ).fit(X_data)
 
     err_msg = "Positive constraint not supported for '{}' coding method."
     err_msg = err_msg.format("lars")
     with pytest.raises(ValueError, match=err_msg):
-        dico.transform(X)
+        dico.transform(X_data)
 
 
-def test_dict_learning_reconstruction():
+def test_dict_learning_reconstruction(X_data, global_random_seed):
     n_components = 12
     dico = DictionaryLearning(
-        n_components, transform_algorithm="omp", transform_alpha=0.001, random_state=0
+        n_components,
+        transform_algorithm="omp",
+        transform_alpha=0.001,
+        random_state=0,
     )
     code = dico.fit(X).transform(X)
     assert_array_almost_equal(np.dot(code, dico.components_), X)
@@ -213,7 +248,7 @@ def test_dict_learning_reconstruction():
     assert_array_almost_equal(dico.inverse_transform(code), X, decimal=2)
 
     # test error raised for wrong code size
-    with pytest.raises(ValueError, match="Expected 12, got 11."):
+    with pytest.raises(ValueError, match=r"Expected 12, got 11\."):
         dico.inverse_transform(code[:, :-1])
 
     # used to test lars here too, but there's no guarantee the number of
@@ -223,7 +258,7 @@ def test_dict_learning_reconstruction():
 # TODO: remove mark once loky bug is fixed:
 # https://github.com/joblib/loky/issues/458
 @pytest.mark.thread_unsafe
-def test_dict_learning_reconstruction_parallel():
+def test_dict_learning_reconstruction_parallel(X_data, global_random_seed):
     # regression test that parallel reconstruction works with n_jobs>1
     n_components = 12
     dico = DictionaryLearning(
@@ -244,7 +279,7 @@ def test_dict_learning_reconstruction_parallel():
 # TODO: remove mark once loky bug is fixed:
 # https://github.com/joblib/loky/issues/458
 @pytest.mark.thread_unsafe
-def test_dict_learning_lassocd_readonly_data():
+def test_dict_learning_lassocd_readonly_data(X_data, global_random_seed):
     n_components = 12
     with TempMemmap(X) as X_read_only:
         dico = DictionaryLearning(
@@ -261,7 +296,7 @@ def test_dict_learning_lassocd_readonly_data():
         )
 
 
-def test_dict_learning_nonzero_coefs():
+def test_dict_learning_nonzero_coefs(global_random_seed):
     n_components = 4
     dico = DictionaryLearning(
         n_components,
@@ -277,10 +312,12 @@ def test_dict_learning_nonzero_coefs():
     assert len(np.flatnonzero(code)) == 3
 
 
-def test_dict_learning_split():
+def test_dict_learning_split(X_data, global_random_seed):
     n_components = 5
     dico = DictionaryLearning(
-        n_components, transform_algorithm="threshold", random_state=0
+        n_components,
+        transform_algorithm="threshold",
+        random_state=global_random_seed,
     )
     code = dico.fit(X).transform(X)
     Xr = dico.inverse_transform(code)
@@ -296,12 +333,12 @@ def test_dict_learning_split():
     assert_array_almost_equal(Xr, Xr2)
 
 
-def test_dict_learning_online_shapes():
-    rng = np.random.RandomState(0)
+def test_dict_learning_online_shapes(X_data, global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_components = 8
 
     code, dictionary = dict_learning_online(
-        X,
+        X_data,
         n_components=n_components,
         batch_size=4,
         max_iter=10,
@@ -311,10 +348,10 @@ def test_dict_learning_online_shapes():
     )
     assert code.shape == (n_samples, n_components)
     assert dictionary.shape == (n_components, n_features)
-    assert np.dot(code, dictionary).shape == X.shape
+    assert np.dot(code, dictionary).shape == X_data.shape
 
     dictionary = dict_learning_online(
-        X,
+        X_data,
         n_components=n_components,
         batch_size=4,
         max_iter=10,
@@ -342,7 +379,11 @@ def test_dict_learning_online_lars_positive_parameter():
 @pytest.mark.parametrize("positive_code", [False, True])
 @pytest.mark.parametrize("positive_dict", [False, True])
 def test_minibatch_dictionary_learning_positivity(
-    transform_algorithm, positive_code, positive_dict
+    X_data,
+    transform_algorithm,
+    positive_code,
+    positive_dict,
+    global_random_seed,
 ):
     n_components = 8
     dico = MiniBatchDictionaryLearning(
@@ -368,7 +409,9 @@ def test_minibatch_dictionary_learning_positivity(
 
 
 @pytest.mark.parametrize("positive_dict", [False, True])
-def test_minibatch_dictionary_learning_lars(positive_dict):
+def test_minibatch_dictionary_learning_lars(
+    X_data, positive_dict, global_random_seed
+):
     n_components = 8
 
     dico = MiniBatchDictionaryLearning(
@@ -376,7 +419,7 @@ def test_minibatch_dictionary_learning_lars(positive_dict):
         batch_size=4,
         max_iter=10,
         transform_algorithm="lars",
-        random_state=0,
+        random_state=global_random_seed,
         positive_dict=positive_dict,
         fit_algorithm="cd",
     ).fit(X)
@@ -389,7 +432,9 @@ def test_minibatch_dictionary_learning_lars(positive_dict):
 
 @pytest.mark.parametrize("positive_code", [False, True])
 @pytest.mark.parametrize("positive_dict", [False, True])
-def test_dict_learning_online_positivity(positive_code, positive_dict):
+def test_dict_learning_online_positivity(
+    X_data, positive_code, positive_dict, global_random_seed
+):
     rng = np.random.RandomState(0)
     n_components = 8
 
@@ -413,7 +458,7 @@ def test_dict_learning_online_positivity(positive_code, positive_dict):
         assert (code < 0).any()
 
 
-def test_dict_learning_online_verbosity():
+def test_dict_learning_online_verbosity(X_data, global_random_seed):
     # test verbosity for better coverage
     n_components = 5
     import sys
@@ -425,40 +470,49 @@ def test_dict_learning_online_verbosity():
 
         # convergence monitoring verbosity
         dico = MiniBatchDictionaryLearning(
-            n_components, batch_size=4, max_iter=5, verbose=1, tol=0.1, random_state=0
+            n_components,
+            batch_size=4,
+            max_iter=5,
+            verbose=1,
+            tol=0.1,
+            random_state=global_random_seed,
         )
-        dico.fit(X)
+        dico.fit(X_data)
         dico = MiniBatchDictionaryLearning(
             n_components,
             batch_size=4,
             max_iter=5,
             verbose=1,
             max_no_improvement=2,
-            random_state=0,
+            random_state=global_random_seed,
         )
-        dico.fit(X)
+        dico.fit(X_data)
         # higher verbosity level
         dico = MiniBatchDictionaryLearning(
-            n_components, batch_size=4, max_iter=5, verbose=2, random_state=0
+            n_components,
+            batch_size=4,
+            max_iter=5,
+            verbose=2,
+            random_state=global_random_seed,
         )
-        dico.fit(X)
+        dico.fit(X_data)
 
         # function API verbosity
         dict_learning_online(
-            X,
+            X_data,
             n_components=n_components,
             batch_size=4,
             alpha=1,
             verbose=1,
-            random_state=0,
+            random_state=global_random_seed,
         )
         dict_learning_online(
-            X,
+            X_data,
             n_components=n_components,
             batch_size=4,
             alpha=1,
             verbose=2,
-            random_state=0,
+            random_state=global_random_seed,
         )
     finally:
         sys.stdout = old_stdout
@@ -466,36 +520,45 @@ def test_dict_learning_online_verbosity():
     assert dico.components_.shape == (n_components, n_features)
 
 
-def test_dict_learning_online_estimator_shapes():
+def test_dict_learning_online_estimator_shapes(X_data, global_random_seed):
     n_components = 5
     dico = MiniBatchDictionaryLearning(
-        n_components, batch_size=4, max_iter=5, random_state=0
+        n_components, batch_size=4, max_iter=5, random_state=global_random_seed
     )
-    dico.fit(X)
+    dico.fit(X_data)
     assert dico.components_.shape == (n_components, n_features)
 
 
-def test_dict_learning_online_overcomplete():
+def test_dict_learning_online_overcomplete(X_data, global_random_seed):
     n_components = 12
     dico = MiniBatchDictionaryLearning(
-        n_components, batch_size=4, max_iter=5, random_state=0
-    ).fit(X)
+        n_components,
+        batch_size=4,
+        max_iter=5,
+        random_state=global_random_seed,
+    ).fit(X_data)
     assert dico.components_.shape == (n_components, n_features)
 
 
-def test_dict_learning_online_initialization():
+def test_dict_learning_online_initialization(X_data, global_random_seed):
     n_components = 12
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     V = rng.randn(n_components, n_features)
     dico = MiniBatchDictionaryLearning(
-        n_components, batch_size=4, max_iter=0, dict_init=V, random_state=0
-    ).fit(X)
+        n_components,
+        batch_size=4,
+        max_iter=0,
+        dict_init=V,
+        random_state=global_random_seed,
+    ).fit(X_data)
     assert_array_equal(dico.components_, V)
 
 
-def test_dict_learning_online_readonly_initialization():
+def test_dict_learning_online_readonly_initialization(
+    X_data, global_random_seed
+):
     n_components = 12
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     V = rng.randn(n_components, n_features)
     V.setflags(write=False)
     MiniBatchDictionaryLearning(
@@ -503,14 +566,14 @@ def test_dict_learning_online_readonly_initialization():
         batch_size=4,
         max_iter=1,
         dict_init=V,
-        random_state=0,
+        random_state=global_random_seed,
         shuffle=False,
-    ).fit(X)
+    ).fit(X_data)
 
 
-def test_dict_learning_online_partial_fit():
+def test_dict_learning_online_partial_fit(X_data, global_random_seed):
     n_components = 12
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V**2, axis=1)[:, np.newaxis]
     dict1 = MiniBatchDictionaryLearning(
@@ -522,25 +585,25 @@ def test_dict_learning_online_partial_fit():
         dict_init=V,
         max_no_improvement=None,
         tol=0.0,
-        random_state=0,
-    ).fit(X)
+        random_state=global_random_seed,
+    ).fit(X_data)
     dict2 = MiniBatchDictionaryLearning(
-        n_components, alpha=1, dict_init=V, random_state=0
+        n_components, alpha=1, dict_init=V, random_state=global_random_seed
     )
     for i in range(10):
-        for sample in X:
+        for sample in X_data:
             dict2.partial_fit(sample[np.newaxis, :])
 
-    assert not np.all(sparse_encode(X, dict1.components_, alpha=1) == 0)
+    assert not np.all(sparse_encode(X_data, dict1.components_, alpha=1) == 0)
     assert_array_almost_equal(dict1.components_, dict2.components_, decimal=2)
 
     # partial_fit should ignore max_iter (#17433)
     assert dict1.n_steps_ == dict2.n_steps_ == 100
 
 
-def test_sparse_encode_shapes():
+def test_sparse_encode_shapes(global_random_seed):
     n_components = 12
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V**2, axis=1)[:, np.newaxis]
     for algo in ("lasso_lars", "lasso_cd", "lars", "omp", "threshold"):
@@ -563,9 +626,9 @@ def test_sparse_encode_positivity(algo, positive):
 
 
 @pytest.mark.parametrize("algo", ["lars", "omp"])
-def test_sparse_encode_unavailable_positivity(algo):
+def test_sparse_encode_unavailable_positivity(algo, global_random_seed):
     n_components = 12
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V**2, axis=1)[:, np.newaxis]
     err_msg = "Positive constraint not supported for '{}' coding method."
@@ -574,54 +637,56 @@ def test_sparse_encode_unavailable_positivity(algo):
         sparse_encode(X, V, algorithm=algo, positive=True)
 
 
-def test_sparse_encode_input():
+def test_sparse_encode_input(X_data, global_random_seed):
     n_components = 100
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V**2, axis=1)[:, np.newaxis]
-    Xf = check_array(X, order="F")
+    Xf = check_array(X_data, order="F")
     for algo in ("lasso_lars", "lasso_cd", "lars", "omp", "threshold"):
-        a = sparse_encode(X, V, algorithm=algo)
+        a = sparse_encode(X_data, V, algorithm=algo)
         b = sparse_encode(Xf, V, algorithm=algo)
         assert_array_almost_equal(a, b)
 
 
-def test_sparse_encode_error():
+def test_sparse_encode_error(X_data, global_random_seed):
     n_components = 12
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V**2, axis=1)[:, np.newaxis]
-    code = sparse_encode(X, V, alpha=0.001)
+    code = sparse_encode(X_data, V, alpha=0.001)
     assert not np.all(code == 0)
-    assert np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1
+    assert np.sqrt(np.sum((np.dot(code, V) - X_data) ** 2)) < 0.1
 
 
 def test_sparse_encode_error_default_sparsity():
     rng = np.random.RandomState(0)
     X = rng.randn(100, 64)
     D = rng.randn(2, 64)
-    code = ignore_warnings(sparse_encode)(X, D, algorithm="omp", n_nonzero_coefs=None)
+    code = ignore_warnings(sparse_encode)(
+        X, D, algorithm="omp", n_nonzero_coefs=None
+    )
     assert code.shape == (100, 2)
 
 
-def test_sparse_coder_estimator():
+def test_sparse_coder_estimator(X_data, global_random_seed):
     n_components = 12
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V**2, axis=1)[:, np.newaxis]
     coder = SparseCoder(
         dictionary=V, transform_algorithm="lasso_lars", transform_alpha=0.001
     )
-    code = coder.fit_transform(X)
+    code = coder.fit_transform(X_data)
     Xr = coder.inverse_transform(code)
     assert not np.all(code == 0)
-    assert np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1
+    assert np.sqrt(np.sum((np.dot(code, V) - X_data) ** 2)) < 0.1
     np.testing.assert_allclose(Xr, np.dot(code, V))
 
 
-def test_sparse_coder_estimator_clone():
+def test_sparse_coder_estimator_clone(global_random_seed):
     n_components = 12
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     V = rng.normal(size=(n_components, n_features))  # random init
     V /= np.sum(V**2, axis=1)[:, np.newaxis]
     coder = SparseCoder(
@@ -685,18 +750,21 @@ def test_sparse_encoder_feature_number_error():
     n_components = 10
     rng = np.random.RandomState(0)
     D = rng.uniform(size=(n_components, n_features))
-    X = rng.uniform(size=(n_samples, n_features + 1))
+    X_mismatch = rng.uniform(size=(n_samples, n_features + 1))
     coder = SparseCoder(D)
+    # Fit with matching feature count, then expect transform to raise
+    # on mismatch
+    coder.fit(rng.uniform(size=(n_samples, n_features)))
     with pytest.raises(
-        ValueError, match="Dictionary and X have different numbers of features"
+        ValueError, match=r"X has .* features, but .* is expecting .* features"
     ):
-        coder.fit(X)
+        coder.transform(X_mismatch)
 
 
-def test_update_dict():
+def test_update_dict(global_random_seed):
     # Check the dict update in batch mode vs online mode
     # Non-regression test for #4866
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
 
     code = np.array([[0.5, -0.5], [0.1, 0.9]])
     dictionary = np.array([[1.0, 0.0], [0.6, 0.8]])
@@ -722,9 +790,9 @@ def test_update_dict():
 @pytest.mark.parametrize("data_type", (np.float32, np.float64))
 # Note: do not check integer input because `lasso_lars` and `lars` fail with
 # `ValueError` in `_lars_path_solver`
-def test_sparse_encode_dtype_match(data_type, algorithm):
+def test_sparse_encode_dtype_match(data_type, algorithm, global_random_seed):
     n_components = 6
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     dictionary = rng.randn(n_components, n_features)
     code = sparse_encode(
         X.astype(data_type), dictionary.astype(data_type), algorithm=algorithm
@@ -735,31 +803,41 @@ def test_sparse_encode_dtype_match(data_type, algorithm):
 @pytest.mark.parametrize(
     "algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
 )
-def test_sparse_encode_numerical_consistency(algorithm):
+def test_sparse_encode_numerical_consistency(
+    algorithm, global_random_seed
+):
     # verify numerical consistency among np.float32 and np.float64
     rtol = 1e-4
+    atol = 1e-6
     n_components = 6
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     dictionary = rng.randn(n_components, n_features)
     code_32 = sparse_encode(
-        X.astype(np.float32), dictionary.astype(np.float32), algorithm=algorithm
+        X.astype(np.float32),
+        dictionary.astype(np.float32),
+        algorithm=algorithm,
     )
     code_64 = sparse_encode(
-        X.astype(np.float64), dictionary.astype(np.float64), algorithm=algorithm
+        X.astype(np.float64),
+        dictionary.astype(np.float64),
+        algorithm=algorithm,
     )
-    assert_allclose(code_32, code_64, rtol=rtol)
+    assert_allclose(code_32, code_64, rtol=rtol, atol=atol)
 
 
 @pytest.mark.parametrize(
-    "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
+    "transform_algorithm",
+    ("lasso_lars", "lasso_cd", "lars", "threshold", "omp"),
 )
 @pytest.mark.parametrize("data_type", (np.float32, np.float64))
-# Note: do not check integer input because `lasso_lars` and `lars` fail with
-# `ValueError` in `_lars_path_solver`
-def test_sparse_coder_dtype_match(data_type, transform_algorithm):
+# Note: do not check integer input because `lasso_lars` and `lars`
+# fail with `ValueError` in `_lars_path_solver`
+def test_sparse_coder_dtype_match(
+    data_type, transform_algorithm, global_random_seed
+):
     # Verify preserving dtype for transform in sparse coder
     n_components = 6
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     dictionary = rng.randn(n_components, n_features)
     coder = SparseCoder(
         dictionary.astype(data_type), transform_algorithm=transform_algorithm
@@ -770,7 +848,8 @@ def test_sparse_coder_dtype_match(data_type, transform_algorithm):
 
 @pytest.mark.parametrize("fit_algorithm", ("lars", "cd"))
 @pytest.mark.parametrize(
-    "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
+    "transform_algorithm",
+    ("lasso_lars", "lasso_cd", "lars", "threshold", "omp"),
 )
 @pytest.mark.parametrize(
     "data_type, expected_type",
@@ -786,22 +865,27 @@ def test_dictionary_learning_dtype_match(
     expected_type,
     fit_algorithm,
     transform_algorithm,
+    global_random_seed,
 ):
-    # Verify preserving dtype for fit and transform in dictionary learning class
+    # Verify preserving dtype for fit and transform in dictionary
+    # learning class
     dict_learner = DictionaryLearning(
         n_components=8,
         fit_algorithm=fit_algorithm,
         transform_algorithm=transform_algorithm,
-        random_state=0,
+        random_state=global_random_seed,
     )
     dict_learner.fit(X.astype(data_type))
     assert dict_learner.components_.dtype == expected_type
-    assert dict_learner.transform(X.astype(data_type)).dtype == expected_type
+    assert (
+        dict_learner.transform(X.astype(data_type)).dtype == expected_type
+    )
 
 
 @pytest.mark.parametrize("fit_algorithm", ("lars", "cd"))
 @pytest.mark.parametrize(
-    "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
+    "transform_algorithm",
+    ("lasso_lars", "lasso_cd", "lars", "threshold", "omp"),
 )
 @pytest.mark.parametrize(
     "data_type, expected_type",
@@ -817,8 +901,10 @@ def test_minibatch_dictionary_learning_dtype_match(
     expected_type,
     fit_algorithm,
     transform_algorithm,
+    global_random_seed,
 ):
-    # Verify preserving dtype for fit and transform in minibatch dictionary learning
+    # Verify preserving dtype for fit and transform in minibatch
+    # dictionary learning
     dict_learner = MiniBatchDictionaryLearning(
         n_components=8,
         batch_size=10,
@@ -826,12 +912,14 @@ def test_minibatch_dictionary_learning_dtype_match(
         transform_algorithm=transform_algorithm,
         max_iter=100,
         tol=1e-1,
-        random_state=0,
+        random_state=global_random_seed,
     )
     dict_learner.fit(X.astype(data_type))
 
     assert dict_learner.components_.dtype == expected_type
-    assert dict_learner.transform(X.astype(data_type)).dtype == expected_type
+    assert (
+        dict_learner.transform(X.astype(data_type)).dtype == expected_type
+    )
     assert dict_learner._A.dtype == expected_type
     assert dict_learner._B.dtype == expected_type
 
@@ -846,9 +934,11 @@ def test_minibatch_dictionary_learning_dtype_match(
         (np.int64, np.float64),
     ),
 )
-def test_dict_learning_dtype_match(data_type, expected_type, method):
+def test_dict_learning_dtype_match(
+    data_type, expected_type, method, global_random_seed
+):
     # Verify output matrix dtype
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_components = 8
     code, dictionary, _ = dict_learning(
         X.astype(data_type),
@@ -907,9 +997,11 @@ def test_dict_learning_numerical_consistency(method):
         (np.int64, np.float64),
     ),
 )
-def test_dict_learning_online_dtype_match(data_type, expected_type, method):
+def test_dict_learning_online_dtype_match(
+    data_type, expected_type, method, global_random_seed
+):
     # Verify output matrix dtype
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_components = 8
     code, dictionary = dict_learning_online(
         X.astype(data_type),
@@ -968,43 +1060,53 @@ def test_dict_learning_online_numerical_consistency(method):
 
 
 @pytest.mark.parametrize(
-    "estimator",
+    "estimator_name",
     [
-        SparseCoder(rng_global.uniform(size=(n_features, n_features))),
-        DictionaryLearning(),
-        MiniBatchDictionaryLearning(batch_size=4, max_iter=10),
+        "SparseCoder",
+        "DictionaryLearning",
+        "MiniBatchDictionaryLearning",
     ],
-    ids=lambda x: x.__class__.__name__,
 )
-def test_get_feature_names_out(estimator):
+def test_get_feature_names_out(X_data, estimator_name, rng_global):
     """Check feature names for dict learning estimators."""
-    estimator.fit(X)
-    n_components = X.shape[1]
+    if estimator_name == "SparseCoder":
+        estimator = SparseCoder(
+            rng_global.uniform(size=(n_features, n_features))
+        )
+    elif estimator_name == "DictionaryLearning":
+        estimator = DictionaryLearning()
+    elif estimator_name == "MiniBatchDictionaryLearning":
+        estimator = MiniBatchDictionaryLearning(
+            batch_size=4, max_iter=10
+        )
+
+    estimator.fit(X_data)
+    n_components = X_data.shape[1]
 
     feature_names_out = estimator.get_feature_names_out()
-    estimator_name = estimator.__class__.__name__.lower()
+    estimator_class_name = estimator.__class__.__name__.lower()
     assert_array_equal(
         feature_names_out,
-        [f"{estimator_name}{i}" for i in range(n_components)],
+        [f"{estimator_class_name}{i}" for i in range(n_components)],
     )
 
 
 # TODO: remove mark once loky bug is fixed:
 # https://github.com/joblib/loky/issues/458
 @pytest.mark.thread_unsafe
-def test_cd_work_on_joblib_memmapped_data(monkeypatch):
+def test_cd_work_on_joblib_memmapped_data(monkeypatch, global_random_seed):
     monkeypatch.setattr(
         sklearn.decomposition._dict_learning,
         "Parallel",
         partial(Parallel, max_nbytes=100),
     )
 
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X_train = rng.randn(10, 10)
 
     dict_learner = DictionaryLearning(
         n_components=5,
-        random_state=0,
+        random_state=global_random_seed,
         n_jobs=2,
         fit_algorithm="cd",
         max_iter=50,
