@@ -870,7 +870,7 @@ def test_sort_inputs_and_compute_classification_thresholds_zero_weights():
     # Indices 0 and 4 zero weight
     sample_weight = np.array([0.0, 2.0, 1.0, 1.5, 0.0, 0.8])
 
-    y_true_sorted, y_score_sorted, threshold_idxs, weight_sorted = (
+    y_true_sorted, y_score_sorted, weight_sorted, threshold_idxs = (
         _sort_inputs_and_compute_classification_thresholds(
             y_true, y_score, sample_weight
         )
@@ -880,11 +880,11 @@ def test_sort_inputs_and_compute_classification_thresholds_zero_weights():
     assert 0.1 not in y_score_sorted
     assert 0.5 not in y_score_sorted
 
-    # Check default `sample_weight=None` gives unit weights
-    _, _, _, weight = _sort_inputs_and_compute_classification_thresholds(
+    # Check default `sample_weight=None` gives None
+    _, _, weight, _ = _sort_inputs_and_compute_classification_thresholds(
         y_true, y_score
     )
-    assert weight == 1
+    assert weight is None
 
     # All zero weights raises error
     y_true = np.array([0, 1, 0])
@@ -892,7 +892,7 @@ def test_sort_inputs_and_compute_classification_thresholds_zero_weights():
     sample_weight = np.array([0.0, 0.0, 0.0])
 
     with pytest.raises(ValueError, match="Sample weights must contain at least"):
-        y_true_sorted, y_score_sorted, threshold_idxs, weight_sorted = (
+        y_true_sorted, y_score_sorted, weight_sorted, threshold_idxs = (
             _sort_inputs_and_compute_classification_thresholds(
                 y_true, y_score, sample_weight
             )
@@ -905,7 +905,7 @@ def test_sort_inputs_and_compute_classification_thresholds_sorting():
     y_score = np.array([0.1, 0.9, 0.3, 0.7, 0.3])
     sample_weight = np.array([1.0, 2.0, 1.5, 0.5, 0.3])
 
-    y_true_sorted, y_score_sorted, threshold_idxs, weight_sorted = (
+    y_true_sorted, y_score_sorted, weight_sorted, threshold_idxs = (
         _sort_inputs_and_compute_classification_thresholds(
             y_true, y_score, sample_weight
         )
@@ -920,7 +920,7 @@ def test_sort_inputs_and_compute_classification_thresholds_sorting():
 
     # All identical scores
     y_score_same = np.array([0.5, 0.5, 0.5, 0.5, 0.5])
-    _, _, threshold_idxs, _ = _sort_inputs_and_compute_classification_thresholds(
+    _, _, _, threshold_idxs = _sort_inputs_and_compute_classification_thresholds(
         y_true, y_score_same
     )
     # Threshold is the final index

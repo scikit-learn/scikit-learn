@@ -2312,7 +2312,7 @@ def metric_at_thresholds(
     )
     metric_params = {
         **(metric_params or {}),
-        **({"sample_weight": sample_weight} if sample_weight else {}),
+        **({"sample_weight": sample_weight} if sample_weight is not None else {}),
     }
 
     thresholds = y_score[threshold_idxs]
