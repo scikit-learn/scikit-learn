@@ -156,3 +156,27 @@ def test_one_feature():
     # https://github.com/scikit-learn/scikit-learn/issues/27236
     X = np.random.normal(size=(128, 1))
     BisectingKMeans(bisecting_strategy="biggest_inertia", random_state=0).fit(X)
+
+
+def test_callable_init():
+    # Check that a callable `init` returning exactly 2 centers works correctly.
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/33146
+    rng = np.random.RandomState(0)
+    X = rng.rand(20, 2)
+
+    n_clusters_seen = []
+
+    def my_init(X, n_clusters, random_state):
+        # BisectingKMeans always calls init with n_clusters=2
+        n_clusters_seen.append(n_clusters)
+        rng = np.random.RandomState(random_state)
+        indices = rng.choice(len(X), size=n_clusters, replace=False)
+        return X[indices]
+
+    bkm = BisectingKMeans(n_clusters=4, random_state=0, init=my_init)
+    bkm.fit(X)
+
+    # The callable must have been called with n_clusters=2 each time
+    assert all(n == 2 for n in n_clusters_seen), n_clusters_seen
+    assert bkm.cluster_centers_.shape == (4, 2)

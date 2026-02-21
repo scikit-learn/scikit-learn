@@ -1,0 +1,4 @@
+- :class:`cluster.BisectingKMeans` now correctly validates the shape of centers
+  returned by a callable ``init`` against the number of centroids requested at
+  each bisection step (always 2) rather than the final ``n_clusters``.
+  By :user:`MAUK9086 <MAUK9086>`.
