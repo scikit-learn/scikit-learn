@@ -1408,7 +1408,7 @@ def test_loss_array_api(
     atol = _atol_for_type(dtype_name)
     random_seed = 42
     n_samples = 100
-    array_api_loss_instance = array_api_loss_class()
+    array_api_loss_instance = array_api_loss_class(xp=xp, device=device_)
     loss_instance = loss_class()
     y_true, raw_prediction = random_y_true_raw_prediction(
         loss=loss_instance,
