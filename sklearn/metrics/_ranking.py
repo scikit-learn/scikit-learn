@@ -2286,7 +2286,7 @@ def metric_at_thresholds(
 
     See Also
     --------
-    confusion_matrix_at_thresholds : Compute binary confusion matrix per threshold
+    confusion_matrix_at_thresholds : Compute binary confusion matrix per threshold.
     precision_recall_curve : Compute precision-recall pairs for different
         probability thresholds.
     det_curve : Compute error rates for different probability thresholds.

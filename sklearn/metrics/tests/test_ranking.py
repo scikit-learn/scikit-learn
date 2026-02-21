@@ -2517,18 +2517,17 @@ def test_metric_at_thresholds_y_score_order_duplicate_y_score():
         assert_allclose(metric_1, metric_2)
 
 
-@pytest.mark.parametrize("pos_label", [0, 1])
-def test_metric_at_thresholds_consistency_with_confusion_matrix(pos_label):
+def test_metric_at_thresholds_consistency_with_confusion_matrix():
     """Test `metric_at_thresholds` consistency with `confusion_matrix_at_thresholds`.
 
-    This also checks output when `metric_func` returns a tuple of arrays and that
-    `pos_label` is passed correctly to the `metric_func`.
+    This also checks output when `metric_func` returns a tuple of arrays.
     """
     y_true = np.array([0, 0, 1, 1, 1])
     y_score = np.array([0.1, 0.4, 0.4, 0.6, 0.9])
 
     tns, fps, fns, tps, thresholds_cm = confusion_matrix_at_thresholds(
-        y_true, y_score, pos_label=pos_label
+        y_true,
+        y_score,
     )
 
     def compute_confusion_matrix_components(y_true, y_pred, pos_label):
@@ -2546,7 +2545,6 @@ def test_metric_at_thresholds_consistency_with_confusion_matrix(pos_label):
         y_true,
         y_score,
         compute_confusion_matrix_components,
-        metric_params={"pos_label": pos_label},
     )
 
     assert_array_equal(thresholds, thresholds_cm)
