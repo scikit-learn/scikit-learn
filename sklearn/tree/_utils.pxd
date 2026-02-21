@@ -6,8 +6,23 @@
 cimport numpy as cnp
 from sklearn.tree._tree cimport Node
 from sklearn.neighbors._quad_tree cimport Cell
-from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, int32_t, uint32_t
+from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, int32_t, uint32_t, uint64_t
 
+
+# This enables flexible typing. For example, for
+#  uint32_t, we can change to:
+# cdef enum:
+#     BITWORD_SHIFT = 5
+#     BITWORD_MASK  = 31
+#     BITWORD_BITS  = 32
+cdef enum:
+    BITWORD_SHIFT = 6          # log2(64)
+    BITWORD_MASK  = 63         # 64 - 1
+    BITWORD_BITS  = 64
+ctypedef uint64_t bitword_t
+
+cdef void set_bit_fast(bitword_t* words, intp_t c) noexcept nogil
+cdef bint in_bitset_words_fast(const bitword_t* words, intp_t c) noexcept nogil
 
 cdef enum:
     # Max value for our rand_r replacement (near the bottom).
@@ -28,6 +43,8 @@ ctypedef fused realloc_ptr:
     (float32_t*)
     (intp_t*)
     (uint8_t*)
+    (uint32_t*)
+    (uint64_t*)
     (float64_t*)
     (float64_t**)
     (Node*)

@@ -22,14 +22,14 @@ of splitting strategies:
 
 from libc.string cimport memcpy
 
-from sklearn.utils._typedefs cimport int8_t
+from sklearn.utils._typedefs cimport int8_t, uint64_t
+from sklearn.utils._bitset cimport BITSET_INNER_DTYPE_C, in_bitset_2d_memoryview
 from sklearn.tree._criterion cimport Criterion
 from sklearn.tree._partitioner cimport (
     FEATURE_THRESHOLD, DensePartitioner, SparsePartitioner,
     shift_missing_values_to_left_if_required
 )
 from sklearn.tree._utils cimport RAND_R_MAX, rand_int, rand_uniform
-
 import numpy as np
 
 # Introduce a fused-class to make it possible to share the split implementation
@@ -44,13 +44,72 @@ ctypedef fused Partitioner:
 
 cdef float64_t INFINITY = np.inf
 
+# The maximum number of categorical set splits to check in brute-force
+# enumeration
+cdef uint64_t MAX_BRUTE_CATEGORIES = 128
+
+
+cdef inline bint goes_left(
+    float32_t feature_value,
+    SplitValue split,
+    int32_t n_categories,
+    BITSET_INNER_DTYPE_C[:, ::1] cat_bitsets,
+    unsigned int row
+) noexcept nogil:
+    """Determine whether a sample goes to the left or right child node.
+
+    For numerical features, ``(-inf, split.threshold]`` is the left child, and
+    ``(split.threshold, inf)`` the right child.
+    For categorical features, if the corresponding bit for the category is set
+    in cachebits, the left child isused, and if not set, the right child. If
+    the given input category is larger than the ``n_categories``, the right
+    child is assumed.
+
+    Attributes
+    ----------
+    feature_value : float32_t
+        The value of the feature for which the decision needs to be made.
+    split : SplitValue
+        The union (of float64_t and BITSET_INNER_DTYPE_C) indicating the split. However, it
+        is used (as a float64_t) only for numerical features.
+    n_categories : int32_t
+        The number of categories present in the feature in question. The
+        feature is considered a numerical one and not a categorical one if
+        n_categories is negative.
+    cat_bitsets : BITSET_INNER_DTYPE_C[:, ::1]
+        The 2D array containing the expansion of split.cat_split for the entire tree. The function
+        setup_cat_cache is the one filling it.
+    row : unsigned int
+        The row of cat_bitsets we're working with.
+
+    Returns
+    -------
+    result : bint
+        Indicating whether the left branch should be used.
+    """
+    cdef intp_t idx
+
+    if n_categories < 0:
+        # Non-categorical feature
+        return feature_value <= split.threshold
+    else:
+        # Categorical feature, using bit cache
+        if (<uint8_t> feature_value) < n_categories:
+            # idx = (<intp_t> feature_value) // 64
+            # offset = (<intp_t> feature_value) % 64
+            # return bs_get(cat_cache[idx], offset)
+            # TODO: allow uint16_t
+            return in_bitset_2d_memoryview(cat_bitsets, <uint8_t> feature_value, row)
+        else:
+            return 0
+
 
 cdef inline void _init_split(SplitRecord* self, intp_t start_pos) noexcept nogil:
     self.impurity_left = INFINITY
     self.impurity_right = INFINITY
     self.pos = start_pos
     self.feature = 0
-    self.threshold = 0.
+    self.split_value.threshold = 0.
     self.improvement = -INFINITY
     self.missing_go_to_left = False
     self.n_missing = 0
@@ -70,6 +129,8 @@ cdef class Splitter:
         float64_t min_weight_leaf,
         object random_state,
         const int8_t[:] monotonic_cst,
+        bint breiman_shortcut,
+        *argv
     ):
         """
         Parameters
@@ -96,6 +157,9 @@ cdef class Splitter:
         monotonic_cst : const int8_t[:]
             Monotonicity constraints
 
+        breiman_shortcut : bool
+            Whether to use the breiman shortcut or not when possible.
+
         """
 
         self.criterion = criterion
@@ -109,6 +173,8 @@ cdef class Splitter:
         self.random_state = random_state
         self.monotonic_cst = monotonic_cst
         self.with_monotonic_cst = monotonic_cst is not None
+        # Unused in random splitters
+        self.breiman_shortcut = breiman_shortcut
 
     def __getstate__(self):
         return {}
@@ -122,7 +188,8 @@ cdef class Splitter:
                              self.min_samples_leaf,
                              self.min_weight_leaf,
                              self.random_state,
-                             self.monotonic_cst), self.__getstate__())
+                             self.monotonic_cst,
+                             self.breiman_shortcut), self.__getstate__())
 
     cdef int init(
         self,
@@ -130,6 +197,7 @@ cdef class Splitter:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         const uint8_t[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories
     ) except -1:
         """Initialize the splitter.
 
@@ -196,6 +264,16 @@ cdef class Splitter:
         self.sample_weight = sample_weight
         if missing_values_in_feature_mask is not None:
             self.criterion.init_sum_missing()
+        
+        # Initialize the number of categories for each feature
+        # A value of -1 indicates a non-categorical feature
+        if n_categories is None:
+            self.n_categories = np.array([-1] * n_features, dtype=np.int32)
+        else:
+            self.n_categories = n_categories
+        self.max_n_categories = max(self.n_categories)
+        max_words = (self.max_n_categories + 31) // 32
+        self.cat_split = np.zeros((max_words), dtype=np.uint32)
         return 0
 
     cdef int node_reset(
@@ -310,6 +388,26 @@ cdef inline int node_split_best(
     cdef float64_t lower_bound = parent_record.lower_bound
     cdef float64_t upper_bound = parent_record.upper_bound
 
+    # variables for categorical split handling
+    cdef bint breiman_shortcut = splitter.breiman_shortcut
+    # whether the feature is categorical
+    cdef bint is_categorical
+    # index through categories to exhaustively split all possible categories
+    # exhaustion only supports up to 8 categories
+    cdef uint64_t cat_idx 
+
+    # total number of categories per feature
+    cdef uint64_t ncat_present
+    # index through unsigned ints
+    cdef intp_t u_idx
+    # the bitset to store which category to split on
+    cdef BITSET_INNER_DTYPE_C[:] cat_split = splitter.cat_split
+
+    # Offsets mapping local category indices to actual category indices.
+    cdef intp_t[:] cat_offs = partitioner.cat_offset
+    # A storage of the sorted categories used in Breiman shortcut
+    cdef intp_t[:] sorted_cat = partitioner.sorted_cat
+
     cdef intp_t f_i = n_features
     cdef intp_t f_j
     cdef intp_t p
@@ -323,6 +421,8 @@ cdef inline int node_split_best(
     cdef intp_t n_known_constants = parent_record.n_constant_features
     # n_total_constants = n_known_constants + n_found_constants
     cdef intp_t n_total_constants = n_known_constants
+
+    cdef intp_t i
 
     _init_split(&best_split, end)
 
@@ -371,7 +471,56 @@ cdef inline int node_split_best(
         f_j += n_found_constants
         # f_j in the interval [n_total_constants, f_i[
         current_split.feature = features[f_j]
-        partitioner.sort_samples_and_feature_values(current_split.feature)
+
+        is_categorical = splitter.n_categories[current_split.feature] > 0
+
+        if is_categorical:
+            # TODO: this part can be abstracted into a function
+            # TODO: ncat_present should be passed down from parent_node, and calculated at tree level
+            # would be faster! eliminates counting per node
+            # Identify the number of categories present in this node
+            cat_split[:] = 0
+            ncat_present = 0
+
+            # Initialize the bitset for the categories present in the node
+            for i in range(start, end):
+                # Xf[i] < 64 already verified in tree.py
+                set_bitset_memoryview(cat_split, <uint8_t>feature_values[i])
+
+            # count the number of categories present per feature in this node
+            for i in range(splitter.n_categories[current_split.feature]):
+                if in_bitset_memoryview(cat_split, i):
+                    # XXX: is this right?
+                    cat_offs[ncat_present] = i - ncat_present
+                    ncat_present += 1
+
+            # TODO: Why do we need to recompute ncat_present? Isn't it in n_categories?
+            # - we do it since the number of categories may change as we traverse the tree, but
+            # instead of running this loop could we pass in parent information? via parentInfo...
+            # similar to constant feature tracking
+            if ncat_present <= 3:
+                breiman_shortcut = False  # No benefit for small N
+
+            # Apply sorting to the categories if we can leverage the Breiman computational
+            # trick to improve the computational efficiency of the categorical splits
+            if breiman_shortcut:
+                partitioner.breiman_sort_categories(
+                    current_split.feature,
+                    splitter.n_categories[current_split.feature],
+                    ncat_present,
+                    cat_offs,
+                    sorted_cat,
+                    splitter.y,
+                    splitter.sample_weight
+                )
+            else:
+                partitioner.count_missing(current_split.feature)
+        else:
+            partitioner.sort_samples_and_feature_values(current_split.feature)
+            # Note: both partitioner.sort_samples_and_feature_values and breiman_sort_categories
+            # will count the number of missing values during the iteration through samples for this
+            # particular feature. If not breiman_shortcut, we will explicitly count the missing values.
+
         n_missing = partitioner.n_missing
         end_non_missing = end - n_missing
 

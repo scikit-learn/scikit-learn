@@ -12,6 +12,24 @@ cnp.import_array()
 from sklearn.utils._random cimport our_rand_r
 
 # =============================================================================
+# Bitset for decision-tree functions
+# =============================================================================
+
+cdef inline void set_bit_fast(bitword_t* words, intp_t c) noexcept nogil:
+    """
+    Set bit `c` in a packed bitset stored as 64-bit words.
+
+    Uses word = c >> 6 and bit = c & 63, i.e. assumes bitword_t is uint64_t.
+    Caller must ensure `words` is large enough (>= ceil((c+1)/64)).
+    """
+    words[c >> BITWORD_SHIFT] |= (<bitword_t>1) << (c & BITWORD_MASK)
+
+cdef inline bint in_bitset_words_fast(const bitword_t* words, intp_t c) noexcept nogil:
+    """Test whether bit `c` is set. Requires 0 <= c < BITWORD_BITS*n_words."""
+    return (words[c >> BITWORD_SHIFT] & ((<bitword_t>1) << (c & BITWORD_MASK))) != 0
+
+
+# =============================================================================
 # Helper functions
 # =============================================================================
 
@@ -39,6 +57,31 @@ def _realloc_test():
     if p != NULL:
         free(p)
         assert False
+
+    
+
+
+# cdef inline void copy_memview_to_array(
+#     BITSET_INNER_DTYPE_C[:] memview,
+#     BITSET_DTYPE_C arr
+# ) noexcept nogil:
+#     for i in range(8):
+#         arr[i] = memview[i]
+
+# cdef inline void copy_array_to_memview(
+#     BITSET_INNER_DTYPE_C[:] memview,
+#     BITSET_DTYPE_C arr
+# ) noexcept nogil:
+#     for i in range(8):
+#         memview[i] = arr[i]
+
+
+
+cdef inline cnp.ndarray int32t_ptr_to_ndarray(int32_t* data, intp_t size):
+    """Encapsulate data into a 1D numpy array of int32's."""
+    cdef cnp.npy_intp shape[1]
+    shape[0] = <cnp.npy_intp> size
+    return cnp.PyArray_SimpleNewFromData(1, shape, cnp.NPY_INT32, data)
 
 
 cdef inline cnp.ndarray sizet_ptr_to_ndarray(intp_t* data, intp_t size):
@@ -268,3 +311,6 @@ cdef class PytestWeightedFenwickTree(WeightedFenwickTree):
         cdef intp_t prev_idx
         idx = self.search(t, &w, &wy, &prev_idx)
         return prev_idx, idx, w, wy
+
+
+

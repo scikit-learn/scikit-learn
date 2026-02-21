@@ -8,7 +8,7 @@ from cython cimport floating
 from sklearn.utils._typedefs cimport (
     float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t
 )
-from sklearn.tree._splitter cimport SplitRecord
+from sklearn.tree._splitter cimport SplitRecord, SplitValue
 
 
 # Mitigate precision differences between 32 bit and 64 bit
@@ -31,8 +31,12 @@ cdef const float32_t FEATURE_THRESHOLD = 1e-7
 #     cdef intp_t end
 #     cdef intp_t n_missing
 #     cdef const uint8_t[::1] missing_values_in_feature_mask
+#     cdef intp_t n_categories
 
-#     cdef void sort_samples_and_feature_values(
+#     cdef inline SplitValue position_to_threshold(
+#         self, intp_t p_prev, intp_t p
+#     ) noexcept nogil
+#     cdef bint sort_samples_and_feature_values(
 #         self, intp_t current_feature
 #     ) noexcept nogil
 #     cdef void init_node_split(
@@ -58,7 +62,7 @@ cdef const float32_t FEATURE_THRESHOLD = 1e-7
 #     cdef void partition_samples_final(
 #         self,
 #         intp_t best_pos,
-#         float64_t best_threshold,
+#         SplitValue split_value,
 #         intp_t best_feature,
 #         intp_t n_missing,
 #     ) noexcept nogil
@@ -77,7 +81,7 @@ cdef class DensePartitioner:
     cdef intp_t n_missing
     cdef const uint8_t[::1] missing_values_in_feature_mask
 
-    cdef void sort_samples_and_feature_values(
+    cdef bint sort_samples_and_feature_values(
         self, intp_t current_feature
     ) noexcept nogil
     cdef void init_node_split(
@@ -103,11 +107,14 @@ cdef class DensePartitioner:
     cdef void partition_samples_final(
         self,
         intp_t best_pos,
-        float64_t best_threshold,
+        SplitValue split_value,
+        # float64_t best_threshold,
         intp_t best_feature,
         intp_t n_missing,
     ) noexcept nogil
-
+    cdef inline SplitValue position_to_threshold(
+        self, intp_t p_prev, intp_t p
+    ) noexcept nogil
 
 cdef class SparsePartitioner:
     """Partitioner specialized for sparse CSC data.

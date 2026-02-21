@@ -4,11 +4,32 @@
 # See _splitter.pyx for details.
 
 from sklearn.utils._typedefs cimport (
-    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t
+    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t, uint64_t
 )
+from sklearn.utils._bitset cimport BITSET_INNER_DTYPE_C
 from sklearn.tree._criterion cimport Criterion
 from sklearn.tree._tree cimport ParentInfo
 
+
+ctypedef union SplitValue:
+    # Union type to generalize the concept of a threshold to categorical
+    # features. The floating point view, i.e. ``SplitValue.split_value.threshold`` is used
+    # for numerical features, where feature values less than or equal to the
+    # threshold go left, and values greater than the threshold go right.
+    #
+    # For categorical features, the BITSET_INNER_DTYPE_C view (`SplitValue.cat_split``) is
+    # used. It works in one of two ways, indicated by the value of its least
+    # significant bit (LSB). If the LSB is 0, then cat_split acts as a bitfield
+    # for up to 64 categories, sending samples left if the bit corresponding to
+    # their category is 1 or right if it is 0. If the LSB is 1, then the most
+    # significant 32 bits of cat_split make a random seed. To evaluate a
+    # sample, use the random seed to flip a coin (category_value + 1) times and
+    # send it left if the last flip gives 1; otherwise right. This second
+    # method allows up to 2**31 category values, but can only be used for
+    # RandomSplitter.
+    float64_t threshold
+    # BITSET_DTYPE_C cat_split
+    uint64_t[8] categorical_bitset
 
 cdef struct SplitRecord:
     # Data to track sample split
@@ -16,7 +37,10 @@ cdef struct SplitRecord:
     intp_t pos             # Split samples array at the given position,
     #                      # i.e. count of samples below threshold for feature.
     #                      # pos is >= end if the node is a leaf.
-    float64_t threshold       # Threshold to split at.
+
+    SplitValue split_value    # Generalized threshold for categorical and
+    #                         # non-categorical features to split samples.
+
     float64_t improvement     # Impurity improvement given parent node.
     float64_t impurity_left   # Impurity of the left split.
     float64_t impurity_right  # Impurity of the right split.
@@ -61,6 +85,20 @@ cdef class Splitter:
     cdef bint with_monotonic_cst
     cdef const float64_t[:] sample_weight
 
+    # Whether or not to sort categories by probabilities to split categorical
+    # features using the Breiman shortcut;
+    # Used to accelerate finding a greedy categorical split for binary classification
+    # with Gini Impurity
+    # or univariate regression with MSE.
+    # XXX: This could be a compile-time check with C++ 17's SFINAE
+    cdef bint breiman_shortcut
+
+    # We know the number of categories within our dataset across each feature.
+    # If a feature index has -1, then it is not categorical
+    cdef const int32_t[:] n_categories
+    cdef int32_t max_n_categories
+    cdef BITSET_INNER_DTYPE_C[:] cat_split
+
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
     # `node_split` reorganizes the node samples `samples[start:end]` in two
@@ -84,6 +122,7 @@ cdef class Splitter:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         const uint8_t[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories
     ) except -1
 
     cdef int node_reset(
