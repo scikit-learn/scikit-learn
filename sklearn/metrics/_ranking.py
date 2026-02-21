@@ -899,9 +899,7 @@ def _sort_inputs_and_compute_classification_thresholds(
     y_score = y_score[desc_score_indices]
     y_true = y_true[desc_score_indices]
     if sample_weight is not None:
-        weight = sample_weight[desc_score_indices]
-    else:
-        weight = 1.0
+        sample_weight = sample_weight[desc_score_indices]
 
     # y_score typically has many tied values. Here we extract
     # the indices associated with the distinct values. We also
@@ -910,7 +908,7 @@ def _sort_inputs_and_compute_classification_thresholds(
     threshold_idxs = xp.concat(
         [distinct_value_indices, xp.asarray([size(y_true) - 1], device=device)]
     )
-    return y_true, y_score, threshold_idxs, weight
+    return y_true, y_score, sample_weight, threshold_idxs
 
 
 @validate_params(
@@ -999,11 +997,13 @@ def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weigh
     if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
         raise ValueError("{0} format is not supported".format(y_type))
 
-    y_true, y_score, threshold_idxs, weight = (
+    y_true, y_score, weight, threshold_idxs = (
         _sort_inputs_and_compute_classification_thresholds(
             y_true, y_score, sample_weight
         )
     )
+    if weight is None:
+        weight = 1.0
 
     # make y_true a boolean vector
     pos_label = _check_pos_label_consistency(pos_label, y_true)
@@ -2236,6 +2236,7 @@ def top_k_accuracy_score(
         "y_true": ["array-like"],
         "y_score": ["array-like"],
         "metric_func": [callable],
+        "sample_weight": ["array-like", None],
         "metric_params": [dict, None],
     },
     prefer_skip_nested_validation=True,
@@ -2244,6 +2245,7 @@ def metric_at_thresholds(
     y_true,
     y_score,
     metric_func,
+    *,
     sample_weight=None,
     metric_params=None,
 ):
@@ -2263,7 +2265,8 @@ def metric_at_thresholds(
 
     metric_func : callable
         The metric function to use. It will be called as
-        `metric_func(y_true, y_pred, **metric_params)`.
+        `metric_func(y_true, y_pred, **metric_params)`. The output should be
+        a single numeric or a collection where each element has the same size.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights. If not `None`, will be passed to `metric_func`.
@@ -2273,8 +2276,10 @@ def metric_at_thresholds(
 
     Returns
     -------
-    metric_values : ndarray of shape (n_thresholds,)
-        The scores associated with each threshold.
+    metric_values : ndarray of shape (n_thresholds,) or (n_thresholds, n_outputs)
+        The scores associated with each threshold. If `metric_func` returns a
+        collection (e.g., a tuple of floats), the output would be a 2D array
+        of shape (n_thresholds, n_outputs).
 
     thresholds : ndarray of shape (n_thresholds,)
         The thresholds used to compute the scores.
@@ -2300,15 +2305,14 @@ def metric_at_thresholds(
     >>> scores
     array([0.75, 0.5 , 0.75, 0.5 ])
     """
-    pass_sample_weight = False if sample_weight is None else True
-    y_true, y_score, threshold_idxs, sample_weight = (
+    y_true, y_score, sample_weight, threshold_idxs = (
         _sort_inputs_and_compute_classification_thresholds(
             y_true, y_score, sample_weight
         )
     )
     metric_params = {
         **(metric_params or {}),
-        **({"sample_weight": sample_weight} if pass_sample_weight else {}),
+        **({"sample_weight": sample_weight} if sample_weight else {}),
     }
 
     thresholds = y_score[threshold_idxs]

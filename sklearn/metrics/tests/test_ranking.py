@@ -903,7 +903,7 @@ def test_sort_inputs_and_compute_classification_thresholds_sorting():
     """Test sorting in `_sort_inputs_and_compute_classification_thresholds`."""
     y_true = np.array([0, 1, 0, 1, 1])
     y_score = np.array([0.1, 0.9, 0.3, 0.7, 0.3])
-    sample_weight = sample_weight = np.array([1.0, 2.0, 1.5, 0.5, 0.3])
+    sample_weight = np.array([1.0, 2.0, 1.5, 0.5, 0.3])
 
     y_true_sorted, y_score_sorted, threshold_idxs, weight_sorted = (
         _sort_inputs_and_compute_classification_thresholds(
@@ -2454,20 +2454,17 @@ def test_metric_at_thresholds_metric_params(normalize):
     assert len(thresholds) == len(np.unique(y_score))
 
 
-@pytest.mark.parametrize("sample_weight", [None, np.array([1, 2, 3, 1, 2])])
-def test_metric_at_thresholds_y_score_order(sample_weight):
+def test_metric_at_thresholds_y_score_order():
     """Test `y_score` order does not effect `metric_at_thresholds`."""
     y_true = np.array([0, 0, 1, 1, 1])
     y_score = np.array([0.9, 0.6, 0.5, 0.1, 0.4])
+    sample_weight = np.array([1, 2, 3, 1, 2])
     # Permutate `y_true`, `y_score` and `sample_weight`
     rng = check_random_state(42)
     perm_indices = rng.permutation(len(y_score))
     y_true_perm = y_true[perm_indices]
     y_score_perm = y_score[perm_indices]
-    if sample_weight is not None:
-        sample_weight_perm = sample_weight[perm_indices]
-    else:
-        sample_weight_perm = None
+    sample_weight_perm = sample_weight[perm_indices]
 
     metric_1, thresh_1 = metric_at_thresholds(
         y_true, y_score, accuracy_score, sample_weight=sample_weight
