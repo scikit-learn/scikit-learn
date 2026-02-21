@@ -15,6 +15,7 @@ import numpy as np
 
 from sklearn import __version__
 from sklearn._config import config_context, get_config
+from sklearn.callback._callback_context import callback_management_context
 from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.utils._metadata_requests import _MetadataRequester, _routing_enabled
 from sklearn.utils._missing import is_pandas_na, is_scalar_nan
@@ -133,6 +134,12 @@ def _clone_parametrized(estimator, *, safe=True):
         pass
 
     params_set = new_object.get_params(deep=False)
+
+    # attach callbacks to the new estimator
+    if hasattr(estimator, "_skl_callbacks"):
+        # TODO(callbacks): Figure out the exact behavior we want when cloning an
+        # estimator with callbacks.
+        new_object._skl_callbacks = clone(estimator._skl_callbacks, safe=False)
 
     # quick sanity check of the parameters of the clone
     for name in new_object_params:
@@ -1337,10 +1344,13 @@ def _fit_context(*, prefer_skip_nested_validation):
             if not global_skip_validation and not partial_fit_and_fitted:
                 estimator._validate_params()
 
-            with config_context(
-                skip_parameter_validation=(
-                    prefer_skip_nested_validation or global_skip_validation
-                )
+            with (
+                config_context(
+                    skip_parameter_validation=(
+                        prefer_skip_nested_validation or global_skip_validation
+                    )
+                ),
+                callback_management_context(estimator, fit_method.__name__),
             ):
                 return fit_method(estimator, *args, **kwargs)
 

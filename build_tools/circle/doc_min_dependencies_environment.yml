@@ -12,6 +12,7 @@ dependencies:
   - joblib
   - threadpoolctl
   - matplotlib=3.6.1  # min
+  - rich
   - pyamg=5.0.0  # min
   - pytest
   - pytest-xdist
