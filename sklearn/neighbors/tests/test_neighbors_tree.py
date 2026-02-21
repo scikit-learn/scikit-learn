@@ -222,6 +222,31 @@ def test_simultaneous_sort(simultaneous_sort, n_rows=10, n_pts=201):
     assert_array_almost_equal(ind, ind2)
 
 
+@pytest.mark.parametrize(
+    "simultaneous_sort", [simultaneous_sort_bt, simultaneous_sort_kdt]
+)
+def test_simultaneous_sort_duplicates(simultaneous_sort):
+    """Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/33167
+
+    Many duplicate values in the distances array caused a stack overflow via
+    recursive quicksort degeneration. The introsort implementation falls back
+    to heapsort when the recursion depth limit is exceeded, avoiding the issue.
+    """
+    n_pts = 100_000
+    # All-zeros distance array is a worst case for the old 2-way partition
+    # quicksort: every recursive call only shrinks the array by 1, leading to
+    # O(n) recursion depth and a stack overflow (segfault).
+    dist = np.zeros((1, n_pts), dtype=np.float64)
+    ind = np.arange(n_pts, dtype=np.intp).reshape(1, n_pts)
+
+    # This must not segfault
+    simultaneous_sort(dist, ind)
+
+    assert np.all(dist == 0.0)
+    assert set(ind[0]) == set(range(n_pts))
+
+
 @pytest.mark.parametrize("Cls", [KDTree, BallTree])
 def test_gaussian_kde(Cls, n_samples=1000):
     # Compare gaussian KDE results to scipy.stats.gaussian_kde
