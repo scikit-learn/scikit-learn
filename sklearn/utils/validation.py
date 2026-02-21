@@ -29,7 +29,11 @@ from sklearn.utils._array_api import (
     get_namespace,
     get_namespace_and_device,
 )
-from sklearn.utils._dataframe import is_pandas_df, is_pandas_df_or_series
+from sklearn.utils._dataframe import (
+    is_pandas_df,
+    is_pandas_df_or_series,
+    is_polars_df_or_series,
+)
 from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
 from sklearn.utils._tags import get_tags
 from sklearn.utils.fixes import (
@@ -911,6 +915,16 @@ def check_array(
         else:
             # Set to None to let array.astype work out the best dtype
             dtype_orig = None
+
+    elif dtype_orig is None and is_polars_df_or_series(array):
+        # For polars DataFrames and Series, dtype_orig is None because polars
+        # dtypes do not have a `.kind` attribute. We infer the numpy-equivalent
+        # dtype from an empty slice so that the dtype-list check below can
+        # correctly skip conversion when the input already has the right type.
+        try:
+            dtype_orig = np.asarray(array[:0]).dtype
+        except Exception:
+            pass
 
     if dtype_numeric:
         if (
