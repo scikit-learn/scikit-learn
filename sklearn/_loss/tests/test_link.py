@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose, assert_array_equal
+from numpy.testing import assert_allclose
 
 from sklearn._loss.link import (
     _LINKS,
@@ -9,6 +9,12 @@ from sklearn._loss.link import (
     MultinomialLogit,
     _inclusive_low_high,
 )
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._testing import _array_api_for_tests
 
 LINK_FUNCTIONS = list(_LINKS.values())
 
@@ -21,6 +27,11 @@ def test_interval_raises():
         Interval(1, 0, False, False)
 
 
+@pytest.mark.parametrize(
+    "namespace, device, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
 @pytest.mark.parametrize(
     "interval",
     [
@@ -38,28 +49,36 @@ def test_interval_raises():
         Interval(-10, -1, True, True),
     ],
 )
-def test_is_in_range(interval):
-    # make sure low and high are always within the interval, used for linspace
-    low, high = _inclusive_low_high(interval)
+def test_is_in_range(namespace, device, dtype, interval):
+    """Test that low and high are always within the interval used for linspace."""
+    xp = _array_api_for_tests(namespace, device)
 
-    x = np.linspace(low, high, num=10)
+    low, high = _inclusive_low_high(interval, dtype=dtype, xp=xp)
+
+    x = xp.linspace(low, high, num=10, device=device)
     assert interval.includes(x)
 
     # x contains lower bound
-    assert interval.includes(np.r_[x, interval.low]) == interval.low_inclusive
+    assert interval.includes(xp.concat(x, [interval.low])) == interval.low_inclusive
 
     # x contains upper bound
-    assert interval.includes(np.r_[x, interval.high]) == interval.high_inclusive
+    assert interval.includes(xp.concat(x, [interval.high])) == interval.high_inclusive
 
     # x contains upper and lower bound
-    assert interval.includes(np.r_[x, interval.low, interval.high]) == (
+    assert interval.includes(xp.concat(x, [interval.low, interval.high])) == (
         interval.low_inclusive and interval.high_inclusive
     )
 
 
+@pytest.mark.parametrize(
+    "namespace, device, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
 @pytest.mark.parametrize("link", LINK_FUNCTIONS)
-def test_link_inverse_identity(link, global_random_seed):
-    # Test that link of inverse gives identity.
+def test_link_inverse_identity(namespace, device, dtype, link, global_random_seed):
+    """Test that link of inverse gives identity."""
+    xp = _array_api_for_tests(namespace, device)
     rng = np.random.RandomState(global_random_seed)
     link = link()
     n_samples, n_classes = 100, None
@@ -69,43 +88,22 @@ def test_link_inverse_identity(link, global_random_seed):
     if link.is_multiclass:
         n_classes = 10
         raw_prediction = rng.uniform(low=-20, high=20, size=(n_samples, n_classes))
-        if isinstance(link, MultinomialLogit):
-            raw_prediction = link.symmetrize_raw_prediction(raw_prediction)
     elif isinstance(link, HalfLogitLink):
         raw_prediction = rng.uniform(low=-10, high=10, size=(n_samples))
     else:
         raw_prediction = rng.uniform(low=-20, high=20, size=(n_samples))
 
-    assert_allclose(link.link(link.inverse(raw_prediction)), raw_prediction)
+    raw_prediction = xp.asarray(raw_prediction, dtype=dtype, device=device)
+
+    if isinstance(link, MultinomialLogit):
+        raw_prediction = link.symmetrize_raw_prediction(raw_prediction)
+
+    assert_allclose(
+        _convert_to_numpy(link.link(link.inverse(raw_prediction))),
+        _convert_to_numpy(raw_prediction),
+    )
     y_pred = link.inverse(raw_prediction)
-    assert_allclose(link.inverse(link.link(y_pred)), y_pred)
-
-
-@pytest.mark.parametrize("link", LINK_FUNCTIONS)
-def test_link_out_argument(link):
-    # Test that out argument gets assigned the result.
-    rng = np.random.RandomState(42)
-    link = link()
-    n_samples, n_classes = 100, None
-    if link.is_multiclass:
-        n_classes = 10
-        raw_prediction = rng.normal(loc=0, scale=10, size=(n_samples, n_classes))
-        if isinstance(link, MultinomialLogit):
-            raw_prediction = link.symmetrize_raw_prediction(raw_prediction)
-    else:
-        # So far, the valid interval of raw_prediction is (-inf, inf) and
-        # we do not need to distinguish.
-        raw_prediction = rng.uniform(low=-10, high=10, size=(n_samples))
-
-    y_pred = link.inverse(raw_prediction, out=None)
-    out = np.empty_like(raw_prediction)
-    y_pred_2 = link.inverse(raw_prediction, out=out)
-    assert_allclose(y_pred, out)
-    assert_array_equal(out, y_pred_2)
-    assert np.shares_memory(out, y_pred_2)
-
-    out = np.empty_like(y_pred)
-    raw_prediction_2 = link.link(y_pred, out=out)
-    assert_allclose(raw_prediction, out)
-    assert_array_equal(out, raw_prediction_2)
-    assert np.shares_memory(out, raw_prediction_2)
+    assert_allclose(
+        _convert_to_numpy(link.inverse(link.link(y_pred))),
+        _convert_to_numpy(y_pred),
+    )
