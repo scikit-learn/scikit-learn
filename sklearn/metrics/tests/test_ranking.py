@@ -13,6 +13,7 @@ from sklearn.metrics import (
     accuracy_score,
     auc,
     average_precision_score,
+    confusion_matrix,
     confusion_matrix_at_thresholds,
     coverage_error,
     dcg_score,
@@ -2530,22 +2531,13 @@ def test_metric_at_thresholds_consistency_with_confusion_matrix():
         y_score,
     )
 
-    def compute_confusion_matrix_components(y_true, y_pred, pos_label):
-        """Compute (tn, fp, fn, tp) from binary predictions."""
-        # Apply `pos_label`
-        y_true = y_true == pos_label
-
-        tn = np.sum((y_true == 0) & (y_pred == 0))
-        fp = np.sum((y_true == 0) & (y_pred == 1))
-        fn = np.sum((y_true == 1) & (y_pred == 0))
-        tp = np.sum((y_true == 1) & (y_pred == 1))
-        return np.array([tn, fp, fn, tp])
-
-    confusion_values, thresholds = metric_at_thresholds(
-        y_true,
-        y_score,
-        compute_confusion_matrix_components,
+    metric_values, thresholds = metric_at_thresholds(
+        y_true, y_score, confusion_matrix, metric_params={"labels": [0, 1]}
     )
 
     assert_array_equal(thresholds, thresholds_cm)
+
+    # Reshape from (n_thresholds, 2, 2) to (n_thresholds, 4)
+    # As `labels=[0, 1]` -> [TN, FP, FN, TP]
+    confusion_values = metric_values.reshape(-1, 4)
     assert_array_equal(confusion_values, np.column_stack([tns, fps, fns, tps]))
