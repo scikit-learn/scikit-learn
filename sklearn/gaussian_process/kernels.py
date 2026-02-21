@@ -274,11 +274,16 @@ class Kernel(metaclass=ABCMeta):
     @property
     def hyperparameters(self):
         """Returns a list of all hyperparameter specifications."""
-        r = [
-            getattr(self, attr)
-            for attr in dir(self)
-            if attr.startswith("hyperparameter_")
-        ]
+        # Use the class MRO instead of dir(self) to avoid thread-safety issues
+        # in free-threaded Python (no-GIL). dir() triggers dynamic attribute
+        # lookup which can cause segfaults when called concurrently.
+        seen = set()
+        r = []
+        for cls in type(self).__mro__:
+            for attr in vars(cls):
+                if attr.startswith("hyperparameter_") and attr not in seen:
+                    seen.add(attr)
+                    r.append(getattr(self, attr))
         return r
 
     @property
