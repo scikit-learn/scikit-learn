@@ -71,14 +71,15 @@ def test_is_in_range(namespace, device, dtype, interval):
 
 
 @pytest.mark.parametrize(
-    "namespace, device, dtype",
+    "namespace, device, dtype_name",
     yield_namespace_device_dtype_combinations(),
     ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("link", LINK_FUNCTIONS)
-def test_link_inverse_identity(namespace, device, dtype, link, global_random_seed):
+def test_link_inverse_identity(namespace, device, dtype_name, link, global_random_seed):
     """Test that link of inverse gives identity."""
     xp = _array_api_for_tests(namespace, device)
+    dtype = xp.float32 if dtype_name == "float32" else xp.float64
     rng = np.random.RandomState(global_random_seed)
     link = link()
     n_samples, n_classes = 100, None
