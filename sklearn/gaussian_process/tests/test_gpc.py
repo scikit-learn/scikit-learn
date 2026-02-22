@@ -127,16 +127,14 @@ def test_lml_gradient(kernel, length_scale):
 
     # Compare analytic and numeric gradient of log marginal likelihood.
     gpr = GaussianProcessClassifier(kernel=kernel).fit(X, y)
-    _, lml_gradient = gpr.log_marginal_likelihood(
-        kernel.non_log_theta, eval_gradient=True
-    )
+    _, lml_gradient = gpr.log_marginal_likelihood(kernel.theta, eval_gradient=True)
     epsilon = 1e-9
     lml_gradient_approx = approx_fprime(
-        kernel.non_log_theta.copy(),
+        kernel.theta.copy(),
         lambda theta: gpr.log_marginal_likelihood(theta, False),
         epsilon=epsilon,
     )
-    assert_allclose(lml_gradient, lml_gradient_approx, rtol=1e-3, atol=1)
+    assert_allclose(lml_gradient, lml_gradient_approx, rtol=1e-4, atol=epsilon * 100)
 
 
 def test_random_starts(global_random_seed):

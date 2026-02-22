@@ -167,7 +167,7 @@ def test_lml_gradient(kernel, length_scale):
         lambda theta: gpr.log_marginal_likelihood(theta, False),
         epsilon=epsilon,
     )
-    assert_allclose(lml_gradient, lml_gradient_approx, rtol=1e-3, atol=1)
+    assert_allclose(lml_gradient, lml_gradient_approx, rtol=1e-4, atol=epsilon * 100)
 
 
 @pytest.mark.parametrize("kernel", kernels)
