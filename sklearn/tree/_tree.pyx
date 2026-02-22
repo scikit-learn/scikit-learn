@@ -1026,15 +1026,11 @@ cdef class Tree:
         else:
             # left_child and right_child will be set later
             node.feature = feature
-            # node.threshold = threshold
-            # node.split_value.threshold = split_value.threshold
-            # node.split_value.categorical_bitset = split_value.categorical_bitset
             if self.n_categories[feature] > 0:
                 node.split_value.threshold = -INFINITY
                 node.split_value.categorical_bitset = split_value.categorical_bitset
             else:
                 node.split_value.threshold = split_value.threshold
-                # node.split_value.categorical_bitset = 0
             node.missing_go_to_left = missing_go_to_left
 
         self.node_count += 1
