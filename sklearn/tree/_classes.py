@@ -1009,7 +1009,11 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         and single-output targets.
         Values of categorical features must be contiguous integers in ``[0, 63]``
         (missing values are not supported).
-        Categorical features cannot have non-zero monotonic constrain
+        Categorical features cannot have non-zero monotonic constraint.
+
+        When these constraints are not met, ``fit`` will raise an error.
+
+        .. versionadded:: 1.9
 
     Attributes
     ----------
@@ -1431,6 +1435,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         Categorical features cannot have non-zero monotonic constraints.
 
         When these constraints are not met, ``fit`` will raise an error.
+
+        .. versionadded:: 1.9
 
     Attributes
     ----------

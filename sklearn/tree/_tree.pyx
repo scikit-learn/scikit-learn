@@ -1003,6 +1003,10 @@ cdef class Tree:
                 return INTPTR_MAX
 
         cdef Node* node = &self.nodes[node_id]
+        
+        # Zero the whole union so unused bytes don't leak into pickle.
+        memset(<void*> &node.split_value, 0, sizeof(SplitValue))
+
         node.impurity = impurity
         node.n_node_samples = n_node_samples
         node.weighted_n_node_samples = weighted_n_node_samples
@@ -1017,15 +1021,14 @@ cdef class Tree:
             node.left_child = _TREE_LEAF
             node.right_child = _TREE_LEAF
             node.feature = _TREE_UNDEFINED
-            # node.threshold = _TREE_UNDEFINED
             node.split_value.threshold = <float64_t> _TREE_UNDEFINED
 
         else:
             # left_child and right_child will be set later
             node.feature = feature
             # node.threshold = threshold
-            node.split_value.threshold = split_value.threshold
-            node.split_value.categorical_bitset = split_value.categorical_bitset
+            # node.split_value.threshold = split_value.threshold
+            # node.split_value.categorical_bitset = split_value.categorical_bitset
             if self.n_categories[feature] > 0:
                 node.split_value.threshold = -INFINITY
                 node.split_value.categorical_bitset = split_value.categorical_bitset
