@@ -396,12 +396,13 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         )  # third derivative
 
         for j in range(d_Z.shape[0]):
-            C = K_gradient[:, :, j]  # Line 11
+            C = K_gradient[:, :, j] / kernel.non_log_theta[j]  # Line 11
             # Line 12: (R.T.ravel().dot(C.ravel()) = np.trace(R.dot(C)))
             s_1 = 0.5 * a.T.dot(C).dot(a) - 0.5 * R.T.ravel().dot(C.ravel())
 
             b = C.dot(self.y_train_ - pi)  # Line 13
-            s_3 = b - K.dot(R.dot(b))  # Line 14
+
+            s_3 = b - K.dot(R.dot(b)) / kernel.non_log_theta[j]  # Line 14
 
             d_Z[j] = s_1 + s_2.T.dot(s_3)  # Line 15
 

@@ -338,6 +338,30 @@ class Kernel(metaclass=ABCMeta):
         self.set_params(**params)
 
     @property
+    def non_log_theta(self):
+        """Returns the (flattened, log-transformed) non-fixed hyperparameters.
+
+        Note that theta are typically the log-transformed values of the
+        kernel's hyperparameters as this representation of the search space
+        is more amenable for hyperparameter search, as hyperparameters like
+        length-scales naturally live on a log-scale.
+
+        Returns
+        -------
+        theta : ndarray of shape (n_dims,)
+            The non-fixed, log-transformed hyperparameters of the kernel
+        """
+        theta = []
+        params = self.get_params()
+        for hyperparameter in self.hyperparameters:
+            if not hyperparameter.fixed:
+                theta.append(params[hyperparameter.name])
+        if len(theta) > 0:
+            return np.hstack(theta)
+        else:
+            return np.array([])
+
+    @property
     def bounds(self):
         """Returns the log-transformed bounds on the theta.
 

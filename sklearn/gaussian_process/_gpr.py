@@ -585,6 +585,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         if eval_gradient:
             K, K_gradient = kernel(self.X_train_, eval_gradient=True)
+            K_gradient /= kernel.non_log_theta
         else:
             K = kernel(self.X_train_)
 
