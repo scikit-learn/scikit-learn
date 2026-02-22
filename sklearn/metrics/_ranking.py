@@ -1755,7 +1755,18 @@ def dcg_score(
     """Compute Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
-    after applying a logarithmic discount.
+    after applying a logarithmic discount:
+
+    .. math::
+        \\text{DCG@k} = \\sum_{i=1}^{k} \\frac{\\text{rel}_i}{\\log_b(i + 1)}
+
+    where :math:`\\text{rel}_i` is the true relevance of the item ranked at
+    position :math:`i` by the predicted scores, :math:`b` is the logarithm
+    base (``log_base``, default 2), and :math:`k` is the truncation depth.
+
+    This implementation uses *linear gains* (:math:`\\text{rel}_i`). Some
+    references in the literature use *exponential gains*
+    (:math:`2^{\\text{rel}_i} - 1`) instead; this variant is **not** used here.
 
     This ranking metric yields a high value if true labels are ranked high by
     ``y_score``.
@@ -1925,7 +1936,14 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     Sum the true scores ranked in the order induced by the predicted scores,
     after applying a logarithmic discount. Then divide by the best possible
     score (Ideal DCG, obtained for a perfect ranking) to obtain a score between
-    0 and 1.
+    0 and 1:
+
+    .. math::
+        \\text{NDCG@k} = \\frac{\\text{DCG@k}}{\\text{IDCG@k}}
+
+    where :math:`\\text{IDCG@k}` is the DCG@k obtained with a perfect ranking
+    (items sorted by decreasing true relevance). See :func:`dcg_score` for the
+    definition of DCG.
 
     This ranking metric returns a high value if true labels are ranked high by
     ``y_score``.
