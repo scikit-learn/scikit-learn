@@ -359,6 +359,12 @@ def _spectral_embedding(
             # to spare a memory allocation of a possibly very large array
             tol = 0 if eigen_tol == "auto" else eigen_tol
             laplacian *= -1
+            # Add identity matrix to convert -L to I - L as described in comments
+            # This ensures eigenvalues are near 1.0, making sigma=1.0 effective
+            if sparse.issparse(laplacian):
+                laplacian.setdiag(laplacian.diagonal() + 1)
+            else:
+                np.fill_diagonal(laplacian, laplacian.diagonal() + 1)
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
             laplacian = check_array(
                 laplacian, accept_sparse="csr", accept_large_sparse=False
