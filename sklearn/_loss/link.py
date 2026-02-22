@@ -86,7 +86,7 @@ def _inclusive_low_high(interval, dtype=np_compat.float64, xp=np_compat):
     else:
         high = interval.high * (1 - eps) - eps
 
-    return low, high
+    return float(low), float(high)
 
 
 class BaseLink(ABC):

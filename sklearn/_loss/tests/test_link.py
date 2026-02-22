@@ -60,13 +60,16 @@ def test_is_in_range(namespace, device, dtype_name, interval):
     assert interval.includes(x)
 
     # x contains lower bound
-    assert interval.includes(xp.concat((x, [interval.low]))) == interval.low_inclusive
+    x_test = xp.concat((x, xp.asarray([interval.low], dtype=x.dtype)))
+    assert interval.includes(x_test) == interval.low_inclusive
 
     # x contains upper bound
-    assert interval.includes(xp.concat((x, [interval.high]))) == interval.high_inclusive
+    x_test = xp.concat((x, xp.asarray([interval.high], dtype=x.dtype)))
+    assert interval.includes(x_test) == interval.high_inclusive
 
     # x contains upper and lower bound
-    assert interval.includes(xp.concat((x, [interval.low, interval.high]))) == (
+    x_test = xp.concat((x, xp.asarray([interval.low, interval.high], dtype=x.dtype)))
+    assert interval.includes(x_test) == (
         interval.low_inclusive and interval.high_inclusive
     )
 
