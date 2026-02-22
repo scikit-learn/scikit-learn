@@ -390,6 +390,36 @@ def test_cross_validate_invalid_scoring_param():
         cross_validate(estimator, X, y, scoring={"foo": multiclass_scorer})
 
 
+# @pytest.mark.parametrize("use_sparse", [False, True])
+def test_cross_validate_multioutput_pipeline():
+    X, Y = make_regression(n_features=10, n_targets=3, random_state=0)
+    est = Pipeline(
+        [
+            ("ridge", Ridge(random_state=0)),
+        ]
+    )
+
+    r2_multi_scorer = check_scoring(
+        est, scoring=make_scorer(r2_score, multioutput="raw_values")
+    )
+
+    test_r2_multi_scores = []
+
+    cv = KFold()
+
+    for train, test in cv.split(X, Y):
+        est.fit(X[train], Y[train])
+        test_r2_multi_scores.append(r2_multi_scorer(est, X[test], Y[test]))
+
+    test_r2_multi_scores = np.array(test_r2_multi_scores)
+
+    r2_multi_scores_dict = cross_validate(
+        est, X, Y, scoring=make_scorer(r2_score, multioutput="raw_values")
+    )
+
+    assert_array_almost_equal(r2_multi_scores_dict["test_score"], test_r2_multi_scores)
+
+
 def test_cross_validate_nested_estimator():
     # Non-regression test to ensure that nested
     # estimators are properly returned in a list
@@ -419,6 +449,12 @@ def test_cross_validate(use_sparse: bool, csr_container):
     X_reg, y_reg = make_regression(n_samples=30, random_state=0)
     reg = Ridge(random_state=0)
 
+    # Regression with multi-output
+    X_reg_multi, y_reg_multi = make_regression(
+        n_samples=30, random_state=0, n_targets=3
+    )
+    reg_multi = Ridge(random_state=0)
+
     # Classification
     X_clf, y_clf = make_classification(n_samples=30, random_state=0)
     clf = SVC(kernel="linear", random_state=0)
@@ -427,28 +463,41 @@ def test_cross_validate(use_sparse: bool, csr_container):
         X_reg = csr_container(X_reg)
         X_clf = csr_container(X_clf)
 
-    for X, y, est in ((X_reg, y_reg, reg), (X_clf, y_clf, clf)):
+    for X, y, est in (
+        (X_reg, y_reg, reg),
+        (X_reg_multi, y_reg_multi, reg_multi),
+        (X_clf, y_clf, clf),
+    ):
         # It's okay to evaluate regression metrics on classification too
         mse_scorer = check_scoring(est, scoring="neg_mean_squared_error")
         r2_scorer = check_scoring(est, scoring="r2")
+        r2_multi_scorer = check_scoring(
+            est, scoring=make_scorer(r2_score, multioutput="raw_values")
+        )
         train_mse_scores = []
         test_mse_scores = []
         train_r2_scores = []
         test_r2_scores = []
+        train_r2_multi_scores = []
+        test_r2_multi_scores = []
         fitted_estimators = []
 
         for train, test in cv.split(X, y):
             est = clone(est).fit(X[train], y[train])
             train_mse_scores.append(mse_scorer(est, X[train], y[train]))
             train_r2_scores.append(r2_scorer(est, X[train], y[train]))
+            train_r2_multi_scores.append(r2_multi_scorer(est, X[train], y[train]))
             test_mse_scores.append(mse_scorer(est, X[test], y[test]))
             test_r2_scores.append(r2_scorer(est, X[test], y[test]))
+            test_r2_multi_scores.append(r2_multi_scorer(est, X[test], y[test]))
             fitted_estimators.append(est)
 
         train_mse_scores = np.array(train_mse_scores)
         test_mse_scores = np.array(test_mse_scores)
         train_r2_scores = np.array(train_r2_scores)
         test_r2_scores = np.array(test_r2_scores)
+        train_r2_multi_scores = np.array(train_r2_multi_scores)
+        test_r2_multi_scores = np.array(test_r2_multi_scores)
         fitted_estimators = np.array(fitted_estimators)
 
         scores = (
@@ -456,6 +505,8 @@ def test_cross_validate(use_sparse: bool, csr_container):
             test_mse_scores,
             train_r2_scores,
             test_r2_scores,
+            train_r2_multi_scores,
+            test_r2_multi_scores,
             fitted_estimators,
         )
 
@@ -472,6 +523,8 @@ def check_cross_validate_single_metric(clf, X, y, scores, cv):
         test_mse_scores,
         train_r2_scores,
         test_r2_scores,
+        train_r2_multi_scores,
+        test_r2_multi_scores,
         fitted_estimators,
     ) = scores
     # Test single metric evaluation when scoring is string or singleton list
@@ -515,6 +568,36 @@ def check_cross_validate_single_metric(clf, X, y, scores, cv):
         assert len(r2_scores_dict) == dict_len
         assert_array_almost_equal(r2_scores_dict["test_r2"], test_r2_scores)
 
+        if len(y.shape) == 2:
+            # Single metric as a function with multioutput
+            if return_train_score:
+                # It must be True by default - deprecated
+                r2_multi_scores_dict = cross_validate(
+                    clf,
+                    X,
+                    y,
+                    scoring=make_scorer(r2_score, multioutput="raw_values"),
+                    return_train_score=True,
+                    cv=cv,
+                )
+                assert_array_almost_equal(
+                    r2_multi_scores_dict["train_score"], train_r2_multi_scores, True
+                )
+            else:
+                r2_multi_scores_dict = cross_validate(
+                    clf,
+                    X,
+                    y,
+                    scoring=make_scorer(r2_score, multioutput="raw_values"),
+                    return_train_score=False,
+                    cv=cv,
+                )
+            assert isinstance(r2_multi_scores_dict, dict)
+            assert len(r2_multi_scores_dict) == dict_len
+            assert_array_almost_equal(
+                r2_multi_scores_dict["test_score"], test_r2_multi_scores
+            )
+
     # Test return_estimator option
     mse_scores_dict = cross_validate(
         clf, X, y, scoring="neg_mean_squared_error", return_estimator=True, cv=cv
@@ -539,6 +622,8 @@ def check_cross_validate_multi_metric(clf, X, y, scores, cv):
         test_mse_scores,
         train_r2_scores,
         test_r2_scores,
+        train_r2_multi_scores,
+        test_r2_multi_scores,
         fitted_estimators,
     ) = scores
 
