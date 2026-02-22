@@ -1003,7 +1003,7 @@ cdef class Tree:
                 return INTPTR_MAX
 
         cdef Node* node = &self.nodes[node_id]
-        
+
         # Zero the whole union so unused bytes don't leak into pickle.
         memset(<void*> &node.split_value, 0, sizeof(SplitValue))
 
