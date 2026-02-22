@@ -784,6 +784,24 @@ def test_stratified_group_kfold_against_group_kfold(cls_distr, n_groups):
     assert sgkf_entr <= gkf_entr
 
 
+def test_stratified_group_kfold_n_splits_greater_than_n_groups():
+    """Check that StratifiedGroupKFold raises when n_splits > n_groups.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/33085
+    """
+    y = [0, 2, 2, 2, 1, 2, 1, 1, 0, 0, 0, 0]
+    groups = [0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1]
+    sgkf = StratifiedGroupKFold(n_splits=3)
+
+    with pytest.raises(
+        ValueError,
+        match="Cannot have number of splits n_splits=3 greater than the number"
+        " of groups: 2.",
+    ):
+        list(sgkf.split(X=y, y=y, groups=groups))
+
+
 def test_shuffle_split():
     ss1 = ShuffleSplit(test_size=0.2, random_state=0).split(X)
     ss2 = ShuffleSplit(test_size=2, random_state=0).split(X)

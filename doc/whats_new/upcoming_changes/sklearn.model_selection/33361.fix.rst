@@ -1,0 +1,5 @@
+- :class:`model_selection.StratifiedGroupKFold` now raises a ``ValueError``
+  when ``n_splits`` is greater than the number of groups, consistent with
+  :class:`model_selection.GroupKFold`. Previously, it silently produced
+  degenerate (empty) splits.
+  By :user:`Adam Kuligowski <akuligowski9>`.
