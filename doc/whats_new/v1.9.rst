@@ -32,10 +32,3 @@ Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.8, including:
 
 TODO: update at the time of the release.
-
-:mod:`sklearn.tree`
--------------------
-
-- |Enhancement| :class:`tree.DecisionTreeRegressor`, :class:`tree.DecisionTreeClassifier`
-  supports native categorical splitting for binary classification, and single-output regression.
-  By `:user:`Adam Li <adam2392>` and `:user:`Arthur Lacote <cakedev0>` :pr:`33354`

@@ -1,0 +1,4 @@
+- :class:`tree.DecisionTreeRegressor`, :class:`tree.DecisionTreeClassifier`
+  supports native categorical splitting up to 256 categories for binary
+  classification, and single-output regression.
+  By `:user:`Adam Li <adam2392>` and `:user:`Arthur Lacote <cakedev0>`

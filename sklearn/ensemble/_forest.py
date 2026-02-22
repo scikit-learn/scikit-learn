@@ -2294,6 +2294,8 @@ class ExtraTreesClassifier(ForestClassifier):
         ],
     }
     _parameter_constraints.pop("splitter")
+    # TODO: remove once randomsplitter supports categorical features
+    _parameter_constraints.pop("categorical_features")
 
     def __init__(
         self,
@@ -2651,6 +2653,8 @@ class ExtraTreesRegressor(ForestRegressor):
         **DecisionTreeRegressor._parameter_constraints,
     }
     _parameter_constraints.pop("splitter")
+    # TODO: remove once randomsplitter supports categorical features
+    _parameter_constraints.pop("categorical_features")
 
     def __init__(
         self,
@@ -2914,7 +2918,8 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         **BaseDecisionTree._parameter_constraints,
         "sparse_output": ["boolean"],
     }
-    for param in ("max_features", "ccp_alpha", "splitter", "monotonic_cst"):
+    for param in ("max_features", "ccp_alpha", "splitter", "monotonic_cst",
+                  "categorical_features"):
         _parameter_constraints.pop(param)
 
     criterion = "squared_error"
