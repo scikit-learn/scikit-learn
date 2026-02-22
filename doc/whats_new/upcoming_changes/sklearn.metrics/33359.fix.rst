@@ -1,0 +1,4 @@
+- :func:`metrics.pairwise.nan_euclidean_distances` now returns an exactly
+  symmetric distance matrix when computing pairwise distances of a single
+  array with missing values.
+  By :user:`Adam Kuligowski <akuligowski9>`.

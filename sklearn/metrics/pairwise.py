@@ -557,6 +557,11 @@ def nan_euclidean_distances(
     distances /= present_count
     distances *= X.shape[1]
 
+    if X is Y:
+        # Enforce symmetry: floating point rounding in the intermediate
+        # dot products and subtractions can cause dist[i,j] != dist[j,i].
+        distances = (distances + distances.T) / 2
+
     if not squared:
         np.sqrt(distances, out=distances)
 

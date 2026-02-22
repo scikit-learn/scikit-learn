@@ -1257,6 +1257,25 @@ def test_nan_euclidean_distances_not_trival(missing_value):
     assert_allclose(D6, D7)
 
 
+def test_nan_euclidean_distances_symmetric():
+    """Check that nan_euclidean_distances(X) returns an exactly symmetric matrix.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/32848
+    """
+    rng = np.random.RandomState(42)
+    mat = rng.rand(10, 20)
+    missing = rng.choice(mat.size, 50, replace=False)
+    mat.ravel()[missing] = np.nan
+
+    dist = nan_euclidean_distances(mat)
+
+    # The distance matrix should be exactly symmetric, not just approximately.
+    assert_array_equal(dist, dist.T)
+    # The diagonal should be exactly zero.
+    assert_array_equal(np.diag(dist), 0.0)
+
+
 @pytest.mark.parametrize("missing_value", [np.nan, -1])
 def test_nan_euclidean_distances_one_feature_match_positive(missing_value):
     # First feature is the only feature that is non-nan and in both
