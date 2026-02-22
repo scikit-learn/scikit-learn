@@ -351,13 +351,13 @@ class Kernel(metaclass=ABCMeta):
         theta : ndarray of shape (n_dims,)
             The non-fixed, log-transformed hyperparameters of the kernel
         """
-        theta = []
+        no_log_theta = []
         params = self.get_params()
         for hyperparameter in self.hyperparameters:
             if not hyperparameter.fixed:
-                theta.append(params[hyperparameter.name])
-        if len(theta) > 0:
-            return np.hstack(theta)
+                no_log_theta.append(params[hyperparameter.name])
+        if len(no_log_theta) > 0:
+            return np.hstack(no_log_theta)
         else:
             return np.array([])
 
