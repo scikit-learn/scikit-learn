@@ -1410,6 +1410,54 @@ def test_quantile_transform_sparse_ignore_zeros(csc_container):
     )
 
 
+def test_quantile_transform_sparse_ignore_zeros_very_sparse():
+    """Check QuantileTransformer with ignore_implicit_zeros on very sparse data.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/32585
+    """
+    subsample = 100
+    n_samples = 10**6
+    n_features = 2
+
+    rng = np.random.RandomState(42)
+
+    # Two columns: one with (subsample - 1) nnz and one with (subsample + 1) nnz.
+    # They contain similar data so the transformed results should also be similar.
+    col = np.repeat([0, 1], [subsample - 1, subsample + 1])
+    row = np.arange(subsample * 2)
+    data = rng.randn(subsample * 2)
+
+    X = sparse.csc_matrix((data, (row, col)), shape=(n_samples, n_features))
+
+    qt = QuantileTransformer(
+        ignore_implicit_zeros=True,
+        subsample=subsample,
+        n_quantiles=subsample,
+        random_state=42,
+    )
+    Y = qt.fit_transform(X)
+
+    # Column 1 triggers the subsampling branch (nnz > subsample).
+    # Before the fix, column_subsample was computed as
+    # subsample * nnz // n_samples which could be 0 for very sparse data,
+    # leading to all-zero quantiles.
+    assert not np.all(qt.quantiles_[:, 1] == 0), (
+        "Quantiles for column 1 should not be all zeros"
+    )
+
+    # Both columns should produce non-degenerate transformed values
+    # (i.e. not all 0 or 1).
+    for col_idx in range(n_features):
+        y_col = Y[:, col_idx].data
+        assert y_col.size > 0
+        unique_vals = np.unique(y_col)
+        assert len(unique_vals) > 2, (
+            f"Transformed column {col_idx} should have more than 2 unique values, "
+            f"got {unique_vals}"
+        )
+
+
 def test_quantile_transform_dense_toy():
     X = np.array(
         [[0, 2, 2.6], [25, 4, 4.1], [50, 6, 2.3], [75, 8, 9.5], [100, 10, 0.1]]

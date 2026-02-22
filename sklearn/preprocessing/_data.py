@@ -2828,14 +2828,22 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         for feature_idx in range(n_features):
             column_nnz_data = X.data[X.indptr[feature_idx] : X.indptr[feature_idx + 1]]
             if self.subsample is not None and len(column_nnz_data) > self.subsample:
-                column_subsample = self.subsample * len(column_nnz_data) // n_samples
                 if self.ignore_implicit_zeros:
-                    column_data = np.zeros(shape=column_subsample, dtype=X.dtype)
+                    # When ignoring implicit zeros, subsample directly from
+                    # the non-zero data only. The total number of rows
+                    # (n_samples) is irrelevant since implicit zeros are
+                    # excluded from the quantile computation.
+                    column_data = random_state.choice(
+                        column_nnz_data, size=self.subsample, replace=False
+                    )
                 else:
+                    column_subsample = (
+                        self.subsample * len(column_nnz_data) // n_samples
+                    )
                     column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
-                column_data[:column_subsample] = random_state.choice(
-                    column_nnz_data, size=column_subsample, replace=False
-                )
+                    column_data[:column_subsample] = random_state.choice(
+                        column_nnz_data, size=column_subsample, replace=False
+                    )
             else:
                 if self.ignore_implicit_zeros:
                     column_data = np.zeros(shape=len(column_nnz_data), dtype=X.dtype)

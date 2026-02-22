@@ -1,0 +1,4 @@
+- :class:`preprocessing.QuantileTransformer` with `ignore_implicit_zeros=True`
+  now correctly subsamples non-zero data for very sparse matrices. Previously,
+  the subsampling could produce empty arrays leading to all-zero quantiles.
+  By :user:`Adam Kuligowski <akuligowski9>`.
