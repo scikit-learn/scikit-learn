@@ -123,7 +123,7 @@ class BaseLoss:
     """
 
     # For gradient boosted decision trees:
-    # If differentiable = False for a loss, the leave values are required to
+    # If differentiable = False for a loss, the leaves values are required to
     # be updated once the tree has been trained. The trees are trained to
     # predict a Newton-Raphson step (see grower._finalize_leaf()). But for
     # some losses (e.g. least absolute deviation) we need to adjust the tree
