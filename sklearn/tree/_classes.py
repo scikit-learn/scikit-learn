@@ -150,7 +150,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         class_weight=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
-        categorical_features=None
+        categorical_features=None,
     ):
         self.criterion = criterion
         self.splitter = splitter
@@ -478,18 +478,23 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 min_weight_leaf,
                 random_state,
                 monotonic_cst,
-                use_breiman_shortcut
+                use_breiman_shortcut,
             )
 
         if is_classifier(self):
-            self.tree_ = Tree(self.n_features_in_, self.n_classes_, self.n_outputs_, self.n_categories_in_feature_)
+            self.tree_ = Tree(
+                self.n_features_in_,
+                self.n_classes_,
+                self.n_outputs_,
+                self.n_categories_in_feature_,
+            )
         else:
             self.tree_ = Tree(
                 self.n_features_in_,
                 # TODO: tree shouldn't need this in this case
                 np.array([1] * self.n_outputs_, dtype=np.intp),
                 self.n_outputs_,
-                self.n_categories_in_feature_
+                self.n_categories_in_feature_,
             )
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
@@ -513,7 +518,14 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self.min_impurity_decrease,
             )
 
-        builder.build(self.tree_, X, y, sample_weight, missing_values_in_feature_mask, self.n_categories_in_feature_)
+        builder.build(
+            self.tree_,
+            X,
+            y,
+            sample_weight,
+            missing_values_in_feature_mask,
+            self.n_categories_in_feature_,
+        )
 
         if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]
@@ -572,9 +584,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             is_categorical = categorical_features
 
         n_categories_in_feature = np.full(self.n_features_in_, -1, dtype=np.intp)
-        
+
         base_msg = (
-            f"Values for categorical features should be integers in [0, {MAX_NUM_CATEGORIES - 1}]."
+            f"Values for categorical features should be integers in "
+            f"[0, {MAX_NUM_CATEGORIES - 1}]."
         )
         for idx in np.where(is_categorical)[0]:
             if np.isnan(X[:, idx]).any():
@@ -740,14 +753,19 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         # build pruned tree
         if is_classifier(self):
             n_classes = np.atleast_1d(self.n_classes_)
-            pruned_tree = Tree(self.n_features_in_, n_classes, self.n_outputs_, self.n_categories_in_feature_)
+            pruned_tree = Tree(
+                self.n_features_in_,
+                n_classes,
+                self.n_outputs_,
+                self.n_categories_in_feature_,
+            )
         else:
             pruned_tree = Tree(
                 self.n_features_in_,
                 # TODO: the tree shouldn't need this param
                 np.array([1] * self.n_outputs_, dtype=np.intp),
                 self.n_outputs_,
-                self.n_categories_in_feature_
+                self.n_categories_in_feature_,
             )
         _build_pruned_tree_ccp(pruned_tree, self.tree_, self.ccp_alpha)
 
@@ -1117,7 +1135,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         class_weight=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
-        categorical_features=None
+        categorical_features=None,
     ):
         super().__init__(
             criterion=criterion,
@@ -1133,7 +1151,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             min_impurity_decrease=min_impurity_decrease,
             monotonic_cst=monotonic_cst,
             ccp_alpha=ccp_alpha,
-            categorical_features=categorical_features
+            categorical_features=categorical_features,
         )
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -1524,7 +1542,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         min_impurity_decrease=0.0,
         ccp_alpha=0.0,
         monotonic_cst=None,
-        categorical_features=None
+        categorical_features=None,
     ):
         if isinstance(criterion, str) and criterion == "friedman_mse":
             # TODO(1.11): remove support of "friedman_mse" criterion.
@@ -1549,7 +1567,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             min_impurity_decrease=min_impurity_decrease,
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
-            categorical_features=categorical_features
+            categorical_features=categorical_features,
         )
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -1888,7 +1906,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         class_weight=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
-        categorical_features=None
+        categorical_features=None,
     ):
         super().__init__(
             criterion=criterion,
@@ -1904,7 +1922,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             random_state=random_state,
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
-            categorical_features=categorical_features
+            categorical_features=categorical_features,
         )
 
     def __sklearn_tags__(self):
@@ -2151,7 +2169,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         max_leaf_nodes=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
-        categorical_features=None
+        categorical_features=None,
     ):
         super().__init__(
             criterion=criterion,
@@ -2166,7 +2184,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             random_state=random_state,
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
-            categorical_features=categorical_features
+            categorical_features=categorical_features,
         )
 
     def __sklearn_tags__(self):

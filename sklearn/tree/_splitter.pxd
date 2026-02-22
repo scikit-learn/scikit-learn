@@ -76,7 +76,7 @@ cdef class Splitter:
     # We know the number of categories within our dataset across each feature.
     # If a feature index has -1, then it is not categorical
     # Buffers for categorical feature handling:
-    # - n_categories: an array to store number of categories per feature; if -1, 
+    # - n_categories: an array to store number of categories per feature; if -1,
     #   then it is not categorical.
     # - categorical_split_buffer: a bitset to store the categorical split
     cdef const intp_t[:] n_categories

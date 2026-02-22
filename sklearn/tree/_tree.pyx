@@ -26,8 +26,7 @@ from scipy.sparse import csr_matrix
 from sklearn.tree._utils cimport safe_realloc
 from sklearn.tree._utils cimport sizet_ptr_to_ndarray
 from sklearn.tree._utils cimport in_bitset_words_fast
-from sklearn.tree._utils cimport goes_left
-from sklearn.tree._utils cimport MAX_CAT_BITSET_WORDS, BITWORD_BITS
+from sklearn.tree._utils cimport MAX_CAT_BITSET_WORDS
 
 cdef extern from "numpy/arrayobject.h":
     object PyArray_NewFromDescr(PyTypeObject* subtype, cnp.dtype descr,
@@ -94,9 +93,7 @@ cdef Node dummy
 #   – categorical_bitset is an array of eight uint32’s at offset 0 (i.e. fully overlapping)
 #   – total itemsize must be 32 (so union = max(size of FLOAT64=8, size of 8×uint32=32))
 # Number of uint64 words in the categorical bitset.
-# Must match uint64_t[4] in SplitValue (see _utils.pxd).
-_N_BITSET_WORDS = 4
-
+# Must match uint64_t[_N_BITSET_WORDS] in SplitValue (see _utils.pxd).
 SplitValue_dtype = np.dtype({
     'names':   ['threshold', 'categorical_bitset'],
     'formats': [np.float64,     (np.uint64, MAX_CAT_BITSET_WORDS)],
@@ -104,14 +101,14 @@ SplitValue_dtype = np.dtype({
     'itemsize': MAX_CAT_BITSET_WORDS * 8,
 })
 NODE_DTYPE = np.dtype([
-    ('left_child',              np.intp),   #  8 bytes  (offset 0)
-    ('right_child',             np.intp),   #  8 bytes  (offset 8)
-    ('feature',                 np.intp),   #  8 bytes  (offset 16)
+    ('left_child',              np.intp),           # 8 bytes  (offset 0)
+    ('right_child',             np.intp),           # 8 bytes  (offset 8)
+    ('feature',                 np.intp),           # 8 bytes  (offset 16)
     ('split_value',             SplitValue_dtype),  # 64 bytes (offset 24)
-    ('impurity',                np.float64),   #  8 bytes (offset 56)
-    ('n_node_samples',          np.intp),      #  8 bytes (offset 64)
-    ('weighted_n_node_samples', np.float64),   #  8 bytes (offset 72)
-    ('missing_go_to_left',      np.uint8),      #  1 byte  (offset 80)
+    ('impurity',                np.float64),        # 8 bytes (offset 56)
+    ('n_node_samples',          np.intp),           # 8 bytes (offset 64)
+    ('weighted_n_node_samples', np.float64),        # 8 bytes (offset 72)
+    ('missing_go_to_left',      np.uint8),          # 1 byte  (offset 80)
     # NumPy will auto‐pad to a multiple of 8 (so total sizeof Node_dtype = 88 bytes),
     # exactly matching C’s sizeof(Node) on a 64‐bit machine.
 ], align=True)
@@ -311,7 +308,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                 min_impurity_decrease))
 
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
-                                        #  split.threshold, 
                                          split.split_value,
                                          parent_record.impurity,
                                          n_node_samples, weighted_n_node_samples,
@@ -917,11 +913,11 @@ cdef class Tree:
         if not node_ndarray.dtype.isnative:
             # byteswap() returns a new array with the data swapped in place,
             # then newbyteorder() marks it as native‐endian dtype.
-            _swapped = node_ndarray.byteswap() 
-            node_ndarray    = _swapped.view(_swapped.dtype.newbyteorder())
+            _swapped = node_ndarray.byteswap()
+            node_ndarray = _swapped.view(_swapped.dtype.newbyteorder())
         if not value_ndarray.dtype.isnative:
-            _swapped = value_ndarray.byteswap() 
-            value_ndarray    = _swapped.view(_swapped.dtype.newbyteorder())
+            _swapped = value_ndarray.byteswap()
+            value_ndarray = _swapped.view(_swapped.dtype.newbyteorder())
 
         value_shape = (node_ndarray.shape[0], self.n_outputs,
                        self.max_n_classes)
@@ -988,7 +984,7 @@ cdef class Tree:
         return 0
 
     cdef intp_t _add_node(self, intp_t parent, bint is_left, bint is_leaf,
-                          intp_t feature, 
+                          intp_t feature,
                           SplitValue split_value,
                           float64_t impurity,
                           intp_t n_node_samples,
@@ -2058,7 +2054,7 @@ cdef void _build_pruned_tree(
                 break
 
             new_node_id = tree._add_node(
-                parent, is_left, is_leaf, node.feature, 
+                parent, is_left, is_leaf, node.feature,
                 node.split_value,
                 node.impurity, node.n_node_samples,
                 node.weighted_n_node_samples, node.missing_go_to_left)

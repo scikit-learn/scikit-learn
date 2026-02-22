@@ -11,8 +11,8 @@ ctypedef uint64_t bitword_t
 
 cdef enum:
     BITWORD_SHIFT = 6          # log2(64)
-    BITWORD_MASK  = 63         # 64 - 1
-    BITWORD_BITS  = 64
+    BITWORD_MASK = 63          # 64 - 1
+    BITWORD_BITS = 64
 
 cdef enum:
     MAX_CAT_BITSET_WORDS = 4   # ceil(256 / 64)
@@ -46,9 +46,8 @@ cdef struct Node:
     intp_t left_child                    # id of the left child of the node
     intp_t right_child                   # id of the right child of the node
     intp_t feature                       # Feature used for splitting the node
-    SplitValue split_value             # Generalized threshold for categorical and
-                                       # non-categorical features
-    # float64_t threshold                  # Threshold value at the node
+    SplitValue split_value               # Generalized threshold for categorical and
+    #                                    # non-categorical features
 
     float64_t impurity                   # Impurity of the node (i.e., the value of the criterion)
     intp_t n_node_samples                # Number of samples at the node
@@ -130,5 +129,3 @@ cdef class WeightedFenwickTree:
         float64_t* cwy_out,
         intp_t* prev_idx_out,
     ) noexcept nogil
-
-

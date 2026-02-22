@@ -6,7 +6,6 @@ import copy
 import copyreg
 import io
 import pickle
-import scipy
 import re
 import struct
 from itertools import chain, pairwise, product
@@ -14,6 +13,7 @@ from itertools import chain, pairwise, product
 import joblib
 import numpy as np
 import pytest
+import scipy
 from joblib.numpy_pickle import NumpyPickler
 from numpy.testing import assert_allclose
 
@@ -3172,13 +3172,17 @@ def test_no_sparse_with_categorical(name):
     # Currently we do not support sparse categorical features
     rng = np.random.RandomState(0)
     n_samples, n_features = 50, 5
-    X = np.hstack([
-        rng.randn(n_samples, 3),                          # 3 numerical cols
-        rng.randint(0, 3, size=(n_samples, 2)).astype(np.float64),  # 2 categorical cols
-    ])
+    X = np.hstack(
+        [
+            rng.randn(n_samples, 3),  # 3 numerical cols
+            rng.randint(0, 3, size=(n_samples, 2)).astype(
+                np.float64
+            ),  # 2 categorical cols
+        ]
+    )
     y = rng.randint(0, 2, size=n_samples)
     X_sparse = scipy.sparse.csc_array(X)
-    
+
     Tree = ALL_TREES[name]
 
     # TODO: ExtraTree defaults to splitter="random" which rejects categorical
@@ -3191,7 +3195,6 @@ def test_no_sparse_with_categorical(name):
         NotImplementedError, match="Categorical features not supported with sparse"
     ):
         Tree(categorical_features=[3, 4]).fit(X_sparse, y)
-
 
     with pytest.raises(
         NotImplementedError, match="Categorical features not supported with sparse"
@@ -3217,26 +3220,29 @@ def test_categorical_better_than_ordinal(Tree, data_params, global_random_seed):
     """Categorical-aware tree should perform at least as well as ordinal."""
     is_reg = Tree == DecisionTreeRegressor
     X, y, _ = _make_categorical(
-        **data_params, regression=is_reg, return_tuple=True, random_state=global_random_seed
+        **data_params,
+        regression=is_reg,
+        return_tuple=True,
+        random_state=global_random_seed,
     )
     categorical_features = (
         np.arange(data_params["n_categorical"]) + data_params["n_numerical"]
     )
-    
+
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.3, random_state=42
     )
-    
+
     # With categorical awareness
     tree_cat = Tree(random_state=42, categorical_features=categorical_features)
     tree_cat.fit(X_train, y_train)
     score_cat = tree_cat.score(X_test, y_test)
-    
+
     # Without categorical awareness (ordinal treatment)
     tree_ord = Tree(random_state=42)
     tree_ord.fit(X_train, y_train)
     score_ord = tree_ord.score(X_test, y_test)
-    
+
     # Categorical should be at least as good (with small tolerance for noise)
     assert score_cat >= score_ord - 0.05, (
         f"Categorical tree score ({score_cat:.4f}) should be >= "
@@ -3279,56 +3285,56 @@ def test_categorical_split_vs_onehot_tree_depth():
 
 def test_categorical_split_exact_tree():
     """Test categorical splits produce exact expected tree with depth >= 2.
-    
+
     Dataset: 2 binary categorical features, binary classification.
-    
+
       feat0=0           → y=0  (always, regardless of feat1)
       feat0=1, feat1=0  → y=0
       feat0=1, feat1=1  → y=1
-    
+
     Expected tree (5 nodes, depth 2):
       node 0 (root): split feat0, {0} left, {1} right
         node 1 (leaf): y=0, pure (all feat0=0 samples)
         node 2: split feat1, {0} left, {1} right
           node 3 (leaf): y=0, pure
           node 4 (leaf): y=1, pure
-    
+
     This tests categorical splits at depth > 0 (node 2 has start > 0),
     which exercises the bitset position calculation in child nodes.
     """
     n = 100  # samples per group
-    
+
     # Group 1: feat0=0, feat1=0, y=0
     # Group 2: feat0=0, feat1=1, y=0
     # Group 3: feat0=1, feat1=0, y=0
     # Group 4: feat0=1, feat1=1, y=1
-    feat0 = np.array([0]*n + [0]*n + [1]*n + [1]*n, dtype=np.float64)
-    feat1 = np.array([0]*n + [1]*n + [0]*n + [1]*n, dtype=np.float64)
+    feat0 = np.array([0] * n + [0] * n + [1] * n + [1] * n, dtype=np.float64)
+    feat1 = np.array([0] * n + [1] * n + [0] * n + [1] * n, dtype=np.float64)
     X = np.column_stack([feat0, feat1])
-    y_clf = np.array([0]*n + [0]*n + [0]*n + [1]*n)
-    
+    y_clf = np.array([0] * n + [0] * n + [0] * n + [1] * n)
+
     # --- Classification ---
     clf = DecisionTreeClassifier(random_state=0, categorical_features=[0, 1])
     clf.fit(X, y_clf)
-    
+
     tree = clf.tree_
-    
+
     assert tree.node_count == 5, f"Expected 5 nodes, got {tree.node_count}"
     assert clf.get_depth() == 2, f"Expected depth 2, got {clf.get_depth()}"
-    
+
     # All 3 leaves should be pure
     leaves = tree.children_left == TREE_LEAF
     assert_allclose(tree.impurity[leaves], 0.0)
-    
+
     # Predictions
     X_test = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.float64)
     assert_array_equal(clf.predict(X_test), [0, 0, 0, 1])
-    
+
     # --- Regression ---
-    y_reg = np.array([0.0]*n + [0.0]*n + [5.0]*n + [10.0]*n)
+    y_reg = np.array([0.0] * n + [0.0] * n + [5.0] * n + [10.0] * n)
     reg = DecisionTreeRegressor(random_state=0, categorical_features=[0, 1])
     reg.fit(X, y_reg)
-    
+
     tree_reg = reg.tree_
     assert tree_reg.node_count == 5
     assert reg.get_depth() == 2

@@ -84,31 +84,6 @@ def _realloc_test():
         free(p)
         assert False
 
-    
-
-
-# cdef inline void copy_memview_to_array(
-#     BITSET_INNER_DTYPE_C[:] memview,
-#     BITSET_DTYPE_C arr
-# ) noexcept nogil:
-#     for i in range(8):
-#         arr[i] = memview[i]
-
-# cdef inline void copy_array_to_memview(
-#     BITSET_INNER_DTYPE_C[:] memview,
-#     BITSET_DTYPE_C arr
-# ) noexcept nogil:
-#     for i in range(8):
-#         memview[i] = arr[i]
-
-
-
-cdef inline cnp.ndarray int32t_ptr_to_ndarray(int32_t* data, intp_t size):
-    """Encapsulate data into a 1D numpy array of int32's."""
-    cdef cnp.npy_intp shape[1]
-    shape[0] = <cnp.npy_intp> size
-    return cnp.PyArray_SimpleNewFromData(1, shape, cnp.NPY_INT32, data)
-
 
 cdef inline cnp.ndarray sizet_ptr_to_ndarray(intp_t* data, intp_t size):
     """Return copied data as 1D numpy array of intp's."""
@@ -337,6 +312,3 @@ cdef class PytestWeightedFenwickTree(WeightedFenwickTree):
         cdef intp_t prev_idx
         idx = self.search(t, &w, &wy, &prev_idx)
         return prev_idx, idx, w, wy
-
-
-

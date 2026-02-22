@@ -17,8 +17,7 @@ from libc.string cimport memcpy, memset
 
 import numpy as np
 from scipy.sparse import issparse
-from sklearn.utils._typedefs cimport uint64_t
-from sklearn.tree._utils cimport in_bitset_words_fast, set_bit_fast, goes_left
+from sklearn.tree._utils cimport set_bit_fast, goes_left
 from sklearn.tree._tree cimport MAX_NUM_CATEGORIES
 
 # Constant to switch between algorithm non zero value extract algorithm
@@ -29,6 +28,7 @@ cdef float32_t EXTRACT_NNZ_SWITCH = 0.1
 cdef float32_t INFINITY_32t = np.inf
 
 cdef float64_t INFINITY_64t = np.inf
+
 
 @final
 cdef class DensePartitioner:
@@ -98,7 +98,7 @@ cdef class DensePartitioner:
 
         # Sort samples along that feature; by copying the values into an array and
         # sorting the array in a manner which utilizes the cache more effectively.
-        # 
+        #
         # Final layout puts missing values to the right side of the array.
         # samples[start : end - n_missing]     -> all NON-MISSING values
         # samples[end - n_missing : end]       -> all MISSING values (NaNs)
@@ -432,7 +432,7 @@ cdef class DensePartitioner:
         # if we split categorically, compute a bitset and populate the SplitValue
         if self.n_categories > 0:
             split_pos_to_bitset_words(
-                p - self.start,  # 
+                p - self.start,  # since offset of start is possible
                 &self.sorted_cat[0],
                 self.n_categories,
                 &self.counts[0],
@@ -1058,7 +1058,6 @@ cdef void heapsort(floating* feature_values, intp_t* samples, intp_t n) noexcept
         swap(feature_values, samples, 0, end)
         sift_down(feature_values, samples, 0, end)
         end = end - 1
-
 
 
 cdef inline void split_pos_to_bitset_words(

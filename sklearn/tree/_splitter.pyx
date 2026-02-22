@@ -28,7 +28,7 @@ from sklearn.tree._partitioner cimport (
     FEATURE_THRESHOLD, DensePartitioner, SparsePartitioner,
     shift_missing_values_to_left_if_required
 )
-from sklearn.tree._utils cimport RAND_R_MAX, rand_int, rand_uniform, n_words_for_nbits
+from sklearn.tree._utils cimport RAND_R_MAX, rand_int, rand_uniform
 import numpy as np
 
 # Introduce a fused-class to make it possible to share the split implementation
@@ -213,7 +213,7 @@ cdef class Splitter:
         self.sample_weight = sample_weight
         if missing_values_in_feature_mask is not None:
             self.criterion.init_sum_missing()
-        
+
         # Initialize the number of categories for each feature
         # A value of -1 indicates a non-categorical feature
         if n_categories is None:
@@ -320,7 +320,6 @@ cdef inline int node_split_best(
     cdef intp_t[::1] constant_features = splitter.constant_features
     cdef intp_t n_features = splitter.n_features
 
-    cdef float32_t[::1] feature_values = splitter.feature_values
     cdef intp_t max_features = splitter.max_features
     cdef intp_t min_samples_leaf = splitter.min_samples_leaf
     cdef float64_t min_weight_leaf = splitter.min_weight_leaf
@@ -340,7 +339,7 @@ cdef inline int node_split_best(
     # cdef bint is_categorical
     # # index through categories to exhaustively split all possible categories
     # # exhaustion only supports up to 8 categories
-    # cdef uint64_t cat_idx 
+    # cdef uint64_t cat_idx
     cdef bint is_constant
 
     # total number of categories per feature
@@ -421,10 +420,10 @@ cdef inline int node_split_best(
 
         # argsort samples by feature scoring: either through values for numerical features,
         # or bitsets for categorical features
-        # 
+        #
         # this function determines whether this feature is constant or not
         is_constant = partitioner.sort_samples_and_feature_values(current_split.feature)
-            
+
         n_missing = partitioner.n_missing
         if is_constant:
             # We consider this feature constant in this case.
@@ -450,7 +449,7 @@ cdef inline int node_split_best(
         # optimal split.
         n_searches = 2 if has_missing else 1
 
-        # 
+        # keep track of end index for non-missing data
         end_non_missing = partitioner.end - n_missing
 
         for i in range(n_searches):
@@ -504,7 +503,7 @@ cdef inline int node_split_best(
 
                     # given previous position and the new position, compute the value of this split
                     current_split.split_value = partitioner.position_to_split_value(p_prev, p)
-                    
+
                     # make sure the split has number of missing correctly
                     current_split.n_missing = n_missing
 
