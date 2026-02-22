@@ -1536,6 +1536,7 @@ class RandomForestClassifier(ForestClassifier):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
+        categorical_features=None,
     ):
         super().__init__(
             estimator=DecisionTreeClassifier(),
@@ -1552,6 +1553,7 @@ class RandomForestClassifier(ForestClassifier):
                 "random_state",
                 "ccp_alpha",
                 "monotonic_cst",
+                "categorical_features",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -1573,6 +1575,7 @@ class RandomForestClassifier(ForestClassifier):
         self.min_impurity_decrease = min_impurity_decrease
         self.monotonic_cst = monotonic_cst
         self.ccp_alpha = ccp_alpha
+        self.categorical_features = categorical_features
 
 
 class RandomForestRegressor(ForestRegressor):
@@ -1913,6 +1916,7 @@ class RandomForestRegressor(ForestRegressor):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
+        categorical_features=None,
     ):
         super().__init__(
             estimator=DecisionTreeRegressor(),
@@ -1929,6 +1933,7 @@ class RandomForestRegressor(ForestRegressor):
                 "random_state",
                 "ccp_alpha",
                 "monotonic_cst",
+                "categorical_features",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -1959,6 +1964,7 @@ class RandomForestRegressor(ForestRegressor):
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
+        self.categorical_features = categorical_features
 
 
 class ExtraTreesClassifier(ForestClassifier):

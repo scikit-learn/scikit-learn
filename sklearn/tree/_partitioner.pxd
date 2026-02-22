@@ -6,9 +6,11 @@
 from cython cimport floating
 
 from sklearn.utils._typedefs cimport (
-    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t
+    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t, uint64_t
 )
 from sklearn.tree._splitter cimport SplitRecord, SplitValue
+
+ctypedef uint64_t bitword_t
 
 
 # Mitigate precision differences between 32 bit and 64 bit
@@ -33,7 +35,7 @@ cdef const float32_t FEATURE_THRESHOLD = 1e-7
 #     cdef const uint8_t[::1] missing_values_in_feature_mask
 #     cdef intp_t n_categories
 
-#     cdef inline SplitValue position_to_threshold(
+#     cdef inline SplitValue position_to_split_value(
 #         self, intp_t p_prev, intp_t p
 #     ) noexcept nogil
 #     cdef bint sort_samples_and_feature_values(
@@ -74,12 +76,26 @@ cdef class DensePartitioner:
     Note that this partitioner is agnostic to the splitting strategy (best vs. random).
     """
     cdef const float32_t[:, :] X
+    cdef const float64_t[:, :] y
+    cdef const float64_t[::1] sample_weight
     cdef intp_t[::1] samples
     cdef float32_t[::1] feature_values
     cdef intp_t start
     cdef intp_t end
     cdef intp_t n_missing
     cdef const uint8_t[::1] missing_values_in_feature_mask
+
+    # memoryview of the n_categories in every feature
+    cdef const intp_t[::1] n_categories_in_feature
+    cdef intp_t n_categories  # keep track of n_categories in current split
+    cdef intp_t n_words
+
+    # purely for Breiman shortcut
+    cdef intp_t[::1] counts
+    cdef float64_t[::1] weighted_counts
+    cdef float64_t[::1] means
+    cdef intp_t[::1] sorted_cat
+    cdef intp_t[::1] offsets
 
     cdef bint sort_samples_and_feature_values(
         self, intp_t current_feature
@@ -108,12 +124,17 @@ cdef class DensePartitioner:
         self,
         intp_t best_pos,
         SplitValue split_value,
-        # float64_t best_threshold,
         intp_t best_feature,
         intp_t n_missing,
     ) noexcept nogil
-    cdef inline SplitValue position_to_threshold(
-        self, intp_t p_prev, intp_t p
+    cdef SplitValue position_to_split_value(
+        self,
+        intp_t p_prev,
+        intp_t p
+    ) noexcept nogil
+    cdef void _breiman_sort_categories(
+        self,
+        intp_t nc
     ) noexcept nogil
 
 cdef class SparsePartitioner:
@@ -138,8 +159,21 @@ cdef class SparsePartitioner:
     cdef intp_t n_missing
     cdef const uint8_t[::1] missing_values_in_feature_mask
 
-    cdef void sort_samples_and_feature_values(
-        self, intp_t current_feature
+    # memoryview of the n_categories in every feature
+    cdef const intp_t[::1] n_categories_in_feature
+    cdef intp_t n_categories  # keep track of n_categories in current split
+    cdef intp_t n_words
+
+    # purely for Breiman shortcut
+    cdef intp_t[::1] counts
+    cdef float64_t[::1] weighted_counts
+    cdef float64_t[::1] means
+    cdef intp_t[::1] sorted_cat
+    cdef intp_t[::1] offsets
+
+    cdef bint sort_samples_and_feature_values(
+        self,
+        intp_t current_feature
     ) noexcept nogil
     cdef void init_node_split(
         self,
@@ -164,9 +198,13 @@ cdef class SparsePartitioner:
     cdef void partition_samples_final(
         self,
         intp_t best_pos,
-        float64_t best_threshold,
+        SplitValue split_value,
         intp_t best_feature,
         intp_t n_missing,
+    ) noexcept nogil
+
+    cdef SplitValue position_to_split_value(
+        self, intp_t p_prev, intp_t p
     ) noexcept nogil
 
     cdef void extract_nnz(

@@ -1,4 +1,7 @@
 tree_extension_metadata = {
+  '_utils':
+    {'sources': [cython_gen.process('_utils.pyx')],
+     'override_options': ['optimization=3']},
   '_tree':
     {'sources': [cython_gen_cpp.process('_tree.pyx')],
      'override_options': ['optimization=3']},
@@ -10,9 +13,6 @@ tree_extension_metadata = {
      'override_options': ['optimization=3']},
   '_criterion':
     {'sources': [cython_gen.process('_criterion.pyx')],
-     'override_options': ['optimization=3']},
-  '_utils':
-    {'sources': [cython_gen.process('_utils.pyx')],
      'override_options': ['optimization=3']},
 }
 

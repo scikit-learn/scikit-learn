@@ -64,7 +64,7 @@ __all__ = [
 # Types and constants
 # =============================================================================
 
-MAX_NUM_CATEGORIES = 64  # TODO import from somewhere
+MAX_NUM_CATEGORIES = _tree.MAX_NUM_CATEGORIES_PY
 
 DTYPE = _tree.DTYPE
 DOUBLE = _tree.DOUBLE
@@ -443,7 +443,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 # *positive class*, all signs must be flipped.
                 monotonic_cst *= -1
 
-        _, self.n_categories_in_feature_ = (
+        self.is_categorical_, self.n_categories_in_feature_ = (
             self._check_categorical_features(X, monotonic_cst)
         )
         has_categorical = bool(np.any(self.is_categorical_))
@@ -461,6 +461,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 "Categorical features are only supported for binary classification. "
                 f"Found {self.n_classes_.max()} classes."
             )
+
+        # The Breiman shortcut sorts categories by ascending mean target
+        # value, which guarantees the optimal split is among the n_categories-1
+        # contiguous partitions.  Valid for binary classification with any
+        # concave impurity criterion and for regression with squared error.
+        use_breiman_shortcut = has_categorical and (
+            is_classification or self.criterion == "squared_error"
+        )
+
         if not isinstance(self.splitter, Splitter):
             splitter = SPLITTERS[self.splitter](
                 criterion,
@@ -469,6 +478,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 min_weight_leaf,
                 random_state,
                 monotonic_cst,
+                use_breiman_shortcut
             )
 
         if is_classifier(self):
@@ -548,6 +558,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError(
                     "categorical_features set as integer "
                     "indices must be in [0, n_features - 1]"
+                    f"{categorical_features}"
                 )
             is_categorical = np.zeros(n_features, dtype=bool)
             is_categorical[categorical_features] = True
@@ -605,6 +616,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 X.indices.dtype != np.intc or X.indptr.dtype != np.intc
             ):
                 raise ValueError("No support for np.int64 index based sparse matrices")
+
+            if issparse(X) and self.categorical_features is not None:
+                raise NotImplementedError(
+                    "Categorical features not supported with sparse inputs"
+                )
         else:
             # The number of features is checked regardless of `check_input`
             _check_n_features(self, X, reset=False)
@@ -1022,7 +1038,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
-    n_categorical_features_ : array-like of int or bool of shape (n_features,) or
+    n_categories_in_feature_ : array-like of int or bool of shape (n_features,) or
         (n_categorical_features,), default=None
         Indicates which features are treated as categorical.
 
@@ -1434,7 +1450,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
-    n_categorical_features_ : array-like of int or bool of shape (n_features,) or
+    n_categories_in_feature_ : array-like of int or bool of shape (n_features,) or
         (n_categorical_features,), default=None
         Indicates which features are treated as categorical.
 
@@ -1872,6 +1888,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         class_weight=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        categorical_features=None
     ):
         super().__init__(
             criterion=criterion,
@@ -1887,6 +1904,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             random_state=random_state,
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
+            categorical_features=categorical_features
         )
 
     def __sklearn_tags__(self):
@@ -2133,6 +2151,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         max_leaf_nodes=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        categorical_features=None
     ):
         super().__init__(
             criterion=criterion,
@@ -2147,6 +2166,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             random_state=random_state,
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
+            categorical_features=categorical_features
         )
 
     def __sklearn_tags__(self):

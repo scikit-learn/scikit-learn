@@ -8,24 +8,13 @@ cimport numpy as cnp
 
 from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint8_t, uint32_t
 
-from sklearn.tree._splitter cimport Splitter
-from sklearn.tree._splitter cimport SplitRecord, SplitValue
+from sklearn.tree._splitter cimport Splitter, SplitRecord
+from sklearn.tree._utils cimport SplitValue, Node
+from sklearn.tree._utils cimport MAX_CAT_BITSET_WORDS, BITWORD_BITS
 
-cdef struct Node:
-    # Base storage structure for the nodes in a Tree object
 
-    intp_t left_child                    # id of the left child of the node
-    intp_t right_child                   # id of the right child of the node
-    intp_t feature                       # Feature used for splitting the node
-    SplitValue split_value             # Generalized threshold for categorical and
-                                       # non-categorical features
-    # float64_t threshold                  # Threshold value at the node
-
-    float64_t impurity                   # Impurity of the node (i.e., the value of the criterion)
-    intp_t n_node_samples                # Number of samples at the node
-    float64_t weighted_n_node_samples    # Weighted number of samples at the node
-    uint8_t missing_go_to_left     # Whether features have missing values
-
+cdef enum:
+    MAX_NUM_CATEGORIES = MAX_CAT_BITSET_WORDS * BITWORD_BITS
 
 cdef struct ParentInfo:
     # Structure to store information about the parent of a node
@@ -113,7 +102,7 @@ cdef class TreeBuilder:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=*,
         const uint8_t[::1] missing_values_in_feature_mask=*,
-        const int32_t[::1] n_categories=*
+        const intp_t[::1] n_categories=*
     )
 
     cdef _check_input(

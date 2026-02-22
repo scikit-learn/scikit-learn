@@ -18,7 +18,8 @@ from libc.string cimport memcpy, memset
 import numpy as np
 from scipy.sparse import issparse
 from sklearn.utils._typedefs cimport uint64_t
-from sklearn.tree._utils cimport in_bitset_words_fast, set_bit_fast
+from sklearn.tree._utils cimport in_bitset_words_fast, set_bit_fast, goes_left
+from sklearn.tree._tree cimport MAX_NUM_CATEGORIES
 
 # Constant to switch between algorithm non zero value extract algorithm
 # in SparsePartitioner
@@ -29,9 +30,6 @@ cdef float32_t INFINITY_32t = np.inf
 
 cdef float64_t INFINITY_64t = np.inf
 
-# maximum allowable categories for breiman shortcut
-cdef intp_t MAX_N_CAT = 64
-
 @final
 cdef class DensePartitioner:
     """Partitioner specialized for dense data.
@@ -41,28 +39,30 @@ cdef class DensePartitioner:
     def __init__(
         self,
         const float32_t[:, :] X,
+        const float64_t[:, :] y,
+        const float64_t[::1] sample_weight,
         intp_t[::1] samples,
         float32_t[::1] feature_values,
         const uint8_t[::1] missing_values_in_feature_mask,
         const intp_t[::1] n_categories_in_feature,
     ):
         self.X = X
+        self.y = y
+        self.sample_weight = sample_weight
         self.samples = samples
         self.feature_values = feature_values
         self.missing_values_in_feature_mask = missing_values_in_feature_mask
 
         self.n_categories_in_feature = n_categories_in_feature
         self.n_categories = 0
-        buffer_size = samples.size * max(samples.itemsize, feature_values.itemsize)
-        self.swap_buffer = np.empty(buffer_size, dtype=np.uint8)
         self.n_words = -1
 
         # for breiman shortcut:
-        self.counts = np.empty(MAX_N_CAT, dtype=np.intp)
-        self.weighted_counts = np.empty(MAX_N_CAT, dtype=np.float64)
-        self.means = np.empty(MAX_N_CAT, dtype=np.float64)
-        self.sorted_cat = np.empty(MAX_N_CAT, dtype=np.intp)
-        self.offsets = np.empty(MAX_N_CAT, dtype=np.intp)
+        self.counts = np.empty(MAX_NUM_CATEGORIES, dtype=np.intp)
+        self.weighted_counts = np.empty(MAX_NUM_CATEGORIES, dtype=np.float64)
+        self.means = np.empty(MAX_NUM_CATEGORIES, dtype=np.float64)
+        self.sorted_cat = np.empty(MAX_NUM_CATEGORIES, dtype=np.intp)
+        self.offsets = np.empty(MAX_NUM_CATEGORIES, dtype=np.intp)
 
     cdef inline void init_node_split(self, intp_t start, intp_t end) noexcept nogil:
         """Initialize splitter at the beginning of node_split."""
@@ -89,7 +89,7 @@ cdef class DensePartitioner:
         Returns ``True`` when the feature is constant at the current node.
         """
         cdef:
-            intp_t i, current_end
+            intp_t i, current_end, end_non_missing
             float32_t[::1] feature_values = self.feature_values
             const float32_t[:, :] X = self.X
             intp_t[::1] samples = self.samples
@@ -98,6 +98,10 @@ cdef class DensePartitioner:
 
         # Sort samples along that feature; by copying the values into an array and
         # sorting the array in a manner which utilizes the cache more effectively.
+        # 
+        # Final layout puts missing values to the right side of the array.
+        # samples[start : end - n_missing]     -> all NON-MISSING values
+        # samples[end - n_missing : end]       -> all MISSING values (NaNs)
         if missing_values_in_feature_mask is not None and missing_values_in_feature_mask[current_feature]:
             i, current_end = self.start, self.end - 1
             # Missing values are placed at the end and do not participate in the sorting.
@@ -153,7 +157,6 @@ cdef class DensePartitioner:
             # a categorical feature
             self._breiman_sort_categories(self.n_categories)
             return feature_values[self.start] == feature_values[self.end - 1]
-        
 
     cdef void _breiman_sort_categories(self, intp_t nc) noexcept nogil:
         """
@@ -210,7 +213,7 @@ cdef class DensePartitioner:
         for r in range(nc):
             c = sorted_cat[r]
             offset += counts[c]
-            offsets[c] = offset - 1
+            offsets[c] = self.start + offset - 1
 
         # sort feature_values & samples in-place such that
         # they are ordered by the mean of the category
@@ -301,11 +304,21 @@ cdef class DensePartitioner:
         """
         cdef intp_t end_non_missing = self.end - self.n_missing
 
-        while (
-            p[0] + 1 < end_non_missing and
-            self.feature_values[p[0] + 1] <= self.feature_values[p[0]] + FEATURE_THRESHOLD
-        ):
-            p[0] += 1
+        if self.n_categories > 0:
+            # For categorical features (Breiman-sorted), skip samples of the
+            # same category. Feature values are integers so exact equality works.
+            while (
+                p[0] + 1 < end_non_missing and
+                self.feature_values[p[0] + 1] == self.feature_values[p[0]]
+            ):
+                p[0] += 1
+        else:
+            # For numerical features, use threshold-based grouping
+            while (
+                p[0] + 1 < end_non_missing and
+                self.feature_values[p[0] + 1] <= self.feature_values[p[0]] + FEATURE_THRESHOLD
+            ):
+                p[0] += 1
 
         p_prev[0] = p[0]
 
@@ -340,7 +353,7 @@ cdef class DensePartitioner:
     cdef inline void partition_samples_final(
         self,
         intp_t best_pos,
-        float64_t best_threshold,
+        SplitValue best_split_value,
         intp_t best_feature,
         intp_t best_n_missing,
     ) noexcept nogil:
@@ -359,6 +372,7 @@ cdef class DensePartitioner:
             intp_t[::1] samples = self.samples
             const float32_t[:, :] X = self.X
             float32_t current_value
+            bint is_categorical = self.n_categories_in_feature[best_feature] > 0
 
         if best_n_missing != 0:
             # Move samples with missing values to the end while partitioning the
@@ -380,15 +394,18 @@ cdef class DensePartitioner:
                     current_value = X[samples[p], best_feature]
 
                 # Partition the non-missing samples
-                if current_value <= best_threshold:
+                if goes_left(best_split_value, 0, is_categorical, current_value):
                     p += 1
+                # if current_value <= best_split_value.threshold:
+                    # p += 1
                 else:
                     samples[p], samples[partition_end] = samples[partition_end], samples[p]
                     partition_end -= 1
         else:
             # Partitioning routine when there are no missing values
             while p < partition_end:
-                if X[samples[p], best_feature] <= best_threshold:
+                # if X[samples[p], best_feature] <= best_split_value.threshold:
+                if goes_left(best_split_value, 0, is_categorical, X[samples[p], best_feature]):
                     p += 1
                 else:
                     samples[p], samples[partition_end] = samples[partition_end], samples[p]
@@ -405,26 +422,27 @@ cdef class DensePartitioner:
 
         From the numerical threshold, or bitset, one can split the samples into
         left and right child.
+
+        Note: for missing values, this assumes the missing values are on the right-side of
+        the array.
         """
         cdef SplitValue split
-        cdef intp_t end_non_missing = (
-            self.end if self.missing_on_the_left
-            else self.end - self.n_missing)
+        cdef intp_t end_non_missing = self.end - self.n_missing
 
         # if we split categorically, compute a bitset and populate the SplitValue
         if self.n_categories > 0:
             split_pos_to_bitset_words(
-                p,
+                p - self.start,  # 
                 &self.sorted_cat[0],
                 self.n_categories,
                 &self.counts[0],
-                split.cat_split,
+                split.categorical_bitset,
                 self.n_words
             )
             return split
 
         # if we split numerically, compute a numerical threshold
-        if p == end_non_missing and not self.missing_on_the_left:
+        if p == end_non_missing:
             # split with the right node being only the missing values
             split.threshold = INFINITY_64t
             return split
@@ -453,6 +471,7 @@ cdef class SparsePartitioner:
         intp_t n_samples,
         float32_t[::1] feature_values,
         const uint8_t[::1] missing_values_in_feature_mask,
+        const intp_t[::1] n_categories_in_feature
     ):
         if not (issparse(X) and X.format == "csc"):
             raise ValueError("X should be in csc format")
@@ -478,6 +497,9 @@ cdef class SparsePartitioner:
 
         self.missing_values_in_feature_mask = missing_values_in_feature_mask
 
+        self.n_categories_in_feature = n_categories_in_feature
+        self.n_categories = 0
+
     cdef inline void init_node_split(self, intp_t start, intp_t end) noexcept nogil:
         """Initialize splitter at the beginning of node_split."""
         self.start = start
@@ -485,7 +507,7 @@ cdef class SparsePartitioner:
         self.is_samples_sorted = 0
         self.n_missing = 0
 
-    cdef inline void sort_samples_and_feature_values(
+    cdef inline bint sort_samples_and_feature_values(
         self,
         intp_t current_feature
     ) noexcept nogil:
@@ -523,6 +545,9 @@ cdef class SparsePartitioner:
         # XXX: When sparse supports missing values, this should be set to the
         # number of missing values for current_feature
         self.n_missing = 0
+
+        # This feature is considered constant (max - min <= FEATURE_THRESHOLD)
+        return feature_values[self.end - 1] <= feature_values[self.start] + FEATURE_THRESHOLD
 
     cdef inline void find_min_max(
         self,
@@ -597,14 +622,16 @@ cdef class SparsePartitioner:
     cdef inline void partition_samples_final(
         self,
         intp_t best_pos,
-        float64_t best_threshold,
+        SplitValue split_value,
+        # float64_t best_threshold,
         intp_t best_feature,
         intp_t n_missing,
     ) noexcept nogil:
         """Partition samples for X at the best_threshold and best_feature."""
         self.extract_nnz(best_feature)
-        self._partition(best_threshold, best_pos)
+        self._partition(split_value.threshold, best_pos)
 
+    # TODO: use splitValue when refactored to support categorical data
     cdef inline intp_t _partition(self, float64_t threshold, intp_t zero_pos) noexcept nogil:
         """Partition samples[start:end] based on threshold."""
         cdef:
@@ -636,6 +663,49 @@ cdef class SparsePartitioner:
                 sparse_swap(index_to_samples, samples, p, partition_end)
 
         return partition_end
+
+    cdef inline SplitValue position_to_split_value(
+        self, intp_t p_prev, intp_t p
+    ) noexcept nogil:
+        """Convert a split position into a concrete split value.
+
+        - For numerical features, this returns the usual mid-point threshold.
+        - For categorical features, it converts the split position into a bitset
+        over categories.
+
+        From the numerical threshold, or bitset, one can split the samples into
+        left and right child.
+        """
+        cdef SplitValue split
+        cdef intp_t end_non_missing = self.end - self.n_missing
+
+        # if we split categorically, compute a bitset and populate the SplitValue
+        if self.n_categories > 0:
+            # split_pos_to_bitset_words(
+            #     p,
+            #     &self.sorted_cat[0],
+            #     self.n_categories,
+            #     &self.counts[0],
+            #     split.categorical_split,
+            #     self.n_words
+            # )
+            return split
+
+        # if we split numerically, compute a numerical threshold
+        if p == end_non_missing:
+            # split with the right node being only the missing values
+            split.threshold = INFINITY_64t
+            return split
+
+        # split between two non-missing values
+        # sum of halves is used to avoid infinite value
+        split.threshold = (
+            self.feature_values[p_prev] / 2.0 + self.feature_values[p] / 2.0
+        )
+        if split.threshold == INFINITY_64t or split.threshold == -INFINITY_64t:
+            split.threshold = self.feature_values[p_prev]
+
+        return split
 
     cdef inline void extract_nnz(self, intp_t feature) noexcept nogil:
         """Extract and partition values for a given feature.

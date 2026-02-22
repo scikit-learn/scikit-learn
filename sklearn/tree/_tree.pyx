@@ -26,6 +26,8 @@ from scipy.sparse import csr_matrix
 from sklearn.tree._utils cimport safe_realloc
 from sklearn.tree._utils cimport sizet_ptr_to_ndarray
 from sklearn.tree._utils cimport in_bitset_words_fast
+from sklearn.tree._utils cimport goes_left
+from sklearn.tree._utils cimport MAX_CAT_BITSET_WORDS, BITWORD_BITS
 
 cdef extern from "numpy/arrayobject.h":
     object PyArray_NewFromDescr(PyTypeObject* subtype, cnp.dtype descr,
@@ -55,12 +57,64 @@ TREE_UNDEFINED = -2
 cdef intp_t _TREE_LEAF = TREE_LEAF
 cdef intp_t _TREE_UNDEFINED = TREE_UNDEFINED
 
+MAX_NUM_CATEGORIES_PY = 256
+
 # Build the corresponding numpy dtype for Node.
 # This works by casting `dummy` to an array of Node of length 1, which numpy
 # can construct a `dtype`-object for. See https://stackoverflow.com/q/62448946
 # for a more detailed explanation.
+# cdef Node dummy
+# NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
+# XXX: this includes categorical_split, but it breaks joblib.hash
+# NODE_DTYPE = np.dtype({
+#     'names': ['left_child', 'right_child', 'feature', 'threshold', 'categorical_split',
+#               'impurity', 'n_node_samples', 'weighted_n_node_samples'],
+#     'formats': [np.intp, np.intp, np.intp, np.float64, np.uint64, np.float64,
+#                 np.intp, np.float64],
+#     'offsets': [
+#         <Py_ssize_t> &(<Node*> NULL).left_child,
+#         <Py_ssize_t> &(<Node*> NULL).right_child,
+#         <Py_ssize_t> &(<Node*> NULL).feature,
+#         <Py_ssize_t> &(<Node*> NULL).split_value,
+#         <Py_ssize_t> &(<Node*> NULL).split_value,
+#         <Py_ssize_t> &(<Node*> NULL).impurity,
+#         <Py_ssize_t> &(<Node*> NULL).n_node_samples,
+#         <Py_ssize_t> &(<Node*> NULL).weighted_n_node_samples
+#     ]
+# })
+# Build the corresponding numpy dtype for Node.
+# This works by casting `dummy` to an array of Node of length 1, which numpy
+# can construct a `dtype`-object for. See https://stackoverflow.com/q/62448946
+# for a more detailed explanation.
+
 cdef Node dummy
-NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
+# NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
+# A 32‐byte union “SplitValue” ──
+#   – threshold is a float64 at offset 0
+#   – categorical_bitset is an array of eight uint32’s at offset 0 (i.e. fully overlapping)
+#   – total itemsize must be 32 (so union = max(size of FLOAT64=8, size of 8×uint32=32))
+# Number of uint64 words in the categorical bitset.
+# Must match uint64_t[4] in SplitValue (see _utils.pxd).
+_N_BITSET_WORDS = 4
+
+SplitValue_dtype = np.dtype({
+    'names':   ['threshold', 'categorical_bitset'],
+    'formats': [np.float64,     (np.uint64, MAX_CAT_BITSET_WORDS)],
+    'offsets': [0,              0],
+    'itemsize': MAX_CAT_BITSET_WORDS * 8,
+})
+NODE_DTYPE = np.dtype([
+    ('left_child',              np.intp),   #  8 bytes  (offset 0)
+    ('right_child',             np.intp),   #  8 bytes  (offset 8)
+    ('feature',                 np.intp),   #  8 bytes  (offset 16)
+    ('split_value',             SplitValue_dtype),  # 64 bytes (offset 24)
+    ('impurity',                np.float64),   #  8 bytes (offset 56)
+    ('n_node_samples',          np.intp),      #  8 bytes (offset 64)
+    ('weighted_n_node_samples', np.float64),   #  8 bytes (offset 72)
+    ('missing_go_to_left',      np.uint8),      #  1 byte  (offset 80)
+    # NumPy will auto‐pad to a multiple of 8 (so total sizeof Node_dtype = 88 bytes),
+    # exactly matching C’s sizeof(Node) on a 64‐bit machine.
+], align=True)
 
 cdef inline void _init_parent_record(ParentInfo* record) noexcept nogil:
     record.n_constant_features = 0
@@ -82,7 +136,7 @@ cdef class TreeBuilder:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=None,
         const uint8_t[::1] missing_values_in_feature_mask=None,
-        const int32_t[::1] n_categories=None,
+        const intp_t[::1] n_categories=None,
     ):
         """Build a decision tree from the training set (X, y)."""
         pass
@@ -147,7 +201,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=None,
         const uint8_t[::1] missing_values_in_feature_mask=None,
-        const int32_t[::1] n_categories=None
+        const intp_t[::1] n_categories=None
     ):
         """Build a decision tree from the training set (X, y)."""
 
@@ -405,7 +459,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=None,
         const uint8_t[::1] missing_values_in_feature_mask=None,
-        const int32_t[::1] n_categories=None
+        const intp_t[::1] n_categories=None
     ):
         """Build a decision tree from the training set (X, y)."""
 
@@ -781,7 +835,7 @@ cdef class Tree:
 
     @property
     def n_categories(self):
-        return self.n_categories
+        return sizet_ptr_to_ndarray(self.n_categories, self.n_features)
 
     # TODO: Convert n_classes to cython.integral memory view once
     #  https://github.com/cython/cython/issues/5243 is fixed
@@ -974,14 +1028,14 @@ cdef class Tree:
             # left_child and right_child will be set later
             node.feature = feature
             # node.threshold = threshold
-            # node.split_value.threshold = split_value.threshold
-            # node.split_value.cat_split = split_value.cat_split
+            node.split_value.threshold = split_value.threshold
+            node.split_value.categorical_bitset = split_value.categorical_bitset
             if self.n_categories[feature] > 0:
                 node.split_value.threshold = -INFINITY
                 node.split_value.categorical_bitset = split_value.categorical_bitset
             else:
                 node.split_value.threshold = split_value.threshold
-                node.split_value.categorical_bitset = 0
+                # node.split_value.categorical_bitset = 0
             node.missing_go_to_left = missing_go_to_left
 
         self.node_count += 1
@@ -1039,7 +1093,7 @@ cdef class Tree:
                             node = &self.nodes[node.left_child]
                         else:
                             node = &self.nodes[node.right_child]
-                    elif self.n_categories[node.feature]:
+                    elif self.n_categories[node.feature] > 0:
                         if in_bitset_words_fast(
                             node.split_value.categorical_bitset,
                             <intp_t> X_i_node_feature
@@ -1175,7 +1229,7 @@ cdef class Tree:
                             node = &self.nodes[node.left_child]
                         else:
                             node = &self.nodes[node.right_child]
-                    elif self.n_categories[node.feature]:
+                    elif self.n_categories[node.feature] > 0:
                         if in_bitset_words_fast(
                             node.split_value.categorical_bitset,
                             <intp_t> X_i_node_feature

@@ -4,6 +4,7 @@
 from libc.stdlib cimport free
 from libc.stdlib cimport realloc
 from libc.math cimport log as ln
+from libc.math cimport isnan
 from libc.string cimport memset
 
 cimport numpy as cnp
@@ -28,6 +29,31 @@ cdef inline bint in_bitset_words_fast(const bitword_t* words, intp_t c) noexcept
     """Test whether bit `c` is set. Requires 0 <= c < BITWORD_BITS*n_words."""
     return (words[c >> BITWORD_SHIFT] & ((<bitword_t>1) << (c & BITWORD_MASK))) != 0
 
+cdef inline intp_t n_words_for_nbits(intp_t n_bits) noexcept:
+    """
+    Return the number of `bitword_t` words needed to store `n_bits` bits.
+
+    Requires BITWORD_BITS to match the width of bitword_t (e.g. 64 for uint64_t).
+    For n_bits <= 0, returns 0.
+    """
+    if n_bits <= 0:
+        return 0
+    return (n_bits + BITWORD_MASK) >> BITWORD_SHIFT
+
+cdef inline bint goes_left(
+    SplitValue split_value,
+    bint missing_go_to_left,
+    bint is_categorical,
+    float32_t value,
+) noexcept nogil:
+    if isnan(value):
+        return missing_go_to_left
+    elif is_categorical:
+        return in_bitset_words_fast(
+            split_value.categorical_bitset, <intp_t> value
+        )
+    else:
+        return value <= split_value.threshold
 
 # =============================================================================
 # Helper functions
