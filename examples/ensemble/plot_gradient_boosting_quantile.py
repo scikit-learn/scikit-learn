@@ -303,7 +303,7 @@ plt.show()
 # producing a well-calibrated conditional 90%-confidence interval.
 #
 # To do this we can compute the coverage fraction, i.e. the proportion of
-# observations that fall between the prediction intervals:
+# observations that fall within the prediction intervals:
 
 
 def coverage_fraction(y, y_low, y_high):
@@ -314,15 +314,15 @@ coverage_fraction(y_train, search_05p.predict(X_train), search_95p.predict(X_tra
 
 # %%
 # On the training set the calibration is very close to the expected coverage
-# value for a 90% confidence interval.
+# value of 90%.
 coverage_fraction(y_test, search_05p.predict(X_test), search_95p.predict(X_test))
 
 # %%
-# On the test set, the estimated confidence interval is too narrow to really
+# On the test set, the estimated interval is too narrow to
 # cover 90% of the test points, but it may still hit the right coverage within
 # reasonable statistical uncertainty. We can use :func:`scipy.stats.bootstrap`
 # to measure the variability of the coverage fraction at prediction time,
-# without retraining the models:
+# without retraining the models. We use a 95% confidence level for the estimated (bootstrapped) interval of coverage; this is not to be confused with the 90% coverage stemming from our 5% and 95% quantile predictions:
 
 from scipy.stats import bootstrap
 
@@ -334,13 +334,13 @@ train_coverage_bs = bootstrap(
     ),
     coverage_fraction,
     paired=True,
-    confidence_level=0.90,
+    confidence_level=0.95,
     n_resamples=1000,
 )
 ci = train_coverage_bs.confidence_interval
 print(
     f"Training-set coverage lies between {ci.low:.1%} and {ci.high:.1%}, "
-    f"based on a 90% bootstrap confidence interval."
+    f"based on a 95% bootstrap confidence interval."
 )
 
 # %%
@@ -355,17 +355,17 @@ test_coverage_bs = bootstrap(
     ),
     coverage_fraction,
     paired=True,
-    confidence_level=0.90,
+    confidence_level=0.95,
     n_resamples=1000,
 )
 ci = test_coverage_bs.confidence_interval
 print(
     f"Test-set coverage lies between {ci.low:.1%} and {ci.high:.1%}, "
-    f"based on a 90% bootstrap confidence interval."
+    f"based on a 95% bootstrap confidence interval."
 )
 
 
 # %%
-# The confidence interval of the tuned models is sadly not well-calibrated on
+# The quantile estimates from the tuned models are sadly not well-calibrated on
 # the test set: the width of the estimated confidence interval is too narrow
 # even when taking it's variations into account.
