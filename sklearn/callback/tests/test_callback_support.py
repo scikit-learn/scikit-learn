@@ -47,4 +47,5 @@ def test_clone_warning():
     estimator = MaxIterEstimator()
     estimator.set_callbacks(TestingCallback())
     with pytest.warns(UserWarning, match="There are callbacks set on the estimator "):
-        clone(estimator)
+        cloned_estimator = clone(estimator)
+    assert not hasattr(cloned_estimator, "_skl_callbacks")

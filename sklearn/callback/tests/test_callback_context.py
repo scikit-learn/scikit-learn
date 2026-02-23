@@ -260,5 +260,7 @@ def test_no_clone_warning_with_propagate_callback_context():
         estimator, task_name="", task_id=0, max_subtasks=0
     )
     with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
+        warnings.filterwarnings(
+            "error", message="There are callbacks set on the estimator "
+        )
         callback_ctx.propagate_callback_context(estimator, clone_estimator=True)
