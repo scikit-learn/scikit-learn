@@ -26,6 +26,40 @@ from sklearn.utils.validation import check_is_fitted, validate_data
 class NearestCentroid(
     DiscriminantAnalysisPredictionMixin, ClassifierMixin, BaseEstimator
 ):
+    def partial_fit(self, X, y, classes=None):
+    import numpy as np
+    from sklearn.utils.validation import check_X_y
+
+    X, y = check_X_y(X, y)
+
+    if not hasattr(self, "classes_"):
+        if classes is None:
+            classes = np.unique(y)
+        self.classes_ = np.array(classes)
+        n_features = X.shape[1]
+        self.centroids_ = np.zeros((len(self.classes_), n_features))
+        self.class_count_ = np.zeros(len(self.classes_))
+
+    for idx, cls in enumerate(self.classes_):
+        X_cls = X[y == cls]
+        if X_cls.shape[0] == 0:
+            continue
+
+        n_new = X_cls.shape[0]
+        new_mean = np.mean(X_cls, axis=0)
+
+        n_old = self.class_count_[idx]
+        old_mean = self.centroids_[idx]
+
+        updated_mean = (
+            (n_old * old_mean + n_new * new_mean)
+            / (n_old + n_new)
+        )
+
+        self.centroids_[idx] = updated_mean
+        self.class_count_[idx] += n_new
+
+    return self
     """Nearest centroid classifier.
 
     Each class is represented by its centroid, with test samples classified to
