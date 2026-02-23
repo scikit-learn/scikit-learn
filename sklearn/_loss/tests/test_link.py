@@ -58,7 +58,6 @@ def test_is_in_range(namespace, device, dtype_name, interval):
 
     with config_context(array_api_dispatch=True):
         low, high = _inclusive_low_high(interval, dtype=dtype, xp=xp)
-
         x = xp.linspace(low, high, num=10, **params)
 
         assert interval.includes(x)
