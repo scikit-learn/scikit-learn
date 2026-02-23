@@ -9,11 +9,10 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 import numpy as np
-from scipy.special import expit, logit
 from scipy.stats import gmean
 
 from sklearn.externals.array_api_compat import numpy as np_compat
-from sklearn.utils._array_api import get_namespace
+from sklearn.utils._array_api import _expit, _logit, get_namespace
 from sklearn.utils.extmath import softmax
 
 
@@ -177,10 +176,10 @@ class LogitLink(BaseLink):
     interval_y_pred = Interval(0, 1, False, False)
 
     def link(self, y_pred):
-        return logit(y_pred)
+        return _logit(y_pred)
 
     def inverse(self, raw_prediction):
-        return expit(raw_prediction)
+        return _expit(raw_prediction)
 
 
 class HalfLogitLink(BaseLink):
@@ -192,11 +191,11 @@ class HalfLogitLink(BaseLink):
     interval_y_pred = Interval(0, 1, False, False)
 
     def link(self, y_pred):
-        out = 0.5 * logit(y_pred)
+        out = 0.5 * _logit(y_pred)
         return out
 
     def inverse(self, raw_prediction):
-        return expit(2 * raw_prediction)
+        return _expit(2 * raw_prediction)
 
 
 class MultinomialLogit(BaseLink):
@@ -256,7 +255,7 @@ class MultinomialLogit(BaseLink):
         xp, _ = get_namespace(y_pred)
         # geometric mean as reference category
         gm = gmean(y_pred, axis=1)
-        return np.log(y_pred / gm[:, None])
+        return xp.log(y_pred / gm[:, None])
 
     def inverse(self, raw_prediction):
         return softmax(raw_prediction)
