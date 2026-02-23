@@ -2600,7 +2600,7 @@ def _check_pos_label_consistency(pos_label, y_true):
                 "specified: either make y_true take value in {0, 1} or "
                 "{-1, 1} or pass pos_label explicitly."
             )
-        pos_label = xp.asarray(1, dtype=dtype, device=device)
+        pos_label = True if xp.isdtype(dtype, "bool") else 1
 
     return pos_label
 
