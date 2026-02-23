@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
+
 import pytest
 
 from sklearn.base import clone
@@ -47,13 +49,11 @@ def test_clone_warning():
     """Test the warning when cloning an estimator with callback registered to it."""
     estimator = MaxIterEstimator()
     estimator.set_callbacks(TestingCallback())
-    with pytest.warns(
-        UserWarning, match="Some callbacks are registered to the estimator"
-    ):
+    with pytest.warns(UserWarning, match="There are callbacks set on the estimator "):
         clone(estimator)
 
 
-def test_no_clone_warning_with_meta_est(recwarn):
+def test_no_clone_warning_with_meta_est():
     """Test that the warning is not raised with callback-compatible meta-estimator.
 
     When the cloning is done inside of a callback-compatible meta-estimator, the warning
@@ -62,10 +62,6 @@ def test_no_clone_warning_with_meta_est(recwarn):
     estimator = MaxIterEstimator()
     estimator.set_callbacks(TestingCallback())
     meta_est = MetaEstimator(estimator=estimator)
-    meta_est.fit()
-    warning_not_raised = not any(
-        w.category is UserWarning
-        and "Some callbacks are registered to the estimator" in str(w.message)
-        for w in recwarn
-    )
-    assert warning_not_raised
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        meta_est.fit()

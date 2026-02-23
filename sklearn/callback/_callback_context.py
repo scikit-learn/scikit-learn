@@ -358,8 +358,8 @@ class CallbackContext:
                 ):
                     callback.on_fit_end(estimator, self)
 
-    def propagate_callbacks(self, sub_estimator, clone_estimator=False):
-        """Propagate the callbacks to a sub-estimator.
+    def propagate_callback_context(self, sub_estimator, clone_estimator=False):
+        """Propagate the callbacks and the context to a sub-estimator.
 
         The callbacks are propagated to a clone of the sub-estimator instead if
         clone_estimator is set to True.
@@ -407,7 +407,7 @@ class CallbackContext:
 
             with warnings.catch_warnings():
                 warnings.filterwarnings(
-                    "ignore", message="Some callbacks are registered to the estimator"
+                    "ignore", message="There are callbacks set on the estimator "
                 )
                 cloned_estimator = clone(sub_estimator)
                 if hasattr(sub_estimator, "_skl_callbacks"):
