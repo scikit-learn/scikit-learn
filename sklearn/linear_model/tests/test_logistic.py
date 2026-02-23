@@ -212,11 +212,12 @@ def test_check_solver_option(LR):
 
     # liblinear does not support penalty='none'
     # (LogisticRegressionCV does not supports penalty='none' at all)
-    if LR is LogisticRegression:
-        msg = "penalty=None is not supported for the liblinear solver"
-        lr = LR(C=np.inf, solver="liblinear")
-        with pytest.raises(ValueError, match=msg):
-            lr.fit(X, y)
+            if LR is LogisticRegression:
+                msg = "penalty=None is not supported for the liblinear solver"
+                lr = LR(C=np.inf, solver="liblinear")
+                with pytest.raises(ValueError, match=msg):
+                    # Slice X and y to the first 100 rows to make it binary (2 classes)
+                    lr.fit(X[:100], y[:100])
 
 
 # TODO(1.10): remove test with removal of penalty

@@ -87,12 +87,10 @@ def _check_solver(solver, penalty, dual):
             f"Only 'saga' solver supports elasticnet penalty, got solver={solver}."
         )
 
-    if solver == "liblinear" and penalty is None:
-        # TODO(1.10): update message to remove "as well as penalty=None".
-        raise ValueError(
-            "C=np.inf as well as penalty=None is not supported for the liblinear solver"
-        )
-
+        if solver == "liblinear" and penalty is None:
+            raise ValueError(
+                "penalty=None is not supported for the liblinear solver"
+            )
     return solver
 
 
