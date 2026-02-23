@@ -1,5 +1,0 @@
-- :class:`cluster.HDBSCAN` now supports configurable minimum-spanning-tree backends
-  via ``mst_algorithm`` and uses a dual-tree Boruvka backend by default on
-  dense tree-compatible inputs, significantly improving fit-time performance on
-  larger datasets.
-  By :user:`gustavorubim`.
