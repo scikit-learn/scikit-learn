@@ -1,7 +1,7 @@
 - :class:`linear_model.LinearRegression` reverts to the scipy default for the
   `cond` parameter when calling the `scipy.linalg.lstsq` solver on dense input
   data. On one hand the value chosen in :pr:`30040` helped fix some issues on
-  rank-decifient data, but on the other hand it introduced new issues especially
+  rank-deficient data, but on the other hand it introduced new issues especially
   on float32 data. A better default or exposing the `cond` parameter will be
   needed to fully solve the problem.
   By :user:`Antoine Baker <antoinebaker>`.

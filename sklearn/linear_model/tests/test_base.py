@@ -801,7 +801,7 @@ def test_linear_regression_sample_weight_consistency(
     params = dict(fit_intercept=fit_intercept)
     if sparse_X:
         # On sparse data we specify the `tol` argument used by the
-        # underlying solver (scipy.sparse.linalg), see issue #30131.
+        # underlying solver (scipy.sparse.linalg).
         params["tol"] = 1e-12
     reg = LinearRegression(**params).fit(X, y, sample_weight=None)
     coef = reg.coef_.copy()
