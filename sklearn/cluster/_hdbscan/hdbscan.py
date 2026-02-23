@@ -39,6 +39,7 @@ import numpy as np
 from scipy.sparse import csgraph, issparse
 
 from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
+from sklearn.cluster._hdbscan._boruvka import BoruvkaAlgorithm
 from sklearn.cluster._hdbscan._linkage import (
     MST_edge_dtype,
     make_single_linkage,
@@ -361,6 +362,36 @@ def _hdbscan_prims(
     return _process_mst(min_spanning_tree)
 
 
+def _hdbscan_boruvka(
+    X,
+    algo,
+    min_samples=5,
+    alpha=1.0,
+    metric="euclidean",
+    leaf_size=40,
+    n_jobs=None,
+    approx_min_span_tree=False,
+    **metric_params,
+):
+    """Build a single-linkage tree from `X` using the Boruvka MST backend."""
+    leaf_size = max(leaf_size, 3)
+    Tree = KDTree if algo == "kd_tree" else BallTree
+    tree = Tree(X, metric=metric, leaf_size=leaf_size, **metric_params)
+
+    out = BoruvkaAlgorithm(
+        tree=tree,
+        min_samples=min_samples,
+        metric=metric,
+        leaf_size=leaf_size // 3,
+        alpha=alpha,
+        approx_min_span_tree=approx_min_span_tree,
+        n_jobs=n_jobs,
+        **metric_params,
+    )
+    min_spanning_tree = out.spanning_tree()
+    return _process_mst(min_spanning_tree)
+
+
 def remap_single_linkage_tree(tree, internal_to_raw, non_finite):
     """
     Takes an internal single_linkage_tree structure and adds back in a set of points
@@ -473,7 +504,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         See [3]_ for more information.
 
     algorithm : {"auto", "brute", "kd_tree", "ball_tree"}, default="auto"
-        Exactly which algorithm to use for computing core distances; By default
+        Exactly which algorithm to use for computing core distances. By default
         this is set to `"auto"` which attempts to use a
         :class:`~sklearn.neighbors.KDTree` tree if possible, otherwise it uses
         a :class:`~sklearn.neighbors.BallTree` tree. Both `"kd_tree"` and
@@ -484,6 +515,22 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         both :class:`~sklearn.neighbors.KDTree` and
         :class:`~sklearn.neighbors.BallTree`, then it resolves to use the
         `"brute"` algorithm.
+
+    mst_algorithm : {"auto", "brute", "prims", "boruvka_exact", "boruvka_approx"}, \
+            default="auto"
+        Exactly which algorithm to use for building the minimum spanning tree
+        (MST) of the mutual reachability graph.
+
+        - `"auto"` uses `"brute"` when required (for sparse input or
+          precomputed distances) and otherwise uses `"boruvka_exact"`.
+        - `"brute"` computes the MST from a full pairwise mutual-reachability
+          graph.
+        - `"prims"` computes the MST with Prim's algorithm directly from the
+          raw feature matrix.
+        - `"boruvka_exact"` computes the exact MST with a dual-tree Boruvka
+          algorithm.
+        - `"boruvka_approx"` computes an approximate MST with additional
+          shortcuts for speed.
 
     leaf_size : int, default=40
         Leaf size for trees responsible for fast nearest neighbour queries when
@@ -654,6 +701,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         "metric_params": [dict, None],
         "alpha": [Interval(Real, left=0, right=None, closed="neither")],
         "algorithm": [StrOptions({"auto", "brute", "kd_tree", "ball_tree"})],
+        "mst_algorithm": [
+            StrOptions({"auto", "brute", "prims", "boruvka_exact", "boruvka_approx"})
+        ],
         "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
         "n_jobs": [Integral, None],
         "cluster_selection_method": [StrOptions({"eom", "leaf"})],
@@ -672,6 +722,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         metric_params=None,
         alpha=1.0,
         algorithm="auto",
+        mst_algorithm="auto",
         leaf_size=40,
         n_jobs=None,
         cluster_selection_method="eom",
@@ -687,6 +738,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self.metric = metric
         self.metric_params = metric_params
         self.algorithm = algorithm
+        self.mst_algorithm = mst_algorithm
         self.leaf_size = leaf_size
         self.n_jobs = n_jobs
         self.cluster_selection_method = cluster_selection_method
@@ -804,6 +856,21 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 f" samples in X ({X.shape[0]})"
             )
 
+        algorithms = {self.algorithm, self.mst_algorithm}
+        brute_compat_algorithms = {"auto", "brute"}
+        using_brute_compat_algos = algorithms.issubset(brute_compat_algorithms)
+
+        if "brute" in algorithms and not using_brute_compat_algos:
+            raise ValueError(
+                "When setting either `algorithm='brute'` or `mst_algorithm='brute'`,"
+                " both keyword arguments must only be set to either 'brute' or 'auto'."
+            )
+        if self.metric == "precomputed" and not using_brute_compat_algos:
+            raise ValueError(
+                "When setting `metric='precomputed'`, both `mst_algorithm` and"
+                " `algorithm` must be set to either 'brute' or 'auto'."
+            )
+
         mst_func = None
         kwargs = dict(
             X=X,
@@ -826,40 +893,55 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 " Please select a different metric."
             )
 
-        if self.algorithm != "auto":
+        if algorithms != {"auto"}:
             if (
                 self.metric != "precomputed"
                 and issparse(X)
-                and self.algorithm != "brute"
+                and "brute" not in algorithms
             ):
                 raise ValueError("Sparse data matrices only support algorithm `brute`.")
 
-            if self.algorithm == "brute":
+            if "brute" in algorithms:
                 mst_func = _hdbscan_brute
                 kwargs["copy"] = _copy
-            elif self.algorithm == "kd_tree":
-                mst_func = _hdbscan_prims
-                kwargs["algo"] = "kd_tree"
-                kwargs["leaf_size"] = self.leaf_size
             else:
-                mst_func = _hdbscan_prims
-                kwargs["algo"] = "ball_tree"
                 kwargs["leaf_size"] = self.leaf_size
+                # Prefer KDTree when available unless algorithm is explicit.
+                if self.algorithm != "auto":
+                    tree_algorithm = self.algorithm
+                else:
+                    tree_algorithm = (
+                        "kd_tree"
+                        if self.metric in KDTree.valid_metrics
+                        else "ball_tree"
+                    )
+                kwargs["algo"] = tree_algorithm
+
+                if self.mst_algorithm != "auto":
+                    if self.mst_algorithm == "prims":
+                        mst_func = _hdbscan_prims
+                    else:
+                        mst_func = _hdbscan_boruvka
+                        kwargs["approx_min_span_tree"] = (
+                            self.mst_algorithm == "boruvka_approx"
+                        )
+                else:
+                    # Use exact Boruvka by default for tree-compatible metrics.
+                    mst_func = _hdbscan_boruvka
+                    kwargs["approx_min_span_tree"] = False
         else:
             if issparse(X) or self.metric not in FAST_METRICS:
                 # We can't do much with sparse matrices ...
                 mst_func = _hdbscan_brute
                 kwargs["copy"] = _copy
-            elif self.metric in KDTree.valid_metrics:
-                # TODO: Benchmark KD vs Ball Tree efficiency
-                mst_func = _hdbscan_prims
-                kwargs["algo"] = "kd_tree"
-                kwargs["leaf_size"] = self.leaf_size
             else:
-                # Metric is a valid BallTree metric
-                mst_func = _hdbscan_prims
-                kwargs["algo"] = "ball_tree"
+                # Use exact Boruvka by default for tree-compatible metrics.
+                mst_func = _hdbscan_boruvka
+                kwargs["approx_min_span_tree"] = False
                 kwargs["leaf_size"] = self.leaf_size
+                kwargs["algo"] = (
+                    "kd_tree" if self.metric in KDTree.valid_metrics else "ball_tree"
+                )
 
         self._single_linkage_tree_ = mst_func(**kwargs)
 
