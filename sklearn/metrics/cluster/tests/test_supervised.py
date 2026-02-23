@@ -520,13 +520,3 @@ def test_normalized_mutual_info_score_bounded(average_method):
     # non constant, non perfect matching labels
     nmi = normalized_mutual_info_score(labels2, labels3, average_method=average_method)
     assert 0 <= nmi < 1
-
-
-# TODO(1.9): remove
-@pytest.mark.parametrize("sparse", [True, False])
-def test_fowlkes_mallows_sparse_deprecated(sparse):
-    """Check deprecation warning for 'sparse' parameter of fowlkes_mallows_score."""
-    with pytest.warns(
-        FutureWarning, match="The 'sparse' parameter was deprecated in 1.7"
-    ):
-        fowlkes_mallows_score([0, 1], [1, 1], sparse=sparse)

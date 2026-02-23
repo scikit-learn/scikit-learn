@@ -23,7 +23,6 @@ from sklearn.utils._array_api import (
     get_namespace_and_device,
 )
 from sklearn.utils._param_validation import (
-    Hidden,
     Interval,
     StrOptions,
     validate_params,
@@ -1189,11 +1188,10 @@ def normalized_mutual_info_score(
     {
         "labels_true": ["array-like"],
         "labels_pred": ["array-like"],
-        "sparse": ["boolean", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
-def fowlkes_mallows_score(labels_true, labels_pred, *, sparse="deprecated"):
+def fowlkes_mallows_score(labels_true, labels_pred):
     """Measure the similarity of two clusterings of a set of points.
 
     .. versionadded:: 0.18
@@ -1223,13 +1221,6 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse="deprecated"):
 
     labels_pred : array-like of shape (n_samples,), dtype=int
         A clustering of the data into disjoint subsets.
-
-    sparse : bool, default=False
-        Compute contingency matrix internally with sparse matrix.
-
-        .. deprecated:: 1.7
-            The ``sparse`` parameter is deprecated and will be removed in 1.9. It has
-            no effect.
 
     Returns
     -------
@@ -1264,14 +1255,6 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse="deprecated"):
       >>> fowlkes_mallows_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
     """
-    # TODO(1.9): remove the sparse parameter
-    if sparse != "deprecated":
-        warnings.warn(
-            "The 'sparse' parameter was deprecated in 1.7 and will be removed in 1.9. "
-            "It has no effect. Leave it to its default value to silence this warning.",
-            FutureWarning,
-        )
-
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     (n_samples,) = labels_true.shape
 
