@@ -254,7 +254,7 @@ def check_array_api_unsupervised_metric(metric, array_namespace, device, dtype_n
     )
 
 
-def check_array_api_metric_supervised(metric, array_namespace, device, int_dtype):
+def check_array_api_supervised_metric(metric, array_namespace, device, int_dtype):
     labels_true = np.array([0, 0, 1, 1, 2, 2], dtype=int_dtype)
     labels_pred = np.array([1, 0, 2, 1, 0, 2], dtype=int_dtype)
 
@@ -277,7 +277,7 @@ array_api_metric_checkers = {
     ],
 }
 array_api_metric_checkers_supervised = {
-    contingency_matrix: [check_array_api_metric_supervised]
+    contingency_matrix: [check_array_api_supervised_metric]
 }
 
 
