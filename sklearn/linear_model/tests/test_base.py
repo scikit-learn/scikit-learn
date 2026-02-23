@@ -750,9 +750,11 @@ def test_fused_types_make_dataset(csr_container):
 
 
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
-def test_linear_regression_33032(dtype):
-    # Check that LinearRegression is as good as `scipy.linalg.lstsq`
-    # See issue #33032
+def test_linear_regression_vs_lstsq(dtype):
+    """
+    Check that LinearRegression is as good as `scipy.linalg.lstsq`.
+    Non regression test for issue #33032.
+    """
     rng = np.random.RandomState(1137)
     n_samples = 500_000
 
