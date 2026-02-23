@@ -839,3 +839,6 @@ added space complexity in the operation.
 
 * `Wikipedia entry on Neighborhood Components Analysis
   <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_
+
+
+NearestCentroid now supports partial_fit for incremental learning.
