@@ -410,9 +410,9 @@ class CallbackContext:
                     "ignore", message="There are callbacks set on the estimator "
                 )
                 cloned_estimator = clone(sub_estimator)
-                if hasattr(sub_estimator, "_skl_callbacks"):
-                    cloned_estimator.set_callbacks(sub_estimator._skl_callbacks)
-                sub_estimator = cloned_estimator
+            if hasattr(sub_estimator, "_skl_callbacks"):
+                cloned_estimator.set_callbacks(sub_estimator._skl_callbacks)
+            sub_estimator = cloned_estimator
 
         if not callbacks_to_propagate:
             return sub_estimator
