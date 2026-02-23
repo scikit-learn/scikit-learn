@@ -208,33 +208,6 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
 
     _html_repr = estimator_html_repr
 
-    def _get_fitted_attr_html(self, doc_link=""):
-        """Get fitted attributes of the estimator."""
-
-        attributes = inspect.getmembers(self)
-        fitted_attributes = {
-            name: value
-            for name, value in attributes
-            if not name.startswith("_") and name.endswith("_")
-        }
-        fitted_attr_out = {}
-        for name, value in fitted_attributes.items():
-            if _is_arraylike_not_scalar(value) and hasattr(value, "shape"):
-                fitted_attr_out[name] = (
-                    type(value).__name__,
-                    value.shape,
-                    value.dtype,
-                    value,
-                )
-
-            else:
-                fitted_attr_out[name] = (type(value).__name__, value)
-        return AttrsDict(
-            fitted_attrs=fitted_attr_out,
-            estimator_class=self.__class__,
-            doc_link=doc_link,
-        )
-
     @classmethod
     def _get_param_names(cls):
         """Get parameter names for the estimator"""
@@ -369,6 +342,33 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         return ParamsDict(
             params=params,
             non_default=tuple(non_default_params),
+            estimator_class=self.__class__,
+            doc_link=doc_link,
+        )
+
+    def _get_fitted_attr_html(self, doc_link=""):
+        """Get fitted attributes of the estimator."""
+
+        attributes = inspect.getmembers(self)
+        fitted_attributes = {
+            name: value
+            for name, value in attributes
+            if not name.startswith("_") and name.endswith("_")
+        }
+        fitted_attr_out = {}
+        for name, value in fitted_attributes.items():
+            if _is_arraylike_not_scalar(value) and hasattr(value, "shape"):
+                fitted_attr_out[name] = (
+                    type(value).__name__,
+                    value.shape,
+                    value.dtype,
+                    value,
+                )
+
+            else:
+                fitted_attr_out[name] = (type(value).__name__, value)
+        return AttrsDict(
+            fitted_attrs=fitted_attr_out,
             estimator_class=self.__class__,
             doc_link=doc_link,
         )
