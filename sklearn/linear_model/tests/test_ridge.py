@@ -913,7 +913,15 @@ def test_regularization_limits_ridge(
     assert_allclose(ridge.intercept_, expected_intercept, atol=1e-10)
 
 
-@pytest.mark.parametrize("alpha", [1e-16, 1e16], ids=["zero_alpha", "inf_alpha"])
+def alpha_zero(X, y, fit_intercept):
+    lin_reg = LinearRegression(fit_intercept=fit_intercept).fit(X, y)
+    return lin_reg.coef_, lin_reg.intercept_
+
+
+def alpha_inf(X, y, fit_intercept):
+    return np.zeros(n_features), np.mean(y) if fit_intercept else 0.0
+
+@pytest.mark.parametrize(["alpha", "calc_result"], [(1e-16, alpha_zero), (1e16, alpha_inf)], ids=["zero_alpha", "inf_alpha"])
 @pytest.mark.parametrize("gcv_mode", ["ignored"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize(
