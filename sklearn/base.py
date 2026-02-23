@@ -137,7 +137,7 @@ def _clone_parametrized(estimator, *, safe=True):
 
     if hasattr(estimator, "_skl_callbacks"):
         warnings.warn(
-            "Some callbacks are registered to the estimator "
+            "There are callbacks are set on the estimator "
             f"{estimator.__class__.__name__} being cloned. The callbacks will be "
             "discarded in the clone."
         )  # TODO: add a link to some documentation for callback support.
