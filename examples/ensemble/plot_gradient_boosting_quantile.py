@@ -300,7 +300,8 @@ plt.show()
 # --------------------------------------
 #
 # We can also evaluate the ability of the two extreme quantile estimators at
-# producing a well-calibrated conditional 90%-confidence interval.
+# producing well-calibrated predictions of the 90%-coverage interval (conditional on `X`),
+meaning that on average 90% of the observations should lie within this interval.
 #
 # To do this we can compute the coverage fraction, i.e. the proportion of
 # observations that fall within the prediction intervals:
