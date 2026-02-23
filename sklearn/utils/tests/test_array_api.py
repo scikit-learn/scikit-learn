@@ -6,6 +6,7 @@ import pytest
 import scipy
 import scipy.sparse as sp
 from numpy.testing import assert_allclose
+from scipy.special import expit, logit
 
 from sklearn._config import config_context
 from sklearn._loss import HalfMultinomialLoss
@@ -18,11 +19,13 @@ from sklearn.utils._array_api import (
     _convert_to_numpy,
     _count_nonzero,
     _estimator_with_converted_arrays,
+    _expit,
     _fill_diagonal,
     _get_namespace_device_dtype_ids,
     _half_multinomial_loss,
     _is_numpy_namespace,
     _isin,
+    _logit,
     _logsumexp,
     _matching_numpy_dtype,
     _max_precision_float_dtype,
@@ -822,6 +825,31 @@ def test_median(namespace, device, dtype_name, axis):
             assert get_namespace(result_xp)[0] == xp
             assert result_xp.device == X_xp.device
     assert_allclose(result_np, _convert_to_numpy(result_xp, xp=xp))
+
+
+@pytest.mark.parametrize(
+    "namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@config_context(array_api_dispatch=True)
+def test_expit_logit(namespace, device, dtype_name):
+    rtol = 1e-6 if "float32" in str(dtype_name) else 1e-12
+    xp = _array_api_for_tests(namespace, device)
+
+    x_np = numpy.linspace(-20, 20, 1000).astype(dtype_name)
+    x_xp = xp.asarray(x_np, device=device)
+    assert_allclose(
+        _convert_to_numpy(_expit(x_xp), xp=xp),
+        expit(x_np),
+        rtol=rtol,
+    )
+
+    x_np = numpy.linspace(0, 1, 1000).astype(dtype_name)
+    x_xp = xp.asarray(x_np, device=device)
+    assert_allclose(
+        _convert_to_numpy(_logit(x_xp), xp=xp),
+        logit(x_np),
+        rtol=rtol,
+    )
 
 
 @pytest.mark.parametrize(
