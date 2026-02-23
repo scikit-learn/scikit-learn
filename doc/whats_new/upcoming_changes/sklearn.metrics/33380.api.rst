@@ -1,0 +1,3 @@
+- :func:`metrics.fowlkes_mallows_score` removed the deprecated `sparse` parameter,
+  which had no effect.
+  By :user:`Unique Shrestha <un1u3>`.
