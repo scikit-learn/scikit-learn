@@ -1,4 +1,6 @@
 - The HTML representation of all scikit-learn estimators
-  inheriting from :class:`base.BaseEstimator` now displays a table
-  showing the fitted attributes.
-  By :user:`Dea María Léon <DeaMariaLeon>`.
+  inheriting from :class:`base.BaseEstimator` now includes a table
+  displaying their fitted attributes. These attributes are identified
+  by a trailing underscore and do not begin with one.
+  By :user:`Dea María Léon <DeaMariaLeon>`,
+  :user: `Jérémie du Boisberranger <jeremiedbb>`.
