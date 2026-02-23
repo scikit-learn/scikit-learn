@@ -377,7 +377,7 @@ def test_lasso_cv_positive_constraint(global_random_seed):
     # Unconstrained: should recover a clearly negative coefficient
     max_iter = 500
     clf_unconstrained = LassoCV(
-        alphas=3, eps=1e-1, cv=2, max_iter=max_iter, fit_intercept=False, n_jobs=1
+        alphas=3, eps=1e-1, cv=2, max_iter=max_iter, n_jobs=1
     ).fit(X, y)
     assert clf_unconstrained.coef_[0] < -0.5
 
@@ -387,7 +387,6 @@ def test_lasso_cv_positive_constraint(global_random_seed):
         eps=1e-1,
         cv=2,
         max_iter=max_iter,
-        fit_intercept=False,
         positive=True,
         n_jobs=1,
     ).fit(X, y)
@@ -572,7 +571,6 @@ def test_enet_cv_positive_constraint(global_random_seed):
         eps=1e-1,
         max_iter=max_iter,
         cv=2,
-        fit_intercept=False,
         n_jobs=1,
     ).fit(X, y)
     assert enetcv_unconstrained.coef_[0] < -0.5
@@ -582,7 +580,6 @@ def test_enet_cv_positive_constraint(global_random_seed):
         eps=1e-1,
         max_iter=max_iter,
         cv=2,
-        fit_intercept=False,
         positive=True,
         n_jobs=1,
     ).fit(X, y)
@@ -807,24 +804,20 @@ def test_sparse_input_dtype_enet_and_lassocv(csr_container, global_random_seed):
 
 
 def test_elasticnet_precompute_incorrect_gram():
-    # Deterministic small dataset
-    X = np.array(
-        [
-            [0.0, 1.0],
-            [1.0, 0.0],
-            [2.0, 1.0],
-            [3.0, 2.0],
-        ]
-    )
-    y = np.array([0.0, 1.0, 2.0, 3.0])
+    # check that passing an invalid precomputed Gram matrix will raise an
+    # error.
+    X, y, _, _ = build_dataset()
 
-    garbage = np.arange(X.size, dtype=float).reshape(X.shape)
-    precompute = garbage.T @ garbage
+    rng = np.random.RandomState(0)
 
-    clf = ElasticNet(alpha=0.01, fit_intercept=False, precompute=precompute)
-    msg = r"Gram matrix.*did not pass validation.*"
+    X_centered = X - np.average(X, axis=0)
+    garbage = rng.standard_normal(X.shape)
+    precompute = np.dot(garbage.T, garbage)
+
+    clf = ElasticNet(alpha=0.01, precompute=precompute)
+    msg = "Gram matrix.*did not pass validation.*"
     with pytest.raises(ValueError, match=msg):
-        clf.fit(X, y)
+        clf.fit(X_centered, y)
 
 
 def test_elasticnet_precompute_gram_weighted_samples(global_random_seed):
@@ -1006,6 +999,8 @@ def test_sparse_dense_descent_paths(csr_container, global_random_seed):
 
 @pytest.mark.parametrize("path_func", [enet_path, lasso_path])
 def test_path_unknown_parameter(path_func):
+    """Check that passing parameter not used by the coordinate descent solver
+    will raise an error."""
     X = np.arange(10).reshape((5, 2))
     y = np.zeros(5)
     err_msg = "Unexpected parameters in params"
