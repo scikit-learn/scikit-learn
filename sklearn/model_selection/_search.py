@@ -288,9 +288,7 @@ class ParameterSampler:
 
         for dist in param_distributions:
             if not isinstance(dist, dict):
-                raise TypeError(
-                    "Parameter distribution is not a dict ({!r})".format(dist)
-                )
+                raise TypeError(f"Parameter distribution is not a dict ({dist!r})")
             for key in dist:
                 if not isinstance(dist[key], Iterable) and not hasattr(
                     dist[key], "rvs"
@@ -724,9 +722,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             check_is_fitted(self)
         except NotFittedError as nfe:
             raise AttributeError(
-                "{} object has no n_features_in_ attribute.".format(
-                    self.__class__.__name__
-                )
+                f"{self.__class__.__name__} object has no n_features_in_ attribute."
             ) from nfe
 
         return self.best_estimator_.n_features_in_
@@ -990,10 +986,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
                 if self.verbose > 0:
                     print(
-                        "Fitting {0} folds for each of {1} candidates,"
-                        " totalling {2} fits".format(
-                            n_splits, n_candidates, n_candidates * n_splits
-                        )
+                        f"Fitting {n_splits} folds for each of {n_candidates} candidates,"
+                        f" totalling {n_candidates * n_splits} fits"
                     )
 
                 out = parallel(
@@ -1023,8 +1017,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 elif len(out) != n_candidates * n_splits:
                     raise ValueError(
                         "cv.split and cv.get_n_splits returned "
-                        "inconsistent results. Expected {} "
-                        "splits, got {}".format(n_splits, len(out) // n_candidates)
+                        f"inconsistent results. Expected {n_splits} "
+                        f"splits, got {len(out) // n_candidates}"
                     )
 
                 _warn_or_raise_about_fit_failures(out, self.error_score)

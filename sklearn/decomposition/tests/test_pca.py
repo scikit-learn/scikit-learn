@@ -553,9 +553,9 @@ def test_pca_validation(svd_solver, data, n_components, err_msg):
         n_components = smallest_d
 
         err_msg = (
-            "n_components={}L? must be strictly less than "
-            r"min\(n_samples, n_features\)={}L? with "
-            "svd_solver='arpack'".format(n_components, smallest_d)
+            f"n_components={n_components}L? must be strictly less than "
+            rf"min\(n_samples, n_features\)={smallest_d}L? with "
+            "svd_solver='arpack'"
         )
         with pytest.raises(ValueError, match=err_msg):
             PCA(n_components, svd_solver=svd_solver).fit(data)
@@ -595,9 +595,7 @@ def test_n_components_mle_error(svd_solver):
     n_samples, n_features = 600, 10
     X = rng.randn(n_samples, n_features)
     pca = PCA(n_components="mle", svd_solver=svd_solver)
-    err_msg = "n_components='mle' cannot be a string with svd_solver='{}'".format(
-        svd_solver
-    )
+    err_msg = f"n_components='mle' cannot be a string with svd_solver='{svd_solver}'"
     with pytest.raises(ValueError, match=err_msg):
         pca.fit(X)
 

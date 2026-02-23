@@ -132,10 +132,10 @@ def test_incremental_pca_validation():
     with pytest.raises(
         ValueError,
         match=(
-            "n_components={} invalid"
-            " for n_features={}, need more rows than"
+            f"n_components={n_components} invalid"
+            f" for n_features={n_features}, need more rows than"
             " columns for IncrementalPCA"
-            " processing".format(n_components, n_features)
+            " processing"
         ),
     ):
         IncrementalPCA(n_components, batch_size=10).fit(X)

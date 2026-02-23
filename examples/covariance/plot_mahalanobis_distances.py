@@ -114,9 +114,7 @@ robust_cov = MinCovDet().fit(X)
 # fit a MLE estimator to data
 emp_cov = EmpiricalCovariance().fit(X)
 print(
-    "Estimated covariance matrix:\nMCD (Robust):\n{}\nMLE:\n{}".format(
-        robust_cov.covariance_, emp_cov.covariance_
-    )
+    f"Estimated covariance matrix:\nMCD (Robust):\n{robust_cov.covariance_}\nMLE:\n{emp_cov.covariance_}"
 )
 
 # %%

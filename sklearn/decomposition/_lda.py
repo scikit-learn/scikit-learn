@@ -133,7 +133,7 @@ def _update_doc_distribution(
         exp_topic_word_d = exp_topic_word_distr[:, ids]
 
         # Iterate between `doc_topic_d` and `norm_phi` until convergence
-        for _ in range(0, max_doc_update_iter):
+        for _ in range(max_doc_update_iter):
             last_d = doc_topic_d
 
             # The optimal phi_{dwk} is proportional to
@@ -541,7 +541,6 @@ class LatentDirichletAllocation(
             _dirichlet_expectation_2d(self.components_)
         )
         self.n_batch_iter_ += 1
-        return
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -823,7 +822,7 @@ class LatentDirichletAllocation(
             X_indptr = X.indptr
 
         # E[log p(docs | theta, beta)]
-        for idx_d in range(0, n_samples):
+        for idx_d in range(n_samples):
             if is_sparse_x:
                 ids = X_indices[X_indptr[idx_d] : X_indptr[idx_d + 1]]
                 cnts = X_data[X_indptr[idx_d] : X_indptr[idx_d + 1]]

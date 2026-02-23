@@ -342,7 +342,7 @@ def test_function_param_validation(func_module):
     """
     func, func_name, func_params, required_params = _get_func_info(func_module)
 
-    parameter_constraints = getattr(func, "_skl_parameter_constraints")
+    parameter_constraints = func._skl_parameter_constraints
 
     _check_function_param_validation(
         func, func_name, func_params, required_params, parameter_constraints
@@ -389,8 +389,8 @@ def test_class_wrapper_param_validation(func_module, class_module):
     module = import_module(module_name)
     klass = getattr(module, class_name)
 
-    parameter_constraints_func = getattr(func, "_skl_parameter_constraints")
-    parameter_constraints_class = getattr(klass, "_parameter_constraints")
+    parameter_constraints_func = func._skl_parameter_constraints
+    parameter_constraints_class = klass._parameter_constraints
     parameter_constraints = {
         **parameter_constraints_class,
         **parameter_constraints_func,

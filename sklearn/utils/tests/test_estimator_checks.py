@@ -215,8 +215,7 @@ class ModifiesValueInsteadOfRaisingError(BaseEstimator):
     def set_params(self, **kwargs):
         if "p" in kwargs:
             p = kwargs.pop("p")
-            if p < 0:
-                p = 0
+            p = max(p, 0)
             self.p = p
         return super().set_params(**kwargs)
 
@@ -717,9 +716,9 @@ def test_check_methods_sample_order_invariance():
     name = NotInvariantSampleOrder.__name__
     method = "predict"
     msg = (
-        "{method} of {name} is not invariant when applied to a dataset"
+        f"{method} of {name} is not invariant when applied to a dataset"
         "with different sample order."
-    ).format(method=method, name=name)
+    )
     with raises(AssertionError, match=msg):
         check_methods_sample_order_invariance(
             "NotInvariantSampleOrder", NotInvariantSampleOrder()
@@ -730,9 +729,7 @@ def test_check_methods_subset_invariance():
     # check for invariant method
     name = NotInvariantPredict.__name__
     method = "predict"
-    msg = ("{method} of {name} is not invariant when applied to a subset.").format(
-        method=method, name=name
-    )
+    msg = f"{method} of {name} is not invariant when applied to a subset."
     with raises(AssertionError, match=msg):
         check_methods_subset_invariance("NotInvariantPredict", NotInvariantPredict())
 

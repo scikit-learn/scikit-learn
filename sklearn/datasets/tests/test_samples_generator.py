@@ -135,7 +135,7 @@ def test_make_classification_informative_features():
 
             # Cluster by sign, viewed as strings to allow uniquing
             signs = np.sign(X)
-            signs = signs.view(dtype="|S{0}".format(signs.strides[0])).ravel()
+            signs = signs.view(dtype=f"|S{signs.strides[0]}").ravel()
             unique_signs, cluster_index = np.unique(signs, return_inverse=True)
 
             assert len(unique_signs) == n_clusters, (
@@ -475,9 +475,7 @@ def test_make_blobs_error():
     )
     with pytest.raises(ValueError, match=wrong_std_msg):
         make_blobs(n_samples, centers=centers, cluster_std=cluster_stds[:-1])
-    wrong_type_msg = "Parameter `centers` must be array-like. Got {!r} instead".format(
-        3
-    )
+    wrong_type_msg = f"Parameter `centers` must be array-like. Got {3!r} instead"
     with pytest.raises(ValueError, match=wrong_type_msg):
         make_blobs(n_samples, centers=3)
 

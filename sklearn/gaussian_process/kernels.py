@@ -884,7 +884,7 @@ class Sum(KernelOperator):
         return self.k1.diag(X) + self.k2.diag(X)
 
     def __repr__(self):
-        return "{0} + {1}".format(self.k1, self.k2)
+        return f"{self.k1} + {self.k2}"
 
 
 class Product(KernelOperator):
@@ -984,7 +984,7 @@ class Product(KernelOperator):
         return self.k1.diag(X) * self.k2.diag(X)
 
     def __repr__(self):
-        return "{0} * {1}".format(self.k1, self.k2)
+        return f"{self.k1} * {self.k2}"
 
 
 class Exponentiation(Kernel):
@@ -1166,7 +1166,7 @@ class Exponentiation(Kernel):
         return self.kernel.diag(X) ** self.exponent
 
     def __repr__(self):
-        return "{0} ** {1}".format(self.kernel, self.exponent)
+        return f"{self.kernel} ** {self.exponent}"
 
     def is_stationary(self):
         """Returns whether the kernel is stationary."""
@@ -1313,7 +1313,7 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
         )
 
     def __repr__(self):
-        return "{0:.3g}**2".format(np.sqrt(self.constant_value))
+        return f"{np.sqrt(self.constant_value):.3g}**2"
 
 
 class WhiteKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
@@ -1434,9 +1434,7 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
         )
 
     def __repr__(self):
-        return "{0}(noise_level={1:.3g})".format(
-            self.__class__.__name__, self.noise_level
-        )
+        return f"{self.__class__.__name__}(noise_level={self.noise_level:.3g})"
 
 
 class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
@@ -1587,9 +1585,7 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
                 ", ".join(map("{0:.3g}".format, self.length_scale)),
             )
         else:  # isotropic
-            return "{0}(length_scale={1:.3g})".format(
-                self.__class__.__name__, np.ravel(self.length_scale)[0]
-            )
+            return f"{self.__class__.__name__}(length_scale={np.ravel(self.length_scale)[0]:.3g})"
 
 
 class Matern(RBF):
@@ -1787,9 +1783,7 @@ class Matern(RBF):
                 self.nu,
             )
         else:
-            return "{0}(length_scale={1:.3g}, nu={2:.3g})".format(
-                self.__class__.__name__, np.ravel(self.length_scale)[0], self.nu
-            )
+            return f"{self.__class__.__name__}(length_scale={np.ravel(self.length_scale)[0]:.3g}, nu={self.nu:.3g})"
 
 
 class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
@@ -1943,9 +1937,7 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             return K
 
     def __repr__(self):
-        return "{0}(alpha={1:.3g}, length_scale={2:.3g})".format(
-            self.__class__.__name__, self.alpha, self.length_scale
-        )
+        return f"{self.__class__.__name__}(alpha={self.alpha:.3g}, length_scale={self.length_scale:.3g})"
 
 
 class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
@@ -2088,9 +2080,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             return K
 
     def __repr__(self):
-        return "{0}(length_scale={1:.3g}, periodicity={2:.3g})".format(
-            self.__class__.__name__, self.length_scale, self.periodicity
-        )
+        return f"{self.__class__.__name__}(length_scale={self.length_scale:.3g}, periodicity={self.periodicity:.3g})"
 
 
 class DotProduct(Kernel):
@@ -2228,7 +2218,7 @@ class DotProduct(Kernel):
         return False
 
     def __repr__(self):
-        return "{0}(sigma_0={1:.3g})".format(self.__class__.__name__, self.sigma_0)
+        return f"{self.__class__.__name__}(sigma_0={self.sigma_0:.3g})"
 
 
 # adapted from scipy/optimize/optimize.py for functions with 2d output
@@ -2402,6 +2392,4 @@ class PairwiseKernel(Kernel):
         return self.metric in ["rbf"]
 
     def __repr__(self):
-        return "{0}(gamma={1}, metric={2})".format(
-            self.__class__.__name__, self.gamma, self.metric
-        )
+        return f"{self.__class__.__name__}(gamma={self.gamma}, metric={self.metric})"

@@ -11,7 +11,7 @@ import pickle
 from collections import defaultdict
 from functools import partial
 from itertools import combinations, product
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import patch
 
 import joblib
@@ -107,12 +107,12 @@ FOREST_TRANSFORMERS = {
     "RandomTreesEmbedding": RandomTreesEmbedding,
 }
 
-FOREST_ESTIMATORS: Dict[str, Any] = dict()
+FOREST_ESTIMATORS: dict[str, Any] = dict()
 FOREST_ESTIMATORS.update(FOREST_CLASSIFIERS)
 FOREST_ESTIMATORS.update(FOREST_REGRESSORS)
 FOREST_ESTIMATORS.update(FOREST_TRANSFORMERS)
 
-FOREST_CLASSIFIERS_REGRESSORS: Dict[str, Any] = FOREST_CLASSIFIERS.copy()
+FOREST_CLASSIFIERS_REGRESSORS: dict[str, Any] = FOREST_CLASSIFIERS.copy()
 FOREST_CLASSIFIERS_REGRESSORS.update(FOREST_REGRESSORS)
 
 
@@ -451,11 +451,11 @@ def test_importances_asymptotic():
 @pytest.mark.parametrize("name", FOREST_ESTIMATORS)
 def test_unfitted_feature_importances(name):
     err_msg = (
-        "This {} instance is not fitted yet. Call 'fit' with "
-        "appropriate arguments before using this estimator.".format(name)
+        f"This {name} instance is not fitted yet. Call 'fit' with "
+        "appropriate arguments before using this estimator."
     )
     with pytest.raises(NotFittedError, match=err_msg):
-        getattr(FOREST_ESTIMATORS[name](), "feature_importances_")
+        FOREST_ESTIMATORS[name]().feature_importances_
 
 
 @pytest.mark.parametrize("ForestClassifier", FOREST_CLASSIFIERS.values())
@@ -1010,14 +1010,14 @@ def test_min_samples_split(name):
     node_idx = est.estimators_[0].tree_.children_left != -1
     node_samples = est.estimators_[0].tree_.n_node_samples[node_idx]
 
-    assert np.min(node_samples) > len(X) * 0.5 - 1, "Failed with {0}".format(name)
+    assert np.min(node_samples) > len(X) * 0.5 - 1, f"Failed with {name}"
 
     est = ForestEstimator(min_samples_split=0.5, n_estimators=1, random_state=0)
     est.fit(X, y)
     node_idx = est.estimators_[0].tree_.children_left != -1
     node_samples = est.estimators_[0].tree_.n_node_samples[node_idx]
 
-    assert np.min(node_samples) > len(X) * 0.5 - 1, "Failed with {0}".format(name)
+    assert np.min(node_samples) > len(X) * 0.5 - 1, f"Failed with {name}"
 
 
 @pytest.mark.parametrize("name", FOREST_ESTIMATORS)
@@ -1033,7 +1033,7 @@ def test_min_samples_leaf(name):
     node_counts = np.bincount(out)
     # drop inner nodes
     leaf_count = node_counts[node_counts != 0]
-    assert np.min(leaf_count) > 4, "Failed with {0}".format(name)
+    assert np.min(leaf_count) > 4, f"Failed with {name}"
 
     est = ForestEstimator(min_samples_leaf=0.25, n_estimators=1, random_state=0)
     est.fit(X, y)
@@ -1041,7 +1041,7 @@ def test_min_samples_leaf(name):
     node_counts = np.bincount(out)
     # drop inner nodes
     leaf_count = node_counts[node_counts != 0]
-    assert np.min(leaf_count) > len(X) * 0.25 - 1, "Failed with {0}".format(name)
+    assert np.min(leaf_count) > len(X) * 0.25 - 1, f"Failed with {name}"
 
 
 @pytest.mark.parametrize("name", FOREST_ESTIMATORS)
@@ -1070,9 +1070,7 @@ def test_min_weight_fraction_leaf(name):
         # drop inner nodes
         leaf_weights = node_weights[node_weights != 0]
         assert np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf, (
-            "Failed with {0} min_weight_fraction_leaf={1}".format(
-                name, est.min_weight_fraction_leaf
-            )
+            f"Failed with {name} min_weight_fraction_leaf={est.min_weight_fraction_leaf}"
         )
 
 
@@ -1325,7 +1323,7 @@ def test_warm_start(name):
     )
 
     assert_array_equal(
-        est_ws.apply(X), est_no_ws.apply(X), err_msg="Failed with {0}".format(name)
+        est_ws.apply(X), est_no_ws.apply(X), err_msg=f"Failed with {name}"
     )
 
 

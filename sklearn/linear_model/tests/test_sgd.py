@@ -788,9 +788,7 @@ def test_sgd_predict_proba_method_access(klass):
             assert hasattr(clf, "predict_proba")
             assert hasattr(clf, "predict_log_proba")
         else:
-            inner_msg = "probability estimates are not available for loss={!r}".format(
-                loss
-            )
+            inner_msg = f"probability estimates are not available for loss={loss!r}"
             assert not hasattr(clf, "predict_proba")
             assert not hasattr(clf, "predict_log_proba")
             with pytest.raises(

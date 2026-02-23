@@ -29,7 +29,7 @@ from sklearn.model_selection._search_successive_halving import (
 )
 
 # use settattr to avoid mypy errors when monkeypatching
-setattr(model_selection, "HalvingRandomSearchCV", HalvingRandomSearchCV)
-setattr(model_selection, "HalvingGridSearchCV", HalvingGridSearchCV)
+model_selection.HalvingRandomSearchCV = HalvingRandomSearchCV
+model_selection.HalvingGridSearchCV = HalvingGridSearchCV
 
 model_selection.__all__ += ["HalvingRandomSearchCV", "HalvingGridSearchCV"]

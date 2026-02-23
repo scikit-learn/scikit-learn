@@ -736,11 +736,13 @@ def test_invalid_sample_weight_max_samples_bootstrap_combinations():
         "max_samples=151 must be <= n_samples=150 to be able to sample without "
         "replacement."
     )
-    with pytest.raises(ValueError, match=expected_msg):
-        with pytest.warns(
+    with (
+        pytest.raises(ValueError, match=expected_msg),
+        pytest.warns(
             UserWarning, match="When fitting BaggingClassifier with sample_weight"
-        ):
-            clf.fit(X, y, sample_weight=sample_weight)
+        ),
+    ):
+        clf.fit(X, y, sample_weight=sample_weight)
 
 
 class EstimatorAcceptingSampleWeight(BaseEstimator):
@@ -832,7 +834,7 @@ def test_oob_score_removed_on_warm_start():
     clf.fit(X, y)
 
     with pytest.raises(AttributeError):
-        getattr(clf, "oob_score_")
+        clf.oob_score_
 
 
 def test_oob_score_consistency():

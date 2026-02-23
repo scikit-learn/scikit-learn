@@ -27,10 +27,10 @@ step before the final (global) clustering step that further reduces these
 from itertools import cycle
 from time import time
 
-import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
 from joblib import cpu_count
+from matplotlib import colors
 
 from sklearn.cluster import Birch, MiniBatchKMeans
 from sklearn.datasets import make_blobs

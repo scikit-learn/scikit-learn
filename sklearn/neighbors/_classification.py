@@ -692,9 +692,9 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
             ):
                 if len(self.outlier_label) != len(classes_):
                     raise ValueError(
-                        "The length of outlier_label: {} is "
+                        f"The length of outlier_label: {self.outlier_label} is "
                         "inconsistent with the output "
-                        "length: {}".format(self.outlier_label, len(classes_))
+                        f"length: {len(classes_)}"
                     )
                 outlier_label_ = self.outlier_label
             else:
@@ -704,16 +704,16 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
                 if _is_arraylike(label) and not isinstance(label, str):
                     # ensure the outlier label for each output is a scalar.
                     raise TypeError(
-                        "The outlier_label of classes {} is "
+                        f"The outlier_label of classes {classes} is "
                         "supposed to be a scalar, got "
-                        "{}.".format(classes, label)
+                        f"{label}."
                     )
                 if np.append(classes, label).dtype != classes.dtype:
                     # ensure the dtype of outlier label is consistent with y.
                     raise TypeError(
-                        "The dtype of outlier_label {} is "
-                        "inconsistent with classes {} in "
-                        "y.".format(label, classes)
+                        f"The dtype of outlier_label {label} is "
+                        f"inconsistent with classes {classes} in "
+                        "y."
                     )
 
         self.outlier_label_ = outlier_label_
@@ -866,10 +866,9 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
                     proba_k[outliers, label_index[0]] = 1.0
                 else:
                     warnings.warn(
-                        "Outlier label {} is not in training "
+                        f"Outlier label {self.outlier_label_[k]} is not in training "
                         "classes. All class probabilities of "
                         "outliers will be assigned with 0."
-                        "".format(self.outlier_label_[k])
                     )
 
             # normalize 'votes' into real [0,1] probabilities

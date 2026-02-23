@@ -113,7 +113,7 @@ def clear_data_home(data_home=None):
 def _convert_data_dataframe(
     caller_name, data, target, feature_names, target_names, sparse_data=False
 ):
-    pd = check_pandas_support("{} with as_frame=True".format(caller_name))
+    pd = check_pandas_support(f"{caller_name} with as_frame=True")
     if not sparse_data:
         data_df = pd.DataFrame(data, columns=feature_names, copy=False)
     else:
@@ -1012,9 +1012,7 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
         images = images[idx]
 
     feature_names = [
-        "pixel_{}_{}".format(row_idx, col_idx)
-        for row_idx in range(8)
-        for col_idx in range(8)
+        f"pixel_{row_idx}_{col_idx}" for row_idx in range(8) for col_idx in range(8)
     ]
 
     frame = None

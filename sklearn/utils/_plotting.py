@@ -409,7 +409,7 @@ def _check_param_lengths(required, optional, class_name):
 
     all_params = {**required, **optional_provided}
     if len({len(param) for param in all_params.values()}) > 1:
-        param_keys = [key for key in all_params.keys()]
+        param_keys = [key for key in all_params]
         # Note: below code requires `len(param_keys) >= 2`, which is the case for all
         # display classes
         params_formatted = " and ".join([", ".join(param_keys[:-1]), param_keys[-1]])

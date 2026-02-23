@@ -474,7 +474,7 @@ def test_adaboostclassifier_without_sample_weight():
     X, y = iris.data, iris.target
     estimator = NoSampleWeightWrapper(DummyClassifier())
     clf = AdaBoostClassifier(estimator=estimator)
-    err_msg = "{} doesn't support sample_weight".format(estimator.__class__.__name__)
+    err_msg = f"{estimator.__class__.__name__} doesn't support sample_weight"
     with pytest.raises(ValueError, match=err_msg):
         clf.fit(X, y)
 

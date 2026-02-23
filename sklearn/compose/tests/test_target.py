@@ -371,7 +371,7 @@ def test_transform_target_regressor_route_pipeline():
     estimators = [("normalize", StandardScaler()), ("est", regr)]
 
     pip = Pipeline(estimators)
-    pip.fit(X, y, **{"est__check_input": False})
+    pip.fit(X, y, est__check_input=False)
 
     assert regr.transformer_.fit_counter == 1
 
@@ -404,12 +404,11 @@ def test_transform_target_regressor_not_warns_with_global_output_set(output_form
     issue #29361."""
     X, y = datasets.make_regression()
     y = np.abs(y) + 1
-    with config_context(transform_output=output_format):
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            TransformedTargetRegressor(
-                regressor=LinearRegression(), func=np.log, inverse_func=np.exp
-            ).fit(X, y)
+    with config_context(transform_output=output_format), warnings.catch_warnings():
+        warnings.simplefilter("error")
+        TransformedTargetRegressor(
+            regressor=LinearRegression(), func=np.log, inverse_func=np.exp
+        ).fit(X, y)
 
 
 class ValidateDimensionRegressor(BaseEstimator):

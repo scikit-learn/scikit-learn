@@ -432,11 +432,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         if violating_indices.shape[0] > 0:
             indices = ", ".join(str(i) for i in violating_indices)
             raise ValueError(
-                "{} received an invalid number "
-                "of bins at indices {}. Number of bins "
-                "must be at least 2, and must be an int.".format(
-                    KBinsDiscretizer.__name__, indices
-                )
+                f"{KBinsDiscretizer.__name__} received an invalid number "
+                f"of bins at indices {indices}. Number of bins "
+                "must be at least 2, and must be an int."
             )
         return n_bins
 
@@ -506,9 +504,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         n_features = self.n_bins_.shape[0]
         if Xinv.shape[1] != n_features:
             raise ValueError(
-                "Incorrect number of features. Expecting {}, received {}.".format(
-                    n_features, Xinv.shape[1]
-                )
+                f"Incorrect number of features. Expecting {n_features}, received {Xinv.shape[1]}."
             )
 
         for jj in range(n_features):

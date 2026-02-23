@@ -25,7 +25,7 @@ def make_distributor_init_64_bits(
     with open(distributor_init, "wt") as f:
         f.write(
             textwrap.dedent(
-                """
+                f"""
             '''Helper to preload vcomp140.dll and msvcp140.dll to prevent
             "not found" errors.
 
@@ -43,14 +43,11 @@ def make_distributor_init_64_bits(
 
             if os.name == "nt":
                 libs_path = op.join(op.dirname(__file__), ".libs")
-                vcomp140_dll_filename = op.join(libs_path, "{0}")
-                msvcp140_dll_filename = op.join(libs_path, "{1}")
+                vcomp140_dll_filename = op.join(libs_path, "{vcomp140_dll_filename}")
+                msvcp140_dll_filename = op.join(libs_path, "{msvcp140_dll_filename}")
                 WinDLL(op.abspath(vcomp140_dll_filename))
                 WinDLL(op.abspath(msvcp140_dll_filename))
-            """.format(
-                    vcomp140_dll_filename,
-                    msvcp140_dll_filename,
-                )
+            """
             )
         )
 

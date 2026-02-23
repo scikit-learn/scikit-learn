@@ -500,7 +500,7 @@ def test_get_column_indices_pandas_nonunique_columns_error(key):
     columns = ["col1", "col1", "col2", "col3", "col2"]
     X = pd.DataFrame(toy, columns=columns)
 
-    err_msg = "Selected columns, {}, are not unique in dataframe".format(key)
+    err_msg = f"Selected columns, {key}, are not unique in dataframe"
     with pytest.raises(ValueError) as exc_info:
         _get_column_indices(X, key)
     assert str(exc_info.value) == err_msg

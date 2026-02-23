@@ -864,7 +864,7 @@ def test_multioutput_regressor_has_partial_fit():
     est = MultiOutputRegressor(LinearRegression())
     msg = "This 'MultiOutputRegressor' has no attribute 'partial_fit'"
     with pytest.raises(AttributeError, match=msg):
-        getattr(est, "partial_fit")
+        est.partial_fit
 
 
 # TODO(1.9):  remove when deprecated `base_estimator` is removed

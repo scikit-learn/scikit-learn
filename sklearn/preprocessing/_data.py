@@ -2522,7 +2522,7 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         if K.shape[0] != K.shape[1]:
             raise ValueError(
                 "Kernel matrix must be a square matrix."
-                " Input is a {}x{} matrix.".format(K.shape[0], K.shape[1])
+                f" Input is a {K.shape[0]}x{K.shape[1]} matrix."
             )
 
         n_samples = K.shape[0]
@@ -2874,8 +2874,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         if self.subsample is not None and self.n_quantiles > self.subsample:
             raise ValueError(
                 "The number of quantiles cannot be greater than"
-                " the number of samples used. Got {} quantiles"
-                " and {} samples.".format(self.n_quantiles, self.subsample)
+                f" the number of samples used. Got {self.n_quantiles} quantiles"
+                f" and {self.subsample} samples."
             )
 
         X = self._check_inputs(X, in_fit=True, copy=False)
@@ -3596,9 +3596,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         if check_shape and not X.shape[1] == len(self.lambdas_):
             raise ValueError(
                 "Input data has a different number of features "
-                "than fitting data. Should have {n}, data has {m}".format(
-                    n=len(self.lambdas_), m=X.shape[1]
-                )
+                f"than fitting data. Should have {len(self.lambdas_)}, data has {X.shape[1]}"
             )
 
         return X

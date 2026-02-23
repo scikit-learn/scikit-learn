@@ -67,9 +67,7 @@ from sklearn.utils.validation import has_fit_parameter
 def test_all_estimator_no_base_class():
     # test that all_estimators doesn't find abstract classes.
     for name, Estimator in all_estimators():
-        msg = (
-            "Base estimators such as {0} should not be included in all_estimators"
-        ).format(name)
+        msg = f"Base estimators such as {name} should not be included in all_estimators"
         assert not name.lower().startswith("base"), msg
 
 
@@ -145,8 +143,8 @@ def test_import_all_consistency():
             continue
         package = __import__(modname, fromlist="dummy")
         for name in getattr(package, "__all__", ()):
-            assert hasattr(package, name), "Module '{0}' has no attribute '{1}'".format(
-                modname, name
+            assert hasattr(package, name), (
+                f"Module '{modname}' has no attribute '{name}'"
             )
 
 
@@ -192,11 +190,11 @@ def test_all_tests_are_importable():
         and name + ".tests" not in lookup
     ]
     assert missing_tests == [], (
-        "{0} do not have `tests` subpackages. "
+        f"{missing_tests} do not have `tests` subpackages. "
         "Perhaps they require "
         "__init__.py or a meson.build "
         "in the parent "
-        "directory".format(missing_tests)
+        "directory"
     )
 
 

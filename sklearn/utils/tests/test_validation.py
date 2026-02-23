@@ -751,10 +751,8 @@ def test_check_array_min_samples_and_features_messages():
 
     # Invalid edge case when checking the default minimum sample of a scalar
     msg = re.escape(
-        (
-            "Input should have at least 1 dimension i.e. satisfy "
-            "`len(x.shape) > 0`, got scalar `array(42)` instead."
-        )
+        "Input should have at least 1 dimension i.e. satisfy "
+        "`len(x.shape) > 0`, got scalar `array(42)` instead."
     )
     with pytest.raises(TypeError, match=msg):
         check_array(42, ensure_2d=False)
@@ -1183,7 +1181,7 @@ def test_check_memory(tmp_path):
     dummy = WrongDummyMemory()
     msg = (
         "'memory' should be None, a string or have the same interface as"
-        " joblib.Memory. Got memory='{}' instead.".format(dummy)
+        f" joblib.Memory. Got memory='{dummy}' instead."
     )
     with pytest.raises(ValueError, match=msg):
         check_memory(dummy)

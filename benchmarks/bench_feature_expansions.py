@@ -2,7 +2,7 @@ from time import time
 
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.sparse as sparse
+from scipy import sparse
 
 from sklearn.preprocessing import PolynomialFeatures
 

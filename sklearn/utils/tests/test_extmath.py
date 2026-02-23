@@ -511,11 +511,7 @@ def test_randomized_svd_sparse_warnings(sparse_container):
     n_components = 5
 
     X = sparse_container(X)
-    warn_msg = (
-        "Calculating SVD of a {} is expensive. csr_matrix is more efficient.".format(
-            sparse_container.__name__
-        )
-    )
+    warn_msg = f"Calculating SVD of a {sparse_container.__name__} is expensive. csr_matrix is more efficient."
     with pytest.warns(sparse.SparseEfficiencyWarning, match=warn_msg):
         randomized_svd(X, n_components, n_iter=1, power_iteration_normalizer="none")
 
@@ -1053,7 +1049,7 @@ def test_safe_sparse_dot_nd(csr_container):
 )
 def test_safe_sparse_dot_2d_1d(container):
     rng = np.random.RandomState(0)
-    B = rng.random_sample((10))
+    B = rng.random_sample(10)
 
     # 2D @ 1D
     A = rng.random_sample((30, 10))

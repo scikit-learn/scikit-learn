@@ -7,11 +7,12 @@ import json
 import os
 import shutil
 import time
+from collections.abc import Callable
 from contextlib import closing
 from functools import wraps
 from os.path import join
 from tempfile import TemporaryDirectory
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
@@ -38,8 +39,8 @@ _DATA_INFO = "https://api.openml.org/api/v1/json/data/{}"
 _DATA_FEATURES = "https://api.openml.org/api/v1/json/data/features/{}"
 _DATA_QUALITIES = "https://api.openml.org/api/v1/json/data/qualities/{}"
 
-OpenmlQualitiesType = List[Dict[str, str]]
-OpenmlFeaturesType = List[Dict[str, str]]
+OpenmlQualitiesType = list[dict[str, str]]
+OpenmlFeaturesType = list[dict[str, str]]
 
 
 def _get_local_path(openml_path: str, data_home: str) -> str:
@@ -48,8 +49,8 @@ def _get_local_path(openml_path: str, data_home: str) -> str:
 
 def _retry_with_clean_cache(
     openml_path: str,
-    data_home: Optional[str],
-    no_retry_exception: Optional[Exception] = None,
+    data_home: str | None,
+    no_retry_exception: Exception | None = None,
 ) -> Callable:
     """If the first call to the decorated function fails, the local cached
     file is removed, and the function is called again. If ``data_home`` is
@@ -122,7 +123,7 @@ def _retry_on_network_error(
 
 
 def _open_openml_url(
-    url: str, data_home: Optional[str], n_retries: int = 3, delay: float = 1.0
+    url: str, data_home: str | None, n_retries: int = 3, delay: float = 1.0
 ):
     """
     Returns a resource from OpenML.org. Caches it to data_home if required.
@@ -200,16 +201,14 @@ def _open_openml_url(
 class OpenMLError(ValueError):
     """HTTP 412 is a specific OpenML error code, indicating a generic error"""
 
-    pass
-
 
 def _get_json_content_from_openml_api(
     url: str,
-    error_message: Optional[str],
-    data_home: Optional[str],
+    error_message: str | None,
+    data_home: str | None,
     n_retries: int = 3,
     delay: float = 1.0,
-) -> Dict:
+) -> dict:
     """
     Loads json data from the openml api.
 
@@ -261,8 +260,8 @@ def _get_json_content_from_openml_api(
 
 def _get_data_info_by_name(
     name: str,
-    version: Union[int, str],
-    data_home: Optional[str],
+    version: int | str,
+    data_home: str | None,
     n_retries: int = 3,
     delay: float = 1.0,
 ):
@@ -303,7 +302,7 @@ def _get_data_info_by_name(
     if version == "active":
         # situation in which we return the oldest active version
         url = _SEARCH_NAME.format(name) + "/status/active/"
-        error_msg = "No active dataset {} found.".format(name)
+        error_msg = f"No active dataset {name} found."
         json_data = _get_json_content_from_openml_api(
             url,
             error_msg,
@@ -344,7 +343,7 @@ def _get_data_info_by_name(
         # given name / version regardless of active, deactivated, etc. )
         # TODO: feature request OpenML.
         url += "/status/deactivated"
-        error_msg = "Dataset {} with version {} not found.".format(name, version)
+        error_msg = f"Dataset {name} with version {version} not found."
         json_data = _get_json_content_from_openml_api(
             url,
             error_msg,
@@ -358,13 +357,13 @@ def _get_data_info_by_name(
 
 def _get_data_description_by_id(
     data_id: int,
-    data_home: Optional[str],
+    data_home: str | None,
     n_retries: int = 3,
     delay: float = 1.0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     # OpenML API function: https://www.openml.org/api_docs#!/data/get_data_id
     url = _DATA_INFO.format(data_id)
-    error_message = "Dataset with data_id {} not found.".format(data_id)
+    error_message = f"Dataset with data_id {data_id} not found."
     json_data = _get_json_content_from_openml_api(
         url,
         error_message,
@@ -377,14 +376,14 @@ def _get_data_description_by_id(
 
 def _get_data_features(
     data_id: int,
-    data_home: Optional[str],
+    data_home: str | None,
     n_retries: int = 3,
     delay: float = 1.0,
 ) -> OpenmlFeaturesType:
     # OpenML function:
     # https://www.openml.org/api_docs#!/data/get_data_features_id
     url = _DATA_FEATURES.format(data_id)
-    error_message = "Dataset with data_id {} not found.".format(data_id)
+    error_message = f"Dataset with data_id {data_id} not found."
     json_data = _get_json_content_from_openml_api(
         url,
         error_message,
@@ -397,14 +396,14 @@ def _get_data_features(
 
 def _get_data_qualities(
     data_id: int,
-    data_home: Optional[str],
+    data_home: str | None,
     n_retries: int = 3,
     delay: float = 1.0,
 ) -> OpenmlQualitiesType:
     # OpenML API function:
     # https://www.openml.org/api_docs#!/data/get_data_qualities_id
     url = _DATA_QUALITIES.format(data_id)
-    error_message = "Dataset with data_id {} not found.".format(data_id)
+    error_message = f"Dataset with data_id {data_id} not found."
     json_data = _get_json_content_from_openml_api(
         url,
         error_message,
@@ -440,17 +439,17 @@ def _get_num_samples(data_qualities: OpenmlQualitiesType) -> int:
 
 def _load_arff_response(
     url: str,
-    data_home: Optional[str],
+    data_home: str | None,
     parser: str,
     output_type: str,
     openml_columns_info: dict,
-    feature_names_to_select: List[str],
-    target_names_to_select: List[str],
-    shape: Optional[Tuple[int, int]],
+    feature_names_to_select: list[str],
+    target_names_to_select: list[str],
+    shape: tuple[int, int] | None,
     md5_checksum: str,
     n_retries: int = 3,
     delay: float = 1.0,
-    read_csv_kwargs: Optional[Dict] = None,
+    read_csv_kwargs: dict | None = None,
 ):
     """Load the ARFF data associated with the OpenML URL.
 
@@ -541,7 +540,7 @@ def _load_arff_response(
         with closing(gzip_file):
             return load_arff_from_gzip_file(gzip_file, **arff_params)
 
-    arff_params: Dict = dict(
+    arff_params: dict = dict(
         parser=parser,
         output_type=output_type,
         openml_columns_info=openml_columns_info,
@@ -577,18 +576,18 @@ def _load_arff_response(
 def _download_data_to_bunch(
     url: str,
     sparse: bool,
-    data_home: Optional[str],
+    data_home: str | None,
     *,
     as_frame: bool,
-    openml_columns_info: List[dict],
-    data_columns: List[str],
-    target_columns: List[str],
-    shape: Optional[Tuple[int, int]],
+    openml_columns_info: list[dict],
+    data_columns: list[str],
+    target_columns: list[str],
+    shape: tuple[int, int] | None,
     md5_checksum: str,
     n_retries: int = 3,
     delay: float = 1.0,
     parser: str,
-    read_csv_kwargs: Optional[Dict] = None,
+    read_csv_kwargs: dict | None = None,
 ):
     """Download ARFF data, load it to a specific container and create to Bunch.
 
@@ -776,19 +775,19 @@ def _valid_data_column_names(features_list, target_columns):
     prefer_skip_nested_validation=True,
 )
 def fetch_openml(
-    name: Optional[str] = None,
+    name: str | None = None,
     *,
-    version: Union[str, int] = "active",
-    data_id: Optional[int] = None,
-    data_home: Optional[Union[str, os.PathLike]] = None,
-    target_column: Optional[Union[str, List]] = "default-target",
+    version: str | int = "active",
+    data_id: int | None = None,
+    data_home: str | os.PathLike | None = None,
+    target_column: str | list | None = "default-target",
     cache: bool = True,
     return_X_y: bool = False,
-    as_frame: Union[str, bool] = "auto",
+    as_frame: str | bool = "auto",
     n_retries: int = 3,
     delay: float = 1.0,
     parser: str = "auto",
-    read_csv_kwargs: Optional[Dict] = None,
+    read_csv_kwargs: dict | None = None,
 ):
     """Fetch dataset from openml by name or dataset id.
 
@@ -1009,9 +1008,9 @@ def fetch_openml(
         name = name.lower()
         if data_id is not None:
             raise ValueError(
-                "Dataset data_id={} and name={} passed, but you can only "
+                f"Dataset data_id={data_id} and name={name} passed, but you can only "
                 "specify a numeric data_id or a name, not "
-                "both.".format(data_id, name)
+                "both."
             )
         data_info = _get_data_info_by_name(
             name, version, data_home, n_retries=n_retries, delay=delay
@@ -1021,9 +1020,9 @@ def fetch_openml(
         # from the previous if statement, it is given that name is None
         if version != "active":
             raise ValueError(
-                "Dataset data_id={} and version={} passed, but you can only "
+                f"Dataset data_id={data_id} and version={version} passed, but you can only "
                 "specify a numeric data_id or a version, not "
-                "both.".format(data_id, version)
+                "both."
             )
     else:
         raise ValueError(
@@ -1120,7 +1119,7 @@ def fetch_openml(
         target_columns = target_column
     data_columns = _valid_data_column_names(features_list, target_columns)
 
-    shape: Optional[Tuple[int, int]]
+    shape: tuple[int, int] | None
     # determine arff encoding to return
     if not return_sparse:
         # The shape must include the ignored features to keep the right indexes
@@ -1158,7 +1157,7 @@ def fetch_openml(
     bunch.update(
         DESCR=description,
         details=data_description,
-        url="https://www.openml.org/d/{}".format(data_id),
+        url=f"https://www.openml.org/d/{data_id}",
     )
 
     return bunch

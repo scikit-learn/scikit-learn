@@ -141,9 +141,7 @@ class KernelDensity(BaseEstimator):
         "algorithm": [StrOptions(set(TREE_DICT.keys()) | {"auto"})],
         "kernel": [StrOptions(set(VALID_KERNELS))],
         "metric": [
-            StrOptions(
-                set(itertools.chain(*[VALID_METRICS[alg] for alg in TREE_DICT.keys()]))
-            )
+            StrOptions(set(itertools.chain(*[VALID_METRICS[alg] for alg in TREE_DICT])))
         ],
         "atol": [Interval(Real, 0, None, closed="left")],
         "rtol": [Interval(Real, 0, None, closed="left")],
@@ -187,7 +185,7 @@ class KernelDensity(BaseEstimator):
         else:  # kd_tree or ball_tree
             if metric not in TREE_DICT[algorithm].valid_metrics:
                 raise ValueError(
-                    "invalid metric for {0}: '{1}'".format(TREE_DICT[algorithm], metric)
+                    f"invalid metric for {TREE_DICT[algorithm]}: '{metric}'"
                 )
             return algorithm
 

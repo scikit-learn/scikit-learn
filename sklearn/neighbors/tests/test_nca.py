@@ -390,7 +390,7 @@ def test_verbose(init_name, capsys):
         lines = lines[1:]
     assert lines[0] == "[NeighborhoodComponentsAnalysis]"
     header = "{:>10} {:>20} {:>10}".format("Iteration", "Objective Value", "Time(s)")
-    assert lines[1] == "[NeighborhoodComponentsAnalysis] {}".format(header)
+    assert lines[1] == f"[NeighborhoodComponentsAnalysis] {header}"
     assert lines[2] == "[NeighborhoodComponentsAnalysis] {}".format("-" * len(header))
     for line in lines[3:-2]:
         # The following regex will match for instance:
@@ -469,7 +469,7 @@ def test_callback(capsys):
     def my_cb(transformation, n_iter):
         assert transformation.shape == (iris_data.shape[1] ** 2,)
         rem_iter = max_iter - n_iter
-        print("{} iterations remaining...".format(rem_iter))
+        print(f"{rem_iter} iterations remaining...")
 
     # assert that my_cb is called
     nca = NeighborhoodComponentsAnalysis(max_iter=max_iter, callback=my_cb, verbose=1)
@@ -477,7 +477,7 @@ def test_callback(capsys):
     out, _ = capsys.readouterr()
 
     # check output
-    assert "{} iterations remaining...".format(max_iter - 1) in out
+    assert f"{max_iter - 1} iterations remaining..." in out
 
 
 def test_expected_transformation_shape():
@@ -510,7 +510,7 @@ def test_expected_transformation_shape():
 def test_convergence_warning():
     nca = NeighborhoodComponentsAnalysis(max_iter=2, verbose=1)
     cls_name = nca.__class__.__name__
-    msg = "[{}] NCA did not converge".format(cls_name)
+    msg = f"[{cls_name}] NCA did not converge"
     with pytest.warns(ConvergenceWarning, match=re.escape(msg)):
         nca.fit(iris_data, iris_target)
 

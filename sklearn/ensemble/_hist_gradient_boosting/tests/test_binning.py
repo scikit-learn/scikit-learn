@@ -77,9 +77,7 @@ def test_find_binning_thresholds_low_n_bins():
 
 @pytest.mark.parametrize("n_bins", (2, 257))
 def test_invalid_n_bins(n_bins):
-    err_msg = "n_bins={} should be no smaller than 3 and no larger than 256".format(
-        n_bins
-    )
+    err_msg = f"n_bins={n_bins} should be no smaller than 3 and no larger than 256"
     with pytest.raises(ValueError, match=err_msg):
         _BinMapper(n_bins=n_bins).fit(DATA)
 

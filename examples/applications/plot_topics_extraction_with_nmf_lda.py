@@ -52,7 +52,7 @@ def plot_top_words(model, feature_names, n_top_words, title):
         ax.barh(top_features, weights, height=0.7)
         ax.set_title(f"Topic {topic_idx + 1}", fontdict={"fontsize": 30})
         ax.tick_params(axis="both", which="major", labelsize=20)
-        for i in "top right left".split():
+        for i in ["top", "right", "left"]:
             ax.spines[i].set_visible(False)
         fig.suptitle(title, fontsize=40)
 

@@ -231,14 +231,12 @@ class MockClassifier(ClassifierMixin, BaseEstimator):
         if sample_weight is not None:
             assert sample_weight.shape[0] == X.shape[0], (
                 "MockClassifier extra fit_param "
-                "sample_weight.shape[0] is {0}, should be {1}".format(
-                    sample_weight.shape[0], X.shape[0]
-                )
+                f"sample_weight.shape[0] is {sample_weight.shape[0]}, should be {X.shape[0]}"
             )
         if class_prior is not None:
             assert class_prior.shape[0] == len(np.unique(y)), (
                 "MockClassifier extra fit_param class_prior.shape[0]"
-                " is {0}, should be {1}".format(class_prior.shape[0], len(np.unique(y)))
+                f" is {class_prior.shape[0]}, should be {len(np.unique(y))}"
             )
         if sparse_sample_weight is not None:
             fmt = (
@@ -2388,7 +2386,7 @@ def test_callable_multimetric_confusion_matrix_cross_validate():
 
     score_names = ["tn", "fp", "fn", "tp"]
     for name in score_names:
-        assert "test_{}".format(name) in cv_results
+        assert f"test_{name}" in cv_results
 
 
 def test_learning_curve_partial_fit_regressors():

@@ -150,10 +150,8 @@ for n, (name, estimator) in enumerate(estimators):
     y_var = np.var(y_predict, axis=1)
 
     print(
-        "{0}: {1:.4f} (error) = {2:.4f} (bias^2) "
-        " + {3:.4f} (var) + {4:.4f} (noise)".format(
-            name, np.mean(y_error), np.mean(y_bias), np.mean(y_var), np.mean(y_noise)
-        )
+        f"{name}: {np.mean(y_error):.4f} (error) = {np.mean(y_bias):.4f} (bias^2) "
+        f" + {np.mean(y_var):.4f} (var) + {np.mean(y_noise):.4f} (noise)"
     )
 
     # Plot figures

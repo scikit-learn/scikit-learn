@@ -218,9 +218,7 @@ class LeaveOneOut(_UnsupportedGroupCVMixin, BaseCrossValidator):
     def _iter_test_indices(self, X, y=None, groups=None):
         n_samples = _num_samples(X)
         if n_samples <= 1:
-            raise ValueError(
-                "Cannot perform LeaveOneOut with n_samples={}.".format(n_samples)
-            )
+            raise ValueError(f"Cannot perform LeaveOneOut with n_samples={n_samples}.")
         return range(n_samples)
 
     def get_n_splits(self, X, y=None, groups=None):
@@ -313,9 +311,7 @@ class LeavePOut(_UnsupportedGroupCVMixin, BaseCrossValidator):
         n_samples = _num_samples(X)
         if n_samples <= self.p:
             raise ValueError(
-                "p={} must be strictly less than the number of samples={}".format(
-                    self.p, n_samples
-                )
+                f"p={self.p} must be strictly less than the number of samples={n_samples}"
             )
         for combination in combinations(range(n_samples), self.p):
             yield np.array(combination)
@@ -356,11 +352,11 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
             raise ValueError(
                 "k-fold cross-validation requires at least one"
                 " train/test split by setting n_splits=2 or more,"
-                " got n_splits={0}.".format(n_splits)
+                f" got n_splits={n_splits}."
             )
 
         if not isinstance(shuffle, bool):
-            raise TypeError("shuffle must be True or False; got {0}".format(shuffle))
+            raise TypeError(f"shuffle must be True or False; got {shuffle}")
 
         if not shuffle and random_state is not None:  # None is the default
             raise ValueError(
@@ -403,10 +399,8 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
         n_samples = _num_samples(X)
         if self.n_splits > n_samples:
             raise ValueError(
-                (
-                    "Cannot have number of splits n_splits={0} greater"
-                    " than the number of samples: n_samples={1}."
-                ).format(self.n_splits, n_samples)
+                f"Cannot have number of splits n_splits={self.n_splits} greater"
+                f" than the number of samples: n_samples={n_samples}."
             )
 
         for train, test in super().split(X, y, groups):
@@ -787,9 +781,7 @@ class StratifiedKFold(_BaseKFold):
         allowed_target_types = ("binary", "multiclass")
         if type_of_target_y not in allowed_target_types:
             raise ValueError(
-                "Supported target types are: {}. Got {!r} instead.".format(
-                    allowed_target_types, type_of_target_y
-                )
+                f"Supported target types are: {allowed_target_types}. Got {type_of_target_y!r} instead."
             )
 
         y = column_or_1d(y)
@@ -1020,9 +1012,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
         allowed_target_types = ("binary", "multiclass")
         if type_of_target_y not in allowed_target_types:
             raise ValueError(
-                "Supported target types are: {}. Got {!r} instead.".format(
-                    allowed_target_types, type_of_target_y
-                )
+                f"Supported target types are: {allowed_target_types}. Got {type_of_target_y!r} instead."
             )
 
         y = column_or_1d(y)
@@ -2450,29 +2440,29 @@ def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=
         test_size_type == "f" and (test_size <= 0 or test_size >= 1)
     ):
         raise ValueError(
-            "test_size={0} should be either positive and smaller"
-            " than the number of samples {1} or a float in the "
-            "(0, 1) range".format(test_size, n_samples)
+            f"test_size={test_size} should be either positive and smaller"
+            f" than the number of samples {n_samples} or a float in the "
+            "(0, 1) range"
         )
 
     if (train_size_type == "i" and (train_size >= n_samples or train_size <= 0)) or (
         train_size_type == "f" and (train_size <= 0 or train_size >= 1)
     ):
         raise ValueError(
-            "train_size={0} should be either positive and smaller"
-            " than the number of samples {1} or a float in the "
-            "(0, 1) range".format(train_size, n_samples)
+            f"train_size={train_size} should be either positive and smaller"
+            f" than the number of samples {n_samples} or a float in the "
+            "(0, 1) range"
         )
 
     if train_size is not None and train_size_type not in ("i", "f"):
-        raise ValueError("Invalid value for train_size: {}".format(train_size))
+        raise ValueError(f"Invalid value for train_size: {train_size}")
     if test_size is not None and test_size_type not in ("i", "f"):
-        raise ValueError("Invalid value for test_size: {}".format(test_size))
+        raise ValueError(f"Invalid value for test_size: {test_size}")
 
     if train_size_type == "f" and test_size_type == "f" and train_size + test_size > 1:
         raise ValueError(
-            "The sum of test_size and train_size = {}, should be in the (0, 1)"
-            " range. Reduce test_size and/or train_size.".format(train_size + test_size)
+            f"The sum of test_size and train_size = {train_size + test_size}, should be in the (0, 1)"
+            " range. Reduce test_size and/or train_size."
         )
 
     if test_size_type == "f":
@@ -2502,9 +2492,9 @@ def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=
 
     if n_train == 0:
         raise ValueError(
-            "With n_samples={}, test_size={} and train_size={}, the "
+            f"With n_samples={n_samples}, test_size={test_size} and train_size={train_size}, the "
             "resulting train set will be empty. Adjust any of the "
-            "aforementioned parameters.".format(n_samples, test_size, train_size)
+            "aforementioned parameters."
         )
 
     return n_train, n_test
@@ -2972,7 +2962,7 @@ def train_test_split(
 # Tell nose that train_test_split is not a test.
 # (Needed for external libraries that may use nose.)
 # Use setattr to avoid mypy errors when monkeypatching.
-setattr(train_test_split, "__test__", False)
+train_test_split.__test__ = False
 
 
 def _pprint(params, offset=0, printer=repr):

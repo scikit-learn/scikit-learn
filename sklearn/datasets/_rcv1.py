@@ -279,7 +279,7 @@ def fetch_rcv1(
 
         # save category names in a list, with same order than y
         categories = np.empty(N_CATEGORIES, dtype=object)
-        for k in category_names.keys():
+        for k in category_names:
             categories[category_names[k]] = k
 
         # reorder categories in lexicographic order

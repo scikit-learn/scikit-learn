@@ -885,9 +885,11 @@ class _BaseKMeans(
         if self.n_init == "auto":
             if isinstance(self.init, str) and self.init == "k-means++":
                 self._n_init = 1
-            elif isinstance(self.init, str) and self.init == "random":
-                self._n_init = default_n_init
-            elif callable(self.init):
+            elif (
+                isinstance(self.init, str)
+                and self.init == "random"
+                or callable(self.init)
+            ):
                 self._n_init = default_n_init
             else:  # array-like
                 self._n_init = 1
@@ -1545,9 +1547,9 @@ class KMeans(_BaseKMeans):
         distinct_clusters = len(set(best_labels))
         if distinct_clusters < self.n_clusters:
             warnings.warn(
-                "Number of distinct clusters ({}) found smaller than "
-                "n_clusters ({}). Possibly due to duplicate points "
-                "in X.".format(distinct_clusters, self.n_clusters),
+                f"Number of distinct clusters ({distinct_clusters}) found smaller than "
+                f"n_clusters ({self.n_clusters}). Possibly due to duplicate points "
+                "in X.",
                 ConvergenceWarning,
                 stacklevel=2,
             )

@@ -19,5 +19,5 @@ from sklearn import impute
 from sklearn.impute._iterative import IterativeImputer
 
 # use settattr to avoid mypy errors when monkeypatching
-setattr(impute, "IterativeImputer", IterativeImputer)
+impute.IterativeImputer = IterativeImputer
 impute.__all__ += ["IterativeImputer"]

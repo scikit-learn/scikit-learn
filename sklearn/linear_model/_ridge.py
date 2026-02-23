@@ -944,10 +944,10 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         elif sparse.issparse(X) and self.fit_intercept:
             if self.solver not in ["auto", "lbfgs", "lsqr", "sag", "sparse_cg"]:
                 raise ValueError(
-                    "solver='{}' does not support fitting the intercept "
+                    f"solver='{self.solver}' does not support fitting the intercept "
                     "on sparse data. Please set the solver to 'auto' or "
                     "'lsqr', 'sparse_cg', 'sag', 'lbfgs' "
-                    "or set `fit_intercept=False`".format(self.solver)
+                    "or set `fit_intercept=False`"
                 )
             if self.solver in ["lsqr", "lbfgs"]:
                 solver = self.solver

@@ -2012,7 +2012,7 @@ def test_normalize(csr_container):
     rs = np.random.RandomState(0)
     X_dense = rs.randn(10, 5)
     X_sparse = csr_container(X_dense)
-    ones = np.ones((10))
+    ones = np.ones(10)
     for X in (X_dense, X_sparse):
         for dtype in (np.float32, np.float64):
             for norm in ("l1", "l2"):

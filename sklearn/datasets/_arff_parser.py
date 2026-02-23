@@ -7,7 +7,6 @@ import itertools
 import re
 from collections import OrderedDict
 from collections.abc import Generator
-from typing import List
 
 import numpy as np
 import scipy as sp
@@ -20,7 +19,7 @@ from sklearn.utils.fixes import pd_fillna
 
 
 def _split_sparse_columns(
-    arff_data: ArffSparseDataType, include_columns: List
+    arff_data: ArffSparseDataType, include_columns: list
 ) -> ArffSparseDataType:
     """Obtains several columns from sparse ARFF representation. Additionally,
     the column indices are re-labelled, given the columns that are not
@@ -55,7 +54,7 @@ def _split_sparse_columns(
 
 
 def _sparse_data_to_array(
-    arff_data: ArffSparseDataType, include_columns: List
+    arff_data: ArffSparseDataType, include_columns: list
 ) -> np.ndarray:
     # turns the sparse data back into an array (can't use toarray() function,
     # as this does only work on numeric data)

@@ -395,7 +395,7 @@ def test_plot_partial_dependence_incorrent_num_axes(
     fig, axes = pyplot.subplots(nrows, ncols)
     axes_formats = [list(axes.ravel()), tuple(axes.ravel()), axes]
 
-    msg = "Expected ax to have 2 axes, got {}".format(nrows * ncols)
+    msg = f"Expected ax to have 2 axes, got {nrows * ncols}"
 
     age = diabetes.data[:, diabetes.feature_names.index("age")]
     bmi = diabetes.data[:, diabetes.feature_names.index("bmi")]

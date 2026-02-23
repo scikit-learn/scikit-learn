@@ -477,9 +477,12 @@ def test_ridge_regression_sample_weights(
     for z=[y, y], A' = [X', X'] (vstacked), and W[:n/2] + W[n/2:] = 1, W=diag(W)
     """
     if sparse_container is not None:
-        if fit_intercept and solver not in SPARSE_SOLVERS_WITH_INTERCEPT:
-            pytest.skip()
-        elif not fit_intercept and solver not in SPARSE_SOLVERS_WITHOUT_INTERCEPT:
+        if (
+            fit_intercept
+            and solver not in SPARSE_SOLVERS_WITH_INTERCEPT
+            or not fit_intercept
+            and solver not in SPARSE_SOLVERS_WITHOUT_INTERCEPT
+        ):
             pytest.skip()
     X, y, _, coef = ols_ridge_dataset
     n_samples, n_features = X.shape
@@ -1987,7 +1990,7 @@ def test_ridge_fit_intercept_sparse_error(solver, csr_container):
     X, y = _make_sparse_offset_regression(n_features=20, random_state=0)
     X_csr = csr_container(X)
     sparse_ridge = Ridge(solver=solver)
-    err_msg = "solver='{}' does not support".format(solver)
+    err_msg = f"solver='{solver}' does not support"
     with pytest.raises(ValueError, match=err_msg):
         sparse_ridge.fit(X_csr, y)
 

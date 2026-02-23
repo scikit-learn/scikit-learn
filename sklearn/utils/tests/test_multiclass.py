@@ -427,7 +427,7 @@ def test_is_multilabel_array_api_compliance(array_namespace, device, dtype_name)
 
 
 def test_check_classification_targets():
-    for y_type in EXAMPLES.keys():
+    for y_type in EXAMPLES:
         if y_type in ["unknown", "continuous", "continuous-multioutput"]:
             for example in EXAMPLES[y_type]:
                 msg = "Unknown label type: "

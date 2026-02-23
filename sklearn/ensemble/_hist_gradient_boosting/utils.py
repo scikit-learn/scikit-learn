@@ -25,7 +25,7 @@ def get_equivalent_estimator(estimator, lib="lightgbm", n_classes=None):
 
     if lib not in ("lightgbm", "xgboost", "catboost"):
         raise ValueError(
-            "accepted libs are lightgbm, xgboost, and catboost.  got {}".format(lib)
+            f"accepted libs are lightgbm, xgboost, and catboost.  got {lib}"
         )
 
     sklearn_params = estimator.get_params()

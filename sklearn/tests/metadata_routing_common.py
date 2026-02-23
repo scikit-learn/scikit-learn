@@ -464,7 +464,7 @@ class ConsumingSplitter(GroupsConsumerMixin, BaseCrossValidator):
         record_metadata_not_default(self, groups=groups, metadata=metadata)
 
         split_index = len(X) // 2
-        train_indices = list(range(0, split_index))
+        train_indices = list(range(split_index))
         test_indices = list(range(split_index, len(X)))
         yield test_indices, train_indices
         yield train_indices, test_indices
@@ -474,7 +474,7 @@ class ConsumingSplitter(GroupsConsumerMixin, BaseCrossValidator):
 
     def _iter_test_indices(self, X=None, y=None, groups=None):
         split_index = len(X) // 2
-        train_indices = list(range(0, split_index))
+        train_indices = list(range(split_index))
         test_indices = list(range(split_index, len(X)))
         yield test_indices
         yield train_indices

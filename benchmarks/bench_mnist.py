@@ -155,7 +155,7 @@ if __name__ == "__main__":
 
     X_train, X_test, y_train, y_test = load_data(order=args["order"])
 
-    print("")
+    print()
     print("Dataset statistics:")
     print("===================")
     print("%s %d" % ("number of features:".ljust(25), X_train.shape[1]))
@@ -221,9 +221,7 @@ if __name__ == "__main__":
     print("-" * 60)
     for name in sorted(args["classifiers"], key=error.get):
         print(
-            "{0: <23} {1: >10.2f}s {2: >10.2f}s {3: >12.4f}".format(
-                name, train_time[name], test_time[name], error[name]
-            )
+            f"{name: <23} {train_time[name]: >10.2f}s {test_time[name]: >10.2f}s {error[name]: >12.4f}"
         )
 
     print()

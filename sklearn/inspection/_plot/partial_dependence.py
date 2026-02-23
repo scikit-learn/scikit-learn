@@ -549,7 +549,7 @@ class PartialDependenceDisplay:
                 not (0 <= target_idx < len(estimator.classes_))
                 or estimator.classes_[target_idx] != target
             ):
-                raise ValueError("target not in est.classes_, got {}".format(target))
+                raise ValueError(f"target not in est.classes_, got {target}")
         else:
             # regression and binary classification
             target_idx = 0
@@ -692,16 +692,14 @@ class PartialDependenceDisplay:
             axes = np.asarray(ax, dtype=object)
             if axes.size != len(features):
                 raise ValueError(
-                    "Expected ax to have {} axes, got {}".format(
-                        len(features), axes.size
-                    )
+                    f"Expected ax to have {len(features)} axes, got {axes.size}"
                 )
 
         for i in chain.from_iterable(features):
             if i >= len(feature_names):
                 raise ValueError(
                     "All entries of features must be less than "
-                    "len(feature_names) = {0}, got {1}.".format(len(feature_names), i)
+                    f"len(feature_names) = {len(feature_names)}, got {i}."
                 )
 
         if isinstance(subsample, numbers.Integral):
@@ -750,9 +748,7 @@ class PartialDependenceDisplay:
             if target is None:
                 raise ValueError("target must be specified for multi-output regressors")
             if not 0 <= target <= n_tasks:
-                raise ValueError(
-                    "target must be in [0, n_tasks], got {}.".format(target)
-                )
+                raise ValueError(f"target must be in [0, n_tasks], got {target}.")
             target_idx = target
 
         deciles = {}
@@ -1366,7 +1362,7 @@ class PartialDependenceDisplay:
             ax = np.asarray(ax, dtype=object)
             if ax.size != n_features:
                 raise ValueError(
-                    "Expected ax to have {} axes, got {}".format(n_features, ax.size)
+                    f"Expected ax to have {n_features} axes, got {ax.size}"
                 )
 
             if ax.ndim == 2:

@@ -281,8 +281,8 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6, random_state=None):
         and n_components > min(n_samples, n_features)
     ):
         raise ValueError(
-            "init = '{}' can only be used when "
-            "n_components <= min(n_samples, n_features)".format(init)
+            f"init = '{init}' can only be used when "
+            "n_components <= min(n_samples, n_features)"
         )
 
     if init is None:
@@ -1196,7 +1196,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
             if H.dtype != X.dtype or W.dtype != X.dtype:
                 raise TypeError(
                     "H and W should have the same dtype as X. Got "
-                    "H.dtype = {} and W.dtype = {}.".format(H.dtype, W.dtype)
+                    f"H.dtype = {H.dtype} and W.dtype = {W.dtype}."
                 )
 
         elif not update_H:
@@ -1212,9 +1212,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
 
             if H.dtype != X.dtype:
                 raise TypeError(
-                    "H should have the same dtype as X. Got H.dtype = {}.".format(
-                        H.dtype
-                    )
+                    f"H should have the same dtype as X. Got H.dtype = {H.dtype}."
                 )
 
             # 'mu' solver should not be initialized by zeros

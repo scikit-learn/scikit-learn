@@ -86,18 +86,16 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
 
     def _validate_names(self, names):
         if len(set(names)) != len(names):
-            raise ValueError("Names provided are not unique: {0!r}".format(list(names)))
+            raise ValueError(f"Names provided are not unique: {list(names)!r}")
         invalid_names = set(names).intersection(self.get_params(deep=False))
         if invalid_names:
             raise ValueError(
-                "Estimator names conflict with constructor arguments: {0!r}".format(
-                    sorted(invalid_names)
-                )
+                f"Estimator names conflict with constructor arguments: {sorted(invalid_names)!r}"
             )
         invalid_names = [name for name in names if "__" in name]
         if invalid_names:
             raise ValueError(
-                "Estimator names must not contain __: got {0!r}".format(invalid_names)
+                f"Estimator names must not contain __: got {invalid_names!r}"
             )
 
     def _check_estimators_are_instances(self, estimators):

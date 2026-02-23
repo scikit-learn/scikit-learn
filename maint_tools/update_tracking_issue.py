@@ -14,7 +14,7 @@ github account that does **not** have commit access to the public repo.
 import argparse
 import sys
 import warnings
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import defusedxml.ElementTree as ET
@@ -67,7 +67,7 @@ if args.junit_file is None and args.tests_passed is None:
 
 gh = Github(args.bot_github_token)
 issue_repo = gh.get_repo(args.issue_repo)
-dt_now = datetime.now(tz=timezone.utc)
+dt_now = datetime.now(tz=UTC)
 date_str = dt_now.strftime("%b %d, %Y")
 title_query = f"CI failed on {args.ci_name}"
 title = f"⚠️ {title_query} (last failure: {date_str}) ⚠️"

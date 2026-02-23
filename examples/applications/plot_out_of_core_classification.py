@@ -349,7 +349,7 @@ def plot_accuracy(x, y, x_legend):
 
 
 rcParams["legend.fontsize"] = 10
-cls_names = list(sorted(cls_stats.keys()))
+cls_names = sorted(cls_stats.keys())
 
 # Plot accuracy evolution
 plt.figure()
@@ -411,7 +411,7 @@ plt.show()
 # Plot prediction times
 plt.figure()
 cls_runtime = []
-cls_names = list(sorted(cls_stats.keys()))
+cls_names = sorted(cls_stats.keys())
 for cls_name, stats in sorted(cls_stats.items()):
     cls_runtime.append(stats["prediction_time"])
 cls_runtime.append(parsing_time)

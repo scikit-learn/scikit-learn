@@ -121,7 +121,7 @@ def _joint_probabilities_nn(distances, desired_perplexity, verbose):
     assert np.all(np.abs(P.data) <= 1.0)
     if verbose >= 2:
         duration = time() - t0
-        print("[t-SNE] Computed conditional probabilities in {:.3f}s".format(duration))
+        print(f"[t-SNE] Computed conditional probabilities in {duration:.3f}s")
     return P
 
 
@@ -954,7 +954,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             n_neighbors = min(n_samples - 1, int(3.0 * self.perplexity + 1))
 
             if self.verbose:
-                print("[t-SNE] Computing {} nearest neighbors...".format(n_neighbors))
+                print(f"[t-SNE] Computing {n_neighbors} nearest neighbors...")
 
             # Find the nearest neighbors for every point
             knn = NearestNeighbors(
@@ -968,20 +968,14 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             knn.fit(X)
             duration = time() - t0
             if self.verbose:
-                print(
-                    "[t-SNE] Indexed {} samples in {:.3f}s...".format(
-                        n_samples, duration
-                    )
-                )
+                print(f"[t-SNE] Indexed {n_samples} samples in {duration:.3f}s...")
 
             t0 = time()
             distances_nn = knn.kneighbors_graph(mode="distance")
             duration = time() - t0
             if self.verbose:
                 print(
-                    "[t-SNE] Computed neighbors for {} samples in {:.3f}s...".format(
-                        n_samples, duration
-                    )
+                    f"[t-SNE] Computed neighbors for {n_samples} samples in {duration:.3f}s..."
                 )
 
             # Free the memory used by the ball_tree

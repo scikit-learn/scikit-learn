@@ -936,7 +936,7 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
         ).fit(X, y)
         for solver in set(SOLVERS) - set(["liblinear"])
     }
-    for solver in regressors.keys():
+    for solver in regressors:
         # See the docstring of test_multinomial_identifiability_on_iris for reference.
         assert_allclose(
             regressors[solver].coef_.sum(axis=0), 0, atol=1e-10, err_msg=solver

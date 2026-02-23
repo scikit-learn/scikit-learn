@@ -29,7 +29,7 @@ from sklearn.utils.validation import check_is_fitted, validate_data
 def _check_positive_coding(method, positive):
     if positive and method in ["omp", "lars"]:
         raise ValueError(
-            "Positive constraint not supported for '{}' coding method.".format(method)
+            f"Positive constraint not supported for '{method}' coding method."
         )
 
 
@@ -366,7 +366,7 @@ def sparse_encode(
     if dictionary.shape[1] != X.shape[1]:
         raise ValueError(
             "Dictionary and X have different numbers of features:"
-            "dictionary.shape: {} X.shape{}".format(dictionary.shape, X.shape)
+            f"dictionary.shape: {dictionary.shape} X.shape{X.shape}"
         )
 
     _check_positive_coding(algorithm, positive)
@@ -648,7 +648,7 @@ def _dict_learning(
             if dE < tol * errors[-1]:
                 if verbose == 1:
                     # A line return
-                    print("")
+                    print()
                 elif verbose:
                     print("--- Convergence reached after %d iterations" % ii)
                 break

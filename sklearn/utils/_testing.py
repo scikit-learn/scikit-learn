@@ -101,9 +101,9 @@ def ignore_warnings(obj=None, category=Warning):
         warning_name = obj.__name__
         raise ValueError(
             "'obj' should be a callable where you want to ignore warnings. "
-            "You passed a warning class instead: 'obj={warning_name}'. "
+            f"You passed a warning class instead: 'obj={warning_name}'. "
             "If you want to pass a warning class to ignore_warnings, "
-            "you should use 'category={warning_name}'".format(warning_name=warning_name)
+            f"you should use 'category={warning_name}'"
         )
     elif callable(obj):
         return _IgnoreWarnings(category=category)(obj)
@@ -669,7 +669,7 @@ def _get_diff_msg(docstrings_grouped):
             )
         )
         # Add header
-        msg_diff += "".join((diff[:3]))
+        msg_diff += "".join(diff[:3])
         # Group consecutive 'diff' words to shorten error message
         for start, group in groupby(diff[3:], key=_diff_key):
             if start is None:

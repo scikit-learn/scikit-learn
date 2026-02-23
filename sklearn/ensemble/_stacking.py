@@ -8,7 +8,7 @@ from copy import deepcopy
 from numbers import Integral
 
 import numpy as np
-import scipy.sparse as sparse
+from scipy import sparse
 
 from sklearn.base import (
     ClassifierMixin,
@@ -628,9 +628,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         self._clone_final_estimator(default=LogisticRegression())
         if not is_classifier(self.final_estimator_):
             raise ValueError(
-                "'final_estimator' parameter should be a classifier. Got {}".format(
-                    self.final_estimator_
-                )
+                f"'final_estimator' parameter should be a classifier. Got {self.final_estimator_}"
             )
 
     def _validate_estimators(self):
@@ -1004,9 +1002,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         self._clone_final_estimator(default=RidgeCV())
         if not is_regressor(self.final_estimator_):
             raise ValueError(
-                "'final_estimator' parameter should be a regressor. Got {}".format(
-                    self.final_estimator_
-                )
+                f"'final_estimator' parameter should be a regressor. Got {self.final_estimator_}"
             )
 
     def fit(self, X, y, **fit_params):

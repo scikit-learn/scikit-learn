@@ -338,9 +338,7 @@ class Pipeline(_BaseComposition):
             stop -= 1
 
         for idx, (name, trans) in enumerate(islice(self.steps, 0, stop)):
-            if not filter_passthrough:
-                yield idx, name, trans
-            elif trans is not None and trans != "passthrough":
+            if not filter_passthrough or trans is not None and trans != "passthrough":
                 yield idx, name, trans
 
     def __len__(self):
@@ -418,11 +416,11 @@ class Pipeline(_BaseComposition):
             for pname, pval in props.items():
                 if "__" not in pname:
                     raise ValueError(
-                        "Pipeline.fit does not accept the {} parameter. "
+                        f"Pipeline.fit does not accept the {pname} parameter. "
                         "You can pass parameters to specific steps of your "
                         "pipeline using the stepname__parameter format, e.g. "
                         "`Pipeline.fit(X, y, logisticregression__sample_weight"
-                        "=sample_weight)`.".format(pname)
+                        "=sample_weight)`."
                     )
                 step, param = pname.split("__", 1)
                 fit_params_steps[step]["fit"][param] = pval
@@ -1210,9 +1208,9 @@ class Pipeline(_BaseComposition):
         for _, name, transform in self._iter():
             if not hasattr(transform, "get_feature_names_out"):
                 raise AttributeError(
-                    "Estimator {} does not provide get_feature_names_out. "
+                    f"Estimator {name} does not provide get_feature_names_out. "
                     "Did you mean to call pipeline[:-1].get_feature_names_out"
-                    "()?".format(name)
+                    "()?"
                 )
             feature_names_out = transform.get_feature_names_out(feature_names_out)
         return feature_names_out

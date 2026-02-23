@@ -2572,14 +2572,14 @@ def test__check_targets():
             if type1 != type2:
                 err_msg = (
                     "Classification metrics can't handle a mix "
-                    "of {0} and {1} targets".format(type1, type2)
+                    f"of {type1} and {type2} targets"
                 )
                 with pytest.raises(ValueError, match=err_msg):
                     _check_targets(y1, y2)
 
             else:
                 if type1 not in (BIN, MC, IND):
-                    err_msg = "{0} is not supported".format(type1)
+                    err_msg = f"{type1} is not supported"
                     with pytest.raises(ValueError, match=err_msg):
                         _check_targets(y1, y2)
 

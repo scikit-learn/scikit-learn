@@ -1727,7 +1727,7 @@ def test_multitask_cv_estimators_with_sample_weight(MultiTaskEstimatorCV):
     class CVSplitterSampleWeight(CVSplitter):
         def split(self, X, y=None, groups=None, sample_weight=None):
             split_index = len(X) // 2
-            train_indices = list(range(0, split_index))
+            train_indices = list(range(split_index))
             test_indices = list(range(split_index, len(X)))
             yield test_indices, train_indices
             yield train_indices, test_indices

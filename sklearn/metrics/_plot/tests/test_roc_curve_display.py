@@ -417,7 +417,7 @@ def test_roc_curve_chance_level_line(
     lr = LogisticRegression()
     lr.fit(X, y)
 
-    y_score = getattr(lr, "predict_proba")(X)
+    y_score = lr.predict_proba(X)
     y_score = y_score if y_score.ndim == 1 else y_score[:, 1]
 
     if constructor_name == "from_estimator":

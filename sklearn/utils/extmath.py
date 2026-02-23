@@ -570,8 +570,8 @@ def _randomized_svd(
 
     if sparse.issparse(M) and M.format in ("lil", "dok"):
         warnings.warn(
-            "Calculating SVD of a {} is expensive. "
-            "csr_matrix is more efficient.".format(type(M).__name__),
+            f"Calculating SVD of a {type(M).__name__} is expensive. "
+            "csr_matrix is more efficient.",
             sparse.SparseEfficiencyWarning,
         )
 
@@ -912,7 +912,7 @@ def cartesian(arrays, out=None):
         out = np.empty_like(ix, dtype=dtype)
 
     for n, arr in enumerate(arrays):
-        out[:, n] = arrays[n][ix[:, n]]
+        out[:, n] = arr[ix[:, n]]
 
     return out
 

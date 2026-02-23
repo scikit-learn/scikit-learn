@@ -1053,7 +1053,6 @@ class DensityMixin:
         -------
         score : float
         """
-        pass
 
 
 class OutlierMixin:

@@ -8,12 +8,13 @@ import pickle
 import re
 import textwrap
 import warnings
+from collections.abc import Callable
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
 from numbers import Integral, Real
-from typing import Callable, Literal
+from typing import Literal
 
 import joblib
 import numpy as np
@@ -371,15 +372,13 @@ def _yield_all_checks(estimator, legacy: bool):
     tags = get_tags(estimator)
     if not tags.input_tags.two_d_array:
         warnings.warn(
-            "Can't test estimator {} which requires input  of type {}".format(
-                name, tags.input_tags
-            ),
+            f"Can't test estimator {name} which requires input  of type {tags.input_tags}",
             SkipTestWarning,
         )
         return
     if tags._skip_test:
         warnings.warn(
-            "Explicit SKIP via _skip_test tag for estimator {}.".format(name),
+            f"Explicit SKIP via _skip_test tag for estimator {name}.",
             SkipTestWarning,
         )
         return
@@ -438,7 +437,7 @@ def _maybe_mark(
     estimator,
     check,
     expected_failed_checks: dict[str, str] | None = None,
-    mark: Literal["xfail", "skip", None] = None,
+    mark: Literal["xfail", "skip"] | None = None,
     pytest=None,
     xfail_strict: bool | None = None,
 ):
@@ -531,7 +530,7 @@ def estimator_checks_generator(
     *,
     legacy: bool = True,
     expected_failed_checks: dict[str, str] | None = None,
-    mark: Literal["xfail", "skip", None] = None,
+    mark: Literal["xfail", "skip"] | None = None,
     xfail_strict: bool | None = None,
 ):
     """Iteratively yield all check callables for an estimator.
@@ -967,7 +966,7 @@ class _NotAnArray:
     def __array_function__(self, func, types, args, kwargs):
         if func.__name__ == "may_share_memory":
             return True
-        raise TypeError("Don't want to call array_function {}!".format(func.__name__))
+        raise TypeError(f"Don't want to call array_function {func.__name__}!")
 
 
 def _is_pairwise_metric(estimator):
@@ -1453,9 +1452,9 @@ def check_sample_weights_pandas_series(name, estimator_orig):
             estimator.fit(X, y, sample_weight=weights)
         except ValueError:
             raise ValueError(
-                "Estimator {0} raises error if "
+                f"Estimator {name} raises error if "
                 "'sample_weight' parameter is of "
-                "type pandas.Series".format(name)
+                "type pandas.Series"
             )
     except ImportError:
         raise SkipTest(
@@ -1897,9 +1896,7 @@ def check_methods_subset_invariance(name, estimator_orig):
         "score_samples",
         "predict_proba",
     ]:
-        msg = ("{method} of {name} is not invariant when applied to a subset.").format(
-            method=method, name=name
-        )
+        msg = f"{method} of {name} is not invariant when applied to a subset."
 
         if hasattr(estimator, method):
             result_full, result_by_batch = _apply_on_subsets(
@@ -1940,9 +1937,9 @@ def check_methods_sample_order_invariance(name, estimator_orig):
         "predict_proba",
     ]:
         msg = (
-            "{method} of {name} is not invariant when applied to a dataset"
+            f"{method} of {name} is not invariant when applied to a dataset"
             "with different sample order."
-        ).format(method=method, name=name)
+        )
 
         if hasattr(estimator, method):
             assert_allclose_dense_sparse(
@@ -2550,7 +2547,7 @@ def check_classifier_multioutput(name, estimator_orig):
 
     assert y_pred.shape == (n_samples, n_classes), (
         "The shape of the prediction for multioutput data is "
-        "incorrect. Expected {}, got {}.".format((n_samples, n_labels), y_pred.shape)
+        f"incorrect. Expected {(n_samples, n_labels)}, got {y_pred.shape}."
     )
     assert y_pred.dtype.kind == "i"
 
@@ -2559,9 +2556,7 @@ def check_classifier_multioutput(name, estimator_orig):
         assert isinstance(decision, np.ndarray)
         assert decision.shape == (n_samples, n_classes), (
             "The shape of the decision function output for "
-            "multioutput data is incorrect. Expected {}, got {}.".format(
-                (n_samples, n_classes), decision.shape
-            )
+            f"multioutput data is incorrect. Expected {(n_samples, n_classes)}, got {decision.shape}."
         )
 
         dec_pred = (decision > 0).astype(int)
@@ -2575,9 +2570,7 @@ def check_classifier_multioutput(name, estimator_orig):
             for i in range(n_classes):
                 assert y_prob[i].shape == (n_samples, 2), (
                     "The shape of the probability for multioutput data is"
-                    " incorrect. Expected {}, got {}.".format(
-                        (n_samples, 2), y_prob[i].shape
-                    )
+                    f" incorrect. Expected {(n_samples, 2)}, got {y_prob[i].shape}."
                 )
                 assert_array_equal(
                     np.argmax(y_prob[i], axis=1).astype(int), y_pred[:, i]
@@ -2585,9 +2578,7 @@ def check_classifier_multioutput(name, estimator_orig):
         elif not tags.classifier_tags.poor_score:
             assert y_prob.shape == (n_samples, n_classes), (
                 "The shape of the probability for multioutput data is"
-                " incorrect. Expected {}, got {}.".format(
-                    (n_samples, n_classes), y_prob.shape
-                )
+                f" incorrect. Expected {(n_samples, n_classes)}, got {y_prob.shape}."
             )
             assert_array_equal(y_prob.round().astype(int), y_pred)
 
@@ -2679,7 +2670,7 @@ def check_clustering(name, clusterer_orig, readonly_memmap=False):
     assert labels_sorted[0] in [0, -1]
     # Labels should be less than n_clusters - 1
     if hasattr(clusterer, "n_clusters"):
-        n_clusters = getattr(clusterer, "n_clusters")
+        n_clusters = clusterer.n_clusters
         assert n_clusters - 1 >= labels_sorted[-1]
     # else labels should be less than max(labels_) which is necessarily true
 
@@ -3808,7 +3799,7 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type):
     set_random_state(estimator_2)
 
     if obj_type not in ["NotAnArray", "PandasDataframe"]:
-        raise ValueError("Data type {0} not supported".format(obj_type))
+        raise ValueError(f"Data type {obj_type} not supported")
 
     if obj_type == "NotAnArray":
         y_ = _NotAnArray(np.asarray(y))
@@ -4019,9 +4010,9 @@ def _enforce_estimator_tags_X(estimator, X, X_test=None, kernel=linear_kernel):
             X_test = X_test - X_test.min()  # pragma: no cover
     if get_tags(estimator).input_tags.categorical:
         dtype = np.float64 if get_tags(estimator).input_tags.allow_nan else np.int32
-        X = np.round((X - X.min())).astype(dtype)
+        X = np.round(X - X.min()).astype(dtype)
         if X_test is not None:
-            X_test = np.round((X_test - X_test.min())).astype(dtype)  # pragma: no cover
+            X_test = np.round(X_test - X_test.min()).astype(dtype)  # pragma: no cover
 
     if estimator.__class__.__name__ == "SkewedChi2Sampler":
         # SkewedChi2Sampler requires X > -skewdness in transform
@@ -4179,15 +4170,13 @@ def check_set_params(name, estimator_orig):
                 e_type = e.__class__.__name__
                 # Exception occurred, possibly parameter validation
                 warnings.warn(
-                    "{0} occurred during set_params of param {1} on "
-                    "{2}. It is recommended to delay parameter "
-                    "validation until fit.".format(e_type, param_name, name)
+                    f"{e_type} occurred during set_params of param {param_name} on "
+                    f"{name}. It is recommended to delay parameter "
+                    "validation until fit."
                 )
 
                 change_warning_msg = (
-                    "Estimator's parameters changed after set_params raised {}".format(
-                        e_type
-                    )
+                    f"Estimator's parameters changed after set_params raised {e_type}"
                 )
                 params_before_exception = curr_params
                 curr_params = estimator.get_params(deep=False)
@@ -4381,7 +4370,7 @@ def check_fit_idempotent(name, estimator_orig):
                 new_result,
                 atol=max(tol, 1e-9),
                 rtol=max(tol, 1e-7),
-                err_msg="Idempotency check failed for method {}".format(method),
+                err_msg=f"Idempotency check failed for method {method}",
             )
 
 
@@ -4511,10 +4500,10 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     y = _enforce_estimator_tags_y(estimator, y)
 
     err_msg = (
-        "`{name}.fit()` does not set the `n_features_in_` attribute. "
+        f"`{name}.fit()` does not set the `n_features_in_` attribute. "
         "You might want to use `sklearn.utils.validation.validate_data` instead "
-        "of `check_array` in `{name}.fit()` which takes care of setting the "
-        "attribute.".format(name=name)
+        f"of `check_array` in `{name}.fit()` which takes care of setting the "
+        "attribute."
     )
 
     estimator.fit(X, y)
@@ -5398,7 +5387,7 @@ def check_classifier_not_supporting_multiclass(name, estimator_orig):
         n_clusters_per_class=1,
         random_state=0,
     )
-    err_msg = """\
+    err_msg = f"""\
         The estimator tag `tags.classifier_tags.multi_class` is False for {name}
         which means it does not support multiclass classification. However, it does
         not raise the right `ValueError` when calling fit with a multiclass dataset,
@@ -5411,7 +5400,7 @@ def check_classifier_not_supporting_multiclass(name, estimator_orig):
                 'Only binary classification is supported. The type of the target '
                 f'is {{y_type}}.'
         )
-    """.format(name=name)
+    """
     err_msg = textwrap.dedent(err_msg)
 
     with raises(

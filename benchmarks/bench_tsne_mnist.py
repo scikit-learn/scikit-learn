@@ -102,16 +102,14 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    print("Used number of threads: {}".format(_openmp_effective_n_threads()))
+    print(f"Used number of threads: {_openmp_effective_n_threads()}")
     X, y = load_data(order=args.order)
 
     if args.pca_components > 0:
         t0 = time()
         X = PCA(n_components=args.pca_components).fit_transform(X)
         print(
-            "PCA preprocessing down to {} dimensions took {:0.3f}s".format(
-                args.pca_components, time() - t0
-            )
+            f"PCA preprocessing down to {args.pca_components} dimensions took {time() - t0:0.3f}s"
         )
 
     methods = []
@@ -183,7 +181,7 @@ $ cd ..
         y_train = y[:n]
         n = X_train.shape[0]
         for name, method in methods:
-            print("Fitting {} on {} samples...".format(name, n))
+            print(f"Fitting {name} on {n} samples...")
             t0 = time()
             np.save(
                 os.path.join(LOG_DIR, "mnist_{}_{}.npy".format("original", n)), X_train
@@ -196,13 +194,11 @@ $ cd ..
             duration = time() - t0
             precision_5 = nn_accuracy(X_train, X_embedded)
             print(
-                "Fitting {} on {} samples took {:.3f}s in {:d} iterations, "
-                "nn accuracy: {:0.3f}".format(name, n, duration, n_iter, precision_5)
+                f"Fitting {name} on {n} samples took {duration:.3f}s in {n_iter:d} iterations, "
+                f"nn accuracy: {precision_5:0.3f}"
             )
             results.append(dict(method=name, duration=duration, n_samples=n))
             with open(log_filename, "w", encoding="utf-8") as f:
                 json.dump(results, f)
             method_name = sanitize(name)
-            np.save(
-                op.join(LOG_DIR, "mnist_{}_{}.npy".format(method_name, n)), X_embedded
-            )
+            np.save(op.join(LOG_DIR, f"mnist_{method_name}_{n}.npy"), X_embedded)

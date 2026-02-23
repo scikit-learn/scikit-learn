@@ -130,7 +130,7 @@ def test_summarize():
     ds2c = ((X[0] - barycenter) ** 2).sum()
 
     assert idx == offset
-    assert node_size == 3, "summary size = {}".format(node_size)
+    assert node_size == 3, f"summary size = {node_size}"
     assert np.isclose(node_dist, ds2c)
 
     # Summary should contain all 3 node with size 1 and distance to
@@ -146,5 +146,5 @@ def test_summarize():
 
         ds2c = ((X[0] - X[i + 1]) ** 2).sum()
 
-        assert node_size == 1, "summary size = {}".format(node_size)
+        assert node_size == 1, f"summary size = {node_size}"
         assert np.isclose(node_dist, ds2c)

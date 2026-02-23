@@ -478,10 +478,10 @@ def execute_command(command_list):
         command_str = " ".join(command_list)
         raise RuntimeError(
             "Command exited with non-zero exit code.\n"
-            "Exit code: {}\n"
-            "Command:\n{}\n"
-            "stdout:\n{}\n"
-            "stderr:\n{}\n".format(proc.returncode, command_str, out, err)
+            f"Exit code: {proc.returncode}\n"
+            f"Command:\n{command_str}\n"
+            f"stdout:\n{out}\n"
+            f"stderr:\n{err}\n"
         )
     logger.log(TRACE, out)
     return out

@@ -72,7 +72,7 @@ def _set_order(X, y, order="C"):
     """
     if order not in [None, "C", "F"]:
         raise ValueError(
-            "Unknown value for order. Got {} instead of None, 'C' or 'F'.".format(order)
+            f"Unknown value for order. Got {order} instead of None, 'C' or 'F'."
         )
     sparse_X = sparse.issparse(X)
     sparse_y = sparse.issparse(y)

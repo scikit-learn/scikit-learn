@@ -480,9 +480,11 @@ def _make_indexable(iterable):
     """
     if sp.issparse(iterable):
         return iterable.tocsr()
-    elif hasattr(iterable, "__getitem__") or hasattr(iterable, "iloc"):
-        return iterable
-    elif iterable is None:
+    elif (
+        hasattr(iterable, "__getitem__")
+        or hasattr(iterable, "iloc")
+        or iterable is None
+    ):
         return iterable
     return np.array(iterable)
 
@@ -666,7 +668,7 @@ def _ensure_no_complex_data(array):
         and hasattr(array.dtype, "kind")
         and array.dtype.kind == "c"
     ):
-        raise ValueError("Complex data not supported\n{}\n".format(array))
+        raise ValueError(f"Complex data not supported\n{array}\n")
 
 
 def _check_estimator_name(estimator):
@@ -1022,7 +1024,7 @@ def check_array(
                     array = _asarray_with_order(array, order=order, dtype=dtype, xp=xp)
             except ComplexWarning as complex_warning:
                 raise ValueError(
-                    "Complex data not supported\n{}\n".format(array)
+                    f"Complex data not supported\n{array}\n"
                 ) from complex_warning
 
         # It is possible that the np.array(..) gave no warning. This happens
@@ -1035,10 +1037,10 @@ def check_array(
             # If input is scalar raise error
             if array.ndim == 0:
                 raise ValueError(
-                    "Expected 2D array, got scalar array instead:\narray={}.\n"
+                    f"Expected 2D array, got scalar array instead:\narray={array}.\n"
                     "Reshape your data either using array.reshape(-1, 1) if "
                     "your data has a single feature or array.reshape(1, -1) "
-                    "if it contains a single sample.".format(array)
+                    "if it contains a single sample."
                 )
             # If input is 1D raise error
             if array.ndim == 1:
@@ -1431,9 +1433,7 @@ def column_or_1d(y, *, dtype=None, input_name="y", warn=False, device=None):
             xp.reshape(y, (-1,)), order="C", xp=xp, device=device
         )
 
-    raise ValueError(
-        "y should be a 1d array, got an array of shape {} instead.".format(shape)
-    )
+    raise ValueError(f"y should be a 1d array, got an array of shape {shape} instead.")
 
 
 def check_random_state(seed):
@@ -1548,7 +1548,7 @@ def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=Fal
     """
     if (array.ndim != 2) or (array.shape[0] != array.shape[1]):
         raise ValueError(
-            "array must be 2-dimensional and square. shape = {0}".format(array.shape)
+            f"array must be 2-dimensional and square. shape = {array.shape}"
         )
 
     if sp.issparse(array):
@@ -2174,9 +2174,7 @@ def _check_sample_weight(
 
         if sample_weight.shape != (n_samples,):
             raise ValueError(
-                "sample_weight.shape == {}, expected {}!".format(
-                    sample_weight.shape, (n_samples,)
-                )
+                f"sample_weight.shape == {sample_weight.shape}, expected {(n_samples,)}!"
             )
 
     if not allow_all_zero_weights:

@@ -696,7 +696,7 @@ def test_refit_callable_invalid_type():
         """
         A dummy function tests when returned 'best_index_' is not integer.
         """
-        return None
+        return
 
     X, y = make_classification(n_samples=100, n_features=4, random_state=42)
 
@@ -1254,14 +1254,12 @@ def compare_cv_results_multimetric_with_single(search_multi, search_acc, search_
     # Check if score and timing are reasonable, also checks if the keys
     # are present
     assert all(
-        (
-            np.all(cv_results_multi[k] <= 1)
-            for k in (
-                "mean_score_time",
-                "std_score_time",
-                "mean_fit_time",
-                "std_fit_time",
-            )
+        np.all(cv_results_multi[k] <= 1)
+        for k in (
+            "mean_score_time",
+            "std_score_time",
+            "mean_fit_time",
+            "std_fit_time",
         )
     )
 
@@ -1749,12 +1747,10 @@ def test_grid_search_failing_classifier():
         )
 
     assert all(
-        (
-            np.all(get_cand_scores(cand_i) == 0.0)
-            for cand_i in range(n_candidates)
-            if gs.cv_results_["param_parameter"][cand_i]
-            == FailingClassifier.FAILING_PARAMETER
-        )
+        np.all(get_cand_scores(cand_i) == 0.0)
+        for cand_i in range(n_candidates)
+        if gs.cv_results_["param_parameter"][cand_i]
+        == FailingClassifier.FAILING_PARAMETER
     )
 
     gs = GridSearchCV(
@@ -2222,7 +2218,7 @@ def test_callable_multimetric_confusion_matrix():
 
     score_names = ["tn", "fp", "fn", "tp"]
     for name in score_names:
-        assert "mean_test_{}".format(name) in search.cv_results_
+        assert f"mean_test_{name}" in search.cv_results_
 
     y_pred = search.predict(X)
     cm = confusion_matrix(y, y_pred)

@@ -100,7 +100,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         ----------
         X : array-like of shape  (n_samples, n_features)
         """
-        pass
 
     def _initialize_parameters(self, X, random_state, xp=None):
         """Initialize the model parameters.
@@ -167,7 +166,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         resp : array-like of shape (n_samples, n_components)
         """
-        pass
 
     def fit(self, X, y=None):
         """Estimate model parameters with the EM algorithm.
@@ -343,7 +341,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.
         """
-        pass
 
     @abstractmethod
     def _get_parameters(self):
@@ -529,7 +526,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         -------
         log_weight : array, shape (n_components, )
         """
-        pass
 
     @abstractmethod
     def _estimate_log_prob(self, X, xp=None):
@@ -545,7 +541,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         -------
         log_prob : array, shape (n_samples, n_component)
         """
-        pass
 
     def _estimate_log_prob_resp(self, X, xp=None):
         """Estimate log probabilities and responsibilities for each sample.

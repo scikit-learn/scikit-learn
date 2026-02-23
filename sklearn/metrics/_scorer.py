@@ -871,7 +871,7 @@ for name, metric in [
 ]:
     _SCORERS[name] = make_scorer(metric, average="binary")
     for average in ["macro", "micro", "samples", "weighted"]:
-        qualified_name = "{0}_{1}".format(name, average)
+        qualified_name = f"{name}_{average}"
         _SCORERS[qualified_name] = make_scorer(metric, pos_label=None, average=average)
 
 

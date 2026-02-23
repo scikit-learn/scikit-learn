@@ -34,9 +34,9 @@ verified from the labelled scatter plot on the right.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import cm
 
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs

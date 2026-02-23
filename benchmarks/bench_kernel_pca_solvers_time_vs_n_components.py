@@ -56,7 +56,7 @@ n_compo_grid_size = 10  # nb of positions in the grid to try
 # generate the grid
 n_compo_range = [
     np.round(np.exp((x / (n_compo_grid_size - 1)) * np.log(max_n_compo)))
-    for x in range(0, n_compo_grid_size)
+    for x in range(n_compo_grid_size)
 ]
 
 n_iter = 3  # the number of times each experiment will be repeated

@@ -101,7 +101,7 @@ need to override, but it works for simple consumers as is.
 import inspect
 from collections import defaultdict, namedtuple
 from copy import deepcopy
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Union
 from warnings import warn
 
 from sklearn import get_config
@@ -1452,7 +1452,7 @@ class RequestMethod:
                     k,
                     inspect.Parameter.KEYWORD_ONLY,
                     default=UNCHANGED,
-                    annotation=Optional[Union[bool, None, str]],
+                    annotation=Union[None, bool, str],
                 )
                 for k in self.keys
             ]

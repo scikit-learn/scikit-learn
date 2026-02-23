@@ -99,7 +99,7 @@ def auc(x, y):
         if np.all(dx <= 0):
             direction = -1
         else:
-            raise ValueError("x is neither increasing nor decreasing : {}.".format(x))
+            raise ValueError(f"x is neither increasing nor decreasing : {x}.")
 
     area = direction * trapezoid(y, x)
     if isinstance(area, np.memmap):
@@ -709,8 +709,8 @@ def roc_auc_score(
             raise ValueError(
                 "Partial AUC computation not available in "
                 "multiclass setting, 'max_fpr' must be"
-                " set to `None`, received `max_fpr={0}` "
-                "instead".format(max_fpr)
+                f" set to `None`, received `max_fpr={max_fpr}` "
+                "instead"
             )
         if multi_class == "raise":
             raise ValueError("multi_class must be in ('ovo', 'ovr')")
@@ -803,15 +803,15 @@ def _multiclass_roc_auc_score(
         average_options = ("micro",) + average_options
     if average not in average_options:
         raise ValueError(
-            "average must be one of {0} for multiclass problems".format(average_options)
+            f"average must be one of {average_options} for multiclass problems"
         )
 
     multiclass_options = ("ovo", "ovr")
     if multi_class not in multiclass_options:
         raise ValueError(
-            "multi_class='{0}' is not supported "
+            f"multi_class='{multi_class}' is not supported "
             "for multiclass ROC AUC, multi_class must be "
-            "in {1}".format(multi_class, multiclass_options)
+            f"in {multiclass_options}"
         )
 
     if average is None and multi_class == "ovo":
@@ -828,8 +828,8 @@ def _multiclass_roc_auc_score(
             raise ValueError("Parameter 'labels' must be ordered")
         if len(classes) != y_score.shape[1]:
             raise ValueError(
-                "Number of given labels, {0}, not equal to the number "
-                "of columns in 'y_score', {1}".format(len(classes), y_score.shape[1])
+                f"Number of given labels, {len(classes)}, not equal to the number "
+                f"of columns in 'y_score', {y_score.shape[1]}"
             )
         if len(np.setdiff1d(y_true, classes)):
             raise ValueError("'y_true' contains labels not in parameter 'labels'")
@@ -947,7 +947,7 @@ def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weigh
     # Check to make sure y_true is valid
     y_type = type_of_target(y_true, input_name="y_true")
     if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
-        raise ValueError("{0} format is not supported".format(y_type))
+        raise ValueError(f"{y_type} format is not supported")
 
     xp, _, device = get_namespace_and_device(y_true, y_score, sample_weight)
 
@@ -1401,7 +1401,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     if y_type != "multilabel-indicator" and not (
         y_type == "binary" and y_true.ndim == 2
     ):
-        raise ValueError("{0} format is not supported".format(y_type))
+        raise ValueError(f"{y_type} format is not supported")
 
     if not issparse(y_true):
         y_true = csr_matrix(y_true)
@@ -1500,7 +1500,7 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
 
     y_type = type_of_target(y_true, input_name="y_true")
     if y_type != "multilabel-indicator":
-        raise ValueError("{0} format is not supported".format(y_type))
+        raise ValueError(f"{y_type} format is not supported")
 
     if y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different shape")
@@ -1579,7 +1579,7 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
 
     y_type = type_of_target(y_true, input_name="y_true")
     if y_type not in ("multilabel-indicator",):
-        raise ValueError("{0} format is not supported".format(y_type))
+        raise ValueError(f"{y_type} format is not supported")
 
     if y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different shape")
@@ -1732,9 +1732,7 @@ def _check_dcg_target_type(y_true):
     )
     if y_type not in supported_fmt:
         raise ValueError(
-            "Only {} formats are supported. Got {} instead".format(
-                supported_fmt, y_type
-            )
+            f"Only {supported_fmt} formats are supported. Got {y_type} instead"
         )
 
 

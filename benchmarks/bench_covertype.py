@@ -156,7 +156,7 @@ if __name__ == "__main__":
         order=args["order"], random_state=args["random_seed"]
     )
 
-    print("")
+    print()
     print("Dataset statistics:")
     print("===================")
     print("%s %d" % ("number of features:".ljust(25), X_train.shape[1]))

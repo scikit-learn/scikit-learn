@@ -235,10 +235,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
                     # provided by the user is in y.
                     err_msg = (
                         "The constant target value must be present in "
-                        "the training data. You provided constant={}. "
-                        "Possible values are: {}.".format(
-                            self.constant, self.classes_[k].tolist()
-                        )
+                        f"the training data. You provided constant={self.constant}. "
+                        f"Possible values are: {self.classes_[k].tolist()}."
                     )
                     raise ValueError(err_msg)
 

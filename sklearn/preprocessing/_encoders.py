@@ -161,8 +161,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     diff = _check_unknown(Xi, cats)
                     if diff:
                         msg = (
-                            "Found unknown categories {0} in column {1}"
-                            " during fit".format(diff, i)
+                            f"Found unknown categories {diff} in column {i} during fit"
                         )
                         raise ValueError(msg)
                 if compute_counts:
@@ -214,8 +213,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             if not np.all(valid_mask):
                 if handle_unknown == "error":
                     msg = (
-                        "Found unknown categories {0} in column {1}"
-                        " during transform".format(diff, i)
+                        f"Found unknown categories {diff} in column {i}"
+                        " during transform"
                     )
                     raise ValueError(msg)
                 else:
@@ -892,10 +891,7 @@ class OneHotEncoder(_BaseEncoder):
                     "dropped, but were not found in the training "
                     "data.\n{}".format(
                         "\n".join(
-                            [
-                                "Category: {}, Feature: {}".format(c, v)
-                                for c, v in missing_drops
-                            ]
+                            [f"Category: {c}, Feature: {v}" for c, v in missing_drops]
                         )
                     )
                 )

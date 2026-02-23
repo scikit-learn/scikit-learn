@@ -244,9 +244,12 @@ class NearestCentroid(
             )
 
         err_msg = "All features have zero variance. Division by zero."
-        if is_X_sparse and np.all((X.max(axis=0) - X.min(axis=0)).toarray() == 0):
-            raise ValueError(err_msg)
-        elif not is_X_sparse and np.all(np.ptp(X, axis=0) == 0):
+        if (
+            is_X_sparse
+            and np.all((X.max(axis=0) - X.min(axis=0)).toarray() == 0)
+            or not is_X_sparse
+            and np.all(np.ptp(X, axis=0) == 0)
+        ):
             raise ValueError(err_msg)
 
         dataset_centroid_ = X.mean(axis=0)

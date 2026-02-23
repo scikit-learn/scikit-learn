@@ -102,8 +102,8 @@ while len(stack) > 0:
         is_leaves[node_id] = True
 
 print(
-    "The binary tree structure has {n} nodes and has "
-    "the following tree structure:\n".format(n=n_nodes)
+    f"The binary tree structure has {n_nodes} nodes and has "
+    "the following tree structure:\n"
 )
 for i in range(n_nodes):
     if is_leaves[i]:
@@ -195,7 +195,7 @@ node_index = node_indicator.indices[
     node_indicator.indptr[sample_id] : node_indicator.indptr[sample_id + 1]
 ]
 
-print("Rules used to predict sample {id}:\n".format(id=sample_id))
+print(f"Rules used to predict sample {sample_id}:\n")
 for node_id in node_index:
     # continue to the next node if it is a leaf node
     if leaf_id[sample_id] == node_id:
@@ -208,15 +208,8 @@ for node_id in node_index:
         threshold_sign = ">"
 
     print(
-        "decision node {node} : (X_test[{sample}, {feature}] = {value}) "
-        "{inequality} {threshold})".format(
-            node=node_id,
-            sample=sample_id,
-            feature=feature[node_id],
-            value=X_test[sample_id, feature[node_id]],
-            inequality=threshold_sign,
-            threshold=threshold[node_id],
-        )
+        f"decision node {node_id} : (X_test[{sample_id}, {feature[node_id]}] = {X_test[sample_id, feature[node_id]]}) "
+        f"{threshold_sign} {threshold[node_id]})"
     )
 
 ##############################################################################
@@ -230,8 +223,6 @@ common_nodes = node_indicator.toarray()[sample_ids].sum(axis=0) == len(sample_id
 common_node_id = np.arange(n_nodes)[common_nodes]
 
 print(
-    "\nThe following samples {samples} share the node(s) {nodes} in the tree.".format(
-        samples=sample_ids, nodes=common_node_id
-    )
+    f"\nThe following samples {sample_ids} share the node(s) {common_node_id} in the tree."
 )
-print("This is {prop}% of all nodes.".format(prop=100 * len(common_node_id) / n_nodes))
+print(f"This is {100 * len(common_node_id) / n_nodes}% of all nodes.")

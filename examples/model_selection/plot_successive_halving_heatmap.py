@@ -75,11 +75,11 @@ def make_heatmap(ax, gs, is_sh=False, make_cbar=False):
     im = ax.imshow(scores_matrix)
 
     ax.set_xticks(np.arange(len(Cs)))
-    ax.set_xticklabels(["{:.0E}".format(x) for x in Cs])
+    ax.set_xticklabels([f"{x:.0E}" for x in Cs])
     ax.set_xlabel("C", fontsize=15)
 
     ax.set_yticks(np.arange(len(gammas)))
-    ax.set_yticklabels(["{:.0E}".format(x) for x in gammas])
+    ax.set_yticklabels([f"{x:.0E}" for x in gammas])
     ax.set_ylabel("gamma", fontsize=15)
 
     # Rotate the tick labels and set their alignment.
@@ -114,8 +114,8 @@ ax1, ax2 = axes
 make_heatmap(ax1, gsh, is_sh=True)
 make_heatmap(ax2, gs, make_cbar=True)
 
-ax1.set_title("Successive Halving\ntime = {:.3f}s".format(gsh_time), fontsize=15)
-ax2.set_title("GridSearch\ntime = {:.3f}s".format(gs_time), fontsize=15)
+ax1.set_title(f"Successive Halving\ntime = {gsh_time:.3f}s", fontsize=15)
+ax2.set_title(f"GridSearch\ntime = {gs_time:.3f}s", fontsize=15)
 
 plt.show()
 

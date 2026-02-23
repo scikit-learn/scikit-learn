@@ -105,7 +105,7 @@ lagged_df.head(10)
 lagged_df = lagged_df.drop_nulls()
 X = lagged_df.drop("count")
 y = lagged_df["count"]
-print("X shape: {}\ny shape: {}".format(X.shape, y.shape))
+print(f"X shape: {X.shape}\ny shape: {y.shape}")
 
 # %%
 # Naive evaluation of the next hour bike demand regression

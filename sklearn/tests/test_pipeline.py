@@ -528,7 +528,7 @@ def test_fit_predict_on_pipeline_without_fit_predict():
     outer_msg = "'Pipeline' has no attribute 'fit_predict'"
     inner_msg = "'PCA' object has no attribute 'fit_predict'"
     with pytest.raises(AttributeError, match=outer_msg) as exec_info:
-        getattr(pipe, "fit_predict")
+        pipe.fit_predict
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
 
@@ -900,7 +900,7 @@ def test_set_pipeline_step_passthrough(passthrough):
     inner_msg = "'str' object has no attribute 'predict'"
     outer_msg = "This 'Pipeline' has no attribute 'predict'"
     with pytest.raises(AttributeError, match=outer_msg) as exec_info:
-        getattr(pipeline, "predict")
+        pipeline.predict
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
 
@@ -1098,11 +1098,11 @@ def test_classes_property():
     reg = make_pipeline(SelectKBest(k=1), LinearRegression())
     reg.fit(X, y)
     with pytest.raises(AttributeError):
-        getattr(reg, "classes_")
+        reg.classes_
 
     clf = make_pipeline(SelectKBest(k=1), LogisticRegression(random_state=0))
     with pytest.raises(AttributeError):
-        getattr(clf, "classes_")
+        clf.classes_
     clf.fit(X, y)
     assert_array_equal(clf.classes_, np.unique(y))
 

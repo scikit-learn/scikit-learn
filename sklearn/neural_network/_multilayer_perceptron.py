@@ -824,8 +824,7 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
                 self._no_improvement_count += 1
             else:
                 self._no_improvement_count = 0
-            if self.loss_curve_[-1] < self.best_loss_:
-                self.best_loss_ = self.loss_curve_[-1]
+            self.best_loss_ = min(self.best_loss_, self.loss_curve_[-1])
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):

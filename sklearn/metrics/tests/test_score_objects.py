@@ -1396,11 +1396,13 @@ def test_kwargs_without_metadata_routing_error():
 
     clf = DecisionTreeClassifier().fit(X, y)
     scorer = make_scorer(score)
-    with config_context(enable_metadata_routing=False):
-        with pytest.raises(
+    with (
+        config_context(enable_metadata_routing=False),
+        pytest.raises(
             ValueError, match="is only supported if enable_metadata_routing=True"
-        ):
-            scorer(clf, X, y, param="blah")
+        ),
+    ):
+        scorer(clf, X, y, param="blah")
 
 
 def test_get_scorer_multilabel_indicator():

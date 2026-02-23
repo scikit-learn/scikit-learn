@@ -57,17 +57,13 @@ def _random_choice_csc(n_samples, classes, class_probability=None, random_state=
             class_prob_j = np.asarray(class_probability[j])
 
         if not np.isclose(np.sum(class_prob_j), 1.0):
-            raise ValueError(
-                "Probability array at index {0} does not sum to one".format(j)
-            )
+            raise ValueError(f"Probability array at index {j} does not sum to one")
 
         if class_prob_j.shape[0] != classes[j].shape[0]:
             raise ValueError(
-                "classes[{0}] (length {1}) and "
-                "class_probability[{0}] (length {2}) have "
-                "different length.".format(
-                    j, classes[j].shape[0], class_prob_j.shape[0]
-                )
+                f"classes[{j}] (length {classes[j].shape[0]}) and "
+                f"class_probability[{j}] (length {class_prob_j.shape[0]}) have "
+                "different length."
             )
 
         # If 0 is not present in the classes insert it with a probability 0.0

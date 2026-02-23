@@ -467,7 +467,7 @@ def _fetch_lfw_pairs(
                 person_folder = join(data_folder_path, name)
             except TypeError:
                 person_folder = join(data_folder_path, str(name, "UTF-8"))
-            filenames = list(sorted(listdir(person_folder)))
+            filenames = sorted(listdir(person_folder))
             file_path = join(person_folder, filenames[idx])
             file_paths.append(file_path)
 
@@ -633,7 +633,7 @@ def fetch_lfw_pairs(
     if subset not in label_filenames:
         raise ValueError(
             "subset='%s' is invalid: should be one of %r"
-            % (subset, list(sorted(label_filenames.keys())))
+            % (subset, sorted(label_filenames.keys()))
         )
     index_file_path = join(lfw_home, label_filenames[subset])
 

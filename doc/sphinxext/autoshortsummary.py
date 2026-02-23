@@ -25,7 +25,6 @@ class ShortSummaryDocumenter(ModuleLevelDocumenter):
 
     def add_directive_header(self, sig):
         """Override default behavior to add no directive header or options."""
-        pass
 
     def add_content(self, more_content):
         """Override default behavior to add only the first line of the docstring.

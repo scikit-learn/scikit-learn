@@ -401,9 +401,7 @@ def load_svmlight_files(
         n_features = n_f
     elif n_features < n_f:
         raise ValueError(
-            "n_features was set to {}, but input file contains {} features".format(
-                n_features, n_f
-            )
+            f"n_features was set to {n_features}, but input file contains {n_f} features"
         )
 
     result = []

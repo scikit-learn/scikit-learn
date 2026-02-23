@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 ====================================
 Demo of HDBSCAN clustering algorithm

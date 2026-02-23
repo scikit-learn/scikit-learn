@@ -74,9 +74,10 @@ def test_regression_metrics(n_samples=50):
         1 - np.abs(y_true - y_pred).sum() / dev_median,
     )
     alpha = 0.2
-    pinball_loss = lambda y_true, y_pred, alpha: alpha * np.maximum(
-        y_true - y_pred, 0
-    ) + (1 - alpha) * np.maximum(y_pred - y_true, 0)
+    pinball_loss = lambda y_true, y_pred, alpha: (
+        alpha * np.maximum(y_true - y_pred, 0)
+        + (1 - alpha) * np.maximum(y_pred - y_true, 0)
+    )
     y_quantile = np.percentile(y_true, q=alpha * 100)
     assert_almost_equal(
         d2_pinball_score(y_true, y_pred, alpha=alpha),
@@ -347,11 +348,7 @@ def test__check_reg_targets():
 
 def test__check_reg_targets_exception():
     invalid_multioutput = "this_value_is_not_valid"
-    expected_message = (
-        "Allowed 'multioutput' string values are.+You provided multioutput={!r}".format(
-            invalid_multioutput
-        )
-    )
+    expected_message = f"Allowed 'multioutput' string values are.+You provided multioutput={invalid_multioutput!r}"
     with pytest.raises(ValueError, match=expected_message):
         _check_reg_targets([1, 2, 3], [[1], [2], [3]], None, invalid_multioutput)
 

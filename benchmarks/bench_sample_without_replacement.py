@@ -106,8 +106,8 @@ if __name__ == "__main__":
 
     ###########################################################################
     # Set Python core input
-    sampling_algorithm["python-core-sample"] = (
-        lambda n_population, n_sample: random.sample(range(n_population), n_sample)
+    sampling_algorithm["python-core-sample"] = lambda n_population, n_sample: (
+        random.sample(range(n_population), n_sample)
     )
 
     ###########################################################################
@@ -150,8 +150,8 @@ if __name__ == "__main__":
 
     ###########################################################################
     # Numpy permutation based
-    sampling_algorithm["numpy-permutation"] = (
-        lambda n_population, n_sample: np.random.permutation(n_population)[:n_sample]
+    sampling_algorithm["numpy-permutation"] = lambda n_population, n_sample: (
+        np.random.permutation(n_population)[:n_sample]
     )
 
     ###########################################################################
@@ -207,12 +207,12 @@ if __name__ == "__main__":
     print(25 * "-" + ("|" + "-" * 14) * 1)
     for key, value in arguments.items():
         print("%s \t | %s " % (str(key).ljust(16), str(value).strip().center(12)))
-    print("")
+    print()
 
     print("Sampling algorithm performance:")
     print("===============================")
     print("Results are averaged over %s repetition(s)." % opts.n_times)
-    print("")
+    print()
 
     fig = plt.figure("scikit-learn sample w/o replacement benchmark results")
     fig.suptitle("n_population = %s, n_times = %s" % (opts.n_population, opts.n_times))

@@ -72,9 +72,9 @@ def test_monotonic_constraints_classifications(
             max_leaf_nodes=n_samples_train,
         )
     if hasattr(est, "random_state"):
-        est.set_params(**{"random_state": global_random_seed})
+        est.set_params(random_state=global_random_seed)
     if hasattr(est, "n_estimators"):
-        est.set_params(**{"n_estimators": 5})
+        est.set_params(n_estimators=5)
     if sparse_splitter:
         X_train = csc_container(X_train)
     est.fit(X_train, y_train)
@@ -145,7 +145,7 @@ def test_monotonic_constraints_regressions(
     if hasattr(est, "random_state"):
         est.set_params(random_state=global_random_seed)
     if hasattr(est, "n_estimators"):
-        est.set_params(**{"n_estimators": 5})
+        est.set_params(n_estimators=5)
     if sparse_splitter:
         X_train = csc_container(X_train)
     est.fit(X_train, y_train)

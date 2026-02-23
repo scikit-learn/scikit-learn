@@ -195,9 +195,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         if not (3 <= self.n_bins <= 256):
             # min is 3: at least 2 distinct bins and a missing values bin
             raise ValueError(
-                "n_bins={} should be no smaller than 3 and no larger than 256.".format(
-                    self.n_bins
-                )
+                f"n_bins={self.n_bins} should be no smaller than 3 and no larger than 256."
             )
 
         X = check_array(X, dtype=[X_DTYPE], ensure_all_finite=False)
@@ -285,8 +283,8 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
         if X.shape[1] != self.n_bins_non_missing_.shape[0]:
             raise ValueError(
-                "This estimator was fitted with {} features but {} got passed "
-                "to transform()".format(self.n_bins_non_missing_.shape[0], X.shape[1])
+                f"This estimator was fitted with {self.n_bins_non_missing_.shape[0]} features but {X.shape[1]} got passed "
+                "to transform()"
             )
 
         n_threads = _openmp_effective_n_threads(self.n_threads)

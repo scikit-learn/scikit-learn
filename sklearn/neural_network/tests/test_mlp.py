@@ -518,11 +518,10 @@ def test_nonfinite_params():
         "Solver produced non-finite parameter weights. The input data may contain large"
         " values and need to be preprocessed."
     )
-    with pytest.raises(ValueError, match=msg):
-        with warnings.catch_warnings():
-            # RuntimeWarning: overflow encountered in square
-            warnings.simplefilter("ignore")
-            clf.fit(X, y)
+    with pytest.raises(ValueError, match=msg), warnings.catch_warnings():
+        # RuntimeWarning: overflow encountered in square
+        warnings.simplefilter("ignore")
+        clf.fit(X, y)
 
 
 def test_predict_proba_binary():

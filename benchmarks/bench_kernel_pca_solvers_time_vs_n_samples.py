@@ -61,7 +61,7 @@ n_samples_grid_size = 4  # nb of positions in the grid to try
 n_samples_range = [
     min_n_samples
     + np.floor((x / (n_samples_grid_size - 1)) * (max_n_samples - min_n_samples))
-    for x in range(0, n_samples_grid_size)
+    for x in range(n_samples_grid_size)
 ]
 
 n_components = 100  # the number of principal components we want to use

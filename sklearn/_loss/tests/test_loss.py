@@ -1006,7 +1006,7 @@ def test_loss_intercept_only(loss, sample_weight):
         # need to apply loss.symmetrize_raw_prediction to opt.x before comparing.
         opt = minimize(
             fun,
-            np.zeros((loss.n_classes)),
+            np.zeros(loss.n_classes),
             tol=1e-13,
             options={"maxiter": 100},
             method="SLSQP",

@@ -319,7 +319,7 @@ def _safe_indexing(X, indices, *, axis=0):
     if axis not in (0, 1):
         raise ValueError(
             "'axis' should be either 0 (to index rows) or 1 (to index "
-            " column). Got {} instead.".format(axis)
+            f" column). Got {axis} instead."
         )
 
     indices_dtype = _determine_key_type(indices)

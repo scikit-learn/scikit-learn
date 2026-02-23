@@ -1265,10 +1265,7 @@ def test_missing_indicator_sparse_param(arr_type, missing_values, param_sparse):
     if param_sparse is True:
         assert X_fit_mask.format == "csc"
         assert X_trans_mask.format == "csc"
-    elif param_sparse == "auto" and missing_values == 0:
-        assert isinstance(X_fit_mask, np.ndarray)
-        assert isinstance(X_trans_mask, np.ndarray)
-    elif param_sparse is False:
+    elif param_sparse == "auto" and missing_values == 0 or param_sparse is False:
         assert isinstance(X_fit_mask, np.ndarray)
         assert isinstance(X_trans_mask, np.ndarray)
     else:

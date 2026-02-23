@@ -1230,7 +1230,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             warnings.warn(
                 "l1_ratio parameter is only used when penalty is "
                 "'elasticnet'. Got "
-                "(penalty={})".format(penalty)
+                f"(penalty={penalty})"
             )
         if (self.penalty == "l2" and self.l1_ratio != 0) or (
             self.penalty == "l1" and self.l1_ratio != 1
@@ -1937,7 +1937,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             if l1_ratios is not None and self.penalty != "deprecated":
                 warnings.warn(
                     "l1_ratios parameter is only used when penalty "
-                    "is 'elasticnet'. Got (penalty={})".format(penalty)
+                    f"is 'elasticnet'. Got (penalty={penalty})"
                 )
 
             if l1_ratios is None:

@@ -522,12 +522,11 @@ def test_fetch_file_using_data_home(monkeypatch, tmpdir):
     expected_warning_msg = re.escape(
         "Retry downloading from url: https://example.com/subfolder/invalid.txt"
     )
-    with pytest.raises(HTTPError):
-        with pytest.warns(match=expected_warning_msg):
-            fetch_file(
-                "https://example.com/subfolder/invalid.txt",
-                delay=0,
-            )
+    with pytest.raises(HTTPError), pytest.warns(match=expected_warning_msg):
+        fetch_file(
+            "https://example.com/subfolder/invalid.txt",
+            delay=0,
+        )
 
     local_subfolder = data_home / "example.com" / "subfolder"
     assert sorted(local_subfolder.iterdir()) == [local_subfolder / "other_file.txt"]

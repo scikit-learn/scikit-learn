@@ -90,11 +90,11 @@ def show_versions():
 
     print("\nSystem:")
     for k, stat in sys_info.items():
-        print("{k:>10}: {stat}".format(k=k, stat=stat))
+        print(f"{k:>10}: {stat}")
 
     print("\nPython dependencies:")
     for k, stat in deps_info.items():
-        print("{k:>13}: {stat}".format(k=k, stat=stat))
+        print(f"{k:>13}: {stat}")
 
     print(
         "\n{k}: {stat}".format(

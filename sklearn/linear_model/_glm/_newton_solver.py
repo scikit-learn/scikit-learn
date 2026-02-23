@@ -363,7 +363,6 @@ class NewtonSolver(ABC):
 
         Some solvers may need this, others not.
         """
-        pass
 
     def solve(self, X, y, sample_weight):
         """Solve the optimization problem.

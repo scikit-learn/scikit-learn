@@ -260,7 +260,7 @@ def test_check_precisions():
         "full": np.ones((n_components + 1, n_features, n_features)),
         "tied": np.ones((n_features + 1, n_features + 1)),
         "diag": np.ones((n_components + 1, n_features)),
-        "spherical": np.ones((n_components + 1)),
+        "spherical": np.ones(n_components + 1),
     }
 
     # Define not positive-definite precisions
@@ -1633,9 +1633,11 @@ def test_gaussian_mixture_raises_where_array_api_not_implemented(
         n_components=3, covariance_type="diag", init_params=init_params
     )
 
-    with sklearn.config_context(array_api_dispatch=True):
-        with pytest.raises(
+    with (
+        sklearn.config_context(array_api_dispatch=True),
+        pytest.raises(
             NotImplementedError,
             match="Allowed `init_params`.+if 'array_api_dispatch' is enabled",
-        ):
-            gmm.fit(X)
+        ),
+    ):
+        gmm.fit(X)

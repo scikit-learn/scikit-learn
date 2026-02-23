@@ -1089,7 +1089,7 @@ def test_countvectorizer_vocab_sets_when_pickling():
             "water",
         ]
     )
-    for x in range(0, 100):
+    for x in range(100):
         vocab_set = set(rng.choice(vocab_words, size=5, replace=False))
         cv = CountVectorizer(vocabulary=vocab_set)
         unpickled_cv = pickle.loads(pickle.dumps(cv))
@@ -1115,10 +1115,10 @@ def test_countvectorizer_vocab_dicts_when_pickling():
             "water",
         ]
     )
-    for x in range(0, 100):
+    for x in range(100):
         vocab_dict = dict()
         words = rng.choice(vocab_words, size=5, replace=False)
-        for y in range(0, 5):
+        for y in range(5):
             vocab_dict[words[y]] = y
         cv = CountVectorizer(vocabulary=vocab_dict)
         unpickled_cv = pickle.loads(pickle.dumps(cv))
@@ -1169,7 +1169,7 @@ def test_tfidfvectorizer_invalid_idf_attr():
     expected_idf_len = len(vect.idf_)
     invalid_idf = [1.0] * (expected_idf_len + 1)
     with pytest.raises(ValueError):
-        setattr(copy, "idf_", invalid_idf)
+        copy.idf_ = invalid_idf
 
 
 def test_non_unique_vocab():

@@ -235,9 +235,7 @@ def test_2d_y():
             list(_split(splitter, X, y_multilabel, groups=groups))
         except ValueError as e:
             allowed_target_types = ("binary", "multiclass")
-            msg = "Supported target types are: {}. Got 'multilabel".format(
-                allowed_target_types
-            )
+            msg = f"Supported target types are: {allowed_target_types}. Got 'multilabel"
             assert msg in str(e)
 
 
@@ -1220,8 +1218,8 @@ def test_repeated_cv_value_errors():
 def test_repeated_cv_repr(RepeatedCV):
     n_splits, n_repeats = 2, 6
     repeated_cv = RepeatedCV(n_splits=n_splits, n_repeats=n_repeats)
-    repeated_cv_repr = "{}(n_repeats=6, n_splits=2, random_state=None)".format(
-        repeated_cv.__class__.__name__
+    repeated_cv_repr = (
+        f"{repeated_cv.__class__.__name__}(n_repeats=6, n_splits=2, random_state=None)"
     )
     assert repeated_cv_repr == repr(repeated_cv)
 

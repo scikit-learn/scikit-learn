@@ -335,13 +335,11 @@ class NeighborhoodComponentsAnalysis(
             # Warn the user if the algorithm did not converge
             if not opt_result.success:
                 warn(
-                    "[{}] NCA did not converge: {}".format(
-                        cls_name, opt_result.message
-                    ),
+                    f"[{cls_name}] NCA did not converge: {opt_result.message}",
                     ConvergenceWarning,
                 )
 
-            print("[{}] Training took {:8.2f}s.".format(cls_name, t_train))
+            print(f"[{cls_name}] Training took {t_train:8.2f}s.")
 
         return self
 
@@ -433,7 +431,7 @@ class NeighborhoodComponentsAnalysis(
                     lda.fit(X, y)
                     transformation = lda.scalings_.T[:n_components]
                 if self.verbose:
-                    print("done in {:5.2f}s".format(time.time() - init_time))
+                    print(f"done in {time.time() - init_time:5.2f}s")
         return transformation
 
     def _callback(self, transformation):
@@ -481,7 +479,7 @@ class NeighborhoodComponentsAnalysis(
                 header_fmt = "{:>10} {:>20} {:>10}"
                 header = header_fmt.format(*header_fields)
                 cls_name = self.__class__.__name__
-                print("[{}]".format(cls_name))
+                print(f"[{cls_name}]")
                 print(
                     "[{}] {}\n[{}] {}".format(
                         cls_name, header, cls_name, "-" * len(header)

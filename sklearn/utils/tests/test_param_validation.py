@@ -484,7 +484,7 @@ def test_validate_params():
     with pytest.raises(
         InvalidParameterError, match="The 'c' parameter of _func must be"
     ):
-        _func(1, **{"c": "wrong"})
+        _func(1, c="wrong")
 
     with pytest.raises(
         InvalidParameterError, match="The 'd' parameter of _func must be"
@@ -495,12 +495,12 @@ def test_validate_params():
     with pytest.raises(
         InvalidParameterError, match="The 'b' parameter of _func must be"
     ):
-        _func(0, *["wrong", 2, 3], c=4, **{"e": 5})
+        _func(0, *["wrong", 2, 3], c=4, e=5)
 
     with pytest.raises(
         InvalidParameterError, match="The 'c' parameter of _func must be"
     ):
-        _func(0, *[1, 2, 3], c="four", **{"e": 5})
+        _func(0, *[1, 2, 3], c="four", e=5)
 
 
 def test_validate_params_missing_params():

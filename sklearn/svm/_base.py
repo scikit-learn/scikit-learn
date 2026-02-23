@@ -248,7 +248,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         if self.kernel == "precomputed" and n_samples != X.shape[1]:
             raise ValueError(
                 "Precomputed matrix must be a square matrix."
-                " Input is a {}x{} matrix.".format(X.shape[0], X.shape[1])
+                f" Input is a {X.shape[0]}x{X.shape[1]} matrix."
             )
 
         if sample_weight.shape[0] > 0 and sample_weight.shape[0] != n_samples:

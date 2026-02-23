@@ -80,13 +80,11 @@ for i, ax in enumerate(axes):
     )
     ax.set_ylim(-1.3, 1.3)
     ax.legend()
-    title = "$\\alpha$_init$={:.2f},\\ \\lambda$_init$={}$".format(init[0], init[1])
+    title = f"$\\alpha$_init$={init[0]:.2f},\\ \\lambda$_init$={init[1]}$"
     if i == 0:
         title += " (Default)"
     ax.set_title(title, fontsize=12)
-    text = "$\\alpha={:.1f}$\n$\\lambda={:.3f}$\n$L={:.1f}$".format(
-        reg.alpha_, reg.lambda_, reg.scores_[-1]
-    )
+    text = f"$\\alpha={reg.alpha_:.1f}$\n$\\lambda={reg.lambda_:.3f}$\n$L={reg.scores_[-1]:.1f}$"
     ax.text(0.05, -1.0, text, fontsize=12)
 
 plt.tight_layout()

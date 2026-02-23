@@ -124,9 +124,7 @@ def _check_reg_targets(
 
     if y_true.shape[1] != y_pred.shape[1]:
         raise ValueError(
-            "y_true and y_pred have different number of output ({0}!={1})".format(
-                y_true.shape[1], y_pred.shape[1]
-            )
+            f"y_true and y_pred have different number of output ({y_true.shape[1]}!={y_pred.shape[1]})"
         )
 
     n_outputs = y_true.shape[1]
@@ -134,10 +132,8 @@ def _check_reg_targets(
     if isinstance(multioutput, str):
         if multioutput not in allowed_multioutput_str:
             raise ValueError(
-                "Allowed 'multioutput' string values are {}. "
-                "You provided multioutput={!r}".format(
-                    allowed_multioutput_str, multioutput
-                )
+                f"Allowed 'multioutput' string values are {allowed_multioutput_str}. "
+                f"You provided multioutput={multioutput!r}"
             )
     elif multioutput is not None:
         multioutput = check_array(multioutput, ensure_2d=False)
