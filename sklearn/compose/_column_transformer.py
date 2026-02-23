@@ -1229,7 +1229,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             transformers = [
                 transformer
                 for transformer in self.transformers_
-                if transformer[1] != "drop"
+                if not (transformer[0] == "remainder" and transformer[1] == "drop")
             ]
         else:  # not fitted
             if self.remainder != "drop":
