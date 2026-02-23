@@ -191,8 +191,7 @@ class HalfLogitLink(BaseLink):
     interval_y_pred = Interval(0, 1, False, False)
 
     def link(self, y_pred):
-        out = 0.5 * _logit(y_pred)
-        return out
+        return 0.5 * _logit(y_pred)
 
     def inverse(self, raw_prediction):
         return _expit(2 * raw_prediction)

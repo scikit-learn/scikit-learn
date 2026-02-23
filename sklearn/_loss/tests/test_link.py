@@ -87,7 +87,6 @@ def test_is_in_range(namespace, device, dtype_name, interval):
 def test_link_inverse_identity(namespace, device, dtype_name, link, global_random_seed):
     """Test that link of inverse gives identity."""
     xp = _array_api_for_tests(namespace, device)
-    dtype = xp.float32 if dtype_name == "float32" else xp.float64
     rng = np.random.RandomState(global_random_seed)
     link = link()
     n_samples, n_classes = 100, None
@@ -109,7 +108,7 @@ def test_link_inverse_identity(namespace, device, dtype_name, link, global_rando
         rtol = 1e-8
 
     with config_context(array_api_dispatch=True):
-        raw_prediction = xp.asarray(raw_prediction, dtype=dtype, device=device)
+        raw_prediction = xp.asarray(raw_prediction.astype(dtype_name), device=device)
 
         if isinstance(link, MultinomialLogit):
             raw_prediction = link.symmetrize_raw_prediction(raw_prediction)
