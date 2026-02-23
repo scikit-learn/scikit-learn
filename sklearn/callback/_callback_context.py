@@ -434,7 +434,7 @@ def get_context_path(context):
 
 
 @contextmanager
-def callback_management_context(estimator, fit_method_name):
+def callback_management_context(estimator):
     """Context manager to manage the callback context's teardown for an estimator.
 
     The context manager is also responsible for calling the callback context's
@@ -445,9 +445,6 @@ def callback_management_context(estimator, fit_method_name):
     ----------
     estimator : estimator instance
         The estimator being fitted.
-
-    fit_method_name : str
-        The name of the fit method being called.
 
     Yields
     ------
@@ -480,7 +477,7 @@ def with_callback_context(fit_method):
     """
 
     def callback_managed_fit_method(estimator, *args, **kwargs):
-        with callback_management_context(estimator, fit_method.__name__):
+        with callback_management_context(estimator):
             return fit_method(estimator, *args, **kwargs)
 
     return callback_managed_fit_method
