@@ -32,7 +32,6 @@ from sklearn.utils._tags import (
     TransformerTags,
     get_tags,
 )
-from sklearn.utils.deprecation import _is_deprecated
 from sklearn.utils.fixes import _IS_32BIT
 from sklearn.utils.validation import (
     _check_feature_names_in,
@@ -211,14 +210,6 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
 
     def _get_fitted_attr_html(self, doc_link=""):
         """Get fitted attributes of the estimator."""
-
-        # It raises when inspecting an empty Pipeline. So we need
-        # to check that a Pipeline is not empty.
-        # Checking if the constructor is deprecated
-        if (hasattr(self, "steps") and len(self.steps) == 0) or (
-            _is_deprecated(self.__new__)
-        ):
-            return AttrsDict(fitted_attrs="")
 
         attributes = inspect.getmembers(self)
         fitted_attributes = {

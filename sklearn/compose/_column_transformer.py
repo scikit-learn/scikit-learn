@@ -557,6 +557,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         remaining = sorted(set(range(self.n_features_in_)) - cols)
         self._transformer_to_input_indices["remainder"] = remaining
         remainder_cols = self._get_remainder_cols(remaining)
+
         self._remainder = ("remainder", self.remainder, remainder_cols)
 
     def _get_remainder_cols_dtype(self):
