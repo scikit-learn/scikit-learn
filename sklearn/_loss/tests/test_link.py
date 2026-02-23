@@ -50,32 +50,32 @@ def test_interval_raises():
         Interval(-10, -1, True, True),
     ],
 )
-@config_context(array_api_dispatch=True)
 def test_is_in_range(namespace, device, dtype_name, interval):
     """Test that low and high are always within the interval used for linspace."""
     xp = _array_api_for_tests(namespace, device)
     dtype = xp.float32 if dtype_name == "float32" else xp.float64
     params = dict(device=device, dtype=dtype)
 
-    low, high = _inclusive_low_high(interval, dtype=dtype, xp=xp)
+    with config_context(array_api_dispatch=True):
+        low, high = _inclusive_low_high(interval, dtype=dtype, xp=xp)
 
-    x = xp.linspace(low, high, num=10, **params)
+        x = xp.linspace(low, high, num=10, **params)
 
-    assert interval.includes(x)
+        assert interval.includes(x)
 
-    # x contains lower bound
-    x_test = xp.concat((x, xp.asarray([interval.low], **params)))
-    assert interval.includes(x_test) == interval.low_inclusive
+        # x contains lower bound
+        x_test = xp.concat((x, xp.asarray([interval.low], **params)))
+        assert interval.includes(x_test) == interval.low_inclusive
 
-    # x contains upper bound
-    x_test = xp.concat((x, xp.asarray([interval.high], **params)))
-    assert interval.includes(x_test) == interval.high_inclusive
+        # x contains upper bound
+        x_test = xp.concat((x, xp.asarray([interval.high], **params)))
+        assert interval.includes(x_test) == interval.high_inclusive
 
-    # x contains upper and lower bound
-    x_test = xp.concat((x, xp.asarray([interval.low, interval.high], **params)))
-    assert interval.includes(x_test) == (
-        interval.low_inclusive and interval.high_inclusive
-    )
+        # x contains upper and lower bound
+        x_test = xp.concat((x, xp.asarray([interval.low, interval.high], **params)))
+        assert interval.includes(x_test) == (
+            interval.low_inclusive and interval.high_inclusive
+        )
 
 
 @pytest.mark.parametrize(
@@ -84,7 +84,6 @@ def test_is_in_range(namespace, device, dtype_name, interval):
     ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("link", LINK_FUNCTIONS)
-@config_context(array_api_dispatch=True)
 def test_link_inverse_identity(namespace, device, dtype_name, link, global_random_seed):
     """Test that link of inverse gives identity."""
     xp = _array_api_for_tests(namespace, device)
@@ -108,19 +107,21 @@ def test_link_inverse_identity(namespace, device, dtype_name, link, global_rando
         rtol = 1e-3 if n_classes else 1e-4
     else:
         rtol = 1e-8
-    raw_prediction = xp.asarray(raw_prediction, dtype=dtype, device=device)
 
-    if isinstance(link, MultinomialLogit):
-        raw_prediction = link.symmetrize_raw_prediction(raw_prediction)
+    with config_context(array_api_dispatch=True):
+        raw_prediction = xp.asarray(raw_prediction, dtype=dtype, device=device)
 
-    assert_allclose(
-        _convert_to_numpy(link.link(link.inverse(raw_prediction)), xp=xp),
-        _convert_to_numpy(raw_prediction, xp=xp),
-        rtol=rtol,
-    )
-    y_pred = link.inverse(raw_prediction)
-    assert_allclose(
-        _convert_to_numpy(link.inverse(link.link(y_pred)), xp=xp),
-        _convert_to_numpy(y_pred, xp=xp),
-        rtol=rtol,
-    )
+        if isinstance(link, MultinomialLogit):
+            raw_prediction = link.symmetrize_raw_prediction(raw_prediction)
+
+        assert_allclose(
+            _convert_to_numpy(link.link(link.inverse(raw_prediction)), xp=xp),
+            _convert_to_numpy(raw_prediction, xp=xp),
+            rtol=rtol,
+        )
+        y_pred = link.inverse(raw_prediction)
+        assert_allclose(
+            _convert_to_numpy(link.inverse(link.link(y_pred)), xp=xp),
+            _convert_to_numpy(y_pred, xp=xp),
+            rtol=rtol,
+        )

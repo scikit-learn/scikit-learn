@@ -830,26 +830,26 @@ def test_median(namespace, device, dtype_name, axis):
 @pytest.mark.parametrize(
     "namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
-@config_context(array_api_dispatch=True)
 def test_expit_logit(namespace, device, dtype_name):
     rtol = 1e-6 if "float32" in str(dtype_name) else 1e-12
     xp = _array_api_for_tests(namespace, device)
 
-    x_np = numpy.linspace(-20, 20, 1000).astype(dtype_name)
-    x_xp = xp.asarray(x_np, device=device)
-    assert_allclose(
-        _convert_to_numpy(_expit(x_xp), xp=xp),
-        expit(x_np),
-        rtol=rtol,
-    )
+    with config_context(array_api_dispatch=True):
+        x_np = numpy.linspace(-20, 20, 1000).astype(dtype_name)
+        x_xp = xp.asarray(x_np, device=device)
+        assert_allclose(
+            _convert_to_numpy(_expit(x_xp), xp=xp),
+            expit(x_np),
+            rtol=rtol,
+        )
 
-    x_np = numpy.linspace(0, 1, 1000).astype(dtype_name)
-    x_xp = xp.asarray(x_np, device=device)
-    assert_allclose(
-        _convert_to_numpy(_logit(x_xp), xp=xp),
-        logit(x_np),
-        rtol=rtol,
-    )
+        x_np = numpy.linspace(0, 1, 1000).astype(dtype_name)
+        x_xp = xp.asarray(x_np, device=device)
+        assert_allclose(
+            _convert_to_numpy(_logit(x_xp), xp=xp),
+            logit(x_np),
+            rtol=rtol,
+        )
 
 
 @pytest.mark.parametrize(
