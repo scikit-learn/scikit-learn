@@ -300,8 +300,9 @@ plt.show()
 # --------------------------------------
 #
 # We can also evaluate the ability of the two extreme quantile estimators at
-# producing well-calibrated predictions of the 90%-coverage interval (conditional on `X`),
-meaning that on average 90% of the observations should lie within this interval.
+# producing well-calibrated predictions of the 90%-coverage interval
+# (conditional on `X`), meaning that on average 90% of the observations should
+# lie within this interval.
 #
 # To do this we can compute the coverage fraction, i.e. the proportion of
 # observations that fall within the prediction intervals:
@@ -319,11 +320,13 @@ coverage_fraction(y_train, search_05p.predict(X_train), search_95p.predict(X_tra
 coverage_fraction(y_test, search_05p.predict(X_test), search_95p.predict(X_test))
 
 # %%
-# On the test set, the estimated interval is too narrow to
-# cover 90% of the test points, but it may still hit the right coverage within
-# reasonable statistical uncertainty. We can use :func:`scipy.stats.bootstrap`
-# to measure the variability of the coverage fraction at prediction time,
-# without retraining the models. We use a 95% confidence level for the estimated (bootstrapped) interval of coverage; this is not to be confused with the 90% coverage stemming from our 5% and 95% quantile predictions:
+# On the test set, the estimated interval is too narrow to cover 90% of the test
+# points, but it may still hit the right coverage within reasonable statistical
+# uncertainty. We can use :func:`scipy.stats.bootstrap` to measure the
+# variability of the coverage fraction at prediction time, without retraining
+# the models. We use a 95% confidence level for the estimated (bootstrapped)
+# interval of coverage; this is not to be confused with the 90% coverage
+# stemming from our 5% and 95% quantile predictions:
 
 from scipy.stats import bootstrap
 
