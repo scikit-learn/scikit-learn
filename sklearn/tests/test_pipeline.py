@@ -34,6 +34,7 @@ from sklearn.exceptions import NotFittedError, UnsetMetadataPassedError
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.impute import SimpleImputer
+from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import Lasso, LinearRegression, LogisticRegression
 from sklearn.metrics import accuracy_score, r2_score
 from sklearn.model_selection import train_test_split
@@ -48,11 +49,18 @@ from sklearn.tests.metadata_routing_common import (
     check_recorded_metadata,
 )
 from sklearn.utils import get_tags
+from sklearn.utils._array_api import (
+    _atol_for_type,
+    _convert_to_numpy,
+    get_namespace_and_device,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._metadata_requests import COMPOSITE_METHODS, METHODS
 from sklearn.utils._testing import (
     MinimalClassifier,
     MinimalRegressor,
     MinimalTransformer,
+    _array_api_for_tests,
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
@@ -283,22 +291,25 @@ def test_pipeline_invalid_parameters():
 
 
 @pytest.mark.parametrize(
-    "meta_estimators",
+    "meta_estimators, class_name",
     [
-        Pipeline([("pca", PCA)]),
-        Pipeline([("pca", PCA), ("ident", None)]),
-        Pipeline([("passthrough", "passthrough"), ("pca", PCA)]),
-        Pipeline([("passthrough", None), ("pca", PCA)]),
-        Pipeline([("scale", StandardScaler), ("pca", PCA())]),
-        FeatureUnion([("pca", PCA), ("svd", TruncatedSVD())]),
-        FeatureUnion([("pca", PCA()), ("svd", TruncatedSVD)]),
-        FeatureUnion([("drop", "drop"), ("svd", TruncatedSVD)]),
-        FeatureUnion([("pca", PCA), ("passthrough", "passthrough")]),
+        (Pipeline([("pca", PCA)]), "PCA"),
+        (Pipeline([("pca", PCA), ("ident", None)]), "PCA"),
+        (Pipeline([("passthrough", "passthrough"), ("pca", PCA)]), "PCA"),
+        (Pipeline([("passthrough", None), ("pca", PCA)]), "PCA"),
+        (Pipeline([("scale", StandardScaler), ("pca", PCA())]), "StandardScaler"),
+        (FeatureUnion([("pca", PCA), ("svd", TruncatedSVD())]), "PCA"),
+        (FeatureUnion([("pca", PCA()), ("svd", TruncatedSVD)]), "TruncatedSVD"),
+        (FeatureUnion([("drop", "drop"), ("svd", TruncatedSVD)]), "TruncatedSVD"),
+        (FeatureUnion([("pca", PCA), ("passthrough", "passthrough")]), "PCA"),
     ],
 )
-def test_meta_estimator_raises_class_not_instance_error(meta_estimators):
+def test_meta_estimator_raises_class_not_instance_error(meta_estimators, class_name):
     # non-regression tests for https://github.com/scikit-learn/scikit-learn/issues/32719
-    msg = "Expected an estimator instance (.*()), got estimator class instead (.*)."
+    msg = re.escape(
+        f"Expected an estimator instance ({class_name}()), "
+        f"got estimator class instead ({class_name})."
+    )
     with pytest.raises(TypeError, match=msg):
         meta_estimators.fit([[1]])
 
@@ -311,6 +322,13 @@ def test_empty_pipeline():
     msg = "The pipeline is empty. Please add steps."
     with pytest.raises(ValueError, match=msg):
         pipe.fit(X, y)
+
+
+def test_empty_pipeline_dir():
+    """Check that dir() works on an empty pipeline"""
+    pipe = Pipeline([])
+    attrs = dir(pipe)
+    assert "steps" in attrs
 
 
 def test_pipeline_init_tuple():
@@ -407,14 +425,14 @@ def test_pipeline_raise_set_params_error():
         pipe.set_params(cls__invalid_param="nope")
 
 
-def test_pipeline_methods_pca_svm():
+def test_pipeline_methods_pca_classifier():
     # Test the various methods of the pipeline (pca + svm).
     X = iris.data
     y = iris.target
-    # Test with PCA + SVC
-    clf = SVC(probability=True, random_state=0)
+    # Test with PCA + LogisticRegression
+    clf = LogisticRegression()
     pca = PCA(svd_solver="full", n_components="mle", whiten=True)
-    pipe = Pipeline([("pca", pca), ("svc", clf)])
+    pipe = Pipeline([("pca", pca), ("classifier", clf)])
     pipe.fit(X, y)
     pipe.predict(X)
     pipe.predict_proba(X)
@@ -455,7 +473,7 @@ def test_score_samples_on_pipeline_without_score_samples():
     assert inner_msg in str(exec_info.value.__cause__)
 
 
-def test_pipeline_methods_preprocessing_svm():
+def test_pipeline_methods_preprocessing_classifier():
     # Test the various methods of the pipeline (preprocessing + svm).
     X = iris.data
     y = iris.target
@@ -463,7 +481,7 @@ def test_pipeline_methods_preprocessing_svm():
     n_classes = len(np.unique(y))
     scaler = StandardScaler()
     pca = PCA(n_components=2, svd_solver="randomized", whiten=True)
-    clf = SVC(probability=True, random_state=0, decision_function_shape="ovr")
+    clf = LogisticRegression()
 
     for preprocessing in [scaler, pca]:
         pipe = Pipeline([("preprocess", preprocessing), ("svc", clf)])
@@ -1847,20 +1865,22 @@ def test_pipeline_set_output_integration():
     assert_array_equal(feature_names_in_, log_reg_feature_names)
 
 
-def test_feature_union_set_output():
+@pytest.mark.parametrize("df_library", ["pandas", "polars"])
+def test_feature_union_set_output(df_library):
     """Test feature union with set_output API."""
-    pd = pytest.importorskip("pandas")
+    lib = pytest.importorskip(df_library)
 
     X, _ = load_iris(as_frame=True, return_X_y=True)
     X_train, X_test = train_test_split(X, random_state=0)
     union = FeatureUnion([("scalar", StandardScaler()), ("pca", PCA())])
-    union.set_output(transform="pandas")
+    union.set_output(transform=df_library)
     union.fit(X_train)
 
     X_trans = union.transform(X_test)
-    assert isinstance(X_trans, pd.DataFrame)
+    assert isinstance(X_trans, lib.DataFrame)
     assert_array_equal(X_trans.columns, union.get_feature_names_out())
-    assert_array_equal(X_trans.index, X_test.index)
+    if df_library == "pandas":
+        assert_array_equal(X_trans.index, X_test.index)
 
 
 def test_feature_union_getitem():
@@ -1938,6 +1958,84 @@ def test_feature_union_1d_output():
                 ("b", FunctionTransformer(lambda X: X[:, 1])),
             ]
         ).fit_transform(X)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_feature_union_array_api_compliance(array_namespace, device, dtype_name):
+    """Test that FeatureUnion with Array API-compatible transformers works."""
+    xp = _array_api_for_tests(array_namespace, device)
+    rnd = np.random.RandomState(0)
+    n_samples, n_features = 20, 10
+    X_np = rnd.uniform(size=(n_samples, n_features)).astype(dtype_name)
+    X_xp = xp.asarray(X_np, device=device)
+
+    n_components_1, n_components_2 = 5, 8
+    union = FeatureUnion(
+        [
+            ("nystroem1", Nystroem(n_components=n_components_1, random_state=0)),
+            ("nystroem2", Nystroem(n_components=n_components_2, random_state=1)),
+        ]
+    )
+
+    X_np_transformed = union.fit_transform(X_np)
+
+    with config_context(array_api_dispatch=True):
+        X_xp_transformed = union.fit_transform(X_xp)
+        X_xp_transformed_np = _convert_to_numpy(X_xp_transformed, xp=xp)
+
+        for name, trans in union.transformer_list:
+            for attr in ["components_", "normalization_"]:
+                if hasattr(trans, attr):
+                    trans_xp, _, trans_device = get_namespace_and_device(
+                        getattr(trans, attr)
+                    )
+                    assert trans_xp is xp
+                    assert trans_device == get_namespace_and_device(X_xp)[2]
+
+    atol = _atol_for_type(dtype_name)
+    assert_allclose(X_np_transformed, X_xp_transformed_np, atol=atol)
+    assert X_xp_transformed_np.shape == (
+        n_samples,
+        n_components_1 + n_components_2,
+    )
+
+
+def test_feature_union_array_api_support_tag():
+    """Check that FeatureUnion.array_api_support tag reflects its transformers."""
+    # All transformers support Array API -> union supports it
+    union = FeatureUnion(
+        [
+            ("scaler", StandardScaler()),
+            ("nystroem", Nystroem(n_components=5, random_state=0)),
+        ]
+    )
+    assert get_tags(union).array_api_support is True
+
+    # One transformer does not support Array API -> union does not
+    union = FeatureUnion(
+        [
+            ("scaler", StandardScaler()),
+            ("svd", TruncatedSVD(n_components=2)),
+        ]
+    )
+    assert get_tags(union).array_api_support is False
+
+    # passthrough/drop are treated as supporting Array API
+    union = FeatureUnion(
+        [
+            ("scaler", StandardScaler()),
+            ("pass", "passthrough"),
+            ("dropped", "drop"),
+        ]
+    )
+    assert get_tags(union).array_api_support is True
+
+    # Only drop and passthrough -> True
+    union = make_union("drop", "passthrough")
+    assert get_tags(union).array_api_support is True
 
 
 # transform_input tests
