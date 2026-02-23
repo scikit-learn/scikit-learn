@@ -24,6 +24,7 @@ from sklearn.metrics import (
     ndcg_score,
     precision_recall_curve,
     precision_score,
+    recall_score,
     roc_auc_score,
     roc_curve,
     top_k_accuracy_score,
@@ -2433,7 +2434,32 @@ def test_metric_at_thresholds(metric_func, sample_weight):
     assert len(metric_values) == len(thresholds)
     # Thresholds are descending
     assert np.all(np.diff(thresholds) <= 0)
+    # Thresholds correspond to unique `y_score`s
+    if sample_weight is not None:
+        # Filter out 0 weight in `y_score`
+        assert_allclose(
+            thresholds, np.sort(np.unique(y_score[sample_weight != 0]))[::-1]
+        )
+    else:
+        assert_allclose(thresholds, np.sort(np.unique(y_score))[::-1])
     assert_allclose(metric_values, expected_scores)
+
+
+def _dummy_metric_no_sample_weight(y_true, y_pred):
+    """Dummy metric that does not accept `sample_weight`."""
+    return (np.sum(y_pred), np.sum(y_true))
+
+
+def test_metric_at_thresholds_sample_weight_error():
+    """Test `metric_params` raises when `metric_func` does not take `sample_weight`."""
+    y_true = np.array([0, 0, 1, 1, 1])
+    y_score = np.array([0.1, 0.4, 0.35, 0.6, 0.9])
+    sample_weight = np.array([1, 2, 3, 1, 2])
+
+    with pytest.raises(TypeError, match="got an unexpected keyword argument"):
+        _, _ = metric_at_thresholds(
+            y_true, y_score, _dummy_metric_no_sample_weight, sample_weight=sample_weight
+        )
 
 
 @pytest.mark.parametrize("normalize", [True, False])
@@ -2453,6 +2479,29 @@ def test_metric_at_thresholds_metric_params(normalize):
 
     assert_allclose(metric_values, expected_values)
     assert len(thresholds) == len(np.unique(y_score))
+
+
+@pytest.mark.parametrize("pos_label", [0, 1])
+def test_metric_at_thresholds_pos_label(pos_label):
+    """Test `pos_label` is passed correctly to `metric_at_thresholds`."""
+    y_true = np.array([0, 0, 1, 1, 1])
+    y_score = np.array([0.1, 0.6, 0.4, 0.9, 0.4])
+
+    metric_values, thresholds = metric_at_thresholds(
+        y_true,
+        y_score,
+        precision_score,
+        metric_params={"pos_label": pos_label, "zero_division": 0},
+    )
+
+    expected_scores = []
+    for threshold in thresholds:
+        y_pred = (y_score >= threshold).astype(int)
+        expected_scores.append(
+            precision_score(y_true, y_pred, pos_label=pos_label, zero_division=0)
+        )
+
+    assert_allclose(metric_values, expected_scores)
 
 
 def test_metric_at_thresholds_y_score_order():
@@ -2513,7 +2562,7 @@ def test_metric_at_thresholds_y_score_order_duplicate_y_score():
 
     # Thresholds should still be the same
     assert_allclose(thresh_1, thresh_2)
-    # Metric output should difffer
+    # Metric output should differ
     with pytest.raises(AssertionError):
         assert_allclose(metric_1, metric_2)
 
@@ -2541,3 +2590,16 @@ def test_metric_at_thresholds_consistency_with_confusion_matrix():
     # As `labels=[0, 1]` -> [TN, FP, FN, TP]
     confusion_values = metric_values.reshape(-1, 4)
     assert_array_equal(confusion_values, np.column_stack([tns, fps, fns, tps]))
+
+
+def test_metric_at_thresholds_with_nan_outputs():
+    """Test `metric_at_thresholds` with NaN output."""
+    # No positive labels means recall undefined (TP + FN = 0) at all thresholds
+    y_true = np.array([0, 0, 0, 0, 0])
+    y_score = np.array([0.1, 0.2, 0.3, 0.4, 0.5])
+
+    metric_values, _ = metric_at_thresholds(
+        y_true, y_score, recall_score, metric_params={"zero_division": np.nan}
+    )
+
+    assert np.all(np.isnan(metric_values))
