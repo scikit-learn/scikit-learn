@@ -2580,16 +2580,17 @@ def _check_pos_label_consistency(pos_label, y_true):
     if pos_label is None:
         # Compute classes only if pos_label is not specified:
         xp, _, device = get_namespace_and_device(y_true)
+        dtype = y_true.dtype
         classes = xp.unique_values(y_true)
         if (
             (_is_numpy_namespace(xp) and classes.dtype.kind in "OUS")
             or classes.shape[0] > 2
             or not (
-                xp.all(classes == xp.asarray([0, 1], device=device))
-                or xp.all(classes == xp.asarray([-1, 1], device=device))
-                or xp.all(classes == xp.asarray([0], device=device))
-                or xp.all(classes == xp.asarray([-1], device=device))
-                or xp.all(classes == xp.asarray([1], device=device))
+                xp.all(classes == xp.asarray([0, 1], device=device, dtype=dtype))
+                or xp.all(classes == xp.asarray([-1, 1], device=device, dtype=dtype))
+                or xp.all(classes == xp.asarray([0], device=device, dtype=dtype))
+                or xp.all(classes == xp.asarray([-1], device=device, dtype=dtype))
+                or xp.all(classes == xp.asarray([1], device=device, dtype=dtype))
             )
         ):
             classes = _convert_to_numpy(classes, xp=xp)
@@ -2599,7 +2600,7 @@ def _check_pos_label_consistency(pos_label, y_true):
                 "specified: either make y_true take value in {0, 1} or "
                 "{-1, 1} or pass pos_label explicitly."
             )
-        pos_label = 1
+        pos_label = xp.asarray(1, dtype=y_true.dtype, device=device)
 
     return pos_label
 
