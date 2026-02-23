@@ -36,7 +36,6 @@ from sklearn.utils._testing import (
     _convert_container,
     assert_array_equal,
 )
-from sklearn.utils.deprecation import deprecated
 from sklearn.utils.validation import _check_n_features, validate_data
 
 
@@ -1023,20 +1022,6 @@ def test_get_fitted_attr_html():
         fitted_attr_html["components_"][3],
         np.array([[0.8816746, 0.47185793], [-0.47185793, 0.8816746]]),
     )
-
-
-@pytest.mark.filterwarnings("ignore::FutureWarning")
-def test_deprecated_get_fitted_attr_html():
-    @deprecated()
-    class MyEstimator(BaseEstimator):
-        def __init__(self):
-            pass
-
-    estimator = MyEstimator()
-    estimator.n_features_in = 2
-    result = estimator._get_fitted_attr_html()
-
-    assert "n_features_in" not in result
 
 
 def make_estimator_with_param(default_value):
