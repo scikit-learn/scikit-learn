@@ -330,6 +330,10 @@ def _write_estimator_html(
         doc_link = estimator._get_doc_link()
     else:
         doc_link = ""
+
+    has_feature_names_out = hasattr(estimator, "get_feature_names_out")
+    is_not_pipeline_step = not hasattr(estimator, "steps")
+
     if est_block.kind in ("serial", "parallel"):
         dashed_wrapped = first_call or est_block.dash_wrapped
         dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
@@ -396,8 +400,6 @@ def _write_estimator_html(
 
         out.write("</div>")
 
-        has_feature_names_out = hasattr(estimator, "get_feature_names_out")
-        is_not_pipeline_step = not hasattr(estimator, "steps")
         is_column_transformer = estimator_label in (
             "ColumnTransformer",
             "transformer: ColumnTransformer",
@@ -419,12 +421,7 @@ def _write_estimator_html(
 
         out.write("</div>")
     elif est_block.kind == "single":
-        if (
-            hasattr(estimator, "get_feature_names_out")
-            and not hasattr(estimator, "steps")
-            and hasattr(estimator, "n_features_in_")
-            and is_fitted_css_class
-        ):
+        if has_feature_names_out and is_not_pipeline_step and is_fitted_css_class:
             output_features = estimator.get_feature_names_out()
         else:
             output_features = ""
