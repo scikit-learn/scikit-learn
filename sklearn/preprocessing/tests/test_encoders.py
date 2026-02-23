@@ -1942,7 +1942,7 @@ def test_ordinal_encoder_unknown_missing_interaction():
 @pytest.mark.parametrize("with_pandas", [True, False])
 def test_ordinal_encoder_encoded_missing_value_error(with_pandas):
     """Check OrdinalEncoder errors when encoded_missing_value is used by
-    an known category."""
+    a known category."""
     X = np.array([["a", "dog"], ["b", "cat"], ["c", np.nan]], dtype=object)
 
     # The 0-th feature has no missing values so it is not included in the list of
@@ -2411,10 +2411,13 @@ def test_onehotencoder_handle_unknown_warn_maps_to_infrequent():
         min_frequency=2,
         drop="first",
     )
+
     encoder_infreq.fit(train_data)
-    result_infreq = encoder_infreq.transform(test_data)
 
     warning_match = "unknown categories will be encoded as the infrequent category"
+    # The warning is raised because `drop is not None`.
+    with pytest.warns(UserWarning, match=warning_match):
+        result_infreq = encoder_infreq.transform(test_data)
 
     with pytest.warns(UserWarning, match=warning_match):
         result_warn = encoder_warn.transform(test_data)

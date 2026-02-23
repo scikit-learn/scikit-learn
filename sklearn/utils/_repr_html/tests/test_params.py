@@ -3,12 +3,8 @@ import re
 import pytest
 
 from sklearn import config_context
-from sklearn.utils._repr_html.params import (
-    ParamsDict,
-    _generate_link_to_param_doc,
-    _params_html_repr,
-    _read_params,
-)
+from sklearn.utils._repr_html.common import generate_link_to_param_doc
+from sklearn.utils._repr_html.params import ParamsDict, _params_html_repr, _read_params
 
 
 def test_params_dict_content():
@@ -90,7 +86,8 @@ def test_params_html_repr_with_doc_links():
         Parameters
         ----------
         a : int
-            Description of a.
+            Description of a which can include `<formatted text
+            https://example.com>`_ that should not be confused with HTML tags.
         b : str
         """
 
@@ -108,11 +105,15 @@ def test_params_html_repr_with_doc_links():
     html_param_a = (
         r'<td class="param">'
         r'\s*<a class="param-doc-link"'
+        r'\s*style="anchor-name: --doc-link-a;"'
         r'\s*rel="noreferrer" target="_blank"'
         r'\shref="mock_module\.MockEstimator\.html#:~:text=a,-int">'
         r"\s*a"
-        r'\s*<span class="param-doc-description">a: int<br><br>'
-        r"Description of a\.</span>"
+        r'\s*<span class="param-doc-description"'
+        r'\s*style="position-anchor: --doc-link-a;">\s*a:'
+        r"\sint<br><br>"
+        r"Description of a which can include `&lt;formatted text<br>"
+        r"https://example.com&gt;`_ that should not be confused with HTML tags.</span>"
         r"\s*</a>"
         r"\s*</td>"
     )
@@ -120,10 +121,13 @@ def test_params_html_repr_with_doc_links():
     html_param_b = (
         r'<td class="param">'
         r'.*<a class="param-doc-link"'
+        r'\s*style="anchor-name: --doc-link-b;"'
         r'\s*rel="noreferrer" target="_blank"'
         r'\shref="mock_module\.MockEstimator\.html#:~:text=b,-str">'
         r"\s*b"
-        r'\s*<span class="param-doc-description">b: str<br><br></span>'
+        r'\s*<span class="param-doc-description"'
+        r'\s*style="position-anchor: --doc-link-b;">\s*b:'
+        r"\sstr<br><br></span>"
         r"\s*</a>"
         r"\s*</td>"
     )
@@ -174,10 +178,10 @@ def test_generate_link_to_param_doc_basic():
         """
 
     doc_link = "mock_module.MockEstimator.html"
-    url = _generate_link_to_param_doc(MockEstimator, "alpha", doc_link)
+    url = generate_link_to_param_doc(MockEstimator, "alpha", doc_link)
     assert url == "mock_module.MockEstimator.html#:~:text=alpha,-float"
 
-    url = _generate_link_to_param_doc(MockEstimator, "beta", doc_link)
+    url = generate_link_to_param_doc(MockEstimator, "beta", doc_link)
     assert url == "mock_module.MockEstimator.html#:~:text=beta,-int"
 
 
@@ -194,7 +198,7 @@ def test_generate_link_to_param_doc_param_not_found():
         """
 
     doc_link = "mock_module.MockEstimator.html"
-    url = _generate_link_to_param_doc(MockEstimator, "gamma", doc_link)
+    url = generate_link_to_param_doc(MockEstimator, "gamma", doc_link)
 
     assert url is None
 
@@ -206,5 +210,5 @@ def test_generate_link_to_param_doc_empty_docstring():
         pass
 
     doc_link = "mock_module.MockEstimator.html"
-    url = _generate_link_to_param_doc(MockEstimator, "alpha", doc_link)
+    url = generate_link_to_param_doc(MockEstimator, "alpha", doc_link)
     assert url is None

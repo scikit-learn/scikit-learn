@@ -46,7 +46,6 @@ from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
-    _max_precision_float_dtype,
     yield_namespace_device_dtype_combinations,
     yield_namespaces,
 )
@@ -665,8 +664,7 @@ def test_compute_gram(shape, uniform_weights, csr_container):
     true_gram = X_centered.dot(X_centered.T)
     X_sparse = csr_container(X * sqrt_sw[:, None])
     gcv = _RidgeGCV(fit_intercept=True)
-    computed_gram, computed_mean = gcv._compute_gram(X_sparse, sqrt_sw)
-    assert_allclose(X_mean, computed_mean)
+    computed_gram = gcv._compute_gram(X_sparse, X_mean, sqrt_sw)
     assert_allclose(true_gram, computed_gram)
 
 
@@ -686,8 +684,7 @@ def test_compute_covariance(shape, uniform_weights, csr_container):
     true_covariance = X_centered.T.dot(X_centered)
     X_sparse = csr_container(X * sqrt_sw[:, None])
     gcv = _RidgeGCV(fit_intercept=True)
-    computed_cov, computed_mean = gcv._compute_covariance(X_sparse, sqrt_sw)
-    assert_allclose(X_mean, computed_mean)
+    computed_cov = gcv._compute_covariance(X_sparse, X_mean, sqrt_sw)
     assert_allclose(true_covariance, computed_cov)
 
 
@@ -797,9 +794,32 @@ def test_solver_consistency(
     assert_allclose(ridge.intercept_, svd_ridge.intercept_, atol=1e-3, rtol=1e-3)
 
 
+def test_ridge_gcv_integer_arrays():
+    n_samples, n_features = 20, 10
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 5, size=(n_samples, n_features))
+    y = rng.randint(0, 5, size=(n_samples,))
+
+    X_float = X.astype(np.float64)
+    y_float = y.astype(np.float64)
+
+    ridge_gcv = RidgeCV(
+        alphas=[0.1, 1.0, 10.0], scoring="neg_mean_squared_error", store_cv_results=True
+    )
+    ridge_gcv.fit(X, y)
+
+    ridge_gcv_float = clone(ridge_gcv)
+    ridge_gcv_float.fit(X_float, y_float)
+
+    assert_allclose(ridge_gcv.coef_, ridge_gcv_float.coef_)
+    assert_allclose(ridge_gcv.cv_results_, ridge_gcv_float.cv_results_)
+    assert ridge_gcv.cv_results_.dtype == np.float64
+
+
 @pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
-@pytest.mark.parametrize("X_shape", [(11, 8), (11, 20)])
+@pytest.mark.parametrize("X_shape", [(11, 8), (11, 20)], ids=["tall", "wide"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize(
     "y_shape, noise",
@@ -810,8 +830,10 @@ def test_solver_consistency(
     ],
 )
 def test_ridge_gcv_vs_ridge_loo_cv(
-    gcv_mode, X_container, X_shape, y_shape, fit_intercept, noise
+    gcv_mode, dtype, X_container, X_shape, y_shape, fit_intercept, noise
 ):
+    if gcv_mode == "svd" and (X_container in CSR_CONTAINERS):
+        pytest.skip("`svd` mode not supported for sparse X.")
     n_samples, n_features = X_shape
     n_targets = y_shape[-1] if len(y_shape) == 2 else 1
     X, y = _make_sparse_offset_regression(
@@ -840,12 +862,153 @@ def test_ridge_gcv_vs_ridge_loo_cv(
 
     loo_ridge.fit(X, y)
 
-    X_gcv = X_container(X)
-    gcv_ridge.fit(X_gcv, y)
+    X = X_container(X)
+    X = X.astype(dtype)
+    y = y.astype(dtype)
+    gcv_ridge.fit(X, y)
 
+    atol = 1e-5 if dtype == np.float32 else 1e-10
     assert gcv_ridge.alpha_ == pytest.approx(loo_ridge.alpha_)
-    assert_allclose(gcv_ridge.coef_, loo_ridge.coef_, rtol=1e-3)
-    assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
+    assert_allclose(gcv_ridge.coef_, loo_ridge.coef_, atol=atol)
+    assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, atol=atol)
+
+
+def _ridge_regularization_limits(alpha, X, y, fit_intercept):
+    "Expected coef and intercept when alpha near 0 or inf"
+    if np.isclose(alpha, 0):
+        # Ridge should recover LinearRegression for near-zero alpha.
+        lin_reg = LinearRegression(fit_intercept=fit_intercept)
+        lin_reg.fit(X, y)
+        return lin_reg.coef_, lin_reg.intercept_
+    else:
+        # Ridge should recover zero coefficients for near-infinite alpha.
+        n_features = X.shape[1]
+        return np.zeros(n_features), np.mean(y) if fit_intercept else 0.0
+
+
+@pytest.mark.parametrize("alpha", [1e-16, 1e16], ids=["zero_alpha", "inf_alpha"])
+@pytest.mark.parametrize("solver", ["svd", "cholesky", "lsqr", "sparse_cg"])
+@pytest.mark.parametrize("fit_intercept", [True, False])
+@pytest.mark.parametrize("X_shape", [(100, 50), (50, 100)], ids=["tall", "wide"])
+@pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
+def test_regularization_limits_ridge(
+    alpha, solver, fit_intercept, X_shape, X_container
+):
+    "Check regularization limits of Ridge (alpha near 0 or inf)"
+    sparse_X = X_container in CSR_CONTAINERS
+    if solver == "svd" and sparse_X:
+        pytest.skip("solver='svd' does not support sparse data")
+    if solver == "cholesky" and sparse_X and fit_intercept:
+        pytest.skip(
+            "solver='cholesky' does not support fitting the intercept on sparse data"
+        )
+    n_samples, n_features = X_shape
+    X, y = make_regression(
+        n_samples=n_samples, n_features=n_features, noise=0, bias=10, random_state=42
+    )
+    expected_coef, expected_intercept = _ridge_regularization_limits(
+        alpha, X, y, fit_intercept
+    )
+    X = X_container(X)
+    ridge = Ridge(alpha=alpha, solver=solver, fit_intercept=fit_intercept, tol=1e-12)
+    ridge.fit(X, y)
+    assert_allclose(ridge.coef_, expected_coef, atol=1e-10)
+    assert_allclose(ridge.intercept_, expected_intercept, atol=1e-10)
+
+
+@pytest.mark.parametrize("alpha", [1e-16, 1e16], ids=["zero_alpha", "inf_alpha"])
+@pytest.mark.parametrize("gcv_mode", ["ignored"])
+@pytest.mark.parametrize("fit_intercept", [True, False])
+@pytest.mark.parametrize(
+    "X_shape",
+    [(100, 50), (50, 50), (50, 100)],
+    ids=["tall", "square", "wide"],
+)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
+def test_regularization_limits_ridge_classifier_gcv(
+    alpha, gcv_mode, fit_intercept, X_shape, dtype, X_container
+):
+    "Check regularization limits of RidgeClassifierCV (alpha near 0 or inf)"
+    sparse_X = X_container in CSR_CONTAINERS
+    alphas = [alpha]
+    n_samples, n_features = X_shape
+    X, y = make_classification(
+        n_samples=n_samples, n_features=n_features, random_state=42
+    )
+    # RidgeClassifier is Ridge with y mapped to {-1, +1}
+    y = 2 * y - 1
+    if np.isclose(alpha, 0):
+        # FIXME : test fails on square or tall X
+        if n_features < n_samples:
+            pytest.xfail(
+                "RidgeClassifierCV does not recover LinearRegression "
+                "on tall X in the small alpha limit"
+            )
+        elif n_features == n_samples:
+            pytest.xfail(
+                "RidgeClassifierCV does not recover LinearRegression "
+                "on square X in the small alpha limit"
+            )
+    expected_coef, expected_intercept = _ridge_regularization_limits(
+        alpha, X, y, fit_intercept
+    )
+    X = X_container(X)
+    X = X.astype(dtype)
+    y = y.astype(dtype)
+    # FIXME : add `gcv_mode` parameter to RidgeClassifierCV
+    gcv_ridge = RidgeClassifierCV(alphas=alphas, fit_intercept=fit_intercept)
+    if gcv_mode == "svd" and sparse_X:
+        # TODO(1.11) should raises ValueError
+        expected_msg = "The 'svd' mode is not supported for sparse X"
+        with pytest.warns(FutureWarning, match=expected_msg):
+            gcv_ridge.fit(X, y)
+    else:
+        gcv_ridge.fit(X, y)
+
+    atol = 1e-5 if dtype == np.float32 else 1e-10
+    assert_allclose(gcv_ridge.coef_, expected_coef, atol=atol)
+    assert_allclose(gcv_ridge.intercept_, expected_intercept, atol=atol)
+
+
+@pytest.mark.parametrize("alpha", [1e-16, 1e16], ids=["zero_alpha", "inf_alpha"])
+@pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
+@pytest.mark.parametrize("fit_intercept", [True, False])
+@pytest.mark.parametrize(
+    "X_shape",
+    [(100, 50), (50, 50), (50, 100)],
+    ids=["tall", "square", "wide"],
+)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
+def test_regularization_limits_ridge_gcv(
+    alpha, gcv_mode, fit_intercept, X_shape, dtype, X_container
+):
+    "Check regularization limits of _RidgeGCV (alpha near 0 or inf)"
+    sparse_X = X_container in CSR_CONTAINERS
+    alphas = [alpha]
+    n_samples, n_features = X_shape
+    X, y = make_regression(
+        n_samples=n_samples, n_features=n_features, noise=0, bias=10, random_state=42
+    )
+    expected_coef, expected_intercept = _ridge_regularization_limits(
+        alpha, X, y, fit_intercept
+    )
+    X = X_container(X)
+    X = X.astype(dtype)
+    y = y.astype(dtype)
+    gcv_ridge = RidgeCV(alphas=alphas, gcv_mode=gcv_mode, fit_intercept=fit_intercept)
+    if gcv_mode == "svd" and sparse_X:
+        # TODO(1.11) should raises ValueError
+        expected_msg = "The 'svd' mode is not supported for sparse X"
+        with pytest.warns(FutureWarning, match=expected_msg):
+            gcv_ridge.fit(X, y)
+    else:
+        gcv_ridge.fit(X, y)
+
+    atol = 1e-5 if dtype == np.float32 else 1e-10
+    assert_allclose(gcv_ridge.coef_, expected_coef, atol=atol)
+    assert_allclose(gcv_ridge.intercept_, expected_intercept, atol=atol)
 
 
 def test_ridge_loo_cv_asym_scoring():
@@ -895,6 +1058,8 @@ def test_ridge_loo_cv_asym_scoring():
 def test_ridge_gcv_sample_weights(
     gcv_mode, X_container, fit_intercept, n_features, y_shape, noise
 ):
+    if gcv_mode == "svd" and (X_container in CSR_CONTAINERS):
+        pytest.skip("`svd` mode not supported for sparse X.")
     alphas = [1e-3, 0.1, 1.0, 10.0, 1e3]
     rng = np.random.RandomState(0)
     n_targets = y_shape[-1] if len(y_shape) == 2 else 1
@@ -956,22 +1121,29 @@ def test_ridge_gcv_sample_weights(
 
 @pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize(
-    "mode, mode_n_greater_than_p, mode_p_greater_than_n",
-    [
-        (None, "svd", "eigen"),
-        ("auto", "svd", "eigen"),
-        ("eigen", "eigen", "eigen"),
-        ("svd", "svd", "svd"),
-    ],
+    "X_shape",
+    [(5, 2), (5, 5), (2, 5)],
+    ids=["tall", "square", "wide"],
 )
-def test_check_gcv_mode_choice(
-    sparse_container, mode, mode_n_greater_than_p, mode_p_greater_than_n
-):
-    X, _ = make_regression(n_samples=5, n_features=2)
-    if sparse_container is not None:
+@pytest.mark.parametrize("gcv_mode", ["auto", "svd", "eigen"])
+def test_check_gcv_mode_choice(sparse_container, X_shape, gcv_mode):
+    n, p = X_shape
+    X, _ = make_regression(n_samples=n, n_features=p)
+    sparse_X = sparse_container is not None
+    if sparse_X:
         X = sparse_container(X)
-    assert _check_gcv_mode(X, mode) == mode_n_greater_than_p
-    assert _check_gcv_mode(X.T, mode) == mode_p_greater_than_n
+    eigen_mode = "gram" if n <= p else "cov"
+
+    if gcv_mode == "svd" and not sparse_X:
+        assert _check_gcv_mode(X, gcv_mode) == "svd"
+    elif gcv_mode == "svd" and sparse_X:
+        # TODO(1.11) should raises ValueError
+        expected_msg = "The 'svd' mode is not supported for sparse X"
+        with pytest.warns(FutureWarning, match=expected_msg):
+            actual_gcv_mode = _check_gcv_mode(X, gcv_mode)
+        assert actual_gcv_mode == eigen_mode
+    else:
+        assert _check_gcv_mode(X, gcv_mode) == eigen_mode
 
 
 def _test_ridge_loo(sparse_container):
@@ -1290,7 +1462,8 @@ def check_array_api_attributes(
     [
         Ridge(solver="svd"),
         RidgeClassifier(solver="svd"),
-        RidgeCV(),
+        RidgeCV(gcv_mode="svd"),
+        RidgeCV(gcv_mode="eigen"),
         RidgeClassifierCV(),
     ],
     ids=_get_check_estimator_ids,
@@ -1299,20 +1472,8 @@ def test_ridge_array_api_compliance(
     estimator, check, array_namespace, device, dtype_name
 ):
     name = estimator.__class__.__name__
-    tols = {}
     xp = _array_api_for_tests(array_namespace, device)
-    if (
-        "CV" in name
-        and check is check_array_api_attributes
-        and _max_precision_float_dtype(xp, device) == xp.float32
-    ):
-        # RidgeGCV is not very numerically stable with float32. It casts the
-        # input to float64 unless the device and namespace combination does
-        # not allow float64 (specifically torch with mps)
-        tols["rtol"] = 1e-3
-    check(
-        name, estimator, array_namespace, device=device, dtype_name=dtype_name, **tols
-    )
+    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
 
 
 @pytest.mark.parametrize(
@@ -1900,6 +2061,7 @@ def test_ridge_regression_check_arguments_validity(
                 return_intercept=return_intercept,
                 positive=positive,
                 tol=tol,
+                random_state=rng,
             )
         return
 
@@ -1912,6 +2074,7 @@ def test_ridge_regression_check_arguments_validity(
         positive=positive,
         return_intercept=return_intercept,
         tol=tol,
+        random_state=rng,
     )
 
     if return_intercept:
@@ -2295,10 +2458,16 @@ def test_ridge_sample_weight_consistency(
         assert_allclose(reg1.intercept_, reg2.intercept_)
 
 
-@pytest.mark.parametrize("with_sample_weight", [False, True])
-@pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("X_shape", [(50, 10), (10, 50)], ids=["tall", "wide"])
+@pytest.mark.parametrize("with_sample_weight", [False, True], ids=["no_sw", "with_sw"])
+@pytest.mark.parametrize(
+    "fit_intercept", [False, True], ids=["no_intercept", "with_intercept"]
+)
+@pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
 @pytest.mark.parametrize("n_targets", [1, 2])
-def test_ridge_cv_results_predictions(with_sample_weight, fit_intercept, n_targets):
+def test_ridge_cv_results_predictions(
+    gcv_mode, X_shape, with_sample_weight, fit_intercept, n_targets
+):
     """Check that the predictions stored in `cv_results_` are on the original scale.
 
     The GCV approach works on scaled data: centered by an offset and scaled by the
@@ -2312,17 +2481,25 @@ def test_ridge_cv_results_predictions(with_sample_weight, fit_intercept, n_targe
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/13998
     """
+    n_samples, n_features = X_shape
     X, y = make_regression(
-        n_samples=100, n_features=10, n_targets=n_targets, random_state=0
+        n_samples=n_samples, n_features=n_features, n_targets=n_targets, random_state=0
     )
-    sample_weight = np.ones(shape=(X.shape[0],))
     if with_sample_weight:
+        sample_weight = np.ones(shape=(X.shape[0],))
         sample_weight[::2] = 0.5
+    else:
+        sample_weight = None
 
-    alphas = (0.1, 1.0, 10.0)
+    # TODO: widening the range of alphas causes failures in the test, in
+    # particular for wide datasets. Not sure if this is an intrinsic limitation
+    # of the underlying linear algebra or if this points to a numerical issue
+    # in RidgeCV or in Ridge(solver="svd").
+    alphas = np.logspace(-5, 7, 5)
 
     # scoring should be set to store predictions and not the squared error
     ridge_cv = RidgeCV(
+        gcv_mode=gcv_mode,
         alphas=alphas,
         scoring="neg_mean_squared_error",
         fit_intercept=fit_intercept,
@@ -2335,23 +2512,39 @@ def test_ridge_cv_results_predictions(with_sample_weight, fit_intercept, n_targe
     cv = LeaveOneOut()
     for alpha_idx, alpha in enumerate(alphas):
         for idx, (train_idx, test_idx) in enumerate(cv.split(X, y)):
-            ridge = Ridge(alpha=alpha, fit_intercept=fit_intercept)
-            ridge.fit(X[train_idx], y[train_idx], sample_weight[train_idx])
+            ridge = Ridge(alpha=alpha, fit_intercept=fit_intercept, solver="svd")
+            if with_sample_weight:
+                ridge.fit(
+                    X[train_idx], y[train_idx], sample_weight=sample_weight[train_idx]
+                )
+            else:
+                ridge.fit(X[train_idx], y[train_idx])
             predictions[idx, ..., alpha_idx] = ridge.predict(X[test_idx])
-    assert_allclose(ridge_cv.cv_results_, predictions)
+    # A few cases are just above the rtol=1e-7 threshold
+    assert_allclose(ridge_cv.cv_results_, predictions, rtol=1e-6)
 
 
-def test_ridge_cv_multioutput_sample_weight(global_random_seed):
+@pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
+@pytest.mark.parametrize("X_shape", [(50, 10), (10, 50)], ids=["tall", "wide"])
+def test_ridge_cv_multioutput_sample_weight(gcv_mode, X_shape, global_random_seed):
     """Check that `RidgeCV` works properly with multioutput and sample_weight
     when `scoring != None`.
 
     We check the error reported by the RidgeCV is close to a naive LOO-CV using a
     Ridge estimator.
     """
-    X, y = make_regression(n_targets=2, random_state=global_random_seed)
-    sample_weight = np.ones(shape=(X.shape[0],))
+    n_samples, n_features = X_shape
+    X, y = make_regression(
+        n_samples=n_samples,
+        n_features=n_features,
+        n_targets=2,
+        random_state=global_random_seed,
+    )
+    sample_weight = np.ones(n_samples)
 
-    ridge_cv = RidgeCV(scoring="neg_mean_squared_error", store_cv_results=True)
+    ridge_cv = RidgeCV(
+        gcv_mode=gcv_mode, scoring="neg_mean_squared_error", store_cv_results=True
+    )
     ridge_cv.fit(X, y, sample_weight=sample_weight)
 
     cv = LeaveOneOut()
@@ -2367,9 +2560,13 @@ def test_ridge_cv_multioutput_sample_weight(global_random_seed):
     assert_allclose(ridge_cv.best_score_, -mean_squared_error(y, y_pred_loo))
 
 
-def test_ridge_cv_custom_multioutput_scorer():
+@pytest.mark.parametrize("X_shape", [(50, 10), (10, 50)], ids=["tall", "wide"])
+def test_ridge_cv_custom_multioutput_scorer(X_shape):
     """Check that `RidgeCV` works properly with a custom multioutput scorer."""
-    X, y = make_regression(n_targets=2, random_state=0)
+    n_samples, n_features = X_shape
+    X, y = make_regression(
+        n_samples=n_samples, n_features=n_features, n_targets=2, random_state=0
+    )
 
     def custom_error(y_true, y_pred):
         errors = (y_true - y_pred) ** 2

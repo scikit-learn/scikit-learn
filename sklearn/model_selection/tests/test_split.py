@@ -249,7 +249,7 @@ def check_valid_split(train, test, n_samples=None):
     assert train.intersection(test) == set()
 
     if n_samples is not None:
-        # Check that the union of train an test split cover all the indices
+        # Check that the union of train and test split cover all the indices
         assert train.union(test) == set(range(n_samples))
 
 
@@ -1621,7 +1621,8 @@ def test_check_cv():
     cv = check_cv(3, y_multioutput, classifier=True)
     np.testing.assert_equal(list(KFold(3).split(X)), list(cv.split(X)))
 
-    with pytest.raises(ValueError):
+    msg = "Expected `cv` as an integer, a cross-validation object"
+    with pytest.raises(ValueError, match=msg):
         check_cv(cv="lolo")
 
 

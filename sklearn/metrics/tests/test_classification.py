@@ -11,6 +11,7 @@ from scipy.stats import bernoulli
 
 from sklearn import datasets, svm
 from sklearn.base import config_context
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import make_multilabel_classification
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics import (
@@ -45,11 +46,12 @@ from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._array_api import (
-    device as array_api_device,
-)
-from sklearn.utils._array_api import (
+    _get_namespace_device_dtype_ids,
     get_namespace,
     yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._array_api import (
+    device as array_api_device,
 )
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
@@ -69,7 +71,7 @@ from sklearn.utils.validation import check_random_state
 
 
 def make_prediction(dataset=None, binary=False):
-    """Make some classification predictions on a toy dataset using a SVC
+    """Make some classification predictions on a toy dataset using an SVC
 
     If binary is True restrict to a binary classification problem instead of a
     multiclass classification problem
@@ -99,7 +101,9 @@ def make_prediction(dataset=None, binary=False):
     X = np.c_[X, rng.randn(n_samples, 200 * n_features)]
 
     # run classifier, get class probabilities and label predictions
-    clf = svm.SVC(kernel="linear", probability=True, random_state=0)
+    clf = CalibratedClassifierCV(
+        svm.SVC(kernel="linear", random_state=0), ensemble=False, cv=3
+    )
     y_pred_proba = clf.fit(X[:half], y[:half]).predict_proba(X[half:])
 
     if binary:
@@ -894,6 +898,68 @@ def test_cohen_kappa():
     )
 
 
+@ignore_warnings(category=UndefinedMetricWarning)
+@pytest.mark.parametrize(
+    "test_case",
+    [
+        # annotator y2 does not assign any label specified in `labels` (note: also
+        # applicable if `labels` is default and `y2` does not contain any label that is
+        # in `y1`):
+        ([1] * 5 + [2] * 5, [3] * 10, [1, 2], None),
+        # both inputs (`y1` and `y2`) only have one label:
+        ([3] * 10, [3] * 10, None, None),
+        # both inputs only have one label in common that is also in `labels`:
+        ([1] * 5 + [2] * 5, [1] * 5 + [3] * 5, [1, 2], None),
+        # like the last test case, but with `weights="linear"` (note that
+        # weights="linear" and weights="quadratic" are different branches, though the
+        # latter is so similar to the former that the test case is skipped here):
+        ([1] * 5 + [2] * 5, [1] * 5 + [3] * 5, [1, 2], "linear"),
+    ],
+)
+@pytest.mark.parametrize("replace_undefined_by", [0.0, np.nan])
+def test_cohen_kappa_undefined(test_case, replace_undefined_by):
+    """Test that cohen_kappa_score handles divisions by 0 correctly by returning the
+    `replace_undefined_by` param. (The first test case covers the first possible
+    location in the function for an occurrence of a division by zero, the last three
+    test cases cover a zero division in the second possible location in the
+    function."""
+
+    y1, y2, labels, weights = test_case
+    y1, y2 = np.array(y1), np.array(y2)
+
+    score = cohen_kappa_score(
+        y1,
+        y2,
+        labels=labels,
+        weights=weights,
+        replace_undefined_by=replace_undefined_by,
+    )
+    assert_allclose(score, replace_undefined_by, equal_nan=True)
+
+
+def test_cohen_kappa_zero_division_warning():
+    """Test that cohen_kappa_score raises UndefinedMetricWarning when a division by 0
+    occurs."""
+
+    labels = [1, 2]
+    y1 = np.array([1] * 5 + [2] * 5)
+    y2 = np.array([3] * 10)
+    with pytest.warns(
+        UndefinedMetricWarning,
+        match="`y2` contains no labels that are present in both `y1` and `labels`.",
+    ):
+        cohen_kappa_score(y1, y2, labels=labels)
+
+    labels = [1, 2]
+    y1 = np.array([1] * 5 + [2] * 5)
+    y2 = np.array([1] * 5 + [3] * 5)
+    with pytest.warns(
+        UndefinedMetricWarning,
+        match="`y1`, `y2` and `labels` have only one label in common.",
+    ):
+        cohen_kappa_score(y1, y2, labels=labels)
+
+
 def test_cohen_kappa_score_error_wrong_label():
     """Test that correct error is raised when users pass labels that are not in y1."""
     labels = [1, 2]
@@ -1571,7 +1637,7 @@ def test_multilabel_hamming_loss():
 def test_jaccard_score_validation():
     y_true = np.array([0, 1, 0, 1, 1])
     y_pred = np.array([0, 1, 0, 1, 1])
-    err_msg = r"pos_label=2 is not a valid label. It should be one of \[0, 1\]"
+    err_msg = re.escape("pos_label=2 is not a valid label. It should be one of [0 1]")
     with pytest.raises(ValueError, match=err_msg):
         jaccard_score(y_true, y_pred, average="binary", pos_label=2)
 
@@ -3645,9 +3711,9 @@ def test_confusion_matrix_array_api(array_namespace, device, _):
 def test_probabilistic_metrics_array_api(
     prob_metric, str_y_true, use_sample_weight, array_namespace, device_, dtype_name
 ):
-    """Test that :func:`brier_score_loss`, :func:`log_loss`, func:`d2_brier_score`
+    """Test that :func:`brier_score_loss`, :func:`log_loss`, :func:`d2_brier_score`
     and :func:`d2_log_loss_score` work correctly with the array API for binary
-    and mutli-class inputs.
+    and multi-class inputs.
     """
     xp = _array_api_for_tests(array_namespace, device_)
     sample_weight = np.array([1, 2, 3, 1]) if use_sample_weight else None
@@ -3712,7 +3778,7 @@ def test_probabilistic_metrics_array_api(
 def test_probabilistic_metrics_multilabel_array_api(
     prob_metric, use_sample_weight, array_namespace, device_, dtype_name
 ):
-    """Test that :func:`brier_score_loss`, :func:`log_loss`, func:`d2_brier_score`
+    """Test that :func:`brier_score_loss`, :func:`log_loss`, :func:`d2_brier_score`
     and :func:`d2_log_loss_score` work correctly with the array API for
     multi-label inputs.
     """
@@ -3743,3 +3809,30 @@ def test_probabilistic_metrics_multilabel_array_api(
         metric_score_xp = prob_metric(y_true_xp, y_prob_xp, sample_weight=sample_weight)
 
     assert metric_score_xp == pytest.approx(metric_score_np)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize("prob_metric", [brier_score_loss, d2_brier_score])
+def test_pos_label_in_brier_score_metrics_array_api(
+    prob_metric, array_namespace, device_, dtype_name
+):
+    """Check `pos_label` handled correctly when labels not in {-1, 1} or {0, 1}."""
+    # For 'brier_score' metrics, when `pos_label=None` and labels are not strings,
+    # `pos_label` defaults to the largest label.
+    xp = _array_api_for_tests(array_namespace, device_)
+    y_true_pos_1 = xp.asarray(np.array([1, 0, 1, 0]), device=device_)
+    # Result should be the same when we use 2's for the label instead of 1's
+    y_true_pos_2 = xp.asarray(np.array([2, 0, 2, 0]), device=device_)
+    y_prob = xp.asarray(
+        np.array([0.5, 0.2, 0.7, 0.6], dtype=dtype_name), device=device_
+    )
+
+    with config_context(array_api_dispatch=True):
+        metric_pos_1 = prob_metric(y_true_pos_1, y_prob)
+        metric_pos_2 = prob_metric(y_true_pos_2, y_prob)
+
+    assert metric_pos_1 == pytest.approx(metric_pos_2)

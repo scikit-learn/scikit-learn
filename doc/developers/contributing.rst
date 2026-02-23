@@ -24,20 +24,20 @@ Contributing
 
 .. currentmodule:: sklearn
 
-This project is a community effort, and everyone is welcome to
-contribute. It is hosted on https://github.com/scikit-learn/scikit-learn.
+This project is a community effort, shaped by a large number of contributors from
+across the world. For more information on the history and people behind scikit-learn
+see :ref:`about`. It is hosted on https://github.com/scikit-learn/scikit-learn.
 The decision making process and governance structure of scikit-learn is laid
 out in :ref:`governance`.
 
 Scikit-learn is :ref:`selective <selectiveness>` when it comes to
 adding new algorithms and features. This means the best way to contribute
 and help the project is to start working on known issues.
-See :ref:`new_contributors` to get started.
+See :ref:`ways_to_contribute` to learn how to make meaningful contributions.
 
 .. topic:: **Our community, our values**
 
-    We are a community based on openness and friendly, didactic,
-    discussions.
+    We are a community based on openness and friendly, didactic discussions.
 
     We aspire to treat everybody equally, and value their contributions.  We
     are particularly seeking people from underrepresented backgrounds in Open
@@ -54,49 +54,33 @@ See :ref:`new_contributors` to get started.
     Communications on all channels should respect our `Code of Conduct
     <https://github.com/scikit-learn/scikit-learn/blob/main/CODE_OF_CONDUCT.md>`_.
 
-
-
-In case you experience issues using this package, do not hesitate to submit a
-ticket to the
-`GitHub issue tracker
-<https://github.com/scikit-learn/scikit-learn/issues>`_. You are also
-welcome to post feature requests or pull requests.
-
 .. _ways_to_contribute:
 
 Ways to contribute
 ==================
 
-There are many ways to contribute to scikit-learn. Improving the
-documentation is no less important than improving the code of the library
-itself. If you find a typo in the documentation, or have made improvements, do
-not hesitate to create a GitHub issue or preferably submit a GitHub pull request.
+There are many ways to contribute to scikit-learn. These include:
 
-There are many ways to help. In particular helping to
-:ref:`improve, triage, and investigate issues <bug_triaging>` and
-:ref:`reviewing other developers' pull requests <code_review>` are very
-valuable contributions that move the project forward.
+* referencing scikit-learn from your blog and articles, linking to it from your website,
+  or simply
+  `staring it <https://docs.github.com/en/get-started/exploring-projects-on-github/saving-repositories-with-stars>`__
+  to say "I use it"; this helps us promote the project
+* :ref:`improving and investigating issues <bug_triaging>`
+* :ref:`reviewing other developers' pull requests <code_review>`
+* reporting difficulties when using this package by submitting an
+  `issue <https://github.com/scikit-learn/scikit-learn/issues>`__, and giving a
+  "thumbs up" on issues that others reported and that are relevant to you (see
+  :ref:`submitting_bug_feature` for details)
+* improving the :ref:`contribute_documentation`
+* making a code contribution
 
-Another way to contribute is to report issues you are facing, and give a "thumbs
-up" on issues that others reported and that are relevant to you.  It also helps
-us if you spread the word: reference the project from your blog and articles,
-link to it from your website, or simply star to say "I use it":
-
-.. raw:: html
-
-  <p>
-    <object
-      data="https://img.shields.io/github/stars/scikit-learn/scikit-learn?style=for-the-badge&logo=github"
-      type="image/svg+xml">
-    </object>
-  </p>
-
-In case a contribution/issue involves changes to the API principles
-or changes to dependencies or supported versions, it must be backed by a
-:ref:`slep`, where a SLEP must be submitted as a pull-request to
-`enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_
-using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_
-and follows the decision-making process outlined in :ref:`governance`.
+There are many ways to contribute without writing code, and we value these
+contributions just as highly as code contributions. If you are interested in making
+a code contribution, please keep in mind that scikit-learn has evolved into a mature
+and complex project since its inception in 2007. Contributing to the project code
+generally requires advanced skills, and it may not be the best place to begin if you
+are new to open source contribution. In this case we suggest you follow the suggestions
+in :ref:`new_contributors`.
 
 .. dropdown:: Contributing to related projects
 
@@ -125,15 +109,31 @@ New Contributors
 ----------------
 
 We recommend new contributors start by reading this contributing guide, in
-particular :ref:`ways_to_contribute`, :ref:`automated_contributions_policy`
-and :ref:`pr_checklist`. For expected etiquette around which issues and stalled PRs
+particular :ref:`ways_to_contribute`, :ref:`automated_contributions_policy`.
+
+Next, we advise new contributors gain foundational knowledge on
+scikit-learn and open source by:
+
+* :ref:`improving and investigating issues <bug_triaging>`
+
+  * confirming that a problem reported can be reproduced and providing a
+    :ref:`minimal reproducible code <minimal_reproducer>` (if missing), can help you
+    learn about different use cases and user needs
+  * investigating the root cause of an issue will aid you in familiarising yourself
+    with the scikit-learn codebase
+
+* :ref:`reviewing other developers' pull requests <code_review>` will help you
+  develop an understanding of the requirements and quality expected of contributions
+* improving the :ref:`contribute_documentation` can help deepen your knowledge
+  of the statistical concepts behind models and functions, and scikit-learn API
+
+If you wish to make code contributions after building your foundational knowledge, we
+recommend you start by looking for an issue that is of interest to you, in an area you
+are already familiar with as a user or have background knowledge of. We recommend
+starting with smaller pull requests and following our :ref:`pr_checklist`.
+For expected etiquette around which issues and stalled PRs
 to work on, please read :ref:`stalled_pull_request`, :ref:`stalled_unclaimed_issues`
 and :ref:`issues_tagged_needs_triage`.
-
-We understand that everyone has different interests and backgrounds, thus we recommend
-you start by looking for an issue that is of interest to you, in an area you are
-already familiar with as a user or have background knowledge of. We recommend starting
-with smaller pull requests, to get used to the contribution process.
 
 We rarely use the "good first issue" label because it is difficult to make
 assumptions about new contributors and these issues often prove more complex
@@ -173,6 +173,8 @@ If you used AI tools, please state so in your PR description.
 
 PRs that appear to violate this policy will be closed without review.
 
+.. _submitting_bug_feature:
+
 Submitting a bug report or a feature request
 ============================================
 
@@ -198,6 +200,13 @@ following rules before submitting:
 
 -  If you are submitting a bug report, we strongly encourage you to follow the guidelines in
    :ref:`filing_bugs`.
+
+When a feature request involves changes to the API principles
+or changes to dependencies or supported versions, it must be backed by a
+:ref:`SLEP <slep>`, which must be submitted as a pull-request to
+`enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_
+using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_
+and follows the decision-making process outlined in :ref:`governance`.
 
 .. _filing_bugs:
 
@@ -231,6 +240,23 @@ feedback:
   appropriate code blocks**.  See `Creating and highlighting code blocks
   <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_
   for more details.
+
+- Please be explicit **how this issue impacts you as a scikit-learn user**. Giving
+  some details (a short paragraph) about how you use scikit-learn and why you need
+  this issue resolved will help the project maintainers invest time and effort
+  on issues that actually impact users.
+
+- Please tell us if you would be interested in opening a PR to resolve your issue
+  once triaged by a project maintainer.
+
+Note that the scikit-learn tracker receives `daily reports
+<https://github.com/scikit-learn/scikit-learn/issues?q=label%3Aspam>`_ by
+GitHub accounts that are mostly interested in increasing contribution
+statistics and show little interest in the expected end-user impact of their
+contributions. As project maintainers we want to be able to assess if our
+efforts are likely to have a meaningful and positive impact to our end users.
+Therefore, we ask you to avoid opening issues for things you don't actually
+care about.
 
 If you want to help curate issues, read about :ref:`bug_triaging`.
 
@@ -349,7 +375,7 @@ line
 .. topic:: Learning Git
 
     The `Git documentation <https://git-scm.com/doc>`_ and
-    http://try.github.io are excellent resources to get started with git,
+    https://try.github.io are excellent resources to get started with git,
     and understanding all of the commands shown here.
 
 .. _pr_checklist:
@@ -378,7 +404,25 @@ complies with the following rules before marking a PR as "ready for review". The
    cases "Fix <ISSUE TITLE>" is enough. "Fix #<ISSUE NUMBER>" is never a
    good title.
 
-2. **Make sure your code passes the tests**. The whole test suite can be run
+2. **Pull requests are expected to resolve one or more issues**.
+   Please **do not open PRs for issues that are labeled as "Needs triage"**
+   (see :ref:`issues_tagged_needs_triage`) or with other kinds of "Needs ..."
+   labels. Please do not open PRs for issues for which:
+
+   - the discussion has not settled down to an explicit resolution plan,
+   - the reporter has already expressed interest in opening a PR,
+   - there already exists cross-referenced and active PRs.
+
+   If merging your pull request means that some other issues/PRs should be closed,
+   you should `use keywords to create link to them
+   <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
+   (e.g., ``Fixes #1234``; multiple issues/PRs are allowed as long as each
+   one is preceded by a keyword). Upon merging, those issues/PRs will
+   automatically be closed by GitHub. If your pull request is simply
+   related to some other issues/PRs, or it only partially resolves the target
+   issue, create a link to them without using the keywords (e.g., ``Towards #1234``).
+
+3. **Make sure your code passes the tests**. The whole test suite can be run
    with `pytest`, but it is usually not recommended since it takes a long
    time. It is often enough to only run the test related to your changes:
    for example, if you changed something in
@@ -401,12 +445,12 @@ complies with the following rules before marking a PR as "ready for review". The
    you don't need to run the whole test suite locally. For guidelines on how
    to use ``pytest`` efficiently, see the :ref:`pytest_tips`.
 
-3. **Make sure your code is properly commented and documented**, and **make
+4. **Make sure your code is properly commented and documented**, and **make
    sure the documentation renders properly**. To build the documentation, please
    refer to our :ref:`contribute_documentation` guidelines. The CI will also
    build the docs: please refer to :ref:`generated_doc_CI`.
 
-4. **Tests are necessary for enhancements to be
+5. **Tests are necessary for enhancements to be
    accepted**. Bug-fixes or new features should be provided with non-regression tests.
    These tests verify the correct behavior of the fix or feature. In this manner,
    further modifications on the code base are granted to be consistent with the
@@ -414,26 +458,16 @@ complies with the following rules before marking a PR as "ready for review". The
    non-regression tests should fail for the code base in the ``main`` branch
    and pass for the PR code.
 
-5. If your PR is likely to affect users, you need to add a changelog entry describing
+6. If your PR is likely to affect users, you need to add a changelog entry describing
    your PR changes. See the
    `README <https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md>`_
    for more details.
 
-6. Follow the :ref:`coding-guidelines`.
+7. Follow the :ref:`coding-guidelines`.
 
-7. When applicable, use the validation tools and scripts in the :mod:`sklearn.utils`
+8. When applicable, use the validation tools and scripts in the :mod:`sklearn.utils`
    module. A list of utility routines available for developers can be found in the
    :ref:`developers-utils` page.
-
-8. Often pull requests resolve one or more other issues (or pull requests).
-   If merging your pull request means that some other issues/PRs should
-   be closed, you should `use keywords to create link to them
-   <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
-   (e.g., ``Fixes #1234``; multiple issues/PRs are allowed as long as each
-   one is preceded by a keyword). Upon merging, those issues/PRs will
-   automatically be closed by GitHub. If your pull request is simply
-   related to some other issues/PRs, or it only partially resolves the target
-   issue, create a link to them without using the keywords (e.g., ``Towards #1234``).
 
 9. PRs should often substantiate the change, through benchmarks of
    performance and efficiency (see :ref:`monitoring_performances`) or through
@@ -499,7 +533,7 @@ profiling and Cython optimizations.
 
    For two very well documented and more detailed guides on development
    workflow, please pay a visit to the `Scipy Development Workflow
-   <http://scipy.github.io/devdocs/dev/dev_quickstart.html>`_ -
+   <https://scipy.github.io/devdocs/dev/dev_quickstart.html>`_ -
    and the `Astropy Workflow for Developers
    <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
@@ -530,7 +564,6 @@ Commit Message Marker  Action Taken by CI
 [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc.) development builds
 [free-threaded]        Build & test with CPython 3.14 free-threaded
 [pyodide]              Build & test with Pyodide
-[azure parallel]       Run Azure CI jobs in parallel
 [float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
 [all random seeds]     Run tests using the `global_random_seed` fixture with all random seeds.
                        See `this <https://github.com/scikit-learn/scikit-learn/issues/28959>`_

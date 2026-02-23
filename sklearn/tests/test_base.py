@@ -237,6 +237,7 @@ def test_clone_class_rather_than_instance():
         clone(MyEstimator)
 
 
+# TODO (1.11): remove svc test for predict_proba after it is deprecated
 def test_conditional_attrs_not_in_dir():
     # Test that __dir__ includes only relevant attributes. #28558
 
@@ -760,7 +761,7 @@ def test_feature_names_in():
     with pytest.raises(ValueError, match=msg):
         trans.transform(df_bad)
 
-    # warns when fitted on dataframe and transforming a ndarray
+    # warns when fitted on dataframe and transforming an ndarray
     msg = (
         "X does not have valid feature names, but NoOpTransformer was "
         "fitted with feature names"
@@ -768,7 +769,7 @@ def test_feature_names_in():
     with pytest.warns(UserWarning, match=msg):
         trans.transform(X_np)
 
-    # warns when fitted on a ndarray and transforming dataframe
+    # warns when fitted on an ndarray and transforming dataframe
     msg = "X has feature names, but NoOpTransformer was fitted without feature names"
     trans = NoOpTransformer().fit(X_np)
     with pytest.warns(UserWarning, match=msg):
