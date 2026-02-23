@@ -2580,8 +2580,8 @@ def _check_pos_label_consistency(pos_label, y_true):
     if pos_label is None:
         # Compute classes only if pos_label is not specified:
         xp, _, device = get_namespace_and_device(y_true)
-        dtype = y_true.dtype
         classes = xp.unique_values(y_true)
+        dtype = classes.dtype
         if (
             (_is_numpy_namespace(xp) and classes.dtype.kind in "OUS")
             or classes.shape[0] > 2
@@ -2600,7 +2600,7 @@ def _check_pos_label_consistency(pos_label, y_true):
                 "specified: either make y_true take value in {0, 1} or "
                 "{-1, 1} or pass pos_label explicitly."
             )
-        pos_label = xp.asarray(1, dtype=y_true.dtype, device=device)
+        pos_label = xp.asarray(1, dtype=dtype, device=device)
 
     return pos_label
 
