@@ -35,7 +35,7 @@ from sklearn.utils._array_api import (
     size,
 )
 from sklearn.utils._encode import _encode, _unique
-from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils._param_validation import Interval, Options, StrOptions, validate_params
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.sparsefuncs import count_nonzero
 from sklearn.utils.validation import _check_pos_label_consistency, _check_sample_weight
@@ -1858,7 +1858,7 @@ def dcg_score(
     )
 
 
-def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
+def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False, zero_division="warn"):
     """Compute Normalized Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -1888,6 +1888,11 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
         Assume that there are no ties in y_score (which is likely to be the
         case if y_score is continuous) for efficiency gains.
 
+    zero_division : "warn", 0 or 1, default="warn"
+        Sets the value to return when IDCG is zero (i.e., all true relevance
+        scores for a sample are zero). If set to "warn", this acts as 0, but
+        warnings are also raised.
+
     Returns
     -------
     normalized_discounted_cumulative_gain : ndarray of shape (n_samples,)
@@ -1904,7 +1909,18 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
     # change the value of the re-ordered y_true)
     normalizing_gain = _dcg_sample_scores(y_true, y_true, k, ignore_ties=True)
     all_irrelevant = normalizing_gain == 0
-    gain[all_irrelevant] = 0
+    if np.any(all_irrelevant):
+        if zero_division == "warn":
+            warnings.warn(
+                "NDCG is not defined for samples where all true relevance scores "
+                "are zero. These samples will be set to 0 in the score. Use "
+                "`zero_division` parameter to control this behavior.",
+                UndefinedMetricWarning,
+                stacklevel=3,
+            )
+            gain[all_irrelevant] = 0
+        else:
+            gain[all_irrelevant] = zero_division
     gain[~all_irrelevant] /= normalizing_gain[~all_irrelevant]
     return gain
 
@@ -1916,10 +1932,11 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
         "k": [Interval(Integral, 1, None, closed="left"), None],
         "sample_weight": ["array-like", None],
         "ignore_ties": ["boolean"],
+        "zero_division": [StrOptions({"warn"}), Options(Real, {0, 1})],
     },
     prefer_skip_nested_validation=True,
 )
-def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False):
+def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False, zero_division="warn"):
     """Compute Normalized Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -1952,6 +1969,14 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     ignore_ties : bool, default=False
         Assume that there are no ties in y_score (which is likely to be the
         case if y_score is continuous) for efficiency gains.
+
+    zero_division : "warn", 0 or 1, default="warn"
+        Sets the value to return when IDCG is zero (i.e., all true relevance
+        scores for a sample are zero). If set to ``"warn"``, this acts as 0,
+        but warnings are also raised via :class:`~sklearn.exceptions.UndefinedMetricWarning`.
+        If set to 0, those samples contribute 0 to the average score (the
+        current behavior, without warnings). If set to 1, those samples
+        contribute 1 to the average score.
 
     Returns
     -------
@@ -2025,7 +2050,9 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
             f"Got {y_true.shape[1]} instead."
         )
     _check_dcg_target_type(y_true)
-    gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
+    gain = _ndcg_sample_scores(
+        y_true, y_score, k=k, ignore_ties=ignore_ties, zero_division=zero_division
+    )
     return float(np.average(gain, weights=sample_weight))
 
 
