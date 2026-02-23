@@ -873,6 +873,19 @@ def test_ridge_gcv_vs_ridge_loo_cv(
     assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, atol=atol)
 
 
+def _ridge_regularization_limits(alpha, X, y, fit_intercept):
+    "Expected coef and intercept when alpha near 0 or inf"
+    if np.isclose(alpha, 0):
+        # Ridge should recover LinearRegression for near-zero alpha.
+        lin_reg = LinearRegression(fit_intercept=fit_intercept)
+        lin_reg.fit(X, y)
+        return lin_reg.coef_, lin_reg.intercept_
+    else:
+        # Ridge should recover zero coefficients for near-infinite alpha.
+        n_features = X.shape[1]
+        return np.zeros(n_features), np.mean(y) if fit_intercept else 0.0
+
+
 @pytest.mark.parametrize("alpha", [1e-16, 1e16], ids=["zero_alpha", "inf_alpha"])
 @pytest.mark.parametrize("solver", ["svd", "cholesky", "lsqr", "sparse_cg"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
@@ -881,10 +894,7 @@ def test_ridge_gcv_vs_ridge_loo_cv(
 def test_regularization_limits_ridge(
     alpha, solver, fit_intercept, X_shape, X_container
 ):
-    """We check Ridge for extreme alpha values:
-    * near-zero alpha should recover LinearRegression
-    * near-infinite alpha should give zero coefficients
-    """
+    "Check regularization limits of Ridge (alpha near 0 or inf)"
     sparse_X = X_container in CSR_CONTAINERS
     if solver == "svd" and sparse_X:
         pytest.skip("solver='svd' does not support sparse data")
@@ -896,16 +906,9 @@ def test_regularization_limits_ridge(
     X, y = make_regression(
         n_samples=n_samples, n_features=n_features, noise=0, bias=10, random_state=42
     )
-    if np.isclose(alpha, 0):
-        # Ridge should recover LinearRegression for near-zero alpha.
-        lin_reg = LinearRegression(fit_intercept=fit_intercept)
-        lin_reg.fit(X, y)
-        expected_coef = lin_reg.coef_
-        expected_intercept = lin_reg.intercept_
-    else:
-        # Ridge should recover zero coefficients for near-infinite alpha.
-        expected_coef = np.zeros(n_features)
-        expected_intercept = np.mean(y) if fit_intercept else 0.0
+    expected_coef, expected_intercept = _ridge_regularization_limits(
+        alpha, X, y, fit_intercept
+    )
     X = X_container(X)
     ridge = Ridge(alpha=alpha, solver=solver, fit_intercept=fit_intercept, tol=1e-12)
     ridge.fit(X, y)
@@ -913,15 +916,7 @@ def test_regularization_limits_ridge(
     assert_allclose(ridge.intercept_, expected_intercept, atol=1e-10)
 
 
-def alpha_zero(X, y, fit_intercept):
-    lin_reg = LinearRegression(fit_intercept=fit_intercept).fit(X, y)
-    return lin_reg.coef_, lin_reg.intercept_
-
-
-def alpha_inf(X, y, fit_intercept):
-    return np.zeros(n_features), np.mean(y) if fit_intercept else 0.0
-
-@pytest.mark.parametrize(["alpha", "calc_result"], [(1e-16, alpha_zero), (1e16, alpha_inf)], ids=["zero_alpha", "inf_alpha"])
+@pytest.mark.parametrize("alpha", [1e-16, 1e16], ids=["zero_alpha", "inf_alpha"])
 @pytest.mark.parametrize("gcv_mode", ["ignored"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize(
@@ -934,10 +929,7 @@ def alpha_inf(X, y, fit_intercept):
 def test_regularization_limits_ridge_classifier_gcv(
     alpha, gcv_mode, fit_intercept, X_shape, dtype, X_container
 ):
-    """We check RidgeClassifierCV for extreme alpha values:
-    * near-zero alpha should recover LinearRegression
-    * near-infinite alpha should give zero coefficients
-    """
+    "Check regularization limits of RidgeClassifierCV (alpha near 0 or inf)"
     sparse_X = X_container in CSR_CONTAINERS
     alphas = [alpha]
     n_samples, n_features = X_shape
@@ -947,11 +939,6 @@ def test_regularization_limits_ridge_classifier_gcv(
     # RidgeClassifier is Ridge with y mapped to {-1, +1}
     y = 2 * y - 1
     if np.isclose(alpha, 0):
-        # Ridge should recover LinearRegression for near-zero alpha.
-        lin_reg = LinearRegression(fit_intercept=fit_intercept)
-        lin_reg.fit(X, y)
-        expected_coef = lin_reg.coef_
-        expected_intercept = lin_reg.intercept_
         # FIXME : test fails on square or tall X
         if n_features < n_samples:
             pytest.xfail(
@@ -963,10 +950,9 @@ def test_regularization_limits_ridge_classifier_gcv(
                 "RidgeClassifierCV does not recover LinearRegression "
                 "on square X in the small alpha limit"
             )
-    else:
-        # Ridge should recover zero coefficients for near-infinite alpha.
-        expected_coef = np.zeros(n_features)
-        expected_intercept = np.mean(y) if fit_intercept else 0.0
+    expected_coef, expected_intercept = _ridge_regularization_limits(
+        alpha, X, y, fit_intercept
+    )
     X = X_container(X)
     X = X.astype(dtype)
     y = y.astype(dtype)
@@ -998,26 +984,16 @@ def test_regularization_limits_ridge_classifier_gcv(
 def test_regularization_limits_ridge_gcv(
     alpha, gcv_mode, fit_intercept, X_shape, dtype, X_container
 ):
-    """We check _RidgeGCV for extreme alpha values:
-    * near-zero alpha should recover LinearRegression
-    * near-infinite alpha should give zero coefficients
-    """
+    "Check regularization limits of _RidgeGCV (alpha near 0 or inf)"
     sparse_X = X_container in CSR_CONTAINERS
     alphas = [alpha]
     n_samples, n_features = X_shape
     X, y = make_regression(
         n_samples=n_samples, n_features=n_features, noise=0, bias=10, random_state=42
     )
-    if np.isclose(alpha, 0):
-        # Ridge should recover LinearRegression for near-zero alpha.
-        lin_reg = LinearRegression(fit_intercept=fit_intercept)
-        lin_reg.fit(X, y)
-        expected_coef = lin_reg.coef_
-        expected_intercept = lin_reg.intercept_
-    else:
-        # Ridge should recover zero coefficients for near-infinite alpha.
-        expected_coef = np.zeros(n_features)
-        expected_intercept = np.mean(y) if fit_intercept else 0.0
+    expected_coef, expected_intercept = _ridge_regularization_limits(
+        alpha, X, y, fit_intercept
+    )
     X = X_container(X)
     X = X.astype(dtype)
     y = y.astype(dtype)
