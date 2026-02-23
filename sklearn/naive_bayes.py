@@ -523,7 +523,7 @@ class GaussianNB(_BaseNB):
                 self.class_count_[i] + N_i
             )
 
-        self.var_ = xpx.at(self.var_)[:, :].set(self.var_ + self.epsilon_)
+        self.var_ = xpx.at(self.var_)[:, :].add(self.epsilon_)
 
         # Update if only no priors is provided
         if self.priors is None:
