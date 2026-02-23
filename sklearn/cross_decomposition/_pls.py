@@ -275,7 +275,13 @@ class _PLS(
         self._y_scores = np.zeros((n, n_components))  # Omega
         self.x_loadings_ = np.zeros((p, n_components))  # Gamma
         self.y_loadings_ = np.zeros((q, n_components))  # Delta
+        self.explained_variance_ratio_x_ = np.zeros(n_components)
+        self.explained_variance_ratio_y_ = np.zeros(n_components)
         self.n_iter_ = []
+
+        # Calculate Total SS for X and Y
+        total_ss_x = np.sum(Xk**2)
+        total_ss_y = np.sum(yk**2)
 
         # This whole thing corresponds to the algorithm in section 4.1 of the
         # review from Wegelin. See above for a notation mapping from code to
@@ -324,19 +330,29 @@ class _PLS(
                 y_ss = np.dot(y_weights, y_weights)
             y_scores = np.dot(yk, y_weights) / y_ss
 
+            # Calculate X and y scores sum of squares
+            x_scores_ss = np.dot(x_scores, x_scores)
+            y_scores_ss = np.dot(y_scores, y_scores)
+
             # Deflation: subtract rank-one approx to obtain Xk+1 and yk+1
-            x_loadings = np.dot(x_scores, Xk) / np.dot(x_scores, x_scores)
+            x_loadings = np.dot(x_scores, Xk) / x_scores_ss
             Xk -= np.outer(x_scores, x_loadings)
+            x_var = x_scores_ss * np.dot(x_loadings, x_loadings)
 
             if self.deflation_mode == "canonical":
                 # regress yk on y_score
-                y_loadings = np.dot(y_scores, yk) / np.dot(y_scores, y_scores)
+                y_loadings = np.dot(y_scores, yk) / y_scores_ss
                 yk -= np.outer(y_scores, y_loadings)
+                y_var = y_scores_ss * np.dot(y_loadings, y_loadings)
+
             if self.deflation_mode == "regression":
                 # regress yk on x_score
-                y_loadings = np.dot(x_scores, yk) / np.dot(x_scores, x_scores)
+                y_loadings = np.dot(x_scores, yk) / x_scores_ss
                 yk -= np.outer(x_scores, y_loadings)
+                y_var = x_scores_ss * np.dot(y_loadings, y_loadings)
 
+            self.explained_variance_ratio_x_[k] = x_var / total_ss_x
+            self.explained_variance_ratio_y_[k] = y_var / total_ss_y
             self.x_weights_[:, k] = x_weights
             self.y_weights_[:, k] = y_weights
             self._x_scores[:, k] = x_scores
@@ -590,6 +606,14 @@ class PLSRegression(_PLS):
 
         .. versionadded:: 1.0
 
+    explained_variance_ratio_x_ : ndarray of shape (n_components,)
+        Percentage of variance explained by each of the selected components
+        in `X`.
+
+    explained_variance_ratio_y_ : ndarray of shape (n_components,)
+        Percentage of variance explained by each of the selected components
+        in `y`.
+
     See Also
     --------
     PLSCanonical : Partial Least Squares transformer and regressor.
@@ -740,6 +764,14 @@ class PLSCanonical(_PLS):
 
         .. versionadded:: 1.0
 
+    explained_variance_ratio_x_ : ndarray of shape (n_components,)
+        Percentage of variance explained by each of the selected components
+        in `X`.
+
+    explained_variance_ratio_y_ : ndarray of shape (n_components,)
+        Percentage of variance explained by each of the selected components
+        in `y`.
+
     See Also
     --------
     CCA : Canonical Correlation Analysis.
@@ -864,6 +896,14 @@ class CCA(_PLS):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    explained_variance_ratio_x_ : ndarray of shape (n_components,)
+        Percentage of variance explained by each of the selected components
+        in `X`.
+
+    explained_variance_ratio_y_ : ndarray of shape (n_components,)
+        Percentage of variance explained by each of the selected components
+        in `y`.
 
     See Also
     --------

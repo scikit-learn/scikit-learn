@@ -2,7 +2,12 @@ import warnings
 
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
+from numpy.testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_array_less,
+)
 
 from sklearn.cross_decomposition import CCA, PLSSVD, PLSCanonical, PLSRegression
 from sklearn.cross_decomposition._pls import (
@@ -676,3 +681,57 @@ def test_pls_regression_scaling_coef():
 
     # we therefore should be able to predict `y` from `X`
     assert_allclose(pls.predict(X), y)
+
+
+@pytest.mark.parametrize("model", [PLSRegression, PLSCanonical, CCA])
+def test_pls_variance_ratio_X_y(model):
+    """Check that `explained_variance_ratio_x_` and `explained_variance_ratio_y_` are
+    correctly computed for both `X` and `y`.
+
+    For the PLSRegrssion model, (PLS in mode A with asymmetric deflation), this test
+    reproduces the results reported by:
+
+    .. Abdi, H. (2003)
+    Partial Least Squares (PLS) Regression. In Lewis-Beck M., Bryman A., Futing T.
+    (Eds.), Encyclopedia of Social Sciences Research Methods. Thousand Oaks (CA): Sage.
+    """
+    # Arrange
+    # X matrix from the literature
+    X = np.array(
+        [
+            [7, 7, 13, 7],
+            [4, 3, 14, 7],
+            [10, 5, 12, 5],
+            [16, 7, 11, 3],
+            [13, 3, 10, 3],
+        ],
+        dtype=float,
+    )
+
+    # y matrix from the literature
+    y = np.array([[14, 7, 8], [10, 7, 6], [8, 5, 5], [2, 4, 7], [6, 2, 4]], dtype=float)
+
+    # Act
+    pls = model(n_components=3).fit(X, y)
+
+    # Assert
+    # Len explained variances should be equal to n_components
+    assert np.array(pls.explained_variance_ratio_x_).shape == (pls.n_components,)
+    assert np.array(pls.explained_variance_ratio_y_).shape == (pls.n_components,)
+
+    # Full decomposition of X should explain all variance
+    assert_allclose(np.array(pls.explained_variance_ratio_x_).sum(), 1.0)
+
+    if model is PLSRegression:
+        # Assert all close to literature values
+        expected_x_var = np.array([0.70450895, 0.27895457, 0.01653648])
+        expected_y_var = np.array([0.63331666, 0.22064505, 0.10437163])
+        assert_allclose(pls.explained_variance_ratio_x_, expected_x_var, rtol=1e-6)
+        assert_allclose(pls.explained_variance_ratio_y_, expected_y_var, rtol=1e-6)
+
+        # Due to asymmetric deflation of y, the variance may not add to 1.0
+        assert_array_less(np.array(pls.explained_variance_ratio_y_).sum(), 1.0)
+
+    else:
+        # Symmetric deflation of y, the variance should add to 1.0
+        assert_allclose(np.array(pls.explained_variance_ratio_y_).sum(), 1.0)
