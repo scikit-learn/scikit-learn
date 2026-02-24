@@ -993,6 +993,10 @@ class SelectFwe(_BaseFilter):
     alpha : float, default=5e-2
         The highest uncorrected p-value for features to keep.
 
+    fwe_control : {'bonf', 'holm'}, default='bonf'
+        Method used to control the family-wise error rate. 'bonf' uses
+        Bonferroni correction. Set to 'holm' to use the Holm method.
+
     Attributes
     ----------
     scores_ : array-like of shape (n_features,)
@@ -1011,6 +1015,10 @@ class SelectFwe(_BaseFilter):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    fwe_control = str
+        Method to use for FWE control. 'bonf' for Bonferroni correction, 'holm'
+        for Holm method.
 
     See Also
     --------
@@ -1042,14 +1050,27 @@ class SelectFwe(_BaseFilter):
         "alpha": [Interval(Real, 0, 1, closed="both")],
     }
 
-    def __init__(self, score_func=f_classif, *, alpha=5e-2):
+    def __init__(self, score_func=f_classif, *, alpha=5e-2, fwe_control='bonf'):
         super().__init__(score_func=score_func)
         self.alpha = alpha
+        self.fwe_control = fwe_control
 
     def _get_support_mask(self):
         check_is_fitted(self)
 
-        return self.pvalues_ < self.alpha / len(self.pvalues_)
+        if self.fwe_control == 'bonf':
+            h0_rejected = self.pvalues_ < self.alpha / len(self.pvalues_)
+        elif self.fwe_control == 'holm':
+            h0_rejected = np.zeros_like(self.pvalues_, dtype=bool)
+            sorted_ids = np.argsort(self.pvalues_)
+            h0_rejected[sorted_ids] = self.pvalues_[sorted_ids] < \
+                self.alpha / np.arange(1, len(self.pvalues_) + 1)
+        else:
+            raise ValueError(f"Invalid fwe_control method: {self.fwe_control}. "
+                             "Expected 'bonf' or 'holm'.")
+        return h0_rejected
+
+
 
 
 ######################################################################
