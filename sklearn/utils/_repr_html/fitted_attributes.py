@@ -114,7 +114,6 @@ def _fitted_attr_html_repr(fitted_attributes):
         if len(value) == 2:
             html_row_values = (value[0], _read_fitted_attr(value[1]))
         else:
-            breakpoint()
             if value[0] == "ndarray":
                 html_row_values = (
                     "".join(["array[" + f"{value[2]}" + "]" + f"{value[1]}"]),
