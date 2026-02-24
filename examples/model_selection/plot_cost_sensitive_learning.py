@@ -304,10 +304,9 @@ def plot_roc_pr_curves(vanilla_model, tuned_model, *, title):
             X_test,
             y_test,
             pos_label=pos_label,
-            linestyle=linestyle,
-            color=color,
             ax=axs[0],
             name=name,
+            curve_kwargs={"linestyle": linestyle, "color": color},
         )
         axs[0].plot(
             scoring["recall"](est, X_test, y_test),
@@ -322,7 +321,7 @@ def plot_roc_pr_curves(vanilla_model, tuned_model, *, title):
             X_test,
             y_test,
             pos_label=pos_label,
-            curve_kwargs=dict(linestyle=linestyle, color=color),
+            curve_kwargs={"linestyle": linestyle, "color": color},
             ax=axs[1],
             name=name,
             plot_chance_level=idx == 1,
