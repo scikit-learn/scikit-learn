@@ -200,7 +200,16 @@ class DecisionBoundaryDisplay:
         self.xlabel = xlabel
         self.ylabel = ylabel
 
-    def plot(self, plot_method="contourf", ax=None, xlabel=None, ylabel=None, **kwargs):
+    def plot(
+        self,
+        plot_method="contourf",
+        ax=None,
+        xlim=None,
+        ylim=None,
+        xlabel=None,
+        ylabel=None,
+        **kwargs,
+    ):
         """Plot visualization.
 
         Parameters
@@ -215,6 +224,18 @@ class DecisionBoundaryDisplay:
         ax : Matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
             created.
+
+        xlim : tuple of float, default=None
+            Tuple of (min, max) x-axis limits for the plot. If None, limits are
+            determined from the data range.
+
+            .. versionadded:: 1.9
+
+        ylim : tuple of float, default=None
+            Tuple of (min, max) y-axis limits for the plot. If None, limits are
+            determined from the data range.
+
+            .. versionadded:: 1.9
 
         xlabel : str, default=None
             Overwrite the x-axis label.
@@ -241,6 +262,24 @@ class DecisionBoundaryDisplay:
                 "plot_method must be 'contourf', 'contour', or 'pcolormesh'. "
                 f"Got {plot_method} instead."
             )
+
+        for lim, name in [(xlim, "xlim"), (ylim, "ylim")]:
+            if lim is not None:
+                if not isinstance(lim, tuple) or len(lim) != 2 or lim[0] >= lim[1]:
+                    raise ValueError(
+                        f"`{name}` must be a tuple of (min, max) with min < max"
+                    )
+                range_msg = (
+                    f"`{name}` values are outside the meshgrid range (`xx0` and `xx1`)."
+                    " Extend the range of the grid and the corresponding"
+                    " predictions or use `from_estimator()` instead."
+                )
+                if name == "xlim":
+                    if lim[0] < self.xx0.min() or lim[1] > self.xx0.max():
+                        raise ValueError(range_msg)
+                else:  # ylim
+                    if lim[0] < self.xx1.min() or lim[1] > self.xx1.max():
+                        raise ValueError(range_msg)
 
         if ax is None:
             _, ax = plt.subplots()
@@ -287,6 +326,9 @@ class DecisionBoundaryDisplay:
             self.multiclass_colors_ = colors
 
             if self.response.ndim == 2:  # predict
+                # Select colors consistently according to classes to be plotted
+                # (given limits might not contain all class regions)
+                colors = [colors[i] for i in np.unique(self.response)]
                 # `pcolormesh` requires cmap, for the others it makes no difference
                 cmap = mpl.colors.ListedColormap(colors)
                 self.surface_ = plot_func(
@@ -328,6 +370,11 @@ class DecisionBoundaryDisplay:
             ylabel = self.ylabel if ylabel is None else ylabel
             ax.set_ylabel(ylabel)
 
+        if xlim is not None:
+            ax.set_xlim(xlim)
+        if ylim is not None:
+            ax.set_ylim(ylim)
+
         self.ax_ = ax
         self.figure_ = ax.figure
         return self
@@ -340,6 +387,8 @@ class DecisionBoundaryDisplay:
         *,
         grid_resolution=100,
         eps=1.0,
+        xlim=None,
+        ylim=None,
         plot_method="contourf",
         response_method="auto",
         class_of_interest=None,
@@ -368,7 +417,19 @@ class DecisionBoundaryDisplay:
 
         eps : float, default=1.0
             Extends the minimum and maximum values of X for evaluating the
-            response function.
+            response function. Ignored if both `xlim` and `ylim` are provided.
+
+        xlim : tuple of float, default=None
+            Tuple of (min, max) x-axis limits for the plot. If None, limits are
+            determined from the data range.
+
+            .. versionadded:: 1.9
+
+        ylim : tuple of float, default=None
+            Tuple of (min, max) y-axis limits for the plot. If None, limits are
+            determined from the data range.
+
+            .. versionadded:: 1.9
 
         plot_method : {'contourf', 'contour', 'pcolormesh'}, default='contourf'
             Plotting method to call when plotting the response. Please refer
@@ -530,10 +591,21 @@ class DecisionBoundaryDisplay:
                         f"Matplotlib colormap. Got: {multiclass_colors}"
                     )
 
-        x0, x1 = _safe_indexing(X, 0, axis=1), _safe_indexing(X, 1, axis=1)
+        for lim, name in [(xlim, "xlim"), (ylim, "ylim")]:
+            if lim is not None:
+                if not isinstance(lim, tuple) or len(lim) != 2 or lim[0] >= lim[1]:
+                    raise ValueError(
+                        f"`{name}` must be a tuple of (min, max) with min < max"
+                    )
 
-        x0_min, x0_max = x0.min() - eps, x0.max() + eps
-        x1_min, x1_max = x1.min() - eps, x1.max() + eps
+        # Create meshgrid for data range.
+        x0 = _safe_indexing(X, 0, axis=1)
+        x0_min = xlim[0] if xlim is not None else x0.min() - eps
+        x0_max = xlim[1] if xlim is not None else x0.max() + eps
+
+        x1 = _safe_indexing(X, 1, axis=1)
+        x1_min = ylim[0] if ylim is not None else x1.min() - eps
+        x1_max = ylim[1] if ylim is not None else x1.max() + eps
 
         xx0, xx1 = np.meshgrid(
             np.linspace(x0_min, x0_max, grid_resolution),
@@ -589,7 +661,11 @@ class DecisionBoundaryDisplay:
         elif is_clusterer(estimator) and hasattr(estimator, "labels_"):
             n_classes = len(np.unique(estimator.labels_))
         else:
-            target_type = type_of_target(response)
+            response_all, _ = _get_response_values(
+                estimator, X, response_method="predict", pos_label=class_of_interest
+            )
+            target_type = type_of_target(response_all)
+
             if target_type in ("binary", "continuous"):
                 n_classes = 2
             elif target_type == "multiclass":
@@ -632,4 +708,7 @@ class DecisionBoundaryDisplay:
             xlabel=xlabel,
             ylabel=ylabel,
         )
-        return display.plot(ax=ax, plot_method=plot_method, **kwargs)
+
+        return display.plot(
+            ax=ax, plot_method=plot_method, xlim=xlim, ylim=ylim, **kwargs
+        )
