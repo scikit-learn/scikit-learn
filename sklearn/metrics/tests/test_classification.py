@@ -921,7 +921,7 @@ def test_cohen_kappa_undefined(test_case, replace_undefined_by):
     """Test that cohen_kappa_score handles divisions by 0 correctly by returning the
     `replace_undefined_by` param. (The first test case covers the first possible
     location in the function for an occurrence of a division by zero, the last three
-    test cases cover a zero division in the the second possible location in the
+    test cases cover a zero division in the second possible location in the
     function."""
 
     y1, y2, labels, weights = test_case
@@ -3711,9 +3711,9 @@ def test_confusion_matrix_array_api(array_namespace, device, _):
 def test_probabilistic_metrics_array_api(
     prob_metric, str_y_true, use_sample_weight, array_namespace, device_, dtype_name
 ):
-    """Test that :func:`brier_score_loss`, :func:`log_loss`, func:`d2_brier_score`
+    """Test that :func:`brier_score_loss`, :func:`log_loss`, :func:`d2_brier_score`
     and :func:`d2_log_loss_score` work correctly with the array API for binary
-    and mutli-class inputs.
+    and multi-class inputs.
     """
     xp = _array_api_for_tests(array_namespace, device_)
     sample_weight = np.array([1, 2, 3, 1]) if use_sample_weight else None
@@ -3778,7 +3778,7 @@ def test_probabilistic_metrics_array_api(
 def test_probabilistic_metrics_multilabel_array_api(
     prob_metric, use_sample_weight, array_namespace, device_, dtype_name
 ):
-    """Test that :func:`brier_score_loss`, :func:`log_loss`, func:`d2_brier_score`
+    """Test that :func:`brier_score_loss`, :func:`log_loss`, :func:`d2_brier_score`
     and :func:`d2_log_loss_score` work correctly with the array API for
     multi-label inputs.
     """
