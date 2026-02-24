@@ -230,7 +230,7 @@ def average_precision_score(
     xp, _, device = get_namespace_and_device(y_score)
     # To allow mixed string `y_true`/numeric `y_score` input, cannot move `y_true`
     # until it has been converted to an integer (e.g., via `label_binarize`)
-    # Ensures `test_array_api_classification_mixed_string_numeric_input` passes
+    # Ensures `test_array_api_classification_mixed_string_numeric_input` passes.
     sample_weight = move_to(sample_weight, xp=xp, device=device)
 
     if sample_weight is not None:
