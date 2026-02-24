@@ -2033,20 +2033,16 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return True
 
     def _sk_visual_block_(self):
-        names, transformers = zip(*self.transformer_list)
+        _, transformers = zip(*self.transformer_list)
 
         detailed_names = []
-        for idx, name in enumerate(names):
-            if str(transformers[idx]).split("(")[0] in (
-                "ColumnTransformer",
-                "Pipeline",
-            ):
-                detailed_names.append(
-                    f"{str(transformers[idx]).split('(')[0]} : {name}"
-                )
-                names = detailed_names
+        for name, transformer in self.transformer_list:
+            if hasattr(transformer, "_sk_visual_block_"):
+                detailed_names.append(f"{type(transformer).__name__} : {name}")
+            else:
+                detailed_names.append(name)
 
-        return _VisualBlock("parallel", transformers, names=names)
+        return _VisualBlock("parallel", transformers, names=detailed_names)
 
     def __getitem__(self, name):
         """Return transformer with name."""
