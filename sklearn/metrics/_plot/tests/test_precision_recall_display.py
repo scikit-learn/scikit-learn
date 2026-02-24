@@ -691,3 +691,25 @@ def test_y_score_and_y_pred_specified_error(pyplot):
 
     with pytest.warns(FutureWarning, match="y_pred was deprecated in 1.8"):
         PrecisionRecallDisplay.from_predictions(y_true, y_pred=y_score)
+
+
+def test_precision_recall_chance_level_non_numpy_y_true(pyplot):
+    """Check that prevalence_pos_label is correct for non-numpy array-like y_true.
+
+    Counter-based computation failed when y_true elements had types where
+    equality checks with pos_label did not match (e.g. PyTorch tensors).
+    Using np.asarray handles all array-like inputs uniformly.
+
+    Non-regression test for gh-33342.
+    """
+    y_true = [0, 0, 0, 1, 1]  # prevalence = 2/5 = 0.4
+    y_score = [0.1, 0.2, 0.3, 0.8, 0.9]
+
+    display = PrecisionRecallDisplay.from_predictions(
+        y_true, y_score, plot_chance_level=True
+    )
+    chance_line = display.chance_level_
+    # The chance level line should be at y = prevalence = 0.4
+    ydata = chance_line.get_ydata()
+    assert ydata[0] == pytest.approx(0.4)
+    assert ydata[1] == pytest.approx(0.4)

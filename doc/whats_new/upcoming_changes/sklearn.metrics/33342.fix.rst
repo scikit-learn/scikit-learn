@@ -1,0 +1,6 @@
+- :class:`metrics.PrecisionRecallDisplay` now correctly computes
+  ``prevalence_pos_label`` when ``y_true`` is a non-NumPy array-like (e.g.
+  PyTorch tensor or plain list). Previously, using ``Counter`` caused incorrect
+  chance level lines when array elements did not match ``pos_label`` by
+  identity.
+  By :user:`worksbyfriday <worksbyfriday>`.

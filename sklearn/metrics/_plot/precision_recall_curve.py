@@ -1,8 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from collections import Counter
-
 import numpy as np
 
 from sklearn.metrics._ranking import average_precision_score, precision_recall_curve
@@ -713,8 +711,10 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
         )
 
-        class_count = Counter(y_true)
-        prevalence_pos_label = class_count[pos_label] / sum(class_count.values())
+        y_true_array = np.asarray(y_true)
+        prevalence_pos_label = np.count_nonzero(
+            y_true_array == pos_label
+        ) / y_true_array.shape[0]
 
         viz = cls(
             precision=precision,
