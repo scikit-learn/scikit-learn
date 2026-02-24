@@ -2276,10 +2276,10 @@ def metric_at_thresholds(
 
     Returns
     -------
-    metric_values : ndarray of shape (n_thresholds,) or (n_thresholds, n_outputs)
+    metric_values : ndarray of shape (n_thresholds,) or (n_thresholds, *n_outputs)
         The scores associated with each threshold. If `metric_func` returns a
         collection (e.g., a tuple of floats), the output would be a 2D array
-        of shape (n_thresholds, n_outputs).
+        of shape (n_thresholds, *n_outputs).
 
     thresholds : ndarray of shape (n_thresholds,)
         The thresholds used to compute the scores.
