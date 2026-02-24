@@ -150,19 +150,15 @@ def test_get_namespace_array_api(monkeypatch):
     ],
 )
 def test_move_to_array_api_conversions(array_input, reference):
-    """Check conversion between various namespace and devices."""
-    xp = _array_api_for_tests(reference.xp, reference.device)
-    xp_array = _array_api_for_tests(array_input[0], array_input[1])
+    """Check conversion between various namespace-device-pairs."""
+    xp_to = _array_api_for_tests(reference.xp, reference.device)
+    xp_from = _array_api_for_tests(array_input[0], array_input[1])
 
     with config_context(array_api_dispatch=True):
-        device_ = device(xp.asarray([1], device=reference.device))
-
-        array_device = array_input.device
-        array = xp_array.asarray([1, 2, 3], device=array_device)
-
-        array_out = move_to(array, xp=xp, device=device_)
-        assert get_namespace(array_out)[0] == xp
-        assert device(array_out) == device_
+        array_in = xp_from.asarray([1, 2, 3], device=array_input.device)
+        array_out = move_to(array_in, xp=xp_to, device=reference.device)
+        assert get_namespace(array_out)[0] == xp_to
+        assert device(array_out) == device(xp_to.asarray([1], device=reference.device))
 
 
 def test_move_to_sparse():

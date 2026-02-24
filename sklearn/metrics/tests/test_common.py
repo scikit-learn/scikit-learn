@@ -2516,7 +2516,7 @@ def test_mixed_array_api_namespace_input_compliance(
 ):
     """Check `y_true` and `sample_weight` follows `y_pred` for mixed namespace inputs.
 
-    Compares the output types for all-numpy vs mixed-type inputs.
+    Compares the output for all-numpy vs mixed-type inputs.
     If the output is a float, checks that both all-numpy and mixed-type inputs return
     a float.
     If output is an array, checks it is of the same namespace and device as `y_pred`
@@ -2652,11 +2652,11 @@ def test_array_api_classification_string_input(metric_name):
 def test_array_api_classification_mixed_string_numeric_input(
     metric_name, array_namespace, device, dtype_name
 ):
-    """Check mixed string/numeric inputs accepted with array API dispatch enabled.
+    """Check string inputs and numeric inputs from mixed namespace and devices accepted.
 
     Non-thresholded (aka continuous/ranking) classification metrics should accept
     a mix of string and numeric inputs (numeric input should be able to be of
-    any supported namespace/device), with dispatch enabled.
+    any supported namespace/device), with array API dispatch enabled.
     """
     xp = _array_api_for_tests(array_namespace, device)
     metric = ALL_METRICS[metric_name]
