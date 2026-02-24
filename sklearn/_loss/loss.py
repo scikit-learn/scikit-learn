@@ -113,9 +113,6 @@ class BaseLoss:
     differentiable : bool
         Indicates whether or not loss function is differentiable in
         raw_prediction everywhere.
-    need_update_leaves_values : bool
-        Indicates whether decision trees in gradient boosting need to update
-        leave values after having been fit to the (negative) gradients.
     approx_hessian : bool
         Indicates whether the hessian is approximated or exact. If,
         approximated, it should be larger or equal to the exact one.
@@ -126,7 +123,7 @@ class BaseLoss:
     """
 
     # For gradient boosted decision trees:
-    # This variable indicates whether the loss requires the leaves values to
+    # If differentiable = False for a loss, the leaves values are required to
     # be updated once the tree has been trained. The trees are trained to
     # predict a Newton-Raphson step (see grower._finalize_leaf()). But for
     # some losses (e.g. least absolute deviation) we need to adjust the tree
@@ -135,7 +132,6 @@ class BaseLoss:
     # Gradient Boosting Machine by Friedman
     # (https://statweb.stanford.edu/~jhf/ftp/trebst.pdf) for the theory.
     differentiable = True
-    need_update_leaves_values = False
     is_multiclass = False
 
     def __init__(self, closs, link, n_classes=None):
@@ -538,10 +534,6 @@ class BaseLoss:
         return gradient, hessian
 
 
-# Note: Naturally, we would inherit in the following order
-#         class HalfSquaredError(IdentityLink, CyHalfSquaredError, BaseLoss)
-#       But because of https://github.com/cython/cython/issues/4350 we
-#       set BaseLoss as the last one. This, of course, changes the MRO.
 class HalfSquaredError(BaseLoss):
     """Half squared error with identity link, for regression.
 
@@ -584,7 +576,6 @@ class AbsoluteError(BaseLoss):
     """
 
     differentiable = False
-    need_update_leaves_values = True
 
     def __init__(self, sample_weight=None):
         super().__init__(closs=CyAbsoluteError(), link=IdentityLink())
@@ -634,7 +625,6 @@ class PinballLoss(BaseLoss):
     """
 
     differentiable = False
-    need_update_leaves_values = True
 
     def __init__(self, sample_weight=None, quantile=0.5):
         check_scalar(
@@ -701,7 +691,6 @@ class HuberLoss(BaseLoss):
     """
 
     differentiable = False
-    need_update_leaves_values = True
 
     def __init__(self, sample_weight=None, quantile=0.9, delta=0.5):
         check_scalar(
@@ -1352,9 +1341,7 @@ def _log1pexp(raw_prediction, raw_prediction_exp, xp):
 
 
 class HalfBinomialLossArrayAPI(ArrayAPILossMixin, HalfBinomialLoss):
-    """A version of the HalfBinomialLoss that is compatible with
-    the array API.
-    """
+    """A version of the HalfBinomialLoss that is compatible with the array API."""
 
     def loss(
         self,
@@ -1456,8 +1443,7 @@ class HalfBinomialLossArrayAPI(ArrayAPILossMixin, HalfBinomialLoss):
 
 
 class HalfMultinomialLossArrayAPI(ArrayAPILossMixin, HalfMultinomialLoss):
-    """A version of the HalfMultinomialLoss that is compatible with
-    the array API.
+    """A version of the HalfMultinomialLoss that is compatible with the array API.
 
     Parameters
     ----------

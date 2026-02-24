@@ -389,6 +389,11 @@ class Pipeline(_BaseComposition):
         try:
             estimator = self.steps[-1][1]
             return "passthrough" if estimator is None else estimator
+        except IndexError:
+            # An empty pipeline has no final estimator
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '_final_estimator'"
+            )
         except (ValueError, AttributeError, TypeError):
             # This condition happens when a call to a method is first calling
             # `_available_if` and `fit` did not validate `steps` yet. We
@@ -1149,7 +1154,12 @@ class Pipeline(_BaseComposition):
     @property
     def classes_(self):
         """The classes labels. Only exist if the last step is a classifier."""
-        return self.steps[-1][1].classes_
+        try:
+            return self.steps[-1][1].classes_
+        except IndexError:
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute 'classes_'"
+            )
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -1221,13 +1231,23 @@ class Pipeline(_BaseComposition):
     def n_features_in_(self):
         """Number of features seen during first step `fit` method."""
         # delegate to first step (which will call check_is_fitted)
-        return self.steps[0][1].n_features_in_
+        try:
+            return self.steps[0][1].n_features_in_
+        except IndexError:
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute 'n_features_in_'"
+            )
 
     @property
     def feature_names_in_(self):
         """Names of features seen during first step `fit` method."""
         # delegate to first step (which will call check_is_fitted)
-        return self.steps[0][1].feature_names_in_
+        try:
+            return self.steps[0][1].feature_names_in_
+        except IndexError:
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute 'feature_names_in_'"
+            )
 
     def __sklearn_is_fitted__(self):
         """Indicate whether pipeline has been fit.
