@@ -337,8 +337,22 @@ def _solve_lbfgs(
         "jac": True,
         "options": options,
     }
-    if positive:
-        config["bounds"] = [(0, np.inf)] * n_features
+
+    if isinstance(positive, bool):
+        if positive:
+            config["bounds"] = [(0, np.inf)] * n_features
+    elif isinstance(positive, list):
+        if len(positive) != n_features:
+            raise ValueError(
+                "Length of 'positive' list must be equal to the number of features"
+            )
+        elif not all(isinstance(p, bool) for p in positive):
+            raise ValueError(
+                "'positive' must be either a boolean or a list of booleans"
+            )
+        config["bounds"] = [(0, np.inf) if p else (None, None) for p in positive]
+    else:
+        raise ValueError("'positive' must be either a boolean or a list of booleans")
 
     if X_offset is not None and X_scale is not None:
         X_offset_scale = X_offset / X_scale
@@ -404,7 +418,7 @@ def _get_valid_accept_sparse(is_X_sparse, solver):
         "max_iter": [Interval(Integral, 0, None, closed="left"), None],
         "tol": [Interval(Real, 0, None, closed="left")],
         "verbose": ["verbose"],
-        "positive": ["boolean"],
+        "positive": ["boolean", "array-like"],
         "random_state": ["random_state"],
         "return_n_iter": ["boolean"],
         "return_intercept": ["boolean"],
@@ -525,8 +539,13 @@ def ridge_regression(
         Verbosity level. Setting verbose > 0 will display additional
         information depending on the solver used.
 
-    positive : bool, default=False
+    positive : bool or list of bool, default=False
         When set to ``True``, forces the coefficients to be positive.
+        Positivity constraint on the coefficients. 
+        If True, forces all coefficients to be positive.
+        If False, no constraint is enforced.
+        If list of length `n_features`, the positivity constraint is specified 
+        for each feature, forcing the corresponding coefficient to be positive.
         Only 'lbfgs' solver is supported in this case.
 
     random_state : int, RandomState instance, default=None
@@ -638,7 +657,20 @@ def _ridge_regression(
 
     has_sw = sample_weight is not None
 
-    solver = resolve_solver(solver, positive, return_intercept, X_is_sparse, xp)
+    if isinstance(positive, bool):
+        _positive = positive
+    elif isinstance(positive, list):
+        if len(positive) != X.shape[1]:
+            raise ValueError(
+                "Length of 'positive' list must be equal to the number of features"
+            )
+        if not all(isinstance(p, bool) for p in positive):
+            raise ValueError(
+                "'positive' must be either a boolean or a list of booleans"
+            )
+        _positive = True
+
+    solver = resolve_solver(solver, _positive, return_intercept, X_is_sparse, xp)
 
     if is_numpy_namespace and not X_is_sparse:
         X = np.asarray(X)
@@ -649,14 +681,14 @@ def _ridge_regression(
             f"solver 'svd'. Got '{solver}'."
         )
 
-    if positive and solver != "lbfgs":
+    if _positive and solver != "lbfgs":
         raise ValueError(
             "When positive=True, only 'lbfgs' solver can be used. "
             f"Please change solver {solver} to 'lbfgs' "
             "or set positive=False."
         )
 
-    if solver == "lbfgs" and not positive:
+    if solver == "lbfgs" and not _positive:
         raise ValueError(
             "'lbfgs' solver can be used only when positive=True. "
             "Please use another solver."
@@ -898,7 +930,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 {"auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga", "lbfgs"}
             )
         ],
-        "positive": ["boolean"],
+        "positive": ["boolean", "array-like"],
         "random_state": ["random_state"],
     }
 
@@ -1139,8 +1171,13 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         .. versionadded:: 0.19
            SAGA solver.
 
-    positive : bool, default=False
+    positive : bool or list of bool, default=False
         When set to ``True``, forces the coefficients to be positive.
+        When set to ``[True, True, False]``, forces the first two
+        coefficients to be positive and the third one to be negative.
+        When set to ``False``, no specific constraint is enforced.
+        When positive is list, the list must have the same length as the number
+        of expected coefficients. (X.shape[1])
         Only 'lbfgs' solver is supported in this case.
 
     random_state : int, RandomState instance, default=None

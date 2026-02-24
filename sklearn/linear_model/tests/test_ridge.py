@@ -2240,6 +2240,96 @@ def test_ridge_positive_regression_test(solver, fit_intercept, alpha):
     assert np.all(model.coef_ >= 0)
 
 
+@pytest.mark.parametrize("positive", [[True, "foo"], [True, "True"], [0, True]])
+def test_ridge_positive_list_type_error_test(positive):
+    """
+    Test that Ridge raises ValueError when positive is List
+    and all values within positive list are not boolean.
+    """
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    coef = np.array([1, -10])
+    y = X.dot(coef)
+    model = Ridge(positive=positive, solver="lbfgs")
+
+    with pytest.raises(
+        ValueError,
+        match="'positive' must be either a boolean or a list of booleans",
+    ):
+        model.fit(X, y)
+
+
+@pytest.mark.parametrize("positive", [[True, True]])
+def test_ridge_positive_list_type_test(positive):
+    """
+    Test that Ridge raises ValueError when positive is List
+    and all values within positive list are boolean.
+    """
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    coef = np.array([1, -10])
+    y = X.dot(coef)
+    model = Ridge(positive=positive, solver="lbfgs")
+    model.fit(X, y)
+
+
+@pytest.mark.parametrize("positive", [[True], [True, True, True]])
+def test_ridge_positive_list_length_error_test(positive):
+    """
+    Test that Ridge raises ValueError when positive is List
+    and X.shape[1] != len(positive).
+    """
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    coef = np.array([1, -10])
+    y = X.dot(coef)
+    model = Ridge(positive=positive, solver="lbfgs")
+
+    with pytest.raises(
+        ValueError,
+        match="Length of 'positive' list must be equal to the number of features",
+    ):
+        model.fit(X, y)
+
+
+@pytest.mark.parametrize("positive", [[True, True]])
+def test_ridge_positive_list_length_test(positive):
+    """
+    Test that Ridge does not raise ValueError when positive is List
+    and X.shape[1] == len(positive).
+    """
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    coef = np.array([1, -10])
+    y = X.dot(coef)
+    model = Ridge(positive=positive, solver="lbfgs")
+    model.fit(X, y)
+
+
+@pytest.mark.parametrize("solver", ["auto", "lbfgs"])
+@pytest.mark.parametrize("fit_intercept", [True, False])
+@pytest.mark.parametrize("alpha", [1e-3, 1e-2, 0.1, 1.0])
+@pytest.mark.parametrize(
+    "positive", [[True, True], [False, False], [True, False], [False, True]]
+)
+@pytest.mark.parametrize("_coefs", [[-10, 1], [-10, -10], [10, 10], [1, -10]])
+def test_ridge_positive_list_regression_test(
+    solver, fit_intercept, alpha, positive, _coefs
+):
+    """Test that positive Ridge finds true positive coefficients."""
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    coef = np.array(_coefs)
+    if fit_intercept:
+        intercept = 20
+        y = X.dot(coef) + intercept
+    else:
+        y = X.dot(coef)
+
+    model = Ridge(
+        alpha=alpha, positive=positive, solver=solver, fit_intercept=fit_intercept
+    )
+    model.fit(X, y)
+    for i, pos in enumerate(positive):
+        if pos:
+            assert model.coef_[i] >= 0
+
+
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("alpha", [1e-3, 1e-2, 0.1, 1.0])
 def test_ridge_ground_truth_positive_test(fit_intercept, alpha):
@@ -2357,6 +2447,87 @@ def test_lbfgs_solver_error():
     )
     with pytest.warns(ConvergenceWarning, match="lbfgs solver did not converge"):
         model.fit(X, y)
+
+
+@pytest.mark.parametrize("alpha", [1e-3, 1e-2, 0.1, 1.0])
+@pytest.mark.parametrize("positive", [[True, True, True]])
+def test_lbfgs_positive_list(alpha, positive):
+    """
+    Test that LBGFS gets the same coef when
+    positive=True and positive=[True]*n_features.
+    """
+    X, y = make_regression(n_samples=100, n_features=3, random_state=42)
+    y = np.expand_dims(y, 1)
+    alpha = np.asarray([alpha])
+    config_single_bool = {
+        "positive": True,
+        "tol": 1e-16,
+        "max_iter": 500000,
+    }
+
+    config_list_bool = {
+        "positive": positive,
+        "tol": 1e-16,
+        "max_iter": 500000,
+    }
+
+    coef_lbfgs_single_bool = _solve_lbfgs(X, y, alpha, **config_single_bool)
+    coef_lbfgs_list_bool = _solve_lbfgs(X, y, alpha, **config_list_bool)
+    assert_allclose(coef_lbfgs_single_bool, coef_lbfgs_list_bool, atol=1e-4, rtol=0)
+
+
+@pytest.mark.parametrize("positive", [[True], [True, True, True]])
+def test_lbfgs_positive_list_error_length(positive):
+    """Test that LBGFS raises an error when len(positive) != n_features."""
+    X, y = make_regression(n_samples=100, n_features=2, random_state=42)
+    y = np.expand_dims(y, 1)
+    config_list_bool = {
+        "positive": positive,
+        "tol": 1e-16,
+        "max_iter": 500000,
+    }
+
+    with pytest.raises(
+        ValueError,
+        match="Length of 'positive' list must be equal to the number of features",
+    ):
+        _ = _solve_lbfgs(X, y, alpha=1.0, **config_list_bool)
+
+
+@pytest.mark.parametrize(
+    "positive", [["foo", True], [0, 1], [False, "foo"], [1, False]]
+)
+def test_lbfgs_positive_list_error_type(positive):
+    """Test that LBGFS returns error when positive is list but not all bool."""
+    X, y = make_regression(n_samples=100, n_features=2, random_state=42)
+    y = np.expand_dims(y, 1)
+    config_list_bool = {
+        "positive": positive,
+        "tol": 1e-16,
+        "max_iter": 500000,
+    }
+
+    with pytest.raises(
+        ValueError, match="'positive' must be either a boolean or a list of booleans"
+    ):
+        _ = _solve_lbfgs(X, y, alpha=1.0, **config_list_bool)
+
+
+@pytest.mark.parametrize("positive", ["foo", 0, 1.334, {"key": "value"}])
+def test_lbfgs_positive_error_type(positive):
+    """Test that LBGFS returns error when positive is not bool or list"""
+    X, y = make_regression(n_samples=100, n_features=2, random_state=42)
+    y = np.expand_dims(y, 1)
+    config_list_bool = {
+        "positive": positive,
+        "tol": 1e-16,
+        "max_iter": 500000,
+    }
+
+    with pytest.raises(
+        ValueError, match="'positive' must be either a boolean or a list of booleans"
+    ):
+        _ = _solve_lbfgs(X, y, alpha=1.0, **config_list_bool)
 
 
 @pytest.mark.parametrize("fit_intercept", [False, True])
