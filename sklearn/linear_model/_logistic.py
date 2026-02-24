@@ -1912,7 +1912,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 "i.e. accuracy, to 'neg_log_loss' in version 1.11. To silence this "
                 "warning, explicitly set the scoring parameter: "
                 "scoring='neg_log_loss' for the new, scoring='accuracy' or "
-                "scoring='None' for the old default.",
+                "scoring=None for the old default.",
                 FutureWarning,
             )
             scoring = None
