@@ -58,7 +58,7 @@ def _fitted_attr_html_repr(fitted_attributes):
                     <tbody>
                         <tr>
                         <th>Name</th>
-                        <th>Type</th>
+                        <th>Type[dtype](shape)</th>
                         <th>Value</th>
                         </tr>
                         {rows}
@@ -70,7 +70,7 @@ def _fitted_attr_html_repr(fitted_attributes):
     FITTED_ATTR_ROW_TEMPLATE = """
        <tr class="default">
            <td class="param">{fitted_attr_display}</td>
-           <td>{0}</td>
+           <td class="fitted-att-type">{0}</td>
            <td>{1}</td>
 
 

@@ -69,6 +69,10 @@
     color: black;
 }
 
+td.fitted-att-type {
+    white-space: preserve nowrap;
+}
+
 /*
     Styles for parameter documentation links
     We need styling for visited so jupyter doesn't overwrite it
