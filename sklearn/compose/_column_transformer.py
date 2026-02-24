@@ -524,7 +524,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 raise TypeError(
                     "All estimators should implement fit and "
                     "transform, or can be 'drop' or 'passthrough' "
-                    "specifiers. '%s' (type %s) doesn't." % (t, type(t))
+                    f"specifiers. '{t}' (type {type(t)}) doesn't."
                 )
 
     def _validate_column_callables(self, X):
@@ -764,8 +764,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         for Xs, name in zip(result, names):
             if not getattr(Xs, "ndim", 0) == 2 and not hasattr(Xs, "__dataframe__"):
                 raise ValueError(
-                    "The output of the '{0}' transformer should be 2D (numpy array, "
-                    "scipy sparse array, dataframe).".format(name)
+                    f"The output of the '{name}' transformer should be 2D "
+                    "(numpy array, scipy sparse array, dataframe)."
                 )
         if _get_output_config("transform", self)["dense"] == "pandas":
             return
@@ -825,7 +825,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     def _log_message(self, name, idx, total):
         if not self.verbose:
             return None
-        return "(%d of %d) Processing %s" % (idx, total, name)
+        return f"({idx} of {total}) Processing {name}"
 
     def _call_func_on_transformers(self, X, y, func, column_as_labels, routed_params):
         """
@@ -882,10 +882,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                             feature_names_out="one-to-one",
                         ).set_output(transform=output_config["dense"])
 
-                    extra_args = dict(
-                        message_clsname="ColumnTransformer",
-                        message=self._log_message(name, idx, len(transformers)),
-                    )
+                    extra_args = {
+                            "message_clsname": "ColumnTransformer",
+                            "message": self._log_message(name, idx, len(transformers)),
+                        }
                 else:  # func is _transform_one
                     extra_args = {}
                 jobs.append(
@@ -1082,7 +1082,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             ]
 
             all_indices = set(chain(*non_dropped_indices))
-            all_names = set(self.feature_names_in_[ind] for ind in all_indices)
+            all_names = {self.feature_names_in_[ind] for ind in all_indices}
 
             diff = all_names - set(column_names)
             if diff:
@@ -1325,7 +1325,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 for name, trans, _ in self.transformers
                 if trans not in {"passthrough", "drop"}
             )
-        except Exception:
+        except (TypeError, ValueError, AttributeError):
             # If `transformers` does not comply with our API (list of tuples)
             # then it will fail. In this case, we assume that `sparse` is False
             # but the parameter validation will raise an error during `fit`.
@@ -1373,8 +1373,7 @@ def _get_transformer_list(estimators):
     transformers, columns = zip(*estimators)
     names, _ = zip(*_name_estimators(transformers))
 
-    transformer_list = list(zip(names, transformers, columns))
-    return transformer_list
+    return list(zip(names, transformers, columns))
 
 
 # This function is not validated using validate_params because
