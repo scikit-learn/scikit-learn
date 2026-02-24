@@ -304,8 +304,7 @@ def plot_roc_pr_curves(vanilla_model, tuned_model, *, title):
             X_test,
             y_test,
             pos_label=pos_label,
-            linestyle=linestyle,
-            color=color,
+            curve_kwargs={"linestyle": linestyle, "color": color},
             ax=axs[0],
             name=name,
         )
