@@ -1,0 +1,4 @@
+- :func:`preprocessing.label_binarize` and :class:`preprocessing.LabelBinarizer`
+  no longer silently overflow when the target array ``y`` has an unsigned integer
+  dtype and ``neg_label`` is negative (e.g. in :class:`linear_model.RidgeClassifier`).
+  By :user:`worksbyfriday <worksbyfriday>`.
