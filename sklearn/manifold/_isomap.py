@@ -57,6 +57,8 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         'dense' : Use a direct solver (i.e. LAPACK)
         for the eigenvalue decomposition.
 
+        'randomized_value' : Use randomized solver in order to reduce complexity.
+
     tol : float, default=0
         Convergence tolerance passed to arpack or lobpcg.
         not used if eigen_solver == 'dense'.
@@ -169,7 +171,7 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         "n_neighbors": [Interval(Integral, 1, None, closed="left"), None],
         "radius": [Interval(Real, 0, None, closed="both"), None],
         "n_components": [Interval(Integral, 1, None, closed="left")],
-        "eigen_solver": [StrOptions({"auto", "arpack", "dense"})],
+        "eigen_solver": [StrOptions({"auto", "arpack", "dense", "randomized_value"})],
         "tol": [Interval(Real, 0, None, closed="left")],
         "max_iter": [Interval(Integral, 1, None, closed="left"), None],
         "path_method": [StrOptions({"auto", "FW", "D"})],
