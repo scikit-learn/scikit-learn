@@ -114,10 +114,17 @@ def _fitted_attr_html_repr(fitted_attributes):
         if len(value) == 2:
             html_row_values = (value[0], _read_fitted_attr(value[1]))
         else:
-            html_row_values = (
-                (value[0], value[1], value[2]),
-                _read_fitted_attr(value[3]),
-            )
+            breakpoint()
+            if value[0] == "ndarray":
+                html_row_values = (
+                    "".join(["array[" + f"{value[2]}" + "]" + f"{value[1]}"]),
+                    _read_fitted_attr(value[3]),
+                )
+            else:
+                html_row_values = (
+                    (value[0], value[1], value[2]),
+                    _read_fitted_attr(value[3]),
+                )
         rows.append(
             FITTED_ATTR_ROW_TEMPLATE.format(
                 *html_row_values,
