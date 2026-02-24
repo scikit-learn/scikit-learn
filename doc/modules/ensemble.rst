@@ -970,6 +970,14 @@ features is considered. The size of this subset is controlled by the
 subset of them (see the :ref:`parameter tuning guidelines
 <random_forest_parameters>` for more details).
 
+Note that the default value of ``max_features`` differs between
+:class:`RandomForestClassifier` (``"sqrt"``) and
+:class:`RandomForestRegressor` (``1.0``). Using a smaller value such as
+``"sqrt"`` increases the randomness between trees, which typically reduces
+variance at the cost of a slight increase in bias. In regression tasks,
+using all features by default (``1.0``) is a common choice to reduce bias.
+
+
 The purpose of these two sources of randomness (bootstrapping the samples and
 randomly selecting features at each split) is to decrease the variance of the
 forest estimator. Indeed, individual decision trees typically exhibit high
