@@ -557,6 +557,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         remaining = sorted(set(range(self.n_features_in_)) - cols)
         self._transformer_to_input_indices["remainder"] = remaining
         remainder_cols = self._get_remainder_cols(remaining)
+
         self._remainder = ("remainder", self.remainder, remainder_cols)
 
     def _get_remainder_cols_dtype(self):
@@ -1227,28 +1228,25 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         if hasattr(self, "transformers_"):
             transformers = [
                 transformer
-                for transformer in getattr(self, "transformers_", self.transformers)
-                if transformer[1] != "drop"
+                for transformer in self.transformers_
+                if not (transformer[0] == "remainder" and transformer[1] == "drop")
             ]
             # We can find remainder and its column only when it's fitted
-            if hasattr(self, "_remainder"):
-                remainder_columns = self._remainder[2]
-                if (
-                    hasattr(self, "feature_names_in_")
-                    and remainder_columns
-                    and not all(isinstance(col, str) for col in remainder_columns)
-                ):
-                    remainder_columns = self.feature_names_in_[
-                        remainder_columns
-                    ].tolist()
-        else:
+
+            remainder_columns = self._remainder[2]
+            if (
+                hasattr(self, "feature_names_in_")
+                and remainder_columns
+                and not all(isinstance(col, str) for col in remainder_columns)
+            ):
+                remainder_columns = self.feature_names_in_[remainder_columns].tolist()
+        else:  # not fitted
             if self.remainder != "drop":
                 transformers = chain(
                     self.transformers, [("remainder", self.remainder, [])]
                 )
             else:
                 transformers = self.transformers
-
         names, transformers, name_details = zip(*transformers)
 
         return _VisualBlock(
