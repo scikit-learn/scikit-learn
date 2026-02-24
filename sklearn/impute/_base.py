@@ -731,14 +731,29 @@ class SimpleImputer(_BaseImputer):
         X_original[:, self.indicator_.features_] = missing_mask
         full_mask = X_original.astype(bool)
 
+        # Determine which columns were dropped during transform because
+        # they had no valid statistics (all-missing at fit time).
+        dropped_features = set(
+            np.flatnonzero(_get_mask(self.statistics_, np.nan))
+        )
+
         imputed_idx, original_idx = 0, 0
         while imputed_idx < len(array_imputed.T):
-            if not np.all(X_original[:, original_idx]):
+            if original_idx in dropped_features:
+                # This column was dropped during transform; fill with
+                # missing_values since no valid statistic exists.
+                X_original[:, original_idx] = self.missing_values
+                original_idx += 1
+            else:
                 X_original[:, original_idx] = array_imputed.T[imputed_idx]
                 imputed_idx += 1
                 original_idx += 1
-            else:
-                original_idx += 1
+
+        # Fill any remaining dropped columns at the end
+        while original_idx < n_features_original:
+            if original_idx in dropped_features:
+                X_original[:, original_idx] = self.missing_values
+            original_idx += 1
 
         X_original[full_mask] = self.missing_values
         return X_original

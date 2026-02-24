@@ -1511,6 +1511,43 @@ def test_simple_imputation_inverse_transform_exceptions(missing_value):
         imputer.inverse_transform(X_1_trans)
 
 
+def test_simple_imputation_inverse_transform_empty_features():
+    """inverse_transform should handle columns that were all-missing at fit time.
+
+    When keep_empty_features=False (default), columns with all missing values
+    are dropped during transform. inverse_transform must re-insert these
+    columns filled with missing_values at the correct positions, rather than
+    shifting remaining columns left.
+
+    Non-regression test for gh-27012.
+    """
+    X_fit = np.array(
+        [
+            [np.nan, 2.0, 3.0],
+            [np.nan, 2.0, 3.0],
+        ]
+    )
+    X_test = np.array(
+        [
+            [1.0, 2.0, 3.0],
+            [1.0, 2.0, 3.0],
+        ]
+    )
+
+    imputer = SimpleImputer(add_indicator=True)
+    imputer.fit(X_fit)
+    X_trans = imputer.transform(X_test)
+    X_inv = imputer.inverse_transform(X_trans)
+
+    expected = np.array(
+        [
+            [np.nan, 2.0, 3.0],
+            [np.nan, 2.0, 3.0],
+        ]
+    )
+    assert_array_equal(X_inv, expected)
+
+
 @pytest.mark.parametrize(
     "expected,array,dtype,extra_value,n_repeat",
     [

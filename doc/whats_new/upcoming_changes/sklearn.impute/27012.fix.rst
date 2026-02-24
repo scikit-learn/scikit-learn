@@ -1,0 +1,5 @@
+- :meth:`impute.SimpleImputer.inverse_transform` now correctly re-inserts
+  columns that were all-missing at fit time (and thus dropped during
+  ``transform``). Previously, the remaining columns were shifted left,
+  producing incorrect results.
+  By :user:`worksbyfriday <worksbyfriday>`.
