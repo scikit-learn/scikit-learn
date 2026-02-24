@@ -125,6 +125,23 @@ def test_label_binarizer_set_label_encoding():
     assert_array_equal(lb.inverse_transform(got), inp)
 
 
+@pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32, np.uint64])
+def test_label_binarizer_unsigned_int_dtype(dtype):
+    """LabelBinarizer should handle unsigned integer targets correctly.
+
+    When neg_label is negative (e.g. -1 in RidgeClassifier), converting to
+    an unsigned dtype causes overflow. The binarizer should use a signed dtype
+    internally to avoid this.
+
+    Non-regression test for gh-33390.
+    """
+    y = np.array([0, 1, 1, 0], dtype=dtype)
+    lb = LabelBinarizer(pos_label=1, neg_label=-1)
+    Y = lb.fit_transform(y)
+    expected = np.array([[-1, 1, 1, -1]]).T
+    assert_array_equal(Y, expected)
+
+
 @pytest.mark.parametrize("dtype", ["Int64", "Float64", "boolean"])
 @pytest.mark.parametrize("unique_first", [True, False])
 def test_label_binarizer_pandas_nullable(dtype, unique_first):
