@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import time
+from multiprocessing import Manager
 
 from sklearn.base import BaseEstimator, _fit_context, clone
 from sklearn.callback import CallbackSupportMixin, with_callback_context
@@ -11,22 +12,37 @@ from sklearn.utils.parallel import Parallel, delayed
 class TestingCallback:
     """A minimal callback used for smoke testing purposes.
 
+    This callback keeps a record of the hooks called for introspection.
+
     This callback doesn't define `max_estimator_depth` and is therefore not an
     `AutoPropagatedCallback`: it should not be propagated to sub-estimators.
     """
 
+    def __init__(self):
+        self.record = Manager().list()
+
     def on_fit_begin(self, estimator):
-        pass
+        self.record.append(("on_fit_begin", None, None))
 
     def on_fit_task_end(self, estimator, context, **kwargs):
-        pass
+        self.record.append(("on_fit_task_end", context, kwargs))
 
     def on_fit_end(self, estimator, context):
-        pass
+        self.record.append(("on_fit_end", context, None))
+
+    def count_hooks(self, hook_name):
+        return len([rec for rec in self.record if rec[0] == hook_name])
 
 
 class TestingAutoPropagatedCallback(TestingCallback):
-    """A minimal auto-propagated callback used for smoke testing purposes."""
+    """A minimal auto-propagated callback used for smoke testing purposes.
+
+    This callback keeps a record of the hooks called for introspection.
+
+    This callback defines `max_estimator_depth` and is therefore an
+    `AutoPropagatedCallback`: it should be set on a top-level estimator and propagated
+    to sub-estimators.
+    """
 
     max_estimator_depth = None
 
@@ -39,6 +55,29 @@ class NotValidCallback:
 
     def on_fit_task_end(self, estimator, context, **kwargs):
         pass  # pragma: no cover
+
+
+class FailingCallback(TestingCallback):
+    """A callback that raises an error at some point."""
+
+    def __init__(self, fail_at=None):
+        super().__init__()
+        self.fail_at = fail_at
+
+    def on_fit_begin(self, estimator):
+        super().on_fit_begin(estimator)
+        if self.fail_at == "on_fit_begin":
+            raise ValueError("Failing callback failed at on_fit_begin")
+
+    def on_fit_task_end(self, estimator, context, **kwargs):
+        super().on_fit_task_end(estimator, context, **kwargs)
+        if self.fail_at == "on_fit_task_end":
+            raise ValueError("Failing callback failed at on_fit_task_end")
+
+    def on_fit_end(self, estimator, context):
+        super().on_fit_end(estimator, context)
+        if self.fail_at == "on_fit_end":
+            raise ValueError("Failing callback failed at on_fit_end")
 
 
 class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
