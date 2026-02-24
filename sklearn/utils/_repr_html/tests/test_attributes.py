@@ -12,7 +12,7 @@ fitted_attrs = AttrsDict(
 def test_fitted_attrs_dict_repr_html_():
     out = fitted_attrs._repr_html_()
     assert "<summary>Fitted attributes</summary>" in out
-    assert "<td>int</td>" in out
+    assert '<td class="fitted-att-type">int</td>' in out
 
     with config_context(display="text"):
         msg = "_repr_html_ is only defined when"
