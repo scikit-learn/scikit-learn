@@ -240,6 +240,48 @@ def make_classification(
             msg.format(n_classes, n_clusters_per_class, n_informative, 2**n_informative)
         )
 
+    n_random = n_features - n_informative - n_redundant - n_repeated
+    n_clusters = n_classes * n_clusters_per_class
+    n_base = n_informative + n_redundant
+
+    # Build the polytope whose vertices become cluster centroids
+    centroids = _generate_hypercube(n_clusters, n_informative, generator).astype(
+        float, copy=False
+    )
+    centroids *= 2 * class_sep
+    centroids -= class_sep
+    if not hypercube:
+        centroids *= generator.uniform(size=(n_clusters, 1))
+        centroids *= generator.uniform(size=(1, n_informative))
+
+    # Pre-generate covariance transformation matrices for each cluster
+    # They define the cluster distribution
+    cov_matrices = []
+    for k in range(n_clusters):
+        cov_matrix = 2 * generator.uniform(size=(n_informative, n_informative)) - 1
+        cov_matrices.append(cov_matrix)
+
+    # Pre-generate redundant feature transformation matrix
+    if n_redundant > 0:
+        redundant_matrix = 2 * generator.uniform(size=(n_informative, n_redundant)) - 1
+
+    # Pre-generate indices for repeated features
+    if n_repeated > 0:
+        repeated_indices = (
+            (n_base - 1) * generator.uniform(size=n_repeated) + 0.5
+        ).astype(np.intp)
+
+    # Pre-calculate shift and scale if they are not provided
+    if shift is None:
+        shift_val = (2 * generator.uniform(size=n_features) - 1) * class_sep
+    else:
+        shift_val = shift
+
+    if scale is None:
+        scale_val = 1 + 100 * generator.uniform(size=n_features)
+    else:
+        scale_val = scale
+
     if weights is not None:
         # we define new variable, weight_, instead of modifying user defined parameter.
         if len(weights) not in [n_classes, n_classes - 1]:
@@ -257,59 +299,38 @@ def make_classification(
     else:
         weights_ = [1.0 / n_classes] * n_classes
 
-    n_random = n_features - n_informative - n_redundant - n_repeated
-    n_clusters = n_classes * n_clusters_per_class
+    cluster_proportions = np.array(
+        [weights_[k % n_classes] / n_clusters_per_class for k in range(n_clusters)]
+    )
+    cluster_proportions = cluster_proportions / cluster_proportions.sum()
 
-    # Distribute samples among clusters by weight
-    n_samples_per_cluster = [
-        int(n_samples * weights_[k % n_classes] / n_clusters_per_class)
-        for k in range(n_clusters)
-    ]
-
-    for i in range(n_samples - sum(n_samples_per_cluster)):
-        n_samples_per_cluster[i % n_clusters] += 1
+    # Assign each sample index to a cluster based on its relative position
+    sample_positions = (np.arange(n_samples) + 0.5) / n_samples
+    cluster_boundaries = np.cumsum(cluster_proportions)
+    cluster_ids = np.searchsorted(cluster_boundaries, sample_positions)
 
     # Initialize X and y
     X = np.zeros((n_samples, n_features))
     y = np.zeros(n_samples, dtype=int)
 
-    # Build the polytope whose vertices become cluster centroids
-    centroids = _generate_hypercube(n_clusters, n_informative, generator).astype(
-        float, copy=False
-    )
-    centroids *= 2 * class_sep
-    centroids -= class_sep
-    if not hypercube:
-        centroids *= generator.uniform(size=(n_clusters, 1))
-        centroids *= generator.uniform(size=(1, n_informative))
+    # Create each cluster using pre-generated transformations
+    for i in range(n_samples):
+        cluster_id = cluster_ids[i]
+        y[i] = cluster_id % n_classes
 
-    # Initially draw informative features from the standard normal
-    X[:, :n_informative] = generator.standard_normal(size=(n_samples, n_informative))
-
-    # Create each cluster; a variant of make_blobs
-    stop = 0
-    for k, centroid in enumerate(centroids):
-        start, stop = stop, stop + n_samples_per_cluster[k]
-        y[start:stop] = k % n_classes  # assign labels
-        X_k = X[start:stop, :n_informative]  # slice a view of the cluster
-
-        A = 2 * generator.uniform(size=(n_informative, n_informative)) - 1
-        X_k[...] = np.dot(X_k, A)  # introduce random covariance
-
-        X_k += centroid  # shift the cluster to a vertex
-
-    # Create redundant features
-    if n_redundant > 0:
-        B = 2 * generator.uniform(size=(n_informative, n_redundant)) - 1
-        X[:, n_informative : n_informative + n_redundant] = np.dot(
-            X[:, :n_informative], B
+        # Draw random values for this sample's informative features and transform
+        sample_random = generator.standard_normal(size=n_informative)
+        X[i, :n_informative] = (
+            np.dot(sample_random, cov_matrices[cluster_id]) + centroids[cluster_id]
         )
 
-    # Repeat some features
-    n = n_informative + n_redundant
+    # Create redundant features using pre-generated redundant transformation matrix
+    if n_redundant > 0:
+        X[:, n_informative:n_base] = np.dot(X[:, :n_informative], redundant_matrix)
+
+    # Repeat some features using pre-generated indices
     if n_repeated > 0:
-        indices = ((n - 1) * generator.uniform(size=n_repeated) + 0.5).astype(np.intp)
-        X[:, n : n + n_repeated] = X[:, indices]
+        X[:, n_base : n_base + n_repeated] = X[:, repeated_indices]
 
     # Fill useless features
     if n_random > 0:
@@ -321,13 +342,8 @@ def make_classification(
         y[flip_mask] = generator.randint(n_classes, size=flip_mask.sum())
 
     # Randomly shift and scale
-    if shift is None:
-        shift = (2 * generator.uniform(size=n_features) - 1) * class_sep
-    X += shift
-
-    if scale is None:
-        scale = 1 + 100 * generator.uniform(size=n_features)
-    X *= scale
+    X += shift_val
+    X *= scale_val
 
     indices = np.arange(n_features)
     if shuffle:
@@ -348,7 +364,7 @@ def make_classification(
             feat_desc[i] = "informative"
         elif n_informative <= index < n_informative + n_redundant:
             feat_desc[i] = "redundant"
-        elif n <= index < n + n_repeated:
+        elif n_base <= index < n_base + n_repeated:
             feat_desc[i] = "repeated"
 
     parameters = {
