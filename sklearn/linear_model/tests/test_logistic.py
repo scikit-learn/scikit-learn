@@ -746,7 +746,7 @@ def test_multinomial_cv_iris(use_legacy_attributes):
     clf = LogisticRegressionCV(
         cv=cv,
         use_legacy_attributes=False,
-        scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
+        scoring="accuracy",
     ).fit(X, y)
     # We expect accuracy to be exactly 0 because train and test sets have
     # non-overlapping labels
