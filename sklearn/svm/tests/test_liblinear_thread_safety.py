@@ -2,11 +2,11 @@
 
 import numpy as np
 import pytest
-from joblib import Parallel, delayed
 
 from sklearn.datasets import make_regression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.svm import LinearSVR
+from sklearn.utils.parallel import Parallel, delayed
 
 
 @pytest.mark.xfail(
