@@ -2018,6 +2018,7 @@ def test_ndcg_score_zero_division():
 
     # zero_division=0: no warning, zero sample contributes 0
     import warnings as _warnings
+
     with _warnings.catch_warnings(record=True) as caught:
         _warnings.simplefilter("always")
         result_zero = ndcg_score(y_true, y_score, zero_division=0)
