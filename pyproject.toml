@@ -12,7 +12,7 @@ dependencies = [
   "joblib>=1.3.0",
   "threadpoolctl>=3.2.0",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = "BSD-3-Clause"
 license-files = ["COPYING"]
 classifiers=[
@@ -28,7 +28,6 @@ classifiers=[
   "Operating System :: Unix",
   "Operating System :: MacOS",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
@@ -49,19 +48,19 @@ install = ["numpy>=1.24.1", "scipy>=1.10.0", "joblib>=1.3.0", "threadpoolctl>=3.
 benchmark = ["matplotlib>=3.6.1", "pandas>=1.5.0", "memory_profiler>=0.57.0"]
 docs = [
     "matplotlib>=3.6.1",
-    "scikit-image>=0.19.0",
+    "scikit-image>=0.22.0",
     "pandas>=1.5.0",
-    "seaborn>=0.9.1",
+    "seaborn>=0.13.0",
     "memory_profiler>=0.57.0",
     "sphinx>=7.3.7",
     "sphinx-copybutton>=0.5.2",
     "sphinx-gallery>=0.17.1",
     "numpydoc>=1.2.0",
-    "Pillow>=8.4.0",
-    "pooch>=1.6.0",
+    "Pillow>=10.1.0",
+    "pooch>=1.8.0",
     "sphinx-prompt>=1.4.0",
     "sphinxext-opengraph>=0.9.1",
-    "plotly>=5.14.0",
+    "plotly>=5.18.0",
     "polars>=0.20.30",
     "sphinx-design>=0.6.0",
     "sphinxcontrib-sass>=0.3.4",
@@ -71,25 +70,24 @@ docs = [
 ]
 examples = [
     "matplotlib>=3.6.1",
-    "scikit-image>=0.19.0",
+    "scikit-image>=0.22.0",
     "pandas>=1.5.0",
-    "seaborn>=0.9.1",
-    "pooch>=1.6.0",
-    "plotly>=5.14.0",
+    "seaborn>=0.13.0",
+    "pooch>=1.8.0",
+    "plotly>=5.18.0",
 ]
 tests = [
     "matplotlib>=3.6.1",
-    "scikit-image>=0.19.0",
     "pandas>=1.5.0",
     "pytest>=7.1.2",
     "pytest-cov>=2.9.0",
-    "ruff>=0.11.7",
+    "ruff>=0.12.2",
     "mypy>=1.15",
     "pyamg>=5.0.0",
     "polars>=0.20.30",
     "pyarrow>=12.0.0",
     "numpydoc>=1.2.0",
-    "pooch>=1.6.0",
+    "pooch>=1.8.0",
 ]
 maintenance = ["conda-lock==3.0.1"]
 
@@ -98,7 +96,7 @@ build-backend = "mesonpy"
 # Minimum requirements for the build system to execute.
 requires = [
     "meson-python>=0.17.1",
-    "Cython>=3.1.2",
+    "cython>=3.1.2",
     "numpy>=2",
     "scipy>=1.10.0",
 ]
@@ -117,6 +115,12 @@ thread_unsafe_fixtures = [
   "tmp_path",  # does not isolate temporary directories across threads
   "pyplot",  # some tests might mutate some shared state of pyplot.
 ]
+# 10 min timeout per test: in case of timeout, dump the tracebacks of all
+# threads and terminate the whole test session if a test hangs for more than 10
+# min (likely due to a deadlock).
+# The second option requires pytest 9.0+ to be active.
+faulthandler_timeout = 600
+faulthandler_exit_on_timeout = true
 
 
 [tool.ruff]
@@ -287,12 +291,12 @@ package = "sklearn"  # name of your package
         whatsnew_pattern = 'doc/whatsnew/upcoming_changes/[^/]+/\d+\.[^.]+\.rst'
 
 [tool.codespell]
-skip = ["./.git", "*.svg", "./.mypy_cache", "./sklearn/feature_extraction/_stop_words.py", "./sklearn/feature_extraction/tests/test_text.py", "./doc/_build", "./doc/auto_examples", "./doc/modules/generated"]
+skip = ["./.git", "*.svg", "./.mypy_cache", "*sklearn/feature_extraction/_stop_words.py", "*sklearn/feature_extraction/tests/test_text.py", "./doc/_build", "./doc/auto_examples", "./doc/modules/generated"]
 ignore-words = "build_tools/codespell_ignore_words.txt"
 
 [tool.towncrier]
     package = "sklearn"
-    filename = "doc/whats_new/v1.8.rst"
+    filename = "doc/whats_new/v1.9.rst"
     single_file = true
     directory = "doc/whats_new/upcoming_changes"
     issue_format = ":pr:`{issue}`"

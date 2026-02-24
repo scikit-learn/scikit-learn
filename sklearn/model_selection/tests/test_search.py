@@ -395,7 +395,7 @@ def test_trivial_cv_results_attr():
 
     random_search = RandomizedSearchCV(clf, {"foo_param": [0]}, n_iter=1, cv=2)
     random_search.fit(X, y)
-    assert hasattr(grid_search, "cv_results_")
+    assert hasattr(random_search, "cv_results_")
 
 
 def test_no_refit():
@@ -1671,7 +1671,7 @@ def test_predict_proba_disabled():
     # Test predict_proba when disabled on estimator.
     X = np.arange(20).reshape(5, -1)
     y = [0, 0, 1, 1, 1]
-    clf = SVC(probability=False)
+    clf = SVC()
     gs = GridSearchCV(clf, {}, cv=2).fit(X, y)
     assert not hasattr(gs, "predict_proba")
 

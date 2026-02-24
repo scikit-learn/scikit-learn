@@ -1,7 +1,7 @@
 """
-================
-Confusion matrix
-================
+==============================================================
+Evaluate the performance of a classifier with Confusion Matrix
+==============================================================
 
 Example of confusion matrix usage to evaluate the quality
 of the output of a classifier on the iris data set. The
@@ -30,7 +30,8 @@ using :ref:`grid_search`.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sklearn import datasets, svm
+from sklearn import datasets
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.model_selection import train_test_split
 
@@ -45,7 +46,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 # Run classifier, using a model that is too regularized (C too low) to see
 # the impact on the results
-classifier = svm.SVC(kernel="linear", C=0.01).fit(X_train, y_train)
+classifier = LogisticRegression(C=0.01).fit(X_train, y_train)
 
 np.set_printoptions(precision=2)
 
@@ -67,5 +68,58 @@ for title, normalize in titles_options:
 
     print(title)
     print(disp.confusion_matrix)
+
+plt.show()
+
+# %%
+# Binary Classification
+# =====================
+#
+# For binary classification, use :func:`sklearn.metrics.confusion_matrix` with
+# the `ravel` method to get counts of true negatives, false positives, false
+# negatives, and true positives.
+#
+# To obtain counts of true negatives, false positives, false negatives, and true
+# positives at different thresholds, one can use
+# :func:`sklearn.metrics.confusion_matrix_at_thresholds`.
+# This is fundamental for binary classification
+# metrics like :func:`~sklearn.metrics.roc_auc_score` and
+# :func:`~sklearn.metrics.det_curve`.
+
+from sklearn.datasets import make_classification
+from sklearn.metrics import confusion_matrix_at_thresholds
+
+X, y = make_classification(
+    n_samples=100,
+    n_features=20,
+    n_informative=20,
+    n_redundant=0,
+    n_classes=2,
+    random_state=42,
+)
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=42
+)
+
+classifier = LogisticRegression(C=0.01)
+classifier.fit(X_train, y_train)
+
+y_score = classifier.predict_proba(X_test)[:, 1]
+
+tns, fps, fns, tps, thresholds = confusion_matrix_at_thresholds(y_test, y_score)
+
+# Plot TNs, FPs, FNs and TPs vs Thresholds
+plt.figure(figsize=(10, 6))
+
+plt.plot(thresholds, tns, label="True Negatives (TNs)")
+plt.plot(thresholds, fps, label="False Positives (FPs)")
+plt.plot(thresholds, fns, label="False Negatives (FNs)")
+plt.plot(thresholds, tps, label="True Positives (TPs)")
+plt.xlabel("Thresholds")
+plt.ylabel("Count")
+plt.title("TNs, FPs, FNs and TPs vs Thresholds")
+plt.legend()
+plt.grid()
 
 plt.show()

@@ -26,8 +26,9 @@ from sklearn.utils import (
 )
 from sklearn.utils._array_api import (
     _convert_to_numpy,
-    ensure_common_namespace_device,
     get_namespace,
+    get_namespace_and_device,
+    move_to,
 )
 from sklearn.utils._param_validation import Interval, RealNotInt, validate_params
 from sklearn.utils.extmath import _approximate_mode
@@ -892,9 +893,9 @@ class StratifiedKFold(_BaseKFold):
 class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     """Class-wise stratified K-Fold iterator variant with non-overlapping groups.
 
-    This cross-validation object is a variation of StratifiedKFold attempts to
-    return stratified folds with non-overlapping groups. The folds are made by
-    preserving the percentage of samples for each class in `y` in a binary or
+    This cross-validation object is a variation of :class:`StratifiedKFold` that
+    attempts to return stratified folds with non-overlapping groups. The folds are made
+    by preserving the percentage of samples for each class in `y` in a binary or
     multiclass classification setting.
 
     Each group will appear exactly once in the test set across all folds (the
@@ -905,7 +906,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     the former attempts to create balanced folds such that the number of
     distinct groups is approximately the same in each fold, whereas
     `StratifiedGroupKFold` attempts to create folds which preserve the
-    percentage of samples for each class as much as possible given the
+    percentage of samples from each class as much as possible given the
     constraint of non-overlapping groups between splits.
 
     Read more in the :ref:`User Guide <stratified_group_k_fold>`.
@@ -928,7 +929,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
         Whether to shuffle each class's samples before splitting into batches.
         Note that the samples within each split will not be shuffled.
         This implementation can only shuffle groups that have approximately the
-        same y distribution, no global shuffle will be performed.
+        same `y` class distribution, no global shuffle will be performed.
 
     random_state : int or RandomState instance, default=None
         When `shuffle` is True, `random_state` affects the ordering of the
@@ -975,7 +976,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     -----
     The implementation is designed to:
 
-    * Mimic the behavior of StratifiedKFold as much as possible for trivial
+    * Mimic the behavior of :class:`StratifiedKFold` as much as possible for trivial
       groups (e.g. when each group contains only one sample).
     * Be invariant to class label: relabelling ``y = ["Happy", "Sad"]`` to
       ``y = [1, 0]`` should not change the indices generated.
@@ -983,7 +984,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
       non-overlapping groups constraint. That means that in some cases when
       there is a small number of groups containing a large number of samples
       the stratification will not be possible and the behavior will be close
-      to GroupKFold.
+      to :class:`GroupKFold`.
 
     See also
     --------
@@ -1052,7 +1053,12 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
         groups_per_fold = defaultdict(set)
 
         if self.shuffle:
-            rng.shuffle(y_counts_per_group)
+            perm = np.arange(len(groups_cnt))
+            rng.shuffle(perm)
+            y_counts_per_group = y_counts_per_group[perm]
+            inv_perm = np.empty_like(perm)
+            inv_perm[perm] = np.arange(perm.size)
+            groups_inv = inv_perm[groups_inv]
 
         # Stable sort to keep shuffled order for groups with the same
         # class distribution variance
@@ -2681,7 +2687,7 @@ class _CVIterableWrapper(BaseCrossValidator):
             yield train, test
 
 
-def check_cv(cv=5, y=None, *, classifier=False):
+def check_cv(cv=5, y=None, *, classifier=False, shuffle=False, random_state=None):
     """Input checker utility for building a cross-validator.
 
     Parameters
@@ -2690,9 +2696,9 @@ def check_cv(cv=5, y=None, *, classifier=False):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
         - None, to use the default 5-fold cross validation,
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable that generates (train, test) splits as arrays of indices.
+        - an iterable that generates (train, test) splits as arrays of indices.
 
         For integer/None inputs, if classifier is True and ``y`` is either
         binary or multiclass, :class:`StratifiedKFold` is used. In all other
@@ -2708,8 +2714,23 @@ def check_cv(cv=5, y=None, *, classifier=False):
         The target variable for supervised learning problems.
 
     classifier : bool, default=False
-        Whether the task is a classification task, in which case
-        stratified KFold will be used.
+        Whether the task is a classification task. When ``True`` and `cv` is an
+        integer or ``None``, :class:`StratifiedKFold` is used if ``y`` is binary
+        or multiclass; otherwise :class:`KFold` is used. Ignored if `cv` is a
+        cross-validator instance or iterable.
+
+    shuffle : bool, default=False
+        Whether to shuffle the data before splitting into batches. Note that the samples
+        within each split will not be shuffled. Only applies if `cv` is an int or
+        `None`. If `cv` is a cross-validation generator or an iterable, `shuffle` is
+        ignored.
+
+    random_state : int, RandomState instance or None, default=None
+        When `shuffle` is True and `cv` is an integer or `None`, `random_state` affects
+        the ordering of the indices, which controls the randomness of each fold.
+        Otherwise, this parameter has no effect.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -2732,16 +2753,16 @@ def check_cv(cv=5, y=None, *, classifier=False):
             and (y is not None)
             and (type_of_target(y, input_name="y") in ("binary", "multiclass"))
         ):
-            return StratifiedKFold(cv)
+            return StratifiedKFold(cv, shuffle=shuffle, random_state=random_state)
         else:
-            return KFold(cv)
+            return KFold(cv, shuffle=shuffle, random_state=random_state)
 
     if not hasattr(cv, "split") or isinstance(cv, str):
         if not isinstance(cv, Iterable) or isinstance(cv, str):
             raise ValueError(
-                "Expected cv as an integer, cross-validation "
-                "object (from sklearn.model_selection) "
-                "or an iterable. Got %s." % cv
+                "Expected `cv` as an integer, a cross-validation object "
+                "(from sklearn.model_selection), or an iterable yielding (train, test) "
+                f"splits as arrays of indices. Got {cv}."
             )
         return _CVIterableWrapper(cv)
 
@@ -2938,7 +2959,8 @@ def train_test_split(
 
         train, test = next(cv.split(X=arrays[0], y=stratify))
 
-    train, test = ensure_common_namespace_device(arrays[0], train, test)
+    xp, _, device = get_namespace_and_device(arrays[0])
+    train, test = move_to(train, test, xp=xp, device=device)
 
     return list(
         chain.from_iterable(
@@ -3004,9 +3026,7 @@ def _pprint(params, offset=0, printer=repr):
 
 
 def _build_repr(self):
-    # XXX This is copied from BaseEstimator's get_params
-    cls = self.__class__
-    init = getattr(cls.__init__, "deprecated_original", cls.__init__)
+    init = self.__class__.__init__
     # Ignore varargs, kw and default values and pop self
     init_signature = signature(init)
     # Consider the constructor parameters excluding 'self'

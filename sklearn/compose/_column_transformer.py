@@ -20,6 +20,7 @@ from sklearn.base import TransformerMixin, _fit_context, clone
 from sklearn.pipeline import _fit_transform_one, _name_estimators, _transform_one
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import Bunch
+from sklearn.utils._dataframe import is_pandas_df
 from sklearn.utils._indexing import (
     _determine_key_type,
     _get_column_indices,
@@ -44,14 +45,13 @@ from sklearn.utils.metadata_routing import (
 from sklearn.utils.metaestimators import _BaseComposition
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
-    _check_feature_names,
     _check_feature_names_in,
     _check_n_features,
     _get_feature_names,
-    _is_pandas_df,
     _num_samples,
     check_array,
     check_is_fitted,
+    validate_data,
 )
 
 __all__ = ["ColumnTransformer", "make_column_selector", "make_column_transformer"]
@@ -513,6 +513,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._validate_names(names)
 
         # validate estimators
+        self._check_estimators_are_instances(transformers)
         for t in transformers:
             if t in ("drop", "passthrough"):
                 continue
@@ -773,7 +774,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         except ImportError:
             return
         for Xs, name in zip(result, names):
-            if not _is_pandas_df(Xs):
+            if not is_pandas_df(Xs):
                 continue
             for col_name, dtype in Xs.dtypes.to_dict().items():
                 if getattr(dtype, "na_value", None) is not pd.NA:
@@ -973,7 +974,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             sparse matrices.
         """
         _raise_for_params(params, self, "fit_transform")
-        _check_feature_names(self, X, reset=True)
 
         if self.force_int_remainder_cols != "deprecated":
             warnings.warn(
@@ -983,9 +983,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 FutureWarning,
             )
 
+        validate_data(self, X=X, skip_check_array=True)
         X = _check_X(X)
         # set n_features_in_ attribute
-        _check_n_features(self, X, reset=True)
         self._validate_transformers()
         n_samples = _num_samples(X)
 
@@ -1065,7 +1065,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # were not present in fit time, and the order of the columns doesn't
         # matter.
         fit_dataframe_and_transform_dataframe = hasattr(self, "feature_names_in_") and (
-            _is_pandas_df(X) or hasattr(X, "__dataframe__")
+            is_pandas_df(X) or hasattr(X, "__dataframe__")
         )
 
         n_samples = _num_samples(X)
@@ -1238,7 +1238,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 self.transformers, [("remainder", self.remainder, remainder_columns)]
             )
         else:
-            transformers = chain(self.transformers, [("remainder", self.remainder, "")])
+            transformers = chain(self.transformers, [("remainder", self.remainder, [])])
 
         names, transformers, name_details = zip(*transformers)
         return _VisualBlock(
@@ -1565,7 +1565,7 @@ class make_column_selector:
     ...       (StandardScaler(),
     ...        make_column_selector(dtype_include=np.number)),  # rating
     ...       (OneHotEncoder(),
-    ...        make_column_selector(dtype_include=object)))  # city
+    ...        make_column_selector(dtype_include=[object, "string"])))  # city
     >>> ct.fit_transform(X)  # doctest: +SKIP
     array([[ 0.90453403,  1.        ,  0.        ,  0.        ],
            [-1.50755672,  1.        ,  0.        ,  0.        ],

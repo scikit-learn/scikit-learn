@@ -23,7 +23,7 @@ jobs:
         run: mkdir -p "$ARTIFACTS_DIR"
 
       - name: Download artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: lint-log
           path: ${{ runner.temp }}/artifacts
@@ -48,7 +48,7 @@ jobs:
             --jq '"PR_NUMBER=\(.number)"' \
             >> $GITHUB_ENV
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           sparse-checkout: build_tools/get_comment.py
 
@@ -58,7 +58,7 @@ jobs:
           python-version: 3.11
 
       - name: Install dependencies
-        run: python -m pip install requests
+        run: python -m pip install PyGithub
 
       - name: Create/update GitHub comment
         env:

@@ -1,8 +1,10 @@
-"""Author: Arthur Mensch, Nelle Varoquaux
-
+"""
 Benchmarks of sklearn SAGA vs lightning SAGA vs Liblinear. Shows the gain
 in using multinomial logistic regression in term of learning time.
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import json
 import os
@@ -66,10 +68,12 @@ def fit_single(
     times = [0]
 
     if penalty == "l2":
+        l1_ratio = 0
         alpha = 1.0 / (C * n_samples)
         beta = 0
         lightning_penalty = None
     else:
+        l1_ratio = 1
         alpha = 0.0
         beta = 1.0 / (C * n_samples)
         lightning_penalty = "l1"
@@ -97,7 +101,7 @@ def fit_single(
             lr = LogisticRegression(
                 solver=solver,
                 C=C,
-                penalty=penalty,
+                l1_ratio=l1_ratio,
                 fit_intercept=False,
                 tol=0,
                 max_iter=this_max_iter,

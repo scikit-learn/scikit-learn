@@ -104,7 +104,7 @@ def test_spectral_clustering_sparse(assign_labels, coo_container, global_random_
 def test_precomputed_nearest_neighbors_filtering(global_random_seed):
     # Test precomputed graph filtering when containing too many neighbors
     X, y = make_blobs(
-        n_samples=250,
+        n_samples=300,
         random_state=global_random_seed,
         centers=[[1, 1, 1], [-1, -1, -1]],
         cluster_std=0.01,
@@ -311,7 +311,7 @@ def test_verbose(assign_labels, capsys):
 
 def test_spectral_clustering_np_matrix_raises():
     """Check that spectral_clustering raises an informative error when passed
-    a np.matrix. See #10993"""
+    an np.matrix. See #10993"""
     X = np.matrix([[0.0, 2.0], [2.0, 0.0]])
 
     msg = r"np\.matrix is not supported. Please convert to a numpy array"
