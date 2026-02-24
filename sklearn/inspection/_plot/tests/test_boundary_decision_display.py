@@ -715,7 +715,7 @@ def test_multiclass_levels(pyplot, y, response_method, plot_method):
     else:
         expected_levels = np.arange(7) - 0.5
 
-    assert np.array_equal(disp.surface_.levels, expected_levels)
+    assert_allclose(disp.surface_.levels, expected_levels)
 
 
 # estimator classes for non-regression test cases for issue #33194
