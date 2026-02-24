@@ -1,0 +1,4 @@
+- :func:`utils.validation.check_array` and :func:`utils.validation.column_or_1d`
+  no longer raise ``TypeError`` when called with a pandas ``StringDType`` as the
+  ``dtype`` parameter.
+  By :user:`worksbyfriday <worksbyfriday>`.
