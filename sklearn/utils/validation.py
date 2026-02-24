@@ -949,7 +949,13 @@ def check_array(
 
     if dtype is not None and _is_numpy_namespace(xp):
         # convert to dtype object to conform to Array API to be use `xp.isdtype` later
-        dtype = np.dtype(dtype)
+        try:
+            dtype = np.dtype(dtype)
+        except (TypeError, KeyError):
+            # dtype is not a NumPy-compatible type (e.g. pandas StringDType).
+            # Use object dtype for NumPy validation checks; _asarray_with_order
+            # will handle the actual conversion.
+            dtype = np.dtype("object")
 
     estimator_name = _check_estimator_name(estimator)
     context = " by %s" % estimator_name if estimator is not None else ""

@@ -2269,6 +2269,18 @@ def test_column_or_1d():
                 column_or_1d(y)
 
 
+def test_column_or_1d_pandas_string_dtype():
+    """check_array should handle pandas StringDType without raising TypeError.
+
+    Non-regression test for gh-33383.
+    """
+    pd = pytest.importorskip("pandas", minversion="3.0.0")
+
+    df = pd.DataFrame({"y": ["a", "b", "a", "c"]})
+    result = column_or_1d(df["y"], dtype=df["y"].dtype)
+    assert_array_equal(result, np.array(["a", "b", "a", "c"], dtype=object))
+
+
 def test_check_array_writeable_np():
     """Check the behavior of check_array when a writeable array is requested
     without copy if possible, on numpy arrays.
