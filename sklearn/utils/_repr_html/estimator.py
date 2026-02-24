@@ -82,6 +82,7 @@ class _VisualBlock:
         self.dash_wrapped = dash_wrapped
         self.name_caption = name_caption
         self.doc_link_label = doc_link_label
+
         if self.kind in ("parallel", "serial"):
             if names is None:
                 names = (None,) * len(estimators)
@@ -175,17 +176,14 @@ def _write_label_html(
                 f'<a class="sk-estimator-doc-link {is_fitted_css_class}"'
                 f' rel="noreferrer" target="_blank" href="{doc_link}">?{doc_label}</a>'
             )
-
         if name == "passthrough" or name_details == "[]":
             name_caption = ""
-
         name_caption_div = (
             ""
             if name_caption is None or name_caption == ""
             else f'<div class="caption">{html.escape(name_caption)}</div>'
         )
         name_caption_div = f"<div><div>{name}</div>{name_caption_div}</div>"
-
         links_div = (
             f"<div>{doc_link}{is_fitted_icon}</div>"
             if doc_link or is_fitted_icon
@@ -529,6 +527,7 @@ def estimator_html_repr(estimator):
             "</div>"
             '<div class="sk-container" hidden>'
         )
+
         out.write(html_template)
         _write_estimator_html(
             out,
