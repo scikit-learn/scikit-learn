@@ -2,10 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import inspect
-import time
 from multiprocessing import Manager
-
-import pandas as pd
 
 from sklearn.callback._callback_context import get_context_path
 
@@ -52,8 +49,6 @@ class MetricMonitor:
     def on_fit_task_end(
         self, estimator, context, data, from_reconstruction_attributes, **kwargs
     ):
-        # TODO: add check to verify we're on the innermost level of the fit loop
-        # e.g. for the KMeans
         X, y = (
             (data["X_val"], data["y_val"])
             if self.on_validation
@@ -67,9 +62,7 @@ class MetricMonitor:
         log_item = {self.metric_func.__name__: metric_value}
         for depth, ctx in enumerate(get_context_path(context)):
             if depth == 0:
-                timestamp = time.strftime(
-                    "%Y-%m-%d_%H:%M:%S", time.localtime(ctx.init_time)
-                )
+                timestamp = ctx.init_time.strftime("%Y-%m-%d_%H:%M:%S.%f")
                 log_item["_run"] = (
                     f"{ctx.estimator_name}_{ctx.estimator_id}_{timestamp}"
                 )
@@ -88,25 +81,52 @@ class MetricMonitor:
         pass
 
     def get_logs(self):
-        """Generate a pandas Dataframe with the logged values.
+        """Get the logged values.
+
+        A dict of structured dataframes is returned if pandas is installed, otherwise a
+        list of dicts is returned.
+
+        If pandas is installed, a dictionary with run ids as keys and mulit-index
+        Dataframes with indices corresponding to the task tree as values. The run ids
+        are strings of the form : "<estimator name>_<estimator object id>_<timestamp>".
+
+        If pandas is not available, a list of dictionaries. Each dictionary contains :
+            "<name of the metric>": <metric value>
+            "_run": <estimator name>_<estimator object id>_<timestamp>
+        and several pairs of key values describing the task tree :
+            "<task depth>_<estimator name>_<task name>": <task id>
 
         Returns
         -------
-        pandas.DataFrame
-            Multi-index DataFrame with indices corresponding to the task tree.
+        dict of pandas.DataFrame or list of dict
+            The logged values.
         """
-        logs = pd.DataFrame(list(self._shared_mem_log))
-        log_dict = {}
-        if not logs.empty:
-            for run_id in logs["_run"].unique():
-                run_log = logs.loc[logs["_run"] == run_id].copy()
-                # Drop columns that correspond to other runs task_id and are filled with
-                # NaNs, and the run column, but always keep the metric column.
-                columns_to_keep = ~(run_log.isnull().all())
-                columns_to_keep["_run"] = False
-                columns_to_keep[self.metric_func.__name__] = True
-                run_log = run_log.loc[:, columns_to_keep]
-                log_dict[run_id] = run_log.set_index(
-                    [col for col in run_log.columns if col != self.metric_func.__name__]
-                ).sort_index()
-        return log_dict
+        logs = list(self._shared_mem_log)
+
+        # If pandas is installed, a structured dataframe is returned, otherwise the raw
+        # list of dicts.
+        try:
+            import pandas as pd
+
+            logs = pd.DataFrame(logs)
+            log_dict = {}
+            if not logs.empty:
+                for run_id in logs["_run"].unique():
+                    run_log = logs.loc[logs["_run"] == run_id].copy()
+                    # Drop columns that correspond to other runs task_id and are filled
+                    # with NaNs, drop the run column, but always keep the metric column.
+                    columns_to_keep = ~(run_log.isnull().all())
+                    columns_to_keep["_run"] = False
+                    columns_to_keep[self.metric_func.__name__] = True
+                    run_log = run_log.loc[:, columns_to_keep]
+                    log_dict[run_id] = run_log.set_index(
+                        [
+                            col
+                            for col in run_log.columns
+                            if col != self.metric_func.__name__
+                        ]
+                    ).sort_index()
+            return log_dict
+
+        except ImportError:
+            return logs

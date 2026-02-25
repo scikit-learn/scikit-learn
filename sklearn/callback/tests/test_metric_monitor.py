@@ -21,6 +21,7 @@ from sklearn.metrics import mean_pinball_loss, mean_squared_error
     [(mean_squared_error, None), (mean_pinball_loss, {"alpha": 0.6})],
 )
 def test_metric_monitor(metric, metric_params):
+    pytest.importorskip("pandas")
     max_iter = 3
     n_dim = 5
     n_samples = 3
@@ -107,11 +108,13 @@ def test_wrong_kwarg_error():
     [(mean_squared_error, None), (mean_pinball_loss, {"alpha": 0.6})],
 )
 def test_within_meta_estimator(prefer, metric, metric_params):
+    pytest.importorskip("pandas")
     n_outer = 3
     n_inner = 2
     max_iter = 4
     n_dim = 5
     n_samples = 3
+    intercept = 1
     rng = np.random.RandomState(0)
     X_train, y_train = rng.uniform(size=(n_dim, n_samples)), rng.uniform(size=n_dim)
     X_val, y_val = rng.uniform(size=(n_dim, n_samples)), rng.uniform(size=n_dim)
@@ -121,7 +124,7 @@ def test_within_meta_estimator(prefer, metric, metric_params):
     callback_val = MetricMonitor(
         metric, metric_params=metric_params, on_validation=True
     )
-    est = MaxIterEstimator(max_iter=max_iter)
+    est = MaxIterEstimator(max_iter=max_iter, intercept=intercept)
     est.set_callbacks([callback_train, callback_val])
     meta_est = MetaEstimator(
         est, n_outer=n_outer, n_inner=n_inner, n_jobs=2, prefer=prefer
@@ -133,13 +136,13 @@ def test_within_meta_estimator(prefer, metric, metric_params):
     expected_log_train = []
     expected_log_val = []
     for i_outer, i_inner in product(range(n_outer), range(n_inner)):
-        est = MaxIterEstimator()
         for i_estimator_fit_iter in range(max_iter):
-            setattr(est, "n_iter_", i_estimator_fit_iter + 1)
             expected_log_train.append(
                 {
                     metric.__name__: metric(
-                        y_train, est.predict(X_train), **metric_params
+                        y_train,
+                        X_train.mean(axis=1) * (i_estimator_fit_iter + 1) + intercept,
+                        **metric_params,
                     ),
                     f"0_{meta_est.__class__.__name__}_fit": 0,
                     f"1_{meta_est.__class__.__name__}_outer": i_outer,
@@ -150,7 +153,11 @@ def test_within_meta_estimator(prefer, metric, metric_params):
             )
             expected_log_val.append(
                 {
-                    metric.__name__: metric(y_val, est.predict(X_val), **metric_params),
+                    metric.__name__: metric(
+                        y_val,
+                        X_val.mean(axis=1) * (i_estimator_fit_iter + 1) + intercept,
+                        **metric_params,
+                    ),
                     f"0_{meta_est.__class__.__name__}_fit": 0,
                     f"1_{meta_est.__class__.__name__}_outer": i_outer,
                     f"2_{meta_est.__class__.__name__}_inner|"
