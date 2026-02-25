@@ -422,7 +422,13 @@ cdef class SparsePartitioner:
         self._partition(best_threshold)
 
     cdef inline intp_t _partition(self, float64_t threshold) noexcept nogil:
-        """Partition samples[start:end] based on threshold."""
+        """
+        Partition samples[start:end] based on threshold.
+        Assume extract_nnz was called beforehand, and partitioned samples in:
+        - samples[start:end_negative] -> < 0
+        - samples[end_negative:start_positive] -> zeros
+        - samples[end_negative:start_positive] -> > 0
+        """
         cdef:
             intp_t p, partition_end
             intp_t[::1] index_to_samples = self.index_to_samples
@@ -436,7 +442,7 @@ cdef class SparsePartitioner:
             p = self.start_positive
             partition_end = self.end
         else:
-            # Data are already split
+            # If threshold is 0, extract_nnz already did the necessary partitioning
             return self.start_positive
 
         while p < partition_end:
