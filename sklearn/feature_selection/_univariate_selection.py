@@ -1016,7 +1016,7 @@ class SelectFwe(_BaseFilter):
 
         .. versionadded:: 1.0
 
-    fwe_control = str
+    fwe_control : str
         Method to use for FWE control. 'bonf' for Bonferroni correction, 'holm'
         for Holm method.
 
