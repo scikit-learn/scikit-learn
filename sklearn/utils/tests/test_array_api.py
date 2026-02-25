@@ -561,7 +561,7 @@ def test_convert_estimator_to_ndarray(array_namespace, converter):
 
         new_est = _estimator_with_converted_arrays(est, converter)
         assert isinstance(new_est.X_, numpy.ndarray)
-        new_est = move_estimator_to(est, numpy, device=None)
+        new_est = move_estimator_to(est, numpy, device="cpu")
         assert isinstance(new_est.X_, numpy.ndarray)
 
 
