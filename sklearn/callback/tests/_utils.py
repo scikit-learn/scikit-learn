@@ -30,6 +30,15 @@ class TestingCallback:
     def on_fit_end(self, estimator, context):
         self.record.append(("on_fit_end", context, None))
 
+    def on_function_begin(self, func_name):
+        self.record.append(("on_function_begin", None, None))
+
+    def on_function_task_end(self, func_name, context, **kwargs):
+        self.record.append(("on_function_task_end", context, kwargs))
+
+    def on_function_end(self, func_name, context):
+        self.record.append(("on_function_end", context, None))
+
     def count_hooks(self, hook_name):
         return len([rec for rec in self.record if rec[0] == hook_name])
 

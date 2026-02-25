@@ -56,6 +56,54 @@ class Callback(Protocol):
 
 
 @runtime_checkable
+class FunctionCallback(Callback, Protocol):
+    """Protocol for callbacks that are called from functions."""
+
+    def on_function_begin(self, func_name):
+        """Method called at the beginning of the function.
+
+        Parameters
+        ----------
+        func_name : str
+            The name of the function calling this callback hook.
+        """
+
+    def on_function_task_end(self, func_name, context, **kwargs):
+        """Method called at the end of the task of the function.
+
+        Parameters
+        ----------
+        func_name : str
+            The name of the function calling this callback hook.
+
+        context : `sklearn.callback.CallbackContext` instance
+            Context of the corresponding task.
+
+        **kwargs : dict
+            Additional optional arguments holding information about the state of the
+            function at this task. The list of possible keys and corresponding values
+            are described in detail at <TODO: add link>.
+
+        Returns
+        -------
+        stop : bool
+            Whether or not to stop the current level of iterations at this task.
+        """
+
+    def on_function_end(self, func_name, context):
+        """Method called at the end of the function.
+
+        Parameters
+        ----------
+        func_name : str
+            The name of the function calling this callback hook.
+
+        context : `sklearn.callback.CallbackContext` instance
+            Context of the corresponding task. This is the root context if the function.
+        """
+
+
+@runtime_checkable
 class AutoPropagatedCallback(Callback, Protocol):
     """Protocol for the auto-propagated callbacks
 
