@@ -10,10 +10,10 @@ import warnings
 from inspect import isgenerator
 from numbers import Integral, Real
 
+import joblib
 import numpy as np
 import scipy.sparse as sp
 
-import joblib
 from sklearn import config_context, get_config
 from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin, TransformerMixin
 from sklearn.cluster import MiniBatchKMeans
