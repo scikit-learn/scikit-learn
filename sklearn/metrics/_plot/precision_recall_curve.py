@@ -4,7 +4,7 @@
 import numpy as np
 
 from sklearn.metrics._ranking import average_precision_score, precision_recall_curve
-from sklearn.utils import _safe_indexing
+from sklearn.utils import _safe_indexing, check_array
 from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
     _check_param_lengths,
@@ -14,7 +14,6 @@ from sklearn.utils._plotting import (
     _despine,
     _validate_style_kwargs,
 )
-from sklearn.utils import check_array
 from sklearn.utils._response import _get_response_values_binary
 
 
