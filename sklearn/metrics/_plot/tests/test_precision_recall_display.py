@@ -707,6 +707,7 @@ def test_correct_prevalence_pos_label_with_pytorch_data(
     pyplot, array_lib, y_true, pos_label, expected_prevalence_pos_label
 ):
     """
+    Non-regression test for issue #33342
     Checks whether the prevalence_pos_label is calculated correctly when using
     pytorch data. This may fail in case prevalence_pos_label is calculated using
     methods relying on hash functions, like using collections.Counter.
