@@ -398,3 +398,33 @@ def test_y_score_and_y_pred_specified_error(pyplot):
 
     with pytest.warns(FutureWarning, match="y_pred was deprecated in 1.8"):
         PrecisionRecallDisplay.from_predictions(y_true, y_pred=y_score)
+
+@pytest.mark.parametrize("array_lib", ["torch", "numpy", "list"])
+@pytest.mark.parametrize(
+    "y_true, pos_label, expected_prevalence_pos_label",
+    [
+        ([1, 0, 0, 0, 0], None, 0.2),
+        ([1, 1, 0, 0, 0], 1, 0.4),
+        ([1, 1, 0, 1, 0], 0, 0.4),
+        ([1, 1, 0, 1, 1], None, 0.8),
+    ],
+)
+def test_correct_prevalence_pos_label_with_pytorch_data(pyplot, array_lib, y_true, pos_label, expected_prevalence_pos_label):
+    """
+    Checks whether the prevalence_pos_label is calculated correctly when using pytorch data.
+    This may fail in case prevalence_pos_label is calculated using methods relying on hash 
+    functions, like using collections.Counter.
+    """
+
+    torch = pytest.importorskip("torch")
+
+    if array_lib == "torch":
+        y_true = torch.tensor(y_true)
+    elif array_lib == "numpy":
+        y_true = np.array(y_true)
+     
+    y_score = [0.08, 0.15, 0.16, 0.23, 0.42]
+
+    display = PrecisionRecallDisplay.from_predictions(y_true, y_score, pos_label=pos_label, plot_chance_level=True)
+
+    assert display.prevalence_pos_label == expected_prevalence_pos_label

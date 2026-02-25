@@ -1,8 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from collections import Counter
-
 from sklearn.metrics._ranking import average_precision_score, precision_recall_curve
 from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
@@ -11,6 +9,7 @@ from sklearn.utils._plotting import (
     _despine,
     _validate_style_kwargs,
 )
+from sklearn.utils import check_array
 
 
 class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
@@ -544,6 +543,8 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
+
+        y_true = check_array(y_true, ensure_2d=False, dtype=None)
         y_score = _deprecate_y_pred_parameter(y_score, y_pred, "1.8")
         pos_label, name = cls._validate_from_predictions_params(
             y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
@@ -560,8 +561,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
         )
 
-        class_count = Counter(y_true)
-        prevalence_pos_label = class_count[pos_label] / sum(class_count.values())
+        prevalence_pos_label = (y_true == pos_label).sum() / len(y_true)
 
         viz = cls(
             precision=precision,
