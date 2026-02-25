@@ -456,11 +456,6 @@ cdef inline int node_split_best(
                         current_split.threshold = (
                             feature_values[p_prev] / 2.0 + feature_values[p] / 2.0
                         )
-                        if (
-                            current_split.threshold == INFINITY or
-                            current_split.threshold == -INFINITY
-                        ):
-                            current_split.threshold = feature_values[p_prev]
 
                     # if there are no missing values in the training data, during
                     # test time, we send missing values to the branch that contains
