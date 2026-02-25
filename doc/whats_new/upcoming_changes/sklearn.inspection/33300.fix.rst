@@ -1,0 +1,5 @@
+- :class:`inspection.DecisionBoundaryDisplay` now displays all class boundaries when
+  using ``plot_method="contour"`` with all response_methods, and displays all classes
+  in distinct colors when using ``plot_method="contourf"`` with
+  ``response_method="predict"``.
+  By :user:`Anne Beyer <AnneBeyer>` and :user:`Levente Csibi <leweex95>`.
