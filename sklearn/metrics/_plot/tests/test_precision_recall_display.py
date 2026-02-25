@@ -702,11 +702,12 @@ def test_y_score_and_y_pred_specified_error(pyplot):
         ([1, 1, 0, 1, 1], None, 0.8),
     ],
 )
-def test_correct_prevalence_pos_label_with_pytorch_data(pyplot, array_lib, y_true, pos_label, expected_prevalence_pos_label):
+def test_correct_prevalence_pos_label_with_pytorch_data(
+    pyplot, array_lib, y_true, pos_label, expected_prevalence_pos_label):
     """
-    Checks whether the prevalence_pos_label is calculated correctly when using pytorch data.
-    This may fail in case prevalence_pos_label is calculated using methods relying on hash 
-    functions, like using collections.Counter.
+    Checks whether the prevalence_pos_label is calculated correctly when using
+    pytorch data. This may fail in case prevalence_pos_label is calculated using
+    methods relying on hash functions, like using collections.Counter.
     """
 
     torch = pytest.importorskip("torch")
@@ -715,9 +716,10 @@ def test_correct_prevalence_pos_label_with_pytorch_data(pyplot, array_lib, y_tru
         y_true = torch.tensor(y_true)
     elif array_lib == "numpy":
         y_true = np.array(y_true)
-     
+
     y_score = [0.08, 0.15, 0.16, 0.23, 0.42]
 
-    display = PrecisionRecallDisplay.from_predictions(y_true, y_score, pos_label=pos_label, plot_chance_level=True)
+    display = PrecisionRecallDisplay.from_predictions(
+        y_true, y_score, pos_label=pos_label, plot_chance_level=True)
 
     assert display.prevalence_pos_label == expected_prevalence_pos_label
