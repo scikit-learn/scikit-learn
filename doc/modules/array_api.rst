@@ -145,9 +145,9 @@ Estimators
 - :class:`kernel_approximation.Nystroem`
 - :class:`linear_model.LogisticRegression` (with `solver="lbfgs"`)
 - :class:`linear_model.Ridge` (with `solver="svd"`)
-- :class:`linear_model.RidgeCV` (with `solver="svd"`, see :ref:`device_support_for_float64`)
+- :class:`linear_model.RidgeCV` (see :ref:`device_support_for_float64`)
 - :class:`linear_model.RidgeClassifier` (with `solver="svd"`)
-- :class:`linear_model.RidgeClassifierCV` (with `solver="svd"`, see :ref:`device_support_for_float64`)
+- :class:`linear_model.RidgeClassifierCV` (see :ref:`device_support_for_float64`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
 - :class:`naive_bayes.GaussianNB`
 - :class:`preprocessing.Binarizer`
