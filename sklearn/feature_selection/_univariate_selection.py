@@ -1051,7 +1051,7 @@ class SelectFwe(_BaseFilter):
         "fwe_control": [StrOptions({"bonf", "holm"})],
     }
 
-    def __init__(self, score_func=f_classif, *, alpha=5e-2, fwe_control='bonf'):
+    def __init__(self, score_func=f_classif, *, alpha=5e-2, fwe_control="bonf"):
         super().__init__(score_func=score_func)
         self.alpha = alpha
         self.fwe_control = fwe_control
@@ -1059,19 +1059,20 @@ class SelectFwe(_BaseFilter):
     def _get_support_mask(self):
         check_is_fitted(self)
 
-        if self.fwe_control == 'bonf':
+        if self.fwe_control == "bonf":
             h0_rejected = self.pvalues_ < self.alpha / len(self.pvalues_)
-        elif self.fwe_control == 'holm':
+        elif self.fwe_control == "holm":
             h0_rejected = np.zeros_like(self.pvalues_, dtype=bool)
             sorted_ids = np.argsort(self.pvalues_)
-            h0_rejected[sorted_ids] = self.pvalues_[sorted_ids] < \
-                self.alpha / np.arange(len(self.pvalues_), 0, -1)
+            h0_rejected[sorted_ids] = self.pvalues_[
+                sorted_ids
+            ] < self.alpha / np.arange(len(self.pvalues_), 0, -1)
         else:
-            raise ValueError(f"Invalid fwe_control method: {self.fwe_control}. "
-                             "Expected 'bonf' or 'holm'.")
+            raise ValueError(
+                f"Invalid fwe_control method: {self.fwe_control}. "
+                "Expected 'bonf' or 'holm'."
+            )
         return h0_rejected
-
-
 
 
 ######################################################################
