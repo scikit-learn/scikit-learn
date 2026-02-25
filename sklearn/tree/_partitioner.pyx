@@ -20,6 +20,7 @@ cimport numpy as cnp
 cnp.import_array()
 from scipy.sparse import issparse
 
+from sklearn.tree._splitter cimport SplitRecord
 
 # Constant to switch between algorithm non zero value extract algorithm
 # in SparsePartitioner
@@ -222,20 +223,21 @@ cdef class DensePartitioner:
 
     cdef inline void partition_samples_final(
         self,
-        float64_t best_threshold,
-        intp_t best_feature,
-        bint best_missing_go_to_left
+        const SplitRecord* best_split,
     ) noexcept nogil:
-        """Partition self.samples for X[:, best_feature] at the best_threshold.
+        """Partition self.samples according to the split described by best_split.
 
         If missing values are present, this method partitions them accordingly
-        to best_missing_go_to_left.
+        to the split strategy.
         """
         cdef:
             # Local invariance: start <= partition_start <= partition_end <= end
             intp_t partition_start = self.start
             intp_t partition_end = self.end
             intp_t* samples = &self.samples[0]
+            float64_t best_threshold = best_split[0].threshold
+            intp_t best_feature = best_split[0].feature
+            bint best_missing_go_to_left = best_split[0].missing_go_to_left
             float32_t current_value
             bint go_to_left
 
@@ -413,13 +415,11 @@ cdef class SparsePartitioner:
 
     cdef inline void partition_samples_final(
         self,
-        float64_t best_threshold,
-        intp_t best_feature,
-        bint missing_go_to_left
+        const SplitRecord* best_split,
     ) noexcept nogil:
-        """Partition samples for X at the best_threshold and best_feature."""
-        self.extract_nnz(best_feature)
-        self._partition(best_threshold)
+        """Partition samples for X according to the split described by best_split."""
+        self.extract_nnz(best_split[0].feature)
+        self._partition(best_split[0].threshold)
 
     cdef inline intp_t _partition(self, float64_t threshold) noexcept nogil:
         """
