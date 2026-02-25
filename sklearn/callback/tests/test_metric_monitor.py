@@ -4,7 +4,6 @@
 from itertools import product
 
 import numpy as np
-import pandas as pd
 import pytest
 
 from sklearn.callback import MetricMonitor
@@ -21,7 +20,7 @@ from sklearn.metrics import mean_pinball_loss, mean_squared_error
     [(mean_squared_error, None), (mean_pinball_loss, {"alpha": 0.6})],
 )
 def test_metric_monitor(metric, metric_params):
-    pytest.importorskip("pandas")
+    pd = pytest.importorskip("pandas")
     max_iter = 3
     n_dim = 5
     n_samples = 3
@@ -108,7 +107,7 @@ def test_wrong_kwarg_error():
     [(mean_squared_error, None), (mean_pinball_loss, {"alpha": 0.6})],
 )
 def test_within_meta_estimator(prefer, metric, metric_params):
-    pytest.importorskip("pandas")
+    pd = pytest.importorskip("pandas")
     n_outer = 3
     n_inner = 2
     max_iter = 4
