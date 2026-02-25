@@ -42,7 +42,6 @@ ctypedef fused Partitioner:
 
 
 cdef float64_t INFINITY = np.inf
-cdef bint DEBUG = False
 
 
 cdef inline void _init_split(SplitRecord* self, intp_t start_pos) noexcept nogil:
