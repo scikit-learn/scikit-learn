@@ -264,7 +264,7 @@ jobs:
           SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$((RANDOM % 20))
           echo "SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$SKLEARN_TESTS_GLOBAL_RANDOM_SEED" >> $GITHUB_ENV
           echo "To reproduce this test run, set the following environment variable:"
-          echo "    SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$SKLEARN_TESTS_GLOBAL_RANDOM_SEED",
+          echo "    SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$SKLEARN_TESTS_GLOBAL_RANDOM_SEED"
           echo "See: https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed"
 
       # Enable global dtype fixture for all nightly builds to discover
@@ -391,7 +391,7 @@ jobs:
           SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$((RANDOM % 20))
           echo "SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$SKLEARN_TESTS_GLOBAL_RANDOM_SEED" >> $GITHUB_ENV
           echo "To reproduce this test run, set the following environment variable:"
-          echo "    SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$SKLEARN_TESTS_GLOBAL_RANDOM_SEED",
+          echo "    SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$SKLEARN_TESTS_GLOBAL_RANDOM_SEED"
           echo "See: https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed"
 
       # Enable global dtype fixture for all nightly builds to discover
