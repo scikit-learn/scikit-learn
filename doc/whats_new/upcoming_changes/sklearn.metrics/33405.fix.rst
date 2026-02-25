@@ -1,3 +1,4 @@
-- :meth:`metrics.PrecisionRecallDisplay.from_predictions` now correctly plots 
-  chance level line when `y_true` is a pytorch tensor.
+- :meth:`metrics.PrecisionRecallDisplay.from_estimator` and 
+  :meth:`metrics.PrecisionRecallDisplay.from_predictions` now 
+  correctly plots chance level line when `y_true` is a pytorch tensor.
   By :user:`Lucas Oliveira <lucolivi>`.

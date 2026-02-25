@@ -703,14 +703,13 @@ def test_y_score_and_y_pred_specified_error(pyplot):
         ([1, 1, 0, 1, 1], None, 0.8),
     ],
 )
-def test_correct_prevalence_pos_label_with_pytorch_data(
+def test_correct_prevalence_pos_label_with_array_types(
     pyplot, array_lib, y_true, pos_label, expected_prevalence_pos_label
 ):
     """
     Non-regression test for issue #33342
     Checks whether the prevalence_pos_label is calculated correctly when using
-    pytorch data. This may fail in case prevalence_pos_label is calculated using
-    methods relying on hash functions, like using collections.Counter.
+    different array types. This used to fail for pytorch arrays.
     """
 
     torch = pytest.importorskip("torch")
