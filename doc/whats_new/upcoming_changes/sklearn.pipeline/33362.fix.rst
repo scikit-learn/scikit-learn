@@ -1,0 +1,4 @@
+- :class:`pipeline.Pipeline` now raises an `AttributeError` when accessing attributes
+  that are not available on an empty pipeline. It's therefore possible to call `dir`
+  on an empty pipeline.
+  By :user:`Jérémie du Boisberranger <jeremiedbb>`.
