@@ -1,5 +1,5 @@
 # We can not use pytest here, because we run
-# build_tools/azure/test_pytest_soft_dependency.sh on these
+# build_tools/github/test_pytest_soft_dependency.sh on these
 # tests to make sure estimator_checks works without pytest.
 
 import importlib
@@ -10,10 +10,10 @@ import warnings
 from inspect import isgenerator
 from numbers import Integral, Real
 
-import joblib
 import numpy as np
 import scipy.sparse as sp
 
+import joblib
 from sklearn import config_context, get_config
 from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin, TransformerMixin
 from sklearn.cluster import MiniBatchKMeans

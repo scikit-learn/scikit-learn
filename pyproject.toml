@@ -267,7 +267,7 @@ exclude= '''
 [tool.check-sdist]
 # These settings should match .gitattributes
 sdist-only = []
-git-only = [".*", "asv_benchmarks", "azure-pipelines.yml", "benchmarks", "build_tools", "maint_tools"]
+git-only = [".*", "asv_benchmarks", "benchmarks", "build_tools", "maint_tools"]
 default-ignore = false
 
 [tool.spin]
