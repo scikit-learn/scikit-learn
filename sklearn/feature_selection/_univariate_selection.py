@@ -1048,6 +1048,7 @@ class SelectFwe(_BaseFilter):
     _parameter_constraints: dict = {
         **_BaseFilter._parameter_constraints,
         "alpha": [Interval(Real, 0, 1, closed="both")],
+        "fwe_control": [StrOptions({"bonf", "holm"})],
     }
 
     def __init__(self, score_func=f_classif, *, alpha=5e-2, fwe_control='bonf'):
