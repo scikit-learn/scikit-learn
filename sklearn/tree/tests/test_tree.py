@@ -3056,7 +3056,13 @@ def test_friedman_mse_deprecation():
     ids=["multiple-non-missing", "single-non-missing"],
 )
 def test_random_splitter_missing_values_uses_non_missing_min_max(X, y):
-    """Check random-split thresholds are finite when the first sample is missing."""
+    """
+    Check random-split thresholds are finite when the first sample is missing.
+
+    Non-regression test for a subtle bug that was introduced in PR #32119 but
+    was caught before the PR got merged:
+    https://github.com/scikit-learn/scikit-learn/pull/32119#issuecomment-3765288780
+    """
     tree = ExtraTreeRegressor(max_depth=1, random_state=0)
     tree.fit(X, y)
 
