@@ -226,7 +226,7 @@ class LinearModelLoss:
     def l2_penalty(self, weights, l2_reg_strength):
         """Compute L2 penalty term l2_reg_strength/2 *||w||_2^2."""
         norm2_w = weights @ weights if weights.ndim == 1 else squared_norm(weights)
-        return 0.5 * l2_reg_strength * norm2_w
+        return float(0.5 * l2_reg_strength * norm2_w)
 
     def loss(
         self,
@@ -267,6 +267,7 @@ class LinearModelLoss:
         loss : float
             Weighted average of losses per sample, plus penalty.
         """
+        n_samples = X.shape[0]
         if raw_prediction is None:
             weights, intercept, raw_prediction = self.weight_intercept_raw(coef, X)
         else:
@@ -275,12 +276,17 @@ class LinearModelLoss:
         loss = self.base_loss.loss(
             y_true=y,
             raw_prediction=raw_prediction,
-            sample_weight=None,
+            sample_weight=sample_weight,
             n_threads=n_threads,
         )
-        loss = np.average(loss, weights=sample_weight)
+        xp, _ = get_namespace(X, y, sample_weight)
+        sw_sum = n_samples if sample_weight is None else xp.sum(sample_weight)
+        loss = float(xp.sum(loss) / sw_sum)
 
-        return loss + self.l2_penalty(weights, l2_reg_strength)
+        if l2_reg_strength > 0:
+            loss += self.l2_penalty(weights, l2_reg_strength)
+
+        return loss
 
     def loss_gradient(
         self,
