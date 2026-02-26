@@ -100,7 +100,7 @@ class WhileEstimator(CallbackSupportMixin, BaseEstimator):
         self.computation_intensity = computation_intensity
 
     @_fit_context(prefer_skip_nested_validation=False)
-    def fit(self, X=None, y=None, X_val=None, y_val=None):
+    def fit(self, X=None, y=None):
         callback_ctx = self._init_callback_context(max_subtasks=None)
         callback_ctx.eval_on_fit_begin(estimator=self)
 
