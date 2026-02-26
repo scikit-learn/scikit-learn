@@ -2265,7 +2265,9 @@ def metric_at_thresholds(
 
     metric_func : callable
         The metric function to use. It will be called as
-        `metric_func(y_true, y_pred, **metric_params)`. The output should be
+        `metric_func(y_true, y_pred, **metric_params)`, where `y_pred` are
+        thresholded predictions, internally computed as
+        `y_pred = (y_score >= threshold)`. The output should be
         a single numeric or a collection where each element has the same size.
 
     sample_weight : array-like of shape (n_samples,), default=None

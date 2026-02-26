@@ -1,4 +1,3 @@
-- :func:`metrics.metric_at_thresholds` has been added to
-  assess performance over thresholds by computing a threshold-dependent
-  metric of interest per threshold.
+- :func:`metrics.metric_at_thresholds` has been added to compute
+  a metric's values across all possible thresholds.
   By :user:`Carlo Lemos <vitaliset>` and :user:`Lucy Liu <lucyleeow>`.

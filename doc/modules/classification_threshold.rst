@@ -86,7 +86,7 @@ Plotting metric across thresholds
 ---------------------------------
 
 The final plot above shows the value of a utility metric of interest across a range
-of threshold values. This can be a useful visualization when tuning decision
+of threshold values. This can be a useful visualization when tuning the decision
 threshold, especially if there is more than one metric of interest. The
 :func:`metric_at_thresholds` allows you to easily generate such plots as it
 computes the values required for each axis; scores per threshold and threshold values.
