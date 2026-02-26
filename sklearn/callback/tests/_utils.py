@@ -2,6 +2,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import time
+from functools import partial
+
+import numpy as np
 
 from sklearn.base import BaseEstimator, _fit_context, clone
 from sklearn.callback import CallbackSupportMixin, with_callback_context
@@ -45,33 +48,43 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
     """A class that mimics the behavior of an estimator.
 
     The iterative part uses a loop with a max number of iterations known in advance.
+    A linear regression is mimicked, using the number of iterations as the linear
+    coefficient, and an intercept set at init.
     """
 
     _parameter_constraints: dict = {}
 
-    def __init__(self, max_iter=20, computation_intensity=0.001):
+    def __init__(self, max_iter=20, intercept=0, computation_intensity=0.001):
         self.max_iter = max_iter
+        self.intercept = intercept
         self.computation_intensity = computation_intensity
 
     @_fit_context(prefer_skip_nested_validation=False)
-    def fit(self, X=None, y=None):
+    def fit(self, X=None, y=None, X_val=None, y_val=None):
         callback_ctx = self._init_callback_context(max_subtasks=self.max_iter)
         callback_ctx.eval_on_fit_begin(estimator=self)
 
         for i in range(self.max_iter):
-            subcontext = callback_ctx.subcontext(task_id=i)
+            subcontext = callback_ctx.subcontext(task_id=i, task_name="iteration")
 
             time.sleep(self.computation_intensity)  # Computation intensive task
 
             if subcontext.eval_on_fit_task_end(
                 estimator=self,
-                data={"X_train": X, "y_train": y},
+                data={"X_train": X, "y_train": y, "X_val": X_val, "y_val": y_val},
+                from_reconstruction_attributes=partial(
+                    self._from_reconstruction_attributes,
+                    reconstruction_attributes=lambda: {"n_iter_": i + 1},
+                ),
             ):
                 break
 
         self.n_iter_ = i + 1
 
         return self
+
+    def predict(self, X):
+        return np.mean(X, axis=1) * self.n_iter_ + self.intercept
 
 
 class WhileEstimator(CallbackSupportMixin, BaseEstimator):
@@ -121,7 +134,7 @@ class ThirdPartyEstimator(CallbackSupportMixin, BaseEstimator):
         self.computation_intensity = computation_intensity
 
     @with_callback_context
-    def fit(self, X=None, y=None):
+    def fit(self, X=None, y=None, X_val=None, y_val=None):
         callback_ctx = self._init_callback_context(max_subtasks=self.max_iter)
         callback_ctx.eval_on_fit_begin(estimator=self)
 
@@ -150,7 +163,7 @@ class ParentFitEstimator(MaxIterEstimator):
         super().__init__(max_iter, computation_intensity)
 
     @_fit_context(prefer_skip_nested_validation=False)
-    def fit(self, X=None, y=None):
+    def fit(self, X=None, y=None, X_val=None, y_val=None):
         return super().fit(X, y)
 
 
@@ -161,7 +174,7 @@ class NoCallbackEstimator(BaseEstimator):
         self.max_iter = max_iter
         self.computation_intensity = computation_intensity
 
-    def fit(self, X=None, y=None):
+    def fit(self, X=None, y=None, X_val=None, y_val=None):
         for i in range(self.max_iter):
             time.sleep(self.computation_intensity)  # Computation intensive task
 
@@ -188,7 +201,7 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
         self.prefer = prefer
 
     @_fit_context(prefer_skip_nested_validation=False)
-    def fit(self, X=None, y=None):
+    def fit(self, X=None, y=None, X_val=None, y_val=None):
         callback_ctx = self._init_callback_context(max_subtasks=self.n_outer)
         callback_ctx.eval_on_fit_begin(estimator=self)
 
@@ -198,6 +211,8 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
                 self.estimator,
                 X,
                 y,
+                X_val,
+                y_val,
                 outer_callback_ctx=callback_ctx.subcontext(
                     task_name="outer", task_id=i, max_subtasks=self.n_inner
                 ),
@@ -208,7 +223,7 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
         return self
 
 
-def _func(meta_estimator, inner_estimator, X, y, *, outer_callback_ctx):
+def _func(meta_estimator, inner_estimator, X, y, X_val, y_val, *, outer_callback_ctx):
     for i in range(meta_estimator.n_inner):
         est = clone(inner_estimator)
 
@@ -216,16 +231,16 @@ def _func(meta_estimator, inner_estimator, X, y, *, outer_callback_ctx):
             task_name="inner", task_id=i
         ).propagate_callbacks(sub_estimator=est)
 
-        est.fit(X, y)
+        est.fit(X, y, X_val, y_val)
 
         inner_ctx.eval_on_fit_task_end(
             estimator=meta_estimator,
-            data={"X_train": X, "y_train": y},
+            data={"X_train": X, "y_train": y, "X_val": X_val, "y_val": y_val},
         )
 
     outer_callback_ctx.eval_on_fit_task_end(
         estimator=meta_estimator,
-        data={"X_train": X, "y_train": y},
+        data={"X_train": X, "y_train": y, "X_val": X_val, "y_val": y_val},
     )
 
 
@@ -233,7 +248,7 @@ class NoSubtaskEstimator(CallbackSupportMixin, BaseEstimator):
     """A class mimicking an estimator without subtasks in fit."""
 
     @with_callback_context
-    def fit(self, X=None, y=None):
+    def fit(self, X=None, y=None, X_val=None, y_val=None):
         callback_ctx = self._init_callback_context().eval_on_fit_begin(estimator=self)
 
         # No task performed
