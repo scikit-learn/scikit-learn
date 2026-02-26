@@ -401,7 +401,6 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             s_1 = 0.5 * a.T.dot(C).dot(a) - 0.5 * R.T.ravel().dot(C.ravel())
 
             b = C.dot(self.y_train_ - pi)  # Line 13
-
             s_3 = b - K.dot(R.dot(b))  # Line 14
 
             d_Z[j] = s_1 + s_2.T.dot(s_3)  # Line 15
