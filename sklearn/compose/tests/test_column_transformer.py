@@ -1615,6 +1615,8 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
     assert isinstance(visual_block.estimators[0], StandardScaler)
     if remainder == "passthrough":
         assert isinstance(visual_block.estimators[1], FunctionTransformer)
+    else:
+        assert isinstance(visual_block.estimators[1], StandardScaler)
 
 
 @pytest.mark.parametrize("explicit_colname", ["first", "second", 0, 1])
