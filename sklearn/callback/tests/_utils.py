@@ -48,15 +48,14 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
     """A class that mimics the behavior of an estimator.
 
     The iterative part uses a loop with a max number of iterations known in advance.
-    A linear regression is mimicked, using the number of iterations as the linear
-    coefficient, and an intercept set at init.
+    A predict method is implemented, avergaing on the feature dimension and multiplying
+    by a coefficient equal to the number of iterations done in fit.
     """
 
     _parameter_constraints: dict = {}
 
-    def __init__(self, max_iter=20, intercept=0, computation_intensity=0.001):
+    def __init__(self, max_iter=20, computation_intensity=0.001):
         self.max_iter = max_iter
-        self.intercept = intercept
         self.computation_intensity = computation_intensity
 
     @_fit_context(prefer_skip_nested_validation=False)
@@ -84,7 +83,7 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
         return self
 
     def predict(self, X):
-        return np.mean(X, axis=1) * self.n_iter_ + self.intercept
+        return np.mean(X, axis=1) * self.n_iter_
 
 
 class WhileEstimator(CallbackSupportMixin, BaseEstimator):

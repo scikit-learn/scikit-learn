@@ -24,8 +24,7 @@ def test_metric_monitor(metric, metric_params):
     max_iter = 3
     n_dim = 5
     n_samples = 3
-    intercept = 1
-    estimator = MaxIterEstimator(intercept=intercept, max_iter=max_iter)
+    estimator = MaxIterEstimator(max_iter=max_iter)
     callback_train = MetricMonitor(
         metric, metric_params=metric_params, on_validation=False
     )
@@ -51,7 +50,7 @@ def test_metric_monitor(metric, metric_params):
                 f"0_{estimator.__class__.__name__}_fit": 0,
                 f"1_{estimator.__class__.__name__}_fit_iter": i,
                 metric.__name__: metric(
-                    y_train, X_train.mean(axis=1) * (i + 1) + intercept, **metric_params
+                    y_train, X_train.mean(axis=1) * (i + 1), **metric_params
                 ),
             }
             for i in range(max_iter)
@@ -74,7 +73,7 @@ def test_metric_monitor(metric, metric_params):
                 f"0_{estimator.__class__.__name__}_fit": 0,
                 f"1_{estimator.__class__.__name__}_fit_iter": i,
                 metric.__name__: metric(
-                    y_val, X_val.mean(axis=1) * (i + 1) + intercept, **metric_params
+                    y_val, X_val.mean(axis=1) * (i + 1), **metric_params
                 ),
             }
             for i in range(max_iter)
@@ -113,7 +112,6 @@ def test_within_meta_estimator(prefer, metric, metric_params):
     max_iter = 4
     n_dim = 5
     n_samples = 3
-    intercept = 1
     rng = np.random.RandomState(0)
     X_train, y_train = rng.uniform(size=(n_dim, n_samples)), rng.uniform(size=n_dim)
     X_val, y_val = rng.uniform(size=(n_dim, n_samples)), rng.uniform(size=n_dim)
@@ -123,7 +121,7 @@ def test_within_meta_estimator(prefer, metric, metric_params):
     callback_val = MetricMonitor(
         metric, metric_params=metric_params, on_validation=True
     )
-    est = MaxIterEstimator(max_iter=max_iter, intercept=intercept)
+    est = MaxIterEstimator(max_iter=max_iter)
     est.set_callbacks([callback_train, callback_val])
     meta_est = MetaEstimator(
         est, n_outer=n_outer, n_inner=n_inner, n_jobs=2, prefer=prefer
@@ -140,7 +138,7 @@ def test_within_meta_estimator(prefer, metric, metric_params):
                 {
                     metric.__name__: metric(
                         y_train,
-                        X_train.mean(axis=1) * (i_estimator_fit_iter + 1) + intercept,
+                        X_train.mean(axis=1) * (i_estimator_fit_iter + 1),
                         **metric_params,
                     ),
                     f"0_{meta_est.__class__.__name__}_fit": 0,
@@ -154,7 +152,7 @@ def test_within_meta_estimator(prefer, metric, metric_params):
                 {
                     metric.__name__: metric(
                         y_val,
-                        X_val.mean(axis=1) * (i_estimator_fit_iter + 1) + intercept,
+                        X_val.mean(axis=1) * (i_estimator_fit_iter + 1),
                         **metric_params,
                     ),
                     f"0_{meta_est.__class__.__name__}_fit": 0,
