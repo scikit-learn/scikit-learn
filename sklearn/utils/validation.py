@@ -5,7 +5,6 @@
 
 import numbers
 import operator
-import sys
 import warnings
 from collections.abc import Sequence
 from contextlib import suppress
@@ -30,6 +29,7 @@ from sklearn.utils._array_api import (
     get_namespace,
     get_namespace_and_device,
 )
+from sklearn.utils._dataframe import is_pandas_df, is_pandas_df_or_series
 from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
 from sklearn.utils._tags import get_tags
 from sklearn.utils.fixes import (
@@ -77,7 +77,7 @@ def _deprecate_positional_args(func=None, *, version="1.3"):
 
             # extra_args > 0
             args_msg = [
-                "{}={}".format(name, arg)
+                f"{name}={arg}"
                 for name, arg in zip(kwonly_args[:extra_args], args[-extra_args:])
             ]
             args_msg = ", ".join(args_msg)
@@ -312,7 +312,7 @@ def _use_interchange_protocol(X):
     to ensure strict behavioral backward compatibility with older versions of
     scikit-learn.
     """
-    return not _is_pandas_df(X) and hasattr(X, "__dataframe__")
+    return not is_pandas_df(X) and hasattr(X, "__dataframe__")
 
 
 def _num_features(X):
@@ -437,7 +437,7 @@ def check_memory(memory):
         raise ValueError(
             "'memory' should be None, a string or have the same"
             " interface as joblib.Memory."
-            " Got memory='{}' instead.".format(memory)
+            f" Got memory='{memory}' instead."
         )
     return memory
 
@@ -1129,7 +1129,7 @@ def check_array(
             # ensure that the output is writeable, even if avoidable, to not overwrite
             # the user's data by surprise.
 
-            if _is_pandas_df_or_series(array_orig):
+            if is_pandas_df_or_series(array_orig):
                 try:
                     # In pandas >= 3, np.asarray(df), called earlier in check_array,
                     # returns a read-only intermediate array. It can be made writeable
@@ -1465,7 +1465,7 @@ def check_random_state(seed):
     if isinstance(seed, np.random.RandomState):
         return seed
     raise ValueError(
-        "%r cannot be used to seed a numpy.random.RandomState instance" % seed
+        f"{seed!r} cannot be used to seed a numpy.random.RandomState instance"
     )
 
 
@@ -1686,7 +1686,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     >>> check_is_fitted(lr)
     """
     if isclass(estimator):
-        raise TypeError("{} is a class, not an instance.".format(estimator))
+        raise TypeError(f"{estimator} is a class, not an instance.")
     if msg is None:
         msg = (
             "This %(name)s instance is not fitted yet. Call 'fit' with "
@@ -1694,7 +1694,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
         )
 
     if not hasattr(estimator, "fit"):
-        raise TypeError("%s is not an estimator instance." % (estimator))
+        raise TypeError(f"{estimator} is not an estimator instance.")
 
     tags = get_tags(estimator)
 
@@ -2085,6 +2085,7 @@ def _check_sample_weight(
     ensure_non_negative=False,
     ensure_same_device=True,
     copy=False,
+    allow_all_zero_weights=False,
 ):
     """Validate sample weights.
 
@@ -2126,6 +2127,9 @@ def _check_sample_weight(
 
     copy : bool, default=False
         If True, a copy of sample_weight will be created.
+
+    allow_all_zero_weights : bool, default=False,
+        Whether or not to raise an error when sample weights are all zero.
 
     Returns
     -------
@@ -2173,6 +2177,12 @@ def _check_sample_weight(
                 "sample_weight.shape == {}, expected {}!".format(
                     sample_weight.shape, (n_samples,)
                 )
+            )
+
+    if not allow_all_zero_weights:
+        if xp.all(sample_weight == 0):
+            raise ValueError(
+                "Sample weights must contain at least one non-zero number."
             )
 
     if ensure_non_negative:
@@ -2307,51 +2317,6 @@ def _check_method_params(X, params, indices=None):
     return method_params_validated
 
 
-def _is_pandas_df_or_series(X):
-    """Return True if the X is a pandas dataframe or series."""
-    try:
-        pd = sys.modules["pandas"]
-    except KeyError:
-        return False
-    return isinstance(X, (pd.DataFrame, pd.Series))
-
-
-def _is_pandas_df(X):
-    """Return True if the X is a pandas dataframe."""
-    try:
-        pd = sys.modules["pandas"]
-    except KeyError:
-        return False
-    return isinstance(X, pd.DataFrame)
-
-
-def _is_pyarrow_data(X):
-    """Return True if the X is a pyarrow Table, RecordBatch, Array or ChunkedArray."""
-    try:
-        pa = sys.modules["pyarrow"]
-    except KeyError:
-        return False
-    return isinstance(X, (pa.Table, pa.RecordBatch, pa.Array, pa.ChunkedArray))
-
-
-def _is_polars_df_or_series(X):
-    """Return True if the X is a polars dataframe or series."""
-    try:
-        pl = sys.modules["polars"]
-    except KeyError:
-        return False
-    return isinstance(X, (pl.DataFrame, pl.Series))
-
-
-def _is_polars_df(X):
-    """Return True if the X is a polars dataframe."""
-    try:
-        pl = sys.modules["polars"]
-    except KeyError:
-        return False
-    return isinstance(X, pl.DataFrame)
-
-
 def _get_feature_names(X):
     """Get feature names from X.
 
@@ -2375,7 +2340,7 @@ def _get_feature_names(X):
     feature_names = None
 
     # extract feature names for support array containers
-    if _is_pandas_df(X):
+    if is_pandas_df(X):
         # Make sure we can inspect columns names from pandas, even with
         # versions too old to expose a working implementation of
         # __dataframe__.column_names() and avoid introducing any

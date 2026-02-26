@@ -2,6 +2,8 @@ import copyreg
 import io
 import pickle
 import re
+import sys
+import sysconfig
 import warnings
 from unittest.mock import Mock
 
@@ -11,7 +13,7 @@ import pytest
 from joblib.numpy_pickle import NumpyPickler
 from numpy.testing import assert_allclose, assert_array_equal
 
-import sklearn
+import sklearn.ensemble._hist_gradient_boosting.gradient_boosting as hgb_module
 from sklearn._loss.loss import (
     AbsoluteError,
     HalfBinomialLoss,
@@ -870,11 +872,7 @@ def test_early_stopping_with_sample_weights(monkeypatch):
         assert scoring == "neg_median_absolute_error"
         return mock_scorer
 
-    monkeypatch.setattr(
-        sklearn.ensemble._hist_gradient_boosting.gradient_boosting,
-        "check_scoring",
-        mock_check_scoring,
-    )
+    monkeypatch.setattr(hgb_module, "check_scoring", mock_check_scoring)
 
     X, y = make_regression(random_state=0)
     sample_weight = np.ones_like(y)
@@ -1353,6 +1351,12 @@ def test_interaction_cst_numerically():
     )
 
 
+@pytest.mark.xfail(
+    sysconfig.get_config_var("Py_GIL_DISABLED") == 1
+    and sys.version_info[:2] == (3, 13),
+    reason="Fails intermittently in the CI for Python 3.13 free-threaded,"
+    " see https://github.com/scikit-learn/scikit-learn/issues/32631",
+)
 def test_no_user_warning_with_scoring():
     """Check that no UserWarning is raised when scoring is set.
 

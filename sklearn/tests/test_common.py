@@ -45,6 +45,7 @@ from sklearn.utils._testing import (
     ignore_warnings,
 )
 from sklearn.utils.estimator_checks import (
+    check_all_zero_sample_weights_error,
     check_dataframe_column_names_consistency,
     check_estimator,
     check_get_feature_names_out_error,
@@ -59,6 +60,7 @@ from sklearn.utils.estimator_checks import (
     check_transformer_get_feature_names_out_pandas,
     parametrize_with_checks,
 )
+from sklearn.utils.validation import has_fit_parameter
 
 
 @pytest.mark.thread_unsafe  # import side-effects
@@ -399,3 +401,17 @@ def test_check_inplace_ensure_writeable(estimator):
         estimator.set_params(kernel="precomputed")
 
     check_inplace_ensure_writeable(name, estimator)
+
+
+ESTIMATORS_ACCEPTING_SAMPLE_WEIGHTS = [
+    est for est in _tested_estimators() if has_fit_parameter(est, "sample_weight")
+]
+
+
+@pytest.mark.parametrize(
+    "estimator", ESTIMATORS_ACCEPTING_SAMPLE_WEIGHTS, ids=_get_check_estimator_ids
+)
+def test_check_all_zero_sample_weights_error(estimator):
+    name = estimator.__class__.__name__
+
+    check_all_zero_sample_weights_error(name, estimator)

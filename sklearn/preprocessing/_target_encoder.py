@@ -1,7 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from numbers import Integral, Real
+from numbers import Real
 
 import numpy as np
 
@@ -10,6 +10,14 @@ from sklearn.preprocessing._encoders import _BaseEncoder
 from sklearn.preprocessing._target_encoder_fast import (
     _fit_encoding_fast,
     _fit_encoding_fast_auto_smooth,
+)
+from sklearn.utils import Bunch, indexable
+from sklearn.utils._metadata_requests import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
 )
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import type_of_target
@@ -41,7 +49,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     that are not seen during :meth:`fit` are encoded with the target mean, i.e.
     `target_mean_`.
 
-    For a demo on the importance of the `TargetEncoder` internal cross-fitting,
+    For a demo on the importance of the `TargetEncoder` internal :term:`cross fitting`,
     see
     :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder_cross_val.py`.
     For a comparison of different encoders, refer to
@@ -94,14 +102,33 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         more weight on the global target mean.
         If `"auto"`, then `smooth` is set to an empirical Bayes estimate.
 
-    cv : int, default=5
-        Determines the number of folds in the :term:`cross fitting` strategy used in
-        :meth:`fit_transform`. For classification targets, `StratifiedKFold` is used
-        and for continuous targets, `KFold` is used.
+    cv : int, cross-validation generator or an iterable, default=None
+        Determines the splitting strategy used in the internal :term:`cross fitting`
+        during :meth:`fit_transform`. Splitters where each sample index doesn't appear
+        in the validation fold exactly once, raise a `ValueError`.
+        Possible inputs for cv are:
+
+        - `None`, to use a 5-fold cross-validation chosen internally based on
+            `target_type`,
+        - integer, to specify the number of folds for the cross-validation chosen
+            internally based on `target_type`,
+        - :term:`CV splitter` that does not repeat samples across validation folds,
+        - an iterable yielding (train, test) splits as arrays of indices.
+
+        For integer/None inputs, if `target_type` is `"continuous"`, :class:`KFold` is
+        used, otherwise :class:`StratifiedKFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for more information on
+        cross-validation strategies.
+
+        .. versionchanged:: 1.9
+            Cross-validation generators and iterables can also be passed as `cv`.
 
     shuffle : bool, default=True
         Whether to shuffle the data in :meth:`fit_transform` before splitting into
-        folds. Note that the samples within each split will not be shuffled.
+        folds. Note that the samples within each split will not be shuffled. Only
+        applies if `cv` is an int or `None`. If `cv` is a cross-validation generator or
+        an iterable, `shuffle` is ignored.
 
     random_state : int, RandomState instance or None, default=None
         When `shuffle` is True, `random_state` affects the ordering of the
@@ -193,7 +220,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         "categories": [StrOptions({"auto"}), list],
         "target_type": [StrOptions({"auto", "continuous", "binary", "multiclass"})],
         "smooth": [StrOptions({"auto"}), Interval(Real, 0, None, closed="left")],
-        "cv": [Interval(Integral, 2, None, closed="left")],
+        "cv": ["cv_object"],
         "shuffle": ["boolean"],
         "random_state": ["random_state"],
     }
@@ -243,7 +270,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit_transform(self, X, y):
+    def fit_transform(self, X, y, **params):
         """Fit :class:`TargetEncoder` and transform `X` with the target encoding.
 
         This method uses a :term:`cross fitting` scheme to prevent target leakage
@@ -263,28 +290,71 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         y : array-like of shape (n_samples,)
             The target data used to encode the categories.
 
+        **params : dict
+            Parameters to route to the internal CV object.
+
+            Can only be used in conjunction with a cross-validation generator as CV
+            object.
+
+            For instance, `groups` (array-like of shape `(n_samples,)`) can be routed to
+            a CV splitter that accepts `groups`, such as :class:`GroupKFold` or
+            :class:`StratifiedGroupKFold`.
+
+            .. versionadded:: 1.9
+                Only available if `enable_metadata_routing=True`, which can be
+                set by using ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         X_trans : ndarray of shape (n_samples, n_features) or \
                     (n_samples, (n_features * n_classes))
             Transformed input.
         """
-        from sklearn.model_selection import (  # avoid circular import
+        # avoid circular imports
+        from sklearn.model_selection import (
+            GroupKFold,
             KFold,
+            StratifiedGroupKFold,
             StratifiedKFold,
         )
+        from sklearn.model_selection._split import check_cv
+
+        _raise_for_params(params, self, "fit_transform")
 
         X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
 
-        # The cv splitter is voluntarily restricted to *KFold to enforce non
-        # overlapping validation folds, otherwise the fit_transform output will
-        # not be well-specified.
-        if self.target_type_ == "continuous":
-            cv = KFold(self.cv, shuffle=self.shuffle, random_state=self.random_state)
+        cv = check_cv(
+            self.cv,
+            y,
+            classifier=self.target_type_ != "continuous",
+            shuffle=self.shuffle,
+            random_state=self.random_state,
+        )
+
+        if _routing_enabled():
+            if params["groups"] is not None:
+                X, y, params["groups"] = indexable(X, y, params["groups"])
+            routed_params = process_routing(self, "fit_transform", **params)
         else:
-            cv = StratifiedKFold(
-                self.cv, shuffle=self.shuffle, random_state=self.random_state
-            )
+            routed_params = Bunch(splitter=Bunch(split={}))
+
+        # The internal cross-fitting is only well-defined when each sample index
+        # appears in exactly one validation fold. Skip the validation check for
+        # known non-overlapping splitters in scikit-learn:
+        if not isinstance(
+            cv, (GroupKFold, KFold, StratifiedKFold, StratifiedGroupKFold)
+        ):
+            seen_count = np.zeros(X.shape[0])
+            for _, test_idx in cv.split(X, y, **routed_params.splitter.split):
+                seen_count[test_idx] += 1
+            if not np.all(seen_count == 1):
+                raise ValueError(
+                    "Validation indices from `cv` must cover each sample index exactly "
+                    "once with no overlap. Pass a splitter with non-overlapping "
+                    "validation folds as `cv` or refer to the docs for other options."
+                )
 
         # If 'multiclass' multiply axis=1 by num classes else keep shape the same
         if self.target_type_ == "multiclass":
@@ -295,7 +365,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         else:
             X_out = np.empty_like(X_ordinal, dtype=np.float64)
 
-        for train_idx, test_idx in cv.split(X, y):
+        for train_idx, test_idx in cv.split(X, y, **routed_params.splitter.split):
             X_train, y_train = X_ordinal[train_idx, :], y_encoded[train_idx]
             y_train_mean = np.mean(y_train, axis=0)
 
@@ -545,6 +615,33 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             return np.asarray(feature_names, dtype=object)
         else:
             return feature_names
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.9
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+
+        router = MetadataRouter(owner=self)
+
+        router.add(
+            # This works, since none of {None, int, iterable} request any metadata
+            # and the machinery here would assign an empty MetadataRequest
+            # to it.
+            splitter=self.cv,
+            method_mapping=MethodMapping().add(caller="fit_transform", callee="split"),
+        )
+
+        return router
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
