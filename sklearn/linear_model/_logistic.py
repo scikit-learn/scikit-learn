@@ -2330,6 +2330,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         """Get the scorer based on the scoring method specified.
         The default scoring method is `accuracy`.
         """
+        if self.scoring == "warn":  # TODO(1.11): remove
+            return get_scorer("accuracy")
         scoring = self.scoring or "accuracy"
         return get_scorer(scoring)
 
