@@ -22,7 +22,7 @@ cdef struct SplitRecord:
     float64_t impurity_right  # Impurity of the right split.
     float64_t lower_bound     # Lower bound on value of both children for monotonicity
     float64_t upper_bound     # Upper bound on value of both children for monotonicity
-    bint missing_go_to_left  # Controls if missing values go to the left node.
+    uint8_t missing_go_to_left  # Controls if missing values go to the left node.
 
 
 cdef class Splitter:
