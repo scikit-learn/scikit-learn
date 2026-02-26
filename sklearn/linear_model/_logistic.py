@@ -1767,7 +1767,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     >>> clf.predict_proba(X[:2, :]).shape
     (2, 3)
     >>> clf.score(X, y)
-    0.98...
+    -0.041...
     """
 
     _parameter_constraints: dict = {**LogisticRegression._parameter_constraints}
