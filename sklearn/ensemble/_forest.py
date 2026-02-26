@@ -110,8 +110,7 @@ def _generate_sample_indices(
             replace=True,
             p=normalized_sample_weight,
         )
-    sample_indices = sample_indices.astype(np.int32)
-    return sample_indices
+    return sample_indices.astype(np.int32)
 
 
 def _generate_unsampled_indices(
@@ -125,9 +124,8 @@ def _generate_unsampled_indices(
     sample_counts = np.bincount(sample_indices, minlength=n_samples)
     unsampled_mask = sample_counts == 0
     indices_range = np.arange(n_samples)
-    unsampled_indices = indices_range[unsampled_mask]
+    return indices_range[unsampled_mask]
 
-    return unsampled_indices
 
 
 def _parallel_build_trees(
@@ -209,7 +207,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         estimator,
         n_estimators=100,
         *,
-        estimator_params=tuple(),
+        estimator_params=(),
         bootstrap=False,
         oob_score=False,
         n_jobs=None,
@@ -732,7 +730,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         estimator,
         n_estimators=100,
         *,
-        estimator_params=tuple(),
+        estimator_params=(),
         bootstrap=False,
         oob_score=False,
         n_jobs=None,
@@ -838,7 +836,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             raise ValueError(
                 "Valid presets for class_weight include "
                 '"balanced" and "balanced_subsample".'
-                'Given "%s".' % self.class_weight
+                f'Given "{self.class_weight}".'
             )
         if self.warm_start:
             warn(
@@ -1020,7 +1018,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         estimator,
         n_estimators=100,
         *,
-        estimator_params=tuple(),
+        estimator_params=(),
         bootstrap=False,
         oob_score=False,
         n_jobs=None,
@@ -2041,8 +2039,8 @@ class ExtraTreesClassifier(ForestClassifier):
         - If float, then `max_features` is a fraction and
           `max(1, int(max_features * n_features_in_))` features are considered at each
           split.
-        - If "sqrt", then `max_features=sqrt(n_features)`. This is a common 
-          heuristic for classification to reduce correlation between trees 
+        - If "sqrt", then `max_features=sqrt(n_features)`. This is a common
+          heuristic for classification to reduce correlation between trees
           and improve ensemble performance.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
