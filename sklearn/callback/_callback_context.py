@@ -176,6 +176,27 @@ class CallbackContext:
         return new_ctx
 
     @classmethod
+    def _from_function(cls, func_name, callbacks, task_name, task_id, max_subtasks):
+        """Private constructor to create a root context from a function."""
+        new_ctx = cls.__new__(cls)
+
+        new_ctx._callbacks = callbacks
+        new_ctx.estimator_name = func_name
+        # new_ctx.func_name = func_name
+        new_ctx.task_name = task_name
+        new_ctx.task_id = task_id
+        new_ctx.max_subtasks = max_subtasks
+        new_ctx.parent = None
+        new_ctx._children_map = {}
+        new_ctx.source_estimator_name = None
+        new_ctx.source_task_name = None
+        new_ctx._has_called_on_fit_begin = False
+
+        new_ctx._estimator_depth = 0
+
+        return new_ctx
+
+    @classmethod
     def _from_parent(cls, parent_context, *, task_name, task_id, max_subtasks):
         """Private constructor to create a sub-context.
 
@@ -302,6 +323,8 @@ class CallbackContext:
         estimator : estimator instance
             The estimator calling this callback hook.
         """
+        self._has_called_on_fit_begin = True
+
         for callback in self._callbacks:
             # Only call the on_fit_begin method of callbacks that are not
             # propagated from a meta-estimator.
@@ -309,8 +332,6 @@ class CallbackContext:
                 isinstance(callback, AutoPropagatedCallback) and self.parent is not None
             ):
                 callback.on_fit_begin(estimator)
-
-        self._has_called_on_fit_begin = True
 
         return self
 
@@ -357,6 +378,53 @@ class CallbackContext:
                     and self.parent is not None
                 ):
                     callback.on_fit_end(estimator, self)
+
+    def eval_on_function_begin(self, func_name):
+        """Evaluate the `on_function_begin` method of the callbacks.
+
+        Parameters
+        ----------
+        func_name : str
+            The name of the function calling this callback hook.
+        """
+        for callback in self._callbacks:
+            callback.on_function_begin(func_name)
+
+        return self
+
+    def eval_on_function_task_end(self, func_name, **kwargs):
+        """Evaluate the `on_function_task_end` method of the callbacks.
+
+        Parameters
+        ----------
+        func_name : str
+            The name of the function calling this callback hook.
+
+        **kwargs : dict
+            Additional optional arguments passed to the callback. The list of possible
+            keys and corresponding values are described in detail at <TODO: add link>.
+
+        Returns
+        -------
+        stop : bool
+            Whether or not to stop the current level of iterations at this end of this
+            task.
+        """
+        return any(
+            callback.on_function_task_end(func_name, self, **kwargs)
+            for callback in self._callbacks
+        )
+
+    def eval_on_function_end(self, func_name):
+        """Evaluate the `on_function_end` method of the callbacks.
+
+        Parameters
+        ----------
+        func_name : str
+            The name of the function calling this callback hook.
+        """
+        for callback in self._callbacks:
+            callback.on_function_end(func_name, self)
 
     def propagate_callbacks(self, sub_estimator):
         """Propagate the callbacks to a sub-estimator.
