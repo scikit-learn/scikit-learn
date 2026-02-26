@@ -390,6 +390,13 @@ class CallbackContext:
             )
         ]
 
+        # We store the parent context in the sub-estimator to be able to merge the task
+        # trees of the sub-estimator and the meta-estimator. We want to link the task
+        # trees even if there is no callback to propagate, as the sub-estimators might
+        # have non auto-propagated callbacks, which would need to have access to the
+        # whole tree.
+        sub_estimator._parent_callback_ctx = self
+
         if not callbacks_to_propagate:
             return self
 
@@ -400,10 +407,6 @@ class CallbackContext:
                 f"be propagated to this estimator."
             )
             return self
-
-        # We store the parent context in the sub-estimator to be able to merge the
-        # task trees of the sub-estimator and the meta-estimator.
-        sub_estimator._parent_callback_ctx = self
 
         sub_estimator.set_callbacks(
             getattr(sub_estimator, "_skl_callbacks", []) + callbacks_to_propagate
