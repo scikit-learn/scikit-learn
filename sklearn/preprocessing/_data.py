@@ -2896,9 +2896,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             Individual weights for each sample.
 
             .. versionadded:: 1.8
-               parameter *sample_weight* support for dense_fit in
-               QuantileTranformer.
-
         Returns
         -------
         self : object
