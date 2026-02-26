@@ -2794,6 +2794,9 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         ----------
         X : ndarray of shape (n_samples, n_features)
             The data used to scale along the features axis.
+        sample_weight : array-like of shape (n_samples,), default=None
+            Individual weights for each sample. Sample weights are not
+            supported for sparse inputs.
         """
         if self.ignore_implicit_zeros:
             warnings.warn(
@@ -2813,6 +2816,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 random_state=random_state,
                 sample_weight=sample_weight,
             )
+            # As we do not want to double count the sample weights, we set
+            # sample weights to None if they are used for subsampling
             sample_weight = None
 
         self.quantiles_ = np.zeros((len(references), n_features))
@@ -2909,19 +2914,23 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             )
 
         X = self._check_inputs(X, in_fit=True, copy=False)
+        n_samples = X.shape[0]
         if sample_weight is None:
-            n_samples = X.shape[0]
+            # sample_weight is None, is equivalent to all samples having unit
+            # weight, so the sum of weights is equal to the number of samples
+            effective_sample_size = n_samples
         else:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-            n_samples = np.sum(sample_weight)
+            effective_sample_size = np.sum(sample_weight)
 
-        if self.n_quantiles > n_samples:
+        if self.n_quantiles > effective_sample_size:
             warnings.warn(
                 "n_quantiles (%s) is greater than the total number "
                 "of samples (%s). n_quantiles is set to "
-                "n_samples." % (self.n_quantiles, n_samples)
+                "effective_sample_size (%s)."
+                % (self.n_quantiles, n_samples, effective_sample_size)
             )
-        self.n_quantiles_ = int(max(1, min(self.n_quantiles, n_samples)))
+        self.n_quantiles_ = int(max(1, min(self.n_quantiles, effective_sample_size)))
 
         rng = check_random_state(self.random_state)
 

@@ -1,3 +1,6 @@
-- :class:`preprocessing.QuantileTransformer` can now handle sample weights
-  by using `_weighted_percentile` when sample weights are not `None`.
-  By :user:`Karassay Raushanbek <kaekkr>` and :user:`Shruti Nath <snath-xoc>`.
+- :class:`preprocessing.QuantileTransformer` can now handle sample weight values
+  not equal to None by subsampling using sample weights if subsampling is
+  enabled or otherwise using _weighted_percentile. Support is only implemented
+  for dense X.
+  `. By :user:`Karassay Raushanbek <kaekkr>` & :user:`Shruti Nath
+  <snath-xoc>`.
