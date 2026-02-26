@@ -1,0 +1,11 @@
+- Fixed the way :class:`ensemble.HistGradientBoostingClassifier` and
+  `ensemble.HistGradientBoostingRegressor` compute their bin edges to properly and
+  consistently handle :term:`sample_weight`. When `sample_weights=None` is
+  passed to `fit` and the number of distinct feature values is less than the
+  specified `max_bins`, the edges are still set to midpoints between consecutive
+  feature values. Otherwise, the bin edges are set to weight-aware quantiles
+  computed using the averaged inverted CDF method. If `n_samples` is larger than
+  the `subsample` parameter, the weights are instead used to subsample the data
+  (with replacement) and the bin edges are set using unweighted quantiles of the
+  subsampled data. By
+  :user:`Shruti Nath <snath-xoc>` and :user:`Olivier Grisel <ogrisel>`
