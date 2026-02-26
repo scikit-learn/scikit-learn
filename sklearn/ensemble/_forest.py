@@ -1672,7 +1672,10 @@ class RandomForestRegressor(ForestRegressor):
           split.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
-        - If None or 1.0, then `max_features=n_features`.
+        - If 1.0, then `max_features=n_features`. Using all features
+          is often used in regression to minimize the bias of individual
+          trees, though using a smaller value (like "sqrt") can further
+          reduce the variance of the ensemble.
 
         .. note::
             The default of 1.0 is equivalent to bagged trees and more
@@ -2038,7 +2041,9 @@ class ExtraTreesClassifier(ForestClassifier):
         - If float, then `max_features` is a fraction and
           `max(1, int(max_features * n_features_in_))` features are considered at each
           split.
-        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "sqrt", then `max_features=sqrt(n_features)`. This is a common 
+          heuristic for classification to reduce correlation between trees 
+          and improve ensemble performance.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
 
