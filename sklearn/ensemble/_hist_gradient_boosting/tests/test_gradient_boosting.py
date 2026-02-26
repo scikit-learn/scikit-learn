@@ -2,6 +2,8 @@ import copyreg
 import io
 import pickle
 import re
+import sys
+import sysconfig
 import warnings
 from unittest.mock import Mock
 
@@ -1349,6 +1351,12 @@ def test_interaction_cst_numerically():
     )
 
 
+@pytest.mark.xfail(
+    sysconfig.get_config_var("Py_GIL_DISABLED") == 1
+    and sys.version_info[:2] == (3, 13),
+    reason="Fails intermittently in the CI for Python 3.13 free-threaded,"
+    " see https://github.com/scikit-learn/scikit-learn/issues/32631",
+)
 def test_no_user_warning_with_scoring():
     """Check that no UserWarning is raised when scoring is set.
 
