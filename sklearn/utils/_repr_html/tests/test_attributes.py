@@ -1,7 +1,9 @@
 import numpy as np
 import pytest
+from numpy.testing import assert_array_equal
 
 from sklearn import config_context
+from sklearn.linear_model import LogisticRegression
 from sklearn.utils._repr_html.fitted_attributes import AttrsDict, _fitted_attr_html_repr
 
 fitted_attrs = AttrsDict(
@@ -38,3 +40,13 @@ def test_fitted_attr_html_repr():
     out = _fitted_attr_html_repr(fitted_attrs)
     assert "<summary>Fitted attributes</summary>" in out
     assert '<table class="parameters-table">' in out
+
+
+def test_pandas_column_names():
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"A": [0, 2, 4], "B": [3, 4, 5], "C": [3, 4, 4]})
+    y = pd.DataFrame({"y": [1, 2, 3]})
+    model = LogisticRegression()
+    model.fit(X, y)
+
+    assert_array_equal(model.feature_names_in_, np.array(["A", "B", "C"], dtype=object))
