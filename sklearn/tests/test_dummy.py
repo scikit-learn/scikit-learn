@@ -713,3 +713,59 @@ def test_dtype_of_classifier_probas(strategy):
     probas = model.fit(X, y).predict_proba(X)
 
     assert probas.dtype == np.float64
+
+
+def test_uniform_proba_strategy(global_random_seed) -> None:
+    """Basic checks on uniform probability distributions in the dummy classifier."""
+    X = [[0]] * 5  # ignored
+    y = [1, 2, 1, 1, 2]
+    clf = DummyClassifier(strategy="uniform-proba", random_state=global_random_seed)
+    clf.fit(X, y)
+
+    X_test = [[0]] * 100
+    y_pred_proba = clf.predict_proba(X_test)
+
+    # Check that probabilities sum to 1 for each sample
+    assert_array_almost_equal(np.sum(y_pred_proba, axis=1), np.ones(len(X_test)))
+
+    # Check that all probabilities are >= 0
+    assert np.all(y_pred_proba >= 0)
+
+    # Check shape
+    assert y_pred_proba.shape == (len(X_test), len(np.unique(y)))
+
+    # Check that predict returns the class with highest probability
+    y_pred = clf.predict(X_test)
+    for i in range(len(X_test)):
+        assert y_pred[i] == clf.classes_[np.argmax(y_pred_proba[i])]
+
+    _check_predict_proba(clf, X_test, y)
+
+
+def test_uniform_proba_strategy_multioutput(global_random_seed):
+    X = [[0]] * 5  # ignored
+    y = np.array([[2, 1], [2, 2], [1, 1], [1, 2], [1, 1]])
+
+    clf = DummyClassifier(strategy="uniform-proba", random_state=global_random_seed)
+    clf.fit(X, y)
+
+    X_test = [[0]] * 100
+    y_pred = clf.predict(X_test)
+    y_pred_proba = clf.predict_proba(X_test)
+
+    # For multioutput, predict_proba returns a list of arrays
+    assert isinstance(y_pred_proba, list)
+    assert len(y_pred_proba) == y.shape[1]
+
+    for k in range(y.shape[1]):
+        # Check that probabilities sum to 1 for each sample
+        assert_array_almost_equal(np.sum(y_pred_proba[k], axis=1), np.ones(len(X_test)))
+
+        # Check that all probabilities are >= 0
+        assert np.all(y_pred_proba[k] >= 0)
+
+        # Check shape
+        assert y_pred_proba[k].shape == (len(X_test), len(np.unique(y[:, k])))
+
+    _check_predict_proba(clf, X_test, y)
+    _check_behavior_2d(clf)
