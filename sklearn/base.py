@@ -1350,7 +1350,7 @@ def _fit_context(*, prefer_skip_nested_validation):
                         prefer_skip_nested_validation or global_skip_validation
                     )
                 ),
-                callback_management_context(estimator, fit_method.__name__),
+                callback_management_context(estimator),
             ):
                 return fit_method(estimator, *args, **kwargs)
 
