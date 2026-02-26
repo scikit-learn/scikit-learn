@@ -404,7 +404,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
             s_3 = b - K.dot(R.dot(b))  # Line 14
 
-            d_Z[j] = (s_1 + s_2.T.dot(s_3)) / np.exp(kernel.theta[j])  # Line 15
+            d_Z[j] = s_1 + s_2.T.dot(s_3)  # Line 15
 
         return Z, d_Z
 
