@@ -1071,7 +1071,8 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
         )
 
 
-# TODO(1.11): FILTER
+# TODO(1.11): remove filterwarnings with change of default scoring
+@pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
 # TODO(1.10): remove filterwarnings with deprecation period of use_legacy_attributes
 @pytest.mark.filterwarnings("ignore:.*use_legacy_attributes.*:FutureWarning")
 @pytest.mark.parametrize("problem", ("single", "cv"))
@@ -1481,6 +1482,7 @@ def test_n_iter(solver, use_legacy_attributes):
         cv=n_cv_fold,
         random_state=42,
         use_legacy_attributes=use_legacy_attributes,
+        scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
     )
     clf_cv.fit(X, y_bin)
     if use_legacy_attributes:
@@ -2608,7 +2610,8 @@ def test_newton_cholesky_fallback_to_lbfgs():
     assert n_iter_nc_limited == lr_nc_limited.max_iter - 1
 
 
-# TODO(1.11): remove
+# TODO(1.11): remove filterwarnings with change of default scoring
+@pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
 # TODO(1.10): remove filterwarnings with deprecation period of use_legacy_attributes
 @pytest.mark.filterwarnings("ignore:.*use_legacy_attributes.*:FutureWarning")
 @pytest.mark.parametrize("Estimator", [LogisticRegression, LogisticRegressionCV])
@@ -2619,8 +2622,8 @@ def test_liblinear_multiclass_raises(Estimator):
         Estimator(solver="liblinear").fit(iris.data, iris.target)
 
 
-# TODO(1.11): remove
 # TODO(1.10): remove after deprecation cycle of penalty.
+@pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
 @pytest.mark.filterwarnings("ignore:.*default.*use_legacy_attributes.*:FutureWarning")
 @pytest.mark.parametrize("est", [LogisticRegression, LogisticRegressionCV])
 def test_penalty_deprecated(est):

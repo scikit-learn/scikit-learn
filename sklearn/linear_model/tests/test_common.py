@@ -222,7 +222,8 @@ def test_linear_model_regressor_coef_shape(Regressor, ndim):
             {
                 "solver": "newton-cholesky",
                 "use_legacy_attributes": False,
-                "l1_ratios": (0,),
+                "l1_ratios": (0,),  # TODO(1.10): remove
+                "scoring": "neg_log_loss",  # TODO(1.11): remove
             },
         ),
         (PassiveAggressiveClassifier, {}),
