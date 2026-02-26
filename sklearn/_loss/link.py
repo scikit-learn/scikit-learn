@@ -11,7 +11,6 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.stats import gmean
 
-from sklearn.externals.array_api_compat import numpy as np_compat
 from sklearn.utils._array_api import _expit, _logit, get_namespace
 from sklearn.utils.extmath import softmax
 
@@ -60,7 +59,7 @@ class Interval:
         return bool(xp.all(high))
 
 
-def _inclusive_low_high(interval, dtype=np_compat.float64, xp=np_compat):
+def _inclusive_low_high(interval, dtype=None, xp=None):
     """Generate values low and high to be within the interval range.
 
     This is used in tests only.
@@ -70,6 +69,8 @@ def _inclusive_low_high(interval, dtype=np_compat.float64, xp=np_compat):
     low, high : tuple
         The returned values low and high lie within the interval.
     """
+    xp, _ = get_namespace(interval)
+    dtype = dtype or xp.float64
     eps = 10 * xp.finfo(dtype).eps
     if interval.low == -xp.inf:
         low = -1e10
