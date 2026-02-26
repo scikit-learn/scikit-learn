@@ -64,7 +64,7 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
         callback_ctx.eval_on_fit_begin(estimator=self)
 
         for i in range(self.max_iter):
-            subcontext = callback_ctx.subcontext(task_id=i, task_name="fit_iter")
+            subcontext = callback_ctx.subcontext(task_id=i, task_name="iteration")
 
             time.sleep(self.computation_intensity)  # Computation intensive task
 
@@ -99,7 +99,7 @@ class WhileEstimator(CallbackSupportMixin, BaseEstimator):
         self.computation_intensity = computation_intensity
 
     @_fit_context(prefer_skip_nested_validation=False)
-    def fit(self, X=None, y=None, X_val=None, y_val=None):
+    def fit(self, X=None, y=None):
         callback_ctx = self._init_callback_context(max_subtasks=None)
         callback_ctx.eval_on_fit_begin(estimator=self)
 
