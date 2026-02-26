@@ -1067,11 +1067,7 @@ class SelectFwe(_BaseFilter):
             h0_rejected[sorted_ids] = self.pvalues_[
                 sorted_ids
             ] < self.alpha / np.arange(len(self.pvalues_), 0, -1)
-        else:
-            raise ValueError(
-                f"Invalid fwe_control method: {self.fwe_control}. "
-                "Expected 'bonf' or 'holm'."
-            )
+        
         return h0_rejected
 
 
