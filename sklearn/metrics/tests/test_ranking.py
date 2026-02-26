@@ -2603,3 +2603,11 @@ def test_metric_at_thresholds_with_nan_outputs():
     )
 
     assert np.all(np.isnan(metric_values))
+
+
+# TODO(1.11): remove this test
+def test_confusion_matrix_at_thresholds_positional_args_deprecation():
+    y_true = np.array([0, 1, 1, 0])
+    y_score = np.array([0.2, 0.1, 0.7, 0.7])
+    with pytest.warns(FutureWarning, match="Pass pos_label=None as keyword arg"):
+        confusion_matrix_at_thresholds(y_true, y_score, None)
