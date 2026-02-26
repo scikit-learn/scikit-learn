@@ -777,11 +777,9 @@ def _log_reg_scoring_path(
         else:
             sig = []
 
-        if (is_binary and "labels" in sig and "pos_label" in sig) or (
-            len(classes) >= 3 and "labels" in sig
-        ):
+        if "labels" in sig:
             pos_label_kwarg = {}
-            if is_binary:
+            if is_binary and "pos_label" in sig:
                 # see _logistic_regression_path
                 pos_label_kwarg["pos_label"] = classes[-1]
             scoring = make_scorer(
