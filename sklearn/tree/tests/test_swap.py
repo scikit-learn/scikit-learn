@@ -8,7 +8,7 @@ from sklearn.tree._partitioner import _py_swap_array_slices
 def test_py_swap_array_slices_random(dtype, global_random_seed):
     def swap_slices_np(arr, start, end, n):
         """
-        Swaps the order of the slices array[start:start + n] and
+        Swaps the two slices array[start:start + n] and
         array[start + n:end] while preserving the order in the slices.
         """
         arr = arr.copy()
