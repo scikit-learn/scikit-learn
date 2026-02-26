@@ -2899,6 +2899,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             supported for sparse inputs.
 
             .. versionadded:: 1.8
+
         Returns
         -------
         self : object
