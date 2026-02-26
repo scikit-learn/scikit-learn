@@ -114,7 +114,6 @@ cdef class DensePartitioner:
         Non-missing values are correspondingly moved from the left to the right while
         preserving their inner ordering.
         """
-        assert not self.missing_on_the_left
         cdef intp_t n_non_missing = self.end - self.start - self.n_missing
         swap_array_slices(self.samples, self.start, self.end, n_non_missing, self.swap_buffer)
         swap_array_slices(self.feature_values, self.start, self.end, n_non_missing, self.swap_buffer)
