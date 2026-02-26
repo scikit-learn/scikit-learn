@@ -1,6 +1,7 @@
 - The HTML representation of all scikit-learn estimators
   inheriting from :class:`base.BaseEstimator` now includes a table
-  displaying their fitted attributes. These attributes are identified
-  by a trailing underscore and do not begin with one.
+  displaying their fitted :term:`attributes`. Those are all the public
+  estimator attributes that are computed during the call to :term:`fit`
+  with a name that ends with an underscore.
   By :user:`Dea María Léon <DeaMariaLeon>`,
   :user: `Jérémie du Boisberranger <jeremiedbb>`.
