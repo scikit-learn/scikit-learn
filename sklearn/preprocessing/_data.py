@@ -2794,9 +2794,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         ----------
         X : ndarray of shape (n_samples, n_features)
             The data used to scale along the features axis.
-        sample_weight : array-like of shape (n_samples,), default=None
-            Individual weights for each sample. Sample weights are not
-            supported for sparse inputs.
         """
         if self.ignore_implicit_zeros:
             warnings.warn(
@@ -2898,7 +2895,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             Ignored.
 
         sample_weight : array-like of shape (n_samples,), default=None
-            Individual weights for each sample.
+            Individual weights for each sample. Sample weights are not
+            supported for sparse inputs.
 
             .. versionadded:: 1.8
         Returns
