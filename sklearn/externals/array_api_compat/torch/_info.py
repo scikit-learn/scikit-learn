@@ -309,7 +309,7 @@ class __array_namespace_info__:
         for k, v in res.copy().items():
             try:
                 torch.empty((0,), dtype=v, device=device)
-            except:
+            except Exception:
                 del res[k]
         return res
 
@@ -362,7 +362,7 @@ class __array_namespace_info__:
                     if a.device in devices:
                         break
                     devices.append(a.device)
-                except:
+                except Exception:
                     break
                 i += 1
 
