@@ -1025,7 +1025,13 @@ API_REFERENCE = {
         "sections": [
             {
                 "title": None,
-                "autosummary": ["BernoulliRBM", "MLPClassifier", "MLPRegressor"],
+                "autosummary": [
+                    "BernoulliRBM",
+                    "MLPClassifier",
+                    "MLPRegressor",
+                    "ExtremeLearningClassifier",
+                    "ExtremeLearningRegressor",
+                ],
             },
         ],
     },
