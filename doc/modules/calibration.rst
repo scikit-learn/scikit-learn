@@ -279,6 +279,8 @@ one, a postprocessing is performed to normalize them.
 On the other hand, temperature scaling naturally supports multiclass
 predictions by working with logits and finally applying the softmax function.
 
+.. _temperature_scaling:
+
 Temperature Scaling
 ^^^^^^^^^^^^^^^^^^^
 
