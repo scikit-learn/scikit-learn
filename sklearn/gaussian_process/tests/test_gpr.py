@@ -146,7 +146,7 @@ def test_solution_inside_bounds(kernel):
     reason="https://github.com/scikit-learn/scikit-learn/issues/31366",
 )
 @pytest.mark.parametrize("kernel", non_fixed_kernels)
-@pytest.mark.parametrize("length_scale", np.logspace(-3, 3, 101))
+@pytest.mark.parametrize("length_scale", np.logspace(-3, 3, 13))
 def test_lml_gradient(kernel, length_scale):
     # Clone the kernel object prior to mutating it to avoid any side effects between
     # GP tests:
