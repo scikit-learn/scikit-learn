@@ -9,9 +9,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 import numpy as np
-from scipy.special import expit, logit
 from scipy.stats import gmean
 
+from sklearn.utils._array_api import _expit, _logit, get_namespace
 from sklearn.utils.extmath import softmax
 
 
@@ -41,24 +41,25 @@ class Interval:
         -------
         result : bool
         """
+        xp, _ = get_namespace(x)
         if self.low_inclusive:
-            low = np.greater_equal(x, self.low)
+            low = xp.greater_equal(x, self.low)
         else:
-            low = np.greater(x, self.low)
+            low = xp.greater(x, self.low)
 
-        if not np.all(low):
+        if not xp.all(low):
             return False
 
         if self.high_inclusive:
-            high = np.less_equal(x, self.high)
+            high = xp.less_equal(x, self.high)
         else:
-            high = np.less(x, self.high)
+            high = xp.less(x, self.high)
 
         # Note: np.all returns numpy.bool_
-        return bool(np.all(high))
+        return bool(xp.all(high))
 
 
-def _inclusive_low_high(interval, dtype=np.float64):
+def _inclusive_low_high(interval, dtype=None, xp=None):
     """Generate values low and high to be within the interval range.
 
     This is used in tests only.
@@ -68,22 +69,24 @@ def _inclusive_low_high(interval, dtype=np.float64):
     low, high : tuple
         The returned values low and high lie within the interval.
     """
-    eps = 10 * np.finfo(dtype).eps
-    if interval.low == -np.inf:
+    xp, _ = get_namespace(np.array([interval.low, interval.high]), xp=xp)
+    dtype = dtype or xp.float64
+    eps = 10 * xp.finfo(dtype).eps
+    if interval.low == -xp.inf:
         low = -1e10
     elif interval.low < 0:
         low = interval.low * (1 - eps) + eps
     else:
         low = interval.low * (1 + eps) + eps
 
-    if interval.high == np.inf:
+    if interval.high == xp.inf:
         high = 1e10
     elif interval.high < 0:
         high = interval.high * (1 + eps) - eps
     else:
         high = interval.high * (1 - eps) - eps
 
-    return low, high
+    return float(low), float(high)
 
 
 class BaseLink(ABC):
@@ -109,7 +112,7 @@ class BaseLink(ABC):
     interval_y_pred = Interval(-np.inf, np.inf, False, False)
 
     @abstractmethod
-    def link(self, y_pred, out=None):
+    def link(self, y_pred):
         """Compute the link function g(y_pred).
 
         The link function maps (predicted) target values to raw predictions,
@@ -119,19 +122,15 @@ class BaseLink(ABC):
         ----------
         y_pred : array
             Predicted target values.
-        out : array
-            A location into which the result is stored. If provided, it must
-            have a shape that the inputs broadcast to. If not provided or None,
-            a freshly-allocated array is returned.
 
         Returns
         -------
-        out : array
+        array
             Output array, element-wise link function.
         """
 
     @abstractmethod
-    def inverse(self, raw_prediction, out=None):
+    def inverse(self, raw_prediction):
         """Compute the inverse link function h(raw_prediction).
 
         The inverse link function maps raw predictions to predicted target
@@ -141,14 +140,10 @@ class BaseLink(ABC):
         ----------
         raw_prediction : array
             Raw prediction values (in link space).
-        out : array
-            A location into which the result is stored. If provided, it must
-            have a shape that the inputs broadcast to. If not provided or None,
-            a freshly-allocated array is returned.
 
         Returns
         -------
-        out : array
+        array
             Output array, element-wise inverse link function.
         """
 
@@ -156,12 +151,8 @@ class BaseLink(ABC):
 class IdentityLink(BaseLink):
     """The identity link function g(x)=x."""
 
-    def link(self, y_pred, out=None):
-        if out is not None:
-            np.copyto(out, y_pred)
-            return out
-        else:
-            return y_pred
+    def link(self, y_pred):
+        return y_pred  # TODO: Should we copy?
 
     inverse = link
 
@@ -171,11 +162,13 @@ class LogLink(BaseLink):
 
     interval_y_pred = Interval(0, np.inf, False, False)
 
-    def link(self, y_pred, out=None):
-        return np.log(y_pred, out=out)
+    def link(self, y_pred):
+        xp, _ = get_namespace(y_pred)
+        return xp.log(y_pred)
 
-    def inverse(self, raw_prediction, out=None):
-        return np.exp(raw_prediction, out=out)
+    def inverse(self, raw_prediction):
+        xp, _ = get_namespace(raw_prediction)
+        return xp.exp(raw_prediction)
 
 
 class LogitLink(BaseLink):
@@ -183,11 +176,11 @@ class LogitLink(BaseLink):
 
     interval_y_pred = Interval(0, 1, False, False)
 
-    def link(self, y_pred, out=None):
-        return logit(y_pred, out=out)
+    def link(self, y_pred):
+        return _logit(y_pred)
 
-    def inverse(self, raw_prediction, out=None):
-        return expit(raw_prediction, out=out)
+    def inverse(self, raw_prediction):
+        return _expit(raw_prediction)
 
 
 class HalfLogitLink(BaseLink):
@@ -198,13 +191,11 @@ class HalfLogitLink(BaseLink):
 
     interval_y_pred = Interval(0, 1, False, False)
 
-    def link(self, y_pred, out=None):
-        out = logit(y_pred, out=out)
-        out *= 0.5
-        return out
+    def link(self, y_pred):
+        return 0.5 * _logit(y_pred)
 
-    def inverse(self, raw_prediction, out=None):
-        return expit(2 * raw_prediction, out)
+    def inverse(self, raw_prediction):
+        return _expit(2 * raw_prediction)
 
 
 class MultinomialLogit(BaseLink):
@@ -257,20 +248,17 @@ class MultinomialLogit(BaseLink):
     interval_y_pred = Interval(0, 1, False, False)
 
     def symmetrize_raw_prediction(self, raw_prediction):
-        return raw_prediction - np.mean(raw_prediction, axis=1)[:, np.newaxis]
+        xp, _ = get_namespace(raw_prediction)
+        return raw_prediction - xp.mean(raw_prediction, axis=1)[:, None]
 
-    def link(self, y_pred, out=None):
+    def link(self, y_pred):
+        xp, _ = get_namespace(y_pred)
         # geometric mean as reference category
         gm = gmean(y_pred, axis=1)
-        return np.log(y_pred / gm[:, np.newaxis], out=out)
+        return xp.log(y_pred / gm[:, None])
 
-    def inverse(self, raw_prediction, out=None):
-        if out is None:
-            return softmax(raw_prediction, copy=True)
-        else:
-            np.copyto(out, raw_prediction)
-            softmax(out, copy=False)
-            return out
+    def inverse(self, raw_prediction):
+        return softmax(raw_prediction)
 
 
 _LINKS = {
