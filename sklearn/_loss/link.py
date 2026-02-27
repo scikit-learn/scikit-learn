@@ -69,7 +69,7 @@ def _inclusive_low_high(interval, dtype=None, xp=None):
     low, high : tuple
         The returned values low and high lie within the interval.
     """
-    xp, _ = get_namespace(interval)
+    xp, _ = get_namespace(np.array([interval.low, interval.high]), xp=xp)
     dtype = dtype or xp.float64
     eps = 10 * xp.finfo(dtype).eps
     if interval.low == -xp.inf:
