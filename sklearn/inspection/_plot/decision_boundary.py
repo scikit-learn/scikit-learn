@@ -303,7 +303,6 @@ class DecisionBoundaryDisplay:
         """
         check_matplotlib_support("DecisionBoundaryDisplay.plot")
         import matplotlib as mpl
-        import matplotlib.pyplot as plt
 
         if plot_method not in ("contourf", "contour", "pcolormesh"):
             raise ValueError(
@@ -312,7 +311,7 @@ class DecisionBoundaryDisplay:
             )
 
         if ax is None:
-            _, ax = plt.subplots()
+            _, ax = mpl.pyplot.subplots()
 
         plot_func = getattr(ax, plot_method)
         if self.n_classes == 2:
