@@ -235,3 +235,23 @@ def test_error_zero_variances(array_constructor):
     clf = NearestCentroid()
     with pytest.raises(ValueError, match="All features have zero variance"):
         clf.fit(X, y)
+        
+def test_partial_fit_nearest_centroid():
+    import numpy as np
+    from sklearn.neighbors import NearestCentroid
+
+    # First batch
+    X1 = np.array([[1, 2], [2, 3]])
+    y1 = np.array([0, 0])
+
+    # Second batch
+    X2 = np.array([[10, 11], [11, 12]])
+    y2 = np.array([1, 1])
+
+    clf = NearestCentroid()
+
+    clf.partial_fit(X1, y1, classes=[0, 1])
+    clf.partial_fit(X2, y2)
+
+    assert clf.centroids_.shape == (2, 2)
+    assert len(clf.class_count_) == 2
