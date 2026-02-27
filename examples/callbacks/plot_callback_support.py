@@ -128,18 +128,16 @@ class SimpleKMeans(CallbackSupportMixin, BaseEstimator):
         return np.argmin(euclidean_distances(X, self.cluster_centers_), axis=1)
 
     # Then the `fit` function must be decorated with the `with_callback_context`
-    # decorator, which will create the `CallbackContext` object and take care of the
-    # proper tear down of callbacks.
+    # decorator, which will take care of the proper tear down of callbacks.
     @with_callback_context
     def fit(self, X, y=None):
         X = validate_data(self, X)
         random_state = check_random_state(self.random_state)
-        # The `CallbackContext` object is accessible in `fit` as the `_callback_fit_ctx`
-        # attribute of the estimator.
-        callback_ctx = self._callback_fit_ctx
-        # As soon as known (if ever), the `fit` method should set the maximum number of
-        # iterative tasks as an attribute of the callback context.
-        callback_ctx.max_subtasks = self.n_iter
+        # The `CallbackContext` object must be instantiated with the
+        # `_init_callback_context` method provided by the mixin.
+        callback_ctx = self._init_callback_context(
+            task_name="fit", task_id=0, max_subtasks=self.n_iter
+        )
         # Then the callback context's `eval_on_fit_begin` method must be called. It will
         # trigger all the callbacks' `on_fit_begin` methods.
         callback_ctx.eval_on_fit_begin(estimator=self)
@@ -278,10 +276,10 @@ class SimpleGridSearch(CallbackSupportMixin, BaseEstimator):  # noqa: F811
     @with_callback_context
     def fit(self, X, y=None):
         cv = check_cv(self.cv)
-        # The callback context can also be accessed as an attribute.
-        callback_ctx = self._callback_fit_ctx
-        # The `max_subtasks` attribute must again be declared.
-        callback_ctx.max_subtasks = len(self.param_list)
+        # The callback context must also be instantiated.
+        callback_ctx = self._init_callback_context(
+            task_name="fit", task_id=0, max_subtasks=len(self.param_list)
+        )
         # The `eval_on_fit_begin` method must again be called.
         callback_ctx.eval_on_fit_begin(estimator=self)
 
