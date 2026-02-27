@@ -210,8 +210,7 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
 
 def _func(meta_estimator, inner_estimator, X, y, *, outer_callback_ctx):
     for i in range(meta_estimator.n_inner):
-        est = clone(inner_estimator)
-
+        est = clone(inner_estimator, keep_callbacks=True)
         inner_ctx = outer_callback_ctx.subcontext(
             task_name="inner", task_id=i
         ).propagate_callbacks(sub_estimator=est)
