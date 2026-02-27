@@ -263,6 +263,7 @@ def _yield_regressor_checks(regressor):
     yield check_regressors_train
     yield partial(check_regressors_train, readonly_memmap=True)
     yield partial(check_regressors_train, readonly_memmap=True, X_dtype="float32")
+    yield check_regressors_predict_single_target
     yield check_regressor_data_not_an_array
     yield check_estimators_partial_fit_n_features
     if tags.target_tags.multi_output:
@@ -3533,6 +3534,41 @@ def check_regressors_train(
     # skipped
     if not get_tags(regressor).regressor_tags.poor_score:
         assert regressor.score(X, y_) > 0.5
+
+
+def check_regressors_predict_single_target(name, regressor_orig):
+    # check the consistency of the prediction obtained from regressors with
+    # single target.
+    X, y = _regression_dataset()
+    X = _pairwise_estimator_convert_X(X, regressor_orig)
+    y = scale(y)  # X is already scaled
+    regressor = clone(regressor_orig)
+    y = _enforce_estimator_tags_y(regressor, y)
+    assert y.ndim == 1
+
+    if not hasattr(regressor, "alphas") and hasattr(regressor, "alpha"):
+        # linear regressors need to set alpha, but not generalized CV ones
+        regressor.alpha = 0.01
+    if name == "PassiveAggressiveRegressor":
+        regressor.C = 0.01
+
+    set_random_state(regressor)
+    regressor.fit(X, y)
+    y_pred = regressor.predict(X)
+    assert y_pred.shape == y.shape, (
+        f"The shape of the prediction of {name} is not consistent with "
+        f"y.shape={y.shape}. We expect a shape of {y.shape} but predictions have a "
+        f" shape of {y_pred.shape}."
+    )
+
+    y = y[:, np.newaxis]
+    regressor.fit(X, y)
+    y_pred = regressor.predict(X)
+    assert y_pred.shape == (y.shape[0],), (
+        f"The shape of the prediction of {name} is not consistent with "
+        f"y.shape={y.shape}. We expect a shape of {(y.shape[0],)} but predictions have "
+        f"a shape of {y_pred.shape}."
+    )
 
 
 @ignore_warnings
