@@ -1619,7 +1619,7 @@ def test_sk_visual_block_remainder_col_names_pandas():
     )
     ct.fit(df)
     visual_block = ct._sk_visual_block_()
-    assert visual_block.name_details == (["col1", "col2"])
+    assert visual_block.name_details == ([0, "col2"])
 
 
 @pytest.mark.parametrize("remainder", ["passthrough", StandardScaler()])
