@@ -8,28 +8,20 @@ from io import StringIO
 from pathlib import Path
 
 from sklearn import config_context
-
-
-class _IDCounter:
-    """Generate sequential ids with a prefix."""
-
-    def __init__(self, prefix):
-        self.prefix = prefix
-        self.count = 0
-
-    def get_id(self):
-        self.count += 1
-        return f"{self.prefix}-{self.count}"
+from sklearn.utils._repr_html.base import _IDCounter
+from sklearn.utils._repr_html.features import _features_html
 
 
 def _get_css_style():
     estimator_css_file = Path(__file__).parent / "estimator.css"
     params_css_file = Path(__file__).parent / "params.css"
+    features_css_file = Path(__file__).parent / "features.css"
 
     estimator_css = estimator_css_file.read_text(encoding="utf-8")
     params_css = params_css_file.read_text(encoding="utf-8")
+    features_css = features_css_file.read_text(encoding="utf-8")
 
-    return f"{estimator_css}\n{params_css}"
+    return f"{estimator_css}\n{params_css}\n{features_css}"
 
 
 _CONTAINER_ID_COUNTER = _IDCounter("sk-container-id")
@@ -111,6 +103,7 @@ def _write_label_html(
     name_details,
     name_caption=None,
     doc_link_label=None,
+    features="",
     outer_class="sk-label-container",
     inner_class="sk-label",
     checked=False,
@@ -220,10 +213,22 @@ def _write_label_html(
                 name_details = ""
             fmt_str = "".join([fmt_str, f"<pre>{name_details}</pre></div>"])
 
+        if len(features) == 0:
+            features_div = ""
+        else:
+            features_div = _features_html(features, is_fitted_css_class)
+
+        fmt_str = "".join(
+            [
+                fmt_str,
+                "</div></div>",
+                features_div,
+            ]
+        )
         out.write(fmt_str)
     else:
         out.write(f"<label>{name}</label>")
-    out.write("</div></div>")  # outer_class inner_class
+        out.write("</div></div>")  # outer_class inner_class
 
 
 def _get_visual_block(estimator):
@@ -323,6 +328,10 @@ def _write_estimator_html(
         doc_link = estimator._get_doc_link()
     else:
         doc_link = ""
+
+    has_feature_names_out = hasattr(estimator, "get_feature_names_out")
+    is_not_pipeline_step = not hasattr(estimator, "steps")
+
     if est_block.kind in ("serial", "parallel"):
         dashed_wrapped = first_call or est_block.dash_wrapped
         dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
@@ -342,6 +351,7 @@ def _write_estimator_html(
                 estimator_label,
                 estimator_label_details,
                 doc_link=doc_link,
+                features="",
                 is_fitted_css_class=is_fitted_css_class,
                 is_fitted_icon=is_fitted_icon,
                 param_prefix=param_prefix,
@@ -386,8 +396,42 @@ def _write_estimator_html(
                 )
                 out.write("</div>")  # sk-parallel-item
 
-        out.write("</div></div>")
+        out.write("</div>")
+
+        is_column_transformer = estimator_label in (
+            "ColumnTransformer",
+            "transformer: ColumnTransformer",
+        )
+        has_single_estimator = len(est_block.estimators) == 1
+        if (
+            is_fitted_css_class
+            and has_feature_names_out
+            and is_not_pipeline_step
+            and not (is_column_transformer and has_single_estimator)
+        ):
+            features_div = _features_html(
+                estimator.get_feature_names_out(), is_fitted_css_class
+            )
+            total_output_features_item = (
+                f"<div class='total_features'>{features_div}</div>"
+            )
+            out.write(total_output_features_item)
+
+        out.write("</div>")
     elif est_block.kind == "single":
+        if (
+            has_feature_names_out
+            and is_not_pipeline_step
+            and is_fitted_css_class
+            and hasattr(estimator, "n_features_in_")
+        ):
+            output_features = estimator.get_feature_names_out()
+        else:
+            output_features = ""
+
+        if est_block.names == "NoneType(...)":
+            est_block.names = "passthrough"
+
         if (
             hasattr(estimator, "_get_params_html")
             and not est_block.names == "passthrough"
@@ -407,6 +451,7 @@ def _write_estimator_html(
             inner_class="sk-estimator",
             checked=first_call,
             doc_link=doc_link,
+            features=output_features,
             is_fitted_css_class=is_fitted_css_class,
             is_fitted_icon=is_fitted_icon,
             param_prefix=param_prefix,

@@ -1,0 +1,7 @@
+- The HTML representation of all scikit-learn estimators
+  inheriting from :class:`base.BaseEstimator` now displays a new block
+  showing the number and names of the output features when using a
+  :class:`compose.ColumnTransformer` or a :class:`pipeline.FeatureUnion`. A copy-paste
+  button is available for the output features name.
+  By :user:`Dea María Léon <DeaMariaLeon>`, :user:`Guillaume Lemaitre <glemaitre>`
+  and :user:`Olivier Grisel <ogrisel>`.

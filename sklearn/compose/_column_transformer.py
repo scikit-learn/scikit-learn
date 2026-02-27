@@ -557,6 +557,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         remaining = sorted(set(range(self.n_features_in_)) - cols)
         self._transformer_to_input_indices["remainder"] = remaining
         remainder_cols = self._get_remainder_cols(remaining)
+
         self._remainder = ("remainder", self.remainder, remainder_cols)
 
     def _get_remainder_cols_dtype(self):
@@ -1224,9 +1225,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return np.hstack(Xs)
 
     def _sk_visual_block_(self):
-        if isinstance(self.remainder, str) and self.remainder == "drop":
-            transformers = self.transformers
-        elif hasattr(self, "_remainder"):
+        if hasattr(self, "transformers_"):
+            transformers = [
+                transformer
+                for transformer in self.transformers_
+                if not (transformer[0] == "remainder" and transformer[1] == "drop")
+            ]
+            # We can find remainder and its column only when it's fitted
+
             remainder_columns = self._remainder[2]
             if (
                 hasattr(self, "feature_names_in_")
@@ -1234,13 +1240,15 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 and not all(isinstance(col, str) for col in remainder_columns)
             ):
                 remainder_columns = self.feature_names_in_[remainder_columns].tolist()
-            transformers = chain(
-                self.transformers, [("remainder", self.remainder, remainder_columns)]
-            )
-        else:
-            transformers = chain(self.transformers, [("remainder", self.remainder, [])])
-
+        else:  # not fitted
+            if self.remainder != "drop":
+                transformers = chain(
+                    self.transformers, [("remainder", self.remainder, [])]
+                )
+            else:
+                transformers = self.transformers
         names, transformers, name_details = zip(*transformers)
+
         return _VisualBlock(
             "parallel", transformers, names=names, name_details=name_details
         )
