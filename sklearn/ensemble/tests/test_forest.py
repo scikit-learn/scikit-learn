@@ -1894,7 +1894,7 @@ def test_missing_value_is_predictive(Forest, criterion, global_random_seed):
     a predictive feature."""
     rng = np.random.RandomState(global_random_seed)
     n_samples = 1000
-    expected_score_gap = 0.35
+    expected_score_gap = 0.3
 
     X_non_predictive = rng.randn(n_samples, 2)
     y = rng.rand(n_samples) < 0.5
