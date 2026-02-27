@@ -271,3 +271,24 @@ div.sk-text-image-grid-large {
     height: 130%;
   }
 }
+
+/* ============================================
+   Fix: Gallery hover overlay blocks clicks
+   Related issue: #30596
+   ============================================ */
+
+.sphx-glr-thumbcontainer::after {
+  pointer-events: none !important;
+}
+
+
+
+
+
+
+
+
+
+
+
+
