@@ -207,14 +207,25 @@ from sklearn.pipeline import make_pipeline
 Cs = np.logspace(-5, 5, 20)
 
 unscaled_clf = make_pipeline(
-    pca, LogisticRegressionCV(Cs=Cs, use_legacy_attributes=False, l1_ratios=(0,))
+    pca,
+    LogisticRegressionCV(
+        Cs=Cs,
+        use_legacy_attributes=False,
+        l1_ratios=(0,),
+        scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
+    ),
 )
 unscaled_clf.fit(X_train, y_train)
 
 scaled_clf = make_pipeline(
     scaler,
     pca,
-    LogisticRegressionCV(Cs=Cs, use_legacy_attributes=False, l1_ratios=(0,)),
+    LogisticRegressionCV(
+        Cs=Cs,
+        use_legacy_attributes=False,
+        l1_ratios=(0,),
+        scoring="neg_log_loss",  # TODO(1.11): remove because it is default now,
+    ),
 )
 scaled_clf.fit(X_train, y_train)
 
