@@ -527,7 +527,6 @@ class DecisionBoundaryDisplay:
         <...>
         >>> plt.show()
         """
-        check_matplotlib_support(f"{cls.__name__}.from_estimator")
         check_is_fitted(estimator)
 
         if not grid_resolution > 1:
