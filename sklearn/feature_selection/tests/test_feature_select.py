@@ -733,6 +733,22 @@ def test_select_fwe_regression():
     assert_array_equal(support[:5], np.ones((5,), dtype=bool))
     assert np.sum(support[5:] == 1) < 2
 
+    # Check if the Holm method returns at least as many features as the
+    # Bonferroni method
+    X_r3 = (
+        SelectFwe(f_regression, alpha=0.01, fwe_control="holm").fit(X, y).transform(X)
+    )
+    assert X_r3.shape[1] >= X_r.shape[1]
+
+    msg = "The 'fwe_control' parameter of SelectFwe must be a str among "
+    "{'bonf', 'holm'}. Got 'sidak' instead."
+    with pytest.raises(ValueError, match=msg):
+        _ = (
+            SelectFwe(f_regression, alpha=0.01, fwe_control="sidak")
+            .fit(X, y)
+            .transform(X)
+        )
+
 
 def test_selectkbest_tiebreaking():
     # Test whether SelectKBest actually selects k features in case of ties.
