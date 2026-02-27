@@ -35,6 +35,7 @@ from sklearn.model_selection import (
     train_test_split,
 )
 from sklearn.model_selection._split import (
+    MultiHorizonTimeSeriesSplit,
     _build_repr,
     _validate_shuffle_split,
     _yields_constant_splits,
@@ -2132,3 +2133,138 @@ def test_stratified_splitter_without_y(cv):
     msg = "missing 1 required positional argument: 'y'"
     with pytest.raises(TypeError, match=msg):
         cv.split(X)
+
+
+def test_multi_horizon_timeseries_split_proposal_horizons_1_2():
+    """Splitting with horizons=[1, 2] and gap=0 produces the expected
+    train/test indices."""
+    X = np.arange(10)
+    cv = MultiHorizonTimeSeriesSplit(n_splits=2, horizons=[1, 2], gap=0)
+    splits = list(cv.split(X))
+    assert len(splits) == 2
+    assert_array_equal(splits[0][0], [0, 1, 2, 3, 4])
+    assert_array_equal(splits[0][1], [5, 6])
+    assert_array_equal(splits[1][0], [0, 1, 2, 3, 4, 5, 6])
+    assert_array_equal(splits[1][1], [7, 8])
+
+
+def test_horizons_1_2_3_default_gap():
+    """Splitting with horizons=[1, 2, 3] and default gap=0 yields the
+    correct train/test indices."""
+    X = np.arange(10)
+    cv = MultiHorizonTimeSeriesSplit(n_splits=2, horizons=[1, 2, 3], gap=0)
+    splits = list(cv.split(X))
+    assert len(splits) == 2
+
+    # First fold: test_start=3 → train=[0,1,2], test=[3,4,5]
+    train0, test0 = splits[0]
+    assert_array_equal(train0, np.array([0, 1, 2]))
+    assert_array_equal(test0, np.array([3, 4, 5]))
+
+    # Second fold: test_start=6 → train=[0,1,2,3,4,5], test=[6,7,8]
+    train1, test1 = splits[1]
+    assert_array_equal(train1, np.array([0, 1, 2, 3, 4, 5]))
+    assert_array_equal(test1, np.array([6, 7, 8]))
+
+
+def test_horizons_1_2_gap_1():
+    """Splitting with horizons=[1, 2] and gap=1 leaves a one-step separation
+    between train and test."""
+    X = np.arange(10)
+    cv = MultiHorizonTimeSeriesSplit(n_splits=2, horizons=[1, 2], gap=1)
+    splits = list(cv.split(X))
+    assert len(splits) == 2
+
+    # First fold: test_start=5, train_end=5-1=4 → train=[0,1,2,3], test=[5,6]
+    train0, test0 = splits[0]
+    assert_array_equal(train0, np.array([0, 1, 2, 3]))
+    assert_array_equal(test0, np.array([5, 6]))
+
+    # Second fold: test_start=7, train_end=7-1=6 → train=[0,1,2,3,4,5], test=[7,8]
+    train1, test1 = splits[1]
+    assert_array_equal(train1, np.array([0, 1, 2, 3, 4, 5]))
+    assert_array_equal(test1, np.array([7, 8]))
+
+
+def test_horizons_1_2_with_test_size_3():
+    """Splitting with horizons=[1, 2], test_size=3, gap=0 selects correct
+    indices within each block."""
+    X = np.arange(10)
+    cv = MultiHorizonTimeSeriesSplit(n_splits=2, horizons=[1, 2], gap=0, test_size=3)
+    splits = list(cv.split(X))
+    assert len(splits) == 2
+
+    # test_starts = [4, 7]
+    # First fold: train=[0,1,2,3], test=[4,5]
+    train0, test0 = splits[0]
+    assert_array_equal(train0, np.array([0, 1, 2, 3]))
+    assert_array_equal(test0, np.array([4, 5]))
+
+    # Second fold: train=[0,1,2,3,4,5,6], test=[7,8]
+    train1, test1 = splits[1]
+    assert_array_equal(train1, np.array([0, 1, 2, 3, 4, 5, 6]))
+    assert_array_equal(test1, np.array([7, 8]))
+
+
+def test_horizons_1_2_with_max_train_size_3():
+    """Splitting with horizons=[1, 2] and max_train_size=3 uses only the
+    last 3 samples for each train."""
+    X = np.arange(10)
+    cv = MultiHorizonTimeSeriesSplit(
+        n_splits=2, horizons=[1, 2], gap=0, max_train_size=3
+    )
+    splits = list(cv.split(X))
+    assert len(splits) == 2
+
+    # test_starts = [5, 7]
+    # First fold: train_end=5 → train full=[0..4],
+    # but max_train_size=3 → train=[2,3,4], test=[5,6]
+    train0, test0 = splits[0]
+    assert_array_equal(train0, np.array([2, 3, 4]))
+    assert_array_equal(test0, np.array([5, 6]))
+
+    # Second fold: train_end=7 → full=[0..6],
+    # but max_train_size=3 → train=[4,5,6], test=[7,8]
+    train1, test1 = splits[1]
+    assert_array_equal(train1, np.array([4, 5, 6]))
+    assert_array_equal(test1, np.array([7, 8]))
+
+
+def test_init_invalid_horizons():
+    """Constructor must raise ValueError if horizons list is empty or
+    contains non-positive ints."""
+    with pytest.raises(ValueError):
+        MultiHorizonTimeSeriesSplit(n_splits=2, horizons=[])
+    with pytest.raises(ValueError):
+        MultiHorizonTimeSeriesSplit(n_splits=2, horizons=[0, 1])
+    with pytest.raises(ValueError):
+        MultiHorizonTimeSeriesSplit(n_splits=2, horizons=[-1, 2])
+    with pytest.raises(ValueError):
+        MultiHorizonTimeSeriesSplit(n_splits=2, horizons=[1, "a"])
+
+
+def test_split_test_size_too_small_for_horizons():
+    """split should raise ValueError if test_size < max(horizons)."""
+    X = np.arange(10)
+    cv = MultiHorizonTimeSeriesSplit(n_splits=2, horizons=[1, 2, 3], gap=0, test_size=2)
+    with pytest.raises(ValueError):
+        list(cv.split(X))
+
+
+def test_split_initial_offset_negative():
+    """split should raise ValueError when there are not enough samples
+    to position n_splits folds given horizons (initial_offset < 0)."""
+    X = np.arange(4)
+    # Here, n_splits=2, horizons=[1,3] → max_horizon=3, step=2
+    # initial_offset = 4-1-3-(2-1)*2 = 3-3-2 = -2
+    cv = MultiHorizonTimeSeriesSplit(n_splits=2, horizons=[1, 3], gap=0)
+    with pytest.raises(ValueError):
+        list(cv.split(X))
+
+
+def test_split_train_end_zero_or_negative():
+    """split should raise ValueError when train_end <= 0."""
+    X = np.arange(3)
+    cv = MultiHorizonTimeSeriesSplit(n_splits=2, horizons=[1], gap=0)
+    with pytest.raises(ValueError):
+        list(cv.split(X))

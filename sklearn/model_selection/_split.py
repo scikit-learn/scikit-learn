@@ -3070,3 +3070,176 @@ def _yields_constant_splits(cv):
     shuffle = getattr(cv, "shuffle", True)
     random_state = getattr(cv, "random_state", 0)
     return isinstance(random_state, numbers.Integral) or not shuffle
+
+
+class MultiHorizonTimeSeriesSplit(TimeSeriesSplit):
+    """Time Series cross-validator with multiple prediction horizons.
+
+    Provides train/test indices to split time series data samples that are
+    observed at fixed time intervals, into multiple training and test sets.
+    Unlike `TimeSeriesSplit`, which creates contiguous test sets, this class
+    generates test sets consisting of specific points determined by the
+    `horizons` parameter, allowing evaluation at multiple forecast horizons.
+
+    This cross-validation object inherits from `TimeSeriesSplit` and maintains
+    the temporal order of the data, ensuring that training sets only include
+    past data relative to the test sets.
+
+    Parameters
+    ----------
+    n_splits : int, default=5
+        Number of splits. Must be at least 1.
+
+    horizons : list of int, default=[1]
+        List of positive integers representing the forecast horizons
+        (steps ahead to predict). Must be a non-empty list containing only
+        positive integers.
+
+    max_train_size : int or None, optional
+        Maximum size for a single training set. If `None`, no upper limit is
+        imposed. Inherited from `TimeSeriesSplit`.
+
+    test_size : int or None, optional
+        Size of the test set. If provided, it must be at least as large as the
+        maximum value in `horizons`. If `None`, the test set positions are
+        determined based on the number of horizons and splits. Inherited from
+        `TimeSeriesSplit`.
+
+    gap : int, default=0
+        Number of samples to exclude between the end of the training set and
+        the start of the test set. Inherited from `TimeSeriesSplit`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.model_selection import MultiHorizonTimeSeriesSplit
+    >>> X = np.array(range(10))
+    >>> cv = MultiHorizonTimeSeriesSplit(n_splits=2, horizons=[1, 2], gap=0)
+    >>> for train_index, test_index in cv.split(X):
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    TRAIN: [0 1 2 3 4] TEST: [5 6]
+    TRAIN: [0 1 2 3 4 5 6] TEST: [7 8]
+
+    >>> # Example with horizons=[1, 3]
+    >>> cv = MultiHorizonTimeSeriesSplit(n_splits=2, horizons=[1, 3], gap=0)
+    >>> for train_index, test_index in cv.split(X):
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    TRAIN: [0 1 2 3] TEST: [4 6]
+    TRAIN: [0 1 2 3 4 5] TEST: [6 8]
+
+    Notes
+    -----
+    - Test indices are computed as `test_start + h - 1` for each horizon `h` in
+      `horizons`, where `test_start` is the starting index of the test set,
+      determined by the number of splits and the maximum horizon.
+    - When `test_size` is specified, it defines the step size between
+      consecutive `test_start` positions and must accommodate the maximum
+      horizon.
+    - If `test_size` is `None`, the step between test sets is equal to the
+      number of horizons, and the initial offset is calculated to fit the
+      specified number of splits.
+    - The class ensures that test indices do not exceed the number of samples,
+      potentially skipping splits if insufficient data remains.
+
+    """
+
+    def __init__(
+        self, n_splits=5, *, horizons=[1], max_train_size=None, test_size=None, gap=0
+    ):
+        if not isinstance(horizons, (list, tuple)) or len(horizons) == 0:
+            raise ValueError(
+                "`horizons` must be a non-empty list of positive integers."
+            )
+        if not all(isinstance(h, int) and h > 0 for h in horizons):
+            raise ValueError("All horizon values must be positive integers.")
+        self.horizons = sorted(set(horizons))
+        super().__init__(
+            n_splits=n_splits,
+            gap=gap,
+            max_train_size=max_train_size,
+            test_size=test_size,
+        )
+
+    def split(self, X, y=None, groups=None):
+        """Generate indices to split data into training and test sets.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        y : array-like of shape (n_samples,), default=None
+            The target variable for supervised learning problems. Always
+            ignored, exists for compatibility.
+
+        groups : array-like of shape (n_samples,), default=None
+            Group labels for the samples used while splitting the dataset.
+            Always ignored, exists for compatibility.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split, corresponding to the
+            specified horizons.
+        """
+        (X,) = indexable(X)
+        n_samples = _num_samples(X)
+        n_splits = self.n_splits
+        gap = self.gap
+        max_horizon = max(self.horizons)
+
+        if n_splits < 1:
+            raise ValueError(f"n_splits must be at least 1, got {n_splits}.")
+        if n_samples <= max_horizon:
+            raise ValueError(
+                f"Not enough samples ({n_samples}) for the maximum horizon \
+                    ({max_horizon})."
+            )
+
+        if self.test_size is not None:
+            test_size = self.test_size
+            if test_size < max_horizon:
+                raise ValueError(
+                    f"test_size={test_size} must be at least as large as \
+                        max(horizons)={max_horizon}."
+                )
+            test_starts = range(n_samples - n_splits * test_size, n_samples, test_size)
+        else:
+            step = len(self.horizons)
+            initial_offset = n_samples - 1 - max_horizon - (n_splits - 1) * step
+            if initial_offset < 0:
+                raise ValueError(
+                    f"Not enough samples={n_samples} for n_splits={n_splits} \
+                        with horizons={self.horizons}."
+                )
+            test_starts = [initial_offset + i * step for i in range(n_splits)]
+
+        indices = np.arange(n_samples)
+
+        for test_start in test_starts:
+            train_end = test_start - gap
+            if train_end <= 0:
+                raise ValueError(
+                    "Not enough data to create training set before test_start."
+                )
+
+            if self.max_train_size is not None and self.max_train_size < train_end:
+                train_indices = indices[train_end - self.max_train_size : train_end]
+            else:
+                train_indices = indices[:train_end]
+
+            test_indices = [
+                test_start + h - 1
+                for h in self.horizons
+                if test_start + h - 1 < n_samples
+            ]
+
+            if len(test_indices) < len(self.horizons):
+                # Skip this split if not all horizons can be included
+                break
+
+            yield train_indices, np.array(test_indices)
