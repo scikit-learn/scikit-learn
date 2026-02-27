@@ -1162,7 +1162,6 @@ API_REFERENCE = {
                 "title": None,
                 "autosummary": [
                     "Bunch",
-                    "_safe_indexing",
                     "as_float_array",
                     "assert_all_finite",
                     "deprecated",
