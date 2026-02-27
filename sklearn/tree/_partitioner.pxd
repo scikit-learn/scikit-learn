@@ -178,6 +178,3 @@ cdef void shift_missing_values_to_left_if_required(
     intp_t[::1] samples,
     intp_t end,
 ) noexcept nogil
-
-
-cdef void sort(floating* feature_values, intp_t* samples, intp_t n) noexcept nogil
