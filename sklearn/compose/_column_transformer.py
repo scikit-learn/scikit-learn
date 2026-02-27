@@ -524,7 +524,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 raise TypeError(
                     "All estimators should implement fit and "
                     "transform, or can be 'drop' or 'passthrough' "
-                    "specifiers. '%s' (type %s) doesn't." % (t, type(t))
+                    f"specifiers. '{t}' (type {type(t)}) doesn't."
                 )
 
     def _validate_column_callables(self, X):
@@ -764,8 +764,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         for Xs, name in zip(result, names):
             if not getattr(Xs, "ndim", 0) == 2 and not hasattr(Xs, "__dataframe__"):
                 raise ValueError(
-                    "The output of the '{0}' transformer should be 2D (numpy array, "
-                    "scipy sparse array, dataframe).".format(name)
+                    f"The output of the '{name}' transformer should be 2D "
+                    "(numpy array, scipy sparse array, dataframe)."
                 )
         if _get_output_config("transform", self)["dense"] == "pandas":
             return
@@ -825,7 +825,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     def _log_message(self, name, idx, total):
         if not self.verbose:
             return None
-        return "(%d of %d) Processing %s" % (idx, total, name)
+        return f"({idx} of {total}) Processing {name}"
 
     def _call_func_on_transformers(self, X, y, func, column_as_labels, routed_params):
         """
@@ -882,10 +882,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                             feature_names_out="one-to-one",
                         ).set_output(transform=output_config["dense"])
 
-                    extra_args = dict(
-                        message_clsname="ColumnTransformer",
-                        message=self._log_message(name, idx, len(transformers)),
-                    )
+                    extra_args = {
+                            "message_clsname": "ColumnTransformer",
+                            "message": self._log_message(name, idx, len(transformers)),
+                        }
                 else:  # func is _transform_one
                     extra_args = {}
                 jobs.append(
@@ -1082,7 +1082,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             ]
 
             all_indices = set(chain(*non_dropped_indices))
-            all_names = set(self.feature_names_in_[ind] for ind in all_indices)
+            all_names = {self.feature_names_in_[ind] for ind in all_indices}
 
             diff = all_names - set(column_names)
             if diff:
@@ -1325,7 +1325,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 for name, trans, _ in self.transformers
                 if trans not in {"passthrough", "drop"}
             )
-        except Exception:
+        except (TypeError, ValueError, AttributeError):
             # If `transformers` does not comply with our API (list of tuples)
             # then it will fail. In this case, we assume that `sparse` is False
             # but the parameter validation will raise an error during `fit`.
@@ -1373,8 +1373,7 @@ def _get_transformer_list(estimators):
     transformers, columns = zip(*estimators)
     names, _ = zip(*_name_estimators(transformers))
 
-    transformer_list = list(zip(names, transformers, columns))
-    return transformer_list
+    return list(zip(names, transformers, columns))
 
 
 # This function is not validated using validate_params because
@@ -1518,13 +1517,8 @@ class make_column_selector:
     :class:`ColumnTransformer`.
 
     :func:`make_column_selector` can select columns based on datatype or the
-    columns name with a regex. When using multiple selection criteria, **all**
-    criteria must match for a column to be selected.
-
-    For an example of how to use :func:`make_column_selector` within a
-    :class:`ColumnTransformer` to select columns based on data type (i.e.
-    `dtype`), refer to
-    :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
+    columns name with a regex. When multiple parameters are set, an `AND`
+    selection is used.
 
     Parameters
     ----------
@@ -1540,6 +1534,14 @@ class make_column_selector:
         A selection of dtypes to exclude. For more details, see
         :meth:`pandas.DataFrame.select_dtypes`.
 
+    min_cardinality : int, default=None
+        The minimum cardinality (number of unique values) of the column to be
+        included. If None, no minimum cardinality is required.
+
+    max_cardinality : int, default=None
+        The maximum cardinality (number of unique values) of the column to be
+        included. If None, no maximum cardinality is required.
+
     Returns
     -------
     selector : callable
@@ -1549,34 +1551,23 @@ class make_column_selector:
     See Also
     --------
     ColumnTransformer : Class that allows combining the
-        outputs of multiple transformer objects used on column subsets
-        of the data into a single feature space.
-
-    Examples
-    --------
-    >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
-    >>> from sklearn.compose import make_column_transformer
-    >>> from sklearn.compose import make_column_selector
-    >>> import numpy as np
-    >>> import pandas as pd  # doctest: +SKIP
-    >>> X = pd.DataFrame({'city': ['London', 'London', 'Paris', 'Sallisaw'],
-    ...                   'rating': [5, 3, 4, 5]})  # doctest: +SKIP
-    >>> ct = make_column_transformer(
-    ...       (StandardScaler(),
-    ...        make_column_selector(dtype_include=np.number)),  # rating
-    ...       (OneHotEncoder(),
-    ...        make_column_selector(dtype_include=[object, "string"])))  # city
-    >>> ct.fit_transform(X)  # doctest: +SKIP
-    array([[ 0.90453403,  1.        ,  0.        ,  0.        ],
-           [-1.50755672,  1.        ,  0.        ,  0.        ],
-           [-0.30151134,  0.        ,  1.        ,  0.        ],
-           [ 0.90453403,  0.        ,  0.        ,  1.        ]])
+        outputs of multiple transformer objects.
     """
 
-    def __init__(self, pattern=None, *, dtype_include=None, dtype_exclude=None):
+    def __init__(
+        self,
+        pattern=None,
+        *,
+        dtype_include=None,
+        dtype_exclude=None,
+        min_cardinality=None,
+        max_cardinality=None,
+    ):
         self.pattern = pattern
         self.dtype_include = dtype_include
         self.dtype_exclude = dtype_exclude
+        self.min_cardinality = min_cardinality
+        self.max_cardinality = max_cardinality
 
     def __call__(self, df):
         """Callable for column selection to be used by a
@@ -1584,8 +1575,13 @@ class make_column_selector:
 
         Parameters
         ----------
-        df : dataframe of shape (n_features, n_samples)
+        df : dataframe of shape (n_samples, n_features)
             DataFrame to select columns from.
+
+        Returns
+        -------
+        selector : list of str
+            The list of column names selected.
         """
         if not hasattr(df, "iloc"):
             raise ValueError(
@@ -1599,6 +1595,16 @@ class make_column_selector:
         cols = df_row.columns
         if self.pattern is not None:
             cols = cols[cols.str.contains(self.pattern, regex=True)]
+
+        if self.min_cardinality is not None or self.max_cardinality is not None:
+            cols_cardinality = df[cols].nunique()
+            if self.min_cardinality is not None:
+                cols = cols[cols_cardinality >= self.min_cardinality]
+                cols_cardinality = cols_cardinality[cols]
+
+            if self.max_cardinality is not None:
+                cols = cols[cols_cardinality <= self.max_cardinality]
+
         return cols.tolist()
 
 
