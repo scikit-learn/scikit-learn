@@ -1225,23 +1225,26 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return np.hstack(Xs)
 
     def _sk_visual_block_(self):
+        # We can find remainder and its column only when it's fitted
         if hasattr(self, "transformers_"):
             transformers = [
                 transformer
-                for transformer in self.transformers_[:-1]
+                for transformer in self.transformers_[:-1]  # Exclude remainder
                 if not (transformer[0] == "remainder" and transformer[1] == "drop")
             ]
-            # We can find remainder and its column only when it's fitted
+
+            # Add remainder back to fitted transformers if remainder is not drop
             if self.remainder != "drop":
                 remainder_columns = self._remainder[2]
-                if (
-                    hasattr(self, "feature_names_in_")
-                    and remainder_columns
-                    and not all(isinstance(col, str) for col in remainder_columns)
-                ):
+                has_numeric_columns = remainder_columns and not all(
+                    isinstance(col, str) for col in remainder_columns
+                )
+                # Convert indices to column names when feature names are available
+                if hasattr(self, "feature_names_in_") and has_numeric_columns:
                     remainder_columns = self.feature_names_in_[
                         remainder_columns
                     ].tolist()
+
                 transformers = chain(
                     transformers, [("remainder", self.remainder, remainder_columns)]
                 )
