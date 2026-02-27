@@ -139,7 +139,7 @@ def _average_precision(y_true, y_score):
             # Compute precision up to document i
             # i.e, percentage of relevant documents up to document i.
             prec = 0
-            for j in range(0, i + 1):
+            for j in range(i + 1):
                 if y_true[j] == pos_label:
                     prec += 1.0
             prec /= i + 1.0
@@ -505,7 +505,7 @@ def test_auc_errors():
     # x is not in order
     x = [2, 1, 3, 4]
     y = [5, 6, 7, 8]
-    error_message = "x is neither increasing nor decreasing : {}".format(np.array(x))
+    error_message = f"x is neither increasing nor decreasing : {np.array(x)}"
     with pytest.raises(ValueError, match=re.escape(error_message)):
         auc(x, y)
 
@@ -2002,6 +2002,45 @@ def _test_ndcg_score_for(y_true, y_score):
     assert score[all_zero] == pytest.approx(np.zeros(all_zero.sum()))
     assert ideal.shape == (y_true.shape[0],)
     assert score.shape == (y_true.shape[0],)
+
+
+def test_ndcg_score_zero_division():
+    """Check `ndcg_score` behavior when all true relevances are zero."""
+    from sklearn.exceptions import UndefinedMetricWarning
+
+    # One sample with all-zero relevance, one normal sample
+    y_true = np.array([[1.0, 0.0, 1.0], [0.0, 0.0, 0.0]])
+    y_score = np.array([[0.5, 0.2, 0.8], [0.1, 0.3, 0.6]])
+
+    # Default "warn": should raise UndefinedMetricWarning and treat zero sample as 0
+    with pytest.warns(UndefinedMetricWarning, match="NDCG is not defined"):
+        result_warn = ndcg_score(y_true, y_score, zero_division="warn")
+
+    # zero_division=0: no warning, zero sample contributes 0
+    import warnings as _warnings
+
+    with _warnings.catch_warnings(record=True) as caught:
+        _warnings.simplefilter("always")
+        result_zero = ndcg_score(y_true, y_score, zero_division=0)
+        undm = [w for w in caught if issubclass(w.category, UndefinedMetricWarning)]
+        assert len(undm) == 0, "Expected no UndefinedMetricWarning with zero_division=0"
+
+    # result with zero_division="warn" and zero_division=0 should be the same
+    assert result_warn == pytest.approx(result_zero)
+
+    # zero_division=1: no warning, zero sample contributes 1 (raises the average)
+    with _warnings.catch_warnings(record=True) as caught:
+        _warnings.simplefilter("always")
+        result_one = ndcg_score(y_true, y_score, zero_division=1)
+        undm = [w for w in caught if issubclass(w.category, UndefinedMetricWarning)]
+        assert len(undm) == 0, "Expected no UndefinedMetricWarning with zero_division=1"
+
+    assert result_one > result_zero
+
+    # All-zeros y_true: zero_division=1 should give 1.0
+    y_all_zero = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
+    result_all_zero_one = ndcg_score(y_all_zero, y_score, zero_division=1)
+    assert result_all_zero_one == pytest.approx(1.0)
 
 
 def test_partial_roc_auc_score():

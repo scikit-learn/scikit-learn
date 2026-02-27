@@ -1,0 +1,6 @@
+- :func:`~metrics.ndcg_score` now supports a ``zero_division`` parameter to
+  control the behavior when a sample has all-zero true relevance scores (IDCG = 0).
+  The default ``"warn"`` keeps the previous behavior of returning 0 but also
+  raises a :class:`~sklearn.exceptions.UndefinedMetricWarning`. Setting it to
+  ``0`` or ``1`` suppresses the warning and returns that value for such samples.
+  By :user:`Dhruvil Darji <dhruvildarji>`.
