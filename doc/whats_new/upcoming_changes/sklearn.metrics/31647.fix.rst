@@ -1,0 +1,2 @@
+- :func:metrics.roc_curve now correctly drops intermediate points after prepending the (0, 0) threshold and uses geometric collinearity detection via cross‑products when drop_intermediate=True.
+  By :user:Shaik Imran <imran4444shaik>

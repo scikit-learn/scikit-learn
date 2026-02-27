@@ -1175,11 +1175,36 @@ def precision_recall_curve(
     )
 
 
+def _roc_collinear_free_mask_xp(fps, tps, xp, device, tolerance=1e-12):
+    """Return indices of non-collinear points preserving endpoints using array API."""
+
+    # Compute segment vectors
+    dx0 = fps[1:-1] - fps[:-2]
+    dy0 = tps[1:-1] - tps[:-2]
+    dx1 = fps[2:] - fps[1:-1]
+    dy1 = tps[2:] - tps[1:-1]
+
+    # Cross-product test
+    cross = dx0 * dy1 - dy0 * dx1
+    is_collinear = xp.abs(cross) < tolerance
+
+    # Build keep mask with endpoints preserved
+    keep = xp.concat(
+        [
+            xp.ones(1, dtype=xp.bool, device=device),
+            xp.logical_not(is_collinear),
+            xp.ones(1, dtype=xp.bool, device=device),
+        ]
+    )
+
+    return xp.nonzero(keep)[0]
+
+
 @validate_params(
     {
         "y_true": ["array-like"],
         "y_score": ["array-like"],
-        "pos_label": [Real, str, "boolean", None],
+        "pos_label": [Real, bool, str, None],
         "sample_weight": ["array-like", None],
         "drop_intermediate": ["boolean"],
     },
@@ -1299,27 +1324,22 @@ def roc_curve(
     # confusion_matrix_at_thresholds). This keeps all cases where the point should be
     # kept, but does not drop more complicated cases like fps = [1, 3, 7],
     # tps = [1, 2, 4]; there is no harm in keeping too many thresholds.
-    if drop_intermediate and fps.shape[0] > 2:
-        optimal_idxs = xp.where(
-            xp.concat(
-                [
-                    xp.asarray([True], device=device),
-                    xp.logical_or(xp.diff(fps, 2), xp.diff(tps, 2)),
-                    xp.asarray([True], device=device),
-                ]
-            )
-        )[0]
-        fps = fps[optimal_idxs]
-        tps = tps[optimal_idxs]
-        thresholds = thresholds[optimal_idxs]
-
-    # Add an extra threshold position
-    # to make sure that the curve starts at (0, 0)
-    tps = xp.concat([xp.asarray([0.0], device=device), tps])
+    # Add an extra threshold position to make sure curve starts at (0, 0)
+    # Prepend start of curve
     fps = xp.concat([xp.asarray([0.0], device=device), fps])
-    # get dtype of `y_score` even if it is an array-like
-    thresholds = xp.astype(thresholds, _max_precision_float_dtype(xp, device))
-    thresholds = xp.concat([xp.asarray([xp.inf], device=device), thresholds])
+    tps = xp.concat([xp.asarray([0.0], device=device), tps])
+    thresholds = xp.concat(
+        [
+            xp.asarray([xp.inf], device=device),
+            xp.astype(thresholds, _max_precision_float_dtype(xp, device)),
+        ]
+    )
+    # Drop intermediate collinear points if requested
+    if drop_intermediate and fps.shape[0] > 2:
+        keep_idx = _roc_collinear_free_mask_xp(fps, tps, xp, device)
+        fps = fps[keep_idx]
+        tps = tps[keep_idx]
+        thresholds = thresholds[keep_idx]
 
     if fps[-1] <= 0:
         warnings.warn(

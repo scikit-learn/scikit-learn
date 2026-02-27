@@ -385,8 +385,8 @@ def test_roc_curve_toydata():
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
         tpr, fpr, _ = roc_curve(y_true, y_score)
-    assert_array_almost_equal(tpr, [0.0, 0.5, 1.0])
-    assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
+    assert_array_almost_equal(tpr, [0.0, 1.0])
+    assert_array_almost_equal(fpr, [np.nan, np.nan])
     expected_message = (
         "Only one class is present in y_true. "
         "ROC AUC score is not defined in that case."
@@ -404,8 +404,8 @@ def test_roc_curve_toydata():
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
         tpr, fpr, _ = roc_curve(y_true, y_score)
-    assert_array_almost_equal(tpr, [np.nan, np.nan, np.nan])
-    assert_array_almost_equal(fpr, [0.0, 0.5, 1.0])
+    assert_array_almost_equal(tpr, [np.nan, np.nan])
+    assert_array_almost_equal(fpr, [0.0, 1.0])
     expected_message = (
         "Only one class is present in y_true. "
         "ROC AUC score is not defined in that case."
@@ -453,7 +453,7 @@ def test_roc_curve_drop_intermediate():
     y_true = [0, 0, 0, 0, 1, 1]
     y_score = [0.0, 0.2, 0.5, 0.6, 0.7, 1.0]
     tpr, fpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
-    assert_array_almost_equal(thresholds, [np.inf, 1.0, 0.7, 0.0])
+    assert_array_almost_equal(thresholds, [np.inf, 0.7, 0.0])
 
     # Test dropping thresholds with repeating scores
     y_true = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
