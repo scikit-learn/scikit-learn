@@ -696,6 +696,8 @@ def test_multiclass_not_enough_colors_error(pyplot):
     """
     Check that an error is raised if a qualitative colormap doesn't have enough colors.
 
+    Non-regression test for PR 33419.
+
     Note: List length mismatch is already checked in
     `test_input_validation_errors_multiclass_colors`.
     """
