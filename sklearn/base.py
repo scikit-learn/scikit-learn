@@ -42,7 +42,7 @@ from sklearn.utils.validation import (
 )
 
 
-def clone(estimator, *, safe=True):
+def clone(estimator, *, safe=True, keep_callbacks="warn"):
     """Construct a new unfitted estimator with the same parameters.
 
     Clone does a deep copy of the model in an estimator
@@ -61,6 +61,11 @@ def clone(estimator, *, safe=True):
         If safe is False, clone will fall back to a deep copy on objects
         that are not estimators. Ignored if `estimator.__sklearn_clone__`
         exists.
+
+    keep_callbacks : "warn" or bool, default="warn"
+        Whether to keep the callbacks set on the estimator. If "warn", callbacks are not
+        kept in the clone and a warning is raised if the estimator had callbacks set on
+        it.
 
     Returns
     -------
@@ -92,11 +97,11 @@ def clone(estimator, *, safe=True):
     False
     """
     if hasattr(estimator, "__sklearn_clone__") and not inspect.isclass(estimator):
-        return estimator.__sklearn_clone__()
-    return _clone_parametrized(estimator, safe=safe)
+        return estimator.__sklearn_clone__(keep_callbacks=keep_callbacks)
+    return _clone_parametrized(estimator, safe=safe, keep_callbacks=keep_callbacks)
 
 
-def _clone_parametrized(estimator, *, safe=True):
+def _clone_parametrized(estimator, *, safe=True, keep_callbacks="warn"):
     """Default implementation of clone. See :func:`sklearn.base.clone` for details."""
 
     estimator_type = type(estimator)
@@ -133,13 +138,16 @@ def _clone_parametrized(estimator, *, safe=True):
     except AttributeError:
         pass
 
-    params_set = new_object.get_params(deep=False)
-
     if hasattr(estimator, "_skl_callbacks"):
-        warnings.warn(
-            f"There are callbacks set on the estimator {estimator.__class__.__name__} "
-            "being cloned. The callbacks will be discarded in the clone."
-        )  # TODO: add a link to some documentation for callback support.
+        if keep_callbacks == "warn":
+            warnings.warn(
+                f"There are callbacks set on the estimator {klass.__name__} "
+                "being cloned. The callbacks will be discarded in the clone."
+            )  # TODO(callbacks): add a link to some documentation for callback support.
+        if not isinstance(keep_callbacks, str) and keep_callbacks:
+            new_object._skl_callbacks = estimator._skl_callbacks
+
+    params_set = new_object.get_params(deep=False)
 
     # quick sanity check of the parameters of the clone
     for name in new_object_params:
@@ -395,8 +403,8 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
 
         return self
 
-    def __sklearn_clone__(self):
-        return _clone_parametrized(self)
+    def __sklearn_clone__(self, keep_callbacks="warn"):
+        return _clone_parametrized(self, keep_callbacks=keep_callbacks)
 
     def __repr__(self, N_CHAR_MAX=700):
         # N_CHAR_MAX is the (approximate) maximum number of non-blank
