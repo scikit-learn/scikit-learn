@@ -90,7 +90,7 @@ all_models["mse"] = gbr_ls.fit(X_train, y_train)
 # %%
 # Create an evenly spaced evaluation set of input values spanning the [0, 10]
 # range.
-xx = np.atleast_2d(np.linspace(0, 10, 1000)).T
+x_plot = np.atleast_2d(np.linspace(0, 10, 1000)).T
 
 # %%
 # Plot the true conditional mean function f, the predictions of the conditional
@@ -98,18 +98,18 @@ xx = np.atleast_2d(np.linspace(0, 10, 1000)).T
 # 90% interval (from 5th to 95th conditional percentiles).
 import matplotlib.pyplot as plt
 
-y_pred = all_models["mse"].predict(xx)
-y_lower = all_models["q 0.05"].predict(xx)
-y_upper = all_models["q 0.95"].predict(xx)
-y_med = all_models["q 0.50"].predict(xx)
+y_pred = all_models["mse"].predict(x_plot)
+y_lower = all_models["q 0.05"].predict(x_plot)
+y_upper = all_models["q 0.95"].predict(x_plot)
+y_med = all_models["q 0.50"].predict(x_plot)
 
 fig = plt.figure(figsize=(10, 10))
-plt.plot(xx, f(xx), "black", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
+plt.plot(x_plot, f(x_plot), "black", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
 plt.plot(X_test, y_test, "b.", markersize=10, label="Test observations")
-plt.plot(xx, y_med, "tab:orange", linewidth=3, label="Predicted median")
-plt.plot(xx, y_pred, "tab:green", linewidth=3, label="Predicted mean")
+plt.plot(x_plot, y_med, "tab:orange", linewidth=3, label="Predicted median")
+plt.plot(x_plot, y_pred, "tab:green", linewidth=3, label="Predicted mean")
 plt.fill_between(
-    xx.ravel(), y_lower, y_upper, alpha=0.4, label="Predicted 90% interval"
+    x_plot.ravel(), y_lower, y_upper, alpha=0.4, label="Predicted 90% interval"
 )
 plt.xlabel("$x$")
 plt.ylabel("$f(x)$")
@@ -193,39 +193,6 @@ pd.DataFrame(results).set_index("model").style.apply(highlight_min)
 # (underestimation for this asymmetric noise) but is also naturally robust to
 # outliers and overfits less.
 #
-# .. _calibration-section:
-#
-# Calibration of the confidence interval
-# --------------------------------------
-#
-# We can also evaluate the ability of the two extreme quantile estimators at
-# producing a well-calibrated conditional 90%-confidence interval.
-#
-# To do this we can compute the fraction of observations that fall between the
-# predictions:
-def coverage_fraction(y, y_low, y_high):
-    return np.mean(np.logical_and(y >= y_low, y <= y_high))
-
-
-coverage_fraction(
-    y_train,
-    all_models["q 0.05"].predict(X_train),
-    all_models["q 0.95"].predict(X_train),
-)
-
-# %%
-# On the training set the calibration is very close to the expected coverage
-# value for a 90% confidence interval.
-coverage_fraction(
-    y_test, all_models["q 0.05"].predict(X_test), all_models["q 0.95"].predict(X_test)
-)
-
-
-# %%
-# On the test set, the estimated confidence interval is slightly too narrow.
-# Note, however, that we would need to wrap those metrics in a cross-validation
-# loop to assess their variability under data resampling.
-#
 # Tuning the hyper-parameters of the quantile regressors
 # ------------------------------------------------------
 #
@@ -238,7 +205,7 @@ coverage_fraction(
 #
 # To confirm this hypothesis, we tune the hyper-parameters of a new regressor
 # of the 5th percentile by selecting the best model parameters by
-# cross-validation on the pinball loss with alpha=0.05:
+# cross-validation on the pinball loss with `alpha=0.05`:
 
 # %%
 from pprint import pprint
@@ -253,13 +220,12 @@ param_grid = dict(
     min_samples_leaf=[1, 5, 10, 20],
     min_samples_split=[5, 10, 20, 30, 50],
 )
-alpha = 0.05
 neg_mean_pinball_loss_05p_scorer = make_scorer(
     mean_pinball_loss,
-    alpha=alpha,
+    alpha=0.05,
     greater_is_better=False,  # maximize the negative loss
 )
-gbr = GradientBoostingRegressor(loss="quantile", alpha=alpha, random_state=0)
+gbr = GradientBoostingRegressor(loss="quantile", alpha=0.05, random_state=0)
 search_05p = HalvingRandomSearchCV(
     gbr,
     param_grid,
@@ -279,18 +245,17 @@ pprint(search_05p.best_params_)
 #
 # Let's now tune the hyper-parameters for the 95th percentile regressor. We
 # need to redefine the `scoring` metric used to select the best model, along
-# with adjusting the alpha parameter of the inner gradient boosting estimator
+# with adjusting the `alpha` parameter of the inner gradient boosting estimator
 # itself:
 from sklearn.base import clone
 
-alpha = 0.95
 neg_mean_pinball_loss_95p_scorer = make_scorer(
     mean_pinball_loss,
-    alpha=alpha,
+    alpha=0.95,
     greater_is_better=False,  # maximize the negative loss
 )
 search_95p = clone(search_05p).set_params(
-    estimator__alpha=alpha,
+    estimator__alpha=0.95,
     scoring=neg_mean_pinball_loss_95p_scorer,
 )
 search_95p.fit(X_train, y_train)
@@ -305,14 +270,18 @@ pprint(search_95p.best_params_)
 # that is comprised by the predictions of those two tuned quantile regressors.
 # Note that the prediction of the upper 95th percentile has a much coarser shape
 # than the prediction of the lower 5th percentile because of the outliers:
-y_lower = search_05p.predict(xx)
-y_upper = search_95p.predict(xx)
+y_lower_plot = search_05p.predict(x_plot)
+y_upper_plot = search_95p.predict(x_plot)
 
 fig = plt.figure(figsize=(10, 10))
-plt.plot(xx, f(xx), "black", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
+plt.plot(x_plot, f(x_plot), "black", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
 plt.plot(X_test, y_test, "b.", markersize=10, label="Test observations")
 plt.fill_between(
-    xx.ravel(), y_lower, y_upper, alpha=0.4, label="Predicted 90% interval"
+    x_plot.ravel(),
+    y_lower_plot,
+    y_upper_plot,
+    alpha=0.4,
+    label="Predicted 90% interval",
 )
 plt.xlabel("$x$")
 plt.ylabel("$f(x)$")
@@ -325,14 +294,82 @@ plt.show()
 # The plot looks qualitatively better than for the untuned models, especially
 # for the shape of the of lower quantile.
 #
-# We now quantitatively evaluate the joint-calibration of the pair of
-# estimators:
-coverage_fraction(y_train, search_05p.predict(X_train), search_95p.predict(X_train))
-# %%
-coverage_fraction(y_test, search_05p.predict(X_test), search_95p.predict(X_test))
-# %%
-# The calibration of the tuned pair is sadly not better on the test set: the
-# width of the estimated confidence interval is still too narrow.
+# .. _calibration-section:
 #
-# Again, we would need to wrap this study in a cross-validation loop to
-# better assess the variability of those estimates.
+# Calibration of the confidence interval
+# --------------------------------------
+#
+# We can also evaluate the ability of the two extreme quantile estimators at
+# producing well-calibrated predictions of the 90%-coverage interval
+# (conditional on `X`), meaning that on average 90% of the observations should
+# lie within this interval.
+#
+# To do this we can compute the coverage fraction, i.e. the proportion of
+# observations that fall within the prediction intervals:
+
+
+def coverage_fraction(y, y_low, y_high):
+    return np.mean(np.logical_and(y >= y_low, y <= y_high))
+
+
+coverage_fraction(y_train, search_05p.predict(X_train), search_95p.predict(X_train))
+
+# %%
+# On the training set the calibration is very close to the expected coverage
+# value of 90%.
+coverage_fraction(y_test, search_05p.predict(X_test), search_95p.predict(X_test))
+
+# %%
+# On the test set, the estimated interval is too narrow to cover 90% of the test
+# points, but it may still hit the right coverage within reasonable statistical
+# uncertainty. We can use :func:`scipy.stats.bootstrap` to measure the
+# variability of the coverage fraction at prediction time, without retraining
+# the models. We use a 95% confidence level for the estimated (bootstrapped)
+# interval of coverage; this is not to be confused with the 90% coverage
+# stemming from our 5% and 95% quantile predictions:
+
+from scipy.stats import bootstrap
+
+train_coverage_bs = bootstrap(
+    (
+        y_train,
+        search_05p.predict(X_train),
+        search_95p.predict(X_train),
+    ),
+    coverage_fraction,
+    paired=True,
+    confidence_level=0.95,
+    n_resamples=1000,
+)
+ci = train_coverage_bs.confidence_interval
+print(
+    f"Training-set coverage lies between {ci.low:.1%} and {ci.high:.1%}, "
+    f"based on a 95% bootstrap confidence interval."
+)
+
+# %%
+# Notice that the interval contains the target value of 90% coverage.
+
+# %%
+test_coverage_bs = bootstrap(
+    (
+        y_test,
+        search_05p.predict(X_test),
+        search_95p.predict(X_test),
+    ),
+    coverage_fraction,
+    paired=True,
+    confidence_level=0.95,
+    n_resamples=1000,
+)
+ci = test_coverage_bs.confidence_interval
+print(
+    f"Test-set coverage lies between {ci.low:.1%} and {ci.high:.1%}, "
+    f"based on a 95% bootstrap confidence interval."
+)
+
+
+# %%
+# The quantile estimates from the tuned models are sadly not well-calibrated on
+# the test set: the width of the estimated confidence interval is too narrow
+# even when taking it's variations into account.
