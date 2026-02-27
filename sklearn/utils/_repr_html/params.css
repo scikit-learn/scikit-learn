@@ -31,11 +31,11 @@
     background-color: #f6f6f6;
 }
 
-.estimator-table .parameters-table tr:hover {
+.estimator-table .parameters-table tr:hover td {
     background-color: #e0e0e0;
 }
 
-.estimator-table table td {
+.estimator-table table :is(td, th) {
     border: 1px solid rgba(106, 105, 104, 0.232);
 }
 
@@ -59,7 +59,7 @@
     background-color: transparent;
 }
 
-.default td {
+.default td, .estimator-table th {
     color: black;
     text-align: left !important;
 }
@@ -67,6 +67,11 @@
 .user-set td i,
 .default td i {
     color: black;
+}
+
+td.fitted-att-type,
+tr.th {
+    white-space: preserve nowrap;
 }
 
 /*
