@@ -1889,29 +1889,25 @@ def test_missing_values_is_resilient(Forest, criterion):
         *product(FOREST_CLASSIFIERS.values(), CLF_CRITERIONS),
     ],
 )
-def test_missing_value_is_predictive(Forest, criterion):
+def test_missing_value_is_predictive(Forest, criterion, global_random_seed):
     """Check that the forest learns when missing values are only present for
     a predictive feature."""
-    rng = np.random.RandomState(0)
-    n_samples = 300
-    expected_score = 0.75
-    # FIXME: this `expected_score` is too high and breaks in some cases
-    # if the seed is set to something else than 0
+    rng = np.random.RandomState(global_random_seed)
+    n_samples = 1000
+    expected_score_gap = 0.35
 
-    X_non_predictive = rng.standard_normal(size=(n_samples, 10))
-    y = rng.randint(0, high=2, size=n_samples)
+    X_non_predictive = rng.randn(n_samples, 2)
+    y = rng.rand(n_samples) < 0.5
 
     # Create a predictive feature using `y` and with some noise
-    X_random_mask = rng.choice([False, True], size=n_samples, p=[0.95, 0.05])
-    y_mask = y.astype(bool)
-    y_mask[X_random_mask] = ~y_mask[X_random_mask]
-
-    predictive_feature = rng.standard_normal(size=n_samples)
-    predictive_feature[y_mask] = np.nan
+    predictive_feature = rng.randn(n_samples)
+    noise_mask = rng.rand(n_samples) < 0.05
+    # nan/non-nan indicates y is 1/0, except if noise_mask is true:
+    predictive_feature[y ^ noise_mask] = np.nan
     assert np.isnan(predictive_feature).any()
 
     X_predictive = X_non_predictive.copy()
-    X_predictive[:, 5] = predictive_feature
+    X_predictive[:, 1] = predictive_feature
 
     (
         X_predictive_train,
@@ -1927,11 +1923,11 @@ def test_missing_value_is_predictive(Forest, criterion):
     forest_non_predictive.fit(X_non_predictive_train, y_train)
 
     predictive_test_score = forest_predictive.score(X_predictive_test, y_test)
-
-    assert predictive_test_score >= expected_score
-    assert predictive_test_score >= forest_non_predictive.score(
+    non_predictive_test_score = forest_non_predictive.score(
         X_non_predictive_test, y_test
     )
+
+    assert predictive_test_score >= non_predictive_test_score + expected_score_gap
 
 
 # TODO(1.11): remove test with the deprecation of friedman_mse criterion
