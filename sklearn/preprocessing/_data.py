@@ -2266,7 +2266,7 @@ def binarize(X, *, threshold=0.0, copy=True):
         X.data[not_cond] = 0
         X.eliminate_zeros()
     else:
-        xp, _, device = get_namespace_and_device(X)
+        xp, _, _ = get_namespace_and_device(X)
         float_dtype = _find_matching_floating_dtype(X, threshold, xp=xp)
         cond = xp.astype(X, float_dtype, copy=False) > threshold
         not_cond = xp.logical_not(cond)
@@ -2800,7 +2800,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 " sparse matrix. This parameter has no effect."
             )
 
-        n_samples, n_features = X.shape
+        n_samples, _ = X.shape
         references = self.references_ * 100
 
         if self.subsample is not None and self.subsample < n_samples:
@@ -3062,9 +3062,20 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             The projected data.
         """
         check_is_fitted(self)
-        X = self._check_inputs(
-            X, in_fit=False, accept_sparse_negative=True, copy=self.copy
+        X = check_array(
+            X,
+            accept_sparse="csc",
+            copy=self.copy,
+            dtype=FLOAT_DTYPES,
+            force_writeable=True,
+            ensure_all_finite="allow-nan",
         )
+
+        if not X.shape[1] == self.n_features_in_:
+            raise ValueError(
+                f"X has {X.shape[1]} features, but QuantileTransformer "
+                f"is expecting {self.n_features_in_} features as input."
+            )
 
         return self._transform(X, inverse=True)
 
@@ -3480,7 +3491,19 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             The original data.
         """
         check_is_fitted(self)
-        X = self._check_input(X, in_fit=False, check_shape=True)
+        X = check_array(
+            X,
+            copy=self.copy,
+            dtype=FLOAT_DTYPES,
+            force_writeable=True,
+            ensure_all_finite="allow-nan",
+        )
+
+        if not X.shape[1] == len(self.lambdas_):
+            raise ValueError(
+                f"X has {X.shape[1]} features, but PowerTransformer "
+                f"is expecting {len(self.lambdas_)} features as input."
+            )
 
         if self.standardize:
             X = self._scaler.inverse_transform(X)
