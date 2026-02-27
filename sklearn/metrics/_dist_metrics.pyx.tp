@@ -19,6 +19,7 @@ cimport numpy as cnp
 cnp.import_array()  # required in order to use C-API
 
 from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
+from libc.stdlib cimport malloc, free
 
 from scipy.sparse import csr_matrix, issparse
 from sklearn.utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
@@ -1611,7 +1612,6 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         optionally specify the inverse directly.  If VI is passed,
         then V is not referenced.
     """
-    cdef float64_t[::1] buffer
 
     def __init__(self, V=None, VI=None):
         if VI is None:
@@ -1626,13 +1626,9 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         self.size = self.mat.shape[0]
 
-        # We need to create a buffer to store the vectors' coordinates' differences
-        self.buffer = np.zeros(self.size, dtype=np.float64)
-
     def __setstate__(self, state):
         super().__setstate__(state)
         self.size = self.mat.shape[0]
-        self.buffer = np.zeros(self.size, dtype=np.float64)
 
     def _validate_data(self, X):
         if X.shape[1] != self.size:
@@ -1646,16 +1642,23 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     ) except -1 nogil:
         cdef float64_t tmp, d = 0
         cdef intp_t i, j
+        cdef float64_t* buffer = <float64_t*>malloc(size * sizeof(float64_t))
+
+        if buffer == NULL:
+            with gil:
+                raise MemoryError("Failed to allocate buffer for Mahalanobis distance")
 
         # compute (x1 - x2).T * VI * (x1 - x2)
         for i in range(size):
-            self.buffer[i] = x1[i] - x2[i]
+            buffer[i] = x1[i] - x2[i]
 
         for i in range(size):
             tmp = 0
             for j in range(size):
-                tmp += self.mat[i, j] * self.buffer[j]
-            d += tmp * self.buffer[i]
+                tmp += self.mat[i, j] * buffer[j]
+            d += tmp * buffer[i]
+
+        free(buffer)
         return d
 
     cdef inline {{INPUT_DTYPE_t}} dist(
@@ -1697,39 +1700,51 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             intp_t i2 = x2_start
 
             float64_t tmp, d = 0.0
+            float64_t* buffer
+
+        # Allocate and initialize buffer
+        buffer = <float64_t*>malloc(size * sizeof(float64_t))
+        if buffer == NULL:
+            with gil:
+                raise MemoryError("Failed to allocate buffer for Mahalanobis distance")
+
+        # Initialize buffer to zero
+        for ix1 in range(size):
+            buffer[ix1] = 0.0
 
         while i1 < x1_end and i2 < x2_end:
             ix1 = x1_indices[i1]
             ix2 = x2_indices[i2]
 
             if ix1 == ix2:
-                self.buffer[ix1] = x1_data[i1] - x2_data[i2]
+                buffer[ix1] = x1_data[i1] - x2_data[i2]
                 i1 = i1 + 1
                 i2 = i2 + 1
             elif ix1 < ix2:
-                self.buffer[ix1] = x1_data[i1]
+                buffer[ix1] = x1_data[i1]
                 i1 = i1 + 1
             else:
-                self.buffer[ix2] = - x2_data[i2]
+                buffer[ix2] = - x2_data[i2]
                 i2 = i2 + 1
 
         if i1 == x1_end:
             while i2 < x2_end:
                 ix2 = x2_indices[i2]
-                self.buffer[ix2] = - x2_data[i2]
+                buffer[ix2] = - x2_data[i2]
                 i2 = i2 + 1
         else:
             while i1 < x1_end:
                 ix1 = x1_indices[i1]
-                self.buffer[ix1] = x1_data[i1]
+                buffer[ix1] = x1_data[i1]
                 i1 = i1 + 1
 
         for i in range(size):
             tmp = 0
             for j in range(size):
-                tmp += self.mat[i, j] * self.buffer[j]
-            d += tmp * self.buffer[i]
+                tmp += self.mat[i, j] * buffer[j]
+            d += tmp * buffer[i]
 
+        free(buffer)
         return d
 
     cdef inline {{INPUT_DTYPE_t}} dist_csr(
