@@ -8,6 +8,7 @@ parameters of an estimator.
 
 import numbers
 import operator
+import re
 import time
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -554,6 +555,27 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             score = score[self.refit]
         return score
 
+    def _wrap_namespace_error(self, method_name, call, *args, **kwargs):
+        """Call ``call`` and rewrite namespace mismatch errors from inner estimator."""
+        try:
+            return call(*args, **kwargs)
+        except ValueError as e:
+            if "must use the same namespace" not in str(e):
+                raise
+            inner_class = self.best_estimator_.__class__.__name__
+            outer_class = self.__class__.__name__
+            msg = str(e)
+            # The inner estimator may raise from a different method than the
+            # one the user called on the meta-estimator (e.g. predict ->
+            # decision_function). Replace the inner "Class.method()" with the
+            # outer one so the message is actionable.
+            msg = re.sub(
+                rf"{re.escape(inner_class)}\.\w+\(\)",
+                f"{outer_class}.{method_name}()",
+                msg,
+            )
+            raise ValueError(msg) from None
+
     @available_if(_search_estimator_has("score_samples"))
     def score_samples(self, X):
         """Call score_samples on the estimator with the best found parameters.
@@ -575,7 +597,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             The ``best_estimator_.score_samples`` method.
         """
         check_is_fitted(self)
-        return self.best_estimator_.score_samples(X)
+        return self._wrap_namespace_error(
+            "score_samples", self.best_estimator_.score_samples, X
+        )
 
     @available_if(_search_estimator_has("predict"))
     def predict(self, X):
@@ -597,7 +621,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             the best found parameters.
         """
         check_is_fitted(self)
-        return self.best_estimator_.predict(X)
+        return self._wrap_namespace_error("predict", self.best_estimator_.predict, X)
 
     @available_if(_search_estimator_has("predict_proba"))
     def predict_proba(self, X):
@@ -620,7 +644,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             to that in the fitted attribute :term:`classes_`.
         """
         check_is_fitted(self)
-        return self.best_estimator_.predict_proba(X)
+        return self._wrap_namespace_error(
+            "predict_proba", self.best_estimator_.predict_proba, X
+        )
 
     @available_if(_search_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X):
@@ -643,7 +669,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             corresponds to that in the fitted attribute :term:`classes_`.
         """
         check_is_fitted(self)
-        return self.best_estimator_.predict_log_proba(X)
+        return self._wrap_namespace_error(
+            "predict_log_proba", self.best_estimator_.predict_log_proba, X
+        )
 
     @available_if(_search_estimator_has("decision_function"))
     def decision_function(self, X):
@@ -666,7 +694,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             the best found parameters.
         """
         check_is_fitted(self)
-        return self.best_estimator_.decision_function(X)
+        return self._wrap_namespace_error(
+            "decision_function", self.best_estimator_.decision_function, X
+        )
 
     @available_if(_search_estimator_has("transform"))
     def transform(self, X):
@@ -688,7 +718,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             the best found parameters.
         """
         check_is_fitted(self)
-        return self.best_estimator_.transform(X)
+        return self._wrap_namespace_error(
+            "transform", self.best_estimator_.transform, X
+        )
 
     @available_if(_search_estimator_has("inverse_transform"))
     def inverse_transform(self, X):

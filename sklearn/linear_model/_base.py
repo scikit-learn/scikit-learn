@@ -28,6 +28,7 @@ from sklearn.utils._array_api import (
     _convert_to_numpy,
     _expit,
     _is_numpy_namespace,
+    check_same_namespace,
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
@@ -309,6 +310,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         C : array, shape (n_samples,)
             Returns predicted values.
         """
+        check_same_namespace(X, self, attribute="coef_", method="predict")
         return self._decision_function(X)
 
     def _set_intercept(self, X_offset, y_offset, X_scale=None):
@@ -360,6 +362,7 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         check_is_fitted(self)
         xp, _ = get_namespace(X)
+        check_same_namespace(X, self, attribute="coef_", method="decision_function")
 
         X = validate_data(self, X, accept_sparse="csr", reset=False)
         coef_T = self.coef_.T if self.coef_.ndim == 2 else self.coef_
@@ -384,6 +387,7 @@ class LinearClassifierMixin(ClassifierMixin):
         y_pred : ndarray of shape (n_samples,)
             Vector containing the class labels for each sample.
         """
+        check_same_namespace(X, self, attribute="coef_", method="predict")
         xp, _ = get_namespace(X)
         scores = self.decision_function(X)
         if len(scores.shape) == 1:

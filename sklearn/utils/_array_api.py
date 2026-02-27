@@ -3,9 +3,11 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import inspect
 import itertools
 import math
 import os
+from functools import partial
 
 import numpy
 import scipy
@@ -501,7 +503,7 @@ def move_to(*arrays, xp, device):
     Each array will be moved to the reference namespace and device if
     it is not already using it. Otherwise the array is left unchanged.
 
-    `array` may contain `None` entries, these are left unchanged.
+    `arrays` may contain `None` entries, these are left unchanged.
 
     Sparse arrays are accepted (as pass through) if the reference namespace is
     NumPy, in which case they are returned unchanged. Otherwise a `TypeError`
@@ -949,10 +951,9 @@ def _convert_to_numpy(array, xp):
 
 
 def _estimator_with_converted_arrays(estimator, converter):
-    """Create new estimator which converting all attributes that are arrays.
+    """Create a new estimator with converted array attributes.
 
-    The converter is called on all NumPy arrays and arrays that support the
-    `DLPack interface <https://dmlc.github.io/dlpack/latest/>`__.
+    All attributes that are arrays will be converted using the provided converter.
 
     Parameters
     ----------
@@ -965,16 +966,124 @@ def _estimator_with_converted_arrays(estimator, converter):
     Returns
     -------
     new_estimator : Estimator
-        Convert estimator
+        A clone of the estimator with converted array attributes.
     """
+    # Inline import to avoid circular import
     from sklearn.base import clone
+
+    # Because we call this function recursively `estimator` might actually be an
+    # attribute of an estimator and not an actual estimator object.
+    estimator_type = type(estimator)
+
+    if hasattr(estimator, "__sklearn_array_api_convert__") and not inspect.isclass(
+        estimator
+    ):
+        return estimator.__sklearn_array_api_convert__(converter)
+
+    if estimator_type is dict:
+        return {
+            k: _estimator_with_converted_arrays(v, converter)
+            for k, v in estimator.items()
+        }
+
+    if estimator_type in (list, tuple, set, frozenset):
+        return estimator_type(
+            _estimator_with_converted_arrays(v, converter) for v in estimator
+        )
+
+    if hasattr(estimator, "__dlpack__") or isinstance(
+        estimator, (numpy.ndarray, numpy.generic)
+    ):
+        return converter(estimator)
+
+    if not hasattr(estimator, "get_params") or isinstance(estimator, type):
+        return estimator
 
     new_estimator = clone(estimator)
     for key, attribute in vars(estimator).items():
-        if hasattr(attribute, "__dlpack__") or isinstance(attribute, numpy.ndarray):
-            attribute = converter(attribute)
+        attribute = _estimator_with_converted_arrays(attribute, converter)
         setattr(new_estimator, key, attribute)
     return new_estimator
+
+
+def move_estimator_to(estimator, xp, device):
+    """Move estimator array attributes to the given namespace and device.
+
+    Attributes which are not arrays are left unchanged.
+
+    Parameters
+    ----------
+    estimator : estimator object
+        The estimator whose attributes should be converted.
+
+    xp : array namespace
+        The target array API namespace.
+
+    device : device or None
+        The target device.
+
+    Returns
+    -------
+    new_estimator : estimator object
+        A clone of the estimator with array attributes moved.
+    """
+    return _estimator_with_converted_arrays(
+        estimator, partial(move_to, xp=xp, device=device)
+    )
+
+
+def check_same_namespace(X, estimator, *, attribute, method):
+    """Check that estimator's fitted attribute is compatible with X.
+
+    Use this to check that an estimator was fitted using the same array
+    namespace and device as ``X``. This is done by comparing the namespace and
+    device of ``X`` and the provided ``attribute``.
+
+    Parameters
+    ----------
+    X : array-like
+        The data passed to the fitted estimator's method, e.g. to ``predict``.
+
+    estimator : estimator object
+        The fitted estimator.
+
+    attribute : str
+        The name of the fitted attribute to check; for example it could be
+        ``"coef_"`` for a linear model. This function will check that ``X`` is
+        in a namespace and device that are consistent with the attribute.
+
+    method : str
+        The name of the calling method (e.g. ``"predict"``). It is used to
+        write the error message if the check fails.
+    """
+    if not get_config()["array_api_dispatch"]:
+        return
+
+    attr = getattr(estimator, attribute)
+    a_xp, _, a_device = get_namespace_and_device(attr)
+
+    X_xp, _, X_device = get_namespace_and_device(X)
+
+    if X_xp == a_xp and X_device == a_device:
+        return
+
+    if X_xp != a_xp:
+        msg = (
+            f"Array namespaces used during fit ({a_xp.__name__}) "
+            f"and {method} ({X_xp.__name__}) differ."
+        )
+    else:  # pragma: no cover
+        msg = f"Devices used during fit ({a_device}) and {method} ({X_device}) differ."
+
+    raise ValueError(
+        f"Inputs passed to {estimator.__class__.__name__}.{method}() "
+        "must use the same namespace and the same device as those passed to fit(). "
+        f"{msg} "
+        "You can move the estimator to the same namespace and device as X with: "
+        "'from sklearn.utils._array_api import move_estimator_to; "
+        "xp, _, device = get_namespace_and_device(X); "
+        "estimator = move_estimator_to(estimator, xp, device)'"
+    )
 
 
 def _atol_for_type(dtype_or_dtype_name):
