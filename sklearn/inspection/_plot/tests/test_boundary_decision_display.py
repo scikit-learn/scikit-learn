@@ -175,6 +175,10 @@ def test_input_validation_errors(pyplot, kwargs, error_msg, fitted_clf):
         ({"multiclass_colors": "not_cmap"}, "it must be a valid Matplotlib colormap"),
         ({"multiclass_colors": ["red", "green"]}, "it must be of the same length"),
         (
+            {"multiclass_colors": ["red", "green", "blue", "yellow"]},
+            "it must be of the same length",
+        ),
+        (
             {"multiclass_colors": ["red", "green", "not color"]},
             "it can only contain valid Matplotlib color names",
         ),
@@ -617,6 +621,7 @@ def test_multiclass_plot_max_class(pyplot, response_method):
         (None, 11),
         ("plasma", 3),
         ("Blues", 3),
+        ("tab20", 20),
         (["red", "green", "blue"], 3),
     ],
 )
@@ -652,14 +657,15 @@ def test_multiclass_colors_cmap(
 
     if multiclass_colors is None:
         if len(clf.classes_) <= 10:
-            colors = mpl.pyplot.get_cmap("tab10", 10).colors[: len(clf.classes_)]
+            multiclass_colors = "tab10"
         else:
-            cmap = mpl.pyplot.get_cmap("gist_rainbow", len(clf.classes_))
-            colors = cmap(np.linspace(0, 1, len(clf.classes_)))
-    elif multiclass_colors == "plasma":
-        colors = mpl.pyplot.get_cmap(multiclass_colors, len(clf.classes_)).colors
-    elif multiclass_colors == "Blues":
-        cmap = mpl.pyplot.get_cmap(multiclass_colors, len(clf.classes_))
+            multiclass_colors = "gist_rainbow"
+
+    if multiclass_colors in ["tab10", "tab20"]:
+        cmap = mpl.pyplot.get_cmap(multiclass_colors)
+        colors = mpl.colors.to_rgba_array(cmap.colors[: len(clf.classes_)])
+    elif multiclass_colors in ["Blues", "gist_rainbow", "plasma"]:
+        cmap = mpl.pyplot.get_cmap(multiclass_colors)
         colors = cmap(np.linspace(0, 1, len(clf.classes_)))
     else:
         colors = [mpl.colors.to_rgba(color) for color in multiclass_colors]
@@ -684,6 +690,37 @@ def test_multiclass_colors_cmap(
             assert quad.cmap == cmaps[idx]
     else:
         assert_allclose(disp.surface_.colors, colors)
+
+
+def test_multiclass_not_enough_colors_error(pyplot):
+    """
+    Check that an error is raised if a qualitative colormap doesn't have enough colors.
+
+    Non-regression test for PR 33419.
+
+    Note: List length mismatch is already checked in
+    `test_input_validation_errors_multiclass_colors`.
+    """
+    X = np.array(
+        [
+            [-1, -1],
+            [-2, -1],
+            [1, 1],
+            [2, 1],
+            [2, 2],
+            [3, 2],
+            [3, 3],
+            [4, 3],
+            [4, 4],
+            [5, 4],
+            [5, 5],
+        ]
+    )
+    y = np.arange(11)
+    clf = LogisticRegression().fit(X, y)
+    msg = "Colormap 'tab10' only has 10 colors, but 11 classes are to be displayed."
+    with pytest.raises(ValueError, match=msg):
+        DecisionBoundaryDisplay.from_estimator(clf, X, multiclass_colors="tab10")
 
 
 @pytest.mark.parametrize("y", [np.arange(6), [str(i) for i in np.arange(6)]])

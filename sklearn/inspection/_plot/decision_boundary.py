@@ -54,6 +54,75 @@ def _check_boundary_response_method(estimator, response_method):
     return prediction_method
 
 
+def _select_colors(mpl, multiclass_colors, n_classes):
+    """Select colors for multiclass decision boundary display.
+
+    Parameters
+    ----------
+    mpl : module
+        Imported `matplotlib` module.
+
+    multiclass_colors : list of color-like, str, or None
+        Color specification for multiclass plots.
+
+        - If `None`, defaults to `"tab10"` when `n_classes <= 10`, otherwise
+          `"gist_rainbow"`.
+        - If `str`, interpreted as a Matplotlib colormap name.
+        - If `list`, each entry must be a valid Matplotlib color-like value.
+
+    n_classes : int
+        Number of colors to select.
+
+    Returns
+    -------
+    colors : list or ndarray of shape (n_classes, 4)
+        RGBA colors, one per class.
+
+    """
+
+    if multiclass_colors is None:
+        multiclass_colors = "tab10" if n_classes <= 10 else "gist_rainbow"
+
+    if isinstance(multiclass_colors, str):
+        if multiclass_colors not in mpl.pyplot.colormaps():
+            raise ValueError(
+                "When 'multiclass_colors' is a string, it must be a valid "
+                f"Matplotlib colormap. Got: {multiclass_colors}"
+            )
+        cmap = mpl.pyplot.get_cmap(multiclass_colors)
+        if cmap.N < n_classes:
+            raise ValueError(
+                f"Colormap '{multiclass_colors}' only has {cmap.N} colors, but "
+                f"{n_classes} classes are to be displayed. Please specify a "
+                "different colormap or provide a list of colors via "
+                "'multiclass_colors'."
+            )
+        if cmap.N < 256:
+            # Special case for the qualitative colormaps that encode a
+            # discrete set of colors that are easily distinguishable, contrary to other
+            # colormaps that are continuous (for which `cmap.N` >= 256).
+            return mpl.colors.to_rgba_array(cmap.colors[:n_classes])
+        else:
+            return cmap(np.linspace(0, 1, n_classes))
+
+    elif isinstance(multiclass_colors, list):
+        if len(multiclass_colors) != n_classes:
+            raise ValueError(
+                "When 'multiclass_colors' is a list, it must be of the same "
+                f"length as the classes or labels to plot ({n_classes}), got: "
+                f"{len(multiclass_colors)}."
+            )
+        elif any(not mpl.colors.is_color_like(col) for col in multiclass_colors):
+            raise ValueError(
+                "When 'multiclass_colors' is a list, it can only contain valid"
+                f" Matplotlib color names. Got: {multiclass_colors}"
+            )
+        return [mpl.colors.to_rgba(color) for color in multiclass_colors]
+
+    else:
+        raise ValueError("'multiclass_colors' must be a list or a str.")
+
+
 class DecisionBoundaryDisplay:
     """Decisions boundary visualization.
 
@@ -234,7 +303,6 @@ class DecisionBoundaryDisplay:
         """
         check_matplotlib_support("DecisionBoundaryDisplay.plot")
         import matplotlib as mpl
-        import matplotlib.pyplot as plt
 
         if plot_method not in ("contourf", "contour", "pcolormesh"):
             raise ValueError(
@@ -243,7 +311,7 @@ class DecisionBoundaryDisplay:
             )
 
         if ax is None:
-            _, ax = plt.subplots()
+            _, ax = mpl.pyplot.subplots()
 
         plot_func = getattr(ax, plot_method)
         if self.n_classes == 2:
@@ -257,34 +325,9 @@ class DecisionBoundaryDisplay:
                     )
                     del kwargs[kwarg]
 
-            if self.multiclass_colors is None or isinstance(
-                self.multiclass_colors, str
-            ):
-                if self.multiclass_colors is None:
-                    cmap = "tab10" if self.n_classes <= 10 else "gist_rainbow"
-                else:
-                    cmap = self.multiclass_colors
-
-                # Special case for the tab10 and tab20 colormaps that encode a
-                # discrete set of colors that are easily distinguishable
-                # contrary to other colormaps that are continuous.
-                if cmap == "tab10" and self.n_classes <= 10:
-                    colors = plt.get_cmap("tab10", 10).colors[: self.n_classes]
-                elif cmap == "tab20" and self.n_classes <= 20:
-                    colors = plt.get_cmap("tab20", 20).colors[: self.n_classes]
-                else:
-                    cmap = plt.get_cmap(cmap, self.n_classes)
-                    if not hasattr(cmap, "colors"):
-                        # Get `LinearSegmentedColormap` for non-qualitative cmaps
-                        colors = cmap(np.linspace(0, 1, self.n_classes))
-                    else:
-                        colors = cmap.colors
-            elif isinstance(self.multiclass_colors, list):
-                colors = [mpl.colors.to_rgba(color) for color in self.multiclass_colors]
-            else:
-                raise ValueError("'multiclass_colors' must be a list or a str.")
-
-            self.multiclass_colors_ = colors
+            self.multiclass_colors_ = _select_colors(
+                mpl, self.multiclass_colors, self.n_classes
+            )
 
             if self.response.ndim == 2:  # predict
                 # Set `levels` to ensure all classes are displayed in different colors
@@ -294,7 +337,7 @@ class DecisionBoundaryDisplay:
                     elif plot_method == "contourf":
                         kwargs["levels"] = np.arange(self.n_classes + 1) - 0.5
                 # `pcolormesh` requires cmap, for the others it makes no difference
-                cmap = mpl.colors.ListedColormap(colors)
+                cmap = mpl.colors.ListedColormap(self.multiclass_colors_)
                 self.surface_ = plot_func(
                     self.xx0, self.xx1, self.response, cmap=cmap, **kwargs
                 )
@@ -309,7 +352,7 @@ class DecisionBoundaryDisplay:
                     self.xx0,
                     self.xx1,
                     self.response.argmax(axis=2),
-                    colors=colors,
+                    colors=self.multiclass_colors_,
                     **kwargs,
                 )
             else:
@@ -318,7 +361,7 @@ class DecisionBoundaryDisplay:
                         f"colormap_{class_idx}",
                         [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)],
                     )
-                    for class_idx, (r, g, b, _) in enumerate(colors)
+                    for class_idx, (r, g, b, _) in enumerate(self.multiclass_colors_)
                 ]
                 self.surface_ = []
                 for class_idx, cmap in enumerate(multiclass_cmaps):
@@ -483,9 +526,7 @@ class DecisionBoundaryDisplay:
         <...>
         >>> plt.show()
         """
-        check_matplotlib_support(f"{cls.__name__}.from_estimator")
         check_is_fitted(estimator)
-        import matplotlib as mpl
 
         if not grid_resolution > 1:
             raise ValueError(
@@ -511,33 +552,6 @@ class DecisionBoundaryDisplay:
             raise ValueError(
                 f"n_features must be equal to 2. Got {num_features} instead."
             )
-
-        if (
-            response_method in ("predict_proba", "decision_function", "auto")
-            and multiclass_colors is not None
-            and hasattr(estimator, "classes_")
-            and (n_classes := len(estimator.classes_)) > 2
-        ):
-            if isinstance(multiclass_colors, list):
-                if len(multiclass_colors) != n_classes:
-                    raise ValueError(
-                        "When 'multiclass_colors' is a list, it must be of the same "
-                        f"length as 'estimator.classes_' ({n_classes}), got: "
-                        f"{len(multiclass_colors)}."
-                    )
-                elif any(
-                    not mpl.colors.is_color_like(col) for col in multiclass_colors
-                ):
-                    raise ValueError(
-                        "When 'multiclass_colors' is a list, it can only contain valid"
-                        f" Matplotlib color names. Got: {multiclass_colors}"
-                    )
-            if isinstance(multiclass_colors, str):
-                if multiclass_colors not in mpl.pyplot.colormaps():
-                    raise ValueError(
-                        "When 'multiclass_colors' is a string, it must be a valid "
-                        f"Matplotlib colormap. Got: {multiclass_colors}"
-                    )
 
         x0, x1 = _safe_indexing(X, 0, axis=1), _safe_indexing(X, 1, axis=1)
 
