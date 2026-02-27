@@ -2099,7 +2099,12 @@ def check_array_api_multiclass_classification_metric(
     y_true_np = np.array([0, 1, 2, 3])
     y_pred_np = np.array([0, 1, 0, 2])
 
-    if metric.__name__ == "average_precision_score":
+    if isinstance(metric, partial):
+        metric_name = metric.func.__name__
+    else:
+        metric_name = metric.__name__
+
+    if metric_name in {"average_precision_score", "roc_auc_score"}:
         # we need y_pred_nd to be of shape (n_samples, n_classes)
         y_pred_np = np.array(
             [
@@ -2116,6 +2121,13 @@ def check_array_api_multiclass_classification_metric(
         "beta": (0.2, 0.5, 0.8),
         "adjusted": (False, True),
     }
+
+    if (
+        metric_name == "roc_auc_score"
+        and metric.keywords.get("multi_class", False) == "ovo"
+    ):
+        additional_params["average"] = ("macro", "weighted")
+
     metric_kwargs_combinations = _get_metric_kwargs_for_array_api_testing(
         metric=metric,
         params=additional_params,
@@ -2133,6 +2145,12 @@ def check_array_api_multiclass_classification_metric(
         )
 
         sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
+
+        if (
+            metric_name == "roc_auc_score"
+            and metric.keywords.get("multi_class", False) == "ovo"
+        ):
+            sample_weight = None
 
         check_array_api_metric(
             metric,
@@ -2441,6 +2459,15 @@ array_api_metric_checkers = {
     laplacian_kernel: [check_array_api_metric_pairwise],
     polynomial_kernel: [check_array_api_metric_pairwise],
     rbf_kernel: [check_array_api_metric_pairwise],
+    roc_auc_score: [check_array_api_binary_classification_metric],
+    partial(roc_auc_score, multi_class="ovr"): [
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    partial(roc_auc_score, average="macro", multi_class="ovo"): [
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
     root_mean_squared_error: [
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,

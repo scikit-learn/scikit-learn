@@ -8,12 +8,15 @@ Common code for all metrics.
 
 from itertools import combinations
 
-import numpy as np
-
 import sklearn.externals.array_api_extra as xpx
 from sklearn.utils import check_array, check_consistent_length
-from sklearn.utils._array_api import _average, _ravel, get_namespace_and_device
-from sklearn.utils.multiclass import type_of_target
+from sklearn.utils._array_api import (
+    _average,
+    _ravel,
+    get_namespace,
+    get_namespace_and_device,
+)
+from sklearn.utils.multiclass import type_of_target, unique_labels
 
 
 def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight=None):
@@ -176,23 +179,30 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average="macro
     """
     check_consistent_length(y_true, y_score)
 
-    y_true_unique = np.unique(y_true)
+    xp, _ = get_namespace(y_true, y_score)
+
+    y_true_unique = unique_labels(y_true)
     n_classes = y_true_unique.shape[0]
     n_pairs = n_classes * (n_classes - 1) // 2
-    pair_scores = np.empty(n_pairs)
+    pair_scores = xp.empty(n_pairs)
 
     is_weighted = average == "weighted"
-    prevalence = np.empty(n_pairs) if is_weighted else None
+    prevalence = xp.empty(n_pairs) if is_weighted else None
 
     # Compute scores treating a as positive class and b as negative class,
     # then b as positive class and a as negative class
     for ix, (a, b) in enumerate(combinations(y_true_unique, 2)):
         a_mask = y_true == a
         b_mask = y_true == b
-        ab_mask = np.logical_or(a_mask, b_mask)
+        ab_mask = xp.logical_or(a_mask, b_mask)
 
         if is_weighted:
-            prevalence[ix] = np.average(ab_mask)
+            prevalence[ix] = _average(ab_mask, xp=xp)
+
+        # array API does not allow mixed Boolean / integral indexing.
+        # Hence, need to convert to integers to able to index
+        # y_score[ab_mask, a] and y_score[ab_mask, b].
+        ab_mask = xp.nonzero(ab_mask)[0]
 
         a_true = a_mask[ab_mask]
         b_true = b_mask[ab_mask]
@@ -201,4 +211,4 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average="macro
         b_true_score = binary_metric(b_true, y_score[ab_mask, b])
         pair_scores[ix] = (a_true_score + b_true_score) / 2
 
-    return np.average(pair_scores, weights=prevalence)
+    return _average(pair_scores, weights=prevalence, xp=xp)
