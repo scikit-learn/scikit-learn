@@ -22,8 +22,8 @@ At this stage, this support is **considered experimental** and must be enabled
 explicitly by the `array_api_dispatch` configuration. See below for details.
 
 .. note::
-    Currently, only `array-api-strict`, `cupy`, and `PyTorch` are known to work
-    with scikit-learn's estimators.
+    Currently, scikit-learn array API support is only regularly tested against
+    array-api-strict, CuPy, PyTorch and JAX.
 
 The following video provides an overview of the standard's design principles
 and how it facilitates interoperability between array libraries:
@@ -322,11 +322,11 @@ vanilla NumPy and array API inputs.
 To run these checks you need to install
 `array-api-strict <https://data-apis.org/array-api-strict/>`_ in your
 test environment. This allows you to run checks without having a
-GPU. To run the full set of checks you also need to install
-`PyTorch <https://pytorch.org/>`_, `CuPy <https://cupy.dev/>`_ and have
-a GPU. Checks that can not be executed or have missing dependencies will be
-automatically skipped. Therefore it's important to run the tests with the
-`-v` flag to see which checks are skipped:
+GPU. To run the full set of checks you also need to install `PyTorch
+<https://pytorch.org/>`_, `CuPy <https://cupy.dev/>`_, `JAX
+<https://docs.jax.dev>`_ and have a GPU. Checks that can not be executed or
+have missing dependencies will be automatically skipped. Therefore it's
+important to run the tests with the `-v` flag to see which checks are skipped:
 
 .. prompt:: bash $
 
@@ -381,3 +381,34 @@ certain combinations of array namespaces and devices, such as `PyTorch on MPS`
 scikit-learn will revert to using the `float32` data type instead. This can result in
 different behavior (typically numerically unstable results) compared to not using array
 API dispatching or using a device with `float64` support.
+
+
+.. _inplace_updates_via_xpx:
+
+Note inplace updates via array-api-extra
+----------------------------------------
+
+While `jax.numpy` is array API compliant, it does not allow for in-place
+updates using the `__setitem__` or `__iadd__` operators contrary to most other
+array libraries. More concretely this means that the following lines of code
+raise an error with JAX arrays:
+
+.. code-block:: python
+
+    array[start:end] = new_value
+    array[start:end] += increment
+
+Since scikit-learn supports JAX arrays, any array API compliant code that needs
+to modify arrays inplace should instead use the vendored `array-api-extra`
+library as follows:
+
+.. code-block:: python
+
+    import sklearn.externals.array_api_extra as xpx
+
+    array = xpx.at(array)[start:end].set(new_value)
+    array = xpx.at(array)[start:end].add(increment)
+
+For most array libraries, this internally calls the equivalent
+`__setitem__`/`__iadd__` operators while this leverages the JAX `at[]` operator
+to simulate in-place updates on JAX inputs.

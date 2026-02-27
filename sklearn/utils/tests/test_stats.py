@@ -259,7 +259,8 @@ def test_weighted_percentile_2d(global_random_seed, percentile_rank, average):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
 )
 @pytest.mark.parametrize(
     "data, weights, percentile",
@@ -289,10 +290,16 @@ def test_weighted_percentile_2d(global_random_seed, percentile_rank, average):
     ],
 )
 def test_weighted_percentile_array_api_consistency(
-    global_random_seed, array_namespace, device, dtype_name, data, weights, percentile
+    global_random_seed,
+    array_namespace,
+    device_name,
+    dtype_name,
+    data,
+    weights,
+    percentile,
 ):
     """Check `_weighted_percentile` gives consistent results with array API."""
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     # Skip test for percentile=0 edge case (#20528) on namespace/device where
     # xp.nextafter is broken. This is the case for torch with MPS device:

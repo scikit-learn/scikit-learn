@@ -10,7 +10,7 @@ from itertools import combinations
 
 import numpy as np
 
-import sklearn.externals.array_api_extra as xpx
+from sklearn.externals import array_api_extra as xpx
 from sklearn.utils import check_array, check_consistent_length
 from sklearn.utils._array_api import _average, _ravel, get_namespace_and_device
 from sklearn.utils.multiclass import type_of_target
@@ -121,14 +121,16 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         y_score_c = _ravel(
             xp.take(y_score, xp.asarray([c], device=_device), axis=not_average_axis)
         )
-        score[c] = binary_metric(y_true_c, y_score_c, sample_weight=score_weight)
+        score = xpx.at(score)[c].set(
+            binary_metric(y_true_c, y_score_c, sample_weight=score_weight)
+        )
 
     # Average the results
     if average is not None:
         if average_weight is not None:
             # Scores with 0 weights are forced to be 0, preventing the average
             # score from being affected by 0-weighted NaN elements.
-            score[average_weight == 0] = 0
+            score = xpx.at(score)[average_weight == 0].set(0)
         return float(_average(score, weights=average_weight, xp=xp))
     else:
         return score

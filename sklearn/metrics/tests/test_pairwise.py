@@ -50,7 +50,6 @@ from sklearn.metrics.pairwise import (
 from sklearn.preprocessing import normalize
 from sklearn.utils._array_api import (
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     get_namespace,
     xpx,
     yield_namespace_device_dtype_combinations,
@@ -152,14 +151,13 @@ def test_pairwise_distances_for_dense_data(global_dtype):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("metric", ["cosine", "euclidean", "manhattan"])
-def test_pairwise_distances_array_api(array_namespace, device, dtype_name, metric):
+def test_pairwise_distances_array_api(array_namespace, device_name, dtype_name, metric):
     # Test array API support in pairwise_distances.
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     rng = np.random.RandomState(0)
     # Euclidean distance should be equivalent to calling the function.
@@ -390,9 +388,8 @@ def test_pairwise_parallel(func, metric, kwds, dtype):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "func, metric, kwds",
@@ -405,9 +402,9 @@ def test_pairwise_parallel(func, metric, kwds, dtype):
     ],
 )
 def test_pairwise_parallel_array_api(
-    func, metric, kwds, array_namespace, device, dtype_name
+    func, metric, kwds, array_namespace, device_name, dtype_name
 ):
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     rng = np.random.RandomState(0)
     X_np = np.array(5 * rng.random_sample((5, 4)), dtype=dtype_name)
     Y_np = np.array(5 * rng.random_sample((3, 4)), dtype=dtype_name)
@@ -482,17 +479,16 @@ def test_pairwise_kernels(metric, csr_container):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "metric",
     ["rbf", "sigmoid", "polynomial", "linear", "laplacian", "chi2", "additive_chi2"],
 )
-def test_pairwise_kernels_array_api(metric, array_namespace, device, dtype_name):
+def test_pairwise_kernels_array_api(metric, array_namespace, device_name, dtype_name):
     # Test array API support in pairwise_kernels.
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     rng = np.random.RandomState(0)
     X_np = 10 * rng.random_sample((5, 4))

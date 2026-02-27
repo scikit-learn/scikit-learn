@@ -18,6 +18,7 @@ from sklearn.base import (
     _fit_context,
 )
 from sklearn.covariance import empirical_covariance, ledoit_wolf, shrunk_covariance
+from sklearn.externals import array_api_extra as xpx
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils._array_api import _expit, device, get_namespace, size
@@ -111,7 +112,7 @@ def _class_means(X, y):
 
     if is_array_api_compliant:
         for i in range(classes.shape[0]):
-            means[i, :] = xp.mean(X[y == i], axis=0)
+            means = xpx.at(means)[i, :].set(xp.mean(X[y == i], axis=0))
     else:
         # TODO: Explore the choice of using bincount + add.at as it seems sub optimal
         # from a performance-wise
@@ -595,7 +596,7 @@ class LinearDiscriminantAnalysis(
         # 1) within (univariate) scaling by with classes std-dev
         std = xp.std(Xc, axis=0)
         # avoid division by zero in normalization
-        std[std == 0] = 1.0
+        std = xpx.at(std)[std == 0].set(1.0)
         fac = xp.asarray(1.0 / (n_samples - n_classes), dtype=X.dtype, device=device(X))
 
         # 2) Within variance scaling
@@ -797,7 +798,9 @@ class LinearDiscriminantAnalysis(
         prediction = self.predict_proba(X)
 
         smallest_normal = xp.finfo(prediction.dtype).smallest_normal
-        prediction[prediction == 0.0] += smallest_normal
+        prediction = xpx.at(prediction)[prediction == 0.0].set(
+            prediction[prediction == 0.0] + smallest_normal
+        )
         return xp.log(prediction)
 
     def decision_function(self, X):

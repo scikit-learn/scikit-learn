@@ -11,6 +11,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.externals import array_api_extra as xpx
 from sklearn.utils import column_or_1d
 from sklearn.utils._array_api import (
     _convert_to_numpy,
@@ -21,7 +22,6 @@ from sklearn.utils._array_api import (
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
-    xpx,
 )
 from sklearn.utils._encode import _encode, _unique
 from sklearn.utils._param_validation import Interval, validate_params
@@ -667,10 +667,10 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
     if not sparse_output:
         if neg_label != 0:
-            Y[Y == 0] = neg_label
+            Y = xpx.at(Y)[Y == 0].set(neg_label)
 
         if pos_switch:
-            Y[Y == pos_label] = 0
+            Y = xpx.at(Y)[Y == pos_label].set(0)
 
         Y = xp.astype(Y, int_dtype_, copy=False)
     else:

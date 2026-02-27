@@ -85,7 +85,6 @@ from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
@@ -2713,17 +2712,16 @@ def test_learning_curve_exploit_incremental_learning_routing():
 )
 @pytest.mark.parametrize("cv", [None, 3, 5])
 @pytest.mark.parametrize(
-    "namespace, device_, dtype_name",
+    "namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 def test_cross_val_predict_array_api_compliance(
-    estimator, cv, namespace, device_, dtype_name
+    estimator, cv, namespace, device_name, dtype_name
 ):
     """Test that `cross_val_predict` functions correctly with the array API
     with both a classifier and a regressor."""
 
-    xp = _array_api_for_tests(namespace, device_)
+    xp, device_ = _array_api_for_tests(namespace, device_name, dtype_name)
     if is_classifier(estimator):
         X, y = make_classification(
             n_samples=1000, n_features=5, n_classes=3, n_informative=3, random_state=42

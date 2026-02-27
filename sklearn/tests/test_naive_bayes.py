@@ -17,7 +17,6 @@ from sklearn.naive_bayes import (
 )
 from sklearn.utils._array_api import (
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     device,
     yield_namespace_device_dtype_combinations,
 )
@@ -995,15 +994,14 @@ def test_categorical_input_tag(Estimator):
 @pytest.mark.parametrize("use_str_y", [False, True])
 @pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 def test_gnb_array_api_compliance(
-    use_str_y, use_sample_weight, array_namespace, device_, dtype_name
+    use_str_y, use_sample_weight, array_namespace, device_name, dtype_name
 ):
     """Tests that :class:`GaussianNB` works correctly with array API inputs."""
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device_ = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X_np = X.astype(dtype_name)
     X_xp = xp.asarray(X_np, device=device_)
     if use_str_y:

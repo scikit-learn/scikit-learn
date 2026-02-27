@@ -20,6 +20,7 @@ from sklearn._loss.loss import (
     HalfMultinomialLossArrayAPI,
 )
 from sklearn.base import _fit_context
+from sklearn.externals import array_api_extra as xpx
 from sklearn.linear_model._base import (
     BaseEstimator,
     LinearClassifierMixin,
@@ -313,11 +314,11 @@ def _logistic_regression_path(
         mask = xp.asarray(y == classes[1], device=device_)
         y_bin = xp.ones(y.shape, dtype=X.dtype, device=device_)
         if solver == "liblinear":
-            y_bin[~mask] = -1.0
+            y_bin = xpx.at(y_bin)[~mask].set(-1.0)
         else:
             # HalfBinomialLoss, used for those solvers, represents y in [0, 1] instead
             # of in [-1, 1].
-            y_bin[~mask] = 0.0
+            y_bin = xpx.at(y_bin)[~mask].set(0.0)
     else:
         # All solvers capable of a multinomial need LabelEncoder, not LabelBinarizer,
         # i.e. y as a 1d-array of integers. LabelEncoder also saves memory
@@ -551,7 +552,7 @@ def _logistic_regression_path(
                 )
             )
 
-        n_iter[i] = n_iter_i
+        n_iter = xpx.at(n_iter)[i].set(n_iter_i)
 
     return xp.stack(coefs), xp.asarray(Cs, device=device_), n_iter
 
@@ -2167,7 +2168,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         if is_binary:
             self.coef_ = w[:, :n_features] if w.ndim == 2 else w[:n_features][None, :]
             if self.fit_intercept:
-                self.intercept_[0] = w[0, -1] if w.ndim == 2 else w[-1]
+                self.intercept_ = xpx.at(self.intercept_)[0].set(
+                    w[0, -1] if w.ndim == 2 else w[-1]
+                )
         else:
             self.C_ = np.tile(self.C_, n_classes)
             self.l1_ratio_ = np.tile(self.l1_ratio_, n_classes)

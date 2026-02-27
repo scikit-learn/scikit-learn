@@ -18,6 +18,7 @@ from sklearn.base import BaseEstimator
 from sklearn.datasets import make_blobs
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
+from sklearn.externals import array_api_extra as xpx
 from sklearn.linear_model import ARDRegression
 
 # TODO: add this estimator into the _mocking module in a further refactoring
@@ -35,7 +36,6 @@ from sklearn.utils import (
 )
 from sklearn.utils._array_api import (
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     _is_numpy_namespace,
     yield_namespace_device_dtype_combinations,
 )
@@ -1034,13 +1034,12 @@ def test_check_consistent_length():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, _",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
-def test_check_consistent_length_array_api(array_namespace, device, _):
+def test_check_consistent_length_array_api(array_namespace, device_name, dtype_name):
     """Test that check_consistent_length works with different array types."""
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     with config_context(array_api_dispatch=True):
         check_consistent_length(
@@ -1623,7 +1622,7 @@ def _check_sample_weight_common(xp):
     # check negative weight when ensure_non_negative=True
     X = xp.ones((5, 2))
     sample_weight = xp.ones(_num_samples(X))
-    sample_weight[-1] = -10
+    sample_weight = xpx.at(sample_weight)[-1].set(-10)
     err_msg = "Negative values in data passed to `sample_weight`"
     with pytest.raises(ValueError, match=err_msg):
         _check_sample_weight(sample_weight, X, ensure_non_negative=True)
@@ -1652,10 +1651,11 @@ def test_check_sample_weight():
 
 
 @pytest.mark.parametrize(
-    "array_namespace,device,dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
 )
-def test_check_sample_weight_array_api(array_namespace, device, dtype):
-    xp = _array_api_for_tests(array_namespace, device)
+def test_check_sample_weight_array_api(array_namespace, device_name, dtype_name):
+    xp, _ = _array_api_for_tests(array_namespace, device_name, dtype_name)
     with config_context(array_api_dispatch=True):
         # check array order
         sample_weight = xp.ones(10)[::2]
@@ -1674,13 +1674,14 @@ def test_check_pos_label_consistency(y_true):
 
 
 @pytest.mark.parametrize(
-    "array_namespace,device,dtype",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("y_true", [[0], [0, 1], [-1, 1], [1, 1, 1], [-1, -1, -1]])
-def test_check_pos_label_consistency_array_api(array_namespace, device, dtype, y_true):
-    xp = _array_api_for_tests(array_namespace, device)
+def test_check_pos_label_consistency_array_api(
+    array_namespace, device_name, dtype_name, y_true
+):
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     with config_context(array_api_dispatch=True):
         arr = xp.asarray(y_true, device=device)
         assert _check_pos_label_consistency(None, arr) == 1
@@ -1695,15 +1696,14 @@ def test_check_pos_label_consistency_invalid(y_true):
 
 
 @pytest.mark.parametrize(
-    "array_namespace,device,dtype",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("y_true", [[2, 3, 4], [-10], [0, -1]])
 def test_check_pos_label_consistency_invalid_array_api(
-    array_namespace, device, dtype, y_true
+    array_namespace, device_name, dtype_name, y_true
 ):
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     with config_context(array_api_dispatch=True):
         arr = xp.asarray(y_true, device=device)
         with pytest.raises(ValueError, match="y_true takes value in"):

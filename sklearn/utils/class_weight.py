@@ -6,6 +6,7 @@
 import numpy as np
 from scipy import sparse
 
+from sklearn.externals import array_api_extra as xpx
 from sklearn.utils._array_api import (
     _bincount,
     _convert_to_numpy,
@@ -107,7 +108,7 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
             except ValueError:  # `classes` contains strings
                 c = str(c)
             if c in class_weight:
-                weight[i] = class_weight[c]
+                weight = xpx.at(weight)[i].set(class_weight[c])
             else:
                 unweighted_classes.append(c)
 

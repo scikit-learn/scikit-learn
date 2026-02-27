@@ -9,6 +9,7 @@ from numbers import Integral
 import numpy as np
 from scipy.sparse import issparse
 
+from sklearn.externals import array_api_extra as xpx
 from sklearn.externals.array_api_compat import is_numpy_array
 from sklearn.metrics.pairwise import (
     _VALID_METRICS,
@@ -23,7 +24,6 @@ from sklearn.utils._array_api import (
     _is_numpy_namespace,
     _max_precision_float_dtype,
     get_namespace_and_device,
-    xpx,
 )
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 
@@ -468,9 +468,9 @@ def davies_bouldin_score(X, labels):
     for k in range(n_labels):
         cluster_k = _safe_indexing(X, xp.nonzero(labels == k)[0])
         centroid = _average(cluster_k, axis=0, xp=xp)
-        centroids[k, ...] = centroid
-        intra_dists[k] = _average(
-            pairwise_distances(cluster_k, xp.stack([centroid])), xp=xp
+        centroids = xpx.at(centroids)[k, ...].set(centroid)
+        intra_dists = xpx.at(intra_dists)[k].set(
+            _average(pairwise_distances(cluster_k, xp.stack([centroid])), xp=xp)
         )
 
     centroid_distances = pairwise_distances(centroids)
@@ -481,7 +481,7 @@ def davies_bouldin_score(X, labels):
     ):
         return 0.0
 
-    centroid_distances[centroid_distances == 0] = xp.inf
+    centroid_distances = xpx.at(centroid_distances)[centroid_distances == 0].set(xp.inf)
     combined_intra_dists = intra_dists[:, None] + intra_dists
     scores = xp.max(combined_intra_dists / centroid_distances, axis=1)
     return float(_average(scores, xp=xp))

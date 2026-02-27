@@ -23,6 +23,7 @@ from sklearn.base import (
     is_classifier,
 )
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.externals import array_api_extra as xpx
 from sklearn.linear_model._base import (
     LinearClassifierMixin,
     LinearModel,
@@ -303,7 +304,7 @@ def _solve_svd(X, y, alpha, xp=None):
     s_nnz = s[idx][:, None]
     UTy = U.T @ y
     d = xp.zeros((s.shape[0], alpha.shape[0]), dtype=X.dtype, device=device(X))
-    d[idx] = s_nnz / (s_nnz**2 + alpha)
+    d = xpx.at(d)[idx].set(s_nnz / (s_nnz**2 + alpha))
     d_UT_y = d * UTy
     return (Vt.T @ d_UT_y).T
 
@@ -2133,7 +2134,7 @@ class _RidgeGCV(LinearModel):
         if self.fit_intercept:
             sw_sum = sqrt_sw @ sqrt_sw
             alpha_Ginv_sqrt_sw = U @ self._diag_dot(M, UT_sqrt_sw) + sqrt_sw
-            alpha_d -= alpha_Ginv_sqrt_sw * sqrt_sw / sw_sum
+            alpha_d = xpx.at(alpha_d)[:].add(-alpha_Ginv_sqrt_sw * sqrt_sw / sw_sum)
         if y.ndim == 2:
             # handle case where y is 2-d
             alpha_d = alpha_d[:, None]
@@ -2154,7 +2155,7 @@ class _RidgeGCV(LinearModel):
         if self.fit_intercept:
             sw_sum = sqrt_sw @ sqrt_sw
             alpha_Ginv_sqrt_sw = U @ self._diag_dot(alpha_D, UT_sqrt_sw)
-            alpha_d -= alpha_Ginv_sqrt_sw * sqrt_sw / sw_sum
+            alpha_d = xpx.at(alpha_d)[:].add(-alpha_Ginv_sqrt_sw * sqrt_sw / sw_sum)
         if y.ndim == 2:
             # handle case where y is 2-d
             alpha_d = alpha_d[:, None]

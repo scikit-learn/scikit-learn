@@ -45,7 +45,6 @@ from sklearn.utils._array_api import (
     _NUMPY_NAMESPACE_NAMES,
     _atol_for_type,
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
     yield_namespaces,
 )
@@ -1409,9 +1408,9 @@ def _test_tolerance(sparse_container):
 
 
 def check_array_api_attributes(
-    name, estimator, array_namespace, device, dtype_name, rtol=None
+    name, estimator, array_namespace, device_name, dtype_name, rtol=None
 ):
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     X_iris_np = X_iris.astype(dtype_name)
     y_iris_np = y_iris.astype(dtype_name)
@@ -1448,9 +1447,8 @@ def check_array_api_attributes(
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "check",
@@ -1469,25 +1467,25 @@ def check_array_api_attributes(
     ids=_get_check_estimator_ids,
 )
 def test_ridge_array_api_compliance(
-    estimator, check, array_namespace, device, dtype_name
+    estimator, check, array_namespace, device_name, dtype_name
 ):
     name = estimator.__class__.__name__
-    xp = _array_api_for_tests(array_namespace, device)
-    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
+    check(
+        name, estimator, array_namespace, device_name=device_name, dtype_name=dtype_name
+    )
 
 
 @pytest.mark.parametrize(
     "estimator", [RidgeClassifier(solver="svd"), RidgeClassifierCV()]
 )
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 def test_ridge_classifier_multilabel_array_api(
-    estimator, array_namespace, device_, dtype_name
+    estimator, array_namespace, device_name, dtype_name
 ):
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device_ = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X, y = make_multilabel_classification(random_state=0)
     X_np = X.astype(dtype_name)
     y_np = y.astype(dtype_name)
@@ -1505,7 +1503,7 @@ def test_ridge_classifier_multilabel_array_api(
     "array_namespace", yield_namespaces(include_numpy_namespaces=False)
 )
 def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
-    xp = _array_api_for_tests(array_namespace, device=None)
+    xp, _ = _array_api_for_tests(array_namespace, device_name=None, dtype_name=None)
 
     X_iris_xp = xp.asarray(X_iris[:5])
     y_iris_xp = xp.asarray(y_iris[:5])
@@ -1548,7 +1546,7 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
 
 @pytest.mark.parametrize("array_namespace", sorted(_NUMPY_NAMESPACE_NAMES))
 def test_array_api_numpy_namespace_no_warning(array_namespace):
-    xp = _array_api_for_tests(array_namespace, device=None)
+    xp, _ = _array_api_for_tests(array_namespace, device_name=None, dtype_name=None)
 
     X_iris_xp = xp.asarray(X_iris[:5])
     y_iris_xp = xp.asarray(y_iris[:5])

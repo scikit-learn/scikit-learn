@@ -13,7 +13,6 @@ from sklearn.preprocessing._label import (
 )
 from sklearn.utils._array_api import (
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     _is_numpy_namespace,
     device,
     get_namespace,
@@ -238,15 +237,16 @@ def test_label_binarizer_sparse_errors(csr_container):
     ],
 )
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
 )
 def test_label_binarizer_array_api_compliance(
-    y, classes, expected, array_namespace, device_, dtype_name
+    y, classes, expected, array_namespace, device_name, dtype_name
 ):
     """Test that :class:`LabelBinarizer` works correctly with the Array API for binary
     and multi-class inputs for numerical labels and non-sparse outputs.
     """
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device_ = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     y_np = np.asarray(y)
 
@@ -764,15 +764,16 @@ def test_invalid_input_label_binarize():
     ],
 )
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
 )
 def test_label_binarize_array_api_compliance(
-    y, classes, expected, array_namespace, device_, dtype_name
+    y, classes, expected, array_namespace, device_name, dtype_name
 ):
     """Test that :func:`label_binarize` works correctly with the Array API for binary
     and multi-class inputs for numerical labels and non-sparse outputs.
     """
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device_ = _array_api_for_tests(array_namespace, device_name, dtype_name)
     xp_is_numpy = _is_numpy_namespace(xp)
     numeric_dtype = np.issubdtype(np.asarray(y).dtype, np.integer) and np.issubdtype(
         np.asarray(classes).dtype, np.integer
@@ -838,9 +839,8 @@ def test_label_encoders_do_not_have_set_output(encoder):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "y",
@@ -850,8 +850,10 @@ def test_label_encoders_do_not_have_set_output(encoder):
         np.array([3, 5, 9, 5, 9, 3]),
     ],
 )
-def test_label_encoder_array_api_compliance(y, array_namespace, device, dtype):
-    xp = _array_api_for_tests(array_namespace, device)
+def test_label_encoder_array_api_compliance(
+    y, array_namespace, device_name, dtype_name
+):
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     xp_y = xp.asarray(y, device=device)
     with config_context(array_api_dispatch=True):
         xp_label = LabelEncoder()

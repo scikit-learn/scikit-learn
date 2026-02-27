@@ -1,0 +1,3 @@
+- Array API support is now tested and validated for JAX (``jax.numpy``) inputs
+  in addition to array-api-strict, CuPy and PyTorch.
+  By :user:`Shruti Nath <snath-xoc>` and :user:`Olivier Grisel <ogrisel>`.

@@ -49,7 +49,6 @@ from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._array_api import (
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     device,
     get_namespace,
     yield_namespace_device_dtype_combinations,
@@ -1227,17 +1226,16 @@ def test_error_less_class_samples_than_folds():
 @pytest.mark.parametrize("ensemble", [False, True])
 @pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 def test_temperature_scaling_array_api_compliance(
-    ensemble, use_sample_weight, array_namespace, device_, dtype_name
+    ensemble, use_sample_weight, array_namespace, device_name, dtype_name
 ):
     """Check that `CalibratedClassifierCV` with temperature scaling is compatible
     with the array API"""
 
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device_ = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X, y = make_classification(
         n_samples=1000,
         n_features=10,
@@ -1298,12 +1296,11 @@ def test_temperature_scaling_array_api_compliance(
 @pytest.mark.parametrize("ensemble", [False, True])
 @pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
-    ensemble, use_sample_weight, array_namespace, device_, dtype_name
+    ensemble, use_sample_weight, array_namespace, device_name, dtype_name
 ):
     """Check that `CalibratedClassifierCV` with temperature scaling is compatible
     with the array API when `y` is an ndarray of strings and the estimator is not
@@ -1314,7 +1311,7 @@ def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
     #  the array API when `y` is an ndarray of strings and we fit
     #  `LinearDiscriminantAnalysis` beforehand. In this regard
     #  `LinearDiscriminantAnalysis` will also need modifications.
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device_ = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X, y = make_classification(
         n_samples=500,
         n_features=10,

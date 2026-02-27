@@ -1,0 +1,3 @@
+- Fixed :func:`sklearn.metrics.pairwise.additive_chi2_kernel` and
+  :func:`sklearn.metrics.pairwise.chi2_kernel` to accept read-only buffers.
+  By :user:`Olivier Grisel <ogrisel>`.

@@ -15,7 +15,6 @@ from sklearn.decomposition._pca import _assess_dimension, _infer_dimension
 from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._array_api import device as array_device
@@ -972,8 +971,10 @@ def test_variance_correctness(copy):
     np.testing.assert_allclose(pca_var, true_var)
 
 
-def check_array_api_get_precision(name, estimator, array_namespace, device, dtype_name):
-    xp = _array_api_for_tests(array_namespace, device)
+def check_array_api_get_precision(
+    name, estimator, array_namespace, device_name, dtype_name
+):
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     iris_np = iris.data.astype(dtype_name)
     iris_xp = xp.asarray(iris_np, device=device)
 
@@ -1007,9 +1008,8 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "check",
@@ -1034,17 +1034,18 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
     ids=_get_check_estimator_ids,
 )
 def test_pca_array_api_compliance(
-    estimator, check, array_namespace, device, dtype_name
+    estimator, check, array_namespace, device_name, dtype_name
 ):
     name = estimator.__class__.__name__
     estimator = clone(estimator)
-    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
+    check(
+        name, estimator, array_namespace, device_name=device_name, dtype_name=dtype_name
+    )
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "check",
@@ -1064,14 +1065,16 @@ def test_pca_array_api_compliance(
     ids=_get_check_estimator_ids,
 )
 def test_pca_mle_array_api_compliance(
-    estimator, check, array_namespace, device, dtype_name
+    estimator, check, array_namespace, device_name, dtype_name
 ):
     name = estimator.__class__.__name__
-    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
+    check(
+        name, estimator, array_namespace, device_name=device_name, dtype_name=dtype_name
+    )
 
     # Simpler variant of the generic check_array_api_input checker tailored for
     # the specific case of PCA with mle-trimmed components.
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     X, y = make_classification(random_state=42)
     X = X.astype(dtype_name, copy=False)
