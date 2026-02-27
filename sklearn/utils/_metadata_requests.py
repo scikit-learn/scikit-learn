@@ -1304,6 +1304,11 @@ def get_routing_for_object(obj=None):
 # mixin class.
 
 # These strings are used to dynamically generate the docstrings for the methods.
+REQUESTER_DOC_EMPTY = """        No-op.
+
+        Calling this method has no effect.
+
+"""
 REQUESTER_DOC = """        Configure whether metadata should be requested to be \
 passed to the ``{method}`` method.
 
@@ -1334,7 +1339,8 @@ this given alias instead of the original name.
 
         .. versionadded:: 1.3
 
-        Parameters
+"""
+REQUESTER_DOC_PARAMS_SECTION = """        Parameters
         ----------
 """
 REQUESTER_DOC_PARAM = """        {metadata} : str, True, False, or None, \
@@ -1461,9 +1467,13 @@ class RequestMethod:
             params,
             return_annotation=owner,
         )
-        doc = REQUESTER_DOC.format(method=self.name)
-        for metadata in self.keys:
-            doc += REQUESTER_DOC_PARAM.format(metadata=metadata, method=self.name)
+        if self.keys:
+            doc = REQUESTER_DOC.format(method=self.name)
+            doc += REQUESTER_DOC_PARAMS_SECTION
+            for metadata in self.keys:
+                doc += REQUESTER_DOC_PARAM.format(metadata=metadata, method=self.name)
+        else:
+            doc = REQUESTER_DOC_EMPTY
         doc += REQUESTER_DOC_RETURN
         func.__doc__ = doc
         return func
@@ -1515,14 +1525,35 @@ class _MetadataRequester:
         ----------
         .. [1] https://www.python.org/dev/peps/pep-0487
         """
+
+        def is_RequestMethod(obj, name: str):
+            value = inspect.getattr_static(obj, name)
+            return isinstance(value, RequestMethod)
+
         try:
             for method in SIMPLE_METHODS:
+                set_method_name = f"set_{method}_request"
                 requests = cls._get_class_level_metadata_request_values(method)
-                if not requests:
+                if hasattr(cls, set_method_name) and not is_RequestMethod(
+                    cls, set_method_name
+                ):
+                    # The method is not a descriptor, which means it's explicitly
+                    # defined in the class, therefore we skip overriding it with a
+                    # descriptor here.
+                    # This happens, for instance in Scorers where the
+                    # `set_score_request` method is defined in the class.
+                    continue
+
+                if not requests and not hasattr(cls, set_method_name):
+                    # It can be the case that requests here is empty due to removing
+                    # metadata with an UNUSED marker, and that the parent class has
+                    # the method already. In this case, we cannot remove the method
+                    # since it exists in the parent class, and instead we set it with
+                    # an empty set of requests.
                     continue
                 setattr(
                     cls,
-                    f"set_{method}_request",
+                    set_method_name,
                     RequestMethod(method, sorted(requests)),
                 )
         except Exception:

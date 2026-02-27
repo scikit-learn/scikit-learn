@@ -1,0 +1,3 @@
+- If a class explicitly defines a `set_{method}_request` method, it will not be
+  overridden by the metadata routing machinery.
+  By `Adrin Jalali`_
