@@ -1,0 +1,6 @@
+- Fixed repeated third-party deprecation warnings in process-based parallel
+  execution. When :class:`utils.parallel.Parallel` propagates warning filters
+  to workers, warning categories are now restored without implicit imports of
+  third-party modules. This avoids repeated warning noise such as
+  ``pkg_resources is deprecated as an API`` in some workflows.
+  By :user:`Fang <gufarui>`

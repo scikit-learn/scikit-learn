@@ -6,6 +6,7 @@ usage.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import functools
+import sys
 import warnings
 from functools import update_wrapper
 
@@ -19,6 +20,51 @@ from sklearn._config import config_context, get_config
 # It should not be accessed directly and _get_threadpool_controller should be used
 # instead.
 _threadpool_controller = None
+_WARNING_FILTER_KEYS = ["action", "message", "category", "module", "lineno"]
+
+
+def _pack_warning_filter(filter_args):
+    """Replace warning category classes by import-free references.
+
+    Storing warning classes directly in the filter tuple forces worker processes to
+    import their defining modules during unpickling. Some third-party modules emit
+    warnings at import time, which can lead to repeated noise in process-based
+    parallel calls.
+    """
+    action, message, category, module, lineno = filter_args
+    if isinstance(category, type) and issubclass(category, Warning):
+        category = (category.__module__, category.__qualname__)
+    return (action, message, category, module, lineno)
+
+
+def _unpack_warning_filter(filter_args):
+    """Build a warning filter dict suitable for warnings.simplefilter/filterwarnings."""
+    warning_filter_dict = {
+        k: v for k, v in zip(_WARNING_FILTER_KEYS, filter_args) if v is not None
+    }
+
+    category = warning_filter_dict.get("category")
+    if (
+        isinstance(category, tuple)
+        and len(category) == 2
+        and all(isinstance(x, str) for x in category)
+    ):
+        module_name, qualname = category
+        module = sys.modules.get(module_name)
+        if module is None:
+            return None
+
+        category_obj = module
+        for attr in qualname.split("."):
+            category_obj = getattr(category_obj, attr, None)
+            if category_obj is None:
+                return None
+
+        if not (isinstance(category_obj, type) and issubclass(category_obj, Warning)):
+            return None
+        warning_filter_dict["category"] = category_obj
+
+    return warning_filter_dict
 
 
 def _with_config_and_warning_filters(delayed_func, config, warning_filters):
@@ -79,6 +125,9 @@ class Parallel(joblib.Parallel):
         warning_filters = (
             filters_func() if filters_func is not None else warnings.filters
         )
+        warning_filters = [
+            _pack_warning_filter(filter_args) for filter_args in warning_filters
+        ]
 
         iterable_with_config_and_warning_filters = (
             (
@@ -154,13 +203,10 @@ class _FuncWrapper:
         with config_context(**config), warnings.catch_warnings():
             # TODO is there a simpler way that resetwarnings+ filterwarnings?
             warnings.resetwarnings()
-            warning_filter_keys = ["action", "message", "category", "module", "lineno"]
             for filter_args in warning_filters:
-                this_warning_filter_dict = {
-                    k: v
-                    for k, v in zip(warning_filter_keys, filter_args)
-                    if v is not None
-                }
+                this_warning_filter_dict = _unpack_warning_filter(filter_args)
+                if this_warning_filter_dict is None:
+                    continue
 
                 # Some small discrepancy between warnings filters and what
                 # filterwarnings expect. simplefilter is more lenient, e.g.
