@@ -68,12 +68,12 @@ def test_linkage_misc():
     # test hierarchical clustering on a precomputed distances matrix
     dis = cosine_distances(X)
 
-    res = linkage_tree(dis, affinity="precomputed")
-    assert_array_equal(res[0], linkage_tree(X, affinity="cosine")[0])
+    res = linkage_tree(dis, metric="precomputed")
+    assert_array_equal(res[0], linkage_tree(X, metric="cosine")[0])
 
     # test hierarchical clustering on a precomputed distances matrix
-    res = linkage_tree(X, affinity=manhattan_distances)
-    assert_array_equal(res[0], linkage_tree(X, affinity="manhattan")[0])
+    res = linkage_tree(X, metric=manhattan_distances)
+    assert_array_equal(res[0], linkage_tree(X, metric="manhattan")[0])
 
 
 def test_structured_linkage_tree():
@@ -143,7 +143,7 @@ def test_zero_cosine_linkage_tree():
     X = np.array([[0, 1], [0, 0]])
     msg = "Cosine affinity cannot be used when X contains zero vectors"
     with pytest.raises(ValueError, match=msg):
-        linkage_tree(X, affinity="cosine")
+        linkage_tree(X, metric="cosine")
 
 
 @pytest.mark.parametrize("n_clusters, distance_threshold", [(None, 0.5), (10, None)])
@@ -719,7 +719,7 @@ def test_affinity_passed_to_fix_connectivity():
 
     fa = FakeAffinity()
 
-    linkage_tree(X, connectivity=connectivity, affinity=fa.increment)
+    linkage_tree(X, connectivity=connectivity, metric=fa.increment)
 
     assert fa.counter == 3
 
