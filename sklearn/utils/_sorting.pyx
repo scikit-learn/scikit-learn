@@ -42,7 +42,7 @@ cdef int simultaneous_sort(
     # an Array of Structures (AoS) instead of the Structure of Arrays (SoA)
     # currently used.
     cdef:
-        intp_t pivot_idx, i, store_idx
+        intp_t pivot_idx, i, j
         floating pivot_val
 
     # in the small-array case, do things efficiently
@@ -75,13 +75,24 @@ cdef int simultaneous_sort(
         # Partition indices about pivot.  At the end of this operation,
         # pivot_idx will contain the pivot value, everything to the left
         # will be smaller, and everything to the right will be larger.
-        store_idx = 0
-        for i in range(size - 1):
-            if values[i] < pivot_val:
-                dual_swap(values, indices, i, store_idx)
-                store_idx += 1
-        dual_swap(values, indices, store_idx, size - 1)
-        pivot_idx = store_idx
+        i = 1  # the median-of-three step ensures values[0] <= pivot
+        j = size - 2  # the median-of-three step ensures values[-1] >= pivot
+        while True:
+            # Find element >= pivot from left
+            while i <= j and values[i] < pivot_val:
+                i += 1
+            # Find element <= pivot from right
+            while i <= j and values[j] > pivot_val:
+                j -= 1
+            if i >= j:
+                break
+            dual_swap(values, indices, i, j)
+            i += 1
+            j -= 1
+
+        # Put pivot at pivot_idx
+        pivot_idx = i
+        dual_swap(values, indices, pivot_idx, size - 1)
 
         # Recursively sort each side of the pivot
         if pivot_idx > 1:
@@ -91,3 +102,12 @@ cdef int simultaneous_sort(
                               indices + pivot_idx + 1,
                               size - pivot_idx - 1)
     return 0
+
+
+def _py_simultaneous_sort(
+    floating[::1] values,
+    intp_t[::1] indices,
+    intp_t size,
+):
+    """Python wrapper used for testing."""
+    simultaneous_sort(&values[0], &indices[0], size)
