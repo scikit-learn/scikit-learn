@@ -307,8 +307,8 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6, random_state=None):
 
     # NNDSVD initialization
     U, S, V = _randomized_svd(X, n_components, random_state=random_state)
-    W = np.zeros_like(U)
-    H = np.zeros_like(V)
+    W = np.zeros_like(U, order="C")
+    H = np.zeros_like(V, order="C")
 
     # The leading singular triplet is non-negative
     # so it can be used as is for initialization.
