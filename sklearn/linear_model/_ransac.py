@@ -508,7 +508,12 @@ class RANSACRegressor(
             n_inliers_subset = np.sum(inlier_mask_subset)
 
             # less inliers -> skip current random sample
-            if n_inliers_subset < n_inliers_best:
+            # `score` for regressors typically requires at least 2 samples (e.g.
+            # default R^2 for LinearRegression) while for custom estimators a
+            # reasonable lower bound is `min_samples`.
+            if n_inliers_subset < n_inliers_best or n_inliers_subset < max(
+                min_samples, 2
+            ):
                 self.n_skips_no_inliers_ += 1
                 continue
 
@@ -528,6 +533,11 @@ class RANSACRegressor(
                 y_inlier_subset,
                 **score_params_inlier_subset,
             )
+
+            # Skip iterations with invalid score (e.g. None, nan or inf).
+            if score_subset is None or not np.all(np.isfinite(score_subset)):
+                self.n_skips_invalid_model_ += 1
+                continue
 
             # same number of inliers but worse score -> skip current random
             # sample

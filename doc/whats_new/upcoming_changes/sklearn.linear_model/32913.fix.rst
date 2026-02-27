@@ -1,0 +1,5 @@
+- Fixed :class:`linear_model.RANSACRegressor` to skip scoring consensus sets with too few
+  inliers (fewer than ``max(min_samples, 2)``) and to ignore invalid scores (e.g. nan or
+  inf), avoiding an ``UndefinedMetricWarning`` from the default ``R^2`` score and making
+  the algorithm more robust to custom estimators.
+  By :user:`DavidAGInnovation <DavidAGInnovation>`.
