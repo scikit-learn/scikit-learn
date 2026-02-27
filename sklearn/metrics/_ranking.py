@@ -2268,7 +2268,9 @@ def metric_at_thresholds(
         Ground truth (correct) target labels.
 
     y_score : array-like of shape (n_samples,)
-        Continuous response scores.
+        Continuous prediction scores. Can either be probability estimates of the
+        positive class or non-thresholded measure of decisions
+        (as returned by :term:`decision_function` on some classifiers).
 
     metric_func : callable
         The metric function to use. It will be called as
@@ -2307,11 +2309,11 @@ def metric_at_thresholds(
     >>> from sklearn.metrics import accuracy_score, metric_at_thresholds
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> scores, thresholds = metric_at_thresholds(
+    >>> metric_values, thresholds = metric_at_thresholds(
     ...     y_true, y_score, accuracy_score)
     >>> thresholds
     array([0.8 , 0.4 , 0.35, 0.1 ])
-    >>> scores
+    >>> metric_values
     array([0.75, 0.5 , 0.75, 0.5 ])
     """
     y_true, y_score, sample_weight, threshold_idxs = (
