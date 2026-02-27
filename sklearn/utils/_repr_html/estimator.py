@@ -404,8 +404,6 @@ def _write_estimator_html(
 
         out.write("</div></div>")
     elif est_block.kind == "single":
-        if est_block.names == "NoneType(...)":
-            est_block.names = "passthrough"
         if (
             hasattr(estimator, "_get_params_html")
             and not est_block.names == "passthrough"
