@@ -2156,13 +2156,12 @@ def _incremental_fit_estimator(
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
     if fit_params is None:
         fit_params = {}
+    if score_params is None:
+        score_params = {}
     if classes is None:
-        partial_fit_func = partial(estimator.partial_fit, **fit_params)
+        partial_fit_func = partial(estimator.partial_fit)
     else:
-        partial_fit_func = partial(estimator.partial_fit, classes=classes, **fit_params)
-    score_params = score_params if score_params is not None else {}
-    score_params_train = _check_method_params(X, params=score_params, indices=train)
-    score_params_test = _check_method_params(X, params=score_params, indices=test)
+        partial_fit_func = partial(estimator.partial_fit, classes=classes)
 
     for n_train_samples, partial_train in partitions:
         train_subset = train[:n_train_samples]
@@ -2170,14 +2169,26 @@ def _incremental_fit_estimator(
         X_partial_train, y_partial_train = _safe_split(estimator, X, y, partial_train)
         X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
         start_fit = time.time()
+
+        fit_params_iter = _check_method_params(
+            X, params=fit_params, indices=partial_train
+        )
+
         if y_partial_train is None:
-            partial_fit_func(X_partial_train)
+            partial_fit_func(X_partial_train, **fit_params_iter)
         else:
-            partial_fit_func(X_partial_train, y_partial_train)
+            partial_fit_func(X_partial_train, y_partial_train, **fit_params_iter)
         fit_time = time.time() - start_fit
         fit_times.append(fit_time)
 
         start_score = time.time()
+
+        score_params_test_iter = _check_method_params(
+            X, params=score_params, indices=test
+        )
+        score_params_train_iter = _check_method_params(
+            X, params=score_params, indices=train_subset
+        )
 
         test_scores.append(
             _score(
@@ -2185,7 +2196,7 @@ def _incremental_fit_estimator(
                 X_test,
                 y_test,
                 scorer,
-                score_params=score_params_test,
+                score_params=score_params_test_iter,
                 error_score=error_score,
             )
         )
@@ -2195,7 +2206,7 @@ def _incremental_fit_estimator(
                 X_train,
                 y_train,
                 scorer,
-                score_params=score_params_train,
+                score_params=score_params_train_iter,
                 error_score=error_score,
             )
         )
