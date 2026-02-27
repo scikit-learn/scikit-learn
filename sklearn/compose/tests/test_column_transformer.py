@@ -1636,7 +1636,7 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
     assert visual_block.name_details == ([0, 2], [1])
     assert isinstance(visual_block.estimators[0], StandardScaler)
     if remainder == "passthrough":
-        assert isinstance(visual_block.estimators[1], FunctionTransformer)
+        assert visual_block.estimators[1] == "passthrough"
     else:
         assert isinstance(visual_block.estimators[1], StandardScaler)
 
