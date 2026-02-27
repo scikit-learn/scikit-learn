@@ -358,13 +358,25 @@ class CallbackContext:
                 ):
                     callback.on_fit_end(estimator, self)
 
-    def propagate_callbacks(self, sub_estimator):
+    def propagate_callbacks(self, sub_estimator, clone_estimator=False):
         """Propagate the callbacks to a sub-estimator.
+
+        The callbacks are propagated to a clone of the sub-estimator instead if
+        clone_estimator is set to True.
 
         Parameters
         ----------
         sub_estimator : estimator instance
             The estimator to which the callbacks should be propagated.
+
+        clone_estimator : bool, default=False
+            Whether to clone the sub-estimator or not.
+
+        Returns
+        -------
+        sub_estimator : estimator instance
+            The sub-estimator to which the callbacks were propagated, or a clone of that
+            estimator if clone_estimator is True.
         """
         bad_callbacks = [
             callback.__class__.__name__
@@ -390,6 +402,18 @@ class CallbackContext:
             )
         ]
 
+        if clone_estimator:
+            from sklearn.base import clone
+
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore", message="There are callbacks set on the estimator "
+                )
+                cloned_estimator = clone(sub_estimator)
+            if hasattr(sub_estimator, "_skl_callbacks"):
+                cloned_estimator.set_callbacks(sub_estimator._skl_callbacks)
+            sub_estimator = cloned_estimator
+
         # We store the parent context in the sub-estimator to be able to merge the task
         # trees of the sub-estimator and the meta-estimator. We want to link the task
         # trees even if there is no callback to propagate, as the sub-estimators might
@@ -398,7 +422,7 @@ class CallbackContext:
         sub_estimator._parent_callback_ctx = self
 
         if not callbacks_to_propagate:
-            return self
+            return sub_estimator
 
         if not hasattr(sub_estimator, "set_callbacks"):
             warnings.warn(
@@ -406,13 +430,13 @@ class CallbackContext:
                 f"callbacks. The callbacks attached to {self.estimator_name} will not "
                 f"be propagated to this estimator."
             )
-            return self
+            return sub_estimator
 
         sub_estimator.set_callbacks(
             getattr(sub_estimator, "_skl_callbacks", []) + callbacks_to_propagate
         )
 
-        return self
+        return sub_estimator
 
 
 def get_context_path(context):

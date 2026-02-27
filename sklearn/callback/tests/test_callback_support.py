@@ -3,6 +3,7 @@
 
 import pytest
 
+from sklearn.base import clone
 from sklearn.callback.tests._utils import (
     MaxIterEstimator,
     NotValidCallback,
@@ -39,3 +40,12 @@ def test_set_callbacks_error(callbacks):
 
     with pytest.raises(TypeError, match="callbacks must follow the Callback protocol."):
         estimator.set_callbacks(callbacks)
+
+
+def test_clone_warning():
+    """Test the warning when cloning an estimator with callback registered to it."""
+    estimator = MaxIterEstimator()
+    estimator.set_callbacks(TestingCallback())
+    with pytest.warns(UserWarning, match="There are callbacks set on the estimator "):
+        cloned_estimator = clone(estimator)
+    assert not hasattr(cloned_estimator, "_skl_callbacks")
