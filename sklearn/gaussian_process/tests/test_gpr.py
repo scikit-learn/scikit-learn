@@ -46,7 +46,7 @@ kernels = [
     fixed_kernel,
     RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
     C(1.0, (1e-2, 1e2)) * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
-    C(1, (1e-2, 1e2)) * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3))
+    C(1.0, (1e-2, 1e2)) * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3))
     + C(1e-5, (1e-5, 1e2)),
     C(0.1, (1e-2, 1e2)) * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3))
     + C(1e-5, (1e-5, 1e2)),
