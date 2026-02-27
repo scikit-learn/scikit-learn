@@ -2431,3 +2431,10 @@ def test_set_score_request_with_default_scoring(metaestimator, make_dataset):
 
 # End of Metadata Routing Tests
 # =============================
+def test_ridge_classifier_unsigned_target():
+    """Check RidgeClassifier support for unsigned integer targets. #33390"""
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([0, 1], dtype=np.uint64)
+    clf = RidgeClassifier()
+    clf.fit(X, y)
+    assert clf.predict(X).dtype == np.uint64
