@@ -80,17 +80,6 @@ a utility metric defined by the business (in this case an insurance company).
    :target: ../auto_examples/model_selection/plot_cost_sensitive_learning.html
    :align: center
 
-.. _metric_at_thresholds:
-
-Plotting metric across thresholds
----------------------------------
-
-The final plot above shows the value of a utility metric of interest across a range
-of threshold values. This can be a useful visualization when tuning the decision
-threshold, especially if there is more than one metric of interest. The
-:func:`~sklearn.metrics.metric_at_thresholds` allows you to easily generate such plots as it
-computes the values required for each axis; scores per threshold and threshold values.
-
 Options to tune the decision threshold
 --------------------------------------
 
@@ -146,6 +135,17 @@ a float number for `cv` to limit to an internal single train-test split.
 The option `cv="prefit"` should only be used when the provided classifier was already
 trained, and you just want to find the best decision threshold using a new validation
 set.
+
+.. _metric_at_thresholds:
+
+Visualizing thresholds
+----------------------
+
+A useful visualization when tuning the decision threshold is a plot of metric values
+across different thresholds. This is  particularly valuable when there is more than
+one metric of interest. The :func:`~sklearn.metrics.metric_at_thresholds` function
+computes metric values at each unique score threshold, returning both the metric
+array and corresponding threshold values for easy plotting.
 
 .. _FixedThresholdClassifier:
 
