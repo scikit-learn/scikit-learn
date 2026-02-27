@@ -307,7 +307,7 @@ def _estimate_mi(
         )
 
     if not discrete_target:
-        y = scale(y, with_mean=False)
+        y = scale(y, with_mean=False, copy=copy)
         y += (
             1e-10
             * np.maximum(1, np.mean(np.abs(y)))
@@ -380,7 +380,8 @@ def mutual_info_regression(
 
     copy : bool, default=True
         Whether to make a copy of the given data. If set to False, the initial
-        data will be overwritten.
+        data will be overwritten. Only affects continuous features in `X` and
+        a continuous `y`; discrete features are not modified in-place.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for adding small noise to
@@ -508,7 +509,8 @@ def mutual_info_classif(
 
     copy : bool, default=True
         Whether to make a copy of the given data. If set to False, the initial
-        data will be overwritten.
+        data will be overwritten. Only affects continuous features in `X`;
+        `y` is discrete for this function and is not modified in-place.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for adding small noise to
