@@ -627,8 +627,9 @@ def move_to(*arrays, xp, device):
                     # more details about the introduction of the `copy` and `device`
                     # kwargs in the from_dlpack method and their expected
                     # meaning by namespaces implementing the array API spec.
+                    # `RuntimeError`: occurs when converting from GPU to NumPy
                     # TODO: try removing this once DLPack v1 more widely supported
-                    # TODO: ValueError should not be needed but is in practice:
+                    # TODO: ValueError not needed once min NumPy >=2.4.0:
                     # https://github.com/numpy/numpy/issues/30341
                 except (
                     AttributeError,
@@ -636,6 +637,7 @@ def move_to(*arrays, xp, device):
                     NotImplementedError,
                     BufferError,
                     ValueError,
+                    RuntimeError,
                 ):
                     # Converting to numpy is tricky, handle this via dedicated function
                     if _is_numpy_namespace(xp):
