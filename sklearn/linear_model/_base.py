@@ -714,9 +714,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
         else:
-            # cut-off ratio for small singular values
-            cond = max(X.shape) * np.finfo(X.dtype).eps
-            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y, cond=cond)
+            # FIXME : cut-off ratio for small singular values
+            # cond = None breaks sample weight consistency, see #26164
+            # cond = max(X.shape) * np.finfo(X.dtype).eps fails on float32, see #33032
+            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y, cond=None)
             self.coef_ = self.coef_.T
 
         if y.ndim == 1:
