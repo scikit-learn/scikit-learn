@@ -2,6 +2,9 @@
  * This is the styling for API reference pages, currently under `modules/generated`.
  * Note that it should be applied *ONLY* to API reference pages, as the selectors are
  * designed based on how `autodoc` and `autosummary` generate the stuff.
+ *
+ * This file is compiled into styles/api.css by sphinxcontrib.sass, see:
+ * https://sass-lang.com/guide/
  */
 
 // Make the admonitions more compact
