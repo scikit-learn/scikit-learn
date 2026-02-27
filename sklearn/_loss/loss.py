@@ -45,13 +45,12 @@ from sklearn._loss.link import (
     LogLink,
     MultinomialLogit,
 )
+from sklearn.externals.array_api_extra import one_hot
 from sklearn.utils import check_scalar
 from sklearn.utils._array_api import (
     _average,
     _logsumexp,
     _ravel,
-    get_namespace,
-    get_namespace_and_device,
 )
 from sklearn.utils.extmath import softmax
 from sklearn.utils.stats import _weighted_percentile
@@ -97,15 +96,29 @@ class BaseLoss:
 
     Parameters
     ----------
+    closs: CyLossFunction
+        For example, a CyLossFunction; hence the name "c"loss.
+    link : BaseLink
     sample_weight : {None, ndarray}
         If sample_weight is None, the hessian might be constant.
     n_classes : {None, int}
         The number of classes for classification, else None.
+    xp : module, default=None
+        Array namespace module.
+    device : device, default=None
+        A device object (see the "Device Support" section of the array API spec).
 
     Attributes
     ----------
     closs: CyLossFunction
+        For example, a CyLossFunction; hence the name "c"loss.
     link : BaseLink
+    n_classes : {None, int}
+        The number of classes for classification, else None.
+    xp : module or None
+        Array namespace module. Ignored by the Cython implementation.
+    device : device or None
+        A device object. Ignored by the Cython implementation.
     interval_y_true : Interval
         Valid interval for y_true
     interval_y_pred : Interval
@@ -134,12 +147,14 @@ class BaseLoss:
     differentiable = True
     is_multiclass = False
 
-    def __init__(self, closs, link, n_classes=None):
+    def __init__(self, closs, link, n_classes=None, xp=None, device=None):
         self.closs = closs
         self.link = link
+        self.n_classes = n_classes
+        self.xp = xp  # simplifies array API versions
+        self.device = device  # simplifies array API versions
         self.approx_hessian = False
         self.constant_hessian = False
-        self.n_classes = n_classes
         self.interval_y_true = Interval(-np.inf, np.inf, False, False)
         self.interval_y_pred = self.link.interval_y_pred
 
@@ -384,9 +399,7 @@ class BaseLoss:
         )
         return gradient_out, hessian_out
 
-    def __call__(
-        self, y_true, raw_prediction, sample_weight=None, n_threads=1, xp=None
-    ):
+    def __call__(self, y_true, raw_prediction, sample_weight=None, n_threads=1):
         """Compute the weighted average loss.
 
         Parameters
@@ -400,8 +413,6 @@ class BaseLoss:
             Sample weights.
         n_threads : int, default=1
             Might use openmp thread parallelism.
-        xp : module, default=None
-            Array namespace module. Ignored by the Cython implementation.
 
         Returns
         -------
@@ -552,8 +563,10 @@ class HalfSquaredError(BaseLoss):
     half the Normal distribution deviance.
     """
 
-    def __init__(self, sample_weight=None):
-        super().__init__(closs=CyHalfSquaredError(), link=IdentityLink())
+    def __init__(self, sample_weight=None, xp=None, device=None):
+        super().__init__(
+            closs=CyHalfSquaredError(), link=IdentityLink(), xp=xp, device=device
+        )
         self.constant_hessian = sample_weight is None
 
 
@@ -577,8 +590,10 @@ class AbsoluteError(BaseLoss):
 
     differentiable = False
 
-    def __init__(self, sample_weight=None):
-        super().__init__(closs=CyAbsoluteError(), link=IdentityLink())
+    def __init__(self, sample_weight=None, xp=None, device=None):
+        super().__init__(
+            closs=CyAbsoluteError(), link=IdentityLink(), xp=xp, device=device
+        )
         self.approx_hessian = True
         self.constant_hessian = sample_weight is None
 
@@ -626,7 +641,7 @@ class PinballLoss(BaseLoss):
 
     differentiable = False
 
-    def __init__(self, sample_weight=None, quantile=0.5):
+    def __init__(self, sample_weight=None, quantile=0.5, xp=None, device=None):
         check_scalar(
             quantile,
             "quantile",
@@ -638,6 +653,8 @@ class PinballLoss(BaseLoss):
         super().__init__(
             closs=CyPinballLoss(quantile=float(quantile)),
             link=IdentityLink(),
+            xp=xp,
+            device=device,
         )
         self.approx_hessian = True
         self.constant_hessian = sample_weight is None
@@ -692,7 +709,9 @@ class HuberLoss(BaseLoss):
 
     differentiable = False
 
-    def __init__(self, sample_weight=None, quantile=0.9, delta=0.5):
+    def __init__(
+        self, sample_weight=None, quantile=0.9, delta=0.5, xp=None, device=None
+    ):
         check_scalar(
             quantile,
             "quantile",
@@ -705,6 +724,8 @@ class HuberLoss(BaseLoss):
         super().__init__(
             closs=CyHuberLoss(delta=float(delta)),
             link=IdentityLink(),
+            xp=xp,
+            device=device,
         )
         self.approx_hessian = True
         self.constant_hessian = False
@@ -749,8 +770,10 @@ class HalfPoissonLoss(BaseLoss):
     We also skip the constant term `y_true_i * log(y_true_i) - y_true_i`.
     """
 
-    def __init__(self, sample_weight=None):
-        super().__init__(closs=CyHalfPoissonLoss(), link=LogLink())
+    def __init__(self, sample_weight=None, xp=None, device=None):
+        super().__init__(
+            closs=CyHalfPoissonLoss(), link=LogLink(), xp=xp, device=device
+        )
         self.interval_y_true = Interval(0, np.inf, True, False)
 
     def constant_to_optimal_zero(self, y_true, sample_weight=None):
@@ -780,8 +803,8 @@ class HalfGammaLoss(BaseLoss):
     We also skip the constant term `-log(y_true_i) - 1`.
     """
 
-    def __init__(self, sample_weight=None):
-        super().__init__(closs=CyHalfGammaLoss(), link=LogLink())
+    def __init__(self, sample_weight=None, xp=None, device=None):
+        super().__init__(closs=CyHalfGammaLoss(), link=LogLink(), xp=xp, device=device)
         self.interval_y_true = Interval(0, np.inf, False, False)
 
     def constant_to_optimal_zero(self, y_true, sample_weight=None):
@@ -822,10 +845,12 @@ class HalfTweedieLoss(BaseLoss):
     the expectation.
     """
 
-    def __init__(self, sample_weight=None, power=1.5):
+    def __init__(self, sample_weight=None, power=1.5, xp=None, device=None):
         super().__init__(
             closs=CyHalfTweedieLoss(power=float(power)),
             link=LogLink(),
+            xp=xp,
+            device=device,
         )
         if self.closs.power <= 0:
             self.interval_y_true = Interval(-np.inf, np.inf, False, False)
@@ -883,10 +908,12 @@ class HalfTweedieLossIdentity(BaseLoss):
     the expectation.
     """
 
-    def __init__(self, sample_weight=None, power=1.5):
+    def __init__(self, sample_weight=None, power=1.5, xp=None, device=None):
         super().__init__(
             closs=CyHalfTweedieLossIdentity(power=float(power)),
             link=IdentityLink(),
+            xp=xp,
+            device=device,
         )
         if self.closs.power <= 0:
             self.interval_y_true = Interval(-np.inf, np.inf, False, False)
@@ -933,11 +960,13 @@ class HalfBinomialLoss(BaseLoss):
         loss(x_i) = - y_true_i * log(y_pred_i) - (1 - y_true_i) * log(1 - y_pred_i)
     """
 
-    def __init__(self, sample_weight=None):
+    def __init__(self, sample_weight=None, xp=None, device=None):
         super().__init__(
             closs=CyHalfBinomialLoss(),
             link=LogitLink(),
             n_classes=2,
+            xp=xp,
+            device=device,
         )
         self.interval_y_true = Interval(0, 1, True, True)
 
@@ -1015,11 +1044,13 @@ class HalfMultinomialLoss(BaseLoss):
 
     is_multiclass = True
 
-    def __init__(self, sample_weight=None, n_classes=3):
+    def __init__(self, sample_weight=None, n_classes=3, xp=None, device=None):
         super().__init__(
             closs=CyHalfMultinomialLoss(),
             link=MultinomialLogit(),
             n_classes=n_classes,
+            xp=xp,
+            device=device,
         )
         self.interval_y_true = Interval(0, np.inf, True, False)
         self.interval_y_pred = Interval(0, 1, False, False)
@@ -1172,11 +1203,13 @@ class ExponentialLoss(BaseLoss):
             + (1 - y_true_i) * sqrt(y_pred_i / (1 - y_pred_i))
     """
 
-    def __init__(self, sample_weight=None):
+    def __init__(self, sample_weight=None, xp=None, device=None):
         super().__init__(
             closs=CyExponentialLoss(),
             link=HalfLogitLink(),
             n_classes=2,
+            xp=xp,
+            device=device,
         )
         self.interval_y_true = Interval(0, 1, True, True)
 
@@ -1225,8 +1258,16 @@ _LOSSES = {
 
 class ArrayAPILossMixin:
     """Mixin for loss classes that are compatible with the array API.
-    Currently this mixin only redefines the `__call__` method such that it
-    works according to the array API specification.
+
+    Currently this mixin redefines methods:
+    - __call__(...)
+    - loss(...)
+    - loss_gradient(...)
+    - gradient(...)
+
+    such that they work according to the array API specification.
+    It uses the attributes self.xp and self.device from BaseLoss and it assumes that
+    methods self._compute_loss and self._compute_gradient are implemented.
     """
 
     def __call__(
@@ -1235,7 +1276,6 @@ class ArrayAPILossMixin:
         raw_prediction,
         sample_weight=None,
         n_threads=1,
-        xp=None,
     ):
         """Compute the weighted average loss for the array API losses.
 
@@ -1250,19 +1290,65 @@ class ArrayAPILossMixin:
             Sample weights.
         n_threads : int, default=1
             Ignored by the array API implementation.
-        xp : module, default=None
-            Array namespace module.
 
         Returns
         -------
         loss : float
             Mean or averaged loss function.
         """
-        xp, _ = get_namespace(y_true, raw_prediction, sample_weight, xp=xp)
         loss_xp = self.loss(
             y_true=y_true, raw_prediction=raw_prediction, sample_weight=None
         )
-        return float(_average(loss_xp, weights=sample_weight, xp=xp))
+        return float(_average(loss_xp, weights=sample_weight, xp=self.xp))
+
+    def loss(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+        loss_out=None,
+        n_threads=1,
+    ):
+        return self._compute_loss(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+        )
+
+    def loss_gradient(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+        loss_out=None,
+        gradient_out=None,
+        n_threads=1,
+    ):
+        loss = self._compute_loss(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+        )
+        gradient = self._compute_gradient(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+        )
+        return loss, gradient
+
+    def gradient(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+        gradient_out=None,
+        n_threads=1,
+    ):
+        return self._compute_gradient(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+        )
 
 
 def _log1pexp(raw_prediction, raw_prediction_exp, xp):
@@ -1343,40 +1429,6 @@ def _log1pexp(raw_prediction, raw_prediction_exp, xp):
 class HalfBinomialLossArrayAPI(ArrayAPILossMixin, HalfBinomialLoss):
     """A version of the HalfBinomialLoss that is compatible with the array API."""
 
-    def loss(
-        self,
-        y_true,
-        raw_prediction,
-        sample_weight=None,
-        loss_out=None,
-        n_threads=1,
-    ):
-        xp, _ = get_namespace(y_true, raw_prediction, sample_weight)
-        return self._compute_loss(
-            xp=xp,
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            raw_prediction_exp=xp.exp(raw_prediction),
-            sample_weight=sample_weight,
-        )
-
-    def gradient(
-        self,
-        y_true,
-        raw_prediction,
-        sample_weight=None,
-        gradient_out=None,
-        n_threads=1,
-    ):
-        xp, _ = get_namespace(y_true, raw_prediction, sample_weight)
-        return self._compute_gradient(
-            xp=xp,
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            raw_prediction_exp=xp.exp(raw_prediction),
-            sample_weight=sample_weight,
-        )
-
     def loss_gradient(
         self,
         y_true,
@@ -1386,36 +1438,34 @@ class HalfBinomialLossArrayAPI(ArrayAPILossMixin, HalfBinomialLoss):
         gradient_out=None,
         n_threads=1,
     ):
-        xp, _ = get_namespace(y_true, raw_prediction, sample_weight)
-        raw_prediction_exp = xp.exp(raw_prediction)
+        raw_prediction_exp = self.xp.exp(raw_prediction)
         loss = self._compute_loss(
-            xp=xp,
             y_true=y_true,
             raw_prediction=raw_prediction,
-            raw_prediction_exp=raw_prediction_exp,
             sample_weight=sample_weight,
+            raw_prediction_exp=raw_prediction_exp,
         )
         gradient = self._compute_gradient(
-            xp=xp,
             y_true=y_true,
             raw_prediction=raw_prediction,
-            raw_prediction_exp=raw_prediction_exp,
             sample_weight=sample_weight,
+            raw_prediction_exp=raw_prediction_exp,
         )
         return loss, gradient
 
     def _compute_loss(
         self,
-        xp,
         y_true,
         raw_prediction,
-        raw_prediction_exp,
         sample_weight=None,
+        raw_prediction_exp=None,
     ):
+        if raw_prediction_exp is None:
+            raw_prediction_exp = self.xp.exp(raw_prediction)
         log1pexp = _log1pexp(
             raw_prediction=raw_prediction,
             raw_prediction_exp=raw_prediction_exp,
-            xp=xp,
+            xp=self.xp,
         )
         loss = log1pexp - y_true * raw_prediction
         if sample_weight is not None:
@@ -1424,12 +1474,14 @@ class HalfBinomialLossArrayAPI(ArrayAPILossMixin, HalfBinomialLoss):
 
     def _compute_gradient(
         self,
-        xp,
         y_true,
         raw_prediction,
-        raw_prediction_exp,
         sample_weight=None,
+        raw_prediction_exp=None,
     ):
+        xp = self.xp
+        if raw_prediction_exp is None:
+            raw_prediction_exp = xp.exp(raw_prediction)
         neg_raw_prediction_exp = 1 / raw_prediction_exp
         grad = xp.where(
             raw_prediction > (-37 if raw_prediction.dtype == xp.float64 else -17),
@@ -1454,8 +1506,8 @@ class HalfMultinomialLossArrayAPI(ArrayAPILossMixin, HalfMultinomialLoss):
         The number of classes for classification, else None.
     """
 
-    def __init__(self, sample_weight=None, n_classes=3):
-        super().__init__(n_classes=n_classes)
+    def __init__(self, sample_weight=None, n_classes=3, xp=None, device=None):
+        super().__init__(n_classes=n_classes, xp=xp, device=device)
         # These instance variables are specifically to store certain
         # intermediate values in order to avoid having to recompute
         # them repeatedly.
@@ -1467,81 +1519,21 @@ class HalfMultinomialLossArrayAPI(ArrayAPILossMixin, HalfMultinomialLoss):
         # Used when computing the gradient.
         self.y_true_one_hot = None
 
-    def loss(
-        self,
-        y_true,
-        raw_prediction,
-        sample_weight=None,
-        loss_out=None,
-        n_threads=1,
-    ):
-        xp, _, device_ = get_namespace_and_device(y_true, raw_prediction, sample_weight)
-        return self._compute_loss(
-            xp=xp,
-            device_=device_,
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-        )
-
-    def gradient(
-        self,
-        y_true,
-        raw_prediction,
-        sample_weight=None,
-        gradient_out=None,
-        n_threads=1,
-    ):
-        xp, _, device_ = get_namespace_and_device(y_true, raw_prediction, sample_weight)
-        return self._compute_gradient(
-            xp=xp,
-            device_=device_,
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-        )
-
-    def loss_gradient(
-        self,
-        y_true,
-        raw_prediction,
-        sample_weight=None,
-        loss_out=None,
-        gradient_out=None,
-        n_threads=1,
-    ):
-        xp, _, device_ = get_namespace_and_device(y_true, raw_prediction, sample_weight)
-        loss = self._compute_loss(
-            xp=xp,
-            device_=device_,
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-        )
-        gradient = self._compute_gradient(
-            xp=xp,
-            device_=device_,
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-        )
-        return loss, gradient
-
     def _compute_loss(
         self,
-        xp,
-        device_,
         y_true,
         raw_prediction,
         sample_weight=None,
     ):
+        xp = self.xp
+        device = self.device
         log_sum_exp = _logsumexp(raw_prediction, axis=1, xp=xp)
         if self.y_true_int is None:
-            self.y_true_int = xp.asarray(y_true, dtype=xp.int64, device=device_)
+            self.y_true_int = xp.asarray(y_true, dtype=xp.int64, device=device)
 
         if self.class_indexing_offsets is None:
             self.class_indexing_offsets = (
-                xp.arange(y_true.shape[0], device=device_) * self.n_classes
+                xp.arange(y_true.shape[0], device=device) * self.n_classes
             )
         true_label_probs = xp.take(
             _ravel(raw_prediction), self.y_true_int + self.class_indexing_offsets
@@ -1553,21 +1545,20 @@ class HalfMultinomialLossArrayAPI(ArrayAPILossMixin, HalfMultinomialLoss):
 
     def _compute_gradient(
         self,
-        xp,
-        device_,
         y_true,
         raw_prediction,
         sample_weight=None,
     ):
+        xp = self.xp
+        device_ = self.device
         if self.y_true_one_hot is None:
             if self.y_true_int is None:
                 self.y_true_int = xp.asarray(y_true, dtype=xp.int64, device=device_)
 
-            self.y_true_one_hot = self.y_true_int[:, None] == xp.arange(
-                self.n_classes, device=device_
-            )
-            self.y_true_one_hot = xp.astype(
-                self.y_true_one_hot, raw_prediction.dtype, copy=False
+            self.y_true_one_hot = one_hot(
+                self.y_true_int,
+                num_classes=self.n_classes,
+                dtype=raw_prediction.dtype,
             )
         grad = softmax(raw_prediction)
         # TODO: once incremental assignment for multiple integer array
@@ -1582,4 +1573,63 @@ class HalfMultinomialLossArrayAPI(ArrayAPILossMixin, HalfMultinomialLoss):
         grad -= self.y_true_one_hot
         if sample_weight is not None:
             grad *= sample_weight[:, None]
+        return grad
+
+
+class HalfPoissonLossArrayAPI(ArrayAPILossMixin, HalfPoissonLoss):
+    """A version of the HalfPoissonLoss that is compatible with the array API."""
+
+    def loss_gradient(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+        loss_out=None,
+        gradient_out=None,
+        n_threads=1,
+    ):
+        xp = self.xp
+        raw_prediction_exp = xp.exp(raw_prediction)
+        loss = self._compute_loss(
+            xp=xp,
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+            raw_prediction_exp=raw_prediction_exp,
+        )
+        gradient = self._compute_gradient(
+            xp=xp,
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+            raw_prediction_exp=raw_prediction_exp,
+        )
+        return loss, gradient
+
+    def _compute_loss(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+        raw_prediction_exp=None,
+    ):
+        if raw_prediction_exp is None:
+            raw_prediction_exp = self.xp.exp(raw_prediction)
+        loss = raw_prediction_exp - y_true * raw_prediction
+        if sample_weight is not None:
+            loss *= sample_weight
+        return loss
+
+    def _compute_gradient(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+        raw_prediction_exp=None,
+    ):
+        if raw_prediction_exp is None:
+            raw_prediction_exp = self.xp.exp(raw_prediction)
+        grad = raw_prediction_exp - y_true
+        if sample_weight is not None:
+            grad *= sample_weight
         return grad
