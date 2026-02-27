@@ -36,6 +36,7 @@ X, _ = make_blobs(
 )
 
 
+@pytest.mark.no_check_spmatrix  # pickle breaks check_spmatrix
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("eigen_solver", ("arpack", "lobpcg"))
 @pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))

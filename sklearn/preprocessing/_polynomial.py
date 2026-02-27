@@ -21,7 +21,7 @@ from sklearn.preprocessing._csr_polynomial_expansion import (
     _calc_total_nnz,
     _csr_polynomial_expansion,
 )
-from sklearn.utils import check_array
+from sklearn.utils import _align_api_if_sparse, check_array
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
     get_namespace_and_device,
@@ -80,10 +80,12 @@ def _create_expansion(X, interaction_only, deg, n_features, cumulative_size=0):
         interaction_only,
         deg,
     )
-    return sparse.csr_matrix(
-        (expanded_data, expanded_indices, expanded_indptr),
-        shape=(X.indptr.shape[0] - 1, expanded_col),
-        dtype=X.dtype,
+    return _align_api_if_sparse(
+        sparse.csr_array(
+            (expanded_data, expanded_indices, expanded_indptr),
+            shape=(X.indptr.shape[0] - 1, expanded_col),
+            dtype=X.dtype,
+        )
     )
 
 
@@ -416,8 +418,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         XP : {ndarray, sparse matrix} of shape (n_samples, NP)
             The matrix of features, where `NP` is the number of polynomial
             features generated from the combination of inputs. If a sparse
-            matrix is provided, it will be converted into a sparse
-            `csr_matrix`.
+            matrix is provided, it will be converted into CSR format.
         """
         check_is_fitted(self)
         xp, _, device_ = get_namespace_and_device(X)
@@ -438,7 +439,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             to_stack = []
             if self.include_bias:
                 to_stack.append(
-                    sparse.csr_matrix(np.ones(shape=(n_samples, 1), dtype=X.dtype))
+                    sparse.csr_array(np.ones(shape=(n_samples, 1), dtype=X.dtype))
                 )
             if self._min_degree <= 1 and self._max_degree > 0:
                 to_stack.append(X)
@@ -457,7 +458,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                     cumulative_size += expanded.shape[1]
             if len(to_stack) == 0:
                 # edge case: deal with empty matrix
-                XP = sparse.csr_matrix((n_samples, 0), dtype=X.dtype)
+                XP = sparse.csr_array((n_samples, 0), dtype=X.dtype)
             else:
                 XP = sparse.hstack(to_stack, dtype=X.dtype, format="csr")
         elif sparse.issparse(X) and X.format == "csc" and self._max_degree < 4:
@@ -478,7 +479,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                         out_col = X[:, [col_idx]].multiply(out_col)
                     columns.append(out_col)
                 else:
-                    bias = sparse.csc_matrix(np.ones((X.shape[0], 1)))
+                    bias = sparse.csc_array(np.ones((X.shape[0], 1)))
                     columns.append(bias)
             XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
         else:
@@ -520,7 +521,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 current_col = 0
 
             if self._max_degree == 0:
-                return XP
+                return _align_api_if_sparse(XP)
 
             # degree 1 term
             XP[:, current_col : current_col + n_features] = X
@@ -573,7 +574,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 else:
                     Xout = xp.asarray(XP[:, n_XP - n_Xout :], copy=True)
                 XP = Xout
-        return XP
+        return _align_api_if_sparse(XP)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -1118,8 +1119,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     XBS_sparse = BSpline.design_matrix(x, spl.t, spl.k)
                     # Note: Without converting to lil_matrix we would get:
                     # scipy.sparse._base.SparseEfficiencyWarning: Changing the sparsity
-                    # structure of a csr_matrix is expensive. lil_matrix is more
-                    # efficient.
+                    # structure of CSC is expensive. LIL is more efficient.
                     if np.any(outside_range_mask):
                         XBS_sparse = XBS_sparse.tolil()
                         XBS_sparse[outside_range_mask, :] = 0
@@ -1240,6 +1240,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         if self.sparse_output:
             XBS = sparse.hstack(output_list, format="csr")
+
+        XBS = _align_api_if_sparse(XBS)
 
         if self.include_bias:
             return XBS

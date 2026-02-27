@@ -23,6 +23,8 @@ from sklearn.utils.fixes import (
     COO_CONTAINERS,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
+    _sparse_diags,
+    _sparse_random,
     parse_version,
     sp_version,
 )
@@ -311,9 +313,9 @@ def test_spectral_embedding_amg_solver(dtype, coo_container, seed=36):
 def test_spectral_embedding_amg_solver_failure(dtype, seed=36):
     # Non-regression test for amg solver failure (issue #13393 on github)
     num_nodes = 100
-    X = sparse.rand(num_nodes, num_nodes, density=0.1, random_state=seed)
+    X = _sparse_random((num_nodes, num_nodes), density=0.1, random_state=seed)
     X = X.astype(dtype)
-    upper = sparse.triu(X) - sparse.diags(X.diagonal())
+    upper = sparse.triu(X) - _sparse_diags(X.diagonal())
     sym_matrix = upper + upper.T
     embedding = spectral_embedding(
         sym_matrix, n_components=10, eigen_solver="amg", random_state=0

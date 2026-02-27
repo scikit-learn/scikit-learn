@@ -1,6 +1,7 @@
 import  numpy as np
 from scipy import sparse
 from sklearn.utils._cython_blas cimport _dot
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils._typedefs cimport float64_t, int32_t, intp_t
 
 cdef extern from *:
@@ -215,9 +216,9 @@ def libsvm_sparse_train (int n_features,
         model,
         n_features,
     )
-    support_vectors_ = sparse.csr_matrix(
+    support_vectors_ = _align_api_if_sparse(sparse.csr_array(
         (SV_data, SV_indices, SV_indptr), (SV_len, n_features)
-    )
+    ))
 
     # copy model.nSV
     # TODO: do only in classification

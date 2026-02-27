@@ -12,7 +12,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from joblib import effective_n_jobs
-from scipy.sparse import csr_matrix, issparse
+from scipy.sparse import csr_array, issparse
 
 from sklearn.base import BaseEstimator, MultiOutputMixin, is_classifier
 from sklearn.exceptions import DataConversionWarning, EfficiencyWarning
@@ -21,7 +21,7 @@ from sklearn.metrics._pairwise_distances_reduction import ArgKmin, RadiusNeighbo
 from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from sklearn.neighbors._ball_tree import BallTree
 from sklearn.neighbors._kd_tree import KDTree
-from sklearn.utils import check_array, gen_even_slices, get_tags
+from sklearn.utils import _align_api_if_sparse, check_array, gen_even_slices, get_tags
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.fixes import parse_version, sp_base_version
 from sklearn.utils.multiclass import check_classification_targets
@@ -222,9 +222,9 @@ def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
 
     Examples
     --------
-    >>> from scipy.sparse import csr_matrix
+    >>> from scipy.sparse import csr_array
     >>> from sklearn.neighbors import sort_graph_by_row_values
-    >>> X = csr_matrix(
+    >>> X = csr_array(
     ...     [[0., 3., 1.],
     ...      [3., 0., 2.],
     ...      [1., 2., 0.]])
@@ -1013,7 +1013,7 @@ class KNeighborsMixin:
 
         # check the input only in self.kneighbors
 
-        # construct CSR matrix representation of the k-NN graph
+        # construct CSR representation of the k-NN graph
         if mode == "connectivity":
             A_ind = self.kneighbors(X, n_neighbors, return_distance=False)
             n_queries = A_ind.shape[0]
@@ -1034,11 +1034,11 @@ class KNeighborsMixin:
         n_nonzero = n_queries * n_neighbors
         A_indptr = np.arange(0, n_nonzero + 1, n_neighbors)
 
-        kneighbors_graph = csr_matrix(
+        kneighbors_graph = csr_array(
             (A_data, A_ind.ravel(), A_indptr), shape=(n_queries, n_samples_fit)
         )
 
-        return kneighbors_graph
+        return _align_api_if_sparse(kneighbors_graph)
 
 
 class RadiusNeighborsMixin:
@@ -1389,7 +1389,8 @@ class RadiusNeighborsMixin:
             A_data = np.ones(len(A_ind))
         A_indptr = np.concatenate((np.zeros(1, dtype=int), np.cumsum(n_neighbors)))
 
-        return csr_matrix((A_data, A_ind, A_indptr), shape=(n_queries, n_samples_fit))
+        csr = csr_array((A_data, A_ind, A_indptr), shape=(n_queries, n_samples_fit))
+        return _align_api_if_sparse(csr)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()

@@ -11,7 +11,7 @@ from time import time
 
 import numpy as np
 from scipy import linalg
-from scipy.sparse import csr_matrix, issparse
+from scipy.sparse import csr_array, issparse
 from scipy.spatial.distance import pdist, squareform
 
 from sklearn.base import (
@@ -27,7 +27,7 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import _barnes_hut_tsne, _utils  # type: ignore[attr-defined]
 from sklearn.metrics.pairwise import _VALID_METRICS, pairwise_distances
 from sklearn.neighbors import NearestNeighbors
-from sklearn.utils import check_random_state
+from sklearn.utils import _align_api_if_sparse, check_random_state
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.validation import _num_samples, check_non_negative, validate_data
@@ -108,7 +108,7 @@ def _joint_probabilities_nn(distances, desired_perplexity, verbose):
     assert np.all(np.isfinite(conditional_P)), "All probabilities should be finite"
 
     # Symmetrize the joint probability distribution using sparse operations
-    P = csr_matrix(
+    P = csr_array(
         (conditional_P.ravel(), distances.indices, distances.indptr),
         shape=(n_samples, n_samples),
     )
@@ -122,7 +122,7 @@ def _joint_probabilities_nn(distances, desired_perplexity, verbose):
     if verbose >= 2:
         duration = time() - t0
         print("[t-SNE] Computed conditional probabilities in {:.3f}s".format(duration))
-    return P
+    return _align_api_if_sparse(P)
 
 
 def _kl_divergence(

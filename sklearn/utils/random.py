@@ -10,6 +10,7 @@ import scipy.sparse as sp
 
 from sklearn.utils import check_random_state
 from sklearn.utils._random import sample_without_replacement
+from sklearn.utils._sparse import _align_api_if_sparse
 
 __all__ = ["sample_without_replacement"]
 
@@ -98,4 +99,5 @@ def _random_choice_csc(n_samples, classes, class_probability=None, random_state=
             data.extend(classes[j][classes_j_nonzero][classes_ind])
         indptr.append(len(indices))
 
-    return sp.csc_matrix((data, indices, indptr), (n_samples, len(classes)), dtype=int)
+    csc = sp.csc_array((data, indices, indptr), (n_samples, len(classes)), dtype=int)
+    return _align_api_if_sparse(csc)

@@ -113,6 +113,14 @@ def _mark_thread_unsafe_if_pytest_imported(f):
         return f
 
 
+def _mark_no_check_spmatrix_if_pytest_imported(f):
+    pytest = sys.modules.get("pytest")
+    if pytest is not None:
+        return pytest.mark.no_check_spmatrix
+    else:
+        return f
+
+
 class CorrectNotFittedError(ValueError):
     """Exception class to raise if estimator is used before fitting.
 
@@ -808,6 +816,7 @@ def test_check_estimator_not_fail_fast():
     assert any(item["status"] == "passed" for item in check_results)
 
 
+@_mark_no_check_spmatrix_if_pytest_imported  # pickle breaks check_spmatrix
 # Some estimator checks rely on warnings in deep functions calls. This is not
 # automatically detected by pytest-run-parallel shallow AST inspection, so we
 # need to mark the test function as thread-unsafe.
@@ -912,6 +921,7 @@ def test_check_estimator_transformer_no_mixin():
         check_estimator(BadTransformerWithoutMixin())
 
 
+@_mark_no_check_spmatrix_if_pytest_imported  # pickle breaks check_spmatrix
 def test_check_estimator_clones():
     # check that check_estimator doesn't modify the estimator it receives
 

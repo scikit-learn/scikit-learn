@@ -40,7 +40,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_equal,
 )
-from sklearn.utils.fixes import CSR_CONTAINERS, parse_version
+from sklearn.utils.fixes import CSR_CONTAINERS, _sparse_eye, parse_version
 
 
 class Trans(TransformerMixin, BaseEstimator):
@@ -74,7 +74,7 @@ class SparseMatrixTrans(BaseEstimator):
 
     def transform(self, X, y=None):
         n_samples = len(X)
-        return self.csr_container(sparse.eye(n_samples, n_samples))
+        return self.csr_container(_sparse_eye(n_samples))
 
 
 class TransNo2D(BaseEstimator):
@@ -490,7 +490,7 @@ def test_column_transformer_output_indices_df():
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_column_transformer_sparse_array(csr_container):
-    X_sparse = csr_container(sparse.eye(3, 2))
+    X_sparse = csr_container(_sparse_eye(3, 2))
 
     # no distinction between 1D and 2D
     X_res_first = X_sparse[:, [0]]

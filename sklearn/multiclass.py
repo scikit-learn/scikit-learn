@@ -514,7 +514,7 @@ class OneVsRestClassifier(
                 indices.extend(np.where(_predict_binary(e, X) > thresh)[0])
                 indptr.append(len(indices))
             data = np.ones(len(indices), dtype=int)
-            indicator = sp.csc_matrix(
+            indicator = sp.csc_array(
                 (data, indices, indptr), shape=(n_samples, len(self.estimators_))
             )
             return self.label_binarizer_.inverse_transform(indicator)
