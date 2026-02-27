@@ -18,6 +18,7 @@ from sklearn._config import config_context
 from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
+    ObjectiveFunction,
     TransformerMixin,
     _fit_context,
 )
@@ -1753,6 +1754,50 @@ class NMF(_BaseNMF):
             W, *_ = self._fit_transform(X, H=self.components_, update_H=False)
 
         return W
+
+    def objective_function(self, X, y=None, *, sample_weight=None):
+        """Compute the objective function of the NMF model.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Data matrix to be decomposed.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
+
+        sample_weight : Ignored
+            Not used, present for API consistency by convention.
+
+        Returns
+        -------
+        objective : ObjectiveFunction
+            The objective function of the NMF model.
+        """
+        W = self.transform(X)
+        H = self.components_
+
+        data_fit = _beta_divergence(X, W, H, self._beta_loss)
+        l1_W, l1_H, l2_W, l2_H = self._compute_regularization(X)
+        penalisations = {
+            "l1_W": l1_W * W.sum(),
+            "l1_H": l1_H * H.sum(),
+            "l2_W": 0.5 * l2_W * (W**2).sum(),
+            "l2_H": 0.5 * l2_H * (H**2).sum(),
+        }
+
+        # normalize by n_samples
+        data_fit /= X.shape[0]
+        for key in penalisations:
+            penalisations[key] /= X.shape[0]
+
+        return ObjectiveFunction(
+            name="penalized_beta_divergence",
+            goal="minimize",
+            value=data_fit + sum(penalisations.values()),
+            data_fit=data_fit,
+            penalisations=penalisations,
+        )
 
 
 class MiniBatchNMF(_BaseNMF):

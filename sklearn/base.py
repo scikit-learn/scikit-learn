@@ -10,6 +10,7 @@ import platform
 import re
 import warnings
 from collections import defaultdict
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -1347,3 +1348,35 @@ def _fit_context(*, prefer_skip_nested_validation):
         return wrapper
 
     return decorator
+
+
+@dataclass
+class ObjectiveFunction:
+    """Represent the objective function of a model.
+
+    Parameters
+    ----------
+    name : str
+        The name of the objective function.
+
+    goal : {"minimize", "maximize"}
+        Whether the model tries to minimize or maximize the objective function.
+
+    value : float
+        The total value of the objective function, normalized by `n_samples`.
+
+    data_fit : float
+        The term in the objective function that measures the discrepancy
+        between the model's predictions and the true values, normalized by `n_samples`.
+
+    penalisations : dict
+        The terms in the objective function that measure the penalty for the
+        model, each term being normalized by `n_samples`.
+        The keys are human-readable names of the penalisation terms.
+    """
+
+    name: str
+    goal: str
+    value: float
+    data_fit: float
+    penalisations: dict
