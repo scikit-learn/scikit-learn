@@ -38,7 +38,7 @@ skip_if_no_pyamg = pytest.mark.skipif(
     not pyamg_available, reason="PyAMG is required for the tests in this function."
 )
 
-# non centered, sparse centers to check the
+# non centered, sparse centers
 centers = np.array(
     [
         [0.0, 5.0, 0.0, 0.0, 0.0],
@@ -46,7 +46,7 @@ centers = np.array(
         [1.0, 0.0, 0.0, 5.0, 1.0],
     ]
 )
-n_samples = 1000
+n_samples = 100
 n_clusters, n_features = centers.shape
 S, true_labels = make_blobs(
     n_samples=n_samples, centers=centers, cluster_std=1.0, random_state=42
@@ -102,6 +102,20 @@ def test_sparse_graph_connected_component(coo_container):
         component_2 = _graph_connected_component(affinity, p[stop - 1])
         assert component_2.sum() == component_size
         assert_array_equal(component_1, component_2)
+
+
+@pytest.mark.skipif(
+    not pyamg_available, reason="PyAMG is required for the tests in this function."
+)
+def test_fallback_amg():
+    random_state = np.random.RandomState(36)
+    data = random_state.randn(10, 30)
+    sims = rbf_kernel(data)
+    with pytest.warns(RuntimeWarning, match="dense matrices"):
+        _ = spectral_embedding(sims, eigen_solver="amg", n_components=1)
+
+    with pytest.warns(RuntimeWarning, match="small graphs"):
+        _ = spectral_embedding(sims, eigen_solver="amg", n_components=5)
 
 
 # TODO: investigate why this test is seed-sensitive on 32-bit Python
@@ -199,11 +213,11 @@ def test_spectral_embedding_precomputed_affinity(
 
 def test_precomputed_nearest_neighbors_filtering():
     # Test precomputed graph filtering when containing too many neighbors
-    n_neighbors = 2
+    n_neighbors = 10
     results = []
     for additional_neighbors in [0, 10]:
         nn = NearestNeighbors(n_neighbors=n_neighbors + additional_neighbors).fit(S)
-        graph = nn.kneighbors_graph(S, mode="connectivity")
+        graph = nn.kneighbors_graph(S, mode="distance")
         embedding = (
             SpectralEmbedding(
                 random_state=0,
@@ -245,24 +259,53 @@ def test_spectral_embedding_callable_affinity(sparse_container, seed=36):
     _assert_equal_with_sign_flipping(embed_rbf, embed_callable, 0.05)
 
 
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
+def test_spectral_embedding_lobpcg_solver(dtype, seed=36):
+    # Tests that the results are the same when using arpack
+    # and lobpcg solvers. Note that we use RBF kernel here
+    # to make the graph connected, so that eigenvectors
+    # are non-trivial and eigenvalues are non-repeated.
+    se_lobpcg = SpectralEmbedding(
+        n_components=2,
+        affinity="rbf",
+        eigen_solver="lobpcg",
+        eigen_tol=1e-5,
+        random_state=np.random.RandomState(seed),
+    )
+    se_arpack = SpectralEmbedding(
+        n_components=2,
+        affinity="rbf",
+        eigen_solver="arpack",
+        eigen_tol=0,
+        random_state=np.random.RandomState(seed),
+    )
+    embed_lobpcg = se_lobpcg.fit_transform(S.astype(dtype))
+    embed_arpack = se_arpack.fit_transform(S.astype(dtype))
+    _assert_equal_with_sign_flipping(embed_lobpcg, embed_arpack, 1e-5)
+
+
 @pytest.mark.skipif(
     not pyamg_available, reason="PyAMG is required for the tests in this function."
 )
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
 def test_spectral_embedding_amg_solver(dtype, coo_container, seed=36):
+    # Tests that the results are the same when using arpack
+    # and amg solvers. Note that we use RBF kernel here
+    # to make the graph connected, so that eigenvectors
+    # are non-trivial and eigenvalues are non-repeated.
     se_amg = SpectralEmbedding(
         n_components=2,
-        affinity="nearest_neighbors",
+        affinity="rbf",
         eigen_solver="amg",
-        n_neighbors=5,
+        eigen_tol=1e-5,
         random_state=np.random.RandomState(seed),
     )
     se_arpack = SpectralEmbedding(
         n_components=2,
-        affinity="nearest_neighbors",
+        affinity="rbf",
         eigen_solver="arpack",
-        n_neighbors=5,
+        eigen_tol=0,
         random_state=np.random.RandomState(seed),
     )
     embed_amg = se_amg.fit_transform(S.astype(dtype))
@@ -329,12 +372,16 @@ def test_spectral_embedding_amg_solver_failure(dtype, seed=36):
 
 def test_pipeline_spectral_clustering(seed=36):
     # Test using pipeline to do spectral clustering
+    # Note that actual SpectralClustering class does not drop the first
+    # eigenvector, but this is not possible when using SpectralEmbedding
+    # class. So here for the three-class problem we will use two
+    # eigenvectors (after the first one is dropped).
     random_state = np.random.RandomState(seed)
     se_rbf = SpectralEmbedding(
-        n_components=n_clusters, affinity="rbf", random_state=random_state
+        n_components=n_clusters - 1, affinity="rbf", random_state=random_state
     )
     se_knn = SpectralEmbedding(
-        n_components=n_clusters,
+        n_components=n_clusters - 1,
         affinity="nearest_neighbors",
         n_neighbors=5,
         random_state=random_state,

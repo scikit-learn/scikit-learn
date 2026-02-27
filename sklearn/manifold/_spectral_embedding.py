@@ -328,60 +328,70 @@ def _spectral_embedding(
     laplacian, dd = csgraph_laplacian(
         adjacency, normed=norm_laplacian, return_diag=True
     )
-    if eigen_solver == "arpack" or (
-        eigen_solver != "lobpcg"
-        and (not sparse.issparse(laplacian) or n_nodes < 5 * n_components)
-    ):
-        # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
+
+    if eigen_solver == "amg" and n_nodes < 5 * n_components:
+        # LOBPCG used with eigen_solver='amg' has bugs for low number of nodes
         # for details see the source code in scipy:
         # https://github.com/scipy/scipy/blob/v0.11.0/scipy/sparse/linalg/eigen
         # /lobpcg/lobpcg.py#L237
         # or matlab:
         # https://www.mathworks.com/matlabcentral/fileexchange/48-lobpcg-m
+        warnings.warn(
+            "AMG solver does not work well with small graphs, using ARPACK instead.",
+            RuntimeWarning,
+        )
+        eigen_solver = "arpack"
+
+    if eigen_solver == "amg" and not sparse.issparse(laplacian):
+        warnings.warn(
+            "AMG solver does not work well with dense matrices, using ARPACK instead.",
+            RuntimeWarning,
+        )
+        eigen_solver = "arpack"
+
+    if eigen_solver == "arpack":
         laplacian = _set_diag(laplacian, 1, norm_laplacian)
 
         # Here we'll use shift-invert mode for fast eigenvalues
-        # (see https://docs.scipy.org/doc/scipy/reference/tutorial/arpack.html
-        #  for a short explanation of what this means)
-        # Because the normalized Laplacian has eigenvalues between 0 and 2,
-        # I - L has eigenvalues between -1 and 1.  ARPACK is most efficient
-        # when finding eigenvalues of largest magnitude (keyword which='LM')
-        # and when these eigenvalues are very large compared to the rest.
-        # For very large, very sparse graphs, I - L can have many, many
-        # eigenvalues very near 1.0.  This leads to slow convergence.  So
-        # instead, we'll use ARPACK's shift-invert mode, asking for the
-        # eigenvalues near 1.0.  This effectively spreads-out the spectrum
-        # near 1.0 and leads to much faster convergence: potentially an
-        # orders-of-magnitude speedup over simply using keyword which='LA'
-        # in standard mode.
+        # (see https://docs.scipy.org/doc/scipy/tutorial/arpack.html
+        # for a short explanation of what this means)
+        # Laplacian (normalized or not) has non-negative eigenvalues
+        # and we need to find the smallest ones, i.e. closest to 0.
+        # The efficient way to do it, according to the scipy docs,
+        # is to use which="LM" and sigma=0.
+        # Andrew Kniazev recommends to set small negative sigma
+        # (see https://github.com/scikit-learn/scikit-learn/
+        # pull/14647#issuecomment-521304431) because a Laplacian
+        # has exact at least one exact zero eigenvalue, so sigma=0
+        # can lead to problems.
         try:
-            # We are computing the opposite of the laplacian inplace so as
-            # to spare a memory allocation of a possibly very large array
             tol = 0 if eigen_tol == "auto" else eigen_tol
-            laplacian *= -1
+
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
             laplacian = check_array(
                 laplacian, accept_sparse="csr", accept_large_sparse=False
             )
             _, diffusion_map = eigsh(
-                laplacian, k=n_components, sigma=1.0, which="LM", tol=tol, v0=v0
+                laplacian, k=n_components, sigma=-1e-5, which="LM", tol=tol, v0=v0
             )
-            embedding = diffusion_map.T[n_components::-1]
+            embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
                 # recover u = D^-1/2 x from the eigenvector output x
                 embedding = embedding / dd
-        except RuntimeError:
-            # When submatrices are exactly singular, an LU decomposition
-            # in arpack fails. We fallback to lobpcg
+        except RuntimeError:  # pragma: no cover
+            # When submatrices are exactly singular, the LU decomposition
+            # in ARPACK can fail. In this case, we fallback to LOBPCG.
+            # Note: this should actually never happen with sigma < 0,
+            # so the entire `try ... except` structure could be removed.
+            # There is no unit test for this (hence `pragma: no cover`)
+            # because it is unclear how to trigger this RuntimeError.
+            # (https://github.com/scikit-learn/scikit-learn/pull/33262)
+            warnings.warn("ARPACK has failed, falling back to LOBPCG.")
             eigen_solver = "lobpcg"
-            # Revert the laplacian to its opposite to have lobpcg work
-            laplacian *= -1
 
     elif eigen_solver == "amg":
         # Use AMG to get a preconditioner and speed up the eigenvalue
         # problem.
-        if not sparse.issparse(laplacian):
-            warnings.warn("AMG works better for sparse matrices")
         laplacian = check_array(
             laplacian, dtype=[np.float64, np.float32], accept_sparse=True
         )
@@ -425,9 +435,8 @@ def _spectral_embedding(
             laplacian, dtype=[np.float64, np.float32], accept_sparse=True
         )
         if n_nodes < 5 * n_components + 1:
-            # see note above under arpack why lobpcg has problems with small
-            # number of nodes
-            # lobpcg will fallback to eigh, so we short circuit it
+            # See note above why lobpcg has problems with small number of nodes.
+            # lobpcg will fallback to eigh, so we short-circuit it
             if sparse.issparse(laplacian):
                 laplacian = laplacian.toarray()
             _, diffusion_map = eigh(laplacian, check_finite=False)
