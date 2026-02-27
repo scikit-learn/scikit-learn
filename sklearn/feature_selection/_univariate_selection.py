@@ -13,9 +13,9 @@ from scipy.sparse import issparse
 from sklearn.base import BaseEstimator, _fit_context
 from sklearn.feature_selection._base import SelectorMixin
 from sklearn.preprocessing import LabelBinarizer
-from sklearn.utils import as_float_array, check_array, check_X_y, safe_mask, safe_sqr
+from sklearn.utils import as_float_array, check_array, check_X_y, safe_mask
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
-from sklearn.utils.extmath import row_norms, safe_sparse_dot
+from sklearn.utils.extmath import axis_norms, row_norms, safe_sparse_dot
 from sklearn.utils.validation import check_is_fitted, validate_data
 
 
@@ -91,7 +91,7 @@ def f_oneway(*args):
     args = [as_float_array(a) for a in args]
     n_samples_per_class = np.array([a.shape[0] for a in args])
     n_samples = np.sum(n_samples_per_class)
-    ss_alldata = sum(safe_sqr(a).sum(axis=0) for a in args)
+    ss_alldata = sum(axis_norms(a, squared=True, axis=0) for a in args)
     sums_args = [np.asarray(a.sum(axis=0)) for a in args]
     square_of_sums_alldata = sum(sums_args) ** 2
     square_of_sums_args = [s**2 for s in sums_args]
