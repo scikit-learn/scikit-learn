@@ -455,3 +455,29 @@ def test_fastica_eigh_low_rank_warning(global_random_seed):
             # random seeds but this happens after the whiten step so this is
             # not want we want to test here.
             ica.fit(X)
+
+
+def test_fastica_deflation_logcosh_vectorization():
+    # Targeted test for the vectorized _logcosh path in deflation mode
+    # ensuring full coverage of both alpha=1.0 and custom alpha paths.
+    rng = np.random.RandomState(42)
+    X = rng.standard_normal((50, 2))
+
+    # 1. Test the default alpha=1.0 path
+    ica_default = FastICA(
+        algorithm="deflation", fun="logcosh", random_state=rng, tol=1e-5
+    )
+    ica_default.fit(X)
+    assert ica_default.n_iter_ > 0
+
+    # 2. Test the custom alpha path (e.g., alpha=1.5)
+    # This ensures the 'else' branch in our optimization is covered
+    ica_custom = FastICA(
+        algorithm="deflation",
+        fun="logcosh",
+        fun_args={"alpha": 1.5},
+        random_state=rng,
+        tol=1e-5,
+    )
+    ica_custom.fit(X)
+    assert ica_custom.n_iter_ > 0
