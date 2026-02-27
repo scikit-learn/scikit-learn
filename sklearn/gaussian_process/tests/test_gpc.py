@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 from scipy.optimize import approx_fprime
 
+from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import (
@@ -20,7 +21,11 @@ from sklearn.gaussian_process.kernels import (
     ConstantKernel as C,
 )
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
-from sklearn.utils._testing import assert_almost_equal, assert_array_equal
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_equal,
+)
 
 
 def f(x):
@@ -105,17 +110,31 @@ def test_converged_to_local_maximum(kernel):
     )
 
 
-@pytest.mark.parametrize("kernel", kernels)
-def test_lml_gradient(kernel):
-    # Compare analytic and numeric gradient of log marginal likelihood.
-    gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
-
-    lml, lml_gradient = gpc.log_marginal_likelihood(kernel.theta, True)
-    lml_gradient_approx = approx_fprime(
-        kernel.theta, lambda theta: gpc.log_marginal_likelihood(theta, False), 1e-10
+@pytest.mark.xfail(
+    raises=AssertionError,
+    reason="https://github.com/scikit-learn/scikit-learn/issues/31366",
+)
+@pytest.mark.parametrize("kernel", non_fixed_kernels)
+@pytest.mark.parametrize("length_scale", np.logspace(-3, 3, 13))
+def test_lml_gradient(kernel, length_scale):
+    # Clone the kernel object prior to mutating it to avoid any side effects between
+    # GP tests:
+    kernel = clone(kernel)
+    length_scale_param_name = next(
+        name for name in kernel.get_params() if name.endswith("length_scale")
     )
+    kernel.set_params(**{length_scale_param_name: length_scale})
 
-    assert_almost_equal(lml_gradient, lml_gradient_approx, 3)
+    # Compare analytic and numeric gradient of log marginal likelihood.
+    gpr = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+    _, lml_gradient = gpr.log_marginal_likelihood(kernel.theta, eval_gradient=True)
+    epsilon = 1e-9
+    lml_gradient_approx = approx_fprime(
+        kernel.theta.copy(),
+        lambda theta: gpr.log_marginal_likelihood(theta, False),
+        epsilon=epsilon,
+    )
+    assert_allclose(lml_gradient, lml_gradient_approx, rtol=1e-4, atol=epsilon * 100)
 
 
 def test_random_starts(global_random_seed):
