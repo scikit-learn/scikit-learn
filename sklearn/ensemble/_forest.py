@@ -1396,6 +1396,23 @@ class RandomForestClassifier(ForestClassifier):
 
         .. versionadded:: 1.4
 
+    categorical_features : array-like of int or bool of shape (n_features,) or
+        (n_categorical_features,), default=None
+        Indicates which features are treated as categorical.
+
+        - If array-like of int, the entries are feature indices.
+        - If array-like of bool, it is a boolean mask over features.
+
+        Categorical features are only supported for dense inputs
+        and single-output targets.
+        Values of categorical features must be contiguous integers in ``[0, 63]``
+        (missing values are not supported).
+        Categorical features cannot have non-zero monotonic constraint.
+
+        When these constraints are not met, ``fit`` will raise an error.
+
+        .. versionadded:: 1.9
+
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.DecisionTreeClassifier`
@@ -1536,6 +1553,7 @@ class RandomForestClassifier(ForestClassifier):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
+        categorical_features=None,
     ):
         super().__init__(
             estimator=DecisionTreeClassifier(),
@@ -1552,6 +1570,7 @@ class RandomForestClassifier(ForestClassifier):
                 "random_state",
                 "ccp_alpha",
                 "monotonic_cst",
+                "categorical_features",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -1573,6 +1592,7 @@ class RandomForestClassifier(ForestClassifier):
         self.min_impurity_decrease = min_impurity_decrease
         self.monotonic_cst = monotonic_cst
         self.ccp_alpha = ccp_alpha
+        self.categorical_features = categorical_features
 
 
 class RandomForestRegressor(ForestRegressor):
@@ -1786,6 +1806,23 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionadded:: 1.4
 
+    categorical_features : array-like of int or bool of shape (n_features,) or
+        (n_categorical_features,), default=None
+        Indicates which features are treated as categorical.
+
+        - If array-like of int, the entries are feature indices.
+        - If array-like of bool, it is a boolean mask over features.
+
+        Categorical features are only supported for dense inputs
+        and single-output targets.
+        Values of categorical features must be contiguous integers in ``[0, 63]``
+        (missing values are not supported).
+        Categorical features cannot have non-zero monotonic constraint.
+
+        When these constraints are not met, ``fit`` will raise an error.
+
+        .. versionadded:: 1.9
+
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.DecisionTreeRegressor`
@@ -1913,6 +1950,7 @@ class RandomForestRegressor(ForestRegressor):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
+        categorical_features=None,
     ):
         super().__init__(
             estimator=DecisionTreeRegressor(),
@@ -1929,6 +1967,7 @@ class RandomForestRegressor(ForestRegressor):
                 "random_state",
                 "ccp_alpha",
                 "monotonic_cst",
+                "categorical_features",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -1959,6 +1998,7 @@ class RandomForestRegressor(ForestRegressor):
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
+        self.categorical_features = categorical_features
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -2183,6 +2223,23 @@ class ExtraTreesClassifier(ForestClassifier):
 
         .. versionadded:: 1.4
 
+    categorical_features : array-like of int or bool of shape (n_features,) or
+        (n_categorical_features,), default=None
+        Indicates which features are treated as categorical.
+
+        - If array-like of int, the entries are feature indices.
+        - If array-like of bool, it is a boolean mask over features.
+
+        Categorical features are only supported for dense inputs
+        and single-output targets.
+        Values of categorical features must be contiguous integers in ``[0, 63]``
+        (missing values are not supported).
+        Categorical features cannot have non-zero monotonic constraint.
+
+        When these constraints are not met, ``fit`` will raise an error.
+
+        .. versionadded:: 1.9
+
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.ExtraTreeClassifier`
@@ -2288,6 +2345,8 @@ class ExtraTreesClassifier(ForestClassifier):
         ],
     }
     _parameter_constraints.pop("splitter")
+    # TODO: remove once randomsplitter supports categorical features
+    _parameter_constraints.pop("categorical_features")
 
     def __init__(
         self,
@@ -2556,6 +2615,23 @@ class ExtraTreesRegressor(ForestRegressor):
 
         .. versionadded:: 1.4
 
+    categorical_features : array-like of int or bool of shape (n_features,) or
+        (n_categorical_features,), default=None
+        Indicates which features are treated as categorical.
+
+        - If array-like of int, the entries are feature indices.
+        - If array-like of bool, it is a boolean mask over features.
+
+        Categorical features are only supported for dense inputs
+        and single-output targets.
+        Values of categorical features must be contiguous integers in ``[0, 63]``
+        (missing values are not supported).
+        Categorical features cannot have non-zero monotonic constraint.
+
+        When these constraints are not met, ``fit`` will raise an error.
+
+        .. versionadded:: 1.9
+
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor`
@@ -2645,6 +2721,8 @@ class ExtraTreesRegressor(ForestRegressor):
         **DecisionTreeRegressor._parameter_constraints,
     }
     _parameter_constraints.pop("splitter")
+    # TODO: remove once randomsplitter supports categorical features
+    _parameter_constraints.pop("categorical_features")
 
     def __init__(
         self,
@@ -2908,7 +2986,13 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         **BaseDecisionTree._parameter_constraints,
         "sparse_output": ["boolean"],
     }
-    for param in ("max_features", "ccp_alpha", "splitter", "monotonic_cst"):
+    for param in (
+        "max_features",
+        "ccp_alpha",
+        "splitter",
+        "monotonic_cst",
+        "categorical_features",
+    ):
         _parameter_constraints.pop(param)
 
     criterion = "squared_error"

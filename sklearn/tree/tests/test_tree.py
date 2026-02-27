@@ -13,6 +13,7 @@ from itertools import chain, pairwise, product
 import joblib
 import numpy as np
 import pytest
+import scipy
 from joblib.numpy_pickle import NumpyPickler
 from numpy.testing import assert_allclose
 
@@ -28,6 +29,7 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.tree import (
     DecisionTreeClassifier,
@@ -202,6 +204,90 @@ DATASETS = {
     "sparse-mix": {"X": X_sparse_mix, "y": y_random},
     "zeros": {"X": np.zeros((20, 3)), "y": y_random},
 }
+
+
+def _make_categorical(
+    n_rows: int,
+    n_numerical: int,
+    n_categorical: int,
+    cat_size: int,
+    n_num_meaningful: int,
+    n_cat_meaningful: int,
+    regression: bool,
+    return_tuple: bool,
+    random_state: int,
+):
+    """Generate a dataset with numerical and categorical features.
+
+    The target is a linear combination of one-hot-encoded meaningful
+    categorical features and meaningful numerical features, with random
+    coefficients. Non-meaningful features are pure noise.
+
+    X is laid out as ``[numerical_cols | categorical_cols]``, where
+    categorical columns contain integers in ``[0, cat_size)``.
+
+    Parameters
+    ----------
+    n_rows : int
+        Number of samples.
+    n_numerical : int
+        Number of numerical (continuous) features.
+    n_categorical : int
+        Number of categorical features.
+    cat_size : int
+        Number of distinct categories per categorical feature (uniform).
+    n_num_meaningful : int
+        How many of the first numerical features contribute to the target.
+    n_cat_meaningful : int
+        How many of the first categorical features contribute to the target.
+    regression : bool
+        If True, return continuous y. If False, binarize y at its mean.
+    return_tuple : bool
+        If True, return ``(X, y, meaningful_features)``.
+        If False, return a dict with keys ``"X"``, ``"y"``,
+        ``"meaningful_features"``.
+    random_state : int
+        Seed for ``np.random``.
+
+    Returns
+    -------
+    X : ndarray of shape (n_rows, n_numerical + n_categorical)
+        Feature matrix.
+    y : ndarray of shape (n_rows,)
+        Target values.
+    meaningful_features : ndarray of shape (n_num_meaningful + n_cat_meaningful,)
+        Indices of the features that actually influence the target.
+    """
+
+    from sklearn.preprocessing import OneHotEncoder
+
+    np.random.seed(random_state)
+    numeric = np.random.standard_normal((n_rows, n_numerical))
+    categorical = np.random.randint(0, cat_size, (n_rows, n_categorical))
+    categorical_ohe = OneHotEncoder(categories="auto").fit_transform(
+        categorical[:, :n_cat_meaningful]
+    )
+
+    data_meaningful = np.hstack(
+        (numeric[:, :n_num_meaningful], categorical_ohe.todense())
+    )
+    _, cols = data_meaningful.shape
+    coefs = np.random.standard_normal(cols)
+    y = np.dot(data_meaningful, coefs)
+    y = np.asarray(y).reshape(-1)
+    X = np.hstack((numeric, categorical))
+
+    if not regression:
+        y = (y < y.mean()).astype(int)
+
+    meaningful_features = np.r_[
+        np.arange(n_num_meaningful), np.arange(n_cat_meaningful) + n_numerical
+    ]
+
+    if return_tuple:
+        return X, y, meaningful_features
+    else:
+        return {"X": X, "y": y, "meaningful_features": meaningful_features}
 
 
 def assert_tree_equal(d, s, message):
@@ -2221,13 +2307,19 @@ def get_different_alignment_node_ndarray(node_ndarray):
 
 def reduce_tree_with_different_bitness(tree):
     new_dtype = np.int64 if _IS_32BIT else np.int32
-    tree_cls, (n_features, n_classes, n_outputs), state = tree.__reduce__()
+    tree_cls, (n_features, n_classes, n_outputs, n_categories_in_feature), state = (
+        tree.__reduce__()
+    )
     new_n_classes = n_classes.astype(new_dtype, casting="same_kind")
 
     new_state = state.copy()
     new_state["nodes"] = get_different_bitness_node_ndarray(new_state["nodes"])
 
-    return (tree_cls, (n_features, new_n_classes, n_outputs), new_state)
+    return (
+        tree_cls,
+        (n_features, new_n_classes, n_outputs, n_categories_in_feature),
+        new_state,
+    )
 
 
 def test_different_bitness_pickle():
@@ -2357,9 +2449,9 @@ def test_check_node_ndarray():
 
     dtype_dict = {name: dtype for name, (dtype, _) in node_ndarray.dtype.fields.items()}
 
-    # array with wrong 'threshold' field dtype (int64 rather than float64)
+    # array with wrong 'impurity' field dtype (int64 rather than float64)
     new_dtype_dict = dtype_dict.copy()
-    new_dtype_dict["threshold"] = np.int64
+    new_dtype_dict["impurity"] = np.int64
 
     new_dtype = np.dtype(
         {"names": list(new_dtype_dict.keys()), "formats": list(new_dtype_dict.values())}
@@ -2392,7 +2484,9 @@ def test_splitter_serializable(Splitter):
     n_outputs, n_classes = 2, np.array([3, 2], dtype=np.intp)
 
     criterion = CRITERIA_CLF["gini"](n_outputs, n_classes)
-    splitter = Splitter(criterion, max_features, 5, 0.5, rng, monotonic_cst=None)
+    splitter = Splitter(
+        criterion, max_features, 5, 0.5, rng, monotonic_cst=None, breiman_shortcut=False
+    )
     splitter_serialize = pickle.dumps(splitter)
 
     splitter_back = pickle.loads(splitter_serialize)
@@ -2864,7 +2958,9 @@ def test_build_pruned_tree_py():
     tree.fit(iris.data, iris.target)
 
     n_classes = np.atleast_1d(tree.n_classes_)
-    pruned_tree = CythonTree(tree.n_features_in_, n_classes, tree.n_outputs_)
+    pruned_tree = CythonTree(
+        tree.n_features_in_, n_classes, tree.n_outputs_, tree.n_categories_in_feature_
+    )
 
     # only keep the root note
     leave_in_subtree = np.zeros(tree.tree_.node_count, dtype=np.uint8)
@@ -2878,7 +2974,9 @@ def test_build_pruned_tree_py():
     assert_array_equal(tree.tree_.value[0], pruned_tree.value[0])
 
     # now keep all the leaves
-    pruned_tree = CythonTree(tree.n_features_in_, n_classes, tree.n_outputs_)
+    pruned_tree = CythonTree(
+        tree.n_features_in_, n_classes, tree.n_outputs_, tree.n_categories_in_feature_
+    )
     leave_in_subtree = np.zeros(tree.tree_.node_count, dtype=np.uint8)
     leave_in_subtree[1:] = 1
 
@@ -2896,7 +2994,9 @@ def test_build_pruned_tree_infinite_loop():
     tree = DecisionTreeClassifier(random_state=0, max_depth=1)
     tree.fit(iris.data, iris.target)
     n_classes = np.atleast_1d(tree.n_classes_)
-    pruned_tree = CythonTree(tree.n_features_in_, n_classes, tree.n_outputs_)
+    pruned_tree = CythonTree(
+        tree.n_features_in_, n_classes, tree.n_outputs_, tree.n_categories_in_feature_
+    )
 
     # only keeping one child as a leaf results in an improper tree
     leave_in_subtree = np.zeros(tree.tree_.node_count, dtype=np.uint8)
@@ -3043,3 +3143,200 @@ def test_missing_values_and_constant_toy():
 def test_friedman_mse_deprecation():
     with pytest.warns(FutureWarning, match="friedman_mse"):
         _ = DecisionTreeRegressor(criterion="friedman_mse")
+
+
+@pytest.mark.parametrize("name", ALL_TREES)
+@pytest.mark.parametrize(
+    "categorical_features, match",
+    [
+        # Wrong dtype (float)
+        ([0.5, 1.5], "must be an array-like of bool or int"),
+        # Boolean mask wrong length
+        ([False, False, False], "boolean mask must have shape"),
+        # Index too large
+        ([5], "must be in \\[0, n_features - 1\\]"),
+        # Negative index
+        ([-3], "must be in \\[0, n_features - 1\\]"),
+    ],
+)
+def test_invalid_categorical(name, categorical_features, match):
+    """Test that invalid categorical_features specifications raise errors."""
+    Tree = ALL_TREES[name]
+    with pytest.raises(ValueError, match=match):
+        Tree(categorical_features=categorical_features).fit(X, y)
+
+
+@pytest.mark.parametrize("name", ALL_TREES)
+def test_no_sparse_with_categorical(name):
+    # Currently we do not support sparse categorical features
+    # Currently we do not support sparse categorical features
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 50, 5
+    X = np.hstack(
+        [
+            rng.randn(n_samples, 3),  # 3 numerical cols
+            rng.randint(0, 3, size=(n_samples, 2)).astype(
+                np.float64
+            ),  # 2 categorical cols
+        ]
+    )
+    y = rng.randint(0, 2, size=n_samples)
+    X_sparse = scipy.sparse.csc_array(X)
+
+    Tree = ALL_TREES[name]
+
+    # TODO: ExtraTree defaults to splitter="random" which rejects categorical
+    # before the sparse check even runs — skip those here since that
+    # validation is tested separately.
+    if "ExtraTree" in name:
+        pytest.skip("ExtraTree uses random splitter; categorical rejected earlier")
+
+    with pytest.raises(
+        NotImplementedError, match="Categorical features not supported with sparse"
+    ):
+        Tree(categorical_features=[3, 4]).fit(X_sparse, y)
+
+    with pytest.raises(
+        NotImplementedError, match="Categorical features not supported with sparse"
+    ):
+        Tree(categorical_features=[3, 4]).fit(X, y).predict(X_sparse)
+
+
+@pytest.mark.parametrize(
+    "data_params",
+    [
+        {
+            "n_rows": 2000,
+            "n_numerical": 0,
+            "n_categorical": 5,
+            "cat_size": 4,
+            "n_num_meaningful": 0,
+            "n_cat_meaningful": 3,
+        },
+    ],
+)
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+def test_categorical_better_than_ordinal(Tree, data_params, global_random_seed):
+    """Categorical-aware tree should perform at least as well as ordinal."""
+    is_reg = Tree == DecisionTreeRegressor
+    X, y, _ = _make_categorical(
+        **data_params,
+        regression=is_reg,
+        return_tuple=True,
+        random_state=global_random_seed,
+    )
+    categorical_features = (
+        np.arange(data_params["n_categorical"]) + data_params["n_numerical"]
+    )
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.3, random_state=42
+    )
+
+    # With categorical awareness
+    tree_cat = Tree(random_state=42, categorical_features=categorical_features)
+    tree_cat.fit(X_train, y_train)
+    score_cat = tree_cat.score(X_test, y_test)
+
+    # Without categorical awareness (ordinal treatment)
+    tree_ord = Tree(random_state=42)
+    tree_ord.fit(X_train, y_train)
+    score_ord = tree_ord.score(X_test, y_test)
+
+    # Categorical should be at least as good (with small tolerance for noise)
+    assert score_cat >= score_ord - 0.05, (
+        f"Categorical tree score ({score_cat:.4f}) should be >= "
+        f"ordinal tree score ({score_ord:.4f}) - 0.05"
+    )
+
+
+def test_categorical_split_vs_onehot_tree_depth():
+    # Simulate data: 8 categories, 1000 samples, binary classification,
+    # non-ordinal mapping
+    rng = np.random.RandomState(42)
+    n_samples = 1000
+    n_categories = 8
+    X = rng.randint(0, n_categories, size=(n_samples, 1))
+    # Shuffle categories and assign half to class 0, half to class 1
+    categories = np.arange(n_categories)
+    rng.shuffle(categories)
+    class0_cats = set(categories[:4])
+    class1_cats = set(categories[4:])
+    y = np.array([0 if x[0] in class0_cats else 1 for x in X])
+
+    # Train with categorical feature
+    tree_cat = DecisionTreeClassifier(random_state=0, categorical_features=[0])
+    tree_cat.fit(X, y)
+
+    # Train with one-hot encoding
+    ohe = OneHotEncoder(sparse_output=False, categories="auto")
+    X_ohe = ohe.fit_transform(X)
+    tree_ohe = DecisionTreeClassifier(random_state=0)
+    tree_ohe.fit(X_ohe, y)
+
+    # The categorical split should yield a shallower tree
+    assert tree_cat.get_depth() == 1, (
+        f"Categorical split depth should be 1, got {tree_cat.get_depth()}"
+    )
+    assert tree_ohe.get_depth() >= 3, (
+        f"One-hot tree depth should be at least 3, got {tree_ohe.get_depth()}"
+    )
+
+
+def test_categorical_split_exact_tree():
+    """Test categorical splits produce exact expected tree with depth >= 2.
+
+    Dataset: 2 binary categorical features, binary classification.
+
+      feat0=0           → y=0  (always, regardless of feat1)
+      feat0=1, feat1=0  → y=0
+      feat0=1, feat1=1  → y=1
+
+    Expected tree (5 nodes, depth 2):
+      node 0 (root): split feat0, {0} left, {1} right
+        node 1 (leaf): y=0, pure (all feat0=0 samples)
+        node 2: split feat1, {0} left, {1} right
+          node 3 (leaf): y=0, pure
+          node 4 (leaf): y=1, pure
+
+    This tests categorical splits at depth > 0 (node 2 has start > 0),
+    which exercises the bitset position calculation in child nodes.
+    """
+    n = 100  # samples per group
+
+    # Group 1: feat0=0, feat1=0, y=0
+    # Group 2: feat0=0, feat1=1, y=0
+    # Group 3: feat0=1, feat1=0, y=0
+    # Group 4: feat0=1, feat1=1, y=1
+    feat0 = np.array([0] * n + [0] * n + [1] * n + [1] * n, dtype=np.float64)
+    feat1 = np.array([0] * n + [1] * n + [0] * n + [1] * n, dtype=np.float64)
+    X = np.column_stack([feat0, feat1])
+    y_clf = np.array([0] * n + [0] * n + [0] * n + [1] * n)
+
+    # --- Classification ---
+    clf = DecisionTreeClassifier(random_state=0, categorical_features=[0, 1])
+    clf.fit(X, y_clf)
+
+    tree = clf.tree_
+
+    assert tree.node_count == 5, f"Expected 5 nodes, got {tree.node_count}"
+    assert clf.get_depth() == 2, f"Expected depth 2, got {clf.get_depth()}"
+
+    # All 3 leaves should be pure
+    leaves = tree.children_left == TREE_LEAF
+    assert_allclose(tree.impurity[leaves], 0.0)
+
+    # Predictions
+    X_test = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.float64)
+    assert_array_equal(clf.predict(X_test), [0, 0, 0, 1])
+
+    # --- Regression ---
+    y_reg = np.array([0.0] * n + [0.0] * n + [5.0] * n + [10.0] * n)
+    reg = DecisionTreeRegressor(random_state=0, categorical_features=[0, 1])
+    reg.fit(X, y_reg)
+
+    tree_reg = reg.tree_
+    assert tree_reg.node_count == 5
+    assert reg.get_depth() == 2
+    assert_allclose(tree_reg.impurity[tree_reg.children_left == TREE_LEAF], 0.0)
+    assert_array_equal(reg.predict(X_test), [0.0, 0.0, 5.0, 10.0])
