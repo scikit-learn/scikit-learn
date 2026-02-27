@@ -69,7 +69,8 @@
     color: black;
 }
 
-td.fitted-att-type {
+td.fitted-att-type,
+tr.th {
     white-space: preserve nowrap;
 }
 

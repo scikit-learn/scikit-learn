@@ -90,7 +90,7 @@ def _fitted_attr_html_repr(fitted_attributes):
 
     rows = []
     # for fitted_attr_name, attr_info in fitted_attributes.items():
-    for name, value in fitted_attributes.items():
+    for name, attr_info in fitted_attributes.items():
         link = generate_link_to_param_doc(
             fitted_attributes.estimator_class,
             name,
@@ -111,18 +111,33 @@ def _fitted_attr_html_repr(fitted_attributes):
             # Just show the parameter name without link
             fitted_attr_display = html.escape(name)
 
-        if len(value) == 2:
-            html_row_values = (value[0], _read_fitted_attr(value[1]))
-        else:
-            if value[0] == "ndarray":
+        if len(attr_info) == 2:  # Attribute is int, str, float
+            html_row_values = (
+                html.escape(str(attr_info[0])),  # Type
+                _read_fitted_attr(attr_info[1]),  # value
+            )
+
+        else:  # fitted attribute type is array-like
+            if attr_info[0] == "ndarray":
                 html_row_values = (
-                    "".join(["array[" + f"{value[2]}" + "]" + f"{value[1]}"]),
-                    _read_fitted_attr(value[3]),
+                    "".join(
+                        [
+                            "array["
+                            + f"{html.escape(str(attr_info[1]))}"  # shape
+                            + "]"
+                            + f"{html.escape(str(attr_info[2]))}"  # dtype
+                        ]
+                    ),
+                    _read_fitted_attr(attr_info[3]),  # value
                 )
             else:
                 html_row_values = (
-                    (value[0], value[1], value[2]),
-                    _read_fitted_attr(value[3]),
+                    (
+                        html.escape(str(attr_info[0])),  # Type
+                        html.escape(str(attr_info[1])),
+                        html.escape(str(attr_info[2])),
+                    ),
+                    _read_fitted_attr(attr_info[3]),  # value
                 )
         rows.append(
             FITTED_ATTR_ROW_TEMPLATE.format(
