@@ -1,0 +1,7 @@
+- Added an `interaction_cst` parameter to
+  :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
+  :class:`tree.ExtraTreeClassifier` and :class:`tree.ExtraTreeRegressor` to
+  constrain feature interactions along each tree path. The parameter accepts
+  explicit groups of features and the `"pairwise"` / `"no_interactions"`
+  shorthands.
+  By :user:`Arthur Lacote <cakedev0>`.

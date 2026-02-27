@@ -7,6 +7,7 @@ randomized trees. Single and multi-output problems are both handled.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import copy
+import itertools
 import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -14,7 +15,7 @@ from math import ceil
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import issparse
+from scipy.sparse import csr_matrix, issparse
 
 from sklearn.base import (
     BaseEstimator,
@@ -124,6 +125,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         "min_impurity_decrease": [Interval(Real, 0.0, None, closed="left")],
         "ccp_alpha": [Interval(Real, 0.0, None, closed="left")],
         "monotonic_cst": ["array-like", None],
+        "interaction_cst": [
+            StrOptions({"pairwise", "no_interactions"}),
+            "array-like",
+            None,
+        ],
     }
 
     @abstractmethod
@@ -143,6 +149,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         class_weight=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        interaction_cst=None,
     ):
         self.criterion = criterion
         self.splitter = splitter
@@ -157,6 +164,69 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.class_weight = class_weight
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
+        self.interaction_cst = interaction_cst
+
+    def _check_interaction_cst(self, n_features):
+        """Check and validate interaction constraints."""
+        if self.interaction_cst is None:
+            return None
+
+        if isinstance(self.interaction_cst, str):
+            if self.interaction_cst == "no_interactions":
+                interaction_cst = [[i] for i in range(n_features)]
+            elif self.interaction_cst == "pairwise":
+                interaction_cst = itertools.combinations(range(n_features), 2)
+            else:
+                raise ValueError(
+                    "Interaction constraints string must be either 'pairwise' or "
+                    f"'no_interactions', got: {self.interaction_cst!r}."
+                )
+        else:
+            interaction_cst = self.interaction_cst
+
+        try:
+            constraints = [set(group) for group in interaction_cst]
+        except TypeError:
+            raise ValueError(
+                "Interaction constraints must be a sequence of tuples or lists, got:"
+                f" {self.interaction_cst!r}."
+            )
+
+        for group in constraints:
+            for x in group:
+                if not (isinstance(x, Integral) and 0 <= x < n_features):
+                    raise ValueError(
+                        "Interaction constraints must consist of integer indices in"
+                        f" [0, n_features - 1] = [0, {n_features - 1}], specifying"
+                        f" the position of features, got invalid indices: {group!r}"
+                    )
+
+        all_features_in_constraints = (
+            set().union(*constraints) if constraints else set()
+        )
+
+        # Add all not listed features as one group by default.
+        rest = set(range(n_features)) - all_features_in_constraints
+        if rest:
+            constraints.append(rest)
+        return constraints
+
+    def _interaction_cst_to_csr(self, constraints, n_features):
+        """Convert interaction constraints to a group-to-features CSR matrix."""
+        if constraints is None:
+            return None
+
+        contraint_idx = np.repeat(
+            np.arange(len(constraints)), [len(cst) for cst in constraints]
+        )
+        group_to_features = csr_matrix(
+            (
+                np.ones(contraint_idx.size),
+                (contraint_idx, list(itertools.chain(*constraints))),
+            ),
+            shape=(len(constraints), n_features),
+        )
+        return group_to_features
 
     def get_depth(self):
         """Return the depth of the decision tree.
@@ -352,6 +422,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.max_features_ = max_features
 
         max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
+        interaction_cst = self._check_interaction_cst(X.shape[1])
 
         if len(y) != n_samples:
             raise ValueError(
@@ -430,6 +501,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 # *positive class*, all signs must be flipped.
                 monotonic_cst *= -1
 
+        group_to_features = self._interaction_cst_to_csr(interaction_cst, X.shape[1])
+
         if not isinstance(self.splitter, Splitter):
             splitter = SPLITTERS[self.splitter](
                 criterion,
@@ -459,6 +532,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 min_weight_leaf,
                 max_depth,
                 self.min_impurity_decrease,
+                group_to_features,
             )
         else:
             builder = BestFirstTreeBuilder(
@@ -469,6 +543,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 max_depth,
                 max_leaf_nodes,
                 self.min_impurity_decrease,
+                group_to_features,
             )
 
         builder.build(self.tree_, X, y, sample_weight, missing_values_in_feature_mask)
@@ -858,6 +933,24 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         .. versionadded:: 1.4
 
+    interaction_cst : {"pairwise", "no_interactions"} or sequence of \
+            lists/tuples/sets of int, default=None
+        Specify interaction constraints, the sets of features which can
+        interact with each other in child node splits.
+
+        Each item specifies the set of feature indices that are allowed
+        to interact with each other. If there are more features than
+        specified in these constraints, they are treated as if they were
+        specified as an additional set.
+
+        The strings "pairwise" and "no_interactions" are shorthands for
+        allowing only pairwise or no interactions, respectively.
+
+        For instance, with 5 features in total, ``interaction_cst=[{0, 1}]``
+        is equivalent to ``interaction_cst=[{0, 1}, {2, 3, 4}]``,
+        and specifies that each branch of a tree will either only split
+        on features 0 and 1 or only split on features 2, 3 and 4.
+
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,) or list of ndarray
@@ -975,6 +1068,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         class_weight=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        interaction_cst=None,
     ):
         super().__init__(
             criterion=criterion,
@@ -989,6 +1083,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             random_state=random_state,
             min_impurity_decrease=min_impurity_decrease,
             monotonic_cst=monotonic_cst,
+            interaction_cst=interaction_cst,
             ccp_alpha=ccp_alpha,
         )
 
@@ -1255,6 +1350,24 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         .. versionadded:: 1.4
 
+    interaction_cst : {"pairwise", "no_interactions"} or sequence of \
+            lists/tuples/sets of int, default=None
+        Specify interaction constraints, the sets of features which can
+        interact with each other in child node splits.
+
+        Each item specifies the set of feature indices that are allowed
+        to interact with each other. If there are more features than
+        specified in these constraints, they are treated as if they were
+        specified as an additional set.
+
+        The strings "pairwise" and "no_interactions" are shorthands for
+        allowing only pairwise or no interactions, respectively.
+
+        For instance, with 5 features in total, ``interaction_cst=[{0, 1}]``
+        is equivalent to ``interaction_cst=[{0, 1}, {2, 3, 4}]``,
+        and specifies that each branch of a tree will either only split
+        on features 0 and 1 or only split on features 2, 3 and 4.
+
     Attributes
     ----------
     feature_importances_ : ndarray of shape (n_features,)
@@ -1358,6 +1471,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         min_impurity_decrease=0.0,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        interaction_cst=None,
     ):
         if isinstance(criterion, str) and criterion == "friedman_mse":
             # TODO(1.11): remove support of "friedman_mse" criterion.
@@ -1382,6 +1496,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             min_impurity_decrease=min_impurity_decrease,
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
+            interaction_cst=interaction_cst,
         )
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -1619,6 +1734,24 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         .. versionadded:: 1.4
 
+    interaction_cst : {"pairwise", "no_interactions"} or sequence of \
+            lists/tuples/sets of int, default=None
+        Specify interaction constraints, the sets of features which can
+        interact with each other in child node splits.
+
+        Each item specifies the set of feature indices that are allowed
+        to interact with each other. If there are more features than
+        specified in these constraints, they are treated as if they were
+        specified as an additional set.
+
+        The strings "pairwise" and "no_interactions" are shorthands for
+        allowing only pairwise or no interactions, respectively.
+
+        For instance, with 5 features in total, ``interaction_cst=[{0, 1}]``
+        is equivalent to ``interaction_cst=[{0, 1}, {2, 3, 4}]``,
+        and specifies that each branch of a tree will either only split
+        on features 0 and 1 or only split on features 2, 3 and 4.
+
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,) or list of ndarray
@@ -1720,6 +1853,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         class_weight=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        interaction_cst=None,
     ):
         super().__init__(
             criterion=criterion,
@@ -1735,6 +1869,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             random_state=random_state,
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
+            interaction_cst=interaction_cst,
         )
 
     def __sklearn_tags__(self):
@@ -1897,6 +2032,24 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         .. versionadded:: 1.4
 
+    interaction_cst : {"pairwise", "no_interactions"} or sequence of \
+            lists/tuples/sets of int, default=None
+        Specify interaction constraints, the sets of features which can
+        interact with each other in child node splits.
+
+        Each item specifies the set of feature indices that are allowed
+        to interact with each other. If there are more features than
+        specified in these constraints, they are treated as if they were
+        specified as an additional set.
+
+        The strings "pairwise" and "no_interactions" are shorthands for
+        allowing only pairwise or no interactions, respectively.
+
+        For instance, with 5 features in total, ``interaction_cst=[{0, 1}]``
+        is equivalent to ``interaction_cst=[{0, 1}, {2, 3, 4}]``,
+        and specifies that each branch of a tree will either only split
+        on features 0 and 1 or only split on features 2, 3 and 4.
+
     Attributes
     ----------
     max_features_ : int
@@ -1981,6 +2134,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         max_leaf_nodes=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        interaction_cst=None,
     ):
         super().__init__(
             criterion=criterion,
@@ -1995,6 +2149,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             random_state=random_state,
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
+            interaction_cst=interaction_cst,
         )
 
     def __sklearn_tags__(self):

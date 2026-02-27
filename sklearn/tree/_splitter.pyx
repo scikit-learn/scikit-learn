@@ -280,7 +280,6 @@ cdef inline int node_split_best(
     """
     cdef const int8_t[:] monotonic_cst = splitter.monotonic_cst
     cdef bint with_monotonic_cst = splitter.with_monotonic_cst
-
     # Find the best split
     cdef intp_t start = splitter.start
     cdef intp_t end = splitter.end
@@ -294,7 +293,6 @@ cdef inline int node_split_best(
     cdef intp_t[::1] samples = splitter.samples
     cdef intp_t[::1] features = splitter.features
     cdef intp_t[::1] constant_features = splitter.constant_features
-    cdef intp_t n_features = splitter.n_features
 
     cdef float32_t[::1] feature_values = splitter.feature_values
     cdef intp_t max_features = splitter.max_features
@@ -310,7 +308,7 @@ cdef inline int node_split_best(
     cdef float64_t lower_bound = parent_record.lower_bound
     cdef float64_t upper_bound = parent_record.upper_bound
 
-    cdef intp_t f_i = n_features
+    cdef intp_t f_i
     cdef intp_t f_j
     cdef intp_t p
     cdef intp_t p_prev
@@ -327,6 +325,10 @@ cdef inline int node_split_best(
     _init_split(&best_split, end)
 
     partitioner.init_node_split(start, end)
+
+    # Candidate features are sampled from features[:f_i], with forbidden
+    # features cached at the end of the array.
+    f_i = parent_record.n_allowed_features
 
     # Sample up to max_features without replacement using a
     # Fisher-Yates-based algorithm (using the local variables `f_i` and
@@ -353,8 +355,10 @@ cdef inline int node_split_best(
         #   features;
         # - [n_total_constant:f_i[ holds features that haven't been drawn
         #   yet and aren't constant apriori.
-        # - [f_i:n_features[ holds features that have been drawn
+        # - [f_i:n_allowed_features[ holds features that have been drawn
         #   and aren't constant.
+        # - [n_allowed_features:n_features[ holds known forbidden
+        #   features inherited from the parent node.
 
         # Draw a feature at random
         f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
@@ -569,7 +573,6 @@ cdef inline int node_split_random(
     cdef intp_t[::1] samples = splitter.samples
     cdef intp_t[::1] features = splitter.features
     cdef intp_t[::1] constant_features = splitter.constant_features
-    cdef intp_t n_features = splitter.n_features
 
     cdef intp_t max_features = splitter.max_features
     cdef intp_t min_samples_leaf = splitter.min_samples_leaf
@@ -584,7 +587,7 @@ cdef inline int node_split_random(
     cdef float64_t lower_bound = parent_record.lower_bound
     cdef float64_t upper_bound = parent_record.upper_bound
 
-    cdef intp_t f_i = n_features
+    cdef intp_t f_i
     cdef intp_t f_j
     # Number of features discovered to be constant during the split search
     cdef intp_t n_found_constants = 0
@@ -600,6 +603,10 @@ cdef inline int node_split_random(
     _init_split(&best_split, end)
 
     partitioner.init_node_split(start, end)
+
+    # Candidate features are sampled from features[:f_i], with forbidden
+    # features cached at the end of the array.
+    f_i = parent_record.n_allowed_features
 
     # Sample up to max_features without replacement using a
     # Fisher-Yates-based algorithm (using the local variables `f_i` and
@@ -625,8 +632,10 @@ cdef inline int node_split_random(
         #   features;
         # - [n_total_constant:f_i[ holds features that haven't been drawn
         #   yet and aren't constant apriori.
-        # - [f_i:n_features[ holds features that have been drawn
-        #   and aren't constant.
+        # - [f_i:n_allowed_features[ holds features that have been
+        #   drawn and aren't constant.
+        # - [n_allowed_features:n_features[ holds known forbidden
+        #   features inherited from the parent node.
 
         # Draw a feature at random
         f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
