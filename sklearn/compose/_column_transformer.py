@@ -1228,18 +1228,23 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         if hasattr(self, "transformers_"):
             transformers = [
                 transformer
-                for transformer in self.transformers_
+                for transformer in self.transformers_[:-1]
                 if not (transformer[0] == "remainder" and transformer[1] == "drop")
             ]
             # We can find remainder and its column only when it's fitted
-
-            remainder_columns = self._remainder[2]
-            if (
-                hasattr(self, "feature_names_in_")
-                and remainder_columns
-                and not all(isinstance(col, str) for col in remainder_columns)
-            ):
-                remainder_columns = self.feature_names_in_[remainder_columns].tolist()
+            if self.remainder != "drop":
+                remainder_columns = self._remainder[2]
+                if (
+                    hasattr(self, "feature_names_in_")
+                    and remainder_columns
+                    and not all(isinstance(col, str) for col in remainder_columns)
+                ):
+                    remainder_columns = self.feature_names_in_[
+                        remainder_columns
+                    ].tolist()
+                transformers = chain(
+                    transformers, [("remainder", self.remainder, remainder_columns)]
+                )
         else:  # not fitted
             if self.remainder != "drop":
                 transformers = chain(
