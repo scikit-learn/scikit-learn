@@ -172,6 +172,7 @@ Metrics
 - :func:`sklearn.metrics.balanced_accuracy_score`
 - :func:`sklearn.metrics.brier_score_loss`
 - :func:`sklearn.metrics.cluster.calinski_harabasz_score`
+- :func:`sklearn.metrics.cluster.contingency_matrix`
 - :func:`sklearn.metrics.cohen_kappa_score`
 - :func:`sklearn.metrics.confusion_matrix`
 - :func:`sklearn.metrics.d2_absolute_error_score`

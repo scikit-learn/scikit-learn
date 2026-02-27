@@ -1980,7 +1980,13 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
 
 
 def check_array_api_metric(
-    metric, array_namespace, device, dtype_name, a_np, b_np, **metric_kwargs
+    metric,
+    array_namespace,
+    device,
+    dtype_name,
+    a_np,
+    b_np,
+    **metric_kwargs,
 ):
     xp = _array_api_for_tests(array_namespace, device)
 
@@ -2013,10 +2019,14 @@ def check_array_api_metric(
         # Exception type may need to be updated in the future for other libraries.
         numpy_as_array_works = False
 
+    assert_kwargs = (
+        {"atol": _atol_for_type(dtype_name)} if dtype_name is not None else {}
+    )
+
     def _check_metric_matches(metric_a, metric_b, convert_a=False):
         if convert_a:
             metric_a = _convert_to_numpy(xp.asarray(metric_a), xp)
-        assert_allclose(metric_a, metric_b, atol=_atol_for_type(dtype_name))
+        assert_allclose(metric_a, metric_b, **assert_kwargs)
 
     def _check_each_metric_matches(metric_a, metric_b, convert_a=False):
         for metric_a_val, metric_b_val in zip(metric_a, metric_b):
