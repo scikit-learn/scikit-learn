@@ -1600,6 +1600,28 @@ def test_sk_visual_block_remainder_fitted_pandas(remainder):
         assert isinstance(visual_block.estimators[1], StandardScaler)
 
 
+def test_sk_visual_block_remainder_col_names_pandas():
+    """Check that the visual block name_details matches the feature_names_in
+    Non-regresion test - when remainder_columns logic is removed it should fail
+    https://github.com/scikit-learn/scikit-learn/pull/31442#discussion_r2841235711
+    """
+    pd = pytest.importorskip("pandas")
+    ohe = OneHotEncoder()
+    ct = ColumnTransformer(
+        transformers=[("ohe", ohe, [0])],
+        remainder="passthrough",
+    )
+    df = pd.DataFrame(
+        {
+            "col1": ["a", "b", "c"],
+            "col2": ["z", "z", "z"],
+        }
+    )
+    ct.fit(df)
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.name_details == (["col1", "col2"])
+
+
 @pytest.mark.parametrize("remainder", ["passthrough", StandardScaler()])
 def test_sk_visual_block_remainder_fitted_numpy(remainder):
     # Remainder shows the indices after fitting
