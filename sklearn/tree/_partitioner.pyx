@@ -13,11 +13,14 @@ and sparse data stored in a Compressed Sparse Column (CSC) format.
 from cython cimport final
 from libc.math cimport isnan, log2
 from libc.stdlib cimport qsort
-from libc.string cimport memcpy
+from libc.string cimport memcpy, memmove
 
 import numpy as np
+cimport numpy as cnp
+cnp.import_array()
 from scipy.sparse import issparse
 
+from sklearn.tree._splitter cimport SplitRecord
 
 # Constant to switch between algorithm non zero value extract algorithm
 # in SparsePartitioner
@@ -44,6 +47,8 @@ cdef class DensePartitioner:
         self.samples = samples
         self.feature_values = feature_values
         self.missing_values_in_feature_mask = missing_values_in_feature_mask
+        buffer_size = samples.size * max(samples.itemsize, feature_values.itemsize)
+        self.swap_buffer = np.empty(buffer_size, dtype=np.uint8)
 
     cdef inline void init_node_split(self, intp_t start, intp_t end) noexcept nogil:
         """Initialize splitter at the beginning of node_split."""
@@ -96,7 +101,23 @@ cdef class DensePartitioner:
                 feature_values[i] = X[samples[i], current_feature]
 
         sort(&feature_values[self.start], &samples[self.start], self.end - self.start - n_missing)
+        self.missing_on_the_left = False
         self.n_missing = n_missing
+
+    cdef void shift_missing_to_the_left(self) noexcept nogil:
+        """Moves missing values from the right to the left.
+
+        All missing values are expected to be grouped at the right hand side of the
+        [self.start:self.end] slices of the self.samples and self.feature_values arrays
+        before calling this method.
+
+        Non-missing values are correspondingly moved from the left to the right while
+        preserving their inner ordering.
+        """
+        cdef intp_t n_non_missing = self.end - self.start - self.n_missing
+        swap_array_slices(self.samples, self.start, self.end, n_non_missing, self.swap_buffer)
+        swap_array_slices(self.feature_values, self.start, self.end, n_non_missing, self.swap_buffer)
+        self.missing_on_the_left = True
 
     cdef inline void find_min_max(
         self,
@@ -110,161 +131,127 @@ cdef class DensePartitioner:
         values observed in feature_values is stored in self.n_missing.
         """
         cdef:
-            intp_t p, current_end
+            intp_t p
             float32_t current_feature_value
-            const float32_t[:, :] X = self.X
             intp_t[::1] samples = self.samples
             float32_t min_feature_value = INFINITY_32t
             float32_t max_feature_value = -INFINITY_32t
             float32_t[::1] feature_values = self.feature_values
             intp_t n_missing = 0
-            const uint8_t[::1] missing_values_in_feature_mask = self.missing_values_in_feature_mask
+            bint seen_non_missing = False
 
-        # We are copying the values into an array and finding min/max of the array in
-        # a manner which utilizes the cache more effectively. We need to also count
-        # the number of missing-values there are.
-        if missing_values_in_feature_mask is not None and missing_values_in_feature_mask[current_feature]:
-            p, current_end = self.start, self.end - 1
-            # Missing values are placed at the end and do not participate in the
-            # min/max calculation.
-            while p <= current_end:
-                # Finds the right-most value that is not missing so that
-                # it can be swapped with missing values towards its left.
-                if isnan(X[samples[current_end], current_feature]):
-                    n_missing += 1
-                    current_end -= 1
-                    continue
+        for p in range(self.start, self.end):
+            current_feature_value = self.X[samples[p], current_feature]
+            feature_values[p] = current_feature_value
 
-                # X[samples[current_end], current_feature] is a non-missing value
-                if isnan(X[samples[p], current_feature]):
-                    samples[p], samples[current_end] = samples[current_end], samples[p]
-                    n_missing += 1
-                    current_end -= 1
-
-                current_feature_value = X[samples[p], current_feature]
-                feature_values[p] = current_feature_value
-                if current_feature_value < min_feature_value:
-                    min_feature_value = current_feature_value
-                elif current_feature_value > max_feature_value:
-                    max_feature_value = current_feature_value
-                p += 1
-        else:
-            min_feature_value = X[samples[self.start], current_feature]
-            max_feature_value = min_feature_value
-
-            feature_values[self.start] = min_feature_value
-            for p in range(self.start + 1, self.end):
-                current_feature_value = X[samples[p], current_feature]
-                feature_values[p] = current_feature_value
-
-                if current_feature_value < min_feature_value:
-                    min_feature_value = current_feature_value
-                elif current_feature_value > max_feature_value:
-                    max_feature_value = current_feature_value
+            if isnan(current_feature_value):
+                n_missing += 1
+            elif not seen_non_missing:
+                min_feature_value = current_feature_value
+                max_feature_value = current_feature_value
+                seen_non_missing = True
+            elif current_feature_value < min_feature_value:
+                min_feature_value = current_feature_value
+            elif current_feature_value > max_feature_value:
+                max_feature_value = current_feature_value
 
         min_feature_value_out[0] = min_feature_value
         max_feature_value_out[0] = max_feature_value
         self.n_missing = n_missing
 
     cdef inline void next_p(self, intp_t* p_prev, intp_t* p) noexcept nogil:
-        """Compute the next p_prev and p for iterating over feature values.
-
-        The missing values are not included when iterating through the feature values.
         """
-        cdef intp_t end_non_missing = self.end - self.n_missing
+        Compute the next p_prev and p for iterating over feature values.
 
-        while (
-            p[0] + 1 < end_non_missing and
-            self.feature_values[p[0] + 1] <= self.feature_values[p[0]] + FEATURE_THRESHOLD
-        ):
+        - if self.missing_on_the_left: go over the p in [start + n_missing + 1, end)
+        - else: go over the p in [start, end_non_missing]
+            when p=end_non_missing, this means all non-missing values go to the left
+            and all missing to the right
+        """
+        cdef intp_t end_non_missing = (
+            self.end if self.missing_on_the_left
+            else self.end - self.n_missing)
+
+        if p[0] == end_non_missing and not self.missing_on_the_left:
+            # skip the missing values up to the end
+            # (which will end the for loop in the best split function)
+            p[0] = self.end
+            p_prev[0] = self.end
+        else:
+            if self.missing_on_the_left and p[0] == self.start:
+                # skip the missing values up to the first non-missing value:
+                p[0] = self.start + self.n_missing
             p[0] += 1
-
-        p_prev[0] = p[0]
-
-        # By adding 1, we have
-        # (feature_values[p] >= end) or (feature_values[p] > feature_values[p - 1])
-        p[0] += 1
+            while (
+                p[0] < end_non_missing and
+                self.feature_values[p[0]] <= self.feature_values[p[0] - 1] + FEATURE_THRESHOLD
+            ):
+                p[0] += 1
+            p_prev[0] = p[0] - 1
 
     cdef inline intp_t partition_samples(
         self,
-        float64_t current_threshold
+        float64_t threshold,
+        bint missing_go_to_left
     ) noexcept nogil:
-        """Partition samples for feature_values at the current_threshold."""
-        cdef:
-            intp_t p = self.start
-            intp_t partition_end = self.end - self.n_missing
-            intp_t[::1] samples = self.samples
-            float32_t[::1] feature_values = self.feature_values
+        """Partition self.samples and self.feature_values
+        on current self.feature_values for a given threshold.
 
-        while p < partition_end:
-            if feature_values[p] <= current_threshold:
-                p += 1
+        Used while searching splits through random threshold sampling.
+        """
+        cdef:
+            # Local invariance: start <= partition_start <= partition_end <= end
+            intp_t partition_start = self.start
+            intp_t partition_end = self.end
+            intp_t* samples = &self.samples[0]
+            float32_t* feature_values = &self.feature_values[0]
+            bint go_to_left
+
+        while partition_start < partition_end:
+            go_to_left = (
+                missing_go_to_left if isnan(feature_values[partition_start])
+                else feature_values[partition_start] <= threshold
+            )
+            if go_to_left:
+                partition_start += 1
             else:
                 partition_end -= 1
-
-                feature_values[p], feature_values[partition_end] = (
-                    feature_values[partition_end], feature_values[p]
-                )
-                samples[p], samples[partition_end] = samples[partition_end], samples[p]
+                swap(feature_values, samples, partition_start, partition_end)
 
         return partition_end
 
     cdef inline void partition_samples_final(
         self,
-        intp_t best_pos,
-        float64_t best_threshold,
-        intp_t best_feature,
-        intp_t best_n_missing,
+        const SplitRecord* best_split,
     ) noexcept nogil:
-        """Partition samples for X at the best_threshold and best_feature.
+        """Partition self.samples according to the split described by best_split.
 
-        If missing values are present, this method partitions `samples`
-        so that the `best_n_missing` missing values' indices are in the
-        right-most end of `samples`, that is `samples[end_non_missing:end]`.
+        If missing values are present, this method partitions them accordingly
+        to the split strategy.
         """
         cdef:
-            # Local invariance: start <= p <= partition_end <= end
-            intp_t start = self.start
-            intp_t p = start
-            intp_t end = self.end - 1
-            intp_t partition_end = end - best_n_missing
-            intp_t[::1] samples = self.samples
-            const float32_t[:, :] X = self.X
+            # Local invariance: start <= partition_start <= partition_end <= end
+            intp_t partition_start = self.start
+            intp_t partition_end = self.end
+            intp_t* samples = &self.samples[0]
+            float64_t best_threshold = best_split[0].threshold
+            intp_t best_feature = best_split[0].feature
+            bint best_missing_go_to_left = best_split[0].missing_go_to_left
             float32_t current_value
+            bint go_to_left
 
-        if best_n_missing != 0:
-            # Move samples with missing values to the end while partitioning the
-            # non-missing samples
-            while p <= partition_end:
-                # Keep samples with missing values at the end
-                if isnan(X[samples[end], best_feature]):
-                    end -= 1
-                    continue
-
-                # Swap sample with missing values with the sample at the end
-                current_value = X[samples[p], best_feature]
-                if isnan(current_value):
-                    samples[p], samples[end] = samples[end], samples[p]
-                    end -= 1
-
-                    # The swapped sample at the end is always a non-missing value, so
-                    # we can continue the algorithm without checking for missingness.
-                    current_value = X[samples[p], best_feature]
-
-                # Partition the non-missing samples
-                if current_value <= best_threshold:
-                    p += 1
-                else:
-                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
-                    partition_end -= 1
-        else:
-            # Partitioning routine when there are no missing values
-            while p < partition_end:
-                if X[samples[p], best_feature] <= best_threshold:
-                    p += 1
-                else:
-                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
-                    partition_end -= 1
+        while partition_start < partition_end:
+            current_value = self.X[samples[partition_start], best_feature]
+            go_to_left = (
+                best_missing_go_to_left if isnan(current_value)
+                else current_value <= best_threshold
+            )
+            if go_to_left:
+                partition_start += 1
+            else:
+                partition_end -= 1
+                samples[partition_start], samples[partition_end] = (
+                    samples[partition_end], samples[partition_start])
 
 
 @final
@@ -351,6 +338,9 @@ cdef class SparsePartitioner:
         # number of missing values for current_feature
         self.n_missing = 0
 
+    cdef void shift_missing_to_the_left(self) noexcept nogil:
+        pass  # Missing values are not supported for sparse data.
+
     cdef inline void find_min_max(
         self,
         intp_t current_feature,
@@ -416,24 +406,28 @@ cdef class SparsePartitioner:
 
     cdef inline intp_t partition_samples(
         self,
-        float64_t current_threshold
+        float64_t current_threshold,
+        bint missing_go_to_left
     ) noexcept nogil:
         """Partition samples for feature_values at the current_threshold."""
-        return self._partition(current_threshold, self.start_positive)
+        return self._partition(current_threshold)
 
     cdef inline void partition_samples_final(
         self,
-        intp_t best_pos,
-        float64_t best_threshold,
-        intp_t best_feature,
-        intp_t n_missing,
+        const SplitRecord* best_split,
     ) noexcept nogil:
-        """Partition samples for X at the best_threshold and best_feature."""
-        self.extract_nnz(best_feature)
-        self._partition(best_threshold, best_pos)
+        """Partition samples for X according to the split described by best_split."""
+        self.extract_nnz(best_split[0].feature)
+        self._partition(best_split[0].threshold)
 
-    cdef inline intp_t _partition(self, float64_t threshold, intp_t zero_pos) noexcept nogil:
-        """Partition samples[start:end] based on threshold."""
+    cdef inline intp_t _partition(self, float64_t threshold) noexcept nogil:
+        """
+        Partition samples[start:end] based on threshold.
+        Assume extract_nnz was called beforehand, and partitioned samples in:
+        - samples[start:end_negative] -> < 0
+        - samples[end_negative:start_positive] -> zeros
+        - samples[end_negative:start_positive] -> > 0
+        """
         cdef:
             intp_t p, partition_end
             intp_t[::1] index_to_samples = self.index_to_samples
@@ -447,8 +441,8 @@ cdef class SparsePartitioner:
             p = self.start_positive
             partition_end = self.end
         else:
-            # Data are already split
-            return zero_pos
+            # If threshold is 0, extract_nnz already did the necessary partitioning
+            return self.start_positive
 
         while p < partition_end:
             if feature_values[p] <= threshold:
@@ -672,32 +666,6 @@ cdef inline void sparse_swap(intp_t[::1] index_to_samples, intp_t[::1] samples,
     index_to_samples[samples[pos_2]] = pos_2
 
 
-cdef inline void shift_missing_values_to_left_if_required(
-    SplitRecord* best,
-    intp_t[::1] samples,
-    intp_t end,
-) noexcept nogil:
-    """Shift missing value sample indices to the left of the split if required.
-
-    Note: this should always be called at the very end because it will
-    move samples around, thereby affecting the criterion.
-    This affects the computation of the children impurity, which affects
-    the computation of the next node.
-    """
-    cdef intp_t i, p, current_end
-    # The partitioner partitions the data such that the missing values are in
-    # samples[-n_missing:] for the criterion to consume. If the missing values
-    # are going to the right node, then the missing values are already in the
-    # correct position. If the missing values go left, then we move the missing
-    # values to samples[best.pos:best.pos+n_missing] and update `best.pos`.
-    if best.n_missing > 0 and best.missing_go_to_left:
-        for p in range(best.n_missing):
-            i = best.pos + p
-            current_end = end - 1 - p
-            samples[i], samples[current_end] = samples[current_end], samples[i]
-        best.pos += best.n_missing
-
-
 def _py_sort(float32_t[::1] feature_values, intp_t[::1] samples, intp_t n):
     """Used for testing sort."""
     sort(&feature_values[0], &samples[0], n)
@@ -815,3 +783,41 @@ cdef void heapsort(floating* feature_values, intp_t* samples, intp_t n) noexcept
         swap(feature_values, samples, 0, end)
         sift_down(feature_values, samples, 0, end)
         end = end - 1
+
+
+cdef void swap_array_slices(
+    array_data_type[::1] array, intp_t start, intp_t end, intp_t n,
+    char[::1] buffer
+) noexcept nogil:
+    """Swaps the order of the slices array[start:start + n] and array[start + n:end].
+
+    Preserves the order within the slices. Works for any itemsize.
+    """
+    if start >= end:
+        return
+    cdef size_t itemsize = sizeof(array[0])
+    cdef intp_t n_rev = end - start - n
+    cdef char* arr = <char*> &array[0]
+    cdef char* buf = &buffer[0]
+    # Copy array[start + n : end] to temporary buffer
+    memcpy(buf, arr + (start + n) * itemsize, n_rev * itemsize)
+    # Move array[start : start + n] to array[start + n_rev : end]
+    # `memmove` is needed as the dest & source regions overlap
+    memmove(arr + (start + n_rev) * itemsize, arr + start * itemsize, n * itemsize)
+    # array[start : start + n_rev] = buffer[:n_rev]
+    memcpy(arr + start * itemsize, buf, n_rev * itemsize)
+
+
+def _py_swap_array_slices(cnp.ndarray array, intp_t start, intp_t end, intp_t n):
+    """
+    Python wrapper for swap_array_slices for testing.
+    `array` must be contiguous.
+    """
+    buffer = np.empty(array.size * array.dtype.itemsize, dtype=np.uint8)
+    # Dispatch to the appropriate specialized version based on dtype
+    if array.dtype == np.intp:
+        swap_array_slices[intp_t](array, start, end, n, buffer)
+    elif array.dtype == np.float32:
+        swap_array_slices[float32_t](array, start, end, n, buffer)
+    else:
+        raise ValueError(f"Unsupported dtype: {array.dtype}. Expected np.intp or np.float32")
