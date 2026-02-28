@@ -869,6 +869,52 @@ def _multiclass_roc_auc_score(
         )
 
 
+def _sort_inputs_and_compute_classification_thresholds(
+    y_true, y_score, sample_weight=None
+):
+    """Validate and sort inputs, and compute classification thresholds.
+
+    Performs the following functions:
+
+    * Array validation on `y_true`, `y_score` and `sample_weight`
+    * Filters out 0-weighted samples
+    * Sorts `y_score`, `y_true` and `sample_weight` according to descending `y_score`
+    * Computes thresholds i.e. indices where sorted `y_score` changes
+    """
+    xp, _, device = get_namespace_and_device(y_true, y_score, sample_weight)
+
+    check_consistent_length(y_true, y_score, sample_weight)
+    y_true = column_or_1d(y_true)
+    y_score = column_or_1d(y_score)
+    assert_all_finite(y_true)
+    assert_all_finite(y_score)
+
+    # Filter out zero-weighted samples, as they should not impact the result
+    if sample_weight is not None:
+        sample_weight = column_or_1d(sample_weight)
+        sample_weight = _check_sample_weight(sample_weight, y_true)
+        nonzero_weight_mask = sample_weight != 0
+        y_true = y_true[nonzero_weight_mask]
+        y_score = y_score[nonzero_weight_mask]
+        sample_weight = sample_weight[nonzero_weight_mask]
+
+    # sort scores and corresponding truth values
+    desc_score_indices = xp.argsort(y_score, stable=True, descending=True)
+    y_score = y_score[desc_score_indices]
+    y_true = y_true[desc_score_indices]
+    if sample_weight is not None:
+        sample_weight = sample_weight[desc_score_indices]
+
+    # y_score typically has many tied values. Here we extract
+    # the indices associated with the distinct values. We also
+    # concatenate a value for the end of the curve.
+    distinct_value_indices = xp.nonzero(xp.diff(y_score))[0]
+    threshold_idxs = xp.concat(
+        [distinct_value_indices, xp.asarray([size(y_true) - 1], device=device)]
+    )
+    return y_true, y_score, sample_weight, threshold_idxs
+
+
 @_deprecate_positional_args(version="1.11")
 @validate_params(
     {
@@ -951,49 +997,24 @@ def confusion_matrix_at_thresholds(
     >>> thresholds
     array([0.8 , 0.4 , 0.35, 0.1 ])
     """
+    xp, _, device = get_namespace_and_device(y_true, y_score, sample_weight)
+
     # Check to make sure y_true is valid
     y_type = type_of_target(y_true, input_name="y_true")
     if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
         raise ValueError("{0} format is not supported".format(y_type))
 
-    xp, _, device = get_namespace_and_device(y_true, y_score, sample_weight)
-
-    check_consistent_length(y_true, y_score, sample_weight)
-    y_true = column_or_1d(y_true)
-    y_score = column_or_1d(y_score)
-    assert_all_finite(y_true)
-    assert_all_finite(y_score)
-
-    # Filter out zero-weighted samples, as they should not impact the result
-    if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight)
-        sample_weight = _check_sample_weight(sample_weight, y_true)
-        nonzero_weight_mask = sample_weight != 0
-        y_true = y_true[nonzero_weight_mask]
-        y_score = y_score[nonzero_weight_mask]
-        sample_weight = sample_weight[nonzero_weight_mask]
-
-    pos_label = _check_pos_label_consistency(pos_label, y_true)
-
-    # make y_true a boolean vector
-    y_true = y_true == pos_label
-
-    # sort scores and corresponding truth values
-    desc_score_indices = xp.argsort(y_score, stable=True, descending=True)
-    y_score = y_score[desc_score_indices]
-    y_true = y_true[desc_score_indices]
-    if sample_weight is not None:
-        weight = sample_weight[desc_score_indices]
-    else:
+    y_true, y_score, weight, threshold_idxs = (
+        _sort_inputs_and_compute_classification_thresholds(
+            y_true, y_score, sample_weight
+        )
+    )
+    if weight is None:
         weight = 1.0
 
-    # y_score typically has many tied values. Here we extract
-    # the indices associated with the distinct values. We also
-    # concatenate a value for the end of the curve.
-    distinct_value_indices = xp.nonzero(xp.diff(y_score))[0]
-    threshold_idxs = xp.concat(
-        [distinct_value_indices, xp.asarray([size(y_true) - 1], device=device)]
-    )
+    # make y_true a boolean vector
+    pos_label = _check_pos_label_consistency(pos_label, y_true)
+    y_true = y_true == pos_label
 
     # accumulate the true positives with decreasing threshold
     max_float_dtype = _max_precision_float_dtype(xp, device)
@@ -2215,3 +2236,103 @@ def top_k_accuracy_score(
         return float(np.sum(hits))
     else:
         return float(np.dot(hits, sample_weight))
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "metric_func": [callable],
+        "sample_weight": ["array-like", None],
+        "metric_params": [dict, None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def metric_at_thresholds(
+    y_true,
+    y_score,
+    metric_func,
+    *,
+    sample_weight=None,
+    metric_params=None,
+):
+    r"""Compute `metric_func` per threshold for :term:`binary` data.
+
+    Aids visualization of metric values across thresholds when tuning the
+    :ref:`decision threshold <threshold_tunning>`.
+
+    Read more in the :ref:`User Guide <metric_at_thresholds>`.
+
+    .. versionadded:: 1.9
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        Ground truth (correct) target labels.
+
+    y_score : array-like of shape (n_samples,)
+        Continuous prediction scores, either estimated probabilities of the
+        positive class or output of a :term:`decision_function`.
+
+    metric_func : callable
+        The metric function to use. It will be called as
+        `metric_func(y_true, y_pred, **metric_params)`, where `y_pred` are
+        thresholded predictions, internally computed as
+        `y_pred = (y_score >= threshold)`. The output should be
+        a single numeric or a collection where each element has the same size.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights. If not `None`, will be passed to `metric_func`.
+
+    metric_params : dict, default=None
+        Parameters to pass to `metric_func`.
+
+    Returns
+    -------
+    metric_values : ndarray of shape (n_thresholds,) or (n_thresholds, \*n_outputs)
+        The scores associated with each threshold. If `metric_func` returns a
+        collection (e.g., a tuple of floats), the output would be a 2D array
+        of shape (n_thresholds, \*n_outputs).
+
+    thresholds : ndarray of shape (n_thresholds,)
+        The thresholds used to compute the scores.
+
+    See Also
+    --------
+    confusion_matrix_at_thresholds : Compute binary confusion matrix per threshold.
+    precision_recall_curve : Compute precision-recall pairs for different
+        probability thresholds.
+    det_curve : Compute error rates for different probability thresholds.
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import accuracy_score, metric_at_thresholds
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> metric_values, thresholds = metric_at_thresholds(
+    ...     y_true, y_score, accuracy_score)
+    >>> thresholds
+    array([0.8 , 0.4 , 0.35, 0.1 ])
+    >>> metric_values
+    array([0.75, 0.5 , 0.75, 0.5 ])
+    """
+    y_true, y_score, sample_weight, threshold_idxs = (
+        _sort_inputs_and_compute_classification_thresholds(
+            y_true, y_score, sample_weight
+        )
+    )
+    metric_params = {
+        **(metric_params or {}),
+        **({"sample_weight": sample_weight} if sample_weight is not None else {}),
+    }
+
+    thresholds = y_score[threshold_idxs]
+    metric_values = []
+    for threshold in thresholds:
+        y_pred = (y_score >= threshold).astype(np.int32)
+        metric_values.append(metric_func(y_true, y_pred, **metric_params))
+
+    metric_values = np.asarray(metric_values)
+    return metric_values, thresholds
