@@ -300,7 +300,7 @@ def test_unique_labels():
 
 @skip_if_array_api_compat_not_configured
 def test_unique_labels_mixed_str_numerical_array_api():
-    """Test error correct for mixed string and numerical input and dispatch enabled.
+    """Test error is raised for mixed string and numerical input and dispatch enabled.
 
     Mixed string and numerical NumPy input with array API dispatch enabled should raise
     the correct error.
