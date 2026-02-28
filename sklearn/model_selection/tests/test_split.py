@@ -2033,6 +2033,40 @@ def test_time_series_walk_forward_not_enough_samples(cv):
             "`step` must be > 0",
         ),
         (
+            {
+                "n_splits": "walk_forward",
+                "min_train_size": 3,
+                "test_size": 2,
+                "step": 1.5,
+            },
+            "The step must be of Integral type",
+        ),
+        (
+            {
+                "n_splits": "walk_forward",
+                "min_train_size": 1.5,
+                "test_size": 2,
+            },
+            "The min_train_size must be of Integral type",
+        ),
+        (
+            {
+                "n_splits": "walk_forward",
+                "min_train_size": 0,
+                "test_size": 2,
+            },
+            "`min_train_size` must be > 0",
+        ),
+        (
+            {
+                "n_splits": "walk_forward",
+                "min_train_size": 3,
+                "max_train_size": 4,
+                "test_size": 2,
+            },
+            "Only one of `max_train_size` and `min_train_size` can be provided",
+        ),
+        (
             {"n_splits": 3, "step": 2},
             "`step` can only be used when n_splits='walk_forward'",
         ),
