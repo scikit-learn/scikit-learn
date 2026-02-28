@@ -2521,7 +2521,7 @@ def test__check_targets():
     MCN = "continuous-multioutput"
     # all of length 3
     EXAMPLES = [
-        (IND, np.array([[0, 1, 1], [1, 0, 0], [0, 0, 1]])),
+        (IND, np.array([[0, 1], [1, 0], [0, 0]])),
         # must not be considered binary
         (IND, np.array([[0, 1], [1, 0], [1, 1]])),
         (MC, [2, 3, 1]),
@@ -2584,7 +2584,7 @@ def test__check_targets():
                         _check_targets(y1, y2)
 
         else:
-            merged_type, y1out, y2out, _ = _check_targets(y1, y2)
+            merged_type, _, y1out, y2out, _ = _check_targets(y1, y2)
             assert merged_type == expected
             if merged_type.startswith("multilabel"):
                 assert y1out.format == "csr"
@@ -2638,7 +2638,7 @@ def test__check_targets_sparse_inputs(y, target_type):
             _check_targets(y, y)
     else:
         # This should not raise an error
-        y_type, y_true_out, y_pred_out, _ = _check_targets(y, y)
+        y_type, _, y_true_out, y_pred_out, _ = _check_targets(y, y)
 
         assert y_type == "multilabel-indicator"
         assert y_true_out.format == "csr"

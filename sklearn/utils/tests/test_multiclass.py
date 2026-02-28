@@ -9,6 +9,8 @@ from sklearn import config_context, datasets
 from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVC
 from sklearn.utils._array_api import (
+    _atol_for_type,
+    _convert_to_numpy,
     _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
@@ -18,6 +20,7 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
+    skip_if_array_api_compat_not_configured,
 )
 from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.utils.fixes import (
@@ -293,6 +296,59 @@ def test_unique_labels():
         unique_labels(np.ones((5, 4)), np.ones((5, 5)))
 
     assert_array_equal(unique_labels(np.ones((4, 5)), np.ones((5, 5))), np.arange(5))
+
+
+@skip_if_array_api_compat_not_configured
+def test_unique_labels_mixed_str_numerical_array_api():
+    """Test error is raised for mixed string and numerical input and dispatch enabled.
+
+    Mixed string and numerical NumPy input with array API dispatch enabled should raise
+    the correct error.
+    """
+    y_string = np.array(["a", "b", "a", "a"])
+    y_object = np.array(["a", "b", "a", "a"], dtype=object)
+    y_numerical = np.array([1, 0, 0, 1])
+
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(ValueError, match="Mix of label input types"):
+            unique_labels(y_string, y_numerical)
+        with pytest.raises(ValueError, match="Mix of label input types"):
+            unique_labels(y_object, y_numerical)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_unique_labels_array_api(array_namespace, device, dtype_name):
+    """Check `unique_labels` compliance for array API."""
+    xp = _array_api_for_tests(array_namespace, device)
+    y1_np = np.array([1, 2, 3], dtype=dtype_name)
+    y2_np = np.array([2, 3, 4], dtype=dtype_name)
+
+    y1_xp = xp.asarray(y1_np, device=device)
+    y2_xp = xp.asarray(y2_np, device=device)
+
+    labels_np = unique_labels(y1_np, y2_np)
+    with config_context(array_api_dispatch=True):
+        labels_xp = unique_labels(y1_xp, y2_xp)
+        labels_xp_np = _convert_to_numpy(labels_xp, xp)
+        assert_allclose(labels_np, labels_xp_np, atol=_atol_for_type(dtype_name))
+
+
+def test_unique_labels_torch_array_api_disabled():
+    """Check PyTorch cpu input to `unique_labels` with array API dispatch disabled."""
+    xp = _array_api_for_tests("torch", "cpu")
+    y1_np = np.array([1, 2, 3])
+    y2_np = np.array([2, 3, 4])
+    y1_torch = xp.asarray(y1_np)
+    y2_torch = xp.asarray(y2_np)
+
+    labels_np = unique_labels(y1_np, y2_np)
+    with config_context(array_api_dispatch=False):
+        labels_torch = unique_labels(y1_torch, y2_torch)
+        assert_allclose(labels_np, labels_torch)
 
 
 def test_check_classification_targets_too_many_unique_classes():

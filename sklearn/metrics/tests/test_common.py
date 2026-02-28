@@ -1925,16 +1925,24 @@ def test_continuous_metric_permutation_invariance(name):
         assert_almost_equal(score, current_score)
 
 
+@pytest.mark.parametrize("input", ["object", "default", "list"])
 @pytest.mark.parametrize("metric_name", CLASSIFICATION_METRICS)
-def test_metrics_consistent_type_error(metric_name):
+def test_metrics_consistent_type_error(input, metric_name):
     # check that an understable message is raised when the type between y_true
     # and y_pred mismatch
     rng = np.random.RandomState(42)
-    y1 = np.array(["spam"] * 3 + ["eggs"] * 2, dtype=object)
-    y2 = rng.randint(0, 2, size=y1.size)
+    n_samples = 5
+    if input == "object":
+        y1 = np.array(["spam"] * 3 + ["eggs"] * 2, dtype=object)
+    elif input == "default":
+        y1 = np.array(["spam"] * 3 + ["eggs"] * 2)
+    else:  # list
+        y1 = ["spam"] * 3 + ["eggs"] * 2
 
-    err_msg = "Labels in y_true and y_pred should be of the same type."
-    with pytest.raises(TypeError, match=err_msg):
+    y2 = rng.randint(0, 2, size=n_samples)
+
+    err_msg = r"Mix of label input types \(string and number\)"
+    with pytest.raises(ValueError, match=err_msg):
         CLASSIFICATION_METRICS[metric_name](y1, y2)
 
 
