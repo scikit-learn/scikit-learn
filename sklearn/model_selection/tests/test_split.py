@@ -2000,12 +2000,8 @@ def test_time_series_walk_forward_get_n_splits():
 @pytest.mark.parametrize(
     "cv",
     [
-        TimeSeriesSplit(
-            n_splits="walk_forward", min_train_size=4, test_size=2, gap=1
-        ),
-        TimeSeriesSplit(
-            n_splits="walk_forward", max_train_size=4, test_size=2, gap=1
-        ),
+        TimeSeriesSplit(n_splits="walk_forward", min_train_size=4, test_size=2, gap=1),
+        TimeSeriesSplit(n_splits="walk_forward", max_train_size=4, test_size=2, gap=1),
     ],
 )
 def test_time_series_walk_forward_not_enough_samples(cv):
