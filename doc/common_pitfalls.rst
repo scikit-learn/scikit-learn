@@ -81,7 +81,8 @@ Data leakage occurs when information that would not be available at prediction
 time is used when building the model. This results in overly optimistic
 performance estimates, for example from :ref:`cross-validation
 <cross_validation>`, and thus poorer performance when the model is used
-on actually novel data, for example during production.
+on actually novel data, for example during production (see Kaufman et al., 2012
+for formulation, detection, and avoidance of leakage in data mining [1]_).
 
 A common cause is not keeping the test and train data subsets separate.
 Test data should never be used to make choices about the model.
@@ -136,7 +137,8 @@ They can help remove irrelevant, redundant and noisy features as well as
 improve your model build time and performance. As with any other type of
 preprocessing, feature selection should **only** use the training data.
 Including the test data in feature selection will optimistically bias your
-model.
+model (Ambroise & McLachlan, 2002 demonstrate this selection bias in gene
+extraction [2]_).
 
 To demonstrate we will create this binary classification problem with
 10,000 randomly generated features::
@@ -226,7 +228,6 @@ method is used during fitting and predicting::
     >>> scores = cross_val_score(pipeline, X, y)
     >>> print(f"Mean accuracy: {scores.mean():.2f}+/-{scores.std():.2f}")
     Mean accuracy: 0.43+/-0.05
-
 
 .. _randomness:
 
@@ -564,7 +565,8 @@ When we pass an integer, the estimator will use the same RNG on each fold:
 if the estimator performs well (or bad), as evaluated by CV, it might just be
 because we got lucky (or unlucky) with that specific seed. Passing instances
 leads to more robust CV results, and makes the comparison between various
-algorithms fairer. It also helps limiting the temptation to treat the
+algorithms fairer (see Cawley & Talbot, 2010 on over-fitting in model
+selection [3]_). It also helps limiting the temptation to treat the
 estimator's RNG as a hyper-parameter that can be tuned.
 
 Whether we pass `RandomState` instances or integers to CV splitters has no
@@ -572,3 +574,20 @@ impact on robustness, as long as `split` is only called once. When `split`
 is called multiple times, fold-to-fold comparison isn't possible anymore. As
 a result, passing integer to CV splitters is usually safer and covers most
 use-cases.
+
+References
+==========
+
+.. [1] Kaufman, S., Rosset, S., Perlich, C., & Stitelman, O. (2012).
+   Leakage in Data Mining: Formulation, Detection, and Avoidance.
+   *ACM Transactions on Knowledge Discovery from Data*, 6(4), 1–21.
+   https://doi.org/10.1145/2382577.2382579
+
+.. [2] Ambroise, C., & McLachlan, G. J. (2002).
+   Selection bias in gene extraction on the basis of microarray gene-expression
+   data. *Proceedings of the National Academy of Sciences*, 99(10), 6562–6566.
+   https://doi.org/10.1073/pnas.102102699
+
+.. [3] Cawley, G. C., & Talbot, N. L. C. (2010).
+   On Over-fitting in Model Selection and Subsequent Selection Bias in
+   Performance Evaluation. *Journal of Machine Learning Research*, 11, 2079–2107.
