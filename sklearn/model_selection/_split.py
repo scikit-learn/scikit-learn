@@ -1445,7 +1445,26 @@ class TimeSeriesSplit(_BaseKFold):
                 )
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator."""
+        """Returns the number of splitting iterations in the cross-validator.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features), default=None
+            Input data. This parameter is required when
+            ``n_splits="walk_forward"``, because the number of feasible splits
+            depends on `n_samples`.
+
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
+
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
+
+        Returns
+        -------
+        n_splits : int
+            Returns the number of splitting iterations in the cross-validator.
+        """
         if self.n_splits != "walk_forward":
             return self.n_splits
 
