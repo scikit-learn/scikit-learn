@@ -1,0 +1,1 @@
+Fixed a :class:~sklearn.neighbors.KNeighborsClassifier failure when using algorithm='brute', p=1 and string labels.
