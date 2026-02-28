@@ -30,8 +30,8 @@ def _scale_normalize(X):
     X = make_nonnegative(X)
     row_diag = np.asarray(1.0 / np.sqrt(X.sum(axis=1))).squeeze()
     col_diag = np.asarray(1.0 / np.sqrt(X.sum(axis=0))).squeeze()
-    row_diag = np.where(np.isnan(row_diag), 0, row_diag)
-    col_diag = np.where(np.isnan(col_diag), 0, col_diag)
+    row_diag = np.nan_to_num(row_diag, posinf=0.0)
+    col_diag = np.nan_to_num(col_diag, posinf=0.0)
     if issparse(X):
         n_rows, n_cols = X.shape
         r = dia_matrix((row_diag, [0]), shape=(n_rows, n_rows))
