@@ -76,6 +76,7 @@ CRITERIA_REG = {
     "squared_error": _criterion.MSE,
     "absolute_error": _criterion.MAE,
     "poisson": _criterion.Poisson,
+    "quantile": _criterion.Pinball,
 }
 
 DENSE_SPLITTERS = {"best": _splitter.BestSplitter, "random": _splitter.RandomSplitter}
@@ -382,7 +383,14 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     self.n_outputs_, self.n_classes_
                 )
             else:
-                criterion = CRITERIA_REG[self.criterion](self.n_outputs_, n_samples)
+                args = (self.n_outputs_, n_samples)
+                if self.criterion == "quantile":
+                    args = (*args, self.quantile)
+                if self.criterion == "absolute_error":
+                    # FIXME: this is coupled with code at a much lower level
+                    # because of the inheritance behavior of __cinit__
+                    args = (*args, 0.5)
+                criterion = CRITERIA_REG[self.criterion](*args)
         else:
             # Make a deepcopy in case the criterion has mutable attributes that
             # might be shared and modified concurrently during parallel fitting
@@ -1117,14 +1125,16 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : {"squared_error", "absolute_error", "poisson"}, default="squared_error"
+    criterion : {"squared_error", "absolute_error", "quantile", "poisson"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
         loss using the mean of each terminal node, "absolute_error" for the mean
         absolute error, which minimizes the L1 loss using the median of each terminal
-        node, and "poisson" which uses reduction in Poisson deviance to find splits,
-        also using the mean of each terminal node.
+        node, "quantile" which minimizes the pinball loss using the quantile of each
+        terminal node (controlled by ``quantile``), and "poisson" which uses reduction
+        in Poisson deviance to find splits, also using the mean of each terminal node.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
@@ -1134,6 +1144,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
+
+        .. versionadded:: 1.9
+           Quantile/Pinball loss criterion
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
@@ -1255,6 +1268,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         .. versionadded:: 1.4
 
+    quantile : float, default=0.5
+        The quantile to predict when ``criterion="quantile"``. It must be strictly
+        between 0 and 1. If 0.5 (default), the model predicts the median.
+
     Attributes
     ----------
     feature_importances_ : ndarray of shape (n_features,)
@@ -1338,9 +1355,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
         "criterion": [
-            StrOptions({"squared_error", "absolute_error", "poisson"}),
+            StrOptions({"squared_error", "absolute_error", "poisson", "quantile"}),
             Hidden(Criterion),
         ],
+        "quantile": [Interval(RealNotInt, 0.0, 1.0, closed="neither")],
     }
 
     def __init__(
@@ -1358,6 +1376,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         min_impurity_decrease=0.0,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        quantile=0.5,
     ):
         if isinstance(criterion, str) and criterion == "friedman_mse":
             # TODO(1.11): remove support of "friedman_mse" criterion.
@@ -1383,6 +1402,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
         )
+        self.quantile = quantile
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None, check_input=True):
@@ -1767,14 +1787,16 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Parameters
     ----------
-    criterion : {"squared_error", "absolute_error", "poisson"}, default="squared_error"
+    criterion : {"squared_error", "absolute_error", "quantile", "poisson"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
         loss using the mean of each terminal node, "absolute_error" for the mean
         absolute error, which minimizes the L1 loss using the median of each terminal
-        node, and "poisson" which uses reduction in Poisson deviance to find splits,
-        also using the mean of each terminal node.
+        node, "quantile" which minimizes the pinball loss using the quantile of each
+        terminal node (controlled by ``quantile``), and "poisson" which uses reduction
+        in Poisson deviance to find splits, also using the mean of each terminal node.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
@@ -1784,6 +1806,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
+
+        .. versionadded:: 1.9
+           Quantile/Pinball loss criterion
 
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
@@ -1897,6 +1922,10 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         .. versionadded:: 1.4
 
+    quantile : float, default=0.5
+        The quantile to predict when ``criterion="quantile"``. It must be strictly
+        between 0 and 1. If 0.5 (default), the model predicts the median.
+
     Attributes
     ----------
     max_features_ : int
@@ -1981,6 +2010,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         max_leaf_nodes=None,
         ccp_alpha=0.0,
         monotonic_cst=None,
+        quantile=0.5,
     ):
         super().__init__(
             criterion=criterion,
@@ -1995,6 +2025,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             random_state=random_state,
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
+            quantile=quantile,
         )
 
     def __sklearn_tags__(self):
