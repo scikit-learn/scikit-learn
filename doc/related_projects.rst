@@ -115,6 +115,10 @@ enhance the functionality of scikit-learn's estimators.
   ``scikit-learn`` itself. If you encounter issues while using this project,
   make sure you report potential issues in their respective repositories.
 
+- `Nvidia RAPIDS <https://rapids.ai/>`_
+  GPU-accelerated implementations of the scikit-learn API for training and
+  inference on NVIDIA GPUs with zero code change 
+
 **Interface to R with genomic applications**
 
 - `BiocSklearn <https://bioconductor.org/packages/BiocSklearn>`_
