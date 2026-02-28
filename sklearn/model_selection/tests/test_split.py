@@ -1940,6 +1940,117 @@ def test_time_series_gap():
         next(splits)
 
 
+def test_time_series_walk_forward_expanding():
+    X = np.zeros((10, 1))
+    splits = list(
+        TimeSeriesSplit(
+            n_splits="walk_forward",
+            min_train_size=4,
+            test_size=2,
+            gap=1,
+            step=2,
+        ).split(X)
+    )
+
+    expected = [
+        (np.array([0, 1, 2, 3]), np.array([5, 6])),
+        (np.array([0, 1, 2, 3, 4, 5]), np.array([7, 8])),
+    ]
+    for (train, test), (expected_train, expected_test) in zip(splits, expected):
+        assert_array_equal(train, expected_train)
+        assert_array_equal(test, expected_test)
+
+
+def test_time_series_walk_forward_rolling():
+    X = np.zeros((10, 1))
+    splits = list(
+        TimeSeriesSplit(
+            n_splits="walk_forward",
+            max_train_size=3,
+            test_size=2,
+            gap=1,
+            step=2,
+        ).split(X)
+    )
+
+    expected = [
+        (np.array([0, 1, 2]), np.array([4, 5])),
+        (np.array([2, 3, 4]), np.array([6, 7])),
+        (np.array([4, 5, 6]), np.array([8, 9])),
+    ]
+    for (train, test), (expected_train, expected_test) in zip(splits, expected):
+        assert_array_equal(train, expected_train)
+        assert_array_equal(test, expected_test)
+
+
+def test_time_series_walk_forward_get_n_splits():
+    X = np.zeros((10, 1))
+    cv = TimeSeriesSplit(
+        n_splits="walk_forward", min_train_size=3, test_size=2, gap=1, step=2
+    )
+
+    assert cv.get_n_splits(X) == 3
+    assert cv.get_n_splits(X[:5]) == 0
+    assert len(list(cv.split(X))) == cv.get_n_splits(X)
+
+    with pytest.raises(ValueError, match="The 'X' parameter should not be None"):
+        cv.get_n_splits()
+
+
+@pytest.mark.parametrize(
+    "cv",
+    [
+        TimeSeriesSplit(
+            n_splits="walk_forward", min_train_size=4, test_size=2, gap=1
+        ),
+        TimeSeriesSplit(
+            n_splits="walk_forward", max_train_size=4, test_size=2, gap=1
+        ),
+    ],
+)
+def test_time_series_walk_forward_not_enough_samples(cv):
+    X = np.zeros((6, 1))
+
+    assert cv.get_n_splits(X) == 0
+    with pytest.raises(ValueError, match="Not enough samples for a single split"):
+        list(cv.split(X))
+
+
+@pytest.mark.parametrize(
+    "kwargs, expected_msg",
+    [
+        (
+            {"n_splits": "walk_forward"},
+            "`test_size` must be provided when n_splits='walk_forward'",
+        ),
+        (
+            {"n_splits": "walk_forward", "test_size": 2},
+            "`min_train_size` must be provided when n_splits='walk_forward'",
+        ),
+        (
+            {
+                "n_splits": "walk_forward",
+                "min_train_size": 3,
+                "test_size": 2,
+                "step": 0,
+            },
+            "`step` must be > 0",
+        ),
+        (
+            {"n_splits": 3, "step": 2},
+            "`step` can only be used when n_splits='walk_forward'",
+        ),
+        (
+            {"n_splits": 3, "min_train_size": 3},
+            "`min_train_size` can only be used when n_splits='walk_forward'",
+        ),
+    ],
+)
+def test_time_series_walk_forward_bad_params(kwargs, expected_msg):
+    with pytest.raises(ValueError, match=expected_msg):
+        TimeSeriesSplit(**kwargs)
+
+
 @ignore_warnings
 def test_nested_cv():
     # Test if nested cross validation works with different combinations of cv
