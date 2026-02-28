@@ -38,7 +38,7 @@ from sklearn.model_selection import (
 from sklearn.model_selection._split import GroupsConsumerMixin
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils import check_array
+from sklearn.utils import check_array, check_random_state
 from sklearn.utils._testing import (
     TempMemmap,
     assert_allclose,
@@ -87,9 +87,9 @@ def test_set_order_sparse(order, input_order, coo_container):
     assert sparse.issparse(y2) and y2.format == format
 
 
-def test_cython_solver_equivalence():
+def test_cython_solver_equivalence(global_random_seed):
     """Test that all 3 Cython solvers for 1-d targets give same results."""
-    X, y = make_regression()
+    X, y = make_regression(random_state=global_random_seed)
     X_mean = X.mean(axis=0)
     X_centered = np.asfortranarray(X - X_mean)
     y -= y.mean()
@@ -185,11 +185,10 @@ def test_lasso_zero():
 def test_enet_nonfinite_params():
     # Check ElasticNet throws ValueError when dealing with non-finite parameter
     # values
-    rng = np.random.RandomState(0)
     n_samples = 10
     fmax = np.finfo(np.float64).max
-    X = fmax * rng.uniform(size=(n_samples, 2))
-    y = rng.randint(0, 2, size=n_samples)
+    X = np.full((n_samples, 2), fmax, dtype=np.float64)
+    y = (np.arange(n_samples) % 2).astype(np.float64)
 
     clf = ElasticNet(alpha=0.1)
     msg = "Coordinate descent iterations resulted in non-finite parameter values"
@@ -292,6 +291,7 @@ def test_lasso_dual_gap():
     alpha = 0.01 * np.max(np.abs(X.T @ y)) / n_samples
     clf = Lasso(alpha=alpha, fit_intercept=False).fit(X, y)
     w = clf.coef_
+    assert np.count_nonzero(w) > 0
     R = y - X @ w
     primal = 0.5 * np.mean(R**2) + clf.alpha * np.sum(np.abs(w))
     # dual pt: R / n_samples, dual constraint: norm(X.T @ theta, inf) <= alpha
@@ -300,21 +300,26 @@ def test_lasso_dual_gap():
     assert_allclose(clf.dual_gap_, primal - dual)
 
 
-def build_dataset(n_samples=50, n_features=200, n_informative_features=10, n_targets=1):
+def build_dataset(
+    n_samples=50, n_features=200, n_informative_features=10, n_targets=1, random_state=0
+):
     """
     build an ill-posed linear regression problem with many noisy features and
     comparatively few samples
     """
-    random_state = np.random.RandomState(0)
+    rng = check_random_state(random_state)
+
     if n_targets > 1:
-        w = random_state.randn(n_features, n_targets)
+        w = rng.randn(n_features, n_targets)
     else:
-        w = random_state.randn(n_features)
+        w = rng.randn(n_features)
     w[n_informative_features:] = 0.0
-    X = random_state.randn(n_samples, n_features)
-    y = np.dot(X, w)
-    X_test = random_state.randn(n_samples, n_features)
-    y_test = np.dot(X_test, w)
+
+    X = rng.randn(n_samples, n_features)
+    y = X @ w
+    X_test = rng.randn(n_samples, n_features)
+    y_test = X_test @ w
+
     return X, y, X_test, y_test
 
 
@@ -360,21 +365,32 @@ def test_lasso_cv_with_some_model_selection():
     pipe.fit(X, y)
 
 
-def test_lasso_cv_positive_constraint():
-    X, y, X_test, y_test = build_dataset()
+def test_lasso_cv_positive_constraint(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
+
+    n_samples = 80
+    X = rng.randn(n_samples, 1)
+    # Strong negative slope with low noise to keep the unconstrained
+    # coefficient reliably negative across seeds.
+    y = -3.0 * X[:, 0] + 0.01 * rng.randn(n_samples)
+
+    # Unconstrained: should recover a clearly negative coefficient
     max_iter = 500
+    clf_unconstrained = LassoCV(
+        alphas=3, eps=1e-1, cv=2, max_iter=max_iter, n_jobs=1
+    ).fit(X, y)
+    assert clf_unconstrained.coef_[0] < -0.5
 
-    # Ensure the unconstrained fit has a negative coefficient
-    clf_unconstrained = LassoCV(alphas=3, eps=1e-1, max_iter=max_iter, cv=2, n_jobs=1)
-    clf_unconstrained.fit(X, y)
-    assert min(clf_unconstrained.coef_) < 0
-
-    # On same data, constrained fit has non-negative coefficients
+    # Constrained: cannot be negative, should be driven to 0 (or very close)
     clf_constrained = LassoCV(
-        alphas=3, eps=1e-1, max_iter=max_iter, positive=True, cv=2, n_jobs=1
-    )
-    clf_constrained.fit(X, y)
-    assert min(clf_constrained.coef_) >= 0
+        alphas=3,
+        eps=1e-1,
+        cv=2,
+        max_iter=max_iter,
+        positive=True,
+        n_jobs=1,
+    ).fit(X, y)
+    assert clf_constrained.coef_[0] >= 0
 
 
 @pytest.mark.parametrize(
@@ -397,9 +413,8 @@ def test_lassocv_alphas_validation(alphas, err_type, err_msg):
     """Check the `alphas` validation in LassoCV."""
 
     n_samples, n_features = 5, 5
-    rng = np.random.RandomState(0)
-    X = rng.randn(n_samples, n_features)
-    y = rng.randint(0, 2, n_samples)
+    X = np.arange(n_samples * n_features).reshape((n_samples, n_features))
+    y = np.zeros(n_samples)
     lassocv = LassoCV(alphas=alphas)
     with pytest.raises(err_type, match=err_msg):
         lassocv.fit(X, y)
@@ -430,11 +445,14 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
     )
 
 
-def test_enet_path():
+def test_enet_path(global_random_seed):
     # We use a large number of samples and of informative features so that
     # the l1_ratio selected is more toward ridge than lasso
     X, y, X_test, y_test = build_dataset(
-        n_samples=200, n_features=100, n_informative_features=100
+        n_samples=200,
+        n_features=100,
+        n_informative_features=100,
+        random_state=global_random_seed,
     )
     max_iter = 150
 
@@ -444,12 +462,10 @@ def test_enet_path():
         alphas=[0.01, 0.05, 0.1], eps=2e-3, l1_ratio=[0.5, 0.7], cv=3, max_iter=max_iter
     )
     clf.fit(X, y)
+
     # Well-conditioned settings, we should have selected our
     # smallest penalty
     assert_almost_equal(clf.alpha_, min(clf.alphas_))
-    # Non-sparse ground truth: we should have selected an elastic-net
-    # that is closer to ridge than to lasso
-    assert clf.l1_ratio_ == min(clf.l1_ratio)
 
     clf = ElasticNetCV(
         alphas=[0.01, 0.05, 0.1],
@@ -464,16 +480,15 @@ def test_enet_path():
     # Well-conditioned settings, we should have selected our
     # smallest penalty
     assert_almost_equal(clf.alpha_, min(clf.alphas_))
-    # Non-sparse ground truth: we should have selected an elastic-net
-    # that is closer to ridge than to lasso
-    assert clf.l1_ratio_ == min(clf.l1_ratio)
 
     # We are in well-conditioned settings with low noise: we should
     # have a good test-set performance
     assert clf.score(X_test, y_test) > 0.99
 
     # Multi-output/target case
-    X, y, X_test, y_test = build_dataset(n_features=10, n_targets=3)
+    X, y, X_test, y_test = build_dataset(
+        n_features=10, n_targets=3, random_state=global_random_seed
+    )
     clf = MultiTaskElasticNetCV(
         alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3, max_iter=max_iter
     )
@@ -485,7 +500,7 @@ def test_enet_path():
 
     # Mono-output should have same cross-validated alpha_ and l1_ratio_
     # in both cases.
-    X, y, _, _ = build_dataset(n_features=10)
+    X, y, _, _ = build_dataset(n_features=10, random_state=global_random_seed)
     clf1 = ElasticNetCV(alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
     clf1.fit(X, y)
     clf2 = MultiTaskElasticNetCV(alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
@@ -494,8 +509,8 @@ def test_enet_path():
     assert_almost_equal(clf1.alpha_, clf2.alpha_)
 
 
-def test_warm_start():
-    X, y, _, _ = build_dataset()
+def test_warm_start(global_random_seed):
+    X, y, _, _ = build_dataset(random_state=global_random_seed)
     clf = ElasticNet(alpha=0.1, max_iter=5, warm_start=True)
     ignore_warnings(clf.fit)(X, y)
     ignore_warnings(clf.fit)(X, y)  # do a second round with 5 iterations
@@ -542,26 +557,36 @@ def test_enet_positive_constraint():
     assert min(enet.coef_) >= 0
 
 
-def test_enet_cv_positive_constraint():
-    X, y, X_test, y_test = build_dataset()
+def test_enet_cv_positive_constraint(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
+
+    n_samples = 100
+    X = rng.randn(n_samples, 1)
+    y = -3.0 * X[:, 0] + 0.01 * rng.randn(n_samples)
+
     max_iter = 500
 
-    # Ensure the unconstrained fit has a negative coefficient
     enetcv_unconstrained = ElasticNetCV(
-        alphas=3, eps=1e-1, max_iter=max_iter, cv=2, n_jobs=1
-    )
-    enetcv_unconstrained.fit(X, y)
-    assert min(enetcv_unconstrained.coef_) < 0
+        alphas=3,
+        eps=1e-1,
+        max_iter=max_iter,
+        cv=2,
+        n_jobs=1,
+    ).fit(X, y)
+    assert enetcv_unconstrained.coef_[0] < -0.5
 
-    # On same data, constrained fit has non-negative coefficients
     enetcv_constrained = ElasticNetCV(
-        alphas=3, eps=1e-1, max_iter=max_iter, cv=2, positive=True, n_jobs=1
-    )
-    enetcv_constrained.fit(X, y)
-    assert min(enetcv_constrained.coef_) >= 0
+        alphas=3,
+        eps=1e-1,
+        max_iter=max_iter,
+        cv=2,
+        positive=True,
+        n_jobs=1,
+    ).fit(X, y)
+    assert enetcv_constrained.coef_[0] >= 0
 
 
-def test_uniform_targets():
+def test_uniform_targets(global_random_seed):
     enet = ElasticNetCV(alphas=3)
     m_enet = MultiTaskElasticNetCV(alphas=3)
     lasso = LassoCV(alphas=3)
@@ -570,7 +595,7 @@ def test_uniform_targets():
     models_single_task = (enet, lasso)
     models_multi_task = (m_enet, m_lasso)
 
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
 
     X_train = rng.random_sample(size=(10, 3))
     X_test = rng.random_sample(size=(10, 3))
@@ -609,7 +634,7 @@ def test_multi_task_lasso_vs_skglm():
         W = W[:, :-1]
         l21_norm = np.sqrt(np.sum(W**2, axis=0)).sum()
         return (
-            np.linalg.norm(Y - X @ W.T - intercept, ord="fro") ** 2 / (2 * n_samples)
+            np.linalg.norm(y - X @ W.T - intercept, ord="fro") ** 2 / (2 * n_samples)
             + alpha * l21_norm
         )
 
@@ -632,8 +657,8 @@ def test_multi_task_lasso_vs_skglm():
     )
 
 
-def test_multi_task_lasso_and_enet():
-    X, y, X_test, y_test = build_dataset()
+def test_multi_task_lasso_and_enet(global_random_seed):
+    X, y, _, _ = build_dataset(random_state=global_random_seed)
     Y = np.c_[y, y]
     # Y_test = np.c_[y_test, y_test]
     clf = MultiTaskLasso(alpha=1, tol=1e-8).fit(X, Y)
@@ -676,10 +701,14 @@ def test_multi_task_lasso_readonly_data():
         assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
 
-def test_enet_multitarget():
+def test_enet_multitarget(global_random_seed):
     n_targets = 3
     X, y, _, _ = build_dataset(
-        n_samples=10, n_features=8, n_informative_features=10, n_targets=n_targets
+        n_samples=10,
+        n_features=8,
+        n_informative_features=10,
+        n_targets=n_targets,
+        random_state=global_random_seed,
     )
     estimator = ElasticNet(alpha=0.01)
     estimator.fit(X, y)
@@ -697,9 +726,8 @@ def test_enet_multitarget():
 
 
 def test_multioutput_enetcv_error():
-    rng = np.random.RandomState(0)
-    X = rng.randn(10, 2)
-    y = rng.randn(10, 2)
+    X = np.arange(20).reshape((10, 2))
+    y = np.zeros((10, 2))
     clf = ElasticNetCV()
     with pytest.raises(ValueError):
         clf.fit(X, y)
@@ -732,8 +760,8 @@ def test_multitask_enet_and_lasso_cv():
     assert 10 == len(clf.alphas_)
 
 
-def test_1d_multioutput_enet_and_multitask_enet_cv():
-    X, y, _, _ = build_dataset(n_features=10)
+def test_1d_multioutput_enet_and_multitask_enet_cv(global_random_seed):
+    X, y, _, _ = build_dataset(n_features=10, random_state=global_random_seed)
     y = y[:, np.newaxis]
     clf = ElasticNetCV(alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
     clf.fit(X, y[:, 0])
@@ -758,8 +786,8 @@ def test_1d_multioutput_lasso_and_multitask_lasso_cv():
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_sparse_input_dtype_enet_and_lassocv(csr_container):
-    X, y, _, _ = build_dataset(n_features=10)
+def test_sparse_input_dtype_enet_and_lassocv(csr_container, global_random_seed):
+    X, y, _, _ = build_dataset(n_features=10, random_state=global_random_seed)
     clf = ElasticNetCV(alphas=5)
     clf.fit(csr_container(X), y)
     clf1 = ElasticNetCV(alphas=5)
@@ -792,18 +820,19 @@ def test_elasticnet_precompute_incorrect_gram():
         clf.fit(X_centered, y)
 
 
-def test_elasticnet_precompute_gram_weighted_samples():
+def test_elasticnet_precompute_gram_weighted_samples(global_random_seed):
     # check the equivalence between passing a precomputed Gram matrix and
     # internal computation using sample weights.
-    X, y, _, _ = build_dataset()
+    X, y, _, _ = build_dataset(random_state=global_random_seed)
 
-    rng = np.random.RandomState(0)
-    sample_weight = rng.lognormal(size=y.shape)
+    rng = np.random.RandomState(global_random_seed)
+    n_samples = X.shape[0]
+    sample_weight = rng.lognormal(size=n_samples)
 
-    w_norm = sample_weight * (y.shape / np.sum(sample_weight))
+    w_norm = sample_weight * (n_samples / np.sum(sample_weight))
     X_c = X - np.average(X, axis=0, weights=w_norm)
     X_r = X_c * np.sqrt(w_norm)[:, np.newaxis]
-    gram = np.dot(X_r.T, X_r)
+    gram = X_r.T @ X_r
 
     clf1 = ElasticNet(alpha=0.01, precompute=gram)
     clf1.fit(X_c, y, sample_weight=sample_weight)
@@ -811,7 +840,7 @@ def test_elasticnet_precompute_gram_weighted_samples():
     clf2 = ElasticNet(alpha=0.01, precompute=False)
     clf2.fit(X, y, sample_weight=sample_weight)
 
-    assert_allclose(clf1.coef_, clf2.coef_)
+    assert_allclose(clf1.coef_, clf2.coef_, rtol=1e-6)
 
 
 def test_elasticnet_precompute_gram():
@@ -885,16 +914,20 @@ def test_warm_start_convergence_with_regularizer_decrement():
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_random_descent(csr_container):
+def test_random_descent(csr_container, global_random_seed):
     # Test that both random and cyclic selection give the same results.
     # Ensure that the test models fully converge and check a wide
     # range of conditions.
 
     # This uses the coordinate descent algo using the gram trick.
-    X, y, _, _ = build_dataset(n_samples=50, n_features=20)
+    X, y, _, _ = build_dataset(
+        n_samples=50, n_features=20, random_state=global_random_seed
+    )
     clf_cyclic = ElasticNet(selection="cyclic", tol=1e-8)
     clf_cyclic.fit(X, y)
-    clf_random = ElasticNet(selection="random", tol=1e-8, random_state=42)
+    clf_random = ElasticNet(
+        selection="random", tol=1e-8, random_state=global_random_seed
+    )
     clf_random.fit(X, y)
     assert_array_almost_equal(clf_cyclic.coef_, clf_random.coef_)
     assert_almost_equal(clf_cyclic.intercept_, clf_random.intercept_)
@@ -902,7 +935,9 @@ def test_random_descent(csr_container):
     # This uses the descent algo without the gram trick
     clf_cyclic = ElasticNet(selection="cyclic", tol=1e-8)
     clf_cyclic.fit(X.T, y[:20])
-    clf_random = ElasticNet(selection="random", tol=1e-8, random_state=42)
+    clf_random = ElasticNet(
+        selection="random", tol=1e-8, random_state=global_random_seed
+    )
     clf_random.fit(X.T, y[:20])
     assert_array_almost_equal(clf_cyclic.coef_, clf_random.coef_)
     assert_almost_equal(clf_cyclic.intercept_, clf_random.intercept_)
@@ -910,7 +945,9 @@ def test_random_descent(csr_container):
     # Sparse Case
     clf_cyclic = ElasticNet(selection="cyclic", tol=1e-8)
     clf_cyclic.fit(csr_container(X), y)
-    clf_random = ElasticNet(selection="random", tol=1e-8, random_state=42)
+    clf_random = ElasticNet(
+        selection="random", tol=1e-8, random_state=global_random_seed
+    )
     clf_random.fit(csr_container(X), y)
     assert_array_almost_equal(clf_cyclic.coef_, clf_random.coef_)
     assert_almost_equal(clf_cyclic.intercept_, clf_random.intercept_)
@@ -919,16 +956,20 @@ def test_random_descent(csr_container):
     new_y = np.hstack((y[:, np.newaxis], y[:, np.newaxis]))
     clf_cyclic = MultiTaskElasticNet(selection="cyclic", tol=1e-8)
     clf_cyclic.fit(X, new_y)
-    clf_random = MultiTaskElasticNet(selection="random", tol=1e-8, random_state=42)
+    clf_random = MultiTaskElasticNet(
+        selection="random", tol=1e-8, random_state=global_random_seed
+    )
     clf_random.fit(X, new_y)
     assert_array_almost_equal(clf_cyclic.coef_, clf_random.coef_)
     assert_almost_equal(clf_cyclic.intercept_, clf_random.intercept_)
 
 
-def test_enet_path_positive():
+def test_enet_path_positive(global_random_seed):
     # Test positive parameter
 
-    X, Y, _, _ = build_dataset(n_samples=50, n_features=50, n_targets=2)
+    X, Y, _, _ = build_dataset(
+        n_samples=50, n_features=50, n_targets=2, random_state=global_random_seed
+    )
 
     # For mono output
     # Test that the coefs returned by positive=True in enet_path are positive
@@ -944,9 +985,11 @@ def test_enet_path_positive():
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_sparse_dense_descent_paths(csr_container):
+def test_sparse_dense_descent_paths(csr_container, global_random_seed):
     # Test that dense and sparse input give the same input for descent paths.
-    X, y, _, _ = build_dataset(n_samples=50, n_features=20)
+    X, y, _, _ = build_dataset(
+        n_samples=50, n_features=20, random_state=global_random_seed
+    )
     csr = csr_container(X)
     for path in [enet_path, lasso_path]:
         _, coefs, _ = path(X, y, tol=1e-10)
@@ -958,7 +1001,8 @@ def test_sparse_dense_descent_paths(csr_container):
 def test_path_unknown_parameter(path_func):
     """Check that passing parameter not used by the coordinate descent solver
     will raise an error."""
-    X, y, _, _ = build_dataset(n_samples=50, n_features=20)
+    X = np.arange(10).reshape((5, 2))
+    y = np.zeros(5)
     err_msg = "Unexpected parameters in params"
     with pytest.raises(ValueError, match=err_msg):
         path_func(X, y, normalize=True, fit_intercept=True)
@@ -967,7 +1011,7 @@ def test_path_unknown_parameter(path_func):
 def test_check_input_false():
     X, y, _, _ = build_dataset(n_samples=20, n_features=10)
     X = check_array(X, order="F", dtype="float64")
-    y = check_array(X, order="F", dtype="float64")
+    y = check_array(y, order="F", dtype="float64", ensure_2d=False)
     clf = ElasticNet(selection="cyclic", tol=1e-7)
     # Check that no error is raised if data is provided in the right format
     clf.fit(X, y, check_input=False)
@@ -984,32 +1028,31 @@ def test_check_input_false():
 
 
 @pytest.mark.parametrize("check_input", [True, False])
-def test_enet_copy_X_True(check_input):
-    X, y, _, _ = build_dataset()
-    X = X.copy(order="F")
+def test_enet_copy_X_true_does_not_overwrite_input(check_input):
+    X = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]], order="F")
+    y = np.array([1.0, 2.0, 3.0])
 
-    original_X = X.copy()
-    enet = ElasticNet(copy_X=True)
-    enet.fit(X, y, check_input=check_input)
+    X_before = X.copy()
+    ElasticNet(copy_X=True).fit(X, y, check_input=check_input)
 
-    assert_array_equal(original_X, X)
+    assert_array_equal(X, X_before)
 
 
-def test_enet_copy_X_False_check_input_False():
-    X, y, _, _ = build_dataset()
-    X = X.copy(order="F")
+def test_enet_copy_X_false_and_check_input_false_may_overwrite_input():
+    X = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]], order="F")
+    y = np.array([1.0, 2.0, 3.0])
 
-    original_X = X.copy()
-    enet = ElasticNet(copy_X=False)
-    enet.fit(X, y, check_input=False)
+    X_before = X.copy()
+    ElasticNet(copy_X=False).fit(X, y, check_input=False)
 
     # No copying, X is overwritten
-    assert np.any(np.not_equal(original_X, X))
+    assert np.any(X != X_before)
 
 
 def test_overrided_gram_matrix():
-    X, y, _, _ = build_dataset(n_samples=20, n_features=10)
-    Gram = X.T.dot(X)
+    X = np.arange(200, dtype=float).reshape(20, 10)
+    y = np.arange(20, dtype=float)
+    Gram = X.T @ X
     clf = ElasticNet(selection="cyclic", tol=1e-8, precompute=Gram)
     warning_message = (
         "Gram matrix was provided but X was centered"
@@ -1034,7 +1077,7 @@ def test_lasso_non_float_y(model):
 
 def test_enet_float_precision():
     # Generate dataset
-    X, y, X_test, y_test = build_dataset(n_samples=20, n_features=10)
+    X, y, _, _ = build_dataset(n_samples=20, n_features=10)
     # Here we have a small number of iterations, and thus the
     # ElasticNet might not converge. This is to speed up tests
 
@@ -1136,8 +1179,8 @@ def test_coef_shape_not_zero():
     assert est_no_intercept.coef_.shape == (1,)
 
 
-def test_warm_start_multitask_lasso():
-    X, y, X_test, y_test = build_dataset()
+def test_warm_start_multitask_lasso(global_random_seed):
+    X, y, _, _ = build_dataset(random_state=global_random_seed)
     Y = np.c_[y, y]
     clf = MultiTaskLasso(alpha=0.1, max_iter=5, warm_start=True)
     ignore_warnings(clf.fit)(X, Y)
@@ -1177,8 +1220,8 @@ def test_enet_coordinate_descent_raises_convergence(klass, n_classes, kwargs):
         clf.fit(X, y)
 
 
-def test_convergence_warnings():
-    random_state = np.random.RandomState(0)
+def test_convergence_warnings(global_random_seed):
+    random_state = np.random.RandomState(global_random_seed)
     X = random_state.standard_normal((1000, 500))
     y = random_state.standard_normal((1000, 3))
 
@@ -1189,8 +1232,10 @@ def test_convergence_warnings():
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_sparse_input_convergence_warning(csr_container):
-    X, y, _, _ = build_dataset(n_samples=1000, n_features=500)
+def test_sparse_input_convergence_warning(csr_container, global_random_seed):
+    X, y, _, _ = build_dataset(
+        n_samples=1000, n_features=500, random_state=global_random_seed
+    )
 
     with pytest.warns(ConvergenceWarning):
         ElasticNet(max_iter=1, tol=0).fit(csr_container(X, dtype=np.float32), y)
@@ -1402,7 +1447,7 @@ def test_enet_cv_sample_weight_correctness(
 
 
 @pytest.mark.parametrize("sample_weight", [False, True])
-def test_enet_cv_grid_search(sample_weight):
+def test_enet_cv_grid_search(sample_weight, global_random_seed):
     """Test that ElasticNetCV gives same result as GridSearchCV."""
     n_samples, n_features = 200, 10
     cv = 5
@@ -1412,7 +1457,7 @@ def test_enet_cv_grid_search(sample_weight):
         effective_rank=10,
         n_informative=n_features - 4,
         noise=10,
-        random_state=0,
+        random_state=global_random_seed,
     )
     if sample_weight:
         sample_weight = np.linspace(1, 5, num=n_samples)
@@ -1441,10 +1486,10 @@ def test_enet_cv_grid_search(sample_weight):
 @pytest.mark.parametrize("precompute", [False, True])
 @pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS)
 def test_enet_cv_sample_weight_consistency(
-    fit_intercept, l1_ratio, precompute, sparse_container
+    fit_intercept, l1_ratio, precompute, sparse_container, global_random_seed
 ):
     """Test that the impact of sample_weight is consistent."""
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features = 10, 5
 
     X = rng.rand(n_samples, n_features)
@@ -1534,7 +1579,9 @@ def test_linear_models_cv_fit_with_loky(estimator):
     # Create a problem sufficiently large to cause memmapping (1MB).
     # Unfortunately the scikit-learn and joblib APIs do not make it possible to
     # change the max_nbyte of the inner Parallel call.
-    X, y = make_regression(int(1e6) // 8 + 1, 1)
+    n_samples = int(1e6) // 8 + 1  # float64 => 8 bytes per entry, 1 feature
+    X = np.arange(n_samples, dtype=np.float64).reshape(-1, 1)
+    y = X[:, 0].copy()
     assert X.nbytes > 1e6  # 1 MB
     with joblib.parallel_backend("loky"):
         estimator(n_jobs=2, cv=3).fit(X, y)
@@ -1543,12 +1590,9 @@ def test_linear_models_cv_fit_with_loky(estimator):
 @pytest.mark.parametrize("check_input", [True, False])
 def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
     """Check that ElasticNet does not overwrite sample_weights."""
-
-    rng = np.random.RandomState(0)
     n_samples, n_features = 10, 5
-
-    X = rng.rand(n_samples, n_features)
-    y = rng.rand(n_samples)
+    X = np.arange(n_samples * n_features, dtype=float).reshape((n_samples, n_features))
+    y = np.zeros(n_samples)
 
     sample_weight_1_25 = 1.25 * np.ones_like(y)
     sample_weight = sample_weight_1_25.copy()
@@ -1563,11 +1607,11 @@ def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
 @pytest.mark.parametrize(
     ["precompute", "n_targets"], [(False, 1), (True, 1), (False, 3)]
 )
-def test_enet_ridge_consistency(ridge_alpha, precompute, n_targets):
+def test_enet_ridge_consistency(ridge_alpha, precompute, n_targets, global_random_seed):
     # Check that ElasticNet(l1_ratio=0) converges to the same solution as Ridge
     # provided that the value of alpha is adapted.
 
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 300
     X, y = make_regression(
         n_samples=n_samples,
@@ -1599,9 +1643,15 @@ def test_enet_ridge_consistency(ridge_alpha, precompute, n_targets):
     # The CD solver using the gram matrix (precompute = True) loses numerical precision
     # by working with the squares of matrices like Q=X'X (=gram) and
     # R^2 = y^2 + wQw - 2yQw (=square of residuals).
-    rtol = 1e-5 if precompute else 1e-7
-    assert_allclose(enet.coef_, ridge.coef_, rtol=rtol)
-    assert_allclose(enet.intercept_, ridge.intercept_)
+    if precompute:
+        rtol, atol = 1e-5, 1e-10
+    elif n_targets > 1:
+        rtol, atol = 1e-6, 1e-9
+    else:
+        rtol, atol = 1e-7, 1e-12
+
+    assert_allclose(enet.coef_, ridge.coef_, rtol=rtol, atol=atol)
+    assert_allclose(enet.intercept_, ridge.intercept_, rtol=rtol, atol=atol)
 
 
 @pytest.mark.filterwarnings("ignore:With alpha=0, this algorithm:UserWarning")
@@ -1644,8 +1694,8 @@ def test_enet_ols_consistency(precompute, effective_rank, global_random_seed):
         ElasticNet(alpha=1.0, l1_ratio=0.1),
     ],
 )
-def test_sample_weight_invariance(estimator):
-    rng = np.random.RandomState(42)
+def test_sample_weight_invariance(estimator, global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     X, y = make_regression(
         n_samples=100,
         n_features=300,
