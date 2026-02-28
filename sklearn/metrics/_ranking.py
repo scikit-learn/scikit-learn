@@ -2261,7 +2261,7 @@ def metric_at_thresholds(
     Aids visualization of metric values across thresholds when tuning the
     :ref:`decision threshold <threshold_tunning>`.
 
-    Read more about the :ref:`User Guide <metric_at_thresholds>`.
+    Read more in the :ref:`User Guide <metric_at_thresholds>`.
 
     .. versionadded:: 1.9
 
@@ -2271,9 +2271,8 @@ def metric_at_thresholds(
         Ground truth (correct) target labels.
 
     y_score : array-like of shape (n_samples,)
-        Continuous prediction scores. Can either be probability estimates of the
-        positive class or non-thresholded measure of decisions
-        (as returned by :term:`decision_function` on some classifiers).
+        Continuous prediction scores, either estimated probabilities of the
+        positive class or output of a :term:`decision_function`.
 
     metric_func : callable
         The metric function to use. It will be called as

@@ -142,7 +142,7 @@ Visualizing thresholds
 ----------------------
 
 A useful visualization when tuning the decision threshold is a plot of metric values
-across different thresholds. This is  particularly valuable when there is more than
+across different thresholds. This is particularly valuable when there is more than
 one metric of interest. The :func:`~sklearn.metrics.metric_at_thresholds` function
 computes metric values at each unique score threshold, returning both the metric
 array and corresponding threshold values for easy plotting.
