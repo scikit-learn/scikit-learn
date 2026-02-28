@@ -590,7 +590,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
     n_samples = y.shape[0] if hasattr(y, "shape") else len(y)
     n_classes = classes.shape[0]
-    if hasattr(y, "dtype") and xp.isdtype(y.dtype, "integral"):
+    if hasattr(y, "dtype") and xp.isdtype(y.dtype, "signed integer"):
         int_dtype_ = y.dtype
     else:
         int_dtype_ = indexing_dtype(xp)

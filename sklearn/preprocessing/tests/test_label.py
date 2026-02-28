@@ -716,6 +716,20 @@ def test_label_binarize_multiclass():
         )
 
 
+def test_label_binarize_uint_overflow():
+    y = np.array([0, 1, 0], dtype=np.uint64)
+
+    Y = label_binarize(
+        y,
+        classes=np.array([0, 1], dtype=np.uint64),
+        neg_label=-1,
+        pos_label=1,
+    )
+
+    assert np.issubdtype(Y.dtype, np.signedinteger)
+    assert_array_equal(Y, np.array([[-1], [1], [-1]]))
+
+
 @pytest.mark.parametrize(
     "arr_type",
     [np.array]
