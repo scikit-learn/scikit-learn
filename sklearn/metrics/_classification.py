@@ -3492,14 +3492,15 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     .. [1] `Wikipedia entry on the Hinge loss
            <https://en.wikipedia.org/wiki/Hinge_loss>`_.
 
-    .. [2] Koby Crammer, Yoram Singer. On the Algorithmic
+    .. [2] `Koby Crammer, Yoram Singer. On the Algorithmic
            Implementation of Multiclass Kernel-based Vector
            Machines. Journal of Machine Learning Research 2,
-           (2001), 265-292.
+           (2001), 265-292
+           <https://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_.
 
-    .. [3] `L1 AND L2 Regularization for Multiclass Hinge Loss Models
+    .. [3] `L1 and L2 Regularization for Multiclass Hinge Loss Models
            by Robert C. Moore, John DeNero
-           <https://storage.googleapis.com/pub-tools-public-publication-data/pdf/37362.pdf>`_.
+           <https://www.isca-archive.org/mlslp_2011/moore11_mlslp.pdf>`_.
 
     Examples
     --------
@@ -3947,6 +3948,8 @@ def d2_brier_score(
     labels=None,
 ):
     """:math:`D^2` score function, fraction of Brier score explained.
+
+    This is also known as Brier Skill Score (BSS) and scaled Brier score.
 
     Best possible score is 1.0 and it can be negative because the model can
     be arbitrarily worse than the null model. The null model, also known as the

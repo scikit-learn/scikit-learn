@@ -127,7 +127,7 @@ jobs:
             DISTRIB: conda
             LOCK_FILE: build_tools/github/pymin_conda_forge_arm_linux-aarch64_conda.lock
 
-          - name: Linuw x86-64 pylatest_conda_forge_mkl
+          - name: Linux x86-64 pylatest_conda_forge_mkl
             os: ubuntu-22.04
             DISTRIB: conda
             LOCK_FILE: build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda.lock
@@ -227,12 +227,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      # This step is necessary to access the job name the same way in both matrix and
+      # non-matrix jobs (like free-threaded or scipy-dev builds).
+      - name: Set JOB_NAME variable
+        shell: bash
+        run: |
+          if [[ -z "$JOB_NAME" ]]; then
+            echo "JOB_NAME=${{ matrix.name }}" >> $GITHUB_ENV
+          fi
+
       - name: Create cache for ccache
         uses: actions/cache@v5
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ccache-v1-${{ matrix.name }}-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp', format('{0}', matrix.LOCK_FILE)) }}
-          restore-keys: ccache-${{ matrix.name }}
+          key: ccache-v1-${{ env.JOB_NAME }}-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp', format('{0}', env.LOCK_FILE)) }}
+          restore-keys: ccache-${{ env.JOB_NAME }}
 
       - name: Set up conda
         uses: conda-incubator/setup-miniconda@v3
@@ -247,7 +256,7 @@ jobs:
 
       - name: Set random seed for nightly/manual runs
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        run: echo "SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$((RANDOM % 100))" >> $GITHUB_ENV
+        run: echo "SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$((RANDOM % 20))" >> $GITHUB_ENV
         shell: bash
 
       - name: Run tests
@@ -286,15 +295,16 @@ jobs:
           pip install defusedxml PyGithub
           python maint_tools/update_tracking_issue.py \
             ${{ secrets.BOT_GITHUB_TOKEN }} \
-            "$GITHUB_WORKFLOW ${{ matrix.name }}" \
+            "$GITHUB_WORKFLOW $JOB_NAME" \
             "$GITHUB_REPOSITORY" \
             https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID \
             --junit-file $TEST_DIR/$JUNITXML \
             --auto-close false \
-            --job-name "${{ matrix.name }}"
+            --job-name "$JOB_NAME"
 
   free-threaded:
-    name: Linux x86-64 pylatest_free_threaded
+    name: &free-threaded-job-name
+      Linux x86-64 pylatest_free_threaded
     runs-on: ubuntu-latest
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
     if: contains(needs.retrieve-commit-message.outputs.message, '[free-threaded]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -304,10 +314,13 @@ jobs:
       COVERAGE: false
       # Disable pytest-xdist to use multiple cores for stress-testing with pytest-run-parallel
       PYTEST_XDIST_VERSION: none
+      # To be able to access the job name in the steps, it must be set as an env variable.
+      JOB_NAME: *free-threaded-job-name
     steps: *unit-tests-steps
 
   scipy-dev:
-    name: Linux x86-64 pylatest_pip_scipy_dev
+    name: &scipy-dev-job-name
+      Linux x86-64 pylatest_pip_scipy_dev
     runs-on: ubuntu-22.04
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
     if: contains(needs.retrieve-commit-message.outputs.message, '[scipy-dev]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -316,4 +329,114 @@ jobs:
       LOCK_FILE: build_tools/azure/pylatest_pip_scipy_dev_linux-64_conda.lock
       SKLEARN_WARNINGS_AS_ERRORS: 1
       CHECK_PYTEST_SOFT_DEPENDENCY: true
+      # To be able to access the job name in the steps, it must be set as an env variable.
+      JOB_NAME: *scipy-dev-job-name
     steps: *unit-tests-steps
+
+  debian-32bit:
+    name: &debian-32bit-job-name
+      Linux i386 debian_32bit
+    runs-on: ubuntu-24.04
+    needs: [lint, retrieve-commit-message, retrieve-selected-tests]
+    env:
+      DISTRIB: debian-32
+      LOCK_FILE: build_tools/azure/debian_32bit_lock.txt
+      SKLEARN_TESTS_GLOBAL_RANDOM_SEED: 4  # non-default seed
+      DOCKER_CONTAINER: i386/debian:trixie
+      # To be able to access the job name in the steps, it must be set as an env variable.
+      JOB_NAME: *debian-32bit-job-name
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Create cache for ccache
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-v1-${{ env.JOB_NAME }}-${{ hashFiles('**/*.pyx*', '**/*.pxd*', '**/*.pxi*', '**/*.h', '**/*.c', '**/*.cpp', format('{0}', env.LOCK_FILE)) }}
+          restore-keys: ccache-${{ env.JOB_NAME }}
+
+      - name: Set up conda
+        uses: conda-incubator/setup-miniconda@v3
+        if: ${{ startsWith(env.DISTRIB, 'conda') }}
+        with:
+          miniforge-version: latest
+          auto-activate-base: true
+          activate-environment: ""
+
+      - name: Set random seed for nightly/manual runs
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: echo "SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$((RANDOM % 20))" >> $GITHUB_ENV
+
+      - name: Start container
+        # Environment variable are passed when starting the container rather
+        # than in "Run tests step" for more standard jobs
+        env:
+          COMMIT_MESSAGE: ${{ needs.retrieve-commit-message.outputs.message }}
+          SELECTED_TESTS: ${{ needs.retrieve-selected-tests.outputs.tests }}
+          COVERAGE: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
+        run: >
+          docker container run --rm
+          --volume $TEST_DIR:/temp_dir
+          --volume $PWD:/scikit-learn
+          --volume $CCACHE_DIR:/ccache
+          -w /scikit-learn
+          --detach
+          --name skcontainer
+          -e TEST_DIR=/temp_dir
+          -e CCACHE_DIR=/ccache
+          -e COVERAGE
+          -e DISTRIB
+          -e LOCK_FILE
+          -e JUNITXML
+          -e VIRTUALENV
+          -e PYTEST_XDIST_VERSION
+          -e SKLEARN_SKIP_NETWORK_TESTS
+          -e SELECTED_TESTS
+          -e CCACHE_COMPRESS
+          -e COMMIT_MESSAGE
+          -e JOB_NAME
+          -e SKLEARN_TESTS_GLOBAL_RANDOM_SEED
+          $DOCKER_CONTAINER
+          sleep 1000000
+
+      - name: Build scikit-learn
+        run: docker exec skcontainer bash -l build_tools/azure/install.sh
+
+      - name: Run tests
+        run: docker exec skcontainer bash -l build_tools/azure/test_script.sh
+
+      - name: Run doctests in .py and .rst files
+        run: docker exec skcontainer bash -l build_tools/azure/test_docs.sh
+        if: ${{ needs.retrieve-selected-tests.outputs.tests == ''}}
+
+      - name: Run pytest soft dependency test
+        run: docker exec skcontainer build_tools/azure/test_pytest_soft_dependency.sh
+        if: ${{ env.CHECK_PYTEST_SOFT_DEPENDENCY == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
+
+      - name: Combine coverage reports from parallel test runners
+        run: docker exec skcontainer bash -l build_tools/azure/combine_coverage_reports.sh
+        if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
+
+      - name: Upload coverage report to Codecov
+        uses: codecov/codecov-action@v5
+        if: ${{ env.COVERAGE == 'true' && needs.retrieve-selected-tests.outputs.tests == ''}}
+        with:
+          files: ./coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          disable_search: true
+
+      - name: Update tracking issue
+        if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
+        run: |
+          set -ex
+
+          pip install defusedxml PyGithub
+          python maint_tools/update_tracking_issue.py \
+            ${{ secrets.BOT_GITHUB_TOKEN }} \
+            "$GITHUB_WORKFLOW $JOB_NAME" \
+            "$GITHUB_REPOSITORY" \
+            https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID \
+            --junit-file $TEST_DIR/$JUNITXML \
+            --auto-close false \
+            --job-name "$JOB_NAME"
