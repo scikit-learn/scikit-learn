@@ -17,6 +17,7 @@ from sklearn.model_selection import (
     GridSearchCV,
     GroupKFold,
     GroupShuffleSplit,
+    GroupTimeSeriesSplit,
     KFold,
     LeaveOneGroupOut,
     LeaveOneOut,
@@ -82,6 +83,7 @@ GROUP_SPLITTERS = [
     StratifiedGroupKFold(),
     LeaveOneGroupOut(),
     GroupShuffleSplit(),
+    GroupTimeSeriesSplit(),
 ]
 GROUP_SPLITTER_NAMES = set(splitter.__class__.__name__ for splitter in GROUP_SPLITTERS)
 
@@ -2048,6 +2050,183 @@ def test_random_state_shuffle_false(Klass):
         Klass(3, shuffle=False, random_state=0)
 
 
+def test_group_time_series_fail_groups_are_none():
+    # The GroupTimeSeriesSplit with no group should raise an Error
+    X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14]]
+
+    # Should fail if the 'groups' is None
+    with pytest.raises(ValueError, match="The 'groups' parameter should not be None"):
+        next(GroupTimeSeriesSplit(n_splits=7).split(X))
+
+
+def test_group_time_series_ordering_and_group_preserved():
+    # With this test we check that we are only evaluating
+    # unseen groups in the future
+    groups = np.repeat(["a", "b", "c", "d"], repeats=3)
+    n_samples = len(groups)
+    n_splits = 3
+
+    X = y = np.ones(n_samples)
+    # Fake array of time like
+    time_stamps = np.arange(n_samples)
+
+    gtf = GroupTimeSeriesSplit(n_splits=n_splits)
+
+    # We check two things here:
+    # 1. Elements of a group in the evaluation split should not be
+    # in the training split
+    # 2. Elements of the training split should be in the past
+    splits = gtf.split(X, y=y, groups=groups)
+
+    # Get all the other entries for the groups found in test
+    for train, test in splits:
+        # verify that they are not in the test set
+        assert len(np.intersect1d(groups[train], groups[test])) == 0
+        # All the elements in the train set should be in past of the
+        # elements of the test set
+        assert (time_stamps[train].max() < time_stamps[test]).all()
+
+
+def test_group_time_series_more_folds_than_group():
+    # Should fail if there are more folds than groups
+    groups = np.array([1, 1, 1, 2, 2])
+    X = y = np.ones(len(groups))
+    with pytest.raises(
+        ValueError,
+        match="Cannot have number of folds=4 greater than the number of groups=2",
+    ):
+        next(GroupTimeSeriesSplit(n_splits=3).split(X, y, groups))
+
+
+def test_group_time_series_max_train_size():
+    groups = np.array(["a", "a", "a", "b", "b", "b", "c", "c", "c", "d", "d", "d"])
+    n_samples = len(groups)
+    X = y = np.ones(n_samples)
+    splits = GroupTimeSeriesSplit(n_splits=3, max_train_size=3).split(X, y, groups)
+    check_splits = GroupTimeSeriesSplit(n_splits=3, max_train_size=3).split(
+        X, y, groups
+    )
+    _check_time_series_max_train_size(splits, check_splits, max_train_size=3)
+
+    # Test for the case where the size of a fold is greater than max_train_size
+    check_splits = GroupTimeSeriesSplit(n_splits=3, max_train_size=2).split(
+        X, y, groups
+    )
+    _check_time_series_max_train_size(splits, check_splits, max_train_size=2)
+
+    # Test for the case where the size of each fold is less than max_train_size
+    check_splits = GroupTimeSeriesSplit(n_splits=3, max_train_size=5).split(
+        X, y, groups
+    )
+    _check_time_series_max_train_size(splits, check_splits, max_train_size=2)
+
+
+def test_group_time_series_non_overlap_group():
+    groups = np.repeat(list("abcdefghijk"), [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3])
+    gtss = GroupTimeSeriesSplit(n_splits=3)
+    splits = gtss.split(groups, groups=groups)
+    train, test = next(splits)
+    assert_array_equal(train, np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]))
+    assert_array_equal(test, np.array([13, 14, 15, 16, 17]))
+    assert_array_equal(
+        groups[train],
+        np.repeat(list("abcde"), [3, 2, 3, 2, 3]),
+    )
+    assert_array_equal(groups[test], np.repeat(list("fg"), [2, 3]))
+
+    train, test = next(splits)
+    assert_array_equal(train, np.arange(0, 18))
+    assert_array_equal(test, np.arange(18, 23))
+    assert_array_equal(groups[train], np.repeat(list("abcdefg"), [3, 2, 3, 2, 3, 2, 3]))
+    assert_array_equal(groups[test], np.repeat(list("hi"), [2, 3]))
+
+    train, test = next(splits)
+    assert_array_equal(
+        train,
+        np.arange(0, 23),
+    )
+    assert_array_equal(test, np.arange(23, 28))
+    assert_array_equal(
+        groups[train], np.repeat(list("abcdefghi"), [3, 2, 3, 2, 3, 2, 3, 2, 3])
+    )
+    assert_array_equal(groups[test], np.repeat(list("jk"), [2, 3]))
+
+
+def test_group_time_series_non_overlap_group_with_gap():
+    groups = np.repeat(list("abcdefghijk"), [3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3])
+    gtss = GroupTimeSeriesSplit(n_splits=3, gap=1)
+    splits = gtss.split(groups, groups=groups)
+    train, test = next(splits)
+    assert_array_equal(train, np.arange(0, 10))
+    assert_array_equal(test, np.arange(13, 18))
+    assert_array_equal(groups[train], np.repeat(list("abcd"), [3, 2, 3, 2]))
+    assert_array_equal(groups[test], np.repeat(list("fg"), [2, 3]))
+
+    train, test = next(splits)
+    assert_array_equal(train, np.arange(0, 15))
+    assert_array_equal(test, np.arange(18, 23))
+    assert_array_equal(
+        groups[train],
+        np.repeat(list("abcdef"), [3, 2, 3, 2, 3, 2]),
+    )
+    assert_array_equal(groups[test], np.repeat(list("hi"), [2, 3]))
+
+    train, test = next(splits)
+    assert_array_equal(
+        train,
+        np.arange(0, 20),
+    )
+    assert_array_equal(test, np.arange(23, 28))
+    assert_array_equal(
+        groups[train],
+        np.repeat(list("abcdefgh"), [3, 2, 3, 2, 3, 2, 3, 2]),
+    )
+    assert_array_equal(groups[test], np.repeat(list("jk"), [2, 3]))
+
+
+def test_group_time_series_non_overlap_group_imbalanced():
+    groups = np.repeat(list("abcdefghijk"), [20, 12, 30, 2, 3, 20, 30, 2, 3, 2, 3])
+    gtss = GroupTimeSeriesSplit(n_splits=3, gap=1)
+    splits = gtss.split(groups, groups=groups)
+    train, test = next(splits)
+    assert_array_equal(
+        train,
+        np.arange(0, 64),
+    )
+    assert_array_equal(
+        test,
+        np.arange(67, 117),
+    )
+    assert_array_equal(groups[train], np.repeat(list("abcd"), [20, 12, 30, 2]))
+    assert_array_equal(groups[test], np.repeat(list("fg"), [20, 30]))
+
+    train, test = next(splits)
+    assert_array_equal(train, np.arange(0, 87))
+    assert_array_equal(test, np.arange(117, 122))
+    assert_array_equal(groups[train], np.repeat(list("abcdef"), [20, 12, 30, 2, 3, 20]))
+    assert_array_equal(groups[test], np.repeat(list("hi"), [2, 3]))
+
+    train, test = next(splits)
+    assert_array_equal(train, np.arange(0, 119))
+    assert_array_equal(test, np.arange(122, 127))
+    assert_array_equal(
+        groups[train], np.repeat(list("abcdefgh"), [20, 12, 30, 2, 3, 20, 30, 2])
+    )
+    assert_array_equal(groups[test], np.repeat(list("jk"), [2, 3]))
+
+
+def test_group_time_series_non_contiguous():
+    groups = np.array(["a", "a", "a", "a", "a", "b", "a", "b", "c", "c"])
+    X = y = np.ones(len(groups))
+    with pytest.raises(
+        ValueError,
+        match=(
+            "The groups should be contiguous. Found a non-contiguous group at index=6"
+        ),
+    ):
+        next(GroupTimeSeriesSplit(n_splits=2).split(X, y, groups))
+
+
 @pytest.mark.parametrize(
     "cv, expected",
     [
@@ -2083,6 +2262,9 @@ def test_random_state_shuffle_false(Klass):
         (GroupShuffleSplit(random_state=np.random.RandomState(0)), False),
         (StratifiedShuffleSplit(random_state=None), False),
         (StratifiedShuffleSplit(random_state=np.random.RandomState(0)), False),
+        (GroupTimeSeriesSplit(), True),
+        (GroupTimeSeriesSplit(n_splits=3), True),
+        (GroupTimeSeriesSplit(n_splits=3, max_train_size=3), True),
     ],
 )
 def test_yields_constant_splits(cv, expected):
