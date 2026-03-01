@@ -277,6 +277,15 @@ General Concepts
         :term:`sample properties` to the ``fit`` methods of estimators in
         the pipeline.
 
+        The double underscore (``__``) is used instead of a dot (``.``)
+        because :term:`set_params` accepts Python keyword arguments
+        (``**kwargs``), and Python does not allow dots in keyword argument
+        names (e.g., ``pipe.set_params(clf.C=10)`` would be a
+        ``SyntaxError``). Because ``param_grid`` keys in
+        :class:`~sklearn.model_selection.GridSearchCV` are ultimately passed
+        to :term:`set_params`, the same ``__`` convention is used
+        consistently throughout scikit-learn.
+
     dtype
     data type
         NumPy arrays assume a homogeneous data type throughout, available in

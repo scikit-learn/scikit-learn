@@ -1272,6 +1272,14 @@ class GridSearchCV(BaseSearchCV):
         in the list are explored. This enables searching over any sequence
         of parameter settings.
 
+        When the estimator is a composite estimator such as
+        :class:`~sklearn.pipeline.Pipeline`, nested parameters can be
+        specified using the ``<estimator>__<parameter>`` syntax (double
+        underscore). For example,
+        ``{'clf__C': [0.1, 1, 10]}`` tunes parameter ``C`` of step
+        ``clf``.  See :ref:`composite_grid_search` and
+        :term:`double underscore` for details.
+
     scoring : str, callable, list, tuple or dict, default=None
         Strategy to evaluate the performance of the cross-validated model on
         the test set.
