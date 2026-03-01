@@ -1029,6 +1029,7 @@ def check_array(
                     e
                 ) or "could not broadcast" in str(e):
                     raise ValueError(
+                        "setting an array element with a sequence. "
                         "Input contains mixed types or inconsistent shapes. "
                         "Ensure all elements are of the same type and shape."
                     ) from e
