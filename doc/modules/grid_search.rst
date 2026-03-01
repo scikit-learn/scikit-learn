@@ -599,7 +599,18 @@ parameters of composite or nested estimators such as
 :class:`~sklearn.compose.ColumnTransformer`,
 :class:`~sklearn.ensemble.VotingClassifier` or
 :class:`~sklearn.calibration.CalibratedClassifierCV` using a dedicated
-``<estimator>__<parameter>`` syntax::
+``<estimator>__<parameter>`` syntax.
+
+.. note::
+
+   The double underscore (``__``) is used as a separator instead of a dot
+   (``.``) because :meth:`~sklearn.base.BaseEstimator.set_params` accepts
+   Python keyword arguments (``**kwargs``), and Python does not allow dots in
+   keyword argument names. For example, ``pipe.set_params(clf.C=10)`` would
+   raise a ``SyntaxError``. Since ``param_grid`` keys are passed to
+   ``set_params`` internally, the same ``__`` convention applies.
+
+Example::
 
   >>> from sklearn.model_selection import GridSearchCV
   >>> from sklearn.calibration import CalibratedClassifierCV
