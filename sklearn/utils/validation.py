@@ -1025,7 +1025,9 @@ def check_array(
                     "Complex data not supported\n{}\n".format(array)
                 ) from complex_warning
             except ValueError as e:
-                if "setting an array element with a sequence" in str(e) or "could not broadcast" in str(e):
+                if "setting an array element with a sequence" in str(
+                    e
+                ) or "could not broadcast" in str(e):
                     raise ValueError(
                         "Input contains mixed types or inconsistent shapes. "
                         "Ensure all elements are of the same type and shape."
