@@ -725,6 +725,24 @@ def test_pairwise_distances_argmin_min(dok_container, csr_container, global_dtyp
     assert_array_equal(argmin_C_contiguous, argmin_F_contiguous)
 
 
+def test_pairwise_distances_argmin_no_conversion_warning_bool_metric():
+    # Regression test for GitHub issue #32495:
+    # pairwise_distances_argmin and pairwise_distances_argmin_min should not
+    # emit a DataConversionWarning when both arrays are already bool and a
+    # boolean metric (e.g. jaccard) is used.
+    rng = np.random.RandomState(42)
+    X = rng.randint(0, 2, size=(5, 10)).astype(bool)
+    Y = rng.randint(0, 2, size=(8, 10)).astype(bool)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DataConversionWarning)
+        pairwise_distances_argmin_min(X, Y, metric="jaccard")
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DataConversionWarning)
+        pairwise_distances_argmin(X, Y, metric="jaccard")
+
+
 def _reduce_func(dist, start):
     return dist[:, :100]
 
