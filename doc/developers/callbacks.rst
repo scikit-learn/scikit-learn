@@ -143,7 +143,7 @@ contextual information about the task being executed and its position in the tas
 In particular, this extra information takes the form of keyword arguments passed to
 :meth:`~callback._callback_context.CallbackContext.eval_on_fit_task_end`. These
 ``kwargs`` are optional. However, for an estimator to be compatible with the largest number
-of callbacks, it should provide all the values it is capable or producing during fit.
+of callbacks, it should provide all the values it is capable of producing during fit.
 The list of the possible keys and corresponding values for these ``kwargs`` is as
 follows.
 
