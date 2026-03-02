@@ -270,7 +270,7 @@ MULTILABEL_SEQUENCES = [
 
 def test_unique_labels():
     # Empty iterable
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="No argument has been passed"):
         unique_labels()
 
     # Multiclass problem
@@ -290,12 +290,23 @@ def test_unique_labels():
     assert_array_equal(unique_labels((0, 1, 2), (0,), (2, 1)), np.arange(3))
 
     # Border line case with binary indicator matrix
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Mix type of y not allowed"):
         unique_labels([4, 0, 2], np.ones((5, 5)))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Multi-label binary indicator input with"):
         unique_labels(np.ones((5, 4)), np.ones((5, 5)))
 
     assert_array_equal(unique_labels(np.ones((4, 5)), np.ones((5, 5))), np.arange(5))
+
+    # Mixed label input types
+    with pytest.raises(
+        ValueError, match=r"Mix of label input types \(string and number\)"
+    ):
+        unique_labels([4, 0, 2], ["a", "b", "c"])
+    with pytest.raises(
+        ValueError, match=r"Mix of label input types \(string and number\)"
+    ):
+        # Note string array is NOT object dtype, but string 'U'
+        unique_labels(np.array([4, 0, 2]), np.array(["a", "b", "c"]))
 
 
 @skip_if_array_api_compat_not_configured
