@@ -58,7 +58,7 @@ def _fitted_attr_html_repr(fitted_attributes):
                     <tbody>
                         <tr>
                         <th>Name</th>
-                        <th>Type[dtype](shape)</th>
+                        <th>Type</th>
                         <th>Value</th>
                         </tr>
                         {rows}
