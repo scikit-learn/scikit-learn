@@ -7,7 +7,15 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.utils._repr_html.fitted_attributes import AttrsDict, _fitted_attr_html_repr
 
 fitted_attrs = AttrsDict(
-    fitted_attrs={"a": ("int", 6), "b": ("ndarray", (1,), np.dtype("float64"), 8)}
+    fitted_attrs={
+        "a": {"type_name": "int", "value": 6},
+        "b": {
+            "type_name": "ndarray",
+            "shape": (1,),
+            "dtype": np.dtype("float64"),
+            "value": 8,
+        },
+    }
 )
 
 
@@ -28,7 +36,11 @@ def test_fitted_attrs_dict_repr_mimebundle():
     assert "text/plain" in out
     assert "text/html" in out
     assert "<summary>Fitted attributes</summary>" in out["text/html"]
-    plain_text = "{'a': ('int', 6), 'b': ('ndarray', (1,), dtype('float64'), 8)}"
+    plain_text = (
+        "{'a': {'type_name': 'int', 'value': 6}, "
+        "'b': {'type_name': 'ndarray', 'shape': (1,), "
+        "'dtype': dtype('float64'), 'value': 8}}"
+    )
     assert out["text/plain"] == plain_text
     with config_context(display="text"):
         out = fitted_attrs._repr_mimebundle_()
