@@ -14,7 +14,7 @@ Callbacks
 ---------
 
 In scikit-learn, callbacks are classes following the :class:`~_base.Callback` protocol.
-This protocol defines three methods, callback hooks, which are invoked at different
+This protocol defines three methods (referred to as callback hooks) which are invoked at different
 steps of the estimator's fit process. The three hooks of a callback are
 :meth:`~sklearn.callback._base.Callback.on_fit_begin`,
 :meth:`~_base.Callback.on_fit_task_end` and :meth:`~_base.Callback.on_fit_end`, which
