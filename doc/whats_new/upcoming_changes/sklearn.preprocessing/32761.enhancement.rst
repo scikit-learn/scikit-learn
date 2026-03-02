@@ -2,5 +2,5 @@
   not equal to None by subsampling using sample weights if subsampling is
   enabled or otherwise using _weighted_percentile. Support is only implemented
   for dense X.
-  `. By :user:`Karassay Raushanbek <kaekkr>` & :user:`Shruti Nath
+  By :user:`Karassay Raushanbek <kaekkr>` and :user:`Shruti Nath
   <snath-xoc>`.
