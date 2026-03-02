@@ -1980,6 +1980,38 @@ def test_ndcg_error_single_document():
         ndcg_score([[1]], [[1]])
 
 
+def test_ndcg_all_zero_relevance():
+    """Test that ndcg_score(y, y) == 1 even when some samples have all-zero relevances.
+
+    Regression test for issue #29521.
+    When all items are irrelevant (all relevances are 0) for a sample,
+    NDCG is undefined (0/0). Such samples should be excluded from averaging
+    to ensure ndcg_score(y, y) == 1.0 always holds.
+    """
+    # Case 1: Mix of relevant and all-zero samples
+    y = np.array([[1.0, 0.0, 1.0], [0.0, 0.0, 0.0]])
+    with pytest.warns(UserWarning, match="All ground truth relevances are zero"):
+        score = ndcg_score(y, y)
+    assert score == pytest.approx(1.0)
+
+    # Case 2: All samples have all-zero relevances
+    y_all_zero = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
+    with pytest.warns(UserWarning, match="All ground truth relevances are zero"):
+        score = ndcg_score(y_all_zero, y_all_zero)
+    assert np.isnan(score)
+
+    # Case 3: Single sample with all-zero relevance
+    y_single = np.array([[0.0, 0.0, 0.0]])
+    with pytest.warns(UserWarning, match="All ground truth relevances are zero"):
+        score = ndcg_score(y_single, y_single)
+    assert np.isnan(score)
+
+    # Case 4: Normal case - should not warn and should return 1.0
+    y_normal = np.array([[1.0, 0.0, 1.0], [2.0, 1.0, 3.0]])
+    score = ndcg_score(y_normal, y_normal)
+    assert score == pytest.approx(1.0)
+
+
 def test_ndcg_score():
     _, y_true = make_multilabel_classification(random_state=0, n_classes=10)
     y_score = -y_true + 1
