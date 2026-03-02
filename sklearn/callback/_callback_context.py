@@ -358,8 +358,14 @@ class CallbackContext:
                 ):
                     callback.on_fit_end(estimator, self)
 
-    def propagate_callbacks(self, sub_estimator):
-        """Propagate the callbacks to a sub-estimator.
+    def propagate_callback_context(self, sub_estimator):
+        """Propagate the context and callbacks to a sub-estimator.
+
+        Only auto-propagated callbacks are propagated to the sub-estimator. An error is
+        raised of the sub-estimator already has auto-propagated callbacks.
+
+        This context is set as an attribute, `_parent_callback_ctx`, of the
+        sub-estimator to be able to merge it with the sub-estimator's context tree.
 
         Parameters
         ----------
@@ -371,7 +377,6 @@ class CallbackContext:
             for callback in getattr(sub_estimator, "_skl_callbacks", [])
             if isinstance(callback, AutoPropagatedCallback)
         ]
-
         if bad_callbacks:
             raise TypeError(
                 f"The sub-estimator ({sub_estimator.__class__.__name__}) of a"
@@ -379,6 +384,13 @@ class CallbackContext:
                 f" auto-propagated callbacks ({bad_callbacks})."
                 " Register them directly on the meta-estimator."
             )
+
+        # We store the parent context in the sub-estimator to be able to merge the task
+        # trees of the sub-estimator and the meta-estimator. We want to link the task
+        # trees even if there is no callback to propagate, as the sub-estimators might
+        # have non auto-propagated callbacks, which would need to have access to the
+        # whole tree.
+        sub_estimator._parent_callback_ctx = self
 
         callbacks_to_propagate = [
             callback
@@ -389,14 +401,6 @@ class CallbackContext:
                 or self._estimator_depth < callback.max_estimator_depth - 1
             )
         ]
-
-        # We store the parent context in the sub-estimator to be able to merge the task
-        # trees of the sub-estimator and the meta-estimator. We want to link the task
-        # trees even if there is no callback to propagate, as the sub-estimators might
-        # have non auto-propagated callbacks, which would need to have access to the
-        # whole tree.
-        sub_estimator._parent_callback_ctx = self
-
         if not callbacks_to_propagate:
             return self
 

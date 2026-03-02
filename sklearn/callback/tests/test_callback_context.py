@@ -17,8 +17,8 @@ from sklearn.callback.tests._utils import (
 )
 
 
-def test_propagate_callbacks():
-    """Sanity check for the `propagate_callbacks` method."""
+def test_propagate_callback_context():
+    """Sanity check for the `propagate_callback_context` method."""
     not_propagated_callback = TestingCallback()
     propagated_callback = TestingAutoPropagatedCallback()
 
@@ -27,14 +27,14 @@ def test_propagate_callbacks():
     metaestimator.set_callbacks([not_propagated_callback, propagated_callback])
 
     callback_ctx = CallbackContext._from_estimator(metaestimator, "fit", 0, 0)
-    callback_ctx.propagate_callbacks(estimator)
+    callback_ctx.propagate_callback_context(estimator)
 
     assert hasattr(estimator, "_parent_callback_ctx")
     assert not_propagated_callback not in estimator._skl_callbacks
     assert propagated_callback in estimator._skl_callbacks
 
 
-def test_propagate_callback_no_callback():
+def test_propagate_callback_context_no_callback():
     """Check that no callback is propagated if there's no callback."""
     estimator = MaxIterEstimator()
     metaestimator = MetaEstimator(estimator)
@@ -42,7 +42,7 @@ def test_propagate_callback_no_callback():
     callback_ctx = CallbackContext._from_estimator(metaestimator, "fit", 0, 0)
     assert len(callback_ctx._callbacks) == 0
 
-    callback_ctx.propagate_callbacks(estimator)
+    callback_ctx.propagate_callback_context(estimator)
 
     assert not hasattr(metaestimator, "_skl_callbacks")
     assert not hasattr(estimator, "_skl_callbacks")
