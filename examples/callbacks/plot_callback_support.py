@@ -239,7 +239,7 @@ class SimpleGridSearch(BaseEstimator):
         # combination and fold.
         self.cv_results_ = []
 
-        # We iterate on the parameter combinations and the folds, computing a score
+        # We iterate over the parameter combinations and the folds, computing a score
         # value for each param combination and fold.
         for i, params in enumerate(self.param_list):
             for j, (train_idx, test_idx) in enumerate(cv.split(X)):
