@@ -14,8 +14,8 @@ Callbacks
 ---------
 
 In scikit-learn, callbacks are classes following the :class:`~_base.Callback` protocol.
-This protocol defines three methods (referred to as callback hooks) which are invoked at different
-steps of the estimator's fit process. The three hooks of a callback are
+This protocol defines three methods (referred to as callback hooks) which are invoked at
+different steps of the estimator's fit process. The three hooks of a callback are
 :meth:`~sklearn.callback._base.Callback.on_fit_begin`,
 :meth:`~_base.Callback.on_fit_task_end` and :meth:`~_base.Callback.on_fit_end`, which
 are respectively called at the start of the ``fit`` method, at the end of each task in
@@ -142,9 +142,9 @@ The callback context is also an object that is passed to the callback hooks to g
 contextual information about the task being executed and its position in the task tree.
 In particular, this extra information takes the form of keyword arguments passed to
 :meth:`~callback._callback_context.CallbackContext.eval_on_fit_task_end`. These
-``kwargs`` are optional. However, for an estimator to be compatible with the largest number
-of callbacks, it should provide all the values it is capable of producing during fit.
-The list of the possible keys and corresponding values for these ``kwargs`` is as
+``kwargs`` are optional. However, for an estimator to be compatible with the largest
+number of callbacks, it should provide all the values it is capable of producing during
+fit. The list of the possible keys and corresponding values for these ``kwargs`` is as
 follows.
 
 - `data`: dict
