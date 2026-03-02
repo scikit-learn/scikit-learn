@@ -3223,50 +3223,6 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     def _is_multitask(self):
         return True
 
-    # This is necessary as LinearModelCV now supports sample_weight while
-    # MultiTaskElasticNetCV does not (yet).
-    def fit(self, X, y, sample_weight=None, **params):
-        """Fit MultiTaskElasticNet model with coordinate descent.
-
-        Fit is on grid of alphas and best alpha estimated by cross-validation.
-
-        Parameters
-        ----------
-         X : {ndarray, sparse matrix, sparse array} of (n_samples, n_features)
-            Data. Pass directly as Fortran-contiguous data to avoid unnecessary memory
-            duplication.
-
-            Note that large sparse matrices and arrays requiring `int64`
-            indices are not accepted.
-
-        y : ndarray of shape (n_samples, n_targets)
-            Training target variable. Will be cast to X's dtype if necessary.
-
-        sample_weight : float or array-like of shape (n_samples,), default=None
-            Sample weights used for fitting and evaluation of the weighted
-            mean squared error of each cv-fold. Note that the cross validated
-            MSE that is finally used to find the best model is the unweighted
-            mean over the (weighted) MSEs of each test fold.
-
-            .. versionadded:: 1.9
-
-        **params : dict, default=None
-            Parameters to be passed to the CV splitter.
-
-            .. versionadded:: 1.4
-                Only available if `enable_metadata_routing=True`,
-                which can be set by using
-                ``sklearn.set_config(enable_metadata_routing=True)``.
-                See :ref:`Metadata Routing User Guide <metadata_routing>` for
-                more details.
-
-        Returns
-        -------
-        self : object
-            Returns MultiTaskElasticNet instance.
-        """
-        return super().fit(X, y, sample_weight=sample_weight, **params)
-
 
 class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
@@ -3482,44 +3438,3 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
     def _is_multitask(self):
         return True
-
-    # TODO: Can we remove this method now?
-    # This is necessary as LinearModelCV now supports sample_weight while
-    # MultiTaskLassoCV does not (yet).
-    def fit(self, X, y, sample_weight=None, **params):
-        """Fit MultiTaskLasso model with coordinate descent.
-
-        Fit is on grid of alphas and best alpha estimated by cross-validation.
-
-        Parameters
-        ----------
-        X : ndarray of shape (n_samples, n_features)
-            Data.
-
-        y : ndarray of shape (n_samples, n_targets)
-            Target. Will be cast to X's dtype if necessary.
-
-        sample_weight : float or array-like of shape (n_samples,), default=None
-            Sample weights used for fitting and evaluation of the weighted
-            mean squared error of each cv-fold. Note that the cross validated
-            MSE that is finally used to find the best model is the unweighted
-            mean over the (weighted) MSEs of each test fold.
-
-            .. versionadded:: 1.9
-
-        **params : dict, default=None
-            Parameters to be passed to the CV splitter.
-
-            .. versionadded:: 1.4
-                Only available if `enable_metadata_routing=True`,
-                which can be set by using
-                ``sklearn.set_config(enable_metadata_routing=True)``.
-                See :ref:`Metadata Routing User Guide <metadata_routing>` for
-                more details.
-
-        Returns
-        -------
-        self : object
-            Returns an instance of fitted model.
-        """
-        return super().fit(X, y, sample_weight=sample_weight, **params)
