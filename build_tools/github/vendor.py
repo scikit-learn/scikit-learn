@@ -10,18 +10,29 @@ TARGET_FOLDER = op.join("sklearn", ".libs")
 DISTRIBUTOR_INIT = op.join("sklearn", "_distributor_init.py")
 VCOMP140_SRC_PATH = "C:\\Windows\\System32\\vcomp140.dll"
 MSVCP140_SRC_PATH = "C:\\Windows\\System32\\msvcp140.dll"
+LIBOMP_SRC_PATH = op.join(
+    r"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\Llvm\ARM64\bin",
+    "libomp.dll",
+)
 
 
 def make_distributor_init_64_bits(
     distributor_init,
     vcomp140_dll_filename,
     msvcp140_dll_filename,
+    libomp_dll_filename=None,
 ):
     """Create a _distributor_init.py file for 64-bit architectures.
 
     This file is imported first when importing the sklearn package
     so as to pre-load the vendored vcomp140.dll and msvcp140.dll.
     """
+    libomp_preload = ""
+    if libomp_dll_filename:
+        libomp_preload = """
+                libomp_dll_filename = op.join(libs_path, "{0}")
+                WinDLL(op.abspath(libomp_dll_filename))""".format(libomp_dll_filename)
+
     with open(distributor_init, "wt") as f:
         f.write(
             textwrap.dedent(
@@ -46,13 +57,30 @@ def make_distributor_init_64_bits(
                 vcomp140_dll_filename = op.join(libs_path, "{0}")
                 msvcp140_dll_filename = op.join(libs_path, "{1}")
                 WinDLL(op.abspath(vcomp140_dll_filename))
-                WinDLL(op.abspath(msvcp140_dll_filename))
+                WinDLL(op.abspath(msvcp140_dll_filename)){2}
             """.format(
                     vcomp140_dll_filename,
                     msvcp140_dll_filename,
+                    libomp_preload,
                 )
             )
         )
+
+
+def copy_libomp_dll(target_folder, wheel_dirname):
+    """Copy libomp.dll from LLVM to target folder if found (ARM64 only)."""
+
+    cibw_build = os.environ.get("CIBW_BUILD", "")
+    if "win_arm64" not in cibw_build.lower():
+        return False
+
+    if op.exists(LIBOMP_SRC_PATH):
+        print(f"Copying {LIBOMP_SRC_PATH} to {target_folder}.")
+        shutil.copy2(LIBOMP_SRC_PATH, target_folder)
+        return True
+
+    print("WARNING: libomp.dll not found for ARM64 build.")
+    return False
 
 
 def main(wheel_dirname):
@@ -82,12 +110,16 @@ def main(wheel_dirname):
     print(f"Copying {MSVCP140_SRC_PATH} to {target_folder}.")
     shutil.copy2(MSVCP140_SRC_PATH, target_folder)
 
+    libomp_copied = copy_libomp_dll(target_folder, wheel_dirname)
+    libomp_dll_filename = "libomp.dll" if libomp_copied else None
+
     # Generate the _distributor_init file in the source tree
     print("Generating the '_distributor_init.py' file.")
     make_distributor_init_64_bits(
         distributor_init,
         vcomp140_dll_filename,
         msvcp140_dll_filename,
+        libomp_dll_filename,
     )
 
 

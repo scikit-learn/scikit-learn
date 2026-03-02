@@ -1,3 +1,4 @@
+import platform
 import re
 import sys
 
@@ -1272,10 +1273,12 @@ def test_polynomial_features_behaviour_on_zero_degree(sparse_container):
 
 
 def test_sizeof_LARGEST_INT_t():
-    # On Windows, scikit-learn is typically compiled with MSVC that
+    # On Windows(x64), scikit-learn is typically compiled with MSVC that
     # does not support int128 arithmetic (at the time of writing):
     # https://stackoverflow.com/a/6761962/163740
-    if sys.platform == "win32" or (
+    if sys.platform == "win32" and platform.machine() == "ARM64":
+        expected_size = 16
+    elif sys.platform == "win32" or (
         sys.maxsize <= 2**32 and sys.platform != "emscripten"
     ):
         expected_size = 8

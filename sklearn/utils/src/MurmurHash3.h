@@ -10,7 +10,7 @@
 
 // Microsoft Visual Studio
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(__clang__)
 
 typedef unsigned char uint8_t;
 typedef unsigned long uint32_t;
