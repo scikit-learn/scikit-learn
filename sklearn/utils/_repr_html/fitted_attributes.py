@@ -113,31 +113,32 @@ def _fitted_attr_html_repr(fitted_attributes):
 
         if len(attr_info) == 2:  # Attribute is int, str, float
             html_row_values = (
-                html.escape(str(attr_info[0])),  # Type
-                _read_fitted_attr(attr_info[1]),  # value
+                html.escape(str(attr_info["type_name"])),  # Type
+                _read_fitted_attr(attr_info["value"]),  # value
             )
 
         else:  # fitted attribute type is array-like
-            if attr_info[0] == "ndarray":
+            if attr_info["type_name"] == "ndarray":
                 html_row_values = (
                     "".join(
                         [
                             "array["
-                            + f"{html.escape(str(attr_info[1]))}"  # shape
+                            + f"{html.escape(str(attr_info['dtype']))}"  # shape
                             + "]"
-                            + f"{html.escape(str(attr_info[2]))}"  # dtype
+                            + f"{html.escape(str(attr_info['shape']))}"  # dtype
                         ]
                     ),
-                    _read_fitted_attr(attr_info[3]),  # value
+                    _read_fitted_attr(attr_info["value"]),  # value
                 )
             else:
+                # Verify order or remove
                 html_row_values = (
                     (
-                        html.escape(str(attr_info[0])),  # Type
-                        html.escape(str(attr_info[1])),
-                        html.escape(str(attr_info[2])),
+                        html.escape(str(attr_info["type_name"])),
+                        html.escape(str(attr_info["shape"])),
+                        html.escape(str(attr_info["dtype"])),
                     ),
-                    _read_fitted_attr(attr_info[3]),  # value
+                    _read_fitted_attr(attr_info["value"]),
                 )
         rows.append(
             FITTED_ATTR_ROW_TEMPLATE.format(

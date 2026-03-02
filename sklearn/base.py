@@ -358,15 +358,18 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         fitted_attr_out = {}
         for name, value in fitted_attributes.items():
             if _is_arraylike_not_scalar(value) and hasattr(value, "shape"):
-                fitted_attr_out[name] = (
-                    type(value).__name__,
-                    value.shape,
-                    value.dtype,
-                    value,
-                )
+                fitted_attr_out[name] = {
+                    "type_name": type(value).__name__,
+                    "shape": value.shape,
+                    "dtype": value.dtype,
+                    "value": value,
+                }
 
             else:
-                fitted_attr_out[name] = (type(value).__name__, value)
+                fitted_attr_out[name] = {
+                    "type_name": type(value).__name__,
+                    "value": value,
+                }
         return AttrsDict(
             fitted_attrs=fitted_attr_out,
             estimator_class=self.__class__,
