@@ -8,7 +8,7 @@ activate_environment
 scipy_doctest_installed=$(python -c 'import scipy_doctest' && echo "True" || echo "False")
 if [[ "$scipy_doctest_installed" == "True" ]]; then
     doc_rst_files=$(find $PWD/doc -name '*.rst' | sort)
-    # Changing dir, as we do in build_tools/azure/test_script.sh, avoids an
+    # Changing dir, as we do in build_tools/github/test_script.sh, avoids an
     # error when importing sklearn. Not sure why this happens ... I am going to
     # wild guess that it has something to do with the bespoke way we set up
     # conda with putting conda in the PATH and source activate, rather than
