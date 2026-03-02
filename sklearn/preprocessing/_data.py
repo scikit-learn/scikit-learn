@@ -921,6 +921,10 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         """
         # Reset internal state before fitting
         self._reset()
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype, ensure_non_negative=True
+            )
         return self.partial_fit(X, y, sample_weight)
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -969,7 +973,9 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         n_features = X.shape[1]
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype, ensure_non_negative=True
+            )
 
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
