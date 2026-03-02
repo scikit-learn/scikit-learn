@@ -2834,14 +2834,19 @@ def test_yeojohnson_for_different_scipy_version():
     pt = PowerTransformer(method="yeo-johnson").fit(X_1col)
     pt.lambdas_[0] == pytest.approx(0.99546157, rel=1e-7)
 
+
 def test_standard_scaler_negative_sample_weight():
     """Check that StandardScaler fit and partial_fit reject negative weights."""
     X = np.array([[10.0], [0.0], [5.0]])
     sample_weight = np.array([-2.0, 1.0, 1.5])
     scaler = StandardScaler()
 
-    with pytest.raises(ValueError, match="Negative values in data passed to `sample_weight`"):
+    with pytest.raises(
+        ValueError, match="Negative values in data passed to `sample_weight`"
+    ):
         scaler.fit(X, sample_weight=sample_weight)
 
-    with pytest.raises(ValueError, match="Negative values in data passed to `sample_weight`"):
+    with pytest.raises(
+        ValueError, match="Negative values in data passed to `sample_weight`"
+    ):
         scaler.partial_fit(X, sample_weight=sample_weight)
