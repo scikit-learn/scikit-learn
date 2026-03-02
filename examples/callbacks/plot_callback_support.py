@@ -15,7 +15,7 @@ a clean mechanism for inserting custom logic like monitoring progress or metrics
 without modifying the core algorithm of the process.
 
 In scikit-learn, callbacks take the form of classes following a protocol. This protocol
-requires the callback classes to implement specific methods (referred as callback hooks)
+requires the callback classes to implement specific methods (referred to as callback hooks)
 which will be called at specific steps of the fitting of an estimator or a
 meta-estimator. These specific methods are
 :meth:`~callback._base.Callback.on_fit_begin`,
