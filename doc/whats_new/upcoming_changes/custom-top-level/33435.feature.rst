@@ -1,0 +1,3 @@
+- |Build| Add experimental support for building scikit-learn with the LLVM
+  toolchain (clang-cl) on Windows ARM.
+  :user:`Saravanan-mcw <saravananselvaraj-mcw>`
