@@ -923,7 +923,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self._reset()
         if sample_weight is not None:
             sample_weight = _check_sample_weight(
-                sample_weight, X, ensure_non_negative=True
+                sample_weight, X, dtype=X.dtype,ensure_non_negative=True
             )
         return self.partial_fit(X, y, sample_weight)
 
@@ -974,7 +974,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(
-                sample_weight, X, ensure_non_negative=True
+                sample_weight, X, dtype=X.dtype,ensure_non_negative=True
             )
 
         # Even in the case of `with_mean=False`, we update the mean anyway
