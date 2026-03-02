@@ -214,7 +214,7 @@ def _func(meta_estimator, inner_estimator, X, y, *, outer_callback_ctx):
 
         inner_ctx = outer_callback_ctx.subcontext(
             task_name="inner", task_id=i
-        ).propagate_callbacks(sub_estimator=est)
+        ).propagate_callback_context(sub_estimator=est)
 
         est.fit(X, y)
 
