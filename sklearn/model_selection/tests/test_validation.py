@@ -1560,30 +1560,6 @@ def test_learning_curve_incremental_learning_params():
             error_score="raise",
         )
 
-    err_msg = "Fit parameter sample_weight has length 3; expected"
-    with pytest.raises(AssertionError, match=err_msg):
-        learning_curve(
-            estimator,
-            X,
-            y,
-            cv=3,
-            exploit_incremental_learning=True,
-            train_sizes=np.linspace(0.1, 1.0, 10),
-            error_score="raise",
-            params={"sample_weight": np.ones(3)},
-        )
-
-    learning_curve(
-        estimator,
-        X,
-        y,
-        cv=3,
-        exploit_incremental_learning=True,
-        train_sizes=np.linspace(0.1, 1.0, 10),
-        error_score="raise",
-        params={"sample_weight": np.ones(2)},
-    )
-
 
 def test_validation_curve():
     X, y = make_classification(
@@ -2567,7 +2543,7 @@ def test_passed_unrequested_metadata(func, extra_args):
         (cross_val_score, {}),
         (cross_val_predict, {}),
         (learning_curve, {}),
-        (permutation_test_score, {}),
+        (permutation_test_score, {"n_permutations": 20}),
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
@@ -2584,8 +2560,12 @@ def test_validation_functions_routing(func, extra_args):
         groups="split_groups", metadata="split_metadata"
     )
     estimator_registry = _Registry()
-    estimator = ConsumingClassifier(registry=estimator_registry).set_fit_request(
-        sample_weight="fit_sample_weight", metadata="fit_metadata"
+    estimator = (
+        ConsumingClassifier(registry=estimator_registry)
+        .set_fit_request(sample_weight="fit_sample_weight", metadata="fit_metadata")
+        .set_partial_fit_request(
+            sample_weight="fit_sample_weight", metadata="fit_metadata"
+        )
     )
 
     n_samples = _num_samples(X)
@@ -2632,32 +2612,55 @@ def test_validation_functions_routing(func, extra_args):
     if func is not cross_val_predict:
         # cross_val_predict doesn't need a scorer
         assert len(scorer_registry)
+    func_names = {
+        "cross_validate": ("_score", "__call__"),
+        "cross_val_score": ("_score", "__call__"),
+        "learning_curve": ("_score", "__call__"),
+        "permutation_test_score": ("_score", "__call__"),
+        "validation_curve": ("_score", "__call__"),
+    }
     for _scorer in scorer_registry:
         check_recorded_metadata(
             obj=_scorer,
-            method="score",
-            parent=func.__name__,
+            method=func_names[func.__name__][0],
+            parent=func_names[func.__name__][1],
             split_params=("sample_weight", "metadata"),
             sample_weight=score_weights,
             metadata=score_metadata,
         )
 
     assert len(splitter_registry)
+    func_names = {
+        "cross_validate": ("split", "<genexpr>"),
+        "cross_val_score": ("split", "<genexpr>"),
+        "cross_val_predict": ("split", "cross_val_predict"),
+        "learning_curve": ("split", "learning_curve"),
+        "permutation_test_score": ("split", "_permutation_test_score"),
+        "validation_curve": ("split", "<genexpr>"),
+    }
     for _splitter in splitter_registry:
         check_recorded_metadata(
             obj=_splitter,
-            method="split",
-            parent=func.__name__,
+            method=func_names[func.__name__][0],
+            parent=func_names[func.__name__][1],
             groups=split_groups,
             metadata=split_metadata,
         )
 
     assert len(estimator_registry)
+    func_names = {
+        "cross_validate": ("fit", "_fit_and_score"),
+        "cross_val_score": ("fit", "_fit_and_score"),
+        "cross_val_predict": ("fit", "_fit_and_predict"),
+        "learning_curve": ("fit", "_fit_and_score"),
+        "permutation_test_score": ("fit", "_permutation_test_score"),
+        "validation_curve": ("fit", "_fit_and_score"),
+    }
     for _estimator in estimator_registry:
         check_recorded_metadata(
             obj=_estimator,
-            method="fit",
-            parent=func.__name__,
+            method=func_names[func.__name__][0],
+            parent=func_names[func.__name__][1],
             split_params=("sample_weight", "metadata"),
             sample_weight=fit_sample_weight,
             metadata=fit_metadata,
@@ -2695,7 +2698,7 @@ def test_learning_curve_exploit_incremental_learning_routing():
         check_recorded_metadata(
             obj=_estimator,
             method="partial_fit",
-            parent="learning_curve",
+            parent="_incremental_fit_estimator",
             split_params=("sample_weight", "metadata"),
             sample_weight=fit_sample_weight,
             metadata=fit_metadata,

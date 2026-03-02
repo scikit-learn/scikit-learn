@@ -2722,8 +2722,8 @@ def test_metadata_routing_for_column_transformer(method):
     for _trs in registry:
         check_recorded_metadata(
             obj=_trs,
-            method=method,
-            parent=method,
+            method="fit_transform",
+            parent="wrapped",
             sample_weight=sample_weight,
             metadata=metadata,
         )

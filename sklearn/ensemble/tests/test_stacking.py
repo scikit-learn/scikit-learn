@@ -974,13 +974,27 @@ def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_v
         registry = estimator[1].registry
         assert len(registry)
         for sub_est in registry:
-            check_recorded_metadata(
-                obj=sub_est,
-                method="fit",
-                parent="fit",
-                split_params=(prop),
-                **{prop: prop_value},
-            )
+            # Both, "_fit_single_estimator" and "_fit_and_predict" are parent
+            # methods; it depends on parallelism, which was added first to the
+            # estimator's registry:
+            try:
+                parent = "_fit_single_estimator"
+                check_recorded_metadata(
+                    obj=sub_est,
+                    method="fit",
+                    parent=parent,
+                    split_params=(prop),
+                    **{prop: prop_value},
+                )
+            except AssertionError:
+                parent = "_fit_and_predict"
+                check_recorded_metadata(
+                    obj=sub_est,
+                    method="fit",
+                    parent=parent,
+                    split_params=(prop),
+                    **{prop: prop_value},
+                )
     # access final_estimator:
     registry = est.final_estimator_.registry
     assert len(registry)
