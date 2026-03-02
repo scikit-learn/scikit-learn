@@ -209,7 +209,7 @@ def _write_label_html(
             f'{label_arrow_class}">{name_caption_div}{links_div}</label>'
         )
 
-        fmt_str = (
+        out.write(
             f'<input class="sk-toggleable__control sk-hidden--visually '
             f'sk-global" id="{est_id}" '
             f'type="checkbox" {checked_str}>{label_html}<div '
@@ -217,14 +217,14 @@ def _write_label_html(
             f'data-param-prefix="{html.escape(param_prefix)}">'
         )
 
-        if params:
-            fmt_str = "".join([fmt_str, f"{params}{attrs}</div>"])
-        elif name_details and ("Pipeline" not in name):
+        out.write(f"{params}")
+        out.write(f"{attrs}")
+        if name_details and ("Pipeline" not in name) and not params:
             if name == "passthrough" or name_details == "[]":
                 name_details = ""
-            fmt_str = "".join([fmt_str, f"<pre>{name_details}</pre></div>"])
+            out.write(f"<pre>{name_details}</pre>")
 
-        out.write(fmt_str)
+        out.write("</div>")
     else:
         out.write(f"<label>{name}</label>")
     out.write("</div></div>")  # outer_class inner_class

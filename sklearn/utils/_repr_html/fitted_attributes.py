@@ -89,7 +89,7 @@ def _fitted_attr_html_repr(fitted_attributes):
     """
 
     rows = []
-    # for fitted_attr_name, attr_info in fitted_attributes.items():
+
     for name, attr_info in fitted_attributes.items():
         link = generate_link_to_param_doc(
             fitted_attributes.estimator_class,
