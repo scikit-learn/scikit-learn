@@ -46,6 +46,7 @@ from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
+    _max_precision_float_dtype,
     indexing_dtype,
     yield_namespace_device_dtype_combinations,
     yield_namespaces,
@@ -1749,7 +1750,8 @@ def test_ridge_classifier_unsigned_integer_overflow(
     X, y = make_classification(10, 5)
 
     with config_context(array_api_dispatch=True):
-        X_xp = xp.asarray(X, device=device_)
+        float_dtype = _max_precision_float_dtype(xp, device_)
+        X_xp = xp.asarray(X, dtype=float_dtype, device=device_)
 
         # Stable signed baseline
         signed_dtype = indexing_dtype(xp)
@@ -1769,7 +1771,9 @@ def test_ridge_classifier_unsigned_integer_overflow(
             actual = clone(ridge_clf).fit(X_xp, y_uint).decision_function(X_xp)
 
             assert_allclose(
-                _convert_to_numpy(actual, xp=xp), _convert_to_numpy(desired, xp=xp)
+                _convert_to_numpy(actual, xp=xp),
+                _convert_to_numpy(desired, xp=xp),
+                atol=_atol_for_type(dtype_name),
             )
 
 
