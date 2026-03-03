@@ -133,7 +133,7 @@ class ThirdPartyEstimator(CallbackSupportMixin, BaseEstimator):
         self.computation_intensity = computation_intensity
 
     @with_callback_context
-    def fit(self, X=None, y=None, X_val=None, y_val=None):
+    def fit(self, X=None, y=None):
         callback_ctx = self._init_callback_context(max_subtasks=self.max_iter)
         callback_ctx.eval_on_fit_begin(estimator=self)
 
@@ -173,7 +173,7 @@ class NoCallbackEstimator(BaseEstimator):
         self.max_iter = max_iter
         self.computation_intensity = computation_intensity
 
-    def fit(self, X=None, y=None, X_val=None, y_val=None):
+    def fit(self, X=None, y=None):
         for i in range(self.max_iter):
             time.sleep(self.computation_intensity)  # Computation intensive task
 
@@ -204,14 +204,17 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
         callback_ctx = self._init_callback_context(max_subtasks=self.n_outer)
         callback_ctx.eval_on_fit_begin(estimator=self)
 
+        data = {"X": X, "y": y}
+        if X_val is not None:
+            data["X_val"] = X_val
+        if y_val is not None:
+            data["y_val"] = y_val
+
         Parallel(n_jobs=self.n_jobs, prefer=self.prefer)(
             delayed(_func)(
                 self,
                 self.estimator,
-                X,
-                y,
-                X_val,
-                y_val,
+                data,
                 outer_callback_ctx=callback_ctx.subcontext(
                     task_name="outer", task_id=i, max_subtasks=self.n_inner
                 ),
@@ -222,7 +225,7 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
         return self
 
 
-def _func(meta_estimator, inner_estimator, X, y, X_val, y_val, *, outer_callback_ctx):
+def _func(meta_estimator, inner_estimator, data, *, outer_callback_ctx):
     for i in range(meta_estimator.n_inner):
         est = clone(inner_estimator)
 
@@ -230,16 +233,16 @@ def _func(meta_estimator, inner_estimator, X, y, X_val, y_val, *, outer_callback
             task_name="inner", task_id=i
         ).propagate_callbacks(sub_estimator=est)
 
-        est.fit(X, y, X_val, y_val)
+        est.fit(**data)
 
         inner_ctx.eval_on_fit_task_end(
             estimator=meta_estimator,
-            data={"X_train": X, "y_train": y, "X_val": X_val, "y_val": y_val},
+            data=data,
         )
 
     outer_callback_ctx.eval_on_fit_task_end(
         estimator=meta_estimator,
-        data={"X_train": X, "y_train": y, "X_val": X_val, "y_val": y_val},
+        data=data,
     )
 
 
@@ -247,7 +250,7 @@ class NoSubtaskEstimator(CallbackSupportMixin, BaseEstimator):
     """A class mimicking an estimator without subtasks in fit."""
 
     @with_callback_context
-    def fit(self, X=None, y=None, X_val=None, y_val=None):
+    def fit(self, X=None, y=None):
         callback_ctx = self._init_callback_context().eval_on_fit_begin(estimator=self)
 
         # No task performed
