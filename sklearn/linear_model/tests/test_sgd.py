@@ -2334,3 +2334,50 @@ def test_sgd_one_class_svm_formulation_with_scipy_minimize():
 
     assert_allclose(model.coef_, expected_coef, rtol=5e-3)
     assert_allclose(model.offset_, expected_offset, rtol=1e-2)
+
+
+@pytest.mark.parametrize(
+    "Estimator, fit_kwargs",
+    [
+        (SGDClassifier, {"classes": np.array([0, 1])}),
+        (SGDRegressor, {}),
+    ],
+)
+def test_sgd_partial_fit_zero_sample_weight_is_noop(Estimator, fit_kwargs):
+    """partial_fit with all-zero sample_weight should not mutate the model.
+
+    Non-regression test for gh-33436.
+    """
+    X, y = datasets.make_classification(n_samples=40, random_state=1)
+
+    clf = Estimator(random_state=0)
+    clf.partial_fit(X[:10], y[:10].astype(float), **fit_kwargs)
+    coef_before = clf.coef_.copy()
+    intercept_before = clf.intercept_.copy()
+    t_before = clf.t_
+
+    clf.partial_fit(X[10:20], y[10:20].astype(float), sample_weight=np.zeros(10))
+
+    assert_array_equal(clf.coef_, coef_before)
+    assert_array_equal(clf.intercept_, intercept_before)
+    assert clf.t_ == t_before
+
+
+def test_sgd_oneclass_partial_fit_zero_sample_weight_is_noop():
+    """SGDOneClassSVM.partial_fit with all-zero sample_weight should not mutate model.
+
+    Non-regression test for gh-33436.
+    """
+    X, _ = datasets.make_classification(n_samples=40, random_state=1)
+
+    clf = SGDOneClassSVM(random_state=0)
+    clf.partial_fit(X[:10])
+    coef_before = clf.coef_.copy()
+    offset_before = clf.offset_.copy()
+    t_before = clf.t_
+
+    clf.partial_fit(X[10:20], sample_weight=np.zeros(10))
+
+    assert_array_equal(clf.coef_, coef_before)
+    assert_array_equal(clf.offset_, offset_before)
+    assert clf.t_ == t_before
