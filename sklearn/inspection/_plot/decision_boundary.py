@@ -120,7 +120,7 @@ def _select_colors(mpl, multiclass_colors, n_classes):
         return [mpl.colors.to_rgba(color) for color in multiclass_colors]
 
     else:
-        raise ValueError("'multiclass_colors' must be a list or a str.")
+        raise TypeError("'multiclass_colors' must be a list or a str.")
 
 
 class DecisionBoundaryDisplay:
