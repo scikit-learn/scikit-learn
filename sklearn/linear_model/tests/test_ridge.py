@@ -46,6 +46,7 @@ from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
+    indexing_dtype,
     yield_namespace_device_dtype_combinations,
     yield_namespaces,
 )
@@ -1751,7 +1752,8 @@ def test_ridge_classifier_unsigned_integer_overflow(
         X_xp = xp.asarray(X, device=device_)
 
         # Stable signed baseline
-        y_signed = xp.asarray(y, dtype=xp.int64, device=device_)
+        signed_dtype = indexing_dtype(xp)
+        y_signed = xp.asarray(y, dtype=signed_dtype, device=device_)
         desired = clone(ridge_clf).fit(X_xp, y_signed).decision_function(X_xp)
 
         # All namespace support `unit8` dtype
