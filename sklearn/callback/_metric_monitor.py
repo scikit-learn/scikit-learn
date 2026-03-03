@@ -27,6 +27,8 @@ class MetricMonitor:
         and y_val arguments, "both" corresponds to using both.
     """
 
+    requires_fit_info = ["reconstruction_attributes"]
+
     def __init__(self, metric, metric_params=None, on="train_set"):
         # TODO: use a scorer for the metric
         possible_on_values = ("train_set", "validation_set", "both")
@@ -54,26 +56,23 @@ class MetricMonitor:
                 " is necessary to use a MetricMonitor callback."
             )
 
-    def on_fit_task_end(
-        self, estimator, context, data, from_reconstruction_attributes, **kwargs
-    ):
+    def on_fit_task_end(self, estimator, context, data, evaluable_estimator, **kwargs):
         # TODO: add a task_info dict in the logs
-        reconstructed_est = from_reconstruction_attributes()
         context_path = get_context_path(context)
         if self.on == "train_set" or self.on == "both":
             X, y = None, None
             if "X_train" in data and "y_train" in data:
                 X, y = data["X_train"], data["y_train"]
-            self._log_item(X, y, "train_set", reconstructed_est, context_path)
+            self._log_item(X, y, "train_set", evaluable_estimator, context_path)
         if self.on == "validation_set" or self.on == "both":
             X, y = None, None
             if "X_val" in data and "y_val" in data:
                 X, y = data["X_val"], data["y_val"]
-            self._log_item(X, y, "validation_set", reconstructed_est, context_path)
+            self._log_item(X, y, "validation_set", evaluable_estimator, context_path)
 
-    def _log_item(self, X, y, on, reconstructed_est, context_path):
+    def _log_item(self, X, y, on, evaluable_estimator, context_path):
         if X is not None and y is not None:
-            y_pred = reconstructed_est.predict(X)
+            y_pred = evaluable_estimator.predict(X)
             metric_value = self.metric_func(y, y_pred, **self.metric_params)
         else:
             metric_value = None

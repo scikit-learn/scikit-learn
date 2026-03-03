@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import time
-from functools import partial
 
 import numpy as np
 
@@ -71,10 +70,7 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
             if subcontext.eval_on_fit_task_end(
                 estimator=self,
                 data={"X_train": X, "y_train": y, "X_val": X_val, "y_val": y_val},
-                from_reconstruction_attributes=partial(
-                    self._from_reconstruction_attributes,
-                    reconstruction_attributes=lambda: {"n_iter_": i + 1},
-                ),
+                reconstruction_attributes=lambda: {"n_iter_": i + 1},
             ):
                 break
 
@@ -162,7 +158,7 @@ class ParentFitEstimator(MaxIterEstimator):
         super().__init__(max_iter, computation_intensity)
 
     @_fit_context(prefer_skip_nested_validation=False)
-    def fit(self, X=None, y=None, X_val=None, y_val=None):
+    def fit(self, X=None, y=None):
         return super().fit(X, y)
 
 
@@ -206,9 +202,7 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
 
         data = {"X": X, "y": y}
         if X_val is not None:
-            data["X_val"] = X_val
-        if y_val is not None:
-            data["y_val"] = y_val
+            data.update(X_val=X_val, y_val=y_val)
 
         Parallel(n_jobs=self.n_jobs, prefer=self.prefer)(
             delayed(_func)(

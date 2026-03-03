@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import copy
 import warnings
 from contextlib import contextmanager
 from datetime import datetime
@@ -337,6 +338,19 @@ class CallbackContext:
             Whether or not to stop the current level of iterations at this end of this
             task.
         """
+
+        required_info = set()
+        for callback in self._callbacks:
+            if hasattr(callback, "requires_fit_info"):
+                required_info = required_info.union(callback.requires_fit_info)
+
+        if (
+            "reconstruction_attributes" in required_info
+            and "reconstruction_attributes" in kwargs
+        ):
+            kwargs["evaluable_estimator"] = _from_reconstruction_attributes(
+                estimator, kwargs["reconstruction_attributes"]()
+            )
         return any(
             callback.on_fit_task_end(estimator, self, **kwargs)
             for callback in self._callbacks
@@ -422,6 +436,29 @@ class CallbackContext:
         )
 
         return self
+
+
+def _from_reconstruction_attributes(estimator, reconstruction_attributes):
+    """Return a copy of the estimator as if it was fitted.
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        The estimator from which to make a ready-to-be-evaluated copy.
+
+    reconstruction_attributes : dict
+        A dictionary containing the necessary fitted attributes to create a working
+        fitted estimator from this instance.
+
+    Returns
+    -------
+    fitted_estimator : estimator instance
+        The fitted copy of this estimator.
+    """
+    new_estimator = copy.copy(estimator)  # TODO(callbacks) copy / deepcopy / clone ?
+    for key, val in reconstruction_attributes.items():
+        setattr(new_estimator, key, val)
+    return new_estimator
 
 
 def get_context_path(context):
