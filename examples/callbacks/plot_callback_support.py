@@ -307,10 +307,10 @@ class SimpleGridSearch(CallbackSupportMixin, BaseEstimator):  # noqa: F811
 
                 estimator = clone(self.estimator).set_params(**params)
                 # Since a sub-estimator is used, the callbacks must be propagated to
-                # that estimator with the `propagate_callbacks` method. Note that only
-                # the callbacks following the `AutoPropagatedCallback` protocol will be
-                # propagated.
-                inner_subcontext.propagate_callbacks(sub_estimator=estimator)
+                # that estimator with the `propagate_callback_context` method. Note that
+                # only the callbacks following the `AutoPropagatedCallback` protocol
+                # will be propagated.
+                inner_subcontext.propagate_callback_context(sub_estimator=estimator)
 
                 X_train, X_test = X[train_idx], X[test_idx]
                 y_train, y_test = (
@@ -347,7 +347,7 @@ class SimpleGridSearch(CallbackSupportMixin, BaseEstimator):  # noqa: F811
 # %%
 # The main difference with a simple estimator is that the callbacks must be propagated
 # to the sub-estimators through the corresponding callback subcontext's
-# :meth:`~callback._callback_context.CallbackContext.propagate_callbacks` method.
+# :meth:`~callback._callback_context.CallbackContext.propagate_callback_context` method.
 
 
 # %%
