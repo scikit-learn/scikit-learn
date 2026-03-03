@@ -369,6 +369,6 @@ sub_estimator = SimpleKMeans(random_state=rng)
 meta_estimator = SimpleGridSearch(
     estimator=sub_estimator, param_list=param_list, cv=4, score_func=score_func
 )
-callback = ProgressBar(max_estimator_depth=2)
+callback = ProgressBar()
 meta_estimator.set_callbacks(callback)
 meta_estimator.fit(X)
