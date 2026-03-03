@@ -166,29 +166,42 @@ def test_input_validation_errors(pyplot, kwargs, error_msg, fitted_clf):
 
 
 @pytest.mark.parametrize(
-    "kwargs, error_msg",
+    "kwargs, error_type, error_msg",
     [
         (
             {"multiclass_colors": {"dict": "not_list"}},
+            TypeError,
             "'multiclass_colors' must be a list or a str.",
         ),
-        ({"multiclass_colors": "not_cmap"}, "it must be a valid Matplotlib colormap"),
-        ({"multiclass_colors": ["red", "green"]}, "it must be of the same length"),
+        (
+            {"multiclass_colors": "not_cmap"},
+            ValueError,
+            "it must be a valid Matplotlib colormap",
+        ),
+        (
+            {"multiclass_colors": ["red", "green"]},
+            ValueError,
+            "it must be of the same length",
+        ),
         (
             {"multiclass_colors": ["red", "green", "blue", "yellow"]},
+            ValueError,
             "it must be of the same length",
         ),
         (
             {"multiclass_colors": ["red", "green", "not color"]},
+            ValueError,
             "it can only contain valid Matplotlib color names",
         ),
     ],
 )
-def test_input_validation_errors_multiclass_colors(pyplot, kwargs, error_msg):
+def test_input_validation_errors_multiclass_colors(
+    pyplot, kwargs, error_type, error_msg
+):
     """Check input validation for `multiclass_colors` in `from_estimator`."""
     X, y = load_iris_2d_scaled()
     clf = LogisticRegression().fit(X, y)
-    with pytest.raises(ValueError, match=error_msg):
+    with pytest.raises(error_type, match=error_msg):
         DecisionBoundaryDisplay.from_estimator(clf, X, **kwargs)
 
 
