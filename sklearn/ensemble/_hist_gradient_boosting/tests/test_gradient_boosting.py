@@ -708,6 +708,7 @@ def test_zero_sample_weights_classification():
 
     X = [[1, 0], [1, 0], [1, 0], [0, 1], [1, 1]]
     y = [0, 0, 1, 0, 2]
+
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1, 1]
     gb = HistGradientBoostingClassifier(loss="log_loss", min_samples_leaf=1)
@@ -718,16 +719,19 @@ def test_zero_sample_weights_classification():
 @pytest.mark.parametrize(
     "problem", ("regression", "binary_classification", "multiclass_classification")
 )
-@pytest.mark.parametrize("duplication", ("half", "all"))
-def test_sample_weight_effect(problem, duplication):
+def test_sample_weight_effect(problem, global_random_seed):
     # High level test to make sure that duplicating a sample is equivalent to
     # giving it weight of 2.
 
-    # fails for n_samples > 255 because binning does not take sample weights
-    # into account. Keeping n_samples <= 255 makes
-    # sure only unique values are used so SW have no effect on binning.
-    n_samples = 255
+    # This test assumes that subsampling in `_BinMapper` is disabled
+    # (when `n_samples < 2e5`) and therefore the binning results should be
+    # deterministic.
+    # Otherwise, this test would require being rewritten as a statistical test.
+    # We also set `n_samples` large enough to ensure that columns have more than
+    # 255 distinct values and that we test the impact of weight-aware binning.
+    n_samples = 300
     n_features = 2
+    rng = np.random.RandomState(global_random_seed)
     if problem == "regression":
         X, y = make_regression(
             n_samples=n_samples,
@@ -755,21 +759,17 @@ def test_sample_weight_effect(problem, duplication):
     # duplicated samples.
     est = Klass(min_samples_leaf=1)
 
-    # Create dataset with duplicate and corresponding sample weights
-    if duplication == "half":
-        lim = n_samples // 2
-    else:
-        lim = n_samples
-    X_dup = np.r_[X, X[:lim]]
-    y_dup = np.r_[y, y[:lim]]
-    sample_weight = np.ones(shape=(n_samples))
-    sample_weight[:lim] = 2
+    # Create dataset with repetitions and corresponding sample weights
+    sample_weight = rng.randint(0, 3, size=X.shape[0])
+    X_repeated = np.repeat(X, sample_weight, axis=0)
+    assert X_repeated.shape[0] < 2e5
+    y_repeated = np.repeat(y, sample_weight, axis=0)
 
-    est_sw = clone(est).fit(X, y, sample_weight=sample_weight)
-    est_dup = clone(est).fit(X_dup, y_dup)
+    est_weighted = clone(est).fit(X, y, sample_weight=sample_weight)
+    est_repeated = clone(est).fit(X_repeated, y_repeated)
 
     # checking raw_predict is stricter than just predict for classification
-    assert np.allclose(est_sw._raw_predict(X_dup), est_dup._raw_predict(X_dup))
+    assert_allclose(est_weighted._raw_predict(X), est_repeated._raw_predict(X))
 
 
 @pytest.mark.parametrize("Loss", (HalfSquaredError, AbsoluteError))
@@ -1303,7 +1303,7 @@ def test_check_interaction_cst(interaction_cst, n_features, result):
 def test_interaction_cst_numerically():
     """Check that interaction constraints have no forbidden interactions."""
     rng = np.random.RandomState(42)
-    n_samples = 1000
+    n_samples = 2000
     X = rng.uniform(size=(n_samples, 2))
     # Construct y with a strong interaction term
     # y = x0 + x1 + 5 * x0 * x1

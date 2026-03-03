@@ -541,11 +541,10 @@ profiling and Cython optimizations.
 Continuous Integration (CI)
 ---------------------------
 
-* Azure pipelines are used for testing scikit-learn on Linux, Mac and Windows,
-  with different dependencies and settings.
+* Github Actions are used for various tasks, including testing scikit-learn on
+  Linux, Mac and Windows, with different dependencies and settings, building
+  wheels and source distributions.
 * CircleCI is used to build the docs for viewing.
-* Github Actions are used for various tasks, including building wheels and
-  source distributions.
 
 .. _commit_markers:
 
@@ -560,7 +559,6 @@ Commit Message Marker  Action Taken by CI
 ====================== ===================
 [ci skip]              CI is skipped completely
 [cd build]             CD is run (wheels and source distribution are built)
-[lint skip]            Azure pipeline skips linting
 [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc.) development builds
 [free-threaded]        Build & test with CPython 3.14 free-threaded
 [pyodide]              Build & test with Pyodide
