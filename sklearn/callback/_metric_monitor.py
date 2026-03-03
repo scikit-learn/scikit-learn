@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import inspect
-from multiprocessing import Manager
 
 from sklearn.callback._callback_context import get_context_path
+from sklearn.callback._callback_support import get_callback_manager
 
 
 class MetricMonitor:
@@ -45,7 +45,7 @@ class MetricMonitor:
                     f" function {metric.__module__}.{metric.__name__}."
                 )
         self.metric_func = metric
-        self._shared_log = Manager().list()
+        self._shared_log = get_callback_manager().list()
 
     def on_fit_begin(self, estimator):
         if not hasattr(estimator, "predict"):
