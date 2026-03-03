@@ -872,7 +872,7 @@ def test_sort_inputs_and_compute_classification_thresholds_zero_weights():
     # Indices 0 and 4 zero weight
     sample_weight = np.array([0.0, 2.0, 1.0, 1.5, 0.0, 0.8])
 
-    y_true_sorted, y_score_sorted, weight_sorted, threshold_idxs = (
+    y_true_sorted, y_score_sorted, weight_sorted, _ = (
         _sort_inputs_and_compute_classification_thresholds(
             y_true, y_score, sample_weight
         )
@@ -894,10 +894,8 @@ def test_sort_inputs_and_compute_classification_thresholds_zero_weights():
     sample_weight = np.array([0.0, 0.0, 0.0])
 
     with pytest.raises(ValueError, match="Sample weights must contain at least"):
-        y_true_sorted, y_score_sorted, weight_sorted, threshold_idxs = (
-            _sort_inputs_and_compute_classification_thresholds(
-                y_true, y_score, sample_weight
-            )
+        _sort_inputs_and_compute_classification_thresholds(
+            y_true, y_score, sample_weight
         )
 
 
@@ -2562,7 +2560,7 @@ def test_metric_at_thresholds_y_score_order_duplicate_y_score():
 
     # Thresholds should still be the same
     assert_allclose(thresh_1, thresh_2)
-    # Metric output should differ
+    # Metric output differs for the test data
     with pytest.raises(AssertionError):
         assert_allclose(metric_1, metric_2)
 
@@ -2586,10 +2584,11 @@ def test_metric_at_thresholds_consistency_with_confusion_matrix():
 
     assert_array_equal(thresholds, thresholds_cm)
 
-    # Reshape from (n_thresholds, 2, 2) to (n_thresholds, 4)
     # As `labels=[0, 1]` -> [TN, FP, FN, TP]
-    confusion_values = metric_values.reshape(-1, 4)
-    assert_array_equal(confusion_values, np.column_stack([tns, fps, fns, tps]))
+    assert_array_equal(metric_values[:, 0, 0], tns)
+    assert_array_equal(metric_values[:, 0, 1], fps)
+    assert_array_equal(metric_values[:, 1, 0], fns)
+    assert_array_equal(metric_values[:, 1, 1], tps)
 
 
 def test_metric_at_thresholds_with_nan_outputs():
