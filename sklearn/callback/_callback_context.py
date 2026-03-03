@@ -392,16 +392,6 @@ class CallbackContext:
                 " Register them directly on the meta-estimator."
             )
 
-        callbacks_to_propagate = [
-            callback
-            for callback in self._callbacks
-            if isinstance(callback, AutoPropagatedCallback)
-            and (
-                callback.max_estimator_depth is None
-                or self._estimator_depth < callback.max_estimator_depth - 1
-            )
-        ]
-
         if clone_estimator:
             from sklearn.base import clone
 
@@ -414,6 +404,15 @@ class CallbackContext:
                 cloned_estimator.set_callbacks(sub_estimator._skl_callbacks)
             sub_estimator = cloned_estimator
 
+        callbacks_to_propagate = [
+            callback
+            for callback in self._callbacks
+            if isinstance(callback, AutoPropagatedCallback)
+            and (
+                callback.max_estimator_depth is None
+                or self._estimator_depth < callback.max_estimator_depth - 1
+            )
+        ]
         if not callbacks_to_propagate:
             return sub_estimator
 
