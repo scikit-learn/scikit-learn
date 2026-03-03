@@ -3026,9 +3026,7 @@ def _pprint(params, offset=0, printer=repr):
 
 
 def _build_repr(self):
-    # XXX This is copied from BaseEstimator's get_params
-    cls = self.__class__
-    init = getattr(cls.__init__, "deprecated_original", cls.__init__)
+    init = self.__class__.__init__
     # Ignore varargs, kw and default values and pop self
     init_signature = signature(init)
     # Consider the constructor parameters excluding 'self'
