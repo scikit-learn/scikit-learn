@@ -38,11 +38,7 @@ from sklearn.utils._encode import _encode, _unique
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.sparsefuncs import count_nonzero
-from sklearn.utils.validation import (
-    _check_pos_label_consistency,
-    _check_sample_weight,
-    _deprecate_positional_args,
-)
+from sklearn.utils.validation import _check_pos_label_consistency, _check_sample_weight
 
 
 @validate_params(
@@ -152,8 +148,8 @@ def average_precision_score(
 
     y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by :term:`decision_function` on some classifiers).
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
         For :term:`decision_function` scores, values greater than or equal to
         zero should indicate the positive class.
 
@@ -331,8 +327,8 @@ def det_curve(
 
     y_score : ndarray of shape of (n_samples,)
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
         For :term:`decision_function` scores, values greater than or equal to
         zero should indicate the positive class.
 
@@ -869,7 +865,6 @@ def _multiclass_roc_auc_score(
         )
 
 
-@_deprecate_positional_args(version="1.11")
 @validate_params(
     {
         "y_true": ["array-like"],
@@ -879,9 +874,7 @@ def _multiclass_roc_auc_score(
     },
     prefer_skip_nested_validation=True,
 )
-def confusion_matrix_at_thresholds(
-    y_true, y_score, *, pos_label=None, sample_weight=None
-):
+def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weight=None):
     """Calculate :term:`binary` confusion matrix terms per classification threshold.
 
     Read more in the :ref:`User Guide <confusion_matrix>`.
@@ -1203,8 +1196,8 @@ def roc_curve(
 
     y_score : array-like of shape (n_samples,)
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
         For :term:`decision_function` scores, values greater than or equal to
         zero should indicate the positive class.
 
@@ -1372,8 +1365,8 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
 
     y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
         For :term:`decision_function` scores, values greater than or equal to
         zero should indicate the positive class.
 
@@ -1474,8 +1467,8 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
 
     y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
         For :term:`decision_function` scores, values greater than or equal to
         zero should indicate the positive class.
 
@@ -1551,8 +1544,8 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
 
     y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
         For :term:`decision_function` scores, values greater than or equal to
         zero should indicate the positive class.
 
@@ -1638,9 +1631,9 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
         to be ranked.
 
     y_score : ndarray of shape (n_samples, n_labels)
-        Target scores, can either be probability estimates, confidence values,
-        or non-thresholded measure of decisions (as returned by
-        "decision_function" on some classifiers).
+        Target scores, can either be probability estimates of the positive
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
 
     k : int, default=None
         Only consider the highest k scores in the ranking. If `None`, use all
@@ -1777,9 +1770,9 @@ def dcg_score(
         to be ranked.
 
     y_score : array-like of shape (n_samples, n_labels)
-        Target scores, can either be probability estimates, confidence values,
-        or non-thresholded measure of decisions (as returned by
-        "decision_function" on some classifiers).
+        Target scores, can either be probability estimates of the positive
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
 
     k : int, default=None
         Only consider the highest k scores in the ranking. If None, use all
@@ -1883,9 +1876,9 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
         to be ranked.
 
     y_score : ndarray of shape (n_samples, n_labels)
-        Target scores, can either be probability estimates, confidence values,
-        or non-thresholded measure of decisions (as returned by
-        "decision_function" on some classifiers).
+        Target scores, can either be probability estimates of the positive
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
 
     k : int, default=None
         Only consider the highest k scores in the ranking. If None, use all
@@ -1945,9 +1938,9 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
         that is not between 0 and 1.
 
     y_score : array-like of shape (n_samples, n_labels)
-        Target scores, can either be probability estimates, confidence values,
-        or non-thresholded measure of decisions (as returned by
-        "decision_function" on some classifiers).
+        Target scores, can either be probability estimates of the positive
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
 
     k : int, default=None
         Only consider the highest k scores in the ranking. If `None`, use all
