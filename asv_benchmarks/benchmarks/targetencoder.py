@@ -11,17 +11,26 @@ from .common import Benchmark, clear_tmp, get_estimator_path
 
 class TargetEncoderTransformSmallBatch(Benchmark):
     """
-    Measure TargetEncoder.transform latency across batch sizes around the
-    small-batch threshold.
+    Measure TargetEncoder.fit and .transform latency and peak memory across
+    batch sizes around the small-batch threshold.
 
     Parameters:
       - dtype: int64 vs object (object injects None/np.nan at transform time)
       - target_type: binary vs multiclass
-      - n_rows: batch size
+      - n_rows: batch size (only affects transform benchmarks; fit always uses
+        the full training set)
 
-    Timings:
-      - time_transform_default: whatever branch TargetEncoder.transform chooses
-      - time_transform_forced_vectorized: force vectorized branch
+    Transform timings/memory:
+      - time_transform_default / peakmem_transform_default:
+            whatever branch TargetEncoder.transform chooses
+      - time_transform_forced_vectorized / peakmem_transform_forced_vectorized:
+            force the vectorized branch regardless of n_rows
+
+    Fit timings/memory:
+      - time_fit / peakmem_fit:
+            full fit including _init_int_lookup (current branch behaviour)
+      - time_fit_no_lut / peakmem_fit_no_lut:
+            fit with _init_int_lookup replaced by a no-op, isolating its cost
     """
 
     param_names = ["dtype", "target_type", "n_rows"]
@@ -69,7 +78,7 @@ class TargetEncoderTransformSmallBatch(Benchmark):
                     Benchmark.save_estimators,
                 )
                 with est_path.open("wb") as f:
-                    pickle.dump(enc, f)
+                    pickle.dump((enc, X_fit.copy(), y.copy()), f)
 
     def setup(self, dtype: str, target_type: str, n_rows: int):
         est_path = get_estimator_path(
@@ -80,14 +89,15 @@ class TargetEncoderTransformSmallBatch(Benchmark):
         )
 
         with est_path.open("rb") as f:
-            self.enc = pickle.load(f)
+            self.enc, self.X_fit, self.y = pickle.load(f)
 
         with est_path.open("rb") as f:
-            self.enc_vec = pickle.load(f)
+            self.enc_vec, _, _ = pickle.load(f)
 
         if hasattr(self.enc_vec, "_small_batch_threshold"):
             self.enc_vec._small_batch_threshold = -1  # always take vectorized path
 
+        self.target_type = target_type
         rng = np.random.default_rng(0)
         n_cats = type(self)._n_cats
         max_rows = max(self.params[2])
@@ -114,3 +124,31 @@ class TargetEncoderTransformSmallBatch(Benchmark):
         self, dtype: str, target_type: str, n_rows: int
     ):
         self.enc_vec.transform(self.X)
+
+    def peakmem_transform_default(self, dtype: str, target_type: str, n_rows: int):
+        self.enc.transform(self.X)
+
+    def peakmem_transform_forced_vectorized(
+        self, dtype: str, target_type: str, n_rows: int
+    ):
+        self.enc_vec.transform(self.X)
+
+    def time_fit(self, dtype: str, target_type: str, n_rows: int):
+        TargetEncoder(target_type=self.target_type, random_state=0).fit(
+            self.X_fit, self.y
+        )
+
+    def time_fit_no_lut(self, dtype: str, target_type: str, n_rows: int):
+        enc = TargetEncoder(target_type=self.target_type, random_state=0)
+        enc._init_int_lookup = lambda: None
+        enc.fit(self.X_fit, self.y)
+
+    def peakmem_fit(self, dtype: str, target_type: str, n_rows: int):
+        TargetEncoder(target_type=self.target_type, random_state=0).fit(
+            self.X_fit, self.y
+        )
+
+    def peakmem_fit_no_lut(self, dtype: str, target_type: str, n_rows: int):
+        enc = TargetEncoder(target_type=self.target_type, random_state=0)
+        enc._init_int_lookup = lambda: None
+        enc.fit(self.X_fit, self.y)
