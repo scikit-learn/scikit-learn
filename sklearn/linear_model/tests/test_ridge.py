@@ -1732,6 +1732,45 @@ def test_ridge_classifier_cv_store_cv_results(scoring):
     assert r.cv_results_.shape == (n_samples, n_targets, n_alphas)
 
 
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_ridge_classifier_unsigned_integer_overflow(
+    array_namespace, device_, dtype_name
+):
+    """Ensure RidgeClassifier does not overflow when y has unsigned integer dtype.
+
+    In particular, verify that internal label binarisation does not wrap
+    -1 to the maximum value of unsigned integer dtypes.
+    """
+    xp = _array_api_for_tests(array_namespace, device_)
+    ridge_clf = RidgeClassifier(solver="svd")
+    X, y = make_classification(10, 5)
+
+    with config_context(array_api_dispatch=True):
+        X_xp = xp.asarray(X, device=device_)
+
+        # Stable signed baseline
+        y_signed = xp.asarray(y, dtype=xp.int64, device=device_)
+        desired = clone(ridge_clf).fit(X_xp, y_signed).decision_function(X_xp)
+
+        # All namespace support `unit8` dtype
+        uint_dtypes = [xp.uint8]
+
+        # PyTorch doesn't fully support `uint16`, `uint32`, `uint64`.
+        # See https://github.com/pytorch/pytorch/issues/58734
+        if "torch" not in xp.__name__:
+            uint_dtypes += [xp.uint16, xp.uint32, xp.uint64]
+
+        for uint_dtype in uint_dtypes:
+            y_uint = xp.asarray(y, dtype=uint_dtype, device=device_)
+            actual = clone(ridge_clf).fit(X_xp, y_uint).decision_function(X_xp)
+
+            assert_allclose(
+                _convert_to_numpy(actual, xp=xp), _convert_to_numpy(desired, xp=xp)
+            )
+
+
 @pytest.mark.parametrize("Estimator", [RidgeCV, RidgeClassifierCV])
 def test_ridgecv_alphas_conversion(Estimator):
     rng = np.random.RandomState(0)
