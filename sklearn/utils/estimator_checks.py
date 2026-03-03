@@ -130,7 +130,11 @@ def _yield_api_checks(estimator):
         )
 
     tags = get_tags(estimator)
-    yield check_estimator_cloneable
+    # This is commented out since it's the first check both
+    # `parametrize_with_checks` and `check_esitmator` do
+    # anyway. But leaving it here as commented out to know
+    # it's a part of the basic API.
+    # yield check_estimator_cloneable
     yield check_estimator_tags_renamed
     yield check_valid_tag_types
     yield check_estimator_repr
@@ -240,9 +244,6 @@ def _yield_classifier_checks(classifier):
     # test if predict_proba is a monotonic transformation of decision_function
     yield check_decision_proba_consistency
 
-    if isinstance(classifier, LinearClassifierMixin):
-        if "class_weight" in classifier.get_params().keys():
-            yield check_class_weight_balanced_linear_classifier
     if (
         isinstance(classifier, LinearClassifierMixin)
         and "class_weight" in classifier.get_params().keys()
@@ -1777,9 +1778,6 @@ def _is_public_parameter(attr):
 @ignore_warnings(category=FutureWarning)
 def check_dont_overwrite_parameters(name, estimator_orig):
     # check that fit method only changes or sets private attributes
-    if hasattr(estimator_orig.__init__, "deprecated_original"):
-        # to not check deprecated classes
-        return
     estimator = clone(estimator_orig)
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
@@ -3708,9 +3706,6 @@ def check_no_attributes_set_in_init(name, estimator_orig):
             f"Estimator {name} should store all parameters as an attribute during init."
         )
 
-    if hasattr(type(estimator).__init__, "deprecated_original"):
-        return
-
     init_params = _get_args(type(estimator).__init__)
     parents_init_params = [
         param
@@ -3879,8 +3874,7 @@ def check_parameters_default_constructible(name, estimator_orig):
         # We get the default parameters from init and then
         # compare these against the actual values of the attributes.
 
-        # this comes from getattr. Gets rid of deprecation decorator.
-        init = getattr(estimator.__init__, "deprecated_original", estimator.__init__)
+        init = estimator.__init__
 
         try:
 

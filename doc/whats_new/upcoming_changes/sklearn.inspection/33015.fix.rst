@@ -1,0 +1,3 @@
+- In :class:`inspection.DecisionBoundaryDisplay`, `multiclass_colors` is now also used
+  for multiclass plotting when `response_method="predict"`.
+  By :user:`Anne Beyer <AnneBeyer>`.

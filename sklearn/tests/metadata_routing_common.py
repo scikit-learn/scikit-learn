@@ -15,7 +15,7 @@ from sklearn.base import (
 )
 from sklearn.metrics._scorer import _Scorer, mean_squared_error
 from sklearn.model_selection import BaseCrossValidator
-from sklearn.model_selection._split import GroupsConsumerMixin
+from sklearn.model_selection._split import GroupKFold, GroupsConsumerMixin
 from sklearn.utils._metadata_requests import (
     SIMPLE_METHODS,
 )
@@ -478,6 +478,11 @@ class ConsumingSplitter(GroupsConsumerMixin, BaseCrossValidator):
         test_indices = list(range(split_index, len(X)))
         yield test_indices
         yield train_indices
+
+
+class ConsumingSplitterInheritingFromGroupKFold(ConsumingSplitter, GroupKFold):
+    """Helper class that can be used to test TargetEncoder, that only takes specific
+    splitters."""
 
 
 class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):

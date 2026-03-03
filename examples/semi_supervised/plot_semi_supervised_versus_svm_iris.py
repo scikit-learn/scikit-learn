@@ -33,6 +33,7 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import load_iris
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.semi_supervised import LabelSpreading, SelfTrainingClassifier
@@ -53,7 +54,7 @@ ls10 = (LabelSpreading().fit(X, y_10), y_10, "LabelSpreading with 10% labeled da
 ls30 = (LabelSpreading().fit(X, y_30), y_30, "LabelSpreading with 30% labeled data")
 ls100 = (LabelSpreading().fit(X, y), y, "LabelSpreading with 100% labeled data")
 
-base_classifier = SVC(gamma=0.5, probability=True, random_state=42)
+base_classifier = CalibratedClassifierCV(SVC(gamma=0.5, random_state=42))
 st10 = (
     SelfTrainingClassifier(base_classifier).fit(X, y_10),
     y_10,

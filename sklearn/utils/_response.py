@@ -120,7 +120,8 @@ def _get_response_values(
     pos_label=None,
     return_response_method_used=False,
 ):
-    """Compute the response values of a classifier, an outlier detector, or a regressor.
+    """Compute the response values of a classifier, an outlier detector, a regressor
+    or a clusterer.
 
     The response values are predictions such that it follows the following shape:
 
@@ -129,8 +130,8 @@ def _get_response_values(
         - with response_method="predict", it is a 1d array of shape `(n_samples,)`;
         - otherwise, it is a 2d array of shape `(n_samples, n_classes)`;
     - for multilabel classification, it is a 2d array of shape `(n_samples, n_outputs)`;
-    - for outlier detection, it is a 1d array of shape `(n_samples,)`;
-    - for regression, it is a 1d array of shape `(n_samples,)`.
+    - for outlier detection, a regressor or a clusterer, it is a 1d array of shape
+      `(n_samples,)`.
 
     If `estimator` is a binary classifier, also return the label for the
     effective positive class.
@@ -142,9 +143,9 @@ def _get_response_values(
     Parameters
     ----------
     estimator : estimator instance
-        Fitted classifier, outlier detector, or regressor or a
+        Fitted classifier, outlier detector, regressor, clusterer or a
         fitted :class:`~sklearn.pipeline.Pipeline` in which the last estimator is a
-        classifier, an outlier detector, or a regressor.
+        classifier, an outlier detector, a regressor or a clusterer.
 
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
@@ -180,8 +181,8 @@ def _get_response_values(
 
     pos_label : int, float, bool, str or None
         The class considered as the positive class when computing
-        the metrics. Returns `None` if `estimator` is a regressor or an outlier
-        detector.
+        the metrics. Returns `None` if `estimator` is a regressor, an outlier
+        detector or a clusterer.
 
     response_method_used : str
         The response method used to compute the response values. Only returned
@@ -194,13 +195,10 @@ def _get_response_values(
     ValueError
         If `pos_label` is not a valid label.
         If the shape of `y_pred` is not consistent for binary classifier.
-        If the response method can be applied to a classifier only and
-        `estimator` is a regressor.
     """
-    from sklearn.base import is_classifier, is_outlier_detector
+    prediction_method = _check_response_method(estimator, response_method)
 
     if is_classifier(estimator):
-        prediction_method = _check_response_method(estimator, response_method)
         classes = estimator.classes_
         target_type = type_of_target(classes)
 
@@ -229,18 +227,7 @@ def _get_response_values(
                 classes=classes,
                 pos_label=pos_label,
             )
-    elif is_outlier_detector(estimator):
-        prediction_method = _check_response_method(estimator, response_method)
-        y_pred, pos_label = prediction_method(X), None
-    else:  # estimator is a regressor
-        if response_method != "predict":
-            raise ValueError(
-                f"{estimator.__class__.__name__} should either be a classifier to be "
-                f"used with response_method={response_method} or the response_method "
-                "should be 'predict'. Got a regressor with response_method="
-                f"{response_method} instead."
-            )
-        prediction_method = estimator.predict
+    else:
         y_pred, pos_label = prediction_method(X), None
 
     if return_response_method_used:

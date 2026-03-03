@@ -13,7 +13,6 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg, optimize, sparse
 from scipy.sparse.linalg import lsqr
-from scipy.special import expit
 
 from sklearn.base import (
     BaseEstimator,
@@ -26,6 +25,9 @@ from sklearn.utils import check_array, check_random_state
 from sklearn.utils._array_api import (
     _asarray_with_order,
     _average,
+    _convert_to_numpy,
+    _expit,
+    _is_numpy_namespace,
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
@@ -114,7 +116,6 @@ def _preprocess_data(
     *,
     fit_intercept,
     copy=True,
-    copy_y=True,
     sample_weight=None,
     check_input=True,
     rescale_with_sw=True,
@@ -153,8 +154,7 @@ def _preprocess_data(
         inplace.
         If input X is dense, then X_out is centered.
     y_out : {ndarray, sparse matrix} of shape (n_samples,) or (n_samples, n_targets)
-        Centered version of y. Possibly performed inplace on input y depending
-        on the copy_y parameter.
+        Centered copy of y.
     X_offset : ndarray of shape (n_features,)
         The mean per column of input X.
     y_offset : float or ndarray of shape (n_features,)
@@ -172,9 +172,9 @@ def _preprocess_data(
         X = check_array(
             X, copy=copy, accept_sparse=["csr", "csc"], dtype=supported_float_dtypes(xp)
         )
-        y = check_array(y, dtype=X.dtype, copy=copy_y, ensure_2d=False)
+        y = check_array(y, dtype=X.dtype, copy=True, ensure_2d=False)
     else:
-        y = xp.astype(y, X.dtype, copy=copy_y)
+        y = xp.astype(y, X.dtype)
         if copy:
             if X_is_sparse:
                 X = X.copy()
@@ -210,7 +210,8 @@ def _preprocess_data(
         # For sparse X and y, it triggers copies anyway.
         # For dense X and y that already have been copied, we safely do inplace
         # rescaling.
-        X, y, sample_weight_sqrt = _rescale_data(X, y, sample_weight, inplace=copy)
+        # Hence, inplace=True here regardless of copy.
+        X, y, sample_weight_sqrt = _rescale_data(X, y, sample_weight, inplace=True)
     else:
         sample_weight_sqrt = None
     return X, y, X_offset, y_offset, X_scale, sample_weight_sqrt
@@ -390,7 +391,14 @@ class LinearClassifierMixin(ClassifierMixin):
         else:
             indices = xp.argmax(scores, axis=1)
 
-        return xp.take(self.classes_, indices, axis=0)
+        # If `y` consists of strings during fitting then `self.classes_` will
+        # also contain strings and we handle such a scenario by returning the
+        # predictions according to the namespace of `self.classes_` i.e. numpy.
+        xp_classes, _ = get_namespace(self.classes_)
+        if _is_numpy_namespace(xp_classes):
+            indices = _convert_to_numpy(indices, xp=xp)
+
+        return xp_classes.take(self.classes_, indices, axis=0)
 
     def _predict_proba_lr(self, X):
         """Probability estimation for OvR logistic regression.
@@ -399,13 +407,21 @@ class LinearClassifierMixin(ClassifierMixin):
         1. / (1. + np.exp(-self.decision_function(X)));
         multiclass is handled by normalizing that over all classes.
         """
+        xp, _ = get_namespace(X)
         prob = self.decision_function(X)
-        expit(prob, out=prob)
+        prob = _expit(prob, out=prob, xp=xp)
         if prob.ndim == 1:
-            return np.vstack([1 - prob, prob]).T
+            return xp.stack([1 - prob, prob], axis=1)
         else:
             # OvR normalization, like LibLinear's predict_probability
-            prob /= prob.sum(axis=1).reshape((prob.shape[0], -1))
+            prob_sum = prob.sum(axis=1)
+            all_zero = prob_sum == 0
+            if xp.any(all_zero):
+                # The above might assign zero to all classes, which doesn't
+                # normalize neatly; work around this to produce uniform probabilities.
+                prob[all_zero, :] = 1
+                prob_sum[all_zero] = prob.shape[1]  # n_classes
+            prob /= xp.reshape(prob_sum, (prob.shape[0], -1))
             return prob
 
 

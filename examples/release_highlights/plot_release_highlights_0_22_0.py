@@ -288,9 +288,9 @@ def test_sklearn_compatible_estimator(estimator, check):
 
 
 from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
-from sklearn.svm import SVC
 
 X, y = make_classification(n_classes=4, n_informative=16)
-clf = SVC(decision_function_shape="ovo", probability=True).fit(X, y)
-print(roc_auc_score(y, clf.predict_proba(X), multi_class="ovo"))
+clf = LogisticRegression().fit(X, y)
+print(roc_auc_score(y, clf.predict_proba(X), multi_class="ovr"))

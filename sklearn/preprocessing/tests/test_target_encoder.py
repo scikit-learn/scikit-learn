@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 
+from sklearn.datasets import make_regression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import (
@@ -889,3 +890,22 @@ def test_smallbatch_index_maps_are_lazy_and_materialize_on_use():
 
     te.transform(X)
     assert index_maps._maps[0] is not None
+
+
+def test_target_encoder_raises_cv_overlap(global_random_seed):
+    """
+    Test that `TargetEncoder` raises if `cv` has overlapping splits.
+    """
+    X, y = make_regression(n_samples=100, n_features=3, random_state=0)
+
+    non_overlapping_iterable = KFold().split(X, y)
+    encoder = TargetEncoder(cv=non_overlapping_iterable)
+    encoder.fit_transform(X, y)
+
+    overlapping_iterable = ShuffleSplit(
+        n_splits=5, random_state=global_random_seed
+    ).split(X, y)
+    encoder = TargetEncoder(cv=overlapping_iterable)
+    msg = "Validation indices from `cv` must cover each sample index exactly once"
+    with pytest.raises(ValueError, match=msg):
+        encoder.fit_transform(X, y)
