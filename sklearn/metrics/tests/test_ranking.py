@@ -2449,7 +2449,7 @@ def _dummy_metric_no_sample_weight(y_true, y_pred):
 
 
 def test_metric_at_thresholds_sample_weight_error():
-    """Test `metric_params` raises when `metric_func` does not take `sample_weight`."""
+    """Test `TypeError` is raised when `metric_func` does not take `sample_weight`."""
     y_true = np.array([0, 0, 1, 1, 1])
     y_score = np.array([0.1, 0.4, 0.35, 0.6, 0.9])
     sample_weight = np.array([1, 2, 3, 1, 2])
