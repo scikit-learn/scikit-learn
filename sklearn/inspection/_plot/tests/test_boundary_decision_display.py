@@ -685,9 +685,37 @@ def test_multiclass_colors_cmap(
     else:
         assert_allclose(disp.surface_.colors, colors)
 
-    # non-regression test for issue #32866 (currently still fails)
-    # if hasattr(disp.surface_, "levels"):
-    #    assert len(disp.surface_.levels) >= disp.n_classes
+
+@pytest.mark.parametrize("y", [np.arange(6), [str(i) for i in np.arange(6)]])
+@pytest.mark.parametrize(
+    "response_method, plot_method",
+    [
+        ("decision_function", "contour"),
+        ("predict_proba", "contour"),
+        ("predict", "contour"),
+        ("predict", "contourf"),
+    ],
+)
+def test_multiclass_levels(pyplot, y, response_method, plot_method):
+    # non-regression test for issue #32866
+
+    X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1], [2, 2], [3, 2]])
+
+    clf = LogisticRegression().fit(X, y)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        clf,
+        X,
+        response_method=response_method,
+        plot_method=plot_method,
+    )
+
+    if plot_method == "contour":
+        expected_levels = np.arange(6)
+    else:
+        expected_levels = np.arange(7) - 0.5
+
+    assert_allclose(disp.surface_.levels, expected_levels)
 
 
 # estimator classes for non-regression test cases for issue #33194
