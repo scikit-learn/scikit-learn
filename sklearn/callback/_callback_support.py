@@ -2,9 +2,29 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import copy
+from multiprocessing import Manager
+from threading import Lock
 
 from sklearn.callback._base import Callback
 from sklearn.callback._callback_context import CallbackContext
+
+
+class _CallbackManagerState:
+    manager = None
+    lock = Lock()
+
+
+def get_callback_manager():
+    """Return the global multiprocessing manager dedicated to callbacks.
+
+    The manager is initialized lazily on first access and reused afterwards.
+    """
+    if _CallbackManagerState.manager is None:
+        with _CallbackManagerState.lock:
+            if _CallbackManagerState.manager is None:
+                _CallbackManagerState.manager = Manager()
+
+    return _CallbackManagerState.manager
 
 
 class CallbackSupportMixin:
