@@ -1,0 +1,4 @@
+- Efficiency improvement: :class:`~sklearn.decomposition.FastICA` with
+  ``algorithm='deflation'`` and ``fun='logcosh'`` is now significantly faster
+  due to vectorization.
+  By :user:`Mohammad Ahmadullah Khan <MAUK9086>`.
