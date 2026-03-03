@@ -346,7 +346,8 @@ def _write_estimator_html(
                 and not est_block.names == "passthrough"
                 and is_fitted_css_class == "fitted"
             ):
-                attrs = estimator._get_fitted_attr_html(doc_link)._repr_html_inner()
+                fitted_attrs = estimator._get_fitted_attr_html(doc_link)
+                attrs = fitted_attrs._repr_html_inner() if len(fitted_attrs) > 0 else ""
 
             else:
                 attrs = ""
@@ -416,7 +417,9 @@ def _write_estimator_html(
             and not est_block.names == "passthrough"
             and is_fitted_css_class == "fitted"
         ):
-            attrs = estimator._get_fitted_attr_html(doc_link)._repr_html_inner()
+            fitted_attrs = estimator._get_fitted_attr_html(doc_link)
+            attrs = fitted_attrs._repr_html_inner() if len(fitted_attrs) > 0 else ""
+
         else:
             attrs = ""
 
