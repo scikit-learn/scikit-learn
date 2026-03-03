@@ -1,8 +1,8 @@
 .. _callbacks_api:
 
-=================================
-Developing with the Callbacks API
-=================================
+================================
+Developing with the Callback API
+================================
 
 .. currentmodule:: sklearn.callback
 
