@@ -123,15 +123,15 @@ def _fitted_attr_html_repr(fitted_attributes):
                     "".join(
                         [
                             "array["
-                            + f"{html.escape(str(attr_info['dtype']))}"  # shape
+                            + f"{html.escape(str(attr_info['dtype']))}"
                             + "]"
-                            + f"{html.escape(str(attr_info['shape']))}"  # dtype
+                            + f"{html.escape(str(attr_info['shape']))}"
                         ]
                     ),
-                    _read_fitted_attr(attr_info["value"]),  # value
+                    _read_fitted_attr(attr_info["value"]),
                 )
             else:
-                # Verify order or remove
+                # array-like other than ndarray
                 html_row_values = (
                     (
                         html.escape(str(attr_info["type_name"])),
