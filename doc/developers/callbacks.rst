@@ -23,7 +23,7 @@ are respectively called at the start of the ``fit`` method, at the end of each t
 
 A second protocol, :class:`~_base.AutoPropagatedCallback`, inherits from the first one
 but adds a :meth:`~_base.AutoPropagatedCallback.max_estimator_depth` property. This
-protocol identifies callbacks that can be propagated to sub-estimators when registered
+protocol identifies callbacks that should be propagated to sub-estimators when registered
 to :term:`meta-estimators`.
 
 .. TODO: add a link to an example doc implementing a custom callback.
