@@ -358,8 +358,8 @@ class CallbackContext:
                 ):
                     callback.on_fit_end(estimator, self)
 
-    def propagate_callback_context(self, sub_estimator, clone_estimator=False):
-        """Propagate the callbacks and the context to a sub-estimator.
+    def propagate_callbacks(self, sub_estimator, clone_estimator=False):
+        """Propagate the callbacks to a sub-estimator.
 
         The callbacks are propagated to a clone of the sub-estimator instead if
         clone_estimator is set to True.
@@ -404,6 +404,13 @@ class CallbackContext:
                 cloned_estimator.set_callbacks(sub_estimator._skl_callbacks)
             sub_estimator = cloned_estimator
 
+        # We store the parent context in the sub-estimator to be able to merge the task
+        # trees of the sub-estimator and the meta-estimator. We want to link the task
+        # trees even if there is no callback to propagate, as the sub-estimators might
+        # have non auto-propagated callbacks, which would need to have access to the
+        # whole tree.
+        sub_estimator._parent_callback_ctx = self
+
         callbacks_to_propagate = [
             callback
             for callback in self._callbacks
@@ -423,10 +430,6 @@ class CallbackContext:
                 f"be propagated to this estimator."
             )
             return sub_estimator
-
-        # We store the parent context in the sub-estimator to be able to merge the
-        # task trees of the sub-estimator and the meta-estimator.
-        sub_estimator._parent_callback_ctx = self
 
         sub_estimator.set_callbacks(
             getattr(sub_estimator, "_skl_callbacks", []) + callbacks_to_propagate
@@ -457,7 +460,7 @@ def get_context_path(context):
 
 
 @contextmanager
-def callback_management_context(estimator, fit_method_name):
+def callback_management_context(estimator):
     """Context manager to manage the callback context's teardown for an estimator.
 
     The context manager is also responsible for calling the callback context's
@@ -468,9 +471,6 @@ def callback_management_context(estimator, fit_method_name):
     ----------
     estimator : estimator instance
         The estimator being fitted.
-
-    fit_method_name : str
-        The name of the fit method being called.
 
     Yields
     ------
@@ -503,7 +503,7 @@ def with_callback_context(fit_method):
     """
 
     def callback_managed_fit_method(estimator, *args, **kwargs):
-        with callback_management_context(estimator, fit_method.__name__):
+        with callback_management_context(estimator):
             return fit_method(estimator, *args, **kwargs)
 
     return callback_managed_fit_method
