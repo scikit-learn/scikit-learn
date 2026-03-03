@@ -111,10 +111,10 @@ def _fitted_attr_html_repr(fitted_attributes):
             # Just show the parameter name without link
             fitted_attr_display = html.escape(name)
 
-        if len(attr_info) == 2:  # Attribute is int, str, float
+        if len(attr_info) == 2:
             html_row_values = (
-                html.escape(str(attr_info["type_name"])),  # Type
-                _read_fitted_attr(attr_info["value"]),  # value
+                html.escape(str(attr_info["type_name"])),
+                _read_fitted_attr(attr_info["value"]),  # All the attr info comes here
             )
 
         else:  # fitted attribute type is array-like
