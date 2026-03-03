@@ -133,10 +133,12 @@ def _fitted_attr_html_repr(fitted_attributes):
             else:
                 # array-like other than ndarray
                 html_row_values = (
-                    (
-                        html.escape(str(attr_info["type_name"])),
-                        html.escape(str(attr_info["shape"])),
-                        html.escape(str(attr_info["dtype"])),
+                    "".join(
+                        [
+                            html.escape(str(attr_info["type_name"])),
+                            html.escape(str(attr_info["dtype"])),
+                            html.escape(str(attr_info["shape"])),
+                        ]
                     ),
                     _read_fitted_attr(attr_info["value"]),
                 )
