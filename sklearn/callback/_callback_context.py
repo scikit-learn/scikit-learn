@@ -358,8 +358,14 @@ class CallbackContext:
                 ):
                     callback.on_fit_end(estimator, self)
 
-    def propagate_callbacks(self, sub_estimator, clone_estimator=False):
-        """Propagate the callbacks to a sub-estimator.
+    def propagate_callback_context(self, sub_estimator):
+        """Propagate the context and callbacks to a sub-estimator.
+
+        Only auto-propagated callbacks are propagated to the sub-estimator. An error is
+        raised of the sub-estimator already has auto-propagated callbacks.
+
+        This context is set as an attribute, `_parent_callback_ctx`, of the
+        sub-estimator to be able to merge it with the sub-estimator's context tree.
 
         The callbacks are propagated to a clone of the sub-estimator instead if
         clone_estimator is set to True.
@@ -383,7 +389,6 @@ class CallbackContext:
             for callback in getattr(sub_estimator, "_skl_callbacks", [])
             if isinstance(callback, AutoPropagatedCallback)
         ]
-
         if bad_callbacks:
             raise TypeError(
                 f"The sub-estimator ({sub_estimator.__class__.__name__}) of a"

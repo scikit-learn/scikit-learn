@@ -3,10 +3,10 @@
 
 import sys
 import warnings
-from multiprocessing import Manager
 from threading import Thread
 
 from sklearn.callback._callback_context import get_context_path
+from sklearn.callback._callback_support import get_callback_manager
 from sklearn.utils._optional_dependencies import check_rich_support
 
 
@@ -38,7 +38,7 @@ class ProgressBar:
         self.max_estimator_depth = max_estimator_depth
 
     def on_fit_begin(self, estimator):
-        self._queue = Manager().Queue()
+        self._queue = get_callback_manager().Queue()
         self.progress_monitor = RichProgressMonitor(queue=self._queue)
         self.progress_monitor.start()
 
