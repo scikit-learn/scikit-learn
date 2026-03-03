@@ -6,7 +6,6 @@ from contextlib import closing
 from inspect import isclass
 from io import StringIO
 from pathlib import Path
-from urllib.parse import urlparse
 
 from sklearn import config_context
 
@@ -274,17 +273,6 @@ def _get_visual_block(estimator):
     )
 
 
-def _is_safe_url(url):
-    """Return True only for http/https URLs to prevent javascript: injection."""
-    if not url:
-        return True
-    try:
-        scheme = urlparse(url).scheme
-    except Exception:
-        return False
-    return scheme in ("http", "https")
-
-
 def _write_estimator_html(
     out,
     estimator,
@@ -338,8 +326,6 @@ def _write_estimator_html(
     # `estimator` can also be an instance of `_VisualBlock`
     if hasattr(estimator, "_get_doc_link"):
         doc_link = estimator._get_doc_link()
-        if not _is_safe_url(doc_link):
-            doc_link = ""
     else:
         doc_link = ""
     if est_block.kind in ("serial", "parallel"):

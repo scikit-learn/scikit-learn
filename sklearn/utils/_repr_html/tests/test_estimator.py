@@ -33,7 +33,6 @@ from sklearn.utils._repr_html.base import _HTMLDocumentationLinkMixin
 from sklearn.utils._repr_html.estimator import (
     _get_css_style,
     _get_visual_block,
-    _is_safe_url,
     _write_label_html,
     estimator_html_repr,
 )
@@ -617,24 +616,3 @@ def test_estimator_html_repr_table():
     """Check that we add the table of parameters in the HTML representation."""
     est = LogisticRegression(C=10.0, fit_intercept=False)
     assert "parameters-table" in estimator_html_repr(est)
-
-
-@pytest.mark.parametrize(
-    "url, expected",
-    [
-        # Safe URLs
-        ("https://scikit-learn.org/stable/", True),
-        ("http://scikit-learn.org/stable/", True),
-        ("", True),
-        (None, True),
-        # Unsafe URLs
-        ("javascript:alert(1)", False),
-        ("javascript:alert(document.cookie)", False),
-        ("data:text/html,<script>alert(1)</script>", False),
-        ("vbscript:msgbox(1)", False),
-        ("file:///etc/passwd", False),
-        ("ftp://example.com", False),
-    ],
-)
-def test_is_safe_url(url, expected):
-    assert _is_safe_url(url) == expected
