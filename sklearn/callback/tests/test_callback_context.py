@@ -241,7 +241,9 @@ def test_propagate_callback_context_forwards_callbacks_when_cloning():
     )
     callback = TestingCallback()
     estimator.set_callbacks(callback)
-    cloned_estimator = callback_ctx.propagate_callbacks(estimator, clone_estimator=True)
+    cloned_estimator = callback_ctx.propagate_callback_context(
+        estimator, clone_estimator=True
+    )
     assert cloned_estimator is not estimator
     assert cloned_estimator._skl_callbacks == estimator._skl_callbacks == [callback]
 
@@ -261,4 +263,4 @@ def test_no_clone_warning_with_propagate_callback_context():
         warnings.filterwarnings(
             "error", message="There are callbacks set on the estimator"
         )
-        callback_ctx.propagate_callbacks(estimator, clone_estimator=True)
+        callback_ctx.propagate_callback_context(estimator, clone_estimator=True)

@@ -358,7 +358,7 @@ class CallbackContext:
                 ):
                     callback.on_fit_end(estimator, self)
 
-    def propagate_callback_context(self, sub_estimator):
+    def propagate_callback_context(self, sub_estimator, clone_estimator=False):
         """Propagate the context and callbacks to a sub-estimator.
 
         Only auto-propagated callbacks are propagated to the sub-estimator. An error is
