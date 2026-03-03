@@ -1086,12 +1086,12 @@ def test_calibration_with_non_sample_aligned_fit_param(data):
     )
 
 
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_calibrated_classifier_cv_works_with_large_confidence_scores(
     global_random_seed,
 ):
-    """Test that :class:`CalibratedClassifierCV` works with large confidence
-    scores when using the `sigmoid` method, particularly with the
-    :class:`SGDClassifier`.
+    """Test that CalibratedClassifierCV works with large confidence scores when using
+    the sigmoid method, particularly with the SGDClassifier.
 
     Non-regression test for issue #26766.
     """
@@ -1104,12 +1104,13 @@ def test_calibrated_classifier_cv_works_with_large_confidence_scores(
 
     # Check that the decision function of SGDClassifier produces predicted
     # values that are quite large, for the data under consideration.
-    cv = check_cv(cv=None, y=y, classifier=True)
+    clf = SGDClassifier(loss="squared_hinge", tol=1e-2, random_state=global_random_seed)
+    cv = check_cv(cv=3, y=y, classifier=True)
     indices = cv.split(X, y)
     for train, test in indices:
         X_train, y_train = X[train], y[train]
         X_test = X[test]
-        sgd_clf = SGDClassifier(loss="squared_hinge", random_state=global_random_seed)
+        sgd_clf = clone(clf)
         sgd_clf.fit(X_train, y_train)
         predictions = sgd_clf.decision_function(X_test)
         assert (predictions > 1e4).any()
@@ -1117,22 +1118,15 @@ def test_calibrated_classifier_cv_works_with_large_confidence_scores(
     # Compare the CalibratedClassifierCV using the sigmoid method with the
     # CalibratedClassifierCV using the isotonic method. The isotonic method
     # is used for comparison because it is numerically stable.
-    clf_sigmoid = CalibratedClassifierCV(
-        SGDClassifier(loss="squared_hinge", random_state=global_random_seed),
-        method="sigmoid",
-    )
+    clf_sigmoid = CalibratedClassifierCV(clone(clf), method="sigmoid")
     score_sigmoid = cross_val_score(clf_sigmoid, X, y, scoring="roc_auc")
 
-    # The isotonic method is used for comparison because it is numerically
-    # stable.
-    clf_isotonic = CalibratedClassifierCV(
-        SGDClassifier(loss="squared_hinge", random_state=global_random_seed),
-        method="isotonic",
-    )
+    # The isotonic method is used for comparison because it is numerically stable.
+    clf_isotonic = CalibratedClassifierCV(clone(clf), method="isotonic")
     score_isotonic = cross_val_score(clf_isotonic, X, y, scoring="roc_auc")
 
-    # The AUC score should be the same because it is invariant under
-    # strictly monotonic conditions
+    # The AUC score should be the same because it is invariant under strictly monotonic
+    # conditions
     assert_allclose(score_sigmoid, score_isotonic)
 
 
