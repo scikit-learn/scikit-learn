@@ -5,7 +5,7 @@
 
 import numpy as np
 from scipy.special import expit as logistic_sigmoid
-from scipy.special import xlogy
+from scipy.special import log_expit, log_softmax, xlogy
 
 
 def inplace_identity(X):
@@ -77,6 +77,41 @@ def inplace_softmax(X):
     X /= X.sum(axis=1)[:, np.newaxis]
 
 
+def inplace_softmin(X):
+    """Compute the softmax function of the negated input inplace.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        The input data.
+    """
+    tmp = -X + X.min(axis=1)[:, np.newaxis]
+    np.exp(tmp, out=X)
+    X /= X.sum(axis=1)[:, np.newaxis]
+
+
+def inplace_log_sigmoid(X):
+    """Compute the logarithm of the sigmoid function inplace.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        The input data.
+    """
+    X[:] = log_expit(X)
+
+
+def inplace_log_softmax(X):
+    """Compute the logarithm of the softmax function inplace.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        The input data.
+    """
+    X[:] = log_softmax(X, axis=1)
+
+
 ACTIVATIONS = {
     "identity": inplace_identity,
     "exp": inplace_exp,
@@ -84,6 +119,9 @@ ACTIVATIONS = {
     "logistic": inplace_logistic,
     "relu": inplace_relu,
     "softmax": inplace_softmax,
+    "softmin": inplace_softmin,
+    "log_sigmoid": inplace_log_sigmoid,
+    "log_softmax": inplace_log_softmax,
 }
 
 
@@ -284,4 +322,223 @@ LOSS_FUNCTIONS = {
     "poisson": poisson_loss,
     "log_loss": log_loss,
     "binary_log_loss": binary_log_loss,
+}
+
+
+def zeros(d, h, **kwargs):
+    """Initialize weights to all zeros.
+
+    Parameters
+    ----------
+    d : int
+        Number of input features (fan_in).
+    h : int
+        Number of output units (fan_out).
+
+    Returns
+    -------
+    W : ndarray of shape (h, d)
+        The initialized weight matrix filled with zeros.
+    """
+    return np.zeros((h, d))
+
+
+def uniform(d, h, *, rng, **kwargs):
+    """Sample weights from a uniform distribution over `[0, 1)`.
+
+    Parameters
+    ----------
+    d : int
+        Number of input features (fan_in).
+    h : int
+        Number of output units (fan_out).
+    rng : numpy.random.Generator
+        Random number generator.
+
+    Returns
+    -------
+    W : ndarray of shape (h, d)
+        The initialized weight matrix sampled from a uniform distribution
+        over [0, 1).
+    """
+    return rng.uniform(0, 1, (h, d))
+
+
+def he_uniform(d, h, *, rng, **kwargs):
+    """He uniform initialization.
+
+    Sample weights from a uniform distribution
+    over `[-limit, limit]` with `limit = sqrt(6 / fan_in)`.
+
+    Parameters
+    ----------
+    d : int
+        Number of input features (fan_in).
+    h : int
+        Number of output units (fan_out).
+    rng : numpy.random.Generator
+        Random number generator.
+
+    Returns
+    -------
+    W : ndarray of shape (h, d)
+        The initialized weight matrix.
+    """
+    limit = np.sqrt(6 / d)
+    return rng.uniform(-limit, limit, (h, d))
+
+
+def lecun_uniform(d, h, *, rng, **kwargs):
+    """LeCun uniform initialization.
+
+    Sample weights from a uniform distribution
+    over `[-limit, limit]` with `limit = sqrt(3 / fan_in)`.
+
+    Parameters
+    ----------
+    d : int
+        Number of input features (fan_in).
+    h : int
+        Number of output units (fan_out).
+    rng : numpy.random.Generator
+        Random number generator.
+
+    Returns
+    -------
+    W : ndarray of shape (h, d)
+        The initialized weight matrix.
+    """
+    limit = np.sqrt(3 / d)
+    return rng.uniform(-limit, limit, (h, d))
+
+
+def glorot_uniform(d, h, *, rng, **kwargs):
+    """Glorot/Xavier uniform initialization.
+
+    Sample weights from a uniform distribution
+    over `[-limit, limit]` with `limit = sqrt(3 / fan_avg)`.
+
+    Parameters
+    ----------
+    d : int
+        Number of input features (fan_in).
+    h : int
+        Number of output units (fan_out).
+    rng : numpy.random.Generator
+        Random number generator.
+
+    Returns
+    -------
+    W : ndarray of shape (h, d)
+        The initialized weight matrix.
+    """
+    fan_avg = 0.5 * (d + h)
+    limit = np.sqrt(3 / fan_avg)
+    return rng.uniform(-limit, limit, (h, d))
+
+
+def normal(d, h, *, rng, **kwargs):
+    """Sample weights from a normal (Gaussian) distribution
+    with mean 0 and standard deviation 1.
+
+    Parameters
+    ----------
+    d : int
+        Number of input features (fan_in).
+    h : int
+        Number of output units (fan_out).
+    rng : numpy.random.Generator
+        Random number generator.
+
+    Returns
+    -------
+    W : ndarray of shape (h, d)
+        The initialized weight matrix sampled from a standard normal distribution.
+    """
+    return rng.normal(0, 1, (h, d))
+
+
+def he_normal(d, h, *, rng, **kwargs):
+    """He normal initialization.
+
+    Sample weights from a normal (Gaussian) distribution
+    with mean 0 and standard deviation `sqrt(2 / fan_in)`.
+
+    Parameters
+    ----------
+    d : int
+        Number of input features (fan_in).
+    h : int
+        Number of output units (fan_out).
+    rng : numpy.random.Generator
+        Random number generator.
+
+    Returns
+    -------
+    W : ndarray of shape (h, d)
+        The initialized weight matrix.
+    """
+    var = np.sqrt(2 / d)
+    return rng.normal(0, var, (h, d))
+
+
+def lecun_normal(d, h, *, rng, **kwargs):
+    """LeCun normal initialization.
+
+    Sample weights from a normal (Gaussian) distribution
+    with mean 0 and standard deviation `1 / sqrt(fan_in)`.
+
+    Parameters
+    ----------
+    d : int
+        Number of input features (fan_in).
+    h : int
+        Number of output units (fan_out).
+    rng : numpy.random.Generator
+        Random number generator.
+
+    Returns
+    -------
+    W : ndarray of shape (h, d)
+        The initialized weight matrix.
+    """
+    var = 1 / np.sqrt(d)
+    return rng.normal(0, var, (h, d))
+
+
+def glorot_normal(d, h, *, rng, **kwargs):
+    """Glorot/Xavier normal initialization.
+
+    Sample weights from a normal (Gaussian) distribution
+    with mean 0 and standard deviation `sqrt(1 / fan_avg)`.
+
+    Parameters
+    ----------
+    d : int
+        Number of input features (fan_in).
+    h : int
+        Number of output units (fan_out).
+    rng : numpy.random.Generator
+        Random number generator.
+
+    Returns
+    -------
+    W : ndarray of shape (h, d)
+        The initialized weight matrix.
+    """
+    fan_avg = 0.5 * (d + h)
+    var = np.sqrt(1 / fan_avg)
+    return rng.normal(0, var, (h, d))
+
+
+WEIGHTS = {
+    "zeros": zeros,
+    "uniform": uniform,
+    "normal": normal,
+    "he_uniform": he_uniform,
+    "lecun_uniform": lecun_uniform,
+    "glorot_uniform": glorot_uniform,
+    "he_normal": he_normal,
+    "lecun_normal": lecun_normal,
+    "glorot_normal": glorot_normal,
 }
