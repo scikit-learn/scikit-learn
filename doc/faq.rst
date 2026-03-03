@@ -134,6 +134,7 @@ do structured prediction:
 
 Why did you remove HMMs from scikit-learn?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+HMMs and other graphical models require a different API structure than the standard scikit-learn estimator pattern. For more technical details on this design decision,
 See :ref:`adding_graphical_models`.
 
 
