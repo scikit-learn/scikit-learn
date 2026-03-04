@@ -34,6 +34,7 @@ from sklearn.model_selection._split import (
     StratifiedKFold,
     StratifiedShuffleSplit,
     TimeSeriesSplit,
+    RollingTimeSeriesSplit,
     check_cv,
     train_test_split,
 )
@@ -81,6 +82,7 @@ __all__ = [
     "StratifiedKFold",
     "StratifiedShuffleSplit",
     "TimeSeriesSplit",
+    "RollingTimeSeriesSplit",
     "TunedThresholdClassifierCV",
     "ValidationCurveDisplay",
     "check_cv",

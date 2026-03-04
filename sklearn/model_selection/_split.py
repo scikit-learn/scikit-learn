@@ -18,6 +18,8 @@ from math import ceil, floor
 import numpy as np
 from scipy.special import comb
 
+from sklearn.model_selection import BaseCrossValidator
+
 from sklearn.utils import (
     _safe_indexing,
     check_random_state,
@@ -1319,6 +1321,134 @@ class TimeSeriesSplit(_BaseKFold):
                     indices[test_start : test_start + test_size],
                 )
 
+
+class RollingTimeSeriesSplit(BaseCrossValidator):
+    """Rolling Window Cross-Validator.
+
+    Provides train/test indices to split time-series data using a fixed-size
+    sliding window. Unlike the standard TimeSeriesSplit, this class:
+    1. Uses fixed `train_size` and `test_size` instead of `n_splits`.
+    2. Is right-aligned (anchored to the end of the dataset) to prioritize
+       recent data.
+    3. Adds any historical remainder (data too old to fit a full block)
+       to the first training set.
+
+    Parameters
+    ----------
+    train_size : int
+        Size of the training set in each split.
+
+    test_size : int
+        Size of the test set in each split.
+
+    step_size : int, optional
+        Number of samples to shift the window between splits.
+        - If None, defaults to `train_size` (resulting in disjoint training
+          sets).
+        - If equal to `test_size`, results in a standard rolling window where
+          the test set of split N becomes part of the train set of split N+1.
+
+    gap : int, default=0
+        Number of samples to exclude from the end of each train set before
+        the test set.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.model_selection import RollingTimeSeriesSplit
+    >>> X = np.arange(14)
+    >>> # User case: Train=4, Test=1, Disjoint (step=4)
+    >>> cv = RollingTimeSeriesSplit(train_size=4, test_size=1, step_size=4)
+    >>> for i, (train, test) in enumerate(cv.split(X)):
+    ...     print(f"Split {i}: Train={train}, Test={test}")
+    Split 0: Train=[0 1 2 3 4], Test=[5]
+    Split 1: Train=[5 6 7 8], Test=[9]
+    Split 2: Train=[9 10 11 12], Test=[13]
+    """
+
+    def __init__(self, train_size, test_size, step_size=None, gap=0):
+        self.train_size = train_size
+        self.test_size = test_size
+        self.step_size = step_size
+        self.gap = gap
+
+    def get_n_splits(self, X=None, y=None, groups=None):
+        """Returns the number of splitting iterations in the cross-validator."""
+        if X is None:
+            raise ValueError(
+                "The 'X' parameter is required to calculate n_splits."
+            )
+
+        n_samples = _num_samples(X)
+
+        # Default step to train_size for disjoint behavior if not specified
+        step = (
+            self.step_size
+            if self.step_size is not None
+            else self.train_size
+        )
+
+        # Minimal size required for one split
+        min_len = self.train_size + self.gap + self.test_size
+
+        if n_samples < min_len:
+            return 0
+
+        # Calculation: (Total - First_Window_Size) // Step + 1
+        # This accounts for the fixed window sliding from the end.
+        return (n_samples - min_len) // step + 1
+
+    def split(self, X, y=None, groups=None):
+        """Generate indices to split data into training and test set."""
+        X, y, groups = indexable(X, y, groups)
+        n_samples = _num_samples(X)
+        indices = np.arange(n_samples)
+
+        step = (
+            self.step_size
+            if self.step_size is not None
+            else self.train_size
+        )
+        gap = self.gap
+
+        n_splits = self.get_n_splits(X, y, groups)
+
+        if n_splits <= 0:
+            raise ValueError(
+                f"n_samples={n_samples} is too small for the "
+                "given parameters."
+            )
+
+        # --- Right-Alignment Logic ---
+
+        # 1. Total length covered by the structured splits (perfect blocks)
+        #    Length = One_Block + (N_Splits - 1) * Step
+        block_len = self.train_size + gap + self.test_size
+        total_covered = block_len + (n_splits - 1) * step
+
+        # 2. The remainder is the indices at the start that don't fit a
+        # full step
+        remainder = n_samples - total_covered
+
+        # 3. Generate splits forward
+        for i in range(n_splits):
+            # Calculate theoretical start based on step
+            base_start = remainder + (i * step)
+
+            if i == 0:
+                # The first split absorbs the remainder (history extension)
+                train_start = 0
+            else:
+                train_start = base_start
+
+            # End of train is always relative to base_start to maintain fixed
+            # size (except for the first split which is effectively larger)
+            train_end = base_start + self.train_size
+
+            test_start = train_end + gap
+            test_end = test_start + self.test_size
+
+            yield indices[train_start:train_end], indices[test_start:test_end]
 
 class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
     """Leave One Group Out cross-validator.

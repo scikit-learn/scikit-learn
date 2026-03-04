@@ -30,6 +30,7 @@ from sklearn.model_selection import (
     StratifiedKFold,
     StratifiedShuffleSplit,
     TimeSeriesSplit,
+    RollingTimeSeriesSplit,
     check_cv,
     cross_val_score,
     train_test_split,
@@ -917,9 +918,9 @@ def test_stratified_shuffle_split_even():
         bf = stats.binom(n_splits, p)
         for count in idx_counts:
             prob = bf.pmf(count)
-            assert prob > threshold, (
-                "An index is not drawn with chance corresponding to even draws"
-            )
+            assert (
+                prob > threshold
+            ), "An index is not drawn with chance corresponding to even draws"
 
     for n_samples in (6, 22):
         groups = np.array((n_samples // 2) * [0, 1])
@@ -2132,3 +2133,104 @@ def test_stratified_splitter_without_y(cv):
     msg = "missing 1 required positional argument: 'y'"
     with pytest.raises(TypeError, match=msg):
         cv.split(X)
+
+
+def test_rolling_time_series_split_basics():
+    """Test standard disjoint behavior of RollingTimeSeriesSplit."""
+    X = np.arange(14)
+    # Train=4, Test=1. Default step=4 (disjoint).
+    # Logic: 14 samples.
+    # Block size = 5 (4 train + 1 test).
+    # Fits 2 full blocks (indices 4-8, 9-13).
+    # Remainder logic: The first block absorbs the history.
+
+    cv = RollingTimeSeriesSplit(train_size=4, test_size=1)
+    splits = list(cv.split(X))
+
+    assert len(splits) == 3
+
+    # Split 0: Absorbs remainder (14 - 13 used = 1 remainder).
+    # Train normal (4) + Remainder (1) = 5.
+    assert_array_equal(splits[0][0], [0, 1, 2, 3, 4])
+    assert_array_equal(splits[0][1], [5])
+
+    # Split 1: Disjoint strict
+    assert_array_equal(splits[1][0], [5, 6, 7, 8])
+    assert_array_equal(splits[1][1], [9])
+
+    # Split 2: Anchored to end
+    assert_array_equal(splits[2][0], [9, 10, 11, 12])
+    assert_array_equal(splits[2][1], [13])
+
+
+def test_rolling_time_series_split_overlap():
+    """Test overlapping windows with explicit step_size."""
+    X = np.arange(10)
+    # Train=3, Test=1, Step=1 (High overlap)
+    cv = RollingTimeSeriesSplit(train_size=3, test_size=1, step_size=1)
+    splits = list(cv.split(X))
+
+    # Min length = 4. 10 - 4 = 6 steps possible + 1 initial = 7 splits.
+    assert len(splits) == 7
+
+    # Check last split (Right aligned)
+    assert_array_equal(splits[-1][0], [6, 7, 8])
+    assert_array_equal(splits[-1][1], [9])
+
+    # Check previous split
+    assert_array_equal(splits[-2][0], [5, 6, 7])
+    assert_array_equal(splits[-2][1], [8])
+
+
+def test_rolling_time_series_split_gap():
+    """Test gap parameter with RollingTimeSeriesSplit."""
+    X = np.arange(10)
+    # Train=2, Gap=2, Test=1. Total block = 5. Step default=2.
+    cv = RollingTimeSeriesSplit(train_size=2, test_size=1, gap=2, step_size=2)
+    splits = list(cv.split(X))
+
+    # Expected:
+    # Last split: Test=[9]. Gap=[7,8]. Train=[5,6].
+    # Prev split: Test=[7]. Gap=[5,6]. Train=[3,4].
+    # First split: Test=[5]. Gap=[3,4]. Train=[0,1,2] (Absorbs remainder of 1).
+
+    assert len(splits) == 3
+
+    # Check last split
+    assert_array_equal(splits[-1][0], [5, 6])
+    assert_array_equal(splits[-1][1], [9])
+
+    # Check first split (remainder handling)
+    assert_array_equal(splits[0][0], [0, 1, 2])
+    assert_array_equal(splits[0][1], [5])
+
+
+def test_rolling_time_series_split_validation():
+    """Test input validation for RollingTimeSeriesSplit."""
+    X = np.arange(5)
+
+    # Error: Data too small
+    with pytest.raises(ValueError, match="too small"):
+        cv = RollingTimeSeriesSplit(train_size=10, test_size=1)
+        next(cv.split(X))
+
+    # Error: Step size 0 or negative (if not handled by init, check split)
+    # Assuming step_size must be positive if implemented in check_cv or logic
+    # This depends on your implementation details, but usually good to check.
+
+
+def test_rolling_time_series_split_compatibility():
+    """Check compatibility with generic scikit-learn utilities."""
+    X = np.random.randn(20, 2)
+    y = np.random.randint(0, 2, 20)
+
+    cv = RollingTimeSeriesSplit(train_size=10, test_size=5)
+
+    # Should work with cross_val_score
+    scores = cross_val_score(DummyClassifier(), X, y, cv=cv)
+    assert len(scores) > 0
+
+    # Should work with check_cv (generic validator)
+    # Note: check_cv calls split(), so this validates API conformance
+    cv_checked = check_cv(cv, y, classifier=True)
+    assert cv_checked is cv
