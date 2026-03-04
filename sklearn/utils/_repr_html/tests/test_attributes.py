@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
@@ -62,3 +64,78 @@ def test_pandas_column_names():
     model.fit(X, y)
 
     assert_array_equal(model.feature_names_in_, np.array(["A", "B", "C"], dtype=object))
+
+
+def test_pandas_series_fitted_attr():
+    pd = pytest.importorskip("pandas")
+    fitted_attrs_with_series = AttrsDict(
+        fitted_attrs={
+            "new_": {
+                "type_name": "Series",
+                "shape": (3,),
+                "dtype": np.dtype("int64"),
+                "value": pd.Series({"a": 1, "b": 2, "c": 3}),
+            }
+        }
+    )
+    html_fitted_attr_out = _fitted_attr_html_repr(fitted_attrs_with_series)
+    expected_html_fitted_attr = (
+        r'<div class="estimator-table">'
+        r"\s*<details>"
+        r"\s*<summary>Fitted attributes</summary>"
+        r'\s*<table class="parameters-table">'
+        r"\s*<tbody>"
+        r"\s*<tr>"
+        r"\s*<th>Name</th>"
+        r"\s*<th>Type</th>"
+        r"\s*<th>Value</th>"
+        r"\s*</tr>"
+        r'\s*<tr class="default">'
+        r'\s*<td class="param">'
+        r'\s*<a class="param-doc-link" style="text-decoration:none;">new_</a>'
+        r"\s*</td>"
+        r'\s*<td class="fitted-att-type">Series\[int64\]\(3,\)</td>'
+        r"\s*<td>a\s*1\s*b\s*2...3\s*dtype:\s*int64</td>"
+        r"\s*</tr>"
+        r"\s*</tbody>"
+        r"\s*</table>"
+        r"\s*</details>"
+        r"\s*</div>"
+    )
+    assert re.search(expected_html_fitted_attr, html_fitted_attr_out, flags=re.DOTALL)
+
+
+def test_numpy_fitted_attr():
+    html_fitted_attr_out = _fitted_attr_html_repr(fitted_attrs)
+
+    expected_html_fitted_attr = (
+        r'<div class="estimator-table">'
+        r"\s*<details>"
+        r"\s*<summary>Fitted attributes</summary>"
+        r'\s*<table class="parameters-table">'
+        r"\s*<tbody>"
+        r"\s*<tr>"
+        r"\s*<th>Name</th>"
+        r"\s*<th>Type</th>"
+        r"\s*<th>Value</th>"
+        r"\s*</tr>"
+        r'\s*<tr class="default">'
+        r'\s*<td class="param">'
+        r'\s*<a class="param-doc-link" style="text-decoration:none;">a</a>'
+        r"\s*</td>"
+        r'\s*<td class="fitted-att-type">int</td>'
+        r"\s*<td>6</td>"
+        r"\s*</tr>"
+        r'\s*<tr class="default">'
+        r'\s*<td class="param">'
+        r'\s*<a class="param-doc-link" style="text-decoration:none;">b</a>'
+        r"\s*</td>"
+        r'\s*<td class="fitted-att-type">array\[float64\]\(1,\)</td>'
+        r"\s*<td>8</td>"
+        r"\s*</tr>"
+        r"\s*</tbody>"
+        r"\s*</table>"
+        r"\s*</details>"
+        r"\s*</div>"
+    )
+    assert re.search(expected_html_fitted_attr, html_fitted_attr_out, flags=re.DOTALL)

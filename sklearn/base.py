@@ -36,7 +36,6 @@ from sklearn.utils.fixes import _IS_32BIT
 from sklearn.utils.validation import (
     _check_feature_names_in,
     _generate_get_feature_names_out,
-    _is_arraylike_not_scalar,
     _is_fitted,
     check_array,
     check_is_fitted,
@@ -357,7 +356,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         }
         fitted_attr_out = {}
         for name, value in fitted_attributes.items():
-            if _is_arraylike_not_scalar(value) and hasattr(value, "shape"):
+            if hasattr(value, "shape") and hasattr(value, "dtype"):
                 fitted_attr_out[name] = {
                     "type_name": type(value).__name__,
                     "shape": value.shape,
