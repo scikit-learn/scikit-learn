@@ -1,0 +1,4 @@
+- :class:`feature_extraction.image.extract_patches_2d` and
+  :class:`feature_extraction.image.reconstruct_from_patches_2d` now can manage
+  extracted patches at different strides with the `stride` parameter.
+  By :user:`Victor Martin <REDVM>`.
