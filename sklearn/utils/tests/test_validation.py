@@ -2269,10 +2269,6 @@ def test_column_or_1d():
                 column_or_1d(y)
 
 
-@pytest.mark.skipif(
-    not hasattr(__import__("pandas"), "StringDtype"),
-    reason="StringDtype not available in this pandas version",
-)
 def test_column_or_1d_with_pandas_string_dtype():
     """Regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/33383
@@ -2281,6 +2277,8 @@ def test_column_or_1d_with_pandas_string_dtype():
     which is the default dtype for string columns in pandas 3.
     """
     pd = pytest.importorskip("pandas")
+    if not hasattr(pd, "StringDtype"):
+        pytest.skip("StringDtype not available in this pandas version")
     df = pd.DataFrame({"y": ["a", "b", "a", "c"]})
     s = df["y"]
     result = column_or_1d(s, dtype=s.dtype)
