@@ -49,6 +49,8 @@ cdef class DensePartitioner:
         self.missing_values_in_feature_mask = missing_values_in_feature_mask
         buffer_size = samples.size * max(samples.itemsize, feature_values.itemsize)
         self.swap_buffer = np.empty(buffer_size, dtype=np.uint8)
+        # TODO - optim: we could make `swap_array_slices` always pick the smallest side
+        # to get copied in the buffer, which would allow to use a buffer twice smaller.
 
     cdef inline void init_node_split(self, intp_t start, intp_t end) noexcept nogil:
         """Initialize splitter at the beginning of node_split."""
