@@ -18,8 +18,6 @@ from math import ceil, floor
 import numpy as np
 from scipy.special import comb
 
-from sklearn.model_selection import BaseCrossValidator
-
 from sklearn.utils import (
     _safe_indexing,
     check_random_state,
@@ -50,6 +48,7 @@ __all__ = [
     "PredefinedSplit",
     "RepeatedKFold",
     "RepeatedStratifiedKFold",
+    "RollingTimeSeriesSplit",
     "ShuffleSplit",
     "StratifiedGroupKFold",
     "StratifiedKFold",
