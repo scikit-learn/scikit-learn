@@ -1524,3 +1524,15 @@ def test_probability_raises_futurewarning(Estimator, name, probability):
     X, y = make_classification()
     with pytest.warns(FutureWarning, match="probability.+parameter.+deprecated"):
         Estimator(probability=probability).fit(X, y)
+
+
+@pytest.mark.parametrize("est", [svm.SVC, svm.NuSVC])
+def test_svc_nusvc_probA_probB_deprecated(est):
+    """Test that accessing probA_ and probB_ raises FutureWarning for SVC and NuSVC."""
+    X, y = make_classification(n_samples=50, n_informative=5, random_state=0)
+    with pytest.warns(FutureWarning, match="probability.+parameter.+deprecated"):
+        est = est(probability=True).fit(X, y)
+    with pytest.warns(DeprecationWarning, match="Attribute `probA_` was deprecated"):
+        _ = est.probA_
+    with pytest.warns(DeprecationWarning, match="Attribute `probB_` was deprecated"):
+        _ = est.probB_

@@ -22,6 +22,7 @@ from sklearn.utils import (
     check_random_state,
     column_or_1d,
     compute_class_weight,
+    deprecated,
 )
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.extmath import safe_sparse_dot
@@ -783,6 +784,11 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         return np.asarray(y, dtype=np.float64, order="C")
 
+    @deprecated(
+        "Attribute `probA_` was deprecated in version 1.10 and will be removed in "
+        "1.11 as the `probability=True` option for SVC and NuSVC was deprecated "
+        "and will be removed in 1.11."
+    )
     def decision_function(self, X):
         """Evaluate the decision function for the samples in X.
 
@@ -889,7 +895,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         datasets.
         """
         X = self._validate_for_predict(X)
-        if self.probA_.size == 0 or self.probB_.size == 0:
+        if self._probA.size == 0 or self._probB.size == 0:
             raise NotFittedError(
                 "predict_proba is not available when fitted with probability=False"
             )
@@ -1006,6 +1012,11 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         return coef
 
+    @deprecated(
+        "Attribute `probA_` was deprecated in version 1.10 and will be removed in "
+        "1.11 as the `probability=True` option for SVC and NuSVC was deprecated "
+        "and will be removed in 1.11."
+    )
     @property
     def probA_(self):
         """Parameter learned in Platt scaling when `probability=True`.
@@ -1016,6 +1027,11 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         """
         return self._probA
 
+    @deprecated(
+        "Attribute `probB_` was deprecated in version 1.10 and will be removed in "
+        "1.11 as the `probability=True` option for SVC and NuSVC was deprecated "
+        "and will be removed in 1.11."
+    )
     @property
     def probB_(self):
         """Parameter learned in Platt scaling when `probability=True`.
