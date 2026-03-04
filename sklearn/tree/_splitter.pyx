@@ -413,7 +413,7 @@ cdef inline int node_split_best(
             p = start
 
             while p < end:
-                partitioner.next_p(&p_prev, &p)
+                partitioner.next_p(&p_prev, &p, missing_go_to_left)
                 if p == end:
                     continue
 
@@ -461,7 +461,7 @@ cdef inline int node_split_best(
                             feature_values[p_prev] / 2.0 + feature_values[p] / 2.0
                         )
 
-                    # if there are no missing values in the training data, during
+                    # If there are no missing values in the training data, during
                     # test time, we send missing values to the branch that contains
                     # the most samples during training time.
                     if n_missing == 0:

@@ -49,7 +49,8 @@ cdef const float32_t FEATURE_THRESHOLD = 1e-7
 #     cdef void next_p(
 #         self,
 #         intp_t* p_prev,
-#         intp_t* p
+#         intp_t* p,
+#         bint missing_go_to_left
 #     ) noexcept nogil
 #     cdef intp_t partition_samples(
 #         self,
@@ -73,12 +74,6 @@ cdef class DensePartitioner:
     cdef intp_t end
     cdef intp_t n_missing
     cdef const uint8_t[::1] missing_values_in_feature_mask
-    # Whether missing values are currently stored on the left or the right
-    # of the feature_values array: the splitter is assumed to always first
-    # call partioner.sort_samples_and_feature_values that moves all missing
-    # values to the right and subsequently call shift_missing_to_the_left
-    # that moves them all to the left.
-    cdef bint missing_on_the_left
     cdef char[::1] swap_buffer
 
     cdef void sort_samples_and_feature_values(
@@ -99,7 +94,8 @@ cdef class DensePartitioner:
     cdef void next_p(
         self,
         intp_t* p_prev,
-        intp_t* p
+        intp_t* p,
+        bint missing_go_to_left
     ) noexcept nogil
     cdef intp_t partition_samples(
         self,
@@ -153,7 +149,8 @@ cdef class SparsePartitioner:
     cdef void next_p(
         self,
         intp_t* p_prev,
-        intp_t* p
+        intp_t* p,
+        bint missing_go_to_left
     ) noexcept nogil
     cdef intp_t partition_samples(
         self,
