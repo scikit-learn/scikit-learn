@@ -638,7 +638,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
             n_samples_per_group = np.bincount(group_idx)
 
             # Distribute the most frequent groups first
-            indices = np.argsort(n_samples_per_group)[::-1]
+            indices = np.argsort(n_samples_per_group, kind="stable")[::-1]
             n_samples_per_group = n_samples_per_group[indices]
 
             # Total weight of each fold
@@ -1063,7 +1063,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
         # Stable sort to keep shuffled order for groups with the same
         # class distribution variance
         sorted_groups_idx = np.argsort(
-            -np.std(y_counts_per_group, axis=1), kind="mergesort"
+            -np.std(y_counts_per_group, axis=1), kind="stable"
         )
 
         for group_idx in sorted_groups_idx:
@@ -2365,7 +2365,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         # Find the sorted list of instances for each class:
         # (np.unique above performs a sort, so code is O(n logn) already)
         class_indices = np.split(
-            np.argsort(y_indices, kind="mergesort"), np.cumsum(class_counts)[:-1]
+            np.argsort(y_indices, kind="stable"), np.cumsum(class_counts)[:-1]
         )
 
         rng = check_random_state(self.random_state)
