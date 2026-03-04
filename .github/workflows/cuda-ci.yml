@@ -25,7 +25,7 @@ jobs:
           CIBW_BUILD_VERBOSITY: 1
           CIBW_ARCHS: x86_64
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: cibw-wheels
           path: ./wheelhouse/*.whl
@@ -40,7 +40,7 @@ jobs:
     timeout-minutes: 20
     name: Run Array API unit tests
     steps:
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           pattern: cibw-wheels
           path: ~/dist
