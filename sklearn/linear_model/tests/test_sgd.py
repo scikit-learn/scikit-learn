@@ -2381,3 +2381,20 @@ def test_sgd_oneclass_partial_fit_zero_sample_weight_is_noop():
     assert_array_equal(clf.coef_, coef_before)
     assert_array_equal(clf.offset_, offset_before)
     assert clf.t_ == t_before
+
+
+def test_sgd_regressor_partial_fit_zero_weight_first_call():
+    """partial_fit with all-zero sample_weight on first call.
+
+    Should initialize model state but not train.
+    Non-regression test for gh-33436 (first-call edge case).
+    """
+    X, y = datasets.make_classification(n_samples=40, random_state=1)
+
+    reg = SGDRegressor(random_state=0)
+    reg.partial_fit(X[:10], y[:10].astype(float), sample_weight=np.zeros(10))
+
+    # Model should be initialized but untrained
+    assert hasattr(reg, "coef_")
+    assert hasattr(reg, "t_")
+    assert reg.t_ == 1.0
