@@ -1,0 +1,5 @@
+- Fixed a :class:`cluster.HDBSCAN` crash (``TypeError``) when
+  ``cluster_selection_epsilon`` is set and the input data contains tied
+  distances. The fix ensures correct scalar extraction from NumPy structured
+  array lookups in ``traverse_upwards``.
+  By :user:`Fadi Younes <repeating>`.

@@ -603,3 +603,50 @@ def test_hdbscan_default_copy_warning():
     with pytest.warns(FutureWarning, match=msg):
         hdb = HDBSCAN(min_cluster_size=20)
         hdb.fit(X)
+
+
+def test_hdbscan_cluster_selection_epsilon_with_tied_distances():
+    """HDBSCAN should not crash when cluster_selection_epsilon is set
+    and the input contains tied distances.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/33219
+    """
+    X = np.array(
+        [
+            [0.0, 0.0144, 0.0146, 0.0184, 0.2028,
+             1e-06, 0.0146, 0.0109, 0.0238, 0.0289, 0.0293],
+            [0.0144, 0.0, 0.0301, 0.0341, 0.2174,
+             0.0185, 0.0301, 0.0261, 0.0444, 0.0499, 0.0506],
+            [0.0146, 0.0301, 0.0, 0.0225, 0.2285,
+             0.0188, 0.0225, 0.0147, 0.0292, 0.0345, 0.0349],
+            [0.0184, 0.0341, 0.0225, 0.0, 0.2289,
+             0.0238, 0.0035, 0.0148, 1e-06, 0.0045, 0.0046],
+            [0.2028, 0.2174, 0.2285, 0.2289, 0.0,
+             0.2062, 0.2208, 0.2293, 0.2397, 0.2300, 0.2553],
+            [1e-06, 0.0185, 0.0188, 0.0238, 0.2062,
+             0.0, 0.0188, 0.0140, 0.0238, 0.0289, 0.0293],
+            [0.0146, 0.0301, 0.0225, 0.0035, 0.2208,
+             0.0188, 0.0, 0.0186, 0.0045, 0.0091, 0.0092],
+            [0.0109, 0.0261, 0.0147, 0.0148, 0.2293,
+             0.0140, 0.0186, 0.0, 0.0191, 0.0242, 0.0244],
+            [0.0238, 0.0444, 0.0292, 1e-06, 0.2397,
+             0.0238, 0.0045, 0.0191, 0.0, 0.0045, 0.0046],
+            [0.0289, 0.0499, 0.0345, 0.0045, 0.2300,
+             0.0289, 0.0091, 0.0242, 0.0045, 0.0, 0.0092],
+            [0.0293, 0.0506, 0.0349, 0.0046, 0.2553,
+             0.0293, 0.0092, 0.0244, 0.0046, 0.0092, 0.0],
+        ]
+    )
+    hdb = HDBSCAN(
+        min_cluster_size=5,
+        min_samples=1,
+        metric="precomputed",
+        copy=True,
+        allow_single_cluster=True,
+        cluster_selection_epsilon=0.015,
+    )
+    # Should not raise TypeError
+    labels = hdb.fit_predict(X)
+    assert labels[4] == -1
+    assert len(set(labels) - {-1}) == 1
