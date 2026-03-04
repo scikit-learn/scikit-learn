@@ -55,6 +55,9 @@ def _encode_target(X_ordinal, y_numeric, n_categories, smooth):
         return cur_encodings
 
 
+# TODO(1.11): use cv object to pass `random_state` and remove
+# pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "categories, unknown_value",
     [
@@ -162,6 +165,9 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
     assert_allclose(X_test_transform, expected_X_test_transform)
 
 
+# TODO(1.11): use cv object to pass `random_state` and remove
+# pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "categories, unknown_values",
     [
@@ -349,6 +355,9 @@ def test_use_regression_target():
     assert enc.target_type_ == "continuous"
 
 
+# TODO(1.11): use cv object to pass `random_state` and remove
+# pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "y, feature_names",
     [
@@ -379,6 +388,9 @@ def test_feature_names_out_set_output(y, feature_names):
     assert_array_equal(enc_pandas.get_feature_names_out(), X_pandas.columns)
 
 
+# TODO(1.11): use cv object to pass `random_state` and remove
+# pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("to_pandas", [True, False])
 @pytest.mark.parametrize("smooth", [1.0, "auto"])
 @pytest.mark.parametrize("target_type", ["binary-ints", "binary-str", "continuous"])
@@ -464,6 +476,9 @@ def test_multiple_features_quick(to_pandas, smooth, target_type):
     assert_allclose(X_test_transform, expected_X_test_transform)
 
 
+# TODO(1.11): use cv object to pass `random_state` and remove
+# pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "y, y_mean",
     [
@@ -490,6 +505,9 @@ def test_constant_target_and_feature(y, y_mean, smooth):
     assert_allclose(X_test_trans, np.repeat([[y_mean]], 2, axis=0))
 
 
+# TODO(1.11): use cv object to pass `shuffle` and `random_state` and remove
+# pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_fit_transform_not_associated_with_y_if_ordinal_categorical_is_not(
     global_random_seed,
 ):
@@ -536,6 +554,9 @@ def test_fit_transform_not_associated_with_y_if_ordinal_categorical_is_not(
     )
 
 
+# TODO(1.11): use cv object to pass `shuffle` and remove
+# pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_smooth_zero():
     """Check edge case with zero smoothing and cv does not contain category."""
     X = np.array([[0, 0, 0, 0, 0, 1, 1, 1, 1, 1]]).T
@@ -553,6 +574,9 @@ def test_smooth_zero():
     assert_allclose(X_trans[-1], np.mean(y[:5]))
 
 
+# TODO(1.11): use cv object to pass `random_state` and remove
+# pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("smooth", [0.0, 1e3, "auto"])
 def test_invariance_of_encoding_under_label_permutation(smooth, global_random_seed):
     # Check that the encoding does not depend on the integer of the value of
@@ -589,6 +613,9 @@ def test_invariance_of_encoding_under_label_permutation(smooth, global_random_se
     assert_allclose(X_test_encoded, X_test_permuted_encoded)
 
 
+# TODO(1.11): use cv object to pass `random_state` and remove
+# pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("smooth", [0.0, "auto"])
 def test_target_encoding_for_linear_regression(smooth, global_random_seed):
     # Check some expected statistical properties when fitting a linear
@@ -751,4 +778,16 @@ def test_target_encoder_raises_cv_overlap(global_random_seed):
     encoder = TargetEncoder(cv=overlapping_iterable)
     msg = "Validation indices from `cv` must cover each sample index exactly once"
     with pytest.raises(ValueError, match=msg):
+        encoder.fit_transform(X, y)
+
+
+# TODO(1.11): remove after deprecation
+def test_target_encoder_shuffle_random_state_deprecated():
+    X, y = make_regression(n_samples=100, n_features=3, random_state=0)
+    msg = "`TargetEncoder.shuffle` and `TargetEncoder.random_state` are deprecated"
+    with pytest.warns(FutureWarning, match=msg):
+        encoder = TargetEncoder(shuffle=False)
+        encoder.fit_transform(X, y)
+    with pytest.warns(FutureWarning, match=msg):
+        encoder = TargetEncoder(random_state=0)
         encoder.fit_transform(X, y)
