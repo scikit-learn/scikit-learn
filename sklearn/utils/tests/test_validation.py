@@ -2269,6 +2269,47 @@ def test_column_or_1d():
                 column_or_1d(y)
 
 
+@pytest.mark.skipif(
+    not hasattr(__import__("pandas"), "StringDtype"),
+    reason="StringDtype not available in this pandas version",
+)
+def test_column_or_1d_with_pandas_string_dtype():
+    """Regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/33383
+
+    column_or_1d should not crash when dtype=StringDtype is passed,
+    which is the default dtype for string columns in pandas 3.
+    """
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"y": ["a", "b", "a", "c"]})
+    s = df["y"]
+    result = column_or_1d(s, dtype=s.dtype)
+    assert result.dtype == np.dtype("object")
+    assert_array_equal(result, np.array(["a", "b", "a", "c"], dtype=object))
+
+
+def test_check_array_with_pandas_string_dtype():
+    """check_array should not crash when dtype=StringDtype is passed.
+
+    Regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/33383
+    """
+    pd = pytest.importorskip("pandas")
+    if not hasattr(pd, "StringDtype"):
+        pytest.skip("StringDtype not available in this pandas version")
+    df = pd.DataFrame({"y": ["a", "b", "a", "c"]})
+    s = df["y"]
+    result = check_array(
+        s,
+        ensure_2d=False,
+        dtype=s.dtype,
+        ensure_all_finite=False,
+        ensure_min_samples=0,
+    )
+    assert result.dtype == np.dtype("object")
+    assert_array_equal(result, np.array(["a", "b", "a", "c"], dtype=object))
+
+
 def test_check_array_writeable_np():
     """Check the behavior of check_array when a writeable array is requested
     without copy if possible, on numpy arrays.

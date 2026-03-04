@@ -1,0 +1,5 @@
+- :func:`utils.validation.check_array` and :func:`utils.validation.column_or_1d`
+  no longer raise a :class:`TypeError` when ``dtype`` is a pandas extension type
+  with no numpy equivalent (e.g. ``pd.StringDtype`` which became the default
+  string dtype in pandas 3).
+  By :user:`Fadi Younes <repeating>`.
