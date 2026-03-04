@@ -1819,3 +1819,20 @@ def test_sparse_manhattan_readonly_dataset(csr_container):
     Parallel(n_jobs=2, max_nbytes=0)(
         delayed(manhattan_distances)(m1, m2) for m1, m2 in zip(matrices1, matrices2)
     )
+
+
+def test_nan_euclidean_distances_symmetry():
+    """Test that nan_euclidean_distances returns a symmetric matrix.
+    Non-regression test for issue #32848.
+    """
+    rng = np.random.RandomState(42)
+    X = rng.rand(10, 20)
+    X[X < 0.1] = np.nan
+
+    dist = nan_euclidean_distances(X)
+
+    # Check perfect symmetry
+    assert_array_equal(dist, dist.T)
+
+    # Check diagonal is zero
+    assert_array_equal(np.diag(dist), np.zeros(len(dist)))
