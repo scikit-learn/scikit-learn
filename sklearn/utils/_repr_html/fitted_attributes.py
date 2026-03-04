@@ -109,7 +109,11 @@ def _fitted_attr_html_repr(fitted_attributes):
             )
         else:
             # Just show the parameter name without link
-            fitted_attr_display = html.escape(name)
+
+            fitted_attr_display = (
+                f'<a class="param-doc-link" style="text-decoration:none;">'
+                f"{html.escape(name)}</a>"
+            )
 
         if len(attr_info) == 2:
             html_row_values = (
@@ -135,9 +139,11 @@ def _fitted_attr_html_repr(fitted_attributes):
                 html_row_values = (
                     "".join(
                         [
-                            html.escape(str(attr_info["type_name"])),
-                            html.escape(str(attr_info["dtype"])),
-                            html.escape(str(attr_info["shape"])),
+                            f"{html.escape(str(attr_info['type_name']))}"
+                            + "["
+                            + f"{html.escape(str(attr_info['dtype']))}"
+                            + "]"
+                            + f"{html.escape(str(attr_info['shape']))}"
                         ]
                     ),
                     _read_fitted_attr(attr_info["value"]),
