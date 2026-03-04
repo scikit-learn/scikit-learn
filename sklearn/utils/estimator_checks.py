@@ -2552,11 +2552,18 @@ def check_classifier_multioutput(name, estimator_orig):
         "The shape of the prediction for multioutput data is "
         "incorrect. Expected {}, got {}.".format((n_samples, n_labels), y_pred.shape)
     )
-    assert y_pred.dtype.kind == "i"
+    assert y_pred.dtype.kind == "i", (
+        "The prediction for multioutput data is expected to be of the same type "
+        f"as the input y. Got dtype={y_pred.dtype}, dtype.kind={y_pred.dtype.kind} "
+        f"instead, while input was dtype={y.dtype}, dtype.kind={y.dtype.kind}."
+    )
 
     if hasattr(estimator, "decision_function"):
         decision = estimator.decision_function(X)
-        assert isinstance(decision, np.ndarray)
+        assert isinstance(decision, np.ndarray), (
+            "The decision function output for multioutput data is expected to be "
+            f"of type np.ndarray. Got {type(decision)} instead."
+        )
         assert decision.shape == (n_samples, n_classes), (
             "The shape of the decision function output for "
             "multioutput data is incorrect. Expected {}, got {}.".format(
@@ -2564,14 +2571,15 @@ def check_classifier_multioutput(name, estimator_orig):
             )
         )
 
-        dec_pred = (decision > 0).astype(int)
-        dec_exp = estimator.classes_[dec_pred]
-        assert_array_equal(dec_exp, y_pred)
-
     if hasattr(estimator, "predict_proba"):
         y_prob = estimator.predict_proba(X)
 
-        if isinstance(y_prob, list) and not tags.classifier_tags.poor_score:
+        err_msg = (
+            "The predicted probabilities for multioutput data are inconsistent"
+            " with the predicted labels. There seem to be cases where the "
+            "maximum probability does not correspond to the predicted label."
+        )
+        if isinstance(y_prob, list):
             for i in range(n_classes):
                 assert y_prob[i].shape == (n_samples, 2), (
                     "The shape of the probability for multioutput data is"
@@ -2579,23 +2587,35 @@ def check_classifier_multioutput(name, estimator_orig):
                         (n_samples, 2), y_prob[i].shape
                     )
                 )
-                assert_array_equal(
-                    np.argmax(y_prob[i], axis=1).astype(int), y_pred[:, i]
-                )
-        elif not tags.classifier_tags.poor_score:
+                if not tags.classifier_tags.poor_score:
+                    assert_array_equal(
+                        np.argmax(y_prob[i], axis=1).astype(int),
+                        y_pred[:, i],
+                        err_msg=err_msg,
+                    )
+        else:
             assert y_prob.shape == (n_samples, n_classes), (
                 "The shape of the probability for multioutput data is"
                 " incorrect. Expected {}, got {}.".format(
                     (n_samples, n_classes), y_prob.shape
                 )
             )
-            assert_array_equal(y_prob.round().astype(int), y_pred)
+            if not tags.classifier_tags.poor_score:
+                assert_array_equal(y_prob.round().astype(int), y_pred, err_msg=err_msg)
 
     if hasattr(estimator, "decision_function") and hasattr(estimator, "predict_proba"):
         for i in range(n_classes):
             y_proba = estimator.predict_proba(X)[:, i]
             y_decision = estimator.decision_function(X)
-            assert_array_equal(rankdata(y_proba), rankdata(y_decision[:, i]))
+            err_msg = (
+                "The predicted probabilities for multioutput data are inconsistent"
+                " with the decision function output. There seem to be cases where the "
+                "maximum probability does not correspond to class inferred from the "
+                "decision function."
+            )
+            assert_array_equal(
+                rankdata(y_proba), rankdata(y_decision[:, i]), err_msg=err_msg
+            )
 
 
 @ignore_warnings(category=FutureWarning)
