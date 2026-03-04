@@ -1854,6 +1854,12 @@ class RandomForestRegressor(ForestRegressor):
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
 
+    .. warning::
+        Using very small target values (e.g., in the range of ``1e-8`` or smaller)
+        may lead to unexpected performance issues or numerical instability.
+        Consider scaling your target variable to a larger range to ensure
+        optimal performance.
+
     The features are always randomly permuted at each split. Therefore,
     the best found split may vary, even with the same training data,
     ``max_features=n_features`` and ``bootstrap=False``, if the improvement
