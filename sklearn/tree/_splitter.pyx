@@ -448,11 +448,15 @@ cdef inline int node_split_best(
                 if current_proxy_improvement > best_proxy_improvement:
                     best_proxy_improvement = current_proxy_improvement
                     if p == end_non_missing and not missing_go_to_left:
-                        # split with the right node being only the missing values
+                        # Split with the right node being only the missing values.
+                        # Note that partioner.next_p never considers candidate
+                        # splits for which the left node would move only the
+                        # the missing values as this would be redundant with the
+                        # split that only send missing values to the right.
                         current_split.threshold = INFINITY
                     else:
-                        # split between two non-missing values
-                        # sum of halves is used to avoid infinite value
+                        # Split between two non-missing values: sum of halves is
+                        # used to avoid infinite value.
                         current_split.threshold = (
                             feature_values[p_prev] / 2.0 + feature_values[p] / 2.0
                         )
