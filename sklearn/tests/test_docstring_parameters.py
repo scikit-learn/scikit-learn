@@ -282,7 +282,10 @@ def test_fit_docstring_attributes(name, Estimator):
     if est.__sklearn_tags__().target_tags.one_d_labels:
         est.fit(y)
     elif est.__sklearn_tags__().target_tags.two_d_labels:
-        est.fit(np.c_[y, y])
+        if not est.__sklearn_tags__().input_tags.two_d_array:
+            est.fit(np.c_[y, y])
+        else:
+            est.fit(X, np.c_[y, y])
     elif est.__sklearn_tags__().input_tags.three_d_array:
         est.fit(X[np.newaxis, ...], y)
     else:
