@@ -618,7 +618,8 @@ METRICS_WITH_LOG1P_Y = {
     "root_mean_squared_log_error",
 }
 
-# Metrics that support mixed array API inputs
+# Metrics that support mixed namespace/device array API inputs
+# Mixed mixed namespace/device support is NOT planned for pairwise metrics
 METRICS_SUPPORTING_MIXED_NAMESPACE = [
     "average_precision_score",
     "brier_score_loss",
@@ -2531,9 +2532,10 @@ def test_mixed_array_api_namespace_input_compliance(
 
     data_all = {
         "binary": ([0, 0, 1, 1], [0, 1, 0, 1]),
-        "continuous_binary": ([1, 0, 1, 0], [0.5, 0.2, 0.7, 0.6]),
-        "continuous_label_indicator": ([[1, 0, 1, 0]], [[0.5, 0.2, 0.7, 0.6]]),
-        "regression": ([2, 1, 3, 4], [2, 1, 2, 2]),
+        "binary_continuous": ([1, 0, 1, 0], [0.5, 0.2, 0.7, 0.6]),
+        "label_indicator_continuous": ([[1, 0, 1, 0]], [[0.5, 0.2, 0.7, 0.6]]),
+        "regression_integer": ([2, 1, 3, 4], [2, 1, 2, 2]),
+        "regression_continuous": ([2.1, 1.0, 3.0, 4.0], [2.2, 1.1, 2.0, 2.0]),
     }
     sample_weight = [1, 1, 2, 2]
 
@@ -2546,28 +2548,22 @@ def test_mixed_array_api_namespace_input_compliance(
             dtype = xp.int64
         return dtype
 
-    checks = ["default"]
     if metric_name in CLASSIFICATION_METRICS:
         # These should all accept binary label input as there are no
         # `CLASSIFICATION_METRICS` that are in `METRIC_UNDEFINED_BINARY` and are
         # NOT `partial`s (which we do not test for in array API compliance)
-        data = data_all["binary"]
+        data_cases = ["binary"]
     elif metric_name in {**CONTINUOUS_CLASSIFICATION_METRICS, **CURVE_METRICS}:
         if metric_name not in METRIC_UNDEFINED_BINARY:
-            data = data_all["continuous_binary"]
+            data_cases = ["binary_continuous"]
         else:
-            data = data_all["continuous_label_indicator"]
+            data_cases = ["label_indicator_continuous"]
     elif metric_name in REGRESSION_METRICS:
-        data = data_all["regression"]
-        checks.append("float")
+        data_cases = ["regression_integer", "regression_continuous"]
 
     with config_context(array_api_dispatch=True):
-        y1, y2 = data
-        for check in checks:
-            if check == "float":
-                # Convert regression inputs from int to float
-                y1 = np.array(y1) * 0.3
-                y2 = np.array(y2) * 0.3
+        for data_case in data_cases:
+            y1, y2 = data_all[data_case]
 
             dtype = _get_dtype(y1, xp_from, from_ns_and_device.device)
             y1_xp = xp_from.asarray(y1, device=from_ns_and_device.device, dtype=dtype)
