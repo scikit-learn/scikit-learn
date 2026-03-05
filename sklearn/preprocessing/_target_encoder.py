@@ -350,8 +350,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         if self.random_state == "deprecated":
             self.random_state = None
 
-        # TODO(1.11): make shuffle=True to keep backwards compatibility and remove
-        # random_state:
+        # TODO(1.11): make `shuffle=True` to keep backwards compatibility for default
+        # inputs and remove random_state (which defaults to None in check_cv):
         cv = check_cv(
             self.cv,
             y,
