@@ -1337,7 +1337,7 @@ def test_quantile_transform_check_error(csc_container):
         transformer.transform(10)
     # check that a warning is raised is n_quantiles > n_samples
     transformer = QuantileTransformer(n_quantiles=100)
-    warn_msg = "n_quantiles is set to n_samples"
+    warn_msg = "n_quantiles is set to effective_sample_size"
     with pytest.warns(UserWarning, match=warn_msg) as record:
         transformer.fit(X)
     assert len(record) == 1
@@ -1498,7 +1498,9 @@ def test_quantile_transform_subsampling_disabled():
 
     expected_references = np.linspace(0, 1, n_quantiles)
     assert_allclose(transformer.references_, expected_references)
-    expected_quantiles = np.quantile(X.ravel(), expected_references)
+    expected_quantiles = np.quantile(
+        X.ravel(), expected_references, method="averaged_inverted_cdf"
+    )
     assert_allclose(transformer.quantiles_.ravel(), expected_quantiles)
 
 
