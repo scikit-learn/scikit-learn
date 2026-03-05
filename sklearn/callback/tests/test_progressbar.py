@@ -6,6 +6,7 @@ import sys
 
 import pytest
 
+from sklearn.base import clone
 from sklearn.callback import ProgressBar
 from sklearn.callback.tests._utils import (
     MaxIterEstimator,
@@ -67,3 +68,9 @@ def test_progressbar_requires_rich_error():
         err_msg = "Progressbar requires rich"
         with pytest.raises(ImportError, match=err_msg):
             ProgressBar()
+
+
+def test_clone_after_fit():
+    """Smoke test for cloning after fit with a progressbar attached."""
+    est = MaxIterEstimator().set_callbacks(ProgressBar()).fit()
+    clone(est)

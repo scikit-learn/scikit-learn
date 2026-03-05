@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
+
 import numpy as np
 import pytest
 
@@ -229,3 +231,34 @@ def test_estimator_without_subtask():
     estimator = NoSubtaskEstimator()
     estimator.set_callbacks([TestingCallback()])
     estimator.fit()
+
+
+def test_clone_and_propagate_callback_context():
+    """Test clone_and_propagate_callback_context for callback preservation."""
+    estimator = MaxIterEstimator()
+    callback_ctx = CallbackContext._from_estimator(
+        estimator, task_name="", task_id=0, max_subtasks=0
+    )
+    callback = TestingCallback()
+    estimator.set_callbacks(callback)
+    cloned_estimator = callback_ctx.clone_and_propagate_callback_context(estimator)
+    assert cloned_estimator is not estimator
+    assert cloned_estimator._skl_callbacks == estimator._skl_callbacks == [callback]
+
+
+def test_no_clone_warning_with_clone_and_propagate_callback_context():
+    """Test that the warning is not raised with clone_and_propagate_callback_context.
+
+    When the cloning is done inside of clone_and_propagate_callback_context, the warning
+    about callbacks not being cloned should not be raised.
+    """
+    estimator = MaxIterEstimator()
+    estimator.set_callbacks(TestingCallback())
+    callback_ctx = CallbackContext._from_estimator(
+        estimator, task_name="", task_id=0, max_subtasks=0
+    )
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "error", message="There are callbacks set on the estimator"
+        )
+        callback_ctx.clone_and_propagate_callback_context(estimator)
