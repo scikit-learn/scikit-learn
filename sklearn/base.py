@@ -350,6 +350,12 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
 
         fitted_attr = {}
         for name, value in inspect.getmembers(self):
+            if len(fitted_attr) > 100:
+                fitted_attr["..."] = {
+                    "type_name": "...",
+                    "value": "",
+                }
+                break
             if name.startswith("_") or not name.endswith("_"):
                 continue
             if hasattr(value, "shape") and hasattr(value, "dtype"):
