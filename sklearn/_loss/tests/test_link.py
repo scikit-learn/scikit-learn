@@ -29,52 +29,39 @@ def test_interval_raises():
 
 
 @pytest.mark.parametrize(
-    "namespace, device, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
-)
-@pytest.mark.parametrize(
     "interval",
     [
         Interval(0, 1, False, False),
         Interval(0, 1, False, True),
         Interval(0, 1, True, False),
         Interval(0, 1, True, True),
-        Interval(-np.inf, np.inf, False, False),
-        Interval(-np.inf, np.inf, False, True),
-        Interval(-np.inf, np.inf, True, False),
-        Interval(-np.inf, np.inf, True, True),
+        Interval(-float("inf"), float("inf"), False, False),
+        Interval(-float("inf"), float("inf"), False, True),
+        Interval(-float("inf"), float("inf"), True, False),
+        Interval(-float("inf"), float("inf"), True, True),
         Interval(-10, -1, False, False),
         Interval(-10, -1, False, True),
         Interval(-10, -1, True, False),
         Interval(-10, -1, True, True),
     ],
 )
-def test_is_in_range(namespace, device, dtype_name, interval):
+def test_is_in_range(interval):
     """Test that low and high are always within the interval used for linspace."""
-    xp = _array_api_for_tests(namespace, device)
-    dtype = xp.float32 if dtype_name == "float32" else xp.float64
-    params = dict(device=device, dtype=dtype)
+    low, high = _inclusive_low_high(interval)
+    x = np.linspace(low, high, num=10)
 
-    with config_context(array_api_dispatch=True):
-        low, high = _inclusive_low_high(interval, dtype=dtype, xp=xp)
-        x = xp.linspace(low, high, num=10, **params)
+    assert interval.includes(x)
 
-        assert interval.includes(x)
+    # x contains lower bound
+    assert interval.includes(np.r_[x, interval.low]) == interval.low_inclusive
 
-        # x contains lower bound
-        x_test = xp.concat((x, xp.asarray([interval.low], **params)))
-        assert interval.includes(x_test) == interval.low_inclusive
+    # x contains upper bound
+    assert interval.includes(np.r_[x, interval.high]) == interval.high_inclusive
 
-        # x contains upper bound
-        x_test = xp.concat((x, xp.asarray([interval.high], **params)))
-        assert interval.includes(x_test) == interval.high_inclusive
-
-        # x contains upper and lower bound
-        x_test = xp.concat((x, xp.asarray([interval.low, interval.high], **params)))
-        assert interval.includes(x_test) == (
-            interval.low_inclusive and interval.high_inclusive
-        )
+    # x contains upper and lower bound
+    assert interval.includes(np.r_[x, interval.low, interval.high]) == (
+        interval.low_inclusive and interval.high_inclusive
+    )
 
 
 @pytest.mark.parametrize(

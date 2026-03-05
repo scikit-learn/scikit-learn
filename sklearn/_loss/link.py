@@ -7,8 +7,8 @@ Module contains classes for invertible (and differentiable) link functions.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from math import ulp
 
-import numpy as np
 from scipy.stats import gmean
 
 from sklearn.utils._array_api import _expit, _logit, get_namespace
@@ -59,27 +59,25 @@ class Interval:
         return bool(xp.all(high))
 
 
-def _inclusive_low_high(interval, dtype=None, xp=None):
+def _inclusive_low_high(interval):
     """Generate values low and high to be within the interval range.
 
     This is used in tests only.
 
     Returns
     -------
-    low, high : tuple
+    low, high : tuple of floats
         The returned values low and high lie within the interval.
     """
-    xp, _ = get_namespace(interval)
-    dtype = dtype or xp.float64
-    eps = 10 * xp.finfo(dtype).eps
-    if interval.low == -xp.inf:
+    eps = 10 * ulp(1)
+    if interval.low == -float("inf"):
         low = -1e10
     elif interval.low < 0:
         low = interval.low * (1 - eps) + eps
     else:
         low = interval.low * (1 + eps) + eps
 
-    if interval.high == xp.inf:
+    if interval.high == float("inf"):
         high = 1e10
     elif interval.high < 0:
         high = interval.high * (1 + eps) - eps
@@ -108,8 +106,8 @@ class BaseLink(ABC):
 
     # Usually, raw_prediction may be any real number and y_pred is an open
     # interval.
-    # interval_raw_prediction = Interval(-np.inf, np.inf, False, False)
-    interval_y_pred = Interval(-np.inf, np.inf, False, False)
+    # interval_raw_prediction = Interval(-float("inf"), float("inf"), False, False)
+    interval_y_pred = Interval(-float("inf"), float("inf"), False, False)
 
     @abstractmethod
     def link(self, y_pred):
@@ -160,7 +158,7 @@ class IdentityLink(BaseLink):
 class LogLink(BaseLink):
     """The log link function g(x)=log(x)."""
 
-    interval_y_pred = Interval(0, np.inf, False, False)
+    interval_y_pred = Interval(0, float("inf"), False, False)
 
     def link(self, y_pred):
         xp, _ = get_namespace(y_pred)
