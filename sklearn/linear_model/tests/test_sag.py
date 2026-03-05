@@ -846,6 +846,36 @@ def test_step_size_alpha_error():
         clf2.fit(X, y)
 
 
+def test_saga_sample_weight_correctness():
+    """SAGA with non-uniform sample_weight must converge to the correct solution.
+
+    Regression test: without the fix, the step size does not account for
+    sample_weight > 1, making it too large and causing SAGA to diverge or
+    converge to the wrong point. We compare against lbfgs as a reference
+    solver that is not affected by this step size issue.
+    """
+    rng = np.random.RandomState(42)
+    n_samples, n_features = 100, 5
+    X, y = make_classification(
+        n_samples=n_samples, n_features=n_features, random_state=rng
+    )
+    # Use weights with a large maximum to expose the step size bug.
+    sample_weight = rng.uniform(1.0, 10.0, size=n_samples)
+
+    clf_ref = LogisticRegression(
+        solver="lbfgs", C=1.0, max_iter=1000, tol=1e-10, random_state=42
+    )
+    clf_ref.fit(X, y, sample_weight=sample_weight)
+
+    clf_saga = LogisticRegression(
+        solver="saga", C=1.0, max_iter=1000, tol=1e-8, random_state=42
+    )
+    clf_saga.fit(X, y, sample_weight=sample_weight)
+
+    assert_allclose(clf_saga.coef_, clf_ref.coef_, rtol=1e-2)
+    assert_allclose(clf_saga.intercept_, clf_ref.intercept_, rtol=1e-2)
+
+
 @pytest.mark.parametrize("solver", ["sag", "saga"])
 def test_sag_classifier_raises_error(solver):
     # Following #13316, the error handling behavior changed in cython sag. This

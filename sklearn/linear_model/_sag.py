@@ -305,8 +305,16 @@ def sag_solver(
 
     if max_squared_sum is None:
         max_squared_sum = row_norms(X, squared=True).max()
+    # For SAGA, the Lipschitz constant of each sample's gradient is scaled by
+    # its weight w_i, so the global L must account for max(w_i * ||x_i||^2).
+    # We use max_squared_sum * sample_weight.max() as an upper bound.
+    # SAG is more robust to step size choices and is left unchanged to avoid
+    # breaking backward compatibility.
+    max_squared_sum_scaled = (
+        max_squared_sum * sample_weight.max() if is_saga else max_squared_sum
+    )
     step_size = get_auto_step_size(
-        max_squared_sum,
+        max_squared_sum_scaled,
         alpha_scaled,
         loss,
         fit_intercept,

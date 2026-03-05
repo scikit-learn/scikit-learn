@@ -1,0 +1,6 @@
+- :func:`linear_model._sag.sag_solver` now correctly accounts for
+  ``sample_weight`` when computing the step size for the SAGA solver. Previously,
+  the Lipschitz constant used to derive the step size did not scale with the
+  maximum sample weight, causing SAGA to use a step size that was too large
+  when weights greater than 1 were provided, leading to incorrect convergence.
+  By :user:`Sayeh <sayeh>`.
