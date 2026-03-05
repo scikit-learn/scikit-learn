@@ -321,7 +321,13 @@ def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type, xp=None):
 
 
 def _compute_precision_cholesky(covariances, covariance_type, xp=None):
-    """Compute the Cholesky decomposition of the precisions.
+    """Compute the upper-triangular Cholesky factor of the precisions.
+
+    For full and tied covariance types, given the covariance matrix ``Σ = L L^T``
+    (lower-triangular ``L``), this returns the upper-triangular matrix
+    ``U = L^{-T}`` such that ``U @ U.T = Σ^{-1}`` (the precision matrix).
+    For diagonal and spherical types, this returns the element-wise square root
+    of the precisions.
 
     Parameters
     ----------
@@ -335,8 +341,8 @@ def _compute_precision_cholesky(covariances, covariance_type, xp=None):
     Returns
     -------
     precisions_cholesky : array-like
-        The Cholesky decomposition of sample precisions of the current
-        components. The shape depends of the covariance_type.
+        The upper-triangular Cholesky factor of the precision matrices of the
+        current components. The shape depends of the covariance_type.
     """
     xp, _, device_ = get_namespace_and_device(covariances, xp=xp)
 
@@ -690,13 +696,13 @@ class GaussianMixture(BaseMixture):
             (n_components, n_features, n_features) if 'full'
 
     precisions_cholesky_ : array-like
-        The Cholesky decomposition of the precision matrices of each mixture
-        component. A precision matrix is the inverse of a covariance matrix.
-        A covariance matrix is symmetric positive definite so the mixture of
-        Gaussian can be equivalently parameterized by the precision matrices.
-        Storing the precision matrices instead of the covariance matrices makes
-        it more efficient to compute the log-likelihood of new samples at test
-        time. The shape depends on `covariance_type`::
+        The upper-triangular Cholesky factor ``U`` of the precision matrices
+        of each mixture component, such that ``U @ U.T`` equals the precision
+        matrix ``Λ`` (i.e. the inverse covariance). For diagonal and spherical
+        covariance types, this is stored as the element-wise square root of
+        the precision. Storing the Cholesky factor instead of the full
+        precision matrix makes it more efficient to compute the log-likelihood
+        of new samples at test time. The shape depends on `covariance_type`::
 
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
