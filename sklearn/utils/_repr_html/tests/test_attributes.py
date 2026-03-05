@@ -2,10 +2,8 @@ import re
 
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal
 
 from sklearn import config_context
-from sklearn.linear_model import LogisticRegression
 from sklearn.utils._repr_html.fitted_attributes import AttrsDict, _fitted_attr_html_repr
 
 fitted_attrs = AttrsDict(
@@ -59,12 +57,41 @@ def test_fitted_attr_html_repr():
 
 def test_pandas_column_names():
     pd = pytest.importorskip("pandas")
-    X = pd.DataFrame({"A": [0, 2, 4], "B": [3, 4, 5], "C": [3, 4, 4]})
-    y = pd.DataFrame({"y": [1, 2, 3]})
-    model = LogisticRegression()
-    model.fit(X, y)
-
-    assert_array_equal(model.feature_names_in_, np.array(["A", "B", "C"], dtype=object))
+    fitted_attrs_with_pandas_cols = AttrsDict(
+        fitted_attrs={
+            "myabc_": {
+                "type_name": "DataFrame",
+                "shape": (3, 3),
+                "dtype": np.dtype("int64"),
+                "value": pd.DataFrame({"A": [0, 2, 4], "B": [3, 4, 5], "C": [3, 4, 4]}),
+            }
+        }
+    )
+    html_fitted_attr_out = _fitted_attr_html_repr(fitted_attrs_with_pandas_cols)
+    expected_html_fitted_attr = (
+        r'<div class="estimator-table">'
+        r"\s*<details>"
+        r"\s*<summary>Fitted attributes</summary>"
+        r'\s*<table class="parameters-table">'
+        r"\s*<tbody>"
+        r"\s*<tr>"
+        r"\s*<th>Name</th>"
+        r"\s*<th>Type</th>"
+        r"\s*<th>Value</th>"
+        r"\s*</tr>"
+        r"\s*<tr class=\"default\">"
+        r"\s*<td class=\"param\">"
+        r'\s*<a class="param-doc-link" style="text-decoration:none;">myabc_</a>'
+        r"\s*</td>"
+        r'\s*<td class="fitted-att-type">DataFrame\[int64\]\(3,\s*3\)</td>'
+        r"\s*<td>\s*A\s*B\s*C\s*0\s*\.\.\.\s*4\s*2\s*4\s*5\s*4\s*</td>"
+        r"\s*</tr>"
+        r"\s*</tbody>"
+        r"\s*</table>"
+        r"\s*</details>"
+        r"\s*</div>"
+    )
+    assert re.search(expected_html_fitted_attr, html_fitted_attr_out, flags=re.DOTALL)
 
 
 def test_pandas_series_fitted_attr():
