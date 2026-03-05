@@ -8,6 +8,7 @@ import operator
 import warnings
 from collections.abc import Sequence
 from contextlib import suppress
+from enum import Enum, unique
 from functools import reduce, wraps
 from inspect import Parameter, isclass, signature
 
@@ -31,6 +32,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._dataframe import is_pandas_df, is_pandas_df_or_series
 from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
+from sklearn.utils._missing import is_pandas_na, is_pandas_nat, is_scalar_nan
 from sklearn.utils._tags import get_tags
 from sklearn.utils.fixes import (
     ComplexWarning,
@@ -2933,3 +2935,26 @@ def validate_data(
         _check_n_features(_estimator, X, reset=reset)
 
     return out
+
+
+@unique
+class _NAKey(Enum):
+    NONE = 0
+    NAN = 1
+    PD_NA = 2
+    PD_NAT = 3
+    NAT = 4
+
+
+def _normalize_na_key(x):
+    if x is None:
+        return _NAKey.NONE
+    if is_scalar_nan(x):
+        return _NAKey.NAN
+    if is_pandas_na(x):
+        return _NAKey.PD_NA
+    if is_pandas_nat(x):  # new helper, same style as is_pandas_na
+        return _NAKey.PD_NAT
+    if isinstance(x, (np.datetime64, np.timedelta64)) and np.isnat(x):
+        return _NAKey.NAT
+    return x
