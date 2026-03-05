@@ -1895,6 +1895,8 @@ def test_missing_value_is_predictive(Forest, criterion, global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     n_samples = 1000
     expected_score_gap = 0.3
+    # Require a minimum 0.3 gap between `forest_predictive` and
+    # `forest_non_predictive`: meaningful for R2/accuracy, but robust in tests.
 
     X_non_predictive = rng.randn(n_samples, 2)
     y = rng.rand(n_samples) < 0.5
