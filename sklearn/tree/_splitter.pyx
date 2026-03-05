@@ -453,6 +453,8 @@ cdef inline int node_split_best(
                         # splits for which the left node would move only the
                         # the missing values as this would be redundant with the
                         # split that only send missing values to the right.
+                        # We use inf as a threshold because nan <= inf is false
+                        # according to IEEE 754.
                         current_split.threshold = INFINITY
                     else:
                         # Split between two non-missing values: sum of halves is
