@@ -1018,10 +1018,7 @@ def test_get_fitted_attr_html():
     assert len(fitted_attr_html) == 9
     assert fitted_attr_html["components_"]["type_name"] == ("ndarray")
     assert fitted_attr_html["components_"]["shape"] == (2, 2)
-    assert np.allclose(
-        fitted_attr_html["components_"]["value"],
-        np.array([[0.8816746, 0.47185793], [-0.47185793, 0.8816746]]),
-    )
+    assert np.allclose(fitted_attr_html["components_"]["value"], pca.components_)
 
 
 def make_estimator_with_param(default_value):

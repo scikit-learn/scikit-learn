@@ -101,14 +101,14 @@ def _fitted_attr_html_repr(fitted_attributes):
         )
 
         if fitted_attributes.doc_link and link and fitted_attr_description:
-            # Create clickable parameter name with documentation link
+            # Create clickable attribute name with documentation link
             fitted_attr_display = FITTED_ATTR_AVAILABLE_DOC_LINK_TEMPLATE.format(
                 link=link,
                 fitted_attr_name=html.escape(name),
                 fitted_attr_description=fitted_attr_description,
             )
         else:
-            # Just show the parameter name without link
+            # Just show the attribute name without link
 
             fitted_attr_display = (
                 f'<a class="param-doc-link" style="text-decoration:none;">'
@@ -125,7 +125,7 @@ def _fitted_attr_html_repr(fitted_attributes):
             html_row_values = (
                 "".join(
                     [
-                        f"{html.escape(str(attr_info['type_name']))}"
+                        f"{html.escape(attr_info['type_name'])}"
                         + "["
                         + f"{html.escape(str(attr_info['dtype']))}"
                         + "]"

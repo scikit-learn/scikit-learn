@@ -1620,14 +1620,14 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
 
 
 def test_sk_visual_block_remainder_col_names_pandas():
-    """Check that the visual block name_details matches the feature_names_in
+    """Check that the visual block name_details matches the feature_names_in_
     Non-regresion test - when remainder_columns logic is removed it should fail
     https://github.com/scikit-learn/scikit-learn/pull/31442#discussion_r2841235711
     """
     pd = pytest.importorskip("pandas")
     ohe = OneHotEncoder()
     ct = ColumnTransformer(
-        transformers=[("ohe", ohe, [0])],
+        transformers=[("ohe", ohe, ["col1"])],
         remainder="passthrough",
     )
     df = pd.DataFrame(
@@ -1636,9 +1636,15 @@ def test_sk_visual_block_remainder_col_names_pandas():
             "col2": ["z", "z", "z"],
         }
     )
-    ct.fit(df)
+    # It is not possible to guess the remainder columns when not fitted.
     visual_block = ct._sk_visual_block_()
-    assert visual_block.name_details == ([0], ["col2"])
+    assert visual_block.name_details == (["col1"], [])
+
+    ct.fit(df)
+    # Once fitted, the remainder columns are the columns seen during fit not
+    # specified for specific transformers.
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.name_details == (["col1"], ["col2"])
 
 
 @pytest.mark.parametrize("explicit_colname", ["first", "second", 0, 1])
