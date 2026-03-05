@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 ==========================================================================
 Marginal Distribution Plots of Feature Values in Partial Dependence Plots
@@ -13,7 +16,7 @@ each point in the partial dependence plot.
 
 This example shows how to add visualizations of marginal distributions to
 partial dependence plots. The focus of this example is to illustrate how these
-extra visualizations can aid with the interpetation of partial dependence
+extra visualizations can aid with the interpretation of partial dependence
 results. Notice that we're setting ``percentiles=(0, 1)`` in these examples
 so we visualize the entire range of the feature values.
 
