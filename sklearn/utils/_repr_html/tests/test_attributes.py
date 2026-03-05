@@ -25,6 +25,7 @@ def test_fitted_attrs_dict_repr_html_():
     out = fitted_attrs._repr_html_()
     assert "<summary>Fitted attributes</summary>" in out
     assert '<td class="fitted-att-type">int</td>' in out
+    assert '<td class="fitted-att-type">ndarray[float64](1,)</td>' in out
 
     with config_context(display="text"):
         msg = "_repr_html_ is only defined when"
@@ -130,7 +131,7 @@ def test_numpy_fitted_attr():
         r'\s*<td class="param">'
         r'\s*<a class="param-doc-link" style="text-decoration:none;">b</a>'
         r"\s*</td>"
-        r'\s*<td class="fitted-att-type">array\[float64\]\(1,\)</td>'
+        r'\s*<td class="fitted-att-type">ndarray\[float64\]\(1,\)</td>'
         r"\s*<td>8</td>"
         r"\s*</tr>"
         r"\s*</tbody>"

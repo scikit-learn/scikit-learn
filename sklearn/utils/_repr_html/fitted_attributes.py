@@ -122,32 +122,18 @@ def _fitted_attr_html_repr(fitted_attributes):
             )
 
         else:  # fitted attribute type is array-like
-            if attr_info["type_name"] == "ndarray":
-                html_row_values = (
-                    "".join(
-                        [
-                            "array["
-                            + f"{html.escape(str(attr_info['dtype']))}"
-                            + "]"
-                            + f"{html.escape(str(attr_info['shape']))}"
-                        ]
-                    ),
-                    _read_fitted_attr(attr_info["value"]),
-                )
-            else:
-                # array-like other than ndarray
-                html_row_values = (
-                    "".join(
-                        [
-                            f"{html.escape(str(attr_info['type_name']))}"
-                            + "["
-                            + f"{html.escape(str(attr_info['dtype']))}"
-                            + "]"
-                            + f"{html.escape(str(attr_info['shape']))}"
-                        ]
-                    ),
-                    _read_fitted_attr(attr_info["value"]),
-                )
+            html_row_values = (
+                "".join(
+                    [
+                        f"{html.escape(str(attr_info['type_name']))}"
+                        + "["
+                        + f"{html.escape(str(attr_info['dtype']))}"
+                        + "]"
+                        + f"{html.escape(str(attr_info['shape']))}"
+                    ]
+                ),
+                _read_fitted_attr(attr_info["value"]),
+            )
         rows.append(
             FITTED_ATTR_ROW_TEMPLATE.format(
                 *html_row_values,

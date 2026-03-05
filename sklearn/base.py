@@ -348,16 +348,12 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
     def _get_fitted_attr_html(self, doc_link=""):
         """Get fitted attributes of the estimator."""
 
-        attributes = inspect.getmembers(self)
-        fitted_attributes = {
-            name: value
-            for name, value in attributes
-            if not name.startswith("_") and name.endswith("_")
-        }
-        fitted_attr_out = {}
-        for name, value in fitted_attributes.items():
+        fitted_attr = {}
+        for name, value in inspect.getmembers(self):
+            if name.startswith("_") or not name.endswith("_"):
+                continue
             if hasattr(value, "shape") and hasattr(value, "dtype"):
-                fitted_attr_out[name] = {
+                fitted_attr[name] = {
                     "type_name": type(value).__name__,
                     "shape": value.shape,
                     "dtype": value.dtype,
@@ -365,12 +361,12 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
                 }
 
             else:
-                fitted_attr_out[name] = {
+                fitted_attr[name] = {
                     "type_name": type(value).__name__,
                     "value": value,
                 }
         return AttrsDict(
-            fitted_attrs=fitted_attr_out,
+            fitted_attrs=fitted_attr,
             estimator_class=self.__class__,
             doc_link=doc_link,
         )
