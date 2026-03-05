@@ -80,8 +80,7 @@ class MetricMonitor:
         for depth, ctx in enumerate(context_path):
             if depth == 0:
                 timestamp = ctx.init_time.strftime("%Y-%m-%d_%H:%M:%S.%f")
-                # TODO: use a UUID in the run id instead or in addition of the timestamp
-                log_item["run"] = f"{ctx.estimator_name}_{ctx.estimator_id}_{timestamp}"
+                log_item["run"] = f"{ctx.estimator_name}_{ctx.uuid}_{timestamp}"
             prev_task_str = (
                 f"{ctx.source_estimator_name}_{ctx.source_task_name}|"
                 if ctx.source_estimator_name is not None
@@ -106,13 +105,13 @@ class MetricMonitor:
 
         If pandas is installed, a list of tuples is returned. Each tuple contains a
         run id and a mulit-index Dataframe with indices corresponding to the task tree
-        as values. The run ids are strings of the form : "<estimator name>_<estimator
-        object id>_<timestamp>".
+        as values. The run ids are strings of the form :
+        "<estimator name>_<run id>_<timestamp>".
 
         If pandas is not available, a list of dictionaries of lists. Each dictionary
         corresponds to a run and contains :
             "<name of the metric>": list of metric values
-            "run": <estimator name>_<estimator object id>_<timestamp>
+            "run": <estimator name>_<run id>_<timestamp>
         and several pairs of key values describing the task tree :
             "<task depth>_<estimator name>_<task name>": list of task id
 

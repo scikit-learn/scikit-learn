@@ -97,11 +97,13 @@ def test_task_tree():
         assert child.parent is root
         assert len(get_context_path(child)) == 2
         assert len(child._children_map) == 5
+        assert child.uuid == root.uuid
 
         for grandchild in child._children_map.values():
             assert grandchild.parent is child
             assert len(get_context_path(grandchild)) == 3
             assert len(grandchild._children_map) == 0
+            assert grandchild.uuid == root.uuid
 
     # all _children_map lengths should match the max_subtasks attribute.
     for node in root:
@@ -171,6 +173,7 @@ def test_merge_with():
 
     assert inner_root.parent is outer_root
     assert inner_root.task_id == outer_child.task_id
+    assert inner_root.uuid == outer_child.uuid
     assert outer_child not in outer_root._children_map.values()
     assert inner_root in outer_root._children_map.values()
 

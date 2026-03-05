@@ -217,37 +217,22 @@ def test_metric_monitor_logged_values_meta_estimator(prefer, metric, metric_para
                 assert Counter(val) == Counter(expected_log_dict[key])
 
 
-def test_get_logs_output_type_and_run_name():
-    """Test the type and run names in the get_logs output."""
-    estimator_1 = MaxIterEstimator()
+def test_get_logs_output_type():
+    """Test the type of the get_logs output."""
+    estimator = MaxIterEstimator()
     callback = MetricMonitor(mean_squared_error)
-    estimator_1.set_callbacks(callback)
-    estimator_1.fit()
+    estimator.set_callbacks(callback)
+    estimator.fit()
     logs = callback.get_logs()
 
     if find_spec("pandas"):
         assert isinstance(logs, tuple)
-        run_id, log_values = logs
 
     else:
         assert isinstance(logs, dict)
-        run_id = logs["run"]
 
-    assert f"{estimator_1.__class__.__name__}_{id(estimator_1)}_" in run_id
-
-    estimator_2 = MaxIterEstimator()
-    estimator_2.set_callbacks(callback)
-    estimator_2.fit()
-
+    estimator.fit()
     logs = callback.get_logs()
 
-    if find_spec("pandas"):
-        assert isinstance(logs, list)
-        assert len(logs) == 2
-        run_id, log_values = logs[1]
-
-    else:
-        assert isinstance(logs, list)
-        run_id = logs[1]["run"]
-
-    assert f"{estimator_2.__class__.__name__}_{id(estimator_2)}_" in run_id
+    assert isinstance(logs, list)
+    assert len(logs) == 2
