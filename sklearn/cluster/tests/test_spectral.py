@@ -106,11 +106,11 @@ def test_precomputed_nearest_neighbors_filtering(global_random_seed):
     X, y = make_blobs(
         n_samples=300,
         random_state=global_random_seed,
-        centers=[[1, 1, 1], [-1, -1, -1]],
+        centers=[[5, 5, 5], [-5, -5, -5]],
         cluster_std=0.01,
     )
 
-    n_neighbors = 2
+    n_neighbors = 10
     results = []
     for additional_neighbors in [0, 10]:
         nn = NearestNeighbors(n_neighbors=n_neighbors + additional_neighbors).fit(X)
