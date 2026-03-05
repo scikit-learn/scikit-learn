@@ -25,6 +25,25 @@ class MetricMonitor:
         "validation_set" and "both". "train_set" corresponds to using the X and y
         arguments of the fit function, "validation_set" corresponds to using the X_val
         and y_val arguments, "both" corresponds to using both.
+
+    Attributes
+    ----------
+    logs : list of tuples (str, pandas.DataFrame) or list of dicts of lists
+        A list of tuples containing structured dataframes is returned if pandas is
+        installed, otherwise a list of dicts of lists is returned. In both cases, if
+        there is only one run in the logs, the item is returned directly instead of a
+        singleton list.
+
+        If pandas is installed, each tuple contains a run id and a mulit-index Dataframe
+        with indices corresponding to the task tree as values. The run ids are strings
+        of the form : "<estimator name>_<run id>_<timestamp>".
+
+        If pandas is not available, each dictionary corresponds to a run and contains :
+            "<name of the metric>": list of metric values,
+            "run": <estimator name>_<run id>_<timestamp>
+        and several pairs of key values describing the task tree :
+            "<task depth>_<estimator name>_<task name>": list of task id
+
     """
 
     requires_fit_info = ["reconstruction_attributes"]
@@ -95,31 +114,8 @@ class MetricMonitor:
     def on_fit_end(self, estimator, context):
         pass
 
-    def get_logs(self):
-        """Get the logged values.
-
-        A list of tuples containing structured dataframes is returned if pandas is
-        installed, otherwise a list of dicts of lists is returned. In both cases, if
-        there is only one run in the logs, the item is returned directly instead of a
-        singleton list.
-
-        If pandas is installed, a list of tuples is returned. Each tuple contains a
-        run id and a mulit-index Dataframe with indices corresponding to the task tree
-        as values. The run ids are strings of the form :
-        "<estimator name>_<run id>_<timestamp>".
-
-        If pandas is not available, a list of dictionaries of lists. Each dictionary
-        corresponds to a run and contains :
-            "<name of the metric>": list of metric values
-            "run": <estimator name>_<run id>_<timestamp>
-        and several pairs of key values describing the task tree :
-            "<task depth>_<estimator name>_<task name>": list of task id
-
-        Returns
-        -------
-        dict of pandas.DataFrame or list of dicts of lists
-            The logged values.
-        """
+    @property
+    def logs(self):
         logs = list(self._shared_log)
 
         try:

@@ -44,7 +44,6 @@ def test_metric_monitor_logged_values(metric, metric_params, on):
     estimator_name = estimator.__class__.__name__
 
     metric_params = metric_params or dict()
-    log = callback.get_logs()
 
     expected_log_dict = {
         f"0_{estimator_name}_fit": [],
@@ -71,7 +70,7 @@ def test_metric_monitor_logged_values(metric, metric_params, on):
     try:  # Check dataframes logs if pandas is installed
         import pandas as pd
 
-        run_id, log_df = log
+        run_id, log_df = callback.logs
 
         expected_log_df = pd.DataFrame(expected_log_dict)
         expected_log_df = expected_log_df.set_index(
@@ -86,8 +85,9 @@ def test_metric_monitor_logged_values(metric, metric_params, on):
         assert np.array_equal(log_df.index.names, expected_log_df.index.names)
 
     except ImportError:  # Check dict of lists logs if pandas is not installed
-        assert set(log.keys()) == set(expected_log_dict.keys()).union(set(["run"]))
-        for key, val in log.items():
+        logs = callback.logs
+        assert set(logs.keys()) == set(expected_log_dict.keys()).union(set(["run"]))
+        for key, val in logs.items():
             if key != "run":
                 assert val == expected_log_dict[key]
 
@@ -141,8 +141,6 @@ def test_metric_monitor_logged_values_meta_estimator(prefer, metric, metric_para
 
     meta_est.fit(X=X_train, y=y_train, X_val=X_val, y_val=y_val)
 
-    log = callback.get_logs()
-
     metric_params = metric_params or dict()
     expected_log_dict = {
         metric.__name__: [],
@@ -194,7 +192,7 @@ def test_metric_monitor_logged_values_meta_estimator(prefer, metric, metric_para
     try:  # Check dataframes logs if pandas is installed
         import pandas as pd
 
-        run_id, log_df = log
+        run_id, log_df = callback.logs
 
         expected_log_df = pd.DataFrame(expected_log_dict)
         expected_log_df = expected_log_df.set_index(
@@ -209,8 +207,9 @@ def test_metric_monitor_logged_values_meta_estimator(prefer, metric, metric_para
         assert log_df.equals(expected_log_df)
 
     except ImportError:  # Check dict of lists logs if pandas is not installed
-        assert set(log.keys()) == set(expected_log_dict.keys()).union(set(["run"]))
-        for key, val in log.items():
+        logs = callback.logs
+        assert set(logs.keys()) == set(expected_log_dict.keys()).union(set(["run"]))
+        for key, val in logs.items():
             if key != "run":
                 # Verify list equality up to a permutation because the parallelization
                 # of the meta-est can change the logging order.
@@ -223,16 +222,15 @@ def test_get_logs_output_type():
     callback = MetricMonitor(mean_squared_error)
     estimator.set_callbacks(callback)
     estimator.fit()
-    logs = callback.get_logs()
 
     if find_spec("pandas"):
-        assert isinstance(logs, tuple)
+        assert isinstance(callback.logs, tuple)
 
     else:
-        assert isinstance(logs, dict)
+        assert isinstance(callback.logs, dict)
 
     estimator.fit()
-    logs = callback.get_logs()
+    logs = callback.logs
 
     assert isinstance(logs, list)
     assert len(logs) == 2
