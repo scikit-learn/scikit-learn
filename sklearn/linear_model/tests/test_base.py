@@ -757,20 +757,35 @@ def test_fused_types_make_dataset(csr_container):
     assert_array_equal(yi_64, yicsr_64)
 
 
-@pytest.mark.parametrize("X_shape", [(10, 5), (10, 20), (100, 100)])
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
+def test_linear_regression_vs_lstsq(dtype):
+    """
+    Check that LinearRegression is as good as `scipy.linalg.lstsq`.
+    Non regression test for issue #33032.
+    """
+    rng = np.random.RandomState(1137)
+    n_samples = 500_000
+
+    x1 = rng.rand(n_samples)
+    x2 = 0.3 * x1 + 0.1 * rng.rand(n_samples)
+    X = np.column_stack([x1, x2])
+    y = X @ [0.5, 2.0] + 0.1 * rng.rand(n_samples)
+
+    X = X.astype(dtype)
+    y = y.astype(dtype)
+
+    coef_scipy = linalg.lstsq(X, y)[0]
+    coef_sklearn = LinearRegression(fit_intercept=False).fit(X, y).coef_
+
+    rmse_scipy = np.linalg.norm(y - X @ coef_scipy)
+    rmse_sklearn = np.linalg.norm(y - X @ coef_sklearn)
+    assert rmse_sklearn <= rmse_scipy + 1e-6
+
+
 @pytest.mark.parametrize(
-    "sparse_container",
-    [None]
-    + [
-        pytest.param(
-            container,
-            marks=pytest.mark.xfail(
-                reason="Known to fail for CSR arrays, see issue #30131."
-            ),
-        )
-        for container in CSR_CONTAINERS
-    ],
+    "X_shape", [(10, 5), (10, 20), (10, 10)], ids=["long", "wide", "square"]
 )
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize("fit_intercept", [False, True])
 def test_linear_regression_sample_weight_consistency(
     X_shape, sparse_container, fit_intercept, global_random_seed
@@ -783,13 +798,21 @@ def test_linear_regression_sample_weight_consistency(
     """
     rng = np.random.RandomState(global_random_seed)
     n_samples, n_features = X_shape
+    sparse_X = sparse_container is not None
+
+    if fit_intercept and not sparse_X:
+        pytest.xfail("Known failure, see issue #26164")
 
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
-    if sparse_container is not None:
+    if sparse_X:
         X = sparse_container(X)
-    params = dict(fit_intercept=fit_intercept)
 
+    params = dict(fit_intercept=fit_intercept)
+    if sparse_X:
+        # On sparse data we specify the `tol` argument used by the
+        # underlying solver (scipy.sparse.linalg).
+        params["tol"] = 1e-12
     reg = LinearRegression(**params).fit(X, y, sample_weight=None)
     coef = reg.coef_.copy()
     if fit_intercept:
