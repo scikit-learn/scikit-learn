@@ -1,0 +1,33 @@
+[33mcommit 3db6b3c7ac32d21f2b0e96d646aaff7f059d929c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31mupstream/main[m[33m, [m[1;31mupstream/HEAD[m[33m)[m
+Author: Auguste Baum <52001167+augustebaum@users.noreply.github.com>
+Date:   Tue Jan 13 16:50:59 2026 +0100
+
+    CI Port Linux min_dependencies test job from Azure to GHA (#33068)
+    
+    Co-authored-by: Loïc Estève <loic.esteve@ymail.com>
+
+[33mcommit bb083c4c75b125ef968342b7c0c496916b9d6166[m
+Author: Auguste Baum <52001167+augustebaum@users.noreply.github.com>
+Date:   Tue Jan 13 16:06:06 2026 +0100
+
+    CI Add architecture to Windows test name (#33069)
+
+[33mcommit 38a2348bf553d4248dd062b64cce6d72b1568f72[m
+Author: Auguste Baum <52001167+augustebaum@users.noreply.github.com>
+Date:   Tue Jan 13 15:54:41 2026 +0100
+
+    CI Port Linux ubuntu_atlas test job from Azure to GHA (#33064)
+    
+    Co-authored-by: Loïc Estève <loic.esteve@ymail.com>
+
+[33mcommit bb4b88c090b76678f6670feaa90f13d2b536acc0[m
+Author: Lucy Liu <jliu176@gmail.com>
+Date:   Wed Jan 14 00:01:18 2026 +1100
+
+    DOC Fix and amend `hinge_loss` docstring (#33054)
+
+[33mcommit 17e8c90bbdcbbc5ae07f8e7f4eb924c20e455048[m
+Author: Auguste Baum <52001167+augustebaum@users.noreply.github.com>
+Date:   Tue Jan 13 12:07:04 2026 +0100
+
+    CI Port windows test job from Azure to GHA (#33062)
