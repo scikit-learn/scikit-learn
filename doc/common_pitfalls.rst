@@ -1,9 +1,3 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
-.. include:: includes/big_toc_css.rst
-
 .. _common_pitfalls:
 
 =========================================
@@ -166,7 +160,7 @@ much higher than expected accuracy score::
 
     >>> from sklearn.model_selection import train_test_split
     >>> from sklearn.feature_selection import SelectKBest
-    >>> from sklearn.ensemble import GradientBoostingClassifier
+    >>> from sklearn.ensemble import HistGradientBoostingClassifier
     >>> from sklearn.metrics import accuracy_score
 
     >>> # Incorrect preprocessing: the entire data is transformed
@@ -174,9 +168,9 @@ much higher than expected accuracy score::
 
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X_selected, y, random_state=42)
-    >>> gbc = GradientBoostingClassifier(random_state=1)
+    >>> gbc = HistGradientBoostingClassifier(random_state=1)
     >>> gbc.fit(X_train, y_train)
-    GradientBoostingClassifier(random_state=1)
+    HistGradientBoostingClassifier(random_state=1)
 
     >>> y_pred = gbc.predict(X_test)
     >>> accuracy_score(y_test, y_pred)
@@ -195,14 +189,14 @@ data, close to chance::
     >>> select = SelectKBest(k=25)
     >>> X_train_selected = select.fit_transform(X_train, y_train)
 
-    >>> gbc = GradientBoostingClassifier(random_state=1)
+    >>> gbc = HistGradientBoostingClassifier(random_state=1)
     >>> gbc.fit(X_train_selected, y_train)
-    GradientBoostingClassifier(random_state=1)
+    HistGradientBoostingClassifier(random_state=1)
 
     >>> X_test_selected = select.transform(X_test)
     >>> y_pred = gbc.predict(X_test_selected)
     >>> accuracy_score(y_test, y_pred)
-    0.46
+    0.5
 
 Here again, we recommend using a :class:`~sklearn.pipeline.Pipeline` to chain
 together the feature selection and model estimators. The pipeline ensures
@@ -213,15 +207,15 @@ is used only for calculating the accuracy score::
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X, y, random_state=42)
     >>> pipeline = make_pipeline(SelectKBest(k=25),
-    ...                          GradientBoostingClassifier(random_state=1))
+    ...                          HistGradientBoostingClassifier(random_state=1))
     >>> pipeline.fit(X_train, y_train)
     Pipeline(steps=[('selectkbest', SelectKBest(k=25)),
-                    ('gradientboostingclassifier',
-                    GradientBoostingClassifier(random_state=1))])
+                    ('histgradientboostingclassifier',
+                     HistGradientBoostingClassifier(random_state=1))])
 
     >>> y_pred = pipeline.predict(X_test)
     >>> accuracy_score(y_test, y_pred)
-    0.46
+    0.5
 
 The pipeline can also be fed into a cross-validation
 function such as :func:`~sklearn.model_selection.cross_val_score`.
@@ -231,7 +225,7 @@ method is used during fitting and predicting::
     >>> from sklearn.model_selection import cross_val_score
     >>> scores = cross_val_score(pipeline, X, y)
     >>> print(f"Mean accuracy: {scores.mean():.2f}+/-{scores.std():.2f}")
-    Mean accuracy: 0.46+/-0.07
+    Mean accuracy: 0.43+/-0.05
 
 
 .. _randomness:
@@ -362,7 +356,7 @@ lead to wrong conclusions.
 Estimators
 ..........
 
-**Different `random_state` types lead to different cross-validation
+**Different** `random_state` **types lead to different cross-validation
 procedures**
 
 Depending on the type of the `random_state` parameter, estimators will behave
@@ -398,7 +392,7 @@ each case**:
   be the same across all folds.
 - Since `rf_inst` was passed a `RandomState` instance, each call to `fit`
   starts from a different RNG. As a result, the random subset of features
-  will be different for each folds.
+  will be different for each fold.
 
 While having a constant estimator RNG across folds isn't inherently wrong, we
 usually want CV results that are robust w.r.t. the estimator's randomness. As
@@ -414,43 +408,40 @@ it will allow the estimator RNG to vary for each fold.
     illustration purpose: what matters is what we pass to the
     :class:`~sklearn.ensemble.RandomForestClassifier` estimator.
 
-|details-start|
-**Cloning**
-|details-split|
+.. dropdown:: Cloning
 
-Another subtle side effect of passing `RandomState` instances is how
-:func:`~sklearn.base.clone` will work::
+    Another subtle side effect of passing `RandomState` instances is how
+    :func:`~sklearn.base.clone` will work::
 
-    >>> from sklearn import clone
-    >>> from sklearn.ensemble import RandomForestClassifier
-    >>> import numpy as np
+        >>> from sklearn import clone
+        >>> from sklearn.ensemble import RandomForestClassifier
+        >>> import numpy as np
 
-    >>> rng = np.random.RandomState(0)
-    >>> a = RandomForestClassifier(random_state=rng)
-    >>> b = clone(a)
+        >>> rng = np.random.RandomState(0)
+        >>> a = RandomForestClassifier(random_state=rng)
+        >>> b = clone(a)
 
-Since a `RandomState` instance was passed to `a`, `a` and `b` are not clones
-in the strict sense, but rather clones in the statistical sense: `a` and `b`
-will still be different models, even when calling `fit(X, y)` on the same
-data. Moreover, `a` and `b` will influence each-other since they share the
-same internal RNG: calling `a.fit` will consume `b`'s RNG, and calling
-`b.fit` will consume `a`'s RNG, since they are the same. This bit is true for
-any estimators that share a `random_state` parameter; it is not specific to
-clones.
+    Since a `RandomState` instance was passed to `a`, `a` and `b` are not clones
+    in the strict sense, but rather clones in the statistical sense: `a` and `b`
+    will still be different models, even when calling `fit(X, y)` on the same
+    data. Moreover, `a` and `b` will influence each other since they share the
+    same internal RNG: calling `a.fit` will consume `b`'s RNG, and calling
+    `b.fit` will consume `a`'s RNG, since they are the same. This bit is true for
+    any estimators that share a `random_state` parameter; it is not specific to
+    clones.
 
-If an integer were passed, `a` and `b` would be exact clones and they would not
-influence each other.
+    If an integer were passed, `a` and `b` would be exact clones and they would not
+    influence each other.
 
-.. warning::
-    Even though :func:`~sklearn.base.clone` is rarely used in user code, it is
-    called pervasively throughout scikit-learn codebase: in particular, most
-    meta-estimators that accept non-fitted estimators call
-    :func:`~sklearn.base.clone` internally
-    (:class:`~sklearn.model_selection.GridSearchCV`,
-    :class:`~sklearn.ensemble.StackingClassifier`,
-    :class:`~sklearn.calibration.CalibratedClassifierCV`, etc.).
+    .. warning::
+        Even though :func:`~sklearn.base.clone` is rarely used in user code, it is
+        called pervasively throughout scikit-learn codebase: in particular, most
+        meta-estimators that accept non-fitted estimators call
+        :func:`~sklearn.base.clone` internally
+        (:class:`~sklearn.model_selection.GridSearchCV`,
+        :class:`~sklearn.ensemble.StackingClassifier`,
+        :class:`~sklearn.calibration.CalibratedClassifierCV`, etc.).
 
-|details-end|
 
 CV splitters
 ............
@@ -558,10 +549,10 @@ When we evaluate a randomized estimator performance by cross-validation, we
 want to make sure that the estimator can yield accurate predictions for new
 data, but we also want to make sure that the estimator is robust w.r.t. its
 random initialization. For example, we would like the random weights
-initialization of a :class:`~sklearn.linear_model.SGDClassifier` to be
+initialization of an :class:`~sklearn.linear_model.SGDClassifier` to be
 consistently good across all folds: otherwise, when we train that estimator
 on new data, we might get unlucky and the random initialization may lead to
-bad performance. Similarly, we want a random forest to be robust w.r.t the
+bad performance. Similarly, we want a random forest to be robust w.r.t. the
 set of randomly selected features that each tree will be using.
 
 For these reasons, it is preferable to evaluate the cross-validation

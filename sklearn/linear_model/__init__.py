@@ -1,14 +1,15 @@
-"""
-The :mod:`sklearn.linear_model` module implements a variety of linear models.
-"""
+"""A variety of linear models."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # See http://scikit-learn.sourceforge.net/modules/sgd.html and
 # http://scikit-learn.sourceforge.net/modules/linear_model.html for
 # complete documentation.
 
-from ._base import LinearRegression
-from ._bayes import ARDRegression, BayesianRidge
-from ._coordinate_descent import (
+from sklearn.linear_model._base import LinearRegression
+from sklearn.linear_model._bayes import ARDRegression, BayesianRidge
+from sklearn.linear_model._coordinate_descent import (
     ElasticNet,
     ElasticNetCV,
     Lasso,
@@ -20,9 +21,9 @@ from ._coordinate_descent import (
     enet_path,
     lasso_path,
 )
-from ._glm import GammaRegressor, PoissonRegressor, TweedieRegressor
-from ._huber import HuberRegressor
-from ._least_angle import (
+from sklearn.linear_model._glm import GammaRegressor, PoissonRegressor, TweedieRegressor
+from sklearn.linear_model._huber import HuberRegressor
+from sklearn.linear_model._least_angle import (
     Lars,
     LarsCV,
     LassoLars,
@@ -31,29 +32,40 @@ from ._least_angle import (
     lars_path,
     lars_path_gram,
 )
-from ._logistic import LogisticRegression, LogisticRegressionCV
-from ._omp import (
+from sklearn.linear_model._logistic import LogisticRegression, LogisticRegressionCV
+from sklearn.linear_model._omp import (
     OrthogonalMatchingPursuit,
     OrthogonalMatchingPursuitCV,
     orthogonal_mp,
     orthogonal_mp_gram,
 )
-from ._passive_aggressive import PassiveAggressiveClassifier, PassiveAggressiveRegressor
-from ._perceptron import Perceptron
-from ._quantile import QuantileRegressor
-from ._ransac import RANSACRegressor
-from ._ridge import Ridge, RidgeClassifier, RidgeClassifierCV, RidgeCV, ridge_regression
-from ._sgd_fast import Hinge, Huber, Log, ModifiedHuber, SquaredLoss
-from ._stochastic_gradient import SGDClassifier, SGDOneClassSVM, SGDRegressor
-from ._theil_sen import TheilSenRegressor
+from sklearn.linear_model._passive_aggressive import (
+    PassiveAggressiveClassifier,
+    PassiveAggressiveRegressor,
+)
+from sklearn.linear_model._perceptron import Perceptron
+from sklearn.linear_model._quantile import QuantileRegressor
+from sklearn.linear_model._ransac import RANSACRegressor
+from sklearn.linear_model._ridge import (
+    Ridge,
+    RidgeClassifier,
+    RidgeClassifierCV,
+    RidgeCV,
+    ridge_regression,
+)
+from sklearn.linear_model._stochastic_gradient import (
+    SGDClassifier,
+    SGDOneClassSVM,
+    SGDRegressor,
+)
+from sklearn.linear_model._theil_sen import TheilSenRegressor
 
 __all__ = [
     "ARDRegression",
     "BayesianRidge",
     "ElasticNet",
     "ElasticNetCV",
-    "Hinge",
-    "Huber",
+    "GammaRegressor",
     "HuberRegressor",
     "Lars",
     "LarsCV",
@@ -63,10 +75,8 @@ __all__ = [
     "LassoLarsCV",
     "LassoLarsIC",
     "LinearRegression",
-    "Log",
     "LogisticRegression",
     "LogisticRegressionCV",
-    "ModifiedHuber",
     "MultiTaskElasticNet",
     "MultiTaskElasticNetCV",
     "MultiTaskLasso",
@@ -76,16 +86,18 @@ __all__ = [
     "PassiveAggressiveClassifier",
     "PassiveAggressiveRegressor",
     "Perceptron",
+    "PoissonRegressor",
     "QuantileRegressor",
+    "RANSACRegressor",
     "Ridge",
     "RidgeCV",
     "RidgeClassifier",
     "RidgeClassifierCV",
     "SGDClassifier",
-    "SGDRegressor",
     "SGDOneClassSVM",
-    "SquaredLoss",
+    "SGDRegressor",
     "TheilSenRegressor",
+    "TweedieRegressor",
     "enet_path",
     "lars_path",
     "lars_path_gram",
@@ -93,8 +105,4 @@ __all__ = [
     "orthogonal_mp",
     "orthogonal_mp_gram",
     "ridge_regression",
-    "RANSACRegressor",
-    "PoissonRegressor",
-    "GammaRegressor",
-    "TweedieRegressor",
 ]

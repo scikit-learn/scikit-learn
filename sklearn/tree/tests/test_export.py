@@ -1,6 +1,7 @@
 """
 Testing for export functions of decision trees (sklearn.tree.export).
 """
+
 from io import StringIO
 from re import finditer, search
 from textwrap import dedent
@@ -10,7 +11,6 @@ import pytest
 from numpy.random import RandomState
 
 from sklearn.base import is_classifier
-from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.tree import (
     DecisionTreeClassifier,
@@ -19,6 +19,9 @@ from sklearn.tree import (
     export_text,
     plot_tree,
 )
+
+CLF_CRITERIONS = ("gini", "log_loss")
+REG_CRITERIONS = ("squared_error", "absolute_error", "poisson")
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -47,6 +50,90 @@ def test_graphviz_toy():
         "0 -> 1 [labeldistance=2.5, labelangle=45, "
         'headlabel="True"] ;\n'
         '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]"] ;\n'
+        "0 -> 2 [labeldistance=2.5, labelangle=-45, "
+        'headlabel="False"] ;\n'
+        "}"
+    )
+    assert contents1 == contents2
+
+    # Test with feature_names
+    contents1 = export_graphviz(
+        clf, feature_names=["feature0", "feature1"], out_file=None
+    )
+    contents2 = (
+        "digraph Tree {\n"
+        'node [shape=box, fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
+        '0 [label="feature0 <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
+        'value = [3, 3]"] ;\n'
+        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]"] ;\n'
+        "0 -> 1 [labeldistance=2.5, labelangle=45, "
+        'headlabel="True"] ;\n'
+        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]"] ;\n'
+        "0 -> 2 [labeldistance=2.5, labelangle=-45, "
+        'headlabel="False"] ;\n'
+        "}"
+    )
+
+    assert contents1 == contents2
+
+    # Test with feature_names (escaped)
+    contents1 = export_graphviz(
+        clf, feature_names=['feature"0"', 'feature"1"'], out_file=None
+    )
+    contents2 = (
+        "digraph Tree {\n"
+        'node [shape=box, fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
+        '0 [label="feature\\"0\\" <= 0.0\\n'
+        "gini = 0.5\\nsamples = 6\\n"
+        'value = [3, 3]"] ;\n'
+        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]"] ;\n'
+        "0 -> 1 [labeldistance=2.5, labelangle=45, "
+        'headlabel="True"] ;\n'
+        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]"] ;\n'
+        "0 -> 2 [labeldistance=2.5, labelangle=-45, "
+        'headlabel="False"] ;\n'
+        "}"
+    )
+
+    assert contents1 == contents2
+
+    # Test with class_names
+    contents1 = export_graphviz(clf, class_names=["yes", "no"], out_file=None)
+    contents2 = (
+        "digraph Tree {\n"
+        'node [shape=box, fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
+        '0 [label="x[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
+        'value = [3, 3]\\nclass = yes"] ;\n'
+        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]\\n'
+        'class = yes"] ;\n'
+        "0 -> 1 [labeldistance=2.5, labelangle=45, "
+        'headlabel="True"] ;\n'
+        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]\\n'
+        'class = no"] ;\n'
+        "0 -> 2 [labeldistance=2.5, labelangle=-45, "
+        'headlabel="False"] ;\n'
+        "}"
+    )
+
+    assert contents1 == contents2
+
+    # Test with class_names (escaped)
+    contents1 = export_graphviz(clf, class_names=['"yes"', '"no"'], out_file=None)
+    contents2 = (
+        "digraph Tree {\n"
+        'node [shape=box, fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
+        '0 [label="x[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
+        'value = [3, 3]\\nclass = \\"yes\\""] ;\n'
+        '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]\\n'
+        'class = \\"yes\\""] ;\n'
+        "0 -> 1 [labeldistance=2.5, labelangle=45, "
+        'headlabel="True"] ;\n'
+        '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]\\n'
+        'class = \\"no\\""] ;\n'
         "0 -> 2 [labeldistance=2.5, labelangle=-45, "
         'headlabel="False"] ;\n'
         "}"
@@ -288,6 +375,11 @@ def test_graphviz_errors():
     with pytest.raises(ValueError, match=message):
         export_graphviz(clf, None, feature_names=["a", "b", "c"])
 
+    # Check error when feature_names contains non-string elements
+    message = "All feature names must be strings."
+    with pytest.raises(ValueError, match=message):
+        export_graphviz(clf, None, feature_names=["a", 1])
+
     # Check error when argument is not an estimator
     message = "is not an estimator instance"
     with pytest.raises(TypeError, match=message):
@@ -299,19 +391,20 @@ def test_graphviz_errors():
         export_graphviz(clf, out, class_names=[])
 
 
-def test_friedman_mse_in_graphviz():
-    clf = DecisionTreeRegressor(criterion="friedman_mse", random_state=0)
-    clf.fit(X, y)
+@pytest.mark.parametrize("criterion", CLF_CRITERIONS + REG_CRITERIONS)
+def test_criterion_in_gradient_boosting_graphviz(criterion):
     dot_data = StringIO()
+
+    is_reg = criterion in REG_CRITERIONS
+    Tree = DecisionTreeRegressor if is_reg else DecisionTreeClassifier
+    clf = Tree(random_state=0, criterion=criterion)
+    # positive values for poisson criterion:
+    y_ = [yi + 2 for yi in y] if is_reg else y
+    clf.fit(X, y_)
     export_graphviz(clf, out_file=dot_data)
 
-    clf = GradientBoostingClassifier(n_estimators=2, random_state=0)
-    clf.fit(X, y)
-    for estimator in clf.estimators_:
-        export_graphviz(estimator[0], out_file=dot_data)
-
     for finding in finditer(r"\[.*?samples.*?\]", dot_data.getvalue()):
-        assert "friedman_mse" in finding.group()
+        assert criterion in finding.group()
 
 
 def test_precision():
@@ -321,9 +414,7 @@ def test_precision():
         (rng_reg.random_sample((5, 2)), rng_clf.random_sample((1000, 4))),
         (rng_reg.random_sample((5,)), rng_clf.randint(2, size=(1000,))),
         (
-            DecisionTreeRegressor(
-                criterion="friedman_mse", random_state=0, max_depth=1
-            ),
+            DecisionTreeRegressor(random_state=0, max_depth=1),
             DecisionTreeClassifier(max_depth=1, random_state=0),
         ),
     ):
@@ -346,7 +437,7 @@ def test_precision():
             if is_classifier(clf):
                 pattern = r"gini = \d+\.\d+"
             else:
-                pattern = r"friedman_mse = \d+\.\d+"
+                pattern = r"squared_error = \d+\.\d+"
 
             # check impurity
             for finding in finditer(pattern, dot_data):
@@ -375,12 +466,14 @@ def test_export_text():
     clf = DecisionTreeClassifier(max_depth=2, random_state=0)
     clf.fit(X, y)
 
-    expected_report = dedent("""
+    expected_report = dedent(
+        """
     |--- feature_1 <= 0.00
     |   |--- class: -1
     |--- feature_1 >  0.00
     |   |--- class: 1
-    """).lstrip()
+    """
+    ).lstrip()
 
     assert export_text(clf) == expected_report
     # testing that leaves at level 1 are not truncated
@@ -388,32 +481,38 @@ def test_export_text():
     # testing that the rest of the tree is truncated
     assert export_text(clf, max_depth=10) == expected_report
 
-    expected_report = dedent("""
+    expected_report = dedent(
+        """
     |--- feature_1 <= 0.00
     |   |--- weights: [3.00, 0.00] class: -1
     |--- feature_1 >  0.00
     |   |--- weights: [0.00, 3.00] class: 1
-    """).lstrip()
+    """
+    ).lstrip()
     assert export_text(clf, show_weights=True) == expected_report
 
-    expected_report = dedent("""
+    expected_report = dedent(
+        """
     |- feature_1 <= 0.00
     | |- class: -1
     |- feature_1 >  0.00
     | |- class: 1
-    """).lstrip()
+    """
+    ).lstrip()
     assert export_text(clf, spacing=1) == expected_report
 
     X_l = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [-1, 1]]
     y_l = [-1, -1, -1, 1, 1, 1, 2]
     clf = DecisionTreeClassifier(max_depth=4, random_state=0)
     clf.fit(X_l, y_l)
-    expected_report = dedent("""
+    expected_report = dedent(
+        """
     |--- feature_1 <= 0.00
     |   |--- class: -1
     |--- feature_1 >  0.00
     |   |--- truncated branch of depth 2
-    """).lstrip()
+    """
+    ).lstrip()
     assert export_text(clf, max_depth=0) == expected_report
 
     X_mo = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -422,12 +521,14 @@ def test_export_text():
     reg = DecisionTreeRegressor(max_depth=2, random_state=0)
     reg.fit(X_mo, y_mo)
 
-    expected_report = dedent("""
+    expected_report = dedent(
+        """
     |--- feature_1 <= 0.0
     |   |--- value: [-1.0, -1.0]
     |--- feature_1 >  0.0
     |   |--- value: [1.0, 1.0]
-    """).lstrip()
+    """
+    ).lstrip()
     assert export_text(reg, decimals=1) == expected_report
     assert export_text(reg, decimals=1, show_weights=True) == expected_report
 
@@ -435,12 +536,14 @@ def test_export_text():
     reg = DecisionTreeRegressor(max_depth=2, random_state=0)
     reg.fit(X_single, y_mo)
 
-    expected_report = dedent("""
+    expected_report = dedent(
+        """
     |--- first <= 0.0
     |   |--- value: [-1.0, -1.0]
     |--- first >  0.0
     |   |--- value: [1.0, 1.0]
-    """).lstrip()
+    """
+    ).lstrip()
     assert export_text(reg, decimals=1, feature_names=["first"]) == expected_report
     assert (
         export_text(reg, decimals=1, show_weights=True, feature_names=["first"])
@@ -455,20 +558,24 @@ def test_export_text_feature_class_names_array_support(constructor):
     clf = DecisionTreeClassifier(max_depth=2, random_state=0)
     clf.fit(X, y)
 
-    expected_report = dedent("""
+    expected_report = dedent(
+        """
     |--- b <= 0.00
     |   |--- class: -1
     |--- b >  0.00
     |   |--- class: 1
-    """).lstrip()
+    """
+    ).lstrip()
     assert export_text(clf, feature_names=constructor(["a", "b"])) == expected_report
 
-    expected_report = dedent("""
+    expected_report = dedent(
+        """
     |--- feature_1 <= 0.00
     |   |--- class: cat
     |--- feature_1 >  0.00
     |   |--- class: dog
-    """).lstrip()
+    """
+    ).lstrip()
     assert export_text(clf, class_names=constructor(["cat", "dog"])) == expected_report
 
 
@@ -483,33 +590,43 @@ def test_plot_tree_entropy(pyplot):
     # Test export code
     feature_names = ["first feat", "sepal_width"]
     nodes = plot_tree(clf, feature_names=feature_names)
-    assert len(nodes) == 3
+    assert len(nodes) == 5
     assert (
         nodes[0].get_text()
         == "first feat <= 0.0\nentropy = 1.0\nsamples = 6\nvalue = [3, 3]"
     )
     assert nodes[1].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [3, 0]"
-    assert nodes[2].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [0, 3]"
+    assert nodes[2].get_text() == "True  "
+    assert nodes[3].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [0, 3]"
+    assert nodes[4].get_text() == "  False"
 
 
-def test_plot_tree_gini(pyplot):
+@pytest.mark.parametrize("fontsize", [None, 10, 20])
+def test_plot_tree_gini(pyplot, fontsize):
     # mostly smoke tests
     # Check correctness of export_graphviz for criterion = gini
     clf = DecisionTreeClassifier(
-        max_depth=3, min_samples_split=2, criterion="gini", random_state=2
+        max_depth=3,
+        min_samples_split=2,
+        criterion="gini",
+        random_state=2,
     )
     clf.fit(X, y)
 
     # Test export code
     feature_names = ["first feat", "sepal_width"]
-    nodes = plot_tree(clf, feature_names=feature_names)
-    assert len(nodes) == 3
+    nodes = plot_tree(clf, feature_names=feature_names, fontsize=fontsize)
+    assert len(nodes) == 5
+    if fontsize is not None:
+        assert all(node.get_fontsize() == fontsize for node in nodes)
     assert (
         nodes[0].get_text()
         == "first feat <= 0.0\ngini = 0.5\nsamples = 6\nvalue = [3, 3]"
     )
     assert nodes[1].get_text() == "gini = 0.0\nsamples = 3\nvalue = [3, 0]"
-    assert nodes[2].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 3]"
+    assert nodes[2].get_text() == "True  "
+    assert nodes[3].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 3]"
+    assert nodes[4].get_text() == "  False"
 
 
 def test_not_fitted_tree(pyplot):

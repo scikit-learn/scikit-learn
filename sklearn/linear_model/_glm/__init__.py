@@ -1,6 +1,7 @@
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-from .glm import (
+from sklearn.linear_model._glm.glm import (
     GammaRegressor,
     PoissonRegressor,
     TweedieRegressor,
@@ -8,8 +9,8 @@ from .glm import (
 )
 
 __all__ = [
-    "_GeneralizedLinearRegressor",
-    "PoissonRegressor",
     "GammaRegressor",
+    "PoissonRegressor",
     "TweedieRegressor",
+    "_GeneralizedLinearRegressor",
 ]

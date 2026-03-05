@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import math
 import numbers
 from contextlib import suppress
@@ -52,10 +55,12 @@ def is_pandas_na(x):
     Parameters
     ----------
     x : any type
+        The input value to test.
 
     Returns
     -------
     boolean
+        True if `x` is `pandas.NA`, False otherwise.
     """
     with suppress(ImportError):
         from pandas import NA

@@ -1,0 +1,111 @@
+/**
+ * This is the styling for the API index page (`api/index`), in particular for the API
+ * search table. It involves overriding the style sheet of DataTables which does not
+ * fit well into the theme, especially in dark theme; see https://datatables.net/
+ */
+
+.dt-container {
+  margin-bottom: 2rem;
+
+  // Fix the selection box for entries per page
+  select.dt-input {
+    padding: 0 !important;
+    margin-right: 0.4rem !important;
+
+    > option {
+      color: var(--pst-color-text-base);
+      background-color: var(--pst-color-background);
+    }
+  }
+
+  // Fix the search box
+  input.dt-input {
+    width: 50%;
+    line-height: normal;
+    padding: 0.1rem 0.3rem !important;
+    margin-left: 0.4rem !important;
+  }
+
+  table.dataTable {
+    th {
+      // Avoid table header being too tall
+      p {
+        margin-bottom: 0;
+      }
+
+      // Fix the ascending/descending order buttons in the header
+      span.dt-column-order {
+        &::before,
+        &::after {
+          color: var(--pst-color-text-base);
+          line-height: 0.7rem !important;
+        }
+      }
+    }
+
+    td {
+      // Fix color of text warning no records found
+      &.dt-empty {
+        color: var(--pst-color-text-base) !important;
+      }
+    }
+
+    // Unset bottom border of the last row
+    tr:last-child > * {
+      border-bottom: unset !important;
+    }
+  }
+
+  div.dt-paging button.dt-paging-button {
+    padding: 0 0.5rem;
+
+    &.disabled {
+      color: var(--pst-color-border) !important;
+
+      // Overwrite the !important color assigned by DataTables because we must keep
+      // the color of disabled buttons consistent with and without hovering
+      &:hover {
+        color: var(--pst-color-border) !important;
+      }
+    }
+
+    // Fix colors of paging buttons
+    &.current,
+    &:not(.disabled):not(.current):hover {
+      color: var(--pst-color-on-surface) !important;
+      border-color: var(--pst-color-surface) !important;
+      background: var(--pst-color-surface) !important;
+    }
+
+    // Highlight the border of the current selected paging button
+    &.current {
+      border-color: var(--pst-color-text-base) !important;
+    }
+  }
+}
+
+// Styling the object description cells in the table
+div.sk-apisearch-desc {
+  p {
+    margin-bottom: 0;
+  }
+
+  div.caption > p {
+    a,
+    code {
+      color: var(--pst-color-text-muted);
+    }
+
+    code {
+      padding: 0;
+      font-size: 0.7rem;
+      font-weight: var(--pst-font-weight-caption);
+      background-color: transparent;
+    }
+
+    .sd-badge {
+      font-size: 0.7rem;
+      margin-left: 0.3rem;
+    }
+  }
+}

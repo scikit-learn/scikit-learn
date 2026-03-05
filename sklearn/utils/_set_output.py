@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import importlib
 from functools import wraps
 from typing import Protocol, runtime_checkable
@@ -5,8 +8,8 @@ from typing import Protocol, runtime_checkable
 import numpy as np
 from scipy.sparse import issparse
 
-from .._config import get_config
-from ._available_if import available_if
+from sklearn._config import get_config
+from sklearn.utils._available_if import available_if
 
 
 def check_library_installed(library):
@@ -92,13 +95,17 @@ class ContainerAdapterProtocol(Protocol):
             Container with new names.
         """
 
-    def hstack(self, Xs):
+    def hstack(self, Xs, feature_names=None):
         """Stack containers horizontally (column-wise).
 
         Parameters
         ----------
         Xs : list of containers
             List of containers to stack.
+
+        feature_names : array-like of str, default=None
+            The feature names for the stacked container. If provided, the
+            columns of the result will be renamed to these names.
 
         Returns
         -------
@@ -121,7 +128,7 @@ class PandasAdapter:
             # because `list` exposes an `index` attribute.
             if isinstance(X_output, pd.DataFrame):
                 index = X_output.index
-            elif isinstance(X_original, pd.DataFrame):
+            elif isinstance(X_original, (pd.DataFrame, pd.Series)):
                 index = X_original.index
             else:
                 index = None
@@ -144,9 +151,12 @@ class PandasAdapter:
         X.columns = columns
         return X
 
-    def hstack(self, Xs):
+    def hstack(self, Xs, feature_names=None):
         pd = check_library_installed("pandas")
-        return pd.concat(Xs, axis=1)
+        result = pd.concat(Xs, axis=1)
+        if feature_names is not None:
+            self.rename_columns(result, feature_names)
+        return result
 
 
 class PolarsAdapter:
@@ -175,8 +185,16 @@ class PolarsAdapter:
         X.columns = columns
         return X
 
-    def hstack(self, Xs):
+    def hstack(self, Xs, feature_names=None):
         pl = check_library_installed("polars")
+        if feature_names is not None:
+            # Rename columns in each X before concat to avoid duplicates
+            start = 0
+            for X in Xs:
+                n_features = X.shape[1]
+                names = feature_names[start : start + n_features]
+                self.rename_columns(X, names)
+                start += n_features
         return pl.concat(Xs, how="horizontal")
 
 
@@ -195,6 +213,24 @@ class ContainerAdaptersManager:
 ADAPTERS_MANAGER = ContainerAdaptersManager()
 ADAPTERS_MANAGER.register(PandasAdapter())
 ADAPTERS_MANAGER.register(PolarsAdapter())
+
+
+def _get_adapter_from_container(container):
+    """Get the adapter that knows how to handle such container.
+
+    See :class:`sklearn.utils._set_output.ContainerAdapterProtocol` for more
+    details.
+    """
+    module_name = container.__class__.__module__.split(".")[0]
+    try:
+        return ADAPTERS_MANAGER.adapters[module_name]
+    except KeyError as exc:
+        available_adapters = list(ADAPTERS_MANAGER.adapters.keys())
+        raise ValueError(
+            "The container does not have a registered adapter in scikit-learn. "
+            f"Available adapters are: {available_adapters} while the container "
+            f"provided is: {container!r}."
+        ) from exc
 
 
 def _get_container_adapter(method, estimator=None):
@@ -374,7 +410,7 @@ class _SetOutputMixin:
 
         Parameters
         ----------
-        transform : {"default", "pandas"}, default=None
+        transform : {"default", "pandas", "polars"}, default=None
             Configure output of `transform` and `fit_transform`.
 
             - `"default"`: Default output format of a transformer
@@ -410,7 +446,7 @@ def _safe_set_output(estimator, *, transform=None):
     estimator : estimator instance
         Estimator instance.
 
-    transform : {"default", "pandas"}, default=None
+    transform : {"default", "pandas", "polars"}, default=None
         Configure output of the following estimator's methods:
 
         - `"transform"`
@@ -423,10 +459,8 @@ def _safe_set_output(estimator, *, transform=None):
     estimator : estimator instance
         Estimator instance.
     """
-    set_output_for_transform = (
-        hasattr(estimator, "transform")
-        or hasattr(estimator, "fit_transform")
-        and transform is not None
+    set_output_for_transform = hasattr(estimator, "transform") or (
+        hasattr(estimator, "fit_transform") and transform is not None
     )
     if not set_output_for_transform:
         # If estimator can not transform, then `set_output` does not need to be

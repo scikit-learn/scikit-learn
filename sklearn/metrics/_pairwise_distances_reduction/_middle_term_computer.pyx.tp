@@ -16,7 +16,7 @@ implementation_specific_values = [
 from libcpp.vector cimport vector
 from libcpp.algorithm cimport fill
 
-from ...utils._cython_blas cimport (
+from sklearn.utils._cython_blas cimport (
   BLAS_Order,
   BLAS_Trans,
   NoTrans,
@@ -24,7 +24,7 @@ from ...utils._cython_blas cimport (
   Trans,
   _gemm,
 )
-from ...utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
+from sklearn.utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
 
 import numpy as np
 from scipy.sparse import issparse, csr_matrix
@@ -129,11 +129,11 @@ cdef class MiddleTermComputer{{name_suffix}}:
         ----------
         X : ndarray or CSR sparse matrix of shape (n_samples_X, n_features)
             Input data.
-            If provided as a ndarray, it must be C-contiguous.
+            If provided as an ndarray, it must be C-contiguous.
 
         Y : ndarray or CSR sparse matrix of shape (n_samples_Y, n_features)
             Input data.
-            If provided as a ndarray, it must be C-contiguous.
+            If provided as an ndarray, it must be C-contiguous.
 
         Returns
         -------
@@ -534,7 +534,7 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
         return dist_middle_terms
 
 cdef class SparseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_suffix}}):
-    """Middle term of the Euclidean distance between chunks of a CSR matrix and a np.ndarray.
+    """Middle term of the Euclidean distance between chunks of a CSR matrix and an np.ndarray.
 
     The logic of the computation is wrapped in the routine _middle_term_sparse_dense_{{name_suffix}}.
     This routine iterates over the data, indices and indptr arrays of the sparse matrices

@@ -2,10 +2,8 @@
 A Theil-Sen Estimator for Multiple Linear Regression Model
 """
 
-# Author: Florian Wilhelm <florian.wilhelm@gmail.com>
-#
-# License: BSD 3 clause
-
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from itertools import combinations
@@ -17,12 +15,13 @@ from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 from scipy.special import binom
 
-from ..base import RegressorMixin, _fit_context
-from ..exceptions import ConvergenceWarning
-from ..utils import check_random_state
-from ..utils._param_validation import Interval
-from ..utils.parallel import Parallel, delayed
-from ._base import LinearModel
+from sklearn.base import RegressorMixin, _fit_context
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import LinearModel
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import validate_data
 
 _EPSILON = np.finfo(np.double).eps
 
@@ -225,9 +224,6 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations.
 
-    copy_X : bool, default=True
-        If True, X will be copied; else, it may be overwritten.
-
     max_subpopulation : int, default=1e4
         Instead of computing with a set of cardinality 'n choose k', where n is
         the number of samples and k is the number of subsamples (at least
@@ -317,14 +313,13 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     ...     n_samples=200, n_features=2, noise=4.0, random_state=0)
     >>> reg = TheilSenRegressor(random_state=0).fit(X, y)
     >>> reg.score(X, y)
-    0.9884...
+    0.9884
     >>> reg.predict(X[:1,])
-    array([-31.5871...])
+    array([-31.5871])
     """
 
     _parameter_constraints: dict = {
         "fit_intercept": ["boolean"],
-        "copy_X": ["boolean"],
         # target_type should be Integral but can accept Real for backward compatibility
         "max_subpopulation": [Interval(Real, 1, None, closed="left")],
         "n_subsamples": [None, Integral],
@@ -339,7 +334,6 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         self,
         *,
         fit_intercept=True,
-        copy_X=True,
         max_subpopulation=1e4,
         n_subsamples=None,
         max_iter=300,
@@ -349,7 +343,6 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         verbose=False,
     ):
         self.fit_intercept = fit_intercept
-        self.copy_X = copy_X
         self.max_subpopulation = max_subpopulation
         self.n_subsamples = n_subsamples
         self.max_iter = max_iter
@@ -412,7 +405,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
             Fitted `TheilSenRegressor` estimator.
         """
         random_state = check_random_state(self.random_state)
-        X, y = self._validate_data(X, y, y_numeric=True)
+        X, y = validate_data(self, X, y, y_numeric=True)
         n_samples, n_features = X.shape
         n_subsamples, self.n_subpopulation_ = self._check_subparams(
             n_samples, n_features

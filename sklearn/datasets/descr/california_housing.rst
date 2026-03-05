@@ -21,8 +21,8 @@ California Housing dataset
 
 :Missing Attribute Values: None
 
-This dataset was obtained from the StatLib repository.
-https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.html
+This dataset was obtained from the StatLib:
+https://lib.stat.cmu.edu/datasets/houses.zip
 
 The target variable is the median house value for California districts,
 expressed in hundreds of thousands of dollars ($100,000).
@@ -40,7 +40,7 @@ and many empty houses, such as vacation resorts.
 It can be downloaded/loaded using the
 :func:`sklearn.datasets.fetch_california_housing` function.
 
-.. topic:: References
+.. rubric:: References
 
-    - Pace, R. Kelley and Ronald Barry, Sparse Spatial Autoregressions,
-      Statistics and Probability Letters, 33 (1997) 291-297
+- Pace, R. Kelley and Ronald Barry, Sparse Spatial Autoregressions,
+  Statistics and Probability Letters, 33:291-297, 1997.

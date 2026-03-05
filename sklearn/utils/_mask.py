@@ -1,11 +1,14 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from contextlib import suppress
 
 import numpy as np
 from scipy import sparse as sp
 
-from ._missing import is_scalar_nan
-from ._param_validation import validate_params
-from .fixes import _object_dtype_isnan
+from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._param_validation import validate_params
+from sklearn.utils.fixes import _object_dtype_isnan
 
 
 def _get_dense_mask(X, value_to_mask):

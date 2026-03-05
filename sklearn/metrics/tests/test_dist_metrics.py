@@ -9,12 +9,17 @@ from scipy.spatial.distance import cdist
 from sklearn.metrics import DistanceMetric
 from sklearn.metrics._dist_metrics import (
     BOOL_METRICS,
+    DEPRECATED_METRICS,
     DistanceMetric32,
     DistanceMetric64,
 )
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_allclose, create_memmap_backed_data
-from sklearn.utils.fixes import CSR_CONTAINERS, parse_version, sp_version
+from sklearn.utils._testing import (
+    assert_allclose,
+    create_memmap_backed_data,
+    ignore_warnings,
+)
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 def dist_func(x1, x2, p):
@@ -76,13 +81,6 @@ def test_cdist(metric_param_grid, X, Y, csr_container):
             # with scipy
             rtol_dict = {"rtol": 1e-6}
 
-        # TODO: Remove when scipy minimum version >= 1.7.0
-        # scipy supports 0<p<1 for minkowski metric >= 1.7.0
-        if metric == "minkowski":
-            p = kwargs["p"]
-            if sp_version < parse_version("1.7.0") and p < 1:
-                pytest.skip("scipy does not support 0<p<1 for minkowski metric < 1.7.0")
-
         D_scipy_cdist = cdist(X, Y, metric, **kwargs)
 
         dm = DistanceMetric.get_metric(metric, X.dtype, **kwargs)
@@ -112,7 +110,15 @@ def test_cdist(metric_param_grid, X, Y, csr_container):
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_cdist_bool_metric(metric, X_bool, Y_bool, csr_container):
-    D_scipy_cdist = cdist(X_bool, Y_bool, metric)
+    if metric in DEPRECATED_METRICS:
+        with ignore_warnings(category=DeprecationWarning):
+            # Some metrics can be deprecated depending on the scipy version.
+            # But if they are present, we still want to test whether
+            # scikit-learn gives the same result, whether or not they are
+            # deprecated.
+            D_scipy_cdist = cdist(X_bool, Y_bool, metric)
+    else:
+        D_scipy_cdist = cdist(X_bool, Y_bool, metric)
 
     dm = DistanceMetric.get_metric(metric)
     D_sklearn = dm.pairwise(X_bool, Y_bool)
@@ -159,12 +165,6 @@ def test_pdist(metric_param_grid, X, csr_container):
             # with scipy
             rtol_dict = {"rtol": 1e-6}
 
-        # TODO: Remove when scipy minimum version >= 1.7.0
-        # scipy supports 0<p<1 for minkowski metric >= 1.7.0
-        if metric == "minkowski":
-            p = kwargs["p"]
-            if sp_version < parse_version("1.7.0") and p < 1:
-                pytest.skip("scipy does not support 0<p<1 for minkowski metric < 1.7.0")
         D_scipy_pdist = cdist(X, X, metric, **kwargs)
 
         dm = DistanceMetric.get_metric(metric, X.dtype, **kwargs)
@@ -219,7 +219,16 @@ def test_distance_metrics_dtype_consistency(metric_param_grid):
 @pytest.mark.parametrize("X_bool", [X_bool, X_bool_mmap])
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_pdist_bool_metrics(metric, X_bool, csr_container):
-    D_scipy_pdist = cdist(X_bool, X_bool, metric)
+    if metric in DEPRECATED_METRICS:
+        with ignore_warnings(category=DeprecationWarning):
+            # Some metrics can be deprecated depending on the scipy version.
+            # But if they are present, we still want to test whether
+            # scikit-learn gives the same result, whether or not they are
+            # deprecated.
+            D_scipy_pdist = cdist(X_bool, X_bool, metric)
+    else:
+        D_scipy_pdist = cdist(X_bool, X_bool, metric)
+
     dm = DistanceMetric.get_metric(metric)
     D_sklearn = dm.pairwise(X_bool)
     assert_allclose(D_sklearn, D_scipy_pdist)

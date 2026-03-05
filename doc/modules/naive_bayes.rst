@@ -69,15 +69,11 @@ On the flip side, although naive Bayes is known as a decent classifier,
 it is known to be a bad estimator, so the probability outputs from
 ``predict_proba`` are not to be taken too seriously.
 
-|details-start|
-**References**
-|details-split|
+.. dropdown:: References
 
-* H. Zhang (2004). `The optimality of Naive Bayes.
-  <https://www.cs.unb.ca/~hzhang/publications/FLAIRS04ZhangH.pdf>`_
-  Proc. FLAIRS.
-
-|details-end|
+   * H. Zhang (2004). `The optimality of Naive Bayes.
+     <https://www.cs.unb.ca/~hzhang/publications/FLAIRS04ZhangH.pdf>`_
+     Proc. FLAIRS.
 
 .. _gaussian_naive_bayes:
 
@@ -121,7 +117,7 @@ for each class :math:`y`, where :math:`n` is the number of features
 and :math:`\theta_{yi}` is the probability :math:`P(x_i \mid y)`
 of feature :math:`i` appearing in a sample belonging to class :math:`y`.
 
-The parameters :math:`\theta_y` is estimated by a smoothed
+The parameters :math:`\theta_y` are estimated by a smoothed
 version of maximum likelihood, i.e. relative frequency counting:
 
 .. math::
@@ -129,13 +125,13 @@ version of maximum likelihood, i.e. relative frequency counting:
     \hat{\theta}_{yi} = \frac{ N_{yi} + \alpha}{N_y + \alpha n}
 
 where :math:`N_{yi} = \sum_{x \in T} x_i` is
-the number of times feature :math:`i` appears in a sample of class :math:`y`
+the number of times feature :math:`i` appears in all samples of class :math:`y`
 in the training set :math:`T`,
 and :math:`N_{y} = \sum_{i=1}^{n} N_{yi}` is the total count of
 all features for class :math:`y`.
 
-The smoothing priors :math:`\alpha \ge 0` accounts for
-features not present in the learning samples and prevents zero probabilities
+The smoothing priors :math:`\alpha \ge 0` account for
+features not present in the learning samples and prevent zero probabilities
 in further computations.
 Setting :math:`\alpha = 1` is called Laplace smoothing,
 while :math:`\alpha < 1` is called Lidstone smoothing.
@@ -153,47 +149,40 @@ The inventors of CNB show empirically that the parameter estimates for CNB are
 more stable than those for MNB. Further, CNB regularly outperforms MNB (often
 by a considerable margin) on text classification tasks.
 
-|details-start|
-**Weights calculation**
-|details-split|
+.. dropdown:: Weights calculation
 
-The procedure for calculating the weights is as follows:
+   The procedure for calculating the weights is as follows:
 
-.. math::
+   .. math::
 
-    \hat{\theta}_{ci} = \frac{\alpha_i + \sum_{j:y_j \neq c} d_{ij}}
-                             {\alpha + \sum_{j:y_j \neq c} \sum_{k} d_{kj}}
+      \hat{\theta}_{ci} = \frac{\alpha_i + \sum_{j:y_j \neq c} d_{ij}}
+                              {\alpha + \sum_{j:y_j \neq c} \sum_{k} d_{kj}}
 
-    w_{ci} = \log \hat{\theta}_{ci}
+      w_{ci} = \log \hat{\theta}_{ci}
 
-    w_{ci} = \frac{w_{ci}}{\sum_{j} |w_{cj}|}
+      w_{ci} = \frac{w_{ci}}{\sum_{j} |w_{cj}|}
 
-where the summations are over all documents :math:`j` not in class :math:`c`,
-:math:`d_{ij}` is either the count or tf-idf value of term :math:`i` in document
-:math:`j`, :math:`\alpha_i` is a smoothing hyperparameter like that found in
-MNB, and :math:`\alpha = \sum_{i} \alpha_i`. The second normalization addresses
-the tendency for longer documents to dominate parameter estimates in MNB. The
-classification rule is:
+   where the summations are over all documents :math:`j` not in class :math:`c`,
+   :math:`d_{ij}` is either the count or tf-idf value of term :math:`i` in document
+   :math:`j`, :math:`\alpha_i` is a smoothing hyperparameter like that found in
+   MNB, and :math:`\alpha = \sum_{i} \alpha_i`. The second normalization addresses
+   the tendency for longer documents to dominate parameter estimates in MNB. The
+   classification rule is:
 
-.. math::
+   .. math::
 
-    \hat{c} = \arg\min_c \sum_{i} t_i w_{ci}
+      \hat{c} = \arg\min_c \sum_{i} t_i w_{ci}
 
-i.e., a document is assigned to the class that is the *poorest* complement
-match.
+   i.e., a document is assigned to the class that is the *poorest* complement
+   match.
 
-|details-end|
+.. dropdown:: References
 
-|details-start|
-**References**
-|details-split|
+   * Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
+     `Tackling the poor assumptions of naive bayes text classifiers.
+     <https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf>`_
+     In ICML (Vol. 3, pp. 616-623).
 
-* Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
-  `Tackling the poor assumptions of naive bayes text classifiers.
-  <https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf>`_
-  In ICML (Vol. 3, pp. 616-623).
-
-|details-end|
 
 .. _bernoulli_naive_bayes:
 
@@ -224,24 +213,21 @@ count vectors) may be used to train and use this classifier. :class:`BernoulliNB
 might perform better on some datasets, especially those with shorter documents.
 It is advisable to evaluate both models, if time permits.
 
-|details-start|
-**References**
-|details-split|
+.. dropdown:: References
 
-* C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
-  Information Retrieval. Cambridge University Press, pp. 234-265.
+   * C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
+     Information Retrieval. Cambridge University Press, pp. 234-265.
 
-* A. McCallum and K. Nigam (1998).
-  `A comparison of event models for Naive Bayes text classification.
-  <https://citeseerx.ist.psu.edu/doc_view/pid/04ce064505b1635583fa0d9cc07cac7e9ea993cc>`_
-  Proc. AAAI/ICML-98 Workshop on Learning for Text Categorization, pp. 41-48.
+   * A. McCallum and K. Nigam (1998).
+     `A comparison of event models for Naive Bayes text classification.
+     <https://cdn.aaai.org/Workshops/1998/WS-98-05/WS98-05-007.pdf>`_
+     Proc. AAAI/ICML-98 Workshop on Learning for Text Categorization, pp. 41-48.
 
-* V. Metsis, I. Androutsopoulos and G. Paliouras (2006).
-  `Spam filtering with Naive Bayes -- Which Naive Bayes?
-  <https://citeseerx.ist.psu.edu/doc_view/pid/8bd0934b366b539ec95e683ae39f8abb29ccc757>`_
-  3rd Conf. on Email and Anti-Spam (CEAS).
+   * V. Metsis, I. Androutsopoulos and G. Paliouras (2006).
+     `Spam filtering with Naive Bayes -- Which Naive Bayes?
+     <https://www2.aueb.gr/users/ion/docs/ceas2006_paper.pdf>`_
+     3rd Conf. on Email and Anti-Spam (CEAS).
 
-|details-end|
 
 .. _categorical_naive_bayes:
 
@@ -258,25 +244,21 @@ For each feature :math:`i` in the training set :math:`X`,
 of X conditioned on the class y. The index set of the samples is defined as
 :math:`J = \{ 1, \dots, m \}`, with :math:`m` as the number of samples.
 
-|details-start|
-**Probability calculation**
-|details-split|
+.. dropdown:: Probability calculation
 
-The probability of category :math:`t` in feature :math:`i` given class
-:math:`c` is estimated as:
+   The probability of category :math:`t` in feature :math:`i` given class
+   :math:`c` is estimated as:
 
-.. math::
+   .. math::
 
-    P(x_i = t \mid y = c \: ;\, \alpha) = \frac{ N_{tic} + \alpha}{N_{c} +
-                                           \alpha n_i},
+      P(x_i = t \mid y = c \: ;\, \alpha) = \frac{ N_{tic} + \alpha}{N_{c} +
+                                             \alpha n_i},
 
-where :math:`N_{tic} = |\{j \in J \mid x_{ij} = t, y_j = c\}|` is the number
-of times category :math:`t` appears in the samples :math:`x_{i}`, which belong
-to class :math:`c`, :math:`N_{c} = |\{ j \in J\mid y_j = c\}|` is the number
-of samples with class c, :math:`\alpha` is a smoothing parameter and
-:math:`n_i` is the number of available categories of feature :math:`i`.
-
-|details-end|
+   where :math:`N_{tic} = |\{j \in J \mid x_{ij} = t, y_j = c\}|` is the number
+   of times category :math:`t` appears in the samples :math:`x_{i}`, which belong
+   to class :math:`c`, :math:`N_{c} = |\{ j \in J\mid y_j = c\}|` is the number
+   of samples with class c, :math:`\alpha` is a smoothing parameter and
+   :math:`n_i` is the number of available categories of feature :math:`i`.
 
 :class:`CategoricalNB` assumes that the sample matrix :math:`X` is encoded (for
 instance with the help of :class:`~sklearn.preprocessing.OrdinalEncoder`) such

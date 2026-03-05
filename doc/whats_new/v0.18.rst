@@ -586,8 +586,8 @@ Decomposition, manifold learning and clustering
 - `decomposition.RandomizedPCA` default number of `iterated_power` is 4 instead of 3.
   :issue:`5141` by :user:`Giorgio Patrini <giorgiop>`.
 
-- :func:`utils.extmath.randomized_svd` performs 4 power iterations by default, instead or 0.
-  In practice this is enough for obtaining a good approximation of the
+- :func:`utils.extmath.randomized_svd` performs 4 power iterations by default, instead
+  of 0. In practice this is enough for obtaining a good approximation of the
   true eigenvalues/vectors in the presence of noise. When `n_components` is
   small (``< .1 * min(X.shape)``) `n_iter` is set to 7, unless the user specifies
   a higher number. This improves precision with few components.

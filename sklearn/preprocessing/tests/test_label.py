@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from scipy.sparse import issparse
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.preprocessing._label import (
     LabelBinarizer,
     LabelEncoder,
@@ -11,8 +11,18 @@ from sklearn.preprocessing._label import (
     _inverse_binarize_thresholding,
     label_binarize,
 )
-from sklearn.utils import _to_object_array
-from sklearn.utils._testing import assert_array_equal, ignore_warnings
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
+    _is_numpy_namespace,
+    device,
+    get_namespace,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._testing import (
+    _array_api_for_tests,
+    assert_array_equal,
+)
 from sklearn.utils.fixes import (
     COO_CONTAINERS,
     CSC_CONTAINERS,
@@ -21,6 +31,7 @@ from sklearn.utils.fixes import (
     LIL_CONTAINERS,
 )
 from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import _to_object_array
 
 iris = datasets.load_iris()
 
@@ -134,7 +145,6 @@ def test_label_binarizer_pandas_nullable(dtype, unique_first):
     assert_array_equal(y_out, [[1], [0]])
 
 
-@ignore_warnings
 def test_label_binarizer_errors():
     # Check that invalid arguments yield ValueError
     one_class = np.array([0, 0, 0, 0])
@@ -213,6 +223,81 @@ def test_label_binarizer_sparse_errors(csr_container):
             output_type="foo",
             classes=[1, 2, 3],
             threshold=0,
+        )
+
+
+@pytest.mark.parametrize(
+    "y, classes, expected",
+    [
+        [[1, 0, 0, 1], [0, 1], [[1], [0], [0], [1]]],
+        [
+            [1, 0, 2, 9],
+            [0, 1, 2, 9],
+            [[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]],
+        ],
+    ],
+)
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_label_binarizer_array_api_compliance(
+    y, classes, expected, array_namespace, device_, dtype_name
+):
+    """Test that :class:`LabelBinarizer` works correctly with the Array API for binary
+    and multi-class inputs for numerical labels and non-sparse outputs.
+    """
+    xp = _array_api_for_tests(array_namespace, device_)
+
+    y_np = np.asarray(y)
+
+    with config_context(array_api_dispatch=True):
+        y = xp.asarray(y, device=device_)
+
+        # `sparse_output=True` is not allowed for non-NumPy namespaces.
+        # Similarly, if `LabelBinarizer` is fitted on a sparse matrix,
+        # then inverse-transforming non-NumPy arrays is not allowed.
+        if not _is_numpy_namespace(xp):
+            sparse_output_msg = "`sparse_output=True` is not supported for array API"
+
+            with pytest.raises(ValueError, match=sparse_output_msg):
+                LabelBinarizer(sparse_output=True).fit(y)
+
+            lb_np = LabelBinarizer(sparse_output=True).fit(y_np)
+            with pytest.raises(ValueError, match=sparse_output_msg):
+                lb_np.transform(y)
+
+            lb_sparse = LabelBinarizer().fit(y_np)
+            lb_sparse.sparse_input_ = True
+            sparse_input_msg = (
+                "`LabelBinarizer` was fitted on a sparse matrix, and therefore cannot"
+            )
+            with pytest.raises(ValueError, match=sparse_input_msg):
+                lb_sparse.inverse_transform(xp.asarray(expected, device=device_))
+
+        # Shouldn't raise error in both `fit` and `transform` when `sparse_output=False`
+        lb_xp = LabelBinarizer()
+
+        binarized = lb_xp.fit_transform(y)
+        assert get_namespace(binarized)[0].__name__ == xp.__name__
+        assert "int" in str(binarized.dtype)
+        assert device(binarized) == device(y)
+        assert_array_equal(_convert_to_numpy(binarized, xp=xp), np.asarray(expected))
+
+        fitted_classes = lb_xp.classes_
+        assert get_namespace(fitted_classes)[0].__name__ == xp.__name__
+        assert device(fitted_classes) == device(y)
+        assert "int" in str(fitted_classes.dtype)
+        assert_array_equal(
+            _convert_to_numpy(fitted_classes, xp=xp), np.asarray(classes)
+        )
+
+        expected_xp = xp.asarray(expected, device=device_)
+        binarized_inverse = lb_xp.inverse_transform(expected_xp)
+        assert get_namespace(binarized_inverse)[0].__name__ == xp.__name__
+        assert "int" in str(binarized_inverse.dtype)
+        assert device(binarized_inverse) == device(y)
+        assert_array_equal(
+            _convert_to_numpy(binarized_inverse, xp=xp), _convert_to_numpy(y, xp=xp)
         )
 
 
@@ -665,6 +750,59 @@ def test_invalid_input_label_binarize():
         label_binarize([[1, 3]], classes=[1, 2, 3])
 
 
+@pytest.mark.parametrize(
+    "y, classes, expected",
+    [
+        [[1, 0, 0, 1], ["yes", "no"], [[0], [0], [0], [0]]],
+        [
+            [1, 0, 2, 9],
+            ["bird", "cat", "dog"],
+            [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
+        ],
+        [[1, 0, 0, 1], [0, 1], [[1], [0], [0], [1]]],
+        [[1, 0, 2, 1], [0, 1, 2], [[0, 1, 0], [1, 0, 0], [0, 0, 1], [0, 1, 0]]],
+    ],
+)
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_label_binarize_array_api_compliance(
+    y, classes, expected, array_namespace, device_, dtype_name
+):
+    """Test that :func:`label_binarize` works correctly with the Array API for binary
+    and multi-class inputs for numerical labels and non-sparse outputs.
+    """
+    xp = _array_api_for_tests(array_namespace, device_)
+    xp_is_numpy = _is_numpy_namespace(xp)
+    numeric_dtype = np.issubdtype(np.asarray(y).dtype, np.integer) and np.issubdtype(
+        np.asarray(classes).dtype, np.integer
+    )
+
+    with config_context(array_api_dispatch=True):
+        y = xp.asarray(y, device=device_)
+
+        if numeric_dtype:
+            # `sparse_output=True` is not allowed for non-NumPy namespaces
+            if not xp_is_numpy:
+                msg = "`sparse_output=True` is not supported for array API "
+                with pytest.raises(ValueError, match=msg):
+                    label_binarize(y=y, classes=classes, sparse_output=True)
+
+            # Numeric class labels should not raise any errors for non-NumPy namespaces
+            binarized = label_binarize(y, classes=classes)
+            expected = np.asarray(expected, dtype=int)
+
+            assert get_namespace(binarized)[0].__name__ == xp.__name__
+            assert device(binarized) == device(y)
+            assert "int" in str(binarized.dtype)
+            assert_array_equal(_convert_to_numpy(binarized, xp=xp), expected)
+
+        if not xp_is_numpy and not numeric_dtype:
+            msg = "`classes` contains unsupported dtype for array API "
+            with pytest.raises(ValueError, match=msg):
+                label_binarize(y=y, classes=classes)
+
+
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_inverse_binarize_multiclass(csr_container):
     got = _inverse_binarize_multiclass(
@@ -697,3 +835,44 @@ def test_label_encoders_do_not_have_set_output(encoder):
     y_encoded_with_kwarg = encoder.fit_transform(y=["a", "b", "c"])
     y_encoded_positional = encoder.fit_transform(["a", "b", "c"])
     assert_array_equal(y_encoded_with_kwarg, y_encoded_positional)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize(
+    "y",
+    [
+        np.array([2, 1, 3, 1, 3]),
+        np.array([1, 1, 4, 5, -1, 0]),
+        np.array([3, 5, 9, 5, 9, 3]),
+    ],
+)
+def test_label_encoder_array_api_compliance(y, array_namespace, device, dtype):
+    xp = _array_api_for_tests(array_namespace, device)
+    xp_y = xp.asarray(y, device=device)
+    with config_context(array_api_dispatch=True):
+        xp_label = LabelEncoder()
+        np_label = LabelEncoder()
+        xp_label = xp_label.fit(xp_y)
+        xp_transformed = xp_label.transform(xp_y)
+        xp_inv_transformed = xp_label.inverse_transform(xp_transformed)
+        np_label = np_label.fit(y)
+        np_transformed = np_label.transform(y)
+        assert get_namespace(xp_transformed)[0].__name__ == xp.__name__
+        assert get_namespace(xp_inv_transformed)[0].__name__ == xp.__name__
+        assert get_namespace(xp_label.classes_)[0].__name__ == xp.__name__
+        assert_array_equal(_convert_to_numpy(xp_transformed, xp), np_transformed)
+        assert_array_equal(_convert_to_numpy(xp_inv_transformed, xp), y)
+        assert_array_equal(_convert_to_numpy(xp_label.classes_, xp), np_label.classes_)
+
+        xp_label = LabelEncoder()
+        np_label = LabelEncoder()
+        xp_transformed = xp_label.fit_transform(xp_y)
+        np_transformed = np_label.fit_transform(y)
+        assert get_namespace(xp_transformed)[0].__name__ == xp.__name__
+        assert get_namespace(xp_label.classes_)[0].__name__ == xp.__name__
+        assert_array_equal(_convert_to_numpy(xp_transformed, xp), np_transformed)
+        assert_array_equal(_convert_to_numpy(xp_label.classes_, xp), np_label.classes_)

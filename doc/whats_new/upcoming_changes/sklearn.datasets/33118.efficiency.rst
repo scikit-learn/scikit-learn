@@ -1,0 +1,3 @@
+- Re-enabled compressed caching for :func:`datasets.fetch_kddcup99`, reducing
+  on-disk cache size without changing the public API.
+  By :user:`Unique Shrestha <un1u3>`.

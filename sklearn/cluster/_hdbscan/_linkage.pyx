@@ -1,9 +1,7 @@
 # Minimum spanning tree single linkage implementation for hdbscan
-# Authors: Leland McInnes <leland.mcinnes@gmail.com>
-#          Steve Astels <sastels@gmail.com>
-#          Meekail Zain <zainmeekail@gmail.com>
-# Copyright (c) 2015, Leland McInnes
-# All rights reserved.
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -35,11 +33,11 @@ cimport numpy as cnp
 from libc.float cimport DBL_MAX
 
 import numpy as np
-from ...metrics._dist_metrics cimport DistanceMetric64
-from ...cluster._hierarchical_fast cimport UnionFind
-from ...cluster._hdbscan._tree cimport HIERARCHY_t
-from ...cluster._hdbscan._tree import HIERARCHY_dtype
-from ...utils._typedefs cimport intp_t, float64_t, int64_t, uint8_t
+from sklearn.metrics._dist_metrics cimport DistanceMetric64
+from sklearn.cluster._hierarchical_fast cimport UnionFind
+from sklearn.cluster._hdbscan._tree cimport HIERARCHY_t
+from sklearn.cluster._hdbscan._tree import HIERARCHY_dtype
+from sklearn.utils._typedefs cimport intp_t, float64_t, int64_t, uint8_t
 
 cnp.import_array()
 
@@ -74,8 +72,8 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_mutual_reachability(
     Returns
     -------
     mst : ndarray of shape (n_samples - 1,), dtype=MST_edge_dtype
-        The MST representation of the mutual-reahability graph. The MST is
-        represented as a collecteion of edges.
+        The MST representation of the mutual-reachability graph. The MST is
+        represented as a collection of edges.
     """
     cdef:
         # Note: we utilize ndarray's over memory-views to make use of numpy
@@ -136,8 +134,8 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
     Returns
     -------
     mst : ndarray of shape (n_samples - 1,), dtype=MST_edge_dtype
-        The MST representation of the mutual-reahability graph. The MST is
-        represented as a collecteion of edges.
+        The MST representation of the mutual-reachability graph. The MST is
+        represented as a collection of edges.
     """
 
     cdef:
@@ -163,6 +161,8 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
 
     current_node = 0
 
+    # The following loop dynamically updates minimum reachability node-by-node,
+    # avoiding unnecessary computation where possible.
     for i in range(0, n_samples - 1):
 
         in_tree[current_node] = 1
@@ -194,25 +194,27 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
                 next_node_core_dist,
                 pair_distance
             )
-            if mutual_reachability_distance > next_node_min_reach:
-                if next_node_min_reach < new_reachability:
-                    new_reachability = next_node_min_reach
-                    source_node = next_node_source
-                    new_node = j
-                continue
 
+            # If MRD(i, j) is smaller than node j's min_reachability, we update
+            # node j's min_reachability for future reference.
             if mutual_reachability_distance < next_node_min_reach:
                 min_reachability[j] = mutual_reachability_distance
                 current_sources[j] = current_node
+
+                # If MRD(i, j) is also smaller than node i's current
+                # min_reachability, we update and set their edge as the current
+                # MST edge candidate.
                 if mutual_reachability_distance < new_reachability:
                     new_reachability = mutual_reachability_distance
                     source_node = current_node
                     new_node = j
-            else:
-                if next_node_min_reach < new_reachability:
-                    new_reachability = next_node_min_reach
-                    source_node = next_node_source
-                    new_node = j
+
+            # If the node j is closer to another node already in the tree, we
+            # make their edge the current MST candidate edge.
+            elif next_node_min_reach < new_reachability:
+                new_reachability = next_node_min_reach
+                source_node = next_node_source
+                new_node = j
 
         mst[i].current_node = source_node
         mst[i].next_node = new_node
@@ -227,8 +229,8 @@ cpdef cnp.ndarray[HIERARCHY_t, ndim=1, mode="c"] make_single_linkage(const MST_e
     Parameters
     ----------
     mst : ndarray of shape (n_samples - 1,), dtype=MST_edge_dtype
-        The MST representation of the mutual-reahability graph. The MST is
-        represented as a collecteion of edges.
+        The MST representation of the mutual-reachability graph. The MST is
+        represented as a collection of edges.
 
     Returns
     -------

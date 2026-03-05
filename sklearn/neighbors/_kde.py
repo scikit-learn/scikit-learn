@@ -2,21 +2,28 @@
 Kernel Density Estimation
 -------------------------
 """
-# Author: Jake Vanderplas <jakevdp@cs.washington.edu>
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 from numbers import Integral, Real
 
 import numpy as np
 from scipy.special import gammainc
 
-from ..base import BaseEstimator, _fit_context
-from ..neighbors._base import VALID_METRICS
-from ..utils import check_random_state
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import row_norms
-from ..utils.validation import _check_sample_weight, check_is_fitted
-from ._ball_tree import BallTree
-from ._kd_tree import KDTree
+from sklearn.base import BaseEstimator, _fit_context
+from sklearn.neighbors._ball_tree import BallTree
+from sklearn.neighbors._base import VALID_METRICS
+from sklearn.neighbors._kd_tree import KDTree
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.extmath import row_norms
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
+)
 
 VALID_KERNELS = [
     "gaussian",
@@ -223,11 +230,11 @@ class KernelDensity(BaseEstimator):
         else:
             self.bandwidth_ = self.bandwidth
 
-        X = self._validate_data(X, order="C", dtype=np.float64)
+        X = validate_data(self, X, order="C", dtype=np.float64)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(
-                sample_weight, X, dtype=np.float64, only_non_negative=True
+                sample_weight, X, dtype=np.float64, ensure_non_negative=True
             )
 
         kwargs = self.metric_params
@@ -262,7 +269,7 @@ class KernelDensity(BaseEstimator):
         # The returned density is normalized to the number of points.
         # For it to be a probability, we must scale it.  For this reason
         # we'll also scale atol.
-        X = self._validate_data(X, order="C", dtype=np.float64, reset=False)
+        X = validate_data(self, X, order="C", dtype=np.float64, reset=False)
         if self.tree_.sample_weight is None:
             N = self.tree_.data.shape[0]
         else:
@@ -354,12 +361,3 @@ class KernelDensity(BaseEstimator):
                 / np.sqrt(s_sq)
             )
             return data[i] + X * correction[:, np.newaxis]
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "sample_weight must have positive values"
-                ),
-            }
-        }

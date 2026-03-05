@@ -16,6 +16,9 @@ weights.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Generate sample data
 # --------------------
@@ -77,7 +80,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.svm import LinearSVC
 
-clf = make_pipeline(MinMaxScaler(), LinearSVC(dual="auto"))
+clf = make_pipeline(MinMaxScaler(), LinearSVC())
 clf.fit(X_train, y_train)
 print(
     "Classification accuracy without selecting features: {:.3f}".format(
@@ -90,9 +93,7 @@ svm_weights /= svm_weights.sum()
 
 # %%
 # After univariate feature selection
-clf_selected = make_pipeline(
-    SelectKBest(f_classif, k=4), MinMaxScaler(), LinearSVC(dual="auto")
-)
+clf_selected = make_pipeline(SelectKBest(f_classif, k=4), MinMaxScaler(), LinearSVC())
 clf_selected.fit(X_train, y_train)
 print(
     "Classification accuracy after univariate feature selection: {:.3f}".format(

@@ -117,7 +117,7 @@ static void info(const char *fmt,...)
 	char buf[BUFSIZ];
 	va_list ap;
 	va_start(ap,fmt);
-	vsprintf(buf,fmt,ap);
+	vsnprintf(buf,sizeof buf,fmt,ap);
 	va_end(ap);
 	(*svm_print_string)(buf);
 }
@@ -3137,7 +3137,8 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	if(svm_type == C_SVC ||
 	   svm_type == EPSILON_SVR ||
 	   svm_type == NU_SVR ||
-	   svm_type == ONE_CLASS)
+	   svm_type == ONE_CLASS ||
+	   svm_type == NU_SVC)
 	{
 		PREFIX(problem) newprob;
 		// filter samples with negative and null weights

@@ -1,12 +1,11 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Basic unittests to test functioning of module's top-level
 
 
-__author__ = "Yaroslav Halchenko"
-__license__ = "BSD"
-
-
 try:
-    from sklearn import *  # noqa
+    from sklearn import *  # noqa: F403
 
     _top_import_error = None
 except Exception as e:

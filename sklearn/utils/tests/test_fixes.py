@@ -1,17 +1,11 @@
-# Authors: Gael Varoquaux <gael.varoquaux@normalesup.org>
-#          Justin Vincent
-#          Lars Buitinck
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 import pytest
 
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils.fixes import (
-    _object_dtype_isnan,
-    _smallest_admissible_index_dtype,
-    delayed,
-)
+from sklearn.utils.fixes import _object_dtype_isnan, _smallest_admissible_index_dtype
 
 
 @pytest.mark.parametrize("dtype, val", ([object, 1], [object, "a"], [float, 1]))
@@ -23,17 +17,6 @@ def test_object_dtype_isnan(dtype, val):
     mask = _object_dtype_isnan(X)
 
     assert_array_equal(mask, expected_mask)
-
-
-def test_delayed_deprecation():
-    """Check that we issue the FutureWarning regarding the deprecation of delayed."""
-
-    def func(x):
-        return x
-
-    warn_msg = "The function `delayed` has been moved from `sklearn.utils.fixes`"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        delayed(func)
 
 
 @pytest.mark.parametrize(

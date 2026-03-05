@@ -1,6 +1,8 @@
-#!/usr/bin/env python
-""" Extract version number from __init__.py
-"""
+#!/usr/bin/env python3
+"""Extract version number from __init__.py"""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import os
 

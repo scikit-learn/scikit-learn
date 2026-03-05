@@ -14,6 +14,9 @@ candidates. Unlike Bayesian procedures, such inferences are prior-free.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Data generation
 # ---------------

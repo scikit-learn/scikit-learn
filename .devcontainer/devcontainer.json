@@ -1,0 +1,18 @@
+{
+  // More info about Features: https://containers.dev/features
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {},
+
+  "onCreateCommand": ".devcontainer/setup.sh",
+  "postCreateCommand": "",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-toolsai.jupyter"
+      ],
+      "settings": {}
+    }
+  }
+}

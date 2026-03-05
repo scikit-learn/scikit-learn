@@ -1,0 +1,3 @@
+- :meth:`manifold.MDS.transform` returns the correct number of components when
+  using `init="classical_mds"`.
+  By :user:`Ben Pedigo <bdpedigo>`.

@@ -1,4 +1,4 @@
-from ._typedefs cimport intp_t
+from sklearn.utils._typedefs cimport intp_t
 
 from cython cimport floating
 

@@ -13,6 +13,9 @@ space while controlling the distortion in the pairwise distances.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import sys
 from time import time
 

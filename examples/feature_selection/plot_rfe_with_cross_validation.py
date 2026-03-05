@@ -8,6 +8,9 @@ number of features selected with cross-validation.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Data generation
 # ---------------
@@ -19,9 +22,12 @@ number of features selected with cross-validation.
 
 from sklearn.datasets import make_classification
 
+n_features = 15
+feat_names = [f"feature_{i}" for i in range(15)]
+
 X, y = make_classification(
     n_samples=500,
-    n_features=15,
+    n_features=n_features,
     n_informative=3,
     n_redundant=2,
     n_repeated=0,
@@ -66,15 +72,21 @@ print(f"Optimal number of features: {rfecv.n_features_}")
 # ---------------------------------------------------
 
 import matplotlib.pyplot as plt
+import pandas as pd
 
-n_scores = len(rfecv.cv_results_["mean_test_score"])
+data = {
+    key: value
+    for key, value in rfecv.cv_results_.items()
+    if key in ["n_features", "mean_test_score", "std_test_score"]
+}
+cv_results = pd.DataFrame(data)
 plt.figure()
 plt.xlabel("Number of features selected")
 plt.ylabel("Mean test accuracy")
 plt.errorbar(
-    range(min_features_to_select, n_scores + min_features_to_select),
-    rfecv.cv_results_["mean_test_score"],
-    yerr=rfecv.cv_results_["std_test_score"],
+    x=cv_results["n_features"],
+    y=cv_results["mean_test_score"],
+    yerr=cv_results["std_test_score"],
 )
 plt.title("Recursive Feature Elimination \nwith correlated features")
 plt.show()
@@ -87,3 +99,17 @@ plt.show()
 # cross-validation technique. The test accuracy decreases above 5 selected
 # features, this is, keeping non-informative features leads to over-fitting and
 # is therefore detrimental for the statistical performance of the models.
+
+# %%
+import numpy as np
+
+for i in range(cv.n_splits):
+    mask = rfecv.cv_results_[f"split{i}_support"][
+        rfecv.n_features_ - 1
+    ]  # mask of features selected by the RFE
+    features_selected = np.ma.compressed(np.ma.masked_array(feat_names, mask=1 - mask))
+    print(f"Features selected in fold {i}: {features_selected}")
+# %%
+# In the five folds, the selected features are consistent. This is good news,
+# it means that the selection is stable across folds, and it confirms that
+# these features are the most informative ones.

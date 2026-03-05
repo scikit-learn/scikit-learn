@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from scipy.sparse import issparse
 
-from sklearn.base import BaseEstimator, BiclusterMixin
+from sklearn.base import BaseEstimator, BiclusterMixin, clone
 from sklearn.cluster import SpectralBiclustering, SpectralCoclustering
 from sklearn.cluster._bicluster import (
     _bistochastic_normalize,
@@ -259,6 +259,7 @@ def test_spectralbiclustering_parameter_validation(params, type_err, err_msg):
 def test_n_features_in_(est):
     X, _, _ = make_biclusters((3, 3), 3, random_state=0)
 
+    est = clone(est)
     assert not hasattr(est, "n_features_in_")
     est.fit(X)
     assert est.n_features_in_ == 3

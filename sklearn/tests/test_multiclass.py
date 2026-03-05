@@ -6,6 +6,7 @@ import scipy.sparse as sp
 from numpy.testing import assert_allclose
 
 from sklearn import datasets, svm
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.datasets import load_breast_cancer
 from sklearn.exceptions import NotFittedError
 from sklearn.impute import SimpleImputer
@@ -45,9 +46,6 @@ from sklearn.utils.fixes import (
 )
 from sklearn.utils.multiclass import check_classification_targets, type_of_target
 
-msg = "The default value for `force_alpha` will change"
-pytestmark = pytest.mark.filterwarnings(f"ignore:{msg}:FutureWarning")
-
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
 perm = rng.permutation(iris.target.size)
@@ -57,7 +55,7 @@ n_classes = 3
 
 
 def test_ovr_exceptions():
-    ovr = OneVsRestClassifier(LinearSVC(dual="auto", random_state=0))
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
 
     # test predicting without fitting
     with pytest.raises(NotFittedError):
@@ -84,13 +82,32 @@ def test_check_classification_targets():
         check_classification_targets(y)
 
 
+def test_ovr_ties():
+    """Check that ties-breaking matches np.argmax behavior
+
+    Non-regression test for issue #14124
+    """
+
+    class Dummy(BaseEstimator):
+        def fit(self, X, y):
+            return self
+
+        def decision_function(self, X):
+            return np.zeros(len(X))
+
+    X = np.array([[0], [0], [0], [0]])
+    y = np.array([0, 1, 2, 3])
+    clf = OneVsRestClassifier(Dummy()).fit(X, y)
+    assert_array_equal(clf.predict(X), np.argmax(clf.decision_function(X), axis=1))
+
+
 def test_ovr_fit_predict():
     # A classifier which implements decision_function.
-    ovr = OneVsRestClassifier(LinearSVC(dual="auto", random_state=0))
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
     assert len(ovr.estimators_) == n_classes
 
-    clf = LinearSVC(dual="auto", random_state=0)
+    clf = LinearSVC(random_state=0)
     pred2 = clf.fit(iris.data, iris.target).predict(iris.data)
     assert np.mean(iris.target == pred) == np.mean(iris.target == pred2)
 
@@ -258,7 +275,7 @@ def test_ovr_multiclass():
 
     for base_clf in (
         MultinomialNB(),
-        LinearSVC(dual="auto", random_state=0),
+        LinearSVC(random_state=0),
         LinearRegression(),
         Ridge(),
         ElasticNet(),
@@ -303,14 +320,17 @@ def test_ovr_binary():
         assert y_pred == 1
 
     for base_clf in (
-        LinearSVC(dual="auto", random_state=0),
+        LinearSVC(random_state=0),
         LinearRegression(),
         Ridge(),
         ElasticNet(),
     ):
         conduct_test(base_clf)
 
-    for base_clf in (MultinomialNB(), SVC(probability=True), LogisticRegression()):
+    for base_clf in (
+        MultinomialNB(),
+        LogisticRegression(),
+    ):
         conduct_test(base_clf, test_predict_proba=True)
 
 
@@ -321,7 +341,7 @@ def test_ovr_multilabel():
 
     for base_clf in (
         MultinomialNB(),
-        LinearSVC(dual="auto", random_state=0),
+        LinearSVC(random_state=0),
         LinearRegression(),
         Ridge(),
         ElasticNet(),
@@ -387,20 +407,11 @@ def test_ovr_multilabel_predict_proba():
         assert not hasattr(decision_only, "predict_proba")
 
         # Estimator with predict_proba disabled, depending on parameters.
-        decision_only = OneVsRestClassifier(svm.SVC(probability=False))
+        decision_only = OneVsRestClassifier(svm.SVC())
         assert not hasattr(decision_only, "predict_proba")
         decision_only.fit(X_train, Y_train)
         assert not hasattr(decision_only, "predict_proba")
         assert hasattr(decision_only, "decision_function")
-
-        # Estimator which can get predict_proba enabled after fitting
-        gs = GridSearchCV(
-            svm.SVC(probability=False), param_grid={"probability": [True]}
-        )
-        proba_after_fit = OneVsRestClassifier(gs)
-        assert not hasattr(proba_after_fit, "predict_proba")
-        proba_after_fit.fit(X_train, Y_train)
-        assert hasattr(proba_after_fit, "predict_proba")
 
         Y_pred = clf.predict(X_test)
         Y_proba = clf.predict_proba(X_test)
@@ -432,6 +443,31 @@ def test_ovr_single_label_predict_proba():
     assert not (pred - Y_pred).any()
 
 
+def test_ovr_single_label_predict_proba_zero():
+    """Check that predic_proba returns all zeros when the base estimator
+    never predicts the positive class.
+    """
+
+    class NaiveBinaryClassifier(BaseEstimator, ClassifierMixin):
+        def fit(self, X, y):
+            self.classes_ = np.unique(y)
+            return self
+
+        def predict_proba(self, X):
+            proba = np.ones((len(X), 2))
+            # Probability of being the positive class is always 0
+            proba[:, 1] = 0
+            return proba
+
+    base_clf = NaiveBinaryClassifier()
+    X, y = iris.data, iris.target  # Three-class problem with 150 samples
+
+    clf = OneVsRestClassifier(base_clf).fit(X, y)
+    y_proba = clf.predict_proba(X)
+
+    assert_allclose(y_proba, 0.0)
+
+
 def test_ovr_multilabel_decision_function():
     X, Y = datasets.make_multilabel_classification(
         n_samples=100,
@@ -459,7 +495,7 @@ def test_ovr_single_label_decision_function():
 
 
 def test_ovr_gridsearch():
-    ovr = OneVsRestClassifier(LinearSVC(dual="auto", random_state=0))
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     Cs = [0.1, 0.5, 0.8]
     cv = GridSearchCV(ovr, {"estimator__C": Cs})
     cv.fit(iris.data, iris.target)
@@ -480,7 +516,7 @@ def test_ovr_pipeline():
 
 
 def test_ovo_exceptions():
-    ovo = OneVsOneClassifier(LinearSVC(dual="auto", random_state=0))
+    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     with pytest.raises(NotFittedError):
         ovo.predict([])
 
@@ -488,7 +524,7 @@ def test_ovo_exceptions():
 def test_ovo_fit_on_list():
     # Test that OneVsOne fitting works with a list of targets and yields the
     # same output as predict from an array
-    ovo = OneVsOneClassifier(LinearSVC(dual="auto", random_state=0))
+    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     prediction_from_array = ovo.fit(iris.data, iris.target).predict(iris.data)
     iris_data_list = [list(a) for a in iris.data]
     prediction_from_list = ovo.fit(iris_data_list, list(iris.target)).predict(
@@ -499,7 +535,7 @@ def test_ovo_fit_on_list():
 
 def test_ovo_fit_predict():
     # A classifier which implements decision_function.
-    ovo = OneVsOneClassifier(LinearSVC(dual="auto", random_state=0))
+    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     ovo.fit(iris.data, iris.target).predict(iris.data)
     assert len(ovo.estimators_) == n_classes * (n_classes - 1) / 2
 
@@ -565,7 +601,7 @@ def test_ovo_partial_fit_predict():
 def test_ovo_decision_function():
     n_samples = iris.data.shape[0]
 
-    ovo_clf = OneVsOneClassifier(LinearSVC(dual="auto", random_state=0))
+    ovo_clf = OneVsOneClassifier(LinearSVC(random_state=0))
     # first binary
     ovo_clf.fit(iris.data, iris.target == 0)
     decisions = ovo_clf.decision_function(iris.data)
@@ -610,7 +646,7 @@ def test_ovo_decision_function():
 
 
 def test_ovo_gridsearch():
-    ovo = OneVsOneClassifier(LinearSVC(dual="auto", random_state=0))
+    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     Cs = [0.1, 0.5, 0.8]
     cv = GridSearchCV(ovo, {"estimator__C": Cs})
     cv.fit(iris.data, iris.target)
@@ -660,7 +696,7 @@ def test_ovo_string_y():
     X = np.eye(4)
     y = np.array(["a", "b", "c", "d"])
 
-    ovo = OneVsOneClassifier(LinearSVC(dual="auto"))
+    ovo = OneVsOneClassifier(LinearSVC())
     ovo.fit(X, y)
     assert_array_equal(y, ovo.predict(X))
 
@@ -670,7 +706,7 @@ def test_ovo_one_class():
     X = np.eye(4)
     y = np.array(["a"] * 4)
 
-    ovo = OneVsOneClassifier(LinearSVC(dual="auto"))
+    ovo = OneVsOneClassifier(LinearSVC())
     msg = "when only one class"
     with pytest.raises(ValueError, match=msg):
         ovo.fit(X, y)
@@ -681,23 +717,21 @@ def test_ovo_float_y():
     X = iris.data
     y = iris.data[:, 0]
 
-    ovo = OneVsOneClassifier(LinearSVC(dual="auto"))
+    ovo = OneVsOneClassifier(LinearSVC())
     msg = "Unknown label type"
     with pytest.raises(ValueError, match=msg):
         ovo.fit(X, y)
 
 
 def test_ecoc_exceptions():
-    ecoc = OutputCodeClassifier(LinearSVC(dual="auto", random_state=0))
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
     with pytest.raises(NotFittedError):
         ecoc.predict([])
 
 
 def test_ecoc_fit_predict():
     # A classifier which implements decision_function.
-    ecoc = OutputCodeClassifier(
-        LinearSVC(dual="auto", random_state=0), code_size=2, random_state=0
-    )
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), code_size=2, random_state=0)
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert len(ecoc.estimators_) == n_classes * 2
 
@@ -708,7 +742,7 @@ def test_ecoc_fit_predict():
 
 
 def test_ecoc_gridsearch():
-    ecoc = OutputCodeClassifier(LinearSVC(dual="auto", random_state=0), random_state=0)
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), random_state=0)
     Cs = [0.1, 0.5, 0.8]
     cv = GridSearchCV(ecoc, {"estimator__C": Cs})
     cv.fit(iris.data, iris.target)
@@ -721,7 +755,7 @@ def test_ecoc_float_y():
     X = iris.data
     y = iris.data[:, 0]
 
-    ovo = OutputCodeClassifier(LinearSVC(dual="auto"))
+    ovo = OutputCodeClassifier(LinearSVC())
     msg = "Unknown label type"
     with pytest.raises(ValueError, match=msg):
         ovo.fit(X, y)
@@ -749,7 +783,7 @@ def test_ecoc_delegate_sparse_base_estimator(csc_container):
         ecoc.predict(X_sp)
 
     # smoke test to check when sparse input should be supported
-    ecoc = OutputCodeClassifier(LinearSVC(dual="auto", random_state=0))
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
     ecoc.fit(X_sp, y).predict(X_sp)
     assert len(ecoc.estimators_) == 4
 
@@ -848,10 +882,10 @@ def test_pairwise_tag(MultiClassClassifier):
     clf_notprecomputed = svm.SVC()
 
     ovr_false = MultiClassClassifier(clf_notprecomputed)
-    assert not ovr_false._get_tags()["pairwise"]
+    assert not ovr_false.__sklearn_tags__().input_tags.pairwise
 
     ovr_true = MultiClassClassifier(clf_precomputed)
-    assert ovr_true._get_tags()["pairwise"]
+    assert ovr_true.__sklearn_tags__().input_tags.pairwise
 
 
 @pytest.mark.parametrize(

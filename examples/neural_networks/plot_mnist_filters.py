@@ -24,6 +24,9 @@ usage constraints on our Continuous Integration infrastructure that is used
 to build this documentation on a regular basis.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 
 import matplotlib.pyplot as plt

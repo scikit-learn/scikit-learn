@@ -28,7 +28,8 @@ meaningful despite the large reduction in dimension.
 
 """
 
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

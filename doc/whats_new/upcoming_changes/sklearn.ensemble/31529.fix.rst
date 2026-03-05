@@ -1,0 +1,10 @@
+- :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`
+  now use `sample_weight` to draw the samples instead of forwarding them
+  multiplied by a uniformly sampled mask to the underlying estimators.
+  Furthermore, when `max_samples` is a float, it is now interpreted as a
+  fraction of `sample_weight.sum()` instead of `X.shape[0]`. As sampling is done
+  with replacement, a float `max_samples` greater than `1.0` is now allowed, as
+  well as an integer `max_samples` greater then `X.shape[0]`. The default
+  `max_samples=None` draws `X.shape[0]` samples, irrespective of `sample_weight`.
+  By :user:`Antoine Baker <antoinebaker>`.

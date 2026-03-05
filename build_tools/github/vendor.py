@@ -1,6 +1,5 @@
 """Embed vcomp140.dll and msvcp140.dll."""
 
-
 import os
 import os.path as op
 import shutil

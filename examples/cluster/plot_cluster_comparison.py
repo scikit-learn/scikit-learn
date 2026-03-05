@@ -24,6 +24,9 @@ dimensional data.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import time
 import warnings
 from itertools import cycle, islice
@@ -175,6 +178,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         min_samples=params["hdbscan_min_samples"],
         min_cluster_size=params["hdbscan_min_cluster_size"],
         allow_single_cluster=params["allow_single_cluster"],
+        copy=True,
     )
     optics = cluster.OPTICS(
         min_samples=params["min_samples"],
@@ -221,14 +225,14 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
             warnings.filterwarnings(
                 "ignore",
                 message="the number of connected components of the "
-                + "connectivity matrix is [0-9]{1,2}"
-                + " > 1. Completing it to avoid stopping the tree early.",
+                "connectivity matrix is [0-9]{1,2}"
+                " > 1. Completing it to avoid stopping the tree early.",
                 category=UserWarning,
             )
             warnings.filterwarnings(
                 "ignore",
                 message="Graph is not fully connected, spectral embedding"
-                + " may not work as expected.",
+                " may not work as expected.",
                 category=UserWarning,
             )
             algorithm.fit(X)

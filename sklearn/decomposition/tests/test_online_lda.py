@@ -132,7 +132,7 @@ def test_lda_dense_input(csr_container):
 
 def test_lda_transform():
     # Test LDA transform.
-    # Transform result cannot be negative and should be normalized
+    # Transform result cannot be negative and should be normalized by default
     rng = np.random.RandomState(0)
     X = rng.randint(5, size=(20, 10))
     n_components = 3
@@ -140,6 +140,11 @@ def test_lda_transform():
     X_trans = lda.fit_transform(X)
     assert (X_trans > 0.0).any()
     assert_array_almost_equal(np.sum(X_trans, axis=1), np.ones(X_trans.shape[0]))
+
+    X_trans_unnormalized = lda.transform(X, normalize=False)
+    assert_array_almost_equal(
+        X_trans, X_trans_unnormalized / X_trans_unnormalized.sum(axis=1)[:, np.newaxis]
+    )
 
 
 @pytest.mark.parametrize("method", ("online", "batch"))
@@ -179,6 +184,9 @@ def test_lda_no_component_error():
         lda.perplexity(X)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 @if_safe_multiprocessing_with_blas
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("method", ("online", "batch"))
@@ -201,6 +209,9 @@ def test_lda_multi_jobs(method, csr_container):
         assert tuple(sorted(top_idx)) in correct_idx_grps
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 @if_safe_multiprocessing_with_blas
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_lda_partial_fit_multi_jobs(csr_container):
@@ -425,6 +436,7 @@ def check_verbosity(
     ],
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+@pytest.mark.thread_unsafe  # manually captured stdout
 def test_verbosity(
     verbose, evaluate_every, expected_lines, expected_perplexities, csr_container
 ):

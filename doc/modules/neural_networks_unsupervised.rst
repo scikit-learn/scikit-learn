@@ -37,9 +37,9 @@ weights of independent RBMs. This method is known as unsupervised pre-training.
    :align: center
    :scale: 100%
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-   * :ref:`sphx_glr_auto_examples_neural_networks_plot_rbm_logistic_classification.py`
+* :ref:`sphx_glr_auto_examples_neural_networks_plot_rbm_logistic_classification.py`
 
 
 Graphical model and parametrization
@@ -57,7 +57,7 @@ visible and hidden unit, omitted from the image for simplicity.
 
 The energy function measures the quality of a joint assignment:
 
-.. math:: 
+.. math::
 
    E(\mathbf{v}, \mathbf{h}) = -\sum_i \sum_j w_{ij}v_ih_j - \sum_i b_iv_i
      - \sum_j c_jh_j
@@ -149,13 +149,13 @@ step, in PCD we keep a number of chains (fantasy particles) that are updated
 :math:`k` Gibbs steps after each weight update. This allows the particles to
 explore the space more thoroughly.
 
-.. topic:: References:
+.. rubric:: References
 
-    * `"A fast learning algorithm for deep belief nets"
-      <https://www.cs.toronto.edu/~hinton/absps/fastnc.pdf>`_
-      G. Hinton, S. Osindero, Y.-W. Teh, 2006
+* `"A fast learning algorithm for deep belief nets"
+  <https://www.cs.toronto.edu/~hinton/absps/fastnc.pdf>`_,
+  G. Hinton, S. Osindero, Y.-W. Teh, 2006
 
-    * `"Training Restricted Boltzmann Machines using Approximations to
-      the Likelihood Gradient"
-      <https://www.cs.toronto.edu/~tijmen/pcd/pcd.pdf>`_
-      T. Tieleman, 2008
+* `"Training Restricted Boltzmann Machines using Approximations to
+  the Likelihood Gradient"
+  <https://www.cs.toronto.edu/~tijmen/pcd/pcd.pdf>`_,
+  T. Tieleman, 2008

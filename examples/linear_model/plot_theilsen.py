@@ -35,8 +35,8 @@ it then works on a random subset.
 
 """
 
-# Author: Florian Wilhelm -- <florian.wilhelm@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import time
 
@@ -85,7 +85,7 @@ for name, estimator in estimators:
     )
 
 plt.axis("tight")
-plt.legend(loc="upper left")
+plt.legend(loc="upper right")
 _ = plt.title("Corrupt y")
 
 # %%

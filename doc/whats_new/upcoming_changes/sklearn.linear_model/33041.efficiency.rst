@@ -1,0 +1,7 @@
+- The :class:`linear_model.LinearRegression`, :class:`linear_model.Ridge`,
+  :class:`linear_model.Lasso`, :class:`linear_model.LassoCV`,
+  :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV` and
+  :class:`linear_model.BayesianRidge` classes now no longer make an unnecessary copy of
+  dense `X, y` input during preprocessing when `copy_X=False` and `sample_weight`
+  is provided.
+  By :user:`Junteng Li <JasonLiJT>`.

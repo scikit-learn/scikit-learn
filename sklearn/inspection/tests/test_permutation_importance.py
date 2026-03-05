@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from joblib import parallel_backend
 from numpy.testing import assert_allclose
 
 from sklearn.compose import ColumnTransformer
@@ -22,7 +23,6 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, OneHotEncoder, StandardScaler, scale
-from sklearn.utils import parallel_backend
 from sklearn.utils._testing import _convert_container
 
 
@@ -311,7 +311,11 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
     X_df = pd.DataFrame(X)
 
     # Add a categorical feature that is statistically linked to y:
-    binner = KBinsDiscretizer(n_bins=3, encode="ordinal")
+    binner = KBinsDiscretizer(
+        n_bins=3,
+        encode="ordinal",
+        quantile_method="averaged_inverted_cdf",
+    )
     cat_column = binner.fit_transform(y.reshape(-1, 1))
 
     # Concatenate the extra column to the numpy array: integers will be
@@ -319,12 +323,8 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
     X = np.hstack([X, cat_column])
     assert X.dtype.kind == "f"
 
-    # Insert extra column as a non-numpy-native dtype (while keeping backward
-    # compat for old pandas versions):
-    if hasattr(pd, "Categorical"):
-        cat_column = pd.Categorical(cat_column.ravel())
-    else:
-        cat_column = cat_column.ravel()
+    # Insert extra column as a non-numpy-native dtype:
+    cat_column = pd.Categorical(cat_column.ravel())
     new_col_idx = len(X_df.columns)
     X_df[new_col_idx] = cat_column
     assert X_df[new_col_idx].dtype == cat_column.dtype
@@ -437,9 +437,7 @@ def test_permutation_importance_sample_weight():
     # the second half of the samples approaches to infinity, the ratio of
     # the two features importance should equal to 2 on expectation (when using
     # mean absolutes error as the loss function).
-    w = np.hstack(
-        [np.repeat(10.0**10, n_half_samples), np.repeat(1.0, n_half_samples)]
-    )
+    w = np.hstack([np.repeat(10.0**10, n_half_samples), np.repeat(1.0, n_half_samples)])
     lr.fit(x, y, w)
     pi = permutation_importance(
         lr,

@@ -1,8 +1,6 @@
 # Commonly used types
 # These are redefinitions of the ones defined by numpy in
-# https://github.com/numpy/numpy/blob/main/numpy/__init__.pxd
-# and exposed by cython in
-# https://github.com/cython/cython/blob/master/Cython/Includes/numpy/__init__.pxd.
+# https://github.com/numpy/numpy/blob/main/numpy/__init__.pxd.
 # It will eventually avoid having to always include the numpy headers even when we
 # would only use it for the types.
 #
@@ -17,6 +15,19 @@
 ctypedef unsigned char uint8_t
 ctypedef unsigned int uint32_t
 ctypedef unsigned long long uint64_t
+# Note: In NumPy 2, indexing always happens with npy_intp which is an alias for
+# the Py_ssize_t type, see PEP 353.
+#
+# Note that on most platforms Py_ssize_t is equivalent to C99's intptr_t,
+# but they can differ on architecture with segmented memory (none
+# supported by scikit-learn at the time of writing).
+#
+# intp_t/np.intp should be used to index arrays in a platform dependent way.
+# Storing arrays with platform dependent dtypes as attribute on picklable
+# objects is not recommended as it requires special care when loading and
+# using such datastructures on a host with different bitness. Instead one
+# should rather use fixed width integer types such as int32 or uint32 when we know
+# that the number of elements to index is not larger to 2 or 4 billions.
 ctypedef Py_ssize_t intp_t
 ctypedef float float32_t
 ctypedef double float64_t
@@ -25,5 +36,6 @@ ctypedef double float64_t
 # When large sparse matrices are supported, indexing must use int64_t.
 # See https://github.com/scikit-learn/scikit-learn/issues/23653 which tracks the
 # ongoing work to support large sparse matrices.
+ctypedef signed char int8_t
 ctypedef signed int int32_t
 ctypedef signed long long int64_t

@@ -10,9 +10,8 @@ The dataset page is available from UCI Machine Learning Repository
 Courtesy of Jock A. Blackard and Colorado State University.
 """
 
-# Author: Lars Buitinck
-#         Peter Prettenhofer <peter.prettenhofer@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import logging
 import os
@@ -24,16 +23,16 @@ from tempfile import TemporaryDirectory
 import joblib
 import numpy as np
 
-from ..utils import Bunch, check_random_state
-from ..utils._param_validation import Interval, validate_params
-from . import get_data_home
-from ._base import (
+from sklearn.datasets import get_data_home
+from sklearn.datasets._base import (
     RemoteFileMetadata,
     _convert_data_dataframe,
     _fetch_remote,
     _pkl_filepath,
     load_descr,
 )
+from sklearn.utils import Bunch, check_random_state
+from sklearn.utils._param_validation import Interval, validate_params
 
 # The original data can be found in:
 # https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz

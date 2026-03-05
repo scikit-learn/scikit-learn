@@ -50,7 +50,7 @@ that contain the missing values::
     >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
     >>> print(imp.transform(X))
     [[4.          2.        ]
-     [6.          3.666...]
+     [6.          3.666]
      [7.          6.        ]]
 
 The :class:`SimpleImputer` class also supports sparse matrices::
@@ -110,9 +110,9 @@ imputation round are returned.
    This estimator is still **experimental** for now: default parameters or
    details of behaviour might change without any deprecation cycle. Resolving
    the following issues would help stabilize :class:`IterativeImputer`:
-   convergence criteria (:issue:`14338`), default estimators (:issue:`13286`),
-   and use of random state (:issue:`15611`). To use it, you need to explicitly
-   import ``enable_iterative_imputer``.
+   convergence criteria (:issue:`14338`) and default estimators
+   (:issue:`13286`). To use it, you need to explicitly import
+   ``enable_iterative_imputer``.
 
 ::
 
@@ -175,8 +175,7 @@ Note that a call to the ``transform`` method of :class:`IterativeImputer` is
 not allowed to change the number of samples. Therefore multiple imputations
 cannot be achieved by a single call to ``transform``.
 
-References
-----------
+.. rubric:: References
 
 .. [1] `Stef van Buuren, Karin Groothuis-Oudshoorn (2011). "mice: Multivariate
    Imputation by Chained Equations in R". Journal of Statistical Software 45:
@@ -224,13 +223,13 @@ neighbors of samples with missing values::
 
 For another example on usage, see :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
 
-.. topic:: References
+.. rubric:: References
 
-  .. [OL2001] `Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown,
-      Trevor Hastie, Robert Tibshirani, David Botstein and Russ B. Altman,
-      Missing value estimation methods for DNA microarrays, BIOINFORMATICS
-      Vol. 17 no. 6, 2001 Pages 520-525.
-      <https://academic.oup.com/bioinformatics/article/17/6/520/272365>`_
+.. [OL2001] `Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown,
+    Trevor Hastie, Robert Tibshirani, David Botstein and Russ B. Altman,
+    Missing value estimation methods for DNA microarrays, BIOINFORMATICS
+    Vol. 17 no. 6, 2001 Pages 520-525.
+    <https://academic.oup.com/bioinformatics/article/17/6/520/272365>`_
 
 Keeping the number of features constant
 =======================================
@@ -250,7 +249,7 @@ imputation. While this feature will not help in predictive setting, dropping
 the columns will change the shape of `X` which could be problematic when using
 imputers in a more complex machine-learning pipeline. The parameter
 `keep_empty_features` offers the option to keep the empty features by imputing
-with a constant values. In most of the cases, this constant value is zero::
+with a constant value. In most of the cases, this constant value is zero::
 
   >>> imputer.set_params(keep_empty_features=True)
   SimpleImputer(keep_empty_features=True)

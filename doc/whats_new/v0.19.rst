@@ -129,7 +129,7 @@ Enhancements
 - To improve usability of version 0.19's :class:`pipeline.Pipeline`
   caching, ``memory`` now allows ``joblib.Memory`` instances.
   This make use of the new :func:`utils.validation.check_memory` helper.
-  issue:`9584` by :user:`Kumar Ashutosh <thechargedneutron>`
+  :issue:`9584` by :user:`Kumar Ashutosh <thechargedneutron>`
 
 - Some fixes to examples: :issue:`9750`, :issue:`9788`, :issue:`9815`
 
@@ -295,7 +295,7 @@ Miscellaneous
   and may be particularly useful for prediction time. :issue:`7548` by
   `Joel Nothman`_.
 
-- Added a test to ensure parameter listing in docstrings match the
+- Added a test to ensure parameter listing in docstrings matches the
   function/class signature. :issue:`9206` by `Alexandre Gramfort`_ and
   `Raghav RV`_.
 
@@ -482,7 +482,7 @@ Model evaluation and meta-estimators
 
 Metrics
 
-- :func:`metrics.matthews_corrcoef` now support multiclass classification.
+- :func:`metrics.matthews_corrcoef` now supports multiclass classification.
   :issue:`8094` by :user:`Jon Crall <Erotemic>`.
 
 - Add ``sample_weight`` parameter to :func:`metrics.cohen_kappa_score`.
@@ -516,7 +516,7 @@ Trees and ensembles
   :issue:`8002` by `Raghav RV`_.
 
 - Fixed a bug where :class:`ensemble.IsolationForest` uses an
-  an incorrect formula for the average path length
+  incorrect formula for the average path length
   :issue:`8549` by `Peter Wang <https://github.com/PTRWang>`_.
 
 - Fixed a bug where :class:`ensemble.AdaBoostClassifier` throws
@@ -609,7 +609,7 @@ Linear, kernelized and related models
 
 - Fixed a bug in :class:`gaussian_process.GaussianProcessRegressor`
   when the standard deviation and covariance predicted without fit
-  would fail with a unmeaningful error by default.
+  would fail with a meaningless error by default.
   :issue:`6573` by :user:`Quazi Marufur Rahman <qmaruf>` and
   `Manoj Kumar`_.
 
@@ -624,7 +624,7 @@ Other predictors
 Decomposition, manifold learning and clustering
 
 - Fixed the implementation of :class:`manifold.TSNE`:
-- ``early_exageration`` parameter had no effect and is now used for the
+- ``early_exaggeration`` parameter had no effect and is now used for the
   first 250 optimization iterations.
 - Fixed the ``AssertionError: Tree consistency failed`` exception
   reported in :issue:`8992`.
@@ -703,7 +703,7 @@ Preprocessing and feature selection
   :issue:`7490` by :user:`Peng Meng <mpjlu>`.
 
 - Fixed a bug where `linear_model.RandomizedLasso` and
-  `linear_model.RandomizedLogisticRegression` breaks for
+  `linear_model.RandomizedLogisticRegression` break for
   sparse input. :issue:`8259` by :user:`Aman Dalmia <dalmia>`.
 
 - Fix a bug where :class:`feature_extraction.FeatureHasher`
@@ -825,7 +825,7 @@ Trees and ensembles
 
 - Gradient boosting base models are no longer estimators. By `Andreas Müller`_.
 
-- All tree based estimators now accept a ``min_impurity_decrease``
+- All tree-based estimators now accept a ``min_impurity_decrease``
   parameter in lieu of the ``min_impurity_split``, which is now deprecated.
   The ``min_impurity_decrease`` helps stop splitting the nodes in which
   the weighted impurity decrease from splitting is no longer at least
@@ -880,7 +880,7 @@ Preprocessing and feature selection
 
 - :class:`feature_selection.SelectFromModel` now validates the ``threshold``
   parameter and sets the ``threshold_`` attribute during the call to
-  ``fit``, and no longer during the call to ``transform```. By `Andreas
+  ``fit``, and no longer during the call to ``transform``. By `Andreas
   Müller`_.
 
 - The ``non_negative`` parameter in :class:`feature_extraction.FeatureHasher`
@@ -942,7 +942,7 @@ Model evaluation and meta-estimators
 Miscellaneous
 
 - Deprecate the ``y`` parameter in ``transform`` and ``inverse_transform``.
-  The method  should not accept ``y`` parameter, as it's used at the prediction time.
+  The method should not accept ``y`` parameter, as it's used at the prediction time.
   :issue:`8174` by :user:`Tahar Zanouda <tzano>`, `Alexandre Gramfort`_
   and `Raghav RV`_.
 
@@ -953,7 +953,7 @@ Miscellaneous
 
 - The ``store_covariances`` and ``covariances_`` parameters of
   :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`
-  has been renamed to ``store_covariance`` and ``covariance_`` to be
+  have been renamed to ``store_covariance`` and ``covariance_`` to be
   consistent with the corresponding parameter names of the
   :class:`discriminant_analysis.LinearDiscriminantAnalysis`. They will be
   removed in version 0.21. :issue:`7998` by :user:`Jiacheng <mrbeann>`

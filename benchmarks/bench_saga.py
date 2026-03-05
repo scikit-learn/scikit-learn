@@ -1,8 +1,11 @@
-"""Author: Arthur Mensch, Nelle Varoquaux
-
+"""
 Benchmarks of sklearn SAGA vs lightning SAGA vs Liblinear. Shows the gain
 in using multinomial logistic regression in term of learning time.
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import json
 import os
 import time
@@ -19,6 +22,7 @@ from sklearn.datasets import (
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss
 from sklearn.model_selection import train_test_split
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder
 from sklearn.utils.extmath import safe_sparse_dot, softmax
 from sklearn.utils.parallel import Parallel, delayed
@@ -64,10 +68,12 @@ def fit_single(
     times = [0]
 
     if penalty == "l2":
+        l1_ratio = 0
         alpha = 1.0 / (C * n_samples)
         beta = 0
         lightning_penalty = None
     else:
+        l1_ratio = 1
         alpha = 0.0
         beta = 1.0 / (C * n_samples)
         lightning_penalty = "l1"
@@ -94,14 +100,15 @@ def fit_single(
         else:
             lr = LogisticRegression(
                 solver=solver,
-                multi_class=multi_class,
                 C=C,
-                penalty=penalty,
+                l1_ratio=l1_ratio,
                 fit_intercept=False,
                 tol=0,
                 max_iter=this_max_iter,
                 random_state=42,
             )
+            if multi_class == "ovr":
+                lr = OneVsRestClassifier(lr)
 
         # Makes cpu cache even for all fit calls
         X_train.max()
@@ -117,10 +124,12 @@ def fit_single(
             except NotImplementedError:
                 # Lightning predict_proba is not implemented for n_classes > 2
                 y_pred = _predict_proba(lr, X)
+            if isinstance(lr, OneVsRestClassifier):
+                coef = np.concatenate([est.coef_ for est in lr.estimators_])
+            else:
+                coef = lr.coef_
             score = log_loss(y, y_pred, normalize=False) / n_samples
-            score += 0.5 * alpha * np.sum(lr.coef_**2) + beta * np.sum(
-                np.abs(lr.coef_)
-            )
+            score += 0.5 * alpha * np.sum(coef**2) + beta * np.sum(np.abs(coef))
             scores.append(score)
         train_score, test_score = tuple(scores)
 
@@ -134,6 +143,7 @@ def fit_single(
 
 
 def _predict_proba(lr, X):
+    """Predict proba for lightning for n_classes >=3."""
     pred = safe_sparse_dot(X, lr.coef_.T)
     if hasattr(lr, "intercept_"):
         pred += lr.intercept_

@@ -1,6 +1,5 @@
-# Author: Olivier Grisel <olivier.grisel@ensta.org>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal

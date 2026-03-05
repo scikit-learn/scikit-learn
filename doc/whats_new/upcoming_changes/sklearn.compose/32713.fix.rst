@@ -1,0 +1,4 @@
+- The dotted line for :class:`compose.ColumnTransformer` in its HTML display
+  now includes only its elements. The behaviour when a remainder is used,
+  has also been corrected.
+  By :user:`Dea María Léon <deamarialeon>`

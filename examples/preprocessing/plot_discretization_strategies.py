@@ -7,7 +7,7 @@ This example presents the different strategies implemented in KBinsDiscretizer:
 
 - 'uniform': The discretization is uniform in each feature, which means that
   the bin widths are constant in each dimension.
-- quantile': The discretization is done on the quantiled values, which means
+- 'quantile': The discretization is done on the quantiled values, which means
   that each bin has approximately the same number of samples.
 - 'kmeans': The discretization is based on the centroids of a KMeans clustering
   procedure.
@@ -16,8 +16,8 @@ The plot shows the regions where the discretized encoding is constant.
 
 """
 
-# Author: Tom Dupré la Tour
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -77,7 +77,10 @@ for ds_cnt, X in enumerate(X_list):
     # transform the dataset with KBinsDiscretizer
     for strategy in strategies:
         enc = KBinsDiscretizer(
-            n_bins=4, encode="ordinal", strategy=strategy, subsample=200_000
+            n_bins=4,
+            encode="ordinal",
+            quantile_method="averaged_inverted_cdf",
+            strategy=strategy,
         )
         enc.fit(X)
         grid_encoded = enc.transform(grid)

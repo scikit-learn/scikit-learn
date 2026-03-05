@@ -1,7 +1,3 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
 .. _sample_generators:
 
 Generated datasets
@@ -21,29 +17,102 @@ targets.
 Single label
 ~~~~~~~~~~~~
 
-Both :func:`make_blobs` and :func:`make_classification` create multiclass
-datasets by allocating each class one or more normally-distributed clusters of
-points.  :func:`make_blobs` provides greater control regarding the centers and
-standard deviations of each cluster, and is used to demonstrate clustering.
-:func:`make_classification` specializes in introducing noise by way of:
-correlated, redundant and uninformative features; multiple Gaussian clusters
-per class; and linear transformations of the feature space.
+:func:`make_blobs` creates a multiclass dataset by allocating each class to one
+normally-distributed cluster of points. It provides control over the centers and
+standard deviations of each cluster. This dataset is used to demonstrate clustering.
+
+.. plot::
+   :context: close-figs
+   :scale: 70
+   :align: center
+
+   import matplotlib.pyplot as plt
+   from sklearn.datasets import make_blobs
+
+   X, y = make_blobs(centers=3, cluster_std=0.5, random_state=0)
+
+   plt.scatter(X[:, 0], X[:, 1], c=y)
+   plt.title("Three normally-distributed clusters")
+   plt.show()
+
+:func:`make_classification` also creates multiclass datasets but specializes in
+introducing noise by way of: correlated, redundant and uninformative features; multiple
+Gaussian clusters per class; and linear transformations of the feature space.
+
+.. plot::
+   :context: close-figs
+   :scale: 70
+   :align: center
+
+   import matplotlib.pyplot as plt
+   from sklearn.datasets import make_classification
+
+   fig, axs = plt.subplots(1, 3, figsize=(12, 4), sharey=True, sharex=True)
+   titles = ["Two classes,\none informative feature,\none cluster per class",
+             "Two classes,\ntwo informative features,\ntwo clusters per class",
+             "Three classes,\ntwo informative features,\none cluster per class"]
+   params = [
+       {"n_informative": 1, "n_clusters_per_class": 1, "n_classes": 2},
+       {"n_informative": 2, "n_clusters_per_class": 2, "n_classes": 2},
+       {"n_informative": 2, "n_clusters_per_class": 1, "n_classes": 3}
+   ]
+
+   for i, param in enumerate(params):
+       X, Y = make_classification(n_features=2, n_redundant=0, random_state=1, **param)
+       axs[i].scatter(X[:, 0], X[:, 1], c=Y)
+       axs[i].set_title(titles[i])
+
+   plt.tight_layout()
+   plt.show()
 
 :func:`make_gaussian_quantiles` divides a single Gaussian cluster into
 near-equal-size classes separated by concentric hyperspheres.
-:func:`make_hastie_10_2` generates a similar binary, 10-dimensional problem.
 
-.. image:: ../auto_examples/datasets/images/sphx_glr_plot_random_dataset_001.png
-   :target: ../auto_examples/datasets/plot_random_dataset.html
-   :scale: 50
+.. plot::
+   :context: close-figs
+   :scale: 70
    :align: center
 
-:func:`make_circles` and :func:`make_moons` generate 2d binary classification
-datasets that are challenging to certain algorithms (e.g. centroid-based
+   import matplotlib.pyplot as plt
+   from sklearn.datasets import make_gaussian_quantiles
+
+   X, Y = make_gaussian_quantiles(n_features=2, n_classes=3, random_state=0)
+   plt.scatter(X[:, 0], X[:, 1], c=Y)
+   plt.title("Gaussian divided into three quantiles")
+   plt.show()
+
+:func:`make_hastie_10_2` generates a similar binary, 10-dimensional problem.
+
+:func:`make_circles` and :func:`make_moons` generate 2D binary classification
+datasets that are challenging to certain algorithms (e.g., centroid-based
 clustering or linear classification), including optional Gaussian noise.
 They are useful for visualization. :func:`make_circles` produces Gaussian data
 with a spherical decision boundary for binary classification, while
-:func:`make_moons` produces two interleaving half circles.
+:func:`make_moons` produces two interleaving half-circles.
+
+
+.. plot::
+   :context: close-figs
+   :scale: 70
+   :align: center
+
+   import matplotlib.pyplot as plt
+   from sklearn.datasets import make_circles, make_moons
+
+   fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(8, 4))
+
+   X, Y = make_circles(noise=0.1, factor=0.3, random_state=0)
+   ax1.scatter(X[:, 0], X[:, 1], c=Y)
+   ax1.set_title("make_circles")
+
+   X, Y = make_moons(noise=0.1, random_state=0)
+   ax2.scatter(X[:, 0], X[:, 1], c=Y)
+   ax2.set_title("make_moons")
+
+   plt.tight_layout()
+   plt.show()
+
+
 
 Multilabel
 ~~~~~~~~~~

@@ -1,6 +1,7 @@
-# Authors: Andrew nystrom <awnystrom@gmail.com>
-#          Meekail Zain <zainmeekail@gmail.com>
-from ..utils._typedefs cimport uint8_t, int64_t, intp_t
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from sklearn.utils._typedefs cimport uint8_t, int64_t, intp_t
 
 ctypedef uint8_t FLAG_t
 
