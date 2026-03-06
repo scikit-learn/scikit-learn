@@ -687,9 +687,17 @@ def test_multiclass_colors_cmap(
     assert disp.n_classes == len(np.unique(colors, axis=0))
 
     if response_method == "predict":
-        cmap = mpl.colors.ListedColormap(colors)
-        assert disp.surface_.cmap == cmap
-    elif plot_method != "contour":
+        if plot_method == "contour":
+            assert disp.surface_.colors == "black"
+        else:
+            cmap = mpl.colors.ListedColormap(colors)
+            assert disp.surface_.cmap == cmap
+
+    else:
+        if plot_method == "contour":
+            # the last display additionally contains the class boundary contours
+            assert disp.surface_[-1].colors == "black"
+            del disp.surface_[-1]
         cmaps = [
             mpl.colors.LinearSegmentedColormap.from_list(
                 f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
@@ -701,8 +709,6 @@ def test_multiclass_colors_cmap(
 
         for idx, quad in enumerate(disp.surface_):
             assert quad.cmap == cmaps[idx]
-    else:
-        assert_allclose(disp.surface_.colors, colors)
 
 
 def test_multiclass_not_enough_colors_error(pyplot):
@@ -747,8 +753,10 @@ def test_multiclass_not_enough_colors_error(pyplot):
     ],
 )
 def test_multiclass_levels(pyplot, y, response_method, plot_method):
-    # non-regression test for issue #32866
+    """Non-regression test for issue #32866.
 
+    Levels are only relevant for "contour" and "predict" with "contourf".
+    """
     X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1], [2, 2], [3, 2]])
 
     clf = LogisticRegression().fit(X, y)
@@ -765,7 +773,15 @@ def test_multiclass_levels(pyplot, y, response_method, plot_method):
     else:
         expected_levels = np.arange(7) - 0.5
 
-    assert_allclose(disp.surface_.levels, expected_levels)
+    if isinstance(disp.surface_, list):
+        # This is the case for "decision_function" and "predict_proba" with "contour",
+        # which have a separate surface for each class contour and contain the decision
+        # boundary contour (which requires the correct levels) on the last surface.
+        levels = disp.surface_[-1].levels
+    else:
+        levels = disp.surface_.levels
+
+    assert_allclose(levels, expected_levels)
 
 
 # estimator classes for non-regression test cases for issue #33194
