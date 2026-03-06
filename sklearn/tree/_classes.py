@@ -443,10 +443,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 # *positive class*, all signs must be flipped.
                 monotonic_cst *= -1
 
-        self.is_categorical_, self.n_categories_in_feature_ = (
+        is_categorical_, self.n_categories_in_feature_ = (
             self._check_categorical_features(X, monotonic_cst)
         )
-        has_categorical = bool(np.any(self.is_categorical_))
+        has_categorical = bool(np.any(is_categorical_))
         if has_categorical and self.splitter == "random":
             raise ValueError(
                 "Categorical features are not supported with splitter='random'. "
@@ -1856,6 +1856,13 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
+    n_categories_in_feature_ : array-like of int or bool of shape (n_features,) or
+        (n_categorical_features,), default=None
+        Indicates which features are treated as categorical.
+
+        - If array-like of int, the entries are feature indices.
+        - If array-like of bool, it is a boolean mask over features.
+
     See Also
     --------
     ExtraTreeRegressor : An extremely randomized tree regressor.
@@ -2123,6 +2130,13 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
+
+    n_categories_in_feature_ : array-like of int or bool of shape (n_features,) or
+        (n_categorical_features,), default=None
+        Indicates which features are treated as categorical.
+
+        - If array-like of int, the entries are feature indices.
+        - If array-like of bool, it is a boolean mask over features.
 
     See Also
     --------
