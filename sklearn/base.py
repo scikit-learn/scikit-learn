@@ -6,6 +6,7 @@
 import copy
 import functools
 import inspect
+import numbers
 import platform
 import re
 import warnings
@@ -361,7 +362,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             if (
                 hasattr(value, "shape")
                 and hasattr(value, "dtype")
-                and len(value.shape) > 0
+                and not isinstance(value, numbers.Number)
             ):
                 fitted_attr[name] = {
                     "type_name": type(value).__name__,
