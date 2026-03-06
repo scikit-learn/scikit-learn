@@ -1,0 +1,6 @@
+- :func:`linear_model.enet_path` now correctly handles the ``precompute`` 
+  parameter when ``check_input=False``. Previously, the value of
+  ``precompute`` was not properly treated which could lead to a ValueError.
+  This also affects :class:`linear_model.ElasticNetCV`, :class:`linear_model.LassoCV`,
+  :class:`linear_model.MultiTaskElasticNetCV` and :class:`linear_model.MultiTaskLassoCV`.
+  By :user:`Albert Dorador <adc-trust-ai>`

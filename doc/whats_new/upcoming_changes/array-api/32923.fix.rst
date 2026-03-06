@@ -1,0 +1,3 @@
+- Fixes how `pos_label` is inferred when `pos_label` is set to `None`, in
+  :func:`sklearn.metrics.brier_score_loss` and
+  :func:`sklearn.metrics.d2_brier_score`. By :user:`Lucy Liu <lucyleeow>`.

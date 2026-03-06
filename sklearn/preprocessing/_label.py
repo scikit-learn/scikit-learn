@@ -800,6 +800,8 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys
     intuitive format and the supported multilabel format: a (samples x classes)
     binary matrix indicating the presence of a class label.
 
+    Read more in the :ref:`User Guide <multilabelbinarizer>`.
+
     Parameters
     ----------
     classes : array-like of shape (n_classes,), default=None

@@ -57,6 +57,7 @@ jobs:
   doc:
     docker:
       - image: cimg/base:current-22.04
+    resource_class: medium+
     environment:
       - MKL_NUM_THREADS: 2
       - OPENBLAS_NUM_THREADS: 2

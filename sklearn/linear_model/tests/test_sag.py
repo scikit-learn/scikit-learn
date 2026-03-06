@@ -577,7 +577,13 @@ def test_sag_regressor(seed, csr_container):
     # simple linear function with noise
     y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
 
-    clf1 = Ridge(tol=tol, solver="sag", max_iter=max_iter, alpha=alpha * n_samples)
+    clf1 = Ridge(
+        tol=tol,
+        solver="sag",
+        max_iter=max_iter,
+        alpha=alpha * n_samples,
+        random_state=rng,
+    )
     clf2 = clone(clf1)
     clf1.fit(X, y)
     clf2.fit(csr_container(X), y)

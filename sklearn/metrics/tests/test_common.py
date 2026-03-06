@@ -3,6 +3,7 @@ import re
 from functools import partial
 from inspect import signature
 from itertools import chain, permutations, product
+from typing import Tuple
 
 import numpy as np
 import pytest
@@ -18,6 +19,7 @@ from sklearn.metrics import (
     classification_report,
     cohen_kappa_score,
     confusion_matrix,
+    confusion_matrix_at_thresholds,
     coverage_error,
     d2_absolute_error_score,
     d2_brier_score,
@@ -71,7 +73,9 @@ from sklearn.metrics.pairwise import (
     manhattan_distances,
     paired_cosine_distances,
     paired_euclidean_distances,
+    paired_manhattan_distances,
     pairwise_distances,
+    pairwise_distances_argmin,
     pairwise_kernels,
     polynomial_kernel,
     rbf_kernel,
@@ -83,6 +87,10 @@ from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
+    _max_precision_float_dtype,
+    device,
+    get_namespace,
+    yield_mixed_namespace_input_permutations,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -148,6 +156,11 @@ REGRESSION_METRICS = {
     "mean_compound_poisson_deviance": partial(mean_tweedie_deviance, power=1.4),
     "d2_tweedie_score": partial(d2_tweedie_score, power=1.4),
     "d2_pinball_score": d2_pinball_score,
+    # The default `alpha=0.5` (median) masks differences between quantile methods,
+    # so we also test `alpha=0.1` and `alpha=0.9` to ensure correctness
+    # for non-median quantiles.
+    "d2_pinball_score_01": partial(d2_pinball_score, alpha=0.1),
+    "d2_pinball_score_09": partial(d2_pinball_score, alpha=0.9),
     "d2_absolute_error_score": d2_absolute_error_score,
 }
 
@@ -156,17 +169,13 @@ CLASSIFICATION_METRICS = {
     "balanced_accuracy_score": balanced_accuracy_score,
     "adjusted_balanced_accuracy_score": partial(balanced_accuracy_score, adjusted=True),
     "unnormalized_accuracy_score": partial(accuracy_score, normalize=False),
-    # `confusion_matrix` returns absolute values and hence behaves unnormalized
-    # . Naming it with an unnormalized_ prefix is necessary for this module to
-    # skip sample_weight scaling checks which will fail for unnormalized
-    # metrics.
-    "unnormalized_confusion_matrix": confusion_matrix,
+    "confusion_matrix": confusion_matrix,
     "normalized_confusion_matrix": lambda *args, **kwargs: (
         confusion_matrix(*args, **kwargs).astype("float")
         / confusion_matrix(*args, **kwargs).sum(axis=1)[:, np.newaxis]
     ),
-    "unnormalized_multilabel_confusion_matrix": multilabel_confusion_matrix,
-    "unnormalized_multilabel_confusion_matrix_sample": partial(
+    "multilabel_confusion_matrix": multilabel_confusion_matrix,
+    "multilabel_confusion_matrix_sample": partial(
         multilabel_confusion_matrix, samplewise=True
     ),
     "hamming_loss": hamming_loss,
@@ -212,7 +221,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
     """
     The dimensions of precision-recall pairs and the threshold array as
     returned by the precision_recall_curve do not match. See
-    func:`sklearn.metrics.precision_recall_curve`
+    :func:`sklearn.metrics.precision_recall_curve`
 
     This prevents implicit conversion of return value triple to a higher
     dimensional np.array of dtype('float64') (it will be of dtype('object)
@@ -240,6 +249,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
 
 
 CURVE_METRICS = {
+    "confusion_matrix_at_thresholds": confusion_matrix_at_thresholds,
     "roc_curve": roc_curve,
     "precision_recall_curve": precision_recall_curve_padded_thresholds,
     "det_curve": det_curve,
@@ -305,7 +315,7 @@ METRIC_UNDEFINED_BINARY = {
     "samples_recall_score",
     "samples_jaccard_score",
     "coverage_error",
-    "unnormalized_multilabel_confusion_matrix_sample",
+    "multilabel_confusion_matrix_sample",
     "label_ranking_loss",
     "label_ranking_average_precision_score",
     "dcg_score",
@@ -327,6 +337,7 @@ METRIC_UNDEFINED_MULTICLASS = {
     "f2_score",
     "f0.5_score",
     # curves
+    "confusion_matrix_at_thresholds",
     "roc_curve",
     "precision_recall_curve",
     "det_curve",
@@ -356,6 +367,7 @@ CONTINOUS_CLASSIFICATION_METRICS_WITH_AVERAGING = {
 
 # Metrics with a "pos_label" argument
 METRICS_WITH_POS_LABEL = {
+    "confusion_matrix_at_thresholds",
     "roc_curve",
     "precision_recall_curve",
     "det_curve",
@@ -377,7 +389,7 @@ METRICS_WITH_POS_LABEL = {
 # TODO: Handle multi_class metrics that has a labels argument as well as a
 # decision function argument. e.g hinge_loss
 METRICS_WITH_LABELS = {
-    "unnormalized_confusion_matrix",
+    "confusion_matrix",
     "normalized_confusion_matrix",
     "roc_curve",
     "precision_recall_curve",
@@ -406,8 +418,8 @@ METRICS_WITH_LABELS = {
     "macro_precision_score",
     "macro_recall_score",
     "macro_jaccard_score",
-    "unnormalized_multilabel_confusion_matrix",
-    "unnormalized_multilabel_confusion_matrix_sample",
+    "multilabel_confusion_matrix",
+    "multilabel_confusion_matrix_sample",
     "cohen_kappa_score",
     "log_loss",
     "d2_log_loss_score",
@@ -470,7 +482,7 @@ MULTILABELS_METRICS = {
     "micro_precision_score",
     "micro_recall_score",
     "micro_jaccard_score",
-    "unnormalized_multilabel_confusion_matrix",
+    "multilabel_confusion_matrix",
     "samples_f0.5_score",
     "samples_f1_score",
     "samples_f2_score",
@@ -492,6 +504,8 @@ MULTIOUTPUT_METRICS = {
     "mean_absolute_percentage_error",
     "mean_pinball_loss",
     "d2_pinball_score",
+    "d2_pinball_score_01",
+    "d2_pinball_score_09",
     "d2_absolute_error_score",
 }
 
@@ -538,8 +552,9 @@ NOT_SYMMETRIC_METRICS = {
     "adjusted_balanced_accuracy_score",
     "explained_variance_score",
     "r2_score",
-    "unnormalized_confusion_matrix",
+    "confusion_matrix",
     "normalized_confusion_matrix",
+    "confusion_matrix_at_thresholds",
     "roc_curve",
     "precision_recall_curve",
     "det_curve",
@@ -552,7 +567,7 @@ NOT_SYMMETRIC_METRICS = {
     "weighted_f2_score",
     "weighted_precision_score",
     "weighted_jaccard_score",
-    "unnormalized_multilabel_confusion_matrix",
+    "multilabel_confusion_matrix",
     "macro_f0.5_score",
     "macro_f2_score",
     "macro_precision_score",
@@ -563,6 +578,8 @@ NOT_SYMMETRIC_METRICS = {
     "mean_compound_poisson_deviance",
     "d2_tweedie_score",
     "d2_pinball_score",
+    "d2_pinball_score_01",
+    "d2_pinball_score_09",
     "d2_absolute_error_score",
     "mean_absolute_percentage_error",
 }
@@ -573,6 +590,19 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = {
     "max_error",
     "ovo_roc_auc",
     "weighted_ovo_roc_auc",
+}
+
+WEIGHT_SCALE_DEPENDENT_METRICS = {
+    # 'confusion_matrix' metrics returns absolute `tps`, `fps` etc values, which
+    # are scaled by weights, so will vary e.g., scaling by 3 will result in 3 * `tps`
+    "confusion_matrix",
+    "confusion_matrix_at_thresholds",
+    "multilabel_confusion_matrix",
+    "multilabel_confusion_matrix_sample",
+    # Metrics where we set `normalize=False`
+    "unnormalized_accuracy_score",
+    "unnormalized_zero_one_loss",
+    "unnormalized_log_loss",
 }
 
 METRICS_REQUIRE_POSITIVE_Y = {
@@ -587,6 +617,18 @@ METRICS_WITH_LOG1P_Y = {
     "mean_squared_log_error",
     "root_mean_squared_log_error",
 }
+
+# Metrics that support mixed namespace/device array API inputs
+# Mixed mixed namespace/device support is NOT planned for pairwise metrics
+METRICS_SUPPORTING_MIXED_NAMESPACE = [
+    "average_precision_score",
+    "brier_score_loss",
+    "confusion_matrix_at_thresholds",
+    "d2_brier_score",
+    "d2_log_loss_score",
+    "log_loss",
+    "max_error",
+]
 
 
 def _require_positive_targets(y1, y2):
@@ -1612,12 +1654,15 @@ def check_sample_weight_invariance(name, metric, y1, y2, sample_weight=None):
         % (weighted_score_zeroed, weighted_score_subset, name),
     )
 
-    if not name.startswith("unnormalized"):
-        # check that the score is invariant under scaling of the weights by a
-        # common factor
-        # Due to numerical instability of floating points in `cumulative_sum` in
-        # `median_absolute_error`, it is not always equivalent when scaling by a float.
-        scaling_values = [2] if name == "median_absolute_error" else [2, 0.3]
+    # Check the score is invariant under scaling of weights by a constant factor
+    if name not in WEIGHT_SCALE_DEPENDENT_METRICS:
+        # Numerical instability of floating points in `cumulative_sum` in
+        # `median_absolute_error`, and in `diff` when in calculating collinear points
+        # and points in between to drop `roc_curve` means they are not always
+        # equivalent when scaling by a float.
+        scaling_values = (
+            [2] if name in {"median_absolute_error", "roc_curve"} else [2, 0.3]
+        )
         for scaling in scaling_values:
             assert_allclose(
                 weighted_score,
@@ -1715,7 +1760,7 @@ def test_binary_sample_weight_invariance(name):
     y_pred = random_state.randint(0, 2, size=(n_samples,))
     y_score = random_state.random_sample(size=(n_samples,))
     metric = ALL_METRICS[name]
-    if name in CONTINUOUS_CLASSIFICATION_METRICS:
+    if name in (CONTINUOUS_CLASSIFICATION_METRICS | CURVE_METRICS.keys()):
         check_sample_weight_invariance(name, metric, y_true, y_score)
     else:
         check_sample_weight_invariance(name, metric, y_true, y_pred)
@@ -1816,7 +1861,7 @@ def test_no_averaging_labels():
 
 
 @pytest.mark.parametrize(
-    "name", sorted(MULTILABELS_METRICS - {"unnormalized_multilabel_confusion_matrix"})
+    "name", sorted(MULTILABELS_METRICS - {"multilabel_confusion_matrix"})
 )
 def test_multilabel_label_permutations_invariance(name):
     random_state = check_random_state(0)
@@ -1940,8 +1985,8 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
         "specified: either make y_true take value in {0, 1} or {-1, 1} or "
         "pass pos_label explicit"
     )
-    err_msg_pos_label_1 = (
-        r"pos_label=1 is not a valid label. It should be one of \['eggs', 'spam'\]"
+    err_msg_pos_label_1 = re.escape(
+        "pos_label=1 is not a valid label. It should be one of ['eggs' 'spam']"
     )
 
     pos_label_default = signature(metric).parameters["pos_label"].default
@@ -2070,6 +2115,18 @@ def check_array_api_multiclass_classification_metric(
 ):
     y_true_np = np.array([0, 1, 2, 3])
     y_pred_np = np.array([0, 1, 0, 2])
+
+    if metric.__name__ == "average_precision_score":
+        # we need y_pred_nd to be of shape (n_samples, n_classes)
+        y_pred_np = np.array(
+            [
+                [0.7, 0.2, 0.05, 0.05],
+                [0.1, 0.8, 0.05, 0.05],
+                [0.1, 0.1, 0.7, 0.1],
+                [0.05, 0.05, 0.1, 0.8],
+            ],
+            dtype=dtype_name,
+        )
 
     additional_params = {
         "average": ("micro", "macro", "weighted"),
@@ -2272,6 +2329,11 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
+    average_precision_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
     balanced_accuracy_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
@@ -2358,6 +2420,22 @@ array_api_metric_checkers = {
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
     ],
+    d2_absolute_error_score: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    d2_pinball_score: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    partial(d2_pinball_score, alpha=0.1): [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    partial(d2_pinball_score, alpha=0.9): [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
     d2_tweedie_score: [
         check_array_api_regression_metric,
     ],
@@ -2372,6 +2450,7 @@ array_api_metric_checkers = {
     ],
     chi2_kernel: [check_array_api_metric_pairwise],
     paired_euclidean_distances: [check_array_api_metric_pairwise],
+    paired_manhattan_distances: [check_array_api_metric_pairwise],
     cosine_distances: [check_array_api_metric_pairwise],
     euclidean_distances: [check_array_api_metric_pairwise],
     manhattan_distances: [check_array_api_metric_pairwise],
@@ -2393,6 +2472,7 @@ array_api_metric_checkers = {
         check_array_api_binary_classification_metric,
     ],
     pairwise_distances: [check_array_api_metric_pairwise],
+    pairwise_distances_argmin: [check_array_api_metric_pairwise],
 }
 
 
@@ -2410,6 +2490,215 @@ def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers)
 @pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
 def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):
     check_func(metric, array_namespace, device, dtype_name)
+
+
+def _check_output(out_np, out_xp, xp_to, y2_xp):
+    if isinstance(out_np, float):
+        assert isinstance(out_xp, float)
+    elif hasattr(out_np, "shape"):
+        assert hasattr(out_xp, "shape")
+        assert get_namespace(out_xp)[0] == xp_to
+        assert device(out_xp) == device(y2_xp)
+    # `classification_report` returns str (with default `output_dict=False`)
+    elif isinstance(out_np, str):
+        assert isinstance(out_xp, str)
+
+
+@pytest.mark.parametrize(
+    "from_ns_and_device, to_ns_and_device",
+    [
+        pytest.param(*args[:2], id=args[2])
+        for args in yield_mixed_namespace_input_permutations()
+    ],
+)
+@pytest.mark.parametrize("metric_name", sorted(METRICS_SUPPORTING_MIXED_NAMESPACE))
+def test_mixed_array_api_namespace_input_compliance(
+    metric_name, from_ns_and_device, to_ns_and_device
+):
+    """Check `y_true` and `sample_weight` follows `y_pred` for mixed namespace inputs.
+
+    Compares the output for all-numpy vs mixed-type inputs.
+    If the output is a float, checks that both all-numpy and mixed-type inputs return
+    a float.
+    If output is an array, checks it is of the same namespace and device as `y_pred`
+    (`to_ns_and_device`).
+    If the output is a tuple, checks that each element, whether float or array,
+    is correct, as detailed above.
+    """
+    xp_to = _array_api_for_tests(to_ns_and_device.xp, to_ns_and_device.device)
+    xp_from = _array_api_for_tests(from_ns_and_device.xp, from_ns_and_device.device)
+
+    metric = ALL_METRICS[metric_name]
+
+    data_all = {
+        "binary": ([0, 0, 1, 1], [0, 1, 0, 1]),
+        "binary_continuous": ([1, 0, 1, 0], [0.5, 0.2, 0.7, 0.6]),
+        "label_indicator_continuous": ([[1, 0, 1, 0]], [[0.5, 0.2, 0.7, 0.6]]),
+        "regression_integer": ([2, 1, 3, 4], [2, 1, 2, 2]),
+        "regression_continuous": ([2.1, 1.0, 3.0, 4.0], [2.2, 1.1, 2.0, 2.0]),
+    }
+    sample_weight = [1, 1, 2, 2]
+
+    # Deal with max mps float precision being float32
+    def _get_dtype(data, xp, device):
+        # Assume list is all float if first element is float
+        if isinstance(data[0], float):
+            dtype = _max_precision_float_dtype(xp, device)
+        else:
+            dtype = xp.int64
+        return dtype
+
+    if metric_name in CLASSIFICATION_METRICS:
+        # These should all accept binary label input as there are no
+        # `CLASSIFICATION_METRICS` that are in `METRIC_UNDEFINED_BINARY` and are
+        # NOT `partial`s (which we do not test for in array API compliance)
+        data_cases = ["binary"]
+    elif metric_name in {**CONTINUOUS_CLASSIFICATION_METRICS, **CURVE_METRICS}:
+        if metric_name not in METRIC_UNDEFINED_BINARY:
+            data_cases = ["binary_continuous"]
+        else:
+            data_cases = ["label_indicator_continuous"]
+    elif metric_name in REGRESSION_METRICS:
+        data_cases = ["regression_integer", "regression_continuous"]
+
+    with config_context(array_api_dispatch=True):
+        for data_case in data_cases:
+            y1, y2 = data_all[data_case]
+
+            dtype = _get_dtype(y1, xp_from, from_ns_and_device.device)
+            y1_xp = xp_from.asarray(y1, device=from_ns_and_device.device, dtype=dtype)
+
+            metric_kwargs_xp = metric_kwargs_np = {}
+            if metric_name not in METRICS_WITHOUT_SAMPLE_WEIGHT:
+                # use `from_ns_and_device` for `sample_weight` as well
+                sample_weight_np = np.array(sample_weight)
+                metric_kwargs_np = {"sample_weight": sample_weight_np}
+                sample_weight_xp = xp_from.asarray(
+                    sample_weight_np, device=from_ns_and_device.device
+                )
+                metric_kwargs_xp = {"sample_weight": sample_weight_xp}
+
+            dtype = _get_dtype(y2, xp_to, to_ns_and_device.device)
+            y2_xp = xp_to.asarray(y2, device=to_ns_and_device.device, dtype=dtype)
+
+            metric_xp = metric(y1_xp, y2_xp, **metric_kwargs_xp)
+            metric_np = metric(y1, y2, **metric_kwargs_np)
+
+            if isinstance(metric_np, Tuple):
+                for out_np, out_xp in zip(metric_np, metric_xp):
+                    _check_output(out_np, out_xp, xp_to, y2_xp)
+            else:
+                _check_output(metric_np, metric_xp, xp_to, y2_xp)
+
+
+# Check thresholded classification metrics, minus multilabel ranking metrics
+# (`METRIC_UNDEFINED_BINARY`), which take label indicator input (and thus never
+# string input).
+@pytest.mark.parametrize(
+    "metric_name",
+    sorted(
+        set(METRICS_SUPPORTING_MIXED_NAMESPACE)
+        & (set(CLASSIFICATION_METRICS.keys()) - METRIC_UNDEFINED_BINARY)
+    ),
+)
+def test_array_api_classification_string_input(metric_name):
+    """Check string inputs accepted with array API dispatch enabled.
+
+    All thresholded classification metrics that do not require label indicator format
+    input should work when both inputs (e.g.,`y_true` and `y_pred`) are string (numpy
+    namespace only) and dispatch is enabled.
+    Note thresholded classification metrics do not support mixed string and numeric
+    inputs.
+    """
+    metric = ALL_METRICS[metric_name]
+    y_true = np.array(["a", "b", "a", "a"])
+    y_pred = np.array(["a", "b", "b", "a"])
+
+    kwargs = {}
+    if metric_name in METRICS_WITH_POS_LABEL:
+        kwargs["pos_label"] = "a"
+
+    with config_context(array_api_dispatch=True):
+        metric_enabled = metric(y_true, y_pred, **kwargs)
+
+    with config_context(array_api_dispatch=False):
+        metric_disabled = metric(y_true, y_pred, **kwargs)
+
+    _check_output(metric_enabled, metric_disabled, get_namespace(y_pred)[0], y_pred)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+# All continuous classification metrics, minus multilabel ranking metrics
+# (`METRIC_UNDEFINED_BINARY`), which take label indicator input (and thus never
+# string input)
+@pytest.mark.parametrize(
+    "metric_name",
+    sorted(
+        set(METRICS_SUPPORTING_MIXED_NAMESPACE)
+        & (
+            (set(CONTINUOUS_CLASSIFICATION_METRICS.keys()) | set(CURVE_METRICS.keys()))
+            - METRIC_UNDEFINED_BINARY
+        )
+    ),
+)
+def test_array_api_classification_mixed_string_numeric_input(
+    metric_name, array_namespace, device, dtype_name
+):
+    """Check string inputs and numeric inputs from mixed namespace and devices accepted.
+
+    Non-thresholded (aka continuous/ranking) classification metrics should accept
+    a mix of string and numeric inputs (numeric input should be able to be of
+    any supported namespace/device), with array API dispatch enabled.
+    """
+    xp = _array_api_for_tests(array_namespace, device)
+    metric = ALL_METRICS[metric_name]
+
+    # Binary
+    y_true = np.array(["a", "b", "a", "a"])
+    y_prob_np = np.array([0.5, 0.2, 0.7, 0.6], dtype=dtype_name)
+    y_prob_xp = xp.asarray(y_prob_np, device=device)
+
+    kwargs = {}
+    if metric_name in METRICS_WITH_POS_LABEL:
+        kwargs["pos_label"] = "a"
+
+    with config_context(array_api_dispatch=True):
+        metric_np = metric(y_true, y_prob_np, **kwargs)
+        metric_xp = metric(y_true, y_prob_xp, **kwargs)
+
+        if isinstance(metric_np, Tuple):
+            for out_np, out_xp in zip(metric_np, metric_xp):
+                _check_output(out_np, out_xp, xp, y_prob_xp)
+        else:
+            _check_output(metric_np, metric_xp, xp, y_prob_xp)
+
+    # Multiclass
+    if metric_name not in METRIC_UNDEFINED_MULTICLASS:
+        y_true = np.array(["a", "b", "c", "d"])
+        y_prob_np = np.array(
+            [
+                [0.5, 0.2, 0.2, 0.1],
+                [0.4, 0.4, 0.1, 0.1],
+                [0.1, 0.1, 0.7, 0.1],
+                [0.1, 0.2, 0.6, 0.1],
+            ],
+            dtype=dtype_name,
+        )
+        y_prob_xp = xp.asarray(y_prob_np, device=device)
+
+        with config_context(array_api_dispatch=True):
+            metric_np = metric(y_true, y_prob_np)
+            metric_xp = metric(y_true, y_prob_xp)
+
+            if isinstance(metric_np, Tuple):
+                for out_np, out_xp in zip(metric_np, metric_xp):
+                    _check_output(out_np, out_xp, xp, y_prob_xp)
+            else:
+                _check_output(metric_np, metric_xp, xp, y_prob_xp)
 
 
 @pytest.mark.parametrize("df_lib_name", ["pandas", "polars"])

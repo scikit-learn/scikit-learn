@@ -1022,5 +1022,5 @@ computation and thus speeds it up.
 .. dropdown:: References
 
   * Ojala and Garriga. `Permutation Tests for Studying Classifier Performance
-    <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_.
+    <https://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_.
     J. Mach. Learn. Res. 2010.

@@ -60,7 +60,7 @@ def local_server(request):
 
 
 def _make_page(body):
-    """Helper to create a HTML page that includes `estimator.js` and the given body."""
+    """Helper to create an HTML page that includes `estimator.js` and the given body."""
 
     js_path = Path(__file__).parent.parent / "estimator.js"
     with open(js_path, "r", encoding="utf-8") as f:

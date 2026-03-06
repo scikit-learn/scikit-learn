@@ -18,7 +18,7 @@ if "%1" == "help" (
 	echo.  dirhtml   to make HTML files named index.html in directories
 	echo.  pickle    to make pickle files
 	echo.  json      to make JSON files
-	echo.  htmlhelp  to make HTML files and a HTML help project
+	echo.  htmlhelp  to make HTML files and an HTML help project
 	echo.  qthelp    to make HTML files and a qthelp project
 	echo.  latex     to make LaTeX files, you can set PAPER=a4 or PAPER=letter
 	echo.  changes   to make an overview over all changed/added/deprecated items

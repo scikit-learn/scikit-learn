@@ -226,7 +226,7 @@ clf
 
 # %%
 # DecisionTreeRegressor with `criterion="absolute_error"`
-# ------------------------------------------------------
+# -------------------------------------------------------
 # :class:`tree.DecisionTreeRegressor` with `criterion="absolute_error"`
 # now runs much faster. It has now `O(n * log(n))` complexity compared to
 # `O(n**2)` previously, which allows to scale to millions of data points.

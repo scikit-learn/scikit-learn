@@ -84,9 +84,6 @@ common_dependencies = common_dependencies_without_coverage + [
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
 default_package_constraints = {
-    # TODO: remove once https://github.com/numpy/numpydoc/issues/638 is fixed
-    # and released.
-    "numpydoc": "<1.9.0",
     # TODO: remove once when we're using the new way to enable coverage in subprocess
     # introduced in 7.0.0, see https://github.com/pytest-dev/pytest-cov?tab=readme-ov-file#upgrading-from-pytest-cov-63
     "pytest-cov": "<=6.3.0",
@@ -104,7 +101,7 @@ build_metadata_list = [
         "tag": "cuda",
         "folder": "build_tools/github",
         "platform": "linux-64",
-        "channels": ["conda-forge", "pytorch", "nvidia"],
+        "channels": ["rapidsai", "conda-forge"],
         "conda_dependencies": common_dependencies
         + [
             "ccache",
@@ -112,17 +109,17 @@ build_metadata_list = [
             "polars",
             "pyarrow",
             "cupy",
+            # cuvs is needed for cupyx.scipy.spatial.distance.cdist and friends
+            "cuvs",
             "array-api-strict",
         ],
-        "package_constraints": {
-            "blas": "[build=mkl]",
-        },
+        "virtual_package_spec": True,
     },
     {
         "name": "pylatest_conda_forge_mkl_linux-64",
         "type": "conda",
         "tag": "main-ci",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies
@@ -144,7 +141,7 @@ build_metadata_list = [
         "name": "pylatest_conda_forge_osx-arm64",
         "type": "conda",
         "tag": "main-ci",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "platform": "osx-arm64",
         "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies
@@ -161,7 +158,7 @@ build_metadata_list = [
         "name": "pylatest_conda_forge_mkl_no_openmp",
         "type": "conda",
         "tag": "main-ci",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "platform": "osx-64",
         "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies + ["ccache"],
@@ -173,7 +170,7 @@ build_metadata_list = [
         "name": "pymin_conda_forge_openblas_min_dependencies",
         "type": "conda",
         "tag": "main-ci",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": remove_from(common_dependencies, ["pandas"])
@@ -201,7 +198,7 @@ build_metadata_list = [
         "name": "pymin_conda_forge_openblas_ubuntu_2204",
         "type": "conda",
         "tag": "main-ci",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": (
@@ -218,7 +215,7 @@ build_metadata_list = [
         "name": "pylatest_pip_openblas_pandas",
         "type": "conda",
         "tag": "main-ci",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": ["python", "ccache"],
@@ -242,7 +239,7 @@ build_metadata_list = [
         "name": "pylatest_pip_scipy_dev",
         "type": "conda",
         "tag": "scipy-dev",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": ["python", "ccache"],
@@ -276,7 +273,7 @@ build_metadata_list = [
         "name": "pylatest_free_threaded",
         "type": "conda",
         "tag": "free-threaded",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": [
@@ -297,7 +294,7 @@ build_metadata_list = [
         "name": "pymin_conda_forge_openblas",
         "type": "conda",
         "tag": "main-ci",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "platform": "win-64",
         "channels": ["conda-forge"],
         "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
@@ -429,7 +426,7 @@ build_metadata_list = [
         "name": "debian_32bit",
         "type": "pip",
         "tag": "main-ci",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "pip_dependencies": [
             "cython",
             "joblib",
@@ -448,7 +445,7 @@ build_metadata_list = [
         "name": "ubuntu_atlas",
         "type": "pip",
         "tag": "main-ci",
-        "folder": "build_tools/azure",
+        "folder": "build_tools/github",
         "pip_dependencies": [
             "cython",
             "joblib",
@@ -559,22 +556,26 @@ def write_all_conda_environments(build_metadata_list):
         write_conda_environment(build_metadata)
 
 
-def conda_lock(environment_path, lock_file_path, platform):
-    execute_command(
-        [
-            "conda-lock",
-            "lock",
-            "--mamba",
-            "--kind",
-            "explicit",
-            "--platform",
-            platform,
-            "--file",
-            str(environment_path),
-            "--filename-template",
-            str(lock_file_path),
-        ]
-    )
+def conda_lock(
+    environment_path, lock_file_path, platform, virtual_package_spec_path=None
+):
+    cmd = [
+        "conda-lock",
+        "lock",
+        "--mamba",
+        "--kind",
+        "explicit",
+        "--platform",
+        platform,
+        "--file",
+        str(environment_path),
+        "--filename-template",
+        str(lock_file_path),
+    ]
+    if virtual_package_spec_path is not None:
+        cmd.extend(["--virtual-package-spec", str(virtual_package_spec_path)])
+
+    execute_command(cmd)
 
 
 def create_conda_lock_file(build_metadata):
@@ -587,7 +588,14 @@ def create_conda_lock_file(build_metadata):
         lock_file_basename = f"{lock_file_basename}_{platform}"
 
     lock_file_path = folder_path / f"{lock_file_basename}_conda.lock"
-    conda_lock(environment_path, lock_file_path, platform)
+
+    virtual_package_spec_path = None
+    if build_metadata.get("virtual_package_spec"):
+        virtual_package_spec_path = (
+            folder_path / f"{lock_file_basename}_virtual_package_spec.yml"
+        )
+
+    conda_lock(environment_path, lock_file_path, platform, virtual_package_spec_path)
 
 
 def write_all_conda_lock_files(build_metadata_list):
@@ -653,6 +661,9 @@ def write_pip_lock_file(build_metadata):
             "-n",
             f"pip-tools-python{python_version}",
             f"python={python_version}",
+            # TODO remove the following line once pip-tools is compatible with pip 26.0,
+            # see https://github.com/jazzband/pip-tools/issues/2319
+            "pip=25.3",
             "pip-tools",
             "-y",
         ]

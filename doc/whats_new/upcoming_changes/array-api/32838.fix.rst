@@ -1,2 +1,0 @@
-- Estimators with array API support no longer reject dataframe inputs when array API support is enabled.
-  By :user:`Tim Head <betatim>`

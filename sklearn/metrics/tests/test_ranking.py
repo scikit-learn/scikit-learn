@@ -1191,7 +1191,7 @@ def test_average_precision_score_binary_pos_label_errors():
     # Raise an error when pos_label is not in binary y_true
     y_true = np.array([0, 1])
     y_pred = np.array([0, 1])
-    err_msg = r"pos_label=2 is not a valid label. It should be one of \[0, 1\]"
+    err_msg = re.escape("pos_label=2 is not a valid label. It should be one of [0 1]")
     with pytest.raises(ValueError, match=err_msg):
         average_precision_score(y_true, y_pred, pos_label=2)
 
@@ -1212,7 +1212,7 @@ def test_average_precision_score_multilabel_pos_label_errors():
 def test_average_precision_score_multiclass_pos_label_errors():
     # Raise an error for multiclass y_true with pos_label other than 1
     y_true = np.array([0, 1, 2, 0, 1, 2])
-    y_pred = np.array(
+    y_score = np.array(
         [
             [0.5, 0.2, 0.1],
             [0.4, 0.5, 0.3],
@@ -1227,7 +1227,21 @@ def test_average_precision_score_multiclass_pos_label_errors():
         "Do not set pos_label or set pos_label to 1."
     )
     with pytest.raises(ValueError, match=err_msg):
-        average_precision_score(y_true, y_pred, pos_label=3)
+        average_precision_score(y_true, y_score, pos_label=3)
+
+
+def test_multiclass_ranking_metrics_raise_for_incorrect_shape_of_y_score():
+    """Test ranking metrics, with multiclass support, raise if shape `y_score` is 1D."""
+    y_true = np.array([0, 1, 2, 0, 1, 2])
+    y_score = np.array([0.5, 0.4, 0.8, 0.9, 0.8, 0.7])
+
+    msg = re.escape("`y_score` needs to be of shape `(n_samples, n_classes)`")
+    with pytest.raises(ValueError, match=msg):
+        average_precision_score(y_true, y_score)
+    with pytest.raises(ValueError, match=msg):
+        roc_auc_score(y_true, y_score, multi_class="ovr")
+    with pytest.raises(ValueError, match=msg):
+        top_k_accuracy_score(y_true, y_score)
 
 
 def test_score_scale_invariance():
@@ -2291,3 +2305,11 @@ def test_roc_curve_with_probablity_estimates(global_random_seed):
     y_score = rng.rand(10)
     _, _, thresholds = roc_curve(y_true, y_score)
     assert np.isinf(thresholds[0])
+
+
+# TODO(1.11): remove this test
+def test_confusion_matrix_at_thresholds_positional_args_deprecation():
+    y_true = np.array([0, 1, 1, 0])
+    y_score = np.array([0.2, 0.1, 0.7, 0.7])
+    with pytest.warns(FutureWarning, match="Pass pos_label=None as keyword arg"):
+        confusion_matrix_at_thresholds(y_true, y_score, None)

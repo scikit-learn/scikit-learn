@@ -9,7 +9,6 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 from scipy.fft import fft, ifft
-from scipy.linalg import svd
 
 from sklearn.base import (
     BaseEstimator,
@@ -20,9 +19,15 @@ from sklearn.base import (
 from sklearn.metrics.pairwise import (
     KERNEL_PARAMS,
     PAIRWISE_KERNEL_FUNCTIONS,
+    _find_floating_dtype_allow_sparse,
     pairwise_kernels,
 )
 from sklearn.utils import check_random_state
+from sklearn.utils._array_api import (
+    _find_matching_floating_dtype,
+    get_namespace_and_device,
+)
+from sklearn.utils._indexing import _safe_indexing
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.validation import (
@@ -99,7 +104,7 @@ class PolynomialCountSketch(
     --------
     AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
     Nystroem : Approximate a kernel map using a subset of the training data.
-    RBFSampler : Approximate a RBF kernel feature map using random Fourier
+    RBFSampler : Approximate an RBF kernel feature map using random Fourier
         features.
     SkewedChi2Sampler : Approximate feature map for "skewed chi-squared" kernel.
     sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
@@ -246,7 +251,7 @@ class PolynomialCountSketch(
 
 
 class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
-    """Approximate a RBF kernel feature map using random Fourier features.
+    """Approximate an RBF kernel feature map using random Fourier features.
 
     It implements a variant of Random Kitchen Sinks.[1]
 
@@ -384,7 +389,6 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
             # output data type during `transform`.
             self.random_weights_ = self.random_weights_.astype(X.dtype, copy=False)
             self.random_offset_ = self.random_offset_.astype(X.dtype, copy=False)
-
         self._n_features_out = self.n_components
         return self
 
@@ -465,7 +469,7 @@ class SkewedChi2Sampler(
     --------
     AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
     Nystroem : Approximate a kernel map using a subset of the training data.
-    RBFSampler : Approximate a RBF kernel feature map using random Fourier
+    RBFSampler : Approximate an RBF kernel feature map using random Fourier
         features.
     SkewedChi2Sampler : Approximate feature map for "skewed chi-squared" kernel.
     sklearn.metrics.pairwise.chi2_kernel : The exact chi squared kernel.
@@ -923,7 +927,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
     --------
     AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
     PolynomialCountSketch : Polynomial kernel approximation via Tensor Sketch.
-    RBFSampler : Approximate a RBF kernel feature map using random Fourier
+    RBFSampler : Approximate an RBF kernel feature map using random Fourier
         features.
     SkewedChi2Sampler : Approximate feature map for "skewed chi-squared" kernel.
     sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
@@ -1013,6 +1017,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         self : object
             Returns the instance itself.
         """
+        xp, _, device = get_namespace_and_device(X)
         X = validate_data(self, X, accept_sparse="csr")
         rnd = check_random_state(self.random_state)
         n_samples = X.shape[0]
@@ -1031,8 +1036,11 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             n_components = self.n_components
         n_components = min(n_samples, n_components)
         inds = rnd.permutation(n_samples)
-        basis_inds = inds[:n_components]
-        basis = X[basis_inds]
+        basis_inds = xp.asarray(inds[:n_components], dtype=xp.int64, device=device)
+        if sp.issparse(X):
+            basis = X[basis_inds]
+        else:
+            basis = _safe_indexing(X, basis_inds, axis=0)
 
         basis_kernel = pairwise_kernels(
             basis,
@@ -1043,9 +1051,11 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         )
 
         # sqrt of kernel matrix on basis vectors
-        U, S, V = svd(basis_kernel)
-        S = np.maximum(S, 1e-12)
-        self.normalization_ = np.dot(U / np.sqrt(S), V)
+        _, _, dtype = _find_floating_dtype_allow_sparse(basis_kernel, Y=None, xp=xp)
+        basis_kernel = xp.asarray(basis_kernel, dtype=dtype, device=device)
+        U, S, V = xp.linalg.svd(basis_kernel)
+        S = xp.clip(S, 1e-12, None)
+        self.normalization_ = U / xp.sqrt(S) @ V
         self.components_ = basis
         self.component_indices_ = basis_inds
         self._n_features_out = n_components
@@ -1068,6 +1078,8 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             Transformed data.
         """
         check_is_fitted(self)
+
+        xp, _, device = get_namespace_and_device(X)
         X = validate_data(self, X, accept_sparse="csr", reset=False)
 
         kernel_params = self._get_kernel_params()
@@ -1079,7 +1091,9 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             n_jobs=self.n_jobs,
             **kernel_params,
         )
-        return np.dot(embedded, self.normalization_.T)
+        dtype = _find_matching_floating_dtype(embedded, xp=xp)
+        embedded = xp.asarray(embedded, dtype=dtype, device=device)
+        return embedded @ self.normalization_.T
 
     def _get_kernel_params(self):
         params = self.kernel_params
@@ -1105,6 +1119,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.array_api_support = True
         tags.input_tags.sparse = True
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         return tags

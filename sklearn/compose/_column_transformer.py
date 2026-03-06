@@ -513,6 +513,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._validate_names(names)
 
         # validate estimators
+        self._check_estimators_are_instances(transformers)
         for t in transformers:
             if t in ("drop", "passthrough"):
                 continue
@@ -1237,7 +1238,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 self.transformers, [("remainder", self.remainder, remainder_columns)]
             )
         else:
-            transformers = chain(self.transformers, [("remainder", self.remainder, "")])
+            transformers = chain(self.transformers, [("remainder", self.remainder, [])])
 
         names, transformers, name_details = zip(*transformers)
         return _VisualBlock(

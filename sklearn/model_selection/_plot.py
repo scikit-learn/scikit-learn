@@ -354,7 +354,7 @@ class LearningCurveDisplay(_BaseCurveDisplay):
             - None, to use the default 5-fold cross validation,
             - int, to specify the number of folds in a `(Stratified)KFold`,
             - :term:`CV splitter`,
-            - An iterable yielding (train, test) splits as arrays of indices.
+            - an iterable yielding (train, test) splits as arrays of indices.
 
             For int/None inputs, if the estimator is a classifier and `y` is
             either binary or multiclass,
@@ -741,7 +741,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             - None, to use the default 5-fold cross validation,
             - int, to specify the number of folds in a `(Stratified)KFold`,
             - :term:`CV splitter`,
-            - An iterable yielding (train, test) splits as arrays of indices.
+            - an iterable yielding (train, test) splits as arrays of indices.
 
             For int/None inputs, if the estimator is a classifier and `y` is
             either binary or multiclass,

@@ -271,6 +271,12 @@ def get_tags(estimator) -> Tags:
         The estimator tags.
     """
 
+    if isinstance(estimator, type):
+        raise TypeError(
+            f"Expected an estimator instance ({estimator.__name__}()), got "
+            f"estimator class instead ({estimator.__name__})."
+        )
+
     try:
         tags = estimator.__sklearn_tags__()
     except AttributeError as exc:

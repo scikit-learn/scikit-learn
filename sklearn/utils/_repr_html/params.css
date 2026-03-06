@@ -83,6 +83,14 @@ a.param-doc-link:visited {
     padding: .5em;
 }
 
+@supports(anchor-name: --doc-link) {
+    a.param-doc-link,
+    a.param-doc-link:link,
+    a.param-doc-link:visited {
+    anchor-name: --doc-link;
+    }
+}
+
 /* "hack" to make the entire area of the cell containing the link clickable */
 a.param-doc-link::before {
     position: absolute;
@@ -107,6 +115,14 @@ a.param-doc-link::before {
     /* unfitted */
     background: var(--sklearn-color-unfitted-level-0);
     border: thin solid var(--sklearn-color-unfitted-level-3);
+}
+
+@supports(position-area: center right) {
+    .param-doc-description {
+    position-area: center right;
+    position: fixed;
+    margin-left: 0;
+    }
 }
 
 /* Fitted state for parameter tooltips */

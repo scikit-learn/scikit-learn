@@ -93,8 +93,7 @@ def _changed_params(estimator):
     estimator with non-default values."""
 
     params = estimator.get_params(deep=False)
-    init_func = getattr(estimator.__init__, "deprecated_original", estimator.__init__)
-    init_params = inspect.signature(init_func).parameters
+    init_params = inspect.signature(estimator.__init__).parameters
     init_params = {name: param.default for name, param in init_params.items()}
 
     def has_changed(k, v):

@@ -4,8 +4,6 @@
 Nearest Neighbors
 =================
 
-.. sectionauthor:: Jake Vanderplas <vanderplas@astro.washington.edu>
-
 .. currentmodule:: sklearn.neighbors
 
 :mod:`sklearn.neighbors` provides functionality for unsupervised and
@@ -637,8 +635,6 @@ implementation with special data types. The precomputed neighbors
 
 Neighborhood Components Analysis
 ================================
-
-.. sectionauthor:: William de Vazelhes <william.de-vazelhes@inria.fr>
 
 Neighborhood Components Analysis (NCA, :class:`NeighborhoodComponentsAnalysis`)
 is a distance metric learning algorithm which aims to improve the accuracy of

@@ -813,4 +813,4 @@ used, please refer to their respective papers.
 
 .. [#8] Crammer and Singer `On the Algorithmic Implementation of Multiclass
   Kernel-based Vector Machines
-  <http://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_, JMLR 2001.
+  <https://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_, JMLR 2001.

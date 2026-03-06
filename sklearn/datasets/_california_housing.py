@@ -43,7 +43,7 @@ from sklearn.utils import Bunch
 from sklearn.utils._param_validation import Interval, validate_params
 
 # The original data can be found at:
-# https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz
+# https://lib.stat.cmu.edu/datasets/houses.zip
 ARCHIVE = RemoteFileMetadata(
     filename="cal_housing.tgz",
     url="https://ndownloader.figshare.com/files/5976036",

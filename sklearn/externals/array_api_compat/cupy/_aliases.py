@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from typing import Optional
+from builtins import bool as py_bool
 
 import cupy as cp
 
 from ..common import _aliases, _helpers
 from ..common._typing import NestedSequence, SupportsBufferProtocol
 from .._internal import get_xp
-from ._info import __array_namespace_info__
 from ._typing import Array, Device, DType
 
 bool = cp.bool_
@@ -54,9 +53,6 @@ reshape = get_xp(cp)(_aliases.reshape)
 argsort = get_xp(cp)(_aliases.argsort)
 sort = get_xp(cp)(_aliases.sort)
 nonzero = get_xp(cp)(_aliases.nonzero)
-ceil = get_xp(cp)(_aliases.ceil)
-floor = get_xp(cp)(_aliases.floor)
-trunc = get_xp(cp)(_aliases.trunc)
 matmul = get_xp(cp)(_aliases.matmul)
 matrix_transpose = get_xp(cp)(_aliases.matrix_transpose)
 tensordot = get_xp(cp)(_aliases.tensordot)
@@ -67,18 +63,13 @@ iinfo = get_xp(cp)(_aliases.iinfo)
 
 # asarray also adds the copy keyword, which is not present in numpy 1.0.
 def asarray(
-    obj: (
-        Array 
-        | bool | int | float | complex 
-        | NestedSequence[bool | int | float | complex] 
-        | SupportsBufferProtocol
-    ),
+    obj: Array | complex | NestedSequence[complex] | SupportsBufferProtocol,
     /,
     *,
-    dtype: Optional[DType] = None,
-    device: Optional[Device] = None,
-    copy: Optional[bool] = None,
-    **kwargs,
+    dtype: DType | None = None,
+    device: Device | None = None,
+    copy: py_bool | None = None,
+    **kwargs: object,
 ) -> Array:
     """
     Array API compatibility wrapper for asarray().
@@ -101,8 +92,8 @@ def astype(
     dtype: DType,
     /,
     *,
-    copy: bool = True,
-    device: Optional[Device] = None,
+    copy: py_bool = True,
+    device: Device | None = None,
 ) -> Array:
     if device is None:
         return x.astype(dtype=dtype, copy=copy)
@@ -113,8 +104,8 @@ def astype(
 # cupy.count_nonzero does not have keepdims
 def count_nonzero(
     x: Array,
-    axis=None,
-    keepdims=False
+    axis: int | tuple[int, ...] | None = None,
+    keepdims: py_bool = False,
 ) -> Array:
    result = cp.count_nonzero(x, axis)
    if keepdims:
@@ -123,9 +114,28 @@ def count_nonzero(
        return cp.expand_dims(result, axis)
    return result
 
+# ceil, floor, and trunc return integers for integer inputs
+
+def ceil(x: Array, /) -> Array:
+    if cp.issubdtype(x.dtype, cp.integer):
+        return x.copy()
+    return cp.ceil(x)
+
+
+def floor(x: Array, /) -> Array:
+    if cp.issubdtype(x.dtype, cp.integer):
+        return x.copy()
+    return cp.floor(x)
+
+
+def trunc(x: Array, /) -> Array:
+    if cp.issubdtype(x.dtype, cp.integer):
+        return x.copy()
+    return cp.trunc(x)
+
 
 # take_along_axis: axis defaults to -1 but in cupy (and numpy) axis is a required arg
-def take_along_axis(x: Array, indices: Array, /, *, axis: int = -1):
+def take_along_axis(x: Array, indices: Array, /, *, axis: int = -1) -> Array:
     return cp.take_along_axis(x, indices, axis=axis)
 
 
@@ -146,11 +156,13 @@ if hasattr(cp, 'unstack'):
 else:
     unstack = get_xp(cp)(_aliases.unstack)
 
-__all__ = _aliases.__all__ + ['__array_namespace_info__', 'asarray', 'astype',
+__all__ = _aliases.__all__ + ['asarray', 'astype',
                               'acos', 'acosh', 'asin', 'asinh', 'atan',
                               'atan2', 'atanh', 'bitwise_left_shift',
                               'bitwise_invert', 'bitwise_right_shift',
                               'bool', 'concat', 'count_nonzero', 'pow', 'sign',
-                              'take_along_axis']
+                              'ceil', 'floor', 'trunc', 'take_along_axis']
 
-_all_ignore = ['cp', 'get_xp']
+
+def __dir__() -> list[str]:
+    return __all__

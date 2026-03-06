@@ -30,14 +30,20 @@ from sklearn.utils import (
 )
 from sklearn.utils._array_api import (
     _max_precision_float_dtype,
+    get_namespace,
     get_namespace_and_device,
+    move_to,
     size,
 )
 from sklearn.utils._encode import _encode, _unique
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.sparsefuncs import count_nonzero
-from sklearn.utils.validation import _check_pos_label_consistency, _check_sample_weight
+from sklearn.utils.validation import (
+    _check_pos_label_consistency,
+    _check_sample_weight,
+    _deprecate_positional_args,
+)
 
 
 @validate_params(
@@ -142,7 +148,8 @@ def average_precision_score(
     Parameters
     ----------
     y_true : array-like of shape (n_samples,) or (n_samples, n_classes)
-        True binary labels or binary label indicators.
+        True binary labels, :term:`multi-label` indicators (as a
+        :term:`multilabel indicator matrix`) or :term:`multi-class` labels.
 
     y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target scores, can either be probability estimates of the positive
@@ -224,27 +231,40 @@ def average_precision_score(
     >>> average_precision_score(y_true, y_scores)
     0.77
     """
+    xp, _, device = get_namespace_and_device(y_score)
+    # To allow mixed string `y_true`/numeric `y_score` input, cannot move `y_true`
+    # until it has been converted to an integer (e.g., via `label_binarize`)
+    # Ensures `test_array_api_classification_mixed_string_numeric_input` passes.
+    sample_weight = move_to(sample_weight, xp=xp, device=device)
+
+    if sample_weight is not None:
+        sample_weight = column_or_1d(sample_weight)
 
     def _binary_uninterpolated_average_precision(
-        y_true, y_score, pos_label=1, sample_weight=None
+        y_true,
+        y_score,
+        pos_label=1,
+        sample_weight=None,
+        xp=xp,
     ):
         precision, recall, _ = precision_recall_curve(
-            y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
+            y_true,
+            y_score,
+            pos_label=pos_label,
+            sample_weight=sample_weight,
         )
         # Return the step function integral
         # The following works because the last entry of precision is
         # guaranteed to be 1, as returned by precision_recall_curve.
         # Due to numerical error, we can get `-0.0` and we therefore clip it.
-        return float(max(0.0, -np.sum(np.diff(recall) * np.array(precision)[:-1])))
+        return float(max(0.0, -xp.sum(xp.diff(recall) * precision[:-1])))
 
     y_type = type_of_target(y_true, input_name="y_true")
-
-    # Convert to Python primitive type to avoid NumPy type / Python str
-    # comparison. See https://github.com/numpy/numpy/issues/6784
-    present_labels = np.unique(y_true).tolist()
+    xp_y_true, _ = get_namespace(y_true)
+    present_labels = xp_y_true.unique_values(y_true)
 
     if y_type == "binary":
-        if len(present_labels) == 2 and pos_label not in present_labels:
+        if present_labels.shape[0] == 2 and pos_label not in present_labels:
             raise ValueError(
                 f"pos_label={pos_label} is not a valid label. It should be "
                 f"one of {present_labels}"
@@ -263,9 +283,16 @@ def average_precision_score(
                 "Do not set pos_label or set pos_label to 1."
             )
         y_true = label_binarize(y_true, classes=present_labels)
+        y_true = move_to(y_true, xp=xp, device=device)
+        if not y_score.shape == y_true.shape:
+            raise ValueError(
+                "`y_score` needs to be of shape `(n_samples, n_classes)`, since "
+                "`y_true` contains multiple classes. Got "
+                f"`y_score.shape={y_score.shape}`."
+            )
 
     average_precision = partial(
-        _binary_uninterpolated_average_precision, pos_label=pos_label
+        _binary_uninterpolated_average_precision, pos_label=pos_label, xp=xp
     )
     return _average_binary_score(
         average_precision, y_true, y_score, average, sample_weight=sample_weight
@@ -502,9 +529,9 @@ def roc_auc_score(
     Parameters
     ----------
     y_true : array-like of shape (n_samples,) or (n_samples, n_classes)
-        True labels or binary label indicators. The binary and multiclass cases
+        True labels or :term:`label indicator matrix`. The binary and multiclass cases
         expect labels with shape (n_samples,) while the multilabel case expects
-        binary label indicators with shape (n_samples, n_classes).
+        a :term:`multilabel indicator matrix` with shape (n_samples, n_classes).
 
     y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target scores.
@@ -681,6 +708,8 @@ def roc_auc_score(
     y_type = type_of_target(y_true, input_name="y_true")
     y_true = check_array(y_true, ensure_2d=False, dtype=None)
     y_score = check_array(y_score, ensure_2d=False)
+    if sample_weight is not None:
+        sample_weight = column_or_1d(sample_weight)
 
     if y_type == "multiclass" or (
         y_type == "binary" and y_score.ndim == 2 and y_score.shape[1] > 2
@@ -766,7 +795,12 @@ def _multiclass_roc_auc_score(
         Sample weights.
 
     """
-    # validation of the input y_score
+    if not y_score.ndim == 2:
+        raise ValueError(
+            "`y_score` needs to be of shape `(n_samples, n_classes)`, since "
+            "`y_true` contains multiple classes. Got "
+            f"`y_score.shape={y_score.shape}`."
+        )
     if not np.allclose(1, y_score.sum(axis=1)):
         raise ValueError(
             "Target scores need to be probabilities for multiclass "
@@ -841,6 +875,7 @@ def _multiclass_roc_auc_score(
         )
 
 
+@_deprecate_positional_args(version="1.11")
 @validate_params(
     {
         "y_true": ["array-like"],
@@ -850,7 +885,9 @@ def _multiclass_roc_auc_score(
     },
     prefer_skip_nested_validation=True,
 )
-def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weight=None):
+def confusion_matrix_at_thresholds(
+    y_true, y_score, *, pos_label=None, sample_weight=None
+):
     """Calculate :term:`binary` confusion matrix terms per classification threshold.
 
     Read more in the :ref:`User Guide <confusion_matrix>`.
@@ -925,7 +962,14 @@ def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weigh
     if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
         raise ValueError("{0} format is not supported".format(y_type))
 
-    xp, _, device = get_namespace_and_device(y_true, y_score, sample_weight)
+    xp, _, device = get_namespace_and_device(y_score)
+    pos_label = _check_pos_label_consistency(pos_label, y_true)
+    xp_y_true, _ = get_namespace(y_true)
+    # Make `y_true` a boolean vector. Use `asarray` as `y_true` could be a list
+    y_true = xp_y_true.asarray(
+        xp_y_true.asarray(y_true) == pos_label, dtype=xp_y_true.int32
+    )
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = column_or_1d(y_true)
@@ -941,11 +985,6 @@ def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weigh
         y_true = y_true[nonzero_weight_mask]
         y_score = y_score[nonzero_weight_mask]
         sample_weight = sample_weight[nonzero_weight_mask]
-
-    pos_label = _check_pos_label_consistency(pos_label, y_true)
-
-    # make y_true a boolean vector
-    y_true = y_true == pos_label
 
     # sort scores and corresponding truth values
     desc_score_indices = xp.argsort(y_score, stable=True, descending=True)
@@ -1095,7 +1134,7 @@ def precision_recall_curve(
     >>> thresholds
     array([0.1 , 0.35, 0.4 , 0.8 ])
     """
-    xp, _, device = get_namespace_and_device(y_true, y_score)
+    xp, _, device = get_namespace_and_device(y_score)
 
     _, fps, _, tps, thresholds = confusion_matrix_at_thresholds(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
@@ -1132,7 +1171,7 @@ def precision_recall_curve(
             "No positive class found in y_true, "
             "recall is set to one for all thresholds."
         )
-        recall = xp.full(tps.shape, 1.0)
+        recall = xp.full(tps.shape, 1.0, device=device)
     else:
         recall = tps / tps[-1]
 
@@ -1337,7 +1376,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     Parameters
     ----------
     y_true : {array-like, sparse matrix} of shape (n_samples, n_labels)
-        True binary labels in binary indicator format.
+        True binary labels in :term:`label indicator format`.
 
     y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
@@ -1439,7 +1478,7 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     Parameters
     ----------
     y_true : array-like of shape (n_samples, n_labels)
-        True binary labels in binary indicator format.
+        True binary labels in :term:`label indicator format`.
 
     y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
@@ -1516,7 +1555,7 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     Parameters
     ----------
     y_true : {array-like, sparse matrix} of shape (n_samples, n_labels)
-        True binary labels in binary indicator format.
+        True binary labels in :term:`label indicator format`.
 
     y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
@@ -2113,6 +2152,13 @@ def top_k_accuracy_score(
                 " labels, `labels` must be provided."
             )
         y_score = column_or_1d(y_score)
+    else:
+        if not y_score.ndim == 2:
+            raise ValueError(
+                "`y_score` needs to be of shape `(n_samples, n_classes)`, since "
+                "`y_true` contains multiple classes. Got "
+                f"`y_score.shape={y_score.shape}`."
+            )
 
     check_consistent_length(y_true, y_score, sample_weight)
     y_score_n_classes = y_score.shape[1] if y_score.ndim == 2 else 2

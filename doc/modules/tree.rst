@@ -310,7 +310,7 @@ the lower half of those faces.
 
 * M. Dumont et al,  `Fast multi-class image annotation with random subwindows
   and multiple output randomized trees
-  <http://www.montefiore.ulg.ac.be/services/stochastic/pubs/2009/DMWG09/dumont-visapp09-shortpaper.pdf>`_,
+  <https://www.montefiore.ulg.ac.be/services/stochastic/pubs/2009/DMWG09/dumont-visapp09-shortpaper.pdf>`_,
   International Conference on Computer Vision Theory and Applications 2009
 
 .. _tree_complexity:
@@ -646,10 +646,6 @@ the splits are determined in a greedy fashion.
 support for missing values for `splitter='random'`, where the splits
 are determined randomly. For more details on how the splitter differs on
 non-missing values, see the :ref:`Forest section <forest>`.
-
-The criterion supported when there are missing values are
-`'gini'`, `'entropy'`, or `'log_loss'`, for classification or
-`'squared_error'`, `'friedman_mse'`, or `'poisson'` for regression.
 
 First we will describe how :class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor`
 handle missing-values in the data.

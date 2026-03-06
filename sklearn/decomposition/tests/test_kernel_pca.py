@@ -355,7 +355,7 @@ def test_nested_circles():
     train_score = Perceptron(max_iter=5).fit(X, y).score(X, y)
     assert train_score < 0.8
 
-    # Project the circles data into the first 2 components of a RBF Kernel
+    # Project the circles data into the first 2 components of an RBF Kernel
     # PCA model.
     # Note that the gamma value is data dependent. If this test breaks
     # and the gamma value has to be updated, the Kernel PCA example will

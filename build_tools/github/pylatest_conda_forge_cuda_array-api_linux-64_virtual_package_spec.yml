@@ -1,0 +1,9 @@
+# The versions of the virtual packages here are taken from running
+# build_tools/github/create_gpu_environment.sh which outputs
+# the versions of the packages used in the CUDA CI runner.
+# Do not set them to what you see on your local machine.
+subdirs:
+  linux-64:
+    packages:
+      __cuda: "12.8"
+      __glibc: "2.39"

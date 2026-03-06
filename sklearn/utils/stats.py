@@ -97,6 +97,9 @@ def _weighted_percentile(
     sample_weight = xp.asarray(sample_weight, dtype=floating_dtype, device=device)
     percentile_rank = xp.asarray(percentile_rank, dtype=floating_dtype, device=device)
 
+    if xp.all(sample_weight == 0):
+        return xp.nan
+
     n_dim = array.ndim
     if n_dim == 0:
         return array
@@ -189,7 +192,7 @@ def _weighted_percentile(
                 )
                 # Handle case where there are trailing 0 sample weight samples
                 # and `percentile_indices` is already max index
-                if next_index >= max_idx:
+                if next_index > max_idx:
                     # use original `percentile_indices` again
                     next_index = percentile_indices[col_idx]
 

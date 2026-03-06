@@ -41,8 +41,8 @@ API_REFERENCE maps each module name to a dictionary that consists of the followi
 components:
 
 short_summary (required)
-    The text to be printed on the index page; it has nothing to do the API reference
-    page of each module.
+    The text to be printed on the index page; it has nothing to do with
+    the API reference page of each module.
 description (required, `None` if not needed)
     The additional description for the module to be placed under the module
     docstring, before the sections start.
@@ -603,7 +603,7 @@ API_REFERENCE = {
                 "title": "Regressors with variable selection",
                 "description": (
                     "The following estimators have built-in variable selection fitting "
-                    "procedures, but any estimator using a L1 or elastic-net penalty "
+                    "procedures, but any estimator using an L1 or elastic-net penalty "
                     "also performs variable selection: typically "
                     ":class:`~linear_model.SGDRegressor` or "
                     ":class:`~sklearn.linear_model.SGDClassifier` with an appropriate "
