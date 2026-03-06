@@ -2,8 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-import numpy as np
-
 from sklearn.metrics._ranking import auc, roc_curve
 from sklearn.utils import _safe_indexing
 from sklearn.utils._plotting import (
@@ -247,14 +245,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         """
         fpr, tpr, roc_auc, name = self._validate_plot_params(ax=ax, name=name)
         n_curves = len(fpr)
-        if not isinstance(curve_kwargs, list) and n_curves > 1:
-            if roc_auc:
-                legend_metric = {"mean": np.mean(roc_auc), "std": np.std(roc_auc)}
-            else:
-                legend_metric = {"mean": None, "std": None}
-        else:
-            roc_auc = roc_auc if roc_auc is not None else [None] * n_curves
-            legend_metric = {"metric": roc_auc}
+        roc_auc, legend_metric = self._get_legend_metric(
+            curve_kwargs, n_curves, roc_auc
+        )
 
         curve_kwargs = self._validate_curve_kwargs(
             n_curves,
