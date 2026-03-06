@@ -324,6 +324,13 @@ def test_empty_pipeline():
         pipe.fit(X, y)
 
 
+def test_empty_pipeline_dir():
+    """Check that dir() works on an empty pipeline"""
+    pipe = Pipeline([])
+    attrs = dir(pipe)
+    assert "steps" in attrs
+
+
 def test_pipeline_init_tuple():
     # Pipeline accepts steps as tuple
     X = np.array([[1, 2]])
