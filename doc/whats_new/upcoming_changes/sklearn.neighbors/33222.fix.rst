@@ -1,0 +1,6 @@
+- Fixed a quadratic-time path in the internal ``simultaneous_sort`` used by
+  :class:`neighbors.BallTree` and :class:`neighbors.KDTree` queries when many
+  distances are identical, which could lead to severe slowdowns or even a stack
+  overflow (segmentation fault) on large inputs. Neighbor searches with tied
+  distances no longer degrade badly in runtime.
+  By :user:`Arthur Lacote <cakedev0>`.
