@@ -1933,3 +1933,31 @@ def test_missing_value_is_predictive(Forest, criterion, global_random_seed):
 def test_friedman_mse_deprecation(Forest):
     with pytest.warns(FutureWarning, match="friedman_mse"):
         _ = Forest(criterion="friedman_mse")
+
+
+@pytest.mark.parametrize(
+    "Forest, is_classifier",
+    [
+        (RandomForestRegressor, False),
+        (ExtraTreesRegressor, False),
+        (RandomForestClassifier, True),
+        (ExtraTreesClassifier, True),
+    ],
+)
+def test_forest_interaction_constraints_smoke(Forest, is_classifier):
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(300, 6))
+    y = X[:, 0] + 0.1 * X[:, 1] + 0.1 * rng.randn(X.shape[0])
+    if is_classifier:
+        y = y > np.median(y)
+
+    interaction_cst = [{0, 1}, {1, 2}, {3, 4, 5}]
+
+    forest = Forest(
+        n_estimators=5,
+        max_depth=4,
+        random_state=0,
+        interaction_cst=interaction_cst,
+    )
+    forest.fit(X, y)
+    assert forest.predict(X[:5]).shape == (5,)
