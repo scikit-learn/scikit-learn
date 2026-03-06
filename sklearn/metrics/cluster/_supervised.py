@@ -160,7 +160,7 @@ def contingency_matrix(
         raise ValueError("Cannot set 'eps' when sparse=True")
 
     xp, _, device = get_namespace_and_device(labels_pred, labels_true)
-
+    # xp.asarray used to convert list inputs to arrays
     classes, class_idx = xp.unique_inverse(xp.asarray(labels_true))
     clusters, cluster_idx = xp.unique_inverse(xp.asarray(labels_pred))
     class_idx = _convert_to_numpy(class_idx, xp)
