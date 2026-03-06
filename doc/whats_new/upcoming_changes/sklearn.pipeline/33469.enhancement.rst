@@ -1,0 +1,4 @@
+- :class:`pipeline.Pipeline` now supports fit-level step callbacks when using
+  the experimental callbacks API, including for cached and ``"passthrough"``
+  steps.
+  By :user:`gustavorubim`.
