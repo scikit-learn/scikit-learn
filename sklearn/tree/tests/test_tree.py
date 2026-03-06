@@ -37,6 +37,9 @@ from sklearn.tree import (
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
+from sklearn.ensemble import (
+    HistGradientBoostingRegressor,
+)
 from sklearn.tree._classes import (
     CRITERIA_CLF,
     CRITERIA_REG,
@@ -3368,3 +3371,100 @@ def test_random_splitter_missing_values_uses_non_missing_min_max(X, y):
 
     assert np.isfinite(threshold)
     assert non_missing.min() <= threshold <= non_missing.max()
+
+
+def test_single_tree_equivalence_with_hgbt_regressor_categorical():
+    """Test single-split categorical equivalence between DT regressor and HGBT."""
+    n_categories = 6
+    category_counts = np.array([40, 19, 23, 29, 31, 37], dtype=np.int64)
+    X_cat = np.repeat(np.arange(n_categories, dtype=np.int64), category_counts)
+    X = X_cat.astype(np.float64).reshape(-1, 1)
+
+    # Non-ordinal categorical signal: categories {1,2,5} -> 0 and {0,3,4} -> 1.
+    # With max_depth=1 this yields one unique optimal split (up to left/right swap).
+    y_map = np.array([0.0, 0.0, 0.0, 1.0, 1.0, 1.0], dtype=np.float64)
+    y = y_map[X_cat]
+
+    tree = DecisionTreeRegressor(
+        criterion="squared_error",
+        max_depth=1,
+        max_leaf_nodes=2,
+        min_samples_leaf=1,
+        random_state=0,
+        categorical_features=[0],
+    ).fit(X, y)
+
+    hist = HistGradientBoostingRegressor(
+        loss="squared_error",
+        max_iter=1,
+        learning_rate=1.0,
+        max_depth=1,
+        max_leaf_nodes=2,
+        min_samples_leaf=1,
+        categorical_features=[0],
+        max_bins=255,
+        l2_regularization=0.0,
+        early_stopping=False,
+        random_state=0,
+    ).fit(X, y)
+
+    tree_pred = tree.predict(X)
+    hist_pred = hist.predict(X)
+    tree_score = tree.score(X, y)
+    hist_score = hist.score(X, y)
+
+    # test predictive equivalence
+    assert_allclose(hist_pred, tree_pred, atol=1e-7, rtol=0.0)
+    assert_allclose(hist_score, tree_score, atol=1e-12, rtol=1e-7)
+    assert hist_score > 0.99
+    assert tree_score > 0.99
+
+    # test high-level structure equivalence
+    hgb_tree = hist._predictors[0][0]
+    assert tree.get_depth() == 1 == hgb_tree.get_max_depth()
+    assert tree.get_n_leaves() == 2 == hgb_tree.get_n_leaf_nodes()
+    assert tree.tree_.feature[0] == 0 == hgb_tree.nodes[0]["feature_idx"]
+    assert hgb_tree.nodes[0]["is_categorical"]
+
+    # test equivalence with one sample
+    X_proto = np.arange(n_categories, dtype=np.float64).reshape(-1, 1)
+    dt_pred_proto = tree.predict(X_proto)
+    hgb_pred_proto = hist.predict(X_proto)
+    assert_allclose(hgb_pred_proto, dt_pred_proto, atol=1e-7, rtol=0.0)
+    assert_allclose(dt_pred_proto, y_map, atol=1e-12, rtol=0.0)
+
+    # test manually the categorical bit-set split
+    def _bitset_to_set(words, n_categories):
+        words = np.asarray(words)
+        bits_per_word = words.dtype.itemsize * 8
+        out = set()
+        for w_idx, w in enumerate(words):
+            v = int(w)
+            for b in range(bits_per_word):
+                c = w_idx * bits_per_word + b
+                if c >= n_categories:
+                    break
+                if (v >> b) & 1:
+                    out.add(c)
+        return frozenset(out)
+
+    def _canonical_split(cat_set, n_categories):
+        all_cats = frozenset(range(n_categories))
+        comp = all_cats - cat_set
+        # canonical: smaller side first (then lexicographic tie-break)
+        a, b = sorted((tuple(sorted(cat_set)), tuple(sorted(comp))))
+        return (a, b)
+
+    # DT root split set
+    dt_root_set = _bitset_to_set(tree.tree_.categorical_bitset[0], n_categories)
+
+    # HGBT root split set
+    hgb_tree = hist._predictors[0][0]
+    hgb_bitset_idx = int(hgb_tree.nodes[0]["bitset_idx"])
+    hgb_root_set = _bitset_to_set(
+        hgb_tree.raw_left_cat_bitsets[hgb_bitset_idx], n_categories
+    )
+
+    assert _canonical_split(dt_root_set, n_categories) == _canonical_split(
+        hgb_root_set, n_categories
+    )
