@@ -11,6 +11,7 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.base import TransformerMixin, _fit_context, clone
+from sklearn.callback._callback_support import CallbackSupportMixin
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import Bunch
@@ -89,7 +90,7 @@ def _cached_transform(
     return cache[param_name]
 
 
-class Pipeline(_BaseComposition):
+class Pipeline(CallbackSupportMixin, _BaseComposition):
     """
     A sequence of data transformers with an optional final predictor.
 
@@ -369,7 +370,7 @@ class Pipeline(_BaseComposition):
                 self.steps[ind], memory=self.memory, verbose=self.verbose
             )
         try:
-            name, est = self.steps[ind]
+            _, est = self.steps[ind]
         except TypeError:
             # Not an int, try get step by name
             return self.named_steps[ind]
@@ -402,6 +403,29 @@ class Pipeline(_BaseComposition):
         name, _ = self.steps[step_idx]
 
         return "(step %d of %d) Processing %s" % (step_idx + 1, len(self.steps), name)
+
+    def _get_callback_step_context(self, callback_ctx, *, step_idx, step_name):
+        """Create a callback context for a pipeline step."""
+        if callback_ctx is None:
+            return None
+
+        return callback_ctx.subcontext(task_name=step_name, task_id=step_idx)
+
+    def _eval_pipeline_step_task_end(
+        self, step_callback_ctx, *, X, y, step_name, step_estimator
+    ):
+        """Evaluate callbacks for a completed pipeline step."""
+        if step_callback_ctx is None:
+            return
+
+        # Pipeline step callbacks are observational only in phase 1 and do not
+        # influence control flow.
+        step_callback_ctx.eval_on_fit_task_end(
+            estimator=self,
+            data={"X_train": X, "y_train": y},
+            step_name=step_name,
+            step_estimator=step_estimator,
+        )
 
     def _check_method_params(self, method, props, **kwargs):
         if _routing_enabled():
@@ -511,7 +535,9 @@ class Pipeline(_BaseComposition):
 
     # Estimator interface
 
-    def _fit(self, X, y=None, routed_params=None, raw_params=None):
+    def _fit(
+        self, X, y=None, routed_params=None, raw_params=None, *, callback_ctx=None
+    ):
         """Fit the pipeline except the last step.
 
         routed_params is the output of `process_routing`
@@ -529,8 +555,19 @@ class Pipeline(_BaseComposition):
         for step_idx, name, transformer in self._iter(
             with_final=False, filter_passthrough=False
         ):
+            step_callback_ctx = self._get_callback_step_context(
+                callback_ctx, step_idx=step_idx, step_name=name
+            )
+            step_input = X
             if transformer is None or transformer == "passthrough":
                 with _print_elapsed_time("Pipeline", self._log_message(step_idx)):
+                    self._eval_pipeline_step_task_end(
+                        step_callback_ctx,
+                        X=step_input,
+                        y=y,
+                        step_name=name,
+                        step_estimator=transformer,
+                    )
                     continue
 
             if hasattr(memory, "location") and memory.location is None:
@@ -559,6 +596,13 @@ class Pipeline(_BaseComposition):
             # transformer. This is necessary when loading the transformer
             # from the cache.
             self.steps[step_idx] = (name, fitted_transformer)
+            self._eval_pipeline_step_task_end(
+                step_callback_ctx,
+                X=step_input,
+                y=y,
+                step_name=name,
+                step_estimator=fitted_transformer,
+            )
         return X
 
     @_fit_context(
@@ -612,8 +656,20 @@ class Pipeline(_BaseComposition):
             )
 
         routed_params = self._check_method_params(method="fit", props=params)
-        Xt = self._fit(X, y, routed_params, raw_params=params)
+        self.steps = list(self.steps)
+        self._validate_steps()
+        callback_ctx = self._init_callback_context(max_subtasks=len(self.steps))
+        callback_ctx.eval_on_fit_begin(estimator=self)
+        Xt = self._fit(
+            X, y, routed_params, raw_params=params, callback_ctx=callback_ctx
+        )
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
+            final_step_name, final_step_estimator = self.steps[-1]
+            final_step_ctx = self._get_callback_step_context(
+                callback_ctx,
+                step_idx=len(self.steps) - 1,
+                step_name=final_step_name,
+            )
             if self._final_estimator != "passthrough":
                 last_step_params = self._get_metadata_for_step(
                     step_idx=len(self) - 1,
@@ -621,6 +677,14 @@ class Pipeline(_BaseComposition):
                     all_params=params,
                 )
                 self._final_estimator.fit(Xt, y, **last_step_params["fit"])
+
+            self._eval_pipeline_step_task_end(
+                final_step_ctx,
+                X=Xt,
+                y=y,
+                step_name=final_step_name,
+                step_estimator=final_step_estimator,
+            )
 
         return self
 

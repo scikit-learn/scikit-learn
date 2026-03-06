@@ -21,6 +21,7 @@ from sklearn.base import (
     is_classifier,
     is_regressor,
 )
+from sklearn.callback._callback_context import get_context_path
 from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA, TruncatedSVD
@@ -1548,7 +1549,7 @@ def test_pipeline_feature_names_out_error_without_definition():
 def test_pipeline_param_error():
     clf = make_pipeline(LogisticRegression())
     with pytest.raises(
-        ValueError, match="Pipeline.fit does not accept the sample_weight parameter"
+        ValueError, match=r"Pipeline.fit does not accept the sample_weight parameter"
     ):
         clf.fit([[0], [0]], [0, 1], sample_weight=[1, 1])
 
@@ -1630,6 +1631,110 @@ def test_verbose(est, method, pattern, capsys):
     est.set_params(verbose=True)
     func(X, y)
     assert re.match(pattern, capsys.readouterr().out)
+
+
+def test_pipeline_callbacks_called_on_fit():
+    class RecordingCallback:
+        def __init__(self):
+            self.n_fit_begin = 0
+            self.n_fit_end = 0
+            self.paths = []
+            self.payloads = []
+
+        def on_fit_begin(self, estimator):
+            self.n_fit_begin += 1
+
+        def on_fit_task_end(self, estimator, context, **kwargs):
+            self.paths.append(
+                [(ctx.task_name, ctx.task_id) for ctx in get_context_path(context)]
+            )
+            self.payloads.append(kwargs)
+            return False
+
+        def on_fit_end(self, estimator, context):
+            self.n_fit_end += 1
+
+    X = np.array([[1, 2], [3, 4], [5, 6]])
+    y = np.array([0, 1, 0])
+    callback = RecordingCallback()
+    pipe = Pipeline([("double", Mult(2)), ("clf", FitParamT())]).set_callbacks(callback)
+
+    pipe.fit(X, y)
+
+    assert callback.n_fit_begin == 1
+    assert callback.n_fit_end == 1
+    assert callback.paths == [[("fit", 0), ("double", 0)], [("fit", 0), ("clf", 1)]]
+
+    double_payload, clf_payload = callback.payloads
+    assert_array_equal(double_payload["data"]["X_train"], X)
+    assert_array_equal(double_payload["data"]["y_train"], y)
+    assert double_payload["step_name"] == "double"
+    assert double_payload["step_estimator"] is pipe.named_steps["double"]
+
+    assert_array_equal(clf_payload["data"]["X_train"], 2 * X)
+    assert_array_equal(clf_payload["data"]["y_train"], y)
+    assert clf_payload["step_name"] == "clf"
+    assert clf_payload["step_estimator"] is pipe.named_steps["clf"]
+
+
+def test_pipeline_callbacks_ignore_stop_request_and_report_passthrough():
+    class StopRequestingCallback:
+        def __init__(self):
+            self.task_names = []
+
+        def on_fit_begin(self, estimator):
+            pass
+
+        def on_fit_task_end(self, estimator, context, **kwargs):
+            self.task_names.append(context.task_name)
+            return True
+
+        def on_fit_end(self, estimator, context):
+            pass
+
+    X = np.array([[1, 2], [3, 4], [5, 6]])
+    y = np.array([0, 1, 0])
+    callback = StopRequestingCallback()
+    pipe = Pipeline([("noop", "passthrough"), ("clf", FitParamT())]).set_callbacks(
+        callback
+    )
+
+    pipe.fit(X, y)
+
+    assert callback.task_names == ["noop", "clf"]
+    assert pipe.named_steps["clf"].fitted_
+
+
+def test_pipeline_callbacks_called_with_memory(tmp_path):
+    class RecordingCallback:
+        def __init__(self):
+            self.task_names = []
+            self.n_fit_begin = 0
+            self.n_fit_end = 0
+
+        def on_fit_begin(self, estimator):
+            self.n_fit_begin += 1
+
+        def on_fit_task_end(self, estimator, context, **kwargs):
+            self.task_names.append(context.task_name)
+            return False
+
+        def on_fit_end(self, estimator, context):
+            self.n_fit_end += 1
+
+    X = np.array([[1, 2], [3, 4], [5, 6]])
+    y = np.array([0, 1, 0])
+    callback = RecordingCallback()
+    pipe = Pipeline(
+        [("transf", DummyTransf()), ("clf", FitParamT())], memory=str(tmp_path)
+    ).set_callbacks(callback)
+
+    pipe.fit(X, y)
+    pipe.fit(X, y)
+
+    assert callback.n_fit_begin == 2
+    assert callback.n_fit_end == 2
+    assert callback.task_names == ["transf", "clf", "transf", "clf"]
 
 
 def test_n_features_in_pipeline():
