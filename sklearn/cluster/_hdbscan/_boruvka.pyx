@@ -28,6 +28,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+# This implementation builds on earlier scikit-learn Boruvka work in PR #27572.
+# That earlier work was attributed as an adaptation of the original HDBSCAN
+# implementation in scikit-learn-contrib/hdbscan by Leland McInnes et al.
+#
 # Code to implement a Dual Tree Boruvka Minimimum Spanning Tree computation
 # The algorithm is largely tree independent, but some fine details still
 # depend on the particular choice of tree.
