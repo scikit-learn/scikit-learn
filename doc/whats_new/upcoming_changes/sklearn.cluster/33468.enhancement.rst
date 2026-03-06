@@ -1,0 +1,3 @@
+- :class:`cluster.MiniBatchKMeans` now supports callbacks during ``fit`` and
+  ``partial_fit`` when using the experimental callbacks API.
+  By :user:`gustavorubim`.
