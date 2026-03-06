@@ -946,7 +946,6 @@ def test_half_multinomial_loss(use_sample_weight, namespace, device_, dtype_name
 
     assert numpy.isclose(np_loss, xp_loss)
 
-            
 @pytest.mark.parametrize(
     "namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
 )
