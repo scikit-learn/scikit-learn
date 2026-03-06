@@ -946,6 +946,7 @@ def test_half_multinomial_loss(use_sample_weight, namespace, device_, dtype_name
 
     assert numpy.isclose(np_loss, xp_loss)
 
+
 @pytest.mark.parametrize(
     "namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
 )
@@ -1016,7 +1017,7 @@ def test_cross_validate_array_api_pipeline(
     X_xp = xp.asarray(X_np, device=device_)
 
     xp_pipeline = make_pipeline(
-        FunctionTransformer(lambda X: xp.asarray(X, device=device_)),
+        FunctionTransformer(partial(xp.asarray, device=device_)),
         estimator,
     )
 
