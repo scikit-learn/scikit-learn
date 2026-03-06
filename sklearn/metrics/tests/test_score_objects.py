@@ -1674,7 +1674,6 @@ def test_Pipeline_in_PassthroughScorer():
     search.fit(X, y, sample_weight=sample_weight)
 
 
-# TODO: use the mixed namespace fixture when it is available instead.
 @pytest.mark.parametrize(
     "namespace, device_, dtype_name",
     yield_namespace_device_dtype_combinations(),
@@ -1757,7 +1756,6 @@ def test_classification_scorer_array_api_compliance(
     )
 
 
-# TODO: use the mixed namespace fixture when it is available instead.
 @pytest.mark.parametrize(
     "namespace, device_, dtype_name",
     yield_namespace_device_dtype_combinations(),
