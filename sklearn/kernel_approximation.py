@@ -860,6 +860,8 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         Kernel map to be approximated. A callable should accept two arguments
         and the keyword arguments passed to this object as `kernel_params`, and
         should return a floating point number.
+        If ``kernel="precomputed"``, ``X`` is interpreted as a kernel matrix.
+        In that case, :meth:`fit` requires ``n_components == n_samples``.
 
     gamma : float, default=None
         Gamma parameter for the RBF, laplacian, polynomial, exponential chi2
@@ -1004,9 +1006,12 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if ``kernel="precomputed"``
             Training data, where `n_samples` is the number of samples
-            and `n_features` is the number of features.
+            and `n_features` is the number of features. If
+            ``kernel="precomputed"``, `X` is a kernel matrix between
+            training samples.
 
         y : array-like, shape (n_samples,) or (n_samples, n_outputs), \
                 default=None
@@ -1069,8 +1074,10 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            Data to transform.
+        X : array-like of shape (n_samples, n_features) or \
+                (n_samples, n_samples_fit) if ``kernel="precomputed"``
+            Data to transform. If ``kernel="precomputed"``, `X` is a
+            kernel matrix between transform samples and training samples.
 
         Returns
         -------
