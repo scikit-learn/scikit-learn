@@ -23,6 +23,7 @@ from sklearn.preprocessing import (
     TargetEncoder,
 )
 from sklearn.utils.fixes import parse_version
+from sklearn.utils.multiclass import type_of_target
 
 
 def _encode_target(X_ordinal, y_numeric, n_categories, smooth):
@@ -55,9 +56,6 @@ def _encode_target(X_ordinal, y_numeric, n_categories, smooth):
         return cur_encodings
 
 
-# TODO(1.11): use cv object to pass `random_state` and remove
-# pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "categories, unknown_value",
     [
@@ -133,8 +131,7 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
     target_encoder = TargetEncoder(
         smooth=smooth,
         categories=categories,
-        cv=n_splits,
-        random_state=global_random_seed,
+        cv=cv,
     )
 
     X_fit_transform = target_encoder.fit_transform(X_train, y_train)
@@ -165,9 +162,6 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
     assert_allclose(X_test_transform, expected_X_test_transform)
 
 
-# TODO(1.11): use cv object to pass `random_state` and remove
-# pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "categories, unknown_values",
     [
@@ -226,8 +220,7 @@ def test_encoding_multiclass(
 
     target_encoder = TargetEncoder(
         smooth=smooth,
-        cv=n_splits,
-        random_state=global_random_seed,
+        cv=cv,
     )
     X_fit_transform = target_encoder.fit_transform(X_train, y_train)
 
@@ -355,9 +348,6 @@ def test_use_regression_target():
     assert enc.target_type_ == "continuous"
 
 
-# TODO(1.11): use cv object to pass `random_state` and remove
-# pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "y, feature_names",
     [
@@ -375,9 +365,10 @@ def test_feature_names_out_set_output(y, feature_names):
 
     X_df = pd.DataFrame({"A": ["a", "b"] * 10, "B": [1, 2] * 10})
 
-    enc_default = TargetEncoder(cv=2, smooth=3.0, random_state=0)
+    cv = StratifiedKFold(n_splits=2, random_state=0, shuffle=True)
+    enc_default = TargetEncoder(cv=cv, smooth=3.0)
     enc_default.set_output(transform="default")
-    enc_pandas = TargetEncoder(cv=2, smooth=3.0, random_state=0)
+    enc_pandas = TargetEncoder(cv=cv, smooth=3.0)
     enc_pandas.set_output(transform="pandas")
 
     X_default = enc_default.fit_transform(X_df, y)
@@ -388,9 +379,6 @@ def test_feature_names_out_set_output(y, feature_names):
     assert_array_equal(enc_pandas.get_feature_names_out(), X_pandas.columns)
 
 
-# TODO(1.11): use cv object to pass `random_state` and remove
-# pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("to_pandas", [True, False])
 @pytest.mark.parametrize("smooth", [1.0, "auto"])
 @pytest.mark.parametrize("target_type", ["binary-ints", "binary-str", "continuous"])
@@ -464,7 +452,7 @@ def test_multiple_features_quick(to_pandas, smooth, target_type):
         dtype=np.float64,
     )
 
-    enc = TargetEncoder(smooth=smooth, cv=2, random_state=0)
+    enc = TargetEncoder(smooth=smooth, cv=cv)
     X_fit_transform = enc.fit_transform(X_train, y_train)
     assert_allclose(X_fit_transform, expected_X_fit_transform)
 
@@ -476,9 +464,6 @@ def test_multiple_features_quick(to_pandas, smooth, target_type):
     assert_allclose(X_test_transform, expected_X_test_transform)
 
 
-# TODO(1.11): use cv object to pass `random_state` and remove
-# pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "y, y_mean",
     [
@@ -494,7 +479,11 @@ def test_constant_target_and_feature(y, y_mean, smooth):
     X = np.array([[1] * 20]).T
     n_samples = X.shape[0]
 
-    enc = TargetEncoder(cv=2, smooth=smooth, random_state=0)
+    if type_of_target(y) == "continuous":
+        cv = KFold(n_splits=2, random_state=0, shuffle=True)
+    else:
+        cv = StratifiedKFold(n_splits=2, random_state=0, shuffle=True)
+    enc = TargetEncoder(cv=cv, smooth=smooth)
     X_trans = enc.fit_transform(X, y)
     assert_allclose(X_trans, np.repeat([[y_mean]], n_samples, axis=0))
     assert enc.encodings_[0][0] == pytest.approx(y_mean)
@@ -505,9 +494,6 @@ def test_constant_target_and_feature(y, y_mean, smooth):
     assert_allclose(X_test_trans, np.repeat([[y_mean]], 2, axis=0))
 
 
-# TODO(1.11): use cv object to pass `shuffle` and `random_state` and remove
-# pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_fit_transform_not_associated_with_y_if_ordinal_categorical_is_not(
     global_random_seed,
 ):
@@ -522,10 +508,12 @@ def test_fit_transform_not_associated_with_y_if_ordinal_categorical_is_not(
     y_train = y_train[y_sorted_indices]
     X_train = X_train[y_sorted_indices]
 
-    target_encoder = TargetEncoder(shuffle=True, random_state=global_random_seed)
+    target_encoder = TargetEncoder(
+        cv=KFold(n_splits=2, random_state=global_random_seed, shuffle=True)
+    )
     X_encoded_train_shuffled = target_encoder.fit_transform(X_train, y_train)
 
-    target_encoder = TargetEncoder(shuffle=False)
+    target_encoder = TargetEncoder(cv=KFold(n_splits=2, shuffle=False))
     X_encoded_train_no_shuffled = target_encoder.fit_transform(X_train, y_train)
 
     # Check that no information about y_train has leaked into X_train:
@@ -554,15 +542,12 @@ def test_fit_transform_not_associated_with_y_if_ordinal_categorical_is_not(
     )
 
 
-# TODO(1.11): use cv object to pass `shuffle` and remove
-# pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_smooth_zero():
     """Check edge case with zero smoothing and cv does not contain category."""
     X = np.array([[0, 0, 0, 0, 0, 1, 1, 1, 1, 1]]).T
     y = np.array([2.1, 4.3, 1.2, 3.1, 1.0, 9.0, 10.3, 14.2, 13.3, 15.0])
 
-    enc = TargetEncoder(smooth=0.0, shuffle=False, cv=2)
+    enc = TargetEncoder(smooth=0.0, cv=KFold(n_splits=2, shuffle=False))
     X_trans = enc.fit_transform(X, y)
 
     # With cv = 2, category 0 does not exist in the second half, thus
@@ -574,9 +559,6 @@ def test_smooth_zero():
     assert_allclose(X_trans[-1], np.mean(y[:5]))
 
 
-# TODO(1.11): use cv object to pass `random_state` and remove
-# pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("smooth", [0.0, 1e3, "auto"])
 def test_invariance_of_encoding_under_label_permutation(smooth, global_random_seed):
     # Check that the encoding does not depend on the integer of the value of
@@ -602,7 +584,10 @@ def test_invariance_of_encoding_under_label_permutation(smooth, global_random_se
     X_train_permuted = permutated_labels[X_train.astype(np.int32)]
     X_test_permuted = permutated_labels[X_test.astype(np.int32)]
 
-    target_encoder = TargetEncoder(smooth=smooth, random_state=global_random_seed)
+    target_encoder = TargetEncoder(
+        smooth=smooth,
+        cv=KFold(n_splits=2, shuffle=True, random_state=global_random_seed),
+    )
     X_train_encoded = target_encoder.fit_transform(X_train, y_train)
     X_test_encoded = target_encoder.transform(X_test)
 
@@ -613,9 +598,6 @@ def test_invariance_of_encoding_under_label_permutation(smooth, global_random_se
     assert_allclose(X_test_encoded, X_test_permuted_encoded)
 
 
-# TODO(1.11): use cv object to pass `random_state` and remove
-# pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("smooth", [0.0, "auto"])
 def test_target_encoding_for_linear_regression(smooth, global_random_seed):
     # Check some expected statistical properties when fitting a linear
@@ -687,8 +669,9 @@ def test_target_encoding_for_linear_regression(smooth, global_random_seed):
 
     # Now do the same with target encoding using the internal CV mechanism
     # implemented when using fit_transform.
+    cv = KFold(shuffle=True, random_state=rng)
     model_with_cv = make_pipeline(
-        TargetEncoder(smooth=smooth, random_state=rng), linear_regression
+        TargetEncoder(smooth=smooth, cv=cv), linear_regression
     ).fit(X_train, y_train)
 
     # This model should be able to fit the data well and also generalise to the
@@ -709,9 +692,7 @@ def test_target_encoding_for_linear_regression(smooth, global_random_seed):
 
     # Let's now disable the internal cross-validation by calling fit and then
     # transform separately on the training set:
-    target_encoder = TargetEncoder(smooth=smooth, random_state=rng).fit(
-        X_train, y_train
-    )
+    target_encoder = TargetEncoder(smooth=smooth, cv=cv).fit(X_train, y_train)
     X_enc_no_cv_train = target_encoder.transform(X_train)
     X_enc_no_cv_test = target_encoder.transform(X_test)
     model_no_cv = linear_regression.fit(X_enc_no_cv_train, y_train)
