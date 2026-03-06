@@ -336,7 +336,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
 
-        # TODO(1.11): remove
+        # TODO(1.11): remove this code block and only keep the `cv` assignments in last
+        # else block:
         if self.shuffle != "deprecated" or self.random_state != "deprecated":
             warnings.warn(
                 "`TargetEncoder.shuffle` and `TargetEncoder.random_state` are "
@@ -345,20 +346,33 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 "behaviour instead.",
                 FutureWarning,
             )
-        if self.shuffle == "deprecated":
-            self.shuffle = True
-        if self.random_state == "deprecated":
-            self.random_state = None
-
+        if self.shuffle == "deprecated" and self.random_state != "deprecated":
+            cv = check_cv(
+                self.cv,
+                y,
+                classifier=self.target_type_ != "continuous",
+                shuffle=True,
+                random_state=self.random_state,
+            )
+        elif self.random_state == "deprecated":
+            cv = check_cv(
+                self.cv,
+                y,
+                classifier=self.target_type_ != "continuous",
+                shuffle=True,
+                random_state=None,
+            )
         # TODO(1.11): make `shuffle=True` to keep backwards compatibility for default
-        # inputs and remove random_state (which defaults to None in check_cv):
-        cv = check_cv(
-            self.cv,
-            y,
-            classifier=self.target_type_ != "continuous",
-            shuffle=self.shuffle,
-            random_state=self.random_state,
-        )
+        # inputs (will be ignored in `check_cv` if a cv object is passed) and remove
+        # random_state (which defaults to None in `check_cv`):
+        else:
+            cv = check_cv(
+                self.cv,
+                y,
+                classifier=self.target_type_ != "continuous",
+                shuffle=self.shuffle,
+                random_state=self.random_state,
+            )
 
         if _routing_enabled():
             if params["groups"] is not None:
