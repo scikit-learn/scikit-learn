@@ -209,7 +209,7 @@ def _get_response_values(
                     f"pos_label={pos_label} is not a valid label: It should be "
                     f"one of {classes}"
                 )
-            elif pos_label is None and target_type == "binary":
+            elif pos_label is None:
                 pos_label = classes[-1]
 
         y_pred = prediction_method(X)
