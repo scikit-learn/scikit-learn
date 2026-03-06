@@ -172,7 +172,8 @@ def _check_reg_targets_with_floating_dtype(
     """Ensures y_true, y_pred, and sample_weight correspond to same regression task.
 
     Extends `_check_reg_targets` by automatically selecting a suitable floating-point
-    data type for inputs using `_find_matching_floating_dtype`.
+    data type. If y_pred has a floating point dtype, it is used. Otherwise, the
+    dtype is determined by `_find_matching_floating_dtype` on all the inputs.
 
     Use this private method only when converting inputs to array API-compatibles.
 
@@ -193,12 +194,14 @@ def _check_reg_targets_with_floating_dtype(
     xp : module, default=None
         Precomputed array namespace module. When passed, typically from a caller
         that has already performed inspection of its own inputs, skips array
-        namespace inspection and move everything that namespace.
+        namespace inspection and move everything that namespace. Otherwise,
+        the inputs are converted to the namespace of y_pred.
 
     device : object, default=None
         Precomputed device. When passed, typically from a caller that has already
         performed inspection of its own inputs, skips device inspection and move
-        everything to that device.
+        everything to that device. Otherwise, the inputs are converted to the device
+        of y_pred.
 
     Returns
     -------
@@ -224,14 +227,18 @@ def _check_reg_targets_with_floating_dtype(
     if xp is None or device is None:
         xp, _, device = get_namespace_and_device(y_pred)
 
-    dtype_name = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
+    if hasattr(y_pred, "dtype") and xp.isdtype(y_pred.dtype, "real floating"):
+        # Follow the precision level of y_pred.
+        dtype = y_pred.dtype
+    else:
+        dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
 
     y_type, y_true, y_pred, sample_weight, multioutput = _check_reg_targets(
         y_true,
         y_pred,
         sample_weight,
         multioutput,
-        dtype=dtype_name,
+        dtype=dtype,
         xp=xp,
         device=device,
     )

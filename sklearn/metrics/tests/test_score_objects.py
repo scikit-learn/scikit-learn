@@ -1761,7 +1761,7 @@ def test_classification_scorer_array_api_compliance(
     yield_namespace_device_dtype_combinations(),
     ids=_get_namespace_device_dtype_ids,
 )
-@pytest.mark.parametrize("target_namespace_dtype", ["xp_float64", "np_float64"])
+@pytest.mark.parametrize("target_namespace_dtype", ["xp_float32", "np_float64"])
 @pytest.mark.parametrize(
     "estimator, scoring",
     [
@@ -1798,12 +1798,12 @@ def test_regression_scorer_array_api_compliance(
     X_np = X_np.astype(dtype_name)
     X_xp = xp.asarray(X_np, device=device_)
 
-    if target_namespace_dtype == "xp_float64":
-        y = xp.asarray(y_np, device=device_)
+    if target_namespace_dtype == "xp_float32":
+        y = xp.asarray(y_np, device=device_, dtype=xp.float32)
     else:  # np_float64
         y = y_np
 
-    score_np = scorer(estimator.fit(X_np, y_np), X_np, y_np)
+    score_np = scorer(estimator.fit(X_np, y), X_np, y_np)
     with config_context(array_api_dispatch=True):
         score_xp = scorer(estimator.fit(X_xp, y), X_xp, y)
 
