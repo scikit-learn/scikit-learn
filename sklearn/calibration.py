@@ -1118,7 +1118,9 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         multinomial_loss = (
             HalfMultinomialLoss(n_classes=logits.shape[1])
             if is_numpy_namespace
-            else HalfMultinomialLossArrayAPI(n_classes=logits.shape[1])
+            else HalfMultinomialLossArrayAPI(
+                n_classes=logits.shape[1], xp=xp, device=xp_device
+            )
         )
 
         def log_loss(log_beta=0.0):
@@ -1155,7 +1157,6 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
                 labels,
                 raw_prediction,
                 sample_weight,
-                xp=xp,
             )
 
         xatol = 64 * xp.finfo(dtype_).eps

@@ -13,6 +13,7 @@ import scipy.optimize
 from sklearn._loss.loss import (
     HalfGammaLoss,
     HalfPoissonLoss,
+    HalfPoissonLossArrayAPI,
     HalfSquaredError,
     HalfTweedieLoss,
     HalfTweedieLossIdentity,
@@ -21,6 +22,11 @@ from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
 from sklearn.linear_model._glm._newton_solver import NewtonCholeskySolver, NewtonSolver
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.utils import check_array
+from sklearn.utils._array_api import (
+    _is_numpy_namespace,
+    get_namespace_and_device,
+    move_to,
+)
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
@@ -192,12 +198,13 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted model.
         """
+        xp, _, device_ = get_namespace_and_device(X)
         X, y = validate_data(
             self,
             X,
             y,
             accept_sparse=["csc", "csr"],
-            dtype=[np.float64, np.float32],
+            dtype=[xp.float64, xp.float32],
             y_numeric=True,
             multi_output=False,
         )
@@ -209,8 +216,11 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             # losses.
             sample_weight = _check_sample_weight(sample_weight, X, dtype=loss_dtype)
 
+        if not _is_numpy_namespace(xp):
+            y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
+
         n_samples, n_features = X.shape
-        self._base_loss = self._get_loss()
+        self._base_loss = self._get_loss(xp=xp, device=device_)
 
         linear_loss = LinearModelLoss(
             base_loss=self._base_loss,
@@ -454,7 +464,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             pass  # pragma: no cover
         return tags
 
-    def _get_loss(self):
+    def _get_loss(self, xp=None, device=None):
         """This is only necessary because of the link and power arguments of the
         TweedieRegressor.
 
@@ -591,8 +601,16 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
             verbose=verbose,
         )
 
-    def _get_loss(self):
-        return HalfPoissonLoss()
+    def _get_loss(self, xp=None, device=None):
+        if xp is None or _is_numpy_namespace(xp):
+            return HalfPoissonLoss()
+        else:
+            return HalfPoissonLossArrayAPI(xp=xp, device=None)
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = self.solver == "lbfgs"
+        return tags
 
 
 class GammaRegressor(_GeneralizedLinearRegressor):
@@ -723,7 +741,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
             verbose=verbose,
         )
 
-    def _get_loss(self):
+    def _get_loss(self, xp=None, device=None):
         return HalfGammaLoss()
 
 
@@ -891,7 +909,7 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         self.link = link
         self.power = power
 
-    def _get_loss(self):
+    def _get_loss(self, xp=None, device=None):
         if self.link == "auto":
             if self.power <= 0:
                 # identity link

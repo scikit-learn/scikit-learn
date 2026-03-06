@@ -379,7 +379,7 @@ def _logistic_regression_path(
             base_loss=(
                 HalfBinomialLoss()
                 if _is_numpy_namespace(xp)
-                else HalfBinomialLossArrayAPI()
+                else HalfBinomialLossArrayAPI(xp=xp, device=device_)
             ),
             fit_intercept=fit_intercept,
         )
@@ -395,7 +395,9 @@ def _logistic_regression_path(
             base_loss=(
                 HalfMultinomialLoss(n_classes=size(classes))
                 if _is_numpy_namespace(xp)
-                else HalfMultinomialLossArrayAPI(n_classes=size(classes))
+                else HalfMultinomialLossArrayAPI(
+                    n_classes=size(classes), xp=xp, device=device_
+                )
             ),
             fit_intercept=fit_intercept,
         )
