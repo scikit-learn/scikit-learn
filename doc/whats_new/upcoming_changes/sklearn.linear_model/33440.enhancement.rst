@@ -1,0 +1,5 @@
+- :class:`linear_model.MultiTaskElasticNet`,
+  :class:`linear_model.MultiTaskElasticNetCV`,
+  :class:`linear_model.MultiTaskLasso`, and :class:`linear_model.MultiTaskLassoCV` now
+  support fitting on sparse `X` as well as fitting with `sample_weight`.
+  By :user:`Christian Lorentzen <lorentzenchr>`.
