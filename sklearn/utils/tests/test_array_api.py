@@ -971,7 +971,7 @@ def test_matching_numpy_dtype(namespace, device_, dtype_name):
         (
             RidgeClassifier(),
             3,
-            ["accuracy"],
+            ["accuracy", "average_precision"],
             str,
         ),
     ],
