@@ -17,6 +17,7 @@ from sklearn.base import (
     TransformerMixin,
     _fit_context,
 )
+from sklearn.callback._callback_support import CallbackSupportMixin
 from sklearn.cluster._k_means_common import (
     CHUNK_SIZE,
     _inertia_dense,
@@ -1681,7 +1682,7 @@ def _mini_batch_step(
     return inertia
 
 
-class MiniBatchKMeans(_BaseKMeans):
+class MiniBatchKMeans(CallbackSupportMixin, _BaseKMeans):
     """
     Mini-Batch K-Means clustering.
 
@@ -2033,6 +2034,32 @@ class MiniBatchKMeans(_BaseKMeans):
 
         return False
 
+    def _eval_minibatch_fit_task_end(
+        self,
+        callback_ctx,
+        *,
+        task_id,
+        X_batch,
+        sample_weight,
+        cluster_centers,
+        batch_inertia,
+        centers_squared_diff,
+    ):
+        """Evaluate callbacks for a completed minibatch update."""
+        mean_batch_inertia = batch_inertia / X_batch.shape[0]
+
+        subcontext = callback_ctx.subcontext(task_name="minibatch", task_id=task_id)
+        return subcontext.eval_on_fit_task_end(
+            estimator=self,
+            data={"X_batch": X_batch, "sample_weight": sample_weight},
+            batch_inertia=batch_inertia,
+            mean_batch_inertia=mean_batch_inertia,
+            ewa_inertia=getattr(self, "_ewa_inertia", None),
+            centers_squared_diff=centers_squared_diff,
+            no_improvement_count=getattr(self, "_no_improvement", 0),
+            cluster_centers=cluster_centers,
+        )
+
     def _random_reassign(self):
         """Check if a random reassignment needs to be done.
 
@@ -2090,7 +2117,7 @@ class MiniBatchKMeans(_BaseKMeans):
         random_state = check_random_state(self.random_state)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         self._n_threads = _openmp_effective_n_threads()
-        n_samples, n_features = X.shape
+        n_samples, _ = X.shape
 
         # Validate init array
         init = self.init
@@ -2158,6 +2185,8 @@ class MiniBatchKMeans(_BaseKMeans):
         n_steps = (self.max_iter * n_samples) // self._batch_size
         normalized_sample_weight = sample_weight / sum_of_weights
         unit_sample_weight = np.ones_like(sample_weight, shape=(self._batch_size,))
+        callback_ctx = self._init_callback_context(max_subtasks=n_steps)
+        callback_ctx.eval_on_fit_begin(estimator=self)
 
         with _get_threadpool_controller().limit(limits=1, user_api="blas"):
             # Perform the iterative optimization until convergence
@@ -2197,9 +2226,19 @@ class MiniBatchKMeans(_BaseKMeans):
                 centers, centers_new = centers_new, centers
 
                 # Monitor convergence and do early stopping if necessary
-                if self._mini_batch_convergence(
+                should_stop = self._mini_batch_convergence(
                     i, n_steps, n_samples, centers_squared_diff, batch_inertia
-                ):
+                )
+                callback_stop = self._eval_minibatch_fit_task_end(
+                    callback_ctx,
+                    task_id=i,
+                    X_batch=X[minibatch_indices],
+                    sample_weight=unit_sample_weight,
+                    cluster_centers=centers,
+                    batch_inertia=batch_inertia,
+                    centers_squared_diff=centers_squared_diff,
+                )
+                if should_stop or callback_stop:
                     break
 
         self.cluster_centers_ = centers
@@ -2247,6 +2286,10 @@ class MiniBatchKMeans(_BaseKMeans):
             Return updated estimator.
         """
         has_centers = hasattr(self, "cluster_centers_")
+        callback_ctx = self._init_callback_context(
+            task_name="partial_fit", max_subtasks=1
+        )
+        callback_ctx.eval_on_fit_begin(estimator=self)
 
         X = validate_data(
             self,
@@ -2297,7 +2340,7 @@ class MiniBatchKMeans(_BaseKMeans):
             self._n_since_last_reassign = 0
 
         with _get_threadpool_controller().limit(limits=1, user_api="blas"):
-            _mini_batch_step(
+            batch_inertia = _mini_batch_step(
                 X,
                 sample_weight=sample_weight,
                 centers=self.cluster_centers_,
@@ -2317,6 +2360,16 @@ class MiniBatchKMeans(_BaseKMeans):
                 self.cluster_centers_,
                 n_threads=self._n_threads,
             )
+
+        self._eval_minibatch_fit_task_end(
+            callback_ctx,
+            task_id=0,
+            X_batch=X,
+            sample_weight=sample_weight,
+            cluster_centers=self.cluster_centers_,
+            batch_inertia=batch_inertia,
+            centers_squared_diff=None,
+        )
 
         self.n_steps_ += 1
         self._n_features_out = self.cluster_centers_.shape[0]

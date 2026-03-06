@@ -383,6 +383,125 @@ def test_minibatch_kmeans_verbose():
         sys.stdout = old_stdout
 
 
+def test_minibatch_kmeans_callbacks_called():
+    class RecordingCallback:
+        def __init__(self):
+            self.n_fit_begin = 0
+            self.n_fit_end = 0
+            self.task_ids = []
+            self.task_names = []
+            self.payloads = []
+
+        def on_fit_begin(self, estimator):
+            self.n_fit_begin += 1
+
+        def on_fit_task_end(self, estimator, context, **kwargs):
+            self.task_ids.append(context.task_id)
+            self.task_names.append(context.task_name)
+            self.payloads.append(kwargs)
+            return False
+
+        def on_fit_end(self, estimator, context):
+            self.n_fit_end += 1
+
+    max_iter = 5
+    callback = RecordingCallback()
+    km = MiniBatchKMeans(
+        n_clusters=n_clusters,
+        batch_size=X.shape[0],
+        max_iter=max_iter,
+        max_no_improvement=None,
+        n_init=1,
+        random_state=0,
+        reassignment_ratio=0,
+        tol=0,
+    ).set_callbacks(callback)
+
+    km.fit(X)
+
+    assert callback.n_fit_begin == 1
+    assert callback.n_fit_end == 1
+    assert callback.task_ids == list(range(max_iter))
+    assert callback.task_names == ["minibatch"] * max_iter
+
+    payload = callback.payloads[0]
+    assert payload["batch_inertia"] > 0
+    assert payload["mean_batch_inertia"] > 0
+    assert payload["data"]["X_batch"].shape == X.shape
+    assert payload["data"]["sample_weight"].shape == (X.shape[0],)
+    assert payload["centers_squared_diff"] >= 0
+    assert payload["cluster_centers"].shape == (n_clusters, n_features)
+
+
+def test_minibatch_kmeans_callbacks_can_stop_fit():
+    class StopAfterCallback:
+        def __init__(self, stop_after):
+            self.stop_after = stop_after
+            self.task_ids = []
+
+        def on_fit_begin(self, estimator):
+            pass
+
+        def on_fit_task_end(self, estimator, context, **kwargs):
+            self.task_ids.append(context.task_id)
+            return context.task_id >= self.stop_after
+
+        def on_fit_end(self, estimator, context):
+            pass
+
+    stop_after = 1
+    callback = StopAfterCallback(stop_after=stop_after)
+    km = MiniBatchKMeans(
+        n_clusters=n_clusters,
+        batch_size=X.shape[0],
+        max_iter=10,
+        max_no_improvement=None,
+        n_init=1,
+        random_state=0,
+        reassignment_ratio=0,
+        tol=0,
+    ).set_callbacks(callback)
+
+    km.fit(X)
+
+    assert callback.task_ids == [0, 1]
+    assert km.n_steps_ == stop_after + 1
+    assert km.n_iter_ == stop_after + 1
+
+
+def test_minibatch_kmeans_callbacks_called_on_partial_fit():
+    class RecordingCallback:
+        def __init__(self):
+            self.n_fit_begin = 0
+            self.n_fit_end = 0
+            self.task_ids = []
+
+        def on_fit_begin(self, estimator):
+            self.n_fit_begin += 1
+
+        def on_fit_task_end(self, estimator, context, **kwargs):
+            self.task_ids.append(context.task_id)
+            return False
+
+        def on_fit_end(self, estimator, context):
+            self.n_fit_end += 1
+
+    callback = RecordingCallback()
+    km = MiniBatchKMeans(
+        n_clusters=n_clusters,
+        batch_size=X.shape[0],
+        n_init=1,
+        random_state=0,
+        reassignment_ratio=0,
+    ).set_callbacks(callback)
+
+    km.partial_fit(X)
+
+    assert callback.n_fit_begin == 1
+    assert callback.n_fit_end == 1
+    assert callback.task_ids == [0]
+
+
 @pytest.mark.parametrize("algorithm", ["lloyd", "elkan"])
 @pytest.mark.parametrize("tol", [1e-2, 0])
 def test_kmeans_verbose(algorithm, tol, capsys):
@@ -433,9 +552,7 @@ def test_minibatch_sensible_reassign(global_random_seed):
     # check that identical initial clusters are reassigned
     # also a regression test for when there are more desired reassignments than
     # samples.
-    zeroed_X, true_labels = make_blobs(
-        n_samples=100, centers=5, random_state=global_random_seed
-    )
+    zeroed_X, _ = make_blobs(n_samples=100, centers=5, random_state=global_random_seed)
     zeroed_X[::2, :] = 0
 
     km = MiniBatchKMeans(
