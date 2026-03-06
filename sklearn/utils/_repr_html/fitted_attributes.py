@@ -122,16 +122,12 @@ def _fitted_attr_html_repr(fitted_attributes):
             )
 
         else:  # fitted attribute type is array-like
+            type_name = html.escape(attr_info["type_name"])
+            dtype = html.escape(str(attr_info["dtype"]))
+            shape = html.escape(str(attr_info["shape"]))
+
             html_row_values = (
-                "".join(
-                    [
-                        f"{html.escape(attr_info['type_name'])}"
-                        + "["
-                        + f"{html.escape(str(attr_info['dtype']))}"
-                        + "]"
-                        + f"{html.escape(str(attr_info['shape']))}"
-                    ]
-                ),
+                f"{type_name}[{dtype}]{shape}",
                 _read_fitted_attr(attr_info["value"]),
             )
         rows.append(
