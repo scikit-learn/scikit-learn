@@ -25,7 +25,7 @@ jobs:
           CIBW_BUILD_VERBOSITY: 1
           CIBW_ARCHS: x86_64
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: cibw-wheels
           path: ./wheelhouse/*.whl
@@ -40,7 +40,7 @@ jobs:
     timeout-minutes: 20
     name: Run Array API unit tests
     steps:
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           pattern: cibw-wheels
           path: ~/dist
@@ -66,6 +66,9 @@ jobs:
           conda activate sklearn
           python -c "import sklearn; sklearn.show_versions()"
 
-          SCIPY_ARRAY_API=1 pytest --pyargs sklearn -k 'array_api' -vl
+          # Since we are billed GPU usage by the minute, we only run the tests that
+          # are likely to exercise the CUDA GPU and rely on free CI runners to run
+          # the tests with PyTorch on non-CUDA devices.
+          SCIPY_ARRAY_API=1 pytest --pyargs sklearn -k 'cuda or cupy' -vl
         # Run in /home/runner to not load sklearn from the checkout repo
         working-directory: /home/runner

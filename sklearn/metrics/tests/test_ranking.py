@@ -2305,3 +2305,11 @@ def test_roc_curve_with_probablity_estimates(global_random_seed):
     y_score = rng.rand(10)
     _, _, thresholds = roc_curve(y_true, y_score)
     assert np.isinf(thresholds[0])
+
+
+# TODO(1.11): remove this test
+def test_confusion_matrix_at_thresholds_positional_args_deprecation():
+    y_true = np.array([0, 1, 1, 0])
+    y_score = np.array([0.2, 0.1, 0.7, 0.7])
+    with pytest.warns(FutureWarning, match="Pass pos_label=None as keyword arg"):
+        confusion_matrix_at_thresholds(y_true, y_score, None)
