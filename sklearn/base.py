@@ -358,7 +358,11 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
                 break
             if name.startswith("_") or not name.endswith("_"):
                 continue
-            if hasattr(value, "shape") and hasattr(value, "dtype"):
+            if (
+                hasattr(value, "shape")
+                and hasattr(value, "dtype")
+                and not isinstance(value, (float, np.floating))
+            ):
                 fitted_attr[name] = {
                     "type_name": type(value).__name__,
                     "shape": value.shape,
