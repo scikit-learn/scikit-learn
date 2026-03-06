@@ -4,6 +4,7 @@
 import pytest
 
 from sklearn.callback.tests._utils import (
+    FailingCallback,
     MaxIterEstimator,
     NotValidCallback,
     TestingAutoPropagatedCallback,
@@ -39,3 +40,15 @@ def test_set_callbacks_error(callbacks):
 
     with pytest.raises(TypeError, match="callbacks must follow the Callback protocol."):
         estimator.set_callbacks(callbacks)
+
+
+@pytest.mark.parametrize("fail_at", ["on_fit_begin", "on_fit_task_end", "on_fit_end"])
+def test_callback_error(fail_at):
+    """Check that a failing callback is properly teared down."""
+    callback = FailingCallback(fail_at=fail_at)
+    estimator = MaxIterEstimator().set_callbacks(callback)
+    with pytest.raises(ValueError, match=f"Failing callback failed at {fail_at}"):
+        estimator.fit()
+
+    assert callback.count_hooks("on_fit_begin") == 1
+    assert callback.count_hooks("on_fit_end") == 1
