@@ -361,7 +361,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             if (
                 hasattr(value, "shape")
                 and hasattr(value, "dtype")
-                and not isinstance(value, (float, np.floating))
+                and len(value.shape) > 0
             ):
                 fitted_attr[name] = {
                     "type_name": type(value).__name__,
