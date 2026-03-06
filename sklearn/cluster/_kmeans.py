@@ -468,6 +468,8 @@ def _kmeans_single_elkan(
     verbose=False,
     tol=1e-4,
     n_threads=1,
+    estimator=None,
+    callback_ctx=None,
 ):
     """A single run of k-means elkan, assumes preparation completed prior.
 
@@ -582,23 +584,39 @@ def _kmeans_single_elkan(
             print(f"Iteration {i}, inertia {inertia}")
 
         centers, centers_new = centers_new, centers
+        center_shift_tot = (center_shift**2).sum()
+        should_stop = False
 
         if np.array_equal(labels, labels_old):
             # First check the labels for strict convergence.
             if verbose:
                 print(f"Converged at iteration {i}: strict convergence.")
             strict_convergence = True
-            break
+            should_stop = True
         else:
             # No strict convergence, check for tol based convergence.
-            center_shift_tot = (center_shift**2).sum()
             if center_shift_tot <= tol:
                 if verbose:
                     print(
                         f"Converged at iteration {i}: center shift "
                         f"{center_shift_tot} within tolerance {tol}."
                     )
-                break
+                should_stop = True
+
+        callback_stop = _eval_kmeans_iter_task_end(
+            estimator,
+            callback_ctx,
+            task_id=i,
+            X=X,
+            sample_weight=sample_weight,
+            cluster_centers=centers,
+            labels=labels,
+            center_shift_tot=center_shift_tot,
+            strict_convergence=strict_convergence,
+        )
+
+        if should_stop or callback_stop:
+            break
 
         labels_old[:] = labels
 
@@ -636,6 +654,8 @@ def _kmeans_single_lloyd(
     verbose=False,
     tol=1e-4,
     n_threads=1,
+    estimator=None,
+    callback_ctx=None,
 ):
     """A single run of k-means lloyd, assumes preparation completed prior.
 
@@ -720,23 +740,39 @@ def _kmeans_single_lloyd(
             print(f"Iteration {i}, inertia {inertia}.")
 
         centers, centers_new = centers_new, centers
+        center_shift_tot = (center_shift**2).sum()
+        should_stop = False
 
         if np.array_equal(labels, labels_old):
             # First check the labels for strict convergence.
             if verbose:
                 print(f"Converged at iteration {i}: strict convergence.")
             strict_convergence = True
-            break
+            should_stop = True
         else:
             # No strict convergence, check for tol based convergence.
-            center_shift_tot = (center_shift**2).sum()
             if center_shift_tot <= tol:
                 if verbose:
                     print(
                         f"Converged at iteration {i}: center shift "
                         f"{center_shift_tot} within tolerance {tol}."
                     )
-                break
+                should_stop = True
+
+        callback_stop = _eval_kmeans_iter_task_end(
+            estimator,
+            callback_ctx,
+            task_id=i,
+            X=X,
+            sample_weight=sample_weight,
+            cluster_centers=centers,
+            labels=labels,
+            center_shift_tot=center_shift_tot,
+            strict_convergence=strict_convergence,
+        )
+
+        if should_stop or callback_stop:
+            break
 
         labels_old[:] = labels
 
@@ -757,6 +793,58 @@ def _kmeans_single_lloyd(
     inertia = _inertia(X, sample_weight, centers, labels, n_threads)
 
     return labels, inertia, centers, i + 1
+
+
+def _eval_kmeans_iter_task_end(
+    estimator,
+    callback_ctx,
+    *,
+    task_id,
+    X,
+    sample_weight,
+    cluster_centers,
+    labels,
+    center_shift_tot,
+    strict_convergence,
+):
+    """Evaluate callbacks for a completed KMeans iteration."""
+    if callback_ctx is None:
+        return False
+
+    subcontext = callback_ctx.subcontext(task_name="iter", task_id=task_id)
+    return subcontext.eval_on_fit_task_end(
+        estimator=estimator,
+        data={"X_train": X, "sample_weight": sample_weight},
+        cluster_centers=cluster_centers,
+        labels=labels,
+        center_shift_tot=center_shift_tot,
+        strict_convergence=strict_convergence,
+    )
+
+
+def _eval_kmeans_init_task_end(
+    estimator,
+    callback_ctx,
+    *,
+    X,
+    sample_weight,
+    cluster_centers,
+    labels,
+    inertia,
+    n_iter,
+):
+    """Evaluate callbacks for a completed KMeans initialization."""
+    if callback_ctx is None:
+        return False
+
+    return callback_ctx.eval_on_fit_task_end(
+        estimator=estimator,
+        data={"X_train": X, "sample_weight": sample_weight},
+        cluster_centers=cluster_centers,
+        labels=labels,
+        inertia=inertia,
+        n_iter=n_iter,
+    )
 
 
 def _labels_inertia(X, sample_weight, centers, n_threads=1, return_inertia=True):
@@ -1190,7 +1278,7 @@ class _BaseKMeans(
         return tags
 
 
-class KMeans(_BaseKMeans):
+class KMeans(CallbackSupportMixin, _BaseKMeans):
     """K-Means clustering.
 
     Read more in the :ref:`User Guide <k_means>`.
@@ -1500,8 +1588,13 @@ class KMeans(_BaseKMeans):
             self._check_mkl_vcomp(X, X.shape[0])
 
         best_inertia, best_labels = None, None
+        callback_ctx = self._init_callback_context(max_subtasks=self._n_init)
+        callback_ctx.eval_on_fit_begin(estimator=self)
 
         for i in range(self._n_init):
+            init_callback_ctx = callback_ctx.subcontext(
+                task_name="init", task_id=i, max_subtasks=self.max_iter
+            )
             # Initialize centers
             centers_init = self._init_centroids(
                 X,
@@ -1522,6 +1615,8 @@ class KMeans(_BaseKMeans):
                 verbose=self.verbose,
                 tol=self._tol,
                 n_threads=self._n_threads,
+                estimator=self,
+                callback_ctx=init_callback_ctx,
             )
 
             # determine if these results are the best so far
@@ -1537,6 +1632,18 @@ class KMeans(_BaseKMeans):
                 best_centers = centers
                 best_inertia = inertia
                 best_n_iter = n_iter_
+
+            if _eval_kmeans_init_task_end(
+                self,
+                init_callback_ctx,
+                X=X,
+                sample_weight=sample_weight,
+                cluster_centers=centers,
+                labels=labels,
+                inertia=inertia,
+                n_iter=n_iter_,
+            ):
+                break
 
         if not sp.issparse(X):
             if not self.copy_x:

@@ -10,6 +10,7 @@ from scipy import sparse as sp
 from threadpoolctl import threadpool_info
 
 from sklearn.base import clone
+from sklearn.callback._callback_context import get_context_path
 from sklearn.cluster import KMeans, MiniBatchKMeans, k_means, kmeans_plusplus
 from sklearn.cluster._k_means_common import (
     _euclidean_dense_dense_wrapper,
@@ -527,6 +528,148 @@ def test_kmeans_verbose(algorithm, tol, capsys):
         assert re.search(r"strict convergence", captured.out)
     else:
         assert re.search(r"center shift .* within tolerance", captured.out)
+
+
+@pytest.mark.parametrize("algorithm", ["lloyd", "elkan"])
+def test_kmeans_callbacks_called(algorithm):
+    class RecordingCallback:
+        def __init__(self):
+            self.n_fit_begin = 0
+            self.n_fit_end = 0
+            self.events = []
+
+        def on_fit_begin(self, estimator):
+            self.n_fit_begin += 1
+
+        def on_fit_task_end(self, estimator, context, **kwargs):
+            self.events.append(
+                {
+                    "path": [
+                        (ctx.task_name, ctx.task_id)
+                        for ctx in get_context_path(context)
+                    ],
+                    "payload": kwargs,
+                }
+            )
+            return False
+
+        def on_fit_end(self, estimator, context):
+            self.n_fit_end += 1
+
+    callback = RecordingCallback()
+    km = KMeans(
+        algorithm=algorithm,
+        n_clusters=n_clusters,
+        init="random",
+        n_init=2,
+        max_iter=1,
+        tol=0,
+        random_state=0,
+    ).set_callbacks(callback)
+
+    km.fit(X)
+
+    assert callback.n_fit_begin == 1
+    assert callback.n_fit_end == 1
+    assert [event["path"] for event in callback.events] == [
+        [("fit", 0), ("init", 0), ("iter", 0)],
+        [("fit", 0), ("init", 0)],
+        [("fit", 0), ("init", 1), ("iter", 0)],
+        [("fit", 0), ("init", 1)],
+    ]
+
+    iter_payload = callback.events[0]["payload"]
+    assert iter_payload["data"]["X_train"].shape == X.shape
+    assert iter_payload["data"]["sample_weight"].shape == (X.shape[0],)
+    assert iter_payload["cluster_centers"].shape == (n_clusters, n_features)
+    assert iter_payload["labels"].shape == (X.shape[0],)
+    assert iter_payload["center_shift_tot"] >= 0
+    assert isinstance(iter_payload["strict_convergence"], (bool, np.bool_))
+
+    init_payload = callback.events[1]["payload"]
+    assert init_payload["data"]["X_train"].shape == X.shape
+    assert init_payload["cluster_centers"].shape == (n_clusters, n_features)
+    assert init_payload["labels"].shape == (X.shape[0],)
+    assert init_payload["inertia"] >= 0
+    assert init_payload["n_iter"] == 1
+
+
+@pytest.mark.parametrize("algorithm", ["lloyd", "elkan"])
+def test_kmeans_iter_callbacks_can_stop_current_init(algorithm):
+    class StopAfterFirstIter:
+        def __init__(self):
+            self.iter_ids = []
+            self.init_ids = []
+
+        def on_fit_begin(self, estimator):
+            pass
+
+        def on_fit_task_end(self, estimator, context, **kwargs):
+            if context.task_name == "iter":
+                self.iter_ids.append((context.parent.task_id, context.task_id))
+                return True
+
+            if context.task_name == "init":
+                self.init_ids.append(context.task_id)
+
+            return False
+
+        def on_fit_end(self, estimator, context):
+            pass
+
+    callback = StopAfterFirstIter()
+    km = KMeans(
+        algorithm=algorithm,
+        n_clusters=n_clusters,
+        init="random",
+        n_init=2,
+        max_iter=10,
+        tol=0,
+        random_state=0,
+    ).set_callbacks(callback)
+
+    km.fit(X)
+
+    assert callback.iter_ids == [(0, 0), (1, 0)]
+    assert callback.init_ids == [0, 1]
+    assert km.n_iter_ == 1
+
+
+def test_kmeans_init_callbacks_can_stop_fit():
+    class StopAfterFirstInit:
+        def __init__(self):
+            self.task_names = []
+            self.init_ids = []
+
+        def on_fit_begin(self, estimator):
+            pass
+
+        def on_fit_task_end(self, estimator, context, **kwargs):
+            self.task_names.append(context.task_name)
+            if context.task_name == "init":
+                self.init_ids.append(context.task_id)
+                return True
+            return False
+
+        def on_fit_end(self, estimator, context):
+            pass
+
+    callback = StopAfterFirstInit()
+    km = KMeans(
+        algorithm="lloyd",
+        n_clusters=n_clusters,
+        init="random",
+        n_init=5,
+        max_iter=1,
+        tol=0,
+        random_state=0,
+    ).set_callbacks(callback)
+
+    km.fit(X)
+
+    assert callback.task_names == ["iter", "init"]
+    assert callback.init_ids == [0]
+    assert km.n_iter_ == 1
 
 
 def test_minibatch_kmeans_warning_init_size():
