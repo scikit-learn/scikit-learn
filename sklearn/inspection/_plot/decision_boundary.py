@@ -587,10 +587,6 @@ class DecisionBoundaryDisplay:
         x1_min, x1_max = x1.min() - eps, x1.max() + eps
 
         xx0, xx1 = np.meshgrid(
-            # TODO: should we make grid resolution dependent on x0 and x1 length?
-            # (x0_max - x0_min) * grid_resolution
-            # (x1_max - x1_min) * grid_resolution
-            # (then we also might need to change the default for `grid_resolution`).
             np.linspace(x0_min, x0_max, grid_resolution),
             np.linspace(x1_min, x1_max, grid_resolution),
         )
