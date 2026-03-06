@@ -31,7 +31,6 @@ from sklearn.utils._array_api import (
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
-    move_to,
     supported_float_dtypes,
 )
 from sklearn.utils._param_validation import Interval
