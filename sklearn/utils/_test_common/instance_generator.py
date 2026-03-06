@@ -349,7 +349,10 @@ INIT_PARAMS = {
     LinearSVC: dict(max_iter=20),
     LinearSVR: dict(max_iter=20),
     LocallyLinearEmbedding: dict(max_iter=5),
-    LogisticRegressionCV: dict(max_iter=5, cv=3, use_legacy_attributes=False),
+    # TODO(1.11): remove scoring because it is default now
+    LogisticRegressionCV: dict(
+        max_iter=5, cv=3, use_legacy_attributes=False, scoring="neg_log_loss"
+    ),
     LogisticRegression: dict(max_iter=5),
     MDS: dict(n_init=2, max_iter=5),
     # In the case of check_fit2d_1sample, bandwidth is set to None and

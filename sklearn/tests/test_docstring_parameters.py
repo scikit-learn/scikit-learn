@@ -232,10 +232,12 @@ def test_fit_docstring_attributes(name, Estimator):
     elif Estimator.__name__ == "MDS":
         # default raises a FutureWarning
         est.set_params(n_init=1, init="random")
-    # TODO(1.10) remove
+    # TODO(1.10) remove l1_ratios
+    # TODO(1.11) remove completely
     elif Estimator.__name__ == "LogisticRegressionCV":
         # default 'l1_ratios' value creates a FutureWarning
-        est.set_params(l1_ratios=(0,))
+        # default 'scoring' value creates a FutureWarning
+        est.set_params(l1_ratios=(0,), scoring="neg_log_loss")
 
     # Low max iter to speed up tests: we are only interested in checking the existence
     # of fitted attributes. This should be invariant to whether it has converged or not.
