@@ -12,7 +12,11 @@ import numpy as np
 
 import sklearn.externals.array_api_extra as xpx
 from sklearn.utils import check_array, check_consistent_length
-from sklearn.utils._array_api import _average, _ravel, get_namespace_and_device
+from sklearn.utils._array_api import (
+    _average,
+    _ravel,
+    get_namespace_and_device,
+)
 from sklearn.utils.multiclass import type_of_target
 
 
@@ -59,7 +63,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         classes.
 
     """
-    xp, _, _device = get_namespace_and_device(y_true, y_score, sample_weight)
+    xp, _, _device = get_namespace_and_device(y_score, sample_weight)
     average_options = (None, "micro", "macro", "weighted", "samples")
     if average not in average_options:
         raise ValueError("average has to be one of {0}".format(average_options))
