@@ -1046,7 +1046,7 @@ cdef class BinaryTree{{name_suffix}}:
         cdef intp_t n_features = self.data.shape[1]
         cdef intp_t n_points = idx_end - idx_start
         cdef intp_t n_mid = n_points / 2
-        cdef intp_t* idx_array = &self.idx_array[idx_start]
+        cdef intp_t* idx_array = <intp_t*> &self.idx_array[idx_start]
         cdef const {{INPUT_DTYPE_t}}* data = &self.data[0, 0]
 
         # initialize node data
@@ -1912,7 +1912,7 @@ cdef class BinaryTree{{name_suffix}}:
     ) noexcept nogil:
         """recursive single-tree radius query, depth-first"""
         cdef const {{INPUT_DTYPE_t}}* data = &self.data[0, 0]
-        cdef intp_t* idx_array = &self.idx_array[0]
+        cdef intp_t* idx_array = <intp_t*> &self.idx_array[0]
         cdef intp_t n_features = self.data.shape[1]
         cdef NodeData_t node_info = self.node_data[i_node]
 
@@ -2007,7 +2007,7 @@ cdef class BinaryTree{{name_suffix}}:
         cdef const {{INPUT_DTYPE_t}}* sample_weight
         if with_sample_weight:
             sample_weight = &self.sample_weight[0]
-        cdef intp_t* idx_array = &self.idx_array[0]
+        cdef intp_t* idx_array = <intp_t*> &self.idx_array[0]
         cdef const NodeData_t* node_data = &self.node_data[0]
         cdef float64_t N
         cdef float64_t log_weight
@@ -2176,7 +2176,7 @@ cdef class BinaryTree{{name_suffix}}:
         cdef float64_t log_weight
         if with_sample_weight:
             sample_weight = &self.sample_weight[0]
-        cdef intp_t* idx_array = &self.idx_array[0]
+        cdef intp_t* idx_array = <intp_t*> &self.idx_array[0]
         cdef intp_t n_features = self.data.shape[1]
 
         cdef NodeData_t node_info = self.node_data[i_node]
@@ -2299,7 +2299,7 @@ cdef class BinaryTree{{name_suffix}}:
     ) except -1:
         """recursive single-tree two-point correlation function query"""
         cdef const {{INPUT_DTYPE_t}}* data = &self.data[0, 0]
-        cdef intp_t* idx_array = &self.idx_array[0]
+        cdef intp_t* idx_array = <intp_t*> &self.idx_array[0]
         cdef intp_t n_features = self.data.shape[1]
         cdef NodeData_t node_info = self.node_data[i_node]
 
@@ -2356,8 +2356,8 @@ cdef class BinaryTree{{name_suffix}}:
         """recursive dual-tree two-point correlation function query"""
         cdef const {{INPUT_DTYPE_t}}* data1 = &self.data[0, 0]
         cdef const {{INPUT_DTYPE_t}}* data2 = &other.data[0, 0]
-        cdef intp_t* idx_array1 = &self.idx_array[0]
-        cdef intp_t* idx_array2 = &other.idx_array[0]
+        cdef intp_t* idx_array1 = <intp_t*> &self.idx_array[0]
+        cdef intp_t* idx_array2 = <intp_t*> &other.idx_array[0]
         cdef NodeData_t node_info1 = self.node_data[i_node1]
         cdef NodeData_t node_info2 = other.node_data[i_node2]
 
