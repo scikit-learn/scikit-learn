@@ -2223,23 +2223,6 @@ class ExtraTreesClassifier(ForestClassifier):
 
         .. versionadded:: 1.4
 
-    categorical_features : array-like of int or bool of shape (n_features,) or
-        (n_categorical_features,), default=None
-        Indicates which features are treated as categorical.
-
-        - If array-like of int, the entries are feature indices.
-        - If array-like of bool, it is a boolean mask over features.
-
-        Categorical features are only supported for dense inputs
-        and single-output targets.
-        Values of categorical features must be contiguous integers in ``[0, 63]``
-        (missing values are not supported).
-        Categorical features cannot have non-zero monotonic constraint.
-
-        When these constraints are not met, ``fit`` will raise an error.
-
-        .. versionadded:: 1.9
-
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.ExtraTreeClassifier`
@@ -2614,23 +2597,6 @@ class ExtraTreesRegressor(ForestRegressor):
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
         .. versionadded:: 1.4
-
-    categorical_features : array-like of int or bool of shape (n_features,) or
-        (n_categorical_features,), default=None
-        Indicates which features are treated as categorical.
-
-        - If array-like of int, the entries are feature indices.
-        - If array-like of bool, it is a boolean mask over features.
-
-        Categorical features are only supported for dense inputs
-        and single-output targets.
-        Values of categorical features must be contiguous integers in ``[0, 63]``
-        (missing values are not supported).
-        Categorical features cannot have non-zero monotonic constraint.
-
-        When these constraints are not met, ``fit`` will raise an error.
-
-        .. versionadded:: 1.9
 
     Attributes
     ----------

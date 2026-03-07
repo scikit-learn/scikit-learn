@@ -3407,8 +3407,8 @@ def test_random_splitter_missing_values_uses_non_missing_min_max(X, y):
 def test_single_tree_equivalence_with_hgbt_regressor_categorical():
     """Test single-split categorical equivalence between DT regressor and HGBT."""
     n_categories = 6
-    category_counts = np.array([40, 19, 23, 29, 31, 37], dtype=np.int64)
-    X_cat = np.repeat(np.arange(n_categories, dtype=np.int64), category_counts)
+    category_counts = np.array([40, 19, 23, 29, 31, 37], dtype=np.intp)
+    X_cat = np.repeat(np.arange(n_categories, dtype=np.intp), category_counts)
     X = X_cat.astype(np.float64).reshape(-1, 1)
 
     # Non-ordinal categorical signal: categories {1,2,5} -> 0 and {0,3,4} -> 1.
