@@ -231,8 +231,8 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         y_score : array-like of shape (n_samples,)
             Target scores, can either be probability estimates of the positive
-            class, confidence values, or non-thresholded measure of decisions
-            (as returned by `decision_function` on some classifiers).
+            class or non-thresholded decision values (as returned by
+            :term:`decision_function` on some classifiers).
 
             .. versionadded:: 1.8
                 `y_pred` has been renamed to `y_score`.
@@ -262,8 +262,8 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         y_pred : array-like of shape (n_samples,)
             Target scores, can either be probability estimates of the positive
-            class, confidence values, or non-thresholded measure of decisions
-            (as returned by “decision_function” on some classifiers).
+            class or non-thresholded decision values (as returned by
+            :term:`decision_function` on some classifiers).
 
             .. deprecated:: 1.8
                 `y_pred` is deprecated and will be removed in 1.10. Use

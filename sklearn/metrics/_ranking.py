@@ -153,8 +153,8 @@ def average_precision_score(
 
     y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by :term:`decision_function` on some classifiers).
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
         For :term:`decision_function` scores, values greater than or equal to
         zero should indicate the positive class.
 
@@ -337,8 +337,8 @@ def det_curve(
 
     y_score : ndarray of shape of (n_samples,)
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
         For :term:`decision_function` scores, values greater than or equal to
         zero should indicate the positive class.
 
@@ -1233,8 +1233,8 @@ def roc_curve(
 
     y_score : array-like of shape (n_samples,)
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
         For :term:`decision_function` scores, values greater than or equal to
         zero should indicate the positive class.
 
@@ -1402,8 +1402,8 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
 
     y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
         For :term:`decision_function` scores, values greater than or equal to
         zero should indicate the positive class.
 
@@ -1504,8 +1504,8 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
 
     y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
         For :term:`decision_function` scores, values greater than or equal to
         zero should indicate the positive class.
 
@@ -1581,8 +1581,8 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
 
     y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
         For :term:`decision_function` scores, values greater than or equal to
         zero should indicate the positive class.
 
@@ -1668,9 +1668,9 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
         to be ranked.
 
     y_score : ndarray of shape (n_samples, n_labels)
-        Target scores, can either be probability estimates, confidence values,
-        or non-thresholded measure of decisions (as returned by
-        "decision_function" on some classifiers).
+        Target scores, can either be probability estimates of the positive
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
 
     k : int, default=None
         Only consider the highest k scores in the ranking. If `None`, use all
@@ -1807,9 +1807,9 @@ def dcg_score(
         to be ranked.
 
     y_score : array-like of shape (n_samples, n_labels)
-        Target scores, can either be probability estimates, confidence values,
-        or non-thresholded measure of decisions (as returned by
-        "decision_function" on some classifiers).
+        Target scores, can either be probability estimates of the positive
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
 
     k : int, default=None
         Only consider the highest k scores in the ranking. If None, use all
@@ -1913,9 +1913,9 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
         to be ranked.
 
     y_score : ndarray of shape (n_samples, n_labels)
-        Target scores, can either be probability estimates, confidence values,
-        or non-thresholded measure of decisions (as returned by
-        "decision_function" on some classifiers).
+        Target scores, can either be probability estimates of the positive
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
 
     k : int, default=None
         Only consider the highest k scores in the ranking. If None, use all
@@ -1975,9 +1975,9 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
         that is not between 0 and 1.
 
     y_score : array-like of shape (n_samples, n_labels)
-        Target scores, can either be probability estimates, confidence values,
-        or non-thresholded measure of decisions (as returned by
-        "decision_function" on some classifiers).
+        Target scores, can either be probability estimates of the positive
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
 
     k : int, default=None
         Only consider the highest k scores in the ranking. If `None`, use all
