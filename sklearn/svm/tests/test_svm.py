@@ -3,7 +3,7 @@ Testing for Support Vector Machine module (sklearn.svm)
 
 TODO: remove hard coded numerical results when possible
 """
-
+from sklearn.svm import NuSVC
 import numpy as np
 import pytest
 from numpy.testing import (
@@ -1524,3 +1524,16 @@ def test_probability_raises_futurewarning(Estimator, name, probability):
     X, y = make_classification()
     with pytest.warns(FutureWarning, match="probability.+parameter.+deprecated"):
         Estimator(probability=probability).fit(X, y)
+
+def test_nusvc_early_nu_feasibility_error():
+    """Check that NuSVC raises ValueError for unfeasible nu before kernel computation."""
+    X = np.array([[0, 0], [1, 1], [2, 2]])
+    y = np.array([0, 1, 1])
+    
+    # nu limit is (2 * 1) / 3 = 0.666...
+    # nu = 0.9 should trigger an immediate ValueError
+    clf = NuSVC(nu=0.9)
+    
+    msg = "specified nu is unfeasible. It should be at most 0.666667"
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)

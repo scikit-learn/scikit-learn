@@ -720,6 +720,14 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         self : object
             Returns an instance of self.
         """
+        if not (hasattr(self.estimator, "predict_proba") or 
+                hasattr(self.estimator, "decision_function")):
+            raise ValueError(
+                f"The estimator {self.estimator.__class__.__name__} must implement "
+                "either 'predict_proba' or 'decision_function' to be used with "
+                "TunedThresholdClassifierCV."
+            )
+        
         if isinstance(self.cv, Real) and 0 < self.cv < 1:
             cv = StratifiedShuffleSplit(
                 n_splits=1, test_size=self.cv, random_state=self.random_state
