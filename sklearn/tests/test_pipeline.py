@@ -324,6 +324,13 @@ def test_empty_pipeline():
         pipe.fit(X, y)
 
 
+def test_empty_pipeline_dir():
+    """Check that dir() works on an empty pipeline"""
+    pipe = Pipeline([])
+    attrs = dir(pipe)
+    assert "steps" in attrs
+
+
 def test_pipeline_init_tuple():
     # Pipeline accepts steps as tuple
     X = np.array([[1, 2]])
@@ -418,14 +425,14 @@ def test_pipeline_raise_set_params_error():
         pipe.set_params(cls__invalid_param="nope")
 
 
-def test_pipeline_methods_pca_svm():
+def test_pipeline_methods_pca_classifier():
     # Test the various methods of the pipeline (pca + svm).
     X = iris.data
     y = iris.target
-    # Test with PCA + SVC
-    clf = SVC(probability=True, random_state=0)
+    # Test with PCA + LogisticRegression
+    clf = LogisticRegression()
     pca = PCA(svd_solver="full", n_components="mle", whiten=True)
-    pipe = Pipeline([("pca", pca), ("svc", clf)])
+    pipe = Pipeline([("pca", pca), ("classifier", clf)])
     pipe.fit(X, y)
     pipe.predict(X)
     pipe.predict_proba(X)
@@ -466,7 +473,7 @@ def test_score_samples_on_pipeline_without_score_samples():
     assert inner_msg in str(exec_info.value.__cause__)
 
 
-def test_pipeline_methods_preprocessing_svm():
+def test_pipeline_methods_preprocessing_classifier():
     # Test the various methods of the pipeline (preprocessing + svm).
     X = iris.data
     y = iris.target
@@ -474,7 +481,7 @@ def test_pipeline_methods_preprocessing_svm():
     n_classes = len(np.unique(y))
     scaler = StandardScaler()
     pca = PCA(n_components=2, svd_solver="randomized", whiten=True)
-    clf = SVC(probability=True, random_state=0, decision_function_shape="ovr")
+    clf = LogisticRegression()
 
     for preprocessing in [scaler, pca]:
         pipe = Pipeline([("preprocess", preprocessing), ("svc", clf)])

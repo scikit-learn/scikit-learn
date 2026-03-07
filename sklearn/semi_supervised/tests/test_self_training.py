@@ -5,6 +5,7 @@ import pytest
 from numpy.testing import assert_array_equal
 
 from sklearn.base import clone
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import load_iris, make_blobs
 from sklearn.ensemble import StackingClassifier
 from sklearn.exceptions import NotFittedError
@@ -116,7 +117,7 @@ def test_k_best():
 
 
 def test_sanity_classification():
-    estimator = SVC(gamma="scale", probability=True)
+    estimator = CalibratedClassifierCV(SVC(gamma="scale"), ensemble=False)
     estimator.fit(X_train[n_labeled_samples:], y_train[n_labeled_samples:])
 
     st = SelfTrainingClassifier(estimator)
@@ -142,7 +143,10 @@ def test_none_iter():
 
 @pytest.mark.parametrize(
     "estimator",
-    [KNeighborsClassifier(), SVC(gamma="scale", probability=True, random_state=0)],
+    [
+        KNeighborsClassifier(),
+        CalibratedClassifierCV(SVC(gamma="scale", random_state=0), ensemble=False),
+    ],
 )
 @pytest.mark.parametrize("y", [y_train_missing_labels, y_train_missing_strings])
 def test_zero_iterations(estimator, y):
@@ -205,8 +209,8 @@ def test_no_unlabeled():
 
 
 def test_early_stopping():
-    svc = SVC(gamma="scale", probability=True)
-    st = SelfTrainingClassifier(svc)
+    lr = LogisticRegression()
+    st = SelfTrainingClassifier(lr)
     X_train_easy = [[1], [0], [1], [0.5]]
     y_train_easy = [1, 0, -1, -1]
     # X = [[0.5]] cannot be predicted on with a high confidence, so training
@@ -294,10 +298,10 @@ def test_estimator_meta_estimator():
 
     estimator = StackingClassifier(
         estimators=[
-            ("svc_1", SVC(probability=True)),
-            ("svc_2", SVC(probability=True)),
+            ("clf_1", LogisticRegression()),
+            ("clf_2", LogisticRegression()),
         ],
-        final_estimator=SVC(probability=True),
+        final_estimator=LogisticRegression(),
         cv=2,
     )
 
@@ -308,10 +312,10 @@ def test_estimator_meta_estimator():
 
     estimator = StackingClassifier(
         estimators=[
-            ("svc_1", SVC(probability=False)),
-            ("svc_2", SVC(probability=False)),
+            ("svc_1", SVC()),
+            ("svc_2", SVC()),
         ],
-        final_estimator=SVC(probability=False),
+        final_estimator=SVC(),
         cv=2,
     )
 
@@ -332,7 +336,7 @@ def test_self_training_estimator_attribute_error():
     # `SVC` with `probability=False` does not implement 'predict_proba' that
     # is required internally in `fit` of `SelfTrainingClassifier`. We expect
     # an AttributeError to be raised.
-    estimator = SVC(probability=False, gamma="scale")
+    estimator = SVC(gamma="scale")
     self_training = SelfTrainingClassifier(estimator)
 
     with pytest.raises(AttributeError, match="has no attribute 'predict_proba'"):
