@@ -684,9 +684,9 @@ def roc_auc_score(
     >>> X, y = load_breast_cancer(return_X_y=True)
     >>> clf = LogisticRegression(solver="newton-cholesky", random_state=0).fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X)[:, 1])
-    0.99...
+    0.99
     >>> roc_auc_score(y, clf.decision_function(X))
-    0.99...
+    0.99
 
     Multiclass case:
 
@@ -694,7 +694,7 @@ def roc_auc_score(
     >>> X, y = load_iris(return_X_y=True)
     >>> clf = LogisticRegression(solver="newton-cholesky").fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X), multi_class='ovr')
-    0.99...
+    0.99
 
     Multilabel case:
 
@@ -709,11 +709,11 @@ def roc_auc_score(
     >>> # extract the positive columns for each output
     >>> y_score = np.transpose([score[:, 1] for score in y_score])
     >>> roc_auc_score(y, y_score, average=None)
-    array([0.827..., 0.851..., 0.93..., 0.869..., 0.94...])
+    array([0.828, 0.852, 0.94, 0.869, 0.95])
     >>> from sklearn.linear_model import RidgeClassifierCV
     >>> clf = RidgeClassifierCV().fit(X, y)
     >>> roc_auc_score(y, clf.decision_function(X), average=None)
-    array([0.81..., 0.846..., 0.93..., 0.872..., 0.944...])
+    array([0.82, 0.847, 0.93, 0.872, 0.944])
     """
 
     xp, _, device_ = get_namespace_and_device(y_score)
