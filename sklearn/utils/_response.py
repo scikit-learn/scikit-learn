@@ -202,13 +202,13 @@ def _get_response_values(
         classes = estimator.classes_
         target_type = type_of_target(classes)
 
-        if target_type in ("binary", "multiclass"):
+        if target_type == "binary":
             if pos_label is not None and pos_label not in classes.tolist():
                 raise ValueError(
                     f"pos_label={pos_label} is not a valid label: It should be "
                     f"one of {classes}"
                 )
-            elif pos_label is None and target_type == "binary":
+            elif pos_label is None:
                 pos_label = classes[-1]
 
         y_pred = prediction_method(X)
