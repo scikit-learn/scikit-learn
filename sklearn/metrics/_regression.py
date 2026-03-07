@@ -58,7 +58,7 @@ __ALL__ = [
 
 
 def _check_reg_targets(
-    y_true, y_pred, sample_weight, multioutput, dtype="numeric", xp=None
+    y_true, y_pred, sample_weight, multioutput, dtype="numeric", xp=None, device=None
 ):
     """Check that y_true, y_pred and sample_weight belong to the same regression task.
 
@@ -86,7 +86,12 @@ def _check_reg_targets(
     xp : module, default=None
         Precomputed array namespace module. When passed, typically from a caller
         that has already performed inspection of its own inputs, skips array
-        namespace inspection.
+        namespace inspection and move everything that namespace.
+
+    device : object, default=None
+        Precomputed device. When passed, typically from a caller that has already
+        performed inspection of its own inputs, skips device inspection and move
+        everything to that device.
 
     Returns
     -------
@@ -109,7 +114,14 @@ def _check_reg_targets(
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
     """
-    xp, _ = get_namespace(y_true, y_pred, multioutput, xp=xp)
+    if xp is None or device is None:
+        xp, _, device = get_namespace_and_device(y_pred)
+
+    # Ensure that all inputs are on the y_pred device and namespace.
+    y_true = move_to(y_true, xp=xp, device=device)
+    sample_weight = move_to(sample_weight, xp=xp, device=device)
+    if hasattr(multioutput, "shape"):
+        multioutput = move_to(multioutput, xp=xp, device=device)
 
     check_consistent_length(y_true, y_pred, sample_weight)
     y_true = check_array(y_true, ensure_2d=False, dtype=dtype)
@@ -155,12 +167,13 @@ def _check_reg_targets(
 
 
 def _check_reg_targets_with_floating_dtype(
-    y_true, y_pred, sample_weight, multioutput, xp=None
+    y_true, y_pred, sample_weight, multioutput, xp=None, device=None
 ):
     """Ensures y_true, y_pred, and sample_weight correspond to same regression task.
 
     Extends `_check_reg_targets` by automatically selecting a suitable floating-point
-    data type for inputs using `_find_matching_floating_dtype`.
+    data type. If y_pred has a floating point dtype, it is used. Otherwise, the
+    dtype is determined by `_find_matching_floating_dtype` on all the inputs.
 
     Use this private method only when converting inputs to array API-compatibles.
 
@@ -181,7 +194,14 @@ def _check_reg_targets_with_floating_dtype(
     xp : module, default=None
         Precomputed array namespace module. When passed, typically from a caller
         that has already performed inspection of its own inputs, skips array
-        namespace inspection.
+        namespace inspection and move everything that namespace. Otherwise,
+        the inputs are converted to the namespace of y_pred.
+
+    device : object, default=None
+        Precomputed device. When passed, typically from a caller that has already
+        performed inspection of its own inputs, skips device inspection and move
+        everything to that device. Otherwise, the inputs are converted to the device
+        of y_pred.
 
     Returns
     -------
@@ -204,10 +224,23 @@ def _check_reg_targets_with_floating_dtype(
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
     """
-    dtype_name = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
+    if xp is None or device is None:
+        xp, _, device = get_namespace_and_device(y_pred)
+
+    if hasattr(y_pred, "dtype") and xp.isdtype(y_pred.dtype, "real floating"):
+        # Follow the precision level of y_pred.
+        dtype = y_pred.dtype
+    else:
+        dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
 
     y_type, y_true, y_pred, sample_weight, multioutput = _check_reg_targets(
-        y_true, y_pred, sample_weight, multioutput, dtype=dtype_name, xp=xp
+        y_true,
+        y_pred,
+        sample_weight,
+        multioutput,
+        dtype=dtype,
+        xp=xp,
+        device=device,
     )
 
     return y_type, y_true, y_pred, sample_weight, multioutput
@@ -278,11 +311,11 @@ def mean_absolute_error(
     >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85...
     """
-    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
+    xp, _, device_ = get_namespace_and_device(y_pred)
 
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp
+            y_true, y_pred, sample_weight, multioutput, xp=xp, device=device_
         )
     )
 
@@ -1274,13 +1307,15 @@ def r2_score(
     >>> r2_score(y_true, y_pred, force_finite=False)
     -inf
     """
-    xp, _, device_ = get_namespace_and_device(
-        y_true, y_pred, sample_weight, multioutput
-    )
-
+    xp, is_array_api, device_ = get_namespace_and_device(y_pred)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
-            y_true, y_pred, sample_weight, multioutput, xp=xp
+            y_true,
+            y_pred,
+            sample_weight,
+            multioutput,
+            xp=xp,
+            device=device_,
         )
     )
 
