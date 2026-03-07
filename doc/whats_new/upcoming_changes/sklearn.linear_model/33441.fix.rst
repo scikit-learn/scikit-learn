@@ -1,0 +1,4 @@
+- Fix unsigned integer overflow in :class:`linear_model.RidgeClassifier`
+  when fitting with unsigned integer inputs. Internal label binarisation now
+  avoids wrapping -1 for unsigned integer target dtypes.
+  By :user:`Virgil Chan <virchan>`.

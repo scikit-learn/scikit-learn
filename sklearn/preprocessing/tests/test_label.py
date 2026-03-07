@@ -243,7 +243,7 @@ def test_label_binarizer_sparse_errors(csr_container):
 def test_label_binarizer_array_api_compliance(
     y, classes, expected, array_namespace, device_, dtype_name
 ):
-    """Test that :class:`LabelBinarizer` works correctly with the Array API for binary
+    """Test that :class:`LabelBinarizer` works correctly with the array API for binary
     and multi-class inputs for numerical labels and non-sparse outputs.
     """
     xp = _array_api_for_tests(array_namespace, device_)
@@ -769,7 +769,7 @@ def test_invalid_input_label_binarize():
 def test_label_binarize_array_api_compliance(
     y, classes, expected, array_namespace, device_, dtype_name
 ):
-    """Test that :func:`label_binarize` works correctly with the Array API for binary
+    """Test that :func:`label_binarize` works correctly with the array API for binary
     and multi-class inputs for numerical labels and non-sparse outputs.
     """
     xp = _array_api_for_tests(array_namespace, device_)
