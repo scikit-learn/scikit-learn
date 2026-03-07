@@ -616,3 +616,21 @@ def test_fixed_threshold_classifier_classes_():
     classifier = LogisticRegression().fit(X, y)
     fixed_threshold_classifier = FixedThresholdClassifier(estimator=classifier)
     assert_array_equal(fixed_threshold_classifier.classes_, classifier.classes_)
+
+def test_tuned_threshold_classifier_error_no_predict_methods():
+    """Check that we raise a clear ValueError if the estimator has no 
+    predict_proba or decision_function."""
+    import pytest
+    from sklearn.linear_model import PassiveAggressiveClassifier
+    from sklearn.model_selection import TunedThresholdClassifierCV
+    import numpy as np
+
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([0, 1])
+    
+    # PassiveAggressiveClassifier lacks both required methods
+    clf = TunedThresholdClassifierCV(PassiveAggressiveClassifier())
+    
+    msg = "must implement either 'predict_proba' or 'decision_function'"
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
