@@ -10,7 +10,7 @@ from itertools import chain
 import numpy as np
 from scipy.sparse import issparse
 
-from sklearn.utils._array_api import get_namespace
+from sklearn.utils._array_api import _is_numpy_namespace, get_namespace
 from sklearn.utils._unique import attach_unique, cached_unique
 from sklearn.utils.fixes import VisibleDeprecationWarning
 from sklearn.utils.validation import _assert_all_finite, _num_samples, check_array
@@ -19,7 +19,9 @@ from sklearn.utils.validation import _assert_all_finite, _num_samples, check_arr
 def _unique_multiclass(y, xp=None):
     xp, is_array_api_compliant = get_namespace(y, xp=xp)
     if hasattr(y, "__array__") or is_array_api_compliant:
-        return cached_unique(xp.asarray(y), xp=xp)
+        a = cached_unique(xp.asarray(y), xp=xp)
+        return a
+        # return cached_unique(xp.asarray(y), xp=xp)
     else:
         return set(y)
 
@@ -38,13 +40,13 @@ _FN_UNIQUE_LABELS = {
 }
 
 
-def unique_labels(*ys):
+def unique_labels(*ys, ys_types=None):
     """Extract an ordered array of unique labels.
 
     We don't allow:
         - mix of multilabel and multiclass (single label) targets
         - mix of label indicator matrix and anything else,
-          because there are no explicit labels)
+          (because there are no explicit labels)
         - mix of label indicator matrices of different sizes
         - mix of string and integer labels
 
@@ -54,6 +56,10 @@ def unique_labels(*ys):
     ----------
     *ys : array-likes
         Label values.
+
+    ys_types : set, default=None
+        Set of target types of `ys` (as determined by `type_of_target`),
+        with `{"binary", "multiclass"}` being amended to `{"multiclass"}`.
 
     Returns
     -------
@@ -74,15 +80,17 @@ def unique_labels(*ys):
     xp, is_array_api_compliant = get_namespace(*ys)
     if len(ys) == 0:
         raise ValueError("No argument has been passed.")
+
+    if ys_types is None:
+        ys_types = set(type_of_target(x) for x in ys)
+        if ys_types == {"binary", "multiclass"}:
+            ys_types = {"multiclass"}
+
     # Check that we don't mix label format
-
-    ys_types = set(type_of_target(x) for x in ys)
-    if ys_types == {"binary", "multiclass"}:
-        ys_types = {"multiclass"}
-
     if len(ys_types) > 1:
         raise ValueError("Mix type of y not allowed, got types %s" % ys_types)
 
+    # We can't have more than one value in y_type => The set is no more needed
     label_type = ys_types.pop()
 
     # Check consistency for the indicator format
@@ -104,8 +112,8 @@ def unique_labels(*ys):
     if not _unique_labels:
         raise ValueError("Unknown label type: %s" % repr(ys))
 
-    if is_array_api_compliant:
-        # array_api does not allow for mixed dtypes
+    if is_array_api_compliant and not _is_numpy_namespace(xp):
+        # non-NumPy array API inputs do not allow for mixed dtypes
         unique_ys = xp.concat([_unique_labels(y, xp=xp) for y in ys])
         return xp.unique_values(unique_ys)
 
@@ -114,7 +122,10 @@ def unique_labels(*ys):
     )
     # Check that we don't mix string type with number type
     if len(set(isinstance(label, str) for label in ys_labels)) > 1:
-        raise ValueError("Mix of label input types (string and number)")
+        msg_details = (
+            "Got " + " and ".join([f"{xp.unique_values(y)}" for y in ys]) + "."
+        )
+        raise ValueError(f"Mix of label input types (string and number); {msg_details}")
 
     return xp.asarray(sorted(ys_labels))
 
