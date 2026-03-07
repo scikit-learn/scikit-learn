@@ -1,3 +1,5 @@
+from unittest.mock import Mock
+
 import numpy as np
 import pytest
 from numpy.testing import assert_array_almost_equal, assert_array_equal
@@ -147,14 +149,13 @@ def test_ransac_does_not_score_inlier_subset_smaller_than_min_samples():
         def predict(self, X):
             return np.zeros(X.shape[0])
 
-        def score(self, X, y):
-            raise AssertionError("score should not be called")
-
     X = np.arange(3)[:, None]
     y = np.array([0.0, 1.0, 2.0])
+    estimator = _EstimatorWithFixedPrediction()
+    estimator.score = Mock(side_effect=AssertionError("score should not be called"))
 
     ransac_estimator = RANSACRegressor(
-        _EstimatorWithFixedPrediction(),
+        estimator,
         min_samples=2,
         residual_threshold=0.0,
         max_trials=1,
@@ -165,6 +166,7 @@ def test_ransac_does_not_score_inlier_subset_smaller_than_min_samples():
     with pytest.raises(ValueError, match=msg):
         ransac_estimator.fit(X, y)
 
+    estimator.score.assert_not_called()
     assert ransac_estimator.n_skips_no_inliers_ == 1
 
 
