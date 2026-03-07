@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from itertools import product
+from itertools import chain, combinations, product
 from operator import itemgetter
 
 import numpy as np
@@ -21,6 +21,7 @@ CLF_CRITERIONS = ("gini", "log_loss")
 
 REG_CRITERIONS = ("squared_error", "absolute_error", "poisson")
 
+
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
     "ExtraTreeClassifier": ExtraTreeClassifier,
@@ -32,10 +33,53 @@ REG_TREES = {
 }
 
 
+def powerset(iterable):
+    """returns all the subsets of `iterable`."""
+    s = list(iterable)
+    return chain.from_iterable(
+        combinations(s, r) for r in range(1, (len(s) + 1) // 2 + 1)
+    )
+
+
+def bitset_to_tuple(v, n_categories):
+    bitset = np.asarray(v, dtype=np.uint64).reshape(-1)
+    return tuple(
+        c
+        for c in range(n_categories)
+        if bitset[c // 64] & (np.uint64(1) << np.uint64(c % 64))
+    )
+
+
+@dataclass
+class Split:
+    feature: int
+    threshold: float | tuple
+    missing_left: bool = False
+
+    @property
+    def is_categorical(self):
+        return isinstance(self.threshold, tuple)
+
+    @classmethod
+    def from_tree(cls, tree):
+        ftr = int(tree.tree_.feature[0])
+        if tree.n_categories_in_feature_[ftr] > 0:
+            cat_bitset = tree.tree_.categorical_bitset[0]
+            threshold = bitset_to_tuple(
+                cat_bitset,
+                n_categories=int(tree.tree_.n_categories[ftr]),
+            )
+        else:
+            threshold = tree.tree_.threshold[0]
+        missing_left = bool(tree.tree_.missing_go_to_left[0])
+        return cls(ftr, threshold, missing_left)
+
+
 @dataclass
 class NaiveSplitter:
     criterion: str
-    n_classes: int = 0
+    n_classes: int
+    is_categorical: np.ndarray
 
     def compute_node_value_and_impurity(self, y, w):
         sum_weights = np.sum(w)
@@ -63,20 +107,24 @@ class NaiveSplitter:
             raise ValueError(f"Unknown criterion: {self.criterion}")
         return pred, loss * sum_weights
 
-    def compute_split_nodes(self, X, y, w, feature, threshold=None, missing_left=False):
-        x = X[:, feature]
-        go_left = x <= threshold
-        if missing_left:
+    def compute_split_nodes(self, X, y, w, split):
+        x = X[:, split.feature]
+        if split.is_categorical:
+            x = x.astype(int)
+            cat_go_left = np.zeros(max(max(x), max(split.threshold)) + 1, dtype=bool)
+            cat_go_left[list(split.threshold)] = True
+            go_left = cat_go_left[x]
+        else:
+            go_left = x <= split.threshold
+        if split.missing_left:
             go_left |= np.isnan(x)
         return (
             self.compute_node_value_and_impurity(y[go_left], w[go_left]),
             self.compute_node_value_and_impurity(y[~go_left], w[~go_left]),
         )
 
-    def compute_split_impurity(
-        self, X, y, w, feature, threshold=None, missing_left=False
-    ):
-        nodes = self.compute_split_nodes(X, y, w, feature, threshold, missing_left)
+    def compute_split_impurity(self, X, y, w, split):
+        nodes = self.compute_split_nodes(X, y, w, split)
         (_, left_impurity), (_, right_impurity) = nodes
         return left_impurity + right_impurity
 
@@ -85,21 +133,15 @@ class NaiveSplitter:
             x = X[:, f]
             nan_mask = np.isnan(x)
             thresholds = np.unique(x[~nan_mask])
+            if self.is_categorical[f]:
+                thresholds = list(powerset(int(th) for th in thresholds))
             for th in thresholds:
-                yield {
-                    "feature": f,
-                    "threshold": th,
-                    "missing_left": False,
-                }
+                yield Split(f, th)
             if not nan_mask.any():
                 continue
             for th in [*thresholds, -np.inf]:
                 # include -inf to test the split with only NaNs on the left node
-                yield {
-                    "feature": f,
-                    "threshold": th,
-                    "missing_left": True,
-                }
+                yield Split(f, th, missing_left=True)
 
     def best_split_naive(self, X, y, w):
         splits = list(self._generate_all_splits(X))
@@ -107,10 +149,17 @@ class NaiveSplitter:
             return (np.inf, None)
 
         split_impurities = [
-            self.compute_split_impurity(X, y, w, **split) for split in splits
+            self.compute_split_impurity(X, y, w, split) for split in splits
         ]
 
         return min(zip(split_impurities, splits), key=itemgetter(0))
+
+
+def to_categorical(x, nc, rng):
+    q = np.linspace(0, 1, num=nc + 1)[1:-1]
+    quantiles = np.quantile(x, q)
+    cats = np.searchsorted(quantiles, x)
+    return rng.permutation(nc)[cats]
 
 
 def make_simple_dataset(
@@ -118,6 +167,7 @@ def make_simple_dataset(
     d,
     with_nans,
     is_sparse,
+    is_categorical,
     is_clf,
     n_classes,
     rng,
@@ -126,6 +176,9 @@ def make_simple_dataset(
     y = rng.random(n) + X_dense.sum(axis=1)
     w = rng.integers(0, 5, size=n) if rng.uniform() < 0.5 else rng.random(n)
 
+    for idx in np.where(is_categorical)[0]:
+        nc = rng.integers(2, 6)  # cant go to high or test will be too slow
+        X_dense[:, idx] = to_categorical(X_dense[:, idx], nc, rng)
     with_duplicates = rng.integers(2) == 0
     if with_duplicates:
         X_dense = X_dense.round(1 if n < 50 else 2)
@@ -160,13 +213,21 @@ def make_simple_dataset(
     ],
 )
 @pytest.mark.parametrize(
-    "sparse, missing_values",
-    [(False, False), (True, False), (False, True)],
-    ids=["dense-without_missing", "sparse-without_missing", "dense-with_missing"],
+    "sparse, missing_values, categorical",
+    [(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)],
+    ids=["dense", "sparse", "dense-with_missing", "dense-categorical"],
 )
-def test_split_impurity(Tree, criterion, sparse, missing_values, global_random_seed):
+def test_split_impurity(
+    Tree, criterion, sparse, missing_values, categorical, global_random_seed
+):
     is_clf = criterion in CLF_CRITERIONS
 
+    if categorical and "Extra" in Tree.__name__:
+        pytest.skip("Categorical features not implemented for the random splitter")
+    if missing_values and criterion == "absolute_error":
+        pytest.skip("AE + missing values not supported yet")
+    if missing_values and criterion == "poisson":
+        pytest.xfail("Poisson criterion is faulty for now")
     rng = np.random.default_rng(global_random_seed)
 
     ns = [5] * 5 + [10] * 5 + [20, 30, 50, 100]
@@ -174,17 +235,24 @@ def test_split_impurity(Tree, criterion, sparse, missing_values, global_random_s
     for it, n in enumerate(ns):
         d = rng.integers(1, 4)
         n_classes = rng.integers(2, 5)  # only used for classification
+
+        tree_kwargs = dict(
+            criterion=criterion, max_depth=1, random_state=global_random_seed
+        )
+        if categorical:
+            is_categorical = rng.random(d) < 0.5
+            n_classes = 2
+            tree_kwargs["categorical_features"] = is_categorical
+        else:
+            is_categorical = np.zeros(d, dtype=bool)
+
+        tree = Tree(**tree_kwargs)
+        naive_splitter = NaiveSplitter(criterion, n_classes, is_categorical)
+
         X_dense, X, y, w = make_simple_dataset(
-            n, d, missing_values, sparse, is_clf, n_classes, rng
+            n, d, missing_values, sparse, is_categorical, is_clf, n_classes, rng
         )
 
-        naive_splitter = NaiveSplitter(criterion, n_classes)
-
-        tree = Tree(
-            criterion=criterion,
-            max_depth=1,
-            random_state=global_random_seed,
-        )
         tree.fit(X, y, sample_weight=w)
         actual_impurity = tree.tree_.impurity * tree.tree_.weighted_n_node_samples
         actual_value = tree.tree_.value[:, 0]
@@ -206,12 +274,8 @@ def test_split_impurity(Tree, criterion, sparse, missing_values, global_random_s
             continue
 
         # Check children impurity:
-        actual_split = {
-            "feature": int(tree.tree_.feature[0]),
-            "threshold": tree.tree_.threshold[0],
-            "missing_left": bool(tree.tree_.missing_go_to_left[0]),
-        }
-        nodes = naive_splitter.compute_split_nodes(X_dense, y, w, **actual_split)
+        actual_split = Split.from_tree(tree)
+        nodes = naive_splitter.compute_split_nodes(X_dense, y, w, actual_split)
         (left_val, left_impurity), (right_val, right_impurity) = nodes
         assert_allclose(left_impurity, actual_impurity[1], atol=1e-12)
         assert_allclose(right_impurity, actual_impurity[2], atol=1e-12)

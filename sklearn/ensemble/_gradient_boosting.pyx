@@ -66,7 +66,7 @@ cdef void _predict_regression_tree_inplace_fast_dense(
         node = root_node
         # While node not a leaf
         while node.left_child != TREE_LEAF:
-            if X[i, node.feature] <= node.threshold:
+            if X[i, node.feature] <= node.split_value.threshold:
                 node = root_node + node.left_child
             else:
                 node = root_node + node.right_child
@@ -148,7 +148,7 @@ def _predict_regression_tree_stages_sparse(
                     else:
                         feature_value = 0.
 
-                    if feature_value <= node.threshold:
+                    if feature_value <= node.split_value.threshold:
                         node = root_node + node.left_child
                     else:
                         node = root_node + node.right_child
