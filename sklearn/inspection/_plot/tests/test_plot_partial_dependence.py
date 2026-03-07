@@ -1313,3 +1313,98 @@ def test_subclass_named_constructors_return_type_is_subclass(
     )
 
     assert isinstance(curve, SubclassOfDisplay)
+
+
+@pytest.mark.parametrize(
+    "marginal_dist, features, categorical, expected_n_data_cols, marginal_dist_kw",
+    [
+        (False, ["x1"], None, 1, None),
+        ("invalid", ["x1"], None, 1, None),
+        (["invalid", "invalid"], ["x1"], None, 1, None),
+        ([True, False], ["x2"], None, 1, None),
+        (True, ["x1", "x2"], None, 2, None),
+        (
+            True,
+            ["x1", "x2"],
+            ["x1"],
+            2,
+            {"hist": {"color": "blue"}, "bar": {"color": "blue"}},
+        ),
+        (True, ["x1", "x2"], [True], 2, None),
+        (True, [("x1", "x2")], None, 2, None),
+        (
+            True,
+            [("x1", "x2")],
+            None,
+            2,
+            {"hist": {"color": "blue"}, "bar": {"color": "blue"}},
+        ),
+        (
+            True,
+            [("x1", "x1")],
+            ["x1"],
+            1,
+            {"hist": {"color": "blue"}, "bar": {"color": "blue"}},
+        ),
+    ],
+)
+def test_partial_dependence_display_marginal_dist(
+    pyplot,
+    marginal_dist,
+    features,
+    categorical,
+    expected_n_data_cols,
+    marginal_dist_kw,
+    clf_diabetes,
+    diabetes,
+):
+    if marginal_dist is False:
+        disp = PartialDependenceDisplay.from_estimator(
+            clf_diabetes,
+            diabetes.data,
+            features,
+            marginal_dist=marginal_dist,
+        )
+        assert disp.marginal_dist_data is None
+    elif marginal_dist is True:
+        if categorical == [True]:
+            with pytest.raises(ValueError, match="When `categorical_features` is"):
+                PartialDependenceDisplay.from_estimator(
+                    clf_diabetes,
+                    diabetes.data,
+                    features,
+                    marginal_dist=marginal_dist,
+                    categorical_features=categorical,
+                )
+            return
+        disp = PartialDependenceDisplay.from_estimator(
+            clf_diabetes,
+            diabetes.data,
+            features,
+            marginal_dist=marginal_dist,
+            categorical_features=categorical,
+            marginal_dist_kw=marginal_dist_kw,
+        )
+        if marginal_dist_kw is not None:
+            # assert that bars have blue color
+            blue = (0.0, 0.0, 1.0, 0.3)
+            assert disp.figure_.get_axes()[1].get_children()[0].get_facecolor() == blue
+        assert len(disp.marginal_dist_data) == expected_n_data_cols
+    else:
+        if features == ["x1"]:
+            with pytest.raises(ValueError, match="marginal_dist must be a bool"):
+                PartialDependenceDisplay.from_estimator(
+                    clf_diabetes,
+                    diabetes.data,
+                    features,
+                    marginal_dist=marginal_dist,
+                )
+        elif features == ["x2"]:
+            with pytest.raises(ValueError, match="When `marginal_dist` is"):
+                PartialDependenceDisplay.from_estimator(
+                    clf_diabetes,
+                    diabetes.data,
+                    features,
+                    marginal_dist=marginal_dist,
+                )
+            return
