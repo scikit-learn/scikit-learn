@@ -1,5 +1,6 @@
 cluster_hdbscan_extension_metadata = {
   '_linkage': {'sources': [cython_gen.process('_linkage.pyx'), metrics_cython_tree]},
+  '_boruvka': {'sources': [cython_gen.process('_boruvka.pyx'), metrics_cython_tree]},
   '_reachability': {'sources': [cython_gen.process('_reachability.pyx')]},
   '_tree': {'sources': [cython_gen.process('_tree.pyx')]}
 }
