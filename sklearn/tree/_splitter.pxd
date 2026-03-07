@@ -46,7 +46,7 @@ cdef class Splitter:
 
     cdef intp_t[::1] samples             # Sample indices in X, y
     cdef intp_t n_samples                # X.shape[0]
-    cdef float64_t weighted_n_samples       # Weighted number of samples
+    cdef float64_t weighted_n_samples    # Weighted number of samples
     cdef intp_t[::1] features            # Feature indices in X
     cdef intp_t[::1] constant_features   # Constant features indices
     cdef intp_t n_features               # X.shape[1]
@@ -65,14 +65,6 @@ cdef class Splitter:
     cdef bint with_monotonic_cst
     cdef const float64_t[:] sample_weight
 
-    # Whether or not to sort categories by probabilities to split categorical
-    # features using the Breiman shortcut;
-    # Used to accelerate finding a greedy categorical split for binary classification
-    # with Gini Impurity
-    # or univariate regression with MSE.
-    # XXX: This could be a compile-time check with C++ 17's SFINAE
-    cdef bint breiman_shortcut
-
     # We know the number of categories within our dataset across each feature.
     # If a feature index has -1, then it is not categorical
     # Buffers for categorical feature handling:
@@ -81,7 +73,6 @@ cdef class Splitter:
     # - categorical_split_buffer: a bitset to store the categorical split
     cdef const intp_t[:] n_categories
     cdef bitword_t* categorical_split
-    # cdef intp_t max_n_categories
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,

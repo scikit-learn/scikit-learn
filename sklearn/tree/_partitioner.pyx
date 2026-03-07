@@ -672,7 +672,7 @@ cdef class SparsePartitioner:
         self,
         const SplitRecord* best_split,
     ) noexcept nogil:
-        """Partition samples for X at the best_threshold and best_feature."""
+        """Partition samples for X at the best split's threshold and feature index."""
         self.extract_nnz(best_split[0].feature)
         self._partition(best_split[0].split_value.threshold)
 
@@ -732,14 +732,7 @@ cdef class SparsePartitioner:
 
         # if we split categorically, compute a bitset and populate the SplitValue
         if self.n_categories > 0:
-            # split_pos_to_bitset_words(
-            #     p,
-            #     &self.sorted_cat[0],
-            #     self.n_categories,
-            #     &self.counts[0],
-            #     split.categorical_split,
-            #     self.n_words
-            # )
+            # TODO: not supported for now, so returns uninitialized split
             return split
 
         # if we split numerically, compute a numerical threshold
@@ -753,8 +746,6 @@ cdef class SparsePartitioner:
         split.threshold = (
             self.feature_values[p_prev] / 2.0 + self.feature_values[p] / 2.0
         )
-        if split.threshold == INFINITY_64t or split.threshold == -INFINITY_64t:
-            split.threshold = self.feature_values[p_prev]
 
         return split
 

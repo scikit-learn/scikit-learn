@@ -462,14 +462,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 f"Found {self.n_classes_.max()} classes."
             )
 
-        # The Breiman shortcut sorts categories by ascending mean target
-        # value, which guarantees the optimal split is among the n_categories-1
-        # contiguous partitions.  Valid for binary classification with any
-        # concave impurity criterion and for regression with squared error.
-        use_breiman_shortcut = has_categorical and (
-            is_classification or self.criterion == "squared_error"
-        )
-
         if not isinstance(self.splitter, Splitter):
             splitter = SPLITTERS[self.splitter](
                 criterion,
@@ -478,7 +470,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 min_weight_leaf,
                 random_state,
                 monotonic_cst,
-                use_breiman_shortcut,
             )
 
         if is_classifier(self):
@@ -536,19 +527,32 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self
 
     def _check_categorical_features(self, X, monotonic_cst):
-        """Check and validate categorical features in X
+        """Validate `categorical_features` and infer per-feature category counts.
+
+        This method resolves `self.categorical_features` into a boolean mask of
+        shape `(n_features,)` (accepting integer indices or a boolean mask),
+        then validates values in categorical columns of `X`.
+
+        Validation for categorical columns includes:
+        - no missing values,
+        - integer-valued entries,
+        - non-negative values,
+        - values strictly below ``MAX_NUM_CATEGORIES``,
+        - no non-zero monotonic constraints on categorical features.
 
         Parameters
         ----------
-        X : {array-like} of shape (n_samples, n_features)
-            Input data (after `validate_data` was called)
+        X : ndarray of shape (n_samples, n_features)
+            Training data after `validate_data`.
+        monotonic_cst : ndarray of shape (n_features,) or None
+            Monotonic constraints for each feature.
 
-        Return
-        ------
+        Returns
+        -------
         is_categorical : ndarray of shape (n_features,), dtype=bool
-            Boolean mask indicating whether each feature is categorical.
+            Boolean mask indicating categorical features.
         n_categories_in_feature : ndarray of shape (n_features,), dtype=intp
-            For categorical features, stores ``max(X[:, idx]) + 1``. For
+            For categorical feature `j`, stores ``max(X[:, j]) + 1``; for
             non-categorical features, stores ``-1``.
         """
         n_features = X.shape[1]
@@ -584,23 +588,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             is_categorical = categorical_features
 
         n_categories_in_feature = np.full(self.n_features_in_, -1, dtype=np.intp)
+        self._validate_categorical_values(X, is_categorical)
 
-        base_msg = (
-            f"Values for categorical features should be integers in "
-            f"[0, {MAX_NUM_CATEGORIES - 1}]."
-        )
         for idx in np.where(is_categorical)[0]:
-            if np.isnan(X[:, idx]).any():
-                raise ValueError(
-                    "Missing values are not supported in categorical features"
-                )
-            if not np.allclose(X[:, idx].astype(np.intp), X[:, idx]):
-                raise ValueError(f"{base_msg} Found non-integer values.")
-            if X[:, idx].min() < 0:
-                raise ValueError(f"{base_msg} Found negative values.")
-            X_idx_max = X[:, idx].max()
-            if X_idx_max >= MAX_NUM_CATEGORIES:
-                raise ValueError(f"{base_msg} Found {X_idx_max}.")
+            X_idx_max = np.max(X[:, idx]).astype(np.intp)
             n_categories_in_feature[idx] = X_idx_max + 1
             if monotonic_cst is not None and monotonic_cst[idx] != 0:
                 raise ValueError(
@@ -609,6 +600,57 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
 
         return is_categorical, n_categories_in_feature
+
+    def _validate_categorical_values(
+        self, X, is_categorical, n_categories_in_feature=None
+    ):
+        """Validate values in categorical columns.
+
+        Checks that categorical entries are finite integer codes in a valid range:
+        - no NaNs,
+        - integer-valued,
+        - non-negative,
+        - below ``MAX_NUM_CATEGORIES`` (fit-time), or below the fitted per-feature
+          upper bound ``n_categories_in_feature[j]`` (predict-time).
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Input samples.
+        is_categorical : ndarray of shape (n_features,), dtype=bool
+            Mask of categorical columns in ``X``.
+        n_categories_in_feature : ndarray of shape (n_features,), dtype=intp, default=None
+            Per-feature upper bounds learned at fit time. If provided, values in
+            categorical feature ``j`` must be in
+            ``[0, n_categories_in_feature[j] - 1]``.
+        """
+        base_msg = (
+            f"Values for categorical features should be integers in "
+            f"[0, {MAX_NUM_CATEGORIES - 1}]."
+        )
+        for idx in np.where(is_categorical)[0]:
+            X_col = X[:, idx]
+            if np.isnan(X_col).any():
+                raise ValueError(
+                    "Missing values are not supported in categorical features"
+                )
+            if not np.allclose(X_col.astype(np.intp), X_col):
+                raise ValueError(f"{base_msg} Found non-integer values.")
+            if np.min(X_col) < 0:
+                raise ValueError(f"{base_msg} Found negative values.")
+
+            X_col_max = np.max(X_col)
+            if n_categories_in_feature is None:
+                if X_col_max >= MAX_NUM_CATEGORIES:
+                    raise ValueError(f"{base_msg} Found {X_col_max}.")
+            else:
+                upper = n_categories_in_feature[idx]
+                if X_col_max >= upper:
+                    raise ValueError(
+                        "Found unknown categories in categorical feature "
+                        f"{idx}. Values should be in [0, {upper - 1}], "
+                        f"got {X_col_max}."
+                    )
 
     def _validate_X_predict(self, X, check_input):
         """Validate the training data on predict (probabilities)."""
@@ -630,9 +672,16 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             ):
                 raise ValueError("No support for np.int64 index based sparse matrices")
 
-            if issparse(X) and self.categorical_features is not None:
+            has_categorical = np.any(self.n_categories_in_feature_ > 0)
+            if issparse(X) and has_categorical:
                 raise NotImplementedError(
                     "Categorical features not supported with sparse inputs"
+                )
+            if has_categorical:
+                self._validate_categorical_values(
+                    X,
+                    self.n_categories_in_feature_ > 0,
+                    n_categories_in_feature=self.n_categories_in_feature_,
                 )
         else:
             # The number of features is checked regardless of `check_input`

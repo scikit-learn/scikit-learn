@@ -2487,9 +2487,7 @@ def test_splitter_serializable(Splitter):
     n_outputs, n_classes = 2, np.array([3, 2], dtype=np.intp)
 
     criterion = CRITERIA_CLF["gini"](n_outputs, n_classes)
-    splitter = Splitter(
-        criterion, max_features, 5, 0.5, rng, monotonic_cst=None, breiman_shortcut=False
-    )
+    splitter = Splitter(criterion, max_features, 5, 0.5, rng, monotonic_cst=None)
     splitter_serialize = pickle.dumps(splitter)
 
     splitter_back = pickle.loads(splitter_serialize)
@@ -3205,6 +3203,39 @@ def test_no_sparse_with_categorical(name):
         NotImplementedError, match="Categorical features not supported with sparse"
     ):
         Tree(categorical_features=[3, 4]).fit(X, y).predict(X_sparse)
+
+    # Regression check: categorical_features=[0] should also trigger sparse rejection.
+    X_fit_cat0 = X.copy()
+    X_fit_cat0[:, 0] = rng.randint(0, 3, size=n_samples).astype(np.float64)
+    with pytest.raises(
+        NotImplementedError, match="Categorical features not supported with sparse"
+    ):
+        Tree(categorical_features=[0]).fit(X_fit_cat0, y).predict(X_sparse)
+
+
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+@pytest.mark.parametrize(
+    "X_test, match",
+    [
+        (np.array([[2.0]], dtype=np.float64), "Found unknown categories"),
+        (np.array([[0.5]], dtype=np.float64), "Found non-integer values"),
+        (np.array([[-1.0]], dtype=np.float64), "Found negative values"),
+        (
+            np.array([[np.nan]], dtype=np.float64),
+            "Missing values are not supported in categorical features",
+        ),
+    ],
+)
+def test_predict_invalid_categorical_values(Tree, X_test, match):
+    X = np.array([[0.0], [1.0], [0.0], [1.0]], dtype=np.float64)
+    if Tree is DecisionTreeClassifier:
+        y = np.array([0, 1, 0, 1])
+    else:
+        y = np.array([0.0, 1.0, 0.0, 1.0])
+
+    est = Tree(categorical_features=[0], random_state=0).fit(X, y)
+    with pytest.raises(ValueError, match=match):
+        est.predict(X_test)
 
 
 @pytest.mark.parametrize(

@@ -23,6 +23,7 @@ cnp.import_array()
 from scipy.sparse import issparse
 from scipy.sparse import csr_matrix
 
+from sklearn.tree._utils cimport goes_left
 from sklearn.tree._utils cimport safe_realloc
 from sklearn.tree._utils cimport sizet_ptr_to_ndarray
 from sklearn.tree._utils cimport in_bitset_words_fast
@@ -58,36 +59,14 @@ cdef intp_t _TREE_UNDEFINED = TREE_UNDEFINED
 
 MAX_NUM_CATEGORIES_PY = 256
 
+# Note: an old simple method for getting the numpy dtype of Node
 # Build the corresponding numpy dtype for Node.
 # This works by casting `dummy` to an array of Node of length 1, which numpy
 # can construct a `dtype`-object for. See https://stackoverflow.com/q/62448946
 # for a more detailed explanation.
 # cdef Node dummy
 # NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
-# XXX: this includes categorical_split, but it breaks joblib.hash
-# NODE_DTYPE = np.dtype({
-#     'names': ['left_child', 'right_child', 'feature', 'threshold', 'categorical_split',
-#               'impurity', 'n_node_samples', 'weighted_n_node_samples'],
-#     'formats': [np.intp, np.intp, np.intp, np.float64, np.uint64, np.float64,
-#                 np.intp, np.float64],
-#     'offsets': [
-#         <Py_ssize_t> &(<Node*> NULL).left_child,
-#         <Py_ssize_t> &(<Node*> NULL).right_child,
-#         <Py_ssize_t> &(<Node*> NULL).feature,
-#         <Py_ssize_t> &(<Node*> NULL).split_value,
-#         <Py_ssize_t> &(<Node*> NULL).split_value,
-#         <Py_ssize_t> &(<Node*> NULL).impurity,
-#         <Py_ssize_t> &(<Node*> NULL).n_node_samples,
-#         <Py_ssize_t> &(<Node*> NULL).weighted_n_node_samples
-#     ]
-# })
-# Build the corresponding numpy dtype for Node.
-# This works by casting `dummy` to an array of Node of length 1, which numpy
-# can construct a `dtype`-object for. See https://stackoverflow.com/q/62448946
-# for a more detailed explanation.
 
-cdef Node dummy
-# NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
 # A 32‐byte union “SplitValue” ──
 #   – threshold is a float64 at offset 0
 #   – categorical_bitset is an array of eight uint32’s at offset 0 (i.e. fully overlapping)
@@ -915,9 +894,6 @@ cdef class Tree:
             # then newbyteorder() marks it as native‐endian dtype.
             _swapped = node_ndarray.byteswap()
             node_ndarray = _swapped.view(_swapped.dtype.newbyteorder())
-        if not value_ndarray.dtype.isnative:
-            _swapped = value_ndarray.byteswap()
-            value_ndarray = _swapped.view(_swapped.dtype.newbyteorder())
 
         value_shape = (node_ndarray.shape[0], self.n_outputs,
                        self.max_n_classes)
@@ -1075,28 +1051,23 @@ cdef class Tree:
         cdef Node* node = NULL
         cdef intp_t i = 0
 
+        cdef bint go_left
+        cdef bint is_categorical
+
         with nogil:
             for i in range(n_samples):
                 node = self.nodes
-                # While node not a leaf
+                # While node not a leaf, traverse the tree
                 while node.left_child != _TREE_LEAF:
                     X_i_node_feature = X_ndarray[i, node.feature]
-                    # ... and node.right_child != _TREE_LEAF:
-                    # Should be abstracted to a "goes_left" function
-                    if isnan(X_i_node_feature):
-                        if node.missing_go_to_left:
-                            node = &self.nodes[node.left_child]
-                        else:
-                            node = &self.nodes[node.right_child]
-                    elif self.n_categories[node.feature] > 0:
-                        if in_bitset_words_fast(
-                            node.split_value.categorical_bitset,
-                            <intp_t> X_i_node_feature
-                        ):
-                            node = &self.nodes[node.left_child]
-                        else:
-                            node = &self.nodes[node.right_child]
-                    elif X_i_node_feature <= node.split_value.threshold:
+                    is_categorical = self.n_categories[node.feature] > 0
+                    go_left = goes_left(
+                        node.split_value,
+                        node.missing_go_to_left,
+                        is_categorical,
+                        X_i_node_feature,
+                    )
+                    if go_left:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]

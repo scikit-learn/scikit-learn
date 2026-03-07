@@ -15,6 +15,7 @@ from sklearn.utils._random cimport our_rand_r
 # =============================================================================
 # Bitset for decision-tree functions
 # =============================================================================
+# TODO: should consolidate with HGBT submodule's bitset functions
 
 cdef inline void set_bit_fast(bitword_t* words, intp_t c) noexcept nogil:
     """

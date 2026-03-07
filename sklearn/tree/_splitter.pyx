@@ -22,7 +22,7 @@ of splitting strategies:
 
 from libc.string cimport memcpy
 
-from sklearn.utils._typedefs cimport int8_t, uint64_t
+from sklearn.utils._typedefs cimport int8_t
 from sklearn.tree._criterion cimport Criterion
 from sklearn.tree._partitioner cimport (
     FEATURE_THRESHOLD, DensePartitioner, SparsePartitioner,
@@ -41,10 +41,6 @@ ctypedef fused Partitioner:
 
 
 cdef float64_t INFINITY = np.inf
-
-# The maximum number of categorical set splits to check in brute-force
-# enumeration
-cdef uint64_t MAX_BRUTE_CATEGORIES = 128
 
 
 cdef inline void _init_split(SplitRecord* self, intp_t start_pos) noexcept nogil:
@@ -71,7 +67,6 @@ cdef class Splitter:
         float64_t min_weight_leaf,
         object random_state,
         const int8_t[:] monotonic_cst,
-        bint breiman_shortcut,
         *argv
     ):
         """
@@ -98,10 +93,6 @@ cdef class Splitter:
 
         monotonic_cst : const int8_t[:]
             Monotonicity constraints
-
-        breiman_shortcut : bool
-            Whether to use the breiman shortcut or not when possible.
-
         """
 
         self.criterion = criterion
@@ -116,9 +107,6 @@ cdef class Splitter:
         self.monotonic_cst = monotonic_cst
         self.with_monotonic_cst = monotonic_cst is not None
 
-        # Unused in random splitters
-        self.breiman_shortcut = breiman_shortcut
-
     def __getstate__(self):
         return {}
 
@@ -131,8 +119,7 @@ cdef class Splitter:
                              self.min_samples_leaf,
                              self.min_weight_leaf,
                              self.random_state,
-                             self.monotonic_cst,
-                             self.breiman_shortcut), self.__getstate__())
+                             self.monotonic_cst), self.__getstate__())
 
     cdef int init(
         self,
@@ -303,7 +290,6 @@ cdef inline int node_split_best(
     # Find the best split
     cdef intp_t start = splitter.start
     cdef intp_t end = splitter.end
-    cdef intp_t end_non_missing
     cdef intp_t n_missing = 0
     cdef bint has_missing = 0
     cdef intp_t n_searches
@@ -327,26 +313,7 @@ cdef inline int node_split_best(
     cdef float64_t lower_bound = parent_record.lower_bound
     cdef float64_t upper_bound = parent_record.upper_bound
 
-    # variables for categorical split handling
-    # cdef bint breiman_shortcut = splitter.breiman_shortcut
-    # # whether the feature is categorical
-    # cdef bint is_categorical
-    # # index through categories to exhaustively split all possible categories
-    # # exhaustion only supports up to 8 categories
-    # cdef uint64_t cat_idx
     cdef bint is_constant
-
-    # total number of categories per feature
-    # cdef uint64_t ncat_present
-    # index through unsigned ints
-    # cdef intp_t u_idx
-    # the bitset to store which category to split on
-    # cdef BITSET_INNER_DTYPE_C[:] categorical_split = splitter.categorical_split
-
-    # Offsets mapping local category indices to actual category indices.
-    # cdef intp_t[:] cat_offs = partitioner.cat_offset
-    # A storage of the sorted categories used in Breiman shortcut
-    # cdef intp_t[:] sorted_cat = partitioner.sorted_cat
 
     cdef intp_t f_i = n_features
     cdef intp_t f_j
