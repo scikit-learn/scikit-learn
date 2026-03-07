@@ -30,6 +30,7 @@ from sklearn.utils import (
 )
 from sklearn.utils._array_api import (
     _max_precision_float_dtype,
+    get_namespace,
     get_namespace_and_device,
     move_to,
     size,
@@ -231,7 +232,10 @@ def average_precision_score(
     0.77
     """
     xp, _, device = get_namespace_and_device(y_score)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
+    # To allow mixed string `y_true`/numeric `y_score` input, cannot move `y_true`
+    # until it has been converted to an integer (e.g., via `label_binarize`)
+    # Ensures `test_array_api_classification_mixed_string_numeric_input` passes.
+    sample_weight = move_to(sample_weight, xp=xp, device=device)
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
@@ -256,7 +260,8 @@ def average_precision_score(
         return float(max(0.0, -xp.sum(xp.diff(recall) * precision[:-1])))
 
     y_type = type_of_target(y_true, input_name="y_true")
-    present_labels = xp.unique_values(y_true)
+    xp_y_true, _ = get_namespace(y_true)
+    present_labels = xp_y_true.unique_values(y_true)
 
     if y_type == "binary":
         if present_labels.shape[0] == 2 and pos_label not in present_labels:
@@ -278,6 +283,7 @@ def average_precision_score(
                 "Do not set pos_label or set pos_label to 1."
             )
         y_true = label_binarize(y_true, classes=present_labels)
+        y_true = move_to(y_true, xp=xp, device=device)
         if not y_score.shape == y_true.shape:
             raise ValueError(
                 "`y_score` needs to be of shape `(n_samples, n_classes)`, since "
@@ -881,7 +887,7 @@ def _sort_inputs_and_compute_classification_thresholds(
     * Sorts `y_score`, `y_true` and `sample_weight` according to descending `y_score`
     * Computes thresholds i.e. indices where sorted `y_score` changes
     """
-    xp, _, device = get_namespace_and_device(y_true, y_score, sample_weight)
+    xp, _, device = get_namespace_and_device(y_score)
 
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = column_or_1d(y_true)
@@ -997,12 +1003,19 @@ def confusion_matrix_at_thresholds(
     >>> thresholds
     array([0.8 , 0.4 , 0.35, 0.1 ])
     """
-    xp, _, device = get_namespace_and_device(y_true, y_score, sample_weight)
-
     # Check to make sure y_true is valid
     y_type = type_of_target(y_true, input_name="y_true")
     if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
         raise ValueError("{0} format is not supported".format(y_type))
+
+    xp, _, device = get_namespace_and_device(y_score)
+    pos_label = _check_pos_label_consistency(pos_label, y_true)
+    xp_y_true, _ = get_namespace(y_true)
+    # Make `y_true` a boolean vector. Use `asarray` as `y_true` could be a list
+    y_true = xp_y_true.asarray(
+        xp_y_true.asarray(y_true) == pos_label, dtype=xp_y_true.int32
+    )
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     y_true, y_score, weight, threshold_idxs = (
         _sort_inputs_and_compute_classification_thresholds(
@@ -1011,10 +1024,6 @@ def confusion_matrix_at_thresholds(
     )
     if weight is None:
         weight = 1.0
-
-    # make y_true a boolean vector
-    pos_label = _check_pos_label_consistency(pos_label, y_true)
-    y_true = y_true == pos_label
 
     # accumulate the true positives with decreasing threshold
     max_float_dtype = _max_precision_float_dtype(xp, device)
@@ -1147,7 +1156,7 @@ def precision_recall_curve(
     >>> thresholds
     array([0.1 , 0.35, 0.4 , 0.8 ])
     """
-    xp, _, device = get_namespace_and_device(y_true, y_score)
+    xp, _, device = get_namespace_and_device(y_score)
 
     _, fps, _, tps, thresholds = confusion_matrix_at_thresholds(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
