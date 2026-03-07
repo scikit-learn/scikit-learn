@@ -26,6 +26,34 @@ from sklearn.utils.validation import (
 )
 
 
+def _get_integer_numpy_dtype(X):
+    """Return the numpy-equivalent integer dtype for pandas integer extension arrays.
+
+    When a DataFrame or Series is backed by a pyarrow or nullable integer
+    extension dtype, return the corresponding numpy dtype.  Returns ``None``
+    if X is not an integer extension type, or if not all columns share the
+    same integer-kind extension dtype.
+    """
+    try:
+        from pandas.api.types import is_integer_dtype
+    except ImportError:
+        return None
+
+    if hasattr(X, "dtypes"):
+        numpy_dtypes = set()
+        for dt in X.dtypes:
+            if not (hasattr(dt, "numpy_dtype") and is_integer_dtype(dt)):
+                return None
+            numpy_dtypes.add(dt.numpy_dtype)
+        return numpy_dtypes.pop() if len(numpy_dtypes) == 1 else None
+
+    dt = getattr(X, "dtype", None)
+    if dt is not None and hasattr(dt, "numpy_dtype") and is_integer_dtype(dt):
+        return dt.numpy_dtype
+
+    return None
+
+
 def _check_inputs_dtype(X, missing_values):
     if is_pandas_na(missing_values):
         # Allow using `pd.NA` as missing values to impute numerical arrays.
@@ -346,6 +374,13 @@ class SimpleImputer(_BaseImputer):
             # Use object dtype if fitted on object dtypes
             dtype = self._fit_dtype
 
+        # validate_data converts pyarrow/nullable integer extension arrays to
+        # float64 when dtype=None.  Save the numpy-equivalent integer dtype
+        # here so we can restore correct dtype tracking after conversion.
+        _original_integer_dtype = None
+        if in_fit and dtype is None:
+            _original_integer_dtype = _get_integer_numpy_dtype(X)
+
         if is_pandas_na(self.missing_values) or is_scalar_nan(self.missing_values):
             ensure_all_finite = "allow-nan"
         else:
@@ -374,8 +409,13 @@ class SimpleImputer(_BaseImputer):
                 raise ve
 
         if in_fit:
-            # Use the dtype seen in `fit` for non-`fit` conversion
-            self._fit_dtype = X.dtype
+            # Use the dtype seen in `fit` for non-`fit` conversion.
+            # If validate_data upcast an integer extension array to float64,
+            # restore the original numpy-equivalent integer dtype.
+            if _original_integer_dtype is not None and X.dtype.kind == "f":
+                self._fit_dtype = _original_integer_dtype
+            else:
+                self._fit_dtype = X.dtype
 
         _check_inputs_dtype(X, self.missing_values)
         if X.dtype.kind not in ("i", "u", "f", "O"):
@@ -444,6 +484,11 @@ class SimpleImputer(_BaseImputer):
         self : object
             Fitted estimator.
         """
+        # Save integer extension dtype before _validate_input converts it.
+        _original_integer_dtype = None
+        if self.strategy in ("most_frequent", "constant"):
+            _original_integer_dtype = _get_integer_numpy_dtype(X)
+
         X = self._validate_input(X, in_fit=True)
 
         # default fill_value is 0 for numerical input and "missing_value"
@@ -456,7 +501,10 @@ class SimpleImputer(_BaseImputer):
         else:
             fill_value = self.fill_value
 
-        self._fill_dtype = X.dtype
+        if _original_integer_dtype is not None and X.dtype.kind == "f":
+            self._fill_dtype = _original_integer_dtype
+        else:
+            self._fill_dtype = X.dtype
 
         if sp.issparse(X):
             self.statistics_ = self._sparse_fit(

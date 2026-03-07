@@ -1934,3 +1934,29 @@ def test_iterative_imputer_with_empty_features(strategy, X_test):
 
     assert X_train_drop_empty_features.shape[1] == X_test_drop_empty_features.shape[1]
     assert X_train_keep_empty_features.shape[1] == X_test_keep_empty_features.shape[1]
+
+
+@pytest.mark.parametrize("strategy", ["constant", "most_frequent"])
+def test_simple_imputer_pyarrow_integer_dtype(strategy):
+    """Non-regression test for gh-31373.
+
+    SimpleImputer should preserve the integer dtype when fitted on a DataFrame
+    backed by a pyarrow integer extension array, so that transform on a
+    numpy-backed DataFrame with the same integer dtype succeeds.
+    """
+    pd = pytest.importorskip("pandas")
+    pytest.importorskip("pyarrow")
+
+    X_pyarrow = pd.DataFrame({"a": pd.array([10, 20, 30], dtype="int32[pyarrow]")})
+    X_numpy = pd.DataFrame({"a": np.array([10, 20, 30], dtype=np.int32)})
+
+    imp = SimpleImputer(strategy=strategy, fill_value=0)
+    imp.fit(X_pyarrow)
+
+    assert imp._fit_dtype.kind == "i", (
+        f"Expected integer _fit_dtype after fitting on int32[pyarrow], "
+        f"got {imp._fit_dtype}"
+    )
+
+    result = imp.transform(X_numpy)
+    assert result.dtype.kind == "i"
