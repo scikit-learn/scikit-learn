@@ -235,3 +235,123 @@ def test_error_zero_variances(array_constructor):
     clf = NearestCentroid()
     with pytest.raises(ValueError, match="All features have zero variance"):
         clf.fit(X, y)
+
+
+def test_nearest_centroid_sample_weight():
+    """Test that NearestCentroid correctly applies sample_weight."""
+    # Toy dataset: 3 samples for class -1, 3 for class 1
+    X_data = np.array(
+        [[-2.0, -1.0], [-1.0, -1.0], [-1.0, -2.0], [1.0, 1.0], [1.0, 2.0], [2.0, 1.0]]
+    )
+    y_data = np.array([-1, -1, -1, 1, 1, 1])
+
+    # -- Test 1: Uniform weights == unweighted --
+    clf_no_weight = NearestCentroid()
+    clf_no_weight.fit(X_data, y_data)
+
+    clf_uniform = NearestCentroid()
+    clf_uniform.fit(X_data, y_data, sample_weight=np.ones(6))
+
+    np.testing.assert_array_almost_equal(
+        clf_no_weight.centroids_, clf_uniform.centroids_
+    )
+
+    # -- Test 2: Heavily weight one extreme sample in class 1 --
+    # Extreme sample: [2, 1] with weight 10. Other samples in class 1: weight 1.
+    # Weighted mean for class 1 should shift toward [2, 1].
+    weights_biased = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 10.0])
+    clf_biased = NearestCentroid()
+    clf_biased.fit(X_data, y_data, sample_weight=weights_biased)
+
+    # The class 1 centroid should shift toward [2, 1] on both coordinates.
+    # x-coordinate increases (toward 2), y-coordinate decreases (toward 1).
+    assert (
+        clf_biased.centroids_[1, 0] > clf_no_weight.centroids_[1, 0]
+    ), "Centroid x for class 1 should shift right with high weight on [2,1]"
+    assert (
+        clf_biased.centroids_[1, 1] < clf_no_weight.centroids_[1, 1]
+    ), "Centroid y for class 1 should shift down with high weight on [2,1]"
+
+    # -- Test 3: Zero-weight class raises ValueError --
+    weights_zero_class = np.array([1.0, 1.0, 1.0, 0.0, 0.0, 0.0])
+    clf_zero = NearestCentroid()
+    with pytest.raises(ValueError, match="zero total sample weight"):
+        clf_zero.fit(X_data, y_data, sample_weight=weights_zero_class)
+
+    # -- Test 4: Sparse input with sample_weight gives same result as dense --
+    for csr_container in CSR_CONTAINERS:
+        X_sparse = csr_container(X_data)
+        clf_dense = NearestCentroid()
+        clf_dense.fit(X_data, y_data, sample_weight=weights_biased)
+
+        clf_sparse = NearestCentroid()
+        clf_sparse.fit(X_sparse, y_data, sample_weight=weights_biased)
+
+        np.testing.assert_array_almost_equal(
+            clf_dense.centroids_, clf_sparse.centroids_, decimal=5
+        )
+
+
+def test_nearest_centroid_weighted_shrinkage():
+    """Test that shrinkage works correctly with sample_weight.
+
+    A heavily weighted outlier should pull the shrunken centroid noticeably
+    compared to the uniform-weight case, confirming the nk/total_weight
+    m-parameter works end-to-end under shrinkage.
+    """
+    # Dataset matches test_shrinkage_correct for easy cross-referencing
+    X_shrink = np.array(
+        [[0.0, 1.0], [1.0, 0.0], [1.0, 1.0], [2.0, 0.0], [6.0, 8.0]]
+    )
+    y_shrink = np.array([1, 1, 2, 2, 2])
+
+    # Uniform weights must reproduce unweighted result
+    clf_no_weight = NearestCentroid(shrink_threshold=0.1)
+    clf_no_weight.fit(X_shrink, y_shrink)
+
+    clf_uniform = NearestCentroid(shrink_threshold=0.1)
+    clf_uniform.fit(X_shrink, y_shrink, sample_weight=np.ones(5))
+
+    np.testing.assert_allclose(
+        clf_uniform.centroids_, clf_no_weight.centroids_, rtol=1e-5
+    )
+
+    # Heavily weight the outlier [6, 8] in class 2 (last sample, index 4).
+    # The shrunken centroid for class 2 should shift toward [6, 8].
+    weights_outlier = np.array([1.0, 1.0, 1.0, 1.0, 20.0])
+    clf_weighted = NearestCentroid(shrink_threshold=0.1)
+    clf_weighted.fit(X_shrink, y_shrink, sample_weight=weights_outlier)
+
+    # Class index for label 2 is 1 (LabelEncoder sorts: 1 < 2)
+    assert clf_weighted.centroids_[1, 0] > clf_uniform.centroids_[1, 0], (
+        "Weighted shrunken centroid x for class 2 should move toward outlier [6,8]"
+    )
+    assert clf_weighted.centroids_[1, 1] > clf_uniform.centroids_[1, 1], (
+        "Weighted shrunken centroid y for class 2 should move toward outlier [6,8]"
+    )
+
+
+def test_nearest_centroid_denominator_guard():
+    """Test the within-class variance denominator guard.
+
+    The pooled variance estimate (total_weight - n_classes) must be positive.
+    This guard fires for degenerate cases like one unit-weight sample per class.
+    """
+    # Case 1: Exactly one unit-weight sample per class (total_weight = 2, n_classes = 2)
+    # -> denominator = 0 -> should raise.
+    X = np.array([[0.0, 0.0], [1.0, 1.0]])
+    y = np.array([0, 1])
+
+    clf = NearestCentroid(shrink_threshold=0.1)
+    with pytest.raises(ValueError, match="effective degrees of freedom"):
+        clf.fit(X, y, sample_weight=np.ones(2))
+
+    # Case 2: Fractional weights summing to <= n_classes (total_weight = 1.0, n_classes = 2)
+    # -> denominator = -1.0 -> should raise.
+    with pytest.raises(ValueError, match="effective degrees of freedom"):
+        clf.fit(X, y, sample_weight=np.array([0.5, 0.5]))
+
+    # Case 3: Positive path. total_weight > n_classes (total_weight = 2.1, n_classes = 2)
+    # -> denominator = 0.1 -> should pass.
+    clf.fit(X, y, sample_weight=np.array([1.05, 1.05]))
+    assert hasattr(clf, "centroids_")

@@ -12,6 +12,7 @@ from sklearn.utils.sparsefuncs import (
     _implicit_column_offset,
     count_nonzero,
     csc_median_axis_0,
+    csc_weighted_median_axis_0,
     incr_mean_variance_axis,
     inplace_column_scale,
     inplace_row_scale,
@@ -1052,3 +1053,50 @@ def test_sparse_matmul_to_dense(
     assert_allclose(result, a_dense @ b_dense, atol=1e-7)
     if not out_is_None:
         assert_allclose(out, result, atol=1e-7)
+
+
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_csc_weighted_median_axis_0(csc_container):
+    """Test that csc_weighted_median_axis_0 computes correct weighted medians."""
+    # Dense equivalent:
+    # X = [[1, 0, 3],
+    #      [0, 2, 4],
+    #      [5, 6, 0]]
+    X_dense = np.array([[1.0, 0.0, 3.0], [0.0, 2.0, 4.0], [5.0, 6.0, 0.0]])
+    X_csc = csc_container(X_dense)
+
+    # With uniform weights, result should equal unweighted median
+    weights_uniform = np.ones(3)
+    result_uniform = csc_weighted_median_axis_0(X_csc, weights_uniform)
+    expected_uniform = np.median(X_dense, axis=0)
+    np.testing.assert_array_almost_equal(result_uniform, expected_uniform)
+
+    # With non-uniform weights — heavily weight the first row (sample 0)
+    # col 0: values [1, 0, 5] with weights [10, 1, 1] -> weighted median is 1
+    # col 1: values [0, 2, 6] with weights [10, 1, 1] -> weighted median is 0
+    # col 2: values [3, 4, 0] with weights [10, 1, 1] -> weighted median is 3
+    weights_nonuniform = np.array([10.0, 1.0, 1.0])
+    result_nonuniform = csc_weighted_median_axis_0(X_csc, weights_nonuniform)
+    expected_nonuniform = np.array([1.0, 0.0, 3.0])
+    np.testing.assert_array_almost_equal(result_nonuniform, expected_nonuniform)
+
+    # Test with a fully-dense column (no implicit zeros) — exercises the
+    # n_zeros == 0 branch in _get_weighted_median.
+    # X2 = [[2, 1],   <- col 0 all non-zero, col 1 all non-zero
+    #        [4, 3],
+    #        [6, 5]]
+    X2_dense = np.array([[2.0, 1.0], [4.0, 3.0], [6.0, 5.0]])
+    X2_csc = csc_container(X2_dense)
+
+    # Uniform weights: standard median of each column
+    result_dense_uniform = csc_weighted_median_axis_0(X2_csc, np.ones(3))
+    expected_dense_uniform = np.median(X2_dense, axis=0)
+    np.testing.assert_array_almost_equal(result_dense_uniform, expected_dense_uniform)
+
+    # Biased weights: heavily weight the last row [6, 5]
+    # col 0: weighted median of [2, 4, 6] with [1, 1, 10] -> 6
+    # col 1: weighted median of [1, 3, 5] with [1, 1, 10] -> 5
+    weights_dense_biased = np.array([1.0, 1.0, 10.0])
+    result_dense_biased = csc_weighted_median_axis_0(X2_csc, weights_dense_biased)
+    expected_dense_biased = np.array([6.0, 5.0])
+    np.testing.assert_array_almost_equal(result_dense_biased, expected_dense_biased)
