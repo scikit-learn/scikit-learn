@@ -1,0 +1,6 @@
+- :class:`neighbors.NearestCentroid` now supports
+  :meth:`~neighbors.NearestCentroid.partial_fit` for incremental/out-of-core
+  learning, :meth:`~neighbors.NearestCentroid.predict_proba`,
+  :meth:`~neighbors.NearestCentroid.decision_function`, and a ``priors``
+  parameter to handle class imbalance. Fixes :issue:`12952`.
+  By :user:`lalakiya <lalakiya>`.
