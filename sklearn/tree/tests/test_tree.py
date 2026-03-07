@@ -19,6 +19,9 @@ from numpy.testing import assert_allclose
 
 from sklearn import clone, datasets, tree
 from sklearn.dummy import DummyRegressor
+from sklearn.ensemble import (
+    HistGradientBoostingRegressor,
+)
 from sklearn.exceptions import NotFittedError
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import (
@@ -36,9 +39,6 @@ from sklearn.tree import (
     DecisionTreeRegressor,
     ExtraTreeClassifier,
     ExtraTreeRegressor,
-)
-from sklearn.ensemble import (
-    HistGradientBoostingRegressor,
 )
 from sklearn.tree._classes import (
     CRITERIA_CLF,

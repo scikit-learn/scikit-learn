@@ -619,7 +619,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             Input samples.
         is_categorical : ndarray of shape (n_features,), dtype=bool
             Mask of categorical columns in ``X``.
-        n_categories_in_feature : ndarray of shape (n_features,), dtype=intp, default=None
+        n_categories_in_feature : ndarray of shape (n_features,),
+                dtype=intp, default=None
             Per-feature upper bounds learned at fit time. If provided, values in
             categorical feature ``j`` must be in
             ``[0, n_categories_in_feature[j] - 1]``.
