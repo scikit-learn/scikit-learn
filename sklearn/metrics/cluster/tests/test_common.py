@@ -9,6 +9,7 @@ from sklearn.metrics.cluster import (
     adjusted_rand_score,
     calinski_harabasz_score,
     completeness_score,
+    contingency_matrix,
     davies_bouldin_score,
     fowlkes_mallows_score,
     homogeneity_score,
@@ -253,6 +254,20 @@ def check_array_api_unsupervised_metric(metric, array_namespace, device, dtype_n
     )
 
 
+def check_array_api_supervised_metric(metric, array_namespace, device, int_dtype):
+    labels_true = np.array([0, 0, 1, 1, 2, 2], dtype=int_dtype)
+    labels_pred = np.array([1, 0, 2, 1, 0, 2], dtype=int_dtype)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        None,
+        labels_true,
+        labels_pred,
+    )
+
+
 array_api_metric_checkers = {
     calinski_harabasz_score: [
         check_array_api_unsupervised_metric,
@@ -260,6 +275,9 @@ array_api_metric_checkers = {
     davies_bouldin_score: [
         check_array_api_unsupervised_metric,
     ],
+}
+array_api_metric_checkers_supervised = {
+    contingency_matrix: [check_array_api_supervised_metric]
 }
 
 
@@ -277,3 +295,19 @@ def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers)
 @pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
 def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):
     check_func(metric, array_namespace, device, dtype_name)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, _",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize(
+    "metric, check_func",
+    yield_metric_checker_combinations(array_api_metric_checkers_supervised),
+)
+def test_array_api_compliance_supervised(
+    metric, array_namespace, device, _, check_func
+):
+    for int_dtype in ["int32", "int64"]:
+        check_func(metric, array_namespace, device, int_dtype)
