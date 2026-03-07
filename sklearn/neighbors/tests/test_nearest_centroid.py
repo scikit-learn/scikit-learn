@@ -265,12 +265,12 @@ def test_nearest_centroid_sample_weight():
 
     # The class 1 centroid should shift toward [2, 1] on both coordinates.
     # x-coordinate increases (toward 2), y-coordinate decreases (toward 1).
-    assert (
-        clf_biased.centroids_[1, 0] > clf_no_weight.centroids_[1, 0]
-    ), "Centroid x for class 1 should shift right with high weight on [2,1]"
-    assert (
-        clf_biased.centroids_[1, 1] < clf_no_weight.centroids_[1, 1]
-    ), "Centroid y for class 1 should shift down with high weight on [2,1]"
+    assert clf_biased.centroids_[1, 0] > clf_no_weight.centroids_[1, 0], (
+        "Centroid x for class 1 should shift right with high weight on [2,1]"
+    )
+    assert clf_biased.centroids_[1, 1] < clf_no_weight.centroids_[1, 1], (
+        "Centroid y for class 1 should shift down with high weight on [2,1]"
+    )
 
     # -- Test 3: Zero-weight class raises ValueError --
     weights_zero_class = np.array([1.0, 1.0, 1.0, 0.0, 0.0, 0.0])
@@ -300,9 +300,7 @@ def test_nearest_centroid_weighted_shrinkage():
     m-parameter works end-to-end under shrinkage.
     """
     # Dataset matches test_shrinkage_correct for easy cross-referencing
-    X_shrink = np.array(
-        [[0.0, 1.0], [1.0, 0.0], [1.0, 1.0], [2.0, 0.0], [6.0, 8.0]]
-    )
+    X_shrink = np.array([[0.0, 1.0], [1.0, 0.0], [1.0, 1.0], [2.0, 0.0], [6.0, 8.0]])
     y_shrink = np.array([1, 1, 2, 2, 2])
 
     # Uniform weights must reproduce unweighted result
@@ -346,12 +344,12 @@ def test_nearest_centroid_denominator_guard():
     with pytest.raises(ValueError, match="effective degrees of freedom"):
         clf.fit(X, y, sample_weight=np.ones(2))
 
-    # Case 2: Fractional weights summing to <= n_classes (total_weight = 1.0, n_classes = 2)
+    # Case 2: Fractional weights sum <= n_classes (total_weight = 1.0, n_classes = 2)
     # -> denominator = -1.0 -> should raise.
     with pytest.raises(ValueError, match="effective degrees of freedom"):
         clf.fit(X, y, sample_weight=np.array([0.5, 0.5]))
 
-    # Case 3: Positive path. total_weight > n_classes (total_weight = 2.1, n_classes = 2)
+    # Case 3: Positive path. total_weight > n_classes (total_weight = 2.1, n=2)
     # -> denominator = 0.1 -> should pass.
     clf.fit(X, y, sample_weight=np.array([1.05, 1.05]))
     assert hasattr(clf, "centroids_")

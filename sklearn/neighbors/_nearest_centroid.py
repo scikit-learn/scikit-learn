@@ -21,7 +21,11 @@ from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.sparsefuncs import csc_weighted_median_axis_0
 from sklearn.utils.stats import _weighted_percentile
-from sklearn.utils.validation import _check_sample_weight, check_is_fitted, validate_data
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
+)
 
 
 class NearestCentroid(
@@ -281,17 +285,14 @@ class NearestCentroid(
         # Dividing by (total_weight - n_classes) is the weighted analogue of
         # the original (n_samples - n_classes) denominator, and reduces to it
         # exactly when all sample_weight values equal 1.
-        weighted_sq_sum = np.sum(
-            deviations_sq * sample_weight[:, np.newaxis], axis=0
-        )
+        weighted_sq_sum = np.sum(deviations_sq * sample_weight[:, np.newaxis], axis=0)
 
         # Guard against a non-positive denominator.
         if total_weight - n_classes <= 0:
             raise ValueError(
                 "The effective degrees of freedom (total_weight - n_classes = "
                 "%g - %d = %g) must be positive. Add more samples or increase "
-                "sample weights."
-                % (total_weight, n_classes, total_weight - n_classes)
+                "sample weights." % (total_weight, n_classes, total_weight - n_classes)
             )
 
         self.within_class_std_dev_ = np.sqrt(

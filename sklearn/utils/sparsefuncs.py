@@ -864,10 +864,7 @@ def _get_weighted_median(data, weights, n_zeros, sum_w_zeros):
     median_idx = min(median_idx, len(full_data) - 1)
 
     # If cumulative weight at median_idx exactly equals half, average with the next
-    if (
-        median_idx < len(cum_weights) - 1
-        and cum_weights[median_idx] == half
-    ):
+    if median_idx < len(cum_weights) - 1 and cum_weights[median_idx] == half:
         return (full_data[median_idx] + full_data[median_idx + 1]) / 2.0
 
     return full_data[median_idx]
