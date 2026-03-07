@@ -163,7 +163,7 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         "algorithm": [StrOptions({"arpack", "randomized"})],
         "n_iter": [Interval(Integral, 0, None, closed="left")],
         "n_oversamples": [Interval(Integral, 1, None, closed="left")],
-        "power_iteration_normalizer": [StrOptions({"auto", "OR", "LU", "none"})],
+        "power_iteration_normalizer": [StrOptions({"auto", "QR", "LU", "none"})],
         "random_state": ["random_state"],
         "tol": [Interval(Real, 0, None, closed="left")],
     }
