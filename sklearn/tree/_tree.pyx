@@ -835,14 +835,13 @@ cdef class Tree:
             self.n_classes[k] = n_classes[k]
 
         # store the number of categories per feature
+        # Note: it is expected to be passed in with a defined number
+        #  per feature via the Python caller. So this array will never be
+        #  "None".
         safe_realloc(&self.n_categories, n_features)
-        if n_categories is None:
-            for f in range(n_features):
-                self.n_categories[f] = False
-        else:
-            n_categories = n_categories.astype(np.intp)
-            for f in range(n_features):
-                self.n_categories[f] = n_categories[f]
+        n_categories = n_categories.astype(np.intp)
+        for f in range(n_features):
+            self.n_categories[f] = n_categories[f]
 
         # Inner structures
         self.max_depth = 0
