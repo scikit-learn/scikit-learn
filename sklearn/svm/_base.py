@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
-
+from collections import Counter
+from .utils.multiclass import check_classification_targets
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
@@ -336,9 +337,21 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             )
 
     def _dense_fit(self, X, y, sample_weight, solver_type, kernel, random_seed):
+        # Move the nu feasibility check BEFORE the kernel computation block
+        if hasattr(self, "nu"):
+            check_classification_targets(y)
+            counts = Counter(y)
+            if len(counts) >= 2:
+                n_samples = len(y)
+                min_class_count = min(counts.values())
+                limit = (2.0 * min_class_count) / n_samples
+                if self.nu > limit:
+                    raise ValueError(
+                        f"specified nu is unfeasible. It should be at most {limit:.6f}"
+                    )
+
         if callable(self.kernel):
-            # you must store a reference to X to compute the kernel in predict
-            # TODO: add keyword copy to copy on demand
+            # Expense kernel computation follows here
             self.__Xfit = X
             X = self._compute_kernel(X)
 
@@ -346,6 +359,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 raise ValueError("X.shape[0] should be equal to X.shape[1]")
 
         libsvm.set_verbosity_wrap(self.verbose)
+        
+        # ... (rest of the existing libsvm.fit call)
 
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
@@ -383,12 +398,21 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         self._warn_from_fit_status()
 
     def _sparse_fit(self, X, y, sample_weight, solver_type, kernel, random_seed):
+        if hasattr(self, "nu"):
+            check_classification_targets(y)
+            counts = Counter(y)
+            if len(counts) >= 2:
+                n_samples = len(y)
+                min_count = min(counts.values())
+                limit = (2.0 * min_count) / n_samples
+                if self.nu > limit:
+                    raise ValueError(
+                        f"specified nu is unfeasible. It should be at most {limit:.6f}"
+                    )
+
         X.data = np.asarray(X.data, dtype=np.float64, order="C")
         X.sort_indices()
-
-        kernel_type = self._sparse_kernels.index(kernel)
-
-        libsvm_sparse.set_verbosity_wrap(self.verbose)
+        
 
         (
             self.support_,
