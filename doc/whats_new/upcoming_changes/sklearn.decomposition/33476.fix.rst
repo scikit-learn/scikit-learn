@@ -1,0 +1,6 @@
+- :class:`decomposition.TruncatedSVD` now correctly accepts ``'QR'`` as a
+  valid value for the ``power_iteration_normalizer`` parameter, fixing a bug
+  where the parameter constraint used ``'OR'`` instead of ``'QR'``, causing
+  an :class:`~sklearn.utils._param_validation.InvalidParameterError` when
+  passing the documented value.
+  By :user:`YOUR_GITHUB_USERNAME <YOUR_GITHUB_USERNAME>`.

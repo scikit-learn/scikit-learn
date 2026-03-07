@@ -210,3 +210,16 @@ def test_fit_transform(X_sparse, algorithm, tol, kind):
     X_transformed_1 = svd.fit_transform(X)
     X_transformed_2 = svd.fit(X).transform(X)
     assert_allclose(X_transformed_1, X_transformed_2)
+
+
+@pytest.mark.parametrize("power_iteration_normalizer", ["auto", "QR", "LU", "none"])
+def test_power_iteration_normalizer(X_sparse, power_iteration_normalizer):
+    """Check that all valid power_iteration_normalizer values work with randomized."""
+    svd = TruncatedSVD(
+        n_components=5,
+        algorithm="randomized",
+        power_iteration_normalizer=power_iteration_normalizer,
+        random_state=42,
+    )
+    X_transformed = svd.fit_transform(X_sparse)
+    assert X_transformed.shape == (X_sparse.shape[0], 5)
