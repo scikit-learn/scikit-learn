@@ -6,6 +6,7 @@
 import copy
 import functools
 import inspect
+import numbers
 import platform
 import re
 import warnings
@@ -21,6 +22,7 @@ from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import validate_parameter_constraints
 from sklearn.utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
 from sklearn.utils._repr_html.estimator import estimator_html_repr
+from sklearn.utils._repr_html.fitted_attributes import AttrsDict
 from sklearn.utils._repr_html.params import ParamsDict
 from sklearn.utils._set_output import _SetOutputMixin
 from sklearn.utils._tags import (
@@ -340,6 +342,42 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         return ParamsDict(
             params=params,
             non_default=tuple(non_default_params),
+            estimator_class=self.__class__,
+            doc_link=doc_link,
+        )
+
+    def _get_fitted_attr_html(self, doc_link=""):
+        """Get fitted attributes of the estimator."""
+
+        fitted_attr = {}
+        for name, value in inspect.getmembers(self):
+            if len(fitted_attr) > 100:
+                fitted_attr["..."] = {
+                    "type_name": "...",
+                    "value": "",
+                }
+                break
+            if name.startswith("_") or not name.endswith("_"):
+                continue
+            if (
+                hasattr(value, "shape")
+                and hasattr(value, "dtype")
+                and not isinstance(value, numbers.Number)
+            ):
+                fitted_attr[name] = {
+                    "type_name": type(value).__name__,
+                    "shape": value.shape,
+                    "dtype": value.dtype,
+                    "value": value,
+                }
+
+            else:
+                fitted_attr[name] = {
+                    "type_name": type(value).__name__,
+                    "value": value,
+                }
+        return AttrsDict(
+            fitted_attrs=fitted_attr,
             estimator_class=self.__class__,
             doc_link=doc_link,
         )

@@ -1006,6 +1006,21 @@ def test_get_params_html():
     assert est._get_params_html().non_default == ("empty",)
 
 
+def test_get_fitted_attr_html():
+    """Check the behaviour of the `_get_fitted_attr_html` method."""
+    X = np.array([[-1, -1], [-2, -1], [-3, -2]])
+    pca = PCA().fit(X)
+    pca._not_a_fitted_attr = "x"
+
+    fitted_attr_html = pca._get_fitted_attr_html()
+    assert fitted_attr_html["n_features_in_"] == {"type_name": "int", "value": 2}
+    assert pca._not_a_fitted_attr not in fitted_attr_html
+    assert len(fitted_attr_html) == 9
+    assert fitted_attr_html["components_"]["type_name"] == ("ndarray")
+    assert fitted_attr_html["components_"]["shape"] == (2, 2)
+    assert np.allclose(fitted_attr_html["components_"]["value"], pca.components_)
+
+
 def make_estimator_with_param(default_value):
     class DynamicEstimator(BaseEstimator):
         def __init__(self, param=default_value):
