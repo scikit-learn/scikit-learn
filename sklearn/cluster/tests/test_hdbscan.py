@@ -359,6 +359,31 @@ def test_hdbscan_allow_single_cluster_with_epsilon():
     assert counts[unique_labels == -1] == 2
 
 
+def test_hdbscan_cluster_selection_epsilon():
+    """
+    Test that HDBSCAN works correctly with cluster_selection_epsilon.
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/33219.
+    """
+    rng = np.random.default_rng(0)
+
+    X = np.vstack([
+        rng.normal(0, 0.2, size=(20, 2)),
+        rng.normal(1, 0.2, size=(21, 2)),
+    ])
+
+    # This used to raise TypeError due to array vs scalar comparison
+    hdb = HDBSCAN(
+        min_cluster_size=5,
+        min_samples=1,
+        copy=True,
+        allow_single_cluster=True,
+        cluster_selection_epsilon=1,
+    )
+    labels = hdb.fit_predict(X)
+    # Basic sanity check - should produce some labels
+    assert len(labels) == len(X)
+
+
 def test_hdbscan_better_than_dbscan():
     """
     Validate that HDBSCAN can properly cluster this difficult synthetic
