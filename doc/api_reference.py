@@ -744,6 +744,7 @@ API_REFERENCE = {
                     "jaccard_score",
                     "log_loss",
                     "matthews_corrcoef",
+                    "metric_at_thresholds",
                     "multilabel_confusion_matrix",
                     "ndcg_score",
                     "precision_recall_curve",
