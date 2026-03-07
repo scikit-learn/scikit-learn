@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
 from numbers import Real
 
 import numpy as np
@@ -130,12 +131,21 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         applies if `cv` is an int or `None`. If `cv` is a cross-validation generator or
         an iterable, `shuffle` is ignored.
 
+        .. deprecated:: 1.9
+            `shuffle` is deprecated and will be removed in 1.11. Pass a cross-validation
+            generator as `cv` argument to specify the shuffling instead.
+
     random_state : int, RandomState instance or None, default=None
         When `shuffle` is True, `random_state` affects the ordering of the
         indices, which controls the randomness of each fold. Otherwise, this
         parameter has no effect.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+
+        .. deprecated:: 1.9
+            `random_state` is deprecated and will be removed in 1.11. Pass a
+            cross-validation generator as `cv` argument to specify the random state of
+            the shuffling instead.
 
     Attributes
     ----------
@@ -221,18 +231,19 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         "target_type": [StrOptions({"auto", "continuous", "binary", "multiclass"})],
         "smooth": [StrOptions({"auto"}), Interval(Real, 0, None, closed="left")],
         "cv": ["cv_object"],
-        "shuffle": ["boolean"],
-        "random_state": ["random_state"],
+        "shuffle": ["boolean", StrOptions({"deprecated"})],
+        "random_state": ["random_state", StrOptions({"deprecated"})],
     }
 
+    # TODO(1.11) remove `shuffle` and `random_state` params, which had been deprecated
     def __init__(
         self,
         categories="auto",
         target_type="auto",
         smooth="auto",
         cv=5,
-        shuffle=True,
-        random_state=None,
+        shuffle="deprecated",
+        random_state="deprecated",
     ):
         self.categories = categories
         self.smooth = smooth
@@ -325,12 +336,29 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
 
+        # TODO(1.11): remove code block
+        if self.shuffle != "deprecated" or self.random_state != "deprecated":
+            warnings.warn(
+                "`TargetEncoder.shuffle` and `TargetEncoder.random_state` are "
+                "deprecated in version 1.9 and will be removed in version 1.11. Pass a "
+                "cross-validation generator as `cv` argument to specify the shuffling "
+                "behaviour instead.",
+                FutureWarning,
+            )
+        shuffle = True if self.shuffle == "deprecated" else self.shuffle
+        cv_kwargs = {"shuffle": shuffle}
+        if self.random_state != "deprecated":
+            cv_kwargs["random_state"] = self.random_state
+
+        # TODO(1.11): pass shuffle=True to keep backwards compatibility for default
+        # inputs (will be ignored in `check_cv` if a cv object is passed);
+        # `random_state` naturally defaults to `None` in `check_cv` and doesn't need to
+        # be passed here
         cv = check_cv(
             self.cv,
             y,
             classifier=self.target_type_ != "continuous",
-            shuffle=self.shuffle,
-            random_state=self.random_state,
+            **cv_kwargs,
         )
 
         if _routing_enabled():
