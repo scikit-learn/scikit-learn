@@ -155,6 +155,7 @@ def test_function_docstring(function_name, request):
         raise ValueError(msg)
 
 
+@pytest.mark.no_check_spmatrix  # no __module__ for check_spmatrix classes
 @pytest.mark.parametrize("Klass, method", get_all_methods())
 def test_docstring(Klass, method, request):
     base_import_path = Klass.__module__

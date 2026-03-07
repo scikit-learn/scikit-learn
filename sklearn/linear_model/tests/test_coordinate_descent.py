@@ -87,7 +87,8 @@ def test_set_order_sparse(order, input_order, coo_container):
     assert sparse.issparse(y2) and y2.format == format
 
 
-def test_cython_solver_equivalence():
+@pytest.mark.parametrize("sparse_csc_type", [sparse.csc_array, sparse.csc_matrix])
+def test_cython_solver_equivalence(sparse_csc_type):
     """Test that all 3 Cython solvers for 1-d targets give same results."""
     X, y = make_regression()
     X_mean = X.mean(axis=0)
@@ -137,7 +138,7 @@ def test_cython_solver_equivalence():
     assert_allclose(coef_2, coef_1)
 
     # Sparse
-    Xs = sparse.csc_matrix(X)
+    Xs = sparse_csc_type(X)
     for do_screening in [True, False]:
         coef_3 = zc()
         cd_fast.sparse_enet_coordinate_descent(
@@ -837,11 +838,12 @@ def test_elasticnet_precompute_gram():
     assert_allclose(clf1.coef_, clf2.coef_)
 
 
+@pytest.mark.parametrize("sparse_csr_type", [sparse.csr_array, sparse.csr_matrix])
 @pytest.mark.parametrize("sparse_X", [True, False])
-def test_warm_start_convergence(sparse_X):
+def test_warm_start_convergence(sparse_X, sparse_csr_type):
     X, y, _, _ = build_dataset()
     if sparse_X:
-        X = sparse.csr_matrix(X)
+        X = sparse_csr_type(X)
     model = ElasticNet(alpha=1e-3, tol=1e-3).fit(X, y)
     n_iter_reference = model.n_iter_
 
@@ -1490,7 +1492,7 @@ def test_enet_cv_sample_weight_consistency(
         assert_allclose(reg.intercept_, intercept)
 
 
-@pytest.mark.parametrize("X_is_sparse", [False, True])
+@pytest.mark.parametrize("X_is_sparse", [False, sparse.csc_array, sparse.csc_matrix])
 @pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("positive", [False, True])
 @pytest.mark.parametrize("sample_weight", [np.array([1, 10, 1, 10]), None])
@@ -1501,7 +1503,7 @@ def test_enet_alpha_max(X_is_sparse, fit_intercept, positive, sample_weight):
     params = dict(fit_intercept=fit_intercept, positive=positive)
 
     if X_is_sparse:
-        X = sparse.csc_matrix(X)
+        X = X_is_sparse(X)
     # Test alpha_max makes coefs zero.
     reg = ElasticNetCV(alphas=1, cv=2, eps=1, **params)
     reg.fit(X, y, sample_weight=sample_weight)

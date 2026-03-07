@@ -15,7 +15,8 @@ from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import MissingValues, StrOptions
-from sklearn.utils.fixes import _mode
+from sklearn.utils._sparse import _align_api_if_sparse
+from sklearn.utils.fixes import SCIPY_VERSION_BELOW_1_12, _mode
 from sklearn.utils.sparsefuncs import _get_median
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
@@ -152,7 +153,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
                 "implementation."
             )
 
-        return hstack((X_imputed, X_indicator))
+        return _align_api_if_sparse(hstack((X_imputed, X_indicator)))
 
     def _concatenate_indicator_feature_names_out(self, names, input_features):
         if not self.add_indicator:
@@ -483,9 +484,14 @@ class SimpleImputer(_BaseImputer):
             statistics.fill(fill_value)
 
             if not self.keep_empty_features:
-                for i in range(missing_mask.shape[1]):
-                    if all(missing_mask[:, i].data):
-                        statistics[i] = np.nan
+                if SCIPY_VERSION_BELOW_1_12:
+                    for i in range(missing_mask.shape[1]):
+                        if all(missing_mask[:, [i]].data):
+                            statistics[i] = np.nan
+                else:
+                    for i in range(missing_mask.shape[1]):
+                        if all(missing_mask[:, i].data):
+                            statistics[i] = np.nan
 
         else:
             for i in range(X.shape[1]):
@@ -929,7 +935,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
                 n_missing = imputer_mask.sum(axis=0)
 
             if self.sparse is True:
-                imputer_mask = sp.csc_matrix(imputer_mask)
+                imputer_mask = _align_api_if_sparse(sp.csc_array(imputer_mask))
 
         if self.features == "all":
             features_indices = np.arange(X.shape[1])
