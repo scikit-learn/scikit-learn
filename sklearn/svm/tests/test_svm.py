@@ -1,11 +1,5 @@
-import pytest
 import numpy as np
-from sklearn.svm import NuSVC
-"""
-Testing for Support Vector Machine module (sklearn.svm)
-
-TODO: remove hard coded numerical results when possible
-"""
+import pytest
 from numpy.testing import (
     assert_allclose,
     assert_almost_equal,
@@ -29,6 +23,7 @@ from sklearn.svm import (  # type: ignore[attr-defined]
     SVR,
     LinearSVC,
     LinearSVR,
+    NuSVC,
     NuSVR,
     OneClassSVM,
     _libsvm,
@@ -38,6 +33,11 @@ from sklearn.utils import check_random_state, shuffle
 from sklearn.utils.fixes import _IS_32BIT, CSR_CONTAINERS, LIL_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
+"""
+Testing for Support Vector Machine module (sklearn.svm)
+
+TODO: remove hard coded numerical results when possible
+"""
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 Y = [1, 1, 1, 2, 2, 2]
@@ -1525,15 +1525,16 @@ def test_probability_raises_futurewarning(Estimator, name, probability):
     with pytest.warns(FutureWarning, match="probability.+parameter.+deprecated"):
         Estimator(probability=probability).fit(X, y)
 
+
 def test_nusvc_early_nu_feasibility_error():
-    """Check that NuSVC raises ValueError for unfeasible nu before kernel computation."""
+    """Check NuSVC raises ValueError for unfeasible nu early."""
     X = np.array([[0, 0], [1, 1], [2, 2]])
     y = np.array([0, 1, 1])
-    
+
     # nu limit is (2 * 1) / 3 = 0.666...
     # nu = 0.9 should trigger an immediate ValueError
     clf = NuSVC(nu=0.9)
-    
+
     msg = "specified nu is unfeasible. It should be at most 0.666667"
     with pytest.raises(ValueError, match=msg):
         clf.fit(X, y)

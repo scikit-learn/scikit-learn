@@ -1,9 +1,8 @@
-from collections import Counter
-from .utils.multiclass import check_classification_targets
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 import warnings
 from abc import ABCMeta, abstractmethod
+from collections import Counter
 from numbers import Integral, Real
 
 import numpy as np
@@ -359,7 +358,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 raise ValueError("X.shape[0] should be equal to X.shape[1]")
 
         libsvm.set_verbosity_wrap(self.verbose)
-        
+
         # ... (rest of the existing libsvm.fit call)
 
         # we don't pass **self.get_params() to allow subclasses to
@@ -412,8 +411,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         X.data = np.asarray(X.data, dtype=np.float64, order="C")
         X.sort_indices()
-        
-
+        kernel_type = self._sparse_kernels.index(kernel)
         (
             self.support_,
             self.support_vectors_,
