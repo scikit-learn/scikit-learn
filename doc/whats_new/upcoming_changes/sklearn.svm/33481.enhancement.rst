@@ -1,0 +1,4 @@
+- :mod:`sklearn.svm`
+  :class:`svm.NuSVC` now checks for parameter feasibility before performing
+  expensive kernel computations.
+  By :user:`Sanket291`
