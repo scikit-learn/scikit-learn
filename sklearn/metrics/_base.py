@@ -62,7 +62,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         classes.
 
     """
-    xp, _, _device = get_namespace_and_device(y_true, y_score, sample_weight)
+    xp, _, _device = get_namespace_and_device(y_score, sample_weight)
     average_options = (None, "micro", "macro", "weighted", "samples")
     if average not in average_options:
         raise ValueError("average has to be one of {0}".format(average_options))
