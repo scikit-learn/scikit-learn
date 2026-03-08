@@ -30,6 +30,7 @@ from sklearn.utils import (
     column_or_1d,
 )
 from sklearn.utils._array_api import (
+    _interp,
     _max_precision_float_dtype,
     get_namespace,
     get_namespace_and_device,
@@ -483,18 +484,9 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None, xp=
 
     # Add a single point at max_fpr by linear interpolation
     stop = xp.searchsorted(fpr, max_fpr, "right")
-    x0 = fpr[stop - 1]
-    x1 = fpr[stop]
-    y0 = tpr[stop - 1]
-    y1 = tpr[stop]
-    denom = x1 - x0
-
-    interp_tpr = xp.where(
-        denom == 0,
-        y0,
-        y0 + (max_fpr - x0) * (y1 - y0) / denom,
-    )
-
+    x_interp = [fpr[stop - 1], fpr[stop]]
+    y_interp = [tpr[stop - 1], tpr[stop]]
+    interp_tpr = _interp(max_fpr, x_interp, y_interp)
     tpr = xp.concat([tpr[:stop], xp.expand_dims(interp_tpr, axis=0)], axis=0)
     fpr = xp.concat([fpr[:stop], xp.expand_dims(max_fpr, axis=0)], axis=0)
 
