@@ -486,7 +486,7 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None, xp=
     stop = xp.searchsorted(fpr, max_fpr, "right")
     x_interp = [fpr[stop - 1], fpr[stop]]
     y_interp = [tpr[stop - 1], tpr[stop]]
-    interp_tpr = _interp(max_fpr, x_interp, y_interp)
+    interp_tpr = _interp(max_fpr, x_interp, y_interp, xp=xp)
     tpr = xp.concat([tpr[:stop], xp.expand_dims(interp_tpr, axis=0)], axis=0)
     fpr = xp.concat([fpr[:stop], xp.expand_dims(max_fpr, axis=0)], axis=0)
 
