@@ -1289,3 +1289,29 @@ def _matching_numpy_dtype(X, xp=None):
     reversed_dtypes_dict = {dtype: name for name, dtype in dtypes_dict.items()}
     dtype_name = reversed_dtypes_dict[X.dtype]
     return numpy.__array_namespace_info__().dtypes()[dtype_name]
+
+
+def _interp(x_new, x, y, xp=None):
+    """Partial port of `numpy.interp` for array API."""
+    # TODO: Replace with `scipy.interpolate` once it supports array API:
+    # https://scipy.github.io/devdocs/dev/api-dev/array_api_modules_tables/interpolate.html
+    xp, _, device_ = get_namespace_and_device(x, xp=xp)
+    y = move_to(y, xp=xp, device=device_)
+
+    if _is_numpy_namespace(xp):
+        return numpy.interp(x_new, x, y)
+
+    stop = xp.searchsorted(x, x_new, side="right")
+    x0 = x[stop - 1]
+    x1 = x[stop]
+    y0 = y[stop - 1]
+    y1 = y[stop]
+    denom = x1 - x0
+
+    interp_y = xp.where(
+        denom == 0,
+        y0,
+        y0 + (x_new - x0) * (y1 - y0) / denom,
+    )
+
+    return interp_y
