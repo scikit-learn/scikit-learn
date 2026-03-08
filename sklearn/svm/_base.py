@@ -345,9 +345,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 min_class_count = min(counts.values())
                 limit = (2.0 * min_class_count) / n_samples
                 if self.nu > limit:
-                    raise ValueError(
-                        f"specified nu is unfeasible. It should be at most {limit:.6f}"
-                    )
+                    raise ValueError("specified nu is infeasible")
 
         if callable(self.kernel):
             # Expense kernel computation follows here
@@ -405,9 +403,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 min_count = min(counts.values())
                 limit = (2.0 * min_count) / n_samples
                 if self.nu > limit:
-                    raise ValueError(
-                        f"specified nu is unfeasible. It should be at most {limit:.6f}"
-                    )
+                    raise ValueError("specified nu is infeasible")
 
         X.data = np.asarray(X.data, dtype=np.float64, order="C")
         X.sort_indices()

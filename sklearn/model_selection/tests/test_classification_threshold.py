@@ -624,14 +624,22 @@ def test_tuned_threshold_classifier_error_no_predict_methods():
     import numpy as np
     import pytest
 
-    from sklearn.linear_model import PassiveAggressiveClassifier
+    from sklearn.base import BaseEstimator, ClassifierMixin
     from sklearn.model_selection import TunedThresholdClassifierCV
+
+    # Create a custom classifier that strictly lacks both methods
+    class MockClassifier(BaseEstimator, ClassifierMixin):
+        def fit(self, X, y):
+            self.classes_ = np.unique(y)
+            return self
+
+        def predict(self, X):
+            return np.zeros(len(X))
 
     X = np.array([[1, 2], [3, 4]])
     y = np.array([0, 1])
 
-    # PassiveAggressiveClassifier lacks both required methods
-    clf = TunedThresholdClassifierCV(PassiveAggressiveClassifier())
+    clf = TunedThresholdClassifierCV(MockClassifier())
 
     msg = "must implement either 'predict_proba' or 'decision_function'"
     with pytest.raises(ValueError, match=msg):
