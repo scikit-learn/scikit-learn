@@ -30,6 +30,7 @@ from sklearn.utils import (
     column_or_1d,
 )
 from sklearn.utils._array_api import (
+    _convert_to_numpy,
     _interp,
     _max_precision_float_dtype,
     get_namespace,
@@ -714,13 +715,21 @@ def roc_auc_score(
     """
 
     xp, _, device_ = get_namespace_and_device(y_score)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device_)
+
+    # If the y_true contains strings, fallback to NumPy namespace
+    try:
+        y_true = move_to(y_true, xp=xp, device=device_)
+
+    except (ValueError, TypeError):
+        y_score = _convert_to_numpy(y_score, xp=xp)
+        xp, _, device_ = get_namespace_and_device(y_score)
 
     y_type = type_of_target(y_true, input_name="y_true")
     y_true = check_array(y_true, ensure_2d=False, dtype=None)
     y_score = check_array(y_score, ensure_2d=False)
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
 
     if y_type == "multiclass" or (
         y_type == "binary" and y_score.ndim == 2 and y_score.shape[1] > 2

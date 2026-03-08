@@ -628,6 +628,7 @@ METRICS_SUPPORTING_MIXED_NAMESPACE = [
     "d2_log_loss_score",
     "log_loss",
     "max_error",
+    "roc_auc_score",
 ]
 
 
