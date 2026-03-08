@@ -364,6 +364,20 @@ def _yield_array_api_checks(estimator, only_numpy=False):
                 dtype_name=dtype_name,
                 device=device,
             )
+        # We intend for all estimators that support array API to also support
+        # mixed namespace/device inputs. Some are in the process of adding mixed
+        # input support and are listed in XFAIL for this check.
+        for (
+            from_ns_and_device,
+            to_ns_and_device,
+            _,
+        ) in yield_mixed_namespace_input_permutations():
+            yield partial(
+                check_array_api_input,
+                array_namespace=array_namespace,
+                dtype_name=dtype_name,
+                device=device,
+            )
 
 
 def _yield_all_checks(estimator, legacy: bool):
