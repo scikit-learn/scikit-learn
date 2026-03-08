@@ -395,15 +395,14 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         self._warn_from_fit_status()
 
     def _sparse_fit(self, X, y, sample_weight, solver_type, kernel, random_seed):
-        if self._impl == "nu_svc":  # <-- CHANGE THIS LINE
+        if self._impl == "nu_svc":
             check_classification_targets(y)
-            counts = Counter(y)
-            if len(counts) >= 2:
-                n_samples = len(y)
-                min_count = min(counts.values())
-                limit = (2.0 * min_count) / n_samples
-                if self.nu > limit:
-                    raise ValueError("specified nu is infeasible")
+            class_counts = list(Counter(y).values())
+            for i in range(len(class_counts)):
+                for j in range(i + 1, len(class_counts)):
+                    n_i, n_j = class_counts[i], class_counts[j]
+                    if self.nu > (2.0 * min(n_i, n_j) / (n_i + n_j)):
+                        raise ValueError("specified nu is infeasible")
 
         X.data = np.asarray(X.data, dtype=np.float64, order="C")
         X.sort_indices()

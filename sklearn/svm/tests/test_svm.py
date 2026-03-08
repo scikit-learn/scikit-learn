@@ -1535,6 +1535,6 @@ def test_nusvc_early_nu_feasibility_error():
     # nu = 0.9 should trigger an immediate ValueError
     clf = NuSVC(nu=0.9)
 
-    msg = "specified nu is unfeasible. It should be at most 0.666667"
+    msg = "specified nu is infeasible"
     with pytest.raises(ValueError, match=msg):
         clf.fit(X, y)

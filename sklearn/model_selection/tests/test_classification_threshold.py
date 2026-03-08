@@ -619,15 +619,12 @@ def test_fixed_threshold_classifier_classes_():
 
 
 def test_tuned_threshold_classifier_error_no_predict_methods():
-    """Check that we raise a clear ValueError if the estimator has no
-    predict_proba or decision_function."""
     import numpy as np
     import pytest
 
     from sklearn.base import BaseEstimator, ClassifierMixin
     from sklearn.model_selection import TunedThresholdClassifierCV
 
-    # Create a custom classifier that strictly lacks both methods
     class MockClassifier(BaseEstimator, ClassifierMixin):
         def fit(self, X, y):
             self.classes_ = np.unique(y)
@@ -636,8 +633,9 @@ def test_tuned_threshold_classifier_error_no_predict_methods():
         def predict(self, X):
             return np.zeros(len(X))
 
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([0, 1])
+    # Provide 10 samples so cv=5 doesn't crash
+    X = np.ones((10, 2))
+    y = np.array([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
 
     clf = TunedThresholdClassifierCV(MockClassifier())
 
