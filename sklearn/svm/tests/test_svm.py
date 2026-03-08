@@ -1,11 +1,11 @@
+import pytest
+import numpy as np
+from sklearn.svm import NuSVC
 """
 Testing for Support Vector Machine module (sklearn.svm)
 
 TODO: remove hard coded numerical results when possible
 """
-from sklearn.svm import NuSVC
-import numpy as np
-import pytest
 from numpy.testing import (
     assert_allclose,
     assert_almost_equal,

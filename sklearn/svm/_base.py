@@ -1,7 +1,7 @@
-# Authors: The scikit-learn developers
-# SPDX-License-Identifier: BSD-3-Clause
 from collections import Counter
 from .utils.multiclass import check_classification_targets
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
