@@ -337,7 +337,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
     def _dense_fit(self, X, y, sample_weight, solver_type, kernel, random_seed):
         # Move the nu feasibility check BEFORE the kernel computation block
-        if hasattr(self, "nu"):
+        if self._impl == "nu_svc":  # <-- CHANGE THIS LINE
             check_classification_targets(y)
             counts = Counter(y)
             if len(counts) >= 2:
@@ -397,7 +397,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         self._warn_from_fit_status()
 
     def _sparse_fit(self, X, y, sample_weight, solver_type, kernel, random_seed):
-        if hasattr(self, "nu"):
+        if self._impl == "nu_svc":  # <-- CHANGE THIS LINE
             check_classification_targets(y)
             counts = Counter(y)
             if len(counts) >= 2:
