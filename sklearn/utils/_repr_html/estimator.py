@@ -217,8 +217,8 @@ def _write_label_html(
             f'data-param-prefix="{html.escape(param_prefix)}">'
         )
 
-        out.write(f"{params}")
-        out.write(f"{attrs}")
+        out.write(params)
+        out.write(attrs)
         if name_details and ("Pipeline" not in name) and not params:
             if name == "passthrough" or name_details == "[]":
                 name_details = ""

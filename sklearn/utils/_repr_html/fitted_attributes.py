@@ -15,7 +15,14 @@ from sklearn.utils._repr_html.common import (
 
 
 def _read_fitted_attr(value):
+    if isinstance(value, np.ndarray):
+        value = np.array2string(
+            value, precision=2, separator=",", suppress_small=True, threshold=4
+        )
+        return html.escape(value)
+
     r = reprlib.Repr()
+
     for attr in (
         "maxlist",
         "maxdict",
@@ -31,14 +38,6 @@ def _read_fitted_attr(value):
     if isinstance(value, float):
         value = round(value, 3)
 
-    if isinstance(value, np.ndarray):
-        value = np.array2string(
-            value, precision=2, separator=",", suppress_small=True, threshold=4
-        )
-        r.maxstring = 18
-
-        return html.escape(value)
-
     return html.escape(r.repr(value))
 
 
@@ -47,7 +46,7 @@ def _fitted_attr_html_repr(fitted_attributes):
 
     Creates an HTML table with fitted attribute names and values
     wrapped in a collapsible details element. When attributes are arrays,
-    shape is shown.
+    shape and dtype are shown.
     """
 
     FITTED_ATTR_TEMPLATE = """

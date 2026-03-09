@@ -1620,7 +1620,7 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
 
 
 def test_sk_visual_block_remainder_col_names_pandas():
-    """Check that the visual block name_details matches the feature_names_in_
+    """Check that the visual block `name_details` matches the `feature_names_in_`
     Non-regression test - when remainder_columns logic is removed it should fail
     https://github.com/scikit-learn/scikit-learn/pull/31442#discussion_r2841235711
     """
