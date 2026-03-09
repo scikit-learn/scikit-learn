@@ -1607,7 +1607,11 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            class_weight == 'balanced'
 
     n_jobs : int, default=None
-        Number of CPU cores used during the cross-validation loop.
+        Number of CPUs to use during cross-validation. The regularization
+        path computation is parallelized over the combination of
+        cross-validation folds and ``l1_ratios`` values. For the ``sag``
+        and ``saga`` solvers, a threading backend is used since they
+        release the GIL; other solvers use a process-based backend.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
