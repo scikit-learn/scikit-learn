@@ -717,6 +717,16 @@ def _pandas_dtype_needs_early_conversion(pd_dtype):
     return False
 
 
+def _is_pandas_string_dtype(dtype):
+    """Return True if dtype is a pandas StringDtype."""
+    try:
+        from pandas import StringDtype
+
+        return isinstance(dtype, StringDtype)
+    except ImportError:
+        return False
+
+
 def _is_extension_array_dtype(array):
     # Pandas extension arrays have a dtype with an na_value
     return hasattr(array, "dtype") and hasattr(array.dtype, "na_value")
@@ -894,8 +904,12 @@ def check_array(
         pandas_requires_conversion = any(
             _pandas_dtype_needs_early_conversion(i) for i in dtypes_orig
         )
+        has_pandas_string = any(_is_pandas_string_dtype(d) for d in dtypes_orig)
         if all(isinstance(dtype_iter, np.dtype) for dtype_iter in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
+        elif has_pandas_string:
+            # Force object if any of the dtypes is a StringDtype.
+            dtype_orig = object
         elif pandas_requires_conversion and any(d == object for d in dtypes_orig):
             # Force object if any of the dtypes is an object
             dtype_orig = object
@@ -903,20 +917,23 @@ def check_array(
     elif (_is_extension_array_dtype(array) or hasattr(array, "iloc")) and hasattr(
         array, "dtype"
     ):
-        # array is a pandas series
+        # array is a pandas series or a pandas array.
         type_if_series = type(array)
         pandas_requires_conversion = _pandas_dtype_needs_early_conversion(array.dtype)
         if isinstance(array.dtype, np.dtype):
             dtype_orig = array.dtype
+        elif _is_pandas_string_dtype(array.dtype):
+            # pandas 3 uses StringDtype for string columns instead of object.
+            # Treat as object so that dtype_numeric detection works correctly.
+            dtype_orig = object
         else:
             # Set to None to let array.astype work out the best dtype
             dtype_orig = None
 
     if dtype_numeric:
-        if (
-            dtype_orig is not None
-            and hasattr(dtype_orig, "kind")
-            and dtype_orig.kind == "O"
+        if dtype_orig is not None and (
+            (hasattr(dtype_orig, "kind") and dtype_orig.kind == "O")
+            or dtype_orig == object
         ):
             # if input is object, convert to float.
             dtype = xp.float64

@@ -501,6 +501,40 @@ def test_check_array_numeric_error(X):
         check_array(X, dtype="numeric")
 
 
+def test_check_array_pandas_string_dtype_numeric_error():
+    """check_array raises an error for pandas StringDtype with dtype='numeric'.
+
+    Non-regression test for pandas 3 where string columns use StringDtype
+    instead of object dtype. check_array should reject string data when
+    dtype='numeric' is requested.
+    """
+    pd = pytest.importorskip("pandas")
+
+    # DataFrame with all string columns
+    df_str = pd.DataFrame({"a": ["x", "y", "z"], "b": ["1", "2", "3"]})
+    with pytest.raises(ValueError):
+        check_array(df_str, dtype="numeric")
+
+    # DataFrame with mixed string/numeric columns
+    df_mixed = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": ["x", "y", "z"]})
+    with pytest.raises(ValueError):
+        check_array(df_mixed, dtype="numeric")
+
+    # Series with string dtype
+    s_str = pd.Series(["a", "b", "c"])
+    with pytest.raises(ValueError):
+        check_array(s_str, dtype="numeric", ensure_2d=False)
+
+    # String data with dtype=None should still work
+    result = check_array(df_str, dtype=None)
+    assert result.dtype == np.object_
+    assert_array_equal(result, df_str.values)
+
+    result = check_array(s_str, dtype=None, ensure_2d=False)
+    assert result.dtype == np.object_
+    assert_array_equal(result, s_str.values)
+
+
 @pytest.mark.parametrize(
     "pd_dtype", ["Int8", "Int16", "UInt8", "UInt16", "Float32", "Float64"]
 )
