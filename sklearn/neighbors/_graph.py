@@ -329,8 +329,13 @@ class KNeighborsTransformer(
         Additional keyword arguments for the metric function.
 
     n_jobs : int, default=None
-        The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        The number of parallel jobs to run for neighbors search. Query
+        samples are split across workers, with each worker searching for
+        neighbors independently. Affects :meth:`transform` and
+        :meth:`fit_transform`.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -556,8 +561,13 @@ class RadiusNeighborsTransformer(
         Additional keyword arguments for the metric function.
 
     n_jobs : int, default=None
-        The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        The number of parallel jobs to run for neighbors search. Query
+        samples are split across workers, with each worker finding
+        neighbors within the radius independently. Affects :meth:`transform`
+        and :meth:`fit_transform`.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------

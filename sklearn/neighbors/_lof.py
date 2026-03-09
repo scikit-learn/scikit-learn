@@ -108,7 +108,12 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         .. versionadded:: 0.20
 
     n_jobs : int, default=None
-        The number of parallel jobs to run for neighbors search.
+        The number of parallel jobs to run for neighbors search. Query
+        samples are split across workers, with each worker searching for
+        neighbors independently. Unlike most neighbors estimators, this
+        affects :meth:`fit` (which computes neighbor distances for local
+        reachability density), as well as :meth:`score_samples` and
+        :meth:`predict` when ``novelty=True``.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.

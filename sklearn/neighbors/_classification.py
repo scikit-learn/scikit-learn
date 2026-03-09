@@ -114,11 +114,14 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         Additional keyword arguments for the metric function.
 
     n_jobs : int, default=None
-        The number of parallel jobs to run for neighbors search.
+        The number of parallel jobs to run for neighbors search. Query
+        samples are split across workers, with each worker searching for
+        neighbors independently. Affects :meth:`predict`,
+        :meth:`predict_proba`, :meth:`kneighbors`, and
+        :meth:`kneighbors_graph`. Does not affect :meth:`fit`.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
-        Doesn't affect :meth:`fit` method.
 
     Attributes
     ----------
@@ -539,7 +542,11 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         Additional keyword arguments for the metric function.
 
     n_jobs : int, default=None
-        The number of parallel jobs to run for neighbors search.
+        The number of parallel jobs to run for neighbors search. Query
+        samples are split across workers, with each worker finding
+        neighbors within the radius independently. Affects :meth:`predict`,
+        :meth:`predict_proba`, :meth:`radius_neighbors`, and
+        :meth:`radius_neighbors_graph`. Does not affect :meth:`fit`.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
