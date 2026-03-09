@@ -242,7 +242,7 @@ def test_clone_and_propagate_callback_context():
 
     parent_callback = TestingAutoPropagatedCallback()
     meta_estimator = MetaEstimator(estimator=estimator).set_callbacks(parent_callback)
-    
+
     callback_ctx = CallbackContext._from_estimator(
         meta_estimator, task_name="", task_id=0, max_subtasks=0
     )

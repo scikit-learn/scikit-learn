@@ -361,8 +361,8 @@ class CallbackContext:
     def clone_and_propagate_callback_context(self, sub_estimator):
         """Clone a sub-estimator and propagate the context and callbacks to the clone.
 
-        Auto-propagated callbacks from the context are added to the cloned 
-        sub-estimator. An error is raised if the sub-estimator already holds 
+        Auto-propagated callbacks from the context are added to the cloned
+        sub-estimator. An error is raised if the sub-estimator already holds
         auto-propagated callbacks.
 
         The clone receives this context as an attribute named `_parent_callback_ctx` so
