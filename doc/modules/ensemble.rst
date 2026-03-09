@@ -55,7 +55,7 @@ Histogram-Based Gradient Boosting
 Scikit-learn 0.21 introduced two new implementations of
 gradient boosted trees, namely :class:`HistGradientBoostingClassifier`
 and :class:`HistGradientBoostingRegressor`, inspired by
-`LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
+`LightGBM <https://github.com/lightgbm-org/LightGBM>`__ (See [LightGBM]_).
 
 These histogram-based estimators can be **orders of magnitude faster**
 than :class:`GradientBoostingClassifier` and
