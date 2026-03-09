@@ -1034,6 +1034,12 @@ class HalfMultinomialLoss(BaseLoss):
     n_classes : {None, int}
         The number of classes for classification, else None.
 
+    xp : module or None
+        Array namespace module. Ignored by the Cython implementation.
+
+    device : device or None
+        A device object. Ignored by the Cython implementation.
+
     References
     ----------
     .. [1] :arxiv:`Simon, Noah, J. Friedman and T. Hastie.
@@ -1574,6 +1580,12 @@ class HalfMultinomialLossArrayAPI(ArrayAPILossMixin, HalfMultinomialLoss):
 
     n_classes : {None, int}
         The number of classes for classification, else None.
+
+    xp : module or None
+        Array namespace module.
+
+    device : device or None
+        A device object.
     """
 
     def __init__(self, sample_weight=None, n_classes=3, xp=None, device=None):
