@@ -247,7 +247,7 @@ def test_clone_and_propagate_callback_context():
 
 
 def test_no_clone_warning_with_clone_and_propagate_callback_context():
-    """Test that the warning is not raised with clone_and_propagate_callback_context.
+    """Test that clone_and_propagate_callback_context catches warning raised in clone().
 
     When the cloning is done inside of clone_and_propagate_callback_context, the warning
     about callbacks not being cloned should not be raised.
