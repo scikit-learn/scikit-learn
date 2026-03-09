@@ -72,5 +72,6 @@ def test_progressbar_requires_rich_error():
 
 def test_clone_after_fit():
     """Smoke test for cloning after fit with a progressbar attached."""
+    pytest.importorskip("rich")
     est = MaxIterEstimator().set_callbacks(ProgressBar()).fit()
     clone(est)

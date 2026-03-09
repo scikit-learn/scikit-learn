@@ -235,15 +235,20 @@ def test_estimator_without_subtask():
 
 def test_clone_and_propagate_callback_context():
     """Test clone_and_propagate_callback_context for callback preservation."""
-    estimator = MaxIterEstimator()
-    callback_ctx = CallbackContext._from_estimator(
-        estimator, task_name="", task_id=0, max_subtasks=0
-    )
     callback = TestingCallback()
+    estimator = MaxIterEstimator()
     estimator.set_callbacks(callback)
+
+    parent_callback = TestingAutoPropagatedCallback()
+    meta_estimator = MetaEstimator(estimator=estimator).set_callbacks(parent_callback)
+    
+    callback_ctx = CallbackContext._from_estimator(
+        meta_estimator, task_name="", task_id=0, max_subtasks=0
+    )
     cloned_estimator = callback_ctx.clone_and_propagate_callback_context(estimator)
     assert cloned_estimator is not estimator
-    assert cloned_estimator._skl_callbacks == estimator._skl_callbacks == [callback]
+    assert parent_callback in cloned_estimator._skl_callbacks
+    assert callback in cloned_estimator._skl_callbacks
 
 
 def test_no_clone_warning_with_clone_and_propagate_callback_context():
