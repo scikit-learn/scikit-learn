@@ -246,7 +246,11 @@ class LatentDirichletAllocation(
         the E-step.
 
     n_jobs : int, default=None
-        The number of jobs to use in the E-step.
+        The number of jobs to use in the E-step. Documents are split into
+        ``n_jobs`` slices, and the topic distribution for each slice is
+        updated independently in parallel. This applies during :meth:`fit`,
+        :meth:`partial_fit`, and :meth:`transform`. The M-step is not
+        parallelized.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
