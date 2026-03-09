@@ -80,7 +80,12 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         passed to neighbors.NearestNeighbors instance.
 
     n_jobs : int or None, default=None
-        The number of parallel jobs to run.
+        The number of parallel jobs to run. During :meth:`fit`, the
+        neighbor search and neighbor graph construction are parallelized
+        across samples. The kernel matrix computation used for the
+        final embedding is also parallelized. During :meth:`transform`,
+        the neighbor search for new points uses ``n_jobs`` as well.
+        The shortest path computation is not parallelized.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.

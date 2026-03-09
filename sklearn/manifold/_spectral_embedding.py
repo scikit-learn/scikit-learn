@@ -541,7 +541,12 @@ class SpectralEmbedding(BaseEstimator):
         If None, n_neighbors will be set to max(n_samples/10, 1).
 
     n_jobs : int, default=None
-        The number of parallel jobs to run.
+        The number of parallel jobs to run. Only used when
+        ``affinity="nearest_neighbors"`` or
+        ``affinity="precomputed_nearest_neighbors"``, in which case the
+        neighbor search for constructing the affinity matrix is
+        parallelized across samples during :meth:`fit`. Has no effect for
+        other affinity types.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.

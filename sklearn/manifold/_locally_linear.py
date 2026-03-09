@@ -674,7 +674,10 @@ class LocallyLinearEmbedding(
         across multiple function calls. See :term:`Glossary <random_state>`.
 
     n_jobs : int or None, default=None
-        The number of parallel jobs to run.
+        The number of parallel jobs to run. During :meth:`fit`, the
+        neighbor search and barycenter weight computation are parallelized
+        across samples. The eigenvalue decomposition used for the final
+        embedding is not parallelized.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
