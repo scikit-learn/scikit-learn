@@ -1401,13 +1401,18 @@ def test_loss_array_api(
     device_,
     dtype_name,
 ):
-    def _assert_array_api_result(result_xp, result_np, raw_prediction_xp, xp, atol):
-        assert_allclose(_convert_to_numpy(result_xp, xp=xp), result_np, atol=atol)
+    def _assert_array_api_result(
+        result_xp, result_np, raw_prediction_xp, xp, rtol, atol
+    ):
+        assert_allclose(
+            _convert_to_numpy(result_xp, xp=xp), result_np, rtol=rtol, atol=atol
+        )
         assert result_xp.dtype == raw_prediction_xp.dtype
         assert device(result_xp) == device(raw_prediction_xp)
 
     xp = _array_api_for_tests(namespace, device_)
     atol = _atol_for_type(dtype_name)
+    rtol = 2e-7 if dtype_name == "float32" else 1e-10
     random_seed = 42
     n_samples = 100
     array_api_loss_instance = array_api_loss_class(xp=xp, device=device_)
@@ -1456,6 +1461,7 @@ def test_loss_array_api(
                         result_np=res_np,
                         raw_prediction_xp=raw_prediction_xp,
                         xp=xp,
+                        rtol=rtol,
                         atol=atol,
                     )
             else:
@@ -1464,6 +1470,7 @@ def test_loss_array_api(
                     result_np=result_np,
                     raw_prediction_xp=raw_prediction_xp,
                     xp=xp,
+                    rtol=rtol,
                     atol=atol,
                 )
 

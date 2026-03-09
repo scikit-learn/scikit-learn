@@ -23,7 +23,10 @@ from sklearn.linear_model._glm._newton_solver import NewtonCholeskySolver, Newto
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.utils import check_array
 from sklearn.utils._array_api import (
+    _average,
     _is_numpy_namespace,
+    _matching_numpy_dtype,
+    get_namespace,
     get_namespace_and_device,
     move_to,
 )
@@ -250,18 +253,19 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         # Thus, without rescaling, we have
         #     obj = LinearModelLoss.loss(...)
 
+        loss_dtype_np = _matching_numpy_dtype(X, xp=xp)
         if self.warm_start and hasattr(self, "coef_"):
             if self.fit_intercept:
                 # LinearModelLoss needs intercept at the end of coefficient array.
                 coef = np.concatenate((self.coef_, np.array([self.intercept_])))
             else:
                 coef = self.coef_
-            coef = coef.astype(loss_dtype, copy=False)
+            coef = coef.astype(loss_dtype_np, copy=False)
         else:
-            coef = linear_loss.init_zero_coef(X, dtype=loss_dtype)
+            coef = linear_loss.init_zero_coef(X, dtype=loss_dtype_np)
             if self.fit_intercept:
                 coef[-1] = linear_loss.base_loss.link.link(
-                    np.average(y, weights=sample_weight)
+                    _average(y, weights=sample_weight)
                 )
 
         l2_reg_strength = self.alpha
@@ -293,6 +297,11 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 "lbfgs", opt_res, max_iter=self.max_iter
             )
             coef = opt_res.x
+            coef = xp.asarray(
+                coef.copy(order="C" if not _is_numpy_namespace(xp) else "K"),
+                dtype=X.dtype,
+                device=device_,
+            )
         elif self.solver == "newton-cholesky":
             sol = NewtonCholeskySolver(
                 coef=coef,
@@ -344,12 +353,13 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         y_pred : array of shape (n_samples,)
             Returns predicted values of linear predictor.
         """
+        xp, _ = get_namespace(X)
         check_is_fitted(self)
         X = validate_data(
             self,
             X,
             accept_sparse=["csr", "csc", "coo"],
-            dtype=[np.float64, np.float32],
+            dtype=[xp.float64, xp.float32],
             ensure_2d=True,
             allow_nd=False,
             reset=False,

@@ -1588,17 +1588,14 @@ class HalfPoissonLossArrayAPI(ArrayAPILossMixin, HalfPoissonLoss):
         gradient_out=None,
         n_threads=1,
     ):
-        xp = self.xp
-        raw_prediction_exp = xp.exp(raw_prediction)
+        raw_prediction_exp = self.xp.exp(raw_prediction)
         loss = self._compute_loss(
-            xp=xp,
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,
             raw_prediction_exp=raw_prediction_exp,
         )
         gradient = self._compute_gradient(
-            xp=xp,
             y_true=y_true,
             raw_prediction=raw_prediction,
             sample_weight=sample_weight,

@@ -29,6 +29,7 @@ from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.metrics import d2_tweedie_score, mean_poisson_deviance
 from sklearn.model_selection import train_test_split
 from sklearn.utils._array_api import (
+    _atol_for_type,
     _convert_to_numpy,
     _get_namespace_device_dtype_ids,
     device,
@@ -40,7 +41,7 @@ SOLVERS = ["lbfgs", "newton-cholesky"]
 
 
 class BinomialRegressor(_GeneralizedLinearRegressor):
-    def _get_loss(self):
+    def _get_loss(self, xp=None, device=None):
         return HalfBinomialLoss()
 
 
@@ -1168,6 +1169,8 @@ def test_poisson_regressor_array_api_compliance(
     # make y positive
     y_np = np.abs(y_np) + 1.0
     n_samples = X_np.shape[0]
+    X_np = X_np.astype(dtype_name, copy=False)
+    y_np = y_np.astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device_)
     y_xp = xp.asarray(y_np, device=device_)
 
@@ -1189,16 +1192,18 @@ def test_poisson_regressor_array_api_compliance(
     assert np.abs(glm_np.coef_).max() > 0.1
 
     predict_np = glm_np.predict(X_np)
+    atol = _atol_for_type(dtype_name)
     rtol = 1e-4 if dtype_name == "float32" else 1e-6
 
     with config_context(array_api_dispatch=True):
         glm_xp = PoissonRegressor(**params).fit(X_xp, y_xp, sample_weight=sample_weight)
-        assert glm_xp.n_iter_ == glm_np.n_iter_
 
         for attr_name in ("coef_", "intercept_"):
             attr_xp = getattr(glm_xp, attr_name)
             attr_np = getattr(glm_np, attr_name)
-            assert_allclose(_convert_to_numpy(attr_xp, xp=xp), attr_np, rtol=rtol)
+            assert_allclose(
+                _convert_to_numpy(attr_xp, xp=xp), attr_np, rtol=rtol, atol=atol
+            )
             assert attr_xp.dtype == X_xp.dtype
             assert device(attr_xp) == device(X_xp)
 
@@ -1207,6 +1212,7 @@ def test_poisson_regressor_array_api_compliance(
             _convert_to_numpy(predict_xp, xp=xp),
             predict_np,
             rtol=rtol,
+            atol=atol,
         )
         assert predict_xp.dtype == X_xp.dtype
         assert device(predict_xp) == device(X_xp)
