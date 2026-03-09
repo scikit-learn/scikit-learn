@@ -49,6 +49,9 @@ def clone(estimator, *, safe=True):
     without actually copying attached data. It returns a new estimator
     with the same parameters that has not been fitted on any data.
 
+    If callbacks are attached to the estimator via a `_skl_callbacks` attribute, a copy
+    of the attribute is attached to the clone.
+
     .. versionchanged:: 1.3
         Delegates to `estimator.__sklearn_clone__` if the method exists.
 
@@ -137,8 +140,6 @@ def _clone_parametrized(estimator, *, safe=True):
 
     # attach callbacks to the new estimator
     if hasattr(estimator, "_skl_callbacks"):
-        # TODO(callbacks): Figure out the exact behavior we want when cloning an
-        # estimator with callbacks.
         new_object._skl_callbacks = estimator._skl_callbacks
 
     # quick sanity check of the parameters of the clone
