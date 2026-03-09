@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import sys
+
 import numpy as np
 import pytest
 
@@ -229,3 +231,72 @@ def test_estimator_without_subtask():
     estimator = NoSubtaskEstimator()
     estimator.set_callbacks([TestingCallback()])
     estimator.fit()
+
+
+@pytest.mark.parametrize("Callback", [TestingAutoPropagatedCallback, TestingCallback])
+def test_callback_hooks_called(Callback):
+    """Check the number of callback hooks calls in a regular estimator.
+
+    For a regular estimator, it does not depend whether it's an autopropagated callback
+    or not.
+    """
+    max_iter = 10
+    callback = Callback()
+    MaxIterEstimator(max_iter=max_iter).set_callbacks(callback).fit()
+    assert callback.count_hooks("on_fit_begin") == 1
+    assert callback.count_hooks("on_fit_task_end") == max_iter
+    assert callback.count_hooks("on_fit_end") == 1
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 12, 8),
+    reason="Race conditions can appear because of multiprocessing issues for python"
+    " < 3.12.8.",
+)
+@pytest.mark.parametrize("n_jobs", [1, 2])
+def test_meta_estimator_autopropagated_callback_hooks_called(n_jobs):
+    """Check the number of callback hooks calls in a meta-estimator.
+
+    For an auto-propagated callback, on_fit_begin and on_fit_end are called only once,
+    by the meta-estimator. To count the number of task ends, we need to aggregate the
+    number of tasks from all the levels of the global task tree (which contains the
+    task tree of the meta-estimator and the task trees of each sub-estimator).
+    """
+
+    n_outer, n_inner, max_iter = 4, 3, 10
+    callback = TestingAutoPropagatedCallback()
+    MetaEstimator(
+        MaxIterEstimator(max_iter=max_iter),
+        n_outer=n_outer,
+        n_inner=n_inner,
+        n_jobs=n_jobs,
+    ).set_callbacks(callback).fit()
+
+    assert callback.count_hooks("on_fit_begin") == 1
+    expected_n_tasks = np.sum(np.cumprod([n_outer, n_inner, max_iter]))
+    assert callback.count_hooks("on_fit_task_end") == expected_n_tasks
+    assert callback.count_hooks("on_fit_end") == 1
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 12, 8),
+    reason="Race conditions can appear because of multiprocessing issues for python"
+    " < 3.12.8.",
+)
+@pytest.mark.parametrize("n_jobs", [1, 2])
+def test_meta_estimator_callback_hooks_called(n_jobs):
+    """Check the number of callback hooks calls in a meta-estimator.
+
+    For a non auto-propagated callback, on_fit_begin and on_fit_end are called once for
+    each fit of the sub-estimator. The number of task ends is the sum of the number of
+    task ends from all the sub-estimators.
+    """
+    n_outer, n_inner, max_iter = 4, 3, 10
+    callback = TestingCallback()
+    est = MaxIterEstimator(max_iter=max_iter).set_callbacks(callback)
+    MetaEstimator(est, n_outer=n_outer, n_inner=n_inner, n_jobs=n_jobs).fit()
+
+    n_fits = n_outer * n_inner
+    assert callback.count_hooks("on_fit_begin") == n_fits
+    assert callback.count_hooks("on_fit_task_end") == n_fits * max_iter
+    assert callback.count_hooks("on_fit_end") == n_fits
