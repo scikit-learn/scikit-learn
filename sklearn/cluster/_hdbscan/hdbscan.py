@@ -493,9 +493,15 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         parameter. Ignored for `algorithm="brute"`.
 
     n_jobs : int, default=None
-        Number of jobs to run in parallel to calculate distances.
-        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        `-1` means using all processors. See :term:`Glossary <n_jobs>`
+        Number of jobs to run in parallel during :meth:`fit`. When
+        ``algorithm="brute"``, the pairwise distance matrix is split into
+        ``n_jobs`` row slices and computed in parallel. When
+        ``algorithm="kd_tree"`` or ``algorithm="ball_tree"``, the
+        nearest neighbor query is parallelized across samples. When
+        ``algorithm="auto"``, the behavior depends on which algorithm is
+        selected.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     cluster_selection_method : {"eom", "leaf"}, default="eom"

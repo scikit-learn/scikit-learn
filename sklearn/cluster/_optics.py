@@ -158,7 +158,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
         path to the caching directory.
 
     n_jobs : int, default=None
-        The number of parallel jobs to run for neighbors search.
+        The number of parallel jobs to run for neighbors search. During
+        :meth:`fit`, the k-nearest neighbors query used to compute the
+        OPTICS reachability graph is parallelized across samples.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
