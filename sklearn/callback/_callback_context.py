@@ -365,7 +365,7 @@ class CallbackContext:
         error is raised if the sub-estimator already holds auto-propagated callbacks.
 
         The clone receives this context as an attribute named `_parent_callback_ctx` so
-        that the meta-estimator's task tree can be merged with the clone’s one.
+        that the meta-estimator's task tree can be merged with the clone's one.
 
         Parameters
         ----------
