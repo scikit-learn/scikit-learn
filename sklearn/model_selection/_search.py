@@ -1293,7 +1293,13 @@ class GridSearchCV(BaseSearchCV):
         See :ref:`multimetric_grid_search` for an example.
 
     n_jobs : int, default=None
-        Number of jobs to run in parallel.
+        Number of jobs to run in parallel. Each job fits and scores a
+        single parameter combination on a single CV fold, so the total
+        number of parallel tasks equals the number of parameter candidates
+        times the number of CV folds. Only affects :meth:`fit`, not
+        :meth:`predict` or :meth:`score` on the refitted estimator.
+        The ``pre_dispatch`` parameter controls how many jobs are
+        dispatched at once to limit memory usage.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -1682,7 +1688,13 @@ class RandomizedSearchCV(BaseSearchCV):
         If None, the estimator's score method is used.
 
     n_jobs : int, default=None
-        Number of jobs to run in parallel.
+        Number of jobs to run in parallel. Each job fits and scores a
+        single sampled parameter setting on a single CV fold, so the total
+        number of parallel tasks equals ``n_iter`` times the number of CV
+        folds. Only affects :meth:`fit`, not :meth:`predict` or
+        :meth:`score` on the refitted estimator. The ``pre_dispatch``
+        parameter controls how many jobs are dispatched at once to limit
+        memory usage.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.

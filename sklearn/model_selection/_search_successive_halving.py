@@ -536,7 +536,10 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         See :term:`Glossary <random_state>`.
 
     n_jobs : int or None, default=None
-        Number of jobs to run in parallel.
+        Number of jobs to run in parallel. Within each halving round,
+        each job fits and scores a single candidate on a single CV fold.
+        Successive halving rounds run sequentially, but the fit-and-score
+        operations within each round are parallelized.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -897,7 +900,10 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         See :term:`Glossary <random_state>`.
 
     n_jobs : int or None, default=None
-        Number of jobs to run in parallel.
+        Number of jobs to run in parallel. Within each halving round,
+        each job fits and scores a single candidate on a single CV fold.
+        Successive halving rounds run sequentially, but the fit-and-score
+        operations within each round are parallelized.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
