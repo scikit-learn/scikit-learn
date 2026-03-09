@@ -55,8 +55,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 # Fit gradient boosting models trained with the quantile loss and `alpha=0.05`,
 # `alpha=0.5`, `alpha=0.95`.
 #
-# The models obtained for `alpha=0.05` and `alpha=0.95` produce a 90%
-# confidence interval (95% - 5% = 90%).
+# The models obtained for `alpha=0.05` and `alpha=0.95` produce a 90% coverage
+# interval (95% - 5% = 90%).
 #
 # The model trained with `alpha=0.5` produces a regression of the median: on
 # average, there should be the same number of target observations above and
@@ -266,7 +266,7 @@ pprint(search_95p.best_params_)
 # identified by the search procedure are roughly in the same range as the hand-tuned
 # hyper-parameters for the median regressor and the hyper-parameters
 # identified by the search procedure for the 5th percentile regressor. However,
-# the hyper-parameter searches did lead to an improved 90% confidence interval
+# the hyper-parameter searches did lead to an improved 90% coverage interval
 # that is comprised by the predictions of those two tuned quantile regressors.
 # Note that the prediction of the upper 95th percentile has a much coarser shape
 # than the prediction of the lower 5th percentile because of the outliers:
