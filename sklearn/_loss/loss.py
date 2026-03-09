@@ -1309,6 +1309,27 @@ class ArrayAPILossMixin:
         loss_out=None,
         n_threads=1,
     ):
+        """Compute the pointwise loss value for each input.
+
+        Parameters
+        ----------
+        y_true : C-contiguous array of shape (n_samples,)
+            Observed, true target values.
+        raw_prediction : C-contiguous array of shape (n_samples,) or array of \
+            shape (n_samples, n_classes)
+            Raw prediction values (in link space).
+        sample_weight : None or C-contiguous array of shape (n_samples,)
+            Sample weights.
+        loss_out : None or C-contiguous array of shape (n_samples,)
+            Ignored by the array API implementation.
+        n_threads : int, default=1
+            Ignored by the array API implementation.
+
+        Returns
+        -------
+        loss : array of shape (n_samples,)
+            Element-wise loss function.
+        """
         return self._compute_loss(
             y_true=y_true,
             raw_prediction=raw_prediction,
@@ -1324,6 +1345,33 @@ class ArrayAPILossMixin:
         gradient_out=None,
         n_threads=1,
     ):
+        """Compute loss and gradient w.r.t. raw_prediction for each input.
+
+        Parameters
+        ----------
+        y_true : C-contiguous array of shape (n_samples,)
+            Observed, true target values.
+        raw_prediction : C-contiguous array of shape (n_samples,) or array of \
+            shape (n_samples, n_classes)
+            Raw prediction values (in link space).
+        sample_weight : None or C-contiguous array of shape (n_samples,)
+            Sample weights.
+        loss_out : None or C-contiguous array of shape (n_samples,)
+            Ignored by the array API implementation.
+        gradient_out : None or C-contiguous array of shape (n_samples,) or array \
+            of shape (n_samples, n_classes)
+            Ignored by the array API implementation.
+        n_threads : int, default=1
+            Ignored by the array API implementation.
+
+        Returns
+        -------
+        loss : array of shape (n_samples,)
+            Element-wise loss function.
+
+        gradient : array of shape (n_samples,) or (n_samples, n_classes)
+            Element-wise gradients.
+        """
         loss = self._compute_loss(
             y_true=y_true,
             raw_prediction=raw_prediction,
@@ -1344,6 +1392,28 @@ class ArrayAPILossMixin:
         gradient_out=None,
         n_threads=1,
     ):
+        """Compute gradient of loss w.r.t raw_prediction for each input.
+
+        Parameters
+        ----------
+        y_true : C-contiguous array of shape (n_samples,)
+            Observed, true target values.
+        raw_prediction : C-contiguous array of shape (n_samples,) or array of \
+            shape (n_samples, n_classes)
+            Raw prediction values (in link space).
+        sample_weight : None or C-contiguous array of shape (n_samples,)
+            Sample weights.
+        gradient_out : None or C-contiguous array of shape (n_samples,) or array \
+            of shape (n_samples, n_classes)
+            Ignored by the array API implementation.
+        n_threads : int, default=1
+            Ignored by the array API implementation.
+
+        Returns
+        -------
+        gradient : array of shape (n_samples,) or (n_samples, n_classes)
+            Element-wise gradients.
+        """
         return self._compute_gradient(
             y_true=y_true,
             raw_prediction=raw_prediction,
