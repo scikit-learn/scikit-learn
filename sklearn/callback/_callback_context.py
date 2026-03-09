@@ -394,7 +394,7 @@ class CallbackContext:
         """Propagate the context and callbacks to a sub-estimator.
 
         Only auto-propagated callbacks are propagated to the sub-estimator. An error is
-        raised of the sub-estimator already holds auto-propagated callbacks.
+        raised if the sub-estimator already holds auto-propagated callbacks.
 
         The sub-estimator receives this context as an attribute named
         `_parent_callback_ctx` so that the meta-estimator's task tree can be merged with
