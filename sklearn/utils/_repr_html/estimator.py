@@ -132,7 +132,7 @@ def _write_label_html(
         does not have `get_params`, it is an empty string.
     attrs: str
         If estimator is fitted, this is the HTML representation of its
-        the fitted attributes.
+        fitted attributes.
     name : str
         The label for the estimator. It corresponds either to the estimator class name
         for a simple estimator or in the case of a `Pipeline` and `ColumnTransformer`,

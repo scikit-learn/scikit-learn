@@ -109,7 +109,6 @@ def _fitted_attr_html_repr(fitted_attributes):
             )
         else:
             # Just show the attribute name without link
-
             fitted_attr_display = (
                 f'<a class="param-doc-link" style="text-decoration:none;">'
                 f"{html.escape(name)}</a>"
@@ -120,7 +119,6 @@ def _fitted_attr_html_repr(fitted_attributes):
                 html.escape(str(attr_info["type_name"])),
                 _read_fitted_attr(attr_info["value"]),  # All the attr info comes here
             )
-
         else:  # fitted attribute type is array-like
             type_name = html.escape(attr_info["type_name"])
             dtype = html.escape(str(attr_info["dtype"]))
