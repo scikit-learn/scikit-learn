@@ -20,9 +20,9 @@ from sklearn.utils import shuffle as util_shuffle
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.fixes import (
-    _sparse_diags,
-    _sparse_eye,
-    _sparse_random,
+    _sparse_diags_array,
+    _sparse_eye_array,
+    _sparse_random_array,
 )
 from sklearn.utils.random import sample_without_replacement
 
@@ -1825,8 +1825,8 @@ def make_sparse_spd_matrix(
     """
     random_state = check_random_state(random_state)
 
-    chol = -_sparse_eye(n_dim)
-    aux = _sparse_random(
+    chol = -_sparse_eye_array(n_dim)
+    aux = _sparse_random_array(
         shape=(n_dim, n_dim),
         density=1 - alpha,
         data_sampler=lambda size: random_state.uniform(
@@ -1846,7 +1846,7 @@ def make_sparse_spd_matrix(
 
     if norm_diag:
         # Form the diagonal vector into a row matrix
-        d = _sparse_diags(1.0 / np.sqrt(prec.diagonal()))
+        d = _sparse_diags_array(1.0 / np.sqrt(prec.diagonal()))
         prec = d @ prec @ d
 
     if sparse_format is None:

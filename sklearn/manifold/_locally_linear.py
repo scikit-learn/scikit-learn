@@ -22,7 +22,7 @@ from sklearn.utils import check_array, check_random_state
 from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils._sparse import _align_api_if_sparse
-from sklearn.utils.fixes import SCIPY_VERSION_BELOW_1_15, _sparse_eye
+from sklearn.utils.fixes import SCIPY_VERSION_BELOW_1_15, _sparse_eye_array
 from sklearn.utils.validation import FLOAT_DTYPES, check_is_fitted, validate_data
 
 
@@ -241,7 +241,7 @@ def _locally_linear_embedding(
         # we'll compute M = (I-W)'(I-W)
         # depending on the solver, we'll do this differently
         if M_sparse:
-            M = _sparse_eye(*W.shape, format=W.format, dtype=W.dtype) - W
+            M = _sparse_eye_array(*W.shape, format=W.format, dtype=W.dtype) - W
             M = M.T @ M  # M = (I - W)' (I - W) = W' W - W' - W + I
         else:
             M = (W.T @ W - W.T - W).toarray()

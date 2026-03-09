@@ -31,7 +31,7 @@ from sklearn.utils._testing import (
     create_memmap_backed_data,
 )
 from sklearn.utils.extmath import row_norms
-from sklearn.utils.fixes import CSR_CONTAINERS, _sparse_random
+from sklearn.utils.fixes import CSR_CONTAINERS, _sparse_random_array
 from sklearn.utils.parallel import _get_threadpool_controller
 
 # non centered, sparse centers to check the
@@ -1042,7 +1042,9 @@ def test_euclidean_distance(dtype, squared, global_random_seed):
     # Check that the _euclidean_(dense/sparse)_dense helpers produce correct
     # results
     rng = np.random.RandomState(global_random_seed)
-    a_sparse = _sparse_random((1, 100), density=0.5, format="csr", rng=rng, dtype=dtype)
+    a_sparse = _sparse_random_array(
+        (1, 100), density=0.5, format="csr", rng=rng, dtype=dtype
+    )
     a_dense = a_sparse.toarray().reshape(-1)
     b = rng.randn(100).astype(dtype, copy=False)
     b_squared_norm = (b**2).sum()
@@ -1065,7 +1067,7 @@ def test_euclidean_distance(dtype, squared, global_random_seed):
 def test_inertia(dtype, global_random_seed):
     # Check that the _inertia_(dense/sparse) helpers produce correct results.
     rng = np.random.RandomState(global_random_seed)
-    X_sparse = _sparse_random(
+    X_sparse = _sparse_random_array(
         (100, 10), density=0.5, format="csr", rng=rng, dtype=dtype
     )
     X_dense = X_sparse.toarray()

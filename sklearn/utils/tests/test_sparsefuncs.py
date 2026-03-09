@@ -11,7 +11,7 @@ from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
     LIL_CONTAINERS,
-    _sparse_random,
+    _sparse_random_array,
 )
 from sklearn.utils.sparsefuncs import (
     _implicit_column_offset,
@@ -442,15 +442,15 @@ def test_incr_mean_variance_axis_dim_mismatch(sparse_constructor):
     "X1, X2",
     [
         (
-            _sparse_random((5, 2), density=0.8, format="csr", rng=0),
-            _sparse_random((13, 2), density=0.8, format="csr", rng=0),
+            _sparse_random_array((5, 2), density=0.8, format="csr", rng=0),
+            _sparse_random_array((13, 2), density=0.8, format="csr", rng=0),
         ),
         (
-            _sparse_random((5, 2), density=0.8, format="csr", rng=0),
+            _sparse_random_array((5, 2), density=0.8, format="csr", rng=0),
             sp.hstack(
                 [
                     np.full((13, 1), fill_value=np.nan),
-                    _sparse_random((13, 1), density=0.8, rng=42),
+                    _sparse_random_array((13, 1), density=0.8, rng=42),
                 ],
                 format="csr",
             ),
@@ -483,8 +483,8 @@ def test_incr_mean_variance_axis_equivalence_mean_variance(X1, X2, csr_container
 def test_incr_mean_variance_no_new_n():
     # check the behaviour when we update the variance with an empty matrix
     axis = 0
-    X1 = _sparse_random((5, 1), density=0.8, format="csr", rng=0)
-    X2 = _sparse_random((0, 1), density=0.8, format="csr", rng=0)
+    X1 = _sparse_random_array((5, 1), density=0.8, format="csr", rng=0)
+    X2 = _sparse_random_array((0, 1), density=0.8, format="csr", rng=0)
     last_mean, last_var = np.zeros(X1.shape[1]), np.zeros(X1.shape[1])
     last_n = np.zeros(X1.shape[1], dtype=np.int64)
     last_mean, last_var, last_n = incr_mean_variance_axis(
@@ -502,7 +502,7 @@ def test_incr_mean_variance_no_new_n():
 def test_incr_mean_variance_n_float():
     # check the behaviour when last_n is just a number
     axis = 0
-    X = _sparse_random((5, 2), density=0.8, format="csr", rng=0)
+    X = _sparse_random_array((5, 2), density=0.8, format="csr", rng=0)
     last_mean, last_var = np.zeros(X.shape[1]), np.zeros(X.shape[1])
     last_n = 0
     _, _, new_n = incr_mean_variance_axis(
@@ -610,7 +610,7 @@ def test_densify_rows(csr_container):
 
 def test_inplace_column_scale():
     rng = np.random.RandomState(0)
-    X = _sparse_random((100, 200), density=0.05)
+    X = _sparse_random_array((100, 200), density=0.05)
     Xr = X.tocsr()
     Xc = X.tocsc()
     XA = X.toarray()
@@ -642,7 +642,7 @@ def test_inplace_column_scale():
 
 def test_inplace_row_scale():
     rng = np.random.RandomState(0)
-    X = _sparse_random((100, 200), density=0.05)
+    X = _sparse_random_array((100, 200), density=0.05)
     Xr = X.tocsr()
     Xc = X.tocsc()
     XA = X.toarray()
@@ -943,7 +943,7 @@ def test_inplace_normalize(csr_container, inplace_csr_row_normalize):
 def test_csr_row_norms(dtype):
     # checks that csr_row_norms returns the same output as
     # scipy.sparse.linalg.norm, and that the dype is the same as X.dtype.
-    X = _sparse_random((100, 10), format="csr", dtype=dtype, rng=42)
+    X = _sparse_random_array((100, 10), format="csr", dtype=dtype, rng=42)
 
     scipy_norms = sp.linalg.norm(X, axis=1) ** 2
     norms = csr_row_norms(X)
@@ -961,7 +961,7 @@ def centered_matrices(request):
     rng = np.random.default_rng(42)
 
     X_sparse = sparse_container(
-        _sparse_random((500, 100), density=0.1, format="csr", rng=rng)
+        _sparse_random_array((500, 100), density=0.1, format="csr", rng=rng)
     )
     X_dense = X_sparse.toarray()
     mu = np.asarray(X_sparse.mean(axis=0)).ravel()

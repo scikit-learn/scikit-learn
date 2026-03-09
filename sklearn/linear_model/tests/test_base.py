@@ -27,7 +27,7 @@ from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
     LIL_CONTAINERS,
-    _sparse_eye,
+    _sparse_eye_array,
 )
 
 rtol = 1e-6
@@ -101,7 +101,7 @@ def test_linear_regression_sample_weights(
 def test_raises_value_error_if_positive_and_sparse():
     error_msg = "Sparse data was passed for X, but dense data is required."
     # X must not be sparse if positive == True
-    X = _sparse_eye(10)
+    X = _sparse_eye_array(10)
     y = np.ones(10)
 
     reg = LinearRegression(positive=True)
@@ -151,7 +151,7 @@ def test_linear_regression_sparse(global_random_seed):
     # Test that linear regression also works with sparse data
     rng = np.random.RandomState(global_random_seed)
     n = 100
-    X = _sparse_eye(n, n)
+    X = _sparse_eye_array(n, n)
     beta = rng.rand(n)
     y = X @ beta
 

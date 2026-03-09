@@ -27,8 +27,13 @@ def _align_api_if_sparse(X):
             # Fundamental code to switch to sparray in any format
             return getattr(sp.sparse, X.format + "_array")(X)
         return X
-    else:  # config is spmatrix
+    elif config_sparse_interface == "spmatrix":
         if sp.sparse.isspmatrix(X):
             return X
         # Fundamental code to switch to spmatrix in any format
         return getattr(sp.sparse, X.format + "_matrix")(X)
+    else:
+        raise ValueError(
+            f'Config "sparse_interface" is {config_sparse_interface}. '
+            'It should be either "sparray" or "spmatrix".'
+        )

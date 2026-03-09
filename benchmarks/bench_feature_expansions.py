@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from sklearn.preprocessing import PolynomialFeatures
-from sklearn.utils.fixes import _sparse_random
+from sklearn.utils.fixes import _sparse_random_array
 
 degree = 2
 trials = 3
@@ -21,7 +21,7 @@ for trial in range(trials):
     for density in densities:
         for dim_index, dim in enumerate(dimensionalities):
             print(trial, density, dim)
-            X_csr = _sparse_random((num_rows, dim), density=density, format="csr")
+            X_csr = _sparse_random_array((num_rows, dim), density=density, format="csr")
             X_dense = X_csr.toarray()
             # CSR
             t0 = time()

@@ -286,7 +286,7 @@ def fetch_rcv1(
         # reorder categories in lexicographic order
         order = np.argsort(categories)
         categories = categories[order]
-        y = sp.csr_array(y[:, order])
+        y = _align_api_if_sparse(sp.csr_array(y[:, order]))
 
         joblib.dump(y, sample_topics_path, compress=9)
         joblib.dump(categories, topics_path, compress=9)

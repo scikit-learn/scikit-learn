@@ -16,7 +16,7 @@ from sklearn.utils.fixes import (
     COO_CONTAINERS,
     CSC_CONTAINERS,
     LIL_CONTAINERS,
-    _sparse_random,
+    _sparse_random_array,
 )
 
 
@@ -395,7 +395,7 @@ def test_sparse_read_only_buffer(copy_X):
     rng = np.random.RandomState(0)
 
     clf = ElasticNet(alpha=0.1, copy_X=copy_X, random_state=rng)
-    X = _sparse_random((100, 20), format="csc", rng=rng)
+    X = _sparse_random_array((100, 20), format="csc", rng=rng)
 
     # Make X.data read-only
     X.data = create_memmap_backed_data(X.data)

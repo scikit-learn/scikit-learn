@@ -23,7 +23,7 @@ from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 from sklearn.utils.estimator_checks import (
     check_array_api_input_and_values,
 )
-from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS, _sparse_random
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS, _sparse_random_array
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "covariance_eigh", "arpack", "randomized", "auto"]
@@ -87,7 +87,9 @@ def test_pca_sparse(
     transform_atol = 1e-10
 
     rng = np.random.default_rng(global_random_seed)
-    X = sparse_container(_sparse_random((SPARSE_M, SPARSE_N), rng=rng, density=density))
+    X = sparse_container(
+        _sparse_random_array((SPARSE_M, SPARSE_N), rng=rng, density=density)
+    )
     # Scale the data + vary the column means
     scale_vector = rng.random(X.shape[1]) * scale
     X = X.multiply(scale_vector)
@@ -112,7 +114,7 @@ def test_pca_sparse(
 
     # Test transform
     X2 = sparse_container(
-        _sparse_random((SPARSE_M, SPARSE_N), rng=rng, density=density)
+        _sparse_random_array((SPARSE_M, SPARSE_N), rng=rng, density=density)
     )
     X2d = X2.toarray()
 
@@ -123,8 +125,9 @@ def test_pca_sparse(
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
 def test_pca_sparse_fit_transform(global_random_seed, sparse_container):
     rng = np.random.default_rng(global_random_seed)
-    X = sparse_container(_sparse_random((SPARSE_M, SPARSE_N), rng=rng, density=0.01))
-    X2 = sparse_container(_sparse_random((SPARSE_M, SPARSE_N), rng=rng, density=0.01))
+    shp = (SPARSE_M, SPARSE_N)
+    X = sparse_container(_sparse_random_array(shp, rng=rng, density=0.01))
+    X2 = sparse_container(_sparse_random_array(shp, rng=rng, density=0.01))
 
     pca_fit = PCA(n_components=10, svd_solver="arpack", random_state=global_random_seed)
     pca_fit_transform = PCA(
@@ -144,7 +147,7 @@ def test_pca_sparse_fit_transform(global_random_seed, sparse_container):
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
 def test_sparse_pca_solver_error(global_random_seed, svd_solver, sparse_container):
     rng = np.random.RandomState(global_random_seed)
-    X = sparse_container(_sparse_random((SPARSE_M, SPARSE_N), rng=rng))
+    X = sparse_container(_sparse_random_array((SPARSE_M, SPARSE_N), rng=rng))
     pca = PCA(n_components=30, svd_solver=svd_solver)
     error_msg_pattern = (
         'PCA only support sparse inputs with the "arpack" and "covariance_eigh"'
@@ -160,7 +163,7 @@ def test_sparse_pca_auto_arpack_singluar_values_consistency(
 ):
     """Check that "auto" and "arpack" solvers are equivalent for sparse inputs."""
     rng = np.random.RandomState(global_random_seed)
-    X = sparse_container(_sparse_random((SPARSE_M, SPARSE_N), rng=rng))
+    X = sparse_container(_sparse_random_array((SPARSE_M, SPARSE_N), rng=rng))
     pca_arpack = PCA(n_components=10, svd_solver="arpack").fit(X)
     pca_auto = PCA(n_components=10, svd_solver="auto").fit(X)
     assert_allclose(pca_arpack.singular_values_, pca_auto.singular_values_, rtol=5e-3)

@@ -408,10 +408,10 @@ except ModuleNotFoundError:  # pragma: no cover
 # TODO: Replace when Scipy 1.12 is the minimum supported version
 #       fixes for transitioning scipy.sparse function names
 if not SCIPY_VERSION_BELOW_1_12:
-    _sparse_eye = scipy.sparse.eye_array
-    _sparse_diags = scipy.sparse.diags_array
+    _sparse_eye_array = scipy.sparse.eye_array
+    _sparse_diags_array = scipy.sparse.diags_array
 
-    def _sparse_random(
+    def _sparse_random_array(
         shape,
         *,
         density=0.01,
@@ -434,15 +434,17 @@ if not SCIPY_VERSION_BELOW_1_12:
 
 else:
 
-    def _sparse_eye(m, n=None, *, k=0, dtype=float, format=None):
+    def _sparse_eye_array(m, n=None, *, k=0, dtype=float, format=None):
         return scipy.sparse.eye(m, n, k=k, dtype=dtype, format=format)
 
-    def _sparse_diags(diagonals, /, *, offsets=0, shape=None, format=None, dtype=None):
+    def _sparse_diags_array(
+        diagonals, /, *, offsets=0, shape=None, format=None, dtype=None
+    ):
         return scipy.sparse.diags(
             diagonals, offsets=offsets, shape=shape, format=format, dtype=dtype
         )
 
-    def _sparse_random(
+    def _sparse_random_array(
         shape,
         *,
         density=0.01,
