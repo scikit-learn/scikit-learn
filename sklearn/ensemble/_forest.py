@@ -1303,11 +1303,21 @@ class RandomForestClassifier(ForestClassifier):
         :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
 
     n_jobs : int, default=None
-        The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
-        :meth:`decision_path` and :meth:`apply` are all parallelized over the
-        trees. ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
-        context. ``-1`` means using all processors. See :term:`Glossary
-        <n_jobs>` for more details.
+        The number of jobs to run in parallel. Each individual decision tree
+        in the forest is built independently, so during :meth:`fit`, trees
+        are constructed in parallel across ``n_jobs`` workers. Similarly,
+        :meth:`predict`, :meth:`predict_proba`, :meth:`decision_path`, and
+        :meth:`apply` parallelize computation across trees, with each tree
+        processing the input data independently before results are combined.
+        Accessing :attr:`feature_importances_` also aggregates across trees
+        in parallel.
+
+        Parallelism uses a threading backend since the underlying tree
+        algorithms release Python's Global Interpreter Lock (GIL).
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>` for
+        more details.
 
     random_state : int, RandomState instance or None, default=None
         Controls both the randomness of the bootstrapping of the samples used
@@ -1722,11 +1732,21 @@ class RandomForestRegressor(ForestRegressor):
         :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
 
     n_jobs : int, default=None
-        The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
-        :meth:`decision_path` and :meth:`apply` are all parallelized over the
-        trees. ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
-        context. ``-1`` means using all processors. See :term:`Glossary
-        <n_jobs>` for more details.
+        The number of jobs to run in parallel. Each individual decision tree
+        in the forest is built independently, so during :meth:`fit`, trees
+        are constructed in parallel across ``n_jobs`` workers. Similarly,
+        :meth:`predict`, :meth:`predict_proba`, :meth:`decision_path`, and
+        :meth:`apply` parallelize computation across trees, with each tree
+        processing the input data independently before results are combined.
+        Accessing :attr:`feature_importances_` also aggregates across trees
+        in parallel.
+
+        Parallelism uses a threading backend since the underlying tree
+        algorithms release Python's Global Interpreter Lock (GIL).
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>` for
+        more details.
 
     random_state : int, RandomState instance or None, default=None
         Controls both the randomness of the bootstrapping of the samples used
@@ -2086,11 +2106,21 @@ class ExtraTreesClassifier(ForestClassifier):
         :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
 
     n_jobs : int, default=None
-        The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
-        :meth:`decision_path` and :meth:`apply` are all parallelized over the
-        trees. ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
-        context. ``-1`` means using all processors. See :term:`Glossary
-        <n_jobs>` for more details.
+        The number of jobs to run in parallel. Each individual decision tree
+        in the forest is built independently, so during :meth:`fit`, trees
+        are constructed in parallel across ``n_jobs`` workers. Similarly,
+        :meth:`predict`, :meth:`predict_proba`, :meth:`decision_path`, and
+        :meth:`apply` parallelize computation across trees, with each tree
+        processing the input data independently before results are combined.
+        Accessing :attr:`feature_importances_` also aggregates across trees
+        in parallel.
+
+        Parallelism uses a threading backend since the underlying tree
+        algorithms release Python's Global Interpreter Lock (GIL).
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>` for
+        more details.
 
     random_state : int, RandomState instance or None, default=None
         Controls 3 sources of randomness:
@@ -2488,11 +2518,21 @@ class ExtraTreesRegressor(ForestRegressor):
         :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`.
 
     n_jobs : int, default=None
-        The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
-        :meth:`decision_path` and :meth:`apply` are all parallelized over the
-        trees. ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
-        context. ``-1`` means using all processors. See :term:`Glossary
-        <n_jobs>` for more details.
+        The number of jobs to run in parallel. Each individual decision tree
+        in the forest is built independently, so during :meth:`fit`, trees
+        are constructed in parallel across ``n_jobs`` workers. Similarly,
+        :meth:`predict`, :meth:`predict_proba`, :meth:`decision_path`, and
+        :meth:`apply` parallelize computation across trees, with each tree
+        processing the input data independently before results are combined.
+        Accessing :attr:`feature_importances_` also aggregates across trees
+        in parallel.
+
+        Parallelism uses a threading backend since the underlying tree
+        algorithms release Python's Global Interpreter Lock (GIL).
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>` for
+        more details.
 
     random_state : int, RandomState instance or None, default=None
         Controls 3 sources of randomness:
@@ -2808,11 +2848,20 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         or to return a dense array compatible with dense pipeline operators.
 
     n_jobs : int, default=None
-        The number of jobs to run in parallel. :meth:`fit`, :meth:`transform`,
-        :meth:`decision_path` and :meth:`apply` are all parallelized over the
-        trees. ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
-        context. ``-1`` means using all processors. See :term:`Glossary
-        <n_jobs>` for more details.
+        The number of jobs to run in parallel. Each individual decision tree
+        in the forest is built independently, so during :meth:`fit`, trees
+        are constructed in parallel across ``n_jobs`` workers. Similarly,
+        :meth:`transform`, :meth:`decision_path`, and :meth:`apply`
+        parallelize computation across trees, with each tree processing the
+        input data independently before results are combined. Accessing
+        :attr:`feature_importances_` also aggregates across trees in parallel.
+
+        Parallelism uses a threading backend since the underlying tree
+        algorithms release Python's Global Interpreter Lock (GIL).
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>` for
+        more details.
 
     random_state : int, RandomState instance or None, default=None
         Controls the generation of the random `y` used to fit the trees
