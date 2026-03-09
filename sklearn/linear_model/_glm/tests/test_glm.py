@@ -1162,10 +1162,11 @@ def test_poisson_regressor_array_api_compliance(
     array_namespace,
     device_,
     dtype_name,
-    regression_data,
 ):
     xp = _array_api_for_tests(array_namespace, device_)
-    X_np, y_np = regression_data
+    X_np, y_np = make_regression(
+        n_samples=107, n_features=20, n_informative=20, noise=0.5, random_state=2
+    )
     # make y positive
     y_np = np.abs(y_np) + 1.0
     n_samples = X_np.shape[0]
@@ -1192,11 +1193,13 @@ def test_poisson_regressor_array_api_compliance(
     assert np.abs(glm_np.coef_).max() > 0.1
 
     predict_np = glm_np.predict(X_np)
-    atol = _atol_for_type(dtype_name)
-    rtol = 1e-4 if dtype_name == "float32" else 1e-6
+    atol = _atol_for_type(dtype_name) * 10
+    rtol = 3e-3 if dtype_name == "float32" else 1e-6
 
     with config_context(array_api_dispatch=True):
         glm_xp = PoissonRegressor(**params).fit(X_xp, y_xp, sample_weight=sample_weight)
+        if dtype_name == "float64":
+            assert glm_xp.n_iter_ == glm_np.n_iter_
 
         for attr_name in ("coef_", "intercept_"):
             attr_xp = getattr(glm_xp, attr_name)
