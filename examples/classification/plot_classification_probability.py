@@ -63,14 +63,14 @@ X_train, X_test, y_train, y_test = train_test_split(
 # the classifier in regions where it is not certain of its prediction.
 
 classifiers = {
-    "Logistic regression\n(C=0.01)": LogisticRegression(C=0.1),
-    "Logistic regression\n(C=1)": LogisticRegression(C=100),
+    "Logistic regression\n(C=0.1)": LogisticRegression(C=0.1),
+    "Logistic regression\n(C=100)": LogisticRegression(C=100),
     "Gaussian Process": GaussianProcessClassifier(kernel=1.0 * RBF([1.0, 1.0])),
     "Logistic regression\n(RBF features)": make_pipeline(
         Nystroem(kernel="rbf", gamma=5e-1, n_components=50, random_state=1),
         LogisticRegression(C=10),
     ),
-    "Gradient Boosting": HistGradientBoostingClassifier(),
+    "Gradient Boosting": HistGradientBoostingClassifier(random_state=42),
     "Logistic regression\n(binned features)": make_pipeline(
         KBinsDiscretizer(n_bins=5, quantile_method="averaged_inverted_cdf"),
         PolynomialFeatures(interaction_only=True),
@@ -136,7 +136,7 @@ for classifier_idx, (name, classifier) in enumerate(classifiers.items()):
             cmap="Blues",
             levels=levels,
         )
-        axes[classifier_idx, label].set_title(f"Class {label}")
+        axes[classifier_idx, label].set_title(f"Class {iris.target_names[label]}")
         # plot data predicted to belong to given class
         mask_y_pred = y_pred == label
         axes[classifier_idx, label].scatter(
@@ -157,7 +157,8 @@ for classifier_idx, (name, classifier) in enumerate(classifiers.items()):
     )
     for label in y_unique:
         mask_label = y_test == label
-        axes[classifier_idx, 3].scatter(
+        max_col = len(y_unique)
+        axes[classifier_idx, max_col].scatter(
             X_test[mask_label, 0],
             X_test[mask_label, 1],
             c=max_class_disp.multiclass_colors_[[label], :],

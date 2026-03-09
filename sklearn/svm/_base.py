@@ -23,7 +23,7 @@ from sklearn.utils import (
     column_or_1d,
     compute_class_weight,
 )
-from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.metaestimators import available_if
 from sklearn.utils.multiclass import (
@@ -98,7 +98,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         "nu": [Interval(Real, 0.0, 1.0, closed="right")],
         "epsilon": [Interval(Real, 0.0, None, closed="left")],
         "shrinking": ["boolean"],
-        "probability": ["boolean"],
+        "probability": ["boolean", Hidden(StrOptions({"deprecated"}))],
         "cache_size": [Interval(Real, 0, None, closed="neither")],
         "class_weight": [StrOptions({"balanced"}), dict, None],
         "verbose": ["verbose"],
@@ -218,6 +218,24 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             [] if sample_weight is None else sample_weight, dtype=np.float64
         )
         solver_type = LIBSVM_IMPL.index(self._impl)
+
+        # TODO(1.11): remove probability
+        self._effective_probability = self.probability
+        if self._impl in ["c_svc", "nu_svc"]:
+            if self._impl == "nu_scv":
+                est_dep = "NuSVC"
+            else:
+                est_dep = "SVC"
+            if self.probability != "deprecated":
+                warnings.warn(
+                    f"The `probability` parameter was deprecated in 1.9 and "
+                    f"will be removed in version 1.11. "
+                    f"Use `CalibratedClassifierCV({est_dep}(), ensemble=False)` "
+                    f"instead of `{est_dep}(probability=True)`",
+                    FutureWarning,
+                )
+            else:
+                self._effective_probability = False
 
         # input validation
         n_samples = _num_samples(X)
@@ -350,7 +368,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             kernel=kernel,
             C=self.C,
             nu=self.nu,
-            probability=self.probability,
+            probability=self._effective_probability,
             degree=self.degree,
             shrinking=self.shrinking,
             tol=self.tol,
@@ -401,7 +419,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.cache_size,
             self.epsilon,
             int(self.shrinking),
-            int(self.probability),
+            int(self._effective_probability),
             self.max_iter,
             random_seed,
         )
@@ -509,7 +527,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.nu,
             self.epsilon,
             self.shrinking,
-            self.probability,
+            self._effective_probability,
             self._n_support,
             self._probA,
             self._probB,
@@ -609,7 +627,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.nu,
             self.epsilon,
             self.shrinking,
-            self.probability,
+            self._effective_probability,
             self._n_support,
             self._probA,
             self._probB,
@@ -835,7 +853,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     # probabilities are not available depending on a setting, introduce two
     # estimators.
     def _check_proba(self):
-        if not self.probability:
+        if self.probability == "deprecated" or not self.probability:
             raise AttributeError(
                 "predict_proba is not available when probability=False"
             )
@@ -966,7 +984,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             self.nu,
             self.epsilon,
             self.shrinking,
-            self.probability,
+            self._effective_probability,
             self._n_support,
             self._probA,
             self._probB,

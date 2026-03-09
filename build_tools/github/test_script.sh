@@ -1,0 +1,68 @@
+#!/bin/bash
+
+set -e
+
+# Defines the show_installed_libraries and activate_environment functions.
+source build_tools/shared.sh
+
+activate_environment
+
+if [[ "$COMMIT_MESSAGE" =~ \[float32\] ]]; then
+    echo "float32 tests will be run due to commit message"
+    export SKLEARN_RUN_FLOAT32_TESTS=1
+fi
+
+CHECKOUT_FOLDER=$PWD
+mkdir -p $TEST_DIR
+cp pyproject.toml $TEST_DIR
+cd $TEST_DIR
+
+python -c "import joblib; print(f'Number of cores (physical): \
+{joblib.cpu_count()} ({joblib.cpu_count(only_physical_cores=True)})')"
+python -c "import sklearn; sklearn.show_versions()"
+
+show_installed_libraries
+show_cpu_info
+
+NUM_CORES=$(python -c "import joblib; print(joblib.cpu_count())")
+TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML -o junit_family=legacy"
+
+if [[ "$COVERAGE" == "true" ]]; then
+    # Note: --cov-report= is used to disable too long text output report in the
+    # CI logs. The coverage data is consolidated by codecov to get an online
+    # web report across all the platforms so there is no need for this text
+    # report that otherwise hides the test failures and forces long scrolls in
+    # the CI logs.
+    export COVERAGE_PROCESS_START="$CHECKOUT_FOLDER/.coveragerc"
+
+    # Use sys.monitoring to make coverage faster for Python >= 3.12
+    HAS_SYSMON=$(python -c 'import sys; print(sys.version_info >= (3, 12))')
+    if [[ "$HAS_SYSMON" == "True" ]]; then
+        export COVERAGE_CORE=sysmon
+    fi
+    TEST_CMD="$TEST_CMD --cov-config='$COVERAGE_PROCESS_START' --cov=sklearn --cov-report="
+fi
+
+if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
+    if [[ "$NUM_LOGICAL_CORES" != 1 ]]; then
+        TEST_CMD="$TEST_CMD -n$NUM_CORES"
+    fi
+fi
+
+if [[ -n "$SELECTED_TESTS" ]]; then
+    TEST_CMD="$TEST_CMD -k $SELECTED_TESTS"
+
+    # Override to make selected tests run on all random seeds
+    export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
+fi
+
+if [[ "$DISTRIB" == "conda-free-threaded" ]]; then
+    # Use pytest-run-parallel
+    TEST_CMD="$TEST_CMD --parallel-threads $NUM_CORES --iterations 1"
+fi
+
+TEST_CMD="$TEST_CMD --pyargs sklearn"
+
+set -x
+eval "$TEST_CMD"
+set +x

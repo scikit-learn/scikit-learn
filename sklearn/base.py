@@ -209,9 +209,8 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
     @classmethod
     def _get_param_names(cls):
         """Get parameter names for the estimator"""
-        # fetch the constructor or the original constructor before
-        # deprecation wrapping if any
-        init = getattr(cls.__init__, "deprecated_original", cls.__init__)
+        # fetch the constructor
+        init = cls.__init__
         if init is object.__init__:
             # No explicit constructor to introspect
             return []
@@ -285,8 +284,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         """
         out = self.get_params(deep=deep)
 
-        init_func = getattr(self.__init__, "deprecated_original", self.__init__)
-        init_default_params = inspect.signature(init_func).parameters
+        init_default_params = inspect.signature(self.__init__).parameters
         init_default_params = {
             name: param.default for name, param in init_default_params.items()
         }

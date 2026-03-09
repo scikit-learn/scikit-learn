@@ -1,0 +1,8 @@
+- Fixed ``_weighted_percentile`` with ``average=True`` so zero-weight samples
+   just before the end of the array are handled correctly. This
+  can change results when using ``sample_weight`` with
+  :class:`preprocessing.KBinsDiscretizer` (``strategy="quantile"``,
+  ``quantile_method="averaged_inverted_cdf"``) and in
+  :func:`metrics.median_absolute_error`, :func:`metrics.d2_pinball_score`, and
+  :func:`metrics.d2_absolute_error_score`.
+  By :user:`Arthur Lacote <cakedev0>`.

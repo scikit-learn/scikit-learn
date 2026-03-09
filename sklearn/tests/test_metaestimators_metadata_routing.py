@@ -63,12 +63,14 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
+from sklearn.preprocessing import TargetEncoder
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
     ConsumingRegressor,
     ConsumingScorer,
     ConsumingSplitter,
+    ConsumingSplitterInheritingFromGroupKFold,
     NonConsumingClassifier,
     NonConsumingRegressor,
     _Registry,
@@ -448,6 +450,13 @@ METAESTIMATORS: list = [
         "X": X,
         "y": y,
     },
+    {
+        "metaestimator": TargetEncoder,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit_transform"],
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -560,7 +569,10 @@ def get_init_args(metaestimator_info, sub_estimator_consumes):
     if "cv_name" in metaestimator_info:
         cv_name = metaestimator_info["cv_name"]
         cv_registry = _Registry()
-        cv = ConsumingSplitter(registry=cv_registry)
+        if metaestimator_info["metaestimator"] is TargetEncoder:
+            cv = ConsumingSplitterInheritingFromGroupKFold(registry=cv_registry)
+        else:
+            cv = ConsumingSplitter(registry=cv_registry)
         kwargs[cv_name] = cv
 
     return (

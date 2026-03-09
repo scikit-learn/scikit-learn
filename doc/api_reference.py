@@ -41,8 +41,8 @@ API_REFERENCE maps each module name to a dictionary that consists of the followi
 components:
 
 short_summary (required)
-    The text to be printed on the index page; it has nothing to do the API reference
-    page of each module.
+    The text to be printed on the index page; it has nothing to do with
+    the API reference page of each module.
 description (required, `None` if not needed)
     The additional description for the module to be placed under the module
     docstring, before the sections start.
@@ -744,6 +744,7 @@ API_REFERENCE = {
                     "jaccard_score",
                     "log_loss",
                     "matthews_corrcoef",
+                    "metric_at_thresholds",
                     "multilabel_confusion_matrix",
                     "ndcg_score",
                     "precision_recall_curve",

@@ -2,37 +2,14 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import html
-import inspect
-import re
 import reprlib
 from collections import UserDict
-from functools import lru_cache
-from urllib.parse import quote
 
-from sklearn.externals._numpydoc import docscrape
 from sklearn.utils._repr_html.base import ReprHTMLMixin
-
-
-def _generate_link_to_param_doc(estimator_class, param_name, doc_link):
-    """URL to the relevant section of the docstring using a Text Fragment
-
-    https://developer.mozilla.org/en-US/docs/Web/URI/Reference/Fragment/Text_fragments
-    """
-    docstring = estimator_class.__doc__
-
-    m = re.search(f"{param_name} : (.+)\\n", docstring or "")
-
-    if m is None:
-        # No match found in the docstring, return None to indicate that we
-        # cannot link.
-        return None
-
-    # Extract the whole line of the type information, up to the line break as
-    # disambiguation suffix to build the fragment
-    param_type = m.group(1)
-    text_fragment = f"{quote(param_name)},-{quote(param_type)}"
-
-    return f"{doc_link}#:~:text={text_fragment}"
+from sklearn.utils._repr_html.common import (
+    generate_link_to_param_doc,
+    get_docstring,
+)
 
 
 def _read_params(name, value, non_default_params):
@@ -49,11 +26,6 @@ def _read_params(name, value, non_default_params):
     param_type = "user-set" if name in non_default_params else "default"
 
     return {"param_type": param_type, "param_name": name, "param_value": cleaned_value}
-
-
-@lru_cache
-def _scrape_estimator_docstring(docstring):
-    return docscrape.NumpyDocString(docstring)
 
 
 def _params_html_repr(params):
@@ -97,28 +69,13 @@ def _params_html_repr(params):
             {param_description}</span>
         </a>
     """
-    estimator_class_docs = inspect.getdoc(params.estimator_class)
-    if estimator_class_docs and (
-        structured_docstring := _scrape_estimator_docstring(estimator_class_docs)
-    ):
-        param_map = {
-            param_docstring.name: param_docstring
-            for param_docstring in structured_docstring["Parameters"]
-        }
-    else:
-        param_map = {}
+
     rows = []
     for row in params:
         param = _read_params(row, params[row], params.non_default)
-        link = _generate_link_to_param_doc(params.estimator_class, row, params.doc_link)
-        if param_numpydoc := param_map.get(row, None):
-            param_description = (
-                f"{html.escape(param_numpydoc.name)}: "
-                f"{html.escape(param_numpydoc.type)}<br><br>"
-                f"{'<br>'.join(html.escape(line) for line in param_numpydoc.desc)}"
-            )
-        else:
-            param_description = None
+        link = generate_link_to_param_doc(params.estimator_class, row, params.doc_link)
+
+        param_description = get_docstring(params.estimator_class, "Parameters", row)
 
         if params.doc_link and link and param_description:
             # Create clickable parameter name with documentation link

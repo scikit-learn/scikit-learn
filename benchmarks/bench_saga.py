@@ -1,8 +1,10 @@
-"""Author: Arthur Mensch, Nelle Varoquaux
-
+"""
 Benchmarks of sklearn SAGA vs lightning SAGA vs Liblinear. Shows the gain
 in using multinomial logistic regression in term of learning time.
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import json
 import os

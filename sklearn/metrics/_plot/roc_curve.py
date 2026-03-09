@@ -2,8 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-import numpy as np
-
 from sklearn.metrics._ranking import auc, roc_curve
 from sklearn.utils import _safe_indexing
 from sklearn.utils._plotting import (
@@ -60,15 +58,20 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     name : str or list of str, default=None
         Name for labeling legend entries. The number of legend entries is determined
         by the `curve_kwargs` passed to `plot`, and is not affected by `name`.
-        To label each curve, provide a list of strings. To avoid labeling
-        individual curves that have the same appearance, a list cannot be used in
-        conjunction with `curve_kwargs` being a dictionary or None. If a
-        string is provided, it will be used to either label the single legend entry
-        or if there are multiple legend entries, label each individual curve with
-        the same name. If `None`, no name is shown in the legend.
+
+        If a string is provided, it will be used to either label the single legend
+        entry or if there are multiple legend entries, label each individual curve
+        with the same name.
+
+        If a list is provided, it will be used to label each curve individually.
+        Passing a list will raise an error if `curve_kwargs` is not a list to avoid
+        labeling individual curves that have the same appearance.
+
+        If `None`, no name is shown in the legend.
 
         .. versionchanged:: 1.7
-            `estimator_name` was deprecated in favor of `name`.
+            `estimator_name` was deprecated in favor of `name` and now accepts
+            a list for plotting multiple curves.
 
     pos_label : int, float, bool or str, default=None
         The class considered the positive class when ROC AUC metrics computed.
@@ -184,15 +187,19 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             created.
 
         name : str or list of str, default=None
-            Name for labeling legend entries. The number of legend entries
-            is determined by `curve_kwargs`, and is not affected by `name`.
-            To label each curve, provide a list of strings. To avoid labeling
-            individual curves that have the same appearance, a list cannot be used in
-            conjunction with `curve_kwargs` being a dictionary or None. If a
-            string is provided, it will be used to either label the single legend entry
-            or if there are multiple legend entries, label each individual curve with
-            the same name. If `None`, set to `name` provided at `RocCurveDisplay`
-            initialization. If still `None`, no name is shown in the legend.
+            Name for labeling legend entries. The number of legend entries is determined
+            by the `curve_kwargs` passed to `plot`, and is not affected by `name`.
+
+            If a string is provided, it will be used to either label the single legend
+            entry or if there are multiple legend entries, label each individual curve
+            with the same name.
+
+            If a list is provided, it will be used to label each curve individually.
+            Passing a list will raise an error if `curve_kwargs` is not a list to avoid
+            labeling individual curves that have the same appearance.
+
+            If `None`, set to `name` provided at `RocCurveDisplay` initialization. If
+            still `None`, no name is shown in the legend.
 
             .. versionadded:: 1.7
 
@@ -238,14 +245,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         """
         fpr, tpr, roc_auc, name = self._validate_plot_params(ax=ax, name=name)
         n_curves = len(fpr)
-        if not isinstance(curve_kwargs, list) and n_curves > 1:
-            if roc_auc:
-                legend_metric = {"mean": np.mean(roc_auc), "std": np.std(roc_auc)}
-            else:
-                legend_metric = {"mean": None, "std": None}
-        else:
-            roc_auc = roc_auc if roc_auc is not None else [None] * n_curves
-            legend_metric = {"metric": roc_auc}
+        roc_auc, legend_metric = self._get_legend_metric(
+            curve_kwargs, n_curves, roc_auc
+        )
 
         curve_kwargs = self._validate_curve_kwargs(
             n_curves,
@@ -678,14 +680,18 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             created.
 
         name : str or list of str, default=None
-            Name for labeling legend entries. The number of legend entries
-            is determined by `curve_kwargs`, and is not affected by `name`.
-            To label each curve, provide a list of strings. To avoid labeling
-            individual curves that have the same appearance, a list cannot be used in
-            conjunction with `curve_kwargs` being a dictionary or None. If a
-            string is provided, it will be used to either label the single legend entry
-            or if there are multiple legend entries, label each individual curve with
-            the same name. If `None`, no name is shown in the legend.
+            Name for labeling legend entries. The number of legend entries is determined
+            by the `curve_kwargs` passed to `plot`, and is not affected by `name`.
+
+            If a string is provided, it will be used to either label the single legend
+            entry or if there are multiple legend entries, label each individual curve
+            with the same name.
+
+            If a list is provided, it will be used to label each curve individually.
+            Passing a list will raise an error if `curve_kwargs` is not a list to avoid
+            labeling individual curves that have the same appearance.
+
+            If `None`, no name is shown in the legend.
 
         curve_kwargs : dict or list of dict, default=None
             Keywords arguments to be passed to matplotlib's `plot` function

@@ -2756,7 +2756,7 @@ def test_power_transformer_constant_feature(standardize):
 
     for Xt_ in [Xft, Xt]:
         if standardize:
-            assert_allclose(Xt_, np.zeros_like(X))
+            assert_allclose(Xt_, np.zeros_like(X), atol=1e-14)
         else:
             assert_allclose(Xt_, X)
 
