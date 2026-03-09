@@ -2062,7 +2062,9 @@ class LassoCV(RegressorMixin, LinearModelCV):
         Amount of verbosity.
 
     n_jobs : int, default=None
-        Number of CPUs to use during the cross validation.
+        Number of CPUs to use during cross-validation. The regularization
+        path computation is parallelized over the combination of ``l1_ratio``
+        values and cross-validation folds, using a threading backend.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -2335,7 +2337,9 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         Amount of verbosity.
 
     n_jobs : int, default=None
-        Number of CPUs to use during the cross validation.
+        Number of CPUs to use during cross-validation. The regularization
+        path computation is parallelized across cross-validation folds
+        using a threading backend.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -3033,8 +3037,10 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         Amount of verbosity.
 
     n_jobs : int, default=None
-        Number of CPUs to use during the cross validation. Note that this is
-        used only if multiple values for l1_ratio are given.
+        Number of CPUs to use during cross-validation. When multiple
+        ``l1_ratio`` values are provided, the regularization path
+        computation is parallelized over the combination of ``l1_ratio``
+        values and cross-validation folds, using a threading backend.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -3288,8 +3294,9 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         Amount of verbosity.
 
     n_jobs : int, default=None
-        Number of CPUs to use during the cross validation. Note that this is
-        used only if multiple values for l1_ratio are given.
+        Number of CPUs to use during cross-validation. The regularization
+        path computation is parallelized across cross-validation folds
+        using a threading backend.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.

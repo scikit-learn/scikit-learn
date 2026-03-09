@@ -256,7 +256,9 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         See :term:`Glossary <random_state>`.
 
     n_jobs : int, default=None
-        Number of CPUs to use during the cross validation.
+        Number of CPUs to use during fitting. The random subsampling
+        iterations are split across workers, with each worker fitting
+        least-squares estimates on its share of the subsampled data.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
