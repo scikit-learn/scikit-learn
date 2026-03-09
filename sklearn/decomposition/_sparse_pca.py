@@ -197,7 +197,10 @@ class SparsePCA(_BaseSparsePCA):
         the estimated components are sparse.
 
     n_jobs : int, default=None
-        Number of parallel jobs to run.
+        Number of parallel jobs to run. During :meth:`fit`, the sparse
+        encoding step of the dictionary learning algorithm splits samples
+        into ``n_jobs`` slices and encodes each slice in parallel. Does not
+        affect :meth:`transform`.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -384,7 +387,10 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
         Whether to shuffle the data before splitting it in batches.
 
     n_jobs : int, default=None
-        Number of parallel jobs to run.
+        Number of parallel jobs to run. During :meth:`fit`, the sparse
+        encoding step of the mini-batch dictionary learning algorithm splits
+        samples into ``n_jobs`` slices and encodes each slice in parallel.
+        Does not affect :meth:`transform`.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.

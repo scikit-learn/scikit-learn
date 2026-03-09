@@ -1235,7 +1235,9 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         performance of downstream classifiers.
 
     n_jobs : int, default=None
-        Number of parallel jobs to run.
+        Number of parallel jobs to run. During :meth:`transform`, samples
+        are split into ``n_jobs`` slices and each slice is encoded against
+        the dictionary in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -1492,7 +1494,10 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
             When None, default value changed from 1.0 to `alpha`.
 
     n_jobs : int or None, default=None
-        Number of parallel jobs to run.
+        Number of parallel jobs to run. During both :meth:`fit` and
+        :meth:`transform`, the sparse encoding step splits samples into
+        ``n_jobs`` slices and encodes each slice against the dictionary in
+        parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -1799,7 +1804,10 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
           the estimated components are sparse.
 
     n_jobs : int, default=None
-        Number of parallel jobs to run.
+        Number of parallel jobs to run. During both :meth:`fit` and
+        :meth:`transform`, the sparse encoding step splits samples into
+        ``n_jobs`` slices and encodes each slice against the dictionary in
+        parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
