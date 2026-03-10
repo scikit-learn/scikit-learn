@@ -352,7 +352,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         # TODO(1.11): pass shuffle=True to keep backwards compatibility for default
         # inputs (will be ignored in `check_cv` if a cv object is passed);
-        # `random_state` naturally defaults to `None` in `check_cv` and doesn't need to
+        # `random_state` already defaults to `None` in `check_cv` and doesn't need to
         # be passed here
         cv = check_cv(
             self.cv,
