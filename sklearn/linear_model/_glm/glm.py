@@ -219,8 +219,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             # losses.
             sample_weight = _check_sample_weight(sample_weight, X, dtype=loss_dtype)
 
-        if not _is_numpy_namespace(xp):
-            y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
+        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
 
         n_samples, n_features = X.shape
         self._base_loss = self._get_loss(xp=xp, device=device_)
@@ -431,8 +430,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             sample_weight = _check_sample_weight(sample_weight, X, dtype=y.dtype)
 
         xp, _, device_ = get_namespace_and_device(X)
-        if not _is_numpy_namespace(xp):
-            y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
+        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
 
         base_loss = self._base_loss
 

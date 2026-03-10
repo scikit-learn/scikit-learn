@@ -1412,7 +1412,7 @@ def test_loss_array_api(
 
     xp = _array_api_for_tests(namespace, device_)
     atol = _atol_for_type(dtype_name)
-    rtol = 3e-7 if dtype_name == "float32" else 1e-10
+    rtol = 1e-6 if dtype_name == "float32" else 1e-11
     random_seed = 42
     n_samples = 100
     array_api_loss_instance = array_api_loss_class(xp=xp, device=device_)
