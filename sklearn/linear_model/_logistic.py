@@ -47,6 +47,7 @@ from sklearn.utils._array_api import (
     size,
 )
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
+from sklearn.utils.deprecation import deprecated
 from sklearn.utils.extmath import row_norms, softmax
 from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
 from sklearn.utils.metadata_routing import (
@@ -101,7 +102,8 @@ def _logistic_regression_path(
     y,
     *,
     classes,
-    Cs=10,
+    alphas=10,
+    Cs="deprecated",
     fit_intercept=True,
     max_iter=100,
     tol=1e-4,
@@ -141,15 +143,20 @@ def _logistic_regression_path(
     classes : ndarray
         A list of class labels known to the classifier.
 
-    Cs : int or array-like of shape (n_cs,), default=10
-        List of values for the regularization parameter or integer specifying
-        the number of regularization parameters that should be used. In this
-        case, the parameters will be chosen in a logarithmic scale between
-        1e-4 and 1e4.
+    alphas : int or array-like of shape (n_alphas,), default=10
+        Each of the values in `alphas` describe the regularization strength that
+        multiplies the penalty term (both L1 and L2). In this case, values must be in
+        the range `[0.0, inf)`.
+        If `alphas` is as an integer, then a grid of `alpha` values is chosen on a
+        logarithmic scale, with between 1e-4 and 1e4.
+
+    Cs : int or array-like of shape (n_alphas,), default=10
+
+        .. deprecated:: 1.9
 
     fit_intercept : bool, default=True
         Whether to fit an intercept for the model. In this case the shape of
-        the returned array is (n_cs, n_features + 1).
+        the returned array is (n_alphas, n_features + 1).
 
     max_iter : int, default=100
         Maximum number of iterations for the solver.
@@ -237,19 +244,24 @@ def _logistic_regression_path(
 
     Returns
     -------
-    coefs : ndarray of shape (n_cs, n_classes, n_features + int(fit_intercept)) or \
-            (n_cs, n_features + int(fit_intercept))
+    coefs : ndarray of shape (n_alphas, n_classes, n_features + int(fit_intercept)) or \
+            (n_alphas, n_features + int(fit_intercept))
         List of coefficients for the Logistic Regression model. If fit_intercept is set
         to True, then the last dimension will be n_features + 1, where the last item
         represents the intercept.
         For binary problems the second dimension in n_classes is dropped, i.e. the shape
-        will be `(n_cs, n_features + int(fit_intercept))`.
+        will be `(n_alphas, n_features + int(fit_intercept))`.
+
+    alphas : ndarray
+        Grid of alphas used for cross-validation.
 
     Cs : ndarray
-        Grid of Cs used for cross-validation.
+        Grid of alphas used for cross-validation.
 
-    n_iter : array of shape (n_cs,)
-        Actual number of iteration for each C in Cs.
+        .. deprecated:: 1.9
+
+    n_iter : array of shape (n_alphas,)
+        Actual number of iteration for each alpha in alphas.
 
     Notes
     -----
@@ -259,8 +271,26 @@ def _logistic_regression_path(
     .. versionchanged:: 0.19
         The "copy" parameter was removed.
     """
-    if isinstance(Cs, numbers.Integral):
-        Cs = np.logspace(-4, 4, Cs)
+    if Cs is not None and not (isinstance(alphas, str) and alphas == "warned_already"):
+        depr_msg = (
+            "'Cs' was deprecated in version 1.9 and will be removed in 1.11. "
+            "For integers, use alphas=Cs, "
+            "for arrays, use alphas=1/(Cs * n_samples) or "
+            "alpha=1/(Cs * np.sum(sample_weight)) and set C=None instead. "
+            "Set Cs=None to avoid this warning."
+        )
+        warnings.warn(depr_msg, FutureWarning)
+
+    use_alpha = True  # TODO(1.11): remove
+    if Cs is None or (isinstance(Cs, str) and Cs == "deprecated"):
+        if isinstance(alphas, numbers.Integral):
+            alphas = np.logspace(4, -4, alphas)  # descending
+        Cs = [None] * len(alphas)
+    else:
+        use_alpha = False
+        if isinstance(Cs, numbers.Integral):
+            Cs = np.logspace(-4, 4, Cs)
+        alphas = [None] * len(Cs)
 
     solver = _check_solver(solver, penalty, dual)
     xp, _, device_ = get_namespace_and_device(X)
@@ -330,6 +360,7 @@ def _logistic_regression_path(
             dtype=_matching_numpy_dtype(X, xp=xp),
         )
 
+    # TODO(1.11): Modify or remove this note with the deprecation/removal of C.
     # IMPORTANT NOTE:
     # All solvers relying on LinearModelLoss need to scale the penalty with n_samples
     # or the sum of sample weights because the implemented logistic regression
@@ -337,11 +368,11 @@ def _logistic_regression_path(
     #     C * sum(pointwise_loss) + penalty
     # instead of (as LinearModelLoss does)
     #     mean(pointwise_loss) + 1/C * penalty
-    if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
-        # This needs to be calculated after sample_weight is multiplied by
-        # class_weight. It is even tested that passing class_weight is equivalent to
-        # passing sample_weights according to class_weight.
-        sw_sum = n_samples if sample_weight is None else float(xp.sum(sample_weight))
+    # At least for solver in ["lbfgs", "newton-cg", "newton-cholesky"]
+    # this needs to be calculated after sample_weight is multiplied by
+    # class_weight. It is even tested that passing class_weight is equivalent to
+    # passing sample_weights according to class_weight.
+    sw_sum = n_samples if sample_weight is None else float(xp.sum(sample_weight))
 
     if coef is not None:
         if is_binary:
@@ -415,11 +446,14 @@ def _logistic_regression_path(
         warm_start_sag = {"coef": w0.T}
 
     coefs = list()
-    n_iter = xp.zeros(len(Cs), dtype=xp.int32, device=device_)
+    n_iter = xp.zeros(len(alphas), dtype=xp.int32, device=device_)
     coefs_order = "C" if not _is_numpy_namespace(xp) else "K"
-    for i, C in enumerate(Cs):
-        if solver == "lbfgs":
+    for i, (alpha, C) in enumerate(zip(alphas, Cs)):
+        if use_alpha:
+            l2_reg_strength = alpha
+        else:
             l2_reg_strength = 1.0 / (C * sw_sum)
+        if solver == "lbfgs":
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)
             ]
@@ -445,7 +479,6 @@ def _logistic_regression_path(
             )
             w0, loss = opt_res.x, opt_res.fun
         elif solver == "newton-cg":
-            l2_reg_strength = 1.0 / (C * sw_sum)
             args = (X, target, sample_weight, l2_reg_strength, n_threads)
             w0, n_iter_i = _newton_cg(
                 grad_hess=hess,
@@ -458,7 +491,6 @@ def _logistic_regression_path(
                 verbose=verbose,
             )
         elif solver == "newton-cholesky":
-            l2_reg_strength = 1.0 / (C * sw_sum)
             sol = NewtonCholeskySolver(
                 coef=w0,
                 linear_loss=loss,
@@ -474,7 +506,7 @@ def _logistic_regression_path(
             coef_, intercept_, n_iter_i = _fit_liblinear(
                 X,
                 target,
-                C,
+                1 / (l2_reg_strength * sw_sum) if use_alpha else C,
                 fit_intercept,
                 intercept_scaling,
                 None,
@@ -502,14 +534,25 @@ def _logistic_regression_path(
                 loss = "multinomial"
             # alpha is for L2-norm, beta is for L1-norm
             if penalty == "l1":
-                alpha = 0.0
-                beta = 1.0 / C
+                if use_alpha:
+                    beta = alpha * sw_sum
+                    alpha = 0.0
+                else:
+                    alpha = 0.0
+                    beta = 1.0 / C
             elif penalty == "l2":
-                alpha = 1.0 / C
+                if use_alpha:
+                    alpha = alpha * sw_sum
+                else:
+                    alpha = 1.0 / C
                 beta = 0.0
             else:  # Elastic-Net penalty
-                alpha = (1.0 / C) * (1 - l1_ratio)
-                beta = (1.0 / C) * l1_ratio
+                if use_alpha:
+                    beta = alpha * sw_sum * l1_ratio
+                    alpha = alpha * sw_sum * (1 - l1_ratio)
+                else:
+                    alpha = (1.0 / C) * (1 - l1_ratio)
+                    beta = (1.0 / C) * l1_ratio
 
             w0, n_iter_i, warm_start_sag = sag_solver(
                 X,
@@ -553,7 +596,13 @@ def _logistic_regression_path(
 
         n_iter[i] = n_iter_i
 
-    return xp.stack(coefs), xp.asarray(Cs, device=device_), n_iter
+    if use_alpha:
+        alphas = xp.asarray(alphas, device=device_)
+        Cs = None
+    else:
+        alphas = None
+        xp.asarray(Cs, device=device_)
+    return xp.stack(coefs), alphas, Cs, n_iter
 
 
 # helper function for LogisticCV
@@ -564,6 +613,7 @@ def _log_reg_scoring_path(
     test,
     *,
     classes,
+    alphas,
     Cs,
     scoring,
     fit_intercept,
@@ -600,10 +650,19 @@ def _log_reg_scoring_path(
     classes : ndarray
         A list of class labels known to the classifier.
 
-    Cs : int or list of floats
+    alphas : int or array-like of shape (n_alphas,), default=10
+        Each of the values in `alphas` describe the regularization strength that
+        multiplies the penalty term (both L1 and L2). In this case, values must be in
+        the range `[0.0, inf)`.
+        If `alphas` is as an integer, then a grid of `alpha` values is chosen on a
+        logarithmic scale, with between 1e-4 and 1e4.
+
+    Cs : int or array-like of shape (n_alphas,), default=10
         Each of the values in Cs describes the inverse of
         regularization strength. If Cs is as an int, then a grid of Cs
         values are chosen in a logarithmic scale between 1e-4 and 1e4.
+
+        .. deprecated:: 1.9
 
     scoring : str, callable or None
         The scoring method to use for cross-validation. Options:
@@ -691,21 +750,26 @@ def _log_reg_scoring_path(
 
     Returns
     -------
-    coefs : ndarray of shape (n_cs, n_classes, n_features + int(fit_intercept)) or \
-            (n_cs, n_features + int(fit_intercept))
+    coefs : ndarray of shape (n_alphas, n_classes, n_features + int(fit_intercept)) or \
+            (n_alphas, n_features + int(fit_intercept))
         List of coefficients for the Logistic Regression model. If fit_intercept is set
         to True, then the last dimension will be n_features + 1, where the last item
         represents the intercept.
         For binary problems the second dimension in n_classes is dropped, i.e. the shape
-        will be `(n_cs, n_features + int(fit_intercept))`.
+        will be `(n_alphas, n_features + int(fit_intercept))`.
 
-    Cs : ndarray of shape (n_cs,)
+    alphas : ndarray of shape (n_alphas,)
+        Grid of alphas used for cross-validation.
+
+    Cs : ndarray of shape (n_alphas,)
         Grid of Cs used for cross-validation.
 
-    scores : ndarray of shape (n_cs,)
+        .. deprecated:: 1.9
+
+    scores : ndarray of shape (n_alphas,)
         Scores obtained for each Cs.
 
-    n_iter : ndarray of shape (n_cs,)
+    n_iter : ndarray of shape (n_alphas,)
         Actual number of iteration for each C in Cs.
     """
     X_train = X[train]
@@ -723,10 +787,11 @@ def _log_reg_scoring_path(
     # i.e. different number of classes in different folds. This way, if a class
     # is not present in a fold, _logistic_regression_path will still return
     # coefficients associated to this class.
-    coefs, Cs, n_iter = _logistic_regression_path(
+    coefs, alphas, Cs, n_iter = _logistic_regression_path(
         X_train,
         y_train,
         classes=classes,
+        alphas=alphas,
         Cs=Cs,
         l1_ratio=l1_ratio,
         fit_intercept=fit_intercept,
@@ -796,7 +861,15 @@ def _log_reg_scoring_path(
         def calc_score(log_reg):
             return scoring(log_reg, X_test, y_test, **score_params)
 
-    for w, C in zip(coefs, Cs):
+    if Cs is None:
+        alphas_zip = alphas
+        Cs_zip = [None] * len(alphas)
+    else:
+        alphas_zip = alphas = [None] * len(Cs)
+        Cs_zip = Cs
+
+    for w, alpha, C in zip(coefs, alphas_zip, Cs_zip):
+        log_reg.alpha = alpha
         log_reg.C = C
         if fit_intercept:
             log_reg.coef_ = w[..., :-1]
@@ -807,7 +880,7 @@ def _log_reg_scoring_path(
 
         scores.append(calc_score(log_reg))
 
-    return coefs, Cs, np.array(scores), n_iter
+    return coefs, alphas, Cs, np.array(scores), n_iter
 
 
 class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
@@ -819,6 +892,21 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     dense and sparse input `X`. Use C-ordered arrays or CSR matrices containing 64-bit
     floats for optimal performance; any other input format will be converted (and
     copied).
+
+    It minimizes the objective function::
+
+            1 / n_samples * sum_i logloss(y_i, x_i w)
+            + alpha * l1_ratio * ||w||_1
+            + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
+
+    If you are interested in controlling the L1 and L2 penalty
+    separately, keep in mind that this is equivalent to::
+
+            a * ||w||_1 + 0.5 * b * ||w||_2^2
+
+    where::
+
+            alpha = a + b and l1_ratio = a / (a + b)
 
     The solvers 'lbfgs', 'newton-cg', 'newton-cholesky' and 'sag' support only L2
     regularization with primal formulation, or no regularization. The 'liblinear'
@@ -857,6 +945,17 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            `penalty='l1'` and `l1_ratio` set to any float between 0 and 1 for
            `'penalty='elasticnet'`.
 
+    alpha : float, default=1
+        Regularization strength that multiplies the penalty term (both L1 and L2).
+        ``alpha = 0`` is equivalent to unpenalized logistic regression. In this case,
+        the design matrix `X` must have full column rank (no collinearities).
+        Values of `alpha` must be in the range `[0.0, inf)`.
+
+        .. warning::
+           During the deprecation period of `C`, you need to set `C=None` in order
+           to use `alpha`. If you do not set `C=None`, the value of `C` will be used
+           no matter the value of `alpha`.
+
     C : float, default=1.0
         Inverse of regularization strength; must be a positive float.
         Like in support vector machines, smaller values specify stronger
@@ -864,6 +963,12 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         For a visual example on the effect of tuning the `C` parameter
         with an L1 penalty, see:
         :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`.
+
+        .. deprecated:: 1.9
+           `C` was deprecated in version 1.9 and will be removed in 1.11.
+           Use `alpha=1/(C * n_samples)` or
+           `alpha=1/(C * np.sum(sample_weight))` and set `C=None` instead.
+           The new default will be `alpha=1`.
 
     l1_ratio : float, default=0.0
         The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Setting
@@ -1090,14 +1195,14 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.linear_model import LogisticRegression
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = LogisticRegression(random_state=0).fit(X, y)
+    >>> clf = LogisticRegression(C=None).fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])
     >>> clf.predict_proba(X[:2, :])
-    array([[9.82e-01, 1.82e-02, 1.44e-08],
-           [9.72e-01, 2.82e-02, 3.02e-08]])
+    array([[0.6637, 0.2363, 0.0999],
+           [0.6562, 0.2458, 0.0979]])
     >>> clf.score(X, y)
-    0.97
+    0.86
 
     For a comparison of the LogisticRegression with other classifiers see:
     :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
@@ -1109,7 +1214,12 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             None,
             Hidden(StrOptions({"deprecated"})),
         ],
-        "C": [Interval(Real, 0, None, closed="right")],
+        "alpha": [Interval(Real, 0.0, None, closed="left")],
+        "C": [
+            Interval(Real, 0, None, closed="right"),
+            None,
+            Hidden(StrOptions({"deprecated", "warn"})),
+        ],
         "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
         "dual": ["boolean"],
         "tol": [Interval(Real, 0, None, closed="left")],
@@ -1132,7 +1242,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self,
         penalty="deprecated",
         *,
-        C=1.0,
+        alpha=1.0,
+        C="deprecated",
         l1_ratio=0.0,
         dual=False,
         tol=1e-4,
@@ -1147,6 +1258,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         n_jobs=None,
     ):
         self.penalty = penalty
+        self.alpha = alpha
         self.C = C
         self.l1_ratio = l1_ratio
         self.dual = dual
@@ -1191,6 +1303,15 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         -----
         The SAGA solver supports both float64 and float32 bit arrays.
         """
+        if self.C is not None:
+            depr_msg = (
+                "'C' was deprecated in version 1.9 and will be removed in 1.11. "
+                "Use alpha=1/(C * n_samples) or "
+                "alpha=1/(C * np.sum(sample_weight)) and set C=None instead. "
+                "Set C=None to avoid this warning."
+            )
+            warnings.warn(depr_msg, FutureWarning)
+
         if self.penalty == "deprecated":
             if self.l1_ratio == 0 or self.l1_ratio is None:
                 penalty = "l2"
@@ -1206,7 +1327,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 penalty = "l1"
             else:
                 penalty = "elasticnet"
-            if self.C == np.inf:
+            if self.C == np.inf or (self.C is None and self.alpha == 0):
                 penalty = None
         else:
             penalty = self.penalty
@@ -1246,17 +1367,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         xp, _, device_ = get_namespace_and_device(X)
         xp_y, _ = get_namespace(y)
 
-        if self.penalty is None:
-            if self.C != 1.0:  # default value
-                warnings.warn(
-                    "Setting penalty=None will ignore the C and l1_ratio parameters"
-                )
-                # Note that check for l1_ratio is done right above
-            C_ = xp.inf
-            penalty = "l2"
-        else:
-            C_ = self.C
-
         msg = (
             "'n_jobs' has no effect since 1.8 and will be removed in 1.10. "
             f"You provided 'n_jobs={self.n_jobs}', please leave it unspecified."
@@ -1273,11 +1383,30 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             order="C",
             accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
         )
-        n_features = X.shape[1]
+        n_samples, n_features = X.shape
         check_classification_targets(y)
         self.classes_ = xp_y.unique_values(y)
         n_classes = size(self.classes_)
         is_binary = n_classes == 2
+
+        if self.penalty is None:
+            # if not default values
+            if self.C != "deprecated" or (self.C is None and self.alpha == 1):
+                warnings.warn(
+                    "Setting penalty=None will ignore the alpha, C and l1_ratio "
+                    "parameters",
+                    UserWarning,
+                )
+                # Note that check for l1_ratio is done right above
+            alpha_ = 0
+            C_ = None
+            penalty = "l2"
+        elif self.C == "deprecated":
+            C_ = 1.0  # the old default
+            alpha_ = None
+        else:
+            alpha_ = self.alpha
+            C_ = self.C
 
         if solver == "liblinear":
             if not is_binary:
@@ -1293,10 +1422,32 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                     "value > 1e30 results in a frozen fit. Please choose another "
                     "solver or rescale the input X."
                 )
+
+            if C_ is None:
+                sample_weight = _check_sample_weight(
+                    sample_weight, X, dtype=X.dtype, copy=True, ensure_same_device=True
+                )
+                if self.class_weight is not None:
+                    le = LabelEncoder().fit(self.classes_)
+                    class_weight_ = compute_class_weight(
+                        self.class_weight,
+                        classes=self.classes_,
+                        y=y,
+                        sample_weight=sample_weight,
+                    )
+                    class_weight_ = xp.asarray(
+                        class_weight_[le.transform(y)], dtype=X.dtype, device=device_
+                    )
+                    sw_sum = float(xp.sum(class_weight_ * sample_weight))
+                else:
+                    sw_sum = float(xp.sum(sample_weight))
+
+                C_ = 1 / (alpha_ * sw_sum)
+
             self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
                 X,
                 y,
-                self.C,
+                C_,
                 self.fit_intercept,
                 self.intercept_scaling,
                 self.class_weight,
@@ -1335,11 +1486,12 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         # see https://github.com/scikit-learn/scikit-learn/issues/32162
         n_threads = 1
 
-        coefs, _, n_iter = _logistic_regression_path(
+        coefs, _, _, n_iter = _logistic_regression_path(
             X,
             y,
             classes=self.classes_,
-            Cs=[C_],
+            alphas=[alpha_] if C_ is None else "warned_already",
+            Cs=[C_] if C_ is not None else None,
             l1_ratio=self.l1_ratio,
             fit_intercept=self.fit_intercept,
             tol=self.tol,
@@ -1463,12 +1615,31 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     Parameters
     ----------
+    alphas : int or array-like of shape (n_alphas,), default=10
+        Each of the values in `alphas` describe the regularization strength that
+        multiplies the penalty term (both L1 and L2). In this case, values must be in
+        the range `[0.0, inf)`.
+        If `alphas` is as an integer, then a grid of `alpha` values is chosen on a
+        logarithmic scale, with between 1e-4 and 1e4.
+
+        .. warning::
+           During the deprecation period of `Cs`, you need to set `Cs=None` in order
+           to use `alphas`. If you do not set `Cs=None`, the value of `Cs` will be used
+           no matter the value of `alphas`.
+
     Cs : int or list of floats, default=10
         Each of the values in Cs describes the inverse of regularization
         strength. If Cs is as an int, then a grid of Cs values are chosen
         in a logarithmic scale between 1e-4 and 1e4.
         Like in support vector machines, smaller values specify stronger
         regularization.
+
+        .. deprecated:: 1.9
+           `Cs` was deprecated in version 1.9 and will be removed in 1.11.
+           For integers, use `alphas=Cs`.
+           For arrays, use `alphas=1/(Cs * n_samples)` or
+           `alphas=1/(Cs * np.sum(sample_weight))` and set `Cs=None` instead.
+           The new default will be `alpha=10` (automatic grid of 10 values).
 
     l1_ratios : array-like of shape (n_l1_ratios), default=None
         Floats between 0 and 1 passed as Elastic-Net mixing parameter (scaling between
@@ -1650,17 +1821,17 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         - `l1_ratio_` is an ndarray of shape (n_classes,) with the same value repeated
         - `coefs_paths_` is a dict with class labels as keys and ndarrays as values
         - `scores_` is a dict with class labels as keys and ndarrays as values
-        - `n_iter_` is an ndarray of shape (1, n_folds, n_cs) or similar
+        - `n_iter_` is an ndarray of shape (1, n_folds, n_alphas) or similar
 
         If False, use new values for attributes:
 
         - `C_` is a float
         - `l1_ratio_` is a float
         - `coefs_paths_` is an ndarray of shape
-          (n_folds, n_l1_ratios, n_cs, n_classes, n_features)
+          (n_folds, n_l1_ratios, n_alphas, n_classes, n_features)
           For binary problems (n_classes=2), the 2nd last dimension is 1.
-        - `scores_` is an ndarray of shape (n_folds, n_l1_ratios, n_cs)
-        - `n_iter_` is an ndarray of shape (n_folds, n_l1_ratios, n_cs)
+        - `scores_` is an ndarray of shape (n_folds, n_l1_ratios, n_alphas)
+        - `n_iter_` is an ndarray of shape (n_folds, n_l1_ratios, n_alphas)
 
         .. versionchanged:: 1.10
            The default will change from True to False in version 1.10.
@@ -1685,34 +1856,47 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         If `fit_intercept` is set to False, the intercept is set to zero.
         `intercept_` is of shape (1,) when the problem is binary.
 
-    Cs_ : ndarray of shape (n_cs)
+    alphas_ : ndarray of shape (n_alphas)
+        Array of alpha values, i.e. regularization strength parameter, used
+        for cross-validation.
+
+    Cs_ : ndarray of shape (n_alphas)
         Array of C i.e. inverse of regularization parameter values used
         for cross-validation.
+
+        .. deprecated:: 1.9
+           `Cs_` was deprecated in version 1.9 and will be removed in 1.11.
+           Use the new attribute `alphas_` instead.
 
     l1_ratios_ : ndarray of shape (n_l1_ratios)
         Array of l1_ratios used for cross-validation. If l1_ratios=None is used
         (i.e. penalty is not 'elasticnet'), this is set to ``[None]``
 
-    coefs_paths_ : dict of ndarray of shape (n_folds, n_cs, n_dof) or \
-            (n_folds, n_cs, n_l1_ratios, n_dof)
+    coefs_paths_ : dict of ndarray of shape (n_folds, n_alphas, n_dof) or \
+            (n_folds, n_alphas, n_l1_ratios, n_dof)
         A dict with classes as the keys, and the path of coefficients obtained
-        during cross-validating across each fold (`n_folds`) and then across each Cs
-        (`n_cs`).
+        during cross-validating across each fold (`n_folds`) and then across each alphas
+        (`n_alphas`).
         The size of the coefficients is the number of degrees of freedom (`n_dof`),
         i.e. without intercept `n_dof=n_features` and with intercept
         `n_dof=n_features+1`.
         If `penalty='elasticnet'`, there is an additional dimension for the number of
         l1_ratio values (`n_l1_ratios`), which gives a shape of
-        ``(n_folds, n_cs, n_l1_ratios_, n_dof)``.
+        ``(n_folds, n_alphas, n_l1_ratios_, n_dof)``.
         See also parameter `use_legacy_attributes`.
 
-    scores_ : dict
+    scores_ : dict or ndarray of shape (n_folds, n_l1_ratios, n_alphas)
         A dict with classes as the keys, and the values as the
         grid of scores obtained during cross-validating each fold.
         The same score is repeated across all classes. Each dict value
-        has shape ``(n_folds, n_cs)`` or ``(n_folds, n_cs, n_l1_ratios)`` if
+        has shape ``(n_folds, n_alphas)`` or ``(n_folds, n_alphas, n_l1_ratios)`` if
         ``penalty='elasticnet'``.
         See also parameter `use_legacy_attributes`.
+
+    alpha_ : float
+        The value of alpha that maps to the best score.
+        If refit is set to False, the best alpha is the average of the alphas that
+        correspond to the best score for each fold.
 
     C_ : ndarray of shape (n_classes,) or (1,)
         The value of C that maps to the best score, repeated n_classes times.
@@ -1721,6 +1905,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         `C_` is of shape (1,) when the problem is binary.
         See also parameter `use_legacy_attributes`.
 
+        .. deprecated:: 1.9
+           `C_` was deprecated in version 1.9 and will be removed in 1.11.
+           Use the new attribute `alpha_` instead.
+
     l1_ratio_ : ndarray of shape (n_classes,) or (n_classes - 1,)
         The value of l1_ratio that maps to the best score, repeated n_classes times.
         If refit is set to False, the best l1_ratio is the average of the
@@ -1728,9 +1916,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         `l1_ratio_` is of shape (1,) when the problem is binary.
         See also parameter `use_legacy_attributes`.
 
-    n_iter_ : ndarray of shape (1, n_folds, n_cs) or (1, n_folds, n_cs, n_l1_ratios)
+    n_iter_ : ndarray of shape (1, n_folds, n_alphas) or \
+            (1, n_folds, n_alphas, n_l1_ratios)
         Actual number of iterations for all classes, folds and Cs.
-        If `penalty='elasticnet'`, the shape is `(1, n_folds, n_cs, n_l1_ratios)`.
+        If `penalty='elasticnet'`, the shape is `(1, n_folds, n_alphas, n_l1_ratios)`.
         See also parameter `use_legacy_attributes`.
 
     n_features_in_ : int
@@ -1755,7 +1944,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     >>> from sklearn.linear_model import LogisticRegressionCV
     >>> X, y = load_iris(return_X_y=True)
     >>> clf = LogisticRegressionCV(
-    ...     cv=5, random_state=0, use_legacy_attributes=False, l1_ratios=(0,)
+    ...     Cs=None, cv=5, use_legacy_attributes=False, l1_ratios=(0,)
     ... ).fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])
@@ -1767,12 +1956,18 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     _parameter_constraints: dict = {**LogisticRegression._parameter_constraints}
 
-    for param in ["C", "warm_start", "l1_ratio"]:
+    for param in ["C", "alpha", "warm_start", "l1_ratio"]:
         _parameter_constraints.pop(param)
 
     _parameter_constraints.update(
         {
-            "Cs": [Interval(Integral, 1, None, closed="left"), "array-like"],
+            "alphas": [Interval(Integral, 1, None, closed="left"), "array-like"],
+            "Cs": [
+                Interval(Integral, 1, None, closed="left"),
+                "array-like",
+                None,
+                Hidden(StrOptions({"deprecated"})),
+            ],
             "l1_ratios": ["array-like", None, Hidden(StrOptions({"warn"}))],
             "cv": ["cv_object"],
             "scoring": [StrOptions(set(get_scorer_names())), callable, None],
@@ -1788,7 +1983,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     def __init__(
         self,
         *,
-        Cs=10,
+        alphas=10,
+        Cs="deprecated",
         l1_ratios="warn",
         fit_intercept=True,
         cv=None,
@@ -1806,6 +2002,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         random_state=None,
         use_legacy_attributes="warn",
     ):
+        self.alphas = alphas
         self.Cs = Cs
         self.l1_ratios = l1_ratios
         self.fit_intercept = fit_intercept
@@ -1954,7 +2151,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             order="C",
             accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
         )
-        n_features = X.shape[1]
+        n_samples, n_features = X.shape
+        xp, _, device_ = get_namespace_and_device(X)
+
         check_classification_targets(y)
 
         class_weight = self.class_weight
@@ -1973,6 +2172,27 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 " in the data, but the data contains only one"
                 f" class: {self.classes_[0]}."
             )
+
+        if sample_weight is not None or class_weight is not None:
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype, copy=True, ensure_same_device=True
+            )
+        if self.class_weight is not None:
+            le = LabelEncoder().fit(self.classes_)
+            class_weight_ = compute_class_weight(
+                self.class_weight,
+                classes=self.classes_,
+                y=y,
+                sample_weight=sample_weight,
+            )
+            class_weight_ = xp.asarray(
+                class_weight_[le.transform(y)], dtype=X.dtype, device=device_
+            )
+            sw_sum = float(xp.sum(class_weight_ * sample_weight))
+        elif sample_weight is None:
+            sw_sum = n_samples
+        else:
+            sw_sum = float(xp.sum(sample_weight))
 
         if solver in ["sag", "saga"]:
             max_squared_sum = row_norms(X, squared=True).max()
@@ -2034,6 +2254,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 train,
                 test,
                 classes=self.classes_,
+                alphas=self.alphas,
                 Cs=self.Cs,
                 fit_intercept=self.fit_intercept,
                 penalty=penalty,
@@ -2057,35 +2278,49 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         # fold_coefs_ is a list and would have shape (n_folds * n_l1_ratios, ..)
         # After reshaping,
-        # - coefs_paths is of shape (n_classes, n_folds, n_Cs, n_l1_ratios, n_features)
-        # - scores is of shape (n_classes, n_folds, n_Cs, n_l1_ratios)
-        # - n_iter is of shape (1, n_folds, n_Cs, n_l1_ratios)
-        coefs_paths, Cs, scores, n_iter_ = zip(*fold_coefs_)
-        self.Cs_ = Cs[0]  # the same for all folds and l1_ratios
+        # - coefs_paths is of shape
+        #   (n_classes, n_folds, n_alphas, n_l1_ratios, n_features)
+        # - scores is of shape (n_classes, n_folds, n_alphas, n_l1_ratios)
+        # - n_iter is of shape (1, n_folds, n_alphas, n_l1_ratios)
+        coefs_paths, alphas, Cs, scores, n_iter_ = zip(*fold_coefs_)
+        if Cs[0] is None:
+            use_alpha = True
+            self.alphas_ = alphas[0]  # the same for all folds and l1_ratios
+            self._Cs_ = 1 / (np.asarray(self.alphas_) * sw_sum)
+            n_alphas = len(self.alphas_)
+        else:
+            use_alpha = False
+            self._Cs_ = Cs[0]  # the same for all folds and l1_ratios
+            self.alphas_ = 1 / (np.asarray(self._Cs_) * sw_sum)
+            n_alphas = len(self._Cs_)
+
         if is_binary:
             coefs_paths = np.reshape(
-                coefs_paths, (len(folds), len(l1_ratios_), len(self.Cs_), -1)
+                coefs_paths, (len(folds), len(l1_ratios_), n_alphas, -1)
             )
-            # coefs_paths.shape = (n_folds, n_l1_ratios, n_Cs, n_features)
+            # coefs_paths.shape = (n_folds, n_l1_ratios, n_alphas, n_features)
             coefs_paths = np.swapaxes(coefs_paths, 1, 2)[None, ...]
         else:
             coefs_paths = np.reshape(
-                coefs_paths, (len(folds), len(l1_ratios_), len(self.Cs_), n_classes, -1)
+                coefs_paths, (len(folds), len(l1_ratios_), n_alphas, n_classes, -1)
             )
-            # coefs_paths.shape = (n_folds, n_l1_ratios, n_Cs, n_classes, n_features)
+            # coefs_paths.shape =
+            # (n_folds, n_l1_ratios, n_alphas, n_classes, n_features)
             coefs_paths = np.moveaxis(coefs_paths, (0, 1, 3), (1, 3, 0))
-        # n_iter_.shape = (n_folds, n_l1_ratios, n_Cs)
-        n_iter_ = np.reshape(n_iter_, (len(folds), len(l1_ratios_), len(self.Cs_)))
+        # n_iter_.shape = (n_folds, n_l1_ratios, n_alphas)
+        n_iter_ = np.reshape(n_iter_, (len(folds), len(l1_ratios_), n_alphas))
         self.n_iter_ = np.swapaxes(n_iter_, 1, 2)[None, ...]
-        # scores.shape = (n_folds, n_l1_ratios, n_Cs)
-        scores = np.reshape(scores, (len(folds), len(l1_ratios_), len(self.Cs_)))
+        # scores.shape = (n_folds, n_l1_ratios, n_alphas)
+        scores = np.reshape(scores, (len(folds), len(l1_ratios_), n_alphas))
         scores = np.swapaxes(scores, 1, 2)[None, ...]
         # repeat same scores across all classes
         scores = np.tile(scores, (n_classes, 1, 1, 1))
         self.scores_ = dict(zip(classes_only_pos_if_binary, scores))
         self.coefs_paths_ = dict(zip(classes_only_pos_if_binary, coefs_paths))
 
-        self.C_ = list()
+        self.alpha_ = list()
+        # Use self._C_ instead of self.C_ because self.C_ is deprecated via property.
+        self._C_ = list()
         self.l1_ratio_ = list()
         self.coef_ = np.empty((n_classes, n_features))
         self.intercept_ = np.zeros(n_classes)
@@ -2095,11 +2330,15 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         if self.refit:
             # best_index over folds
-            scores_sum = scores.sum(axis=0)  # shape (n_cs, n_l1_ratios)
+            scores_sum = scores.sum(axis=0)  # shape (n_alphas, n_l1_ratios)
             best_index = np.unravel_index(np.argmax(scores_sum), scores_sum.shape)
 
-            C_ = self.Cs_[best_index[0]]
-            self.C_.append(C_)
+            if use_alpha:
+                alpha_ = self.alphas_[best_index[0]]
+                self.alpha_.append(alpha_)
+            else:
+                C_ = self._Cs_[best_index[0]]
+                self._C_.append(C_)
 
             l1_ratio_ = l1_ratios_[best_index[1]]
             self.l1_ratio_.append(l1_ratio_)
@@ -2110,11 +2349,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 coef_init = np.mean(coefs_paths[:, :, *best_index, :], axis=1)
 
             # Note that y is label encoded
-            w, _, _ = _logistic_regression_path(
+            w, _, _, _ = _logistic_regression_path(
                 X,
                 y,
                 classes=self.classes_,
-                Cs=[C_],
+                alphas=[alpha_] if use_alpha else None,
+                Cs=[C_] if not use_alpha else None,
                 solver=solver,
                 fit_intercept=self.fit_intercept,
                 coef=coef_init,
@@ -2134,10 +2374,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         else:
             # Take the best scores across every fold and the average of
             # all coefficients corresponding to the best scores.
-            n_folds, n_cs, n_l1_ratios = scores.shape
-            scores = scores.reshape(n_folds, -1)  # (n_folds, n_cs * n_l1_ratios)
+            n_folds, n_alphas, n_l1_ratios = scores.shape
+            scores = scores.reshape(n_folds, -1)  # (n_folds, n_alphas * n_l1_ratios)
             best_indices = np.argmax(scores, axis=1)  # (n_folds,)
-            best_indices = np.unravel_index(best_indices, (n_cs, n_l1_ratios))
+            best_indices = np.unravel_index(best_indices, (n_alphas, n_l1_ratios))
             best_indices = list(zip(*best_indices))  # (n_folds, 2)
             # each row of best_indices has the 2 indices for Cs and l1_ratios
             if is_binary:
@@ -2155,8 +2395,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 )
 
             best_indices = np.asarray(best_indices)
-            best_indices_C = best_indices[:, 0]
-            self.C_.append(np.mean(self.Cs_[best_indices_C]))
+            if use_alpha:
+                best_indices_alpha = best_indices[:, 0]
+                self.alpha_.append(np.mean(self.alphas_[best_indices_alpha]))
+            else:
+                best_indices_C = best_indices[:, 0]
+                self._C_.append(np.mean(self._Cs_[best_indices_C]))
 
             if penalty == "elasticnet":
                 best_indices_l1 = best_indices[:, 1]
@@ -2169,13 +2413,20 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             if self.fit_intercept:
                 self.intercept_[0] = w[0, -1] if w.ndim == 2 else w[-1]
         else:
-            self.C_ = np.tile(self.C_, n_classes)
+            if use_alpha:
+                self.alpha_ = np.tile(self.alpha_, n_classes)
+            else:
+                self._C_ = np.tile(self._C_, n_classes)
             self.l1_ratio_ = np.tile(self.l1_ratio_, n_classes)
             self.coef_ = w[:, :n_features]
             if self.fit_intercept:
                 self.intercept_ = w[:, -1]
 
-        self.C_ = np.asarray(self.C_)
+        if use_alpha:
+            self._C_ = 1 / (np.asarray(self.alpha_) * sw_sum)
+            self.alpha_ = float(self.alpha_[0])
+        else:
+            self._C_ = np.asarray(self._C_)
         self.l1_ratio_ = np.asarray(self.l1_ratio_)
         self.l1_ratios_ = np.asarray(l1_ratios_)
         if l1_ratios is None:
@@ -2189,9 +2440,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         if not use_legacy_attributes:
             n_folds = len(folds)
-            n_cs = self.Cs_.size
+            n_alphas = len(self._Cs_)
             n_dof = X.shape[1] + int(self.fit_intercept)
-            self.C_ = float(self.C_[0])
+            self._C_ = float(self._C_[0])
             newpaths = np.concatenate(list(self.coefs_paths_.values()))
             newscores = self.scores_[
                 classes_only_pos_if_binary[0]
@@ -2199,11 +2450,11 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             newniter = self.n_iter_[0]
             if l1_ratios is None:
                 if n_classes <= 2:
-                    newpaths = newpaths.reshape(1, n_folds, n_cs, 1, n_dof)
+                    newpaths = newpaths.reshape(1, n_folds, n_alphas, 1, n_dof)
                 else:
-                    newpaths = newpaths.reshape(n_classes, n_folds, n_cs, 1, n_dof)
-                newscores = newscores.reshape(n_folds, n_cs, 1)
-                newniter = newniter.reshape(n_folds, n_cs, 1)
+                    newpaths = newpaths.reshape(n_classes, n_folds, n_alphas, 1, n_dof)
+                newscores = newscores.reshape(n_folds, n_alphas, 1)
+                newniter = newniter.reshape(n_folds, n_alphas, 1)
                 if self.penalty == "l1":
                     self.l1_ratio_ = 1.0
                 else:
@@ -2212,17 +2463,19 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 n_l1_ratios = len(self.l1_ratios_)
                 self.l1_ratio_ = float(self.l1_ratio_[0])
                 if n_classes <= 2:
-                    newpaths = newpaths.reshape(1, n_folds, n_cs, n_l1_ratios, n_dof)
+                    newpaths = newpaths.reshape(
+                        1, n_folds, n_alphas, n_l1_ratios, n_dof
+                    )
                 else:
                     newpaths = newpaths.reshape(
-                        n_classes, n_folds, n_cs, n_l1_ratios, n_dof
+                        n_classes, n_folds, n_alphas, n_l1_ratios, n_dof
                     )
-            # newpaths.shape = (n_classes, n_folds, n_cs, n_l1_ratios, n_dof)
+            # newpaths.shape = (n_classes, n_folds, n_alphas, n_l1_ratios, n_dof)
             # self.coefs_paths_.shape should be
-            # (n_folds, n_l1_ratios, n_cs, n_classes, n_dof)
+            # (n_folds, n_l1_ratios, n_alphas, n_classes, n_dof)
             self.coefs_paths_ = np.moveaxis(newpaths, (0, 1, 3), (3, 0, 1))
-            # newscores.shape = (n_folds, n_cs, n_l1_ratios)
-            # self.scores_.shape should be (n_folds, n_l1_ratios, n_cs)
+            # newscores.shape = (n_folds, n_alphas, n_l1_ratios)
+            # self.scores_.shape should be (n_folds, n_l1_ratios, n_alphas)
             self.scores_ = np.moveaxis(newscores, (1, 2), (2, 1))
             self.n_iter_ = np.moveaxis(newniter, (1, 2), (2, 1))
 
@@ -2318,3 +2571,15 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         tags.input_tags.sparse = True
         tags.array_api_support = False
         return tags
+
+    @deprecated("C_ is deprecated, use alpha_ instead.")  # type: ignore[prop-decorator]
+    @property
+    def C_(self):
+        """Best penalty parameter C."""
+        return self._C_
+
+    @deprecated("Cs_ is deprecated, use alphas_ instead.")  # type: ignore[prop-decorator]
+    @property
+    def Cs_(self):
+        """Values of C to CV search over."""
+        return self._Cs_

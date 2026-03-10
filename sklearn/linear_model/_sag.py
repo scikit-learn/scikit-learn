@@ -219,9 +219,9 @@ def sag_solver(
 
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
-    >>> clf = linear_model.LogisticRegression(solver='sag')
+    >>> clf = linear_model.LogisticRegression(C=None, solver='sag')
     >>> clf.fit(X, y)
-    LogisticRegression(solver='sag')
+    LogisticRegression(C=None, solver='sag')
 
     References
     ----------
