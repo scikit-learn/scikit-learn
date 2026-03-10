@@ -63,7 +63,9 @@ from sklearn.utils import _safe_indexing, shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
+    _max_precision_float_dtype,
     get_namespace,
+    yield_mixed_namespace_input_permutations,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._array_api import device as array_device
@@ -373,10 +375,9 @@ def _yield_array_api_checks(estimator, only_numpy=False):
             _,
         ) in yield_mixed_namespace_input_permutations():
             yield partial(
-                check_array_api_input,
-                array_namespace=array_namespace,
-                dtype_name=dtype_name,
-                device=device,
+                check_array_api_mixed_inputs,
+                from_ns_and_device=from_ns_and_device,
+                to_ns_and_device=to_ns_and_device,
             )
 
 
@@ -1070,80 +1071,71 @@ def check_supervised_y_no_nan(name, estimator_orig):
             estimator.fit(X, y)
 
 
-def check_array_api_input(
-    name,
-    estimator_orig,
-    array_namespace,
-    device=None,
-    dtype_name="float64",
-    check_values=False,
-    check_sample_weight=False,
-    expect_only_array_outputs=True,
+def _check_array_api_core(
+    namespace, device, est, est_xp, X, X_xp, y, y_xp, check_values, expect_only_array_outputs
 ):
-    """Check that the estimator can work consistently with the Array API
+    """Helper to check estimator attributes and method outputs.
 
-    By default, this just checks that the types and shapes of the arrays are
-    consistent with calling the same estimator with numpy arrays.
+    Parameters
+    ----------
+    namespace : module
+        Reference array namespace. If mixed namespace/device array inputs passed
+        to an estimator, namespace of `X`.
 
-    When check_values is True, it also checks that calling the estimator on the
-    array_api Array gives the same results as ndarrays.
+    device : str or None
+        Reference array device. If mixed namespace/device array inputs passed
+        to an estimator, device of `X`.
 
-    When check_sample_weight is True, dummy sample weights are passed to the
-    fit call.
+    est : estimator
+        Estimator fitted with all NumPy inputs and array API dispatch disabled.
 
-    When expect_only_array_outputs is False, the check is looser: in particular
-    it accepts non-array outputs such as sparse data structures. This is
-    useful to test that enabling array API dispatch does not change the
-    behavior of any estimator fed with NumPy inputs, even for estimators that
-    do not support array API.
+    est_xp : estimator
+        Estimator fitted with array API inputs and array API dispatch enabled.
+
+    X : numpy array
+        NumPy `X` input.
+
+    X_xp : array-like
+        Array API `X` input.
+
+    y : numpy array
+        NumPy `y` input.
+
+    y_xp : array-like
+        Array API `y` input.
+
+    check_values : bool, default=False
+        Whether to check the values of attributes, method outputs (including
+        `inverse_transform`) obtained with array API inputs match that of all-NumPy
+        inputs. If `False` only the namespace, device, shape and dtype of outputs
+        are checked.
+
+    expect_only_array_outputs : bool, default=True
+        Whether to expect non-array outputs such as sparse data structures and lists.
+        If `False` the checks are looser; device, shape and dtype checks for method
+        outputs are skipped and only a smoke test is performed for `inverse_transform`.
     """
-    xp = _array_api_for_tests(array_namespace, device)
-
-    X, y = make_classification(n_samples=30, n_features=10, random_state=42)
-    X = X.astype(dtype_name, copy=False)
-
-    X = _enforce_estimator_tags_X(estimator_orig, X)
-    y = _enforce_estimator_tags_y(estimator_orig, y)
-
-    est = clone(estimator_orig)
-    set_random_state(est)
-
-    X_xp = xp.asarray(X, device=device)
-    y_xp = xp.asarray(y, device=device)
-    fit_kwargs = {}
-    fit_kwargs_xp = {}
-    if check_sample_weight:
-        fit_kwargs["sample_weight"] = np.ones(X.shape[0], dtype=X.dtype)
-        fit_kwargs_xp["sample_weight"] = xp.asarray(
-            fit_kwargs["sample_weight"], device=device
-        )
-
-    est.fit(X, y, **fit_kwargs)
+    xp_to = _array_api_for_tests(namespace, device)
+    X_ns = xp_to.__name__
 
     array_attributes = {
         key: value for key, value in vars(est).items() if isinstance(value, np.ndarray)
     }
 
-    est_xp = clone(est)
-    with config_context(array_api_dispatch=True):
-        est_xp.fit(X_xp, y_xp, **fit_kwargs_xp)
-        input_ns = get_namespace(X_xp)[0].__name__
-
-    # Fitted attributes which are arrays must have the same
-    # namespace as the one of the training data.
+    # Fitted attributes which are arrays must have the same namespace as `X`.
     for key, attribute in array_attributes.items():
         est_xp_param = getattr(est_xp, key)
         with config_context(array_api_dispatch=True):
             attribute_ns = get_namespace(est_xp_param)[0].__name__
-        assert attribute_ns == input_ns, (
-            f"'{key}' attribute is in wrong namespace, expected {input_ns} "
+        assert attribute_ns == X_ns, (
+            f"'{key}' attribute is in wrong namespace, expected {X_ns} "
             f"got {attribute_ns}"
         )
 
         with config_context(array_api_dispatch=True):
             assert array_device(est_xp_param) == array_device(X_xp)
 
-        est_xp_param_np = _convert_to_numpy(est_xp_param, xp=xp)
+        est_xp_param_np = _convert_to_numpy(est_xp_param, xp=xp_to)
         if check_values:
             assert_allclose(
                 attribute,
@@ -1180,7 +1172,7 @@ def check_array_api_input(
         # all the array API libraries (PyTorch, jax, CuPy) accept indexing with a
         # numpy array. This is probably not worth doing anything about for
         # now since array-api-strict seems a bit too strict ...
-        numpy_asarray_works = xp.__name__ != "array_api_strict"
+        numpy_asarray_works = xp_to.__name__ != "array_api_strict"
 
     except (TypeError, RuntimeError, ValueError):
         # PyTorch with CUDA device and CuPy raise TypeError consistently.
@@ -1227,8 +1219,8 @@ def check_array_api_input(
 
         with config_context(array_api_dispatch=True):
             result_ns = get_namespace(result_xp)[0].__name__
-        assert result_ns == input_ns, (
-            f"'{method}' output is in wrong namespace, expected {input_ns}, "
+        assert result_ns == X_ns, (
+            f"'{method}' output is in wrong namespace, expected {X_ns}, "
             f"got {result_ns}."
         )
 
@@ -1236,7 +1228,7 @@ def check_array_api_input(
             with config_context(array_api_dispatch=True):
                 assert array_device(result_xp) == array_device(X_xp)
 
-            result_xp_np = _convert_to_numpy(result_xp, xp=xp)
+            result_xp_np = _convert_to_numpy(result_xp, xp=xp_to)
             if check_values:
                 assert_allclose(
                     result,
@@ -1256,14 +1248,14 @@ def check_array_api_input(
             if expect_only_array_outputs:
                 with config_context(array_api_dispatch=True):
                     inverse_result_ns = get_namespace(inverse_result_xp)[0].__name__
-                assert inverse_result_ns == input_ns, (
+                assert inverse_result_ns == X_ns, (
                     "'inverse_transform' output is in wrong namespace, expected"
-                    f" {input_ns}, got {inverse_result_ns}."
+                    f" {X_ns}, got {inverse_result_ns}."
                 )
                 with config_context(array_api_dispatch=True):
                     assert array_device(result_xp) == array_device(X_xp)
 
-                inverse_result_xp_np = _convert_to_numpy(inverse_result_xp, xp=xp)
+                inverse_result_xp_np = _convert_to_numpy(inverse_result_xp, xp=xp_to)
                 if check_values:
                     assert_allclose(
                         inverse_result,
@@ -1274,6 +1266,67 @@ def check_array_api_input(
                 elif hasattr(result, "shape"):
                     assert inverse_result.shape == inverse_result_xp_np.shape
                     assert inverse_result.dtype == inverse_result_xp_np.dtype
+
+
+def check_array_api_input(
+    name,
+    estimator_orig,
+    array_namespace,
+    device=None,
+    dtype_name="float64",
+    check_values=False,
+    check_sample_weight=False,
+    expect_only_array_outputs=True,
+):
+    """Check that the estimator can work consistently with the Array API.
+
+    All inputs are of the same namespace/device. See `check_array_api_mixed_inputs`
+    for testing of inputs from different namespaces/devices.
+
+    By default, this just checks that the types and shapes of the arrays are
+    consistent with calling the same estimator with numpy arrays.
+
+    When check_values is True, it also checks that calling the estimator on the
+    array_api Array gives the same results as ndarrays.
+
+    When check_sample_weight is True, dummy sample weights are passed to the
+    fit call.
+
+    When expect_only_array_outputs is False, the check is looser: in particular
+    it accepts non-array outputs such as sparse data structures. This is
+    useful to test that enabling array API dispatch does not change the
+    behavior of any estimator fed with NumPy inputs, even for estimators that
+    do not support array API.
+    """
+    xp = _array_api_for_tests(array_namespace, device)
+
+    X, y = make_classification(n_samples=30, n_features=10, random_state=42)
+    X = X.astype(dtype_name, copy=False)
+
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+    y = _enforce_estimator_tags_y(estimator_orig, y)
+
+    est = clone(estimator_orig)
+    set_random_state(est)
+
+    X_xp = xp.asarray(X, device=device)
+    y_xp = xp.asarray(y, device=device)
+    fit_kwargs = {}
+    fit_kwargs_xp = {}
+    if check_sample_weight:
+        fit_kwargs["sample_weight"] = np.ones(X.shape[0], dtype=X.dtype)
+        fit_kwargs_xp["sample_weight"] = xp.asarray(
+            fit_kwargs["sample_weight"], device=device
+        )
+
+    est.fit(X, y, **fit_kwargs)
+
+    est_xp = clone(est)
+    with config_context(array_api_dispatch=True):
+        est_xp.fit(X_xp, y_xp, **fit_kwargs_xp)
+
+    _validate_estimator_outputs(
+        array_namespace, device, est, est_xp, X, X_xp, y, y_xp, check_values, expect_only_array_outputs)
 
 
 def check_array_api_input_and_values(
@@ -1293,6 +1346,86 @@ def check_array_api_input_and_values(
         check_values=True,
         check_sample_weight=check_sample_weight,
     )
+
+
+def check_array_api_mixed_inputs(
+    name,
+    estimator_orig,
+    to_ns_and_device,
+    from_ns_and_device,
+    check_values=False,
+    expect_only_array_outputs=True,
+):
+    """Check `estimator_orig` works with mixed namespace/device array API inputs.
+
+    Inputs are of different namespace/device, as specified by
+    `yield_mixed_namespace_input_permutations`.
+    See `check_array_api_input` for testing of inputs from the same
+    namespaces/devices.
+
+    `sample_weight` is always checked.
+
+    Parameters
+    ----------
+    name : str
+        The name of the estimator. Used in error messages but ignored here.
+
+    estimator_orig : estimator
+        Original (uncloned) estimator instance.
+
+    to_ns_and_device : NamedTuple
+        Namespace and device of reference array API input: `X` as "everything
+        follows X".
+
+    from_ns_and_device : NamedTuple
+        Namespace and device of other array API inputs. Used for `y` and
+        `sample_weight`.
+
+    check_values : bool, default=False
+        Whether to check the values of attributes, method outputs (including
+        `inverse_transform`) obtained with array API inputs match that of all-NumPy
+        inputs. If `False` only the namespace, device, shape and dtype of outputs
+        are checked.
+
+    expect_only_array_outputs : bool, default=True
+        Whether to expect non-array outputs such as sparse data structures and lists.
+        If `False` the checks are looser; device, shape and dtype checks for method
+        outputs are skipped and only a smoke test is performed for `inverse_transform`.
+    """
+    xp_to = _array_api_for_tests(to_ns_and_device.xp, to_ns_and_device.device)
+    xp_from = _array_api_for_tests(from_ns_and_device.xp, from_ns_and_device.device)
+
+    X, y = make_classification(n_samples=30, n_features=10, random_state=42)
+    max_float_dtype = _max_precision_float_dtype(
+        to_ns_and_device.xp, to_ns_and_device.device
+    )
+    X = X.astype(max_float_dtype, copy=False)
+
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+    y = _enforce_estimator_tags_y(estimator_orig, y)
+
+    est = clone(estimator_orig)
+    set_random_state(est)
+
+    X_xp = xp_to.asarray(X, device=to_ns_and_device.device)
+    y_xp = xp_from.asarray(y, device=from_ns_and_device.device)
+
+    fit_kwargs = {}
+    fit_kwargs_xp = {}
+    if has_fit_parameter(estimator_orig, "sample_weight"):
+        fit_kwargs["sample_weight"] = np.ones(X.shape[0], dtype=X.dtype)
+        fit_kwargs_xp["sample_weight"] = xp_from.asarray(
+            fit_kwargs["sample_weight"], device=from_ns_and_device.device
+        )
+
+    est.fit(X, y, **fit_kwargs)
+
+    est_xp = clone(est)
+    with config_context(array_api_dispatch=True):
+        est_xp.fit(X_xp, y_xp, **fit_kwargs_xp)
+
+    _validate_estimator_outputs(
+        to_ns_and_device.xp, to_ns_and_device.device, est, est_xp, X, X_xp, y, y_xp, check_values, expect_only_array_outputs)
 
 
 def check_estimator_sparse_tag(name, estimator_orig):
