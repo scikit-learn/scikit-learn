@@ -628,6 +628,11 @@ METRICS_SUPPORTING_MIXED_NAMESPACE = [
     "d2_log_loss_score",
     "log_loss",
     "max_error",
+    "mean_absolute_error",
+    "mean_absolute_percentage_error",
+    "mean_pinball_loss",
+    "mean_squared_error",
+    "root_mean_squared_error",
 ]
 
 
