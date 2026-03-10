@@ -5,6 +5,7 @@ import warnings
 from contextlib import contextmanager
 
 from sklearn.callback._base import AutoPropagatedCallback
+from sklearn.exceptions import CloneWithCallbacksWarning
 
 # TODO(callbacks): move these explanations into a dedicated user guide.
 #
@@ -382,9 +383,7 @@ class CallbackContext:
         from sklearn.base import clone
 
         with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore", message="There are callbacks set on the estimator "
-            )
+            warnings.filterwarnings("ignore", category=CloneWithCallbacksWarning)
             cloned_estimator = clone(sub_estimator)
         if hasattr(sub_estimator, "_skl_callbacks"):
             cloned_estimator.set_callbacks(sub_estimator._skl_callbacks)

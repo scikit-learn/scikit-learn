@@ -16,7 +16,7 @@ import numpy as np
 from sklearn import __version__
 from sklearn._config import config_context, get_config
 from sklearn.callback._callback_context import callback_management_context
-from sklearn.exceptions import InconsistentVersionWarning
+from sklearn.exceptions import CloneWithCallbacksWarning, InconsistentVersionWarning
 from sklearn.utils._metadata_requests import _MetadataRequester, _routing_enabled
 from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import validate_parameter_constraints
@@ -135,20 +135,13 @@ def _clone_parametrized(estimator, *, safe=True):
 
     params_set = new_object.get_params(deep=False)
 
-    # Raise a warning for meta-estimators that use clone internally
-    # without handling context handling and callbacks propagation
-    # explicitly. This serves two purposes: warn the users that
-    # they can expect degraded (incomplete) callback handling and
-    # let library maintainers that need to update their meta-estimators
-    # or cloning functions to explicitly add callback support.
+    # Raise a warning for meta-estimators that use clone internally without handling
+    # context handling and callbacks propagation explicitly. This serves two purposes:
+    # warn the users that they can expect degraded (incomplete) callback handling and
+    # let library maintainers that need to update their meta-estimators or cloning
+    # functions to explicitly add callback support.
     if hasattr(estimator, "_skl_callbacks"):
-        warnings.warn(
-            f"There are callbacks set on the estimator {estimator.__class__.__name__} "
-            "being cloned. The callbacks will be discarded in the clone. "
-            "Note: to add the callback support, the caller should rely on "
-            "CallbackContext.clone_and_propagate_callback_context instead "
-            "of calling clone directly."
-        )  # TODO: add a link to some documentation for callback support.
+        warnings.warn(CloneWithCallbacksWarning(estimator))
 
     # quick sanity check of the parameters of the clone
     for name in new_object_params:

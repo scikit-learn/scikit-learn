@@ -18,6 +18,7 @@ from sklearn.callback.tests._utils import (
     TestingCallback,
     ThirdPartyEstimator,
 )
+from sklearn.exceptions import CloneWithCallbacksWarning
 
 
 def test_propagate_callback_context():
@@ -264,9 +265,7 @@ def test_no_clone_warning_with_clone_and_propagate_callback_context():
         estimator, task_name="", task_id=0, max_subtasks=0
     )
     with warnings.catch_warnings():
-        warnings.filterwarnings(
-            "error", message="There are callbacks set on the estimator"
-        )
+        warnings.filterwarnings("error", category=CloneWithCallbacksWarning)
         callback_ctx.clone_and_propagate_callback_context(estimator)
 
 

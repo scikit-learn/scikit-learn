@@ -11,6 +11,7 @@ from sklearn.callback.tests._utils import (
     TestingAutoPropagatedCallback,
     TestingCallback,
 )
+from sklearn.exceptions import CloneWithCallbacksWarning
 
 
 @pytest.mark.parametrize(
@@ -47,7 +48,7 @@ def test_clone_warning():
     """Test the warning when cloning an estimator with callback registered to it."""
     estimator = MaxIterEstimator()
     estimator.set_callbacks(TestingCallback())
-    with pytest.warns(UserWarning, match="There are callbacks set on the estimator "):
+    with pytest.warns(CloneWithCallbacksWarning):
         cloned_estimator = clone(estimator)
     assert not hasattr(cloned_estimator, "_skl_callbacks")
 
