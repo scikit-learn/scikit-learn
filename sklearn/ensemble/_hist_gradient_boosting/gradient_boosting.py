@@ -1493,7 +1493,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     usecase example of this feature.
 
     This implementation is inspired by
-    `LightGBM <https://github.com/Microsoft/LightGBM>`_.
+    `LightGBM <https://github.com/lightgbm-org/LightGBM>`_.
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
@@ -1894,7 +1894,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
     missing values are mapped to whichever child has the most samples.
 
     This implementation is inspired by
-    `LightGBM <https://github.com/Microsoft/LightGBM>`_.
+    `LightGBM <https://github.com/lightgbm-org/LightGBM>`_.
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
