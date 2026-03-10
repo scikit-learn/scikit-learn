@@ -161,6 +161,7 @@ def _yield_checks(estimator):
         yield check_sample_weights_pandas_series
         yield check_sample_weights_not_an_array
         yield check_sample_weights_list
+        yield check_all_zero_sample_weights_error
         if not tags.input_tags.pairwise:
             # We skip pairwise because the data is not pairwise
             yield check_sample_weights_shape
