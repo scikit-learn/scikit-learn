@@ -1209,6 +1209,202 @@ class ExponentialLoss(BaseLoss):
         return proba
 
 
+class LagrangianDDSplineLoss(BaseLoss):
+    """Experimental Lagrangian-enhanced differing-degree spline loss.
+
+    This is a proof-of-concept regression loss with identity link.
+    It keeps the implementation entirely in Python for rapid prototyping.
+    """
+
+    differentiable = False
+
+    def __init__(
+        self,
+        sample_weight=None,
+        n_knots=2,
+        degree=3,
+        init_knots=(0.5, 2.0),
+        rho=10.0,
+    ):
+        if not isinstance(n_knots, numbers.Integral) or n_knots < 1:
+            raise ValueError(
+                f"n_knots must be an integer >= 1, got n_knots={n_knots!r}."
+            )
+        if not isinstance(degree, numbers.Integral) or degree < 1:
+            raise ValueError(f"degree must be an integer >= 1, got degree={degree!r}.")
+
+        init_knots = np.asarray(init_knots, dtype=np.float64)
+        if init_knots.ndim != 1 or init_knots.shape[0] != n_knots:
+            raise ValueError(
+                "init_knots must be a 1D array-like with length equal to n_knots."
+            )
+        if np.any(init_knots <= 0):
+            raise ValueError("All init_knots must be strictly positive.")
+
+        check_scalar(
+            rho,
+            "rho",
+            target_type=numbers.Real,
+            min_val=0,
+            include_boundaries="left",
+        )
+
+        super().__init__(closs=None, link=IdentityLink())
+        self.n_knots = int(n_knots)
+        self.degree = int(degree)
+        self.init_knots = init_knots
+        self.rho = float(rho)
+
+        self.approx_hessian = True
+        self.constant_hessian = False
+
+        self.log_knots_ = np.log(self.init_knots.copy())
+        self.scale_ = 1.0
+        self.lambda_mono_ = np.zeros(max(self.n_knots - 1, 0), dtype=np.float64)
+
+    @property
+    def knots_(self):
+        knots = np.exp(self.log_knots_) * self.scale_
+        return np.sort(knots)
+
+    def _compute_coeffs(self, knots):
+        coeffs = [(1.0, 0.0)]
+        n = self.degree
+
+        for i in range(1, len(knots) + 1):
+            a_prev, b_prev = coeffs[i - 1]
+            m_prev = knots[i - 1]
+            d_prev = n - (i - 1)
+            d_curr = n - i
+
+            if d_curr < 1:
+                a = a_prev * d_prev * m_prev ** (d_prev - 1)
+                b = a_prev * m_prev**d_prev + b_prev - a * m_prev
+                coeffs.append((a, b))
+                break
+            else:
+                a = a_prev * (d_prev / d_curr) * m_prev
+                b = a_prev * m_prev**d_prev + b_prev - a * m_prev**d_curr
+                coeffs.append((a, b))
+
+        while len(coeffs) < len(knots) + 1:
+            coeffs.append(coeffs[-1])
+
+        return coeffs
+
+    def _loss_pointwise(self, y_true, raw_prediction):
+        diff = raw_prediction - y_true
+        x_abs = np.abs(diff)
+        knots = self.knots_
+        coeffs = self._compute_coeffs(knots)
+
+        segments = np.zeros_like(x_abs, dtype=np.intp)
+        for i, knot in enumerate(knots):
+            segments[x_abs > knot] = i + 1
+        segments = np.clip(segments, 0, len(coeffs) - 1)
+
+        loss = np.zeros_like(x_abs, dtype=raw_prediction.dtype)
+        for seg_idx, (a, b) in enumerate(coeffs):
+            mask = segments == seg_idx
+            if np.any(mask):
+                p = max(self.degree - seg_idx, 1)
+                loss[mask] = a * x_abs[mask] ** p + b
+
+        if len(knots) > 1:
+            violations = np.maximum(knots[:-1] - knots[1:] + 1e-6, 0.0)
+            penalty = np.sum(
+                self.lambda_mono_ * violations + 0.5 * self.rho * violations**2
+            )
+            loss = loss + penalty
+
+        return loss
+
+    def loss(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+        loss_out=None,
+        n_threads=1,
+    ):
+        if raw_prediction.ndim == 2 and raw_prediction.shape[1] == 1:
+            raw_prediction = raw_prediction.squeeze(1)
+
+        if loss_out is None:
+            loss_out = np.empty_like(y_true, dtype=raw_prediction.dtype)
+
+        loss_out[:] = self._loss_pointwise(y_true, raw_prediction)
+
+        if sample_weight is not None:
+            loss_out *= sample_weight
+
+        return loss_out
+
+    def gradient(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+        gradient_out=None,
+        n_threads=1,
+    ):
+        if raw_prediction.ndim == 2 and raw_prediction.shape[1] == 1:
+            raw_prediction = raw_prediction.squeeze(1)
+
+        if gradient_out is None:
+            gradient_out = np.empty_like(raw_prediction)
+
+        eps = np.array(1e-6, dtype=raw_prediction.dtype)
+        loss_plus = self._loss_pointwise(y_true, raw_prediction + eps)
+        loss_minus = self._loss_pointwise(y_true, raw_prediction - eps)
+        gradient_out[:] = (loss_plus - loss_minus) / (2 * eps)
+
+        if sample_weight is not None:
+            gradient_out *= sample_weight
+
+        return gradient_out
+
+    def gradient_hessian(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+        gradient_out=None,
+        hessian_out=None,
+        n_threads=1,
+    ):
+        if raw_prediction.ndim == 2 and raw_prediction.shape[1] == 1:
+            raw_prediction = raw_prediction.squeeze(1)
+
+        if gradient_out is None:
+            gradient_out = np.empty_like(raw_prediction)
+        if hessian_out is None:
+            hessian_out = np.empty_like(raw_prediction)
+
+        eps = np.array(1e-4, dtype=raw_prediction.dtype)
+
+        loss_0 = self._loss_pointwise(y_true, raw_prediction)
+        loss_plus = self._loss_pointwise(y_true, raw_prediction + eps)
+        loss_minus = self._loss_pointwise(y_true, raw_prediction - eps)
+
+        gradient_out[:] = (loss_plus - loss_minus) / (2 * eps)
+        hessian_out[:] = np.maximum(
+            (loss_plus - 2 * loss_0 + loss_minus) / (eps**2),
+            1e-9,
+        )
+
+        if sample_weight is not None:
+            gradient_out *= sample_weight
+            hessian_out *= sample_weight
+
+        return gradient_out, hessian_out
+
+    def fit_intercept_only(self, y_true, sample_weight=None):
+        if sample_weight is None:
+            return np.median(y_true, axis=0)
+        return _weighted_percentile(y_true, sample_weight, 50)
+
+
 _LOSSES = {
     "squared_error": HalfSquaredError,
     "absolute_error": AbsoluteError,
@@ -1220,6 +1416,7 @@ _LOSSES = {
     "binomial_loss": HalfBinomialLoss,
     "multinomial_loss": HalfMultinomialLoss,
     "exponential_loss": ExponentialLoss,
+    "lagrangian_dd_spline_loss": LagrangianDDSplineLoss,
 }
 
 

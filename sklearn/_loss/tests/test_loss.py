@@ -28,6 +28,7 @@ from sklearn._loss.loss import (
     HalfTweedieLoss,
     HalfTweedieLossIdentity,
     HuberLoss,
+    LagrangianDDSplineLoss,
     PinballLoss,
     _log1pexp,
 )
@@ -1497,3 +1498,21 @@ def test_log1pexp(namespace, device_, dtype_name):
             rel=1e-5 if dtype_name == "float32" else 1e-12,
             abs=0,
         )
+
+
+def test_lagrangian_dd_spline_loss_smoke():
+    loss = LagrangianDDSplineLoss()
+    y_true = np.array([0.0, 1.0, 2.0], dtype=np.float64)
+    raw_prediction = np.array([0.1, 0.9, 2.2], dtype=np.float64)
+
+    loss_values = loss.loss(y_true, raw_prediction)
+    grad = loss.gradient(y_true, raw_prediction)
+    grad2, hess = loss.gradient_hessian(y_true, raw_prediction)
+
+    assert loss_values.shape == y_true.shape
+    assert grad.shape == y_true.shape
+    assert grad2.shape == y_true.shape
+    assert hess.shape == y_true.shape
+    assert np.all(np.isfinite(loss_values))
+    assert np.all(np.isfinite(grad))
+    assert np.all(np.isfinite(hess))
