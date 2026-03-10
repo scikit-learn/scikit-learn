@@ -621,13 +621,18 @@ METRICS_WITH_LOG1P_Y = {
 # Metrics that support mixed namespace/device array API inputs
 # Mixed mixed namespace/device support is NOT planned for pairwise metrics
 METRICS_SUPPORTING_MIXED_NAMESPACE = [
+    "accuracy_score",
     "average_precision_score",
     "brier_score_loss",
     "confusion_matrix_at_thresholds",
     "d2_brier_score",
     "d2_log_loss_score",
+    "f1_score",
     "log_loss",
     "max_error",
+    "multilabel_confusion_matrix",
+    "precision_score",
+    "recall_score",
 ]
 
 
