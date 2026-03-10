@@ -477,8 +477,8 @@ jobs:
             --auto-close false \
             --job-name "$JOB_NAME"
 
-  aggregate-tests:
-    name: Aggregate Unit Test Status
+  all-tests:
+    name: all-tests
     runs-on: ubuntu-latest
     if: always() && github.repository == 'scikit-learn/scikit-learn'
     needs: [lint, unit-tests, free-threaded, scipy-dev, debian-32bit]
