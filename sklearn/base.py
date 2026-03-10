@@ -135,6 +135,12 @@ def _clone_parametrized(estimator, *, safe=True):
 
     params_set = new_object.get_params(deep=False)
 
+    # Raise a warning for meta-estimators that use clone internally
+    # without handling context handling and callbacks propagation
+    # explicitly. This serves two purposes: warn the users that
+    # they can expect degraded (incomplete) callback handling and
+    # let library maintainers that need to update their meta-estimators
+    # or cloning functions to explicitly add callback support.
     if hasattr(estimator, "_skl_callbacks"):
         warnings.warn(
             f"There are callbacks set on the estimator {estimator.__class__.__name__} "
