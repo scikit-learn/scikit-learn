@@ -99,6 +99,7 @@ class _VisualBlock:
 def _write_label_html(
     out,
     params,
+    attrs,
     name,
     name_details,
     name_caption=None,
@@ -122,6 +123,9 @@ def _write_label_html(
         If estimator has `get_params` method, this is the HTML representation
         of the estimator's parameters and their values. When the estimator
         does not have `get_params`, it is an empty string.
+    attrs: str
+        If estimator is fitted, this is the HTML representation of its
+        fitted attributes.
     name : str
         The label for the estimator. It corresponds either to the estimator class name
         for a simple estimator or in the case of a `Pipeline` and `ColumnTransformer`,
@@ -207,11 +211,14 @@ def _write_label_html(
         )
         out.write(f"{params}")
 
+        out.write(params)
+        out.write(attrs)
         if name_details and ("Pipeline" not in name) and not params:
             if name == "passthrough" or name_details == "[]":
                 name_details = ""
             out.write(f"<pre>{name_details}</pre>")
 
+        out.write("</div>")
         out.write("</div>")
         if len(features) == 0:
             features_div = ""
@@ -311,6 +318,7 @@ def _write_estimator_html(
         The prefix to prepend to parameter names for nested estimators.
         For example, in a pipeline this might be "pipeline__stepname__".
     """
+
     if first_call:
         est_block = _get_visual_block(estimator)
     else:
@@ -330,18 +338,30 @@ def _write_estimator_html(
         dashed_wrapped = first_call or est_block.dash_wrapped
         dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
         out.write(f'<div class="sk-item{dash_cls}">')
-
         if estimator_label:
-            if hasattr(estimator, "get_params") and hasattr(
-                estimator, "_get_params_html"
+            if (
+                hasattr(estimator, "get_params")
+                and not est_block.names == "passthrough"
+                and hasattr(estimator, "_get_params_html")
             ):
                 params = estimator._get_params_html(False, doc_link)._repr_html_inner()
             else:
                 params = ""
+            if (
+                hasattr(estimator, "_get_fitted_attr_html")
+                and not est_block.names == "passthrough"
+                and is_fitted_css_class == "fitted"
+            ):
+                fitted_attrs = estimator._get_fitted_attr_html(doc_link)
+                attrs = fitted_attrs._repr_html_inner() if len(fitted_attrs) > 0 else ""
+
+            else:
+                attrs = ""
 
             _write_label_html(
                 out,
                 params,
+                attrs,
                 estimator_label,
                 estimator_label_details,
                 doc_link=doc_link,
@@ -433,10 +453,21 @@ def _write_estimator_html(
             params = estimator._get_params_html(doc_link=doc_link)._repr_html_inner()
         else:
             params = ""
+        if (
+            hasattr(estimator, "_get_fitted_attr_html")
+            and not est_block.names == "passthrough"
+            and is_fitted_css_class == "fitted"
+        ):
+            fitted_attrs = estimator._get_fitted_attr_html(doc_link)
+            attrs = fitted_attrs._repr_html_inner() if len(fitted_attrs) > 0 else ""
+
+        else:
+            attrs = ""
 
         _write_label_html(
             out,
             params,
+            attrs,
             est_block.names,
             est_block.name_details,
             est_block.name_caption,
