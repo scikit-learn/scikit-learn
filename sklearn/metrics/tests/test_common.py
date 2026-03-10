@@ -391,9 +391,6 @@ METRICS_WITH_POS_LABEL = {
 METRICS_WITH_LABELS = {
     "confusion_matrix",
     "normalized_confusion_matrix",
-    "roc_curve",
-    "precision_recall_curve",
-    "det_curve",
     "precision_score",
     "recall_score",
     "f1_score",
