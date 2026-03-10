@@ -674,6 +674,10 @@ In addition, we add the following guidelines:
   <https://divmod.readthedocs.io/en/latest/products/pyflakes.html>`_ to automatically
   find bugs in scikit-learn.
 
+* Use f-strings for string interpolation instead of the ``str.format()``
+  method or ``%`` formatting. f-strings are more readable, concise, and
+  performant.
+
 * Use the `numpy docstring standard
   <https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`_
   in all your docstrings.
