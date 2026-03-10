@@ -430,6 +430,10 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             # losses.
             sample_weight = _check_sample_weight(sample_weight, X, dtype=y.dtype)
 
+        xp, _, device_ = get_namespace_and_device(X)
+        if not _is_numpy_namespace(xp):
+            y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
+
         base_loss = self._base_loss
 
         if not base_loss.in_y_true_range(y):
@@ -438,7 +442,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 f" {base_loss.__name__}."
             )
 
-        constant = np.average(
+        constant = _average(
             base_loss.constant_to_optimal_zero(y_true=y, sample_weight=None),
             weights=sample_weight,
         )
@@ -450,14 +454,14 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             sample_weight=sample_weight,
             n_threads=1,
         )
-        y_mean = base_loss.link.link(np.average(y, weights=sample_weight))
+        y_mean = base_loss.link.link(_average(y, weights=sample_weight))
         deviance_null = base_loss(
             y_true=y,
-            raw_prediction=np.tile(y_mean, y.shape[0]),
+            raw_prediction=xp.tile(y_mean, (y.shape[0],)),
             sample_weight=sample_weight,
             n_threads=1,
         )
-        return 1 - (deviance + constant) / (deviance_null + constant)
+        return float(1 - (deviance + constant) / (deviance_null + constant))
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
