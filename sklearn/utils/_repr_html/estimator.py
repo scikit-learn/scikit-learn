@@ -209,7 +209,6 @@ def _write_label_html(
             f'class="sk-toggleable__content {is_fitted_css_class}" '
             f'data-param-prefix="{html.escape(param_prefix)}">'
         )
-        out.write(f"{params}")
 
         out.write(params)
         out.write(attrs)
@@ -218,7 +217,6 @@ def _write_label_html(
                 name_details = ""
             out.write(f"<pre>{name_details}</pre>")
 
-        out.write("</div>")
         out.write("</div>")
         if len(features) == 0:
             features_div = ""
