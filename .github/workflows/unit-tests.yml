@@ -476,3 +476,14 @@ jobs:
             --junit-file $TEST_DIR/$JUNITXML \
             --auto-close false \
             --job-name "$JOB_NAME"
+
+  aggregate-tests:
+    name: Aggregate Unit Test Status
+    runs-on: ubuntu-latest
+    if: always() && github.repository == 'scikit-learn/scikit-learn'
+    needs: [lint, unit-tests, free-threaded, scipy-dev, debian-32bit]
+    steps:
+      - name: Check all job statuses
+        uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
