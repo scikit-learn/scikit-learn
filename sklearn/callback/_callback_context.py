@@ -389,7 +389,9 @@ class CallbackContext:
         if hasattr(sub_estimator, "_skl_callbacks"):
             cloned_estimator.set_callbacks(sub_estimator._skl_callbacks)
 
-        return self.propagate_callback_context(cloned_estimator)
+        self.propagate_callback_context(cloned_estimator)
+
+        return cloned_estimator
 
     def propagate_callback_context(self, sub_estimator):
         """Propagate the context and callbacks to a sub-estimator.
@@ -441,7 +443,7 @@ class CallbackContext:
             )
         ]
         if not callbacks_to_propagate:
-            return sub_estimator
+            return self
 
         if not hasattr(sub_estimator, "set_callbacks"):
             warnings.warn(
@@ -449,13 +451,13 @@ class CallbackContext:
                 f"callbacks. The callbacks attached to {self.estimator_name} will not "
                 f"be propagated to this estimator."
             )
-            return sub_estimator
+            return self
 
         sub_estimator.set_callbacks(
             getattr(sub_estimator, "_skl_callbacks", []) + callbacks_to_propagate
         )
 
-        return sub_estimator
+        return self
 
 
 def get_context_path(context):
