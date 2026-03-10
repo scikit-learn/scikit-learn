@@ -72,7 +72,7 @@ def test_progressbar_requires_rich_error():
 
 def test_clone_after_fit():
     """Smoke test for cloning after fit with a progressbar attached.
-    
+
     Initialized `ProgressBar` instances use a multiprocessing.Manager instance
     that cannot be deepcopied. This test is there to ensure that future changes
     in clone will not make it attempt to naively call copy.deepcopy on the
