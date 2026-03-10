@@ -430,6 +430,7 @@ METRICS_WITH_LABELS = {
 # Metrics with a "normalize" option
 METRICS_WITH_NORMALIZE_OPTION = {
     "accuracy_score",
+    "log_loss",
     "top_k_accuracy_score",
     "zero_one_loss",
 }
@@ -1330,7 +1331,7 @@ def test_normalize_option_binary_classification(name):
 
     y_true = random_state.randint(0, n_classes, size=(n_samples,))
     y_pred = random_state.randint(0, n_classes, size=(n_samples,))
-    y_score = random_state.normal(size=y_true.shape)
+    y_score = random_state.uniform(size=y_true.shape)
 
     metrics = ALL_METRICS[name]
     pred = y_score if name in CONTINUOUS_CLASSIFICATION_METRICS else y_pred
@@ -1359,7 +1360,9 @@ def test_normalize_option_multiclass_classification(name):
 
     y_true = random_state.randint(0, n_classes, size=(n_samples,))
     y_pred = random_state.randint(0, n_classes, size=(n_samples,))
-    y_score = random_state.uniform(size=(n_samples, n_classes))
+    y_score = random_state.rand(n_samples, n_classes)
+    temp = np.exp(-y_score)
+    y_score = temp / temp.sum(axis=-1).reshape(-1, 1)
 
     metrics = ALL_METRICS[name]
     pred = y_score if name in CONTINUOUS_CLASSIFICATION_METRICS else y_pred
