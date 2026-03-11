@@ -603,13 +603,6 @@ Finally, we have to re-generate the environment and lock files for the CIs by ru
 
   python build_tools/update_environments_and_lock_files.py
 
-Fix CI failures on automated lock file update PRs
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-If CI tasks fail on an automated lock file update PR (created by the bot), do
-not push fixes directly to the bot's branch. Instead, create a new branch based
-on the bot's PR, add the required fixes there, and open a new PR.
-
 .. _stalled_pull_request:
 
 Stalled pull requests
