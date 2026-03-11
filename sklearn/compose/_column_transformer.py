@@ -1259,11 +1259,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 )
             else:
                 transformers = self.transformers
-        # if transformers[-1] == "remainder":
-        #    remainder = (transformers[-1][0], transformers[-1][1],
 
         names, transformers, name_details = zip(*transformers)
-        breakpoint()
         return _VisualBlock(
             "parallel", transformers, names=names, name_details=name_details
         )
