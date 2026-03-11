@@ -100,6 +100,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     assert_array_less,
     ignore_warnings,
+    skip_if_array_api_compat_not_configured,
 )
 from sklearn.utils.fixes import COO_CONTAINERS, parse_version, sp_version
 from sklearn.utils.multiclass import type_of_target
@@ -2606,6 +2607,7 @@ def test_mixed_array_api_namespace_input_compliance(
         & (set(CLASSIFICATION_METRICS.keys()) - METRIC_UNDEFINED_BINARY)
     ),
 )
+@skip_if_array_api_compat_not_configured
 def test_array_api_classification_string_input(metric_name):
     """Check string inputs accepted with array API dispatch enabled.
 
