@@ -5,6 +5,7 @@ import warnings
 from contextlib import contextmanager
 
 from sklearn.callback._base import AutoPropagatedCallback
+from sklearn.exceptions import CloneWithCallbacksWarning
 
 # TODO(callbacks): move these explanations into a dedicated user guide.
 #
@@ -358,19 +359,58 @@ class CallbackContext:
                 ):
                     callback.on_fit_end(estimator, self)
 
-    def propagate_callback_context(self, sub_estimator):
-        """Propagate the context and callbacks to a sub-estimator.
+    def clone_and_propagate_callback_context(self, sub_estimator):
+        """Clone a sub-estimator and propagate the context and callbacks to the clone.
 
-        Only auto-propagated callbacks are propagated to the sub-estimator. An error is
-        raised of the sub-estimator already has auto-propagated callbacks.
+        Auto-propagated callbacks from the context are added to the cloned
+        sub-estimator. An error is raised if the sub-estimator already holds
+        auto-propagated callbacks.
 
-        This context is set as an attribute, `_parent_callback_ctx`, of the
-        sub-estimator to be able to merge it with the sub-estimator's context tree.
+        The clone receives this context as an attribute named `_parent_callback_ctx` so
+        that the meta-estimator's task tree can be merged with the clone's one.
 
         Parameters
         ----------
         sub_estimator : estimator instance
-            The estimator to which the callbacks should be propagated.
+            The estimator to clone; callbacks and context are propagated to this clone.
+
+        Returns
+        -------
+        cloned_estimator : estimator instance
+            A clone of the sub-estimator, to which the callbacks and context were
+            propagated.
+        """
+        from sklearn.base import clone
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=CloneWithCallbacksWarning)
+            cloned_estimator = clone(sub_estimator)
+        if hasattr(sub_estimator, "_skl_callbacks"):
+            cloned_estimator.set_callbacks(sub_estimator._skl_callbacks)
+
+        self.propagate_callback_context(cloned_estimator)
+
+        return cloned_estimator
+
+    def propagate_callback_context(self, sub_estimator):
+        """Propagate the context and callbacks to a sub-estimator.
+
+        Only auto-propagated callbacks are propagated to the sub-estimator. An error is
+        raised if the sub-estimator already holds auto-propagated callbacks.
+
+        The sub-estimator receives this context as an attribute named
+        `_parent_callback_ctx` so that the meta-estimator's task tree can be merged with
+        the sub-estimator's one.
+
+        Parameters
+        ----------
+        sub_estimator : estimator instance
+            The estimator to propagate the callbacks and context to.
+
+        Returns
+        -------
+        sub_estimator : estimator instance
+            The sub-estimator to which the callbacks and context were propagated.
         """
         bad_callbacks = [
             callback.__class__.__name__
