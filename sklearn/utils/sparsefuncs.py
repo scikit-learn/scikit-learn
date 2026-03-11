@@ -63,18 +63,18 @@ def inplace_csr_column_scale(X, scale):
     >>> indices = np.array([0, 1, 2, 2])
     >>> data = np.array([8, 1, 2, 5])
     >>> scale = np.array([2, 3, 2])
-    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr = sparse.csr_array((data, indices, indptr))
     >>> csr.todense()
-    matrix([[8, 1, 2],
-            [0, 0, 5],
-            [0, 0, 0],
-            [0, 0, 0]])
+    array([[8, 1, 2],
+           [0, 0, 5],
+           [0, 0, 0],
+           [0, 0, 0]])
     >>> sparsefuncs.inplace_csr_column_scale(csr, scale)
     >>> csr.todense()
-    matrix([[16,  3,  4],
-            [ 0,  0, 10],
-            [ 0,  0,  0],
-            [ 0,  0,  0]])
+    array([[16,  3,  4],
+           [ 0,  0, 10],
+           [ 0,  0,  0],
+           [ 0,  0,  0]])
     """
     assert scale.shape[0] == X.shape[1]
     X.data *= scale.take(X.indices, mode="clip")
@@ -143,12 +143,12 @@ def mean_variance_axis(X, axis, weights=None, return_sum_weights=False):
     >>> indices = np.array([0, 1, 2, 2])
     >>> data = np.array([8, 1, 2, 5])
     >>> scale = np.array([2, 3, 2])
-    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr = sparse.csr_array((data, indices, indptr))
     >>> csr.todense()
-    matrix([[8, 1, 2],
-            [0, 0, 5],
-            [0, 0, 0],
-            [0, 0, 0]])
+    array([[8, 1, 2],
+           [0, 0, 5],
+           [0, 0, 0],
+           [0, 0, 0]])
     >>> sparsefuncs.mean_variance_axis(csr, axis=0)
     (array([2.  , 0.25, 1.75]), array([12.    ,  0.1875,  4.1875]))
     """
@@ -245,12 +245,12 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n, weights=Non
     >>> indices = np.array([0, 1, 2, 2])
     >>> data = np.array([8, 1, 2, 5])
     >>> scale = np.array([2, 3, 2])
-    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr = sparse.csr_array((data, indices, indptr))
     >>> csr.todense()
-    matrix([[8, 1, 2],
-            [0, 0, 5],
-            [0, 0, 0],
-            [0, 0, 0]])
+    array([[8, 1, 2],
+           [0, 0, 5],
+           [0, 0, 0],
+           [0, 0, 0]])
     >>> sparsefuncs.incr_mean_variance_axis(
     ...     csr, axis=0, last_mean=np.zeros(3), last_var=np.zeros(3), last_n=2
     ... )
@@ -315,18 +315,18 @@ def inplace_column_scale(X, scale):
     >>> indices = np.array([0, 1, 2, 2])
     >>> data = np.array([8, 1, 2, 5])
     >>> scale = np.array([2, 3, 2])
-    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr = sparse.csr_array((data, indices, indptr))
     >>> csr.todense()
-    matrix([[8, 1, 2],
-            [0, 0, 5],
-            [0, 0, 0],
-            [0, 0, 0]])
+    array([[8, 1, 2],
+           [0, 0, 5],
+           [0, 0, 0],
+           [0, 0, 0]])
     >>> sparsefuncs.inplace_column_scale(csr, scale)
     >>> csr.todense()
-    matrix([[16,  3,  4],
-            [ 0,  0, 10],
-            [ 0,  0,  0],
-            [ 0,  0,  0]])
+    array([[16,  3,  4],
+           [ 0,  0, 10],
+           [ 0,  0,  0],
+           [ 0,  0,  0]])
     """
     if sp.issparse(X) and X.format == "csc":
         inplace_csr_row_scale(X.T, scale)
@@ -359,18 +359,18 @@ def inplace_row_scale(X, scale):
     >>> indices = np.array([0, 1, 2, 3, 3])
     >>> data = np.array([8, 1, 2, 5, 6])
     >>> scale = np.array([2, 3, 4, 5])
-    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr = sparse.csr_array((data, indices, indptr))
     >>> csr.todense()
-    matrix([[8, 1, 0, 0],
-            [0, 0, 2, 0],
-            [0, 0, 0, 5],
-            [0, 0, 0, 6]])
+    array([[8, 1, 0, 0],
+           [0, 0, 2, 0],
+           [0, 0, 0, 5],
+           [0, 0, 0, 6]])
     >>> sparsefuncs.inplace_row_scale(csr, scale)
     >>> csr.todense()
-     matrix([[16,  2,  0,  0],
-             [ 0,  0,  6,  0],
-             [ 0,  0,  0, 20],
-             [ 0,  0,  0, 30]])
+     array([[16,  2,  0,  0],
+            [ 0,  0,  6,  0],
+            [ 0,  0,  0, 20],
+            [ 0,  0,  0, 30]])
     """
     if sp.issparse(X) and X.format == "csc":
         inplace_csr_column_scale(X.T, scale)
@@ -496,18 +496,18 @@ def inplace_swap_row(X, m, n):
     >>> indptr = np.array([0, 2, 3, 3, 3])
     >>> indices = np.array([0, 2, 2])
     >>> data = np.array([8, 2, 5])
-    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr = sparse.csr_array((data, indices, indptr))
     >>> csr.todense()
-    matrix([[8, 0, 2],
-            [0, 0, 5],
-            [0, 0, 0],
-            [0, 0, 0]])
+    array([[8, 0, 2],
+           [0, 0, 5],
+           [0, 0, 0],
+           [0, 0, 0]])
     >>> sparsefuncs.inplace_swap_row(csr, 0, 1)
     >>> csr.todense()
-    matrix([[0, 0, 5],
-            [8, 0, 2],
-            [0, 0, 0],
-            [0, 0, 0]])
+    array([[0, 0, 5],
+           [8, 0, 2],
+           [0, 0, 0],
+           [0, 0, 0]])
     """
     if sp.issparse(X) and X.format == "csc":
         inplace_swap_row_csc(X, m, n)
@@ -541,18 +541,18 @@ def inplace_swap_column(X, m, n):
     >>> indptr = np.array([0, 2, 3, 3, 3])
     >>> indices = np.array([0, 2, 2])
     >>> data = np.array([8, 2, 5])
-    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr = sparse.csr_array((data, indices, indptr))
     >>> csr.todense()
-    matrix([[8, 0, 2],
-            [0, 0, 5],
-            [0, 0, 0],
-            [0, 0, 0]])
+    array([[8, 0, 2],
+           [0, 0, 5],
+           [0, 0, 0],
+           [0, 0, 0]])
     >>> sparsefuncs.inplace_swap_column(csr, 0, 1)
     >>> csr.todense()
-    matrix([[0, 8, 2],
-            [0, 0, 5],
-            [0, 0, 0],
-            [0, 0, 0]])
+    array([[0, 8, 2],
+           [0, 0, 5],
+           [0, 0, 0],
+           [0, 0, 0]])
     """
     if m < 0:
         m += X.shape[1]

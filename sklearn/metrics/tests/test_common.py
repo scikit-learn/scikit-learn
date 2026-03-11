@@ -626,8 +626,18 @@ METRICS_SUPPORTING_MIXED_NAMESPACE = [
     "confusion_matrix_at_thresholds",
     "d2_brier_score",
     "d2_log_loss_score",
+    "explained_variance_score",
     "log_loss",
     "max_error",
+    "mean_absolute_error",
+    "mean_absolute_percentage_error",
+    "mean_pinball_loss",
+    "mean_squared_error",
+    "mean_squared_log_error",
+    "median_absolute_error",
+    "r2_score",
+    "root_mean_squared_error",
+    "root_mean_squared_log_error",
 ]
 
 
