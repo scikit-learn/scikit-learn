@@ -1595,7 +1595,7 @@ def test_sk_visual_block_remainder_fitted_pandas(remainder):
     assert visual_block.name_details == (["col1", "col2"], ["col3", "col4"])
     assert isinstance(visual_block.estimators[0], OneHotEncoder)
     if remainder == "passthrough":
-        assert visual_block.estimators[1] == "passthrough"
+        assert isinstance(visual_block.estimators[1], FunctionTransformer)
     else:
         assert isinstance(visual_block.estimators[1], StandardScaler)
 
@@ -1614,7 +1614,7 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
     assert visual_block.name_details == ([0, 2], [1])
     assert isinstance(visual_block.estimators[0], StandardScaler)
     if remainder == "passthrough":
-        assert visual_block.estimators[1] == "passthrough"
+        assert isinstance(visual_block.estimators[1], FunctionTransformer)
     else:
         assert isinstance(visual_block.estimators[1], StandardScaler)
 
