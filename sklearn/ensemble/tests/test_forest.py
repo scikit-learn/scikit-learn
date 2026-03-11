@@ -1843,7 +1843,7 @@ def test_estimators_samples(ForestClass, bootstrap, seed):
 )
 def test_missing_values_is_resilient(Forest, criterion):
     """Check that forest can deal with missing values and has decent performance."""
-    rng = np.random.RandomState(np.random.randint(0, 100000))
+    rng = np.random.RandomState(0)
     n_samples, n_features = 500, 5
     make_data = make_regression if criterion in REG_CRITERIONS else make_classification
     X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)

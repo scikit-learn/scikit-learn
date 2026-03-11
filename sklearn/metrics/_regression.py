@@ -755,7 +755,8 @@ def mean_squared_log_error(
     >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.060...
     """
-    xp, _ = get_namespace(y_true, y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
@@ -833,7 +834,8 @@ def root_mean_squared_log_error(
     >>> root_mean_squared_log_error(y_true, y_pred)
     0.199...
     """
-    xp, _ = get_namespace(y_true, y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
@@ -920,9 +922,10 @@ def median_absolute_error(
     >>> median_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85
     """
-    xp, _ = get_namespace(y_true, y_pred, multioutput, sample_weight)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
     _, y_true, y_pred, sample_weight, multioutput = _check_reg_targets(
-        y_true, y_pred, sample_weight, multioutput
+        y_true, y_pred, sample_weight, multioutput, xp=xp
     )
     if sample_weight is None:
         output_errors = _median(xp.abs(y_pred - y_true), axis=0)
@@ -1107,7 +1110,8 @@ def explained_variance_score(
     >>> explained_variance_score(y_true, y_pred, force_finite=False)
     -inf
     """
-    xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight, multioutput)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
@@ -1277,9 +1281,8 @@ def r2_score(
     >>> r2_score(y_true, y_pred, force_finite=False)
     -inf
     """
-    xp, _, device_ = get_namespace_and_device(
-        y_true, y_pred, sample_weight, multioutput
-    )
+    xp, _, device_ = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device_)
 
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
