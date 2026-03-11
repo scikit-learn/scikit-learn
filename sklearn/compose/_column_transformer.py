@@ -1228,8 +1228,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         if hasattr(self, "transformers_"):
             transformers = [
                 transformer
-                for transformer in self.transformers_[:-1]  # Exclude remainder
-                if not (transformer[0] == "remainder" and transformer[1] == "drop")
+                for transformer in self.transformers_
+                if not (transformer[0] == "remainder")  # Exclude remainder
             ]
 
             # Add remainder back to fitted transformers if remainder is not drop
