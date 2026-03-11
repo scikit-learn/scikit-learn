@@ -47,6 +47,6 @@ def _features_html(features, is_fitted_css_class=""):
 
     return FEATURES_TABLE_TEMPLATE.format(
         total_features=total_features,
-        is_fitted_css_class=is_fitted_css_class,
+        is_fitted_css_class=html.escape(is_fitted_css_class),
         rows="".join(rows),
     )

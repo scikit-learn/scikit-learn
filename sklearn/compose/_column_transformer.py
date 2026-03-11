@@ -1230,10 +1230,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         if hasattr(self, "transformers_"):
             transformers = [
                 transformer
-                for transformer in self.transformers_  # Exclude remainder
-                if not (transformer[0] == "remainder")
+                for transformer in self.transformers_
+                if not (transformer[0] == "remainder")  # Exclude remainder
             ]
-
             # Add remainder back to fitted transformers if remainder is not drop
             if self.remainder != "drop":
                 remainder_columns = self._remainder[2]
@@ -1245,9 +1244,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     remainder_columns = self.feature_names_in_[
                         remainder_columns
                     ].tolist()
+                # get the fitted remainder so we can access get_output_names to
+                # build the display
+                remainder_transformer = self.transformers_[-1][1]
 
                 transformers = chain(
-                    transformers, [("remainder", self.remainder, remainder_columns)]
+                    transformers,
+                    [("remainder", remainder_transformer, remainder_columns)],
                 )
         else:  # not fitted
             if self.remainder != "drop":
@@ -1256,8 +1259,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 )
             else:
                 transformers = self.transformers
-        names, transformers, name_details = zip(*transformers)
+        # if transformers[-1] == "remainder":
+        #    remainder = (transformers[-1][0], transformers[-1][1],
 
+        names, transformers, name_details = zip(*transformers)
+        breakpoint()
         return _VisualBlock(
             "parallel", transformers, names=names, name_details=name_details
         )
