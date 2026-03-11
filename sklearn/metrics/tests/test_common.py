@@ -629,9 +629,14 @@ METRICS_SUPPORTING_MIXED_NAMESPACE = [
     "explained_variance_score",
     "log_loss",
     "max_error",
+    "mean_absolute_error",
+    "mean_absolute_percentage_error",
+    "mean_pinball_loss",
+    "mean_squared_error",
     "mean_squared_log_error",
     "median_absolute_error",
     "r2_score",
+    "root_mean_squared_error",
     "root_mean_squared_log_error",
 ]
 
