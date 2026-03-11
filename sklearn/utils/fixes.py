@@ -435,14 +435,14 @@ if not SCIPY_VERSION_BELOW_1_12:
 else:
 
     def _sparse_eye_array(m, n=None, *, k=0, dtype=float, format=None):
-        return scipy.sparse.eye(m, n, k=k, dtype=dtype, format=format)
+        A = scipy.sparse.eye(m, n, k=k, dtype=dtype)
+        return scipy.sparse.dia_array(A).asformat(format)
 
     def _sparse_diags_array(
         diagonals, /, *, offsets=0, shape=None, format=None, dtype=None
     ):
-        return scipy.sparse.diags(
-            diagonals, offsets=offsets, shape=shape, format=format, dtype=dtype
-        )
+        A = scipy.sparse.diags(diagonals, offsets=offsets, shape=shape, dtype=dtype)
+        return scipy.sparse.dia_array(A).asformat(format)
 
     def _sparse_random_array(
         shape,
@@ -454,14 +454,14 @@ else:
         rng=None,
         data_sampler=None,
     ):
-        return scipy.sparse.random(
+        A = scipy.sparse.random(
             *shape,
             density=density,
-            format=format,
             dtype=dtype,
             random_state=rng or random_state,
             data_rvs=data_sampler,
         )
+        return scipy.sparse.coo_array(A).asformat(format)
 
 
 # TODO: remove when SciPy 1.15 is minimal supported version
