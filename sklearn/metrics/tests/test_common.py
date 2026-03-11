@@ -631,9 +631,14 @@ METRICS_SUPPORTING_MIXED_NAMESPACE = [
     "f1_score",
     "log_loss",
     "max_error",
+    "mean_absolute_error",
+    "mean_absolute_percentage_error",
+    "mean_pinball_loss",
+    "mean_squared_error",
     "multilabel_confusion_matrix",
     "precision_score",
     "recall_score",
+    "root_mean_squared_error",
 ]
 
 
