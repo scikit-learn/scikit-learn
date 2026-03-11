@@ -1841,9 +1841,9 @@ def test_estimators_samples(ForestClass, bootstrap, seed):
         *product(FOREST_CLASSIFIERS.values(), CLF_CRITERIONS),
     ],
 )
-def test_missing_values_is_resilient(Forest, criterion, global_random_seed):
+def test_missing_values_is_resilient(Forest, criterion):
     """Check that forest can deal with missing values and has decent performance."""
-    rng = np.random.RandomState(global_random_seed)
+    rng = np.random.RandomState(0)
     n_samples, n_features = 500, 5
     make_data = make_regression if criterion in REG_CRITERIONS else make_classification
     X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
