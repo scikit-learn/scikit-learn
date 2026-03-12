@@ -3,6 +3,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 from numbers import Integral
@@ -586,7 +587,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     ...                           LinearSVC(random_state=42)))
     ... ]
     >>> clf = StackingClassifier(
-    ...     estimators=estimators, final_estimator=LogisticRegression()
+    ...     estimators=estimators, final_estimator=LogisticRegression(C=None)
     ... )
     >>> from sklearn.model_selection import train_test_split
     >>> X_train, X_test, y_train, y_test = train_test_split(
@@ -625,6 +626,15 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         )
 
     def _validate_final_estimator(self):
+        if self.final_estimator is None:
+            warnings.warn(
+                "The default 'final_estimator' is LogisticRegression(). Note that "
+                "its parameter 'C' was deprecated in verseion 1.9. In version 1.11, "
+                "the new parameter 'alpha=1' is the default. I might be a good idea "
+                "to use a smaller penalty alpha or to perform a cross validation "
+                "search for it, e.g. by using LogisticRegressionCV instead.",
+                FutureWarning,
+            )
         self._clone_final_estimator(default=LogisticRegression())
         if not is_classifier(self.final_estimator_):
             raise ValueError(
@@ -832,7 +842,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         # If final_estimator's default changes then this should be
         # updated.
         if self.final_estimator is None:
-            final_estimator = LogisticRegression()
+            final_estimator = LogisticRegression(C=None)
         else:
             final_estimator = self.final_estimator
         return super()._sk_visual_block_with_final_estimator(final_estimator)
