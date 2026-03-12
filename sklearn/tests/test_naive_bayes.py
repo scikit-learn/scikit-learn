@@ -1049,3 +1049,87 @@ def test_gnb_array_api_compliance(
         assert_allclose(
             _convert_to_numpy(y_pred_log_proba_xp, xp=xp), y_pred_log_proba_np
         )
+
+
+def test_gaussian_nb_var_smoothing_epsilon():
+    """Check that epsilon_ is computed correctly from var_smoothing.
+
+    epsilon_ should equal var_smoothing * max(var(X, axis=0)).
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/14054
+    """
+    rng = np.random.RandomState(0)
+    X = rng.randn(100, 5) * [1, 2, 3, 4, 5]
+    y = np.array([0] * 50 + [1] * 50)
+
+    var_smoothing = 1e-3
+    clf = GaussianNB(var_smoothing=var_smoothing)
+    clf.fit(X, y)
+
+    expected_epsilon = var_smoothing * np.max(np.var(X, axis=0))
+    assert_allclose(clf.epsilon_, expected_epsilon)
+
+
+def test_gaussian_nb_var_smoothing_affects_predictions():
+    """Check that var_smoothing affects predictions.
+
+    Higher var_smoothing should lead to more regularized (smoother) predictions,
+    pushing predicted probabilities closer to the prior.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/14054
+    """
+    rng = np.random.RandomState(42)
+    X = rng.randn(100, 2)
+    y = np.array([0] * 50 + [1] * 50)
+
+    clf_low = GaussianNB(var_smoothing=1e-12).fit(X, y)
+    clf_high = GaussianNB(var_smoothing=1e0).fit(X, y)
+
+    proba_low = clf_low.predict_proba(X)
+    proba_high = clf_high.predict_proba(X)
+
+    # Higher smoothing -> probabilities closer to 0.5 (less confident)
+    assert np.max(np.abs(proba_high - 0.5)) < np.max(np.abs(proba_low - 0.5))
+
+
+def test_gaussian_nb_var_smoothing_zero():
+    """Check that var_smoothing=0 results in epsilon_=0.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/14054
+    """
+    X = np.array([[1, 2], [3, 4], [5, 6]])
+    y = np.array([0, 1, 0])
+
+    clf = GaussianNB(var_smoothing=0.0)
+    clf.fit(X, y)
+    assert clf.epsilon_ == 0.0
+
+
+def test_gaussian_nb_var_smoothing_partial_fit():
+    """Check that epsilon_ is recomputed on each call to partial_fit.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/14054
+    """
+    rng = np.random.RandomState(0)
+    X1 = rng.randn(50, 3)
+    y1 = np.array([0] * 25 + [1] * 25)
+
+    X2 = rng.randn(50, 3) * 10  # much higher variance
+    y2 = np.array([0] * 25 + [1] * 25)
+
+    var_smoothing = 1e-5
+    clf = GaussianNB(var_smoothing=var_smoothing)
+    clf.partial_fit(X1, y1, classes=[0, 1])
+    epsilon_first = clf.epsilon_
+
+    clf.partial_fit(X2, y2)
+    epsilon_second = clf.epsilon_
+
+    # epsilon_ should change since it depends on the current batch variance
+    assert epsilon_first != epsilon_second
+    expected_epsilon_second = var_smoothing * np.max(np.var(X2, axis=0))
+    assert_allclose(epsilon_second, expected_epsilon_second)
