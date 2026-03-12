@@ -1,0 +1,4 @@
+- :class:`linear_model.POPSRegression` addresses Bayesian regression
+  overconfidence in low-noise, misspecified data by accounting for
+  model misspecification via pointwise optimal parameter sets.
+  By :user:`Thomas D. Swinburne <tomswinburne>` and :user:`Jien Weng <JienWeng>`.
