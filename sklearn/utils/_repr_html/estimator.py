@@ -104,7 +104,7 @@ def _write_label_html(
     name_details,
     name_caption=None,
     doc_link_label=None,
-    features="",
+    features=None,
     outer_class="sk-label-container",
     inner_class="sk-label",
     checked=False,
@@ -218,10 +218,11 @@ def _write_label_html(
             out.write(f"<pre>{name_details}</pre>")
 
         out.write("</div>")
-        if len(features) == 0:
+        if features is None or len(features) == 0:
             features_div = ""
         else:
             features_div = _features_html(features, is_fitted_css_class)
+
         out.write("</div></div>")
         out.write(features_div)
 
@@ -363,7 +364,7 @@ def _write_estimator_html(
                 estimator_label,
                 estimator_label_details,
                 doc_link=doc_link,
-                features="",
+                features=None,
                 is_fitted_css_class=is_fitted_css_class,
                 is_fitted_icon=is_fitted_icon,
                 param_prefix=param_prefix,
