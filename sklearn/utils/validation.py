@@ -598,8 +598,16 @@ def _ensure_sparse_format(
     if isinstance(accept_sparse, str):
         accept_sparse = [accept_sparse]
 
-    # Indices dtype validation
-    _check_large_sparse(sparse_container, accept_large_sparse)
+    # Index array dtype validation
+    # if not accept_large_sparse:
+    #     # convert index arrays to np.int32 if safe to do so
+    #     if sparse_container.format in ("csc", "csr", "bsr"):
+    #         indices, indptr = sp.safely_cast_index_arrays(sparse_container)
+    #         sparse_container.indices, sparse_container.indptr = indices, indptr
+    #     elif sparse_container.format == "coo":
+    #         coords = sp.safely_cast_index_arrays(sparse_container)
+    #         sparse_container.coords = coords
+    sparse_container = _check_large_sparse(sparse_container, accept_large_sparse)
 
     if accept_sparse is False:
         padded_input = " for " + input_name if input_name else ""
@@ -1150,25 +1158,27 @@ def check_array(
 
 
 def _check_large_sparse(X, accept_large_sparse=False):
-    """Raise a ValueError if X has 64bit indices and accept_large_sparse=False"""
+    """Raise a ValueError if accept_large_sparse=False and X cannot safely be
+    downcast to int32 index arrays"""
     if not accept_large_sparse:
         supported_indices = ["int32"]
+        try:
+            index_arrays = sp.safely_cast_index_arrays(X)
+        except ValueError as err:
+            raise ValueError(
+                "Only sparse matrices with 32-bit integer indices are accepted."
+                f"X.{err.msg}. Please do report a minimal"
+                " reproducer on scikit-learn issue tracker so that support for"
+                " your use-case can be studied by maintainers. See:"
+                " https://scikit-learn.org/dev/developers/minimal_reproducer.html"
+            )
+
         if X.format == "coo":
-            index_keys = ["col", "row"]
+            X.coords = index_arrays
         elif X.format in ["csr", "csc", "bsr"]:
-            index_keys = ["indices", "indptr"]
-        else:
-            return
-        for key in index_keys:
-            indices_datatype = getattr(X, key).dtype
-            if indices_datatype not in supported_indices:
-                raise ValueError(
-                    "Only sparse matrices with 32-bit integer indices are accepted."
-                    f" Got {indices_datatype} indices. Please do report a minimal"
-                    " reproducer on scikit-learn issue tracker so that support for"
-                    " your use-case can be studied by maintainers. See:"
-                    " https://scikit-learn.org/dev/developers/minimal_reproducer.html"
-                )
+            X.indices, X.indptr = index_arrays
+
+    return X
 
 
 def check_X_y(

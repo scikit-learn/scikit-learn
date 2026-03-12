@@ -1087,6 +1087,7 @@ class OneHotEncoder(_BaseEncoder):
             dtype=self.dtype,
         )
         if self.sparse_output:
+            # out.indices, out.indptr = sparse.safely_cast_index_arrays(out)
             return _align_api_if_sparse(out)
         else:
             return out.toarray()

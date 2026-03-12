@@ -1255,7 +1255,7 @@ def _fit_liblinear(
 
     # Liblinear doesn't support 64bit sparse matrix indices yet
     if sp.issparse(X):
-        _check_large_sparse(X)
+        X = _check_large_sparse(X)
 
     # LibLinear wants targets as doubles, even for classification
     y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
