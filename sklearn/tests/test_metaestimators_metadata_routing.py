@@ -137,7 +137,7 @@ METAESTIMATORS: list = [
     },
     {
         "metaestimator": LogisticRegressionCV,
-        "init_args": {"use_legacy_attributes": False, "l1_ratios": (0,)},
+        "init_args": {"Cs": None, "use_legacy_attributes": False, "l1_ratios": (0,)},
         "X": X,
         "y": y,
         "scorer_name": "scoring",

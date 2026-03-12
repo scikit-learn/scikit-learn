@@ -35,7 +35,7 @@ def test_det_curve_display(
     else:
         sample_weight = None
 
-    lr = LogisticRegression()
+    lr = LogisticRegression(C=None)
     lr.fit(X, y)
     y_score = getattr(lr, response_method)(X)
     if y_score.ndim == 2:
@@ -101,7 +101,7 @@ def test_det_curve_display_default_name(
     # Binarize the data with only the two first classes
     X, y = X[y < 2], y[y < 2]
 
-    lr = LogisticRegression().fit(X, y)
+    lr = LogisticRegression(C=None).fit(X, y)
     y_score = lr.predict_proba(X)[:, 1]
 
     if constructor_name == "from_estimator":

@@ -831,8 +831,8 @@ def test_check_estimator():
         check_estimator(SparseTransformer(sparse_container=csr_container))
 
     # doesn't error on actual estimator
-    check_estimator(LogisticRegression())
-    check_estimator(LogisticRegression(C=0.01))
+    check_estimator(LogisticRegression(C=None))
+    check_estimator(LogisticRegression(C=None, alpha=0.01))
     check_estimator(MultiTaskElasticNet())
 
     # doesn't error on binary_only tagged estimator
@@ -845,7 +845,7 @@ def test_check_estimator():
         check_estimator(RequiresPositiveYRegressor())
 
     # Does not raise error on classifier with poor_score tag
-    check_estimator(PoorScoreLogisticRegression())
+    check_estimator(PoorScoreLogisticRegression(C=None))
 
 
 def test_check_outlier_corruption():
@@ -1044,7 +1044,7 @@ def test_check_dataframe_column_names_consistency():
         check_dataframe_column_names_consistency("estimator_name", BaseBadClassifier())
     check_dataframe_column_names_consistency("estimator_name", PartialFitChecksName())
 
-    lr = LogisticRegression()
+    lr = LogisticRegression(C=None)
     check_dataframe_column_names_consistency(lr.__class__.__name__, lr)
     lr.__doc__ = "Docstring that does not document the estimator's attributes"
     err_msg = (
@@ -1734,7 +1734,7 @@ def test_estimator_with_set_output():
 
 def test_estimator_checks_generator():
     """Check that checks_generator returns a generator."""
-    all_instance_gen_checks = estimator_checks_generator(LogisticRegression())
+    all_instance_gen_checks = estimator_checks_generator(LogisticRegression(C=None))
     assert isgenerator(all_instance_gen_checks)
 
 
@@ -1743,7 +1743,9 @@ def test_check_estimator_callback_with_fast_fail_error():
     with raises(
         ValueError, match="callback cannot be provided together with on_fail='raise'"
     ):
-        check_estimator(LogisticRegression(), on_fail="raise", callback=lambda: None)
+        check_estimator(
+            LogisticRegression(C=None), on_fail="raise", callback=lambda: None
+        )
 
 
 def test_check_mixin_order():

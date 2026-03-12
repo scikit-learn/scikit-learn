@@ -217,13 +217,13 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     ...      [-1.34, -0.48, -2.55 ],
     ...      [ 1.92,  1.48,  0.65 ]]
     >>> y = [0, 1, 0, 1]
-    >>> selector = SelectFromModel(estimator=LogisticRegression()).fit(X, y)
+    >>> selector = SelectFromModel(estimator=LogisticRegression(C=None)).fit(X, y)
     >>> selector.estimator_.coef_
-    array([[-0.3252,  0.8345,  0.4976]])
+    array([[-0.091...,  0.321...,  0.188...]])
     >>> selector.threshold_
-    np.float64(0.55249)
+    np.float64(0.200...)
     >>> selector.get_support()
-    array([False,  True, False])
+    array([False, True, False])
     >>> selector.transform(X)
     array([[-1.34],
            [-0.02],
@@ -235,7 +235,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     >>> def half_callable(X):
     ...     return round(len(X[0]) / 2)
-    >>> half_selector = SelectFromModel(estimator=LogisticRegression(),
+    >>> half_selector = SelectFromModel(estimator=LogisticRegression(C=None),
     ...                                 max_features=half_callable)
     >>> _ = half_selector.fit(X, y)
     >>> half_selector.max_features_

@@ -1275,10 +1275,10 @@ def get_routing_for_object(obj=None):
     >>> from sklearn.utils.metadata_routing import get_routing_for_object
     >>> X, y = make_classification()
     >>> pipe = Pipeline(
-    ...       [("scaler", StandardScaler()), ("lr_cv", LogisticRegressionCV())]
+    ...       [("scaler", StandardScaler()), ("lr_cv", LogisticRegressionCV(Cs=None))]
     ... )
     >>> pipe.fit(X, y) # doctest: +SKIP
-    Pipeline(steps=[('scaler', StandardScaler()), ('lr_cv', LogisticRegressionCV())])
+    Pipeline(steps=[('scaler', StandardScaler()), ('lr_cv', LogisticRegressionCV(...))])
     >>> type(get_routing_for_object(pipe))
     <class 'sklearn.utils._metadata_requests.MetadataRouter'>
     >>> type(get_routing_for_object(pipe.named_steps.scaler))

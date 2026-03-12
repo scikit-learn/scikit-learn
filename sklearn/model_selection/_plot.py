@@ -579,8 +579,8 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
     >>> from sklearn.model_selection import ValidationCurveDisplay, validation_curve
     >>> from sklearn.linear_model import LogisticRegression
     >>> X, y = make_classification(n_samples=1_000, random_state=0)
-    >>> logistic_regression = LogisticRegression()
-    >>> param_name, param_range = "C", np.logspace(-8, 3, 10)
+    >>> logistic_regression = LogisticRegression(C=None)
+    >>> param_name, param_range = "alpha", np.logspace(-5, 6, 10)
     >>> train_scores, test_scores = validation_curve(
     ...     logistic_regression, X, y, param_name=param_name, param_range=param_range
     ... )
@@ -838,8 +838,8 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
         >>> from sklearn.model_selection import ValidationCurveDisplay
         >>> from sklearn.linear_model import LogisticRegression
         >>> X, y = make_classification(n_samples=1_000, random_state=0)
-        >>> logistic_regression = LogisticRegression()
-        >>> param_name, param_range = "C", np.logspace(-8, 3, 10)
+        >>> logistic_regression = LogisticRegression(C=None)
+        >>> param_name, param_range = "alpha", np.logspace(-5, 6, 10)
         >>> ValidationCurveDisplay.from_estimator(
         ...     logistic_regression, X, y, param_name=param_name,
         ...     param_range=param_range,

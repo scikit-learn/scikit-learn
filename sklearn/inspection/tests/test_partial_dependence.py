@@ -68,6 +68,8 @@ multioutput_regression_data = (
 iris = load_iris()
 
 
+# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "Estimator, method, data",
     [
@@ -837,7 +839,7 @@ def test_partial_dependence_pipeline_custom_values(
 @pytest.mark.parametrize(
     "estimator",
     [
-        LogisticRegression(max_iter=1000, random_state=0),
+        LogisticRegression(C=None, max_iter=1000, random_state=0),
         GradientBoostingClassifier(random_state=0, n_estimators=5),
     ],
     ids=["estimator-brute", "estimator-recursion"],
@@ -952,7 +954,7 @@ def test_partial_dependence_feature_type(features, custom_values, expected_pd_sh
         (RobustScaler(), [iris.feature_names[i] for i in (1, 3)]),
     )
     pipe = make_pipeline(
-        preprocessor, LogisticRegression(max_iter=1000, random_state=0)
+        preprocessor, LogisticRegression(C=None, max_iter=1000, random_state=0)
     )
     pipe.fit(df, iris.target)
     pdp_pipe = partial_dependence(
@@ -971,7 +973,7 @@ def test_partial_dependence_feature_type(features, custom_values, expected_pd_sh
     "estimator",
     [
         LinearRegression(),
-        LogisticRegression(),
+        LogisticRegression(C=None),
         GradientBoostingRegressor(),
         GradientBoostingClassifier(),
     ],
@@ -988,6 +990,8 @@ def test_partial_dependence_unfitted(estimator):
         partial_dependence(estimator, X, features=[0, 2], grid_resolution=10)
 
 
+# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "Estimator, data",
     [
@@ -1006,6 +1010,8 @@ def test_kind_average_and_average_of_individual(Estimator, data):
     assert_allclose(avg_ind, pdp_avg["average"])
 
 
+# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "Estimator, data",
     [
@@ -1032,7 +1038,7 @@ def test_partial_dependence_kind_individual_ignores_sample_weight(Estimator, dat
     "estimator",
     [
         LinearRegression(),
-        LogisticRegression(),
+        LogisticRegression(C=None),
         RandomForestRegressor(),
         GradientBoostingClassifier(),
     ],
@@ -1069,6 +1075,8 @@ def test_partial_dependence_non_null_weight_idx(estimator, non_null_weight_idx):
         )
 
 
+# TODO(1.11): remove filterwarnings with deprecation period of C and Cs
+@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "Estimator, data",
     [
@@ -1097,7 +1105,7 @@ def test_partial_dependence_sample_weight_size_error():
     """Check that we raise an error when the size of `sample_weight` is not
     consistent with `X` and `y`.
     """
-    est = LogisticRegression()
+    est = LogisticRegression(C=None)
     (X, y), n_targets = binary_classification_data
     sample_weight = np.ones_like(y)
     est.fit(X, y)
@@ -1133,7 +1141,7 @@ def test_mixed_type_categorical():
 
     clf = make_pipeline(
         OrdinalEncoder(encoded_missing_value=-1),
-        LogisticRegression(),
+        LogisticRegression(C=None),
     ).fit(X, y)
     with pytest.raises(ValueError, match="The column #0 contains mixed data types"):
         partial_dependence(clf, X, features=[0])
@@ -1200,7 +1208,7 @@ def test_reject_pandas_with_integer_dtype():
 def test_partial_dependence_empty_categorical_features():
     """Check that we raise the proper exception when `categorical_features`
     is an empty list"""
-    clf = make_pipeline(StandardScaler(), LogisticRegression())
+    clf = make_pipeline(StandardScaler(), LogisticRegression(C=None))
     clf.fit(iris.data, iris.target)
 
     with pytest.raises(

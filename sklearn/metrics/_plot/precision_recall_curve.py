@@ -530,9 +530,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> X, y = make_classification(random_state=0)
         >>> X_train, X_test, y_train, y_test = train_test_split(
         ...         X, y, random_state=0)
-        >>> clf = LogisticRegression()
+        >>> clf = LogisticRegression(C=None)
         >>> clf.fit(X_train, y_train)
-        LogisticRegression()
+        LogisticRegression(C=None)
         >>> PrecisionRecallDisplay.from_estimator(
         ...    clf, X_test, y_test)
         <...>
@@ -688,9 +688,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> X, y = make_classification(random_state=0)
         >>> X_train, X_test, y_train, y_test = train_test_split(
         ...         X, y, random_state=0)
-        >>> clf = LogisticRegression()
+        >>> clf = LogisticRegression(C=None)
         >>> clf.fit(X_train, y_train)
-        LogisticRegression()
+        LogisticRegression(C=None)
         >>> y_score = clf.predict_proba(X_test)[:, 1]
         >>> PrecisionRecallDisplay.from_predictions(
         ...    y_test, y_score)

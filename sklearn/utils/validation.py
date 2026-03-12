@@ -1675,14 +1675,14 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.utils.validation import check_is_fitted
     >>> from sklearn.exceptions import NotFittedError
-    >>> lr = LogisticRegression()
+    >>> lr = LogisticRegression(C=None)
     >>> try:
     ...     check_is_fitted(lr)
     ... except NotFittedError as exc:
     ...     print(f"Model is not fitted yet.")
     Model is not fitted yet.
     >>> lr.fit([[1, 2], [1, 3]], [1, 0])
-    LogisticRegression()
+    LogisticRegression(C=None)
     >>> check_is_fitted(lr)
     """
     if isclass(estimator):

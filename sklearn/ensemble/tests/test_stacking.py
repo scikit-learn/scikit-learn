@@ -922,10 +922,12 @@ def test_stacking_final_estimator_attribute_error():
 
 # TODO(1.11): remove with the deprecation of C in LogisticRegression
 def test_stacking_classifier_warning_default_C_deprecated():
-    msg = "The default 'final_estimator' is LogisticRegression"
     clf = StackingClassifier(estimators=[("logreg", LogisticRegression(C=None))])
-    with pytest.warns(FutureWarning, match=msg):
+    with pytest.warns(FutureWarning) as record:
         clf.fit(scale(X_iris), y_iris)
+    assert len(record) == 2
+    assert record[0].message.args[0].startswith("The default 'final_estimator' is")
+    assert record[1].message.args[0].startswith("'C' was deprecated")
 
 
 # Metadata Routing Tests
