@@ -44,6 +44,7 @@ from sklearn.linear_model._passive_aggressive import (
     PassiveAggressiveRegressor,
 )
 from sklearn.linear_model._perceptron import Perceptron
+from sklearn.linear_model._pops import POPSRegression
 from sklearn.linear_model._quantile import QuantileRegressor
 from sklearn.linear_model._ransac import RANSACRegressor
 from sklearn.linear_model._ridge import (
@@ -87,6 +88,7 @@ __all__ = [
     "PassiveAggressiveRegressor",
     "Perceptron",
     "PoissonRegressor",
+    "POPSRegression",
     "QuantileRegressor",
     "RANSACRegressor",
     "Ridge",
