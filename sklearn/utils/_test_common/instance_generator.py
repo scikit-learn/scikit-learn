@@ -118,6 +118,8 @@ from sklearn.linear_model import (
     RANSACRegressor,
     Ridge,
     RidgeClassifier,
+    RidgeClassifierCV,
+    RidgeCV,
     SGDClassifier,
     SGDOneClassSVM,
     SGDRegressor,
@@ -151,6 +153,7 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
+from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import (
     KernelDensity,
     KNeighborsClassifier,
@@ -950,6 +953,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
+    CalibratedClassifierCV: {
+        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
+    },
     ColumnTransformer: {
         "check_estimators_empty_data_messages": "FIXME",
         "check_estimators_nan_inf": "FIXME",
@@ -965,6 +971,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_methods_sample_order_invariance": "fails for the predict method",
     },
     FeatureUnion: {
+        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_estimators_overwrite_params": "FIXME",
         "check_estimators_nan_inf": "FIXME",
         "check_dont_overwrite_parameters": "FIXME",
@@ -979,6 +986,12 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
+    },
+    GaussianMixture: {
+        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
+    },
+    GaussianNB: {
+        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
     },
     GradientBoostingClassifier: {
         # TODO: investigate failure see meta-issue #16298
@@ -999,10 +1012,12 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     GridSearchCV: {
+        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_supervised_y_2d": "DataConversionWarning not caught",
         "check_requires_y_none": "Doesn't fail gracefully",
     },
     HalvingGridSearchCV: {
+        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_fit2d_1sample": (
             "Fail during parameter check since min/max resources requires more samples"
         ),
@@ -1013,6 +1028,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_requires_y_none": "Doesn't fail gracefully",
     },
     HalvingRandomSearchCV: {
+        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_fit2d_1sample": (
             "Fail during parameter check since min/max resources requires more samples"
         ),
@@ -1066,6 +1082,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     KNeighborsTransformer: {
         "check_methods_sample_order_invariance": "check is not applicable."
     },
+    LinearDiscriminantAnalysis: {
+        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
+    },
     LinearSVC: {
         # TODO: replace by a statistical test when _dual=True, see meta-issue #16298
         "check_sample_weight_equivalence_on_dense_data": (
@@ -1088,6 +1107,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     LogisticRegression: {
+        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         "check_sample_weight_equivalence_on_dense_data": (
             "sample_weight is not equivalent to removing/repeating samples."
@@ -1130,9 +1150,10 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     Nystroem: {
+        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_transformer_preserves_dtypes": (
             "dtypes are preserved but not at a close enough precision"
-        )
+        ),
     },
     OneClassSVM: {
         # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
@@ -1144,6 +1165,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     PCA: {
+        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         # TODO: see gh-33205 for details
         "check_array_api_input": "`linalg.inv` fails because input is singular",
     },
@@ -1192,6 +1214,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     RandomizedSearchCV: {
+        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_supervised_y_2d": "DataConversionWarning not caught",
         "check_requires_y_none": "Doesn't fail gracefully",
     },
@@ -1219,9 +1242,16 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         )
     },
     RidgeClassifier: {
+        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_non_transformer_estimators_n_iter": (
             "n_iter_ cannot be easily accessed."
-        )
+        ),
+    },
+    RidgeClassifierCV: {
+        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
+    },
+    RidgeCV: {
+        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
     },
     SelfTrainingClassifier: {
         "check_non_transformer_estimators_n_iter": "n_iter_ can be 0."
@@ -1295,6 +1325,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
+    },
+    StandardScaler: {
+        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
     },
     TunedThresholdClassifierCV: {
         "check_classifiers_train": "Threshold at probability 0.5 does not hold",

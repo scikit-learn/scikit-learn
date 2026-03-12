@@ -1258,7 +1258,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             Fitted estimator.
         """
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
-        xp, _ = get_namespace(X, y, sample_weight)
+        xp, _, device_ = get_namespace_and_device(X)
+        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
+
         X, y = validate_data(
             self,
             X,
