@@ -1311,7 +1311,7 @@ def check_array_api_input(
         inputs. If `False` only the namespace, device, shape and dtype of outputs
         are checked.
 
-    check_sample_weight : bool, default=False,
+    check_sample_weight : bool, default=False
         Whether to pass dummy weights to the fit call.
 
     expect_only_array_outputs : bool, default=True
@@ -1391,7 +1391,7 @@ def check_array_api_mixed_inputs(
         inputs. If `False` only the namespace, device, shape and dtype of outputs
         are checked.
 
-    check_sample_weight : bool, default=True,
+    check_sample_weight : bool, default=True
         Whether to pass dummy weights to the fit call.
 
     expect_only_array_outputs : bool, default=True
