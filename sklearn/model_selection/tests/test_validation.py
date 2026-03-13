@@ -2460,6 +2460,126 @@ def test_cross_validate_return_indices(global_random_seed):
         assert_array_equal(test_indices[split_idx], expected_test_idx)
 
 
+# Tests for return_predictions in cross_validate
+# ===============================================
+
+
+def test_cross_validate_return_predictions_predict():
+    """Predictions from return_predictions='predict' match a manual loop."""
+    X, y = load_diabetes(return_X_y=True)
+    cv = KFold(n_splits=5)
+    results = cross_validate(
+        Ridge(), X, y, cv=cv, return_predictions="predict"
+    )
+    assert "predictions" in results
+    assert results["predictions"].shape == (X.shape[0],)
+
+    # Manual reassembly
+    manual_preds = np.empty(X.shape[0])
+    for train_idx, test_idx in KFold(n_splits=5).split(X, y):
+        est = Ridge().fit(X[train_idx], y[train_idx])
+        manual_preds[test_idx] = est.predict(X[test_idx])
+
+    assert_array_almost_equal(results["predictions"], manual_preds)
+
+
+def test_cross_validate_return_predictions_matches_cross_val_predict():
+    """return_predictions='predict' result equals cross_val_predict."""
+    X, y = load_diabetes(return_X_y=True)
+    cv = KFold(n_splits=5)
+    results = cross_validate(
+        Ridge(), X, y, cv=cv, return_predictions="predict"
+    )
+    expected = cross_val_predict(Ridge(), X, y, cv=cv, method="predict")
+    assert_array_almost_equal(results["predictions"], expected)
+
+
+def test_cross_validate_return_predictions_predict_proba():
+    """return_predictions='predict_proba' gives shape (n_samples, n_classes)."""
+    X, y = load_iris(return_X_y=True)
+    cv = KFold(n_splits=5)
+    results = cross_validate(
+        LogisticRegression(max_iter=200), X, y, cv=cv,
+        return_predictions="predict_proba"
+    )
+    preds = results["predictions"]
+    assert preds.shape == (X.shape[0], 3)
+    assert np.all(preds >= 0) and np.all(preds <= 1)
+    assert_array_almost_equal(preds.sum(axis=1), np.ones(X.shape[0]))
+
+
+def test_cross_validate_return_predictions_decision_function():
+    """return_predictions='decision_function' gives shape (n_samples,) for binary."""
+    from sklearn.datasets import make_classification
+    X_bin, y_bin = make_classification(n_samples=100, random_state=0)
+    cv = KFold(n_splits=5)
+    results = cross_validate(
+        LogisticRegression(), X_bin, y_bin, cv=cv,
+        return_predictions="decision_function"
+    )
+    assert results["predictions"].shape == (X_bin.shape[0],)
+
+
+def test_cross_validate_return_predictions_predict_log_proba():
+    """return_predictions='predict_log_proba' gives shape (n_samples, n_classes)."""
+    X, y = load_iris(return_X_y=True)
+    cv = KFold(n_splits=5)
+    results = cross_validate(
+        LogisticRegression(max_iter=200), X, y, cv=cv,
+        return_predictions="predict_log_proba"
+    )
+    preds = results["predictions"]
+    assert preds.shape == (X.shape[0], 3)
+    assert np.all(preds <= 0)
+
+
+def test_cross_validate_return_predictions_absent_by_default():
+    """'predictions' key is absent when return_predictions is not set."""
+    X, y = load_iris(return_X_y=True)
+    results = cross_validate(LogisticRegression(), X, y, cv=3)
+    assert "predictions" not in results
+
+
+def test_cross_validate_return_predictions_non_partition_raises():
+    """ValueError is raised for non-partitioning CV (e.g. ShuffleSplit)."""
+    X, y = load_iris(return_X_y=True)
+    with pytest.raises(ValueError, match="partition the data"):
+        cross_validate(
+            LogisticRegression(), X, y,
+            cv=ShuffleSplit(n_splits=3, random_state=0),
+            return_predictions="predict"
+        )
+
+
+def test_cross_validate_return_predictions_combined_flags():
+    """return_predictions works alongside return_estimator, return_train_score,
+    and return_indices."""
+    X, y = load_iris(return_X_y=True)
+    cv = KFold(n_splits=3)
+    results = cross_validate(
+        LogisticRegression(max_iter=200), X, y, cv=cv,
+        return_predictions="predict",
+        return_estimator=True,
+        return_train_score=True,
+        return_indices=True,
+    )
+    assert "predictions" in results
+    assert "estimator" in results
+    assert "train_score" in results
+    assert "indices" in results
+    assert results["predictions"].shape == (X.shape[0],)
+
+
+def test_cross_validate_return_predictions_invalid_value():
+    """ValueError from @validate_params for an invalid return_predictions string."""
+    X, y = load_iris(return_X_y=True)
+    with pytest.raises(ValueError):
+        cross_validate(
+            LogisticRegression(), X, y, cv=3,
+            return_predictions="fit_transform"
+        )
+
+
 # Tests for metadata routing in cross_val* and in *curve
 # ======================================================
 
