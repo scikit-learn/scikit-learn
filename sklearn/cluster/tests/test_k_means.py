@@ -394,6 +394,29 @@ def test_minibatch_kmeans_fit_adaptive_lr(array_constr):
     assert np.linalg.norm(centers - expected_final_centers) < initial_dist_to_expected
 
 
+@pytest.mark.parametrize("method", ["fit", "partial_fit"])
+@pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)
+def test_minibatch_kmeans_adaptive_lr_rejects_negative_sample_weight(
+    method, array_constr
+):
+    X = array_constr([[0.0, 0.0], [0.0, 1.0], [10.0, 10.0], [10.0, 11.0]])
+    sample_weight = np.array([1.0, -1.0, 1.0, 1.0])
+    km = MiniBatchKMeans(
+        n_clusters=2,
+        init=np.array([[0.0, 0.0], [10.0, 10.0]]),
+        n_init=1,
+        batch_size=X.shape[0],
+        random_state=0,
+        reassignment_ratio=0,
+        adaptive_lr=True,
+    )
+
+    with pytest.raises(
+        ValueError, match="Negative values in data passed to `sample_weight`."
+    ):
+        getattr(km, method)(X, sample_weight=sample_weight)
+
+
 @pytest.mark.parametrize(
     "init, expected_n_init",
     [

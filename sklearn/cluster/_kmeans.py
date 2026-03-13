@@ -1452,6 +1452,7 @@ class KMeans(_BaseKMeans):
             The weights for each observation in X. If None, all observations
             are assigned equal weight. `sample_weight` is not used during
             initialization if `init` is a callable or a user provided array.
+            When ``adaptive_lr=True``, `sample_weight` must be non-negative.
 
             .. versionadded:: 0.20
 
@@ -2115,7 +2116,12 @@ class MiniBatchKMeans(_BaseKMeans):
 
         self._check_params_vs_input(X)
         random_state = check_random_state(self.random_state)
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        sample_weight = _check_sample_weight(
+            sample_weight,
+            X,
+            dtype=X.dtype,
+            ensure_non_negative=self.adaptive_lr,
+        )
         self._n_threads = _openmp_effective_n_threads()
         n_samples, n_features = X.shape
 
