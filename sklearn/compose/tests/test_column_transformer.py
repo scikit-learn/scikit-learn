@@ -1647,6 +1647,14 @@ def test_sk_visual_block_remainder_col_names_pandas():
     assert visual_block.name_details == (["col1"], ["col2"])
 
 
+def test_sk_visual_block_without_remainder():
+    ct = ColumnTransformer([("norm1", Normalizer(), [0, 1])], remainder="passthrough")
+    X = np.array([[0, 4], [3, 3]])
+    ct.fit(X)
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.names == ("norm1",)
+
+
 @pytest.mark.parametrize("explicit_colname", ["first", "second", 0, 1])
 @pytest.mark.parametrize("remainder", [Trans(), "passthrough", "drop"])
 def test_column_transformer_reordered_column_names_remainder(
