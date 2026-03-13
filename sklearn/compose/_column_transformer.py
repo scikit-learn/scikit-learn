@@ -1233,6 +1233,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             ]
 
             # Add remainder back to fitted transformers if remainder is not drop
+            # and if there are remainder columns to display
             remainder_columns = self._remainder[2]
             if self.remainder != "drop" and remainder_columns:
                 has_numeric_columns = not all(
