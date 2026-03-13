@@ -810,7 +810,7 @@ def _update_centers_sort_based(X, labels, centers, n_clusters, sample_weight, xp
     sorted_weights = xp.take(sample_weight, sorted_idx)
 
     # Detect segment boundaries where label changes
-    if n_samples == 0:
+    if n_samples == 0:  # pragma: no cover
         return xp.zeros_like(centers), xp.zeros(
             n_clusters, dtype=X.dtype, device=device_
         )

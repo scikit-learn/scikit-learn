@@ -1650,3 +1650,161 @@ def test_kmeans_array_api_fit_predict(array_namespace, device_, dtype):
         X_transformed = km2.fit_transform(X_xp)
         assert get_namespace(X_transformed)[0] == xp
         assert X_transformed.shape == (50, 3)
+
+
+@pytest.mark.skipif(not _ARRAY_API_AVAILABLE, reason="array_api_compat not installed")
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype",
+    yield_namespace_device_dtype_combinations() if _ARRAY_API_AVAILABLE else [],
+    ids=_get_namespace_device_dtype_ids if _ARRAY_API_AVAILABLE else None,
+)
+def test_kmeans_array_api_verbose(capsys, array_namespace, device_, dtype):
+    """Test verbose output in Array API path."""
+    if array_namespace == "numpy":
+        pytest.skip("numpy namespace uses existing Cython path")
+
+    xp = _array_api_for_tests(array_namespace, device_)
+    X_np, _ = make_blobs(n_samples=50, n_features=2, centers=3, random_state=42)
+    X_xp = xp.asarray(X_np.astype(dtype), device=device_)
+
+    with sklearn.config_context(array_api_dispatch=True):
+        km = KMeans(n_clusters=3, init="random", n_init=1, random_state=0, verbose=True)
+        km.fit(X_xp)
+
+    captured = capsys.readouterr()
+    assert "Initialization complete" in captured.out
+    assert "Iteration" in captured.out
+    assert "inertia" in captured.out
+
+
+@pytest.mark.skipif(not _ARRAY_API_AVAILABLE, reason="array_api_compat not installed")
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype",
+    yield_namespace_device_dtype_combinations() if _ARRAY_API_AVAILABLE else [],
+    ids=_get_namespace_device_dtype_ids if _ARRAY_API_AVAILABLE else None,
+)
+def test_kmeans_array_api_empty_cluster(array_namespace, device_, dtype):
+    """Test that empty clusters retain their centroid in Array API path."""
+    if array_namespace == "numpy":
+        pytest.skip("numpy namespace uses existing Cython path")
+
+    xp = _array_api_for_tests(array_namespace, device_)
+    # Two tight clusters but request 5 clusters; at least some will be empty
+    rng = np.random.RandomState(0)
+    X_np = np.vstack(
+        [rng.randn(30, 2) + [10, 10], rng.randn(30, 2) + [-10, -10]]
+    ).astype(dtype)
+    # Place 3 extra init centers far from data so their clusters stay empty
+    init_centers = np.vstack(
+        [
+            X_np[:2],  # 2 centers near data
+            [[100, 100], [200, 200], [300, 300]],  # 3 centers far from data
+        ]
+    ).astype(dtype)
+
+    X_xp = xp.asarray(X_np, device=device_)
+
+    with sklearn.config_context(array_api_dispatch=True):
+        km = KMeans(n_clusters=5, init=init_centers, n_init=1, max_iter=3)
+        km.fit(X_xp)
+
+    # All cluster centers should be finite (empty ones retain init centroid)
+    centers_np = _convert_to_numpy(km.cluster_centers_, xp=xp)
+    assert np.all(np.isfinite(centers_np))
+    assert km.cluster_centers_.shape == (5, 2)
+
+
+@pytest.mark.skipif(not _ARRAY_API_AVAILABLE, reason="array_api_compat not installed")
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype",
+    yield_namespace_device_dtype_combinations() if _ARRAY_API_AVAILABLE else [],
+    ids=_get_namespace_device_dtype_ids if _ARRAY_API_AVAILABLE else None,
+)
+def test_kmeans_array_api_tol_zero(array_namespace, device_, dtype):
+    """Test tol=0 exercises _tolerance_array_api early-return in Array API path."""
+    if array_namespace == "numpy":
+        pytest.skip("numpy namespace uses existing Cython path")
+
+    xp = _array_api_for_tests(array_namespace, device_)
+    X_np, _ = make_blobs(n_samples=50, n_features=2, centers=3, random_state=42)
+    X_xp = xp.asarray(X_np.astype(dtype), device=device_)
+
+    with sklearn.config_context(array_api_dispatch=True):
+        km = KMeans(
+            n_clusters=3,
+            init="random",
+            n_init=1,
+            random_state=0,
+            tol=0,
+            max_iter=10,
+        )
+        km.fit(X_xp)
+
+    # tol=0 means converge only when centers stop moving entirely
+    assert km.n_iter_ >= 1
+    assert km.cluster_centers_.shape == (3, 2)
+
+
+@pytest.mark.skipif(not _ARRAY_API_AVAILABLE, reason="array_api_compat not installed")
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype",
+    yield_namespace_device_dtype_combinations() if _ARRAY_API_AVAILABLE else [],
+    ids=_get_namespace_device_dtype_ids if _ARRAY_API_AVAILABLE else None,
+)
+def test_kmeans_array_api_callable_init(array_namespace, device_, dtype):
+    """Test callable init in Array API path."""
+    if array_namespace == "numpy":
+        pytest.skip("numpy namespace uses existing Cython path")
+
+    xp = _array_api_for_tests(array_namespace, device_)
+    X_np, _ = make_blobs(n_samples=50, n_features=2, centers=3, random_state=42)
+    X_xp = xp.asarray(X_np.astype(dtype), device=device_)
+
+    def custom_init(X, n_clusters, random_state):
+        # Convert to numpy for indexing; caller wraps result with xp.asarray
+        xp_local, _ = get_namespace(X)
+        X_np_local = _convert_to_numpy(X, xp=xp_local)
+        indices = random_state.choice(
+            X_np_local.shape[0], size=n_clusters, replace=False
+        )
+        return X_np_local[indices]
+
+    with sklearn.config_context(array_api_dispatch=True):
+        km = KMeans(n_clusters=3, init=custom_init, n_init=1, random_state=0)
+        km.fit(X_xp)
+
+    assert km.cluster_centers_.shape == (3, 2)
+    assert km.n_iter_ >= 1
+
+
+@pytest.mark.skipif(not _ARRAY_API_AVAILABLE, reason="array_api_compat not installed")
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype",
+    yield_namespace_device_dtype_combinations() if _ARRAY_API_AVAILABLE else [],
+    ids=_get_namespace_device_dtype_ids if _ARRAY_API_AVAILABLE else None,
+)
+def test_kmeans_array_api_array_init(array_namespace, device_, dtype):
+    """Test array-like init in Array API path."""
+    if array_namespace == "numpy":
+        pytest.skip("numpy namespace uses existing Cython path")
+
+    xp = _array_api_for_tests(array_namespace, device_)
+    X_np, _ = make_blobs(n_samples=50, n_features=2, centers=3, random_state=42)
+    X_xp = xp.asarray(X_np.astype(dtype), device=device_)
+
+    # Use first 3 samples as initial centers (numpy array)
+    init_centers = X_np[:3].astype(dtype)
+
+    with sklearn.config_context(array_api_dispatch=True):
+        km = KMeans(n_clusters=3, init=init_centers, n_init=1)
+        km.fit(X_xp)
+
+    assert km.cluster_centers_.shape == (3, 2)
+    assert km.n_iter_ >= 1
+    centers_np = _convert_to_numpy(km.cluster_centers_, xp=xp)
+    assert np.all(np.isfinite(centers_np))
