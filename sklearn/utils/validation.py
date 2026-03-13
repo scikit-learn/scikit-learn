@@ -2140,7 +2140,9 @@ def _check_sample_weight(
     sample_weight : ndarray of shape (n_samples,)
         Validated sample weight. It is guaranteed to be "C" contiguous.
     """
-    xp, is_array_api, device = get_namespace_and_device(X, remove_types=(int, float))
+    xp, is_array_api, device = get_namespace_and_device(
+        X, remove_types=(list, int, float)
+    )
 
     n_samples = _num_samples(X)
 
