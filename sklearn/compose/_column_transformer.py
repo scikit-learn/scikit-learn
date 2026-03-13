@@ -1233,9 +1233,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             ]
 
             # Add remainder back to fitted transformers if remainder is not drop
-            if self.remainder != "drop":
-                remainder_columns = self._remainder[2]
-                has_numeric_columns = remainder_columns and not all(
+            remainder_columns = self._remainder[2]
+            if self.remainder != "drop" and remainder_columns:
+                has_numeric_columns = not all(
                     isinstance(col, str) for col in remainder_columns
                 )
                 # Convert indices to column names when feature names are available
