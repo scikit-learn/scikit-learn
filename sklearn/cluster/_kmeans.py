@@ -1342,7 +1342,7 @@ class _BaseKMeans(
                 xp=xp,
                 return_inertia=False,
             )
-            return labels
+            return xp.astype(labels, xp.int32)
 
         # sample weights are not used by predict but cython helpers expect an array
         sample_weight = np.ones(X.shape[0], dtype=X.dtype)
@@ -1909,7 +1909,8 @@ class KMeans(_BaseKMeans):
 
         self.cluster_centers_ = best_centers
         self._n_features_out = self.cluster_centers_.shape[0]
-        self.labels_ = best_labels
+        # Cast labels to int32 for consistency with the Cython path
+        self.labels_ = xp.astype(best_labels, xp.int32)
         self.inertia_ = best_inertia
         self.n_iter_ = best_n_iter
         return self
