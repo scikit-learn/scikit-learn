@@ -3,7 +3,7 @@
 
 import time
 
-from sklearn.base import BaseEstimator, _fit_context
+from sklearn.base import BaseEstimator, _fit_context, clone
 from sklearn.callback import CallbackSupportMixin, with_callback_context
 from sklearn.callback._callback_support import get_callback_manager
 from sklearn.utils.parallel import Parallel, delayed
@@ -21,8 +21,8 @@ class TestingCallback:
     def __init__(self):
         self.record = get_callback_manager().list()
 
-    def on_fit_begin(self, estimator):
-        self.record.append(("on_fit_begin", estimator, None, None))
+    def on_fit_begin(self, estimator, context):
+        self.record.append(("on_fit_begin", estimator, context, None))
 
     def on_fit_task_end(self, estimator, context, **kwargs):
         self.record.append(("on_fit_task_end", estimator, context, kwargs))
@@ -64,8 +64,8 @@ class FailingCallback(TestingCallback):
         super().__init__()
         self.fail_at = fail_at
 
-    def on_fit_begin(self, estimator):
-        super().on_fit_begin(estimator)
+    def on_fit_begin(self, estimator, context):
+        super().on_fit_begin(estimator, context)
         if self.fail_at == "on_fit_begin":
             raise ValueError("Failing callback failed at on_fit_begin")
 
@@ -232,7 +232,7 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
         callback_ctx.eval_on_fit_begin(estimator=self)
 
         Parallel(n_jobs=self.n_jobs, prefer=self.prefer)(
-            delayed(_func)(
+            delayed(_fit_subestimator)(
                 self,
                 self.estimator,
                 X,
@@ -247,12 +247,13 @@ class MetaEstimator(CallbackSupportMixin, BaseEstimator):
         return self
 
 
-def _func(meta_estimator, inner_estimator, X, y, *, outer_callback_ctx):
+def _fit_subestimator(meta_estimator, inner_estimator, X, y, *, outer_callback_ctx):
     for i in range(meta_estimator.n_inner):
-        inner_ctx = outer_callback_ctx.subcontext(task_name="inner", task_id=i)
-        est = inner_ctx.clone_and_propagate_callback_context(
-            sub_estimator=inner_estimator
-        )
+        est = clone(inner_estimator)
+
+        inner_ctx = outer_callback_ctx.subcontext(
+            task_name="inner", task_id=i
+        ).propagate_callback_context(sub_estimator=est)
 
         est.fit(X, y)
 

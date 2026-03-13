@@ -8,13 +8,18 @@ from typing import Protocol, runtime_checkable
 class Callback(Protocol):
     """Protocol for the callbacks."""
 
-    def on_fit_begin(self, estimator):
+    def on_fit_begin(self, estimator, context):
         """Method called at the beginning of the fit method of the estimator.
 
         Parameters
         ----------
         estimator : estimator instance
             The estimator calling this callback hook.
+
+        context : `sklearn.callback.CallbackContext` instance
+            Context of the corresponding task. This is usually the root context of the
+            estimator but it can be an intermediate context if the estimator is a
+            sub-estimator of a meta-estimator.
         """
 
     def on_fit_task_end(self, estimator, context, **kwargs):

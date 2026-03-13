@@ -247,31 +247,3 @@ class EstimatorCheckFailedWarning(UserWarning):
 
     def __str__(self):
         return self.__repr__()
-
-
-class CloneWithCallbacksWarning(UserWarning):
-    """Warning raised when an estimator with callback attached to it is cloned.
-
-    This warning is meant for meta-estimators that use clone internally without handling
-    context handling and callbacks propagation explicitly. This serves two purposes:
-    warn the users that they can expect degraded (incomplete) callback handling and let
-    library maintainers that need to update their meta-estimators or cloning functions
-    to explicitly add callback support.
-
-    Parameters
-    ----------
-    estimator : estimator object
-        Estimator instance being cloned.
-    """
-
-    def __init__(self, estimator):
-        self.estimator_name = estimator.__class__.__name__
-
-    def __str__(self):
-        return (
-            f"There are callbacks set on the estimator {self.estimator_name} "
-            "being cloned. The callbacks will be discarded in the clone. "
-            "Note: to add the callback support, the caller should rely on "
-            "CallbackContext.clone_and_propagate_callback_context instead "
-            "of calling clone directly."
-        )  # TODO: add a link to some documentation for callback support.

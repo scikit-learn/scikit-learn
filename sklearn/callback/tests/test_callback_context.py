@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import sys
-import warnings
 
 import numpy as np
 import pytest
@@ -18,7 +17,6 @@ from sklearn.callback.tests._utils import (
     TestingCallback,
     ThirdPartyEstimator,
 )
-from sklearn.exceptions import CloneWithCallbacksWarning
 
 
 def test_propagate_callback_context():
@@ -233,40 +231,6 @@ def test_estimator_without_subtask():
     estimator = NoSubtaskEstimator()
     estimator.set_callbacks([TestingCallback()])
     estimator.fit()
-
-
-def test_clone_and_propagate_callback_context():
-    """Test clone_and_propagate_callback_context for callback preservation."""
-    callback = TestingCallback()
-    estimator = MaxIterEstimator()
-    estimator.set_callbacks(callback)
-
-    parent_callback = TestingAutoPropagatedCallback()
-    meta_estimator = MetaEstimator(estimator=estimator).set_callbacks(parent_callback)
-
-    callback_ctx = CallbackContext._from_estimator(
-        meta_estimator, task_name="", task_id=0, max_subtasks=0
-    )
-    cloned_estimator = callback_ctx.clone_and_propagate_callback_context(estimator)
-    assert cloned_estimator is not estimator
-    assert parent_callback in cloned_estimator._skl_callbacks
-    assert callback in cloned_estimator._skl_callbacks
-
-
-def test_no_clone_warning_with_clone_and_propagate_callback_context():
-    """Test that clone_and_propagate_callback_context catches warning raised in clone().
-
-    When the cloning is done inside of clone_and_propagate_callback_context, the warning
-    about callbacks not being cloned should not be raised.
-    """
-    estimator = MaxIterEstimator()
-    estimator.set_callbacks(TestingCallback())
-    callback_ctx = CallbackContext._from_estimator(
-        estimator, task_name="", task_id=0, max_subtasks=0
-    )
-    with warnings.catch_warnings():
-        warnings.filterwarnings("error", category=CloneWithCallbacksWarning)
-        callback_ctx.clone_and_propagate_callback_context(estimator)
 
 
 @pytest.mark.parametrize("Callback", [TestingAutoPropagatedCallback, TestingCallback])

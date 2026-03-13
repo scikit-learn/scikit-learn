@@ -36,26 +36,49 @@ class ProgressBar:
         check_rich_support("Progressbar")
 
         self.max_estimator_depth = max_estimator_depth
+        self._manager = get_callback_manager()
+        # Queue proxies need to be shared across callback copies in subprocesses,
+        # while monitor threads must stay process-local (they are not picklable).
+        self._run_queues = self._manager.dict()
+        self._run_monitors = {}
 
-    def on_fit_begin(self, estimator):
-        self._queue = get_callback_manager().Queue()
-        self.progress_monitor = RichProgressMonitor(queue=self._queue)
-        self.progress_monitor.start()
+    def on_fit_begin(self, estimator, context):
+        if not hasattr(self, "_manager"):
+            # If the outer function call supports callback, it would typically have
+            # initialized the manager and monitor in the same process and we can
+            # directly reuse it. If the same callback is used to collect progress of
+            # sub-estimators in subprocess parallel workers the setup/teardown is not
+            # needed because it is performed only once, typically in the parent process.
+            # However, if the outer function call does not support callbacks explicitly,
+            # we need to reinitialize a working callback state in worker processes:
+            # the callback will work in slightly degraded mode with redundant managers
+            # and progress monitors but this should not crash.
+            self._manager = get_callback_manager()
+            self._run_queues = self._manager.dict()
+            self._run_monitors = {}
+
+        queue = self._manager.Queue()
+        progress_monitor = RichProgressMonitor(queue=queue)
+        progress_monitor.start()
+        self._run_queues[context.root_uuid] = queue
+        self._run_monitors[context.root_uuid] = progress_monitor
 
     def on_fit_task_end(self, estimator, context, **kwargs):
-        self._queue.put(context)
+        self._run_queues[context.root_uuid].put(context)
 
     def on_fit_end(self, estimator, context):
         # This is called by the root context. We signal that the root task is finished
         # and the queue won't receive any more tasks.
-        self._queue.put(context)
-        self._queue.put(None)
-        self.progress_monitor.join()
+        self._run_queues[context.root_uuid].put(context)
+        self._run_queues[context.root_uuid].put(None)
+        self._run_monitors[context.root_uuid].join()
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        if "progress_monitor" in state:
-            del state["progress_monitor"]  # a thread is not picklable
+        state.pop("_manager", None)
+        state.pop("_run_monitors", None)
+        # Note that run queues are pickleable and are expected to be shared between
+        # the parent and worker processes.
         return state
 
 
