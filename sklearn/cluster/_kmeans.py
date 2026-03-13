@@ -1872,7 +1872,7 @@ class MiniBatchKMeans(_BaseKMeans):
     ----------
 
     .. [1] :arxiv:`Gregory Schwartzman (2023).
-      "Mini-batch k-means terminates within O(d/ɛ) iterations" <2304.00419>`
+        "Mini-batch k-means terminates within O(d/ɛ) iterations" <2304.00419>`
 
     Examples
     --------
@@ -2268,6 +2268,9 @@ class MiniBatchKMeans(_BaseKMeans):
             The weights for each observation in X. If None, all observations
             are assigned equal weight. `sample_weight` is not used during
             initialization if `init` is a callable or a user provided array.
+            When ``adaptive_lr=True``, `sample_weight` must be non-negative
+            and the sum of the weights over the batch must be strictly
+            positive.
 
         Returns
         -------
@@ -2289,7 +2292,17 @@ class MiniBatchKMeans(_BaseKMeans):
         self._random_state = getattr(
             self, "_random_state", check_random_state(self.random_state)
         )
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        sample_weight = _check_sample_weight(
+            sample_weight,
+            X,
+            dtype=X.dtype,
+            ensure_non_negative=self.adaptive_lr,
+        )
+        if self.adaptive_lr and sample_weight.sum() <= 0:
+            raise ValueError(
+                "When adaptive_lr=True, sample_weight must be non-negative "
+                "and sum to a positive value over the batch."
+            )
         self.n_steps_ = getattr(self, "n_steps_", 0)
 
         # precompute squared norms of data points

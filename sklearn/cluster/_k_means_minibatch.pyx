@@ -83,6 +83,7 @@ cdef void update_center_dense(
         floating wsum_cluster = 0
         floating old_weight, new_weight
         floating alpha
+        floating weight_idx
 
     k = 0
     for sample_idx in range(n_samples):
@@ -207,9 +208,9 @@ cdef void update_center_sparse(
         int n_samples = sample_weight.shape[0]
         int n_features = centers_old.shape[1]
         int n_indices = 0
-        int k, sample_idx, feature_idx, ptr
+        int k, sample_idx, feature_idx, ptr, i
         floating wsum_cluster = 0.0
-        floating old_weight, new_weight
+        floating old_weight, new_weight, weight_idx
         floating alpha
 
     k = 0
