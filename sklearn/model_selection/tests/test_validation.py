@@ -2468,9 +2468,7 @@ def test_cross_validate_return_predictions_predict():
     """Predictions from return_predictions='predict' match a manual loop."""
     X, y = load_diabetes(return_X_y=True)
     cv = KFold(n_splits=5)
-    results = cross_validate(
-        Ridge(), X, y, cv=cv, return_predictions="predict"
-    )
+    results = cross_validate(Ridge(), X, y, cv=cv, return_predictions="predict")
     assert "predictions" in results
     assert results["predictions"].shape == (X.shape[0],)
 
@@ -2487,9 +2485,7 @@ def test_cross_validate_return_predictions_matches_cross_val_predict():
     """return_predictions='predict' result equals cross_val_predict."""
     X, y = load_diabetes(return_X_y=True)
     cv = KFold(n_splits=5)
-    results = cross_validate(
-        Ridge(), X, y, cv=cv, return_predictions="predict"
-    )
+    results = cross_validate(Ridge(), X, y, cv=cv, return_predictions="predict")
     expected = cross_val_predict(Ridge(), X, y, cv=cv, method="predict")
     assert_array_almost_equal(results["predictions"], expected)
 
@@ -2499,8 +2495,11 @@ def test_cross_validate_return_predictions_predict_proba():
     X, y = load_iris(return_X_y=True)
     cv = KFold(n_splits=5)
     results = cross_validate(
-        LogisticRegression(max_iter=200), X, y, cv=cv,
-        return_predictions="predict_proba"
+        LogisticRegression(max_iter=200),
+        X,
+        y,
+        cv=cv,
+        return_predictions="predict_proba",
     )
     preds = results["predictions"]
     assert preds.shape == (X.shape[0], 3)
@@ -2511,11 +2510,15 @@ def test_cross_validate_return_predictions_predict_proba():
 def test_cross_validate_return_predictions_decision_function():
     """return_predictions='decision_function' gives shape (n_samples,) for binary."""
     from sklearn.datasets import make_classification
+
     X_bin, y_bin = make_classification(n_samples=100, random_state=0)
     cv = KFold(n_splits=5)
     results = cross_validate(
-        LogisticRegression(), X_bin, y_bin, cv=cv,
-        return_predictions="decision_function"
+        LogisticRegression(),
+        X_bin,
+        y_bin,
+        cv=cv,
+        return_predictions="decision_function",
     )
     assert results["predictions"].shape == (X_bin.shape[0],)
 
@@ -2525,8 +2528,11 @@ def test_cross_validate_return_predictions_predict_log_proba():
     X, y = load_iris(return_X_y=True)
     cv = KFold(n_splits=5)
     results = cross_validate(
-        LogisticRegression(max_iter=200), X, y, cv=cv,
-        return_predictions="predict_log_proba"
+        LogisticRegression(max_iter=200),
+        X,
+        y,
+        cv=cv,
+        return_predictions="predict_log_proba",
     )
     preds = results["predictions"]
     assert preds.shape == (X.shape[0], 3)
@@ -2545,9 +2551,11 @@ def test_cross_validate_return_predictions_non_partition_raises():
     X, y = load_iris(return_X_y=True)
     with pytest.raises(ValueError, match="partition the data"):
         cross_validate(
-            LogisticRegression(), X, y,
+            LogisticRegression(),
+            X,
+            y,
             cv=ShuffleSplit(n_splits=3, random_state=0),
-            return_predictions="predict"
+            return_predictions="predict",
         )
 
 
@@ -2557,7 +2565,10 @@ def test_cross_validate_return_predictions_combined_flags():
     X, y = load_iris(return_X_y=True)
     cv = KFold(n_splits=3)
     results = cross_validate(
-        LogisticRegression(max_iter=200), X, y, cv=cv,
+        LogisticRegression(max_iter=200),
+        X,
+        y,
+        cv=cv,
         return_predictions="predict",
         return_estimator=True,
         return_train_score=True,
@@ -2575,8 +2586,7 @@ def test_cross_validate_return_predictions_invalid_value():
     X, y = load_iris(return_X_y=True)
     with pytest.raises(ValueError):
         cross_validate(
-            LogisticRegression(), X, y, cv=3,
-            return_predictions="fit_transform"
+            LogisticRegression(), X, y, cv=3, return_predictions="fit_transform"
         )
 
 

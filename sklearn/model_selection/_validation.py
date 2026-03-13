@@ -95,7 +95,9 @@ def _check_groups_routing_disabled(groups):
         "return_estimator": ["boolean"],
         "return_indices": ["boolean"],
         "return_predictions": [
-            StrOptions({"predict", "predict_proba", "predict_log_proba", "decision_function"}),
+            StrOptions(
+                {"predict", "predict_proba", "predict_log_proba", "decision_function"}
+            ),
             None,
         ],
         "error_score": [StrOptions({"raise"}), Real],
@@ -457,23 +459,18 @@ def cross_validate(
             ret[key] = train_scores_dict[name]
 
     if return_predictions is not None:
-        xp, is_array_api, device_ = get_namespace_and_device(X)
         all_test_indices = np.concatenate([test for _, test in indices])
         inv_test_indices = np.empty(len(all_test_indices), dtype=int)
         inv_test_indices[all_test_indices] = np.arange(len(all_test_indices))
 
         # Determine shape from a successful fold (for NaN-fill of failed folds)
-        sample_pred = next(
-            (p for p in per_fold_predictions if p is not None), None
-        )
+        sample_pred = next((p for p in per_fold_predictions if p is not None), None)
         fold_preds = []
         for pred, (_, test) in zip(per_fold_predictions, indices):
             if pred is None:
                 n_test = len(test)
                 if sample_pred is not None and np.ndim(sample_pred) == 2:
-                    fold_preds.append(
-                        np.full((n_test, sample_pred.shape[1]), np.nan)
-                    )
+                    fold_preds.append(np.full((n_test, sample_pred.shape[1]), np.nan))
                 else:
                     fold_preds.append(np.full(n_test, np.nan))
             else:
@@ -483,9 +480,7 @@ def cross_validate(
             all_preds = sp.vstack(fold_preds, format=fold_preds[0].format)
             ret["predictions"] = all_preds[inv_test_indices]
         else:
-            all_preds = np.concatenate(
-                [np.asarray(p) for p in fold_preds], axis=0
-            )
+            all_preds = np.concatenate([np.asarray(p) for p in fold_preds], axis=0)
             ret["predictions"] = all_preds[inv_test_indices]
 
     return ret
@@ -1423,10 +1418,10 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
             "stratified folds"
         )
         warnings.warn(
-            "Number of classes in training fold ({}) does "
-            "not match total number of classes ({}). "
+            f"Number of classes in training fold ({classes_length}) does "
+            f"not match total number of classes ({n_classes}). "
             "Results may not be appropriate for your use case. "
-            "{}".format(classes_length, n_classes, recommendation),
+            f"{recommendation}",
             RuntimeWarning,
         )
         if method == "decision_function":
@@ -1436,23 +1431,19 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
                 # it with. This case is found when sklearn.svm.SVC is
                 # set to `decision_function_shape='ovo'`.
                 raise ValueError(
-                    "Output shape {} of {} does not match "
-                    "number of classes ({}) in fold. "
+                    f"Output shape {predictions.shape} of {method} does not match "
+                    f"number of classes ({classes_length}) in fold. "
                     "Irregular decision_function outputs "
                     "are not currently supported by "
-                    "cross_val_predict".format(
-                        predictions.shape, method, classes_length
-                    )
+                    "cross_val_predict"
                 )
             if classes_length <= 2:
                 # In this special case, `predictions` contains a 1D array.
                 raise ValueError(
-                    "Only {} class/es in training fold, but {} "
+                    f"Only {classes_length} class/es in training fold, but {n_classes} "
                     "in overall dataset. This "
                     "is not supported for decision_function "
-                    "with imbalanced folds. {}".format(
-                        classes_length, n_classes, recommendation
-                    )
+                    f"with imbalanced folds. {recommendation}"
                 )
 
         float_min = xp.finfo(predictions.dtype).min
