@@ -20,6 +20,7 @@ from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils._set_output import _get_output_config
+from sklearn.utils.fixes import _ensure_sparse_index_int32
 from sklearn.utils.validation import (
     _check_feature_names_in,
     check_is_fitted,
@@ -1087,6 +1088,7 @@ class OneHotEncoder(_BaseEncoder):
             dtype=self.dtype,
         )
         if self.sparse_output:
+            _ensure_sparse_index_int32(out)
             return _align_api_if_sparse(out)
         else:
             return out.toarray()
