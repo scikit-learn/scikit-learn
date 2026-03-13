@@ -8,7 +8,6 @@ from functools import partial
 import numpy as np
 import pytest
 import scipy
-from numpy.testing import assert_allclose
 from scipy import linalg
 from scipy.optimize import minimize, root
 
@@ -28,6 +27,7 @@ from sklearn.linear_model._glm._newton_solver import NewtonCholeskySolver
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.metrics import d2_tweedie_score, mean_poisson_deviance
 from sklearn.model_selection import train_test_split
+from sklearn.utils._testing import assert_allclose
 
 SOLVERS = ["lbfgs", "newton-cholesky"]
 
@@ -636,11 +636,11 @@ def test_glm_identity_regression(fit_intercept):
     )
     if fit_intercept:
         glm.fit(X[:, 1:], y)
-        assert_allclose(glm.coef_, coef[1:], rtol=1e-10)
-        assert_allclose(glm.intercept_, coef[0], rtol=1e-10)
+        assert_allclose(glm.coef_, coef[1:])
+        assert_allclose(glm.intercept_, coef[0])
     else:
         glm.fit(X, y)
-        assert_allclose(glm.coef_, coef, rtol=1e-12)
+        assert_allclose(glm.coef_, coef)
 
 
 @pytest.mark.parametrize("fit_intercept", [False, True])
@@ -663,12 +663,12 @@ def test_glm_sample_weight_consistency(fit_intercept, alpha, GLMEstimator):
     # sample_weight=np.ones(..) should be equivalent to sample_weight=None
     sample_weight = np.ones(y.shape)
     glm.fit(X, y, sample_weight=sample_weight)
-    assert_allclose(glm.coef_, coef, rtol=1e-12)
+    assert_allclose(glm.coef_, coef)
 
     # sample_weight are normalized to 1 so, scaling them has no effect
     sample_weight = 2 * np.ones(y.shape)
     glm.fit(X, y, sample_weight=sample_weight)
-    assert_allclose(glm.coef_, coef, rtol=1e-12)
+    assert_allclose(glm.coef_, coef)
 
     # setting one element of sample_weight to 0 is equivalent to removing
     # the corresponding sample
@@ -677,7 +677,7 @@ def test_glm_sample_weight_consistency(fit_intercept, alpha, GLMEstimator):
     glm.fit(X, y, sample_weight=sample_weight)
     coef1 = glm.coef_.copy()
     glm.fit(X[:-1], y[:-1])
-    assert_allclose(glm.coef_, coef1, rtol=1e-12)
+    assert_allclose(glm.coef_, coef1)
 
     # check that multiplying sample_weight by 2 is equivalent
     # to repeating corresponding samples twice

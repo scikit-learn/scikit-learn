@@ -1,6 +1,6 @@
 .. currentmodule:: sklearn.model_selection
 
-.. _TunedThresholdClassifierCV:
+.. _threshold_tunning:
 
 ==================================================
 Tuning the decision threshold for class prediction
@@ -28,7 +28,7 @@ cut-off rules: a positive class is predicted when the conditional probability
 :math:`P(y|X)` is greater than 0.5 (obtained with :term:`predict_proba`) or if the
 decision score is greater than 0 (obtained with :term:`decision_function`).
 
-Here, we show an example that illustrates the relation between conditional
+Here, we show an example that illustrates the relatonship between conditional
 probability estimates :math:`P(y|X)` and class labels::
 
     >>> from sklearn.datasets import make_classification
@@ -38,8 +38,8 @@ probability estimates :math:`P(y|X)` and class labels::
     >>> classifier.predict_proba(X[:4])
     array([[0.94     , 0.06     ],
            [0.94     , 0.06     ],
-           [0.0416..., 0.9583...],
-           [0.0416..., 0.9583...]])
+           [0.0416, 0.9583],
+           [0.0416, 0.9583]])
     >>> classifier.predict(X[:4])
     array([0, 0, 1, 1])
 
@@ -63,7 +63,7 @@ Post-tuning the decision threshold
 
 One solution to address the problem stated in the introduction is to tune the decision
 threshold of the classifier once the model has been trained. The
-:class:`~sklearn.model_selection.TunedThresholdClassifierCV` tunes this threshold using
+:class:`TunedThresholdClassifierCV` tunes this threshold using
 an internal cross-validation. The optimum threshold is chosen to maximize a given
 metric.
 
@@ -112,10 +112,10 @@ a meaningful metric for their use case.
         >>> base_model = LogisticRegression()
         >>> model = TunedThresholdClassifierCV(base_model, scoring=scorer)
         >>> scorer(model.fit(X, y), X, y)
-        0.88...
+        0.88
         >>> # compare it with the internal score found by cross-validation
         >>> model.best_score_
-        np.float64(0.86...)
+        np.float64(0.86)
 
 Important notes regarding the internal cross-validation
 -------------------------------------------------------
@@ -135,6 +135,17 @@ a float number for `cv` to limit to an internal single train-test split.
 The option `cv="prefit"` should only be used when the provided classifier was already
 trained, and you just want to find the best decision threshold using a new validation
 set.
+
+.. _metric_at_thresholds:
+
+Visualizing thresholds
+----------------------
+
+A useful visualization when tuning the decision threshold is a plot of metric values
+across different thresholds. This is particularly valuable when there is more than
+one metric of interest. The :func:`~sklearn.metrics.metric_at_thresholds` function
+computes metric values at each unique score threshold, returning both the metric
+array and corresponding threshold values for easy plotting.
 
 .. _FixedThresholdClassifier:
 

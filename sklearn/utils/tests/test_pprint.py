@@ -16,10 +16,10 @@ from sklearn.utils._pprint import _EstimatorPrettyPrinter
 class LogisticRegression(BaseEstimator):
     def __init__(
         self,
-        penalty="l2",
+        C=1.0,
+        l1_ratio=0,
         dual=False,
         tol=1e-4,
-        C=1.0,
         fit_intercept=True,
         intercept_scaling=1,
         class_weight=None,
@@ -30,12 +30,11 @@ class LogisticRegression(BaseEstimator):
         verbose=0,
         warm_start=False,
         n_jobs=None,
-        l1_ratio=None,
     ):
-        self.penalty = penalty
+        self.C = C
+        self.l1_ratio = l1_ratio
         self.dual = dual
         self.tol = tol
-        self.C = C
         self.fit_intercept = fit_intercept
         self.intercept_scaling = intercept_scaling
         self.class_weight = class_weight
@@ -46,7 +45,6 @@ class LogisticRegression(BaseEstimator):
         self.verbose = verbose
         self.warm_start = warm_start
         self.n_jobs = n_jobs
-        self.l1_ratio = l1_ratio
 
     def fit(self, X, y):
         return self
@@ -242,15 +240,15 @@ class SimpleImputer(BaseEstimator):
         self.copy = copy
 
 
-def test_basic(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_basic():
     # Basic pprint test
     lr = LogisticRegression()
     expected = """
 LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
-                   intercept_scaling=1, l1_ratio=None, max_iter=100,
-                   multi_class='warn', n_jobs=None, penalty='l2',
-                   random_state=None, solver='warn', tol=0.0001, verbose=0,
-                   warm_start=False)"""
+                   intercept_scaling=1, l1_ratio=0, max_iter=100,
+                   multi_class='warn', n_jobs=None, random_state=None,
+                   solver='warn', tol=0.0001, verbose=0, warm_start=False)"""
 
     expected = expected[1:]  # remove first \n
     assert lr.__repr__() == expected
@@ -282,10 +280,11 @@ LogisticRegression(C=99, class_weight=0.4, fit_intercept=False, tol=1234,
     assert imputer.__repr__() == expected
 
     # make sure array parameters don't throw error (see #13583)
-    repr(LogisticRegressionCV(Cs=np.array([0.1, 1])))
+    repr(LogisticRegressionCV(Cs=np.array([0.1, 1]), use_legacy_attributes=False))
 
 
-def test_pipeline(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_pipeline():
     # Render a pipeline object
     pipeline = make_pipeline(StandardScaler(), LogisticRegression(C=999))
     expected = """
@@ -295,18 +294,18 @@ Pipeline(memory=None,
                 ('logisticregression',
                  LogisticRegression(C=999, class_weight=None, dual=False,
                                     fit_intercept=True, intercept_scaling=1,
-                                    l1_ratio=None, max_iter=100,
+                                    l1_ratio=0, max_iter=100,
                                     multi_class='warn', n_jobs=None,
-                                    penalty='l2', random_state=None,
-                                    solver='warn', tol=0.0001, verbose=0,
-                                    warm_start=False))],
+                                    random_state=None, solver='warn',
+                                    tol=0.0001, verbose=0, warm_start=False))],
          transform_input=None, verbose=False)"""
 
     expected = expected[1:]  # remove first \n
     assert pipeline.__repr__() == expected
 
 
-def test_deeply_nested(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_deeply_nested():
     # Render a deeply nested estimator
     rfe = RFE(RFE(RFE(RFE(RFE(RFE(RFE(LogisticRegression())))))))
     expected = """
@@ -315,11 +314,10 @@ RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estima
                                                                                                                      dual=False,
                                                                                                                      fit_intercept=True,
                                                                                                                      intercept_scaling=1,
-                                                                                                                     l1_ratio=None,
+                                                                                                                     l1_ratio=0,
                                                                                                                      max_iter=100,
                                                                                                                      multi_class='warn',
                                                                                                                      n_jobs=None,
-                                                                                                                     penalty='l2',
                                                                                                                      random_state=None,
                                                                                                                      solver='warn',
                                                                                                                      tol=0.0001,
@@ -361,7 +359,8 @@ def test_print_estimator_max_depth(print_changed_only, expected):
         assert pp.pformat(rfe) == expected
 
 
-def test_gridsearch(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_gridsearch():
     # render a gridsearch
     param_grid = [
         {"kernel": ["rbf"], "gamma": [1e-3, 1e-4], "C": [1, 10, 100, 1000]},
@@ -387,7 +386,8 @@ GridSearchCV(cv=5, error_score='raise-deprecating',
     assert gs.__repr__() == expected
 
 
-def test_gridsearch_pipeline(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_gridsearch_pipeline():
     # render a pipeline inside a gridsearch
     pp = _EstimatorPrettyPrinter(compact=True, indent=1, indent_at_name=True)
 
@@ -406,7 +406,7 @@ def test_gridsearch_pipeline(print_changed_only_false):
             "classify__C": C_OPTIONS,
         },
     ]
-    gspipline = GridSearchCV(pipeline, cv=3, n_jobs=1, param_grid=param_grid)
+    gspipeline = GridSearchCV(pipeline, cv=3, n_jobs=1, param_grid=param_grid)
     expected = """
 GridSearchCV(cv=3, error_score='raise-deprecating',
              estimator=Pipeline(memory=None,
@@ -447,13 +447,14 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
              scoring=None, verbose=0)"""  # noqa: E501
 
     expected = expected[1:]  # remove first \n
-    repr_ = pp.pformat(gspipline)
+    repr_ = pp.pformat(gspipeline)
     # Remove address of '<function chi2 at 0x.....>' for reproducibility
     repr_ = re.sub("function chi2 at 0x.*>", "function chi2 at some_address>", repr_)
     assert repr_ == expected
 
 
-def test_n_max_elements_to_show(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_n_max_elements_to_show():
     n_max_elements_to_show = 30
     pp = _EstimatorPrettyPrinter(
         compact=True,
@@ -543,7 +544,8 @@ GridSearchCV(cv='warn', error_score='raise-deprecating',
     assert pp.pformat(gs) == expected
 
 
-def test_bruteforce_ellipsis(print_changed_only_false):
+@config_context(print_changed_only=False)
+def test_bruteforce_ellipsis():
     # Check that the bruteforce ellipsis (used when the number of non-blank
     # characters exceeds N_CHAR_MAX) renders correctly.
 
@@ -554,12 +556,11 @@ def test_bruteforce_ellipsis(print_changed_only_false):
     expected = """
 LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
                    in...
-                   multi_class='warn', n_jobs=None, penalty='l2',
-                   random_state=None, solver='warn', tol=0.0001, verbose=0,
-                   warm_start=False)"""
+                   multi_class='warn', n_jobs=None, random_state=None,
+                   solver='warn', tol=0.0001, verbose=0, warm_start=False)"""
 
     expected = expected[1:]  # remove first \n
-    assert expected == lr.__repr__(N_CHAR_MAX=150)
+    assert lr.__repr__(N_CHAR_MAX=150) == expected
 
     # test with very small N_CHAR_MAX
     # Note that N_CHAR_MAX is not strictly enforced, but it's normal: to avoid
@@ -567,10 +568,10 @@ LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
     # ellipsis).
     expected = """
 Lo...
-                   warm_start=False)"""
+                   solver='warn', tol=0.0001, verbose=0, warm_start=False)"""
 
     expected = expected[1:]  # remove first \n
-    assert expected == lr.__repr__(N_CHAR_MAX=4)
+    assert lr.__repr__(N_CHAR_MAX=4) == expected
 
     # test with N_CHAR_MAX == number of non-blank characters: In this case we
     # don't want ellipsis
@@ -584,12 +585,11 @@ Lo...
     # want to expend the whole line of the right side
     expected = """
 LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
-                   intercept_scaling=1, l1_ratio=None, max_i...
-                   multi_class='warn', n_jobs=None, penalty='l2',
-                   random_state=None, solver='warn', tol=0.0001, verbose=0,
-                   warm_start=False)"""
+                   intercept_scaling=1, l1_ratio=0,...00,
+                   multi_class='warn', n_jobs=None, random_state=None,
+                   solver='warn', tol=0.0001, verbose=0, warm_start=False)"""
     expected = expected[1:]  # remove first \n
-    assert expected == lr.__repr__(N_CHAR_MAX=n_nonblank - 10)
+    assert lr.__repr__(N_CHAR_MAX=n_nonblank - 10) == expected
 
     # test with N_CHAR_MAX == number of non-blank characters - 10: the left and
     # right side of the ellispsis are on the same line. In this case we don't
@@ -597,24 +597,22 @@ LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
     # between the 2 sides.
     expected = """
 LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
-                   intercept_scaling=1, l1_ratio=None, max_iter...,
-                   multi_class='warn', n_jobs=None, penalty='l2',
-                   random_state=None, solver='warn', tol=0.0001, verbose=0,
-                   warm_start=False)"""
+                   intercept_scaling=1, l1_ratio=0, max...r=100,
+                   multi_class='warn', n_jobs=None, random_state=None,
+                   solver='warn', tol=0.0001, verbose=0, warm_start=False)"""
     expected = expected[1:]  # remove first \n
-    assert expected == lr.__repr__(N_CHAR_MAX=n_nonblank - 4)
+    assert lr.__repr__(N_CHAR_MAX=n_nonblank - 4) == expected
 
     # test with N_CHAR_MAX == number of non-blank characters - 2: the left and
     # right side of the ellispsis are on the same line, but adding the ellipsis
     # would actually make the repr longer. So we don't add the ellipsis.
     expected = """
 LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
-                   intercept_scaling=1, l1_ratio=None, max_iter=100,
-                   multi_class='warn', n_jobs=None, penalty='l2',
-                   random_state=None, solver='warn', tol=0.0001, verbose=0,
-                   warm_start=False)"""
+                   intercept_scaling=1, l1_ratio=0, max_iter=100,
+                   multi_class='warn', n_jobs=None, random_state=None,
+                   solver='warn', tol=0.0001, verbose=0, warm_start=False)"""
     expected = expected[1:]  # remove first \n
-    assert expected == lr.__repr__(N_CHAR_MAX=n_nonblank - 2)
+    assert lr.__repr__(N_CHAR_MAX=n_nonblank - 2) == expected
 
 
 def test_builtin_prettyprinter():
@@ -654,11 +652,11 @@ def test_kwargs_in_init():
     est = WithKWargs(a="something", c="abcd", d=None)
 
     expected = "WithKWargs(a='something', c='abcd', d=None)"
-    assert expected == est.__repr__()
+    assert est.__repr__() == expected
 
     with config_context(print_changed_only=False):
         expected = "WithKWargs(a='something', b='unchanged', c='abcd', d=None)"
-        assert expected == est.__repr__()
+        assert est.__repr__() == expected
 
 
 def test_complexity_print_changed_only():

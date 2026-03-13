@@ -7,7 +7,7 @@ Kernel ridge regression
 .. currentmodule:: sklearn.kernel_ridge
 
 Kernel ridge regression (KRR) [M2012]_ combines :ref:`ridge_regression`
-(linear least squares with l2-norm regularization) with the `kernel trick
+(linear least squares with :math:`L_2`-norm regularization) with the `kernel trick
 <https://en.wikipedia.org/wiki/Kernel_method>`_. It thus learns a linear
 function in the space induced by the respective kernel and the data. For
 non-linear kernels, this corresponds to a non-linear function in the original
@@ -16,7 +16,7 @@ space.
 The form of the model learned by :class:`KernelRidge` is identical to support
 vector regression (:class:`~sklearn.svm.SVR`). However, different loss
 functions are used: KRR uses squared error loss while support vector
-regression uses :math:`\epsilon`-insensitive loss, both combined with l2
+regression uses :math:`\epsilon`-insensitive loss, both combined with :math:`L_2`
 regularization. In contrast to :class:`~sklearn.svm.SVR`, fitting
 :class:`KernelRidge` can be done in closed-form and is typically faster for
 medium-sized datasets. On the other hand, the learned model is non-sparse and
@@ -31,7 +31,7 @@ plotted, where both complexity/regularization and bandwidth of the RBF kernel
 have been optimized using grid-search. The learned functions are very
 similar; however, fitting :class:`KernelRidge` is approximately seven times
 faster than fitting :class:`~sklearn.svm.SVR` (both with grid-search).
-However, prediction of 100000 target values is more than three times faster
+However, prediction of 100,000 target values is more than three times faster
 with :class:`~sklearn.svm.SVR` since it has learned a sparse model using only
 approximately 1/3 of the 100 training datapoints as support vectors.
 

@@ -26,6 +26,7 @@ from cupy import (
     complex128,
 )
 
+
 class __array_namespace_info__:
     """
     Get the array API inspection namespace for CuPy.
@@ -49,7 +50,7 @@ class __array_namespace_info__:
 
     Examples
     --------
-    >>> info = np.__array_namespace_info__()
+    >>> info = xp.__array_namespace_info__()
     >>> info.default_dtypes()
     {'real floating': cupy.float64,
      'complex floating': cupy.complex128,
@@ -94,13 +95,13 @@ class __array_namespace_info__:
         >>> info = xp.__array_namespace_info__()
         >>> info.capabilities()
         {'boolean indexing': True,
-         'data-dependent shapes': True}
+         'data-dependent shapes': True,
+         'max dimensions': 64}
 
         """
         return {
             "boolean indexing": True,
             "data-dependent shapes": True,
-            # 'max rank' will be part of the 2024.12 standard
             "max dimensions": 64,
         }
 
@@ -117,7 +118,7 @@ class __array_namespace_info__:
 
         Returns
         -------
-        device : str
+        device : Device
             The default device used for new CuPy arrays.
 
         Examples
@@ -126,6 +127,15 @@ class __array_namespace_info__:
         >>> info.default_device()
         Device(0)
 
+        Notes
+        -----
+        This method returns the static default device when CuPy is initialized.
+        However, the *current* device used by creation functions (``empty`` etc.)
+        can be changed globally or with a context manager.
+
+        See Also
+        --------
+        https://github.com/data-apis/array-api/issues/835
         """
         return cuda.Device(0)
 
@@ -312,7 +322,7 @@ class __array_namespace_info__:
 
         Returns
         -------
-        devices : list of str
+        devices : list[Device]
             The devices supported by CuPy.
 
         See Also

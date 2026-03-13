@@ -1,0 +1,3 @@
+- ``sklearn.utils._response._get_response_values`` now provides a clearer error message
+  when estimator does not implement the given ``response_method``.
+  By :user:`Quentin Barthélemy <qbarthelemy>`.

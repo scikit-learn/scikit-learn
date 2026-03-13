@@ -15,7 +15,7 @@ from sklearn.base import (
 )
 from sklearn.metrics._scorer import _Scorer, mean_squared_error
 from sklearn.model_selection import BaseCrossValidator
-from sklearn.model_selection._split import GroupsConsumerMixin
+from sklearn.model_selection._split import GroupKFold, GroupsConsumerMixin
 from sklearn.utils._metadata_requests import (
     SIMPLE_METHODS,
 )
@@ -480,6 +480,11 @@ class ConsumingSplitter(GroupsConsumerMixin, BaseCrossValidator):
         yield train_indices
 
 
+class ConsumingSplitterInheritingFromGroupKFold(ConsumingSplitter, GroupKFold):
+    """Helper class that can be used to test TargetEncoder, that only takes specific
+    splitters."""
+
+
 class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
     """A meta-regressor which is only a router."""
 
@@ -491,7 +496,7 @@ class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
 
     def get_metadata_routing(self):
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             estimator=self.estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
@@ -520,7 +525,7 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
 
     def get_metadata_routing(self):
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
                 estimator=self.estimator,
@@ -550,7 +555,7 @@ class WeightedMetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator)
 
     def get_metadata_routing(self):
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
                 estimator=self.estimator,
@@ -576,7 +581,7 @@ class MetaTransformer(MetaEstimatorMixin, TransformerMixin, BaseEstimator):
         return self.transformer_.transform(X, **params.transformer.transform)
 
     def get_metadata_routing(self):
-        return MetadataRouter(owner=self.__class__.__name__).add(
+        return MetadataRouter(owner=self).add(
             transformer=self.transformer,
             method_mapping=MethodMapping()
             .add(caller="fit", callee="fit")

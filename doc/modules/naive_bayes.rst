@@ -220,12 +220,12 @@ It is advisable to evaluate both models, if time permits.
 
    * A. McCallum and K. Nigam (1998).
      `A comparison of event models for Naive Bayes text classification.
-     <https://citeseerx.ist.psu.edu/doc_view/pid/04ce064505b1635583fa0d9cc07cac7e9ea993cc>`_
+     <https://cdn.aaai.org/Workshops/1998/WS-98-05/WS98-05-007.pdf>`_
      Proc. AAAI/ICML-98 Workshop on Learning for Text Categorization, pp. 41-48.
 
    * V. Metsis, I. Androutsopoulos and G. Paliouras (2006).
      `Spam filtering with Naive Bayes -- Which Naive Bayes?
-     <https://citeseerx.ist.psu.edu/doc_view/pid/8bd0934b366b539ec95e683ae39f8abb29ccc757>`_
+     <https://www2.aueb.gr/users/ion/docs/ceas2006_paper.pdf>`_
      3rd Conf. on Email and Anti-Spam (CEAS).
 
 

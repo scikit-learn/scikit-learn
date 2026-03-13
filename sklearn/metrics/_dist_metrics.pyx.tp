@@ -21,9 +21,9 @@ cnp.import_array()  # required in order to use C-API
 from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 
 from scipy.sparse import csr_matrix, issparse
-from ..utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
-from ..utils import check_array
-from ..utils.fixes import parse_version, sp_base_version
+from sklearn.utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
+from sklearn.utils import check_array
+from sklearn.utils.fixes import parse_version, sp_base_version
 
 cdef inline double fmax(double a, double b) noexcept nogil:
     return max(a, b)
@@ -846,7 +846,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
 
             intp_t i1, i2
             intp_t x1_start, x1_end
-            {{INPUT_DTYPE_t}} * x2_data
+            const {{INPUT_DTYPE_t}} * x2_data
 
         with nogil:
             # Use the exact same adaptation for CSR than in SparseDenseDatasetsPair
@@ -910,7 +910,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
             {{INPUT_DTYPE_t}}[:, ::1] Darr = np.empty((n_X, n_Y), dtype={{INPUT_DTYPE}}, order='C')
 
             intp_t i1, i2
-            {{INPUT_DTYPE_t}} * x1_data
+            const {{INPUT_DTYPE_t}} * x1_data
 
             intp_t x2_start, x2_end
 

@@ -10,9 +10,14 @@ import numpy as np
 from numpy.lib.stride_tricks import as_strided
 from scipy import sparse
 
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils import check_array, check_random_state
-from ..utils._param_validation import Hidden, Interval, RealNotInt, validate_params
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.utils import _align_api_if_sparse, check_array, check_random_state
+from sklearn.utils._param_validation import (
+    Hidden,
+    Interval,
+    RealNotInt,
+    validate_params,
+)
 
 __all__ = [
     "PatchExtractor",
@@ -22,7 +27,7 @@ __all__ = [
     "reconstruct_from_patches_2d",
 ]
 
-from ..utils.validation import validate_data
+from sklearn.utils.validation import validate_data
 
 ###############################################################################
 # From an image to a graph
@@ -89,7 +94,7 @@ def _mask_edges_weights(mask, edges, weights=None):
 
 
 def _to_graph(
-    n_x, n_y, n_z, mask=None, img=None, return_as=sparse.coo_matrix, dtype=None
+    n_x, n_y, n_z, mask=None, img=None, return_as=sparse.coo_array, dtype=None
 ):
     """Auxiliary function for img_to_graph and grid_to_graph"""
     edges = _make_edges_3d(n_x, n_y, n_z)
@@ -122,7 +127,7 @@ def _to_graph(
     diag_idx = np.arange(n_voxels)
     i_idx = np.hstack((edges[0], edges[1]))
     j_idx = np.hstack((edges[1], edges[0]))
-    graph = sparse.coo_matrix(
+    graph = sparse.coo_array(
         (
             np.hstack((weights, weights, diag)),
             (np.hstack((i_idx, diag_idx)), np.hstack((j_idx, diag_idx))),
@@ -132,7 +137,7 @@ def _to_graph(
     )
     if return_as is np.ndarray:
         return graph.toarray()
-    return return_as(graph)
+    return _align_api_if_sparse(return_as(graph))
 
 
 @validate_params(
@@ -144,7 +149,7 @@ def _to_graph(
     },
     prefer_skip_nested_validation=True,
 )
-def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
+def img_to_graph(img, *, mask=None, return_as=sparse.coo_array, dtype=None):
     """Graph of the pixel-to-pixel gradient connections.
 
     Edges are weighted with the gradient values.
@@ -160,7 +165,7 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
         An optional mask of the image, to consider only part of the
         pixels.
     return_as : np.ndarray or a sparse matrix class, \
-            default=sparse.coo_matrix
+            default=sparse.coo_array
         The class to use to build the returned adjacency matrix.
     dtype : dtype, default=None
         The data of the returned sparse matrix. By default it is the
@@ -198,12 +203,12 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
     },
     prefer_skip_nested_validation=True,
 )
-def grid_to_graph(
-    n_x, n_y, n_z=1, *, mask=None, return_as=sparse.coo_matrix, dtype=int
-):
+def grid_to_graph(n_x, n_y, n_z=1, *, mask=None, return_as=sparse.coo_array, dtype=int):
     """Graph of the pixel-to-pixel connections.
 
     Edges exist if 2 voxels are connected.
+
+    Read more in the :ref:`User Guide <connectivity_graph_image>`.
 
     Parameters
     ----------
@@ -217,7 +222,7 @@ def grid_to_graph(
         An optional mask of the image, to consider only part of the
         pixels.
     return_as : np.ndarray or a sparse matrix class, \
-            default=sparse.coo_matrix
+            default=sparse.coo_array
         The class to use to build the returned adjacency matrix.
     dtype : dtype, default=int
         The data of the returned sparse matrix. By default it is int.

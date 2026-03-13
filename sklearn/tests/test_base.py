@@ -19,16 +19,15 @@ from sklearn.base import (
     clone,
     is_classifier,
     is_clusterer,
-    is_outlier_detector,
     is_regressor,
 )
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
-from sklearn.ensemble import IsolationForest
 from sklearn.exceptions import InconsistentVersionWarning
-from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import get_scorer
+from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._mocking import MockDataFrame
@@ -190,6 +189,10 @@ def test_clone_empty_array():
     clf2 = clone(clf)
     assert_array_equal(clf.empty.data, clf2.empty.data)
 
+    clf = MyEstimator(empty=sp.csr_array(np.array([[0]])))
+    clf2 = clone(clf)
+    assert_array_equal(clf.empty.data, clf2.empty.data)
+
 
 def test_clone_nan():
     # Regression test for cloning estimators with default parameter as np.nan
@@ -210,7 +213,8 @@ def test_clone_sparse_matrices():
     sparse_matrix_classes = [
         cls
         for name in dir(sp)
-        if name.endswith("_matrix") and type(cls := getattr(sp, name)) is type
+        if name.endswith("_matrix") or name.endswith("_array")
+        if type(cls := getattr(sp, name)) is type
     ]
 
     for cls in sparse_matrix_classes:
@@ -236,6 +240,23 @@ def test_clone_class_rather_than_instance():
     msg = "You should provide an instance of scikit-learn estimator"
     with pytest.raises(TypeError, match=msg):
         clone(MyEstimator)
+
+
+# TODO (1.11): remove svc test for predict_proba after it is deprecated
+def test_conditional_attrs_not_in_dir():
+    # Test that __dir__ includes only relevant attributes. #28558
+
+    encoder = LabelEncoder()
+    assert "set_output" not in dir(encoder)
+
+    scalar = StandardScaler()
+    assert "set_output" in dir(scalar)
+
+    svc = SVC(probability=False)
+    assert "predict_proba" not in dir(svc)
+
+    svc.probability = True
+    assert "predict_proba" in dir(svc)
 
 
 def test_repr():
@@ -266,21 +287,6 @@ def test_get_params():
 
     with pytest.raises(ValueError):
         test.set_params(a__a=2)
-
-
-# TODO(1.8): Remove this test when the deprecation is removed
-def test_is_estimator_type_class():
-    with pytest.warns(FutureWarning, match="passing a class to.*is deprecated"):
-        assert is_classifier(SVC)
-
-    with pytest.warns(FutureWarning, match="passing a class to.*is deprecated"):
-        assert is_regressor(SVR)
-
-    with pytest.warns(FutureWarning, match="passing a class to.*is deprecated"):
-        assert is_clusterer(KMeans)
-
-    with pytest.warns(FutureWarning, match="passing a class to.*is deprecated"):
-        assert is_outlier_detector(IsolationForest)
 
 
 @pytest.mark.parametrize(
@@ -393,6 +399,7 @@ def test_set_params_updates_valid_params():
     ],
 )
 def test_score_sample_weight(tree, dataset):
+    tree = clone(tree)  # avoid side effects from previous tests.
     rng = np.random.RandomState(0)
     # check that the score with and without sample weights are different
     X, y = dataset
@@ -559,6 +566,8 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
         pickle.loads(tree_pickle_noversion)
 
 
+# The test modifies global state by changing the TreeNoVersion class
+@pytest.mark.thread_unsafe
 def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
     iris = datasets.load_iris()
     tree = TreeNoVersion().fit(iris.data, iris.target)
@@ -757,7 +766,7 @@ def test_feature_names_in():
     with pytest.raises(ValueError, match=msg):
         trans.transform(df_bad)
 
-    # warns when fitted on dataframe and transforming a ndarray
+    # warns when fitted on dataframe and transforming an ndarray
     msg = (
         "X does not have valid feature names, but NoOpTransformer was "
         "fitted with feature names"
@@ -765,7 +774,7 @@ def test_feature_names_in():
     with pytest.warns(UserWarning, match=msg):
         trans.transform(X_np)
 
-    # warns when fitted on a ndarray and transforming dataframe
+    # warns when fitted on an ndarray and transforming dataframe
     msg = "X has feature names, but NoOpTransformer was fitted without feature names"
     trans = NoOpTransformer().fit(X_np)
     with pytest.warns(UserWarning, match=msg):
@@ -992,3 +1001,117 @@ def test_outlier_mixin_fit_predict_with_metadata_in_predict():
     with warnings.catch_warnings(record=True) as record:
         CustomOutlierDetector().set_predict_request(prop=True).fit_predict([[1]], [1])
         assert len(record) == 0
+
+
+def test_get_params_html():
+    """Check the behaviour of the `_get_params_html` method."""
+    est = MyEstimator(empty="test")
+
+    assert est._get_params_html() == {"l1": 0, "empty": "test"}
+    assert est._get_params_html().non_default == ("empty",)
+
+
+def test_get_fitted_attr_html():
+    """Check the behaviour of the `_get_fitted_attr_html` method."""
+    X = np.array([[-1, -1], [-2, -1], [-3, -2]])
+    pca = PCA().fit(X)
+    pca._not_a_fitted_attr = "x"
+
+    fitted_attr_html = pca._get_fitted_attr_html()
+    assert fitted_attr_html["n_features_in_"] == {"type_name": "int", "value": 2}
+    assert pca._not_a_fitted_attr not in fitted_attr_html
+    assert len(fitted_attr_html) == 9
+    assert fitted_attr_html["components_"]["type_name"] == ("ndarray")
+    assert fitted_attr_html["components_"]["shape"] == (2, 2)
+    assert_allclose(fitted_attr_html["components_"]["value"], pca.components_)
+
+
+def make_estimator_with_param(default_value):
+    class DynamicEstimator(BaseEstimator):
+        def __init__(self, param=default_value):
+            self.param = param
+
+    return DynamicEstimator
+
+
+@pytest.mark.parametrize(
+    "default_value, test_value",
+    [
+        ((), (1,)),
+        ((), [1]),
+        ((), np.array([1])),
+        ((1, 2), (3, 4)),
+        ((1, 2), [3, 4]),
+        ((1, 2), np.array([3, 4])),
+        (None, 1),
+        (None, []),
+        (None, lambda x: x),
+        (np.nan, 1.0),
+        (np.nan, np.array([np.nan])),
+        ("abc", "def"),
+        ("abc", ["abc"]),
+        (True, False),
+        (1, 2),
+        (1, [1]),
+        (1, np.array([1])),
+        (1.0, 2.0),
+        (1.0, [1.0]),
+        (1.0, np.array([1.0])),
+        ([1, 2], [3]),
+        (np.array([1]), [2, 3]),
+        (None, KFold()),
+        (None, get_scorer("accuracy")),
+    ],
+)
+def test_param_is_non_default(default_value, test_value):
+    """Check that we detect non-default parameters with various types.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/31525
+    """
+    estimator = make_estimator_with_param(default_value)(param=test_value)
+    non_default = estimator._get_params_html().non_default
+    assert "param" in non_default
+
+
+def test_param_is_non_default_when_pandas_NA():
+    """Check that we detect pandas.Na as non-default parameter.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/32312
+    """
+    pd = pytest.importorskip("pandas")
+
+    estimator = make_estimator_with_param(default_value=0)(param=pd.NA)
+    non_default = estimator._get_params_html().non_default
+    assert "param" in non_default
+
+
+@pytest.mark.parametrize(
+    "default_value, test_value",
+    [
+        (None, None),
+        ((), ()),
+        ((), []),
+        ((), np.array([])),
+        ((1, 2, 3), (1, 2, 3)),
+        ((1, 2, 3), [1, 2, 3]),
+        ((1, 2, 3), np.array([1, 2, 3])),
+        (np.nan, np.nan),
+        ("abc", "abc"),
+        (True, True),
+        (1, 1),
+        (1.0, 1.0),
+        (2, 2.0),
+    ],
+)
+def test_param_is_default(default_value, test_value):
+    """Check that we detect the default parameters and values in an array-like will
+    be reported as default as well.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/31525
+    """
+    estimator = make_estimator_with_param(default_value)(param=test_value)
+    non_default = estimator._get_params_html().non_default
+    assert "param" not in non_default

@@ -260,6 +260,7 @@ def test_iforest_warm_start():
     side_effect=Mock(**{"return_value": 3}),
 )
 @pytest.mark.parametrize("contamination, n_predict_calls", [(0.25, 3), ("auto", 2)])
+@pytest.mark.thread_unsafe  # monkeypatched code
 def test_iforest_chunks_works1(
     mocked_get_chunk, contamination, n_predict_calls, global_random_seed
 ):
@@ -273,6 +274,7 @@ def test_iforest_chunks_works1(
     side_effect=Mock(**{"return_value": 10}),
 )
 @pytest.mark.parametrize("contamination, n_predict_calls", [(0.25, 3), ("auto", 2)])
+@pytest.mark.thread_unsafe  # monkeypatched code
 def test_iforest_chunks_works2(
     mocked_get_chunk, contamination, n_predict_calls, global_random_seed
 ):

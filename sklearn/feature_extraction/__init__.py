@@ -3,10 +3,10 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from . import image, text
-from ._dict_vectorizer import DictVectorizer
-from ._hash import FeatureHasher
-from .image import grid_to_graph, img_to_graph
+from sklearn.feature_extraction import image, text
+from sklearn.feature_extraction._dict_vectorizer import DictVectorizer
+from sklearn.feature_extraction._hash import FeatureHasher
+from sklearn.feature_extraction.image import grid_to_graph, img_to_graph
 
 __all__ = [
     "DictVectorizer",

@@ -11,14 +11,20 @@ import numpy as np
 import scipy.optimize
 from scipy.linalg import cho_solve, cholesky, solve_triangular
 
-from ..base import BaseEstimator, MultiOutputMixin, RegressorMixin, _fit_context, clone
-from ..preprocessing._data import _handle_zeros_in_scale
-from ..utils import check_random_state
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.optimize import _check_optimize_result
-from ..utils.validation import validate_data
-from .kernels import RBF, Kernel
-from .kernels import ConstantKernel as C
+from sklearn.base import (
+    BaseEstimator,
+    MultiOutputMixin,
+    RegressorMixin,
+    _fit_context,
+    clone,
+)
+from sklearn.gaussian_process.kernels import RBF, Kernel
+from sklearn.gaussian_process.kernels import ConstantKernel as C
+from sklearn.preprocessing._data import _handle_zeros_in_scale
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.optimize import _check_optimize_result
+from sklearn.utils.validation import validate_data
 
 GPR_CHOLESKY_LOWER = True
 
@@ -49,11 +55,13 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     Parameters
     ----------
     kernel : kernel instance, default=None
-        The kernel specifying the covariance function of the GP. If None is
-        passed, the kernel ``ConstantKernel(1.0, constant_value_bounds="fixed")
-        * RBF(1.0, length_scale_bounds="fixed")`` is used as default. Note that
-        the kernel hyperparameters are optimized during fitting unless the
-        bounds are marked as "fixed".
+        The kernel specifying the covariance function of the GP.
+        If `None` is passed,
+        the kernel `ConstantKernel() * RBF()` is used as default.
+        Note that
+        the kernel hyperparameters are optimized during fitting
+        unless the bounds are marked as `"fixed"`
+        or the argument `optimizer` is set to `None`.
 
     alpha : float or ndarray of shape (n_samples,), default=1e-10
         Value added to the diagonal of the kernel matrix during fitting.
@@ -186,7 +194,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     >>> gpr.score(X, y)
     0.3680...
     >>> gpr.predict(X[:2,:], return_std=True)
-    (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
+    (array([653.0, 592.1]), array([316.6, 316.6]))
     """
 
     _parameter_constraints: dict = {
@@ -238,12 +246,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             GaussianProcessRegressor class instance.
         """
-        if self.kernel is None:  # Use an RBF kernel as default
-            self.kernel_ = C(1.0, constant_value_bounds="fixed") * RBF(
-                1.0, length_scale_bounds="fixed"
-            )
-        else:
-            self.kernel_ = clone(self.kernel)
+        self.kernel_ = C() * RBF() if self.kernel is None else clone(self.kernel)
 
         self._rng = check_random_state(self.random_state)
 
@@ -450,6 +453,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             if y_mean.ndim > 1 and y_mean.shape[1] == 1:
                 y_mean = np.squeeze(y_mean, axis=1)
 
+            if not return_cov and not return_std:
+                return y_mean
+
             # Alg 2.1, page 19, line 5 -> v = L \ K(X_test, X_train)^T
             V = solve_triangular(
                 self.L_, K_trans.T, lower=GPR_CHOLESKY_LOWER, check_finite=False
@@ -467,7 +473,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     y_cov = np.squeeze(y_cov, axis=2)
 
                 return y_mean, y_cov
-            elif return_std:
+            else:  # return_std
                 # Compute variance of predictive distribution
                 # Use einsum to avoid explicitly forming the large matrix
                 # V^T @ V just to extract its diagonal afterward.
@@ -492,8 +498,6 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     y_var = np.squeeze(y_var, axis=1)
 
                 return y_mean, np.sqrt(y_var)
-            else:
-                return y_mean
 
     def sample_y(self, X, n_samples=1, random_state=0):
         """Draw samples from Gaussian process and evaluate at X.

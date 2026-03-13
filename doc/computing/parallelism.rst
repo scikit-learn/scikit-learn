@@ -36,6 +36,15 @@ When the underlying implementation uses joblib, the number of workers
 
 .. note::
 
+    **Startup Overhead**
+
+    When using ``n_jobs > 1`` (or ``n_jobs=-1``), you may observe a delay
+    the first time a parallel function is called. This is expected behavior
+    caused by the overhead of starting the Python worker processes.
+    Subsequent calls will be faster as they reuse the existing pool of workers.   
+
+.. note::
+
     Where (and how) parallelization happens in the estimators using joblib by
     specifying `n_jobs` is currently poorly documented.
     Please help us by improving our docs and tackle `issue 14228
@@ -73,6 +82,8 @@ many factors. It is usually a good idea to experiment rather than assuming
 that increasing the number of workers is always a good thing. In some cases
 it can be highly detrimental to performance to run multiple copies of some
 estimators or functions in parallel (see :ref:`oversubscription<oversubscription>` below).
+
+.. _lower-level-parallelism-with-openmp:
 
 Lower-level parallelism with OpenMP
 ...................................

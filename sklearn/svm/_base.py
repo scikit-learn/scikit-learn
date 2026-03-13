@@ -8,15 +8,31 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, ClassifierMixin, _fit_context
-from ..exceptions import ConvergenceWarning, NotFittedError
-from ..preprocessing import LabelEncoder
-from ..utils import check_array, check_random_state, column_or_1d, compute_class_weight
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import safe_sparse_dot
-from ..utils.metaestimators import available_if
-from ..utils.multiclass import _ovr_decision_function, check_classification_targets
-from ..utils.validation import (
+from sklearn.base import BaseEstimator, ClassifierMixin, _fit_context
+from sklearn.exceptions import ConvergenceWarning, NotFittedError
+from sklearn.preprocessing import LabelEncoder
+from sklearn.svm import _liblinear as liblinear  # type: ignore[attr-defined]
+
+# mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
+# (and same for other imports)
+from sklearn.svm import _libsvm as libsvm  # type: ignore[attr-defined]
+from sklearn.svm import _libsvm_sparse as libsvm_sparse  # type: ignore[attr-defined]
+from sklearn.utils import (
+    check_array,
+    check_random_state,
+    column_or_1d,
+    compute_class_weight,
+)
+from sklearn.utils._param_validation import Hidden, Interval, StrOptions
+from sklearn.utils._sparse import _align_api_if_sparse
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.fixes import SCIPY_VERSION_BELOW_1_12
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import (
+    _ovr_decision_function,
+    check_classification_targets,
+)
+from sklearn.utils.validation import (
     _check_large_sparse,
     _check_sample_weight,
     _num_samples,
@@ -24,12 +40,6 @@ from ..utils.validation import (
     check_is_fitted,
     validate_data,
 )
-from . import _liblinear as liblinear  # type: ignore[attr-defined]
-
-# mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
-# (and same for other imports)
-from . import _libsvm as libsvm  # type: ignore[attr-defined]
-from . import _libsvm_sparse as libsvm_sparse  # type: ignore[attr-defined]
 
 LIBSVM_IMPL = ["c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr"]
 
@@ -56,10 +66,16 @@ def _one_vs_one_coef(dual_coef, n_support, support_vectors):
             # SVs for class1:
             sv2 = support_vectors[sv_locs[class2] : sv_locs[class2 + 1], :]
 
-            # dual coef for class1 SVs:
-            alpha1 = dual_coef[class2 - 1, sv_locs[class1] : sv_locs[class1 + 1]]
-            # dual coef for class2 SVs:
-            alpha2 = dual_coef[class1, sv_locs[class2] : sv_locs[class2 + 1]]
+            if SCIPY_VERSION_BELOW_1_12:
+                # dual coef for class1 SVs:
+                alpha1 = dual_coef[[class2 - 1], sv_locs[class1] : sv_locs[class1 + 1]]
+                # dual coef for class2 SVs:
+                alpha2 = dual_coef[[class1], sv_locs[class2] : sv_locs[class2 + 1]]
+            else:
+                # dual coef for class1 SVs:
+                alpha1 = dual_coef[class2 - 1, sv_locs[class1] : sv_locs[class1 + 1]]
+                # dual coef for class2 SVs:
+                alpha2 = dual_coef[class1, sv_locs[class2] : sv_locs[class2 + 1]]
             # build weight for class1 vs class2
 
             coef.append(safe_sparse_dot(alpha1, sv1) + safe_sparse_dot(alpha2, sv2))
@@ -90,7 +106,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         "nu": [Interval(Real, 0.0, 1.0, closed="right")],
         "epsilon": [Interval(Real, 0.0, None, closed="left")],
         "shrinking": ["boolean"],
-        "probability": ["boolean"],
+        "probability": ["boolean", Hidden(StrOptions({"deprecated"}))],
         "cache_size": [Interval(Real, 0, None, closed="neither")],
         "class_weight": [StrOptions({"balanced"}), dict, None],
         "verbose": ["verbose"],
@@ -179,7 +195,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         Notes
         -----
         If X and y are not C-ordered and contiguous arrays of np.float64 and
-        X is not a scipy.sparse.csr_matrix, X and/or y may be copied.
+        X is not a sparse CSR format, X and/or y may be copied.
 
         If X is a dense array, then the other methods will not support sparse
         matrices as input.
@@ -210,6 +226,24 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             [] if sample_weight is None else sample_weight, dtype=np.float64
         )
         solver_type = LIBSVM_IMPL.index(self._impl)
+
+        # TODO(1.11): remove probability
+        self._effective_probability = self.probability
+        if self._impl in ["c_svc", "nu_svc"]:
+            if self._impl == "nu_scv":
+                est_dep = "NuSVC"
+            else:
+                est_dep = "SVC"
+            if self.probability != "deprecated":
+                warnings.warn(
+                    f"The `probability` parameter was deprecated in 1.9 and "
+                    f"will be removed in version 1.11. "
+                    f"Use `CalibratedClassifierCV({est_dep}(), ensemble=False)` "
+                    f"instead of `{est_dep}(probability=True)`",
+                    FutureWarning,
+                )
+            else:
+                self._effective_probability = False
 
         # input validation
         n_samples = _num_samples(X)
@@ -342,7 +376,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             kernel=kernel,
             C=self.C,
             nu=self.nu,
-            probability=self.probability,
+            probability=self._effective_probability,
             degree=self.degree,
             shrinking=self.shrinking,
             tol=self.tol,
@@ -393,7 +427,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.cache_size,
             self.epsilon,
             int(self.shrinking),
-            int(self.probability),
+            int(self._effective_probability),
             self.max_iter,
             random_seed,
         )
@@ -408,19 +442,22 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         dual_coef_indices = np.tile(np.arange(n_SV), n_class)
         if not n_SV:
-            self.dual_coef_ = sp.csr_matrix([])
+            self.dual_coef_ = _align_api_if_sparse(sp.csr_array([[]]))
         else:
             dual_coef_indptr = np.arange(
                 0, dual_coef_indices.size + 1, dual_coef_indices.size / n_class
             )
-            self.dual_coef_ = sp.csr_matrix(
-                (dual_coef_data, dual_coef_indices, dual_coef_indptr), (n_class, n_SV)
+            self.dual_coef_ = _align_api_if_sparse(
+                sp.csr_array(
+                    (dual_coef_data, dual_coef_indices, dual_coef_indptr),
+                    (n_class, n_SV),
+                )
             )
 
     def predict(self, X):
         """Perform regression on samples in X.
 
-        For an one-class model, +1 (inlier) or -1 (outlier) is returned.
+        For a one-class model, +1 (inlier) or -1 (outlier) is returned.
 
         Parameters
         ----------
@@ -472,7 +509,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         )
 
     def _sparse_predict(self, X):
-        # Precondition: X is a csr_matrix of dtype np.float64.
+        # Precondition: X is CSR sparse of dtype np.float64.
         kernel = self.kernel
         if callable(kernel):
             kernel = "precomputed"
@@ -501,7 +538,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.nu,
             self.epsilon,
             self.shrinking,
-            self.probability,
+            self._effective_probability,
             self._n_support,
             self._probA,
             self._probB,
@@ -601,7 +638,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.nu,
             self.epsilon,
             self.shrinking,
-            self.probability,
+            self._effective_probability,
             self._n_support,
             self._probA,
             self._probB,
@@ -621,9 +658,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 reset=False,
             )
 
-        if self._sparse and not sp.issparse(X):
-            X = sp.csr_matrix(X)
         if self._sparse:
+            if not sp.issparse(X):
+                X = _align_api_if_sparse(sp.csr_array(X))
             X.sort_indices()
 
         if sp.issparse(X) and not self._sparse and not callable(self.kernel):
@@ -792,7 +829,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     def predict(self, X):
         """Perform classification on samples in X.
 
-        For an one-class model, +1 or -1 is returned.
+        For a one-class model, +1 or -1 is returned.
 
         Parameters
         ----------
@@ -827,7 +864,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     # probabilities are not available depending on a setting, introduce two
     # estimators.
     def _check_proba(self):
-        if not self.probability:
+        if self.probability == "deprecated" or not self.probability:
             raise AttributeError(
                 "predict_proba is not available when probability=False"
             )
@@ -958,7 +995,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             self.nu,
             self.epsilon,
             self.shrinking,
-            self.probability,
+            self._effective_probability,
             self._n_support,
             self._probA,
             self._probB,
@@ -1149,7 +1186,7 @@ def _fit_liblinear(
     multi_class : {'ovr', 'crammer_singer'}, default='ovr'
         `ovr` trains n_classes one-vs-rest classifiers, while `crammer_singer`
         optimizes a joint objective over all classes.
-        While `crammer_singer` is interesting from an theoretical perspective
+        While `crammer_singer` is interesting from a theoretical perspective
         as it is consistent it is seldom used in practice and rarely leads to
         better accuracy and is more expensive to compute.
         If `crammer_singer` is chosen, the options loss, penalty and dual will
