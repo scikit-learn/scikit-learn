@@ -367,6 +367,33 @@ def test_minibatch_kmeans_partial_fit_adaptive_lr(array_constr):
     )
 
 
+@pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)
+def test_minibatch_kmeans_fit_adaptive_lr(array_constr):
+    X = array_constr([[0.0, 0.0], [0.0, 1.0], [10.0, 10.0], [10.0, 11.0]])
+    sample_weight = np.ones(4)
+    init_centers = np.array([[0.0, 0.0], [10.0, 10.0]])
+    expected_final_centers = np.array([[0.0, 0.5], [10.0, 10.5]])
+    initial_inertia = _labels_inertia(X, sample_weight, init_centers)[1]
+    initial_dist_to_expected = np.linalg.norm(init_centers - expected_final_centers)
+
+    km = MiniBatchKMeans(
+        n_clusters=2,
+        init=init_centers,
+        n_init=1,
+        batch_size=X.shape[0],
+        max_iter=20,
+        tol=0,
+        max_no_improvement=None,
+        random_state=0,
+        reassignment_ratio=0,
+        adaptive_lr=True,
+    ).fit(X)
+    centers = km.cluster_centers_[np.argsort(km.cluster_centers_[:, 0])]
+
+    assert km.inertia_ < initial_inertia
+    assert np.linalg.norm(centers - expected_final_centers) < initial_dist_to_expected
+
+
 @pytest.mark.parametrize(
     "init, expected_n_init",
     [
