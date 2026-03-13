@@ -1452,7 +1452,6 @@ class KMeans(_BaseKMeans):
             The weights for each observation in X. If None, all observations
             are assigned equal weight. `sample_weight` is not used during
             initialization if `init` is a callable or a user provided array.
-            When ``adaptive_lr=True``, `sample_weight` must be non-negative.
 
             .. versionadded:: 0.20
 
