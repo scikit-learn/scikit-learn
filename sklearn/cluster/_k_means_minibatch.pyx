@@ -181,8 +181,9 @@ def _minibatch_update_sparse(
         int *indices
 
     if adaptive_lr:
-        for sample_idx in range(n_samples):
-            wsum_batch += sample_weight[sample_idx]
+        with nogil:
+            for sample_idx in range(n_samples):
+                wsum_batch += sample_weight[sample_idx]
     with nogil, parallel(num_threads=n_threads):
         indices = <int*> malloc(n_samples * sizeof(int))
 
