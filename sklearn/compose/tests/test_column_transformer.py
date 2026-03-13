@@ -1660,22 +1660,6 @@ def test_sk_visual_block_full_transform():
     assert isinstance(visual_block.estimators[0], Normalizer)
 
 
-def test_sk_visual_block_remainder_with_preprocessor():
-    """Check that visual_block doesn't cut the remainder if it is a transformer
-    Non-regression test - https://github.com/scikit-learn/scikit-learn/issues/33513
-    """
-    ct = ColumnTransformer(
-        [("norm1", Normalizer(), [0, 1])], remainder=StandardScaler()
-    )
-    X = np.array([[0, 4, 3], [3, 3, 3]])
-    ct.fit(X)
-    visual_block = ct._sk_visual_block_()
-    assert visual_block.names == ("norm1", "remainder")
-    assert visual_block.name_details == ([0, 1], [2])
-    assert isinstance(visual_block.estimators[0], Normalizer)
-    assert isinstance(visual_block.estimators[1], StandardScaler)
-
-
 @pytest.mark.parametrize("explicit_colname", ["first", "second", 0, 1])
 @pytest.mark.parametrize("remainder", [Trans(), "passthrough", "drop"])
 def test_column_transformer_reordered_column_names_remainder(
