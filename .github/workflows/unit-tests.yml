@@ -480,7 +480,7 @@ jobs:
   all-tests:
     name: all-tests
     runs-on: ubuntu-latest
-    if: always() && github.repository == 'scikit-learn/scikit-learn'
+    if: always()
     needs: [lint, unit-tests, free-threaded, scipy-dev, debian-32bit]
     steps:
       - name: Check all job statuses
