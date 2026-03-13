@@ -40,6 +40,14 @@ from sklearn.cluster._k_means_minibatch import (
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics.pairwise import _euclidean_distances, euclidean_distances
 from sklearn.utils import check_array, check_random_state
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    _is_numpy_namespace,
+    get_namespace,
+)
+from sklearn.utils._array_api import (
+    device as _device_func,
+)
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.extmath import row_norms
@@ -758,6 +766,224 @@ def _kmeans_single_lloyd(
     return labels, inertia, centers, i + 1
 
 
+###############################################################################
+# Array API support: pure-Python Lloyd implementation for GPU / non-numpy arrays
+# Inspired by Flash KMeans (arXiv:2603.09229) Sort-Inverse Update
+
+
+def _tolerance_array_api(X, tol, xp):
+    """Return a tolerance which is dependent on the dataset (Array API path)."""
+    if tol == 0:
+        return 0
+    variances = xp.var(X, axis=0)
+    return float(xp.mean(variances)) * tol
+
+
+def _update_centers_sort_based(X, labels, centers, n_clusters, sample_weight, xp):
+    """Centroid update via sort-based segmented aggregation (Array API).
+
+    This implements the Sort-Inverse Update idea from Flash KMeans: sort
+    samples by cluster label, detect segment boundaries, and compute per-segment
+    weighted means.  This avoids materialising an N x K mask and works entirely
+    with Array API standard operations.
+
+    Parameters
+    ----------
+    X : array of shape (n_samples, n_features)
+    labels : array of shape (n_samples,), integer cluster ids
+    centers : array of shape (n_clusters, n_features), current centers
+    n_clusters : int
+    sample_weight : array of shape (n_samples,)
+    xp : array namespace
+
+    Returns
+    -------
+    centers_new : array of shape (n_clusters, n_features)
+    weight_in_clusters : array of shape (n_clusters,)
+    """
+    device_ = _device_func(X)
+    n_samples, _n_features = X.shape
+
+    sorted_idx = xp.argsort(labels)
+    sorted_labels = xp.take(labels, sorted_idx)
+    sorted_X = xp.take(X, sorted_idx, axis=0)
+    sorted_weights = xp.take(sample_weight, sorted_idx)
+
+    # Detect segment boundaries where label changes
+    if n_samples == 0:
+        return xp.zeros_like(centers), xp.zeros(
+            n_clusters, dtype=X.dtype, device=device_
+        )
+
+    changes = sorted_labels[1:] != sorted_labels[:-1]
+    boundary_flags = xp.concat(
+        [
+            xp.asarray([True], dtype=changes.dtype, device=device_),
+            changes,
+            xp.asarray([True], dtype=changes.dtype, device=device_),
+        ]
+    )
+    boundaries = xp.nonzero(boundary_flags)[0]
+
+    centers_new = xp.zeros_like(centers)
+    weight_in_clusters = xp.zeros(n_clusters, dtype=X.dtype, device=device_)
+
+    for seg in range(int(boundaries.shape[0]) - 1):
+        start = int(boundaries[seg])
+        end = int(boundaries[seg + 1])
+        k = int(sorted_labels[start])
+        seg_weights = sorted_weights[start:end]
+        total_w = xp.sum(seg_weights)
+        # Weighted mean for this segment
+        seg_X = sorted_X[start:end, :]
+        weighted_X = seg_X * seg_weights[:, None]
+        centers_new_k = xp.sum(weighted_X, axis=0) / total_w
+        # Assign to the correct cluster index
+        centers_new[k, :] = centers_new_k
+        weight_in_clusters[k] = total_w
+
+    # Empty clusters retain the old centroid
+    empty_mask = weight_in_clusters == 0
+    if xp.any(empty_mask):
+        empty_mask_2d = empty_mask[:, None]
+        centers_new = xp.where(
+            xp.broadcast_to(empty_mask_2d, centers_new.shape), centers, centers_new
+        )
+
+    return centers_new, weight_in_clusters
+
+
+def _kmeans_single_lloyd_array_api(
+    X,
+    sample_weight,
+    centers_init,
+    max_iter=300,
+    verbose=False,
+    tol=1e-4,
+    xp=None,
+):
+    """A single run of k-means Lloyd using Array API operations.
+
+    Pure-Python implementation that works on any Array API compatible array
+    (e.g. CuPy, PyTorch tensors).
+
+    Parameters
+    ----------
+    X : array of shape (n_samples, n_features)
+    sample_weight : array of shape (n_samples,)
+    centers_init : array of shape (n_clusters, n_features)
+    max_iter : int
+    verbose : bool
+    tol : float
+    xp : array namespace
+
+    Returns
+    -------
+    labels : array of shape (n_samples,)
+    inertia : float
+    centers : array of shape (n_clusters, n_features)
+    n_iter : int
+    """
+    xp, _ = get_namespace(X, xp=xp)
+    n_clusters = centers_init.shape[0]
+    n_samples = X.shape[0]
+
+    centers = xp.asarray(centers_init, copy=True)
+    x_squared_norms = xp.sum(X**2, axis=1)
+
+    for i in range(max_iter):
+        # E-step: assign labels via expanded distance formula
+        # ||x - c||^2 = ||x||^2 + ||c||^2 - 2 * x @ c^T
+        c_squared_norms = xp.sum(centers**2, axis=1)
+        distances = (
+            x_squared_norms[:, None] + c_squared_norms[None, :] - 2.0 * (X @ centers.T)
+        )
+        # Clamp small negative values from floating-point error
+        distances = xp.where(
+            distances < 0,
+            xp.asarray(0.0, dtype=distances.dtype, device=_device_func(distances)),
+            distances,
+        )
+        labels = xp.argmin(distances, axis=1)
+
+        # M-step: update centers using sort-based segmented aggregation
+        centers_new, _weight_in_clusters = _update_centers_sort_based(
+            X, labels, centers, n_clusters, sample_weight, xp
+        )
+
+        # Convergence check: total squared shift of centers
+        center_shift = xp.sum((centers_new - centers) ** 2, axis=1)
+        center_shift_tot = float(xp.sum(center_shift))
+
+        if verbose:
+            # Compute inertia for verbose output
+            min_distances = xp.min(distances, axis=1)
+            inertia_val = float(xp.sum(sample_weight * min_distances))
+            print(f"Iteration {i}, inertia {inertia_val}.")
+
+        centers = centers_new
+
+        if center_shift_tot <= tol:
+            if verbose:
+                print(
+                    f"Converged at iteration {i}: center shift "
+                    f"{center_shift_tot} within tolerance {tol}."
+                )
+            break
+
+    # Final labels and inertia
+    c_squared_norms = xp.sum(centers**2, axis=1)
+    distances = (
+        x_squared_norms[:, None] + c_squared_norms[None, :] - 2.0 * (X @ centers.T)
+    )
+    distances = xp.where(
+        distances < 0,
+        xp.asarray(0.0, dtype=distances.dtype, device=_device_func(distances)),
+        distances,
+    )
+    labels = xp.argmin(distances, axis=1)
+    min_distances = xp.min(distances, axis=1)
+    inertia = float(xp.sum(sample_weight * min_distances))
+
+    return labels, inertia, centers, i + 1
+
+
+def _labels_inertia_array_api(X, sample_weight, centers, xp, return_inertia=True):
+    """E step of the K-means EM algorithm (Array API path).
+
+    Parameters
+    ----------
+    X : array of shape (n_samples, n_features)
+    sample_weight : array of shape (n_samples,)
+    centers : array of shape (n_clusters, n_features)
+    xp : array namespace
+    return_inertia : bool
+
+    Returns
+    -------
+    labels : array of shape (n_samples,)
+    inertia : float (only if return_inertia is True)
+    """
+    x_squared_norms = xp.sum(X**2, axis=1)
+    c_squared_norms = xp.sum(centers**2, axis=1)
+    distances = (
+        x_squared_norms[:, None] + c_squared_norms[None, :] - 2.0 * (X @ centers.T)
+    )
+    distances = xp.where(
+        distances < 0,
+        xp.asarray(0.0, dtype=distances.dtype, device=_device_func(distances)),
+        distances,
+    )
+    labels = xp.argmin(distances, axis=1)
+
+    if return_inertia:
+        min_distances = xp.min(distances, axis=1)
+        inertia = float(xp.sum(sample_weight * min_distances))
+        return labels, inertia
+
+    return labels
+
+
 def _labels_inertia(X, sample_weight, centers, n_threads=1, return_inertia=True):
     """E step of the K-means EM algorithm.
 
@@ -871,7 +1097,7 @@ class _BaseKMeans(
         self.verbose = verbose
         self.random_state = random_state
 
-    def _check_params_vs_input(self, X, default_n_init=None):
+    def _check_params_vs_input(self, X, default_n_init=None, is_array_api=False):
         # n_clusters
         if X.shape[0] < self.n_clusters:
             raise ValueError(
@@ -879,7 +1105,11 @@ class _BaseKMeans(
             )
 
         # tol
-        self._tol = _tolerance(X, self.tol)
+        if is_array_api:
+            xp, _ = get_namespace(X)
+            self._tol = _tolerance_array_api(X, self.tol, xp)
+        else:
+            self._tol = _tolerance(X, self.tol)
 
         # n-init
         if self.n_init == "auto":
@@ -950,15 +1180,24 @@ class _BaseKMeans(
             )
 
     def _check_test_data(self, X):
-        X = validate_data(
-            self,
-            X,
-            accept_sparse="csr",
-            reset=False,
-            dtype=[np.float64, np.float32],
-            order="C",
-            accept_large_sparse=False,
-        )
+        xp, is_array_api = get_namespace(X)
+        if is_array_api and not _is_numpy_namespace(xp):
+            X = validate_data(
+                self,
+                X,
+                reset=False,
+                dtype=[xp.float64, xp.float32],
+            )
+        else:
+            X = validate_data(
+                self,
+                X,
+                accept_sparse="csr",
+                reset=False,
+                dtype=[np.float64, np.float32],
+                order="C",
+                accept_large_sparse=False,
+            )
         return X
 
     def _init_centroids(
@@ -1092,6 +1331,18 @@ class _BaseKMeans(
         check_is_fitted(self)
 
         X = self._check_test_data(X)
+        xp, is_array_api = get_namespace(X)
+
+        if is_array_api and not _is_numpy_namespace(xp):
+            sample_weight = xp.ones(X.shape[0], dtype=X.dtype, device=_device_func(X))
+            labels = _labels_inertia_array_api(
+                X,
+                sample_weight,
+                self.cluster_centers_,
+                xp=xp,
+                return_inertia=False,
+            )
+            return labels
 
         # sample weights are not used by predict but cython helpers expect an array
         sample_weight = np.ones(X.shape[0], dtype=X.dtype)
@@ -1154,6 +1405,18 @@ class _BaseKMeans(
 
     def _transform(self, X):
         """Guts of transform method; no input validation."""
+        xp, is_array_api = get_namespace(X)
+        if is_array_api and not _is_numpy_namespace(xp):
+            # Compute euclidean distances via expanded formula
+            x_sq = xp.sum(X**2, axis=1)
+            c_sq = xp.sum(self.cluster_centers_**2, axis=1)
+            dist_sq = (
+                x_sq[:, None] + c_sq[None, :] - 2.0 * (X @ self.cluster_centers_.T)
+            )
+            # Clamp and sqrt
+            zero = xp.asarray(0.0, dtype=dist_sq.dtype, device=_device_func(dist_sq))
+            dist_sq = xp.where(dist_sq < 0, zero, dist_sq)
+            return xp.sqrt(dist_sq)
         return euclidean_distances(X, self.cluster_centers_)
 
     def score(self, X, y=None, sample_weight=None):
@@ -1180,6 +1443,13 @@ class _BaseKMeans(
 
         X = self._check_test_data(X)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        xp, is_array_api = get_namespace(X)
+
+        if is_array_api and not _is_numpy_namespace(xp):
+            _, scores = _labels_inertia_array_api(
+                X, sample_weight, self.cluster_centers_, xp=xp
+            )
+            return -scores
 
         _, scores = _labels_inertia_threadpool_limit(
             X, sample_weight, self.cluster_centers_, self._n_threads
@@ -1409,8 +1679,8 @@ class KMeans(_BaseKMeans):
         self.copy_x = copy_x
         self.algorithm = algorithm
 
-    def _check_params_vs_input(self, X):
-        super()._check_params_vs_input(X, default_n_init=10)
+    def _check_params_vs_input(self, X, is_array_api=False):
+        super()._check_params_vs_input(X, default_n_init=10, is_array_api=is_array_api)
 
         self._algorithm = self.algorithm
         if self._algorithm == "elkan" and self.n_clusters == 1:
@@ -1422,6 +1692,12 @@ class KMeans(_BaseKMeans):
                 RuntimeWarning,
             )
             self._algorithm = "lloyd"
+
+        if is_array_api and self._algorithm == "elkan":
+            raise NotImplementedError(
+                "algorithm='elkan' is not supported when array_api_dispatch "
+                "is enabled. Use algorithm='lloyd' instead."
+            )
 
     def _warn_mkl_vcomp(self, n_active_threads):
         """Warn when vcomp and mkl are both present"""
@@ -1460,6 +1736,11 @@ class KMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
+        xp, is_array_api = get_namespace(X)
+
+        if is_array_api and not _is_numpy_namespace(xp):
+            return self._fit_array_api(X, sample_weight, xp)
+
         X = validate_data(
             self,
             X,
@@ -1561,6 +1842,139 @@ class KMeans(_BaseKMeans):
         self.inertia_ = best_inertia
         self.n_iter_ = best_n_iter
         return self
+
+    def _fit_array_api(self, X, sample_weight, xp):
+        """Fit using pure-Python Array API path for non-numpy arrays.
+
+        This method handles GPU arrays (CuPy, PyTorch) and other Array API
+        compatible inputs.
+        """
+        device_ = _device_func(X)
+
+        X = validate_data(
+            self,
+            X,
+            dtype=[xp.float64, xp.float32],
+        )
+
+        self._check_params_vs_input(X, is_array_api=True)
+
+        random_state = check_random_state(self.random_state)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        self._n_threads = 1  # not used in Array API path
+
+        # Validate init array
+        init = self.init
+        init_is_array_like = _is_arraylike_not_scalar(init)
+        if init_is_array_like:
+            init = xp.asarray(init, dtype=X.dtype, device=device_)
+            self._validate_center_shape(X, init)
+
+        # subtract mean for more accurate distance computations
+        X_mean = xp.mean(X, axis=0)
+        X = X - X_mean
+
+        if init_is_array_like:
+            init = init - X_mean
+
+        best_inertia, best_labels = None, None
+
+        for i in range(self._n_init):
+            # Initialize centers
+            centers_init = self._init_centroids_array_api(
+                X, init, random_state, sample_weight, xp, device_
+            )
+            if self.verbose:
+                print("Initialization complete")
+
+            # run a k-means once
+            labels, inertia, centers, n_iter_ = _kmeans_single_lloyd_array_api(
+                X,
+                sample_weight,
+                centers_init,
+                max_iter=self.max_iter,
+                verbose=self.verbose,
+                tol=self._tol,
+                xp=xp,
+            )
+
+            # determine if these results are the best so far
+            if best_inertia is None or inertia < best_inertia:
+                best_labels = labels
+                best_centers = centers
+                best_inertia = inertia
+                best_n_iter = n_iter_
+
+        best_centers = best_centers + X_mean
+
+        self.cluster_centers_ = best_centers
+        self._n_features_out = self.cluster_centers_.shape[0]
+        self.labels_ = best_labels
+        self.inertia_ = best_inertia
+        self.n_iter_ = best_n_iter
+        return self
+
+    def _init_centroids_array_api(
+        self, X, init, random_state, sample_weight, xp, device_
+    ):
+        """Compute initial centroids using Array API operations.
+
+        Parameters
+        ----------
+        X : array of shape (n_samples, n_features)
+        init : str or array
+        random_state : RandomState
+        sample_weight : array of shape (n_samples,)
+        xp : array namespace
+        device_ : device
+
+        Returns
+        -------
+        centers : array of shape (n_clusters, n_features)
+        """
+        n_samples = X.shape[0]
+        n_clusters = self.n_clusters
+
+        if isinstance(init, str) and init == "random":
+            # CPU-side random sampling, then transfer to device
+            sw_np = _convert_to_numpy(sample_weight, xp=xp)
+            seeds = random_state.choice(
+                n_samples,
+                size=n_clusters,
+                replace=False,
+                p=sw_np / sw_np.sum(),
+            )
+            # Use integer index array; Array API requires explicit ellipsis
+            # for multi-dimensional fancy indexing. We index rows directly.
+            centers = xp.stack([X[int(s), :] for s in seeds])
+        elif isinstance(init, str) and init == "k-means++":
+            # Fall back to CPU-based k-means++ and transfer result to device
+            X_np = _convert_to_numpy(X, xp=xp)
+            sw_np = _convert_to_numpy(sample_weight, xp=xp)
+            x_squared_norms_np = np.sum(X_np**2, axis=1)
+            centers_np, _ = _kmeans_plusplus(
+                X_np,
+                n_clusters,
+                random_state=random_state,
+                x_squared_norms=x_squared_norms_np,
+                sample_weight=sw_np,
+            )
+            centers = xp.asarray(centers_np, dtype=X.dtype, device=device_)
+        elif _is_arraylike_not_scalar(self.init):
+            centers = xp.asarray(init, copy=True)
+        elif callable(init):
+            centers = init(X, n_clusters, random_state=random_state)
+            centers = xp.asarray(centers, dtype=X.dtype, device=device_)
+            self._validate_center_shape(X, centers)
+        else:
+            raise ValueError(f"Unsupported init parameter: {init}")
+
+        return centers
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = self.algorithm == "lloyd"
+        return tags
 
 
 def _mini_batch_step(

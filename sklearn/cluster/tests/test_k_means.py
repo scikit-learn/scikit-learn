@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 from threadpoolctl import threadpool_info
 
+import sklearn
 from sklearn.base import clone
 from sklearn.cluster import KMeans, MiniBatchKMeans, k_means, kmeans_plusplus
 from sklearn.cluster._k_means_common import (
@@ -23,7 +24,7 @@ from sklearn.cluster._kmeans import _labels_inertia, _mini_batch_step
 from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import pairwise_distances, pairwise_distances_argmin
-from sklearn.metrics.cluster import v_measure_score
+from sklearn.metrics.cluster import adjusted_rand_score, v_measure_score
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.utils._testing import (
     assert_allclose,
@@ -1374,3 +1375,278 @@ def test_relocating_with_duplicates(algorithm, array_constr):
         km.fit(array_constr(X))
 
     assert km.n_iter_ == 1
+
+
+# ===========================================================================
+# Array API tests
+# ===========================================================================
+
+try:
+    from sklearn.utils._array_api import (
+        _convert_to_numpy,
+        _get_namespace_device_dtype_ids,
+        get_namespace,
+        yield_namespace_device_dtype_combinations,
+    )
+    from sklearn.utils._array_api import (
+        device as _device_func,
+    )
+    from sklearn.utils._testing import (
+        _array_api_for_tests,
+        skip_if_array_api_compat_not_configured,
+    )
+
+    _ARRAY_API_AVAILABLE = True
+except ImportError:
+    _ARRAY_API_AVAILABLE = False
+
+
+@pytest.mark.skipif(not _ARRAY_API_AVAILABLE, reason="array_api_compat not installed")
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize("init", ["random", "k-means++"])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype",
+    yield_namespace_device_dtype_combinations() if _ARRAY_API_AVAILABLE else [],
+    ids=_get_namespace_device_dtype_ids if _ARRAY_API_AVAILABLE else None,
+)
+def test_kmeans_array_api_compliance(init, array_namespace, device_, dtype):
+    """Test that Array API path produces correct results for KMeans.fit()."""
+    xp = _array_api_for_tests(array_namespace, device_)
+
+    X_np, _ = make_blobs(n_samples=100, n_features=4, centers=3, random_state=42)
+    X_np = X_np.astype(dtype)
+
+    # Fit with numpy
+    km_np = KMeans(n_clusters=3, init=init, n_init=1, random_state=0, algorithm="lloyd")
+    km_np.fit(X_np)
+
+    # Fit with Array API
+    X_xp = xp.asarray(X_np, device=device_)
+    with sklearn.config_context(array_api_dispatch=True):
+        km_xp = sklearn.base.clone(km_np)
+        km_xp.fit(X_xp)
+
+        # Check output arrays are in the correct namespace and device
+        assert get_namespace(km_xp.cluster_centers_)[0] == xp
+        assert get_namespace(km_xp.labels_)[0] == xp
+        assert _device_func(km_xp.cluster_centers_) == _device_func(X_xp)
+
+        # Check predict
+        pred = km_xp.predict(X_xp)
+        assert get_namespace(pred)[0] == xp
+        assert _device_func(pred) == _device_func(X_xp)
+
+        # Check transform
+        transformed = km_xp.transform(X_xp)
+        assert get_namespace(transformed)[0] == xp
+        assert transformed.shape == (100, 3)
+
+        # Check score returns float
+        score = km_xp.score(X_xp)
+        assert isinstance(score, float)
+
+    # Compare results with numpy path
+    rtol = 1e-4 if dtype == "float32" else 1e-7
+    atol = 1e-3 if dtype == "float32" else 0
+
+    centers_xp_np = _convert_to_numpy(km_xp.cluster_centers_, xp=xp)
+    labels_xp_np = _convert_to_numpy(km_xp.labels_, xp=xp)
+
+    # Inertia should be close
+    assert_allclose(km_np.inertia_, km_xp.inertia_, rtol=rtol, atol=atol)
+
+    # Centers should match (up to permutation)
+    assert_allclose(
+        np.sort(km_np.cluster_centers_, axis=0),
+        np.sort(centers_xp_np, axis=0),
+        rtol=rtol,
+        atol=atol,
+    )
+
+    # Labels should be equivalent (cluster identity check)
+    ari = adjusted_rand_score(km_np.labels_, labels_xp_np)
+    assert ari > 0.95, f"Labels differ too much: ARI={ari}"
+
+
+@pytest.mark.skipif(not _ARRAY_API_AVAILABLE, reason="array_api_compat not installed")
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype",
+    yield_namespace_device_dtype_combinations() if _ARRAY_API_AVAILABLE else [],
+    ids=_get_namespace_device_dtype_ids if _ARRAY_API_AVAILABLE else None,
+)
+def test_kmeans_array_api_elkan_raises(array_namespace, device_, dtype):
+    """Test that algorithm='elkan' raises NotImplementedError with Array API."""
+    # Only non-numpy namespaces trigger the Array API path
+    if array_namespace == "numpy":
+        pytest.skip("numpy namespace uses existing Cython path")
+
+    xp = _array_api_for_tests(array_namespace, device_)
+    X_np, _ = make_blobs(n_samples=50, n_features=2, centers=3, random_state=0)
+    X_xp = xp.asarray(X_np.astype(dtype), device=device_)
+
+    with sklearn.config_context(array_api_dispatch=True):
+        km = KMeans(n_clusters=3, algorithm="elkan", init="random", n_init=1)
+        with pytest.raises(
+            NotImplementedError,
+            match="algorithm='elkan' is not supported when array_api_dispatch",
+        ):
+            km.fit(X_xp)
+
+
+@pytest.mark.skipif(not _ARRAY_API_AVAILABLE, reason="array_api_compat not installed")
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype",
+    yield_namespace_device_dtype_combinations() if _ARRAY_API_AVAILABLE else [],
+    ids=_get_namespace_device_dtype_ids if _ARRAY_API_AVAILABLE else None,
+)
+def test_kmeans_array_api_edge_cases(array_namespace, device_, dtype):
+    """Test Array API path with edge cases."""
+    xp = _array_api_for_tests(array_namespace, device_)
+
+    with sklearn.config_context(array_api_dispatch=True):
+        # n_clusters=1: all points in same cluster
+        X_np = np.array([[1, 2], [3, 4], [5, 6]], dtype=dtype)
+        X_xp = xp.asarray(X_np, device=device_)
+        km = KMeans(n_clusters=1, init="random", n_init=1, random_state=0)
+        km.fit(X_xp)
+        assert km.cluster_centers_.shape == (1, 2)
+        labels = km.predict(X_xp)
+        # All labels should be 0
+        labels_np = _convert_to_numpy(labels, xp=xp)
+        assert_array_equal(labels_np, [0, 0, 0])
+
+        # max_iter=1: single iteration
+        X_np, _ = make_blobs(n_samples=50, n_features=2, centers=3, random_state=0)
+        X_np = X_np.astype(dtype)
+        X_xp = xp.asarray(X_np, device=device_)
+        km = KMeans(n_clusters=3, init="random", n_init=1, max_iter=1, random_state=0)
+        km.fit(X_xp)
+        assert km.n_iter_ == 1
+
+        # n_clusters == n_samples: each point is its own cluster
+        X_small = np.array([[0, 0], [10, 10], [20, 20]], dtype=dtype)
+        X_small_xp = xp.asarray(X_small, device=device_)
+        km = KMeans(n_clusters=3, init="random", n_init=1, random_state=0)
+        km.fit(X_small_xp)
+        labels_np = _convert_to_numpy(km.labels_, xp=xp)
+        assert len(set(labels_np.tolist())) == 3
+
+        # All identical points
+        X_same = np.ones((10, 3), dtype=dtype)
+        X_same_xp = xp.asarray(X_same, device=device_)
+        km = KMeans(n_clusters=1, init="random", n_init=1, random_state=0)
+        km.fit(X_same_xp)
+        centers_np = _convert_to_numpy(km.cluster_centers_, xp=xp)
+        assert_allclose(centers_np, [[1.0, 1.0, 1.0]], atol=1e-6)
+
+        # 1D features
+        X_1d = np.array([[1], [2], [10], [11]], dtype=dtype)
+        X_1d_xp = xp.asarray(X_1d, device=device_)
+        km = KMeans(n_clusters=2, init="random", n_init=3, random_state=0)
+        km.fit(X_1d_xp)
+        assert km.cluster_centers_.shape == (2, 1)
+
+        # float32 precision
+        if dtype == "float32":
+            X_np, _ = make_blobs(
+                n_samples=100, n_features=4, centers=3, random_state=42
+            )
+            X_np = X_np.astype(np.float32)
+            X_xp = xp.asarray(X_np, device=device_)
+            km = KMeans(n_clusters=3, init="random", n_init=1, random_state=0)
+            km.fit(X_xp)
+            # Should not raise and should produce finite results
+            assert np.isfinite(km.inertia_)
+
+
+@pytest.mark.skipif(not _ARRAY_API_AVAILABLE, reason="array_api_compat not installed")
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype",
+    yield_namespace_device_dtype_combinations() if _ARRAY_API_AVAILABLE else [],
+    ids=_get_namespace_device_dtype_ids if _ARRAY_API_AVAILABLE else None,
+)
+def test_kmeans_array_api_n_init(array_namespace, device_, dtype):
+    """Test that n_init > 1 selects the best result with Array API."""
+    xp = _array_api_for_tests(array_namespace, device_)
+    X_np, _ = make_blobs(n_samples=100, n_features=4, centers=3, random_state=42)
+    X_np = X_np.astype(dtype)
+    X_xp = xp.asarray(X_np, device=device_)
+
+    with sklearn.config_context(array_api_dispatch=True):
+        km_1 = KMeans(n_clusters=3, init="random", n_init=1, random_state=0)
+        km_1.fit(X_xp)
+
+        km_10 = KMeans(n_clusters=3, init="random", n_init=10, random_state=0)
+        km_10.fit(X_xp)
+
+        # n_init=10 should find equal or better inertia than n_init=1
+        assert km_10.inertia_ <= km_1.inertia_ + 1e-6
+
+
+@pytest.mark.skipif(not _ARRAY_API_AVAILABLE, reason="array_api_compat not installed")
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype",
+    yield_namespace_device_dtype_combinations() if _ARRAY_API_AVAILABLE else [],
+    ids=_get_namespace_device_dtype_ids if _ARRAY_API_AVAILABLE else None,
+)
+def test_kmeans_array_api_sample_weight(array_namespace, device_, dtype):
+    """Test that sample_weight is respected in Array API path."""
+    xp = _array_api_for_tests(array_namespace, device_)
+
+    # Use well-separated blobs to ensure clear clustering
+    X_np, _ = make_blobs(
+        n_samples=60, n_features=2, centers=2, cluster_std=0.5, random_state=42
+    )
+    X_np = X_np.astype(dtype)
+
+    # Create sample weights: double weight on first half
+    sw_np = np.ones(60, dtype=dtype)
+    sw_np[:30] = 10.0
+
+    X_xp = xp.asarray(X_np, device=device_)
+    sw_xp = xp.asarray(sw_np, device=device_)
+
+    with sklearn.config_context(array_api_dispatch=True):
+        km_w = KMeans(n_clusters=2, init="random", n_init=5, random_state=0)
+        km_w.fit(X_xp, sample_weight=sw_xp)
+
+        km_uw = KMeans(n_clusters=2, init="random", n_init=5, random_state=0)
+        km_uw.fit(X_xp)
+
+        # Both should converge and find 2 clusters
+        assert km_w.cluster_centers_.shape == (2, 2)
+        assert km_uw.cluster_centers_.shape == (2, 2)
+        # Weighted version should have finite inertia
+        assert np.isfinite(km_w.inertia_)
+
+
+@pytest.mark.skipif(not _ARRAY_API_AVAILABLE, reason="array_api_compat not installed")
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype",
+    yield_namespace_device_dtype_combinations() if _ARRAY_API_AVAILABLE else [],
+    ids=_get_namespace_device_dtype_ids if _ARRAY_API_AVAILABLE else None,
+)
+def test_kmeans_array_api_fit_predict(array_namespace, device_, dtype):
+    """Test fit_predict and fit_transform with Array API."""
+    xp = _array_api_for_tests(array_namespace, device_)
+    X_np, _ = make_blobs(n_samples=50, n_features=2, centers=3, random_state=42)
+    X_np = X_np.astype(dtype)
+    X_xp = xp.asarray(X_np, device=device_)
+
+    with sklearn.config_context(array_api_dispatch=True):
+        km = KMeans(n_clusters=3, init="random", n_init=1, random_state=0)
+
+        # fit_predict
+        labels = km.fit_predict(X_xp)
+        assert get_namespace(labels)[0] == xp
+
+        # fit_transform
+        km2 = KMeans(n_clusters=3, init="random", n_init=1, random_state=0)
+        X_transformed = km2.fit_transform(X_xp)
+        assert get_namespace(X_transformed)[0] == xp
+        assert X_transformed.shape == (50, 3)

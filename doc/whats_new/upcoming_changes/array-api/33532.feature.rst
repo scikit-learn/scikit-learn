@@ -1,0 +1,5 @@
+- :class:`sklearn.cluster.KMeans` now supports Array API compliant inputs when
+  ``algorithm="lloyd"``. A pure-Python Lloyd implementation with sort-based
+  centroid updates is used for non-numpy arrays, while the existing Cython path
+  is preserved for numpy inputs.
+  By :user:`YuminosukeSato <YuminosukeSato>`.
