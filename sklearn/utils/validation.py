@@ -34,6 +34,7 @@ from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
 from sklearn.utils._tags import get_tags
 from sklearn.utils.fixes import (
     ComplexWarning,
+    _ensure_sparse_index_int32,
     _object_dtype_isnan,
     _preserve_dia_indices_dtype,
 )
@@ -1162,21 +1163,18 @@ def _check_large_sparse(X, accept_large_sparse=False):
     downcast to int32 index arrays"""
     if not accept_large_sparse:
         supported_indices = ["int32"]
+        if X.format in ("dok", "lil"):
+            return X  # no index arrays to check for dok and lil
         try:
-            index_arrays = sp.safely_cast_index_arrays(X)
+            _ensure_sparse_index_int32(X)
         except ValueError as err:
             raise ValueError(
                 "Only sparse matrices with 32-bit integer indices are accepted."
-                f"X.{err.msg}. Please do report a minimal"
+                f"X.{err}. Please do report a minimal"
                 " reproducer on scikit-learn issue tracker so that support for"
                 " your use-case can be studied by maintainers. See:"
                 " https://scikit-learn.org/dev/developers/minimal_reproducer.html"
             )
-
-        if X.format == "coo":
-            X.coords = index_arrays
-        elif X.format in ["csr", "csc", "bsr"]:
-            X.indices, X.indptr = index_arrays
 
     return X
 

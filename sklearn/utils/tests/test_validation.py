@@ -704,23 +704,23 @@ def test_check_array_accept_sparse_no_exception():
 
 @pytest.fixture(params=["csr", "csc", "coo", "bsr"])
 def X_64bit(request):
-    X = _sparse_random_array((20, 10), format=request.param)
-
     if request.param == "coo":
-        if hasattr(X, "coords"):
-            # for scipy >= 1.13 .coords is a new attribute and is a tuple. The
-            # .col and .row attributes do not seem to be able to change the
-            # dtype, for more details see https://github.com/scipy/scipy/pull/18530/
-            # and https://github.com/scipy/scipy/pull/20003 where .indices was
-            # renamed to .coords
-            X.coords = tuple(v.astype("int64") for v in X.coords)
-        else:
-            # scipy < 1.13
-            X.row = X.row.astype("int64")
-            X.col = X.col.astype("int64")
+        X = sp.coo_array(([1, 1], ([0, 1], [0, 2**33])), shape=(2, 2**35))
+        assert X.row.dtype == np.int64
+        assert X.col.dtype == np.int64
     else:
-        X.indices = X.indices.astype("int64")
-        X.indptr = X.indptr.astype("int64")
+        if request.param == "bsr":
+            indices = [0, 2**33]
+            indptr = [0, 0, 2]
+            data = [[[1]], [[1]]]
+            X = sp.bsr_array((data, indices, indptr), shape=(2, 2**33))
+        else:
+            X = sp.csr_array(([1, 1], [0, 2**33], [0, 0, 2]), shape=(2, 2**34))
+            if request.param == "csc":
+                X = X.T  # converts to "csc" format
+        assert X.format == request.param
+        assert X.indices.dtype == np.int64
+        assert X.indptr.dtype == np.int64
 
     yield X
 
@@ -732,10 +732,7 @@ def test_check_array_accept_large_sparse_no_exception(X_64bit):
 
 def test_check_array_accept_large_sparse_raise_exception(X_64bit):
     # When large sparse are not allowed
-    msg = (
-        "Only sparse matrices with 32-bit integer indices "
-        "are accepted. Got int64 indices. Please do report"
-    )
+    msg = "Only sparse matrices with 32-bit integer indices are accepted."
     with pytest.raises(ValueError, match=msg):
         check_array(X_64bit, accept_sparse=True, accept_large_sparse=False)
 
