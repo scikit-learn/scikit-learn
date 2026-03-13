@@ -118,8 +118,8 @@ cdef void update_center_dense(
             centers_new[cluster_idx, feature_idx] = (1 - alpha) * centers_old[cluster_idx, feature_idx]
         for k in range(n_indices):
             sample_idx = indices[k]
+            weight_idx = sample_weight[sample_idx] / wsum_cluster
             for feature_idx in range(n_features):
-                weight_idx = sample_weight[sample_idx] / wsum_cluster
                 centers_new[cluster_idx, feature_idx] += alpha * weight_idx * X[sample_idx, feature_idx]
 
     else:
@@ -237,9 +237,9 @@ cdef void update_center_sparse(
 
         for i in range(n_indices):
             sample_idx = indices[i]
+            weight_idx = sample_weight[sample_idx] / wsum_cluster
             for ptr in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
                 feature_idx = X_indices[ptr]
-                weight_idx = sample_weight[sample_idx] / wsum_cluster
                 centers_new[cluster_idx, feature_idx] += alpha * weight_idx * X_data[ptr]
 
     else:

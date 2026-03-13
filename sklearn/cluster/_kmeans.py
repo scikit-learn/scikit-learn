@@ -2298,11 +2298,6 @@ class MiniBatchKMeans(_BaseKMeans):
             dtype=X.dtype,
             ensure_non_negative=self.adaptive_lr,
         )
-        if self.adaptive_lr and sample_weight.sum() <= 0:
-            raise ValueError(
-                "When adaptive_lr=True, sample_weight must be non-negative "
-                "and sum to a positive value over the batch."
-            )
         self.n_steps_ = getattr(self, "n_steps_", 0)
 
         # precompute squared norms of data points
