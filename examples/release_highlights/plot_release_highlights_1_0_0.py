@@ -188,7 +188,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 
 y = [1, 0, 1]
-pipe = make_pipeline(preprocessor, LogisticRegression())
+pipe = make_pipeline(preprocessor, LogisticRegression(C=None))
 pipe.fit(X, y)
 pipe[:-1].get_feature_names_out()
 

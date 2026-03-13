@@ -109,13 +109,13 @@ a meaningful metric for their use case.
         ...   n_samples=1_000, weights=[0.1, 0.9], random_state=0)
         >>> pos_label = 0
         >>> scorer = make_scorer(f1_score, pos_label=pos_label)
-        >>> base_model = LogisticRegression()
+        >>> base_model = LogisticRegression(C=None)
         >>> model = TunedThresholdClassifierCV(base_model, scoring=scorer)
         >>> scorer(model.fit(X, y), X, y)
         0.88
         >>> # compare it with the internal score found by cross-validation
         >>> model.best_score_
-        np.float64(0.86)
+        np.float64(0.86...)
 
 Important notes regarding the internal cross-validation
 -------------------------------------------------------

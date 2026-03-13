@@ -71,7 +71,7 @@ from sklearn import linear_model
 from sklearn.neural_network import BernoulliRBM
 from sklearn.pipeline import Pipeline
 
-logistic = linear_model.LogisticRegression(solver="newton-cg", tol=1)
+logistic = linear_model.LogisticRegression(C=None, solver="newton-cg", tol=1)
 rbm = BernoulliRBM(random_state=0, verbose=True)
 
 rbm_features_classifier = Pipeline(steps=[("rbm", rbm), ("logistic", logistic)])
@@ -95,14 +95,14 @@ rbm.n_iter = 10
 # More components tend to give better prediction performance, but larger
 # fitting time
 rbm.n_components = 100
-logistic.C = 6000
+logistic.alpha = 1e-8
 
 # Training RBM-Logistic Pipeline
 rbm_features_classifier.fit(X_train, Y_train)
 
 # Training the Logistic regression classifier directly on the pixel
 raw_pixel_classifier = clone(logistic)
-raw_pixel_classifier.C = 100.0
+raw_pixel_classifier.alpha = 1e-6
 raw_pixel_classifier.fit(X_train, Y_train)
 
 # %%

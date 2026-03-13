@@ -46,7 +46,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 # Run classifier, using a model that is too regularized (C too low) to see
 # the impact on the results
-classifier = LogisticRegression(C=0.01).fit(X_train, y_train)
+classifier = LogisticRegression(C=None, alpha=0.2).fit(X_train, y_train)
 
 np.set_printoptions(precision=2)
 
@@ -102,7 +102,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.3, random_state=42
 )
 
-classifier = LogisticRegression(C=0.01)
+classifier = LogisticRegression(C=None, alpha=0.1)
 classifier.fit(X_train, y_train)
 
 y_score = classifier.predict_proba(X_test)[:, 1]

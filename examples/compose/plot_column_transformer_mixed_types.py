@@ -93,7 +93,7 @@ preprocessor = ColumnTransformer(
 # Append classifier to preprocessing pipeline.
 # Now we have a full prediction pipeline.
 clf = Pipeline(
-    steps=[("preprocessor", preprocessor), ("classifier", LogisticRegression())]
+    steps=[("preprocessor", preprocessor), ("classifier", LogisticRegression(C=None))]
 )
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
@@ -149,7 +149,7 @@ preprocessor = ColumnTransformer(
     ]
 )
 clf = Pipeline(
-    steps=[("preprocessor", preprocessor), ("classifier", LogisticRegression())]
+    steps=[("preprocessor", preprocessor), ("classifier", LogisticRegression(C=None))]
 )
 
 
@@ -185,7 +185,7 @@ selector(dtype_include="category")(X_train)
 param_grid = {
     "preprocessor__num__imputer__strategy": ["mean", "median"],
     "preprocessor__cat__selector__percentile": [10, 30, 50, 70],
-    "classifier__C": [0.1, 1.0, 10, 100],
+    "classifier__alpha": [0.1, 1e-2, 1e-3, 1e-4],
 }
 
 search_cv = RandomizedSearchCV(clf, param_grid, n_iter=10, random_state=0)
@@ -216,7 +216,7 @@ cv_results[
         "std_test_score",
         "param_preprocessor__num__imputer__strategy",
         "param_preprocessor__cat__selector__percentile",
-        "param_classifier__C",
+        "param_classifier__alpha",
     ]
 ].head(5)
 

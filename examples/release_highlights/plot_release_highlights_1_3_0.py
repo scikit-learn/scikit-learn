@@ -115,11 +115,11 @@ from sklearn.model_selection import ValidationCurveDisplay
 X, y = make_classification(1000, 10, random_state=0)
 
 _ = ValidationCurveDisplay.from_estimator(
-    LogisticRegression(),
+    LogisticRegression(C=None),
     X,
     y,
-    param_name="C",
-    param_range=np.geomspace(1e-5, 1e3, num=9),
+    param_name="alpha",
+    param_range=np.geomspace(1e2, 1e-5, num=10),
     score_type="both",
     score_name="Accuracy",
 )

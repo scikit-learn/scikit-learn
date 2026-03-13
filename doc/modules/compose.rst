@@ -135,7 +135,7 @@ pipeline slicing to get the feature names going into each step::
     >>> iris = load_iris()
     >>> pipe = Pipeline(steps=[
     ...    ('select', SelectKBest(k=2)),
-    ...    ('clf', LogisticRegression())])
+    ...    ('clf', LogisticRegression(C=None))])
     >>> pipe.fit(iris.data, iris.target)
     Pipeline(steps=[('select', SelectKBest(...)), ('clf', LogisticRegression(...))])
     >>> pipe[:-1].get_feature_names_out()
@@ -176,8 +176,8 @@ syntax::
   ignored by setting them to ``'passthrough'``::
 
       >>> param_grid = dict(reduce_dim=['passthrough', PCA(5), PCA(10)],
-      ...                   clf=[SVC(), LogisticRegression()],
-      ...                   clf__C=[0.1, 10, 100])
+      ...                   clf=[SVC(), LogisticRegression(C=None)],
+      ...                   clf__alpha=[1e-1, 1e-2, 1e-3])
       >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
 
   .. seealso::

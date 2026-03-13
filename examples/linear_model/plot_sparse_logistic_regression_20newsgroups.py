@@ -79,6 +79,8 @@ for model in models:
             % (model_params["name"], solver, this_max_iter)
         )
         clf = LogisticRegression(
+            C=None,
+            alpha=1e-4,
             l1_ratio=1,
             solver=solver,
             max_iter=this_max_iter,

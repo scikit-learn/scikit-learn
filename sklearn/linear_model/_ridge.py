@@ -571,8 +571,7 @@ def ridge_regression(
 
     Regularization improves the conditioning of the problem and
     reduces the variance of the estimates. Larger values specify stronger
-    regularization. Alpha corresponds to ``1 / (2C)`` in other linear
-    models such as :class:`~sklearn.linear_model.LogisticRegression` or
+    regularization. Alpha corresponds to ``1 / (2C)`` in other linear models such as
     :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
     assumed to be specific to the targets. Hence they must correspond in
     number.
@@ -1196,8 +1195,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     -----
     Regularization improves the conditioning of the problem and
     reduces the variance of the estimates. Larger values specify stronger
-    regularization. Alpha corresponds to ``1 / (2C)`` in other linear
-    models such as :class:`~sklearn.linear_model.LogisticRegression` or
+    regularization. Alpha corresponds to ``1 / (2C)`` in other linear models such as
     :class:`~sklearn.svm.LinearSVC`.
 
     Examples
@@ -1401,7 +1399,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
-        :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`.
 
         For an illustration of the effect of alpha on the model coefficients, see
@@ -2668,7 +2665,6 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
-        :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`.
         If using Leave-One-Out cross-validation, alphas must be strictly positive.
 
@@ -2862,7 +2858,6 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
-        :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`.
         If using Leave-One-Out cross-validation, alphas must be strictly positive.
 

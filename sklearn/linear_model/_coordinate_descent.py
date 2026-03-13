@@ -1328,8 +1328,7 @@ class Lasso(ElasticNet):
     Regularization improves the conditioning of the problem and
     reduces the variance of the estimates. Larger values specify stronger
     regularization. Alpha corresponds to `1 / (2C)` in other linear
-    models such as :class:`~sklearn.linear_model.LogisticRegression` or
-    :class:`~sklearn.svm.LinearSVC`.
+    models such as :class:`~sklearn.svm.LinearSVC`.
 
     The precise stopping criteria based on `tol` are the following: First, check that
     the maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`

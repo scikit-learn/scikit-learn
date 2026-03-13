@@ -367,7 +367,7 @@ from sklearn.svm import LinearSVC
 
 results = []
 for clf, name in (
-    (LogisticRegression(C=5, max_iter=1000), "Logistic Regression"),
+    (LogisticRegression(C=None, alpha=1e-4, max_iter=1000), "Logistic Regression"),
     (RidgeClassifier(alpha=1.0, solver="sparse_cg"), "Ridge Classifier"),
     (KNeighborsClassifier(n_neighbors=100), "kNN"),
     (RandomForestClassifier(), "Random Forest"),
