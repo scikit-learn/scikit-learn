@@ -404,12 +404,7 @@ def test_roc_curve_display_plotting_from_cv_results(
         sample_weight = None
 
     cv_results = cross_validate(
-        LogisticRegression(alpha=1, C="deprecated"),
-        X,
-        y,
-        cv=3,
-        return_estimator=True,
-        return_indices=True,
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
     )
     display = RocCurveDisplay.from_cv_results(
         cv_results,
@@ -454,9 +449,9 @@ def test_roc_curve_display_plotting_from_cv_results(
 
     _check_figure_axes_and_labels(display, pos_label)
     if with_sample_weight:
-        aggregate_expected_labels = ["AUC = 0.70 +/- 0.03", "_child1", "_child2"]
+        aggregate_expected_labels = ["AUC = 0.64 +/- 0.04", "_child1", "_child2"]
     else:
-        aggregate_expected_labels = ["AUC = 0.68 +/- 0.04", "_child1", "_child2"]
+        aggregate_expected_labels = ["AUC = 0.61 +/- 0.05", "_child1", "_child2"]
     for idx, line in enumerate(display.line_):
         assert isinstance(line, mpl.lines.Line2D)
         # Default alpha for `from_cv_results`
@@ -538,12 +533,7 @@ def test_roc_curve_from_cv_results_legend_label(
     X, y = data_binary
     n_cv = 3
     cv_results = cross_validate(
-        LogisticRegression(alpha=1, C="deprecated"),
-        X,
-        y,
-        cv=n_cv,
-        return_estimator=True,
-        return_indices=True,
+        LogisticRegression(), X, y, cv=n_cv, return_estimator=True, return_indices=True
     )
 
     if not isinstance(curve_kwargs, list) and isinstance(name, list):
@@ -561,7 +551,7 @@ def test_roc_curve_from_cv_results_legend_label(
         if isinstance(curve_kwargs, list):
             # Multiple labels in legend
             assert len(legend_labels) == 3
-            auc = ["0.72", "0.70", "0.62"]
+            auc = ["0.62", "0.66", "0.55"]
             for idx, label in enumerate(legend_labels):
                 if name is None:
                     assert label == f"AUC = {auc[idx]}"
@@ -574,10 +564,10 @@ def test_roc_curve_from_cv_results_legend_label(
             # Single label in legend
             assert len(legend_labels) == 1
             if name is None:
-                assert legend_labels[0] == "AUC = 0.68 +/- 0.04"
+                assert legend_labels[0] == "AUC = 0.61 +/- 0.05"
             else:
                 # name is single string
-                assert legend_labels[0] == "single (AUC = 0.68 +/- 0.04)"
+                assert legend_labels[0] == "single (AUC = 0.61 +/- 0.05)"
 
 
 @pytest.mark.parametrize(
@@ -826,8 +816,8 @@ def test_roc_curve_display_default_labels(
 
 
 def _check_auc(display, constructor_name):
-    roc_auc_limit = 0.94444444
-    roc_auc_limit_multi = [0.96830985, 0.98239436, 0.97777777]
+    roc_auc_limit = 0.95679
+    roc_auc_limit_multi = [0.97007, 0.985915, 0.980952]
 
     if constructor_name == "from_cv_results":
         for idx, roc_auc in enumerate(display.roc_auc):
@@ -861,15 +851,10 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
         random_state=0,
     )
 
-    classifier = LogisticRegression(alpha=1.0, C="deprecated")
+    classifier = LogisticRegression()
     classifier.fit(X_train, y_train)
     cv_results = cross_validate(
-        LogisticRegression(alpha=1.0, C="deprecated"),
-        X,
-        y,
-        cv=3,
-        return_estimator=True,
-        return_indices=True,
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
     )
 
     # Sanity check to be sure the positive class is `classes_[0]`
