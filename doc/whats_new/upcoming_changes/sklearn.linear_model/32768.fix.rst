@@ -1,0 +1,5 @@
+- :class:`linear_model.LassoCV` and :class:`linear_model.ElasticNetCV` now
+  take the `positive` parameter into account to compute the maximum `alpha` parameter,
+  where all coefficients are zero. This impacts the search grid for the
+  internally tuned `alpha` hyper-parameter stored in the attribute `alphas_`.
+  By :user:`Junteng Li <JasonLiJT>`

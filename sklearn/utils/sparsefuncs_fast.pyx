@@ -8,7 +8,7 @@ from libc.stdint cimport intptr_t
 
 import numpy as np
 from cython cimport floating
-from ..utils._typedefs cimport float64_t, int32_t, int64_t, intp_t, uint64_t
+from sklearn.utils._typedefs cimport float64_t, int32_t, int64_t, intp_t, uint64_t
 
 
 ctypedef fused integral:
@@ -50,7 +50,7 @@ def _sqeuclidean_row_norms_sparse(
 def csr_mean_variance_axis0(X, weights=None, return_sum_weights=False):
     """Compute mean and variance along axis 0 on a CSR matrix
 
-    Uses a np.float64 accumulator.
+    Uses an np.float64 accumulator.
 
     Parameters
     ----------
@@ -184,7 +184,7 @@ def _csr_mean_variance_axis0(
 def csc_mean_variance_axis0(X, weights=None, return_sum_weights=False):
     """Compute mean and variance along axis 0 on a CSC matrix
 
-    Uses a np.float64 accumulator.
+    Uses an np.float64 accumulator.
 
     Parameters
     ----------

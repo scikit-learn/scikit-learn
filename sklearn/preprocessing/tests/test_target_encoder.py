@@ -1,9 +1,11 @@
 import re
+import warnings
 
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 
+from sklearn.datasets import make_regression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import (
@@ -20,6 +22,7 @@ from sklearn.preprocessing import (
     LabelEncoder,
     TargetEncoder,
 )
+from sklearn.utils.fixes import parse_version
 
 
 def _encode_target(X_ordinal, y_numeric, n_categories, smooth):
@@ -709,6 +712,43 @@ def test_pandas_copy_on_write():
     Non-regression test for gh-27879.
     """
     pd = pytest.importorskip("pandas", minversion="2.0")
-    with pd.option_context("mode.copy_on_write", True):
+    # Pandas currently warns that setting copy_on_write will be removed in pandas 4
+    # (and copy-on-write will always be enabled).
+    # see https://github.com/scikit-learn/scikit-learn/issues/32829
+    # TODO: remove this workaround when pandas 4 is our minimum version
+    if parse_version(pd.__version__) >= parse_version("4.0"):
         df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
         TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
+    else:
+        with warnings.catch_warnings():
+            expected_message = (
+                ".*Copy-on-Write can no longer be disabled.*This option will"
+                r" be removed in pandas 4\.0"
+            )
+            warnings.filterwarnings(
+                "ignore",
+                message=expected_message,
+                category=DeprecationWarning,
+            )
+            with pd.option_context("mode.copy_on_write", True):
+                df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
+                TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
+
+
+def test_target_encoder_raises_cv_overlap(global_random_seed):
+    """
+    Test that `TargetEncoder` raises if `cv` has overlapping splits.
+    """
+    X, y = make_regression(n_samples=100, n_features=3, random_state=0)
+
+    non_overlapping_iterable = KFold().split(X, y)
+    encoder = TargetEncoder(cv=non_overlapping_iterable)
+    encoder.fit_transform(X, y)
+
+    overlapping_iterable = ShuffleSplit(
+        n_splits=5, random_state=global_random_seed
+    ).split(X, y)
+    encoder = TargetEncoder(cv=overlapping_iterable)
+    msg = "Validation indices from `cv` must cover each sample index exactly once"
+    with pytest.raises(ValueError, match=msg):
+        encoder.fit_transform(X, y)

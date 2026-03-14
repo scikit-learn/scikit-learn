@@ -964,19 +964,26 @@ In random forests (see :class:`RandomForestClassifier` and
 from a sample drawn with replacement (i.e., a bootstrap sample) from the
 training set.
 
-Furthermore, when splitting each node during the construction of a tree, the
-best split is found through an exhaustive search of the feature values of
-either all input features or a random subset of size ``max_features``.
-(See the :ref:`parameter tuning guidelines <random_forest_parameters>` for more details.)
+During the construction of each tree in the forest, a random subset of the
+features is considered. The size of this subset is controlled by the
+`max_features` parameter; it may include either all input features or a random
+subset of them (see the :ref:`parameter tuning guidelines
+<random_forest_parameters>` for more details).
 
-The purpose of these two sources of randomness is to decrease the variance of
-the forest estimator. Indeed, individual decision trees typically exhibit high
+The purpose of these two sources of randomness (bootstrapping the samples and
+randomly selecting features at each split) is to decrease the variance of the
+forest estimator. Indeed, individual decision trees typically exhibit high
 variance and tend to overfit. The injected randomness in forests yield decision
 trees with somewhat decoupled prediction errors. By taking an average of those
 predictions, some errors can cancel out. Random forests achieve a reduced
 variance by combining diverse trees, sometimes at the cost of a slight increase
 in bias. In practice the variance reduction is often significant hence yielding
 an overall better model.
+
+When growing each tree in the forest, the "best" split (i.e. equivalent to
+passing `splitter="best"` to the underlying decision trees) is chosen according
+to the impurity criterion. See the :ref:`CART mathematical formulation
+<tree_mathematical_formulation>` for more details.
 
 In contrast to the original publication [B2001]_, the scikit-learn
 implementation combines classifiers by averaging their probabilistic

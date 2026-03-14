@@ -43,20 +43,16 @@ def test_feature_hasher_strings():
         assert X.nnz == 6
 
 
-@pytest.mark.parametrize(
-    "raw_X",
-    [
-        ["my_string", "another_string"],
-        (x for x in ["my_string", "another_string"]),
-    ],
-    ids=["list", "generator"],
-)
-def test_feature_hasher_single_string(raw_X):
+@pytest.mark.parametrize("input_type", ["list", "generator"])
+def test_feature_hasher_single_string(input_type):
     """FeatureHasher raises error when a sample is a single string.
 
     Non-regression test for gh-13199.
     """
     msg = "Samples can not be a single string"
+    raw_X = ["my_string", "another_string"]
+    if input_type == "generator":
+        raw_X = (x for x in raw_X)
 
     feature_hasher = FeatureHasher(n_features=10, input_type="string")
     with pytest.raises(ValueError, match=msg):

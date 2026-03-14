@@ -355,7 +355,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     @property
     def n_features_in_(self):
         """Number of features seen during :term:`fit`."""
-        # For consistency with other estimators we raise a AttributeError so
+        # For consistency with other estimators we raise an AttributeError so
         # that hasattr() returns False the estimator isn't fitted.
         try:
             check_is_fitted(self)
@@ -382,7 +382,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             regressor=self._get_regressor(),
             method_mapping=MethodMapping()
             .add(caller="fit", callee="fit")

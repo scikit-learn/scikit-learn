@@ -51,7 +51,7 @@ def filter_errors(errors, method, Klass=None):
         # We ignore following error code,
         #  - RT02: The first line of the Returns section
         #    should contain only the type, ..
-        #   (as we may need refer to the name of the returned
+        #   (as we may need to refer to the name of the returned
         #    object)
         #  - GL01: Docstring text (summary) should start in the line
         #    immediately after the opening quotes (not in the same line,

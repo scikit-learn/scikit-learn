@@ -317,7 +317,7 @@ def test_passive_aggressive_classifier_vs_sgd(loss, lr):
     )
     pa = PassiveAggressiveClassifier(loss=loss, C=0.987, random_state=42).fit(X, y)
     sgd = SGDClassifier(
-        loss="hinge", penalty=None, learning_rate=lr, PA_C=0.987, random_state=42
+        loss="hinge", penalty=None, learning_rate=lr, eta0=0.987, random_state=42
     ).fit(X, y)
     assert_allclose(pa.decision_function(X), sgd.decision_function(X))
 
@@ -339,7 +339,7 @@ def test_passive_aggressive_regressor_vs_sgd(loss, lr):
         epsilon=0.123,
         penalty=None,
         learning_rate=lr,
-        PA_C=0.987,
+        eta0=0.987,
         random_state=42,
     ).fit(X, y)
     assert_allclose(pa.predict(X), sgd.predict(X))

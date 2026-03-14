@@ -22,7 +22,7 @@ if TYPE_CHECKING:  # pragma: no cover
     import numpy as np
     from numpy.typing import ArrayLike
 
-    NumPyObject: TypeAlias = np.ndarray[Any, Any] | np.generic  # type: ignore[explicit-any]
+    NumPyObject: TypeAlias = np.ndarray[Any, Any] | np.generic
 else:
     # Sphinx hack
     NumPyObject = Any
@@ -31,7 +31,7 @@ P = ParamSpec("P")
 
 
 @overload
-def lazy_apply(  # type: ignore[decorated-any, valid-type]
+def lazy_apply(  # type: ignore[valid-type]
     func: Callable[P, Array | ArrayLike],
     *args: Array | complex | None,
     shape: tuple[int | None, ...] | None = None,
@@ -43,7 +43,7 @@ def lazy_apply(  # type: ignore[decorated-any, valid-type]
 
 
 @overload
-def lazy_apply(  # type: ignore[decorated-any, valid-type]
+def lazy_apply(  # type: ignore[valid-type]
     func: Callable[P, Sequence[Array | ArrayLike]],
     *args: Array | complex | None,
     shape: Sequence[tuple[int | None, ...]],
@@ -144,7 +144,12 @@ def lazy_apply(  # type: ignore[valid-type]  # numpydoc ignore=GL07,SA04
 
     Dask
         This allows applying eager functions to Dask arrays.
-        The Dask graph won't be computed.
+        The Dask graph won't be computed until the user calls ``compute()`` or
+        ``persist()`` down the line.
+
+        The function name will be prominently visible on the user-facing Dask
+        dashboard and on Prometheus metrics, so it is recommended for it to be
+        meaningful.
 
         `lazy_apply` doesn't know if `func` reduces along any axes; also, shape
         changes are non-trivial in chunked Dask arrays. For these reasons, all inputs
@@ -308,7 +313,7 @@ def _is_jax_jit_enabled(xp: ModuleType) -> bool:  # numpydoc ignore=PR01,RT01
         return True
 
 
-def _lazy_apply_wrapper(  # type: ignore[explicit-any]  # numpydoc ignore=PR01,RT01
+def _lazy_apply_wrapper(  # numpydoc ignore=PR01,RT01
     func: Callable[..., Array | ArrayLike | Sequence[Array | ArrayLike]],
     as_numpy: bool,
     multi_output: bool,
@@ -326,7 +331,7 @@ def _lazy_apply_wrapper(  # type: ignore[explicit-any]  # numpydoc ignore=PR01,R
 
     # On Dask, @wraps causes the graph key to contain the wrapped function's name
     @wraps(func)
-    def wrapper(  # type: ignore[decorated-any,explicit-any]
+    def wrapper(
         *args: Array | complex | None, **kwargs: Any
     ) -> tuple[Array, ...]:  # numpydoc ignore=GL08
         args_list = []
@@ -338,7 +343,7 @@ def _lazy_apply_wrapper(  # type: ignore[explicit-any]  # numpydoc ignore=PR01,R
                 if as_numpy:
                     import numpy as np
 
-                    arg = cast(Array, np.asarray(arg))  # type: ignore[bad-cast]  # noqa: PLW2901
+                    arg = cast(Array, np.asarray(arg))  # pyright: ignore[reportInvalidCast] # noqa: PLW2901
             args_list.append(arg)
         assert device is not None
 

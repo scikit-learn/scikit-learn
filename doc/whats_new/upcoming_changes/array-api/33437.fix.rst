@@ -1,0 +1,5 @@
+- :func:`linear_model.ridge_regression` now correctly passes a Python scalar as
+  ``fill_value`` to ``xp.full`` when broadcasting alpha for multi-target
+  regression, ensuring compliance with the array API specification. This fixes
+  compatibility issues with some array API backends.
+  By :user:`Olivier Grisel <ogrisel>`.

@@ -5,7 +5,7 @@ import inspect
 import numpy as np
 import pytest
 
-from sklearn.base import is_classifier
+from sklearn.base import clone, is_classifier
 from sklearn.datasets import make_classification, make_low_rank_matrix, make_regression
 from sklearn.linear_model import (
     ARDRegression,
@@ -69,12 +69,10 @@ from sklearn.utils.fixes import CSR_CONTAINERS
         # This is a known limitation, see:
         # https://github.com/scikit-learn/scikit-learn/issues/21305
         pytest.param(
-            LogisticRegression(
-                penalty="elasticnet", solver="saga", l1_ratio=0.5, tol=1e-15
-            ),
+            LogisticRegression(l1_ratio=0.5, solver="saga", tol=1e-15),
             marks=pytest.mark.xfail(reason="Missing importance sampling scheme"),
         ),
-        LogisticRegressionCV(tol=1e-6),
+        LogisticRegressionCV(tol=1e-6, use_legacy_attributes=False, l1_ratios=(0,)),
         MultiTaskElasticNet(),
         MultiTaskElasticNetCV(),
         MultiTaskLasso(),
@@ -106,7 +104,7 @@ def test_balance_property(model, with_sample_weight, global_random_seed):
     # For reference, see Corollary 3.18, 3.20 and Chapter 5.1.5 of
     # M.V. Wuthrich and M. Merz, "Statistical Foundations of Actuarial Learning and its
     # Applications" (June 3, 2022). http://doi.org/10.2139/ssrn.3822407
-
+    model = clone(model)  # Avoid side effects from shared instances.
     if (
         with_sample_weight
         and "sample_weight" not in inspect.signature(model.fit).parameters.keys()
@@ -214,7 +212,14 @@ def test_linear_model_regressor_coef_shape(Regressor, ndim):
     [
         (LinearSVC, {}),
         (LogisticRegression, {}),
-        (LogisticRegressionCV, {"solver": "newton-cholesky"}),
+        (
+            LogisticRegressionCV,
+            {
+                "solver": "newton-cholesky",
+                "use_legacy_attributes": False,
+                "l1_ratios": (0,),
+            },
+        ),
         (PassiveAggressiveClassifier, {}),
         (Perceptron, {}),
         (RidgeClassifier, {}),
@@ -278,7 +283,7 @@ def test_model_pipeline_same_dense_and_sparse(LinearModel, params, csr_container
     model_dense.fit(X, y)
     model_sparse.fit(X_sparse, y)
 
-    assert_allclose(model_sparse[1].coef_, model_dense[1].coef_, atol=1e-16)
+    assert_allclose(model_sparse[1].coef_, model_dense[1].coef_, atol=1e-15)
     y_pred_dense = model_dense.predict(X)
     y_pred_sparse = model_sparse.predict(X_sparse)
     assert_allclose(y_pred_dense, y_pred_sparse)

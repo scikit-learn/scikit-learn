@@ -36,8 +36,6 @@ from sklearn.utils._testing import (
 from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
-    parse_version,
-    sp_version,
 )
 
 
@@ -1196,21 +1194,6 @@ def test_csr_polynomial_expansion_index_overflow(
             pf.fit(X)
         return
 
-    # When `n_features>=65535`, `scipy.sparse.hstack` may not use the right
-    # dtype for representing indices and indptr if `n_features` is still
-    # small enough so that each block matrix's indices and indptr arrays
-    # can be represented with `np.int32`. We test `n_features==65535`
-    # since it is guaranteed to run into this bug.
-    if (
-        sp_version < parse_version("1.9.2")
-        and n_features == 65535
-        and degree == 2
-        and not interaction_only
-    ):  # pragma: no cover
-        msg = r"In scipy versions `<1.9.2`, the function `scipy.sparse.hstack`"
-        with pytest.raises(ValueError, match=msg):
-            X_trans = pf.fit_transform(X)
-        return
     X_trans = pf.fit_transform(X)
 
     expected_dtype = np.int64 if num_combinations > np.iinfo(np.int32).max else np.int32

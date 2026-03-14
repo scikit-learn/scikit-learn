@@ -65,7 +65,7 @@ cs = l1_min_c(X, y, loss="log") * np.logspace(0, 1, 16)
 clf = make_pipeline(
     StandardScaler(),
     LogisticRegression(
-        penalty="l1",
+        l1_ratio=1,
         solver="liblinear",
         tol=1e-6,
         max_iter=int(1e6),

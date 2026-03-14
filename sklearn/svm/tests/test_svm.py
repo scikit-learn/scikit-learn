@@ -64,6 +64,10 @@ def test_libsvm_parameters():
     assert_array_equal(clf.predict(X), Y)
 
 
+# XXX: this test is thread-unsafe because it uses _libsvm.cross_validation:
+# https://github.com/scikit-learn/scikit-learn/issues/31885
+# TODO: investigate why assertion on L148 fails.
+@pytest.mark.thread_unsafe
 def test_libsvm_iris(global_random_seed):
     # Check consistency on dataset iris.
     iris = get_iris_dataset(global_random_seed)
@@ -373,6 +377,11 @@ def test_tweak_params():
     assert_array_equal(clf.predict([[-0.1, -0.1]]), [2])
 
 
+# XXX: this test is thread-unsafe because it uses probability=True:
+# https://github.com/scikit-learn/scikit-learn/issues/31885
+# TODO(1.11): remove this test entirely
+@pytest.mark.thread_unsafe
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_probability(global_random_seed):
     # Predict probabilities using SVC
     # This uses cross validation, so we use a slightly bigger testing set.
@@ -521,6 +530,7 @@ def test_weight():
 
 @pytest.mark.parametrize("estimator", [svm.SVC(C=1e-2), svm.NuSVC()])
 def test_svm_classifier_sided_sample_weight(estimator):
+    estimator = base.clone(estimator)  # Avoid side effects from previous tests.
     # fit a linear SVM and check that giving more weight to opposed samples
     # in the space will flip the decision toward these samples.
     X = [[-2, 0], [-1, -1], [0, -2], [0, 2], [1, 1], [2, 0]]
@@ -547,6 +557,7 @@ def test_svm_classifier_sided_sample_weight(estimator):
 
 @pytest.mark.parametrize("estimator", [svm.SVR(C=1e-2), svm.NuSVR(C=1e-2)])
 def test_svm_regressor_sided_sample_weight(estimator):
+    estimator = base.clone(estimator)  # Avoid side effects from previous tests.
     # similar test to test_svm_classifier_sided_sample_weight but for
     # SVM regressors
     X = [[-2, 0], [-1, -1], [0, -2], [0, 2], [1, 1], [2, 0]]
@@ -585,7 +596,11 @@ def test_svm_equivalence_sample_weight_C():
     "Estimator, err_msg",
     [
         (svm.SVC, "Invalid input - all samples have zero or negative weights."),
-        (svm.NuSVC, "(negative dimensions are not allowed|nu is infeasible)"),
+        (
+            svm.NuSVC,
+            "(Invalid input - all samples have zero or negative weights.|nu is"
+            " infeasible)",
+        ),
         (svm.SVR, "Invalid input - all samples have zero or negative weights."),
         (svm.NuSVR, "Invalid input - all samples have zero or negative weights."),
         (svm.OneClassSVM, "Invalid input - all samples have zero or negative weights."),
@@ -754,18 +769,6 @@ def test_svc_nonfinite_params(global_random_seed):
     msg = "The dual coefficients or intercepts are not finite"
     with pytest.raises(ValueError, match=msg):
         clf.fit(X, y)
-
-
-def test_unicode_kernel(global_random_seed):
-    # Test that a unicode kernel name does not cause a TypeError
-    iris = get_iris_dataset(global_random_seed)
-
-    clf = svm.SVC(kernel="linear", probability=True)
-    clf.fit(X, Y)
-    clf.predict_proba(T)
-    _libsvm.cross_validation(
-        iris.data, iris.target.astype(np.float64), 5, kernel="linear", random_seed=0
-    )
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -1028,6 +1031,7 @@ def test_immutable_coef_property(global_random_seed):
             clf.coef_.__setitem__((0, 0), 0)
 
 
+@pytest.mark.thread_unsafe
 def test_linearsvc_verbose():
     # stdout: redirect
     import os
@@ -1050,7 +1054,6 @@ def test_svc_clone_with_callable_kernel():
     # as with built-in linear kernel
     svm_callable = svm.SVC(
         kernel=lambda x, y: np.dot(x, y.T),
-        probability=True,
         random_state=0,
         decision_function_shape="ovr",
     )
@@ -1060,21 +1063,16 @@ def test_svc_clone_with_callable_kernel():
 
     svm_builtin = svm.SVC(
         kernel="linear",
-        probability=True,
         random_state=0,
         decision_function_shape="ovr",
     )
+
     svm_builtin.fit(iris.data, iris.target)
 
     assert_array_almost_equal(svm_cloned.dual_coef_, svm_builtin.dual_coef_)
     assert_array_almost_equal(svm_cloned.intercept_, svm_builtin.intercept_)
     assert_array_equal(svm_cloned.predict(iris.data), svm_builtin.predict(iris.data))
 
-    assert_array_almost_equal(
-        svm_cloned.predict_proba(iris.data),
-        svm_builtin.predict_proba(iris.data),
-        decimal=4,
-    )
     assert_array_almost_equal(
         svm_cloned.decision_function(iris.data),
         svm_builtin.decision_function(iris.data),
@@ -1090,7 +1088,6 @@ def test_svc_bad_kernel():
 def test_libsvm_convergence_warnings(global_random_seed):
     a = svm.SVC(
         kernel=lambda x, y: np.dot(x, y.T),
-        probability=True,
         random_state=global_random_seed,
         max_iter=2,
     )
@@ -1115,13 +1112,11 @@ def test_unfitted():
         clf.predict(X)
 
 
-# ignore convergence warnings from max_iter=1
-@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
-def test_consistent_proba(global_random_seed):
-    a = svm.SVC(probability=True, max_iter=1, random_state=global_random_seed)
-    proba_1 = a.fit(X, Y).predict_proba(X)
-    a = svm.SVC(probability=True, max_iter=1, random_state=global_random_seed)
-    proba_2 = a.fit(X, Y).predict_proba(X)
+def test_consistent_decision_function(global_random_seed):
+    a = svm.SVC(max_iter=1, random_state=global_random_seed)
+    proba_1 = a.fit(X, Y).decision_function(X)
+    a = svm.SVC(max_iter=1, random_state=global_random_seed)
+    proba_2 = a.fit(X, Y).decision_function(X)
     assert_array_almost_equal(proba_1, proba_2)
 
 
@@ -1172,6 +1167,8 @@ def test_lsvc_intercept_scaling_zero():
     assert lsvc.intercept_ == 0.0
 
 
+# TODO(1.11): remove test entirely.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_hasattr_predict_proba(global_random_seed):
     iris = get_iris_dataset(global_random_seed)
 
@@ -1316,6 +1313,8 @@ def test_gamma_scale():
     assert_almost_equal(clf._gamma, 4)
 
 
+# XXX: https://github.com/scikit-learn/scikit-learn/issues/31883
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize(
     "SVM, params",
     [
@@ -1514,3 +1513,14 @@ def test_svm_with_infinite_C(Estimator, make_dataset, C_inf, global_random_seed)
     estimator_C_large = Estimator(C=1e10).fit(X, y)
 
     assert_allclose(estimator_C_large.predict(X), estimator_C_inf.predict(X))
+
+
+@pytest.mark.parametrize(
+    "Estimator, name",
+    [(svm.SVC, "SVC"), (svm.NuSVC, "NuSVC")],
+)
+@pytest.mark.parametrize("probability", [True, False])
+def test_probability_raises_futurewarning(Estimator, name, probability):
+    X, y = make_classification()
+    with pytest.warns(FutureWarning, match="probability.+parameter.+deprecated"):
+        Estimator(probability=probability).fit(X, y)

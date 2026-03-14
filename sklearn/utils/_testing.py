@@ -976,12 +976,12 @@ def _convert_container(
     container : array-like
         The container to convert.
     constructor_name : {"list", "tuple", "array", "sparse", "dataframe", \
-            "series", "index", "slice", "sparse_csr", "sparse_csc", \
+            "pandas", "series", "index", "slice", "sparse_csr", "sparse_csc", \
             "sparse_csr_array", "sparse_csc_array", "pyarrow", "polars", \
             "polars_series"}
         The type of the returned container.
     columns_name : index or array-like, default=None
-        For pandas container supporting `columns_names`, it will affect
+        For pandas/polars container supporting `columns_names`, it will affect
         specific names.
     dtype : dtype, default=None
         Force the dtype of the container. Does not apply to `"slice"`
@@ -1422,6 +1422,16 @@ def _get_warnings_filters_info_list():
         ),
         WarningInfo(
             "ignore", message="Attribute n is deprecated", category=DeprecationWarning
+        ),
+        # numpy 2.5 DeprecationWarning in joblib, see
+        # https://github.com/joblib/joblib/issues/1772
+        WarningInfo(
+            "ignore",
+            message=(
+                "Setting the shape on a NumPy array has been deprecated"
+                r" in NumPy 2.5"
+            ),
+            category=DeprecationWarning,
         ),
         # Python 3.12 warnings from sphinx-gallery fixed in master but not
         # released yet, see
