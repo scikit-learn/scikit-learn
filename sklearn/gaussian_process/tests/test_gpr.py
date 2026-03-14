@@ -310,7 +310,7 @@ def test_y_normalization(kernel):
 
 def test_large_variance_y():
     """
-    Here we test that, when noramlize_y=True, our GP can produce a
+    Here we test that, when normalize_y=True, our GP can produce a
     sensible fit to training data whose variance is significantly
     larger than unity. This test was made in response to issue #15612.
 
@@ -372,8 +372,7 @@ def test_y_multioutput():
     # of 1d GP and that second dimension is twice as large
     kernel = RBF(length_scale=1.0)
 
-    # Set normalize_y to True because gpr_2d will normalize the target values.
-    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None, normalize_y=True)
+    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None)
     gpr.fit(X, y)
 
     gpr_2d = GaussianProcessRegressor(kernel=kernel, optimizer=None)
@@ -901,6 +900,6 @@ def test_gpr_multioutput_normalization(normalize_y, kernel):
     _, cov = gpr.predict(np.array([[0.25]]), return_cov=True)
 
     scale = 10
-    assert_almost_equal(mean[:, 1], mean[:, 0] * 10)
+    assert_almost_equal(mean[:, 1], mean[:, 0] * scale)
     assert_almost_equal(std[:, 1], std[:, 0] * scale)
     assert_almost_equal(cov[:, :, 1], cov[:, :, 0] * scale**2)
