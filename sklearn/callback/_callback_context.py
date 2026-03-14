@@ -3,7 +3,6 @@
 
 import uuid
 import warnings
-from contextlib import contextmanager
 
 from sklearn.callback._base import AutoPropagatedCallback
 
@@ -65,10 +64,10 @@ from sklearn.callback._base import AutoPropagatedCallback
 #     def __init__(self, max_iter):
 #         self.max_iter = max_iter
 #
-#     @with_callback_context
+#     @with_fit_callbacks
 #     def fit(self, X, y):
 #         callback_ctx = self._init_callback_context(max_subtasks=self.max_iter)
-#         callback_ctx.eval_on_fit_begin(estimator=self)
+#         callback_ctx.eval_on_fit_task_begin()
 #
 #         for i in range(self.max_iter):
 #             subcontext = callback_ctx.subcontext(task_id=i)
@@ -76,11 +75,14 @@ from sklearn.callback._base import AutoPropagatedCallback
 #             # Do something
 #
 #             subcontext.eval_on_fit_task_end(
-#                 estimator=self,
 #                 data={"X_train": X, "y_train": y},
 #             )
 #
-#     return self
+#         callback_ctx.eval_on_fit_task_end(
+#             data={"X_train": X, "y_train": y},
+#         )
+#
+#         return self
 #
 #
 # It's also an object that is passed to the callback hooks to give them information
@@ -94,7 +96,7 @@ class CallbackContext:
     of an estimator's tasks. Each instance corresponds to a task of the estimator.
 
     This class should not be instantiated directly, but through the
-    `with_callback_context` decorator of fit methods to create root context or using
+    `_init_callback_context` method of the estimator to create the root context or using
     the `subcontext` method of this class to create sub-contexts.
 
     These contexts are passed to the callback hooks to be able to keep track of the
@@ -112,8 +114,18 @@ class CallbackContext:
         The maximum number of children tasks for this task. 0 means it's a leaf.
         None means the maximum number of subtasks is not known in advance.
 
+    estimator : estimator instance
+        The estimator that holds this context.
+
     estimator_name : str
-        The name of the estimator.
+        The name of the estimator that holds this context.
+
+    parent : CallbackContext or None
+        The parent context of this context. None if this context is the root.
+
+    root_uuid : uuid.UUID instance
+        The UUID of the root context. All contexts in the same task tree have the same
+        root UUID that is used to identify the task tree itself.
 
     parent : CallbackContext or None
         The parent context of this context. None if this context is the root.
@@ -123,8 +135,8 @@ class CallbackContext:
         root UUID that is used to identify the task tree itself.
 
     source_estimator_name : str or None
-        The estimator name of the parent task this task was merged with. None if it
-        was not merged with another context.
+        The name of the estimator that holds the parent task this task was
+        merged with. None if it was not merged with another context.
 
     source_task_name : str or None
         The task name of the parent task this task was merged with. None if it
@@ -156,6 +168,7 @@ class CallbackContext:
         # We don't store the estimator in the context to avoid circular references
         # because the estimator already holds a reference to the context.
         new_ctx._callbacks = getattr(estimator, "_skl_callbacks", [])
+        new_ctx.estimator = estimator
         new_ctx.estimator_name = estimator.__class__.__name__
         new_ctx.task_name = task_name
         new_ctx.task_id = task_id
@@ -165,7 +178,6 @@ class CallbackContext:
         new_ctx._children_map = {}
         new_ctx.source_estimator_name = None
         new_ctx.source_task_name = None
-        new_ctx._has_called_on_fit_begin = False
 
         if hasattr(estimator, "_parent_callback_ctx"):
             # This context's task is the root task of the estimator which itself
@@ -175,9 +187,9 @@ class CallbackContext:
             # the meta-estimator on the way.
             parent_ctx = estimator._parent_callback_ctx
             new_ctx._merge_with(parent_ctx)
-            new_ctx._estimator_depth = parent_ctx._estimator_depth + 1
+            new_ctx._propagation_depth = parent_ctx._propagation_depth + 1
         else:
-            new_ctx._estimator_depth = 0
+            new_ctx._propagation_depth = 0
 
         return new_ctx
 
@@ -204,8 +216,9 @@ class CallbackContext:
         new_ctx = cls.__new__(cls)
 
         new_ctx._callbacks = parent_context._callbacks
+        new_ctx.estimator = parent_context.estimator
         new_ctx.estimator_name = parent_context.estimator_name
-        new_ctx._estimator_depth = parent_context._estimator_depth
+        new_ctx._propagation_depth = parent_context._propagation_depth
         new_ctx.task_name = task_name
         new_ctx.task_id = task_id
         new_ctx.max_subtasks = max_subtasks
@@ -214,7 +227,6 @@ class CallbackContext:
         new_ctx._children_map = {}
         new_ctx.source_estimator_name = None
         new_ctx.source_task_name = None
-        new_ctx._has_called_on_fit_begin = parent_context._has_called_on_fit_begin
 
         # This task is a subtask of another task of a same estimator
         parent_context._add_child(new_ctx)
@@ -302,34 +314,29 @@ class CallbackContext:
             max_subtasks=max_subtasks,
         )
 
-    def eval_on_fit_begin(self, estimator):
-        """Evaluate the `on_fit_begin` method of the callbacks.
+    def eval_on_fit_task_begin(self, **kwargs):
+        """Evaluate the `on_fit_task_begin` hook of the callbacks.
 
         Parameters
         ----------
-        estimator : estimator instance
-            The estimator calling this callback hook.
+        **kwargs : dict
+            Additional optional arguments passed to the callback. The list of possible
+            keys and corresponding values are described in detail at <TODO: add link>.
         """
-        self._has_called_on_fit_begin = True
-
         for callback in self._callbacks:
-            # Only call the on_fit_begin method of callbacks that are not
-            # propagated from a meta-estimator.
-            if not (
-                isinstance(callback, AutoPropagatedCallback) and self.parent is not None
-            ):
-                callback.on_fit_begin(estimator, self)
+            # Only call the `on_fit_task_begin` hook of callbacks that are not
+            # propagated. For propagated callbacks, the hook will be called by the
+            # sub-estimator's root context (both represent the same task).
+            if callback not in getattr(self, "_propagated_callbacks", []):
+                callback.on_fit_task_begin(self, **kwargs)
 
         return self
 
-    def eval_on_fit_task_end(self, estimator, **kwargs):
-        """Evaluate the `on_fit_task_end` method of the callbacks.
+    def eval_on_fit_task_end(self, **kwargs):
+        """Evaluate the `on_fit_task_end` hook of the callbacks.
 
         Parameters
         ----------
-        estimator : estimator instance
-            The estimator calling this callback hook.
-
         **kwargs : dict
             Additional optional arguments passed to the callback. The list of possible
             keys and corresponding values are described in detail at <TODO: add link>.
@@ -341,30 +348,13 @@ class CallbackContext:
             task.
         """
         return any(
-            callback.on_fit_task_end(estimator, self, **kwargs)
+            callback.on_fit_task_end(self, **kwargs)
             for callback in self._callbacks
+            # Only call the `on_fit_task_end` hook of callbacks that are not
+            # propagated. For propagated callbacks, the hook will be called by the
+            # sub-estimator's root context (both represent the same task).
+            if callback not in getattr(self, "_propagated_callbacks", [])
         )
-
-    def eval_on_fit_end(self, estimator):
-        """Evaluate the `on_fit_end` method of the callbacks.
-
-        Parameters
-        ----------
-        estimator : estimator instance
-            The estimator calling this callback hook.
-        """
-        # `eval_on_fit_end` being called in a `try finally` block, it can be called even
-        # if `fit` crashed and `eval_on_fit_begin` was not called, hence the
-        # defensive check of the `_has_called_on_fit_begin` attribute.
-        if self._has_called_on_fit_begin:
-            for callback in self._callbacks:
-                # Only call the on_fit_end method of callbacks that are not
-                # propagated from a meta-estimator.
-                if not (
-                    isinstance(callback, AutoPropagatedCallback)
-                    and self.parent is not None
-                ):
-                    callback.on_fit_end(estimator, self)
 
     def propagate_callback_context(self, sub_estimator):
         """Propagate the context and callbacks to a sub-estimator.
@@ -406,8 +396,8 @@ class CallbackContext:
             for callback in self._callbacks
             if isinstance(callback, AutoPropagatedCallback)
             and (
-                callback.max_estimator_depth is None
-                or self._estimator_depth < callback.max_estimator_depth - 1
+                callback.max_propagation_depth is None
+                or self._propagation_depth < callback.max_propagation_depth - 1
             )
         ]
         if not callbacks_to_propagate:
@@ -421,8 +411,10 @@ class CallbackContext:
             )
             return self
 
+        self._propagated_callbacks = callbacks_to_propagate
+
         sub_estimator.set_callbacks(
-            getattr(sub_estimator, "_skl_callbacks", []) + callbacks_to_propagate
+            getattr(sub_estimator, "_skl_callbacks", []) + self._propagated_callbacks
         )
 
         return self
@@ -447,53 +439,3 @@ def get_context_path(context):
         if context.parent is None
         else get_context_path(context.parent) + [context]
     )
-
-
-@contextmanager
-def callback_management_context(estimator):
-    """Context manager to manage the callback context's teardown for an estimator.
-
-    The context manager is also responsible for calling the callback context's
-    `eval_on_fit_end` method, which guarantees the callbacks' `on_fit_end` hook will
-    always be evaluated, whether the estimator's fit exits successfully or not.
-
-    Parameters
-    ----------
-    estimator : estimator instance
-        The estimator being fitted.
-
-    Yields
-    ------
-    None.
-    """
-    try:
-        yield
-    finally:
-        if hasattr(estimator, "_callback_fit_ctx"):
-            estimator._callback_fit_ctx.eval_on_fit_end(estimator)
-            del estimator._callback_fit_ctx
-
-
-def with_callback_context(fit_method):
-    """Decorator to run the fit methods within the callback context manager.
-
-    This decorator creates the root callback context and stores it into a
-    `_callback_fit_ctx` attribute that is accessible during fit and cleaned-up
-    afterwards.
-
-    Parameters
-    ----------
-    fit_method : method
-        The fit method to decorate.
-
-    Returns
-    -------
-    decorated_fit_method : method
-        The decorated fit method.
-    """
-
-    def callback_managed_fit_method(estimator, *args, **kwargs):
-        with callback_management_context(estimator):
-            return fit_method(estimator, *args, **kwargs)
-
-    return callback_managed_fit_method

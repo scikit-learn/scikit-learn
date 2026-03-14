@@ -25,8 +25,8 @@ from sklearn.utils.parallel import Parallel, delayed
 @pytest.mark.parametrize("n_jobs", [1, 2])
 @pytest.mark.parametrize("prefer", ["threads", "processes"])
 @pytest.mark.parametrize("InnerEstimator", [MaxIterEstimator, WhileEstimator])
-@pytest.mark.parametrize("max_estimator_depth", [1, 2, None])
-def test_progressbar(n_jobs, prefer, InnerEstimator, max_estimator_depth, capsys):
+@pytest.mark.parametrize("max_propagation_depth", [1, 2, None])
+def test_progressbar(n_jobs, prefer, InnerEstimator, max_propagation_depth, capsys):
     """Check the output of the progress bars and their completion."""
     pytest.importorskip("rich")
 
@@ -37,7 +37,7 @@ def test_progressbar(n_jobs, prefer, InnerEstimator, max_estimator_depth, capsys
     meta_est = MetaEstimator(
         est, n_outer=n_outer, n_inner=n_inner, n_jobs=n_jobs, prefer=prefer
     )
-    meta_est.set_callbacks(ProgressBar(max_estimator_depth=max_estimator_depth))
+    meta_est.set_callbacks(ProgressBar(max_propagation_depth=max_propagation_depth))
     meta_est.fit()
 
     captured = capsys.readouterr()
@@ -46,9 +46,9 @@ def test_progressbar(n_jobs, prefer, InnerEstimator, max_estimator_depth, capsys
     for i in range(n_outer):
         assert re.search(rf"MetaEstimator - outer #{i}", captured.out)
 
-    # Progress bars of inner estimators are displayed only if max_estimator_depth > 1
+    # Progress bars of inner estimators are displayed only if max_propagation_depth > 1
     # (or None, which means all levels are displayed)
-    if max_estimator_depth is None or max_estimator_depth > 1:
+    if max_propagation_depth is None or max_propagation_depth > 1:
         for i in range(n_inner):
             assert re.search(
                 rf"MetaEstimator - inner \| {est.__class__.__name__} - fit #{i}",
