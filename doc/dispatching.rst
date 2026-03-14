@@ -1,6 +1,6 @@
-====================================
-Dispatching - Dataframes - Array API
-====================================
+=====================
+Data Interoperability
+=====================
 
 .. toctree::
     :maxdepth: 2
