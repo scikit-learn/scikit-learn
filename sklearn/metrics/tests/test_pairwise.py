@@ -293,6 +293,28 @@ def test_pairwise_boolean_distance(metric):
         pairwise_distances(X.astype(bool), metric=metric)
 
 
+@pytest.mark.parametrize(
+    "func", [pairwise_distances_argmin, pairwise_distances_argmin_min]
+)
+@pytest.mark.parametrize("metric", PAIRWISE_BOOLEAN_FUNCTIONS)
+def test_pairwise_argmin_boolean_distance(func, metric):
+    # Regression test for https://github.com/scikit-learn/scikit-learn/issues/32495
+    # No DataConversionWarning when input is already boolean.
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 2, size=(5, 4)).astype(bool)
+    Y = rng.randint(0, 2, size=(5, 4)).astype(bool)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DataConversionWarning)
+        func(X, Y, metric=metric)
+
+    # Non-boolean input should still trigger the warning.
+    X_float = X.astype(float)
+    msg = "Data was converted to boolean for metric %s" % metric
+    with pytest.warns(DataConversionWarning, match=msg):
+        func(X_float, Y, metric=metric)
+
+
 def test_no_data_conversion_warning():
     # No warnings issued if metric is not a boolean distance function
     rng = np.random.RandomState(0)

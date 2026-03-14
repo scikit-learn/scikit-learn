@@ -797,7 +797,18 @@ def pairwise_distances_argmin_min(
     array([1., 1.])
     """
     ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
-    X, Y = check_pairwise_arrays(X, Y, ensure_all_finite=ensure_all_finite)
+    dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
+
+    if dtype is bool and (
+        getattr(X, "dtype", None) != bool
+        or (Y is not None and getattr(Y, "dtype", None) != bool)
+    ):
+        msg = "Data was converted to boolean for metric %s" % metric
+        warnings.warn(msg, DataConversionWarning)
+
+    X, Y = check_pairwise_arrays(
+        X, Y, dtype=dtype, ensure_all_finite=ensure_all_finite
+    )
 
     if axis == 0:
         X, Y = Y, X
@@ -938,7 +949,18 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     array([0, 1])
     """
     ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
-    X, Y = check_pairwise_arrays(X, Y, ensure_all_finite=ensure_all_finite)
+    dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
+
+    if dtype is bool and (
+        getattr(X, "dtype", None) != bool
+        or (Y is not None and getattr(Y, "dtype", None) != bool)
+    ):
+        msg = "Data was converted to boolean for metric %s" % metric
+        warnings.warn(msg, DataConversionWarning)
+
+    X, Y = check_pairwise_arrays(
+        X, Y, dtype=dtype, ensure_all_finite=ensure_all_finite
+    )
     xp, _ = get_namespace(X, Y)
 
     if axis == 0:
