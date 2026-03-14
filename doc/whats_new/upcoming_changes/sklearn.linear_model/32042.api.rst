@@ -1,0 +1,13 @@
+- The parameters `C` of :class:`linear_model.LogisticRegression` and `Cs` of
+  :class:`linear_model.LogisticRegressionCV` are deprecated and will be removed in
+  version 1.11. Use `alpha` and `alphas` instead. To silence deprecation warnings,
+  set `C=None` or `Cs=None` during the deprecation period.
+  Note that the relation is `C=1/(alpha * n_samples)` or
+  `C=1/(alpha * np.sum(sample_weight))`. This ways, the penalty parameterization of
+  most linear models is aligned, e.g. :class:`linear_model.Lasso`,
+  :class:`linear_model.ElasticNet`, :class:`linear_model.PoissonRegressor`, to name a
+  few.
+
+  For :class:`linear_model.LogisticRegressionCV`, also the attributes `C_` and `Cs_`
+  are deprecated. Use the new attributes `alpha_` and `alphas_` instead.
+  By :user:`Christian Lorentzen <lorentzenchr>`.
