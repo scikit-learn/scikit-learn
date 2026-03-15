@@ -348,6 +348,7 @@ class NearestCentroid(
     predict_log_proba = available_if(_check_euclidean_metric)(
         DiscriminantAnalysisPredictionMixin.predict_log_proba
     )
+
     def partial_fit(self, X, y, classes=None):
         """Incrementally fit the NearestCentroid model.
 
@@ -398,6 +399,7 @@ class NearestCentroid(
             self.nk_[idx] = new_n
 
         return self
+
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = self.metric == "nan_euclidean"
