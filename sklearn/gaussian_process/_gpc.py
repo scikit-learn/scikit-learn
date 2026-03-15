@@ -371,6 +371,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             kernel = self.kernel_
             kernel.theta = theta
 
+        K_gradient = None
         if eval_gradient:
             K, K_gradient = kernel(self.X_train_, eval_gradient=True)
         else:

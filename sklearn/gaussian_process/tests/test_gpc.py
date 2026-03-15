@@ -96,6 +96,19 @@ def test_lml_without_cloning_kernel(kernel):
     assert_almost_equal(gpc.kernel_.theta, input_theta, 7)
 
 
+def test_lml_eval_gradient_false_does_not_require_kernel_gradient():
+    # Non-gradient LML evaluation should not access K_gradient.
+    X = np.array([[0.0], [1.0], [2.0]])
+    y = np.array([0, 1, 0])
+
+    gpc = GaussianProcessClassifier(kernel=RBF()).fit(X, y)
+    theta = gpc.kernel_.theta
+
+    lml = gpc.log_marginal_likelihood(theta, eval_gradient=False)
+
+    assert np.isscalar(lml)
+
+
 @pytest.mark.parametrize("kernel", non_fixed_kernels)
 def test_converged_to_local_maximum(kernel):
     # Test that we are in local maximum after hyperparameter-optimization.
