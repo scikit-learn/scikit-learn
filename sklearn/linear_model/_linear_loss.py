@@ -13,6 +13,7 @@ from sklearn.utils._array_api import (
     get_namespace,
     get_namespace_and_device,
 )
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import safe_sparse_dot, squared_norm
 
 
@@ -29,10 +30,12 @@ def sandwich_dot(X, W):
     # which (might) detect the symmetry and use BLAS SYRK under the hood.
     n_samples = X.shape[0]
     if sparse.issparse(X):
-        return safe_sparse_dot(
-            X.T,
-            sparse.dia_matrix((W, 0), shape=(n_samples, n_samples)) @ X,
-            dense_output=True,
+        return _align_api_if_sparse(
+            safe_sparse_dot(
+                X.T,
+                sparse.dia_array((W, 0), shape=(n_samples, n_samples)) @ X,
+                dense_output=True,
+            )
         )
     else:
         # np.einsum may use less memory but the following, using BLAS matrix
@@ -758,7 +761,7 @@ class LinearModelLoss:
             hessian_sum = hess_pointwise.sum()
             if sparse.issparse(X):
                 hX = (
-                    sparse.dia_matrix((hess_pointwise, 0), shape=(n_samples, n_samples))
+                    sparse.dia_array((hess_pointwise, 0), shape=(n_samples, n_samples))
                     @ X
                 )
             else:
