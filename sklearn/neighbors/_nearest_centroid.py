@@ -133,12 +133,6 @@ class NearestCentroid(
     [1]
     """
 
-    _parameter_constraints: dict = {
-        "metric": [StrOptions({"manhattan", "euclidean"})],
-        "shrink_threshold": [Interval(Real, 0, None, closed="neither"), None],
-        "priors": ["array-like", StrOptions({"empirical", "uniform"})],
-    }
-
     def __init__(
         self,
         metric="euclidean",
