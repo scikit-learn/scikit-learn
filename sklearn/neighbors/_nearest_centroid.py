@@ -26,6 +26,10 @@ from sklearn.utils.validation import check_is_fitted, validate_data
 class NearestCentroid(
     DiscriminantAnalysisPredictionMixin, ClassifierMixin, BaseEstimator
 ):
+    _parameter_constraints: dict = {
+        "metric": [StrOptions({"euclidean", "manhattan"}), callable],
+        "shrink_threshold": [Interval(Real, 0, None, closed="left"), None],
+    }
     """Nearest centroid classifier.
 
     Each class is represented by its centroid, with test samples classified to
