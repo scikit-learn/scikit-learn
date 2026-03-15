@@ -348,7 +348,56 @@ class NearestCentroid(
     predict_log_proba = available_if(_check_euclidean_metric)(
         DiscriminantAnalysisPredictionMixin.predict_log_proba
     )
+    def partial_fit(self, X, y, classes=None):
+        """Incrementally fit the NearestCentroid model.
 
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data.
+        y : array-like of shape (n_samples,)
+            Target values.
+        classes : array-like of shape (n_classes,), default=None
+            List of all the classes that can possibly appear in y.
+            Must be provided on the first call, optional on subsequent calls.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
+        X, y = validate_data(self, X, y, reset=not hasattr(self, "centroids_"))
+
+        if classes is not None:
+            classes = np.asarray(classes)
+
+        if not hasattr(self, "centroids_"):
+            # First call — initialize
+            le = LabelEncoder()
+            if classes is not None:
+                le.fit(classes)
+            else:
+                le.fit(y)
+            self.classes_ = le.classes_
+            n_classes = len(self.classes_)
+            n_features = X.shape[1]
+            self.centroids_ = np.zeros((n_classes, n_features))
+            self.nk_ = np.zeros(n_classes, dtype=np.int64)
+
+        for idx, c in enumerate(self.classes_):
+            mask = y == c
+            X_c = X[mask]
+            n_new = X_c.shape[0]
+            if n_new == 0:
+                continue
+            old_n = self.nk_[idx]
+            new_n = old_n + n_new
+            self.centroids_[idx] = (
+                self.centroids_[idx] * old_n + X_c.sum(axis=0)
+            ) / new_n
+            self.nk_[idx] = new_n
+
+        return self
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = self.metric == "nan_euclidean"
