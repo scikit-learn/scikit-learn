@@ -391,6 +391,8 @@ class NearestCentroid(
             n_new = X_c.shape[0]
             if n_new == 0:
                 continue
+            if not hasattr(self, 'nk_'):
+                self.nk_ = np.zeros(len(self.classes_), dtype=np.int64)
             old_n = self.nk_[idx]
             new_n = old_n + n_new
             self.centroids_[idx] = (
