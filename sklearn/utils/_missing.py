@@ -4,6 +4,9 @@
 import math
 import numbers
 from contextlib import suppress
+from enum import Enum, unique
+
+import numpy as np
 
 
 def is_scalar_nan(x):
@@ -92,3 +95,26 @@ def is_pandas_nat(x):
 
         return x is NaT
     return False
+
+
+@unique
+class _NAKey(Enum):
+    NONE = 0
+    NAN = 1
+    PD_NA = 2
+    PD_NAT = 3
+    NAT = 4
+
+
+def _normalize_na_key(x):
+    if x is None:
+        return _NAKey.NONE
+    if is_scalar_nan(x):
+        return _NAKey.NAN
+    if is_pandas_na(x):
+        return _NAKey.PD_NA
+    if is_pandas_nat(x):
+        return _NAKey.PD_NAT
+    if isinstance(x, (np.datetime64, np.timedelta64)) and np.isnat(x):
+        return _NAKey.NAT
+    return x

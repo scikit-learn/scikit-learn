@@ -804,9 +804,6 @@ def test_fastpath_matches_vectorized_for_int_categories_small_batch(n_repeats):
     ).fit(X_fit_i, y_fit_i)
     te_vec_i._small_batch_threshold = -1
 
-    if hasattr(te_fast_i, "_int_lookup_"):
-        assert te_fast_i._int_lookup_[0][0] is None
-
     X_small_i = np.array(
         [[0], [10_000_000], [123_456_789]],
         dtype=np.int64,
@@ -884,20 +881,6 @@ def test_fit_dataframe_sets_feature_names_polars():
     te = TargetEncoder(smooth=5.0).fit(X, y)
     names = te.get_feature_names_out()
     assert_array_equal(names, np.array(["feat_a", "feat_b"], dtype=object))
-
-
-def test_smallbatch_index_maps_are_lazy_and_materialize_on_use():
-    X = np.array([["a"], ["b"]], dtype=object)
-    y = np.array([0.0, 1.0])
-
-    te = TargetEncoder(smooth=5.0).fit(X, y)
-
-    index_maps = te._index_maps_
-    assert index_maps.__class__.__name__ == "_LazyIndexMaps"
-    assert index_maps._maps[0] is None
-
-    te.transform(X)
-    assert index_maps._maps[0] is not None
 
 
 def test_target_encoder_raises_cv_overlap(global_random_seed):

@@ -39,6 +39,7 @@ from sklearn.utils._array_api import (
     _is_numpy_namespace,
     yield_namespace_device_dtype_combinations,
 )
+from sklearn.utils._missing import _normalize_na_key
 from sklearn.utils._mocking import (
     MockDataFrame,
     _MockEstimatorOnOffPrediction,
@@ -77,7 +78,6 @@ from sklearn.utils.validation import (
     _estimator_has,
     _get_feature_names,
     _is_fitted,
-    _normalize_na_key,
     _num_features,
     _num_samples,
     _to_object_array,

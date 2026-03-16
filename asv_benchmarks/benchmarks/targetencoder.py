@@ -28,9 +28,7 @@ class TargetEncoderTransformSmallBatch(Benchmark):
 
     Fit timings/memory:
       - time_fit / peakmem_fit:
-            full fit including _init_int_lookup (current branch behaviour)
-      - time_fit_no_lut / peakmem_fit_no_lut:
-            fit with _init_int_lookup replaced by a no-op, isolating its cost
+            full fit
     """
 
     param_names = ["dtype", "target_type", "n_rows"]
@@ -138,17 +136,7 @@ class TargetEncoderTransformSmallBatch(Benchmark):
             self.X_fit, self.y
         )
 
-    def time_fit_no_lut(self, dtype: str, target_type: str, n_rows: int):
-        enc = TargetEncoder(target_type=self.target_type, random_state=0)
-        enc._init_int_lookup = lambda: None
-        enc.fit(self.X_fit, self.y)
-
     def peakmem_fit(self, dtype: str, target_type: str, n_rows: int):
         TargetEncoder(target_type=self.target_type, random_state=0).fit(
             self.X_fit, self.y
         )
-
-    def peakmem_fit_no_lut(self, dtype: str, target_type: str, n_rows: int):
-        enc = TargetEncoder(target_type=self.target_type, random_state=0)
-        enc._init_int_lookup = lambda: None
-        enc.fit(self.X_fit, self.y)
