@@ -40,7 +40,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_equal,
 )
-from sklearn.utils.fixes import CSR_CONTAINERS, parse_version
+from sklearn.utils.fixes import CSR_CONTAINERS, _sparse_eye_array, parse_version
 
 
 class Trans(TransformerMixin, BaseEstimator):
@@ -74,7 +74,7 @@ class SparseMatrixTrans(BaseEstimator):
 
     def transform(self, X, y=None):
         n_samples = len(X)
-        return self.csr_container(sparse.eye(n_samples, n_samples))
+        return self.csr_container(_sparse_eye_array(n_samples))
 
 
 class TransNo2D(BaseEstimator):
@@ -490,7 +490,7 @@ def test_column_transformer_output_indices_df():
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_column_transformer_sparse_array(csr_container):
-    X_sparse = csr_container(sparse.eye(3, 2))
+    X_sparse = csr_container(_sparse_eye_array(3, 2))
 
     # no distinction between 1D and 2D
     X_res_first = X_sparse[:, [0]]
@@ -1593,7 +1593,11 @@ def test_sk_visual_block_remainder_fitted_pandas(remainder):
     visual_block = ct._sk_visual_block_()
     assert visual_block.names == ("ohe", "remainder")
     assert visual_block.name_details == (["col1", "col2"], ["col3", "col4"])
-    assert visual_block.estimators == (ohe, remainder)
+    assert isinstance(visual_block.estimators[0], OneHotEncoder)
+    if remainder == "passthrough":
+        assert visual_block.estimators[1] == "passthrough"
+    else:
+        assert isinstance(visual_block.estimators[1], StandardScaler)
 
 
 @pytest.mark.parametrize("remainder", ["passthrough", StandardScaler()])
@@ -1608,7 +1612,39 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
     visual_block = ct._sk_visual_block_()
     assert visual_block.names == ("scale", "remainder")
     assert visual_block.name_details == ([0, 2], [1])
-    assert visual_block.estimators == (scaler, remainder)
+    assert isinstance(visual_block.estimators[0], StandardScaler)
+    if remainder == "passthrough":
+        assert visual_block.estimators[1] == "passthrough"
+    else:
+        assert isinstance(visual_block.estimators[1], StandardScaler)
+
+
+def test_sk_visual_block_remainder_col_names_pandas():
+    """Check that the visual block `name_details` matches the `feature_names_in_`
+    Non-regression test - when remainder_columns logic is removed it should fail
+    https://github.com/scikit-learn/scikit-learn/pull/31442#discussion_r2841235711
+    """
+    pd = pytest.importorskip("pandas")
+    ohe = OneHotEncoder()
+    ct = ColumnTransformer(
+        transformers=[("ohe", ohe, ["col1"])],
+        remainder="passthrough",
+    )
+    df = pd.DataFrame(
+        {
+            "col1": ["a", "b", "c"],
+            "col2": ["z", "z", "z"],
+        }
+    )
+    # It is not possible to guess the remainder columns when not fitted.
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.name_details == (["col1"], [])
+
+    ct.fit(df)
+    # Once fitted, the remainder columns are the columns seen during fit not
+    # specified for specific transformers.
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.name_details == (["col1"], ["col2"])
 
 
 @pytest.mark.parametrize("explicit_colname", ["first", "second", 0, 1])
