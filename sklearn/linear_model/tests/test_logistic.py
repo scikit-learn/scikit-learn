@@ -2832,9 +2832,17 @@ def test_lr_penalty_l1ratio_incompatible(penalty, l1_ratio):
 # TODO(1.11): remove when default of scoring has changed
 @pytest.mark.filterwarnings("ignore:.*default.*use_legacy_attributes.*:FutureWarning")
 def test_lr_scoring_warns():
-    """Check that scoring raise a warning."""
+    """Check that scoring raises a warning."""
     X, y = make_classification(n_samples=20)
     lr = LogisticRegressionCV(l1_ratios=[0])
     msg = "The default value of the parameter 'scoring' will change"
     with pytest.warns(FutureWarning, match=msg):
         lr.fit(X, y)
+
+
+# TODO(1.11): remove test when default of scoring has changed
+@pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
+def test_get_default_scorer():
+    """Test that LogisticRegressionCV gets correct default scorer."""
+    lr = LogisticRegressionCV()
+    assert lr._get_scorer()._score_func.__name__ == "accuracy_score"
