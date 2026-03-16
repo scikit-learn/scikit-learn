@@ -5,6 +5,7 @@ Logistic Regression
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import inspect
 import numbers
 import warnings
 from numbers import Integral, Real
@@ -27,7 +28,7 @@ from sklearn.linear_model._base import (
 from sklearn.linear_model._glm.glm import NewtonCholeskySolver
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.linear_model._sag import sag_solver
-from sklearn.metrics import get_scorer, get_scorer_names
+from sklearn.metrics import get_scorer, get_scorer_names, make_scorer
 from sklearn.model_selection import check_cv
 from sklearn.preprocessing import LabelEncoder
 from sklearn.svm._base import _fit_liblinear
@@ -308,6 +309,7 @@ def _logistic_regression_path(
         w0 = np.zeros(
             n_features + int(fit_intercept), dtype=_matching_numpy_dtype(X, xp=xp)
         )
+        # classes[1] is the "positive label"
         mask = xp.asarray(y == classes[1], device=device_)
         y_bin = xp.ones(y.shape, dtype=X.dtype, device=device_)
         if solver == "liblinear":
@@ -749,8 +751,51 @@ def _log_reg_scoring_path(
 
     scores = list()
 
+    # Prepare the call to get the score per fold: calc_score
     scoring = get_scorer(scoring)
-    for w in coefs:
+    if scoring is None:
+
+        def calc_score(log_reg):
+            return log_reg.score(X_test, y_test, sample_weight=sw_test)
+
+    else:
+        is_binary = len(classes) <= 2
+        score_params = score_params or {}
+        score_params = _check_method_params(X=X, params=score_params, indices=test)
+        # We need to pass the classes as "labels" argument to scorers that support
+        # it, e.g. scoring = "neg_brier_score", because y_test may not contain all
+        # class labels.
+        # There are at least 2 possibilities:
+        # 1. Metadata routing is enabled: A try except clause is possible with
+        #   adding labels to score_params. We could then pass the already instantiated
+        #   log_reg instance to scoring.
+        # 2. We reconstruct the scorer and pass labels as kwargs explicitly.
+        # We implement the 2nd option even if it seems a bit hacky because it works
+        # with and without metadata routing.
+        if hasattr(scoring, "_score_func"):
+            sig = inspect.signature(scoring._score_func).parameters
+        else:
+            sig = []
+
+        if "labels" in sig:
+            pos_label_kwarg = {}
+            if is_binary and "pos_label" in sig:
+                # see _logistic_regression_path
+                pos_label_kwarg["pos_label"] = classes[-1]
+            scoring = make_scorer(
+                scoring._score_func,
+                greater_is_better=True if scoring._sign == 1 else False,
+                response_method=scoring._response_method,
+                labels=classes,
+                **pos_label_kwarg,
+                **getattr(scoring, "_kwargs", {}),
+            )
+
+        def calc_score(log_reg):
+            return scoring(log_reg, X_test, y_test, **score_params)
+
+    for w, C in zip(coefs, Cs):
+        log_reg.C = C
         if fit_intercept:
             log_reg.coef_ = w[..., :-1]
             log_reg.intercept_ = w[..., -1]
@@ -758,15 +803,8 @@ def _log_reg_scoring_path(
             log_reg.coef_ = w
             log_reg.intercept_ = 0.0
 
-        if scoring is None:
-            scores.append(log_reg.score(X_test, y_test, sample_weight=sw_test))
-        else:
-            score_params = score_params or {}
-            score_params = _check_method_params(X=X, params=score_params, indices=test)
-            # FIXME: If scoring = "neg_brier_score" and if not all class labels
-            # are present in y_test, the following fails. Maybe we can pass
-            # "labels=classes" to the call of scoring.
-            scores.append(scoring(log_reg, X_test, y_test, **score_params))
+        scores.append(calc_score(log_reg))
+
     return coefs, Cs, np.array(scores), n_iter
 
 
@@ -1493,6 +1531,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
           ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
         - `None`: :ref:`accuracy <accuracy_score>` is used.
 
+        .. versionchanged:: 1.11
+           The default will change from None, i.e. accuracy, to 'neg_log_loss' in
+           version 1.11.
+
     solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'}, \
             default='lbfgs'
 
@@ -1715,14 +1757,17 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     >>> from sklearn.linear_model import LogisticRegressionCV
     >>> X, y = load_iris(return_X_y=True)
     >>> clf = LogisticRegressionCV(
-    ...     cv=5, random_state=0, use_legacy_attributes=False, l1_ratios=(0,)
+    ...     cv=5, random_state=0,
+    ...     use_legacy_attributes=False,
+    ...     l1_ratios=(0,),
+    ...     scoring="neg_log_loss",
     ... ).fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])
     >>> clf.predict_proba(X[:2, :]).shape
     (2, 3)
     >>> clf.score(X, y)
-    0.98...
+    -0.041...
     """
 
     _parameter_constraints: dict = {**LogisticRegression._parameter_constraints}
@@ -1735,7 +1780,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             "Cs": [Interval(Integral, 1, None, closed="left"), "array-like"],
             "l1_ratios": ["array-like", None, Hidden(StrOptions({"warn"}))],
             "cv": ["cv_object"],
-            "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+            "scoring": [
+                StrOptions(set(get_scorer_names())),
+                callable,
+                None,
+                Hidden(StrOptions({"warn"})),
+            ],
             "refit": ["boolean"],
             "penalty": [
                 StrOptions({"l1", "l2", "elasticnet"}),
@@ -1754,7 +1804,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         cv=None,
         dual=False,
         penalty="deprecated",
-        scoring=None,
+        scoring="warn",
         solver="lbfgs",
         tol=1e-4,
         max_iter=100,
@@ -1856,6 +1906,19 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 ),
                 FutureWarning,
             )
+
+        if self.scoring == "warn":
+            warnings.warn(
+                "The default value of the parameter 'scoring' will change from None, "
+                "i.e. accuracy, to 'neg_log_loss' in version 1.11. To silence this "
+                "warning, explicitly set the scoring parameter: "
+                "scoring='neg_log_loss' for the new, scoring='accuracy' or "
+                "scoring=None for the old default.",
+                FutureWarning,
+            )
+            scoring = None
+        else:
+            scoring = self.scoring
 
         if self.use_legacy_attributes == "warn":
             warnings.warn(
@@ -2003,7 +2066,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 max_iter=self.max_iter,
                 verbose=self.verbose,
                 class_weight=class_weight,
-                scoring=self.scoring,
+                scoring=scoring,
                 intercept_scaling=self.intercept_scaling,
                 random_state=self.random_state,
                 max_squared_sum=max_squared_sum,
@@ -2270,6 +2333,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         """Get the scorer based on the scoring method specified.
         The default scoring method is `accuracy`.
         """
+        if self.scoring == "warn":  # TODO(1.11): remove
+            return get_scorer("accuracy")
         scoring = self.scoring or "accuracy"
         return get_scorer(scoring)
 

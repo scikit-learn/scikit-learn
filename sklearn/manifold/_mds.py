@@ -813,7 +813,7 @@ class MDS(BaseEstimator):
         if init is not None:
             init_array = init
         elif self._init == "classical_mds":
-            cmds = ClassicalMDS(metric="precomputed")
+            cmds = ClassicalMDS(metric="precomputed", n_components=self.n_components)
             init_array = cmds.fit_transform(self.dissimilarity_matrix_)
         else:
             init_array = None

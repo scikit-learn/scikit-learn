@@ -6,6 +6,7 @@ import pytest
 import scipy
 import scipy.sparse as sp
 from numpy.testing import assert_allclose
+from scipy.special import expit, logit
 
 from sklearn._config import config_context
 from sklearn._loss import HalfMultinomialLoss
@@ -18,11 +19,13 @@ from sklearn.utils._array_api import (
     _convert_to_numpy,
     _count_nonzero,
     _estimator_with_converted_arrays,
+    _expit,
     _fill_diagonal,
     _get_namespace_device_dtype_ids,
     _half_multinomial_loss,
     _is_numpy_namespace,
     _isin,
+    _logit,
     _logsumexp,
     _matching_numpy_dtype,
     _max_precision_float_dtype,
@@ -39,6 +42,7 @@ from sklearn.utils._array_api import (
     move_to,
     np_compat,
     supported_float_dtypes,
+    yield_mixed_namespace_input_permutations,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -144,38 +148,21 @@ def test_get_namespace_array_api(monkeypatch):
 @pytest.mark.parametrize(
     "array_input, reference",
     [
-        pytest.param(("cupy", None), ("torch", "cuda"), id="cupy to torch cuda"),
-        pytest.param(("torch", "mps"), ("numpy", None), id="torch mps to numpy"),
-        pytest.param(("numpy", None), ("torch", "cuda"), id="numpy to torch cuda"),
-        pytest.param(("numpy", None), ("torch", "mps"), id="numpy to torch mps"),
-        pytest.param(
-            ("array_api_strict", None),
-            ("torch", "mps"),
-            id="array_api_strict to torch mps",
-        ),
+        pytest.param(*args[:2], id=args[2])
+        for args in yield_mixed_namespace_input_permutations()
     ],
 )
 def test_move_to_array_api_conversions(array_input, reference):
-    """Check conversion between various namespace and devices."""
-    if array_input[0] == "array_api_strict":
-        array_api_strict = pytest.importorskip(
-            "array_api_strict", reason="array-api-strict not available"
-        )
-    xp = _array_api_for_tests(reference[0], reference[1])
-    xp_array = _array_api_for_tests(array_input[0], array_input[1])
+    """Check conversion between various namespace-device-pairs."""
+    xp_to = _array_api_for_tests(reference.xp, reference.device)
+    xp_from = _array_api_for_tests(array_input[0], array_input[1])
 
     with config_context(array_api_dispatch=True):
-        device_ = device(xp.asarray([1], device=reference[1]))
-
-        if array_input[0] == "array_api_strict":
-            array_device = array_api_strict.Device("CPU_DEVICE")
-        else:
-            array_device = array_input[1]
-        array = xp_array.asarray([1, 2, 3], device=array_device)
-
-        array_out = move_to(array, xp=xp, device=device_)
-        assert get_namespace(array_out)[0] == xp
-        assert device(array_out) == device_
+        array_in = xp_from.asarray([1, 2, 3], device=array_input.device)
+        device_reference = device(xp_to.asarray([1], device=reference.device))
+        array_out = move_to(array_in, xp=xp_to, device=device_reference)
+        assert get_namespace(array_out)[0] == xp_to
+        assert device(array_out) == device_reference
 
 
 def test_move_to_sparse():
@@ -184,7 +171,6 @@ def test_move_to_sparse():
     xp_torch = _array_api_for_tests("torch", "cpu")
 
     sparse1 = sp.csr_array([0, 1, 2, 3])
-    sparse2 = sp.csr_array([0, 1, 0, 1])
     numpy_array = numpy.array([1, 2, 3])
 
     with config_context(array_api_dispatch=True):
@@ -822,6 +808,31 @@ def test_median(namespace, device, dtype_name, axis):
             assert get_namespace(result_xp)[0] == xp
             assert result_xp.device == X_xp.device
     assert_allclose(result_np, _convert_to_numpy(result_xp, xp=xp))
+
+
+@pytest.mark.parametrize(
+    "namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_expit_logit(namespace, device, dtype_name):
+    rtol = 1e-6 if "float32" in str(dtype_name) else 1e-12
+    xp = _array_api_for_tests(namespace, device)
+
+    with config_context(array_api_dispatch=True):
+        x_np = numpy.linspace(-20, 20, 1000).astype(dtype_name)
+        x_xp = xp.asarray(x_np, device=device)
+        assert_allclose(
+            _convert_to_numpy(_expit(x_xp), xp=xp),
+            expit(x_np),
+            rtol=rtol,
+        )
+
+        x_np = numpy.linspace(0, 1, 1000).astype(dtype_name)
+        x_xp = xp.asarray(x_np, device=device)
+        assert_allclose(
+            _convert_to_numpy(_logit(x_xp), xp=xp),
+            logit(x_np),
+            rtol=rtol,
+        )
 
 
 @pytest.mark.parametrize(
