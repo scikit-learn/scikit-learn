@@ -13,29 +13,39 @@ support in estimators, or develop custom callbacks.
 Callbacks
 ---------
 
-In scikit-learn, callbacks are classes following the :class:`~Callback` protocol.
-This protocol defines three methods (referred to as callback hooks) which are invoked at
-different steps of the estimator's fit process. The three hooks of a callback are :
+In scikit-learn, callbacks are classes following the :class:`~FitCallback` protocol.
+This protocol defines four methods (referred to as callback hooks) which are invoked at
+different steps of the estimator's fit process. The four hooks of a callback are :
 
-.. method:: Callback.on_fit_begin(estimator) -> None
+.. method:: FitCallback.setup(context) -> None
     :noindex:
 
     Called only once at the start of the ``fit`` method and responsible for the
     callback's setup.
 
-.. method:: Callback.on_fit_task_end(estimator, context, **kwargs) -> bool
+.. method:: FitCallback.on_fit_task_begin(context, **kwargs) -> None
     :noindex:
 
-    Called at the end of each task in ``fit`` and implementing the main work of the
-    callback. It returns a boolean which can be used by the estimator to stop its fit
-    process. In addition to the estimator the callback is attached to, it takes a
-    ``context`` argument, a :class:`~sklearn.callback.CallbackContext` object holding
-    contextual information and described in more detailed in the
-    :ref:`callback_context_section` below. Optional keyword arguments can be provided
-    depending on the estimator, with the list of possible keys and values described in
-    the :ref:`related section <contextual_info_section>` below.
+    Called at the beginning of each task in ``fit``. It takes a ``context`` argument,
+    a :class:`~sklearn.callback.CallbackContext` object holding contextual information
+    and described in more detailed in the :ref:`callback_context_section` below.
+    Optional keyword arguments can be provided depending on the estimator, with the list
+    of possible keys and values described in the
+    :ref:`related section <contextual_info_section>` below.
 
-.. method:: Callback.on_fit_end(estimator) -> None
+.. method:: FitCallback.on_fit_task_end(context, **kwargs) -> bool
+    :noindex:
+
+    Called at the end of each task in ``fit``. It returns a boolean which can be used by
+    the estimator to stop its fit process. In addition to the estimator the callback is
+    attached to, it takes a ``context`` argument, a
+    :class:`~sklearn.callback.CallbackContext` object holding contextual information and
+    described in more detailed in the :ref:`callback_context_section` below. Optional
+    keyword arguments can be provided depending on the estimator, with the list of
+    possible keys and values described in the
+    :ref:`related section <contextual_info_section>` below.
+
+.. method:: FitCallback.teardown(context) -> None
     :noindex:
 
     Called at the end of the ``fit`` method and responsible for the tear down of the
@@ -109,7 +119,7 @@ in a loop, such as in a grid search). Whereas an auto-propagated callback requir
 registered to the root estimator of the task tree, and its
 :meth:`~Callback.on_fit_task_end` hook will be called in all task node of the tree, up
 to a depth of :meth:`~AutoPropagatedCallback.max_estimator_depth`. The
-:meth:`~Callback.on_fit_begin` and :meth:`~Callback.on_fit_end` hooks of an
+:meth:`~Callback.setup` and :meth:`~Callback.teardown` hooks of an
 auto-propagated callback will still be only called once, in the root task.
 
 An auto-propagated callback can thus aggregate information across the task tree. For
@@ -142,38 +152,36 @@ inherit from to support callbacks. The children context objects are then instant
 each sub-task through their parent context's :meth:`~CallbackContext.subcontext` method.
 
 The callback hooks are invoked by the context object through its
-:meth:`~CallbackContext.eval_on_fit_begin`,
-:meth:`~CallbackContext.eval_on_fit_task_end` and
-:meth:`~CallbackContext.eval_on_fit_end` methods.
-:meth:`~CallbackContext.eval_on_fit_begin` and
-:meth:`~CallbackContext.eval_on_fit_task_end` are called during fit, respectively once
-at the beginning of ``fit`` and at each end of a task, as the names implie.
-:meth:`~CallbackContext.eval_on_fit_end` is automatically called after ``fit``, even if
-the ``fit`` call did not complete. This is achieved by decorating the ``fit`` method
-with the :func:`~CallbackContext.with_callback_context` decorator, which also takes care
-of the context tear-down.
+:meth:`~CallbackContext.eval_on_fit_task_begin` and 
+:meth:`~CallbackContext.eval_on_fit_task_end` methods, which are called during fit,
+at the beginning and at the end of each defined task.
+
+The `setup` and `teardown` hooks are called once, at the beginning and at the end of
+`fit`, respectively. The `with_callbacks` decorator used to decorate the `fit` method
+is responsible for calling the `teardown` hooks in a `try finally` block, which
+guarantees that callbacks teardown will always be evaluated, whether the `fit` call
+completed successfully or not.
 
 Here is a minimal example of how a callback context should be handled in an estimator::
-
-
     class MyEstimator(CallbackSupportMixin, BaseEstimator):
         def __init__(self, max_iter):
             self.max_iter = max_iter
 
-        @with_callback_context
+        @with_callbacks
         def fit(self, X, y):
             callback_ctx = self._init_callback_context(max_subtasks=self.max_iter)
-            callback_ctx.eval_on_fit_begin(estimator=self)
+            callback_ctx.eval_on_fit_task_begin()
 
             for i in range(self.max_iter):
-                subcontext = callback_ctx.subcontext(task_id=i)
+                subcontext = callback_ctx.subcontext(task_id=i).eval_on_fit_task_begin()
 
                 # Do something
 
                 subcontext.eval_on_fit_task_end(
-                    estimator=self,
                     data={"X_train": X, "y_train": y},
                 )
+
+            callback_ctx.eval_on_fit_task_end()
 
             return self
 
@@ -200,16 +208,14 @@ follows.
 
 - `data`: dict
     A dictionary containing the training and validation data. The possible keys are
-    "X_train", "y_train", "sample_weight_train", "X_val", "y_val", "sample_weight_val".
+    "X_train", "y_train", "X_val", "y_val".
 
-- `from_reconstruction_attributes`: callable
-    A function returning a ready-to-predict, transform, etc ... estimator as if the fit
-    had stopped at the end of this task.
+- `metadata`: dict
+    A dictionary containing the training and validation metadata.
 
-- `fit_state`: dict
-    Model-specific quantities updated during fit. This is not meant to be used by
-    generic callbacks but by a callback designed for a specific estimator.
-
+- `fitted_estimator`: estimator instance
+    The estimator, ready to predict, transform, etc ... as if the fit had stopped at the
+    end of this task.
 
 And here is a list of all the built-in callbacks in scikit-learn, and which ones of the
 ``kwargs`` they require to function.
