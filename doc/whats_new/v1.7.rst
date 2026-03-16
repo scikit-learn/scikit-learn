@@ -622,3 +622,4 @@ Thomas Li, ThorbenMaa, Tim Head, Tingwei Zhu, TJ Norred, Umberto Fasci, UV,
 Vasco Pereira, Vassilis Margonis, Velislav Babatchev, Victoria Shevchenko,
 viktor765, Vipsa Kamani, VirenPassi, Virgil Chan, vpz, Xiao Yuan, Yaich
 Mohamed, Yair Shimony, Yao Xiao, Yaroslav Halchenko, Yulia Vilensky, Yuvi Panda
+- Added :meth:`NearestCentroid.partial_fit` method to support incremental learning. :pr:`33543` by :user:`raunak-pratap`.
