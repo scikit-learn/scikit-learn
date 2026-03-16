@@ -4,7 +4,7 @@
 @EXPLICIT
 https://conda.anaconda.org/conda-forge/noarch/python_abi-3.14-8_cp314t.conda#3251796e09870c978e0f69fa05e38fb6
 https://conda.anaconda.org/conda-forge/noarch/tzdata-2025c-hc9c84f9_1.conda#ad659d0a2b3e47e38d829aa8cad2d610
-https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.1.4-hbd8a1cb_0.conda#bddacf101bb4dd0e51811cb69c7790e2
+https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.2.25-hbd8a1cb_0.conda#4492fd26db29495f0ba23f146cd5638d
 https://conda.anaconda.org/conda-forge/linux-64/libgomp-15.2.0-he0feb66_18.conda#239c5e9546c38a1e884d69effcf4c882
 https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda#a9f577daf3de00bca7c3c76c0ecbd1de
 https://conda.anaconda.org/conda-forge/linux-64/libgcc-15.2.0-he0feb66_18.conda#0aa00f03f9e39fb9876085dee11a85d4
@@ -55,5 +55,5 @@ https://conda.anaconda.org/conda-forge/noarch/pyproject-metadata-0.11.0-pyhd8ed1
 https://conda.anaconda.org/conda-forge/noarch/python-freethreading-3.14.3-h92d6c8b_1.conda#817a41a5e7c547bda68fd981fb72b1ec
 https://conda.anaconda.org/conda-forge/noarch/meson-python-0.19.0-pyh7e86bf3_2.conda#369afcc2d4965e7a6a075ab82e2a26b8
 https://conda.anaconda.org/conda-forge/noarch/pytest-9.0.2-pyhcf101f3_0.conda#2b694bad8a50dc2f712f5368de866480
-https://conda.anaconda.org/conda-forge/linux-64/scipy-1.17.0-py314h529d2a9_1.conda#2548681b651d007d01368d98b3f8536e
+https://conda.anaconda.org/conda-forge/linux-64/scipy-1.17.1-py314h529d2a9_0.conda#c09dd94be0e88aca25c60fb53d5c8e45
 https://conda.anaconda.org/conda-forge/noarch/pytest-run-parallel-0.8.2-pyhd8ed1ab_0.conda#288250b7e539cddf52f39616deae278d

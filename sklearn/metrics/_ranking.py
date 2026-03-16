@@ -38,7 +38,11 @@ from sklearn.utils._encode import _encode, _unique
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.sparsefuncs import count_nonzero
-from sklearn.utils.validation import _check_pos_label_consistency, _check_sample_weight
+from sklearn.utils.validation import (
+    _check_pos_label_consistency,
+    _check_sample_weight,
+    _deprecate_positional_args,
+)
 
 
 @validate_params(
@@ -865,6 +869,7 @@ def _multiclass_roc_auc_score(
         )
 
 
+@_deprecate_positional_args(version="1.11")
 @validate_params(
     {
         "y_true": ["array-like"],
@@ -874,7 +879,9 @@ def _multiclass_roc_auc_score(
     },
     prefer_skip_nested_validation=True,
 )
-def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weight=None):
+def confusion_matrix_at_thresholds(
+    y_true, y_score, *, pos_label=None, sample_weight=None
+):
     """Calculate :term:`binary` confusion matrix terms per classification threshold.
 
     Read more in the :ref:`User Guide <confusion_matrix>`.

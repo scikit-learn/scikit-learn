@@ -503,11 +503,7 @@ scikit-learn project.
       </tr>
       <tr>
         <td><a href="https://www.github.com">GitHub</a></td>
-        <td>Teams account</td>
-      </tr>
-      <tr>
-        <td><a href="https://azure.microsoft.com/en-us/">Microsoft Azure</a></td>
-        <td>CPU time on their Continuous Integration servers</td>
+        <td>CPU time on their Continuous Integration servers + Teams account</td>
       </tr>
     </tbody>
   </table>

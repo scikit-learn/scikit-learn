@@ -591,18 +591,33 @@ def move_to(*arrays, xp, device):
     )
 
 
-def _expit(X, out=None, xp=None):
+def _expit(x, out=None, xp=None):
     # The out argument for exp and hence expit is only supported for numpy,
     # but not in the Array API specification.
-    xp, _ = get_namespace(X, xp=xp)
+    xp, _ = get_namespace(x, xp=xp)
     if _is_numpy_namespace(xp):
-        if out is not None:
-            special.expit(X, out=out)
-        else:
-            out = special.expit(X)
-        return out
+        return special.expit(x, out=out)
 
-    return 1.0 / (1.0 + xp.exp(-X))
+    return 1.0 / (1.0 + xp.exp(-x))
+
+
+def _logit(x, out=None, xp=None):
+    # The out argument for log and hence logit is only supported for numpy,
+    # but not in the Array API specification.
+    xp, _ = get_namespace(x, xp=xp)
+    if _is_numpy_namespace(xp):
+        return special.logit(x, out=out)
+
+    # See https://github.com/scipy/xsf/blob/e0c4d22d6ae768b39efc69586f1e8d5560a32fc5/include/xsf/log_exp.h#L30
+    def logit_v2(x):
+        s = 2 * (x - 0.5)
+        return xp.log1p(s) - xp.log1p(-s)
+
+    return xp.where(
+        xp.logical_or(x < 0.3, x > 0.65),
+        xp.log(x / (1 - x)),
+        logit_v2(x),
+    )
 
 
 def _validate_diagonal_args(array, value, xp):
