@@ -753,14 +753,18 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         else:
             self.estimator_ = clone(self.estimator)
             classifier = clone(self.estimator)
-            splits = cv.split(X, y, **routed_params.splitter.split)
+            # Materialize splits to avoid consuming the generator twice.
+            # When refit=False, the first split is used for training
+            # estimator_ and the same splits are reused for threshold
+            # tuning, ensuring consistency (see #33540).
+            splits = list(cv.split(X, y, **routed_params.splitter.split))
 
             if self.refit:
                 # train on the whole dataset
                 X_train, y_train, fit_params_train = X, y, routed_params.estimator.fit
             else:
                 # single split cross-validation
-                train_idx, _ = next(cv.split(X, y, **routed_params.splitter.split))
+                train_idx, _ = splits[0]
                 X_train = _safe_indexing(X, train_idx)
                 y_train = _safe_indexing(y, train_idx)
                 fit_params_train = _check_method_params(
