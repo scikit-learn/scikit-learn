@@ -211,7 +211,7 @@ unscaled_clf = make_pipeline(
     LogisticRegressionCV(
         Cs=Cs,
         use_legacy_attributes=False,
-        l1_ratios=(0,),
+        l1_ratios=(0,),  # TODO(1.10): remove because it is default now
         scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
     ),
 )
@@ -223,7 +223,7 @@ scaled_clf = make_pipeline(
     LogisticRegressionCV(
         Cs=Cs,
         use_legacy_attributes=False,
-        l1_ratios=(0,),
+        l1_ratios=(0,),  # TODO(1.10): remove because it is default now
         scoring="neg_log_loss",  # TODO(1.11): remove because it is default now,
     ),
 )
