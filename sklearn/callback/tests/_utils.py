@@ -4,7 +4,7 @@
 import time
 
 from sklearn.base import BaseEstimator, _fit_context, clone
-from sklearn.callback import CallbackSupportMixin, with_fit_callbacks
+from sklearn.callback import CallbackSupportMixin, with_callbacks
 from sklearn.callback._callback_support import get_callback_manager
 from sklearn.utils.parallel import Parallel, delayed
 
@@ -177,7 +177,7 @@ class ThirdPartyEstimator(CallbackSupportMixin, BaseEstimator):
         self.max_iter = max_iter
         self.computation_intensity = computation_intensity
 
-    @with_fit_callbacks
+    @with_callbacks
     def fit(self, X=None, y=None):
         callback_ctx = self._init_callback_context(max_subtasks=self.max_iter)
         callback_ctx.eval_on_fit_task_begin()
@@ -296,7 +296,7 @@ def _fit_subestimator(meta_estimator, inner_estimator, X, y, *, outer_callback_c
 class NoSubtaskEstimator(CallbackSupportMixin, BaseEstimator):
     """A class mimicking an estimator without subtasks in fit."""
 
-    @with_fit_callbacks
+    @with_callbacks
     def fit(self, X=None, y=None):
         callback_ctx = self._init_callback_context().eval_on_fit_task_begin()
 

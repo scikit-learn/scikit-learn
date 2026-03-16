@@ -64,7 +64,7 @@ from sklearn.callback._base import AutoPropagatedCallback
 #     def __init__(self, max_iter):
 #         self.max_iter = max_iter
 #
-#     @with_fit_callbacks
+#     @with_callbacks
 #     def fit(self, X, y):
 #         callback_ctx = self._init_callback_context(max_subtasks=self.max_iter)
 #         callback_ctx.eval_on_fit_task_begin()

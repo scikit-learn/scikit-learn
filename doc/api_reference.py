@@ -154,7 +154,7 @@ API_REFERENCE = {
                     "CallbackSupportMixin",
                     "FitCallback",
                     "ProgressBar",
-                    "with_fit_callbacks",
+                    "with_callbacks",
                 ],
             },
         ],

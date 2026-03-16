@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import functools
 from contextlib import contextmanager
 from multiprocessing import Manager
 from threading import Lock
@@ -135,28 +136,29 @@ def callback_management_context(estimator):
                 del estimator._parent_callback_ctx
 
 
-def with_fit_callbacks(fit_method):
-    """Decorator to run the fit methods within a callback context manager.
+def with_callbacks(method):
+    """Decorator to run the method within a callback context manager.
 
     This decorator is responsible for calling the callbacks `teardown` hooks of
     callbacks in a `try finally` block, which guarantees that callbacks teardown will
-    always be evaluated, whether the estimator's fit exits successfully or not.
+    always be evaluated, whether the estimator's method exits successfully or not.
 
     It will only teardown callbacks that are not propagated from a meta-estimator.
 
     Parameters
     ----------
-    fit_method : method
-        The fit method to decorate.
+    method : method
+        The method to decorate.
 
     Returns
     -------
-    decorated_fit_method : method
-        The decorated fit method.
+    decorated_method : method
+        The decorated method.
     """
 
-    def callback_managed_fit_method(estimator, *args, **kwargs):
+    @functools.wraps(method)
+    def callback_managed_method(estimator, *args, **kwargs):
         with callback_management_context(estimator):
-            return fit_method(estimator, *args, **kwargs)
+            return method(estimator, *args, **kwargs)
 
-    return callback_managed_fit_method
+    return callback_managed_method
