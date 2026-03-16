@@ -476,3 +476,16 @@ jobs:
             --junit-file $TEST_DIR/$JUNITXML \
             --auto-close false \
             --job-name "$JOB_NAME"
+
+  # This aggregates all unit test jobs statuses into a single status. This is
+  # useful to be able to have a single required check in GitHub.
+  check-job-statuses:
+    name: Check all job statuses
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [lint, unit-tests, debian-32bit, free-threaded, scipy-dev]
+    steps:
+      - uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
+          allowed-skips: free-threaded,scipy-dev

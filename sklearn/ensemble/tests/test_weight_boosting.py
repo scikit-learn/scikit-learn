@@ -367,7 +367,7 @@ def test_sparse_classification(sparse_container, expected_internal_type):
     # Verify sparsity of data is maintained during training
     types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-    assert all([t == expected_internal_type for t in types])
+    assert all(issubclass(t, expected_internal_type) for t in types)
 
 
 @pytest.mark.parametrize(
@@ -427,7 +427,7 @@ def test_sparse_regression(sparse_container, expected_internal_type):
 
     types = [i.data_type_ for i in sparse_regressor.estimators_]
 
-    assert all([t == expected_internal_type for t in types])
+    assert all(issubclass(t, expected_internal_type) for t in types)
 
 
 def test_sample_weight_adaboost_regressor():

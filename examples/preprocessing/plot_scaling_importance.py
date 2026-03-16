@@ -209,7 +209,11 @@ alphas = np.logspace(-8, 2, 20)
 unscaled_clf = make_pipeline(
     pca,
     LogisticRegressionCV(
-        Cs=None, alphas=alphas, use_legacy_attributes=False, l1_ratios=(0,)
+        Cs=None,
+        alphas=alphas,
+        use_legacy_attributes=False,
+        l1_ratios=(0,),  # TODO(1.10): remove because it is default now
+        scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
     ),
 )
 unscaled_clf.fit(X_train, y_train)
@@ -218,7 +222,11 @@ scaled_clf = make_pipeline(
     scaler,
     pca,
     LogisticRegressionCV(
-        Cs=None, alphas=alphas, use_legacy_attributes=False, l1_ratios=(0,)
+        Cs=None,
+        alphas=alphas,
+        use_legacy_attributes=False,
+        l1_ratios=(0,),  # TODO(1.10): remove because it is default now
+        scoring="neg_log_loss",  # TODO(1.11): remove because it is default now,
     ),
 )
 scaled_clf.fit(X_train, y_train)

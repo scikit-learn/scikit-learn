@@ -55,7 +55,7 @@ Histogram-Based Gradient Boosting
 Scikit-learn 0.21 introduced two new implementations of
 gradient boosted trees, namely :class:`HistGradientBoostingClassifier`
 and :class:`HistGradientBoostingRegressor`, inspired by
-`LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
+`LightGBM <https://github.com/lightgbm-org/LightGBM>`__ (See [LightGBM]_).
 
 These histogram-based estimators can be **orders of magnitude faster**
 than :class:`GradientBoostingClassifier` and
@@ -460,7 +460,8 @@ is the number of samples at the node.
 
 :class:`HistGradientBoostingClassifier` and
 :class:`HistGradientBoostingRegressor`, in contrast, do not require sorting the
-feature values and instead use a data-structure called a histogram, where the
+feature values and instead use a data-structure called
+`histogram <https://en.wikipedia.org/wiki/Histogram>`_ , where the
 samples are implicitly ordered. Building a histogram has a
 :math:`\mathcal{O}(n)` complexity, so the node splitting procedure has a
 :math:`\mathcal{O}(n_\text{features} \times n)` complexity, much smaller
@@ -473,6 +474,11 @@ integer-valued bins. This binning procedure does require sorting the feature
 values, but it only happens once at the very beginning of the boosting process
 (not at each node, like in :class:`GradientBoostingClassifier` and
 :class:`GradientBoostingRegressor`).
+
+A second major reason for being faster is the fact that
+:class:`HistGradientBoostingClassifier` and :class:`HistGradientBoostingRegressor` both
+use second order information about the loss, i.e. the Hessian. This is called Newton
+boosting and avoids the line-search step of the ordinary gradient boosting.
 
 Finally, many parts of the implementation of
 :class:`HistGradientBoostingClassifier` and
