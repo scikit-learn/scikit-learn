@@ -6,6 +6,7 @@
 import copy
 import functools
 import inspect
+import numbers
 import platform
 import re
 import warnings
@@ -15,13 +16,14 @@ import numpy as np
 
 from sklearn import __version__
 from sklearn._config import config_context, get_config
-from sklearn.callback._callback_context import callback_management_context
+from sklearn.callback._callback_support import callback_management_context
 from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.utils._metadata_requests import _MetadataRequester, _routing_enabled
 from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import validate_parameter_constraints
 from sklearn.utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
 from sklearn.utils._repr_html.estimator import estimator_html_repr
+from sklearn.utils._repr_html.fitted_attributes import AttrsDict
 from sklearn.utils._repr_html.params import ParamsDict
 from sklearn.utils._set_output import _SetOutputMixin
 from sklearn.utils._tags import (
@@ -135,11 +137,12 @@ def _clone_parametrized(estimator, *, safe=True):
 
     params_set = new_object.get_params(deep=False)
 
-    # attach callbacks to the new estimator
     if hasattr(estimator, "_skl_callbacks"):
-        # TODO(callbacks): Figure out the exact behavior we want when cloning an
-        # estimator with callbacks.
-        new_object._skl_callbacks = clone(estimator._skl_callbacks, safe=False)
+        # Callback classes are expected to be designed in a way that a single instance
+        # can be used by multiple clones of the same estimator as is typically the case
+        # in ensembles or during cross-validation. Therefore it is safe to pass the
+        # callback instances by reference.
+        new_object._skl_callbacks = estimator._skl_callbacks
 
     # quick sanity check of the parameters of the clone
     for name in new_object_params:
@@ -347,6 +350,44 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         return ParamsDict(
             params=params,
             non_default=tuple(non_default_params),
+            estimator_class=self.__class__,
+            doc_link=doc_link,
+        )
+
+    def _get_fitted_attr_html(self, doc_link=""):
+        """Get fitted attributes of the estimator."""
+
+        fitted_attr = {}
+        for name, value in inspect.getmembers(self):
+            # We display up to 100 fitted attributes
+            if len(fitted_attr) > 100:
+                fitted_attr["..."] = {
+                    "type_name": "...",
+                    "value": "",
+                }
+                break
+            if name.startswith("_") or not name.endswith("_"):
+                continue
+            if (
+                hasattr(value, "shape")
+                and hasattr(value, "dtype")
+                and not isinstance(value, numbers.Number)
+            ):
+                # array-like attribute with shape and dtype
+                fitted_attr[name] = {
+                    "type_name": type(value).__name__,
+                    "shape": value.shape,
+                    "dtype": value.dtype,
+                    "value": value,
+                }
+            else:
+                fitted_attr[name] = {
+                    "type_name": type(value).__name__,
+                    "value": value,
+                }
+
+        return AttrsDict(
+            fitted_attrs=fitted_attr,
             estimator_class=self.__class__,
             doc_link=doc_link,
         )

@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import sys
+
 import numpy as np
 import pytest
 
@@ -229,3 +231,102 @@ def test_estimator_without_subtask():
     estimator = NoSubtaskEstimator()
     estimator.set_callbacks([TestingCallback()])
     estimator.fit()
+
+
+@pytest.mark.parametrize("Callback", [TestingAutoPropagatedCallback, TestingCallback])
+def test_callback_hooks_called(Callback):
+    """Check the number of callback hook calls in a regular estimator.
+
+    For a regular estimator, it does not depend whether it's an autopropagated callback
+    or not.
+    """
+    max_iter = 10
+    callback = Callback()
+    MaxIterEstimator(max_iter=max_iter).set_callbacks(callback).fit()
+    assert callback.count_hooks("setup") == 1
+    # 1 root + max_iter leaves
+    assert callback.count_hooks("on_fit_task_begin") == 1 + max_iter
+    assert callback.count_hooks("on_fit_task_end") == 1 + max_iter
+    assert callback.count_hooks("teardown") == 1
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 12, 8),
+    reason="Race conditions can appear because of multiprocessing issues for python"
+    " < 3.12.8.",
+)
+@pytest.mark.parametrize("n_jobs", [1, 2])
+def test_meta_estimator_autopropagated_callback_hooks_called(n_jobs):
+    """Check the number of callback hook calls in a meta-estimator.
+
+    For an auto-propagated callback, setup and teardown are called only once,
+    by the meta-estimator. To count the number of task ends, we need to aggregate the
+    number of tasks from all the levels of the global task tree (which contains the
+    task tree of the meta-estimator and the task trees of each sub-estimator).
+    """
+
+    n_outer, n_inner, max_iter = 2, 3, 5
+    callback = TestingAutoPropagatedCallback()
+    MetaEstimator(
+        MaxIterEstimator(max_iter=max_iter),
+        n_outer=n_outer,
+        n_inner=n_inner,
+        n_jobs=n_jobs,
+    ).set_callbacks(callback).fit()
+
+    assert callback.count_hooks("setup") == 1
+    expected_n_tasks = np.sum(np.cumprod([1, n_outer, n_inner, max_iter]))
+    assert callback.count_hooks("on_fit_task_begin") == expected_n_tasks
+    assert callback.count_hooks("on_fit_task_end") == expected_n_tasks
+    assert callback.count_hooks("teardown") == 1
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 12, 8),
+    reason="Race conditions can appear because of multiprocessing issues for python"
+    " < 3.12.8.",
+)
+@pytest.mark.parametrize("n_jobs", [1, 2])
+def test_meta_estimator_callback_hooks_called(n_jobs):
+    """Check the number of callback hook calls in a meta-estimator.
+
+    For a non auto-propagated callback, setup and teardown are called once for
+    each fit of the sub-estimator. The number of task ends is the sum of the number of
+    task ends from all the sub-estimators.
+    """
+    n_outer, n_inner, max_iter = 2, 3, 5
+    callback = TestingCallback()
+    est = MaxIterEstimator(max_iter=max_iter).set_callbacks(callback)
+    MetaEstimator(est, n_outer=n_outer, n_inner=n_inner, n_jobs=n_jobs).fit()
+
+    n_fits = n_outer * n_inner
+    assert callback.count_hooks("setup") == n_fits
+    # 1 root + max_iter leaves
+    assert callback.count_hooks("on_fit_task_begin") == n_fits * (1 + max_iter)
+    assert callback.count_hooks("on_fit_task_end") == n_fits * (1 + max_iter)
+    assert callback.count_hooks("teardown") == n_fits
+
+
+def test_autopropagation_to_callback_agnostic_subestimator():
+    """Check the number of hook calls when the sub-estimator doesn't support callbacks.
+
+    The number of task begins and ends is just the number of nodes in the context tree
+    of the meta-estimator.
+    """
+    n_outer, n_inner = 2, 3
+    callback = TestingAutoPropagatedCallback()
+    meta_estimator = MetaEstimator(
+        NoCallbackEstimator(), n_outer=n_outer, n_inner=n_inner
+    ).set_callbacks(callback)
+
+    with pytest.warns(
+        UserWarning,
+        match="The estimator NoCallbackEstimator does not support callbacks.",
+    ):
+        meta_estimator.fit()
+
+    assert callback.count_hooks("setup") == 1
+    expected_n_tasks = np.sum(np.cumprod([1, n_outer, n_inner]))
+    assert callback.count_hooks("on_fit_task_begin") == expected_n_tasks
+    assert callback.count_hooks("on_fit_task_end") == expected_n_tasks
+    assert callback.count_hooks("teardown") == 1

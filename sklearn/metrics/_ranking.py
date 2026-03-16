@@ -16,7 +16,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy.integrate import trapezoid
-from scipy.sparse import csr_matrix, issparse
+from scipy.sparse import csr_array, issparse
 from scipy.stats import rankdata
 
 from sklearn.exceptions import UndefinedMetricWarning
@@ -30,6 +30,7 @@ from sklearn.utils import (
 )
 from sklearn.utils._array_api import (
     _max_precision_float_dtype,
+    get_namespace,
     get_namespace_and_device,
     move_to,
     size,
@@ -38,7 +39,11 @@ from sklearn.utils._encode import _encode, _unique
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.sparsefuncs import count_nonzero
-from sklearn.utils.validation import _check_pos_label_consistency, _check_sample_weight
+from sklearn.utils.validation import (
+    _check_pos_label_consistency,
+    _check_sample_weight,
+    _deprecate_positional_args,
+)
 
 
 @validate_params(
@@ -227,7 +232,10 @@ def average_precision_score(
     0.77
     """
     xp, _, device = get_namespace_and_device(y_score)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
+    # To allow mixed string `y_true`/numeric `y_score` input, cannot move `y_true`
+    # until it has been converted to an integer (e.g., via `label_binarize`)
+    # Ensures `test_array_api_classification_mixed_string_numeric_input` passes.
+    sample_weight = move_to(sample_weight, xp=xp, device=device)
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
@@ -252,7 +260,8 @@ def average_precision_score(
         return float(max(0.0, -xp.sum(xp.diff(recall) * precision[:-1])))
 
     y_type = type_of_target(y_true, input_name="y_true")
-    present_labels = xp.unique_values(y_true)
+    xp_y_true, _ = get_namespace(y_true)
+    present_labels = xp_y_true.unique_values(y_true)
 
     if y_type == "binary":
         if present_labels.shape[0] == 2 and pos_label not in present_labels:
@@ -274,6 +283,7 @@ def average_precision_score(
                 "Do not set pos_label or set pos_label to 1."
             )
         y_true = label_binarize(y_true, classes=present_labels)
+        y_true = move_to(y_true, xp=xp, device=device)
         if not y_score.shape == y_true.shape:
             raise ValueError(
                 "`y_score` needs to be of shape `(n_samples, n_classes)`, since "
@@ -865,6 +875,53 @@ def _multiclass_roc_auc_score(
         )
 
 
+def _sort_inputs_and_compute_classification_thresholds(
+    y_true, y_score, sample_weight=None
+):
+    """Validate and sort inputs, and compute classification thresholds.
+
+    Performs the following functions:
+
+    * Array validation on `y_true`, `y_score` and `sample_weight`
+    * Filters out 0-weighted samples
+    * Sorts `y_score`, `y_true` and `sample_weight` according to descending `y_score`
+    * Computes thresholds i.e. indices where sorted `y_score` changes
+    """
+    xp, _, device = get_namespace_and_device(y_score)
+
+    check_consistent_length(y_true, y_score, sample_weight)
+    y_true = column_or_1d(y_true)
+    y_score = column_or_1d(y_score)
+    assert_all_finite(y_true)
+    assert_all_finite(y_score)
+
+    # Filter out zero-weighted samples, as they should not impact the result
+    if sample_weight is not None:
+        sample_weight = column_or_1d(sample_weight)
+        sample_weight = _check_sample_weight(sample_weight, y_true)
+        nonzero_weight_mask = sample_weight != 0
+        y_true = y_true[nonzero_weight_mask]
+        y_score = y_score[nonzero_weight_mask]
+        sample_weight = sample_weight[nonzero_weight_mask]
+
+    # sort scores and corresponding truth values
+    desc_score_indices = xp.argsort(y_score, stable=True, descending=True)
+    y_score = y_score[desc_score_indices]
+    y_true = y_true[desc_score_indices]
+    if sample_weight is not None:
+        sample_weight = sample_weight[desc_score_indices]
+
+    # y_score typically has many tied values. Here we extract
+    # the indices associated with the distinct values. We also
+    # concatenate a value for the end of the curve.
+    distinct_value_indices = xp.nonzero(xp.diff(y_score))[0]
+    threshold_idxs = xp.concat(
+        [distinct_value_indices, xp.asarray([size(y_true) - 1], device=device)]
+    )
+    return y_true, y_score, sample_weight, threshold_idxs
+
+
+@_deprecate_positional_args(version="1.11")
 @validate_params(
     {
         "y_true": ["array-like"],
@@ -874,7 +931,9 @@ def _multiclass_roc_auc_score(
     },
     prefer_skip_nested_validation=True,
 )
-def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weight=None):
+def confusion_matrix_at_thresholds(
+    y_true, y_score, *, pos_label=None, sample_weight=None
+):
     """Calculate :term:`binary` confusion matrix terms per classification threshold.
 
     Read more in the :ref:`User Guide <confusion_matrix>`.
@@ -949,44 +1008,22 @@ def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weigh
     if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
         raise ValueError("{0} format is not supported".format(y_type))
 
-    xp, _, device = get_namespace_and_device(y_true, y_score, sample_weight)
-
-    check_consistent_length(y_true, y_score, sample_weight)
-    y_true = column_or_1d(y_true)
-    y_score = column_or_1d(y_score)
-    assert_all_finite(y_true)
-    assert_all_finite(y_score)
-
-    # Filter out zero-weighted samples, as they should not impact the result
-    if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight)
-        sample_weight = _check_sample_weight(sample_weight, y_true)
-        nonzero_weight_mask = sample_weight != 0
-        y_true = y_true[nonzero_weight_mask]
-        y_score = y_score[nonzero_weight_mask]
-        sample_weight = sample_weight[nonzero_weight_mask]
-
+    xp, _, device = get_namespace_and_device(y_score)
     pos_label = _check_pos_label_consistency(pos_label, y_true)
-
-    # make y_true a boolean vector
-    y_true = y_true == pos_label
-
-    # sort scores and corresponding truth values
-    desc_score_indices = xp.argsort(y_score, stable=True, descending=True)
-    y_score = y_score[desc_score_indices]
-    y_true = y_true[desc_score_indices]
-    if sample_weight is not None:
-        weight = sample_weight[desc_score_indices]
-    else:
-        weight = 1.0
-
-    # y_score typically has many tied values. Here we extract
-    # the indices associated with the distinct values. We also
-    # concatenate a value for the end of the curve.
-    distinct_value_indices = xp.nonzero(xp.diff(y_score))[0]
-    threshold_idxs = xp.concat(
-        [distinct_value_indices, xp.asarray([size(y_true) - 1], device=device)]
+    xp_y_true, _ = get_namespace(y_true)
+    # Make `y_true` a boolean vector. Use `asarray` as `y_true` could be a list
+    y_true = xp_y_true.asarray(
+        xp_y_true.asarray(y_true) == pos_label, dtype=xp_y_true.int32
     )
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
+
+    y_true, y_score, weight, threshold_idxs = (
+        _sort_inputs_and_compute_classification_thresholds(
+            y_true, y_score, sample_weight
+        )
+    )
+    if weight is None:
+        weight = 1.0
 
     # accumulate the true positives with decreasing threshold
     max_float_dtype = _max_precision_float_dtype(xp, device)
@@ -1119,7 +1156,7 @@ def precision_recall_curve(
     >>> thresholds
     array([0.1 , 0.35, 0.4 , 0.8 ])
     """
-    xp, _, device = get_namespace_and_device(y_true, y_score)
+    xp, _, device = get_namespace_and_device(y_score)
 
     _, fps, _, tps, thresholds = confusion_matrix_at_thresholds(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
@@ -1404,7 +1441,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
         raise ValueError("{0} format is not supported".format(y_type))
 
     if not issparse(y_true):
-        y_true = csr_matrix(y_true)
+        y_true = csr_array(y_true)
 
     y_score = -y_score
 
@@ -1586,7 +1623,7 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
 
     n_samples, n_labels = y_true.shape
 
-    y_true = csr_matrix(y_true)
+    y_true = csr_array(y_true)
 
     loss = np.zeros(n_samples)
     for i, (start, stop) in enumerate(zip(y_true.indptr, y_true.indptr[1:])):
@@ -2208,3 +2245,103 @@ def top_k_accuracy_score(
         return float(np.sum(hits))
     else:
         return float(np.dot(hits, sample_weight))
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "metric_func": [callable],
+        "sample_weight": ["array-like", None],
+        "metric_params": [dict, None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def metric_at_thresholds(
+    y_true,
+    y_score,
+    metric_func,
+    *,
+    sample_weight=None,
+    metric_params=None,
+):
+    r"""Compute `metric_func` per threshold for :term:`binary` data.
+
+    Aids visualization of metric values across thresholds when tuning the
+    :ref:`decision threshold <threshold_tunning>`.
+
+    Read more in the :ref:`User Guide <metric_at_thresholds>`.
+
+    .. versionadded:: 1.9
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        Ground truth (correct) target labels.
+
+    y_score : array-like of shape (n_samples,)
+        Continuous prediction scores, either estimated probabilities of the
+        positive class or output of a :term:`decision_function`.
+
+    metric_func : callable
+        The metric function to use. It will be called as
+        `metric_func(y_true, y_pred, **metric_params)`, where `y_pred` are
+        thresholded predictions, internally computed as
+        `y_pred = (y_score >= threshold)`. The output should be
+        a single numeric or a collection where each element has the same size.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights. If not `None`, will be passed to `metric_func`.
+
+    metric_params : dict, default=None
+        Parameters to pass to `metric_func`.
+
+    Returns
+    -------
+    metric_values : ndarray of shape (n_thresholds,) or (n_thresholds, \*n_outputs)
+        The scores associated with each threshold. If `metric_func` returns a
+        collection (e.g., a tuple of floats), the output would be a 2D array
+        of shape (n_thresholds, \*n_outputs).
+
+    thresholds : ndarray of shape (n_thresholds,)
+        The thresholds used to compute the scores.
+
+    See Also
+    --------
+    confusion_matrix_at_thresholds : Compute binary confusion matrix per threshold.
+    precision_recall_curve : Compute precision-recall pairs for different
+        probability thresholds.
+    det_curve : Compute error rates for different probability thresholds.
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import accuracy_score, metric_at_thresholds
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> metric_values, thresholds = metric_at_thresholds(
+    ...     y_true, y_score, accuracy_score)
+    >>> thresholds
+    array([0.8 , 0.4 , 0.35, 0.1 ])
+    >>> metric_values
+    array([0.75, 0.5 , 0.75, 0.5 ])
+    """
+    y_true, y_score, sample_weight, threshold_idxs = (
+        _sort_inputs_and_compute_classification_thresholds(
+            y_true, y_score, sample_weight
+        )
+    )
+    metric_params = {
+        **(metric_params or {}),
+        **({"sample_weight": sample_weight} if sample_weight is not None else {}),
+    }
+
+    thresholds = y_score[threshold_idxs]
+    metric_values = []
+    for threshold in thresholds:
+        y_pred = (y_score >= threshold).astype(np.int32)
+        metric_values.append(metric_func(y_true, y_pred, **metric_params))
+
+    metric_values = np.asarray(metric_values)
+    return metric_values, thresholds

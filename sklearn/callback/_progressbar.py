@@ -15,7 +15,7 @@ class ProgressBar:
 
     Parameters
     ----------
-    max_estimator_depth : int, default=2
+    max_propagation_depth : int, default=2
         The maximum number of nested levels of estimators to display progress bars for.
         If set to None, all levels are displayed.
 
@@ -25,7 +25,7 @@ class ProgressBar:
     unexpected crashes related to multiprocessing bugs on certain platforms.
     """
 
-    def __init__(self, max_estimator_depth=2):
+    def __init__(self, max_propagation_depth=2):
         if sys.version_info < (3, 12, 8):
             warnings.warn(
                 "The use of the ProgressBar callback on python versions inferior "
@@ -35,27 +35,52 @@ class ProgressBar:
 
         check_rich_support("Progressbar")
 
-        self.max_estimator_depth = max_estimator_depth
+        self.max_propagation_depth = max_propagation_depth
+        self._manager = get_callback_manager()
+        # Queue proxies need to be shared across callback copies in subprocesses,
+        # while monitor threads must stay process-local (they are not picklable).
+        self._run_queues = self._manager.dict()
+        self._run_monitors = {}
 
-    def on_fit_begin(self, estimator):
-        self._queue = get_callback_manager().Queue()
-        self.progress_monitor = RichProgressMonitor(queue=self._queue)
-        self.progress_monitor.start()
+    def setup(self, context):
+        if not hasattr(self, "_manager"):
+            # If the outer function call supports callback, it would typically have
+            # initialized the manager and monitor in the same process and we can
+            # directly reuse it. If the same callback is used to collect progress of
+            # sub-estimators in subprocess parallel workers the setup/teardown is not
+            # needed because it is performed only once, typically in the parent process.
+            # However, if the outer function call does not support callbacks explicitly,
+            # we need to reinitialize a working callback state in worker processes:
+            # the callback will work in slightly degraded mode with redundant managers
+            # and progress monitors but this should not crash.
+            self._manager = get_callback_manager()
+            self._run_queues = self._manager.dict()
+            self._run_monitors = {}
 
-    def on_fit_task_end(self, estimator, context, **kwargs):
-        self._queue.put(context)
+        queue = self._manager.Queue()
+        progress_monitor = RichProgressMonitor(queue=queue)
+        progress_monitor.start()
+        self._run_queues[context.root_uuid] = queue
+        self._run_monitors[context.root_uuid] = progress_monitor
+        self._run_queues[context.root_uuid].put(context)
 
-    def on_fit_end(self, estimator, context):
-        # This is called by the root context. We signal that the root task is finished
-        # and the queue won't receive any more tasks.
-        self._queue.put(context)
-        self._queue.put(None)
-        self.progress_monitor.join()
+    def on_fit_task_begin(self, context, **kwargs):
+        pass
+
+    def on_fit_task_end(self, context, **kwargs):
+        self._run_queues[context.root_uuid].put(context)
+
+    def teardown(self, context):
+        # Signal that the queue won't receive any more tasks.
+        self._run_queues[context.root_uuid].put(None)
+        self._run_monitors[context.root_uuid].join()
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        if "progress_monitor" in state:
-            del state["progress_monitor"]  # a thread is not picklable
+        state.pop("_manager", None)
+        state.pop("_run_monitors", None)
+        # Note that run queues are pickleable and are expected to be shared between
+        # the parent and worker processes.
         return state
 
 

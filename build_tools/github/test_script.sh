@@ -7,31 +7,6 @@ source build_tools/shared.sh
 
 activate_environment
 
-if [[ "$BUILD_REASON" == "Schedule" ]]; then
-    # Enable global random seed randomization to discover seed-sensitive tests
-    # only on nightly builds.
-    # https://scikit-learn.org/stable/computing/parallelism.html#environment-variables
-    export SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$(($RANDOM % 20))
-    echo "To reproduce this test run, set the following environment variable:"
-    echo "    SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$SKLEARN_TESTS_GLOBAL_RANDOM_SEED",
-    echo "See: https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed"
-
-    # Enable global dtype fixture for all nightly builds to discover
-    # numerical-sensitive tests.
-    # https://scikit-learn.org/stable/computing/parallelism.html#environment-variables
-    export SKLEARN_RUN_FLOAT32_TESTS=1
-fi
-
-# In GitHub Action (especially in `.github/workflows/unit-tests.yml` which
-# calls this script), the environment variable `COMMIT_MESSAGE` is already set
-# to the latest commit message.
-if [[ -z "${COMMIT_MESSAGE+x}" ]]; then
-    # If 'COMMIT_MESSAGE' is unset we are in Azure, and we retrieve the commit
-    # message via the get_commit_message.py script which uses Azure-specific
-    # variables, for example 'BUILD_SOURCEVERSIONMESSAGE'.
-    COMMIT_MESSAGE=$(python build_tools/azure/get_commit_message.py --only-show-message)
-fi
-
 if [[ "$COMMIT_MESSAGE" =~ \[float32\] ]]; then
     echo "float32 tests will be run due to commit message"
     export SKLEARN_RUN_FLOAT32_TESTS=1
