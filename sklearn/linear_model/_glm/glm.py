@@ -255,7 +255,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         loss_dtype_np = _matching_numpy_dtype(X, xp=xp)
         if self.warm_start and hasattr(self, "coef_"):
-            coef = _convert_to_numpy(self.coef_, xp=xp)
+            coef_xp, _ = get_namespace(self.coef_)
+            coef = _convert_to_numpy(self.coef_, xp=coef_xp)
             if self.fit_intercept:
                 # LinearModelLoss needs intercept at the end of coefficient array.
                 coef = np.concatenate((coef, np.array([self.intercept_])))
