@@ -1151,7 +1151,6 @@ def test_newton_solver_verbosity(capsys, verbose):
 
 
 @pytest.mark.parametrize("use_sample_weight", [False, True])
-@pytest.mark.parametrize("warm_start", [False, True])
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype_name",
     yield_namespace_device_dtype_combinations(),
@@ -1160,7 +1159,6 @@ def test_newton_solver_verbosity(capsys, verbose):
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_poisson_regressor_array_api_compliance(
     use_sample_weight,
-    warm_start,
     array_namespace,
     device_,
     dtype_name,
@@ -1187,9 +1185,7 @@ def test_poisson_regressor_array_api_compliance(
     else:
         sample_weight = None
 
-    params = dict(
-        alpha=1, solver="lbfgs", tol=1e-12, max_iter=500, warm_start=warm_start
-    )
+    params = dict(alpha=1, solver="lbfgs", tol=1e-12, max_iter=500)
     glm_np = PoissonRegressor(**params).fit(X_np, y_np, sample_weight=sample_weight)
     assert glm_np.n_iter_ < glm_np.max_iter
 
@@ -1223,3 +1219,33 @@ def test_poisson_regressor_array_api_compliance(
         )
         assert predict_xp.dtype == X_xp.dtype
         assert device(predict_xp) == device(X_xp)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
+def test_poisson_regressor_array_api_warm_start(
+    array_namespace,
+    device_,
+    dtype_name,
+):
+    """Test that incremental fitting of PoissonRegressor works correctly
+    with the array API when warm_start is True."""
+    rng = np.random.default_rng(42)
+    X = rng.standard_normal((200, 5)).astype(dtype_name)
+    y = np.abs(rng.standard_normal(200)) + 0.1
+    y = y.astype(dtype_name)
+    xp = _array_api_for_tests(array_namespace, device_)
+    X_xp = xp.asarray(X, device=device_)
+    y_xp = xp.asarray(y, device=device_)
+    with config_context(array_api_dispatch=True):
+        reg_xp = PoissonRegressor(
+            alpha=1.0, solver="lbfgs", max_iter=300, warm_start=True
+        )
+        reg_xp.fit(X_xp, y_xp)
+        reg_xp.predict(X_xp)
+        # fit again and ensure there is no error
+        reg_xp.fit(X_xp, y_xp)
