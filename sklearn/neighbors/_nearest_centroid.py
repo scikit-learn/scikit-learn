@@ -348,6 +348,7 @@ class NearestCentroid(
         DiscriminantAnalysisPredictionMixin.predict_log_proba
     )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y, classes=None):
         """Incrementally fit the NearestCentroid model.
 
