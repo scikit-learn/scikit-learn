@@ -29,6 +29,7 @@ class NearestCentroid(
     _parameter_constraints: dict = {
         "metric": [StrOptions({"euclidean", "manhattan"}), callable],
         "shrink_threshold": [Interval(Real, 0, None, closed="left"), None],
+        "priors": [StrOptions({"uniform", "empirical"}), "array-like", None],
     }
     """Nearest centroid classifier.
 
