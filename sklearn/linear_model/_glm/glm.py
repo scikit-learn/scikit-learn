@@ -617,7 +617,7 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
         if xp is None or _is_numpy_namespace(xp):
             return HalfPoissonLoss()
         else:
-            return HalfPoissonLossArrayAPI(xp=xp, device=None)
+            return HalfPoissonLossArrayAPI(xp=xp, device=device)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()

@@ -1151,6 +1151,7 @@ def test_newton_solver_verbosity(capsys, verbose):
 
 
 @pytest.mark.parametrize("use_sample_weight", [False, True])
+@pytest.mark.parametrize("warm_start", [False, True])
 @pytest.mark.parametrize(
     "array_namespace, device_, dtype_name",
     yield_namespace_device_dtype_combinations(),
@@ -1159,6 +1160,7 @@ def test_newton_solver_verbosity(capsys, verbose):
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_poisson_regressor_array_api_compliance(
     use_sample_weight,
+    warm_start,
     array_namespace,
     device_,
     dtype_name,
@@ -1185,7 +1187,9 @@ def test_poisson_regressor_array_api_compliance(
     else:
         sample_weight = None
 
-    params = dict(alpha=1, solver="lbfgs", tol=1e-12, max_iter=500)
+    params = dict(
+        alpha=1, solver="lbfgs", tol=1e-12, max_iter=500, warm_start=warm_start
+    )
     glm_np = PoissonRegressor(**params).fit(X_np, y_np, sample_weight=sample_weight)
     assert glm_np.n_iter_ < glm_np.max_iter
 
