@@ -1332,7 +1332,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             if self.fit_intercept:
                 intercept_np = _convert_to_numpy(self.intercept_, xp=xp)
                 warm_start_coef = np.concatenate(
-                    [warm_start_coef, intercept_np[:, np.newaxis]], axis=1
+                    [warm_start_coef, intercept_np[:, None]], axis=1
                 )
 
         # TODO: enable multi-threading if benchmarks show a positive effect,
