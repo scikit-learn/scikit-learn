@@ -646,6 +646,7 @@ METRICS_SUPPORTING_MIXED_NAMESPACE = [
     "mean_poisson_deviance",
     "mean_squared_error",
     "mean_squared_log_error",
+    "mean_tweedie_deviance",
     "median_absolute_error",
     "multilabel_confusion_matrix",
     "precision_score",
