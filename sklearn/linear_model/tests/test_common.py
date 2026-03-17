@@ -74,6 +74,7 @@ from sklearn.utils.fixes import CSR_CONTAINERS
         ),
         LogisticRegressionCV(
             Cs=None,
+            l1_ratios=(0.0,),  # TODO(1.10): remove because it is default now.
             tol=1e-6,
             use_legacy_attributes=False,
             scoring="neg_log_loss",  # TODO(1.11): remove because it is default now

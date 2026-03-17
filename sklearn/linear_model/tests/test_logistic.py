@@ -2969,7 +2969,7 @@ def test_lr_penalty_l1ratio_incompatible(penalty, l1_ratio):
 def test_lr_scoring_warns():
     """Check that scoring raises a warning."""
     X, y = make_classification(n_samples=20)
-    lr = LogisticRegressionCV(l1_ratios=[0])
+    lr = LogisticRegressionCV(Cs=None, l1_ratios=[0])
     msg = "The default value of the parameter 'scoring' will change"
     with pytest.warns(FutureWarning, match=msg):
         lr.fit(X, y)
@@ -3001,11 +3001,13 @@ def test_C_deprecated():
 def test_Cs_deprecated():
     """Check that Cs in LogisticRegressionCV is deprecated."""
     X, y = make_classification(n_classes=2, n_samples=20, n_informative=6)
-    lr = LogisticRegressionCV(use_legacy_attributes=False)
+    lr = LogisticRegressionCV(use_legacy_attributes=False, scoring="neg_log_loss")
     msg = "'Cs' was deprecated"
     with pytest.warns(FutureWarning, match=msg):
         lr.fit(X, y)
 
-    lr = LogisticRegressionCV(Cs=(1.0,), use_legacy_attributes=False)
+    lr = LogisticRegressionCV(
+        Cs=(1.0,), use_legacy_attributes=False, scoring="neg_log_loss"
+    )
     with pytest.warns(FutureWarning, match=msg):
         lr.fit(X, y)
