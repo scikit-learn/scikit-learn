@@ -15,8 +15,9 @@ class ProgressBar:
 
     Parameters
     ----------
-    max_propagation_depth : int, default=2
-        The maximum number of nested levels of estimators to display progress bars for.
+    max_propagation_depth : int, default=1
+        The maximum depth of nested levels of estimators to display progress bars for.
+        0 means that the progress of only the outermost estimator is displayed.
         If set to None, all levels are displayed.
 
     Notes
@@ -25,7 +26,7 @@ class ProgressBar:
     unexpected crashes related to multiprocessing bugs on certain platforms.
     """
 
-    def __init__(self, max_propagation_depth=2):
+    def __init__(self, max_propagation_depth=1):
         if sys.version_info < (3, 12, 8):
             warnings.warn(
                 "The use of the ProgressBar callback on python versions inferior "

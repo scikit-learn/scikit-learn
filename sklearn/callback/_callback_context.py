@@ -393,7 +393,7 @@ class CallbackContext:
             if isinstance(callback, AutoPropagatedCallback)
             and (
                 callback.max_propagation_depth is None
-                or self._propagation_depth < callback.max_propagation_depth - 1
+                or self._propagation_depth < callback.max_propagation_depth
             )
         ]
         if not callbacks_to_propagate:
