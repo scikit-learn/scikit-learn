@@ -27,7 +27,7 @@ https://conda.anaconda.org/conda-forge/linux-64/ninja-1.13.2-h171cf75_0.conda#b5
 https://conda.anaconda.org/conda-forge/linux-64/readline-8.3-h853b02a_0.conda#d7d95fc8287ea7bf33e0e7116d2b95ec
 https://conda.anaconda.org/conda-forge/linux-64/tk-8.6.13-noxft_h366c992_103.conda#cffd3bdd58090148f4cfcd831f4b26ab
 https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb78ec9c_6.conda#4a13eeac0b5c8e5b8ab496e6c4ddd829
-https://conda.anaconda.org/conda-forge/linux-64/ccache-4.13-hedf47ba_0.conda#92a194f6d6511e91afbdd2944491ea8e
+https://conda.anaconda.org/conda-forge/linux-64/ccache-4.13.1-hedf47ba_0.conda#876d0d4cdb6bef3957a91fb4271ac346
 https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.45.1-default_hbd61a6d_101.conda#12bd9a3f089ee6c9266a37dab82afabd
 https://conda.anaconda.org/conda-forge/linux-64/libopenblas-0.3.30-pthreads_h94d23a6_4.conda#be43915efc66345cccb3c310b6ed0374
 https://conda.anaconda.org/conda-forge/linux-64/libsqlite-3.52.0-hf4e2dac_0.conda#fd893f6a3002a635b5e50ceb9dd2c0f4
@@ -39,12 +39,12 @@ https://conda.anaconda.org/conda-forge/linux-64/cython-3.2.4-py314h3f98dc2_0.con
 https://conda.anaconda.org/conda-forge/noarch/iniconfig-2.3.0-pyhd8ed1ab_0.conda#9614359868482abba1bd15ce465e3c42
 https://conda.anaconda.org/conda-forge/linux-64/libcblas-3.11.0-5_h0358290_openblas.conda#6636a2b6f1a87572df2970d3ebc87cc0
 https://conda.anaconda.org/conda-forge/linux-64/liblapack-3.11.0-5_h47877c9_openblas.conda#b38076eb5c8e40d0106beda6f95d7609
-https://conda.anaconda.org/conda-forge/noarch/meson-1.10.1-pyhcf101f3_0.conda#6c07238c531b1f93603c6908d1a4ef4f
+https://conda.anaconda.org/conda-forge/noarch/meson-1.10.2-pyhcf101f3_0.conda#fb44f3dcee86e4aa1d6653b1608d666b
 https://conda.anaconda.org/conda-forge/noarch/packaging-26.0-pyhcf101f3_0.conda#b76541e68fea4d511b1ac46a28dcd2c6
 https://conda.anaconda.org/conda-forge/noarch/pip-26.0.1-pyh145f28c_0.conda#09a970fbf75e8ed1aa633827ded6aa4f
 https://conda.anaconda.org/conda-forge/noarch/pluggy-1.6.0-pyhf9edf01_1.conda#d7585b6550ad04c8c5e21097ada2888e
 https://conda.anaconda.org/conda-forge/noarch/pygments-2.19.2-pyhd8ed1ab_0.conda#6b6ece66ebcae2d5f326c77ef2c5a066
-https://conda.anaconda.org/conda-forge/noarch/setuptools-82.0.0-pyh332efcf_0.conda#1d00d46c634177fc8ede8b99d6089239
+https://conda.anaconda.org/conda-forge/noarch/setuptools-82.0.1-pyh332efcf_0.conda#8e194e7b992f99a5015edbd4ebd38efd
 https://conda.anaconda.org/conda-forge/noarch/threadpoolctl-3.6.0-pyhecae5ae_0.conda#9d64911b31d57ca443e9f1e36b04385f
 https://conda.anaconda.org/conda-forge/noarch/tomli-2.4.0-pyhcf101f3_0.conda#72e780e9aa2d0a3295f59b1874e3768b
 https://conda.anaconda.org/conda-forge/noarch/typing_extensions-4.15.0-pyhcf101f3_0.conda#0caa1af407ecff61170c9437a808404d

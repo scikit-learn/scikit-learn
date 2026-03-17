@@ -24,6 +24,7 @@ from sklearn._loss.loss import (
     HalfMultinomialLoss,
     HalfMultinomialLossArrayAPI,
     HalfPoissonLoss,
+    HalfPoissonLossArrayAPI,
     HalfSquaredError,
     HalfTweedieLoss,
     HalfTweedieLossIdentity,
@@ -1378,8 +1379,9 @@ def test_tweedie_log_identity_consistency(p):
     [
         (HalfBinomialLossArrayAPI, HalfBinomialLoss),
         (HalfMultinomialLossArrayAPI, HalfMultinomialLoss),
+        (HalfPoissonLossArrayAPI, HalfPoissonLoss),
     ],
-    ids=["HalfBinomialLoss", "HalfMultinomialLoss"],
+    ids=["HalfBinomialLoss", "HalfMultinomialLoss", "HalfPoissonLoss"],
 )
 @pytest.mark.parametrize(
     "method_name", ["__call__", "gradient", "loss", "loss_gradient"]
@@ -1399,16 +1401,21 @@ def test_loss_array_api(
     device_,
     dtype_name,
 ):
-    def _assert_array_api_result(result_xp, result_np, raw_prediction_xp, xp, atol):
-        assert_allclose(_convert_to_numpy(result_xp, xp=xp), result_np, atol=atol)
+    def _assert_array_api_result(
+        result_xp, result_np, raw_prediction_xp, xp, rtol, atol
+    ):
+        assert_allclose(
+            _convert_to_numpy(result_xp, xp=xp), result_np, rtol=rtol, atol=atol
+        )
         assert result_xp.dtype == raw_prediction_xp.dtype
         assert device(result_xp) == device(raw_prediction_xp)
 
     xp = _array_api_for_tests(namespace, device_)
     atol = _atol_for_type(dtype_name)
+    rtol = 1e-6 if dtype_name == "float32" else 1e-11
     random_seed = 42
     n_samples = 100
-    array_api_loss_instance = array_api_loss_class()
+    array_api_loss_instance = array_api_loss_class(xp=xp, device=device_)
     loss_instance = loss_class()
     y_true, raw_prediction = random_y_true_raw_prediction(
         loss=loss_instance,
@@ -1454,6 +1461,7 @@ def test_loss_array_api(
                         result_np=res_np,
                         raw_prediction_xp=raw_prediction_xp,
                         xp=xp,
+                        rtol=rtol,
                         atol=atol,
                     )
             else:
@@ -1462,6 +1470,7 @@ def test_loss_array_api(
                     result_np=result_np,
                     raw_prediction_xp=raw_prediction_xp,
                     xp=xp,
+                    rtol=rtol,
                     atol=atol,
                 )
 
