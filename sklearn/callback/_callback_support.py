@@ -104,8 +104,8 @@ def callback_management_context(estimator):
     """Context manager to manage callback lifecycle around estimator fit.
 
     The context manager is responsible for calling the callbacks `teardown` hook in a
-    `try finally` block, which guarantees that callbacks teardown will always be
-    evaluated, whether the estimator's fit exits successfully or not.
+    `try finally` block, which guarantees that callbacks teardown will always be called,
+    whether the estimator's fit exits successfully or not.
 
     Parameters
     ----------
@@ -141,7 +141,7 @@ def with_callbacks(method):
 
     This decorator is responsible for calling the callbacks `teardown` hooks of
     callbacks in a `try finally` block, which guarantees that callbacks teardown will
-    always be evaluated, whether the estimator's method exits successfully or not.
+    always be called, whether the estimator's method exits successfully or not.
 
     It will only teardown callbacks that are not propagated from a meta-estimator.
 

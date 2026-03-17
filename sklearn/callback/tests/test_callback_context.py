@@ -226,7 +226,7 @@ def test_estimator_without_subtask():
     """Check that callback support works for an estimator without subtasks.
 
     This test is about verifying that an estimator that does not call its callback
-    context's `eval_on_fit_task_end` does not cause a problem.
+    context's `call_on_fit_task_end` does not cause a problem.
     """
     estimator = NoSubtaskEstimator()
     estimator.set_callbacks([TestingCallback()])
