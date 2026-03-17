@@ -4,7 +4,7 @@
 import numpy as np
 import pytest
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.covariance import (
     OAS,
     EmpiricalCovariance,
@@ -13,16 +13,26 @@ from sklearn.covariance import (
     empirical_covariance,
     ledoit_wolf,
     ledoit_wolf_shrinkage,
+    log_likelihood,
     oas,
     shrunk_covariance,
 )
 from sklearn.covariance._shrunk_covariance import _ledoit_wolf, _oas
+from sklearn.utils._array_api import (
+    _atol_for_type,
+    _convert_to_numpy,
+    _get_namespace_device_dtype_ids,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.estimator_checks import check_array_api_input_and_values
 
 X, _ = datasets.load_diabetes(return_X_y=True)
 X_1d = X[:, 0]
@@ -370,3 +380,290 @@ def test_EmpiricalCovariance_validates_mahalanobis():
     msg = f"X has 2 features, but \\w+ is expecting {X.shape[1]} features as input"
     with pytest.raises(ValueError, match=msg):
         cov.mahalanobis(X[:, :2])
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize("assume_centered", [True, False])
+def test_empirical_covariance_array_api(
+    array_namespace, device, dtype_name, assume_centered
+):
+    """empirical_covariance() should return the same result with array API inputs."""
+    xp = _array_api_for_tests(array_namespace, device)
+
+    X_np = X.astype(dtype_name, copy=False)
+    X_xp = xp.asarray(X_np, device=device)
+
+    result_np = empirical_covariance(X_np, assume_centered=assume_centered)
+
+    with config_context(array_api_dispatch=True):
+        result_xp = empirical_covariance(X_xp, assume_centered=assume_centered)
+
+    result_xp_np = _convert_to_numpy(result_xp, xp=xp)
+    assert_allclose(result_np, result_xp_np, atol=_atol_for_type(dtype_name))
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize("store_precision", [True, False])
+def test_set_covariance_array_api(array_namespace, device, dtype_name, store_precision):
+    """_set_covariance() and get_precision() should work with array API inputs."""
+    xp = _array_api_for_tests(array_namespace, device)
+
+    X_np = X.astype(dtype_name, copy=False)
+    cov_np = empirical_covariance(X_np)
+
+    cov_xp = xp.asarray(cov_np, device=device)
+
+    est = EmpiricalCovariance(store_precision=store_precision)
+    est.covariance_ = None
+    est.precision_ = None
+
+    with config_context(array_api_dispatch=True):
+        est._set_covariance(cov_xp)
+
+    cov_result_np = _convert_to_numpy(est.covariance_, xp=xp)
+    assert_allclose(cov_np, cov_result_np, atol=_atol_for_type(dtype_name))
+
+    if store_precision:
+        with config_context(array_api_dispatch=True):
+            precision_xp = est.get_precision()
+        precision_np = _convert_to_numpy(precision_xp, xp=xp)
+
+        est_ref = EmpiricalCovariance(store_precision=True)
+        est_ref._set_covariance(cov_np)
+        assert_allclose(
+            est_ref.precision_, precision_np, atol=_atol_for_type(dtype_name)
+        )
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize("assume_centered", [True, False])
+def test_empirical_covariance_fit_array_api(
+    array_namespace, device, dtype_name, assume_centered
+):
+    """EmpiricalCovariance.fit() should work with array API inputs."""
+    xp = _array_api_for_tests(array_namespace, device)
+
+    X_np = X.astype(dtype_name, copy=False)
+    X_xp = xp.asarray(X_np, device=device)
+
+    est_np = EmpiricalCovariance(assume_centered=assume_centered).fit(X_np)
+
+    with config_context(array_api_dispatch=True):
+        est_xp = EmpiricalCovariance(assume_centered=assume_centered).fit(X_xp)
+
+    assert_allclose(
+        est_np.covariance_,
+        _convert_to_numpy(est_xp.covariance_, xp=xp),
+        atol=_atol_for_type(dtype_name),
+    )
+    assert_allclose(
+        est_np.location_,
+        _convert_to_numpy(est_xp.location_, xp=xp),
+        atol=_atol_for_type(dtype_name),
+    )
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_ledoit_wolf_shrinkage_array_api(array_namespace, device, dtype_name):
+    """ledoit_wolf_shrinkage() should return the same result with array API inputs."""
+    xp = _array_api_for_tests(array_namespace, device)
+
+    X_np = X.astype(dtype_name, copy=False)
+    X_xp = xp.asarray(X_np, device=device)
+
+    shrinkage_np = ledoit_wolf_shrinkage(X_np)
+
+    with config_context(array_api_dispatch=True):
+        shrinkage_xp = ledoit_wolf_shrinkage(X_xp)
+
+    assert isinstance(shrinkage_xp, float)
+    assert abs(shrinkage_np - shrinkage_xp) < _atol_for_type(dtype_name)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_ledoit_wolf_private_array_api(array_namespace, device, dtype_name):
+    """_ledoit_wolf() should return the same covariance and shrinkage."""
+    xp = _array_api_for_tests(array_namespace, device)
+
+    X_np = X.astype(dtype_name, copy=False)
+    X_xp = xp.asarray(X_np, device=device)
+
+    cov_np, shrinkage_np = _ledoit_wolf(X_np, assume_centered=False, block_size=1000)
+
+    with config_context(array_api_dispatch=True):
+        cov_xp, shrinkage_xp = _ledoit_wolf(
+            X_xp, assume_centered=False, block_size=1000
+        )
+
+    cov_xp_np = _convert_to_numpy(cov_xp, xp=xp)
+    assert_allclose(cov_np, cov_xp_np, atol=_atol_for_type(dtype_name))
+    assert abs(shrinkage_np - shrinkage_xp) < _atol_for_type(dtype_name)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_ledoit_wolf_fit_array_api(array_namespace, device, dtype_name):
+    """LedoitWolf.fit() should produce matching results with array API inputs."""
+    xp = _array_api_for_tests(array_namespace, device)
+
+    X_np = X.astype(dtype_name, copy=False)
+    X_xp = xp.asarray(X_np, device=device)
+
+    lw_np = LedoitWolf().fit(X_np)
+
+    with config_context(array_api_dispatch=True):
+        lw_xp = LedoitWolf().fit(X_xp)
+
+    assert_allclose(
+        lw_np.covariance_,
+        _convert_to_numpy(lw_xp.covariance_, xp=xp),
+        atol=_atol_for_type(dtype_name),
+    )
+    assert_allclose(
+        lw_np.location_,
+        _convert_to_numpy(lw_xp.location_, xp=xp),
+        atol=_atol_for_type(dtype_name),
+    )
+    assert abs(lw_np.shrinkage_ - lw_xp.shrinkage_) < _atol_for_type(dtype_name)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_log_likelihood_array_api(array_namespace, device, dtype_name):
+    """log_likelihood() should work with array API inputs."""
+    xp = _array_api_for_tests(array_namespace, device)
+
+    X_np = X.astype(dtype_name, copy=False)
+    emp_cov_np = empirical_covariance(X_np)
+    est = EmpiricalCovariance().fit(X_np)
+    precision_np = est.get_precision()
+
+    result_np = log_likelihood(emp_cov_np, precision_np)
+
+    emp_cov_xp = xp.asarray(emp_cov_np, device=device)
+    precision_xp = xp.asarray(precision_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        result_xp = log_likelihood(emp_cov_xp, precision_xp)
+
+    assert isinstance(result_xp, float)
+    assert abs(result_np - result_xp) < _atol_for_type(dtype_name)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_score_array_api(array_namespace, device, dtype_name):
+    """LedoitWolf.score() should work with array API inputs."""
+    xp = _array_api_for_tests(array_namespace, device)
+
+    X_np = X.astype(dtype_name, copy=False)
+    X_xp = xp.asarray(X_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        lw_xp = LedoitWolf().fit(X_xp)
+        score_xp = lw_xp.score(X_xp)
+
+    lw_np = LedoitWolf().fit(X_np)
+    score_np = lw_np.score(X_np)
+
+    assert isinstance(score_xp, float)
+    assert abs(score_np - score_xp) < _atol_for_type(dtype_name)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize("norm", ["frobenius", "spectral"])
+def test_error_norm_array_api(array_namespace, device, dtype_name, norm):
+    """error_norm() should work with array API inputs."""
+    xp = _array_api_for_tests(array_namespace, device)
+
+    X_np = X.astype(dtype_name, copy=False)
+    X_xp = xp.asarray(X_np, device=device)
+
+    lw_np = LedoitWolf().fit(X_np)
+    comp_cov_np = empirical_covariance(X_np)
+
+    with config_context(array_api_dispatch=True):
+        lw_xp = LedoitWolf().fit(X_xp)
+        comp_cov_xp = xp.asarray(comp_cov_np, device=device)
+        result_xp = lw_xp.error_norm(comp_cov_xp, norm=norm)
+
+    result_np = lw_np.error_norm(comp_cov_np, norm=norm)
+    assert abs(result_np - float(result_xp)) < _atol_for_type(dtype_name)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+def test_mahalanobis_array_api(array_namespace, device, dtype_name):
+    """mahalanobis() should work with array API inputs."""
+    xp = _array_api_for_tests(array_namespace, device)
+
+    X_np = X.astype(dtype_name, copy=False)
+    X_xp = xp.asarray(X_np, device=device)
+
+    lw_np = LedoitWolf().fit(X_np)
+    dist_np = lw_np.mahalanobis(X_np)
+
+    with config_context(array_api_dispatch=True):
+        lw_xp = LedoitWolf().fit(X_xp)
+        dist_xp = lw_xp.mahalanobis(X_xp)
+
+    dist_xp_np = _convert_to_numpy(dist_xp, xp=xp)
+    assert_allclose(dist_np, dist_xp_np, atol=_atol_for_type(dtype_name))
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.parametrize(
+    "check",
+    [check_array_api_input_and_values],
+    ids=_get_check_estimator_ids,
+)
+@pytest.mark.parametrize(
+    "estimator",
+    [LedoitWolf()],
+    ids=_get_check_estimator_ids,
+)
+def test_covariance_array_api_compliance(
+    estimator, check, array_namespace, device, dtype_name
+):
+    name = estimator.__class__.__name__
+    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
