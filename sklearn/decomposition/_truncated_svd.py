@@ -19,6 +19,7 @@ from sklearn.utils import check_array, check_random_state
 from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.extmath import _randomized_svd, safe_sparse_dot, svd_flip
+from sklearn.utils.parallel import _threadpool_controller_decorator
 from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.utils.validation import check_is_fitted, validate_data
 
@@ -207,6 +208,7 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
+    @_threadpool_controller_decorator(limits=1, user_api="blas")
     def fit_transform(self, X, y=None):
         """Fit model to X and perform dimensionality reduction on X.
 
