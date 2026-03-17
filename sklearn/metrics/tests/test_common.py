@@ -155,6 +155,7 @@ REGRESSION_METRICS = {
     "mean_poisson_deviance": mean_poisson_deviance,
     "mean_gamma_deviance": mean_gamma_deviance,
     "mean_compound_poisson_deviance": partial(mean_tweedie_deviance, power=1.4),
+    "mean_tweedie_deviance": mean_tweedie_deviance,
     "d2_tweedie_score": partial(d2_tweedie_score, power=1.4),
     "d2_pinball_score": d2_pinball_score,
     # The default `alpha=0.5` (median) masks differences between quantile methods,
@@ -527,6 +528,7 @@ SYMMETRIC_METRICS = {
     "macro_f1_score",
     "weighted_recall_score",
     "mean_squared_log_error",
+    "mean_tweedie_deviance",
     "root_mean_squared_error",
     "root_mean_squared_log_error",
     # P = R = F = accuracy in multiclass case
