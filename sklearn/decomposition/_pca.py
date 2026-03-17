@@ -85,11 +85,28 @@ def _assess_dimension(spectrum, rank, n_samples):
     pa = 0.0
     spectrum_ = xp.asarray(spectrum, copy=True)
     spectrum_[rank:n_features] = v
-    for i in range(rank):
-        for j in range(i + 1, spectrum.shape[0]):
-            pa += log(
-                (spectrum[i] - spectrum[j]) * (1.0 / spectrum_[j] - 1.0 / spectrum_[i])
-            ) + log(n_samples)
+
+    s_signal = spectrum[:rank]
+
+    # Block B: both indices in signal part (i < j < rank)
+    if rank > 1:
+        si = s_signal[:, None]  # (rank, 1)
+        sj = s_signal[None, :]  # (1, rank)
+        # (s_i - s_j) * (1/s_j - 1/s_i) = (s_i - s_j)^2 / (s_i * s_j)
+        vals = (si - sj) ** 2 / (si * sj)
+        # Upper triangle mask: i < j
+        mask = np.triu(np.ones((rank, rank), dtype=bool), k=1)
+        n_pairs_B = int(mask.sum())
+        pa += float(xp.sum(xp.log(vals[mask]))) + n_pairs_B * log(n_samples)
+
+    # Block A: i < rank, j >= rank (spectrum_[j] = v)
+    if n_features - rank > 0:
+        s_noise = spectrum[rank:]  # (n_features - rank,)
+        si_A = s_signal[:, None]  # (rank, 1)
+        sj_A = s_noise[None, :]  # (1, n_noise)
+        term_A = (si_A - sj_A) * (1.0 / v - 1.0 / si_A)
+        n_pairs_A = term_A.size
+        pa += float(xp.sum(xp.log(term_A))) + n_pairs_A * log(n_samples)
 
     ll = pu + pl + pv + pp - pa / 2.0 - rank * log(n_samples) / 2.0
 
