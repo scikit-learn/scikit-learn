@@ -1,0 +1,2 @@
+- Fix :class:`linear_model.LogisticRegression` when `warm_start=True`.
+  By :user:`Tim Head <betatim>`.
