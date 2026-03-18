@@ -331,12 +331,11 @@ class CallbackContext:
         result : bool
             True if any hook call returned True. False otherwise.
         """
-        if set(kwargs.keys()) - set(VALID_HOOK_PARAMS_IN):
+        if diff := set(kwargs.keys()) - set(VALID_HOOK_PARAMS_IN):
             raise TypeError(
                 f"call_{hook_name} in estimator {self.estimator_name} has received "
-                f"parameters that are not valid: "
-                f"{set(kwargs.keys()) - set(VALID_HOOK_PARAMS_IN)}. The "
-                f"valid parameters are: {VALID_HOOK_PARAMS_IN}."
+                f"parameters that are not valid: {diff}. The valid parameters are: "
+                f"{VALID_HOOK_PARAMS_IN}."
             )
 
         result = False
@@ -368,7 +367,7 @@ class CallbackContext:
             for param_name in params_names:
                 if param_name not in evaluated_args:
                     # Special case: "reconstruction_attributes" is not directly passed
-                    # to the hook. An ready to predict/transform estimator is created
+                    # to the hook. A ready to predict/transform estimator is created
                     # from these attributes and passed to the hook as "fitted_estimator"
                     if param_name == "fitted_estimator":
                         attrs = kwargs.get("reconstruction_attributes", None)
