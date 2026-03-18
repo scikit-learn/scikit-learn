@@ -718,7 +718,12 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
-        the best random split.
+        the best random split. When ``splitter="random"``, up to
+        ``max_features`` candidate features are drawn at random; for each
+        candidate a single threshold is drawn uniformly between that
+        feature's observed minimum and maximum values, and the
+        ``(feature, threshold)`` pair with the best impurity improvement
+        is selected.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1133,7 +1138,12 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
-        the best random split.
+        the best random split. When ``splitter="random"``, up to
+        ``max_features`` candidate features are drawn at random; for each
+        candidate a single threshold is drawn uniformly between that
+        feature's observed minimum and maximum values, and the
+        ``(feature, threshold)`` pair with the best impurity improvement
+        is selected.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1477,7 +1487,12 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
-        the best random split.
+        the best random split. When ``splitter="random"``, up to
+        ``max_features`` candidate features are drawn at random; for each
+        candidate a single threshold is drawn uniformly between that
+        feature's observed minimum and maximum values, and the
+        ``(feature, threshold)`` pair with the best impurity improvement
+        is selected.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1775,7 +1790,12 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
-        the best random split.
+        the best random split. When ``splitter="random"``, up to
+        ``max_features`` candidate features are drawn at random; for each
+        candidate a single threshold is drawn uniformly between that
+        feature's observed minimum and maximum values, and the
+        ``(feature, threshold)`` pair with the best impurity improvement
+        is selected.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
