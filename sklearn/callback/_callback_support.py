@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import functools
-import inspect
 from contextlib import contextmanager
 from multiprocessing import Manager
 from threading import Lock
