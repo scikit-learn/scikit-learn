@@ -386,7 +386,7 @@ class CallbackContext:
 
                 args_to_pass[param_name] = evaluated_args[param_name]
 
-            result &= bool(getattr(callback, hook_name)(self, **args_to_pass))
+            result |= bool(getattr(callback, hook_name)(self, **args_to_pass))
 
         return result
 

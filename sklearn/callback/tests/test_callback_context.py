@@ -20,6 +20,7 @@ from sklearn.callback.tests._utils import (
     NotRequiredKwargsCallback,
     NotValidHookCallback,
     ParentFitEstimator,
+    StopFitCallback,
     TestingAutoPropagatedCallback,
     TestingCallback,
     ThirdPartyEstimator,
@@ -368,6 +369,20 @@ def test_hook_calling_unused_kwargs():
     context.call_on_fit_task_begin(X=1, y=2)
     assert callback.record[-1]["kwargs"]["metadata"] is None
     assert callback.record[-1]["kwargs"]["fitted_estimator"] is None
+
+
+def test_hook_calling_return_value():
+    """Check the return value of the hook calls."""
+    estimator = MaxIterEstimator()
+    context = estimator.set_callbacks(TestingCallback())._init_callback_context()
+    result = context.call_on_fit_task_end()
+    # TestingCallback.on_fit_task_end does not return a value (interpreted as False)
+    assert result is False
+
+    estimator.set_callbacks([TestingCallback(), StopFitCallback()])
+    result = estimator._init_callback_context().call_on_fit_task_end()
+    # StopFitCallback.on_fit_task_end returns True
+    assert result is True
 
 
 def test_hook_calling_lazy_evaluation():
