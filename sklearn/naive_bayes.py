@@ -178,8 +178,10 @@ class GaussianNB(_BaseNB):
         adjusted according to the data.
 
     var_smoothing : float, default=1e-9
-        Portion of the largest variance of all features that is added to
-        variances for calculation stability.
+        Portion of the largest variance of all features that is added to variances for calculation stability. A higher value of 
+var_smoothing can improve model stability when features have very small variances, at the cost of slightly less precise 
+probability estimates. For example, setting var_smoothing=1e-8 makes the model more robust to near-zero variance features 
+compared to the default 1e-9.
 
         .. versionadded:: 0.20
 
@@ -195,7 +197,7 @@ class GaussianNB(_BaseNB):
         class labels known to the classifier.
 
     epsilon_ : float
-        absolute additive value to variances.
+        Absolute additive value to variances. Computed as var_smoothing * max(var_) where var_ is the variance  of each feature per class seen during fitting.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
