@@ -110,14 +110,27 @@ def empirical_covariance(X, *, assume_centered=False):
             "Only one sample available. You may want to reshape your data array"
         )
 
-    if assume_centered:
-        covariance = X.T @ X / X.shape[0]
-    else:
-        X_centered = X - xp.mean(X, axis=0)
-        covariance = X_centered.T @ X_centered / X.shape[0]
+    # Preserve numpy path, because `np.cov` always returns float64
+    # and callers like GraphicalLasso and GraphicalLassoCV rely on
+    # this behavior.
+    if _is_numpy_namespace(xp):
+        if assume_centered:
+            covariance = np.dot(X.T, X) / X.shape[0]
+        else:
+            covariance = np.cov(X.T, bias=1)
 
-    if covariance.ndim == 0:
-        covariance = xp.reshape(covariance, (1, 1))
+        if covariance.ndim == 0:
+            covariance = np.array([[covariance]])
+
+    else:
+        if assume_centered:
+            covariance = X.T @ X / X.shape[0]
+        else:
+            X_centered = X - xp.mean(X, axis=0)
+            covariance = X_centered.T @ X_centered / X.shape[0]
+        if covariance.ndim == 0:
+            covariance = xp.reshape(covariance, (1, 1))
+
     return covariance
 
 

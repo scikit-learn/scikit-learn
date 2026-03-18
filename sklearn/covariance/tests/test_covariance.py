@@ -440,11 +440,12 @@ def test_log_likelihood_array_api(array_namespace, device, dtype_name):
     emp_cov_np = empirical_covariance(X_np)
     est = EmpiricalCovariance().fit(X_np)
     precision_np = est.get_precision()
-
     result_np = log_likelihood(emp_cov_np, precision_np)
 
-    emp_cov_xp = xp.asarray(emp_cov_np, device=device)
-    precision_xp = xp.asarray(precision_np, device=device)
+    # Downcast to target dtype before converting because `empirical_covariance` can
+    # return float64 for numpy and MPS only supports float32
+    emp_cov_xp = xp.asarray(emp_cov_np.astype(dtype_name), device=device)
+    precision_xp = xp.asarray(precision_np.astype(dtype_name), device=device)
 
     with config_context(array_api_dispatch=True):
         result_xp = log_likelihood(emp_cov_xp, precision_xp)
@@ -494,7 +495,9 @@ def test_error_norm_array_api(array_namespace, device, dtype_name, norm):
 
     with config_context(array_api_dispatch=True):
         lw_xp = LedoitWolf().fit(X_xp)
-        comp_cov_xp = xp.asarray(comp_cov_np, device=device)
+        # Downcast to target dtype before converting because `empirical_covariance` can
+        # return float64 for numpy and MPS only supports float32
+        comp_cov_xp = xp.asarray(comp_cov_np.astype(dtype_name), device=device)
         result_xp = lw_xp.error_norm(comp_cov_xp, norm=norm)
 
     result_np = lw_np.error_norm(comp_cov_np, norm=norm)
