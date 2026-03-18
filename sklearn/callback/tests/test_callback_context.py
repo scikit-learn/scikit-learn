@@ -13,6 +13,7 @@ from sklearn.callback.tests._utils import (
     NoCallbackEstimator,
     NoSubtaskEstimator,
     ParentFitEstimator,
+    StopFitCallback,
     TestingAutoPropagatedCallback,
     TestingCallback,
     ThirdPartyEstimator,
@@ -330,3 +331,50 @@ def test_autopropagation_to_callback_agnostic_subestimator():
     assert callback.count_hooks("on_fit_task_begin") == expected_n_tasks
     assert callback.count_hooks("on_fit_task_end") == expected_n_tasks
     assert callback.count_hooks("teardown") == 1
+
+
+def test_hook_calling():
+    """Test the hook calling methods of the callback context."""
+    estimator = MaxIterEstimator()
+    test_callback = TestingCallback()
+    estimator.set_callbacks(test_callback)
+    context = CallbackContext._from_estimator(
+        estimator, task_name="task_name", task_id="task_id", max_subtasks=0
+    )
+    possible_kwargs = {
+        "X": None,
+        "y": None,
+        "metadata": None,
+        "fitted_estimator": None,
+    }
+
+    # Providing a lazy-loading, a non-lazy-loading and an unused kwarg
+    return_val = context.call_on_fit_task_begin(X=lambda: 1, y=2, not_used_kwarg=3)
+    assert test_callback.record[-1]["kwargs"] == dict(
+        possible_kwargs, **{"X": 1, "y": 2}
+    )
+    assert return_val is context
+
+    # Not providing any kwarg
+    context.call_on_fit_task_begin()
+    assert test_callback.record[-1]["kwargs"] == possible_kwargs
+
+    # Lazy-loading reconstruction attributes
+    return_val = context.call_on_fit_task_end(
+        reconstruction_attributes=lambda: {"n_iter_": 1}
+    )
+    fitted_estimator = test_callback.record[-1]["kwargs"]["fitted_estimator"]
+    assert isinstance(fitted_estimator, MaxIterEstimator)
+    assert fitted_estimator.n_iter_ == 1
+    assert not return_val and isinstance(return_val, bool)
+
+    # Non-lazy-loading reconstruction attributes + returning True
+    estimator.set_callbacks([test_callback, StopFitCallback()])
+    context = CallbackContext._from_estimator(
+        estimator, task_name="task_name", task_id="task_id", max_subtasks=0
+    )
+    return_val = context.call_on_fit_task_end(reconstruction_attributes={"n_iter_": 2})
+    fitted_estimator = test_callback.record[-1]["kwargs"]["fitted_estimator"]
+    assert isinstance(fitted_estimator, MaxIterEstimator)
+    assert fitted_estimator.n_iter_ == 2
+    assert return_val
