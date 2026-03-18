@@ -86,6 +86,13 @@ class NotValidCallback:
         pass  # pragma: no cover
 
 
+class NotValidHookCallback(TestingCallback):
+    """Invalid callback since it has invalid parameters in the hooks signatures."""
+
+    def on_fit_task_begin(self, context, *, not_valid_kwarg=None):
+        pass  # pragma: no cover
+
+
 class FailingCallback(TestingCallback):
     """A callback that raises an error at some point."""
 
@@ -120,6 +127,13 @@ class StopFitCallback(TestingCallback):
     def on_fit_task_end(self, context):
         super().on_fit_task_end(context)
         return True
+
+
+class NotRequiredKwargsCallback(TestingCallback):
+    """A callback with a `on_fit_task_end` not requiring all possible kwargs."""
+
+    def on_fit_task_end(self, context, *, X=None, y=None):
+        super().on_fit_task_end(context, X=X, y=y)
 
 
 class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
