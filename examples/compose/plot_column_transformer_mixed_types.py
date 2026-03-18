@@ -87,7 +87,7 @@ preprocessor = ColumnTransformer(
         ("num", numeric_transformer, numeric_features),
         ("cat", categorical_transformer, categorical_features),
     ]
-).set_output(transform="pandas")
+)
 
 # %%
 # Append classifier to preprocessing pipeline.
@@ -147,7 +147,7 @@ preprocessor = ColumnTransformer(
         ("num", numeric_transformer, selector(dtype_exclude="category")),
         ("cat", categorical_transformer, selector(dtype_include="category")),
     ]
-).set_output(transform="pandas")
+)
 clf = Pipeline(
     steps=[("preprocessor", preprocessor), ("classifier", LogisticRegression())]
 )
