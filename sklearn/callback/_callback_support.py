@@ -49,7 +49,7 @@ class CallbackSupportMixin:
 
         if not all(
             # isinstance for a Protocol returns True for classes too (not only
-            # instances). Hence the need for isclass.
+            # instances). Hence the additional check for classes.
             isinstance(callback, FitCallback) and not isinstance(callback, type)
             for callback in callbacks
         ):
