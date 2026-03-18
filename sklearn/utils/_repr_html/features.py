@@ -40,10 +40,11 @@ def _features_html(features, is_fitted_css_class=""):
 
     """
     total_features = len(features)
-    rows = []
-    for feature in features:
-        escaped_feature = html.escape(feature)
-        rows.append(FEATURES_ROW_TEMPLATE.format(feature=escaped_feature))
+
+    rows = [
+        FEATURES_ROW_TEMPLATE.format(feature=html.escape(feature))
+        for feature in features
+    ]
 
     return FEATURES_TABLE_TEMPLATE.format(
         total_features=total_features,

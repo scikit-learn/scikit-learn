@@ -6,4 +6,4 @@
   :user:`Guillaume Lemaitre <glemaitre>`,
   :user:`Jérémie du Boisberranger <jeremiedbb>`,
   :user:`Olivier Grisel <ogrisel>`,
-  :user:`Antoine Baker<antoinebaker>`.
+  :user:`Antoine Baker <antoinebaker>`.
