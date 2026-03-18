@@ -9,6 +9,7 @@ import pytest
 
 from sklearn.callback._callback_context import (
     CallbackContext,
+    _from_reconstruction_attributes,
     get_context_path,
 )
 from sklearn.callback.tests._utils import (
@@ -415,3 +416,16 @@ def test_hook_calling_lazy_evaluation_reconstruction_attributes():
     fitted_estimator = callback.record[-1]["kwargs"]["fitted_estimator"]
     assert isinstance(fitted_estimator, MaxIterEstimator)
     assert fitted_estimator.n_iter_ == 1
+
+
+# TODO(callbacks): check that the reconstructed estimator can be used to predict
+# while the original cannot.
+def test_from_reconstruction_attributes():
+    """Test the _from_reconstruction_attributes helper function."""
+    max_iter = 5
+    estimator = MaxIterEstimator(max_iter=max_iter)
+    reconstructed_est = _from_reconstruction_attributes(estimator, {"n_iter_": 2})
+    assert isinstance(reconstructed_est, MaxIterEstimator)
+    assert reconstructed_est is not estimator
+    assert reconstructed_est.get_params() == estimator.get_params()
+    assert reconstructed_est.n_iter_ == 2
