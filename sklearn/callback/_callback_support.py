@@ -51,7 +51,7 @@ class CallbackSupportMixin:
         if not all(
             # isinstance for a Protocol returns True for classes too (not only
             # instances). Hence the need for isclass.
-            isinstance(callback, FitCallback) and not inspect.isclass(callback)
+            isinstance(callback, FitCallback) and not isinstance(callback, type)
             for callback in callbacks
         ):
             raise TypeError(
