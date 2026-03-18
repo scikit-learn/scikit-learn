@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import functools
+import inspect
 from contextlib import contextmanager
 from multiprocessing import Manager
 from threading import Lock
@@ -47,8 +48,15 @@ class CallbackSupportMixin:
         if not isinstance(callbacks, list):
             callbacks = [callbacks]
 
-        if not all(isinstance(callback, FitCallback) for callback in callbacks):
-            raise TypeError("callbacks must follow the FitCallback protocol.")
+        if not all(
+            # isinstance for a Protocol returns True for classes too (not only
+            # instances). Hence the need for isclass.
+            isinstance(callback, FitCallback) and not inspect.isclass(callback)
+            for callback in callbacks
+        ):
+            raise TypeError(
+                "callbacks must be instances following the FitCallback protocol."
+            )
 
         self._skl_callbacks = callbacks
 
