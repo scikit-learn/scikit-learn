@@ -24,14 +24,36 @@ class TestingCallback:
     def setup(self, context):
         self.record.append({"name": "setup", "context": context})
 
-    def on_fit_task_begin(self, context, **kwargs):
+    def on_fit_task_begin(
+        self, context, *, X=None, y=None, metadata=None, fitted_estimator=None
+    ):
         self.record.append(
-            {"name": "on_fit_task_begin", "context": context, "kwargs": kwargs}
+            {
+                "name": "on_fit_task_begin",
+                "context": context,
+                "kwargs": {
+                    "X": X,
+                    "y": y,
+                    "metadata": metadata,
+                    "fitted_estimator": fitted_estimator,
+                },
+            }
         )
 
-    def on_fit_task_end(self, context, **kwargs):
+    def on_fit_task_end(
+        self, context, *, X=None, y=None, metadata=None, fitted_estimator=None
+    ):
         self.record.append(
-            {"name": "on_fit_task_end", "context": context, "kwargs": kwargs}
+            {
+                "name": "on_fit_task_end",
+                "context": context,
+                "kwargs": {
+                    "X": X,
+                    "y": y,
+                    "metadata": metadata,
+                    "fitted_estimator": fitted_estimator,
+                },
+            }
         )
 
     def teardown(self, context):
@@ -60,7 +82,14 @@ class NotValidCallback:
     def setup(self, estimator):
         pass  # pragma: no cover
 
-    def on_fit_task_end(self, context, **kwargs):
+    def on_fit_task_end(self, context):
+        pass  # pragma: no cover
+
+
+class NotValidHookCallback(TestingCallback):
+    """Invalid callback since it has invalid parameters in the hooks signatures."""
+
+    def on_fit_task_begin(self, context, *, not_valid_kwarg=None):
         pass  # pragma: no cover
 
 
@@ -76,13 +105,13 @@ class FailingCallback(TestingCallback):
         if self.fail_at == "setup":
             raise ValueError("Failing callback failed at setup")
 
-    def on_fit_task_begin(self, context, **kwargs):
-        super().on_fit_task_begin(context, **kwargs)
+    def on_fit_task_begin(self, context):
+        super().on_fit_task_begin(context)
         if self.fail_at == "on_fit_task_begin":
             raise ValueError("Failing callback failed at on_fit_task_begin")
 
-    def on_fit_task_end(self, context, **kwargs):
-        super().on_fit_task_end(context, **kwargs)
+    def on_fit_task_end(self, context):
+        super().on_fit_task_end(context)
         if self.fail_at == "on_fit_task_end":
             raise ValueError("Failing callback failed at on_fit_task_end")
 
@@ -90,6 +119,21 @@ class FailingCallback(TestingCallback):
         super().teardown(context)
         if self.fail_at == "teardown":
             raise ValueError("Failing callback failed at teardown")
+
+
+class StopFitCallback(TestingCallback):
+    """A callback with a `on_fit_task_end` hook returning True."""
+
+    def on_fit_task_end(self, context):
+        super().on_fit_task_end(context)
+        return True
+
+
+class NotRequiredKwargsCallback(TestingCallback):
+    """A callback with a `on_fit_task_end` not requiring all possible kwargs."""
+
+    def on_fit_task_end(self, context, *, X=None, y=None):
+        super().on_fit_task_end(context, X=X, y=y)
 
 
 class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
