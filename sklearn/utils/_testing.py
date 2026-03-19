@@ -1308,14 +1308,14 @@ def _array_api_for_tests(array_namespace, device_name=None):
     Parameters
     ----------
     array_namespace : str
-        The array module namespace (e.g. "numpy", "torch", "array_api_strict").
+        The importable name of the array namespace module.
     device_name : str or None, default=None
         The device name for array allocation. Can be None for default device.
 
     Returns
     -------
-    xp : tuple
-        The array namespace for the given array module.
+    xp : module
+        The module object for the requested array namespace.
     device : object or None
         The library specific device object to pass to
         xp.asarray(..., device=device).
