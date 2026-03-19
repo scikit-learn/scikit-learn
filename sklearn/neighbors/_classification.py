@@ -222,7 +222,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         # KNeighborsClassifier.metric is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weights=None):
         """Fit the k-nearest neighbors classifier from the training dataset.
 
         Parameters
@@ -234,13 +234,16 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         y : {array-like, sparse matrix} of shape (n_samples,) or \
                 (n_samples, n_outputs)
             Target values.
+        
+        sample_weight : array-like of shape (n_samples,), default=None
+            Per-sample weights.
 
         Returns
         -------
         self : KNeighborsClassifier
             The fitted k-nearest neighbors classifier.
         """
-        return self._fit(X, y)
+        return self._fit(X, y, sample_weights)
 
     def predict(self, X):
         """Predict the class labels for the provided data.
@@ -295,6 +298,12 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                 "Please modify 'weights' to avoid this case if you are "
                 "using a user-defined function."
             )
+        
+        if self.sample_weights is not None:
+            if weights is None:
+                weights = self.sample_weights
+            else:
+                weights *= self.sample_weights
 
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):

@@ -26,7 +26,7 @@ from sklearn.utils._param_validation import Interval, StrOptions, validate_param
 from sklearn.utils.fixes import parse_version, sp_base_version
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.parallel import Parallel, delayed
-from sklearn.utils.validation import _to_object_array, check_is_fitted, validate_data
+from sklearn.utils.validation import _to_object_array, check_is_fitted, validate_data, _num_samples
 
 SCIPY_METRICS = [
     "braycurtis",
@@ -464,7 +464,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     stacklevel=3,
                 )
 
-    def _fit(self, X, y=None):
+    def _fit(self, X, y=None, sample_weights=None):
         ensure_all_finite = "allow-nan" if get_tags(self).input_tags.allow_nan else True
         if self.__sklearn_tags__().target_tags.required:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
@@ -513,6 +513,23 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     self._y = self._y.ravel()
             else:
                 self._y = y
+            
+            if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
+                n_samples = _num_samples(X)
+            else:
+                n_samples = _num_samples(self._y)
+
+            if sample_weights is not None:
+                sample_weights = np.asarray(sample_weights, dtype=np.float64)
+                if sample_weights.shape[0] != n_samples:
+                    raise ValueError(
+                        "sample_weight and X have incompatible shapes: "
+                        "%r vs %r\n"
+                        "Note: Sparse matrices cannot be indexed w/"
+                        "boolean masks (use `indices=True` in CV)."
+                        % (sample_weights.shape, X.shape)
+                    )
+            self.sample_weights = sample_weights
 
         else:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
