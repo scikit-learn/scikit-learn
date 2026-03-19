@@ -1316,8 +1316,9 @@ def _array_api_for_tests(array_namespace, device_name=None):
     -------
     xp : tuple
         The array namespace for the given array module.
-    device : str, Device or None
-        The device to pass to xp.asarray(..., device=device).
+    device : object or None
+        The library specific device object to pass to
+        xp.asarray(..., device=device).
     """
     try:
         array_mod = importlib.import_module(array_namespace)
