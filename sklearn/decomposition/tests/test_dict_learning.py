@@ -144,7 +144,10 @@ def test_dict_learning_omp_transform_n_nonzero_coefs_validation():
         random_state=0,
     )
     dico.fit(X)
-    err_msg = "transform_n_nonzero_coefs \(10\) cannot be greater than n_components \(5\)"
+    err_msg = (
+        r"transform_n_nonzero_coefs \(10\) cannot be greater than "
+        r"n_components \(5\)"
+    )
     with pytest.raises(ValueError, match=err_msg):
         dico.transform(X)
 
