@@ -1376,10 +1376,7 @@ def _array_api_for_tests(array_namespace, device_name=None):
         # device_name can be a string ("CPU_DEVICE", "device1") or a Device object
         # from yield_mixed_namespace_input_permutations
         if device_name is not None:
-            if isinstance(device_name, str):
-                device = xp.Device(device_name)
-            else:
-                device = device_name  # Already a Device object
+            device = xp.Device(device_name)
 
     return xp, device_name if device is None else device
 

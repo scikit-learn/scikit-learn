@@ -2600,21 +2600,19 @@ def test_mixed_array_api_namespace_input_compliance(
         for data_case in data_cases:
             y1, y2 = data_all[data_case]
 
-            dtype = _get_dtype(y1, xp_from, from_ns_and_device.device)
-            y1_xp = xp_from.asarray(y1, device=from_ns_and_device.device, dtype=dtype)
+            dtype = _get_dtype(y1, xp_from, device_from)
+            y1_xp = xp_from.asarray(y1, device=device_from, dtype=dtype)
 
             metric_kwargs_xp = metric_kwargs_np = {}
             if metric_name not in METRICS_WITHOUT_SAMPLE_WEIGHT:
                 # use `from_ns_and_device` for `sample_weight` as well
                 sample_weight_np = np.array(sample_weight)
                 metric_kwargs_np = {"sample_weight": sample_weight_np}
-                sample_weight_xp = xp_from.asarray(
-                    sample_weight_np, device=from_ns_and_device.device
-                )
+                sample_weight_xp = xp_from.asarray(sample_weight_np, device=device_from)
                 metric_kwargs_xp = {"sample_weight": sample_weight_xp}
 
-            dtype = _get_dtype(y2, xp_to, to_ns_and_device.device)
-            y2_xp = xp_to.asarray(y2, device=to_ns_and_device.device, dtype=dtype)
+            dtype = _get_dtype(y2, xp_to, device_to)
+            y2_xp = xp_to.asarray(y2, device=device_to, dtype=dtype)
 
             metric_xp = metric(y1_xp, y2_xp, **metric_kwargs_xp)
             metric_np = metric(y1, y2, **metric_kwargs_np)

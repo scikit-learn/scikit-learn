@@ -145,17 +145,8 @@ def yield_mixed_namespace_input_permutations():
         "numpy to torch mps",
     )
 
-    try:
-        import array_api_strict
-
-        device = array_api_strict.Device("device1")
-    except ImportError:
-        # This case will generally be skipped when `array_api_strict` is not installed
-        # but we still include it so it shows in the test output.
-        device = None
-
     yield (
-        NamespaceAndDevice("array_api_strict", device),
+        NamespaceAndDevice("array_api_strict", "device1"),
         NamespaceAndDevice("torch", "cpu"),
         "array_api_strict to torch cpu",
     )
