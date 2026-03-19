@@ -2850,20 +2850,19 @@ def test_get_default_scorer():
 
 @pytest.mark.parametrize("binary", [True, False])
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_logistic_regression_array_api_warm_start(
     binary,
     array_namespace,
-    device_,
+    device_name,
     dtype_name,
 ):
     """Test that warm_start=True works with array API inputs across
     multiple fit calls for both binary and multiclass classification."""
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device_ = _array_api_for_tests(array_namespace, device_name)
     X_np = iris.data.astype(dtype_name, copy=True)
     if binary:
         y_np = (iris.target > 0).astype(dtype_name)
