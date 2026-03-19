@@ -48,7 +48,7 @@ def _minibatch_update_dense(
         int n_clusters = centers_old.shape[0]
         int cluster_idx
         int sample_idx
-        floating wsum_batch = 0.0
+        floating wsum_batch = 0.0  # wsum_batch is only used when adaptive_lr=True
         int *indices
 
     if adaptive_lr:
@@ -85,7 +85,7 @@ cdef void update_center_dense(
         floating wsum_cluster = 0
         floating old_weight, new_weight
         floating alpha
-        floating weight_idx
+        floating weight_ratio
 
     k = 0
     for sample_idx in range(n_samples):
@@ -96,9 +96,6 @@ cdef void update_center_dense(
     n_indices = k
 
     if wsum_cluster > 0:
-        old_weight = weight_sums[cluster_idx]
-        new_weight = old_weight + wsum_cluster
-        weight_sums[cluster_idx] = new_weight
 
         # Update cluster center with learning rate alpha
         # center_new = (1-alpha)*center_old + alpha*X_bar,
@@ -114,15 +111,18 @@ cdef void update_center_dense(
         if adaptive_lr:
             alpha = sqrt(wsum_cluster / wsum_batch)
         else:
+            old_weight = weight_sums[cluster_idx]
+            new_weight = old_weight + wsum_cluster
+            weight_sums[cluster_idx] = new_weight
             alpha = wsum_cluster / new_weight
 
         for feature_idx in range(n_features):
             centers_new[cluster_idx, feature_idx] = (1 - alpha) * centers_old[cluster_idx, feature_idx]
         for k in range(n_indices):
             sample_idx = indices[k]
-            weight_idx = sample_weight[sample_idx] / wsum_cluster
+            weight_ratio = sample_weight[sample_idx] / wsum_cluster
             for feature_idx in range(n_features):
-                centers_new[cluster_idx, feature_idx] += alpha * weight_idx * X[sample_idx, feature_idx]
+                centers_new[cluster_idx, feature_idx] += alpha * weight_ratio * X[sample_idx, feature_idx]
 
     else:
         # No sample was assigned to this cluster in this batch of data
@@ -177,7 +177,7 @@ def _minibatch_update_sparse(
         int n_clusters = centers_old.shape[0]
         int cluster_idx
         int sample_idx
-        floating wsum_batch = 0.0
+        floating wsum_batch = 0.0  # wsum_batch is only used when adaptive_lr=True
         int *indices
 
     if adaptive_lr:
@@ -214,7 +214,7 @@ cdef void update_center_sparse(
         int n_indices = 0
         int k, sample_idx, feature_idx, ptr, i
         floating wsum_cluster = 0.0
-        floating old_weight, new_weight, weight_idx
+        floating old_weight, new_weight, weight_ratio
         floating alpha
 
     k = 0
@@ -227,13 +227,13 @@ cdef void update_center_sparse(
 
     if wsum_cluster > 0:
         # See update_center_dense for details
-        old_weight = weight_sums[cluster_idx]
-        new_weight = old_weight + wsum_cluster
-        weight_sums[cluster_idx] = new_weight
 
         if adaptive_lr:
             alpha = sqrt(wsum_cluster / wsum_batch)
         else:
+            old_weight = weight_sums[cluster_idx]
+            new_weight = old_weight + wsum_cluster
+            weight_sums[cluster_idx] = new_weight
             alpha = wsum_cluster / new_weight
 
         for feature_idx in range(n_features):
@@ -241,10 +241,10 @@ cdef void update_center_sparse(
 
         for i in range(n_indices):
             sample_idx = indices[i]
-            weight_idx = sample_weight[sample_idx] / wsum_cluster
+            weight_ratio = sample_weight[sample_idx] / wsum_cluster
             for ptr in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
                 feature_idx = X_indices[ptr]
-                centers_new[cluster_idx, feature_idx] += alpha * weight_idx * X_data[ptr]
+                centers_new[cluster_idx, feature_idx] += alpha * weight_ratio * X_data[ptr]
 
     else:
         # No sample was assigned to this cluster in this batch of data

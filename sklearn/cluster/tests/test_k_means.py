@@ -355,6 +355,8 @@ def test_minibatch_kmeans_partial_fit_adaptive_lr(array_constr):
         if first_step_centers is None:
             first_step_centers = km.cluster_centers_.copy()
 
+    # Note that inertia is not guaranteed to decrease at each step,
+    # but it does on this toy example.
     assert inertias[0] < initial_inertia
     assert np.all(np.diff(inertias) <= 1e-12)
     assert_allclose(
@@ -390,6 +392,8 @@ def test_minibatch_kmeans_fit_adaptive_lr(array_constr):
     ).fit(X)
     centers = km.cluster_centers_[np.argsort(km.cluster_centers_[:, 0])]
 
+    # Note that inertia is not guaranteed to decrease at each step,
+    # but it does on this toy example.
     assert km.inertia_ < initial_inertia
     assert np.linalg.norm(centers - expected_final_centers) < initial_dist_to_expected
 
