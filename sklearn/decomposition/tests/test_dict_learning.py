@@ -133,6 +133,22 @@ def test_dict_learning_lars_positive_parameter():
         dict_learning(X, n_components, alpha=alpha, positive_code=True)
 
 
+
+def test_dict_learning_omp_transform_n_nonzero_coefs_validation():
+    """Check that transform_n_nonzero_coefs > n_components raises clear error."""
+    n_components = 5
+    dico = DictionaryLearning(
+        n_components=n_components,
+        transform_algorithm="omp",
+        transform_n_nonzero_coefs=10,
+        random_state=0,
+    )
+    dico.fit(X)
+    err_msg = "transform_n_nonzero_coefs \(10\) cannot be greater than n_components \(5\)"
+    with pytest.raises(ValueError, match=err_msg):
+        dico.transform(X)
+
+
 @pytest.mark.parametrize(
     "transform_algorithm",
     [

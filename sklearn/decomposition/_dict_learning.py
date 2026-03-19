@@ -1094,6 +1094,16 @@ class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
         SparseCoder."""
         X = validate_data(self, X, reset=False)
 
+        if self.transform_algorithm == "omp":
+            n_components = dictionary.shape[0]
+            n_nonzero = self.transform_n_nonzero_coefs
+            if n_nonzero is not None and n_nonzero > n_components:
+                raise ValueError(
+                    "transform_n_nonzero_coefs (%d) cannot be greater than "
+                    "n_components (%d) when using transform_algorithm='omp'."
+                    % (n_nonzero, n_components)
+                )
+
         if hasattr(self, "alpha") and self.transform_alpha is None:
             transform_alpha = self.alpha
         else:
