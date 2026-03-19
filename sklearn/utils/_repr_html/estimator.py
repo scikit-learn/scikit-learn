@@ -411,10 +411,7 @@ def _write_estimator_html(
 
         out.write("</div>")
 
-        is_column_transformer = estimator_label in (
-            "ColumnTransformer",
-            "transformer: ColumnTransformer",
-        )
+        is_column_transformer = estimator.__class__.__name__ == "ColumnTransformer"
         has_single_estimator = len(est_block.estimators) == 1
         if (
             is_fitted_css_class
