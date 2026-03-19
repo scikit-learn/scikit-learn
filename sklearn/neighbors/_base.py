@@ -529,6 +529,10 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                         "boolean masks (use `indices=True` in CV)."
                         % (sample_weights.shape, X.shape)
                     )
+                if np.all(sample_weights <= 0):
+                    raise ValueError(
+                        "Invalid input - all samples have zero or negative weights."
+                    )
             self.sample_weights = sample_weights
 
         else:

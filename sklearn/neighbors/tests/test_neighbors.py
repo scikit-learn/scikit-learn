@@ -724,6 +724,7 @@ def test_kneighbors_classifier_const_sample_weights(
     y_pred = knn.predict(X[:n_test_pts] + epsilon)
     assert_array_equal(y_pred, y[:n_test_pts])
 
+
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
 @pytest.mark.parametrize("weights", WEIGHTS)
 @pytest.mark.parametrize("len_sample_weight", [1, 39])
@@ -748,6 +749,28 @@ def test_kneighbors_classifier_sample_weights_shape(
 
     with pytest.raises(ValueError):
         knn.fit(X, y, sample_weights=np.ones(len_sample_weight))
+
+
+@pytest.mark.parametrize("mag_sample_weight", [0, -0.3])
+@pytest.mark.parametrize("weights", WEIGHTS)
+def test_negative_sample_weights_mask_all_samples(
+    global_dtype,
+    weights, 
+    mag_sample_weight,
+    random_state=0,
+    n_samples=40,
+    n_features=5
+):
+    knn = neighbors.KNeighborsClassifier(
+        n_neighbors=5, weights=weights
+    )
+    err_msg = "Invalid input - all samples have zero or negative weights."
+    
+    rng = np.random.RandomState(random_state)
+    X = 2 * rng.rand(n_samples, n_features).astype(global_dtype, copy=False) - 1
+    y = ((X**2).sum(axis=1) < 0.5).astype(int)
+    with pytest.raises(ValueError, match=err_msg):
+        knn.fit(X, y, sample_weights=np.ones(n_samples) * mag_sample_weight)
 
 def test_kneighbors_classifier_float_labels(
     global_dtype,
