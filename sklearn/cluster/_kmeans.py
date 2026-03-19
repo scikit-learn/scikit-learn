@@ -1811,11 +1811,10 @@ class MiniBatchKMeans(_BaseKMeans):
 
     adaptive_lr : bool, default=False
         If True, use the adaptive learning rate described in [1]_ which can be
-        If True, use the adaptive learning rate described in [1]_ which can be
-        more effective than the standard learning rate.
         more effective than the standard learning rate.
 
         .. versionadded:: 1.9
+
     Attributes
     ----------
 
