@@ -1961,12 +1961,12 @@ def test_feature_union_1d_output():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
 )
-def test_feature_union_array_api_compliance(array_namespace, device, dtype_name):
+def test_feature_union_array_api_compliance(array_namespace, device_name, dtype_name):
     """Test that FeatureUnion with Array API-compatible transformers works."""
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     rnd = np.random.RandomState(0)
     n_samples, n_features = 20, 10
     X_np = rnd.uniform(size=(n_samples, n_features)).astype(dtype_name)
