@@ -1811,8 +1811,11 @@ class MiniBatchKMeans(_BaseKMeans):
 
     adaptive_lr : bool, default=False
         If True, use the adaptive learning rate described in [1]_ which can be
-        more effective than the standard learning rate when the input is dense.
+        If True, use the adaptive learning rate described in [1]_ which can be
+        more effective than the standard learning rate.
+        more effective than the standard learning rate.
 
+        .. versionadded:: 1.9
     Attributes
     ----------
 
@@ -1871,8 +1874,9 @@ class MiniBatchKMeans(_BaseKMeans):
     References
     ----------
 
-    .. [1] :arxiv:`Gregory Schwartzman (2023).
-        "Mini-batch k-means terminates within O(d/ɛ) iterations" <2304.00419>`
+    .. [1] Gregory Schwartzman (2023).
+        "Mini-batch k-means terminates within O(d/ɛ) iterations".
+        :arxiv:`2304.00419`
 
     Examples
     --------
