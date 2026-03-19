@@ -298,15 +298,12 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                 "Please modify 'weights' to avoid this case if you are "
                 "using a user-defined function."
             )
-        
-        if self.sample_weights is not None:
-            if weights is None:
-                weights = self.sample_weights
-            else:
-                weights *= self.sample_weights
 
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
+            if self.sample_weights is not None:
+                sample_weights = self.sample_weights.reshape((-1, 1))
+                sample_weights = sample_weights[neigh_ind, k]
             if weights is None:
                 mode, _ = _mode(_y[neigh_ind, k], axis=1)
             else:
