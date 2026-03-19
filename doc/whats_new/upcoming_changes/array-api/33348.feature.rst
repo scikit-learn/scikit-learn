@@ -1,0 +1,3 @@
+- :class:`linear_model.PoissonRegressor` now supports array API compatible inputs
+  with `solver="lbfgs"`.
+  By :user:`Christian Lorentzen <lorentzenchr>` and :user:`Omar Salman <OmarManzoor>`.

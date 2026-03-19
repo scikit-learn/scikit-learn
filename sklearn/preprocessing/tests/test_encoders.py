@@ -39,6 +39,16 @@ def test_one_hot_encoder_sparse_dense():
     assert_array_equal(X_trans_sparse.toarray(), X_trans_dense)
 
 
+def test_one_hot_encoder_sparse_index_array_int32():
+    X = np.array([[3, 2, 1], [0, 1, 1]])
+    enc_sparse = OneHotEncoder(sparse_output=True)
+
+    X_trans_sparse = enc_sparse.fit_transform(X)
+    assert X_trans_sparse.format == "csr"
+    assert X_trans_sparse.indices.dtype == np.int32
+    assert X_trans_sparse.indptr.dtype == np.int32
+
+
 @pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 def test_one_hot_encoder_handle_unknown(handle_unknown):
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
