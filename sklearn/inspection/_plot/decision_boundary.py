@@ -573,12 +573,13 @@ class DecisionBoundaryDisplay:
             )
 
         prediction_method = _check_boundary_response_method(estimator, response_method)
-        if class_of_interest is not None and hasattr(estimator, "classes_"):
-            if class_of_interest not in estimator.classes_:
-                raise ValueError(
-                    f"class_of_interest={class_of_interest} is not a valid label: It "
-                    f"should be one of {estimator.classes_}"
-                )
+        if (class_of_interest is not None and hasattr(estimator, "classes_")) and (
+            class_of_interest not in estimator.classes_
+        ):
+            raise ValueError(
+                f"class_of_interest={class_of_interest} is not a valid label: It "
+                f"should be one of {estimator.classes_}"
+            )
 
         response, _, response_method_used = _get_response_values(
             estimator,
