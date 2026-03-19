@@ -155,6 +155,12 @@ jobs:
             platform_id: manylinux_aarch64
             manylinux_image: manylinux_2_28
 
+          # Linux riscv64
+          - os: ubuntu-24.04-riscv
+            python: 312
+            platform_id: manylinux_riscv64
+            manylinux_image: manylinux_2_39
+
           # MacOS x86_64
           - os: macos-15-intel
             python: 311
@@ -219,6 +225,7 @@ jobs:
           CIBW_ARCHS: all
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_image }}
+          CIBW_MANYLINUX_RISCV64_IMAGE: ${{ matrix.manylinux_image }}
           # Needed on Windows CI to compile with Visual Studio compiler
           # otherwise Meson detects a MINGW64 platform and use MINGW64
           # toolchain
