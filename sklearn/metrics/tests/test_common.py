@@ -2556,8 +2556,7 @@ def test_mixed_array_api_namespace_input_compliance(
     is correct, as detailed above.
     """
     xp_to, device_to = _array_api_for_tests(
-        to_ns_and_device.xp,
-        device_name=to_ns_and_device.device,
+        to_ns_and_device.xp, device_name=to_ns_and_device.device
     )
     xp_from, device_from = _array_api_for_tests(
         from_ns_and_device.xp, device_name=from_ns_and_device.device
