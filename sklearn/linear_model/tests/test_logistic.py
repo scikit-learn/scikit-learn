@@ -2846,3 +2846,35 @@ def test_get_default_scorer():
     """Test that LogisticRegressionCV gets correct default scorer."""
     lr = LogisticRegressionCV()
     assert lr._get_scorer()._score_func.__name__ == "accuracy_score"
+
+
+@pytest.mark.parametrize("binary", [True, False])
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+    ids=_get_namespace_device_dtype_ids,
+)
+@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
+def test_logistic_regression_array_api_warm_start(
+    binary,
+    array_namespace,
+    device_,
+    dtype_name,
+):
+    """Test that warm_start=True works with array API inputs across
+    multiple fit calls for both binary and multiclass classification."""
+    xp = _array_api_for_tests(array_namespace, device_)
+    X_np = iris.data.astype(dtype_name, copy=True)
+    if binary:
+        y_np = (iris.target > 0).astype(dtype_name)
+    else:
+        y_np = iris.target.astype(dtype_name)
+
+    X_xp = xp.asarray(X_np, device=device_)
+    y_xp = xp.asarray(y_np, device=device_)
+
+    with config_context(array_api_dispatch=True):
+        lr = LogisticRegression(C=1e-2, solver="lbfgs", max_iter=300, warm_start=True)
+        lr.fit(X_xp, y_xp)
+        lr.predict(X_xp)
+        lr.fit(X_xp, y_xp)
