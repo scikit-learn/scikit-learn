@@ -40,6 +40,7 @@ from sklearn.utils import (
     compute_class_weight,
 )
 from sklearn.utils._array_api import (
+    _convert_to_numpy,
     _is_numpy_namespace,
     _matching_numpy_dtype,
     get_namespace,
@@ -1326,10 +1327,13 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             warm_start_coef = getattr(self, "coef_", None)
         else:
             warm_start_coef = None
-        if warm_start_coef is not None and self.fit_intercept:
-            warm_start_coef = xp.concat(
-                [warm_start_coef, self.intercept_[:, None]], axis=1
-            )
+        if warm_start_coef is not None:
+            warm_start_coef = _convert_to_numpy(warm_start_coef, xp=xp)
+            if self.fit_intercept:
+                intercept_np = _convert_to_numpy(self.intercept_, xp=xp)
+                warm_start_coef = np.concatenate(
+                    [warm_start_coef, intercept_np[:, None]], axis=1
+                )
 
         # TODO: enable multi-threading if benchmarks show a positive effect,
         # see https://github.com/scikit-learn/scikit-learn/issues/32162
