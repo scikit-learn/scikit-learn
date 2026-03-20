@@ -469,7 +469,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     stacklevel=3,
                 )
 
-    def _fit(self, X, y=None, sample_weights=None):
+    def _fit(self, X, y=None, sample_weight=None):
         ensure_all_finite = "allow-nan" if get_tags(self).input_tags.allow_nan else True
         if self.__sklearn_tags__().target_tags.required:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
@@ -524,21 +524,21 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             else:
                 n_samples = _num_samples(self._y)
 
-            if sample_weights is not None:
-                sample_weights = np.asarray(sample_weights, dtype=np.float64)
-                if sample_weights.shape[0] != n_samples:
+            if sample_weight is not None:
+                sample_weight = np.asarray(sample_weight, dtype=np.float64)
+                if sample_weight.shape[0] != n_samples:
                     raise ValueError(
                         "sample_weight and X have incompatible shapes: "
                         "%r vs %r\n"
                         "Note: Sparse matrices cannot be indexed w/"
                         "boolean masks (use `indices=True` in CV)."
-                        % (sample_weights.shape, X.shape)
+                        % (sample_weight.shape, X.shape)
                     )
-                if np.all(sample_weights <= 0):
+                if np.all(sample_weight <= 0):
                     raise ValueError(
                         "Invalid input - all samples have zero or negative weights."
                     )
-            self.sample_weights = sample_weights
+            self._sample_weight = sample_weight
 
         else:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
