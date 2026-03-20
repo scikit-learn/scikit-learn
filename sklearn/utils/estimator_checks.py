@@ -364,6 +364,9 @@ def _yield_array_api_checks(estimator, only_numpy=False):
                 device_name=device_name,
                 dtype_name=dtype_name,
             )
+        # Only test with one namespace to keep costs down
+        # There should be no dependency on the exact
+        # namespace used.
         yield partial(
             check_array_api_same_namespace,
             array_namespace="array_api_strict",
