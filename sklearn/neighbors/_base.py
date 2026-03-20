@@ -31,6 +31,7 @@ from sklearn.utils.validation import (
     _to_object_array,
     check_is_fitted,
     validate_data,
+    _check_sample_weight,
 )
 
 SCIPY_METRICS = [
@@ -525,19 +526,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 n_samples = _num_samples(self._y)
 
             if sample_weight is not None:
-                sample_weight = np.asarray(sample_weight, dtype=np.float64)
-                if sample_weight.shape[0] != n_samples:
-                    raise ValueError(
-                        "sample_weight and X have incompatible shapes: "
-                        "%r vs %r\n"
-                        "Note: Sparse matrices cannot be indexed w/"
-                        "boolean masks (use `indices=True` in CV)."
-                        % (sample_weight.shape, X.shape)
-                    )
-                if np.all(sample_weight <= 0):
-                    raise ValueError(
-                        "Invalid input - all samples have zero or negative weights."
-                    )
+                _check_sample_weight(sample_weight, X, ensure_non_negative=True)
+
             self._sample_weight = sample_weight
 
         else:

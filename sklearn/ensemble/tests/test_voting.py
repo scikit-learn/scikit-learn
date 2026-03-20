@@ -22,7 +22,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors import RadiusNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.tests.metadata_routing_common import (
@@ -349,11 +349,11 @@ def test_sample_weight(global_random_seed):
 
     # check that an error is raised and indicative if sample_weight is not
     # supported.
-    clf4 = KNeighborsClassifier()
+    clf4 = RadiusNeighborsClassifier()
     eclf3 = VotingClassifier(
         estimators=[("lr", clf1), ("svc", clf3), ("knn", clf4)], voting="soft"
     )
-    msg = "Underlying estimator KNeighborsClassifier does not support sample weights."
+    msg = "Underlying estimator RadiusNeighborsClassifier does not support sample weights."
     with pytest.raises(TypeError, match=msg):
         eclf3.fit(X_scaled, y, sample_weight=sample_weight)
 

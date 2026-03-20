@@ -751,18 +751,29 @@ def test_kneighbors_classifier_sample_weight_shape(
         knn.fit(X, y, sample_weight=np.ones(len_sample_weight))
 
 
-@pytest.mark.parametrize("mag_sample_weight", [0, -0.3])
+@pytest.mark.parametrize(
+    "mag_sample_weight,msg",
+    [
+        (0, "Sample weights must contain at least one non-zero number."),
+        (-0.3, "Negative values in data passed to `sample_weight`."),
+    ],
+)
 @pytest.mark.parametrize("weights", WEIGHTS)
 def test_negative_sample_weight_mask_all_samples(
-    global_dtype, weights, mag_sample_weight, random_state=0, n_samples=40, n_features=5
+    global_dtype,
+    weights,
+    mag_sample_weight,
+    msg,
+    random_state=0,
+    n_samples=40,
+    n_features=5,
 ):
     knn = neighbors.KNeighborsClassifier(n_neighbors=5, weights=weights)
-    err_msg = "Invalid input - all samples have zero or negative weights."
 
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features).astype(global_dtype, copy=False) - 1
     y = ((X**2).sum(axis=1) < 0.5).astype(int)
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.raises(ValueError, match=msg):
         knn.fit(X, y, sample_weight=np.ones(n_samples) * mag_sample_weight)
 
 
