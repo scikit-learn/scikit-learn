@@ -21,7 +21,6 @@ from sklearn.covariance._shrunk_covariance import _ledoit_wolf, _oas
 from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
@@ -383,16 +382,15 @@ def test_EmpiricalCovariance_validates_mahalanobis():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("assume_centered", [True, False])
 def test_empirical_covariance_array_api(
-    array_namespace, device, dtype_name, assume_centered
+    array_namespace, device_name, dtype_name, assume_centered
 ):
     """empirical_covariance() should return the same result with array API inputs."""
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     X_np = X.astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device)
@@ -407,16 +405,15 @@ def test_empirical_covariance_array_api(
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("n_features", [1, n_features])
 def test_ledoit_wolf_shrinkage_array_api(
-    array_namespace, device, dtype_name, n_features
+    array_namespace, device_name, dtype_name, n_features
 ):
     """ledoit_wolf_shrinkage() should return the same result with array API inputs."""
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     X_np = X[:, :n_features].astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device)
@@ -431,13 +428,12 @@ def test_ledoit_wolf_shrinkage_array_api(
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
-def test_log_likelihood_array_api(array_namespace, device, dtype_name):
+def test_log_likelihood_array_api(array_namespace, device_name, dtype_name):
     """log_likelihood() should work with array API inputs."""
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     X_np = X.astype(dtype_name, copy=False)
     emp_cov_np = empirical_covariance(X_np)
@@ -458,14 +454,13 @@ def test_log_likelihood_array_api(array_namespace, device, dtype_name):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("store_precision", [True, False])
-def test_score_array_api(array_namespace, device, dtype_name, store_precision):
+def test_score_array_api(array_namespace, device_name, dtype_name, store_precision):
     """LedoitWolf.score() should work with array API inputs."""
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     X_np = X.astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device)
@@ -482,14 +477,13 @@ def test_score_array_api(array_namespace, device, dtype_name, store_precision):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("norm", ["frobenius", "spectral"])
-def test_error_norm_array_api(array_namespace, device, dtype_name, norm):
+def test_error_norm_array_api(array_namespace, device_name, dtype_name, norm):
     """error_norm() should work with array API inputs."""
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     X_np = X.astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device)
@@ -509,13 +503,12 @@ def test_error_norm_array_api(array_namespace, device, dtype_name, norm):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
-def test_mahalanobis_array_api(array_namespace, device, dtype_name):
+def test_mahalanobis_array_api(array_namespace, device_name, dtype_name):
     """mahalanobis() should work with array API inputs."""
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     X_np = X.astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device)
@@ -532,9 +525,8 @@ def test_mahalanobis_array_api(array_namespace, device, dtype_name):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "check",
@@ -547,7 +539,9 @@ def test_mahalanobis_array_api(array_namespace, device, dtype_name):
     ids=_get_check_estimator_ids,
 )
 def test_covariance_array_api_compliance(
-    estimator, check, array_namespace, device, dtype_name
+    estimator, check, array_namespace, device_name, dtype_name
 ):
     name = estimator.__class__.__name__
-    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
+    check(
+        name, estimator, array_namespace, device_name=device_name, dtype_name=dtype_name
+    )
