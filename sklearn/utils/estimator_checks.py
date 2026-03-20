@@ -1285,7 +1285,9 @@ def check_array_api_input_and_values(
     )
 
 
-def check_array_api_same_namespace(name, estimator_orig, array_namespace, device=None):
+def check_array_api_same_namespace(
+    name, estimator_orig, array_namespace, device_name=None
+):
     """Check that estimator raises when predict/transform namespace differs from fit.
 
     Array API compatible estimators should call ``check_same_namespace`` in
@@ -1293,7 +1295,7 @@ def check_array_api_same_namespace(name, estimator_orig, array_namespace, device
     input arrays are from the same namespace and device as the fitted
     attributes.
     """
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     X, y = make_classification(n_samples=30, n_features=10, random_state=42)
     X = X.astype("float64", copy=False)
