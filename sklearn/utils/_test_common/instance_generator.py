@@ -1199,6 +1199,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "Therefore this test is x-fail until we fix this."
         ),
     },
+    PoissonRegressor: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
+    },
     PolynomialFeatures: {
         "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
