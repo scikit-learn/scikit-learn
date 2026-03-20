@@ -19,7 +19,6 @@ import joblib
 import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
-from sklearn.neighbors._base import KNeighborsMixin
 
 from sklearn import config_context
 from sklearn.base import (
@@ -58,6 +57,7 @@ from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 from sklearn.metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
 from sklearn.model_selection import LeaveOneGroupOut, ShuffleSplit, train_test_split
 from sklearn.model_selection._validation import _safe_split
+from sklearn.neighbors._base import KNeighborsMixin
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler, scale
 from sklearn.utils import _safe_indexing, shuffle

@@ -353,7 +353,10 @@ def test_sample_weight(global_random_seed):
     eclf3 = VotingClassifier(
         estimators=[("lr", clf1), ("svc", clf3), ("knn", clf4)], voting="soft"
     )
-    msg = "Underlying estimator RadiusNeighborsClassifier does not support sample weights."
+    msg = (
+        "Underlying estimator RadiusNeighborsClassifier "
+        "does not support sample weights."
+    )
     with pytest.raises(TypeError, match=msg):
         eclf3.fit(X_scaled, y, sample_weight=sample_weight)
 
