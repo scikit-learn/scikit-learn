@@ -411,11 +411,14 @@ def test_empirical_covariance_array_api(
     yield_namespace_device_dtype_combinations(),
     ids=_get_namespace_device_dtype_ids,
 )
-def test_ledoit_wolf_shrinkage_array_api(array_namespace, device, dtype_name):
+@pytest.mark.parametrize("n_features", [1, n_features])
+def test_ledoit_wolf_shrinkage_array_api(
+    array_namespace, device, dtype_name, n_features
+):
     """ledoit_wolf_shrinkage() should return the same result with array API inputs."""
     xp = _array_api_for_tests(array_namespace, device)
 
-    X_np = X.astype(dtype_name, copy=False)
+    X_np = X[:, :n_features].astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device)
 
     shrinkage_np = ledoit_wolf_shrinkage(X_np)
@@ -459,7 +462,8 @@ def test_log_likelihood_array_api(array_namespace, device, dtype_name):
     yield_namespace_device_dtype_combinations(),
     ids=_get_namespace_device_dtype_ids,
 )
-def test_score_array_api(array_namespace, device, dtype_name):
+@pytest.mark.parametrize("store_precision", [True, False])
+def test_score_array_api(array_namespace, device, dtype_name, store_precision):
     """LedoitWolf.score() should work with array API inputs."""
     xp = _array_api_for_tests(array_namespace, device)
 
@@ -467,10 +471,10 @@ def test_score_array_api(array_namespace, device, dtype_name):
     X_xp = xp.asarray(X_np, device=device)
 
     with config_context(array_api_dispatch=True):
-        lw_xp = LedoitWolf().fit(X_xp)
+        lw_xp = LedoitWolf(store_precision=store_precision).fit(X_xp)
         score_xp = lw_xp.score(X_xp)
 
-    lw_np = LedoitWolf().fit(X_np)
+    lw_np = LedoitWolf(store_precision=store_precision).fit(X_np)
     score_np = lw_np.score(X_np)
 
     assert isinstance(score_xp, float)
