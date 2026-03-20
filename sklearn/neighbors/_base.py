@@ -27,10 +27,10 @@ from sklearn.utils.fixes import parse_version, sp_base_version
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
+    _num_samples,
     _to_object_array,
     check_is_fitted,
     validate_data,
-    _num_samples,
 )
 
 SCIPY_METRICS = [

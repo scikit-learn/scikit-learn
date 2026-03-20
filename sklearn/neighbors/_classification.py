@@ -234,7 +234,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         y : {array-like, sparse matrix} of shape (n_samples,) or \
                 (n_samples, n_outputs)
             Target values.
-        
+
         sample_weight : array-like of shape (n_samples,), default=None
             Per-sample weights.
 
