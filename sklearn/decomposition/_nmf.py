@@ -1050,6 +1050,15 @@ def non_negative_factorization(
         `alpha_W`.
 
         .. versionadded:: 1.0
+        .. warning::
+               When applying sparsity constraints using ``alpha_W`` or ``alpha_H``,
+               be aware of scale ambiguity in NMF. The factorization can be rescaled
+               without changing the reconstruction error, which may lead to misleading
+               sparsity interpretations.
+            
+               This is especially important when only one of ``alpha_W`` or ``alpha_H`` is non-zero.
+            
+               Consider constraining or regularizing both matrices to avoid this issue.
 
     l1_ratio : float, default=0.0
         The regularization mixing parameter, with 0 <= l1_ratio <= 1.
