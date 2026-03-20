@@ -63,11 +63,11 @@ def yield_namespaces(include_numpy_namespaces=True):
 
 
 def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
-    """Yield supported namespace, device, dtype tuples for testing.
+    """Yield supported namespace, device_name, dtype_name tuples for testing.
 
     Use this to test that an estimator works with all combinations.
-    Use in conjunction with `ids=_get_namespace_device_dtype_ids` to give
-    clearer pytest parametrization ID names.
+    Pass the yielded values to `_array_api_for_tests` which returns (xp, device)
+    for array allocation.
 
     Parameters
     ----------
@@ -79,7 +79,7 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     array_namespace : str
         The name of the Array API namespace.
 
-    device : str
+    device_name : str or None
         The name of the device on which to allocate the arrays. Can be None to
         indicate that the default value should be used.
 
@@ -91,43 +91,19 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
         include_numpy_namespaces=include_numpy_namespaces
     ):
         if array_namespace == "torch":
-            for device, dtype in itertools.product(
+            for device_name, dtype in itertools.product(
                 ("cpu", "cuda", "xpu"), ("float64", "float32")
             ):
-                yield array_namespace, device, dtype
+                yield array_namespace, device_name, dtype
             yield array_namespace, "mps", "float32"
 
         elif array_namespace == "array_api_strict":
-            try:
-                import array_api_strict
-
-                yield array_namespace, array_api_strict.Device("CPU_DEVICE"), "float64"
-                yield array_namespace, array_api_strict.Device("device1"), "float32"
-            except ImportError:
-                # Those combinations will typically be skipped by pytest if
-                # array_api_strict is not installed but we still need to see them in
-                # the test output.
-                yield array_namespace, "CPU_DEVICE", "float64"
-                yield array_namespace, "device1", "float32"
+            # Always yield strings for consistent parametrization; _array_api_for_tests
+            # creates Device objects when needed.
+            yield array_namespace, "CPU_DEVICE", "float64"
+            yield array_namespace, "device1", "float32"
         else:
             yield array_namespace, None, None
-
-
-def _get_namespace_device_dtype_ids(param):
-    """Get pytest parametrization IDs for `yield_namespace_device_dtype_combinations`"""
-    # Gives clearer IDs for array-api-strict devices, see #31042 for details
-    try:
-        import array_api_strict
-    except ImportError:
-        # `None` results in the default pytest representation
-        return None
-    else:
-        if param == array_api_strict.Device("CPU_DEVICE"):
-            return "CPU_DEVICE"
-        if param == array_api_strict.Device("device1"):
-            return "device1"
-        if param == array_api_strict.Device("device2"):
-            return "device2"
 
 
 def yield_mixed_namespace_input_permutations():
@@ -169,17 +145,8 @@ def yield_mixed_namespace_input_permutations():
         "numpy to torch mps",
     )
 
-    try:
-        import array_api_strict
-
-        device = array_api_strict.Device("device1")
-    except ImportError:
-        # This case will generally be skipped when `array_api_strict` is not installed
-        # but we still include it so it shows in the test output.
-        device = None
-
     yield (
-        NamespaceAndDevice("array_api_strict", device),
+        NamespaceAndDevice("array_api_strict", "device1"),
         NamespaceAndDevice("torch", "cpu"),
         "array_api_strict to torch cpu",
     )

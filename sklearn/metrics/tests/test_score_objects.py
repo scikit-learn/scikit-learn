@@ -14,6 +14,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
     load_diabetes,
+    load_iris,
     make_blobs,
     make_classification,
     make_multilabel_classification,
@@ -60,7 +61,6 @@ from sklearn.tests.metadata_routing_common import (
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._array_api import (
     _atol_for_type,
-    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -70,6 +70,7 @@ from sklearn.utils._testing import (
     ignore_warnings,
 )
 from sklearn.utils.metadata_routing import MetadataRouter, MethodMapping
+from sklearn.utils.multiclass import type_of_target
 
 REGRESSION_SCORERS = [
     "d2_absolute_error_score",
@@ -1187,6 +1188,38 @@ def test_scorer_select_proba_error(scorer):
         scorer(lr, X, y)
 
 
+def test_invalid_default_pos_label_ignored_on_multiclass():
+    iris = load_iris()
+    X = iris.data
+    y = np.array(iris.target_names)[iris.target]
+
+    assert type_of_target(y) == "multiclass"
+
+    clf = LogisticRegression(max_iter=1000, random_state=0).fit(X, y)
+
+    # The default of average_precision_score pos_label is 1. It's not one of
+    # the string class labels but it should be ignored when the scorer is
+    # called on a multiclass problem.
+    scorer = make_scorer(
+        average_precision_score,
+        response_method=("decision_function", "predict_proba"),
+    )
+    assert scorer(clf, X, y) > 0.7
+
+    # Passing an invalid pos_label explicitly should raise an error.
+    scorer = make_scorer(
+        average_precision_score,
+        response_method=("decision_function", "predict_proba"),
+        pos_label="invalid_label",
+    )
+    expected_msg = re.escape(
+        "Parameter pos_label is fixed to 1 for multiclass y_true. Do not set pos_label "
+        "or set pos_label to 1."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        scorer(clf, X, y)
+
+
 def test_get_scorer_return_copy():
     # test that get_scorer returns a copy
     assert get_scorer("roc_auc") is not get_scorer("roc_auc")
@@ -1675,9 +1708,7 @@ def test_Pipeline_in_PassthroughScorer():
 
 
 @pytest.mark.parametrize(
-    "namespace, device_, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
+    "namespace, device_name, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "target_namespace_dtype", ["xp_int32", "np_int32", "np_str_object"]
@@ -1695,7 +1726,7 @@ def test_Pipeline_in_PassthroughScorer():
 @pytest.mark.parametrize("n_classes", [2, 3])
 def test_classification_scorer_array_api_compliance(
     namespace,
-    device_,
+    device_name,
     dtype_name,
     estimator,
     scoring,
@@ -1713,8 +1744,7 @@ def test_classification_scorer_array_api_compliance(
     """
     estimator = clone(estimator)
     scorer = check_scoring(estimator=estimator, scoring=scoring)
-
-    xp = _array_api_for_tests(namespace, device_)
+    xp, device_ = _array_api_for_tests(namespace, device_name)
 
     # Check compliance of the scorer API for binary classification tasks.
     X_np, y_np = make_classification(
@@ -1757,9 +1787,7 @@ def test_classification_scorer_array_api_compliance(
 
 
 @pytest.mark.parametrize(
-    "namespace, device_, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
+    "namespace, device_name, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize("target_namespace_dtype", ["xp_float32", "np_float64"])
 @pytest.mark.parametrize(
@@ -1771,7 +1799,7 @@ def test_classification_scorer_array_api_compliance(
 @pytest.mark.parametrize("n_targets", [1, 3])
 def test_regression_scorer_array_api_compliance(
     namespace,
-    device_,
+    device_name,
     dtype_name,
     estimator,
     scoring,
@@ -1784,8 +1812,7 @@ def test_regression_scorer_array_api_compliance(
     """
     estimator = clone(estimator)
     scorer = check_scoring(estimator=estimator, scoring=scoring)
-
-    xp = _array_api_for_tests(namespace, device_)
+    xp, device_ = _array_api_for_tests(namespace, device_name)
 
     # Check compliance of the scorer API for binary classification tasks.
     X_np, y_np = make_regression(

@@ -15,7 +15,6 @@ from sklearn.utils import gen_batches
 from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._array_api import (
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     _max_precision_float_dtype,
     get_namespace,
     yield_namespace_device_dtype_combinations,
@@ -56,6 +55,7 @@ from sklearn.utils.fixes import (
     DOK_CONTAINERS,
     LIL_CONTAINERS,
     _mode,
+    _sparse_random_array,
 )
 
 
@@ -512,7 +512,7 @@ def test_randomized_svd_sparse_warnings(sparse_container):
 
     X = sparse_container(X)
     warn_msg = (
-        "Calculating SVD of a {} is expensive. csr_matrix is more efficient.".format(
+        "Calculating SVD of a {} is expensive. CSR format is more efficient.".format(
             sparse_container.__name__
         )
     )
@@ -702,18 +702,17 @@ def test_incremental_weighted_mean_and_variance_simple(dtype, as_list):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 def test_incremental_weighted_mean_and_variance_array_api(
-    array_namespace, device, dtype
+    array_namespace, device_name, dtype_name
 ):
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     rng = np.random.RandomState(42)
     mult = 10
-    X = rng.rand(1000, 20).astype(dtype) * mult
-    sample_weight = rng.rand(X.shape[0]).astype(dtype) * mult
+    X = rng.rand(1000, 20).astype(dtype_name) * mult
+    sample_weight = rng.rand(X.shape[0]).astype(dtype_name) * mult
     mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=sample_weight)
 
     X_xp = xp.asarray(X, device=device)
@@ -1072,8 +1071,8 @@ def test_safe_sparse_dot_2d_1d(container):
 def test_safe_sparse_dot_dense_output(dense_output):
     rng = np.random.RandomState(0)
 
-    A = sparse.random(30, 10, density=0.1, random_state=rng)
-    B = sparse.random(10, 20, density=0.1, random_state=rng)
+    A = _sparse_random_array((30, 10), density=0.1, rng=rng)
+    B = _sparse_random_array((10, 20), density=0.1, rng=rng)
 
     expected = A.dot(B)
     actual = safe_sparse_dot(A, B, dense_output=dense_output)
@@ -1103,18 +1102,17 @@ def test_approximate_mode():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
-def test_randomized_svd_array_api_compliance(array_namespace, device, dtype):
-    xp = _array_api_for_tests(array_namespace, device)
+def test_randomized_svd_array_api_compliance(array_namespace, device_name, dtype_name):
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     rng = np.random.RandomState(0)
-    X = rng.normal(size=(30, 10)).astype(dtype)
+    X = rng.normal(size=(30, 10)).astype(dtype_name)
     X_xp = xp.asarray(X, device=device)
     n_components = 5
-    atol = 1e-5 if dtype == "float32" else 0
+    atol = 1e-5 if dtype_name == "float32" else 0
 
     with config_context(array_api_dispatch=True):
         u_np, s_np, vt_np = randomized_svd(X, n_components, random_state=0)
@@ -1130,19 +1128,20 @@ def test_randomized_svd_array_api_compliance(array_namespace, device, dtype):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
-def test_randomized_range_finder_array_api_compliance(array_namespace, device, dtype):
-    xp = _array_api_for_tests(array_namespace, device)
+def test_randomized_range_finder_array_api_compliance(
+    array_namespace, device_name, dtype_name
+):
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     rng = np.random.RandomState(0)
-    X = rng.normal(size=(30, 10)).astype(dtype)
+    X = rng.normal(size=(30, 10)).astype(dtype_name)
     X_xp = xp.asarray(X, device=device)
     size = 5
     n_iter = 10
-    atol = 1e-5 if dtype == "float32" else 0
+    atol = 1e-5 if dtype_name == "float32" else 0
 
     with config_context(array_api_dispatch=True):
         Q_np = randomized_range_finder(X, size=size, n_iter=n_iter, random_state=0)

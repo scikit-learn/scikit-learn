@@ -40,7 +40,7 @@ def _process_predict_proba(*, y_pred, target_type, classes, pos_label):
         Class labels as reported by `estimator.classes_`.
 
     pos_label : int, float, bool or str
-        Only used with binary and multiclass targets.
+        Only used with binary targets.
 
     Returns
     -------
@@ -80,7 +80,8 @@ def _process_decision_function(*, y_pred, target_type, classes, pos_label):
     This function process the `y_pred` array in the binary and multi-label cases.
     In the binary case, it inverts the sign of the score if the positive label
     is not `classes[1]`. In the multi-label case, it stacks the predictions if
-    they are not in the "compressed" format `(n_samples, n_outputs)`.
+    the positive label is not `classes[1]`. `y_pred` is returned unchanged if
+    `target_type` is "multiclass" or "multilabel-indicator".
 
     Parameters
     ----------
@@ -101,7 +102,7 @@ def _process_decision_function(*, y_pred, target_type, classes, pos_label):
         Class labels as reported by `estimator.classes_`.
 
     pos_label : int, float, bool or str
-        Only used with binary and multiclass targets.
+        Only used with binary targets.
 
     Returns
     -------
@@ -164,8 +165,8 @@ def _get_response_values(
 
     pos_label : int, float, bool or str, default=None
         The class considered as the positive class when computing
-        the metrics. If `None` and target is 'binary', `estimators.classes_[1]` is
-        considered as the positive class.
+        the response values. If `None` and target is 'binary',
+        `estimators.classes_[1]` is considered as the positive class.
 
     return_response_method_used : bool, default=False
         Whether to return the response method used to compute the response
@@ -182,7 +183,7 @@ def _get_response_values(
 
     pos_label : int, float, bool, str or None
         The class considered as the positive class when computing
-        the metrics. Returns `None` if `estimator` is a regressor, an outlier
+        binary response values. Returns `None` if `estimator` is a regressor, an outlier
         detector or a clusterer.
 
     response_method_used : str

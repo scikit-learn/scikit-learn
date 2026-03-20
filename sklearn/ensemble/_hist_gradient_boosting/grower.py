@@ -661,7 +661,7 @@ class TreeGrower:
         / \ / \      Right split at feature 2 has only group {1, 2} from now on.
 
         LightGBM uses the same logic for overlapping groups. See
-        https://github.com/microsoft/LightGBM/issues/4481 for details.
+        https://github.com/lightgbm-org/LightGBM/issues/4481 for details.
 
         Parameters:
         ----------
