@@ -528,6 +528,57 @@ def test_mahalanobis_array_api(array_namespace, device_name, dtype_name):
     "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
 )
+@pytest.mark.parametrize("assume_centered", [True, False])
+@pytest.mark.parametrize("n_features", [1, n_features])
+def test_oas_array_api(
+    array_namespace, device_name, dtype_name, assume_centered, n_features
+):
+    """oas() should return the same result with array API inputs."""
+    xp, device = _array_api_for_tests(array_namespace, device_name)
+
+    X_np = X[:, :n_features].astype(dtype_name, copy=False)
+    X_xp = xp.asarray(X_np, device=device)
+
+    cov_np, shrinkage_np = oas(X_np, assume_centered=assume_centered)
+
+    with config_context(array_api_dispatch=True):
+        cov_xp, shrinkage_xp = oas(X_xp, assume_centered=assume_centered)
+
+    cov_xp_np = _convert_to_numpy(cov_xp, xp=xp)
+    assert_allclose(cov_np, cov_xp_np, atol=_atol_for_type(dtype_name))
+    assert isinstance(shrinkage_xp, float)
+    assert abs(shrinkage_np - shrinkage_xp) < _atol_for_type(dtype_name)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+@pytest.mark.parametrize("store_precision", [True, False])
+def test_oas_score_array_api(
+    array_namespace, device_name, dtype_name, store_precision
+):
+    """OAS.score() should work with array API inputs."""
+    xp, device = _array_api_for_tests(array_namespace, device_name)
+
+    X_np = X.astype(dtype_name, copy=False)
+    X_xp = xp.asarray(X_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        oa_xp = OAS(store_precision=store_precision).fit(X_xp)
+        score_xp = oa_xp.score(X_xp)
+
+    oa_np = OAS(store_precision=store_precision).fit(X_np)
+    score_np = oa_np.score(X_np)
+
+    assert isinstance(score_xp, float)
+    assert abs(score_np - score_xp) < _atol_for_type(dtype_name)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
 @pytest.mark.parametrize(
     "check",
     [check_array_api_input_and_values],
@@ -535,7 +586,7 @@ def test_mahalanobis_array_api(array_namespace, device_name, dtype_name):
 )
 @pytest.mark.parametrize(
     "estimator",
-    [LedoitWolf()],
+    [LedoitWolf(), OAS()],
     ids=_get_check_estimator_ids,
 )
 def test_covariance_array_api_compliance(

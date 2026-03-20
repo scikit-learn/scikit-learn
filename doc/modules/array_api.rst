@@ -140,6 +140,7 @@ Estimators
 ----------
 
 - :class:`covariance.LedoitWolf`
+- :class:`covariance.OAS`
 - :class:`decomposition.PCA` (with `svd_solver="full"`, `svd_solver="covariance_eigh"`, or
   `svd_solver="randomized"` (`svd_solver="randomized"` only if `power_iteration_normalizer="QR"`))
 - :class:`kernel_approximation.Nystroem`
