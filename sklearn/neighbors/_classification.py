@@ -262,7 +262,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             Class labels for each data sample.
         """
         check_is_fitted(self, "_fit_method")
-        if self.weights == "uniform":
+        if self.weights == "uniform" and self._sample_weight is None:
             if self._fit_method == "brute" and ArgKminClassMode.is_usable_for(
                 X, self._fit_X, self.metric
             ):
@@ -292,23 +292,21 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         n_outputs = len(classes_)
         n_queries = _num_samples(self._fit_X if X is None else X)
         weights = _get_weights(neigh_dist, self.weights)
+        if weights is None:
+            weights = np.ones_like(neigh_ind)
         if weights is not None and _all_with_any_reduction_axis_1(weights, value=0):
             raise ValueError(
                 "All neighbors of some sample is getting zero weights. "
                 "Please modify 'weights' to avoid this case if you are "
                 "using a user-defined function."
             )
+        if self._sample_weight is not None:
+            sample_weight = self._sample_weight[neigh_ind]
+            weights = weights * sample_weight
 
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
-        for k, classes_k in enumerate(classes_):
-            if self._sample_weight is not None:
-                sample_weight = self._sample_weight.reshape((-1, 1))
-                sample_weight = sample_weight[neigh_ind, k]
-            if weights is None:
-                mode, _ = _mode(_y[neigh_ind, k], axis=1)
-            else:
-                mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
-
+        for k, classes_k in enumerate(classes_):        
+            mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
             mode = np.asarray(mode.ravel(), dtype=np.intp)
             y_pred[:, k] = classes_k.take(mode)
 
@@ -336,7 +334,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             by lexicographic order.
         """
         check_is_fitted(self, "_fit_method")
-        if self.weights == "uniform":
+        if self.weights == "uniform" and self._sample_weight is None:
             # TODO: systematize this mapping of metric for
             # PairwiseDistancesReductions.
             metric, metric_kwargs = _adjusted_metric(
@@ -400,6 +398,10 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                 "Please modify 'weights' to avoid this case if you are "
                 "using a user-defined function."
             )
+
+        if self._sample_weight is not None:
+            sample_weight = self._sample_weight[neigh_ind]
+            weights = weights * sample_weight
 
         all_rows = np.arange(n_queries)
         probabilities = []
