@@ -1317,8 +1317,9 @@ def _array_api_for_tests(array_namespace, device_name=None):
     xp : module
         The module object for the requested array namespace.
     device : object or None
-        The library specific device object to pass to
-        xp.asarray(..., device=device).
+        The library specific device object that can be passed to
+        xp.asarray(..., device=device). This might be a string and not
+        a library specific device object.
     """
     try:
         array_mod = importlib.import_module(array_namespace)
@@ -1379,6 +1380,10 @@ def _array_api_for_tests(array_namespace, device_name=None):
         if device_name is not None:
             device = xp.Device(device_name)
 
+    # Right now only array_api_strict uses a library specific device
+    # object. For all other libraries we return a string or `None`.
+    # This works because strings are accepted as arguments to
+    # xp.asarray(..., device=) in those libraries.
     return xp, device_name if device is None else device
 
 
