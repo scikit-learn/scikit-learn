@@ -106,8 +106,7 @@ to a different namespace and device::
 
     >>> from sklearn.utils._array_api import move_estimator_to, get_namespace_and_device
     >>> import numpy as np
-    >>> xp, _, dev = get_namespace_and_device(np.empty(0))
-    >>> lda_np = move_estimator_to(lda, xp, dev)
+    >>> lda_np = move_estimator_to(lda, np, device="cpu")
     >>> with config_context(array_api_dispatch=True):
     ...     X_trans = lda_np.transform(X_np)
     >>> type(X_trans)
