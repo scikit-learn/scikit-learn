@@ -1660,6 +1660,15 @@ def test_sk_visual_block_full_transform():
     assert isinstance(visual_block.estimators[0], Normalizer)
 
 
+def test_sk_visual_block_int_remainder_cols_pandas():
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"a": [1, 2], "b": [3, 4], "c": [5, 6]})
+    ct = ColumnTransformer([("scaler", StandardScaler(), [0])], remainder="passthrough")
+    ct.fit(X)
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.name_details == ([0], ["b", "c"])
+
+
 @pytest.mark.parametrize("explicit_colname", ["first", "second", 0, 1])
 @pytest.mark.parametrize("remainder", [Trans(), "passthrough", "drop"])
 def test_column_transformer_reordered_column_names_remainder(
