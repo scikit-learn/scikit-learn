@@ -7,6 +7,7 @@ import inspect
 import itertools
 import math
 import os
+from collections import namedtuple
 from functools import partial
 
 import numpy
@@ -64,11 +65,11 @@ def yield_namespaces(include_numpy_namespaces=True):
 
 
 def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
-    """Yield supported namespace, device, dtype tuples for testing.
+    """Yield supported namespace, device_name, dtype_name tuples for testing.
 
     Use this to test that an estimator works with all combinations.
-    Use in conjunction with `ids=_get_namespace_device_dtype_ids` to give
-    clearer pytest parametrization ID names.
+    Pass the yielded values to `_array_api_for_tests` which returns (xp, device)
+    for array allocation.
 
     Parameters
     ----------
@@ -80,7 +81,7 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     array_namespace : str
         The name of the Array API namespace.
 
-    device : str
+    device_name : str or None
         The name of the device on which to allocate the arrays. Can be None to
         indicate that the default value should be used.
 
@@ -92,43 +93,65 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
         include_numpy_namespaces=include_numpy_namespaces
     ):
         if array_namespace == "torch":
-            for device, dtype in itertools.product(
+            for device_name, dtype in itertools.product(
                 ("cpu", "cuda", "xpu"), ("float64", "float32")
             ):
-                yield array_namespace, device, dtype
+                yield array_namespace, device_name, dtype
             yield array_namespace, "mps", "float32"
 
         elif array_namespace == "array_api_strict":
-            try:
-                import array_api_strict
-
-                yield array_namespace, array_api_strict.Device("CPU_DEVICE"), "float64"
-                yield array_namespace, array_api_strict.Device("device1"), "float32"
-            except ImportError:
-                # Those combinations will typically be skipped by pytest if
-                # array_api_strict is not installed but we still need to see them in
-                # the test output.
-                yield array_namespace, "CPU_DEVICE", "float64"
-                yield array_namespace, "device1", "float32"
+            # Always yield strings for consistent parametrization; _array_api_for_tests
+            # creates Device objects when needed.
+            yield array_namespace, "CPU_DEVICE", "float64"
+            yield array_namespace, "device1", "float32"
         else:
             yield array_namespace, None, None
 
 
-def _get_namespace_device_dtype_ids(param):
-    """Get pytest parametrization IDs for `yield_namespace_device_dtype_combinations`"""
-    # Gives clearer IDs for array-api-strict devices, see #31042 for details
-    try:
-        import array_api_strict
-    except ImportError:
-        # `None` results in the default pytest representation
-        return None
-    else:
-        if param == array_api_strict.Device("CPU_DEVICE"):
-            return "CPU_DEVICE"
-        if param == array_api_strict.Device("device1"):
-            return "device1"
-        if param == array_api_strict.Device("device2"):
-            return "device2"
+def yield_mixed_namespace_input_permutations():
+    """Yield mixed namespace and device inputs for testing.
+
+    We do not test for all possible permutations of namespace/device from
+    `yield_namespace_device_dtype_combinations` (excluding dtype variations, this is
+    P(8,2)=56), to avoid slow testing and maintenance burden.
+
+    The included selection ensures that the following conversions are tested:
+
+    * non-NumPy to NumPy (including GPU to CPU)
+    * NumPy to non-NumPy (including CPU to GPU)
+    * non-NumPy to non-NumPy (GPU to GPU)
+    * array-api-strict to non-NumPy (this pair also has no special hardware
+      requirements to allow for local testing)
+    """
+
+    NamespaceAndDevice = namedtuple("NamespaceAndDevice", ["xp", "device"])
+
+    yield (
+        NamespaceAndDevice("cupy", None),
+        NamespaceAndDevice("torch", "cuda"),
+        "cupy to torch cuda",
+    )
+    yield (
+        NamespaceAndDevice("torch", "mps"),
+        NamespaceAndDevice("numpy", None),
+        "torch mps to numpy",
+    )
+    yield (
+        NamespaceAndDevice("numpy", None),
+        NamespaceAndDevice("torch", "cuda"),
+        "numpy to torch cuda",
+    )
+    yield (
+        NamespaceAndDevice("numpy", None),
+        NamespaceAndDevice("torch", "mps"),
+        "numpy to torch mps",
+    )
+
+    yield (
+        NamespaceAndDevice("array_api_strict", "device1"),
+        NamespaceAndDevice("torch", "cpu"),
+        "array_api_strict to torch cpu",
+    )
 
 
 def _check_array_api_dispatch(array_api_dispatch):
@@ -534,9 +557,19 @@ def move_to(*arrays, xp, device):
             "namespace is Numpy"
         )
 
-    converted_arrays = []
+    arrays_ = arrays
+    # Down cast float64 `arrays` when highest precision of `xp`/`device` is float32
+    if _max_precision_float_dtype(xp, device) == xp.float32:
+        arrays_ = []
+        for array in arrays:
+            xp_array, _ = get_namespace(array)
+            if getattr(array, "dtype", None) == xp_array.float64:
+                arrays_.append(xp_array.astype(array, xp_array.float32))
+            else:
+                arrays_.append(array)
 
-    for array, is_sparse, is_none in zip(arrays, sparse_mask, none_mask):
+    converted_arrays = []
+    for array, is_sparse, is_none in zip(arrays_, sparse_mask, none_mask):
         if is_none:
             converted_arrays.append(None)
         elif is_sparse:
@@ -564,7 +597,7 @@ def move_to(*arrays, xp, device):
                     # kwargs in the from_dlpack method and their expected
                     # meaning by namespaces implementing the array API spec.
                     # TODO: try removing this once DLPack v1 more widely supported
-                    # TODO: ValueError should not be needed but is in practice:
+                    # TODO: ValueError not needed once min NumPy >=2.4.0:
                     # https://github.com/numpy/numpy/issues/30341
                 except (
                     AttributeError,
@@ -593,18 +626,33 @@ def move_to(*arrays, xp, device):
     )
 
 
-def _expit(X, out=None, xp=None):
+def _expit(x, out=None, xp=None):
     # The out argument for exp and hence expit is only supported for numpy,
     # but not in the Array API specification.
-    xp, _ = get_namespace(X, xp=xp)
+    xp, _ = get_namespace(x, xp=xp)
     if _is_numpy_namespace(xp):
-        if out is not None:
-            special.expit(X, out=out)
-        else:
-            out = special.expit(X)
-        return out
+        return special.expit(x, out=out)
 
-    return 1.0 / (1.0 + xp.exp(-X))
+    return 1.0 / (1.0 + xp.exp(-x))
+
+
+def _logit(x, out=None, xp=None):
+    # The out argument for log and hence logit is only supported for numpy,
+    # but not in the Array API specification.
+    xp, _ = get_namespace(x, xp=xp)
+    if _is_numpy_namespace(xp):
+        return special.logit(x, out=out)
+
+    # See https://github.com/scipy/xsf/blob/e0c4d22d6ae768b39efc69586f1e8d5560a32fc5/include/xsf/log_exp.h#L30
+    def logit_v2(x):
+        s = 2 * (x - 0.5)
+        return xp.log1p(s) - xp.log1p(-s)
+
+    return xp.where(
+        xp.logical_or(x < 0.3, x > 0.65),
+        xp.log(x / (1 - x)),
+        logit_v2(x),
+    )
 
 
 def _validate_diagonal_args(array, value, xp):
