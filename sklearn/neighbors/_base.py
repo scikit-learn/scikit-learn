@@ -26,7 +26,12 @@ from sklearn.utils._param_validation import Interval, StrOptions, validate_param
 from sklearn.utils.fixes import parse_version, sp_base_version
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.parallel import Parallel, delayed
-from sklearn.utils.validation import _to_object_array, check_is_fitted, validate_data, _num_samples
+from sklearn.utils.validation import (
+    _to_object_array,
+    check_is_fitted,
+    validate_data,
+    _num_samples,
+)
 
 SCIPY_METRICS = [
     "braycurtis",
@@ -513,7 +518,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     self._y = self._y.ravel()
             else:
                 self._y = y
-            
+
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
                 n_samples = _num_samples(X)
             else:
