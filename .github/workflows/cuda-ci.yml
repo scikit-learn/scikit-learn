@@ -77,4 +77,5 @@ jobs:
         run: |
           source "${HOME}/conda/etc/profile.d/conda.sh"
           conda activate sklearn
-          python -m pytest --doctest-modules doc/modules/array_api.rst
+          cd doc
+          SCIPY_ARRAY_API=1 pytest --doctest-modules modules/array_api.rst
