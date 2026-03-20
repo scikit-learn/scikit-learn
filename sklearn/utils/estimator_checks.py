@@ -1573,11 +1573,11 @@ def check_sample_weights_shape(name, estimator_orig):
 def _check_sample_weight_equivalence(name, estimator_orig, sparse_container):
     # check that setting sample_weight to zero / integer is equivalent
     # to removing / repeating corresponding samples.
-    
+
     # This is not guaranteed to pass for k Neighbor estimators
     if isinstance(estimator_orig, KNeighborsMixin):
-        return 
-    
+        return
+
     estimator_weighted = clone(estimator_orig)
     estimator_repeated = clone(estimator_orig)
     set_random_state(estimator_weighted, random_state=0)

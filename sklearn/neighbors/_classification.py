@@ -305,7 +305,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             weights = weights * sample_weight
 
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
-        for k, classes_k in enumerate(classes_):        
+        for k, classes_k in enumerate(classes_):
             mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
             mode = np.asarray(mode.ravel(), dtype=np.intp)
             y_pred[:, k] = classes_k.take(mode)
