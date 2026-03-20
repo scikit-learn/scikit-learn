@@ -170,9 +170,9 @@ name. Several different "versions" of a dataset with the same name can exist
 which can contain entirely different datasets.
 If a particular version of a dataset has been found to contain significant
 issues, it might be deactivated. Using a name to specify a dataset will yield
-the earliest version of a dataset that is still active. That means that
+the earliest version of a dataset that is still active. That means -
 ``fetch_openml(name="miceprotein")`` can yield different results
-at different times if earlier versions become inactive.
+at different times, if earlier versions become inactive.
 You can see that the dataset with ``data_id`` 40966 that we fetched above is
 the first version of the "miceprotein" dataset::
 
