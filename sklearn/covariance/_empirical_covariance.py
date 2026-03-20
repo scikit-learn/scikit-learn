@@ -214,7 +214,14 @@ class EmpiricalCovariance(BaseEstimator):
 
     def __init__(self, *, store_precision=True, assume_centered=False):
         self.store_precision = store_precision
-        self.assume_centered = assume_centered
+def __init__(self, *, store_precision=True, assume_centered=False):
+    self.store_precision = store_precision
+    self.assume_centered = assume_centered
+
+def __sklearn_tags__(self):
+    tags = super().__sklearn_tags__()
+    tags.array_api_support = True    
+    return tags
 
     def _set_covariance(self, covariance):
         """Saves the covariance and precision estimates
@@ -311,7 +318,8 @@ class EmpiricalCovariance(BaseEstimator):
             The log-likelihood of `X_test` with `self.location_` and `self.covariance_`
             as estimators of the Gaussian model mean and covariance matrix respectively.
         """
-        X_test = validate_data(self, X_test, reset=False)
+        xp, _, device_ = get_namespace_and_device(X_test)
+        X_test = validate_data(self, X_test, reset=False, dtype=supported_float_dtypes(xp, device_))
         # compute empirical covariance of the test set
         test_cov = empirical_covariance(X_test - self.location_, assume_centered=True)
         # compute log likelihood
