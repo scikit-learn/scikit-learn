@@ -372,6 +372,25 @@ def test_oas():
     assert_array_almost_equal((X_1f**2).sum() / n_samples, oa.covariance_, 4)
 
 
+def test_oas_function_does_not_store_precision(monkeypatch):
+    """oas() should avoid computing the precision matrix."""
+    observed = {}
+
+    def fake_fit(self, X, y=None):
+        observed["store_precision"] = self.store_precision
+        self.covariance_ = np.eye(X.shape[1])
+        self.shrinkage_ = 0.5
+        return self
+
+    monkeypatch.setattr(OAS, "fit", fake_fit)
+
+    cov, shrinkage = oas(X)
+
+    assert observed["store_precision"] is False
+    assert_array_equal(cov, np.eye(X.shape[1]))
+    assert shrinkage == 0.5
+
+
 def test_EmpiricalCovariance_validates_mahalanobis():
     """Checks that EmpiricalCovariance validates data with mahalanobis."""
     cov = EmpiricalCovariance().fit(X)
@@ -555,9 +574,7 @@ def test_oas_array_api(
     yield_namespace_device_dtype_combinations(),
 )
 @pytest.mark.parametrize("store_precision", [True, False])
-def test_oas_score_array_api(
-    array_namespace, device_name, dtype_name, store_precision
-):
+def test_oas_score_array_api(array_namespace, device_name, dtype_name, store_precision):
     """OAS.score() should work with array API inputs."""
     xp, device = _array_api_for_tests(array_namespace, device_name)
 
