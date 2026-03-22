@@ -112,7 +112,8 @@ def _assess_dimension(spectrum, rank, n_samples):
     si_A = s_signal[:, None]
     sj_A = s_noise[None, :]
     terms = (si_A - sj_A) * (1.0 / v - 1.0 / si_A)
-    pa += float(xp.sum(xp.log(terms))) + terms.size * log(n_samples)
+    n_signal_noise_pairs = rank * (n_features - rank)
+    pa += float(xp.sum(xp.log(terms))) + n_signal_noise_pairs * log(n_samples)
 
     ll = pu + pl + pv + pp - pa / 2.0 - rank * log(n_samples) / 2.0
 
