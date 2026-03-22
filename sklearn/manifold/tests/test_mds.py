@@ -241,6 +241,7 @@ def test_convergence_does_not_depend_on_scale(metric_mds):
 
     assert_equal(n_iter1, n_iter2)
 
+
 # TODO(1.10): delete this test
 def test_future_warning_init_and_metric():
     X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
@@ -267,6 +268,7 @@ def test_future_warning_init_and_metric():
         mds.MDS(
             metric="cosine", dissimilarity="euclidean", init="random", n_init=1
         ).fit(X)
+
 
 def test_classical_mds_init_to_mds():
     X, _ = load_iris(return_X_y=True)
