@@ -103,7 +103,10 @@ def _assess_dimension(spectrum, rank, n_samples):
         # (s_i - s_j) * (1/s_j - 1/s_i) = (s_i - s_j)^2 / (s_i * s_j)
         vals = (si - sj) ** 2 / (si * sj)
         # Mask to upper triangle to avoid double-counting and log(0) on diagonal
-        mask = xp.asarray(np.triu(np.ones((rank, rank), dtype=bool), k=1))
+        mask = xp.asarray(
+            np.triu(np.ones((rank, rank), dtype=bool), k=1),
+            device=vals.device,
+        )
         n_pairs = rank * (rank - 1) // 2
         pa += float(xp.sum(xp.log(vals[mask]))) + n_pairs * log(n_samples)
 
