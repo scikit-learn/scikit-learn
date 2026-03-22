@@ -63,7 +63,6 @@ class ProgressBar:
         progress_monitor.start()
         self._run_queues[context.root_uuid] = queue
         self._run_monitors[context.root_uuid] = progress_monitor
-        self._run_queues[context.root_uuid].put(context)
 
     def on_fit_task_begin(self, context):
         pass
