@@ -83,30 +83,35 @@ def _assess_dimension(spectrum, rank, n_samples):
     pp = log(2.0 * xp.pi) * (m + rank) / 2.0
 
     pa = 0.0
-    spectrum_ = xp.asarray(spectrum, copy=True)
-    spectrum_[rank:n_features] = v
-
     s_signal = spectrum[:rank]
 
-    # Block B: both indices in signal part (i < j < rank)
+    # Equation (27) from the paper.
+    # |A_Z| = ∏∏ (λ̂_j⁻¹ - λ̂_i⁻¹)(λ_i - λ_j) · N
+    # A literal implementation involves two loops:
+    # for i in range(rank):
+    #     for j in range(i+1, n_features):
+    # This ends up being O(n_features^2). However, we can do better by
+    # exploiting the piecewise nature of spectrum - it's one thing below
+    # rank (the actual eigenvalues) and another thing above it (v).
+    # By splitting the problem on this boundary we can take advantage of
+    # numpy vectorization.
+    # Signal-signal pairs (i < j < rank): both eigenvalues are signal
     if rank > 1:
-        si = s_signal[:, None]  # (rank, 1)
-        sj = s_signal[None, :]  # (1, rank)
+        si = s_signal[:, None]
+        sj = s_signal[None, :]
         # (s_i - s_j) * (1/s_j - 1/s_i) = (s_i - s_j)^2 / (s_i * s_j)
         vals = (si - sj) ** 2 / (si * sj)
-        # Upper triangle mask: i < j
-        mask = np.triu(np.ones((rank, rank), dtype=bool), k=1)
-        n_pairs_B = int(mask.sum())
-        pa += float(xp.sum(xp.log(vals[mask]))) + n_pairs_B * log(n_samples)
+        # Mask to upper triangle to avoid double-counting and log(0) on diagonal
+        mask = xp.asarray(np.triu(np.ones((rank, rank), dtype=bool), k=1))
+        n_pairs = rank * (rank - 1) // 2
+        pa += float(xp.sum(xp.log(vals[mask]))) + n_pairs * log(n_samples)
 
-    # Block A: i < rank, j >= rank (spectrum_[j] = v)
-    if n_features - rank > 0:
-        s_noise = spectrum[rank:]  # (n_features - rank,)
-        si_A = s_signal[:, None]  # (rank, 1)
-        sj_A = s_noise[None, :]  # (1, n_noise)
-        term_A = (si_A - sj_A) * (1.0 / v - 1.0 / si_A)
-        n_pairs_A = term_A.size
-        pa += float(xp.sum(xp.log(term_A))) + n_pairs_A * log(n_samples)
+    # Signal-noise pairs (i < rank, j >= rank): noise eigenvalues are all v
+    s_noise = spectrum[rank:]
+    si_A = s_signal[:, None]
+    sj_A = s_noise[None, :]
+    terms = (si_A - sj_A) * (1.0 / v - 1.0 / si_A)
+    pa += float(xp.sum(xp.log(terms))) + terms.size * log(n_samples)
 
     ll = pu + pl + pv + pp - pa / 2.0 - rank * log(n_samples) / 2.0
 
