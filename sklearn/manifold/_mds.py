@@ -733,7 +733,16 @@ class MDS(BaseEstimator):
 
         self._n_init = self.n_init
 
-        self._init = self.init
+        if self.init == "warn":
+            warnings.warn(
+                "The default value of `init` will change from 'random' to "
+                "'classical_mds' in 1.10. To suppress this warning, provide "
+                "some value of `init`.",
+                FutureWarning,
+            )
+            self._init = "random"
+        else:
+            self._init = self.init
 
         if self.dissimilarity != "deprecated":
             if not isinstance(self.metric, bool) and self.metric != "euclidean":
