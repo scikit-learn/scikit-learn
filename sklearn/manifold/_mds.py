@@ -733,6 +733,8 @@ class MDS(BaseEstimator):
 
         self._n_init = self.n_init
 
+        self._init = self.init
+
         if self.dissimilarity != "deprecated":
             if not isinstance(self.metric, bool) and self.metric != "euclidean":
                 raise ValueError(
