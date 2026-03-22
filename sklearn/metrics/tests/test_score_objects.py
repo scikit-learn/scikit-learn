@@ -1189,7 +1189,7 @@ def test_invalid_default_pos_label_ignored_on_multiclass():
 
     assert type_of_target(y) == "multiclass"
 
-    clf = LogisticRegression(max_iter=1000, random_state=0).fit(X, y)
+    clf = LogisticRegression(C=None, max_iter=1000, random_state=0).fit(X, y)
 
     # The default of average_precision_score pos_label is 1. It's not one of
     # the string class labels but it should be ignored when the scorer is
