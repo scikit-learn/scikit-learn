@@ -358,7 +358,7 @@ class LinearModelLoss:
                 _convert_to_numpy(X_grad, xp=xp) + l2_reg_strength * weights
             )
             if self.fit_intercept:
-                grad[-1] = xp.sum(grad_pointwise)
+                grad[-1] = _convert_to_numpy(xp.sum(grad_pointwise), xp=xp)
         else:
             # The final value of `grad` needs to be in the `numpy` namespace
             # because the relevant `scipy.optimize` functions do not currently
