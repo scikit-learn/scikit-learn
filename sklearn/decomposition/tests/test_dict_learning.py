@@ -603,6 +603,14 @@ def test_sparse_encode_error_default_sparsity():
     code = ignore_warnings(sparse_encode)(X, D, algorithm="omp", n_nonzero_coefs=None)
     assert code.shape == (100, 2)
 
+def test_sparse_encode_omp_rejects_too_many_nonzero_coefs():
+    rng = np.random.RandomState(0)
+    X = rng.randn(2, 4)
+    dictionary = rng.randn(1, 4) # n_components = 1
+
+    err_msg = "n_nonzero_coefs must be <= n_components"
+    with pytest.raises(ValueError, match=err_msg):
+        sparse_encode(X, dictionary, algorithm="omp", n_nonzero_coefs=4)
 
 def test_sparse_coder_estimator():
     n_components = 12

@@ -369,6 +369,14 @@ def sparse_encode(
             "dictionary.shape: {} X.shape{}".format(dictionary.shape, X.shape)
         )
 
+    if algorithm == "omp" and n_nonzero_coefs is not None:
+        n_components = dictionary.shape[0]
+        if n_nonzero_coefs > n_components:
+            raise ValueError(
+                "For algorithm='omp', n_nonzero_coefs must be <= n_components "
+                f"(got n_nonzero_coefs={n_nonzero_coefs} and n_components={n_components})."
+            )
+
     _check_positive_coding(algorithm, positive)
 
     return _sparse_encode(
