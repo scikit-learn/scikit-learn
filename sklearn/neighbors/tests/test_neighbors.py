@@ -697,12 +697,10 @@ def test_kneighbors_classifier(
     assert_array_equal(y_pred, y_str[:n_test_pts])
 
 
-@pytest.mark.parametrize("algorithm", ALGORITHMS)
 @pytest.mark.parametrize("weights", WEIGHTS)
 @pytest.mark.parametrize("mag_sample_weight", [1, 5])
 def test_kneighbors_classifier_const_sample_weight(
     global_dtype,
-    algorithm,
     weights,
     mag_sample_weight,
     n_samples=40,
@@ -716,21 +714,17 @@ def test_kneighbors_classifier_const_sample_weight(
     X = 2 * rng.rand(n_samples, n_features).astype(global_dtype, copy=False) - 1
     y = ((X**2).sum(axis=1) < 0.5).astype(int)
 
-    knn = neighbors.KNeighborsClassifier(
-        n_neighbors=n_neighbors, weights=weights, algorithm=algorithm
-    )
+    knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors, weights=weights)
     knn.fit(X, y, sample_weight=np.ones(n_samples) * mag_sample_weight)
     epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
     y_pred = knn.predict(X[:n_test_pts] + epsilon)
     assert_array_equal(y_pred, y[:n_test_pts])
 
 
-@pytest.mark.parametrize("algorithm", ALGORITHMS)
 @pytest.mark.parametrize("weights", WEIGHTS)
 @pytest.mark.parametrize("len_sample_weight", [1, 39])
 def test_kneighbors_classifier_sample_weight_shape(
     global_dtype,
-    algorithm,
     weights,
     len_sample_weight,
     n_samples=40,
@@ -743,9 +737,7 @@ def test_kneighbors_classifier_sample_weight_shape(
     X = 2 * rng.rand(n_samples, n_features).astype(global_dtype, copy=False) - 1
     y = ((X**2).sum(axis=1) < 0.5).astype(int)
 
-    knn = neighbors.KNeighborsClassifier(
-        n_neighbors=n_neighbors, weights=weights, algorithm=algorithm
-    )
+    knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors, weights=weights)
 
     with pytest.raises(ValueError):
         knn.fit(X, y, sample_weight=np.ones(len_sample_weight))
@@ -775,6 +767,20 @@ def test_negative_sample_weight_mask_all_samples(
     y = ((X**2).sum(axis=1) < 0.5).astype(int)
     with pytest.raises(ValueError, match=msg):
         knn.fit(X, y, sample_weight=np.ones(n_samples) * mag_sample_weight)
+
+
+@pytest.mark.parametrize(
+    "sample_weight,y_pred", [(None, 1), ([3, 1, 1], 0), ([1, 0.25, 0.25], 0)]
+)
+def test_kneighbors_sample_weight(sample_weight, y_pred):
+    # Simple example to see if sample_weight is working properly
+    knn = neighbors.KNeighborsClassifier(n_neighbors=3)
+    X = np.array([[0, 0], [1, 0], [0, 1]])
+    y = np.array([0, 1, 1])
+
+    knn.fit(X, y, sample_weight=sample_weight)
+    y_ref = knn.predict([[0.2, 0.2]])
+    assert y_ref == y_pred
 
 
 def test_kneighbors_classifier_float_labels(

@@ -527,8 +527,9 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
             if sample_weight is not None:
                 _check_sample_weight(sample_weight, X, ensure_non_negative=True)
-
-            self._sample_weight = sample_weight
+                self._sample_weight = np.asarray(sample_weight)
+            else:
+                self._sample_weight = None
 
         else:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
