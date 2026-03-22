@@ -90,11 +90,12 @@ def _assess_dimension(spectrum, rank, n_samples):
     # A literal implementation involves two loops:
     # for i in range(rank):
     #     for j in range(i+1, n_features):
-    # This ends up being O(n_features^2). However, we can do better by
-    # exploiting the piecewise nature of spectrum - it's one thing below
-    # rank (the actual eigenvalues) and another thing above it (v).
-    # By splitting the problem on this boundary we can take advantage of
-    # numpy vectorization.
+    # This is O(n_features^2) per call, and _infer_dimension calls
+    # it for every candidate rank, making the total O(n_features^3).
+    # We can do much better by exploiting the piecewise nature of
+    # spectrum_: it equals spectrum[:rank] for signal eigenvalues
+    # and v for noise eigenvalues. Splitting on this boundary lets
+    # us replace the Python loops with numpy vectorization.
     # Signal-signal pairs (i < j < rank): both eigenvalues are signal
     if rank > 1:
         si = s_signal[:, None]
