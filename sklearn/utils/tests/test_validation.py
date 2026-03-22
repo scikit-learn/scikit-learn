@@ -617,6 +617,20 @@ def test_check_array_dtype_stability():
     assert check_array(X, ensure_2d=False).dtype.kind == "i"
 
 
+def test_check_array_empty_dtype_list():
+    """Check that an empty list/tuple for dtype raises a ValueError."""
+    X = np.array([[1, 2], [3, 4]])
+    with pytest.raises(ValueError, match="dtype must not be an empty list"):
+        check_array(X, dtype=[])
+
+
+def test_check_array_empty_dtype_tuple():
+    """Check that an empty tuple for dtype raises a ValueError."""
+    X = np.array([[1, 2], [3, 4]])
+    with pytest.raises(ValueError, match="dtype must not be an empty list"):
+        check_array(X, dtype=())
+
+
 def test_check_array_dtype_warning():
     X_int_list = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
     X_float32 = np.asarray(X_int_list, dtype=np.float32)
