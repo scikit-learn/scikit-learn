@@ -1,0 +1,1 @@
+- Improved the :class:`ValueError` message when unsorted categories are passed to a numerical feature in :class:`preprocessing.OneHotEncoder`, :class:`preprocessing.OrdinalEncoder`, and :class:`preprocessing.TargetEncoder`. The error message now displays the column index and the offending arrays to help users quickly debug bad inputs. By :user:`Pravin-raj-03`.

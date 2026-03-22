@@ -89,12 +89,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         )
         self.n_features_in_ = n_features
 
-        if self.categories != "auto":
-            if len(self.categories) != n_features:
-                raise ValueError(
-                    "Shape mismatch: if categories is an array,"
-                    " it has to be of shape (n_features,)."
-                )
+        if self.categories != "auto" and len(self.categories) != n_features:
+            raise ValueError(
+                "Shape mismatch: if categories is an array,"
+                " it has to be of shape (n_features,)."
+            )
 
         self.categories_ = []
         category_counts = []
@@ -150,20 +149,19 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
                 if Xi.dtype.kind not in "OUS":
                     sorted_cats = np.sort(cats)
-                    error_msg = (
-                        "Unsorted categories are not supported for numerical categories"
-                    )
                     # if there are nans, nan should be the last element
                     stop_idx = -1 if np.isnan(sorted_cats[-1]) else None
                     if np.any(sorted_cats[:stop_idx] != cats[:stop_idx]):
-                        raise ValueError(error_msg)
+                        raise ValueError(
+                            f"Unsorted categories in column {i}: "
+                            f"{cats[:stop_idx]} != {sorted_cats[:stop_idx]}"
+                        )
 
                 if handle_unknown == "error":
                     diff = _check_unknown(Xi, cats)
                     if diff:
                         msg = (
-                            "Found unknown categories {0} in column {1}"
-                            " during fit".format(diff, i)
+                            f"Found unknown categories {diff} in column {i} during fit"
                         )
                         raise ValueError(msg)
                 if compute_counts:
@@ -215,8 +213,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             if not np.all(valid_mask):
                 if handle_unknown == "error":
                     msg = (
-                        "Found unknown categories {0} in column {1}"
-                        " during transform".format(diff, i)
+                        f"Found unknown categories {diff} in column {i}"
+                        " during transform"
                     )
                     raise ValueError(msg)
                 else:
@@ -893,10 +891,7 @@ class OneHotEncoder(_BaseEncoder):
                     "dropped, but were not found in the training "
                     "data.\n{}".format(
                         "\n".join(
-                            [
-                                "Category: {}, Feature: {}".format(c, v)
-                                for c, v in missing_drops
-                            ]
+                            [f"Category: {c}, Feature: {v}" for c, v in missing_drops]
                         )
                     )
                 )
@@ -1055,7 +1050,7 @@ class OneHotEncoder(_BaseEncoder):
             warn_on_unknown=warn_on_unknown,
         )
 
-        n_samples, n_features = X_int.shape
+        n_samples, _ = X_int.shape
 
         if self._drop_idx_after_grouping is not None:
             to_drop = self._drop_idx_after_grouping.copy()

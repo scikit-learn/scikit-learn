@@ -536,7 +536,7 @@ def test_one_hot_encoder_unsorted_categories():
     # unsorted passed categories still raise for numerical values
     X = np.array([[1, 2]]).T
     enc = OneHotEncoder(categories=[[2, 1, 3]])
-    msg = "Unsorted categories are not supported"
+    msg = "Unsorted categories in column 0"
     with pytest.raises(ValueError, match=msg):
         enc.fit_transform(X)
 
