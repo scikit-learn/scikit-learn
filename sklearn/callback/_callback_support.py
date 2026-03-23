@@ -47,8 +47,15 @@ class CallbackSupportMixin:
         if not isinstance(callbacks, list):
             callbacks = [callbacks]
 
-        if not all(isinstance(callback, FitCallback) for callback in callbacks):
-            raise TypeError("callbacks must follow the FitCallback protocol.")
+        if not all(
+            # isinstance for a Protocol returns True for classes too (not only
+            # instances). Hence the additional check for classes.
+            isinstance(callback, FitCallback) and not isinstance(callback, type)
+            for callback in callbacks
+        ):
+            raise TypeError(
+                "callbacks must be instances following the FitCallback protocol."
+            )
 
         self._skl_callbacks = callbacks
 
@@ -104,8 +111,8 @@ def callback_management_context(estimator):
     """Context manager to manage callback lifecycle around estimator fit.
 
     The context manager is responsible for calling the callbacks `teardown` hook in a
-    `try finally` block, which guarantees that callbacks teardown will always be
-    evaluated, whether the estimator's fit exits successfully or not.
+    `try finally` block, which guarantees that callbacks teardown will always be called,
+    whether the estimator's fit exits successfully or not.
 
     Parameters
     ----------
@@ -141,7 +148,7 @@ def with_callbacks(method):
 
     This decorator is responsible for calling the callbacks `teardown` hooks of
     callbacks in a `try finally` block, which guarantees that callbacks teardown will
-    always be evaluated, whether the estimator's method exits successfully or not.
+    always be called, whether the estimator's method exits successfully or not.
 
     It will only teardown callbacks that are not propagated from a meta-estimator.
 

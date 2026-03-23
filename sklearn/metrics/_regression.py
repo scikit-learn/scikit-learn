@@ -1455,7 +1455,8 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     >>> mean_tweedie_deviance(y_true, y_pred, power=1)
     1.4260...
     """
-    xp, _ = get_namespace(y_true, y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
     y_type, y_true, y_pred, sample_weight, _ = _check_reg_targets_with_floating_dtype(
         y_true, y_pred, sample_weight, multioutput=None, xp=xp
     )
@@ -1667,7 +1668,8 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     >>> d2_tweedie_score(y_true, y_true, power=2)
     1.0
     """
-    xp, _ = get_namespace(y_true, y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     y_type, y_true, y_pred, sample_weight, _ = _check_reg_targets_with_floating_dtype(
         y_true, y_pred, sample_weight, multioutput=None, xp=xp
@@ -1811,9 +1813,8 @@ def d2_pinball_score(
     >>> grid.best_params_
     {'fit_intercept': True}
     """
-    xp, _, device_ = get_namespace_and_device(
-        y_true, y_pred, sample_weight, multioutput
-    )
+    xp, _, device_ = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device_)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
             y_true, y_pred, sample_weight, multioutput, xp=xp

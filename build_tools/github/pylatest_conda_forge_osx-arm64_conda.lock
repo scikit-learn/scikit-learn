@@ -62,7 +62,7 @@ https://conda.anaconda.org/conda-forge/osx-arm64/libprotobuf-6.33.5-h4a5acfd_0.c
 https://conda.anaconda.org/conda-forge/osx-arm64/libsigtool-0.1.3-h98dc951_0.conda#c08557d00807785decafb932b5be7ef5
 https://conda.anaconda.org/conda-forge/osx-arm64/libtiff-4.7.1-h4030677_1.conda#e2a72ab2fa54ecb6abab2b26cde93500
 https://conda.anaconda.org/conda-forge/osx-arm64/libxml2-2.15.2-h8d039ee_0.conda#e476ba84e57f2bd2004a27381812ad4e
-https://conda.anaconda.org/conda-forge/osx-arm64/mpfr-4.2.1-hb693164_3.conda#4e4ea852d54cc2b869842de5044662fb
+https://conda.anaconda.org/conda-forge/osx-arm64/mpfr-4.2.2-h6bc93b0_0.conda#a47a14da2103c9c7a390f7c8bc8d7f9b
 https://conda.anaconda.org/conda-forge/osx-arm64/python-3.14.3-h4c637c5_101_cp314.conda#753c8d0447677acb7ddbcc6e03e82661
 https://conda.anaconda.org/conda-forge/osx-arm64/brotli-1.2.0-h7d5ae5b_1.conda#48ece20aa479be6ac9a284772827d00c
 https://conda.anaconda.org/conda-forge/noarch/colorama-0.4.6-pyhd8ed1ab_1.conda#962b9857ee8e7018c22f2776ffa0b2d7
@@ -80,7 +80,7 @@ https://conda.anaconda.org/conda-forge/osx-arm64/libgfortran5-15.2.0-hdae7583_18
 https://conda.anaconda.org/conda-forge/osx-arm64/libllvm19-19.1.7-h8e0c9ce_2.conda#d1d9b233830f6631800acc1e081a9444
 https://conda.anaconda.org/conda-forge/osx-arm64/markupsafe-3.0.3-py314h6e9b3f0_1.conda#d33c0a15882b70255abdd54711b06a45
 https://conda.anaconda.org/conda-forge/noarch/mdurl-0.1.2-pyhd8ed1ab_1.conda#592132998493b3ff25fd7479396e8351
-https://conda.anaconda.org/conda-forge/noarch/meson-1.10.1-pyhcf101f3_0.conda#6c07238c531b1f93603c6908d1a4ef4f
+https://conda.anaconda.org/conda-forge/noarch/meson-1.10.2-pyhcf101f3_0.conda#fb44f3dcee86e4aa1d6653b1608d666b
 https://conda.anaconda.org/conda-forge/osx-arm64/mpc-1.3.1-h8f1351a_1.conda#a5635df796b71f6ca400fc7026f50701
 https://conda.anaconda.org/conda-forge/noarch/mpmath-1.3.0-pyhd8ed1ab_1.conda#3585aa87c43ab15b167b574cd73b057b
 https://conda.anaconda.org/conda-forge/noarch/munkres-1.1.4-pyhd8ed1ab_1.conda#37293a85a0f4f77bbd9cf7aaefc62609

@@ -155,6 +155,7 @@ REGRESSION_METRICS = {
     "mean_poisson_deviance": mean_poisson_deviance,
     "mean_gamma_deviance": mean_gamma_deviance,
     "mean_compound_poisson_deviance": partial(mean_tweedie_deviance, power=1.4),
+    "mean_tweedie_deviance": mean_tweedie_deviance,
     "d2_tweedie_score": partial(d2_tweedie_score, power=1.4),
     "d2_pinball_score": d2_pinball_score,
     # The default `alpha=0.5` (median) masks differences between quantile methods,
@@ -392,9 +393,6 @@ METRICS_WITH_POS_LABEL = {
 METRICS_WITH_LABELS = {
     "confusion_matrix",
     "normalized_confusion_matrix",
-    "roc_curve",
-    "precision_recall_curve",
-    "det_curve",
     "precision_score",
     "recall_score",
     "f1_score",
@@ -431,6 +429,7 @@ METRICS_WITH_LABELS = {
 # Metrics with a "normalize" option
 METRICS_WITH_NORMALIZE_OPTION = {
     "accuracy_score",
+    "log_loss",
     "top_k_accuracy_score",
     "zero_one_loss",
 }
@@ -527,6 +526,7 @@ SYMMETRIC_METRICS = {
     "macro_f1_score",
     "weighted_recall_score",
     "mean_squared_log_error",
+    "mean_tweedie_deviance",
     "root_mean_squared_error",
     "root_mean_squared_log_error",
     # P = R = F = accuracy in multiclass case
@@ -626,17 +626,27 @@ METRICS_SUPPORTING_MIXED_NAMESPACE = [
     "average_precision_score",
     "brier_score_loss",
     "confusion_matrix_at_thresholds",
+    "d2_absolute_error_score",
     "d2_brier_score",
     "d2_log_loss_score",
+    "d2_pinball_score",
+    "d2_pinball_score_01",
+    "d2_pinball_score_09",
+    "d2_tweedie_score",
     "explained_variance_score",
     "f1_score",
     "log_loss",
     "max_error",
     "mean_absolute_error",
     "mean_absolute_percentage_error",
+    "mean_compound_poisson_deviance",
+    "mean_gamma_deviance",
+    "mean_normal_deviance",
     "mean_pinball_loss",
+    "mean_poisson_deviance",
     "mean_squared_error",
     "mean_squared_log_error",
+    "mean_tweedie_deviance",
     "median_absolute_error",
     "multilabel_confusion_matrix",
     "precision_score",
@@ -1346,7 +1356,7 @@ def test_normalize_option_binary_classification(name):
 
     y_true = random_state.randint(0, n_classes, size=(n_samples,))
     y_pred = random_state.randint(0, n_classes, size=(n_samples,))
-    y_score = random_state.normal(size=y_true.shape)
+    y_score = random_state.uniform(size=y_true.shape)
 
     metrics = ALL_METRICS[name]
     pred = y_score if name in CONTINUOUS_CLASSIFICATION_METRICS else y_pred
@@ -1375,7 +1385,9 @@ def test_normalize_option_multiclass_classification(name):
 
     y_true = random_state.randint(0, n_classes, size=(n_samples,))
     y_pred = random_state.randint(0, n_classes, size=(n_samples,))
-    y_score = random_state.uniform(size=(n_samples, n_classes))
+    y_score = random_state.rand(n_samples, n_classes)
+    temp = np.exp(-y_score)
+    y_score = temp / temp.sum(axis=-1).reshape(-1, 1)
 
     metrics = ALL_METRICS[name]
     pred = y_score if name in CONTINUOUS_CLASSIFICATION_METRICS else y_pred

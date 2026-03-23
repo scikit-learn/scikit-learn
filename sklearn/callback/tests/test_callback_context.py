@@ -2,17 +2,25 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import sys
+from functools import partial
 
 import numpy as np
 import pytest
 
-from sklearn.callback._callback_context import CallbackContext, get_context_path
+from sklearn.callback._callback_context import (
+    CallbackContext,
+    _from_reconstruction_attributes,
+    get_context_path,
+)
 from sklearn.callback.tests._utils import (
     MaxIterEstimator,
     MetaEstimator,
     NoCallbackEstimator,
     NoSubtaskEstimator,
+    NotRequiredKwargsCallback,
+    NotValidHookCallback,
     ParentFitEstimator,
+    StopFitCallback,
     TestingAutoPropagatedCallback,
     TestingCallback,
     ThirdPartyEstimator,
@@ -226,7 +234,7 @@ def test_estimator_without_subtask():
     """Check that callback support works for an estimator without subtasks.
 
     This test is about verifying that an estimator that does not call its callback
-    context's `eval_on_fit_task_end` does not cause a problem.
+    context's `call_on_fit_task_end` does not cause a problem.
     """
     estimator = NoSubtaskEstimator()
     estimator.set_callbacks([TestingCallback()])
@@ -330,3 +338,109 @@ def test_autopropagation_to_callback_agnostic_subestimator():
     assert callback.count_hooks("on_fit_task_begin") == expected_n_tasks
     assert callback.count_hooks("on_fit_task_end") == expected_n_tasks
     assert callback.count_hooks("teardown") == 1
+
+
+def test_hook_calling_invalid_kwargs_in():
+    """Check that passing invalid kwargs to call_on_fit_task_* raises an error."""
+    estimator = MaxIterEstimator()
+    context = estimator.set_callbacks(TestingCallback())._init_callback_context()
+    msg = r"call_on_fit_task_begin .* has received parameters that are not valid"
+    with pytest.raises(TypeError, match=msg):
+        context.call_on_fit_task_begin(X=1, y=2, not_valid_kwarg=3)
+
+
+# TODO(callbacks): should be a common test in a dev test suite instead of a check
+# in the hook calls to avoid repeating the same check for each call of the same hook.
+def test_hook_calling_invalid_kwargs_out():
+    """Check that a callback with invalid kwargs in its signatures raises an error."""
+    estimator = MaxIterEstimator()
+    context = estimator.set_callbacks(NotValidHookCallback())._init_callback_context()
+    msg = r"on_fit_task_begin .* has parameters that are not valid"
+    with pytest.raises(TypeError, match=msg):
+        context.call_on_fit_task_begin(X=1, y=2)
+
+
+def test_hook_calling_unused_kwargs():
+    """Check that not provided kwargs are left to their default value (None)."""
+    callback = TestingCallback()
+    estimator = MaxIterEstimator()
+    context = estimator.set_callbacks(callback)._init_callback_context()
+    # only provide "X" and "y"
+    context.call_on_fit_task_begin(X=1, y=2)
+    assert callback.record[-1]["kwargs"]["metadata"] is None
+    assert callback.record[-1]["kwargs"]["fitted_estimator"] is None
+
+
+def test_hook_calling_return_value():
+    """Check the return value of the hook calls."""
+    estimator = MaxIterEstimator()
+    context = estimator.set_callbacks(TestingCallback())._init_callback_context()
+    result = context.call_on_fit_task_end()
+    # TestingCallback.on_fit_task_end does not return a value (interpreted as False)
+    assert result is False
+
+    estimator.set_callbacks([TestingCallback(), StopFitCallback()])
+    result = estimator._init_callback_context().call_on_fit_task_end()
+    # StopFitCallback.on_fit_task_end returns True
+    assert result is True
+
+
+def test_hook_calling_lazy_evaluation():
+    """Check lazy evaluation of kwargs.
+
+    kwargs are not evaluated if no callback uses them.
+    They are evaluated only once and passed to all callbacks that use them.
+    """
+    eval_counts = {"X": 0, "metadata": 0}
+
+    def eval_kwarg(key):
+        eval_counts[key] += 1
+        return 1
+
+    # unused kwarg is not evaluated
+    estimator = MaxIterEstimator()
+    callback = NotRequiredKwargsCallback()
+    context = estimator.set_callbacks(callback)._init_callback_context()
+    context.call_on_fit_task_end(
+        X=partial(eval_kwarg, "X"), metadata=partial(eval_kwarg, "metadata")
+    )
+    assert eval_counts["X"] == 1
+    assert eval_counts["metadata"] == 0
+
+    # kwarg used twice is evaluated only once
+    eval_counts = {"X": 0}
+    estimator.set_callbacks([TestingCallback(), TestingCallback()])
+    context = estimator._init_callback_context()
+    context.call_on_fit_task_begin(X=partial(eval_kwarg, "X"))
+    assert eval_counts["X"] == 1
+
+
+def test_hook_calling_lazy_evaluation_reconstruction_attributes():
+    """Check lazy evaluation of reconstruction_attributes.
+
+    "reconstruction_attributes" is processed by the context and used to create a
+    fitted estimator that is passed to the callback as "fitted_estimator".
+    """
+    estimator = MaxIterEstimator()
+    callback = TestingCallback()
+    context = estimator.set_callbacks(callback)._init_callback_context()
+    context.call_on_fit_task_end(reconstruction_attributes=lambda: {"n_iter_": 1})
+    assert "reconstruction_attributes" not in callback.record[-1]["kwargs"]
+    assert "fitted_estimator" in callback.record[-1]["kwargs"]
+
+    fitted_estimator = callback.record[-1]["kwargs"]["fitted_estimator"]
+    assert isinstance(fitted_estimator, MaxIterEstimator)
+    assert fitted_estimator.n_iter_ == 1
+
+
+# TODO(callbacks): check that the reconstructed estimator can be used to predict
+# while the original cannot.
+def test_from_reconstruction_attributes():
+    """Test the _from_reconstruction_attributes helper function."""
+    max_iter = 5
+    estimator = MaxIterEstimator(max_iter=max_iter)
+    reconstructed_est = _from_reconstruction_attributes(estimator, {"n_iter_": 2})
+    assert isinstance(reconstructed_est, MaxIterEstimator)
+    assert reconstructed_est is not estimator
+    assert reconstructed_est.get_params() == estimator.get_params()
+    assert reconstructed_est.n_iter_ == 2

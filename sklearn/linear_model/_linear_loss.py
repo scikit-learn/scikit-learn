@@ -139,9 +139,9 @@ class LinearModelLoss:
         else:
             n_dof = n_features
         if self.base_loss.is_multiclass:
-            coef = np.zeros_like(X, shape=(n_classes, n_dof), dtype=dtype, order="F")
+            coef = np.zeros(shape=(n_classes, n_dof), dtype=dtype, order="F")
         else:
-            coef = np.zeros_like(X, shape=n_dof, dtype=dtype)
+            coef = np.zeros(shape=n_dof, dtype=dtype)
         return coef
 
     def weight_intercept(self, coef):

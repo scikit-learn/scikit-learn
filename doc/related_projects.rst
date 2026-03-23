@@ -287,7 +287,7 @@ Other packages useful for data analysis and machine learning.
   Models are fully compatible with scikit-learn.
 
 Recommendation Engine packages
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------
 
 - `implicit <https://github.com/benfred/implicit>`_, Library for implicit
   feedback datasets.
@@ -299,7 +299,7 @@ Recommendation Engine packages
   datasets.
 
 Domain specific packages
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 - `scikit-network <https://scikit-network.readthedocs.io/>`_ Machine learning on graphs.
 

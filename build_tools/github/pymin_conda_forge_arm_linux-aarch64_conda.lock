@@ -113,7 +113,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/liblapack-3.11.0-5_h88aeb00
 https://conda.anaconda.org/conda-forge/linux-aarch64/libllvm22-22.1.1-hfd2ba90_0.conda#9684eec87b0eb9c81c6b95dfcbe574a0
 https://conda.anaconda.org/conda-forge/linux-aarch64/libxkbcommon-1.13.1-h3c6a4c8_0.conda#22c1ce28d481e490f3635c1b6a2bb23f
 https://conda.anaconda.org/conda-forge/linux-aarch64/libxslt-1.1.43-h6700d25_1.conda#0f31501ccd51a40f0a91381080ae7368
-https://conda.anaconda.org/conda-forge/noarch/meson-1.10.1-pyhcf101f3_0.conda#6c07238c531b1f93603c6908d1a4ef4f
+https://conda.anaconda.org/conda-forge/noarch/meson-1.10.2-pyhcf101f3_0.conda#fb44f3dcee86e4aa1d6653b1608d666b
 https://conda.anaconda.org/conda-forge/noarch/munkres-1.1.4-pyhd8ed1ab_1.conda#37293a85a0f4f77bbd9cf7aaefc62609
 https://conda.anaconda.org/conda-forge/linux-aarch64/openldap-2.6.10-h2fb54aa_1.conda#b761e5f1358577a16ca187c6116d9fcc
 https://conda.anaconda.org/conda-forge/noarch/packaging-26.0-pyhcf101f3_0.conda#b76541e68fea4d511b1ac46a28dcd2c6
@@ -163,5 +163,5 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/matplotlib-base-3.10.8-py31
 https://conda.anaconda.org/conda-forge/noarch/pytest-cov-6.3.0-pyhd8ed1ab_0.conda#50d191b852fccb4bf9ab7b59b030c99d
 https://conda.anaconda.org/conda-forge/noarch/pytest-xdist-3.8.0-pyhd8ed1ab_0.conda#8375cfbda7c57fbceeda18229be10417
 https://conda.anaconda.org/conda-forge/linux-aarch64/qt6-main-6.10.2-h4f79d1e_5.conda#c5a6c2e22d9e1a1ef8870a5997fe2eda
-https://conda.anaconda.org/conda-forge/linux-aarch64/pyside6-6.10.2-py311hf1caecd_0.conda#a245e6ef62e8403f5c5e449e6227924d
+https://conda.anaconda.org/conda-forge/linux-aarch64/pyside6-6.10.2-py311hb02cd75_1.conda#3db17f3d74ea130f9c0058f0567d5f44
 https://conda.anaconda.org/conda-forge/linux-aarch64/matplotlib-3.10.8-py311hfecb2dc_0.conda#3920b856b59a909812f1913b96adaad8
