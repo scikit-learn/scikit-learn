@@ -8,7 +8,6 @@ import warnings
 
 from sklearn.callback._base import AutoPropagatedCallback
 
-
 # List of the parameters expected to be passed to call_on_fit_task_* (IN) and to be in
 # the hooks signatures (OUT).
 VALID_HOOK_PARAMS_IN = ["X", "y", "metadata", "reconstruction_attributes"]
