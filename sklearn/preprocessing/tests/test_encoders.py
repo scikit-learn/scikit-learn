@@ -2433,3 +2433,14 @@ def test_onehotencoder_handle_unknown_warn_maps_to_infrequent():
         result_warn = encoder_warn.transform(test_data)
 
     assert_allclose(result_warn[2], result_infreq[2])
+
+
+def test_ordinal_encoder_unsorted_categories():
+    # unsorted passed categories should raise for numerical values
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/pull/33593
+    X = np.array([[1, 2]]).T
+    enc = OrdinalEncoder(categories=[[2, 1, 3]])
+    msg = "Unsorted categories in column 0"
+    with pytest.raises(ValueError, match=msg):
+        enc.fit_transform(X)

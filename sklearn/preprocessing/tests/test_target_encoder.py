@@ -772,3 +772,14 @@ def test_target_encoder_shuffle_random_state_deprecated():
     with pytest.warns(FutureWarning, match=msg):
         encoder = TargetEncoder(random_state=0)
         encoder.fit_transform(X, y)
+
+
+def test_target_encoder_unsorted_categories():
+    # unsorted passed categories should raise for numerical values
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/pull/33593
+    X, y = make_regression(n_samples=100, n_features=3, random_state=0)
+    enc = TargetEncoder(categories=[[2, 1, 3], "auto", "auto"])
+    msg = "Unsorted categories in column 0"
+    with pytest.raises(ValueError, match=msg):
+        enc.fit_transform(X, y)
