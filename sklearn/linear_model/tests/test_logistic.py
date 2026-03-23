@@ -39,9 +39,10 @@ from sklearn.utils import compute_class_weight, shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
-    device,
     yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._array_api import (
+    device as array_api_device,
 )
 from sklearn.utils._testing import _array_api_for_tests, ignore_warnings
 from sklearn.utils.fixes import _IS_32BIT, COO_CONTAINERS, CSR_CONTAINERS
@@ -2688,9 +2689,8 @@ def test_logisticregression_warns_with_n_jobs():
 @pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize("class_weight", [None, "balanced", "dict"])
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_logistic_regression_array_api_compliance(
@@ -2699,13 +2699,13 @@ def test_logistic_regression_array_api_compliance(
     use_sample_weight,
     class_weight,
     array_namespace,
-    device_,
+    device_name,
     dtype_name,
 ):
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     X_np = iris.data.astype(dtype_name, copy=True)
     n_samples, _ = X_np.shape
-    X_xp = xp.asarray(X_np, device=device_)
+    X_xp = xp.asarray(X_np, device=device)
     if use_str_y:
         if binary:
             target = (iris.target > 0).astype(np.int64)
@@ -2728,7 +2728,7 @@ def test_logistic_regression_array_api_compliance(
             if class_weight == "dict":
                 class_weight = {0: 1.0, 1: 2.0, 2: 3.0}
         y_np = target.astype(dtype_name)
-        y_xp_or_np = xp.asarray(y_np, device=device_)
+        y_xp_or_np = xp.asarray(y_np, device=device)
 
     if use_sample_weight:
         sample_weight = (
@@ -2789,7 +2789,7 @@ def test_logistic_regression_array_api_compliance(
                 _convert_to_numpy(attr_xp, xp=xp), attr_np, rtol=rtol, atol=atol
             )
             assert attr_xp.dtype == X_xp.dtype
-            assert device(attr_xp) == device(X_xp)
+            assert array_api_device(attr_xp) == array_api_device(X_xp)
 
         predict_proba_xp = lr_xp.predict_proba(X_xp)
         assert_allclose(
@@ -2799,7 +2799,7 @@ def test_logistic_regression_array_api_compliance(
             atol=atol,
         )
         assert predict_proba_xp.dtype == X_xp.dtype
-        assert device(predict_proba_xp) == device(X_xp)
+        assert array_api_device(predict_proba_xp) == array_api_device(X_xp)
 
         predict_log_proba_xp = lr_xp.predict_log_proba(X_xp)
         assert_allclose(
@@ -2809,7 +2809,7 @@ def test_logistic_regression_array_api_compliance(
             atol=atol,
         )
         assert predict_log_proba_xp.dtype == X_xp.dtype
-        assert device(predict_log_proba_xp) == device(X_xp)
+        assert array_api_device(predict_log_proba_xp) == array_api_device(X_xp)
 
         prediction_xp = lr_xp.predict(X_xp)
         if not use_str_y:
@@ -2850,20 +2850,19 @@ def test_get_default_scorer():
 
 @pytest.mark.parametrize("binary", [True, False])
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_logistic_regression_array_api_warm_start(
     binary,
     array_namespace,
-    device_,
+    device_name,
     dtype_name,
 ):
     """Test that warm_start=True works with array API inputs across
     multiple fit calls for both binary and multiclass classification."""
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device_ = _array_api_for_tests(array_namespace, device_name)
     X_np = iris.data.astype(dtype_name, copy=True)
     if binary:
         y_np = (iris.target > 0).astype(dtype_name)

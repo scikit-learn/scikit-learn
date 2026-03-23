@@ -31,9 +31,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
-    device,
     yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._array_api import (
+    device as array_api_device,
 )
 from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 
@@ -1152,18 +1153,17 @@ def test_newton_solver_verbosity(capsys, verbose):
 
 @pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_poisson_regressor_array_api_compliance(
     use_sample_weight,
     array_namespace,
-    device_,
+    device_name,
     dtype_name,
 ):
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     X_np, y_np = make_regression(
         n_samples=107, n_features=20, n_informative=20, noise=0.5, random_state=2
     )
@@ -1172,8 +1172,8 @@ def test_poisson_regressor_array_api_compliance(
     n_samples = X_np.shape[0]
     X_np = X_np.astype(dtype_name, copy=False)
     y_np = y_np.astype(dtype_name, copy=False)
-    X_xp = xp.asarray(X_np, device=device_)
-    y_xp = xp.asarray(y_np, device=device_)
+    X_xp = xp.asarray(X_np, device=device)
+    y_xp = xp.asarray(y_np, device=device)
 
     if use_sample_weight:
         sample_weight = (
@@ -1208,7 +1208,7 @@ def test_poisson_regressor_array_api_compliance(
                 _convert_to_numpy(attr_xp, xp=xp), attr_np, rtol=rtol, atol=atol
             )
             assert attr_xp.dtype == X_xp.dtype
-            assert device(attr_xp) == device(X_xp)
+            assert array_api_device(attr_xp) == array_api_device(X_xp)
 
         predict_xp = glm_xp.predict(X_xp)
         assert_allclose(
@@ -1218,18 +1218,17 @@ def test_poisson_regressor_array_api_compliance(
             atol=atol,
         )
         assert predict_xp.dtype == X_xp.dtype
-        assert device(predict_xp) == device(X_xp)
+        assert array_api_device(predict_xp) == array_api_device(X_xp)
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_poisson_regressor_array_api_warm_start(
     array_namespace,
-    device_,
+    device_name,
     dtype_name,
 ):
     """Test that incremental fitting of PoissonRegressor works correctly
@@ -1238,9 +1237,9 @@ def test_poisson_regressor_array_api_warm_start(
     X = rng.standard_normal((200, 5)).astype(dtype_name)
     y = np.abs(rng.standard_normal(200)) + 0.1
     y = y.astype(dtype_name)
-    xp = _array_api_for_tests(array_namespace, device_)
-    X_xp = xp.asarray(X, device=device_)
-    y_xp = xp.asarray(y, device=device_)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
+    X_xp = xp.asarray(X, device=device)
+    y_xp = xp.asarray(y, device=device)
     with config_context(array_api_dispatch=True):
         reg_xp = PoissonRegressor(
             alpha=1.0, solver="lbfgs", max_iter=300, warm_start=True
