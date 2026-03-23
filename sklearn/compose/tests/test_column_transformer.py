@@ -1658,6 +1658,7 @@ def test_sk_visual_block_full_transform():
     assert visual_block.names == ("norm1",)
     assert visual_block.name_details == ([0, 1],)
     assert isinstance(visual_block.estimators[0], Normalizer)
+    assert len(visual_block.estimators) == 1
 
 
 def test_sk_visual_block_int_remainder_cols_pandas():
