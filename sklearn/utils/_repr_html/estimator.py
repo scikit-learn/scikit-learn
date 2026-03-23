@@ -317,6 +317,7 @@ def _write_estimator_html(
         The prefix to prepend to parameter names for nested estimators.
         For example, in a pipeline this might be "pipeline__stepname__".
     """
+    from sklearn.compose import ColumnTransformer
 
     if first_call:
         est_block = _get_visual_block(estimator)
@@ -411,7 +412,7 @@ def _write_estimator_html(
 
         out.write("</div>")
 
-        is_column_transformer = estimator.__class__.__name__ == "ColumnTransformer"
+        is_column_transformer = isinstance(estimator, ColumnTransformer)
         has_single_estimator = len(est_block.estimators) == 1
         if (
             is_fitted_css_class
