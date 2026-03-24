@@ -16,6 +16,9 @@ from sklearn.neighbors._base import (
     _get_weights,
 )
 from sklearn.utils._param_validation import StrOptions
+from sklearn.utils.validation import (
+    check_is_fitted,
+)
 
 
 class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
@@ -206,7 +209,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         # KNeighborsRegressor.metric is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the k-nearest neighbors regressor from the training dataset.
 
         Parameters
@@ -219,12 +222,15 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
                 (n_samples, n_outputs)
             Target values.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Per-sample weights.
+
         Returns
         -------
         self : KNeighborsRegressor
             The fitted k-nearest neighbors regressor.
         """
-        return self._fit(X, y)
+        return self._fit(X, y, sample_weight)
 
     def predict(self, X):
         """Predict the target for the provided data.
@@ -242,7 +248,8 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs), dtype=int
             Target values.
         """
-        if self.weights == "uniform":
+        check_is_fitted(self, "_fit_method")
+        if self.weights == "uniform" and self._sample_weight is None:
             # In that case, we do not need the distances to perform
             # the weighting so we do not compute them.
             neigh_ind = self.kneighbors(X, return_distance=False)
@@ -255,6 +262,13 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         _y = self._y
         if _y.ndim == 1:
             _y = _y.reshape((-1, 1))
+
+        if self._sample_weight is not None:
+            if weights is None:
+                weights = self._sample_weight[neigh_ind]
+            else:
+                sample_weight = self._sample_weight[neigh_ind]
+                weights = weights * sample_weight
 
         if weights is None:
             y_pred = np.mean(_y[neigh_ind], axis=1)
