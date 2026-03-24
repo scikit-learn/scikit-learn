@@ -757,10 +757,9 @@ def _max_precision_float_dtype(xp, device):
         str(device).startswith("mps") or str(device).startswith("xpu")
     ):  # pragma: no cover
         return xp.float32
-    elif _is_xp_namespace(xp, "dpnp") and "gpu" in str(device):  # pragma: no cover
-        # TODO: find a way to inspect if device supports float64, now always
-        # return float32 for Intel GPUs (same as above for XPU devices in
-        # PyTorch).
+    elif _is_xp_namespace(xp, "dpnp") and not getattr(
+        device, "has_aspect_fp64", False
+    ):  # pragma: no cover
         return xp.float32
     return xp.float64
 
