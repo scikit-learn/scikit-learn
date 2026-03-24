@@ -752,6 +752,21 @@ def test_kneighbors_classifier_predict_proba(global_dtype):
     assert_allclose(real_prob, y_prob)
 
 
+def test_kneighbors_classifier_brute_manhattan_non_numeric_labels(global_dtype):
+    """`algorithm=\"brute\"` with p=1 should work with string labels."""
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(6, 4)).astype(global_dtype, copy=False)
+    y = np.array(["foo", "bar", "foo", "bar", "foo", "bar"])
+
+    clf = neighbors.KNeighborsClassifier(algorithm="brute", p=1)
+    clf.fit(X, y)
+
+    proba = clf.predict_proba(X[:2])
+    assert proba.shape == (2, 2)
+    assert_allclose(proba.sum(axis=1), 1)
+    assert_array_equal(clf.classes_, np.array(["bar", "foo"]))
+
+
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
 @pytest.mark.parametrize("weights", WEIGHTS)
 def test_radius_neighbors_classifier(
