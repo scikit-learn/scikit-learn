@@ -12,7 +12,6 @@ from sklearn._loss.link import (
 )
 from sklearn.utils._array_api import (
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import _array_api_for_tests
@@ -89,13 +88,12 @@ def test_link_inverse_identity(link, global_random_seed):
 
 
 @pytest.mark.parametrize(
-    "namespace, device, dtype_name",
+    "namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("link", LINK_FUNCTIONS)
 def test_link_inverse_array_api(
-    namespace, device, dtype_name, link, global_random_seed
+    namespace, device_name, dtype_name, link, global_random_seed
 ):
     """Test that link and inverse link give same result for array API inputs."""
     rng = np.random.RandomState(global_random_seed)
@@ -114,7 +112,7 @@ def test_link_inverse_array_api(
     else:
         raw_prediction = rng.uniform(low=-20, high=20, size=(n_samples))
 
-    xp = _array_api_for_tests(namespace, device)
+    xp, device = _array_api_for_tests(namespace, device_name)
     if dtype_name != "float64":
         raw_prediction *= 0.5  # avoid overflow
         rtol = 1e-3 if n_classes else 1e-4

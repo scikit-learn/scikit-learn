@@ -742,7 +742,8 @@ def multilabel_confusion_matrix(
             [1, 2]]])
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    xp, _, device_ = get_namespace_and_device(y_true, y_pred, sample_weight)
+    xp, _, device_ = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device_)
     y_type, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
@@ -2146,6 +2147,8 @@ def precision_recall_fscore_support(
      array([2, 2, 2]))
     """
     _check_zero_division(zero_division)
+    xp, _, device_ = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device_)
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
 
     # Calculate tp_sum, pred_sum, true_sum ###
@@ -2161,7 +2164,6 @@ def precision_recall_fscore_support(
     pred_sum = tp_sum + MCM[:, 0, 1]
     true_sum = tp_sum + MCM[:, 1, 0]
 
-    xp, _, device_ = get_namespace_and_device(y_true, y_pred)
     if average == "micro":
         tp_sum = xp.reshape(xp.sum(tp_sum), (1,))
         pred_sum = xp.reshape(xp.sum(pred_sum), (1,))
