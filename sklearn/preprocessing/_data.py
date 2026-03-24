@@ -2261,6 +2261,7 @@ def binarize(X, *, threshold=0.0, copy=True):
     return _binarize_no_validation(X, threshold=threshold)
 
 
+
 def _binarize_no_validation(X, *, threshold):
     """Binarize data assuming X has already been validated.
 
