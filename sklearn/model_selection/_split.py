@@ -25,7 +25,6 @@ from sklearn.utils import (
     metadata_routing,
 )
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     get_namespace,
     get_namespace_and_device,
     move_to,
@@ -780,7 +779,7 @@ class StratifiedKFold(_BaseKFold):
         # we need the following explicit conversion:
         xp, is_array_api = get_namespace(y)
         if is_array_api:
-            y = _convert_to_numpy(y, xp)
+            y = move_to(y, xp=np, device="cpu")
         else:
             y = np.asarray(y)
         type_of_target_y = type_of_target(y)
@@ -2329,7 +2328,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         # `y` is probably never a very large array, which means that converting it
         # should be cheap
         xp, _ = get_namespace(y)
-        y = _convert_to_numpy(y, xp=xp)
+        y = move_to(y, xp=np, device="cpu")
 
         if y.ndim == 2:
             # for multi-label y, map each distinct row to a string repr

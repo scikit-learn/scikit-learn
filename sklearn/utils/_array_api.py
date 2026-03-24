@@ -857,9 +857,8 @@ def _median(x, axis=None, keepdims=False, xp=None):
     if hasattr(xp, "median"):
         return xp.median(x, axis=axis, keepdims=keepdims)
 
-    # Intended mostly for array-api-strict (which as no "median", as per the spec)
-    # as `_convert_to_numpy` does not necessarily work for all array types.
-    x_np = _convert_to_numpy(x, xp=xp)
+    # Intended mostly for array-api-strict (which has no "median", as per the spec).
+    x_np = move_to(x, xp=numpy, device="cpu")
     return xp.asarray(numpy.median(x_np, axis=axis, keepdims=keepdims), device=device)
 
 
@@ -1188,9 +1187,9 @@ def _bincount(array, weights=None, minlength=0, xp=None):
     if hasattr(xp, "bincount"):
         return xp.bincount(array, weights=weights, minlength=minlength)
 
-    array_np = _convert_to_numpy(array, xp=xp)
+    array_np = move_to(array, xp=numpy, device="cpu")
     if weights is not None:
-        weights_np = _convert_to_numpy(weights, xp=xp)
+        weights_np = move_to(weights, xp=numpy, device="cpu")
     else:
         weights_np = None
     bin_out = numpy.bincount(array_np, weights=weights_np, minlength=minlength)

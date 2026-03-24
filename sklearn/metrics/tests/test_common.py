@@ -85,9 +85,9 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
-    _convert_to_numpy,
     _max_precision_float_dtype,
     get_namespace,
+    move_to,
     yield_mixed_namespace_input_permutations,
     yield_namespace_device_dtype_combinations,
 )
@@ -2061,7 +2061,7 @@ def check_array_api_metric(
 
     def _check_metric_matches(metric_a, metric_b, convert_a=False):
         if convert_a:
-            metric_a = _convert_to_numpy(xp.asarray(metric_a), xp)
+            metric_a = move_to(xp.asarray(metric_a), xp=np, device="cpu")
         assert_allclose(metric_a, metric_b, atol=_atol_for_type(dtype_name))
 
     def _check_each_metric_matches(metric_a, metric_b, convert_a=False):

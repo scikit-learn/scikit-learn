@@ -10,12 +10,11 @@ import sklearn
 from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.utils import _safe_indexing, resample, shuffle
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
-    move_to,
-    yield_namespace_device_dtype_combinations,
+    device as array_api_device,
 )
 from sklearn.utils._array_api import (
-    device as array_api_device,
+    move_to,
+    yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._indexing import (
     _determine_key_type,
@@ -169,7 +168,7 @@ def test_safe_indexing_array_api_support(
         assert array_api_device(indexed_array_xp) == array_api_device(array_to_index_xp)
         assert indexed_array_xp.dtype == array_to_index_xp.dtype
 
-    assert_allclose(_convert_to_numpy(indexed_array_xp, xp=xp), expected_result)
+    assert_allclose(move_to(indexed_array_xp, xp=np, device="cpu"), expected_result)
 
 
 @pytest.mark.parametrize(

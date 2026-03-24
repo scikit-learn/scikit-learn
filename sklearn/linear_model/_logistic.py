@@ -40,11 +40,11 @@ from sklearn.utils import (
     compute_class_weight,
 )
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     _is_numpy_namespace,
     _matching_numpy_dtype,
     get_namespace,
     get_namespace_and_device,
+    move_to,
     size,
 )
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
@@ -1328,9 +1328,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         else:
             warm_start_coef = None
         if warm_start_coef is not None:
-            warm_start_coef = _convert_to_numpy(warm_start_coef, xp=xp)
+            warm_start_coef = move_to(warm_start_coef, xp=np, device="cpu")
             if self.fit_intercept:
-                intercept_np = _convert_to_numpy(self.intercept_, xp=xp)
+                intercept_np = move_to(self.intercept_, xp=np, device="cpu")
                 warm_start_coef = np.concatenate(
                     [warm_start_coef, intercept_np[:, None]], axis=1
                 )

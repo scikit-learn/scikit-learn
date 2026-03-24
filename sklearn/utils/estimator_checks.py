@@ -62,8 +62,8 @@ from sklearn.preprocessing import StandardScaler, scale
 from sklearn.utils import _safe_indexing, shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
-    _convert_to_numpy,
     get_namespace,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._array_api import device as array_device
@@ -1129,7 +1129,7 @@ def check_array_api_input(
         with config_context(array_api_dispatch=True):
             assert array_device(est_xp_param) == array_device(X_xp)
 
-        est_xp_param_np = _convert_to_numpy(est_xp_param, xp=xp)
+        est_xp_param_np = move_to(est_xp_param, xp=np, device="cpu")
         if check_values:
             assert_allclose(
                 attribute,
@@ -1222,7 +1222,7 @@ def check_array_api_input(
             with config_context(array_api_dispatch=True):
                 assert array_device(result_xp) == array_device(X_xp)
 
-            result_xp_np = _convert_to_numpy(result_xp, xp=xp)
+            result_xp_np = move_to(result_xp, xp=np, device="cpu")
             if check_values:
                 assert_allclose(
                     result,
@@ -1249,7 +1249,7 @@ def check_array_api_input(
                 with config_context(array_api_dispatch=True):
                     assert array_device(result_xp) == array_device(X_xp)
 
-                inverse_result_xp_np = _convert_to_numpy(inverse_result_xp, xp=xp)
+                inverse_result_xp_np = move_to(inverse_result_xp, xp=np, device="cpu")
                 if check_values:
                     assert_allclose(
                         inverse_result,

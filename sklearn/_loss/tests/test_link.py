@@ -11,7 +11,7 @@ from sklearn._loss.link import (
     _inclusive_low_high,
 )
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import _array_api_for_tests
@@ -122,7 +122,7 @@ def test_link_inverse_array_api(
     with config_context(array_api_dispatch=True):
         raw_prediction_xp = xp.asarray(raw_prediction.astype(dtype_name), device=device)
         assert_allclose(
-            _convert_to_numpy(link.inverse(raw_prediction_xp), xp=xp),
+            move_to(link.inverse(raw_prediction_xp), xp=np, device="cpu"),
             link.inverse(raw_prediction),
             rtol=rtol,
         )
@@ -130,7 +130,7 @@ def test_link_inverse_array_api(
         y_pred = link.inverse(raw_prediction)
         y_pred_xp = xp.asarray(y_pred.astype(dtype_name), device=device)
         assert_allclose(
-            _convert_to_numpy(link.link(y_pred_xp), xp=xp),
+            move_to(link.link(y_pred_xp), xp=np, device="cpu"),
             link.link(y_pred),
             rtol=rtol,
         )

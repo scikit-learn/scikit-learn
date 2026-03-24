@@ -255,7 +255,7 @@ def test_average(
             # https://github.com/numpy/numpy/issues/26850
             assert array_api_device(array_in) == array_api_device(result)
 
-    result = _convert_to_numpy(result, xp)
+    result = move_to(result, xp=numpy, device="cpu")
     assert_allclose(result, expected, atol=_atol_for_type(dtype_name))
 
 
@@ -438,7 +438,7 @@ def test_nan_reductions(library, X, reduction, expected):
     with config_context(array_api_dispatch=True):
         result = reduction(xp.asarray(X))
 
-    result = _convert_to_numpy(result, xp)
+    result = move_to(result, xp=numpy, device="cpu")
     assert_allclose(result, expected)
 
 
@@ -454,7 +454,7 @@ def test_ravel(namespace, device_name, dtype_name):
     with config_context(array_api_dispatch=True):
         result = _ravel(array_xp)
 
-    result = _convert_to_numpy(result, xp)
+    result = move_to(result, xp=numpy, device="cpu")
     expected = numpy.ravel(array, order="C")
 
     assert_allclose(expected, result)
@@ -591,7 +591,7 @@ def test_isin(
             invert=invert,
         )
 
-    assert_array_equal(_convert_to_numpy(result, xp=xp), expected)
+    assert_array_equal(move_to(result, xp=numpy, device="cpu"), expected)
 
 
 @pytest.mark.skipif(
@@ -659,7 +659,7 @@ def test_count_nonzero(
             array_xp, axis=axis, sample_weight=sample_weight, xp=xp, device=device
         )
 
-    assert_allclose(_convert_to_numpy(result, xp=xp), expected)
+    assert_allclose(move_to(result, xp=numpy, device="cpu"), expected)
 
     if np_version < parse_version("2.0.0") or np_version >= parse_version("2.1.0"):
         # NumPy 2.0 has a problem with the device attribute of scalar arrays:
@@ -745,7 +745,7 @@ def test_fill_diagonal(array, array_namespace, device_name, dtype_name):
     with config_context(array_api_dispatch=True):
         _fill_diagonal(array_xp, value=1, xp=xp)
 
-    assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
+    assert_array_equal(move_to(array_xp, xp=numpy, device="cpu"), array_np)
 
 
 @pytest.mark.parametrize(
@@ -765,7 +765,7 @@ def test_add_to_diagonal(array_namespace, device_name, dtype_name):
     with config_context(array_api_dispatch=True):
         _fill_diagonal(array_xp, value=add_val, xp=xp)
 
-    assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
+    assert_array_equal(move_to(array_xp, xp=numpy, device="cpu"), array_np)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -810,7 +810,7 @@ def test_median(namespace, device_name, dtype_name, axis):
             # part of the Array API spec
             assert get_namespace(result_xp)[0] == xp
             assert result_xp.device == X_xp.device
-    assert_allclose(result_np, _convert_to_numpy(result_xp, xp=xp))
+    assert_allclose(result_np, move_to(result_xp, xp=numpy, device="cpu"))
 
 
 @pytest.mark.parametrize(
@@ -825,7 +825,7 @@ def test_expit_logit(namespace, device_name, dtype_name):
         x_np = numpy.linspace(-20, 20, 1000).astype(dtype_name)
         x_xp = xp.asarray(x_np, device=device)
         assert_allclose(
-            _convert_to_numpy(_expit(x_xp), xp=xp),
+            move_to(_expit(x_xp), xp=numpy, device="cpu"),
             expit(x_np),
             rtol=rtol,
         )
@@ -833,7 +833,7 @@ def test_expit_logit(namespace, device_name, dtype_name):
         x_np = numpy.linspace(0, 1, 1000).astype(dtype_name)
         x_xp = xp.asarray(x_np, device=device)
         assert_allclose(
-            _convert_to_numpy(_logit(x_xp), xp=xp),
+            move_to(_logit(x_xp), xp=numpy, device="cpu"),
             logit(x_np),
             rtol=rtol,
         )
@@ -871,7 +871,7 @@ def test_logsumexp_like_scipy_logsumexp(array_namespace, device_name, dtype_name
 
     with config_context(array_api_dispatch=True):
         res_xp = _logsumexp(array_xp, axis=axis)
-        res_xp = _convert_to_numpy(res_xp, xp)
+        res_xp = move_to(res_xp, xp=numpy, device="cpu")
         assert_allclose(res_np, res_xp, rtol=rtol)
 
     # Test with NaNs and +np.inf
@@ -891,7 +891,7 @@ def test_logsumexp_like_scipy_logsumexp(array_namespace, device_name, dtype_name
 
     with config_context(array_api_dispatch=True):
         res_xp_2 = _logsumexp(array_xp_2, axis=axis)
-        res_xp_2 = _convert_to_numpy(res_xp_2, xp)
+        res_xp_2 = move_to(res_xp_2, xp=numpy, device="cpu")
         assert_allclose(res_np_2, res_xp_2, rtol=rtol)
 
 

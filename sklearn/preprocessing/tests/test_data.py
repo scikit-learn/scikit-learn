@@ -39,7 +39,7 @@ from sklearn.preprocessing._data import BOUNDS_THRESHOLD, _handle_zeros_in_scale
 from sklearn.svm import SVR
 from sklearn.utils import gen_batches, shuffle
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -202,8 +202,8 @@ def test_standard_scaler_sample_weight_array_api(
     scaler_w_xp = StandardScaler()
     with config_context(array_api_dispatch=True):
         scaler_w_xp.fit(Xw_xp, yw_xp, sample_weight=sample_weight_xp)
-        w_mean = _convert_to_numpy(scaler_w_xp.mean_, xp=xp)
-        w_var = _convert_to_numpy(scaler_w_xp.var_, xp=xp)
+        w_mean = move_to(scaler_w_xp.mean_, xp=np, device="cpu")
+        w_var = move_to(scaler_w_xp.var_, xp=np, device="cpu")
 
     assert_allclose(scaler_w.mean_, w_mean)
     assert_allclose(scaler_w.var_, w_var)
@@ -212,8 +212,8 @@ def test_standard_scaler_sample_weight_array_api(
     scaler_xp = StandardScaler()
     with config_context(array_api_dispatch=True):
         scaler_xp.fit(X_xp, y_xp)
-        uw_mean = _convert_to_numpy(scaler_xp.mean_, xp=xp)
-        uw_var = _convert_to_numpy(scaler_xp.var_, xp=xp)
+        uw_mean = move_to(scaler_xp.mean_, xp=np, device="cpu")
+        uw_var = move_to(scaler_xp.var_, xp=np, device="cpu")
 
     assert_allclose(scaler.mean_, uw_mean)
     assert_allclose(scaler.var_, uw_var)
@@ -223,8 +223,8 @@ def test_standard_scaler_sample_weight_array_api(
     assert_allclose(uw_var, w_var)
     with config_context(array_api_dispatch=True):
         assert_allclose(
-            _convert_to_numpy(scaler_xp.transform(X_test_xp), xp=xp),
-            _convert_to_numpy(scaler_w_xp.transform(X_test_xp), xp=xp),
+            move_to(scaler_xp.transform(X_test_xp), xp=np, device="cpu"),
+            move_to(scaler_w_xp.transform(X_test_xp), xp=np, device="cpu"),
         )
 
 
@@ -2121,7 +2121,7 @@ def test_binarizer_array_api_int(array_namespace, device_name, dtype_name):
         binarized_np = Binarizer(threshold=2.5).fit_transform(X_np)
         with config_context(array_api_dispatch=True):
             binarized_xp = Binarizer(threshold=2.5).fit_transform(X_xp)
-        assert_array_equal(_convert_to_numpy(binarized_xp, xp), binarized_np)
+        assert_array_equal(move_to(binarized_xp, xp=np, device="cpu"), binarized_np)
 
 
 def test_center_kernel():
