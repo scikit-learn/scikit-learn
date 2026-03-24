@@ -10,12 +10,75 @@ Scikit-learn offers a callback API to use built-in or custom callbacks with comp
 estimators. This section is intended for developers who wish to implement callback
 support in estimators, or develop custom callbacks.
 
-Callbacks
+Task tree
 ---------
 
+During its ``fit`` process, an estimator dynamically builds a tree of tasks. The root
+task node represents the whole ``fit`` function itself, and each child node represents a
+sub-task, i.e. an arbitrary unit of work. Such child task is tipycally one step of a
+loop, with nested loops corresponding to nested sub-tasks. The callbacks attached to an
+estimator will have methods (referred to as hooks) called for each task defined in the
+estimator.
+
+As an example, KMeans has two nested loops: the outer loop is controlled by `n_init` and
+the inner loop is controlled by `max_iter`. Its task tree looks like this::
+
+    KMeans fit
+    ├── init 0
+    │   ├── iter 0
+    │   ├── iter 1
+    │   ├── ...
+    │   └── iter n
+    ├── init 1
+    │   ├── iter 0
+    │   ├── ...
+    │   └── iter n
+    └── init 2
+        ├── iter 0
+        ├── ...
+        └── iter n
+
+where each innermost ``iter j`` task corresponds to the computation of the labels and
+centers for the full dataset. A callback attached to a KMeans estimator thus will have
+its hooks called in the ``fit`` node, each of the ``init i`` nodes and each of the
+``iter j`` nodes.
+
+When the estimator is a meta-estimator, a task leaf usually corresponds to fitting a
+sub-estimator. Therefore, this leaf and the root task of the sub-estimator actually
+represent the same task. In this case the leaf task of the meta-estimator and the root
+task of the sub-estimator are merged into a single task.
+
+For instance, a `Pipeline` would have a task tree that looks like this::
+
+    Pipeline fit
+    ├── step 0 | StandardScaler fit
+    │   └── <insert StandardScaler task tree here>
+    └── step 1 | LogisticRegression fit
+        └── <insert LogisticRegression task tree here>
+
+In that case, a callback attached to the meta-estimator will have its hooks called
+either only on the task nodes of the met-estimator (here ``fit``, ``setp 1`` and ``step
+2``) if the callback is not proagated; or on both the task of the meta-estimator and
+those of its sub-estimators (here the tasks of the ``StandardScaler`` and
+``LogisticRegression``) if the callback is propagated.
+
+The callback hooks :meth:`~Callback.on_fit_task_begin` :meth:`~Callback.on_fit_task_end`
+are called respectively at the start and end of each task node of the tree. To allow
+callbacks to be generic and reusable across estimators, the innermost tasks, i.e. the
+leaves of the task tree, must correspond to operations on the full input data (or
+batches for incremental estimators).
+
+Concretely, the tree structure is created dynamically and abstracted in an object named
+:class:`~CallbackContext`. There is one context for each task, and the context is
+responsible for calling the callback hooks for its task and creating contexts for the
+child tasks.
+
+Callbacks protocol
+------------------
+
 In scikit-learn, callbacks are classes following the :class:`~FitCallback` protocol.
-This protocol defines four methods (referred to as callback hooks) which are invoked at
-different steps of the estimator's fit process. The four hooks of a callback are :
+This protocol defines four hook methods which are invoked at different steps of the
+estimator's fit process. The four hooks of a callback are :
 
 .. method:: FitCallback.setup(context) -> None
     :noindex:
@@ -28,7 +91,7 @@ different steps of the estimator's fit process. The four hooks of a callback are
 
     Called at the beginning of each task in ``fit``. It takes a ``context`` argument,
     a :class:`~sklearn.callback.CallbackContext` object holding contextual information
-    and described in more detailed in the :ref:`callback_context_section` below.
+    and described in more detailed in the :ref:`callback_context_section` section below.
     Optional keyword arguments can be provided depending on the estimator, with the list
     of possible keys and values described in the
     :ref:`related section <contextual_info_section>` below.
@@ -53,58 +116,6 @@ different steps of the estimator's fit process. The four hooks of a callback are
 
 .. TODO: add a link to an example doc implementing a custom callback.
 
-Task tree
----------
-
-During its ``fit`` process, an estimator dynamically builds a tree of tasks. The root
-task node represents the whole ``fit`` function itself, and each child node represents a
-sub-task, i.e. an arbitrary unit of work. Such child task is tipycally one step of a
-loop, with nested loops corresponding to nested sub-tasks.
-
-For instance, KMeans has two nested loops: the outer loop is controlled by `n_init` and
-the inner loop is controlled by `max_iter`. Its task tree looks like this::
-
-    KMeans fit
-    ├── init 0
-    │   ├── iter 0
-    │   ├── iter 1
-    │   ├── ...
-    │   └── iter n
-    ├── init 1
-    │   ├── iter 0
-    │   ├── ...
-    │   └── iter n
-    └── init 2
-        ├── iter 0
-        ├── ...
-        └── iter n
-
-where each innermost ``iter j`` task corresponds to the computation of the labels and
-centers for the full dataset.
-
-When the estimator is a meta-estimator, a task leaf usually corresponds to fitting a
-sub-estimator. Therefore, this leaf and the root task of the sub-estimator actually
-represent the same task. In this case the leaf task of the meta-estimator and the root
-task of the sub-estimator are merged into a single task.
-
-For instance, a `Pipeline` would have a task tree that looks like this::
-
-    Pipeline fit
-    ├── step 0 | StandardScaler fit
-    │   └── <insert StandardScaler task tree here>
-    └── step 1 | LogisticRegression fit
-        └── <insert LogisticRegression task tree here>
-
-
-The callback hook :meth:`~Callback.on_fit_task_end` is called at the end of each task
-node of the tree. To allow callbacks to be generic and reusable across estimators, the
-innermost tasks, i.e. the leaves of the task tree, must correspond to operations on the
-full input data (or batches for incremental estimators).
-
-Concretely, the tree structure is created dynamically and abstracted in an object named
-:class:`~CallbackContext`. There is one context for each task, and the context is
-responsible for calling the callback hooks for its task and creating contexts for the
-child tasks.
 
 Auto-propagated callbacks
 -------------------------
@@ -152,7 +163,7 @@ inherit from to support callbacks. The children context objects are then instant
 each sub-task through their parent context's :meth:`~CallbackContext.subcontext` method.
 
 The callback hooks are invoked by the context object through its
-:meth:`~CallbackContext.eval_on_fit_task_begin` and 
+:meth:`~CallbackContext.eval_on_fit_task_begin` and
 :meth:`~CallbackContext.eval_on_fit_task_end` methods, which are called during fit,
 at the beginning and at the end of each defined task.
 
@@ -163,6 +174,7 @@ guarantees that callbacks teardown will always be evaluated, whether the `fit` c
 completed successfully or not.
 
 Here is a minimal example of how a callback context should be handled in an estimator::
+
     class MyEstimator(CallbackSupportMixin, BaseEstimator):
         def __init__(self, max_iter):
             self.max_iter = max_iter
@@ -170,18 +182,18 @@ Here is a minimal example of how a callback context should be handled in an esti
         @with_callbacks
         def fit(self, X, y):
             callback_ctx = self._init_callback_context(max_subtasks=self.max_iter)
-            callback_ctx.eval_on_fit_task_begin()
+            callback_ctx.eval_on_fit_task_begin(X=X, y=y)
 
             for i in range(self.max_iter):
-                subcontext = callback_ctx.subcontext(task_id=i).eval_on_fit_task_begin()
+                subcontext = callback_ctx.subcontext(task_id=i).eval_on_fit_task_begin(
+                    X=X, y=y
+                )
 
                 # Do something
 
-                subcontext.eval_on_fit_task_end(
-                    data={"X_train": X, "y_train": y},
-                )
+                subcontext.eval_on_fit_task_end(X=X, y=y)
 
-            callback_ctx.eval_on_fit_task_end()
+            callback_ctx.eval_on_fit_task_end(X=X, y=y)
 
             return self
 
@@ -206,9 +218,11 @@ implementation, as an estimator might not be able to produce all the possible va
 The list of the possible keys and corresponding values for these ``kwargs`` is as
 follows.
 
-- `data`: dict
-    A dictionary containing the training and validation data. The possible keys are
-    "X_train", "y_train", "X_val", "y_val".
+- `X`: array-like
+    The training data of the estimator.
+
+- `y`: array-like
+    The training targets of the estimator.
 
 - `metadata`: dict
     A dictionary containing the training and validation metadata.
@@ -231,7 +245,7 @@ Finally, here is a list of the planned callbacks to be added to the built-in one
 ============================== ====================== ==================================
 Planned callback               Description            Required kwargs
 ============================== ====================== ==================================
-MetricMonitor                  Log a metric score     data,
-                               between predictions    from_reconstruction_attributes
+ScoringMonitor                 Log a metric score     X, y, metadata,
+                               between predictions    fitted_estimator
                                and targets.
 ============================== ====================== ==================================
