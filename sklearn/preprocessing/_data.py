@@ -2258,6 +2258,16 @@ def binarize(X, *, threshold=0.0, copy=True):
            [1., 0., 0.]])
     """
     X = check_array(X, accept_sparse=["csr", "csc"], force_writeable=True, copy=copy)
+    return _binarize_no_validation(X, threshold=threshold)
+
+
+def _binarize_no_validation(X, *, threshold):
+    """Binarize data assuming X has already been validated.
+
+    This avoids repeated validation when ``binarize`` is called from
+    :meth:`Binarizer.transform`, which already runs ``validate_data``.
+    """
+
     if sparse.issparse(X):
         if threshold < 0:
             raise ValueError("Cannot binarize a sparse matrix with threshold < 0")
@@ -2408,7 +2418,7 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             copy=copy,
             reset=False,
         )
-        return binarize(X, threshold=self.threshold, copy=False)
+        return _binarize_no_validation(X, threshold=self.threshold)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
