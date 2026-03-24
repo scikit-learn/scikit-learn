@@ -1226,11 +1226,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     def _sk_visual_block_(self):
         # We can find remainder and its column only when it's fitted
         if hasattr(self, "transformers_"):
-            transformers = [
-                transformer
-                for transformer in self.transformers_
-                if not (transformer[0] == "remainder")  # Exclude remainder
-            ]
+            transformers = (
+                self.transformers_[:-1]
+                if self.transformers_ and self.transformers_[-1][0] == "remainder"
+                else self.transformers_
+            )
 
             # Add remainder back to fitted transformers if remainder is not drop
             # and if there are remainder columns to display

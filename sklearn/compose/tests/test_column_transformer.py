@@ -1662,6 +1662,9 @@ def test_sk_visual_block_full_transform():
 
 
 def test_sk_visual_block_int_remainder_cols_pandas():
+    """Check that remainder still uses available string column names in visual block
+    even when transformer columns are specified by integer index.
+    """
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame({"a": [1, 2], "b": [3, 4], "c": [5, 6]})
     ct = ColumnTransformer([("scaler", StandardScaler(), [0])], remainder="passthrough")
