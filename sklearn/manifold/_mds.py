@@ -274,7 +274,7 @@ def smacof(
         provided, this option is overridden and a single run is performed.
 
         .. versionchanged:: 1.9
-           The default value changed from 8 to 1.
+           The default value for `n_iter` changed from 8 to 1.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. If multiple
