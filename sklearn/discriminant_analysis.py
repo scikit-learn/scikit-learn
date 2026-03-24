@@ -623,7 +623,7 @@ class LinearDiscriminantAnalysis(
             self.priors_
         )
 
-    def _solve_svd(self, X, y):
+    def _solve_svd(self, X, y, shrinkage):
         """SVD solver.
 
         Parameters
@@ -633,6 +633,12 @@ class LinearDiscriminantAnalysis(
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
+
+        shrinkage : 'auto', float or None
+            Shrinkage parameter, possible values:
+              - None: no shrinkage.
+              - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
+              - float between 0 and 1: fixed shrinkage constant.
         """
         xp, is_array_api_compliant = get_namespace(X)
 
@@ -646,7 +652,7 @@ class LinearDiscriminantAnalysis(
 
         self.means_ = _class_means(X, y)
         if self.store_covariance:
-            self.covariance_ = _class_cov(X, y, self.priors_)
+            self.covariance_ = _class_cov(X, y, self.priors_, shrinkage)
 
         Xc = []
         for idx, group in enumerate(self.classes_):
@@ -666,7 +672,7 @@ class LinearDiscriminantAnalysis(
         # 2) Within variance scaling
         X = xp.sqrt(fac) * (Xc / std)
         # SVD of centered (within)scaled data
-        _, S, Vt = svd(X, full_matrices=False)
+        _, S, Vt = _svd_shrinkage(X, shrinkage=shrinkage)
 
         rank = xp.sum(xp.astype(S > self.tol, xp.int32))
         # Scaling of within covariance is: V' 1/S
@@ -761,15 +767,13 @@ class LinearDiscriminantAnalysis(
             self._max_components = self.n_components
 
         if self.solver == "svd":
-            if self.shrinkage is not None:
-                raise NotImplementedError("shrinkage not supported with 'svd' solver.")
             if self.covariance_estimator is not None:
                 raise ValueError(
                     "covariance estimator "
                     "is not supported "
                     "with svd solver. Try another solver"
                 )
-            self._solve_svd(X, y)
+            self._solve_svd(X, y, shrinkage=self.shrinkage)
         elif self.solver == "lsqr":
             self._solve_lstsq(
                 X,
