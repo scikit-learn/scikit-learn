@@ -629,6 +629,91 @@ def _randomized_svd(
         return U[:, :n_components], s[:n_components], Vt[:n_components, :]
 
 
+def randomized_eigen_decomposition(
+    A,
+    n_components,
+    n_oversamples=10,
+    n_iter="auto",
+    power_iteration_normalizer="auto",
+    random_state=None,
+):
+    """
+    Approximate eigenvalue decomposition of a Hermitian matrix A ≈ U Λ U*.
+
+    Parameters
+    ----------
+    A : ndarray of shape (n, n)
+        Hermitian matrix to decompose.
+
+    n_components : int
+        Number of eigenvalues and eigenvectors to extract.
+
+    n_oversamples : int, default=10
+        Additional number of random vectors to sample the range of A so as to
+        ensure proper conditioning. The total number of random vectors used to
+        find the range of A is n_components + n_oversamples.
+
+    n_iter : int or "auto", default="auto"
+        Number of power iterations. Can be used to deal with slow singular
+        value decay of A. When "auto", it is set to 4 (or 7 if n_components is
+        small compared to n).
+
+    power_iteration_normalizer : {'auto', 'QR', 'LU', None}, default='auto'
+        Normalizer for power iterations. Used by randomized_range_finder.
+
+    random_state : int, RandomState instance or None, default=None
+        Pseudo-random number generator to control randomness.
+
+    Returns
+    -------
+    U : ndarray of shape (n, n_components)
+        Approximate eigenvectors.
+
+    Lambda : ndarray of shape (n_components,)
+        Approximate eigenvalues.
+
+    Notes
+    -----
+    This implementation follows Algorithm 5.3 (Direct Eigenvalue Decomposition)
+    from:
+
+        Halko, N., Martinsson, P.G., & Tropp, J.A. (2011).
+        Finding structure with randomness: Probabilistic algorithms for
+        constructing approximate matrix decompositions.
+        SIAM Review, 53(2), 217–288.
+    """
+    random_state = check_random_state(random_state)
+    n_random = n_components + n_oversamples
+    n = A.shape[0]
+
+    if n_iter == "auto":
+        n_iter = 7 if n_components < 0.1 * n else 4
+
+    # Step 1: compute an orthonormal matrix Q approximating the range of A
+    Q = randomized_range_finder(
+        A,
+        size=n_random,
+        n_iter=n_iter,
+        power_iteration_normalizer=power_iteration_normalizer,
+        random_state=random_state,
+    )
+
+    # Step 2: project A to the low-dimensional subspace
+    B = Q.T @ A @ Q
+
+    # Step 3: compute the eigenvalue decomposition of the small matrix
+    xp, is_array_api_compliant = get_namespace(B)
+    if is_array_api_compliant:
+        Lambda, V = xp.linalg.eigh(B)
+    else:
+        Lambda, V = linalg.eigh(B)
+
+    # Step 4: compute the approximate eigenvectors of A
+    U = Q @ V
+
+    return Lambda[-n_components:], U[:, -n_components:]
+
+
 def _randomized_eigsh(
     M,
     n_components,
@@ -715,9 +800,14 @@ def _randomized_eigsh(
     effective rank. Usually, `n_components` is chosen to be greater than k
     so increasing `n_oversamples` up to `n_components` should be enough.
 
-    Strategy 'value': not implemented yet.
-    Algorithms 5.3, 5.4 and 5.5 in the Halko et al paper should provide good
-    candidates for a future implementation.
+    Strategy 'value':
+    This randomized algorithm efficiently approximates eigendecompositions
+    of Hermitian matrices by projection onto a lower-dimensional subspace using basis Q.
+    Relying on Algorithm 5.3 from Halko et al.'s article, it computes B = Q*AQ,
+    finds its eigendecomposition B = VΛV*, and forms U = QV to yield A = UΛU*
+    with bounded error. Unlike the 'module' strategy, it works efficiently with
+    non-positive semidefinite matrices, handling both positive and negative
+    eigenvalues directly.
 
     Strategy 'module':
     The principle is that for diagonalizable matrices, the singular values and
@@ -749,8 +839,15 @@ def _randomized_eigsh(
       Halko, et al. (2009)
     """
     if selection == "value":  # pragma: no cover
-        # to do : an algorithm can be found in the Halko et al reference
-        raise NotImplementedError()
+        # Call Hako et al 5.3 randomized eigs solver
+        eigvals, eigvecs = randomized_eigen_decomposition(
+            M,
+            n_components=n_components,
+            n_oversamples=n_oversamples,
+            n_iter=n_iter,
+            power_iteration_normalizer=power_iteration_normalizer,
+            random_state=random_state,
+        )
 
     elif selection == "module":
         # Note: no need for deterministic U and Vt (flip_sign=True),
