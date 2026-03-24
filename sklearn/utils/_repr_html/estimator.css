@@ -75,25 +75,27 @@
 div.sk-parallel-item,
 div.sk-serial,
 div.sk-item {
-  /* draw centered vertical line to link estimators */
+  /* draw centered vertical line to link estimators
   background-image: linear-gradient(var(--sklearn-color-text-on-default-background), var(--sklearn-color-text-on-default-background));
   background-size: 2px 100%;
   background-repeat: no-repeat;
-  background-position: center center;
+  background-position: center center; */
 }
 
 /* Parallel-specific style estimator block */
 
 .sk-global div.sk-parallel-item::after {
   content: "";
-  width: 100%;
+  /*width: 100%;*/
   border-bottom: 2px solid var(--sklearn-color-text-on-default-background);
   flex-grow: 1;
+  display: none;
 }
 
 .sk-global div.sk-parallel {
   display: flex;
-  align-items: stretch;
+  flex-direction: column;
+  align-items: flex-start;
   justify-content: center;
   background-color: var(--sklearn-color-background);
   position: relative;
@@ -123,7 +125,7 @@ div.sk-item {
 .sk-global div.sk-serial {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   background-color: var(--sklearn-color-background);
   padding-right: 1em;
   padding-left: 1em;
@@ -148,13 +150,13 @@ clickable and can be expanded/collapsed.
 .sk-global label.sk-toggleable__label {
   cursor: pointer;
   display: flex;
-  width: 100%;
+  /*width: 100%;*/
   margin-bottom: 0;
   padding: 0.5em;
   box-sizing: border-box;
   text-align: center;
-  align-items: center;
-  justify-content: center;
+  align-items: start;
+  justify-content:flex-start;
   gap: 0.5em;
 }
 
@@ -206,7 +208,7 @@ clickable and can be expanded/collapsed.
 .sk-global input.sk-toggleable__control:checked~div.sk-toggleable__content {
   /* Expand drop-down */
   display: block;
-  width: 100%;
+  /*width: 100%;*/
   overflow: visible;
 }
 
