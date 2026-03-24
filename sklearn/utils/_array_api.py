@@ -985,7 +985,14 @@ def _ravel(array, xp=None):
 
 
 def _convert_to_numpy(array, xp):
-    """Convert X into a NumPy ndarray on the CPU."""
+    """Convert X into a NumPy ndarray on the CPU.
+
+    This function uses library-specific methods to convert the array to a NumPy
+    ndarray on the CPU. It is only meant as a fallback when move_to fails to use the
+    DLPACK protocol.
+
+    Code should instead use `move_to(array, xp=np, device="cpu")` instead.
+    """
     if _is_xp_namespace(xp, "torch"):
         return array.cpu().numpy()
     elif _is_xp_namespace(xp, "cupy"):  # pragma: nocover
