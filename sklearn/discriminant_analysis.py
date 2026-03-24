@@ -17,7 +17,12 @@ from sklearn.base import (
     TransformerMixin,
     _fit_context,
 )
-from sklearn.covariance import empirical_covariance, ledoit_wolf, shrunk_covariance
+from sklearn.covariance import (
+    empirical_covariance,
+    ledoit_wolf,
+    ledoit_wolf_shrinkage,
+    shrunk_covariance,
+)
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils._array_api import _expit, device, get_namespace, size
@@ -166,6 +171,66 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
         Xg = X[y == group, :]
         cov += priors[idx] * np.atleast_2d(_cov(Xg, shrinkage, covariance_estimator))
     return cov
+
+
+def _svd_shrinkage(X, shrinkage=None):
+    """Compute the SVD of the data and shrink the singular values to mimic covariance
+    shrinking.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Input data.
+
+    shrinkage : 'auto' or float, default=None
+        Shrinkage parameter, possible values:
+          - None: no shrinkage (default).
+          - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
+          - float between 0 and 1: fixed shrinkage parameter.
+
+    Returns
+    -------
+    U : ndarray of shape (n_samples, n_samples)
+        Left singular vectors.
+    S : ndarray of shape (n_samples,)
+        Singular values.
+    Vt : ndarray of shape (n_samples, n_features)
+        Right singular vectors.
+
+    Notes
+    -----
+    Uses the equivalence between the covariance eigenvalues and the data
+    singular values in [1]. However, this function uses the maximum likelihood
+    covariance estimator, unlike [1] that uses the unbiased estimator.
+
+    References
+    ----------
+    .. [1] https://stats.stackexchange.com/a/134283/134438
+    """
+    xp, is_array_api_compliant = get_namespace(X)
+
+    if is_array_api_compliant:
+        svd = xp.linalg.svd
+    else:
+        svd = scipy.linalg.svd
+
+    n_samples, _ = X.shape
+
+    if shrinkage is None:
+        U, S, Vt = svd(X, full_matrices=False)
+        return U, S, Vt
+    elif shrinkage == "auto":
+        shrinkage_val = ledoit_wolf_shrinkage(X)
+    elif isinstance(shrinkage, Real):
+        shrinkage_val = shrinkage
+
+    # Use full_matrices=True to include 0's that will be shrunk
+    U, S_raw, Vt = svd(X, full_matrices=True)
+    cov_eigvals = S_raw**2 / n_samples
+    mean_eigval = xp.mean(cov_eigvals)
+    shrunk_eigvals = shrinkage_val * mean_eigval + (1 - shrinkage_val) * cov_eigvals
+    S = xp.sqrt(shrunk_eigvals * n_samples)
+    return U, S, Vt
 
 
 class DiscriminantAnalysisPredictionMixin:
