@@ -93,10 +93,11 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     ):
         if array_namespace == "torch":
             for device_name, dtype in itertools.product(
-                ("cpu", "cuda", "xpu"), ("float64", "float32")
+                ("cpu", "cuda"), ("float64", "float32")
             ):
                 yield array_namespace, device_name, dtype
             yield array_namespace, "mps", "float32"
+            yield array_namespace, "xpu", "float32"
 
         elif array_namespace == "dpnp":
             # XXX: add "accelerator" device type?
