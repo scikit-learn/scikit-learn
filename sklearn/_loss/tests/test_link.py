@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose, assert_array_equal
+from numpy.testing import assert_allclose
 
+from sklearn import config_context
 from sklearn._loss.link import (
     _LINKS,
     HalfLogitLink,
@@ -9,6 +10,11 @@ from sklearn._loss.link import (
     MultinomialLogit,
     _inclusive_low_high,
 )
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._testing import _array_api_for_tests
 
 LINK_FUNCTIONS = list(_LINKS.values())
 
@@ -28,10 +34,10 @@ def test_interval_raises():
         Interval(0, 1, False, True),
         Interval(0, 1, True, False),
         Interval(0, 1, True, True),
-        Interval(-np.inf, np.inf, False, False),
-        Interval(-np.inf, np.inf, False, True),
-        Interval(-np.inf, np.inf, True, False),
-        Interval(-np.inf, np.inf, True, True),
+        Interval(-float("inf"), float("inf"), False, False),
+        Interval(-float("inf"), float("inf"), False, True),
+        Interval(-float("inf"), float("inf"), True, False),
+        Interval(-float("inf"), float("inf"), True, True),
         Interval(-10, -1, False, False),
         Interval(-10, -1, False, True),
         Interval(-10, -1, True, False),
@@ -39,10 +45,10 @@ def test_interval_raises():
     ],
 )
 def test_is_in_range(interval):
-    # make sure low and high are always within the interval, used for linspace
+    """Test that low and high are always within the interval used for linspace."""
     low, high = _inclusive_low_high(interval)
-
     x = np.linspace(low, high, num=10)
+
     assert interval.includes(x)
 
     # x contains lower bound
@@ -59,7 +65,7 @@ def test_is_in_range(interval):
 
 @pytest.mark.parametrize("link", LINK_FUNCTIONS)
 def test_link_inverse_identity(link, global_random_seed):
-    # Test that link of inverse gives identity.
+    """Test that link of inverse gives identity."""
     rng = np.random.RandomState(global_random_seed)
     link = link()
     n_samples, n_classes = 100, None
@@ -81,31 +87,50 @@ def test_link_inverse_identity(link, global_random_seed):
     assert_allclose(link.inverse(link.link(y_pred)), y_pred)
 
 
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
 @pytest.mark.parametrize("link", LINK_FUNCTIONS)
-def test_link_out_argument(link):
-    # Test that out argument gets assigned the result.
-    rng = np.random.RandomState(42)
+def test_link_inverse_array_api(
+    namespace, device_name, dtype_name, link, global_random_seed
+):
+    """Test that link and inverse link give same result for array API inputs."""
+    rng = np.random.RandomState(global_random_seed)
     link = link()
     n_samples, n_classes = 100, None
+    # The values for `raw_prediction` are limited from -20 to 20 because in the
+    # class `LogitLink` the term `expit(x)` comes very close to 1 for large
+    # positive x and therefore loses precision.
     if link.is_multiclass:
         n_classes = 10
-        raw_prediction = rng.normal(loc=0, scale=10, size=(n_samples, n_classes))
+        raw_prediction = rng.uniform(low=-20, high=20, size=(n_samples, n_classes))
         if isinstance(link, MultinomialLogit):
             raw_prediction = link.symmetrize_raw_prediction(raw_prediction)
-    else:
-        # So far, the valid interval of raw_prediction is (-inf, inf) and
-        # we do not need to distinguish.
+    elif isinstance(link, HalfLogitLink):
         raw_prediction = rng.uniform(low=-10, high=10, size=(n_samples))
+    else:
+        raw_prediction = rng.uniform(low=-20, high=20, size=(n_samples))
 
-    y_pred = link.inverse(raw_prediction, out=None)
-    out = np.empty_like(raw_prediction)
-    y_pred_2 = link.inverse(raw_prediction, out=out)
-    assert_allclose(y_pred, out)
-    assert_array_equal(out, y_pred_2)
-    assert np.shares_memory(out, y_pred_2)
+    xp, device = _array_api_for_tests(namespace, device_name)
+    if dtype_name != "float64":
+        raw_prediction *= 0.5  # avoid overflow
+        rtol = 1e-3 if n_classes else 1e-4
+    else:
+        rtol = 1e-8
 
-    out = np.empty_like(y_pred)
-    raw_prediction_2 = link.link(y_pred, out=out)
-    assert_allclose(raw_prediction, out)
-    assert_array_equal(out, raw_prediction_2)
-    assert np.shares_memory(out, raw_prediction_2)
+    with config_context(array_api_dispatch=True):
+        raw_prediction_xp = xp.asarray(raw_prediction.astype(dtype_name), device=device)
+        assert_allclose(
+            _convert_to_numpy(link.inverse(raw_prediction_xp), xp=xp),
+            link.inverse(raw_prediction),
+            rtol=rtol,
+        )
+
+        y_pred = link.inverse(raw_prediction)
+        y_pred_xp = xp.asarray(y_pred.astype(dtype_name), device=device)
+        assert_allclose(
+            _convert_to_numpy(link.link(y_pred_xp), xp=xp),
+            link.link(y_pred),
+            rtol=rtol,
+        )

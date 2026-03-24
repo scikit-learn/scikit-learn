@@ -22,6 +22,7 @@ from sklearn.utils._array_api import (
     _median,
     get_namespace,
     get_namespace_and_device,
+    move_to,
     size,
 )
 from sklearn.utils._array_api import _xlogy as xlogy
@@ -277,7 +278,8 @@ def mean_absolute_error(
     >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85...
     """
-    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
@@ -376,7 +378,8 @@ def mean_pinball_loss(
     >>> mean_pinball_loss(y_true, y_true, alpha=0.9)
     0.0
     """
-    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
@@ -481,9 +484,8 @@ def mean_absolute_percentage_error(
     >>> mean_absolute_percentage_error(y_true, y_pred)
     112589990684262.48
     """
-    xp, _, device_ = get_namespace_and_device(
-        y_true, y_pred, sample_weight, multioutput
-    )
+    xp, _, device_ = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device_)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
             y_true, y_pred, sample_weight, multioutput, xp=xp
@@ -574,7 +576,8 @@ def mean_squared_error(
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.825...
     """
-    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
             y_true, y_pred, sample_weight, multioutput, xp=xp
@@ -660,7 +663,8 @@ def root_mean_squared_error(
     0.822...
     """
 
-    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     output_errors = xp.sqrt(
         mean_squared_error(
@@ -751,7 +755,8 @@ def mean_squared_log_error(
     >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.060...
     """
-    xp, _ = get_namespace(y_true, y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
@@ -829,7 +834,8 @@ def root_mean_squared_log_error(
     >>> root_mean_squared_log_error(y_true, y_pred)
     0.199...
     """
-    xp, _ = get_namespace(y_true, y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
@@ -916,9 +922,10 @@ def median_absolute_error(
     >>> median_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85
     """
-    xp, _ = get_namespace(y_true, y_pred, multioutput, sample_weight)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
     _, y_true, y_pred, sample_weight, multioutput = _check_reg_targets(
-        y_true, y_pred, sample_weight, multioutput
+        y_true, y_pred, sample_weight, multioutput, xp=xp
     )
     if sample_weight is None:
         output_errors = _median(xp.abs(y_pred - y_true), axis=0)
@@ -936,7 +943,7 @@ def median_absolute_error(
     return float(_average(output_errors, weights=multioutput, xp=xp))
 
 
-def _assemble_r2_explained_variance(
+def _assemble_fraction_of_explained_deviance(
     numerator, denominator, n_outputs, multioutput, force_finite, xp, device
 ):
     """Common part used by explained variance score and :math:`R^2` score."""
@@ -1103,7 +1110,8 @@ def explained_variance_score(
     >>> explained_variance_score(y_true, y_pred, force_finite=False)
     -inf
     """
-    xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight, multioutput)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
@@ -1121,7 +1129,7 @@ def explained_variance_score(
         (y_true - y_true_avg) ** 2, weights=sample_weight, axis=0, xp=xp
     )
 
-    return _assemble_r2_explained_variance(
+    return _assemble_fraction_of_explained_deviance(
         numerator=numerator,
         denominator=denominator,
         n_outputs=y_true.shape[1],
@@ -1273,9 +1281,8 @@ def r2_score(
     >>> r2_score(y_true, y_pred, force_finite=False)
     -inf
     """
-    xp, _, device_ = get_namespace_and_device(
-        y_true, y_pred, sample_weight, multioutput
-    )
+    xp, _, device_ = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device_)
 
     _, y_true, y_pred, sample_weight, multioutput = (
         _check_reg_targets_with_floating_dtype(
@@ -1300,7 +1307,7 @@ def r2_score(
         axis=0,
     )
 
-    return _assemble_r2_explained_variance(
+    return _assemble_fraction_of_explained_deviance(
         numerator=numerator,
         denominator=denominator,
         n_outputs=y_true.shape[1],
@@ -1345,7 +1352,8 @@ def max_error(y_true, y_pred):
     >>> max_error(y_true, y_pred)
     1.0
     """
-    xp, _ = get_namespace(y_true, y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true = move_to(y_true, xp=xp, device=device)
     y_type, y_true, y_pred, _, _ = _check_reg_targets(
         y_true, y_pred, sample_weight=None, multioutput=None, xp=xp
     )
@@ -1447,7 +1455,8 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     >>> mean_tweedie_deviance(y_true, y_pred, power=1)
     1.4260...
     """
-    xp, _ = get_namespace(y_true, y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
     y_type, y_true, y_pred, sample_weight, _ = _check_reg_targets_with_floating_dtype(
         y_true, y_pred, sample_weight, multioutput=None, xp=xp
     )
@@ -1659,7 +1668,8 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     >>> d2_tweedie_score(y_true, y_true, power=2)
     1.0
     """
-    xp, _ = get_namespace(y_true, y_pred)
+    xp, _, device = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
     y_type, y_true, y_pred, sample_weight, _ = _check_reg_targets_with_floating_dtype(
         y_true, y_pred, sample_weight, multioutput=None, xp=xp
@@ -1779,9 +1789,9 @@ def d2_pinball_score(
     >>> d2_pinball_score(y_true, y_pred)
     0.5
     >>> d2_pinball_score(y_true, y_pred, alpha=0.9)
-    0.772...
+    0.666...
     >>> d2_pinball_score(y_true, y_pred, alpha=0.1)
-    -1.045...
+    -1.999...
     >>> d2_pinball_score(y_true, y_true, alpha=0.1)
     1.0
 
@@ -1803,8 +1813,12 @@ def d2_pinball_score(
     >>> grid.best_params_
     {'fit_intercept': True}
     """
-    _, y_true, y_pred, sample_weight, multioutput = _check_reg_targets(
-        y_true, y_pred, sample_weight, multioutput
+    xp, _, device_ = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device_)
+    _, y_true, y_pred, sample_weight, multioutput = (
+        _check_reg_targets_with_floating_dtype(
+            y_true, y_pred, sample_weight, multioutput, xp=xp
+        )
     )
 
     if _num_samples(y_pred) < 2:
@@ -1821,16 +1835,18 @@ def d2_pinball_score(
     )
 
     if sample_weight is None:
-        y_quantile = np.tile(
-            np.percentile(y_true, q=alpha * 100, axis=0), (len(y_true), 1)
-        )
-    else:
-        y_quantile = np.tile(
-            _weighted_percentile(
-                y_true, sample_weight=sample_weight, percentile_rank=alpha * 100
-            ),
-            (len(y_true), 1),
-        )
+        sample_weight = xp.ones([y_true.shape[0]], dtype=y_true.dtype, device=device_)
+
+    y_quantile = xp.tile(
+        _weighted_percentile(
+            y_true,
+            sample_weight=sample_weight,
+            percentile_rank=alpha * 100,
+            average=True,
+            xp=xp,
+        ),
+        (y_true.shape[0], 1),
+    )
 
     denominator = mean_pinball_loss(
         y_true,
@@ -1840,25 +1856,15 @@ def d2_pinball_score(
         multioutput="raw_values",
     )
 
-    nonzero_numerator = numerator != 0
-    nonzero_denominator = denominator != 0
-    valid_score = nonzero_numerator & nonzero_denominator
-    output_scores = np.ones(y_true.shape[1])
-
-    output_scores[valid_score] = 1 - (numerator[valid_score] / denominator[valid_score])
-    output_scores[nonzero_numerator & ~nonzero_denominator] = 0.0
-
-    if isinstance(multioutput, str):
-        if multioutput == "raw_values":
-            # return scores individually
-            return output_scores
-        else:  # multioutput == "uniform_average"
-            # passing None as weights to np.average results in uniform mean
-            avg_weights = None
-    else:
-        avg_weights = multioutput
-
-    return float(np.average(output_scores, weights=avg_weights))
+    return _assemble_fraction_of_explained_deviance(
+        numerator=numerator,
+        denominator=denominator,
+        n_outputs=y_true.shape[1],
+        multioutput=multioutput,
+        force_finite=True,
+        xp=xp,
+        device=device_,
+    )
 
 
 @validate_params(

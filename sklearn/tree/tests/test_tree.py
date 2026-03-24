@@ -41,6 +41,7 @@ from sklearn.tree._classes import (
     DENSE_SPLITTERS,
     SPARSE_SPLITTERS,
 )
+from sklearn.tree._criterion import _py_precompute_absolute_errors
 from sklearn.tree._partitioner import _py_sort
 from sklearn.tree._tree import (
     NODE_DTYPE,
@@ -67,6 +68,7 @@ from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
 )
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_random_state
 
 CLF_CRITERIONS = ("gini", "log_loss")
@@ -265,6 +267,8 @@ def test_weighted_classification_toy():
         assert_array_equal(clf.predict(T), true_result, "Failed with {0}".format(name))
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize("Tree", REG_TREES.values())
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
 def test_regression_toy(Tree, criterion):
@@ -289,7 +293,7 @@ def test_regression_toy(Tree, criterion):
 
 
 def test_xor():
-    # Check on a XOR problem
+    # Check on an XOR problem
     y = np.zeros((10, 10))
     y[:5, :5] = 1
     y[5:, 5:] = 1
@@ -327,6 +331,8 @@ def test_iris():
         )
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize("name, Tree", REG_TREES.items())
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
 def test_diabetes_overfit(name, Tree, criterion):
@@ -340,6 +346,8 @@ def test_diabetes_overfit(name, Tree, criterion):
     )
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize("Tree", REG_TREES.values())
 @pytest.mark.parametrize(
     "criterion, metric",
@@ -821,76 +829,49 @@ def test_min_weight_fraction_leaf_with_min_samples_leaf_on_sparse_input(
     )
 
 
-def test_min_impurity_decrease(global_random_seed):
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
+@pytest.mark.parametrize(
+    "TreeEstimator, criterion",
+    [
+        *product(REG_TREES.values(), REG_CRITERIONS),
+        *product(CLF_TREES.values(), CLF_CRITERIONS),
+    ],
+)
+def test_min_impurity_decrease(TreeEstimator, criterion, global_random_seed):
     # test if min_impurity_decrease ensure that a split is made only if
     # if the impurity decrease is at least that value
     X, y = datasets.make_classification(n_samples=100, random_state=global_random_seed)
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
     # by setting max_leaf_nodes
-    for max_leaf_nodes, name in product((None, 1000), ALL_TREES.keys()):
-        TreeEstimator = ALL_TREES[name]
-
-        # Check default value of min_impurity_decrease, 1e-7
-        est1 = TreeEstimator(max_leaf_nodes=max_leaf_nodes, random_state=0)
-        # Check with explicit value of 0.05
-        est2 = TreeEstimator(
-            max_leaf_nodes=max_leaf_nodes, min_impurity_decrease=0.05, random_state=0
-        )
-        # Check with a much lower value of 0.0001
-        est3 = TreeEstimator(
-            max_leaf_nodes=max_leaf_nodes, min_impurity_decrease=0.0001, random_state=0
-        )
-        # Check with a much lower value of 0.1
-        est4 = TreeEstimator(
-            max_leaf_nodes=max_leaf_nodes, min_impurity_decrease=0.1, random_state=0
-        )
-
-        for est, expected_decrease in (
-            (est1, 1e-7),
-            (est2, 0.05),
-            (est3, 0.0001),
-            (est4, 0.1),
-        ):
-            assert est.min_impurity_decrease <= expected_decrease, (
-                "Failed, min_impurity_decrease = {0} > {1}".format(
-                    est.min_impurity_decrease, expected_decrease
-                )
+    for max_leaf_nodes in [None, 1000]:
+        for expected_decrease in [0.05, 0.0001, 0.1]:
+            est = TreeEstimator(
+                criterion=criterion,
+                max_leaf_nodes=max_leaf_nodes,
+                min_impurity_decrease=expected_decrease,
+                random_state=global_random_seed,
             )
             est.fit(X, y)
-            for node in range(est.tree_.node_count):
+            tree = est.tree_
+            weighted_impurity = (
+                tree.impurity * tree.weighted_n_node_samples / X.shape[0]
+            )
+
+            for node in range(tree.node_count):
                 # If current node is a not leaf node, check if the split was
                 # justified w.r.t the min_impurity_decrease
-                if est.tree_.children_left[node] != TREE_LEAF:
-                    imp_parent = est.tree_.impurity[node]
-                    wtd_n_node = est.tree_.weighted_n_node_samples[node]
+                if tree.children_left[node] != TREE_LEAF:
+                    left = tree.children_left[node]
+                    right = tree.children_right[node]
 
-                    left = est.tree_.children_left[node]
-                    wtd_n_left = est.tree_.weighted_n_node_samples[left]
-                    imp_left = est.tree_.impurity[left]
-                    wtd_imp_left = wtd_n_left * imp_left
-
-                    right = est.tree_.children_right[node]
-                    wtd_n_right = est.tree_.weighted_n_node_samples[right]
-                    imp_right = est.tree_.impurity[right]
-                    wtd_imp_right = wtd_n_right * imp_right
-
-                    wtd_avg_left_right_imp = wtd_imp_right + wtd_imp_left
-                    wtd_avg_left_right_imp /= wtd_n_node
-
-                    fractional_node_weight = (
-                        est.tree_.weighted_n_node_samples[node] / X.shape[0]
+                    actual_decrease = weighted_impurity[node] - (
+                        weighted_impurity[left] + weighted_impurity[right]
                     )
 
-                    actual_decrease = fractional_node_weight * (
-                        imp_parent - wtd_avg_left_right_imp
-                    )
-
-                    assert actual_decrease >= expected_decrease, (
-                        "Failed with {0} expected min_impurity_decrease={1}".format(
-                            actual_decrease, expected_decrease
-                        )
-                    )
+                    # Allow a tiny slack to account for floating-point rounding errors:
+                    assert actual_decrease > expected_decrease - 1e-10
 
 
 def test_pickle():
@@ -944,6 +925,8 @@ def test_pickle():
             )
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize(
     "Tree, criterion",
     [
@@ -1488,6 +1471,8 @@ def test_sparse_parameters(tree_type, dataset, csc_container):
     assert_array_almost_equal(s.predict(X), d.predict(X))
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize(
     "tree_type, criterion",
     list(product([tree for tree in SPARSE_TREES if tree in REG_TREES], REG_CRITERIONS))
@@ -1714,8 +1699,9 @@ def test_no_sparse_y_support(name, csr_container):
 
 
 def test_mae():
-    """Check MAE criterion produces correct results on small toy dataset:
+    """Check MAE criterion produces correct results on small toy datasets:
 
+    ## First toy dataset
     ------------------
     | X | y | weight |
     ------------------
@@ -1786,6 +1772,31 @@ def test_mae():
             = 1.2 / 1.6
             = 0.75
             ------
+
+    ## Second toy dataset:
+    ------------------
+    | X | y | weight |
+    ------------------
+    | 1 | 1 |   3    |
+    | 2 | 1 |   3    |
+    | 3 | 3 |   2    |
+    | 4 | 1 |   1    |
+    | 5 | 2 |   2    |
+    ------------------
+    |sum wt:|   11   |
+    ------------------
+
+    The weighted median is 1
+    Total error = Absolute(1 - 3) * 2 + Absolute(1 - 2) * 2 = 6
+
+    The best split is between X values of 2 and 3, with:
+    - left node being the first 2 data points, both with y=1
+      => AE and impurity is 0
+    - right node being the last 3 data points, weighted median is 2.
+      Total error = (Absolute(2 - 3) * 2)
+                  + (Absolute(2 - 1) * 1)
+                  + (Absolute(2 - 2) * 2)
+                  = 3
     """
     dt_mae = DecisionTreeRegressor(
         random_state=0, criterion="absolute_error", max_leaf_nodes=2
@@ -1811,6 +1822,21 @@ def test_mae():
     dt_mae.fit(X=[[3], [5], [3], [8], [5]], y=[6, 7, 3, 4, 3])
     assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0 / 3.0])
     assert_array_equal(dt_mae.tree_.value.flat, [4, 4.5, 4.0])
+
+    dt_mae = DecisionTreeRegressor(
+        random_state=0,
+        criterion="absolute_error",
+        max_depth=1,  # stop after one split
+    )
+    X = [[1], [2], [3], [4], [5]]
+    dt_mae.fit(
+        X=X,
+        y=[1, 1, 3, 1, 2],
+        sample_weight=[3, 3, 2, 1, 2],
+    )
+    assert_allclose(dt_mae.predict(X), [1, 1, 2, 2, 2])
+    assert_allclose(dt_mae.tree_.impurity, [6 / 11, 0, 3 / 5])
+    assert_array_equal(dt_mae.tree_.value.flat, [1, 1, 2])
 
 
 def test_criterion_copy():
@@ -1991,6 +2017,8 @@ def test_apply_path_readonly_all_trees(name, splitter, sparse_container):
     )
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse", "poisson"])
 @pytest.mark.parametrize("Tree", REG_TREES.values())
 def test_balance_property(criterion, Tree):
@@ -2413,18 +2441,21 @@ def test_min_sample_split_1_error(Tree):
         tree.fit(X, y)
 
 
-@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
+@pytest.mark.parametrize("criterion", REG_CRITERIONS)
 def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
     """Check missing values goes to correct node during predictions."""
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
+    node_value_func = np.median if criterion == "absolute_error" else np.mean
 
     dtc = DecisionTreeRegressor(random_state=42, max_depth=1, criterion=criterion)
     dtc.fit(X, y)
 
     # Goes to right node because it has the most data points
     y_pred = dtc.predict([[np.nan]])
-    assert_allclose(y_pred, [np.mean(y[-5:])])
+    assert_allclose(y_pred, [node_value_func(y[-5:])])
 
     # equal number of elements in both nodes
     X_equal = X[:-1]
@@ -2436,11 +2467,13 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
     # Goes to right node because the implementation sets:
     # missing_go_to_left = n_left > n_right, which is False
     y_pred = dtc.predict([[np.nan]])
-    assert_allclose(y_pred, [np.mean(y_equal[-4:])])
+    assert_allclose(y_pred, [node_value_func(y_equal[-4:])])
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize("seed", range(3))
-@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
+@pytest.mark.parametrize("criterion", REG_CRITERIONS)
 def test_missing_values_random_splitter_on_equal_nodes_no_missing(criterion, seed):
     """Check missing values go to the correct node during predictions for ExtraTree.
 
@@ -2538,12 +2571,12 @@ def test_missing_values_best_splitter_missing_both_classes_has_nan(criterion):
     assert_array_equal(y_pred, [1, 0, 1])
 
 
-@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS)
 @pytest.mark.parametrize(
     "tree",
     [
-        DecisionTreeRegressor(criterion="absolute_error"),
-        ExtraTreeRegressor(criterion="absolute_error"),
+        DecisionTreeRegressor(),
+        ExtraTreeRegressor(),
     ],
 )
 def test_missing_value_errors(sparse_container, tree):
@@ -2552,8 +2585,7 @@ def test_missing_value_errors(sparse_container, tree):
     X = np.array([[1, 2, 3, 5, np.nan, 10, 20, 30, 60, np.nan]]).T
     y = np.array([0] * 5 + [1] * 5)
 
-    if sparse_container is not None:
-        X = sparse_container(X)
+    X = sparse_container(X)
 
     with pytest.raises(ValueError, match="Input X contains NaN"):
         tree.fit(X, y)
@@ -2714,6 +2746,8 @@ def test_deterministic_pickle():
     assert pickle1 == pickle2
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize("Tree", [DecisionTreeRegressor, ExtraTreeRegressor])
 @pytest.mark.parametrize(
     "X",
@@ -2726,29 +2760,31 @@ def test_deterministic_pickle():
         np.array([1, 2, 3, np.nan, 6, np.nan]),
     ],
 )
-@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
+@pytest.mark.parametrize("criterion", REG_CRITERIONS)
 def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_seed):
-    """Check that we properly handle missing values in regression trees using a toy
-    dataset.
+    """Check that regression trees correctly handle missing values in impurity
+    calculations.
 
-    The regression targeted by this test was that we were not reinitializing the
-    criterion when it comes to the number of missing values. Therefore, the value
-    of the critetion (i.e. MSE) was completely wrong.
-
-    This test check that the MSE is null when there is a single sample in the leaf.
+    This test verifies that:
+    1. Impurity is always non-negative
+    2. Impurity is zero for leaves with a single sample
+    3. For decision trees, impurity matches reference trees after the first split
 
     Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/28254
-    https://github.com/scikit-learn/scikit-learn/issues/28316
+    - Missing values handling in regression criteria:
+      https://github.com/scikit-learn/scikit-learn/issues/28254
+      https://github.com/scikit-learn/scikit-learn/issues/28316
+    - Incorrect/negative impurites for the Poisson criterion with missing values:
+      https://github.com/scikit-learn/scikit-learn/issues/32870
     """
     X = X.reshape(-1, 1)
-    y = np.arange(6)
+    y = np.arange(1, 7)
 
     tree = Tree(criterion=criterion, random_state=global_random_seed).fit(X, y)
     tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
 
     impurity = tree.tree_.impurity
-    assert all(impurity >= 0), impurity.min()  # MSE should always be positive
+    assert all(impurity >= 0), impurity.min()  # impurity should always be positive
 
     # Note: the impurity matches after the first split only on greedy trees
     # see https://github.com/scikit-learn/scikit-learn/issues/32125
@@ -2756,7 +2792,7 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion, global_random_se
         # Check the impurity match after the first split
         assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
 
-    # Find the leaves with a single sample where the MSE should be 0
+    # Find the leaves with a single sample where the impurity should be 0
     leaves_idx = np.flatnonzero(
         (tree.tree_.children_left == -1) & (tree.tree_.n_node_samples == 1)
     )
@@ -2893,3 +2929,145 @@ def test_sort_log2_build():
     ]
     # fmt: on
     assert_array_equal(samples, expected_samples)
+
+
+def test_absolute_errors_precomputation_function(global_random_seed):
+    """
+    Test the main bit of logic of the MAE(RegressionCriterion) class
+    (used by DecisionTreeRegressor(criterion="absolute_error")).
+
+    The implementation of the criterion relies on an efficient precomputation
+    of left/right children absolute error for each split. This test verifies this
+    part of the computation, in case of major refactor of the MAE class,
+    it can be safely removed.
+    """
+
+    def compute_prefix_abs_errors_naive(y, w):
+        y = y.ravel().copy()
+        medians = [
+            _weighted_percentile(y[:i], w[:i], 50, average=True)
+            for i in range(1, y.size + 1)
+        ]
+        errors = [
+            (np.abs(y[:i] - m) * w[:i]).sum()
+            for i, m in zip(range(1, y.size + 1), medians)
+        ]
+        return np.array(errors), np.array(medians)
+
+    def assert_same_results(y, w, indices, reverse=False):
+        n = y.shape[0]
+        args = (n - 1, -1) if reverse else (0, n)
+        abs_errors, medians = _py_precompute_absolute_errors(y, w, indices, *args, n)
+        y_sorted = y[indices]
+        w_sorted = w[indices]
+        if reverse:
+            y_sorted = y_sorted[::-1]
+            w_sorted = w_sorted[::-1]
+        abs_errors_, medians_ = compute_prefix_abs_errors_naive(y_sorted, w_sorted)
+        if reverse:
+            abs_errors_ = abs_errors_[::-1]
+            medians_ = medians_[::-1]
+        assert_allclose(abs_errors, abs_errors_, atol=1e-11)
+        assert_allclose(medians, medians_, atol=1e-11)
+
+    rng = np.random.default_rng(global_random_seed)
+
+    for n in [3, 5, 10, 20, 50, 100]:
+        y = rng.uniform(size=(n, 1))
+        w = rng.random(n)
+        w *= 10.0 ** rng.uniform(-5, 5)
+        indices = np.arange(n)
+        assert_same_results(y, w, indices)
+        assert_same_results(y, np.ones(n), indices)
+        assert_same_results(y, w.round() + 1, indices)
+        assert_same_results(y, w, indices, reverse=True)
+        indices = rng.permutation(n)
+        assert_same_results(y, w, indices)
+        assert_same_results(y, w, indices, reverse=True)
+
+
+def test_absolute_error_accurately_predicts_weighted_median(global_random_seed):
+    """
+    Test that the weighted-median computed under-the-hood when
+    building a tree with criterion="absolute_error" is correct.
+    """
+    rng = np.random.default_rng(global_random_seed)
+    n = int(1e5)
+    data = rng.lognormal(size=n)
+    # Large number of zeros and otherwise continuous weights:
+    weights = rng.integers(0, 3, size=n) * rng.uniform(0, 1, size=n)
+
+    tree_leaf_weighted_median = (
+        DecisionTreeRegressor(criterion="absolute_error", max_depth=1)
+        .fit(np.ones(shape=(data.shape[0], 1)), data, sample_weight=weights)
+        .tree_.value.ravel()[0]
+    )
+    weighted_median = _weighted_percentile(data, weights, 50, average=True)
+
+    assert_allclose(tree_leaf_weighted_median, weighted_median)
+
+
+def test_splitting_with_missing_values():
+    # Non regression test for https://github.com/scikit-learn/scikit-learn/issues/32178
+    X = (
+        np.vstack([[0, 0, 0, 0, 1, 2, 3, 4], [1, 2, 1, 2, 1, 2, 1, 2]])
+        .swapaxes(0, 1)
+        .astype(float)
+    )
+    y = [0, 0, 0, 0, 1, 1, 1, 1]
+    X[X == 0] = np.nan
+
+    # The important thing here is that we try several trees, where each one tries
+    # one of the two features first. The resulting tree should be the same in all
+    # cases. The way to control which feature is tried first is `random_state`.
+    # Twenty trees is a good guess for how many we need to try to make sure we get
+    # both orders of features at least once.
+    for i in range(20):
+        tree = DecisionTreeRegressor(max_depth=1, random_state=i).fit(X, y)
+        assert_array_equal(tree.tree_.impurity, np.array([0.25, 0.0, 0.0]))
+
+
+def test_missing_values_and_constant_toy():
+    # Non regression test for https://github.com/scikit-learn/scikit-learn/issues/32272
+    # This test ensures that a feature with constant non-missing values plus some
+    # missing values is correctly identified as splittable (not constant).
+    X = [0, 0, 0, np.nan, np.nan]  # constant non-missing values (all 0s)
+    y = [0, 0, 0, 1, 1]  # perfectly separable by missingness
+    X = np.array(X).reshape(-1, 1)
+    tree = DecisionTreeClassifier().fit(X, y)
+    # We expect perfect predictions because the missing value pattern perfectly
+    # separates the two classes (non-missing -> class 0, missing -> class 1)
+    assert_array_equal(tree.predict(X), y)
+    # with just one split (-> three nodes: the root + 2 leaves)
+    assert tree.tree_.node_count == 3
+
+
+def test_friedman_mse_deprecation():
+    with pytest.warns(FutureWarning, match="friedman_mse"):
+        _ = DecisionTreeRegressor(criterion="friedman_mse")
+
+
+@pytest.mark.parametrize(
+    "X,y",
+    [
+        (np.array([[np.nan], [0.0], [1.0], [2.0]]), np.array([0.0, 1.0, 2.0, 3.0])),
+        (np.array([[np.nan], [1.0], [np.nan]]), np.array([0.0, 1.0, 0.0])),
+    ],
+    ids=["multiple-non-missing", "single-non-missing"],
+)
+def test_random_splitter_missing_values_uses_non_missing_min_max(X, y):
+    """
+    Check random-split thresholds are finite when the first sample is missing.
+
+    Non-regression test for a subtle bug, see
+    https://github.com/scikit-learn/scikit-learn/pull/32119#issuecomment-3765288780
+    """
+    tree = ExtraTreeRegressor(max_depth=1, random_state=0)
+    tree.fit(X, y)
+
+    assert tree.tree_.children_left[0] != TREE_LEAF
+    threshold = tree.tree_.threshold[0]
+    non_missing = X[~np.isnan(X)]
+
+    assert np.isfinite(threshold)
+    assert non_missing.min() <= threshold <= non_missing.max()

@@ -99,14 +99,12 @@ def test_weighted_percentile_equal():
     assert approx(score) == 0
 
 
-# XXX: is this really what we want? Shouldn't we raise instead?
-# https://github.com/scikit-learn/scikit-learn/issues/31032
 def test_weighted_percentile_all_zero_weights():
-    """Check `weighted_percentile` with all weights equal to 0 returns last index."""
+    """Check `weighted_percentile` with all weights equal to 0 returns `np.nan`."""
     y = np.arange(10)
     sw = np.zeros(10)
     value = _weighted_percentile(y, sw, 50)
-    assert approx(value) == 9.0
+    assert np.isnan(value)
 
 
 @pytest.mark.parametrize("average", [True, False])
@@ -130,6 +128,13 @@ def test_weighted_percentile_ignores_zero_weight(
     )
     for idx in range(2):
         assert approx(value[idx]) == expected_value
+
+
+def test_weighted_percentile_average_zero_weight_plateau():
+    """Check zero weights just before `max_index` handled correctly."""
+    score_without_zeros = _weighted_percentile([1, 3], [3, 3], average=True)
+    score_with_zeros = _weighted_percentile([1, 2, 3], [3, 0, 3], average=True)
+    assert approx(score_without_zeros) == score_with_zeros
 
 
 @pytest.mark.parametrize("average", [True, False])
@@ -254,7 +259,8 @@ def test_weighted_percentile_2d(global_random_seed, percentile_rank, average):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
 )
 @pytest.mark.parametrize(
     "data, weights, percentile",
@@ -284,10 +290,16 @@ def test_weighted_percentile_2d(global_random_seed, percentile_rank, average):
     ],
 )
 def test_weighted_percentile_array_api_consistency(
-    global_random_seed, array_namespace, device, dtype_name, data, weights, percentile
+    global_random_seed,
+    array_namespace,
+    device_name,
+    dtype_name,
+    data,
+    weights,
+    percentile,
 ):
     """Check `_weighted_percentile` gives consistent results with array API."""
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     # Skip test for percentile=0 edge case (#20528) on namespace/device where
     # xp.nextafter is broken. This is the case for torch with MPS device:

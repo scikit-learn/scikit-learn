@@ -14,6 +14,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
     load_diabetes,
+    load_iris,
     make_blobs,
     make_classification,
     make_multilabel_classification,
@@ -63,6 +64,7 @@ from sklearn.utils._testing import (
     ignore_warnings,
 )
 from sklearn.utils.metadata_routing import MetadataRouter, MethodMapping
+from sklearn.utils.multiclass import type_of_target
 
 REGRESSION_SCORERS = [
     "d2_absolute_error_score",
@@ -1017,7 +1019,7 @@ def string_labeled_classification_problem():
     from sklearn.utils import shuffle
 
     X, y = load_breast_cancer(return_X_y=True)
-    # create an highly imbalanced classification task
+    # create a highly imbalanced classification task
     idx_positive = np.flatnonzero(y == 1)
     idx_negative = np.flatnonzero(y == 0)
     idx_selected = np.hstack([idx_negative, idx_positive[:25]])
@@ -1178,6 +1180,38 @@ def test_scorer_select_proba_error(scorer):
     err_msg = "is not a valid label"
     with pytest.raises(ValueError, match=err_msg):
         scorer(lr, X, y)
+
+
+def test_invalid_default_pos_label_ignored_on_multiclass():
+    iris = load_iris()
+    X = iris.data
+    y = np.array(iris.target_names)[iris.target]
+
+    assert type_of_target(y) == "multiclass"
+
+    clf = LogisticRegression(max_iter=1000, random_state=0).fit(X, y)
+
+    # The default of average_precision_score pos_label is 1. It's not one of
+    # the string class labels but it should be ignored when the scorer is
+    # called on a multiclass problem.
+    scorer = make_scorer(
+        average_precision_score,
+        response_method=("decision_function", "predict_proba"),
+    )
+    assert scorer(clf, X, y) > 0.7
+
+    # Passing an invalid pos_label explicitly should raise an error.
+    scorer = make_scorer(
+        average_precision_score,
+        response_method=("decision_function", "predict_proba"),
+        pos_label="invalid_label",
+    )
+    expected_msg = re.escape(
+        "Parameter pos_label is fixed to 1 for multiclass y_true. Do not set pos_label "
+        "or set pos_label to 1."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        scorer(clf, X, y)
 
 
 def test_get_scorer_return_copy():
@@ -1521,7 +1555,7 @@ def test_check_scoring_multimetric_raise_exc():
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf = LogisticRegression().fit(X_train, y_train)
 
-    # "raising_scorer" is raising ValueError and should return an string representation
+    # "raising_scorer" is raising ValueError and should return a string representation
     # of the error of the last scorer:
     scoring = {
         "accuracy": make_scorer(accuracy_score),

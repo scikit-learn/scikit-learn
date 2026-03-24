@@ -493,7 +493,7 @@ def _plain_sgd{{name_suffix}}(
                     objective_sum += cur_loss_val
                     # for PA1/PA2 (passive/aggressive model, online algorithm) use only the loss
                     if learning_rate != PA1 and learning_rate != PA2:
-                        # sum up all the terms in the optimization objective function 
+                        # sum up all the terms in the optimization objective function
                         # (i.e. also include regularization in addition to the loss)
                         # Note: for the L2 term SGD optimizes 0.5 * L2**2, due to using
                         # weight decay that's why the 0.5 coefficient is required
@@ -503,8 +503,8 @@ def _plain_sgd{{name_suffix}}(
                                 l1_ratio * w.l1norm()
                             )
                         if one_class:  # specific to One-Class SVM
-                            # nu is alpha * 2 (alpha is set as nu / 2 by the caller)
-                            objective_sum += intercept * (alpha * 2)
+                            # nu is alpha
+                            objective_sum += intercept * alpha
 
                 if y > 0.0:
                     class_weight = weight_pos
@@ -549,7 +549,7 @@ def _plain_sgd{{name_suffix}}(
                 if fit_intercept == 1:
                     intercept_update = update
                     if one_class:  # specific for One-Class SVM
-                        intercept_update -= 2. * eta * alpha
+                        intercept_update -= eta * alpha
                     if intercept_update != 0:
                         intercept += intercept_update * intercept_decay
 

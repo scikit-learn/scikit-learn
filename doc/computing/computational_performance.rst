@@ -178,7 +178,7 @@ non-zero coefficients.
 For the :mod:`sklearn.svm` family of algorithms with a non-linear kernel,
 the latency is tied to the number of support vectors (the fewer the faster).
 Latency and throughput should (asymptotically) grow linearly with the number
-of support vectors in a SVC or SVR model. The kernel will also influence the
+of support vectors in an SVC or SVR model. The kernel will also influence the
 latency as it is used to compute the projection of the input vector once per
 support vector. In the following graph the ``nu`` parameter of
 :class:`~svm.NuSVR` was used to influence the number of

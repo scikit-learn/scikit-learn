@@ -702,10 +702,11 @@ def load_iris(*, return_X_y=False, as_frame=False):
 
     >>> from sklearn.datasets import load_iris
     >>> data = load_iris()
-    >>> data.target[[10, 25, 50]]
+    >>> samples = [10, 25, 50]
+    >>> data.target[samples]
     array([0, 0, 1])
-    >>> list(data.target_names)
-    [np.str_('setosa'), np.str_('versicolor'), np.str_('virginica')]
+    >>> data.target_names[data.target[samples]]
+    array(['setosa', 'setosa', 'versicolor'], dtype='<U10')
 
     See :ref:`sphx_glr_auto_examples_decomposition_plot_pca_iris.py` for a more
     detailed example of how to work with the iris dataset.

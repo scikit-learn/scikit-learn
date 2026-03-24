@@ -43,7 +43,6 @@ from sklearn.svm import SVC
 from sklearn.tests.metadata_routing_common import assert_request_is_empty
 from sklearn.utils._array_api import (
     _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     get_namespace,
     yield_namespace_device_dtype_combinations,
 )
@@ -249,13 +248,13 @@ def check_valid_split(train, test, n_samples=None):
     assert train.intersection(test) == set()
 
     if n_samples is not None:
-        # Check that the union of train an test split cover all the indices
+        # Check that the union of train and test split cover all the indices
         assert train.union(test) == set(range(n_samples))
 
 
 def check_cv_coverage(cv, X, y, groups, expected_n_splits):
     n_samples = _num_samples(X)
-    # Check that a all the samples appear at least once in a test fold
+    # Check that all the samples appear at least once in a test fold
     assert cv.get_n_splits(X, y, groups) == expected_n_splits
 
     collected_test_samples = set()
@@ -1342,9 +1341,8 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "shuffle,stratify",
@@ -1356,9 +1354,9 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
     ),
 )
 def test_array_api_train_test_split(
-    shuffle, stratify, array_namespace, device, dtype_name
+    shuffle, stratify, array_namespace, device_name, dtype_name
 ):
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     X = np.arange(100).reshape((10, 10))
     y = np.arange(10)
@@ -1621,7 +1619,8 @@ def test_check_cv():
     cv = check_cv(3, y_multioutput, classifier=True)
     np.testing.assert_equal(list(KFold(3).split(X)), list(cv.split(X)))
 
-    with pytest.raises(ValueError):
+    msg = "Expected `cv` as an integer, a cross-validation object"
+    with pytest.raises(ValueError, match=msg):
         check_cv(cv="lolo")
 
 
@@ -1953,7 +1952,7 @@ def test_nested_cv():
         LeaveOneOut(),
         GroupKFold(n_splits=3),
         StratifiedKFold(),
-        StratifiedGroupKFold(),
+        StratifiedGroupKFold(n_splits=3),
         StratifiedShuffleSplit(n_splits=3, random_state=0),
     ]
 

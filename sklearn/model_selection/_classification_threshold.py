@@ -502,9 +502,9 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
     used for converting posterior probability estimates (i.e. output of
     `predict_proba`) or decision scores (i.e. output of `decision_function`)
     into a class label. The tuning is done by optimizing a binary metric,
-    potentially constrained by a another metric.
+    potentially constrained by another metric.
 
-    Read more in the :ref:`User Guide <TunedThresholdClassifierCV>`.
+    Read more in the :ref:`User Guide <threshold_tunning>`.
 
     .. versionadded:: 1.5
 

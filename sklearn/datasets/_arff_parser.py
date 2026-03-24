@@ -16,6 +16,7 @@ from sklearn.externals import _arff
 from sklearn.externals._arff import ArffSparseDataType
 from sklearn.utils._chunking import chunk_generator, get_chunk_n_rows
 from sklearn.utils._optional_dependencies import check_pandas_support
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.fixes import pd_fillna
 
 
@@ -262,12 +263,12 @@ def _liac_arff_parser(
             arff_data_X = _split_sparse_columns(arff_data, feature_indices_to_select)
             num_obs = max(arff_data[1]) + 1
             X_shape = (num_obs, len(feature_indices_to_select))
-            X = sp.sparse.coo_matrix(
+            X = sp.sparse.coo_array(
                 (arff_data_X[0], (arff_data_X[1], arff_data_X[2])),
                 shape=X_shape,
                 dtype=np.float64,
             )
-            X = X.tocsr()
+            X = _align_api_if_sparse(X.tocsr())
             y = _sparse_data_to_array(arff_data, target_indices_to_select)
         else:
             # This should never happen

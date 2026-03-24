@@ -1,0 +1,2 @@
+- Raise more informative error when fitting :class:`NuSVR` with all zero sample weights.
+  By :user:`Lucy Liu <lucyleeow>` and :user:`John Hendricks <j-hendricks>`.
