@@ -748,6 +748,7 @@ def test_kneighbors_regressor_const_sample_weight(
     y_pred_none = knn.predict(X[:n_test_pts] + epsilon)
     assert_allclose(y_pred_const, y_pred_none)
 
+
 @pytest.mark.parametrize(
     "Estimator", [neighbors.KNeighborsClassifier, neighbors.KNeighborsRegressor]
 )
@@ -775,7 +776,7 @@ def test_kneighbors_sample_weight_shape(
 
 
 @pytest.mark.parametrize(
-        "Estimator", [neighbors.KNeighborsClassifier, neighbors.KNeighborsRegressor]
+    "Estimator", [neighbors.KNeighborsClassifier, neighbors.KNeighborsRegressor]
 )
 @pytest.mark.parametrize(
     "mag_sample_weight,msg",
