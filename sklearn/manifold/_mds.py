@@ -731,7 +731,6 @@ class MDS(BaseEstimator):
             X transformed in the new space.
         """
 
-
         if self.init == "warn":
             warnings.warn(
                 "The default value of `init` will change from 'random' to "
