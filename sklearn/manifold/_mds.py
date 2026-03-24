@@ -452,7 +452,7 @@ class MDS(BaseEstimator):
         determined by the run with the smallest final stress.
 
         .. versionchanged:: 1.9
-           The default value changed from 4 to 1.
+           The default value for `n_init` changed from 4 to 1.
 
     init : {'random', 'classical_mds'}, default='random'
         The initialization approach. If `random`, random initialization is used.
@@ -731,7 +731,6 @@ class MDS(BaseEstimator):
             X transformed in the new space.
         """
 
-        self._n_init = self.n_init
 
         if self.init == "warn":
             warnings.warn(
@@ -806,7 +805,7 @@ class MDS(BaseEstimator):
             metric=self._metric_mds,
             n_components=self.n_components,
             init=init_array,
-            n_init=self._n_init,
+            n_init=self.n_init,
             n_jobs=self.n_jobs,
             max_iter=self.max_iter,
             verbose=self.verbose,

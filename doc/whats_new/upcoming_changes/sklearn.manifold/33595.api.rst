@@ -1,4 +1,0 @@
-- :func:`manifold.smacof` and :class:`manifold.MDS` now use ``n_init=1``
-  as default value instead of the previous defaults of 8 and 4 respectively,
-  as planned for version 1.9.
-  By :user:`Julian901 <Julian901>`.
