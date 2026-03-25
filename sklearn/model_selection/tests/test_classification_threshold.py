@@ -500,6 +500,45 @@ def test_tuned_threshold_classifier_cv_float():
     assert_allclose(tuned_model.estimator_.coef_, cloned_estimator.coef_)
 
 
+def test_tuned_threshold_classifier_cv_float_refit_false_same_split():
+    """Regression test for gh-33540.
+
+    With ``cv=float`` and ``refit=False``, ``best_threshold_`` must be tuned on
+    the same split that was used to train ``estimator_``.  Previously the
+    ``refit=False`` branch called ``cv.split(...)`` a second time, which could
+    yield a completely different split when ``random_state=None``, making the
+    returned estimator/threshold pair inconsistent.
+    """
+    X, y = make_classification(n_samples=200, random_state=42)
+
+    # Patch StratifiedShuffleSplit.split to count how many times it is called
+    # and record the train indices returned each time.
+    split_calls = []
+    original_split = StratifiedShuffleSplit.split
+
+    def tracking_split(self, X, y=None, groups=None):
+        for train_idx, val_idx in original_split(self, X, y, groups):
+            split_calls.append(train_idx.copy())
+            yield train_idx, val_idx
+
+    StratifiedShuffleSplit.split = tracking_split
+    try:
+        clf = TunedThresholdClassifierCV(
+            LogisticRegression(random_state=0),
+            cv=0.2,
+            refit=False,
+        )
+        clf.fit(X, y)
+    finally:
+        StratifiedShuffleSplit.split = original_split
+
+    # The split generator must be consumed exactly once (no second call).
+    assert len(split_calls) == 1, (
+        f"cv.split() was called {len(split_calls)} time(s); expected 1. "
+        "The refit=False branch must reuse the existing split."
+    )
+
+
 def test_tuned_threshold_classifier_error_constant_predictor():
     """Check that we raise a ValueError if the underlying classifier returns constant
     probabilities such that we cannot find any threshold.
