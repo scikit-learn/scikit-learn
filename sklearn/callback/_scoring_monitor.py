@@ -6,6 +6,7 @@ from collections import defaultdict
 from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._callback_support import get_callback_manager
 from sklearn.metrics import check_scoring
+from sklearn.metrics._scorer import _BaseScorer
 from sklearn.utils._optional_dependencies import check_pandas_support
 from sklearn.utils._param_validation import StrOptions, validate_params
 
@@ -56,6 +57,12 @@ class ScoringMonitor:
     def __init__(self, *, eval_on="train", scoring):
         self.eval_on = eval_on
         self.scoring = scoring
+        # Turn the scorer into a MultimetricScorer which can route score params
+        if isinstance(self.scoring, str):
+            self.scoring = [self.scoring]
+        if callable(self.scoring) and isinstance(self.scoring, _BaseScorer):
+            self.scoring = {"score": self.scoring}
+
         self._shared_log = get_callback_manager().list()
         self._estimator_scorers = {}
 
@@ -86,14 +93,14 @@ class ScoringMonitor:
             return
 
         if self.eval_on in ("train", "both"):
-            sample_weight = metadata.get("sample_weight", None)
-            self._add_log_entry(X, y, "train", fitted_estimator, sample_weight, context)
+            score_params = metadata.get("train", {}).copy()
+            self._log_scores(X, y, "train", fitted_estimator, score_params, context)
         if self.eval_on in ("val", "both"):
-            X, y = metadata.get("X_val", None), metadata.get("y_val", None)
-            sample_weight = metadata.get("sample_weight_val", None)
-            self._add_log_entry(X, y, "val", fitted_estimator, sample_weight, context)
+            score_params = metadata.get("val", {}).copy()
+            X, y = score_params.pop("X_val", None), score_params.pop("y_val", None)
+            self._log_scores(X, y, "val", fitted_estimator, score_params, context)
 
-    def _add_log_entry(self, X, y, eval_on, fitted_estimator, sample_weight, context):
+    def _log_scores(self, X, y, eval_on, fitted_estimator, score_params, context):
         if X is None or y is None:
             return
 
@@ -119,15 +126,10 @@ class ScoringMonitor:
 
         # scores
         scores = {"eval_on": eval_on}
-        score_params = {}
         scorer = self._estimator_scorers[context.estimator_name]
-        if sample_weight is not None and scorer._accept_sample_weight():
-            score_params["sample_weight"] = sample_weight
-        score_value = scorer(fitted_estimator, X, y, **score_params)
-        if not isinstance(score_value, dict):
-            score_name = self.scoring if isinstance(self.scoring, str) else "score"
-            score_value = {score_name: score_value}
-        scores.update(score_value)
+        score_params = {k: v for k, v in score_params.items() if v is not None}
+        score = scorer(fitted_estimator, X, y, **score_params)
+        scores.update(score)
 
         self._shared_log.append((run_info, context_levels, scores))
 

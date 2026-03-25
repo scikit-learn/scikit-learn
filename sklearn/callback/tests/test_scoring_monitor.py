@@ -129,9 +129,12 @@ def _make_expected_output_MetaEstimator(
     return expected_log
 
 
-def custom_score(estimator, X, y):
+def _custom_score_func(y_true, y_pred):
     """Custom score to test the ScoringMonitor with a callable."""
     return 0
+
+
+custom_score = make_scorer(_custom_score_func)
 
 
 @pytest.mark.parametrize("eval_on", ["train", "val", "both"])
