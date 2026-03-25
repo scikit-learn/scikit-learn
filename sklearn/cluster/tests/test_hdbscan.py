@@ -603,3 +603,62 @@ def test_hdbscan_default_copy_warning():
     with pytest.warns(FutureWarning, match=msg):
         hdb = HDBSCAN(min_cluster_size=20)
         hdb.fit(X)
+
+
+def test_hdbscan_cluster_selection_epsilon_tied_distances():
+    """HDBSCAN with cluster_selection_epsilon should not raise TypeError when
+    the condensed tree contains tied distances (duplicate child entries).
+
+    With tied distances the condensed tree can have multiple rows sharing the
+    same child id, causing boolean-index lookups to return a 1-element array
+    instead of a scalar.  NumPy 2.4+ removed the implicit array-to-scalar
+    conversion, exposing this as a TypeError inside `traverse_upwards`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/33219
+    """
+    # Precomputed distance matrix that reliably triggers tied distances,
+    # taken directly from the bug report.
+    X = np.array(
+        [
+            [0.0, 0.0144234, 0.014608, 0.018432, 0.2028331, 1e-06, 0.0146122,
+             0.0108745, 0.0238127, 0.0289057, 0.0292668],
+            [0.0144234, 0.0, 0.030085, 0.0341493, 0.2174494, 0.0185183, 0.0300855,
+             0.0261329, 0.0444496, 0.0499432, 0.0506157],
+            [0.014608, 0.030085, 0.0, 0.0224902, 0.2284748, 0.0188262, 0.022492,
+             0.0147419, 0.029195, 0.0344591, 0.0349043],
+            [0.018432, 0.0341493, 0.0224902, 0.0, 0.2288503, 0.0238127, 0.0035258,
+             0.0147674, 1e-06, 0.0045079, 0.0045573],
+            [0.2028331, 0.2174494, 0.2284748, 0.2288503, 0.0, 0.2061707, 0.220841,
+             0.2293228, 0.2397258, 0.2299638, 0.2552726],
+            [1e-06, 0.0185183, 0.0188262, 0.0238127, 0.2061707, 0.0, 0.0188313,
+             0.013986, 0.0238127, 0.0289057, 0.0292668],
+            [0.0146122, 0.0300855, 0.022492, 0.0035258, 0.220841, 0.0188313, 0.0,
+             0.0186034, 0.0044997, 0.0091034, 0.0092055],
+            [0.0108745, 0.0261329, 0.0147419, 0.0147674, 0.2293228, 0.013986,
+             0.0186034, 0.0, 0.0190924, 0.0241502, 0.0244496],
+            [0.0238127, 0.0444496, 0.029195, 1e-06, 0.2397258, 0.0238127, 0.0044997,
+             0.0190924, 0.0, 0.0045079, 0.0045573],
+            [0.0289057, 0.0499432, 0.0344591, 0.0045079, 0.2299638, 0.0289057,
+             0.0091034, 0.0241502, 0.0045079, 0.0, 0.0092227],
+            [0.0292668, 0.0506157, 0.0349043, 0.0045573, 0.2552726, 0.0292668,
+             0.0092055, 0.0244496, 0.0045573, 0.0092227, 0.0],
+        ]
+    )
+    # cluster_selection_epsilon=0.015 is the value from the bug report that
+    # triggers the TypeError via traverse_upwards when tied distances exist.
+    hdb = HDBSCAN(
+        min_cluster_size=5,
+        min_samples=1,
+        copy=True,
+        allow_single_cluster=True,
+        cluster_selection_epsilon=0.015,
+        metric="precomputed",
+    )
+    labels = hdb.fit_predict(X)
+    # All non-noise points should be assigned to a single cluster (label 0).
+    # Point 4 (the outlier) may be labelled -1 (noise).
+    assert set(labels) <= {0, -1}, f"Unexpected label set: {set(labels)}"
+    assert (labels == 0).sum() >= 9, (
+        f"Expected at least 9 points in cluster 0, got {(labels == 0).sum()}"
+    )
