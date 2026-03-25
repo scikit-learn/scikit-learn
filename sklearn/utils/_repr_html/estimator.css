@@ -155,7 +155,7 @@ clickable and can be expanded/collapsed.
   padding: 0.5em;
   box-sizing: border-box;
   text-align: center;
-  align-items: start;
+  /* align-items: start; */
   justify-content:flex-start;
   gap: 0.5em;
 }
