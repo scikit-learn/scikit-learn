@@ -656,7 +656,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         # RadiusNeighborsClassifier.metric is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the radius neighbors classifier from the training dataset.
 
         Parameters
@@ -669,12 +669,15 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
                 (n_samples, n_outputs)
             Target values.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
+
         Returns
         -------
         self : RadiusNeighborsClassifier
             The fitted radius neighbors classifier.
         """
-        self._fit(X, y)
+        self._fit(X, y, sample_weight)
 
         classes_ = self.classes_
         _y = self._y
@@ -798,6 +801,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
 
         if (
             self.weights == "uniform"
+            and self._sample_weight is None
             and self._fit_method == "brute"
             and not self.outputs_2d_
             and RadiusNeighborsClassMode.is_usable_for(X, self._fit_X, metric)
@@ -825,6 +829,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         neigh_dist, neigh_ind = self.radius_neighbors(X)
         outlier_mask = np.zeros(n_queries, dtype=bool)
         outlier_mask[:] = [len(nind) == 0 for nind in neigh_ind]
+        print(outlier_mask)
         outliers = np.flatnonzero(outlier_mask)
         inliers = np.flatnonzero(~outlier_mask)
 
@@ -836,8 +841,8 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
 
         if self.outlier_label_ is None and outliers.size > 0:
             raise ValueError(
-                "No neighbors found for test samples %r, "
-                "you can try using larger radius, "
+                "No neighbors found for test samples %r and thus "
+                "no class can be assigned, you can try using larger radius, "
                 "giving a label for outliers, "
                 "or considering removing them from your dataset." % outliers
             )
@@ -845,6 +850,16 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         weights = _get_weights(neigh_dist, self.weights)
         if weights is not None:
             weights = weights[inliers]
+
+        if self._sample_weight is not None:
+            # Weights is a jagged array so we have to do some fancy indexing
+            sample_weight = [self._sample_weight[idx] for idx in neigh_ind]
+            sample_weight = np.asarray(sample_weight, dtype=np.ndarray)
+            if weights is not None:
+                weights = weights * sample_weight[inliers]
+            else:
+                # If we go down this path, each element of weights is an ndarray
+                weights = sample_weight[inliers]
 
         probabilities = []
         # iterate over multi-output, measure probabilities of the k-th output.
@@ -861,8 +876,10 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
                     proba_inl[i, :] = np.bincount(idx, minlength=classes_k.size)
             else:
                 for i, idx in enumerate(pred_labels[inliers]):
+                    # Convert weights[i] to float because weights[i] can have type
+                    # np.ndarray if weights is None but _sample_weight is not None
                     proba_inl[i, :] = np.bincount(
-                        idx, weights[i], minlength=classes_k.size
+                        idx, weights[i].astype(float), minlength=classes_k.size
                     )
             proba_k[inliers, :] = proba_inl
 
