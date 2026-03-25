@@ -45,7 +45,7 @@ from sklearn.model_selection._validation import (
     _warn_or_raise_about_fit_failures,
 )
 from sklearn.utils import Bunch, check_random_state
-from sklearn.utils._array_api import xpx
+from sklearn.utils._array_api import device, get_namespace, move_to, xpx
 from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
 from sklearn.utils._repr_html.estimator import _VisualBlock
 from sklearn.utils._tags import get_tags
@@ -1086,9 +1086,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 **clone(self.best_params_, safe=False)
             )
 
+            xp, _ = get_namespace(X)
+            X_device = device(X)
             refit_start_time = time.time()
             if y is not None:
-                self.best_estimator_.fit(X, y, **routed_params.estimator.fit)
+                y_refit = move_to(y, xp=xp, device=X_device)
+                self.best_estimator_.fit(X, y_refit, **routed_params.estimator.fit)
             else:
                 self.best_estimator_.fit(X, **routed_params.estimator.fit)
             refit_end_time = time.time()

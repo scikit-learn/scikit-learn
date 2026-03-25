@@ -2890,6 +2890,32 @@ def test_array_api_search_cv_classifier(
         searcher.score(X_xp, y_xp)
 
 
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
+def test_array_api_search_cv_mixed_inputs(
+    SearchCV, array_namespace, device_name, dtype_name
+):
+    """Check SearchCV follows 'everything follows X' with mixed inputs."""
+    xp, device = _array_api_for_tests(array_namespace, device_name)
+
+    X_np = np.arange(100).reshape((10, 10)).astype(dtype_name)
+    X_xp = xp.asarray(X_np, device=device)
+    y_np = np.array([0] * 5 + [1] * 5)
+
+    with config_context(array_api_dispatch=True):
+        searcher = SearchCV(
+            LinearDiscriminantAnalysis(),
+            {"tol": [1e-2, 1e-3]},
+            cv=2,
+            error_score="raise",
+        )
+        searcher.fit(X_xp, y_np)
+        searcher.score(X_xp, y_np)
+
+
 # Construct these outside the tests so that the same object is used
 # for both input and `expected`
 one_hot_encoder = OneHotEncoder()

@@ -2743,3 +2743,27 @@ def test_cross_val_predict_array_api_compliance(
     assert_allclose(
         _convert_to_numpy(pred_xp, xp), pred_np, atol=_atol_for_type(dtype_name)
     )
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_cross_validate_array_api_mixed_inputs(
+    array_namespace, device_name, dtype_name
+):
+    """Check cross_validate follows 'everything follows X' with mixed inputs."""
+    xp, device = _array_api_for_tests(array_namespace, device_name)
+
+    X_np = np.arange(100).reshape((10, 10)).astype(dtype_name)
+    X_xp = xp.asarray(X_np, device=device)
+    y_np = np.array([0] * 5 + [1] * 5)
+
+    with config_context(array_api_dispatch=True):
+        results = cross_validate(
+            LinearDiscriminantAnalysis(),
+            X_xp,
+            y_np,
+            cv=2,
+            error_score="raise",
+        )
