@@ -230,7 +230,7 @@ def test_logged_values_meta_estimator(prefer, scoring, as_frame):
 def test_get_logs_output_type_no_fit(as_frame):
     """Check that get_logs return empty containers of the right type before fit."""
     if as_frame:
-        pd = pytest.importorskip("pandas")
+        pytest.importorskip("pandas")
 
     callback = ScoringMonitor(scoring="neg_mean_squared_error")
 
@@ -254,6 +254,7 @@ def test_get_logs_output_type(as_frame):
     estimator = MaxIterEstimator().set_callbacks(callback)
     X, y = make_regression(n_samples=100, n_features=2, random_state=0)
 
+    # 2 runs
     estimator.fit(X, y)
     estimator.fit(X, y)
 
@@ -262,15 +263,20 @@ def test_get_logs_output_type(as_frame):
     assert len(logs_all) == 2
     assert all(isinstance(log, dict) for log in logs_all)
 
+    expected_data_type = pd.DataFrame if as_frame else list
+    assert all(isinstance(log["data"], expected_data_type) for log in logs_all)
+
     log_most_recent = callback.get_logs(select="most_recent", as_frame=as_frame)
     assert isinstance(log_most_recent, dict)
+    assert isinstance(log_most_recent["data"], expected_data_type)
 
 
 def test_estimator_without_reconstruction_attributes():
     """Smoke test on an estimator which does not provide reconstruction_attributes."""
     callback = ScoringMonitor(eval_on="both", scoring="r2")
     WhileEstimator().set_callbacks(callback).fit()
-    assert len(callback.get_logs()) == 0
+    assert len(callback.get_logs(select="all")) == 0
+    assert len(callback.get_logs(select="most_recent")) == 0
 
 
 def test_sample_weights_and_metadata_routing():
@@ -281,21 +287,21 @@ def test_sample_weights_and_metadata_routing():
       passing them with metadata-routing enabled.
     - Not requesting sample weights gives an error if metadata-routing is enabled.
     """
-    n_samples = 100
-    X, y = make_regression(n_samples=n_samples, n_features=2, random_state=0)
-    sample_weight = np.random.randint(0, 5, size=n_samples)
+    rng = np.random.RandomState(0)
+    X, y = make_regression(n_samples=100, n_features=2, random_state=rng)
+    sample_weight = rng.randint(0, 5, size=X.shape[0])
 
     # no sample weights
     callback = ScoringMonitor(eval_on="train", scoring="r2")
     MaxIterEstimator().set_callbacks(callback).fit(X=X, y=y)
-    log_no_sw = callback.get_logs(as_frame=False, select="most_recent")
+    log_no_sw = callback.get_logs(as_frame=False, select="most_recent")["data"]
 
     # sample weights, no metadata-routing
     callback = ScoringMonitor(eval_on="train", scoring="r2")
     MaxIterEstimator().set_callbacks(callback).fit(
         X=X, y=y, sample_weight=sample_weight
     )
-    log_sw_no_mr = callback.get_logs(as_frame=False, select="most_recent")
+    log_sw_no_mr = callback.get_logs(as_frame=False, select="most_recent")["data"]
 
     # sample weights, metadata-routing
     with config_context(enable_metadata_routing=True):
@@ -305,7 +311,7 @@ def test_sample_weights_and_metadata_routing():
         MaxIterEstimator().set_callbacks(callback).fit(
             X=X, y=y, sample_weight=sample_weight
         )
-        log_sw_mr = callback.get_logs(as_frame=False, select="most_recent")
+        log_sw_mr = callback.get_logs(as_frame=False, select="most_recent")["data"]
 
         # error if sample_weight not requested
         scorer = make_scorer(r2_score)
@@ -317,28 +323,8 @@ def test_sample_weights_and_metadata_routing():
         ):
             est.fit(X=X, y=y, sample_weight=sample_weight)
 
-    def _sorted_rows(log):
-        return sorted(
-            log["data"],
-            key=lambda row: (
-                row.get("task_id_0", -1),
-                row.get("task_id_1", -1),
-                row.get("task_id_2", -1),
-                row.get("eval_on", ""),
-            ),
-        )
-
-    rows_no_sw = _sorted_rows(log_no_sw)
-    rows_sw_no_mr = _sorted_rows(log_sw_no_mr)
-    rows_sw_mr = _sorted_rows(log_sw_mr)
-
-    assert any(
-        np.logical_not(np.isclose(l1["r2"], l2["r2"]))
-        for l1, l2 in zip(rows_no_sw, rows_sw_no_mr)
-    )
-    assert all(
-        np.isclose(l1["r2"], l2["r2"]) for l1, l2 in zip(rows_sw_no_mr, rows_sw_mr)
-    )
+    assert log_no_sw != log_sw_no_mr
+    assert log_sw_no_mr == log_sw_mr
 
 
 def test_validation_set_metadata_routing():
@@ -349,8 +335,10 @@ def test_validation_set_metadata_routing():
     X, y = make_regression(n_samples=100, n_features=2, random_state=0)
     X, X_val, y, y_val = train_test_split(X, y, test_size=0.2, random_state=0)
 
+    n_outer, n_inner, max_iter = 2, 3, 10
+
     callback = ScoringMonitor(eval_on="both", scoring="r2")
-    est = MaxIterEstimator(max_iter=10).set_callbacks(callback)
+    est = MaxIterEstimator(max_iter=max_iter).set_callbacks(callback)
 
     # Without metadata-routing enabled, passing X_val and y_val gives an error
     msg = re.escape(
@@ -367,7 +355,16 @@ def test_validation_set_metadata_routing():
 
         # with metadata-routing enabled and requested
         est.set_fit_request(X_val=True, y_val=True)
-        MetaEstimator(est, n_outer=2, n_inner=3).fit(X=X, y=y, X_val=X_val, y_val=y_val)
+        MetaEstimator(est, n_outer=n_outer, n_inner=n_inner).fit(
+            X=X, y=y, X_val=X_val, y_val=y_val
+        )
+        log = callback.get_logs(as_frame=False, select="most_recent")["data"]
 
+        log_train = [entry for entry in log if entry["eval_on"] == "train"]
+        log_val = [entry for entry in log if entry["eval_on"] == "val"]
 
-# TODO: add test for task_tree and info in logs
+        # 1 score for each iteration + 1 score at the end of fit in MaxIterEstimator
+        assert len(log_train) == len(log_val) == n_outer * n_inner * (1 + max_iter)
+
+        # The scores on the train and validation sets are different
+        assert log_train != log_val
