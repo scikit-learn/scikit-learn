@@ -602,7 +602,6 @@ def test_convert_estimator_to_array_api_strict():
 def test_check_fitted_attribute():
     xp = pytest.importorskip("array_api_strict")
 
-    X_np = numpy.asarray([[1.3, 4.5]])
     with config_context(array_api_dispatch=True):
         est = SimpleEstimator().fit(xp.asarray([[1.3, 4.5]]))
 
