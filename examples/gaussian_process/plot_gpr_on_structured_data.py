@@ -5,7 +5,7 @@ Gaussian processes on discrete data structures
 
 This example illustrates the use of Gaussian processes for regression and
 classification tasks on data that are not in fixed-length feature vector form.
-This is achieved through the use of kernel functions that operates directly
+This is achieved through the use of kernel functions that operate directly
 on discrete structures such as variable-length sequences, trees, and graphs.
 
 Specifically, here the input variables are some gene sequences stored as
@@ -149,7 +149,11 @@ X_train = np.array(["AGCT", "CGA", "TAAC", "TCG", "CTTT", "TGCT"])
 # whether there are 'A's in the sequence
 Y_train = np.array([True, True, True, False, False, False])
 
-gp = GaussianProcessClassifier(kernel)
+# Set baseline_similarity_bounds to "fixed" to prevent hyperparameter
+# optimization for this kernel. The optimizer pushes baseline_similarity
+# toward zero in this example, which triggers a ConvergenceWarning because
+# the optimal value sits at the lower bound of the search range.
+gp = GaussianProcessClassifier(SequenceKernel(baseline_similarity_bounds="fixed"))
 gp.fit(X_train, Y_train)
 
 X_test = ["AAA", "ATAG", "CTC", "CT", "C"]
