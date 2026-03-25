@@ -907,7 +907,22 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         pred_proba = (
             self._sparse_predict_proba if self._sparse else self._dense_predict_proba
         )
-        return pred_proba(X)
+        pprob = pred_proba(X)
+
+        # In the binary case, libsvm's Platt calibration computes
+        # sigmoid_predict(raw_dec, probA, probB), where raw_dec is the
+        # *un-negated* internal decision value (positive raw_dec → class 0).
+        # sklearn's decision_function() negates this for binary classification
+        # so that positive values indicate class 1 (the second class in
+        # sorted order).  When probA > 0 the sigmoid is a decreasing function
+        # of raw_dec, which makes pprob[:,0] (class 0) *increase* with raw_dec
+        # — the opposite of the correct ordering.  Swapping the columns in
+        # that case restores consistency between predict_proba and
+        # decision_function.  See gh-31222.
+        if len(self.classes_) == 2 and self._probA[0] > 0:
+            pprob = pprob[:, ::-1]
+
+        return pprob
 
     @available_if(_check_proba)
     def predict_log_proba(self, X):

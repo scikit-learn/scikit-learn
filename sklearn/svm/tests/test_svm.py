@@ -1524,3 +1524,43 @@ def test_probability_raises_futurewarning(Estimator, name, probability):
     X, y = make_classification()
     with pytest.warns(FutureWarning, match="probability.+parameter.+deprecated"):
         Estimator(probability=probability).fit(X, y)
+
+
+# TODO(1.11): remove once probability=True is removed from SVC/NuSVC.
+@pytest.mark.thread_unsafe
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("kernel", ["rbf", "linear", "poly", "sigmoid"])
+def test_predict_proba_consistent_with_decision_function(kernel):
+    """predict_proba[:, 1] and decision_function must be monotonically consistent.
+
+    Non-regression test for gh-31222.  When the Platt-scaling parameter
+    probA > 0 (which can occur when the SVM does not generalise well, e.g.
+    on noise data), the column ordering returned by libsvm's
+    predict_probability was inverted relative to sklearn's decision_function
+    convention (positive score → class 1).  The fix swaps the probability
+    columns in that case so that predict_proba[:, 1] always increases
+    monotonically with decision_function for all kernels.
+    """
+    from scipy.stats import spearmanr
+
+    # Use a high-dimensional noise dataset where the SVM generalises poorly
+    # and probA > 0 is expected.
+    rng = np.random.default_rng(123)
+    X = rng.normal(size=(100, 100))
+    y = rng.integers(0, 2, size=100)
+    X_train, X_test, y_train, _ = train_test_split(X, y, random_state=0)
+
+    clf = svm.SVC(kernel=kernel, probability=True, random_state=0)
+    clf.fit(X_train, y_train)
+
+    y_proba = clf.predict_proba(X_test)
+    y_dec = clf.decision_function(X_test)
+
+    # predict_proba[:, 1] must be monotonically increasing with
+    # decision_function (Spearman rank correlation >= 0).
+    corr, _ = spearmanr(y_proba[:, 1], y_dec)
+    assert corr >= 0, (
+        f"kernel={kernel!r}: predict_proba[:, 1] is anti-correlated with "
+        f"decision_function (Spearman rho={corr:.3f}). "
+        "This indicates a sign flip in the Platt-calibrated probabilities."
+    )
