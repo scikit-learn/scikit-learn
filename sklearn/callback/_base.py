@@ -8,7 +8,7 @@ from typing import Protocol, runtime_checkable
 class _BaseCallback(Protocol):
     """Protocol for the base callbacks."""
 
-    def setup(self, context):
+    def setup(self, estimator, context):
         """Method called at the beginning of the fit method of the estimator.
 
         For auto-propagated callbacks, this method is called only once, before running
@@ -16,13 +16,16 @@ class _BaseCallback(Protocol):
 
         Parameters
         ----------
+        estimator : estimator instance
+            The estimator calling this callback hook.
+
         context : `sklearn.callback.CallbackContext` instance
             Context of the corresponding task. This is usually the root context of the
             estimator but it can be an intermediate context if the estimator is a
             sub-estimator of a meta-estimator.
         """
 
-    def teardown(self, context):
+    def teardown(self, estimator, context):
         """Method called after finishing the fit method of the estimator.
 
         For auto-propagated callbacks, this method is called only once, after finishing
@@ -30,6 +33,9 @@ class _BaseCallback(Protocol):
 
         Parameters
         ----------
+        estimator : estimator instance
+            The estimator calling this callback hook.
+
         context : `sklearn.callback.CallbackContext` instance
             Context of the corresponding task. This is usually the root context of the
             estimator but it can be an intermediate context if the estimator is a
@@ -41,11 +47,14 @@ class _BaseCallback(Protocol):
 class FitCallback(_BaseCallback, Protocol):
     """Protocol for the callbacks evaluated on tasks during the fit of an estimator."""
 
-    def on_fit_task_begin(self, context, **kwargs):
+    def on_fit_task_begin(self, estimator, context, **kwargs):
         """Method called at the beginning of each fit task of the estimator.
 
         Parameters
         ----------
+        estimator : estimator instance
+            The estimator calling this callback hook.
+
         context : `sklearn.callback.CallbackContext` instance
             Context of the corresponding task.
 
@@ -55,11 +64,14 @@ class FitCallback(_BaseCallback, Protocol):
             values are described in detail at <TODO: add link>.
         """
 
-    def on_fit_task_end(self, context, **kwargs):
+    def on_fit_task_end(self, estimator, context, **kwargs):
         """Method called at the end of each fit task of the estimator.
 
         Parameters
         ----------
+        estimator : estimator instance
+            The estimator calling this callback hook.
+
         context : `sklearn.callback.CallbackContext` instance
             Context of the corresponding task.
 

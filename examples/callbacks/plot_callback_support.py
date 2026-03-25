@@ -6,7 +6,7 @@ Supporting callbacks in third party estimators
 .. currentmodule:: sklearn
 
 This document shows how to make third party :term:`estimators` and
-:term:`meta-estimators` compatible with the callback mechanisms supported by
+:term:`meta-estimators` compatible with the callback infrastructure supported by
 scikit-learn.
 
 Generally speaking, a callback is a function that is provided by the user to be called
@@ -17,23 +17,26 @@ without modifying the core algorithm of the process.
 In scikit-learn, callbacks take the form of classes following a protocol. This protocol
 requires the callback classes to implement specific methods (referred to as callback
 hooks) which will be called at specific steps of the fitting of an estimator or a
-meta-estimator. These specific methods are
-:meth:`~callback._base.Callback.setup`
+meta-estimator. These hooks are :meth:`~callback._base.Callback.setup`
 :meth:`~callback._base.Callback.on_fit_task_begin`,
 :meth:`~callback._base.Callback.on_fit_task_end` and
-:meth:`~callback._base.Callback.teardown`, which are respectively called at the start
-of the :term:`fit` method, at the beginning and end of each task in ``fit`` and at the
-end of the ``fit`` method. In scikit-learn estimators, a ``fit`` task is usually one
-step of a loop, with nested loops corresponding to netsed tasks. In general a task can
-be whatever unit of work the estimator's developer wants it to be, however if the
-defined tasks are too unusual it might comprommise the compatibility of the estimator
-with scikit-learn's builtin callbacks.
+:meth:`~callback._base.Callback.teardown`. The :meth:`~callback._base.Callback.setup`
+and :meth:`~callback._base.Callback.teardown` hooks are called only once, respectively
+at the start and end of the estimator's :term:`fit` method, and are responsible for
+setting up and shutting down the callback. The
+:meth:`~callback._base.Callback.on_fit_task_begin` and
+:meth:`~callback._base.Callback.on_fit_task_end` hooks are respectively called at the
+beginning and end of each task in ``fit`` and are responsible for the actual callback
+work. In scikit-learn estimators, a task in ``fit`` is usually one step of a loop, with
+nested loops corresponding to netsed tasks. In general a task can be whatever unit of
+work the estimator's developer wants it to be, however if the defined tasks are too
+unusual it might comprommise the compatibility of the estimator with scikit-learn's
+builtin callbacks.
 
 In order to support the callbacks, estimators need to initialize and manage
 :class:`~callback.CallbackContext` objects. As the name implies, these objects hold the
 contextual information necessary to run the callback hooks. They are also responsible
 for calling the callback hooks at the right time.
-
 
 In the following, we will show how to convert an example estimator class and an example
 meta-estimator class to make them compliant with the scikit-learn callback
@@ -99,7 +102,7 @@ class SimpleKmeans(BaseEstimator):
 
             for k in range(self.n_clusters):
                 # For each centroid, if its cluster is not empty, its coordinates are
-                # updated with the coordinates of the cluster centers.
+                # updated with the coordinates of the cluster's center.
                 if (labels == k).any():
                     self.cluster_centers_[k] = X[labels == k].mean(axis=0)
 
@@ -141,16 +144,21 @@ class SimpleKMeans(CallbackSupportMixin, BaseEstimator):
             task_name="fit", max_subtasks=self.n_iter
         )
         # Then the callback context's `call_on_fit_task_begin` method must be called. It
-        # will call all the callbacks' `on_fit_task_begin` hooks. Extra `kwargs` can be
-        # passed to provide extra contextual information for the callbacks.
-        callback_ctx.call_on_fit_task_begin(X=X, y=y)
+        # will call all the callbacks' `on_fit_task_begin` hooks. The `estimator`
+        # argument is mandatory and optional `kwargs` can be passed to provide extra
+        # contextual information for the callbacks, for example here `X` and`y` are
+        # passed. See the following note for more details on these extra `kwargs`.
+        callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
         self.cluster_centers_ = random_state.rand(self.n_clusters, X.shape[1])
 
         for i in range(self.n_iter):
-            # For each of the fit task (here each iteration of the loop), a subcontext
+            # For each of the fit task (here each iteration of the loop), a sub-context
             # must be created with the callback context's `subcontext` method.
             subcontext = callback_ctx.subcontext(task_id=i, task_name="fit iteration")
+            # The sub-context's correspond to a new task, so its
+            # `call_on_fit_task_begin` method must also be called.
+            subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
             labels = self._compute_labels(X)
 
@@ -158,18 +166,18 @@ class SimpleKMeans(CallbackSupportMixin, BaseEstimator):
                 if (labels == k).any():
                     self.cluster_centers_[k] = X[labels == k].mean(axis=0)
 
-            # After each task, the `call_on_fit_task_end` method of its callback context
-            # must be called. It will call all the callbacks' `on_fit_task_end` hooks.
-            # Extra `kwargs` can be passed to provide extra contextual information for
-            # the callbacks, such as the `reconstruction_attributes` function which
-            # returns the necessary arguments to generate an estimator instance ready to
-            # predict, as if the fit process just stopped at this step. See the
-            # following note for more details on these `kwargs`.
+            # After each sub-task, the `call_on_fit_task_end` method of its sub-context
+            # must be called, also with `estimator` as a mandatory argument and optional
+            # `kwargs`. It will call all the callbacks' `on_fit_task_end` hooks. Here
+            # the extra `kwargs` contain the `reconstruction_attributes` function,
+            # which returns the necessary attributes to generate an estimator instance
+            # ready to predict, as if the fit process just stopped at this step.
             if subcontext.call_on_fit_task_end(
+                estimator=self,
                 X=X,
                 y=y,
                 reconstruction_attributes=lambda: {
-                    "centroids_": self.cluster_centers_,
+                    "cluster_centers_": self.cluster_centers_,
                 },
             ):
                 # The `call_on_fit_task_end` method returns a boolean, which will be set
@@ -179,6 +187,17 @@ class SimpleKMeans(CallbackSupportMixin, BaseEstimator):
                 # method should be used in an `if` / `break` block to enable such
                 # interruptions.
                 break
+
+        # After the root task of the fit function is done, the `call_on_fit_task_end`
+        # method of its callback context must be called.
+        callback_ctx.call_on_fit_task_end(
+            estimator=self,
+            X=X,
+            y=y,
+            reconstruction_attributes=lambda: {
+                "cluster_centers_": self.cluster_centers_,
+            },
+        )
 
         # The callbacks' `teardown` hooks are called automatically in the decorator,
         # after fit finishes, even if it crashed.
@@ -196,10 +215,11 @@ class SimpleKMeans(CallbackSupportMixin, BaseEstimator):
 # %%
 # .. note::
 #
-#     See :ref:`the callback API documentation <callback_api>` for a list of
-#     the possible keys of the ``kwargs`` to provide to ``call_on_fit_task_end``. These
-#     ``kwargs`` are optional, but an estimator should provide all the ones it is
-#     capable of producing to be compatible with a maximum number of callbacks.
+#     See :ref:`the callback API documentation <contextual_info_section>` for a list of
+#     the possible keys of the ``kwargs`` to provide to ``call_on_fit_task_begin`` and
+#     ``call_on_fit_task_end``. These ``kwargs`` are optional, but an estimator should
+#     provide all the ones it is capable of producing to be compatible with a maximum
+#     number of callbacks.
 
 # %%
 # Registering callbacks to the custom estimator
@@ -236,7 +256,7 @@ class SimpleGridSearch(BaseEstimator):
         # We make a cross-validator instance to evaluate each parameter combination on
         # multiple folds.
         cv = check_cv(self.cv)
-        # This `cv_results_` attribute will hold the score values for each parameter
+        # The `cv_results_` attribute will hold the score values for each parameter
         # combination and fold.
         self.cv_results_ = []
 
@@ -282,27 +302,29 @@ class SimpleGridSearch(CallbackSupportMixin, BaseEstimator):  # noqa: F811
         callback_ctx = self._init_callback_context(
             task_name="fit", max_subtasks=len(self.param_list)
         )
-        # The `call_on_fit_task_begin` method must be called.
-        callback_ctx.call_on_fit_task_begin(X=X, y=y)
+        # The `call_on_fit_task_begin` method of this context must be called.
+        callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
         self.cv_results_ = []
 
         # The tasks of the `fit` function are here the iterations on two levels of
-        # nested loops. Therefore, two levels of subcontexts must be used. Each level
-        # will need its subcontext to call its `call_on_fit_task_end` method. These
+        # nested loops. Therefore, two levels of sub-contexts must be used. Each level
+        # will need its sub-context to call its `call_on_fit_task_end` method. These
         # methods can be used at any level to enable interruptions through a `break`.
         # Here it does not make much sense to allow stopping between folds inside the
         # inner loop, so it is only implemented on the outer loop, but this is only a
         # design choice.
 
         for i, params in enumerate(self.param_list):
-            # A subcontext for the first level of `fit` iterations must be created.
+            # A sub-context for the first level of `fit` iterations must be created.
             outer_subcontext = callback_ctx.subcontext(
                 task_name="param iteration", task_id=i, max_subtasks=cv.get_n_splits()
             )
+            # The `call_on_fit_task_begin` method of this sub-context must e called
+            outer_subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
             for j, (train_idx, test_idx) in enumerate(cv.split(X)):
                 # This time a second level of `fit` iterations is also used, a second
-                # level of subcontext must then be used.
+                # level of sub-context must then be used.
                 inner_subcontext = outer_subcontext.subcontext(
                     task_name=f"split {j}", task_id=j
                 )
@@ -313,6 +335,8 @@ class SimpleGridSearch(CallbackSupportMixin, BaseEstimator):  # noqa: F811
                 # only the callbacks following the `AutoPropagatedCallback` protocol
                 # will be propagated.
                 inner_subcontext.propagate_callback_context(sub_estimator=estimator)
+                # As for other contexts, its `call_on_fit_task_begin` must be called.
+                inner_subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
                 X_train, X_test = X[train_idx], X[test_idx]
                 y_train, y_test = (
@@ -322,13 +346,16 @@ class SimpleGridSearch(CallbackSupportMixin, BaseEstimator):  # noqa: F811
                 score = self.score_func(estimator, X_test, y_test)
                 self.cv_results_.append((params, f"split_{j}", score))
 
-                # The inner subcontext's `call_on_fit_task_end` must be called.
-                inner_subcontext.call_on_fit_task_end(X=X_train, y=y_train)
+                # The inner sub-context's `call_on_fit_task_end` must be called.
+                inner_subcontext.call_on_fit_task_end(estimator=self, X=X, y=y)
 
-            # The outer subcontext's `call_on_fit_task_end` must be called as well and
+            # The outer sub-context's `call_on_fit_task_end` must be called as well and
             # is used with an `if` / `break` to enable interruptions.
-            if outer_subcontext.call_on_fit_task_end(X=X_train, y=y_train):
+            if outer_subcontext.call_on_fit_task_end(estimator=self, X=X, y=y):
                 break
+
+        # The root context's `call_on_fit_task_end` must be called.
+        callback_ctx.call_on_fit_task_end(estimator=self, X=X, y=y)
 
         # The callbacks' `teardown` hooks are called automatically in the decorator.
         return self
@@ -336,7 +363,7 @@ class SimpleGridSearch(CallbackSupportMixin, BaseEstimator):  # noqa: F811
 
 # %%
 # The main difference with a simple estimator is that the callbacks must be propagated
-# to the sub-estimators through the corresponding callback subcontext's
+# to the sub-estimators through the corresponding callback sub-context's
 # :meth:`~callback._callback_context.CallbackContext.propagate_callback_context` method.
 
 

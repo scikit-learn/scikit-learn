@@ -86,7 +86,6 @@ class CallbackContext:
         # We don't store the estimator in the context to avoid circular references
         # because the estimator already holds a reference to the context.
         new_ctx._callbacks = getattr(estimator, "_skl_callbacks", [])
-        new_ctx.estimator = estimator
         new_ctx.estimator_name = estimator.__class__.__name__
         new_ctx.task_name = task_name
         new_ctx.task_id = task_id
@@ -134,7 +133,6 @@ class CallbackContext:
         new_ctx = cls.__new__(cls)
 
         new_ctx._callbacks = parent_context._callbacks
-        new_ctx.estimator = parent_context.estimator
         new_ctx.estimator_name = parent_context.estimator_name
         new_ctx._propagation_depth = parent_context._propagation_depth
         new_ctx.task_name = task_name
@@ -232,7 +230,7 @@ class CallbackContext:
             max_subtasks=max_subtasks,
         )
 
-    def _call_hooks(self, hook_name, **kwargs):
+    def _call_hooks(self, estimator, hook_name, **kwargs):
         """Helper to call the hook of all callbacks with their respective arguments.
 
         Provide the right arguments to each hook by inspecting their signatures. Any
@@ -241,6 +239,9 @@ class CallbackContext:
 
         Parameters
         ----------
+        estimator : estimator instance
+            The estimator calling the callback hook.
+
         hook_name : str
             Name of the callback hook to call.
 
@@ -294,7 +295,7 @@ class CallbackContext:
                         attrs = kwargs.get("reconstruction_attributes", None)
                         attrs = attrs() if callable(attrs) else attrs
                         new_est = (
-                            _from_reconstruction_attributes(self.estimator, attrs)
+                            _from_reconstruction_attributes(estimator, attrs)
                             if attrs is not None
                             else None
                         )
@@ -306,27 +307,35 @@ class CallbackContext:
 
                 args_to_pass[param_name] = evaluated_args[param_name]
 
-            result |= bool(getattr(callback, hook_name)(self, **args_to_pass))
+            result |= bool(
+                getattr(callback, hook_name)(estimator, self, **args_to_pass)
+            )
 
         return result
 
-    def call_on_fit_task_begin(self, **kwargs):
+    def call_on_fit_task_begin(self, estimator, **kwargs):
         """Call the `on_fit_task_begin` hook of the callbacks.
 
         Parameters
         ----------
+        estimator : estimator instance
+            The estimator calling this callback hook.
+
         **kwargs : dict
             Additional optional arguments passed to the callback. The list of possible
             keys and corresponding values are described in detail at <TODO: add link>.
         """
-        self._call_hooks(hook_name="on_fit_task_begin", **kwargs)
+        self._call_hooks(estimator, hook_name="on_fit_task_begin", **kwargs)
         return self
 
-    def call_on_fit_task_end(self, **kwargs):
+    def call_on_fit_task_end(self, estimator, **kwargs):
         """Call the `on_fit_task_end` hook of the callbacks.
 
         Parameters
         ----------
+        estimator : estimator instance
+            The estimator calling this callback hook.
+
         **kwargs : dict
             Additional optional arguments passed to the callback. The list of possible
             keys and corresponding values are described in detail at <TODO: add link>.
@@ -337,7 +346,7 @@ class CallbackContext:
             Whether or not to stop the current level of iterations at this end of this
             task.
         """
-        return self._call_hooks(hook_name="on_fit_task_end", **kwargs)
+        return self._call_hooks(estimator, hook_name="on_fit_task_end", **kwargs)
 
     def propagate_callback_context(self, sub_estimator):
         """Propagate the context and callbacks to a sub-estimator.

@@ -62,7 +62,7 @@ either only on the task nodes of the met-estimator (here ``fit``, ``setp 1`` and
 those of its sub-estimators (here the tasks of the ``StandardScaler`` and
 ``LogisticRegression``) if the callback is propagated.
 
-The callback hooks :meth:`~Callback.on_fit_task_begin` :meth:`~Callback.on_fit_task_end`
+The callback hooks :meth:`~FitCallback.on_fit_task_begin` :meth:`~FitCallback.on_fit_task_end`
 are called respectively at the start and end of each task node of the tree. To allow
 callbacks to be generic and reusable across estimators, the innermost tasks, i.e. the
 leaves of the task tree, must correspond to operations on the full input data (or
@@ -120,7 +120,7 @@ estimator's fit process. The four hooks of a callback are :
 Auto-propagated callbacks
 -------------------------
 
-In addition to :class:`~Callback`, a second protocol :class:`~AutoPropagatedCallback`
+In addition to :class:`~FitCallback`, a second protocol :class:`~AutoPropagatedCallback`
 inherits from the first one but adding a
 :meth:`~AutoPropagatedCallback.max_estimator_depth` property. This protocol identifies
 callbacks that should be propagated through the task tree. A non-propagated callback can
@@ -128,10 +128,11 @@ be attached to an estimator at any depth of the task tree, and it will have its 
 called only in this estimator's task nodes (and its siblings if the estimator is cloned
 in a loop, such as in a grid search). Whereas an auto-propagated callback requires to be
 registered to the root estimator of the task tree, and its
-:meth:`~Callback.on_fit_task_end` hook will be called in all task node of the tree, up
-to a depth of :meth:`~AutoPropagatedCallback.max_estimator_depth`. The
-:meth:`~Callback.setup` and :meth:`~Callback.teardown` hooks of an
-auto-propagated callback will still be only called once, in the root task.
+:meth:`~FitCallback.on_fit_task_begin` and :meth:`~FitCallback.on_fit_task_end` hooks
+will be called in all task node of the tree, up to a depth of
+:meth:`~AutoPropagatedCallback.max_estimator_depth`. The :meth:`~Callback.setup` and
+:meth:`~Callback.teardown` hooks of an auto-propagated callback will still be only
+called once, in the root task.
 
 An auto-propagated callback can thus aggregate information across the task tree. For
 example, the :class:`sklearn.callback.ProgressBar` callback is auto-propagated in order
@@ -207,16 +208,20 @@ compatible with scikit-learn's callback API, you can refer to this example :
 Contextual information passed to callbacks
 ------------------------------------------
 
-The callback context is also an object that is passed to the
-:meth:`~CallbackContext.eval_on_fit_task_end` hooks to give contextual
-information about the task being executed and its position in the task tree.
+The :meth:`~FitCallback.on_fit_task_begin` and :meth:`~FitCallback.on_fit_task_end`
+hooks always receive as arguments:
 
-Some extra information is also forwarded to the
-:meth:`~CallbackContext.eval_on_fit_task_end` hooks as optional
-keyword arguments. The content of these ``kwargs`` will depend on the estimator's
-implementation, as an estimator might not be able to produce all the possible values.
-The list of the possible keys and corresponding values for these ``kwargs`` is as
-follows.
+- `estimator`: the estimator calling the callback hooks.
+
+- `context`: the callback context of the task for which the hooks are called.
+
+Additional information can also forwarded to these hooks from the
+:meth:`~CallbackContext.eval_on_fit_task_begin` and
+:meth:`~CallbackContext.eval_on_fit_task_end` methods, taking the form optional keyword
+arguments given to these methods. The content of these ``kwargs`` will depend on the
+estimator's implementation, as an estimator might not be able to produce all the
+possible values. The list of the possible keys and corresponding values for these
+``kwargs`` is as follows.
 
 - `X`: array-like
     The training data of the estimator.
@@ -227,11 +232,28 @@ follows.
 - `metadata`: dict
     A dictionary containing the training and validation metadata.
 
-- `fitted_estimator`: estimator instance
-    The estimator, ready to predict, transform, etc ... as if the fit had stopped at the
-    end of this task.
+- `reconstruction_attributes`: dict
+    A dictionary of the fitted attributes of the estimator, used by the callback context
+    to generate a `fitted_estimator`, i.e. an estimator instance ready to predict,
+    transform, etc ... as if the fit had stopped at the end of this task.
 
-And here is a list of all the built-in callbacks in scikit-learn, and which ones of the
+    .. warning::
+
+        Contrary to the other kwargs, the `reconstruction_attributes` kwarg given to the
+        callback context's :meth:`~CallbackContext.eval_on_fit_task_begin` or
+        :meth:`~CallbackContext.eval_on_fit_task_end` method will not be directly
+        forwarded to the :meth:`~FitCallback.on_fit_task_begin` or
+        :meth:`~FitCallback.on_fit_task_end` hook, but instead the `fitted_estimator`
+        instance will be generated by the callback context, and that instance will be
+        provided to the callback hooks as a `"fitted_estimator"` kwarg.
+
+For each of these kwargs, a callable can be provided instead of the actual value. When
+it is the case, if a callback hook requires the kwarg, the callback context will execute
+the callable and forward the returned value to the hook. This mechanism enables
+lazy-loading the kwarg values, to avoid potentially costly computations when no callback
+require a kwarg value.
+
+Here is a list of all the built-in callbacks in scikit-learn, and which ones of the
 ``kwargs`` they require to function.
 
 ============================== ====================== ==================================
