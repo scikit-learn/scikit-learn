@@ -123,6 +123,16 @@ def _get_weights(dist, weights):
         return weights(dist)
 
 
+def _check_zero_weights(weights):
+    for i in range(weights.shape[0]):
+        if np.sum(weights[i].astype(float)) == 0:
+            raise ValueError(
+                "All neighbors of some sample is getting zero weights. "
+                "Please modify 'weights' to avoid this case if you are "
+                "using a user-defined function."
+            )
+
+
 def _is_sorted_by_data(graph):
     """Return whether the graph's non-zero entries are sorted by data.
 

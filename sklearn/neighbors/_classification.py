@@ -18,6 +18,7 @@ from sklearn.neighbors._base import (
     NeighborsBase,
     RadiusNeighborsMixin,
     _check_precomputed,
+    _check_zero_weights,
     _get_weights,
 )
 from sklearn.utils._param_validation import StrOptions
@@ -293,15 +294,17 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         weights = _get_weights(neigh_dist, self.weights)
         if weights is None:
             weights = np.ones_like(neigh_ind)
-        if weights is not None and _all_with_any_reduction_axis_1(weights, value=0):
-            raise ValueError(
-                "All neighbors of some sample is getting zero weights. "
-                "Please modify 'weights' to avoid this case if you are "
-                "using a user-defined function."
-            )
+
         if self._sample_weight is not None:
             sample_weight = self._sample_weight[neigh_ind]
             weights = weights * sample_weight
+
+        if (weights is not None) and (_all_with_any_reduction_axis_1(weights, value=0)):
+            raise ValueError(
+                "All neighbors of some sample is getting zero weights and thus"
+                "no class can be assigned. Please modify 'weights' to avoid this "
+                "case if you are using a user-defined function."
+            )
 
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
@@ -391,16 +394,17 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         weights = _get_weights(neigh_dist, self.weights)
         if weights is None:
             weights = np.ones_like(neigh_ind)
-        elif _all_with_any_reduction_axis_1(weights, value=0):
-            raise ValueError(
-                "All neighbors of some sample is getting zero weights. "
-                "Please modify 'weights' to avoid this case if you are "
-                "using a user-defined function."
-            )
 
         if self._sample_weight is not None:
             sample_weight = self._sample_weight[neigh_ind]
             weights = weights * sample_weight
+
+        if (weights is not None) and (_all_with_any_reduction_axis_1(weights, value=0)):
+            raise ValueError(
+                "All neighbors of some sample is getting zero weights and thus"
+                "no class can be assigned. Please modify 'weights' to avoid this "
+                "case if you are using a user-defined function."
+            )
 
         all_rows = np.arange(n_queries)
         probabilities = []
@@ -828,7 +832,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
         outlier_mask = np.zeros(n_queries, dtype=bool)
-        outlier_mask[:] = [len(nind) == 0 for nind in neigh_ind]        
+        outlier_mask[:] = [len(nind) == 0 for nind in neigh_ind]
         outliers = np.flatnonzero(outlier_mask)
         inliers = np.flatnonzero(~outlier_mask)
 
@@ -859,6 +863,9 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
             else:
                 # If we go down this path, each element of weights is an ndarray
                 weights = sample_weight[inliers]
+
+        if weights is not None:
+            _check_zero_weights(weights)
 
         probabilities = []
         # iterate over multi-output, measure probabilities of the k-th output.

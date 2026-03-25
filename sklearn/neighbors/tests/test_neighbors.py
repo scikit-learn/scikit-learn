@@ -728,6 +728,7 @@ def test_kneighbors_classifier_const_sample_weight(
     y_pred = knn.predict(X[:n_test_pts] + epsilon)
     assert_array_equal(y_pred, y[:n_test_pts])
 
+
 @pytest.mark.parametrize(
     "Estimator,params",
     [

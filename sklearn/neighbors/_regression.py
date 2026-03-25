@@ -13,9 +13,11 @@ from sklearn.neighbors._base import (
     KNeighborsMixin,
     NeighborsBase,
     RadiusNeighborsMixin,
+    _check_zero_weights,
     _get_weights,
 )
 from sklearn.utils._param_validation import StrOptions
+from sklearn.utils.arrayfuncs import _all_with_any_reduction_axis_1
 from sklearn.utils.validation import (
     check_is_fitted,
 )
@@ -270,6 +272,13 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
                 sample_weight = self._sample_weight[neigh_ind]
                 weights = weights * sample_weight
 
+        if (weights is not None) and (_all_with_any_reduction_axis_1(weights, value=0)):
+            raise ValueError(
+                "All neighbors of some sample is getting zero weights. "
+                "Please modify 'weights' to avoid this case if you are "
+                "using a user-defined function."
+            )
+
         if weights is None:
             y_pred = np.mean(_y[neigh_ind], axis=1)
         else:
@@ -511,6 +520,9 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
             else:
                 # If we go down this path, each element of weights is an ndarray
                 weights = sample_weight
+
+        if weights is not None:
+            _check_zero_weights(weights)
 
         if weights is None:
             y_pred = np.array(
