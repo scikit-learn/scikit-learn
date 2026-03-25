@@ -30,31 +30,32 @@ def _get_scorer_and_names(scoring):
     return scorer, score_names
 
 
-def _make_dataframe(log):
-    pd = pytest.importorskip("pandas")
-    return pd.DataFrame(log)
+def _rows_from_run_log(run_log, as_frame):
+    if as_frame:
+        return run_log["data"].to_dict("records")
+    return run_log["data"]
 
 
 def _make_expected_output_MaxIterEstimator(
-    max_iter, scoring, as_frame, X_train, y_train, X_val, y_val
+    max_iter, scoring, as_frame, X_train, y_train, X_val, y_val, depth=0
 ):
     """Generate the expected output of a ScoringMonitor on a MaxIterEstimator."""
     scorer, score_names = _get_scorer_and_names(scoring)
     est_name = MaxIterEstimator.__name__
 
-    expected_log = {
-        (0,): {"values": [], "task_path": (f"{est_name} fit",)},
-        tuple(): {"values": [], "task_path": tuple()},
-    }
+    expected_log = []
     # fit loop iterations
     for i in range(max_iter):
         fitted_est = MaxIterEstimator(max_iter=i + 1).fit()
 
         for eval_on in ("train", "val"):
             log_item = {
-                "task_name": "iteration",
-                "task_id": i,
-                "estimator_name": est_name,
+                f"estimator_name_{depth}": est_name,
+                f"task_name_{depth}": "fit",
+                f"task_id_{depth}": 0,
+                f"estimator_name_{depth + 1}": est_name,
+                f"task_name_{depth + 1}": "iteration",
+                f"task_id_{depth + 1}": i,
                 "eval_on": eval_on,
             }
 
@@ -64,29 +65,31 @@ def _make_expected_output_MaxIterEstimator(
                 log_item.update(scores)
             else:
                 log_item[score_names[0]] = scores
-            expected_log[(0,)]["values"].append(log_item)
+            expected_log.append(log_item)
 
     # fit root task
     for eval_on in ("train", "val"):
         log_item = {
-            "task_name": "fit",
-            "task_id": 0,
-            "estimator_name": est_name,
+            f"estimator_name_{depth}": est_name,
+            f"task_name_{depth}": "fit",
+            f"task_id_{depth}": 0,
+            "task_id_0": 0,
             "eval_on": eval_on,
         }
+
         X, y = (X_train, y_train) if eval_on == "train" else (X_val, y_val)
         scores = scorer(fitted_est, X, y)
         if isinstance(scores, dict):
             log_item.update(scores)
         else:
             log_item[score_names[0]] = scores
-        expected_log[tuple()]["values"].append(log_item)
+        expected_log.append(log_item)
 
     if as_frame:
-        for key in expected_log:
-            expected_log[key]["values"] = _make_dataframe(expected_log[key]["values"])
+        pd = pytest.importorskip("pandas")
+        expected_log = pd.DataFrame(expected_log)
 
-    return expected_log, score_names
+    return expected_log
 
 
 def _make_expected_output_MetaEstimator(
@@ -96,65 +99,34 @@ def _make_expected_output_MetaEstimator(
 
     The sub-estimators are expected to be MaxIterEstimator.
     """
-    scorer, score_names = _get_scorer_and_names(scoring)
     meta_est_name = MetaEstimator.__name__
-    sub_est_name = MaxIterEstimator.__name__
 
-    expected_log = {}
-    for i_outer in range(n_outer):
-        expected_log[(0, i_outer)] = {
-            "values": [],
-            "task_path": (f"{meta_est_name} fit", f"{meta_est_name} outer"),
-        }
-        for i_inner in range(n_inner):
-            expected_log[(0, i_outer, i_inner)] = {
-                "values": [],
-                "task_path": (
-                    f"{meta_est_name} fit",
-                    f"{meta_est_name} outer",
-                    f"{meta_est_name} inner | {sub_est_name} fit",
-                ),
+    expected_log = []
+    for i in range(n_outer):
+        for j in range(n_inner):
+            common = {
+                "estimator_name_0": meta_est_name,
+                "task_name_0": "fit",
+                "task_id_0": 0,
+                "estimator_name_1": meta_est_name,
+                "task_name_1": "outer",
+                "task_id_1": i,
             }
-            for i_estimator_iteration in range(max_iter):
-                fitted_est = MaxIterEstimator(max_iter=i_estimator_iteration + 1).fit()
 
-                for eval_on in ("train", "val"):
-                    log_item = {
-                        "task_name": "iteration",
-                        "task_id": i_estimator_iteration,
-                        "estimator_name": sub_est_name,
-                        "eval_on": eval_on,
-                    }
-
-                    X, y = (X_train, y_train) if eval_on == "train" else (X_val, y_val)
-                    scores = scorer(fitted_est, X, y)
-                    if isinstance(scores, dict):
-                        log_item.update(scores)
-                    else:
-                        log_item[score_names[0]] = scores
-                    expected_log[(0, i_outer, i_inner)]["values"].append(log_item)
-
-            for eval_on in ("train", "val"):
-                log_item = {
-                    "task_name": "fit",
-                    "task_id": i_inner,
-                    "estimator_name": sub_est_name,
-                    "eval_on": eval_on,
-                }
-
-                X, y = (X_train, y_train) if eval_on == "train" else (X_val, y_val)
-                scores = scorer(fitted_est, X, y)
-                if isinstance(scores, dict):
-                    log_item.update(scores)
-                else:
-                    log_item[score_names[0]] = scores
-                expected_log[(0, i_outer)]["values"].append(log_item)
+            estimator_log = _make_expected_output_MaxIterEstimator(
+                max_iter, scoring, False, X_train, y_train, X_val, y_val, depth=2
+            )
+            # root task_id of the estimator is inherited from the inner task
+            for entry in estimator_log:
+                entry["task_id_2"] = j
+                log_item = {**common, **entry}
+                expected_log.append(log_item)
 
     if as_frame:
-        for key in expected_log:
-            expected_log[key]["values"] = _make_dataframe(expected_log[key]["values"])
+        pd = pytest.importorskip("pandas")
+        expected_log = pd.DataFrame(expected_log)
 
-    return expected_log, score_names
+    return expected_log
 
 
 def custom_score(estimator, X, y):
@@ -171,17 +143,16 @@ def test_eval_on(eval_on):
     X, X_val, y, y_val = train_test_split(X, y, test_size=0.2, random_state=0)
 
     estimator.fit(X=X, y=y, X_val=X_val, y_val=y_val)
-    log = callback.get_logs(as_frame=False, select="most_recent")["logs"][(0,)][
-        "values"
-    ]
+    log = callback.get_logs(as_frame=False, select="most_recent")["data"]
 
+    # we expect one score for each iteration + the score at the end of fit
     if eval_on in ("train", "val"):
-        assert len(log) == max_iter
+        assert len(log) == 1 + max_iter
         assert all(entry["eval_on"] == eval_on for entry in log)
     else:  # eval_on == "both"
         train_log = [entry for entry in log if entry["eval_on"] == "train"]
         val_log = [entry for entry in log if entry["eval_on"] == "val"]
-        assert len(train_log) == len(val_log) == max_iter
+        assert len(train_log) == len(val_log) == 1 + max_iter
 
 
 @pytest.mark.parametrize(
@@ -202,22 +173,15 @@ def test_logged_values(scoring, as_frame):
 
     estimator.fit(X=X, y=y, X_val=X_val, y_val=y_val)
 
-    log = callback.get_logs(as_frame=as_frame, select="most_recent")
-    expected_log, _ = _make_expected_output_MaxIterEstimator(
+    log = callback.get_logs(as_frame=as_frame, select="most_recent")["data"]
+    expected_log = _make_expected_output_MaxIterEstimator(
         max_iter, scoring, as_frame, X, y, X_val, y_val
     )
 
-    for task_id, task_log in log["logs"].items():
-        assert task_log["task_path"] == expected_log[task_id]["task_path"]
-        log_values = task_log["values"]
-        expected_values = expected_log[task_id]["values"]
-        if as_frame:
-            assert log_values.equals(expected_values)
-        else:
-            assert all(
-                entry == expected_entry
-                for entry, expected_entry in zip(log_values, expected_values)
-            )
+    if as_frame:
+        assert log.equals(expected_log)
+    else:
+        assert log == expected_log
 
 
 @pytest.mark.parametrize("prefer", ["processes", "threads"])
@@ -244,31 +208,22 @@ def test_logged_values_meta_estimator(prefer, scoring, as_frame):
         est.set_fit_request(X_val=True, y_val=True)
         meta_est.fit(X=X, y=y, X_val=X_val, y_val=y_val)
 
-    log = callback.get_logs(as_frame=as_frame, select="most_recent")
-    expected_log, score_names = _make_expected_output_MetaEstimator(
+    log = callback.get_logs(as_frame=as_frame, select="most_recent")["data"]
+    expected_log = _make_expected_output_MetaEstimator(
         n_outer, n_inner, max_iter, scoring, as_frame, X, y, X_val, y_val
     )
 
-    for task_id, task_log in log["logs"].items():
-        assert task_log["task_path"] == expected_log[task_id]["task_path"]
-        log_values = task_log["values"]
-        expected_values = expected_log[task_id]["values"]
-        # The log items might not be in the same order as the expected log due to the
-        # parallelization of the meta-estimator. Hence we sort / set_index the log by
-        # task_id.
-        if as_frame:
-            assert log_values.set_index("task_id").equals(
-                expected_values.set_index("task_id")
-            )
-        else:
-            sorted_log_values = sorted(log_values, key=lambda x: x["task_id"])
-            sorted_expected_values = sorted(expected_values, key=lambda x: x["task_id"])
-            assert all(
-                entry == expected_entry
-                for entry, expected_entry in zip(
-                    sorted_log_values, sorted_expected_values
-                )
-            )
+    # The log items might not be in the same order as the expected log due to the
+    # parallelization of the meta-estimator. hence we sort the log by id of the
+    # parallel task, "outer", which at depth 1.
+    if as_frame:
+        log.sort_values(
+            by=["task_id_1"], inplace=True, ignore_index=True, kind="stable"
+        )
+        assert log.equals(expected_log)
+    else:
+        log.sort(key=lambda x: x["task_id_1"])
+        assert log == expected_log
 
 
 @pytest.mark.parametrize("as_frame", [True, False])
@@ -279,9 +234,9 @@ def test_get_logs_output_type_no_fit(as_frame):
 
     callback = ScoringMonitor(scoring="neg_mean_squared_error")
 
-    # "all" logs is always a dict indexed by run ids.
+    # "all" logs is always a list of run dicts.
     logs_all = callback.get_logs(select="all", as_frame=as_frame)
-    assert isinstance(logs_all, dict)
+    assert isinstance(logs_all, list)
     assert len(logs_all) == 0
 
     log_most_recent = callback.get_logs(select="most_recent", as_frame=as_frame)
@@ -303,9 +258,9 @@ def test_get_logs_output_type(as_frame):
     estimator.fit(X, y)
 
     logs_all = callback.get_logs(select="all", as_frame=as_frame)
-    assert isinstance(logs_all, dict)
+    assert isinstance(logs_all, list)
     assert len(logs_all) == 2
-    assert all(isinstance(log, dict) for log in logs_all.values())
+    assert all(isinstance(log, dict) for log in logs_all)
 
     log_most_recent = callback.get_logs(select="most_recent", as_frame=as_frame)
     assert isinstance(log_most_recent, dict)
@@ -362,21 +317,28 @@ def test_sample_weights_and_metadata_routing():
         ):
             est.fit(X=X, y=y, sample_weight=sample_weight)
 
-    for task_id in log_no_sw["logs"]:
-        assert any(
-            np.logical_not(np.isclose(l1["r2"], l2["r2"]))
-            for l1, l2 in zip(
-                log_no_sw["logs"][task_id]["values"],
-                log_sw_no_mr["logs"][task_id]["values"],
-            )
+    def _sorted_rows(log):
+        return sorted(
+            log["data"],
+            key=lambda row: (
+                row.get("task_id_0", -1),
+                row.get("task_id_1", -1),
+                row.get("task_id_2", -1),
+                row.get("eval_on", ""),
+            ),
         )
-        assert all(
-            np.isclose(l1["r2"], l2["r2"])
-            for l1, l2 in zip(
-                log_sw_no_mr["logs"][task_id]["values"],
-                log_sw_mr["logs"][task_id]["values"],
-            )
-        )
+
+    rows_no_sw = _sorted_rows(log_no_sw)
+    rows_sw_no_mr = _sorted_rows(log_sw_no_mr)
+    rows_sw_mr = _sorted_rows(log_sw_mr)
+
+    assert any(
+        np.logical_not(np.isclose(l1["r2"], l2["r2"]))
+        for l1, l2 in zip(rows_no_sw, rows_sw_no_mr)
+    )
+    assert all(
+        np.isclose(l1["r2"], l2["r2"]) for l1, l2 in zip(rows_sw_no_mr, rows_sw_mr)
+    )
 
 
 def test_validation_set_metadata_routing():

@@ -57,14 +57,15 @@ class ScoringMonitor:
         self.eval_on = eval_on
         self.scoring = scoring
         self._shared_log = get_callback_manager().list()
-        self._run_scorers = {}
+        self._estimator_scorers = {}
 
     def setup(self, context):
-        # A scorer per run is needed to avoid race conditions when the callback is set
-        # on different estimators and the scorer is the estimator's default scorer.
-        self._run_scorers[context.root_uuid] = check_scoring(
-            context.estimator, self.scoring
-        )
+        # A scorer per estimator is needed to avoid race conditions when the callback is
+        # set on different estimators and the scorer is the estimator's default scorer.
+        if context.estimator_name not in self._estimator_scorers:
+            self._estimator_scorers[context.estimator_name] = check_scoring(
+                context.estimator, self.scoring
+            )
 
     def teardown(self, context):
         pass
@@ -84,67 +85,51 @@ class ScoringMonitor:
         if fitted_estimator is None:
             return
 
-        context_path = get_context_path(context)
         if self.eval_on in ("train", "both"):
             sample_weight = metadata.get("sample_weight", None)
-            self._add_log_entry(
-                X, y, "train", fitted_estimator, sample_weight, context_path
-            )
+            self._add_log_entry(X, y, "train", fitted_estimator, sample_weight, context)
         if self.eval_on in ("val", "both"):
             X, y = metadata.get("X_val", None), metadata.get("y_val", None)
             sample_weight = metadata.get("sample_weight_val", None)
-            self._add_log_entry(
-                X, y, "val", fitted_estimator, sample_weight, context_path
-            )
+            self._add_log_entry(X, y, "val", fitted_estimator, sample_weight, context)
 
-    def _add_log_entry(
-        self, X, y, eval_on, fitted_estimator, sample_weight, context_path
-    ):
+    def _add_log_entry(self, X, y, eval_on, fitted_estimator, sample_weight, context):
         if X is None or y is None:
             return
 
-        # run_info
-        root_ctx = context_path[0]
-        run_id = root_ctx.root_uuid
+        context_path = get_context_path(context)
+
+        # run info
+        root_context = context_path[0]
         run_info = {
-            "timestamp": root_ctx.init_time.strftime("UTC%Y-%m-%d-%H:%M:%S.%f"),
-            "root_estimator_name": root_ctx.estimator_name,
+            "timestamp": root_context.init_time.strftime("UTC%Y-%m-%d-%H:%M:%S.%f"),
+            "estimator_name": root_context.estimator_name,
+            "run_id": root_context.root_uuid,
         }
 
-        # task_id and parent_tasks_info
-        task_id = tuple(ctx.task_id for ctx in context_path[:-1])
-        parent_tasks_info = tuple(
+        # context path
+        context_levels = tuple(
             {
-                "task_name": ctx.task_name,
                 "estimator_name": ctx.estimator_name,
-                "source_task_name": ctx.source_task_name,
-                "source_estimator_name": ctx.source_estimator_name,
+                "task_name": ctx.task_name,
+                "task_id": ctx.task_id,
             }
-            for ctx in context_path[:-1]
+            for ctx in context_path
         )
 
-        # log_data
-        current_ctx = context_path[-1]
-        log_data = {
-            "task_name": current_ctx.task_name,
-            "task_id": current_ctx.task_id,
-            "estimator_name": current_ctx.estimator_name,
-            "eval_on": eval_on,
-        }
+        # scores
+        scores = {"eval_on": eval_on}
         score_params = {}
-        scorer = self._run_scorers[root_ctx.root_uuid]
+        scorer = self._estimator_scorers[context.estimator_name]
         if sample_weight is not None and scorer._accept_sample_weight():
             score_params["sample_weight"] = sample_weight
         score_value = scorer(fitted_estimator, X, y, **score_params)
-        if isinstance(score_value, dict):
-            log_data.update(score_value)
-        else:
+        if not isinstance(score_value, dict):
             score_name = self.scoring if isinstance(self.scoring, str) else "score"
-            log_data[score_name] = score_value
+            score_value = {score_name: score_value}
+        scores.update(score_value)
 
-        self._shared_log.append(
-            (run_id, run_info, task_id, log_data, parent_tasks_info)
-        )
+        self._shared_log.append((run_info, context_levels, scores))
 
     @validate_params(
         {
@@ -154,98 +139,70 @@ class ScoringMonitor:
         prefer_skip_nested_validation=True,
     )
     def get_logs(self, select="most_recent", as_frame=False):
-        """Get the logged values.
+        """Get the logged scores.
 
-        If `select == "all"`, a dictionary is returned with run ids as keys and logs as
-        values. A run corresponds to a fit execution of the outermost meta-estimator
-        that is a parent of the estimator the callback is registered on. If the
-        estimator is not wrapped in a meta-estimator, a run corresponds to a single
-        fit execution of the estimator.
+        For a given run, the scores are logged in a dict containing:
+            - "estimator_name": the name of the estimator of the run;
+            - "timestamp": the timestamp of the start of the run;
+            - "run_id": a unique identifier for the run;
+            - "data": the recorded scores for the run. Each score value is associated
+              with the detailed context of the score computation.
 
-        For each run key in the dictionary, the value is a dictionary containing:
-            - "info": a dictionary containing the timestamp for the start of fit and the
-              estimator name for the outermost parent meta-estimator.
-
-            - "task_tree": nested dictionaries describing the tree structure of the
-              tasks.
-
-            - "logs": a dictionary with tuples of task id as key and for values
-              dictionaries containing:
-                  - "values": pandas Dataframe or list of dict containing the score
-                    values, the type being controlled by the `as_frame` argument.
-
-                  - "task_path": a tuple of strings with the estimator names and task
-                    names corresponding to the task ids in the key of this dict.
+        A run corresponds to one fit of the outermost meta-estimator that is a parent of
+        the estimator the callback is registered on. If the estimator is not wrapped in
+        a meta-estimator, a run corresponds to a single fit of the estimator.
 
         Parameters
         ----------
         select : {"all", "most_recent"}, default="most_recent"
             Which log run to return:
 
-            - `"all"`: returns the whole log as a dictionary indexed by run ids;
-            - `"most_recent"`: only returns the log of the most recent run based on
-              the timestamp in the run id.
+            - `"all"`: return the logged scores for all runs;
+            - `"most_recent"`: return the logged scores for the most recent run.
 
         as_frame : bool, default=False
-            Whether to have the individual task logs formatted as Pandas DataFrames. If
+            Whether to have the individual run logs formatted as Pandas DataFrames. If
             set to False the individual run logs are formatted as lists of dictionaries
             instead.
 
         Returns
         -------
-        logs : dict
-            The logged values.
+        logs : dict or list of dict
+            The logged scores.
         """
-        log_item_list = list(self._shared_log)
+        logs = defaultdict(lambda: {"data": []})
 
-        logs_dict = defaultdict(
-            lambda: {
-                "logs": defaultdict(lambda: {"values": []}),
-                "task_tree": {},
-                "info": {},
+        # group logs by run
+        for run_info, context_levels, scores in list(self._shared_log):
+            run_id = run_info.pop("run_id")
+            logs[run_id].update(run_info)
+
+            row = {}
+            for depth, context_level in enumerate(context_levels):
+                row[f"estimator_name_{depth}"] = context_level["estimator_name"]
+                row[f"task_name_{depth}"] = context_level["task_name"]
+                row[f"task_id_{depth}"] = context_level["task_id"]
+            row.update(scores)
+            logs[run_id]["data"].append(row)
+
+        # sort logs by run timestamp and estimator name
+        logs = [
+            {
+                "estimator_name": log["estimator_name"],
+                "timestamp": log["timestamp"],
+                "run_id": run_id,
+                "data": log["data"],
             }
-        )
-
-        for run_id, run_info, task_id, log_data, parent_tasks_info in log_item_list:
-            logs_dict[run_id]["logs"][task_id]["values"].append(log_data)
-            logs_dict[run_id]["logs"][task_id]["task_path"] = tuple(
-                f"{info['source_estimator_name']} {info['source_task_name']} | "
-                f"{info['estimator_name']} {info['task_name']}"
-                if info["source_task_name"] is not None
-                else f"{info['estimator_name']} {info['task_name']}"
-                for info in parent_tasks_info
-            )
-            logs_dict[run_id]["info"].update(run_info)
-            task_dict = logs_dict[run_id]["task_tree"]
-            for i, id in enumerate(task_id):
-                if id not in task_dict:
-                    task_dict[id] = {
-                        "subtasks": {},
-                        "task_info": {**parent_tasks_info[i]},
-                    }
-                task_dict = task_dict[id]["subtasks"]
-
-        # Sort runs chronologically.
-        logs_dict = dict(
-            sorted(
-                logs_dict.items(),
-                key=lambda x: x[1]["info"]["timestamp"],
-            )
-        )
-        # Convert the defaultdicts to dicts.
-        for run_id in logs_dict:
-            logs_dict[run_id]["logs"] = dict(logs_dict[run_id]["logs"])
+            for run_id, log in logs.items()
+        ]
+        logs.sort(key=lambda log: (log["timestamp"], log["estimator_name"]))
 
         if as_frame:
-            pd = check_pandas_support(f"`{self.__class__.__name__}.get_logs`")
-
-            for run_id in logs_dict:
-                for task_id in logs_dict[run_id]["logs"]:
-                    logs_dict[run_id]["logs"][task_id]["values"] = pd.DataFrame(
-                        logs_dict[run_id]["logs"][task_id]["values"]
-                    )
+            pd = check_pandas_support(f"`{self.__class__.__name__}.get_logs_2`")
+            for log in logs:
+                log["data"] = pd.DataFrame(log["data"])
 
         if select == "most_recent":
-            return list(logs_dict.values())[-1] if logs_dict else {}
+            return logs[-1] if logs else {}
 
-        return logs_dict
+        return logs
