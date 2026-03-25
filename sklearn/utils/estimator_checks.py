@@ -57,7 +57,7 @@ from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 from sklearn.metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
 from sklearn.model_selection import LeaveOneGroupOut, ShuffleSplit, train_test_split
 from sklearn.model_selection._validation import _safe_split
-from sklearn.neighbors import RadiusNeighborsClassifier
+from sklearn.neighbors import RadiusNeighborsClassifier, RadiusNeighborsRegressor
 from sklearn.neighbors._base import KNeighborsMixin
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler, scale
@@ -1582,6 +1582,8 @@ def _check_sample_weight_equivalence(name, estimator_orig, sparse_container):
     # The default radius of 1 is not quite large enough to classify all points
     if isinstance(estimator_orig, RadiusNeighborsClassifier):
         estimator_orig = RadiusNeighborsClassifier(radius=2.2)
+    if isinstance(estimator_orig, RadiusNeighborsRegressor):
+        estimator_orig = RadiusNeighborsRegressor(radius=2.2)
 
     estimator_weighted = clone(estimator_orig)
     estimator_repeated = clone(estimator_orig)

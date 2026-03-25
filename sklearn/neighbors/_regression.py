@@ -452,7 +452,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         # RadiusNeighborsRegressor.metric is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the radius neighbors regressor from the training dataset.
 
         Parameters
@@ -465,12 +465,15 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
                 (n_samples, n_outputs)
             Target values.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Per-sample weights.
+
         Returns
         -------
         self : RadiusNeighborsRegressor
             The fitted radius neighbors regressor.
         """
-        return self._fit(X, y)
+        return self._fit(X, y, sample_weight)
 
     def predict(self, X):
         """Predict the target for the provided data.
@@ -499,6 +502,16 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
 
         empty_obs = np.full_like(_y[0], np.nan)
 
+        if self._sample_weight is not None:
+            # Weights is a jagged array so we have to do some fancy indexing
+            sample_weight = [self._sample_weight[idx] for idx in neigh_ind]
+            sample_weight = np.asarray(sample_weight, dtype=np.ndarray)
+            if weights is not None:
+                weights = weights * sample_weight
+            else:
+                # If we go down this path, each element of weights is an ndarray
+                weights = sample_weight
+
         if weights is None:
             y_pred = np.array(
                 [
@@ -511,7 +524,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
             y_pred = np.array(
                 [
                     (
-                        np.average(_y[ind, :], axis=0, weights=weights[i])
+                        np.average(_y[ind, :], axis=0, weights=weights[i].astype(float))
                         if len(ind)
                         else empty_obs
                     )
