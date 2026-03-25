@@ -63,11 +63,11 @@ def yield_namespaces(include_numpy_namespaces=True):
 
 
 def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
-    """Yield supported namespace, device, dtype tuples for testing.
+    """Yield supported namespace, device_name, dtype_name tuples for testing.
 
     Use this to test that an estimator works with all combinations.
-    Use in conjunction with `ids=_get_namespace_device_dtype_ids` to give
-    clearer pytest parametrization ID names.
+    Pass the yielded values to `_array_api_for_tests` which returns (xp, device)
+    for array allocation.
 
     Parameters
     ----------
@@ -79,7 +79,7 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     array_namespace : str
         The name of the Array API namespace.
 
-    device : str
+    device_name : str or None
         The name of the device on which to allocate the arrays. Can be None to
         indicate that the default value should be used.
 
@@ -91,43 +91,19 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
         include_numpy_namespaces=include_numpy_namespaces
     ):
         if array_namespace == "torch":
-            for device, dtype in itertools.product(
+            for device_name, dtype in itertools.product(
                 ("cpu", "cuda", "xpu"), ("float64", "float32")
             ):
-                yield array_namespace, device, dtype
+                yield array_namespace, device_name, dtype
             yield array_namespace, "mps", "float32"
 
         elif array_namespace == "array_api_strict":
-            try:
-                import array_api_strict
-
-                yield array_namespace, array_api_strict.Device("CPU_DEVICE"), "float64"
-                yield array_namespace, array_api_strict.Device("device1"), "float32"
-            except ImportError:
-                # Those combinations will typically be skipped by pytest if
-                # array_api_strict is not installed but we still need to see them in
-                # the test output.
-                yield array_namespace, "CPU_DEVICE", "float64"
-                yield array_namespace, "device1", "float32"
+            # Always yield strings for consistent parametrization; _array_api_for_tests
+            # creates Device objects when needed.
+            yield array_namespace, "CPU_DEVICE", "float64"
+            yield array_namespace, "device1", "float32"
         else:
             yield array_namespace, None, None
-
-
-def _get_namespace_device_dtype_ids(param):
-    """Get pytest parametrization IDs for `yield_namespace_device_dtype_combinations`"""
-    # Gives clearer IDs for array-api-strict devices, see #31042 for details
-    try:
-        import array_api_strict
-    except ImportError:
-        # `None` results in the default pytest representation
-        return None
-    else:
-        if param == array_api_strict.Device("CPU_DEVICE"):
-            return "CPU_DEVICE"
-        if param == array_api_strict.Device("device1"):
-            return "device1"
-        if param == array_api_strict.Device("device2"):
-            return "device2"
 
 
 def yield_mixed_namespace_input_permutations():
@@ -169,17 +145,8 @@ def yield_mixed_namespace_input_permutations():
         "numpy to torch mps",
     )
 
-    try:
-        import array_api_strict
-
-        device = array_api_strict.Device("device1")
-    except ImportError:
-        # This case will generally be skipped when `array_api_strict` is not installed
-        # but we still include it so it shows in the test output.
-        device = None
-
     yield (
-        NamespaceAndDevice("array_api_strict", device),
+        NamespaceAndDevice("array_api_strict", "device1"),
         NamespaceAndDevice("torch", "cpu"),
         "array_api_strict to torch cpu",
     )
@@ -890,9 +857,8 @@ def _median(x, axis=None, keepdims=False, xp=None):
     if hasattr(xp, "median"):
         return xp.median(x, axis=axis, keepdims=keepdims)
 
-    # Intended mostly for array-api-strict (which as no "median", as per the spec)
-    # as `_convert_to_numpy` does not necessarily work for all array types.
-    x_np = _convert_to_numpy(x, xp=xp)
+    # Intended mostly for array-api-strict (which has no "median", as per the spec).
+    x_np = move_to(x, xp=numpy, device="cpu")
     return xp.asarray(numpy.median(x_np, axis=axis, keepdims=keepdims), device=device)
 
 
@@ -1018,7 +984,15 @@ def _ravel(array, xp=None):
 
 
 def _convert_to_numpy(array, xp):
-    """Convert X into a NumPy ndarray on the CPU."""
+    """Convert X into a NumPy ndarray on the CPU.
+
+    This function uses library-specific methods to convert the array to a NumPy
+    ndarray on the CPU. It is only meant as a fallback when move_to fails to use the
+    DLPACK protocol.
+
+    This function is not meant to be called directly and
+    `move_to(array, xp=np, device="cpu")` should be used instead.
+    """
     if _is_xp_namespace(xp, "torch"):
         return array.cpu().numpy()
     elif _is_xp_namespace(xp, "cupy"):  # pragma: nocover
@@ -1214,9 +1188,9 @@ def _bincount(array, weights=None, minlength=0, xp=None):
     if hasattr(xp, "bincount"):
         return xp.bincount(array, weights=weights, minlength=minlength)
 
-    array_np = _convert_to_numpy(array, xp=xp)
+    array_np = move_to(array, xp=numpy, device="cpu")
     if weights is not None:
-        weights_np = _convert_to_numpy(weights, xp=xp)
+        weights_np = move_to(weights, xp=numpy, device="cpu")
     else:
         weights_np = None
     bin_out = numpy.bincount(array_np, weights=weights_np, minlength=minlength)

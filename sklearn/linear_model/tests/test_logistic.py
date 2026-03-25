@@ -38,10 +38,11 @@ from sklearn.svm import l1_min_c
 from sklearn.utils import compute_class_weight, shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
-    _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
-    device,
+    move_to,
     yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._array_api import (
+    device as array_api_device,
 )
 from sklearn.utils._testing import _array_api_for_tests, ignore_warnings
 from sklearn.utils.fixes import _IS_32BIT, COO_CONTAINERS, CSR_CONTAINERS
@@ -2688,9 +2689,8 @@ def test_logisticregression_warns_with_n_jobs():
 @pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize("class_weight", [None, "balanced", "dict"])
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_logistic_regression_array_api_compliance(
@@ -2699,13 +2699,13 @@ def test_logistic_regression_array_api_compliance(
     use_sample_weight,
     class_weight,
     array_namespace,
-    device_,
+    device_name,
     dtype_name,
 ):
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     X_np = iris.data.astype(dtype_name, copy=True)
     n_samples, _ = X_np.shape
-    X_xp = xp.asarray(X_np, device=device_)
+    X_xp = xp.asarray(X_np, device=device)
     if use_str_y:
         if binary:
             target = (iris.target > 0).astype(np.int64)
@@ -2728,7 +2728,7 @@ def test_logistic_regression_array_api_compliance(
             if class_weight == "dict":
                 class_weight = {0: 1.0, 1: 2.0, 2: 3.0}
         y_np = target.astype(dtype_name)
-        y_xp_or_np = xp.asarray(y_np, device=device_)
+        y_xp_or_np = xp.asarray(y_np, device=device)
 
     if use_sample_weight:
         sample_weight = (
@@ -2786,34 +2786,34 @@ def test_logistic_regression_array_api_compliance(
             attr_xp = getattr(lr_xp, attr_name)
             attr_np = getattr(lr_np, attr_name)
             assert_allclose(
-                _convert_to_numpy(attr_xp, xp=xp), attr_np, rtol=rtol, atol=atol
+                move_to(attr_xp, xp=np, device="cpu"), attr_np, rtol=rtol, atol=atol
             )
             assert attr_xp.dtype == X_xp.dtype
-            assert device(attr_xp) == device(X_xp)
+            assert array_api_device(attr_xp) == array_api_device(X_xp)
 
         predict_proba_xp = lr_xp.predict_proba(X_xp)
         assert_allclose(
-            _convert_to_numpy(predict_proba_xp, xp=xp),
+            move_to(predict_proba_xp, xp=np, device="cpu"),
             predict_proba_np,
             rtol=rtol,
             atol=atol,
         )
         assert predict_proba_xp.dtype == X_xp.dtype
-        assert device(predict_proba_xp) == device(X_xp)
+        assert array_api_device(predict_proba_xp) == array_api_device(X_xp)
 
         predict_log_proba_xp = lr_xp.predict_log_proba(X_xp)
         assert_allclose(
-            _convert_to_numpy(predict_log_proba_xp, xp=xp),
+            move_to(predict_log_proba_xp, xp=np, device="cpu"),
             preditct_log_proba_np,
             rtol=rtol,
             atol=atol,
         )
         assert predict_log_proba_xp.dtype == X_xp.dtype
-        assert device(predict_log_proba_xp) == device(X_xp)
+        assert array_api_device(predict_log_proba_xp) == array_api_device(X_xp)
 
         prediction_xp = lr_xp.predict(X_xp)
         if not use_str_y:
-            prediction_xp = _convert_to_numpy(prediction_xp, xp=xp)
+            prediction_xp = move_to(prediction_xp, xp=np, device="cpu")
         assert_array_equal(prediction_xp, prediction_np)
 
 
@@ -2846,3 +2846,34 @@ def test_get_default_scorer():
     """Test that LogisticRegressionCV gets correct default scorer."""
     lr = LogisticRegressionCV()
     assert lr._get_scorer()._score_func.__name__ == "accuracy_score"
+
+
+@pytest.mark.parametrize("binary", [True, False])
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
+def test_logistic_regression_array_api_warm_start(
+    binary,
+    array_namespace,
+    device_name,
+    dtype_name,
+):
+    """Test that warm_start=True works with array API inputs across
+    multiple fit calls for both binary and multiclass classification."""
+    xp, device_ = _array_api_for_tests(array_namespace, device_name)
+    X_np = iris.data.astype(dtype_name, copy=True)
+    if binary:
+        y_np = (iris.target > 0).astype(dtype_name)
+    else:
+        y_np = iris.target.astype(dtype_name)
+
+    X_xp = xp.asarray(X_np, device=device_)
+    y_xp = xp.asarray(y_np, device=device_)
+
+    with config_context(array_api_dispatch=True):
+        lr = LogisticRegression(C=1e-2, solver="lbfgs", max_iter=300, warm_start=True)
+        lr.fit(X_xp, y_xp)
+        lr.predict(X_xp)
+        lr.fit(X_xp, y_xp)

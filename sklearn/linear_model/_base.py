@@ -25,12 +25,12 @@ from sklearn.utils import _align_api_if_sparse, check_array, check_random_state
 from sklearn.utils._array_api import (
     _asarray_with_order,
     _average,
-    _convert_to_numpy,
     _expit,
     _is_numpy_namespace,
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
+    move_to,
     supported_float_dtypes,
 )
 from sklearn.utils._param_validation import Interval
@@ -396,7 +396,7 @@ class LinearClassifierMixin(ClassifierMixin):
         # predictions according to the namespace of `self.classes_` i.e. numpy.
         xp_classes, _ = get_namespace(self.classes_)
         if _is_numpy_namespace(xp_classes):
-            indices = _convert_to_numpy(indices, xp=xp)
+            indices = move_to(indices, xp=np, device="cpu")
 
         return xp_classes.take(self.classes_, indices, axis=0)
 
