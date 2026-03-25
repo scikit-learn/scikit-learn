@@ -990,7 +990,8 @@ def _convert_to_numpy(array, xp):
     ndarray on the CPU. It is only meant as a fallback when move_to fails to use the
     DLPACK protocol.
 
-    Code should instead use `move_to(array, xp=np, device="cpu")` instead.
+    This function is not meant to be called directly and
+    `move_to(array, xp=np, device="cpu")` should be used instead.
     """
     if _is_xp_namespace(xp, "torch"):
         return array.cpu().numpy()
