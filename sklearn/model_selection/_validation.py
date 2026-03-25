@@ -48,7 +48,7 @@ from sklearn.utils.metadata_routing import (
 )
 from sklearn.utils.metaestimators import _safe_split
 from sklearn.utils.parallel import Parallel, delayed
-from sklearn.utils.validation import _check_method_params, _num_samples
+from sklearn.utils.validation import _check_method_params, _is_arraylike, _num_samples
 
 __all__ = [
     "cross_val_predict",
@@ -667,7 +667,7 @@ def cross_val_score(
 def _move_method_params_to(params, xp, device):
     """Move array-like method params to the given namespace and device."""
     return {
-        k: move_to(v, xp=xp, device=device) if hasattr(v, "shape") else v
+        k: move_to(v, xp=xp, device=device) if _is_arraylike(v) else v
         for k, v in params.items()
     }
 
