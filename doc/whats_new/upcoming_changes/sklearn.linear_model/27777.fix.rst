@@ -1,0 +1,6 @@
+- :class:`linear_model.HuberRegressor` now emits a
+  :class:`~exceptions.ConvergenceWarning` instead of raising a ``ValueError``
+  when the L-BFGS-B solver reports convergence issues such as
+  ``ABNORMAL_TERMINATION_IN_LNSRCH``. This is consistent with the behavior of
+  :class:`linear_model.LogisticRegression`.
+  By :user:`Eden Rochman <EdenRochmanSharabi>`.

@@ -1,11 +1,14 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from unittest.mock import patch
+
 import numpy as np
 import pytest
 from scipy import optimize
 
 from sklearn.datasets import make_regression
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import HuberRegressor, LinearRegression, Ridge, SGDRegressor
 from sklearn.linear_model._huber import _huber_loss_and_gradient
 from sklearn.utils._testing import (
@@ -214,3 +217,32 @@ def test_huber_bool():
     X, y = make_regression(n_samples=200, n_features=2, noise=4.0, random_state=0)
     X_bool = X > 0
     HuberRegressor().fit(X_bool, y)
+
+
+def test_huber_convergence_warning_instead_of_error():
+    """Check that HuberRegressor emits a ConvergenceWarning instead of raising
+    a ValueError when the L-BFGS-B solver fails to converge.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/27777
+    """
+    X, y = make_regression_with_outliers()
+
+    # Mock optimize.minimize to return a result with status=2
+    # (ABNORMAL_TERMINATION_IN_LNSRCH), which previously raised ValueError.
+    real_minimize = optimize.minimize
+
+    def mock_minimize(*args, **kwargs):
+        result = real_minimize(*args, **kwargs)
+        result.status = 2
+        result.message = "ABNORMAL_TERMINATION_IN_LNSRCH"
+        return result
+
+    huber = HuberRegressor()
+    with patch("sklearn.linear_model._huber.optimize.minimize", side_effect=mock_minimize):
+        with pytest.warns(ConvergenceWarning, match="lbfgs failed to converge"):
+            huber.fit(X, y)
+
+    # The model should still have fitted attributes despite the warning.
+    assert hasattr(huber, "coef_")
+    assert hasattr(huber, "scale_")
+    assert hasattr(huber, "outliers_")
