@@ -2887,5 +2887,49 @@ def test_unused_transformer_request_present():
     assert router.consumes("fit", ["metadata"]) == set(["metadata"])
 
 
+@config_context(enable_metadata_routing=True)
+def test_metadata_routing_remainder_passthrough_with_sample_weight():
+    """Regression test for https://github.com/scikit-learn/scikit-learn/issues/33614
+
+    ColumnTransformer.fit raised KeyError('remainder') when metadata routing
+    was enabled, a child transformer requested sample_weight, and
+    remainder='passthrough'. The routing code did not register any router
+    entry for the 'passthrough' sentinel, so process_routing returned a Bunch
+    without a 'remainder' key, causing the KeyError.
+    """
+    import pandas as pd
+
+    rng = np.random.RandomState(0)
+    X = pd.DataFrame({"x1": rng.randn(10), "x2": rng.randn(10)})
+    y = rng.randn(10)
+    sample_weight = rng.rand(10)
+
+    class WeightConsumingTransformer(TransformerMixin, BaseEstimator):
+        """A transformer that explicitly requests sample_weight on fit."""
+
+        def fit(self, X, y=None, sample_weight=None):
+            self.sample_weight_ = sample_weight
+            return self
+
+        def transform(self, X):
+            return X
+
+    wt = WeightConsumingTransformer().set_fit_request(sample_weight=True)
+
+    # remainder='passthrough' + metadata-requesting transformer must not raise
+    ct = ColumnTransformer([("model", wt, ["x1"])], remainder="passthrough")
+    # This used to raise KeyError('remainder') before the fix.
+    ct.fit(X, y, sample_weight=sample_weight)
+
+    # Verify that sample_weight was actually forwarded to the transformer.
+    np.testing.assert_array_equal(ct.named_transformers_["model"].sample_weight_, sample_weight)
+
+    # Also verify fit_transform works correctly.
+    ct2 = ColumnTransformer([("model", wt, ["x1"])], remainder="passthrough")
+    result = ct2.fit_transform(X, y, sample_weight=sample_weight)
+    # Output should have both x1 (transformed) and x2 (passthrough) columns.
+    assert result.shape == (10, 2)
+
+
 # End of Metadata Routing Tests
 # =============================

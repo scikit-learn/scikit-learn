@@ -1311,7 +1311,17 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # might happen if no columns are selected for that transformer. We
         # request all metadata requested by all transformers.
         transformers = self.transformers
-        if self.remainder not in ("drop", "passthrough"):
+        if self.remainder == "passthrough":
+            # When remainder='passthrough', a FunctionTransformer is used at
+            # runtime (see _call_func_on_transformers). We add a proxy entry
+            # here so that process_routing produces a 'remainder' key and
+            # _call_func_on_transformers does not raise KeyError. The
+            # FunctionTransformer requests no metadata by default, which is
+            # correct because 'passthrough' simply forwards columns unchanged.
+            transformers = chain(
+                transformers, [("remainder", FunctionTransformer(), None)]
+            )
+        elif self.remainder != "drop":
             transformers = chain(transformers, [("remainder", self.remainder, None)])
         for name, step, _ in transformers:
             method_mapping = MethodMapping()
