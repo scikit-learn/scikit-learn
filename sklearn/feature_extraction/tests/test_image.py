@@ -223,6 +223,28 @@ def test_reconstruct_patches_perfect_color(orange_face):
     np.testing.assert_array_almost_equal(face, face_reconstructed)
 
 
+@pytest.mark.parametrize(
+    "image_size, patch_size",
+    [
+        ((128, 256), (128, 128)),  # patch_h == image_h
+        ((256, 128), (128, 128)),  # patch_w == image_w
+        ((128, 128), (128, 128)),  # patch == image
+        ((128, 256, 3), (128, 128)),  # patch_h == image_h, with channels
+    ],
+)
+def test_reconstruct_patches_edge_patch_size(image_size, patch_size):
+    """Check that reconstruct_from_patches_2d works when a patch dimension
+    equals the corresponding image dimension.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/10910
+    """
+    rng = np.random.RandomState(0)
+    image = rng.rand(*image_size)
+    patches = extract_patches_2d(image, patch_size)
+    reconstructed = reconstruct_from_patches_2d(patches, image_size)
+    np.testing.assert_array_almost_equal(image, reconstructed)
+
+
 def test_patch_extractor_fit(downsampled_face_collection, global_random_seed):
     faces = downsampled_face_collection
     extr = PatchExtractor(
