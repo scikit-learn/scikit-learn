@@ -30,3 +30,4 @@ dependencies:
   - cupy
   - cuvs
   - array-api-strict
+  - scipy-doctest

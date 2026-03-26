@@ -33,7 +33,6 @@ from sklearn.preprocessing import LabelEncoder, label_binarize
 from sklearn.svm import LinearSVC
 from sklearn.utils import Bunch, _safe_indexing, column_or_1d, get_tags, indexable
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     _is_numpy_namespace,
     get_namespace,
     get_namespace_and_device,
@@ -556,7 +555,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         check_is_fitted(self)
         class_indices = xp.argmax(self.predict_proba(X), axis=1)
         if isinstance(self.classes_[0], str):
-            class_indices = _convert_to_numpy(class_indices, xp=xp)
+            class_indices = move_to(class_indices, xp=np, device="cpu")
 
         return self.classes_[class_indices]
 
@@ -1118,7 +1117,9 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         multinomial_loss = (
             HalfMultinomialLoss(n_classes=logits.shape[1])
             if is_numpy_namespace
-            else HalfMultinomialLossArrayAPI(n_classes=logits.shape[1])
+            else HalfMultinomialLossArrayAPI(
+                n_classes=logits.shape[1], xp=xp, device=xp_device
+            )
         )
 
         def log_loss(log_beta=0.0):
@@ -1155,7 +1156,6 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
                 labels,
                 raw_prediction,
                 sample_weight,
-                xp=xp,
             )
 
         xatol = 64 * xp.finfo(dtype_).eps

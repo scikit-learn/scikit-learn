@@ -39,8 +39,7 @@ from sklearn.preprocessing._data import BOUNDS_THRESHOLD, _handle_zeros_in_scale
 from sklearn.svm import SVR
 from sklearn.utils import gen_batches, shuffle
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -170,22 +169,21 @@ def test_standard_scaler_sample_weight(Xw, X, sample_weight, array_constructor):
 
 @pytest.mark.parametrize(["Xw", "X", "sample_weight"], _yield_xw_x_sampleweight())
 @pytest.mark.parametrize(
-    "namespace, dev, dtype",
+    "namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 def test_standard_scaler_sample_weight_array_api(
-    Xw, X, sample_weight, namespace, dev, dtype
+    Xw, X, sample_weight, namespace, device_name, dtype_name
 ):
     # N.B. The sample statistics for Xw w/ sample_weight should match
     #      the statistics of X w/ uniform sample_weight.
-    xp = _array_api_for_tests(namespace, dev)
+    xp, device = _array_api_for_tests(namespace, device_name)
 
-    X = np.array(X).astype(dtype, copy=False)
-    y = np.ones(X.shape[0]).astype(dtype, copy=False)
-    Xw = np.array(Xw).astype(dtype, copy=False)
-    yw = np.ones(Xw.shape[0]).astype(dtype, copy=False)
-    X_test = np.array([[1.5, 2.5, 3.5], [3.5, 4.5, 5.5]]).astype(dtype, copy=False)
+    X = np.array(X).astype(dtype_name, copy=False)
+    y = np.ones(X.shape[0]).astype(dtype_name, copy=False)
+    Xw = np.array(Xw).astype(dtype_name, copy=False)
+    yw = np.ones(Xw.shape[0]).astype(dtype_name, copy=False)
+    X_test = np.array([[1.5, 2.5, 3.5], [3.5, 4.5, 5.5]]).astype(dtype_name, copy=False)
 
     scaler = StandardScaler()
     scaler.fit(X, y)
@@ -194,18 +192,18 @@ def test_standard_scaler_sample_weight_array_api(
     scaler_w.fit(Xw, yw, sample_weight=sample_weight)
 
     # Test array-api support and correctness.
-    X_xp = xp.asarray(X, device=dev)
-    y_xp = xp.asarray(y, device=dev)
-    Xw_xp = xp.asarray(Xw, device=dev)
-    yw_xp = xp.asarray(yw, device=dev)
-    X_test_xp = xp.asarray(X_test, device=dev)
-    sample_weight_xp = xp.asarray(sample_weight, device=dev)
+    X_xp = xp.asarray(X, device=device)
+    y_xp = xp.asarray(y, device=device)
+    Xw_xp = xp.asarray(Xw, device=device)
+    yw_xp = xp.asarray(yw, device=device)
+    X_test_xp = xp.asarray(X_test, device=device)
+    sample_weight_xp = xp.asarray(sample_weight, device=device)
 
     scaler_w_xp = StandardScaler()
     with config_context(array_api_dispatch=True):
         scaler_w_xp.fit(Xw_xp, yw_xp, sample_weight=sample_weight_xp)
-        w_mean = _convert_to_numpy(scaler_w_xp.mean_, xp=xp)
-        w_var = _convert_to_numpy(scaler_w_xp.var_, xp=xp)
+        w_mean = move_to(scaler_w_xp.mean_, xp=np, device="cpu")
+        w_var = move_to(scaler_w_xp.var_, xp=np, device="cpu")
 
     assert_allclose(scaler_w.mean_, w_mean)
     assert_allclose(scaler_w.var_, w_var)
@@ -214,8 +212,8 @@ def test_standard_scaler_sample_weight_array_api(
     scaler_xp = StandardScaler()
     with config_context(array_api_dispatch=True):
         scaler_xp.fit(X_xp, y_xp)
-        uw_mean = _convert_to_numpy(scaler_xp.mean_, xp=xp)
-        uw_var = _convert_to_numpy(scaler_xp.var_, xp=xp)
+        uw_mean = move_to(scaler_xp.mean_, xp=np, device="cpu")
+        uw_var = move_to(scaler_xp.var_, xp=np, device="cpu")
 
     assert_allclose(scaler.mean_, uw_mean)
     assert_allclose(scaler.var_, uw_var)
@@ -225,8 +223,8 @@ def test_standard_scaler_sample_weight_array_api(
     assert_allclose(uw_var, w_var)
     with config_context(array_api_dispatch=True):
         assert_allclose(
-            _convert_to_numpy(scaler_xp.transform(X_test_xp), xp=xp),
-            _convert_to_numpy(scaler_w_xp.transform(X_test_xp), xp=xp),
+            move_to(scaler_xp.transform(X_test_xp), xp=np, device="cpu"),
+            move_to(scaler_w_xp.transform(X_test_xp), xp=np, device="cpu"),
         )
 
 
@@ -764,9 +762,8 @@ def test_standard_check_array_of_inverse_transform():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "check",
@@ -789,16 +786,21 @@ def test_standard_check_array_of_inverse_transform():
     ids=_get_check_estimator_ids,
 )
 def test_preprocessing_array_api_compliance(
-    estimator, check, array_namespace, device, dtype_name
+    estimator, check, array_namespace, device_name, dtype_name
 ):
     name = estimator.__class__.__name__
-    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
+    check(
+        name,
+        estimator,
+        array_namespace,
+        device_name=device_name,
+        dtype_name=dtype_name,
+    )
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "check",
@@ -807,7 +809,7 @@ def test_preprocessing_array_api_compliance(
 )
 @pytest.mark.parametrize("sample_weight", [True, None])
 def test_standard_scaler_array_api_compliance(
-    check, sample_weight, array_namespace, device, dtype_name
+    check, sample_weight, array_namespace, device_name, dtype_name
 ):
     estimator = StandardScaler()
     name = estimator.__class__.__name__
@@ -815,7 +817,7 @@ def test_standard_scaler_array_api_compliance(
         name,
         estimator,
         array_namespace,
-        device=device,
+        device_name=device_name,
         dtype_name=dtype_name,
         check_sample_weight=sample_weight,
     )
@@ -2107,18 +2109,19 @@ def test_binarizer(constructor):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
 )
-def test_binarizer_array_api_int(array_namespace, device, dtype_name):
+def test_binarizer_array_api_int(array_namespace, device_name, dtype_name):
     # Checks that Binarizer works with integer elements and float threshold
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     for dtype_name_ in [dtype_name, "int32", "int64"]:
         X_np = np.reshape(np.asarray([0, 1, 2, 3, 4], dtype=dtype_name_), (-1, 1))
         X_xp = xp.asarray(X_np, device=device)
         binarized_np = Binarizer(threshold=2.5).fit_transform(X_np)
         with config_context(array_api_dispatch=True):
             binarized_xp = Binarizer(threshold=2.5).fit_transform(X_xp)
-        assert_array_equal(_convert_to_numpy(binarized_xp, xp), binarized_np)
+        assert_array_equal(move_to(binarized_xp, xp=np, device="cpu"), binarized_np)
 
 
 def test_center_kernel():
