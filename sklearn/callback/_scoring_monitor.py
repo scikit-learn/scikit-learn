@@ -57,7 +57,7 @@ class ScoringMonitor:
     def __init__(self, *, eval_on="train", scoring):
         self.eval_on = eval_on
         self.scoring = scoring
-        # Turn the scorer into a MultimetricScorer which can route score params
+        # Turn the scorer into a MultimetricScorer for conveniene
         if isinstance(self.scoring, str):
             self.scoring = [self.scoring]
         if callable(self.scoring) and isinstance(self.scoring, _BaseScorer):
@@ -92,46 +92,50 @@ class ScoringMonitor:
         if fitted_estimator is None:
             return
 
-        if self.eval_on in ("train", "both"):
-            score_params = metadata.get("train", {}).copy()
-            self._log_scores(X, y, "train", fitted_estimator, score_params, context)
-        if self.eval_on in ("val", "both"):
-            score_params = metadata.get("val", {}).copy()
-            X, y = score_params.pop("X_val", None), score_params.pop("y_val", None)
-            self._log_scores(X, y, "val", fitted_estimator, score_params, context)
-
-    def _log_scores(self, X, y, eval_on, fitted_estimator, score_params, context):
-        if X is None or y is None:
-            return
-
         context_path = get_context_path(context)
 
-        # run info
         root_context = context_path[0]
+        run_id = root_context.root_uuid
         run_info = {
             "timestamp": root_context.init_time.strftime("UTC%Y-%m-%d-%H:%M:%S.%f"),
             "estimator_name": root_context.estimator_name,
-            "run_id": root_context.root_uuid,
         }
 
-        # context path
-        context_levels = tuple(
-            {
-                "estimator_name": ctx.estimator_name,
-                "task_name": ctx.task_name,
-                "task_id": ctx.task_id,
-            }
-            for ctx in context_path
-        )
+        context_levels = {}
+        for depth, ctx in enumerate(context_path):
+            context_levels[f"estimator_name_depth_{depth}"] = ctx.estimator_name
+            context_levels[f"task_name_depth_{depth}"] = ctx.task_name
+            context_levels[f"task_id_depth_{depth}"] = ctx.task_id
 
-        # scores
-        scores = {"eval_on": eval_on}
+        metadata = {} if metadata is None else metadata
+        scores = {}
+        if self.eval_on in ("train", "both"):
+            score_params = metadata.get("train", {}).copy()
+            scores.update(
+                self._compute_scores(
+                    fitted_estimator, X, y, score_params, "train", context
+                )
+            )
+        if self.eval_on in ("val", "both"):
+            score_params = metadata.get("val", {}).copy()
+            X_val = score_params.pop("X_val", None)
+            y_val = score_params.pop("y_val", None)
+            scores.update(
+                self._compute_scores(
+                    fitted_estimator, X_val, y_val, score_params, "val", context
+                )
+            )
+
+        self._shared_log.append((run_id, run_info, context_levels, scores))
+
+    def _compute_scores(self, fitted_estimator, X, y, score_params, eval_on, context):
+        if X is None or y is None:
+            return {}
+
         scorer = self._estimator_scorers[context.estimator_name]
         score_params = {k: v for k, v in score_params.items() if v is not None}
-        score = scorer(fitted_estimator, X, y, **score_params)
-        scores.update(score)
-
-        self._shared_log.append((run_info, context_levels, scores))
+        raw_scores = scorer(fitted_estimator, X, y, **score_params)
+        return {f"{eval_on}_{name}": value for name, value in raw_scores.items()}
 
     @validate_params(
         {
@@ -144,9 +148,9 @@ class ScoringMonitor:
         """Get the logged scores.
 
         For a given run, the scores are logged in a dict containing:
+            - "run_id": a unique identifier for the run;
             - "estimator_name": the name of the estimator of the run;
             - "timestamp": the timestamp of the start of the run;
-            - "run_id": a unique identifier for the run;
             - "data": the recorded scores for the run. Each score value is associated
               with the detailed context of the score computation.
 
@@ -175,28 +179,12 @@ class ScoringMonitor:
         logs = defaultdict(lambda: {"data": []})
 
         # group logs by run
-        for run_info, context_levels, scores in list(self._shared_log):
-            run_id = run_info.pop("run_id")
+        for run_id, run_info, context_levels, scores in list(self._shared_log):
             logs[run_id].update(run_info)
-
-            row = {}
-            for depth, context_level in enumerate(context_levels):
-                row[f"estimator_name_{depth}"] = context_level["estimator_name"]
-                row[f"task_name_{depth}"] = context_level["task_name"]
-                row[f"task_id_{depth}"] = context_level["task_id"]
-            row.update(scores)
-            logs[run_id]["data"].append(row)
+            logs[run_id]["data"].append({**context_levels, **scores})
 
         # sort logs by run timestamp and estimator name
-        logs = [
-            {
-                "estimator_name": log["estimator_name"],
-                "timestamp": log["timestamp"],
-                "run_id": run_id,
-                "data": log["data"],
-            }
-            for run_id, log in logs.items()
-        ]
+        logs = [{"run_id": run_id, **log} for run_id, log in logs.items()]
         logs.sort(key=lambda log: (log["timestamp"], log["estimator_name"]))
 
         if as_frame:

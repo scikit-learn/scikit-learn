@@ -19,7 +19,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils._metadata_requests import UnsetMetadataPassedError
 
 
-def _get_scorer_and_names(scoring):
+def _make_expected_output_MaxIterEstimator(
+    max_iter, scoring, as_frame, X_train, y_train, X_val, y_val, depth=0
+):
+    """Generate the expected output of a ScoringMonitor on a MaxIterEstimator."""
     scorer = check_scoring(None, scoring)
     if isinstance(scoring, str):
         score_names = [scoring]
@@ -27,63 +30,44 @@ def _get_scorer_and_names(scoring):
         score_names = ["score"]
     else:  # multi-scorer
         score_names = list(scorer._scorers.keys())
-    return scorer, score_names
 
-
-def _rows_from_run_log(run_log, as_frame):
-    if as_frame:
-        return run_log["data"].to_dict("records")
-    return run_log["data"]
-
-
-def _make_expected_output_MaxIterEstimator(
-    max_iter, scoring, as_frame, X_train, y_train, X_val, y_val, depth=0
-):
-    """Generate the expected output of a ScoringMonitor on a MaxIterEstimator."""
-    scorer, score_names = _get_scorer_and_names(scoring)
     est_name = MaxIterEstimator.__name__
 
     expected_log = []
     # fit loop iterations
     for i in range(max_iter):
         fitted_est = MaxIterEstimator(max_iter=i + 1).fit()
-
+        log_item = {
+            f"estimator_name_depth_{depth}": est_name,
+            f"task_name_depth_{depth}": "fit",
+            f"task_id_depth_{depth}": 0,
+            f"estimator_name_depth_{depth + 1}": est_name,
+            f"task_name_depth_{depth + 1}": "iteration",
+            f"task_id_depth_{depth + 1}": i,
+        }
         for eval_on in ("train", "val"):
-            log_item = {
-                f"estimator_name_{depth}": est_name,
-                f"task_name_{depth}": "fit",
-                f"task_id_{depth}": 0,
-                f"estimator_name_{depth + 1}": est_name,
-                f"task_name_{depth + 1}": "iteration",
-                f"task_id_{depth + 1}": i,
-                "eval_on": eval_on,
-            }
-
             X, y = (X_train, y_train) if eval_on == "train" else (X_val, y_val)
             scores = scorer(fitted_est, X, y)
             if isinstance(scores, dict):
-                log_item.update(scores)
+                log_item.update({f"{eval_on}_{k}": v for k, v in scores.items()})
             else:
-                log_item[score_names[0]] = scores
-            expected_log.append(log_item)
+                log_item[f"{eval_on}_{score_names[0]}"] = scores
+        expected_log.append(log_item)
 
     # fit root task
+    log_item = {
+        f"estimator_name_depth_{depth}": est_name,
+        f"task_name_depth_{depth}": "fit",
+        f"task_id_depth_{depth}": 0,
+    }
     for eval_on in ("train", "val"):
-        log_item = {
-            f"estimator_name_{depth}": est_name,
-            f"task_name_{depth}": "fit",
-            f"task_id_{depth}": 0,
-            "task_id_0": 0,
-            "eval_on": eval_on,
-        }
-
         X, y = (X_train, y_train) if eval_on == "train" else (X_val, y_val)
         scores = scorer(fitted_est, X, y)
         if isinstance(scores, dict):
-            log_item.update(scores)
+            log_item.update({f"{eval_on}_{k}": v for k, v in scores.items()})
         else:
-            log_item[score_names[0]] = scores
-        expected_log.append(log_item)
+            log_item[f"{eval_on}_{score_names[0]}"] = scores
+    expected_log.append(log_item)
 
     if as_frame:
         pd = pytest.importorskip("pandas")
@@ -104,13 +88,13 @@ def _make_expected_output_MetaEstimator(
     expected_log = []
     for i in range(n_outer):
         for j in range(n_inner):
-            common = {
-                "estimator_name_0": meta_est_name,
-                "task_name_0": "fit",
-                "task_id_0": 0,
-                "estimator_name_1": meta_est_name,
-                "task_name_1": "outer",
-                "task_id_1": i,
+            meta_est_context_levels = {
+                "estimator_name_depth_0": meta_est_name,
+                "task_name_depth_0": "fit",
+                "task_id_depth_0": 0,
+                "estimator_name_depth_1": meta_est_name,
+                "task_name_depth_1": "outer",
+                "task_id_depth_1": i,
             }
 
             estimator_log = _make_expected_output_MaxIterEstimator(
@@ -118,9 +102,8 @@ def _make_expected_output_MetaEstimator(
             )
             # root task_id of the estimator is inherited from the inner task
             for entry in estimator_log:
-                entry["task_id_2"] = j
-                log_item = {**common, **entry}
-                expected_log.append(log_item)
+                entry["task_id_depth_2"] = j
+                expected_log.append({**meta_est_context_levels, **entry})
 
     if as_frame:
         pd = pytest.importorskip("pandas")
@@ -149,13 +132,12 @@ def test_eval_on(eval_on):
     log = callback.get_logs(as_frame=False, select="most_recent")["data"]
 
     # we expect one score for each iteration + the score at the end of fit
-    if eval_on in ("train", "val"):
-        assert len(log) == 1 + max_iter
-        assert all(entry["eval_on"] == eval_on for entry in log)
-    else:  # eval_on == "both"
-        train_log = [entry for entry in log if entry["eval_on"] == "train"]
-        val_log = [entry for entry in log if entry["eval_on"] == "val"]
-        assert len(train_log) == len(val_log) == 1 + max_iter
+    assert len(log) == 1 + max_iter
+    for row in log:
+        if eval_on in ("train", "both"):
+            assert "train_r2" in row
+        if eval_on in ("val", "both"):
+            assert "val_r2" in row
 
 
 @pytest.mark.parametrize(
@@ -221,11 +203,11 @@ def test_logged_values_meta_estimator(prefer, scoring, as_frame):
     # parallel task, "outer", which at depth 1.
     if as_frame:
         log.sort_values(
-            by=["task_id_1"], inplace=True, ignore_index=True, kind="stable"
+            by=["task_id_depth_1"], inplace=True, ignore_index=True, kind="stable"
         )
         assert log.equals(expected_log)
     else:
-        log.sort(key=lambda x: x["task_id_1"])
+        log.sort(key=lambda x: x["task_id_depth_1"])
         assert log == expected_log
 
 
@@ -363,11 +345,8 @@ def test_validation_set_metadata_routing():
         )
         log = callback.get_logs(as_frame=False, select="most_recent")["data"]
 
-        log_train = [entry for entry in log if entry["eval_on"] == "train"]
-        log_val = [entry for entry in log if entry["eval_on"] == "val"]
-
         # 1 score for each iteration + 1 score at the end of fit in MaxIterEstimator
-        assert len(log_train) == len(log_val) == n_outer * n_inner * (1 + max_iter)
+        assert len(log) == n_outer * n_inner * (1 + max_iter)
 
         # The scores on the train and validation sets are different
-        assert log_train != log_val
+        assert any([entry["train_r2"] != entry["val_r2"] for entry in log])
