@@ -2338,3 +2338,74 @@ def test_sgd_one_class_svm_formulation_with_scipy_minimize():
 
     assert_allclose(model.coef_, expected_coef, rtol=5e-3)
     assert_allclose(model.offset_, expected_offset, rtol=1e-2)
+
+
+# ---- Non-regression tests for issue #33436 ----
+
+@pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
+def test_partial_fit_zero_sample_weight_classifier(klass):
+    """SGDClassifier.partial_fit must not mutate the model when all
+    sample_weight values are zero (GH #33436)."""
+    X_train, y_train = iris.data, iris.target
+    classes = np.unique(y_train)
+
+    # Fit the model on real data first
+    clf = klass(random_state=0, max_iter=5)
+    clf.partial_fit(X_train, y_train, classes=classes)
+
+    coef_before = clf.coef_.copy()
+    t_before = clf.t_
+
+    # Call partial_fit with all-zero sample weights
+    zero_weight = np.zeros(X_train.shape[0])
+    clf.partial_fit(X_train, y_train, sample_weight=zero_weight)
+
+    assert_array_equal(clf.coef_, coef_before)
+    assert clf.t_ == t_before, (
+        f"t_ changed from {t_before} to {clf.t_} with all-zero sample_weight"
+    )
+
+
+def test_partial_fit_zero_sample_weight_regressor():
+    """SGDRegressor.partial_fit must not mutate the model when all
+    sample_weight values are zero (GH #33436)."""
+    from sklearn.linear_model import SGDRegressor
+
+    rng = np.random.RandomState(0)
+    X_train = rng.randn(50, 4)
+    y_train = rng.randn(50)
+
+    reg = SGDRegressor(random_state=0, max_iter=5)
+    reg.partial_fit(X_train, y_train)
+
+    coef_before = reg.coef_.copy()
+    t_before = reg.t_
+
+    zero_weight = np.zeros(X_train.shape[0])
+    reg.partial_fit(X_train, y_train, sample_weight=zero_weight)
+
+    assert_array_equal(reg.coef_, coef_before)
+    assert reg.t_ == t_before, (
+        f"t_ changed from {t_before} to {reg.t_} with all-zero sample_weight"
+    )
+
+
+def test_partial_fit_zero_sample_weight_one_class_svm():
+    """SGDOneClassSVM.partial_fit must not mutate the model when all
+    sample_weight values are zero (GH #33436)."""
+    rng = np.random.RandomState(0)
+    X_train = rng.randn(50, 4)
+
+    clf = SGDOneClassSVM(random_state=0, max_iter=5)
+    clf.partial_fit(X_train)
+
+    coef_before = clf.coef_.copy()
+    t_before = clf.t_
+
+    zero_weight = np.zeros(X_train.shape[0])
+    clf.partial_fit(X_train, sample_weight=zero_weight)
+
+    assert_array_equal(clf.coef_, coef_before)
+    assert clf.t_ == t_before, (
+        f"t_ changed from {t_before} to {clf.t_} with all-zero sample_weight"
+    )

@@ -655,6 +655,11 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         if not hasattr(self, "t_"):
             self.t_ = 1.0
 
+        # If all sample weights are zero, skip the gradient update to preserve
+        # the current model state (see issue #33436).
+        if not np.any(sample_weight):
+            return self
+
         # delegate to concrete training procedure
         if n_classes > 2:
             self._fit_multiclass(
@@ -1531,6 +1536,11 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         if self.average > 0 and getattr(self, "_average_coef", None) is None:
             self._average_coef = np.zeros(n_features, dtype=X.dtype, order="C")
             self._average_intercept = np.zeros(1, dtype=X.dtype, order="C")
+
+        # If all sample weights are zero, skip the gradient update to preserve
+        # the current model state (see issue #33436).
+        if not np.any(sample_weight):
+            return self
 
         self._fit_regressor(X, y, alpha, loss, learning_rate, sample_weight, max_iter)
 
@@ -2465,6 +2475,11 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         self._loss_function_ = self._get_loss_function(loss)
         if not hasattr(self, "t_"):
             self.t_ = 1.0
+
+        # If all sample weights are zero, skip the gradient update to preserve
+        # the current model state (see issue #33436).
+        if not np.any(sample_weight):
+            return self
 
         # delegate to concrete training procedure
         self._fit_one_class(
