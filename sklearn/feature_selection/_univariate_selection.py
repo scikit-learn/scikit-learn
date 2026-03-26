@@ -376,8 +376,12 @@ def r_regression(X, y, *, center=True, force_finite=True):
         # SciPy >= 1.11
         X_means = X.mean(axis=0)
         X_means = X_means.getA1() if isinstance(X_means, np.matrix) else X_means
-        # Compute the scaled standard deviations via moments
-        X_norms = np.sqrt(row_norms(X.T, squared=True) - n_samples * X_means**2)
+        # Compute the scaled standard deviations via moments.
+        # Clamp to zero to avoid negative values from floating-point error
+        # when features are constant (see #11395).
+        X_norms_squared = row_norms(X.T, squared=True) - n_samples * X_means**2
+        np.maximum(X_norms_squared, 0, out=X_norms_squared)
+        X_norms = np.sqrt(X_norms_squared)
     else:
         X_norms = row_norms(X.T)
 

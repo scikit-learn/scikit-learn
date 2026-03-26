@@ -1,0 +1,5 @@
+- :func:`feature_selection.r_regression` no longer raises a ``RuntimeWarning``
+  when computing the Pearson correlation for constant features. Tiny negative
+  values from floating-point error in the variance computation are now clamped
+  to zero before taking the square root.
+  By :user:`Eden Rochman <EdenRochmanSharabi>`.

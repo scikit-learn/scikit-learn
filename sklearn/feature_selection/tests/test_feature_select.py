@@ -303,6 +303,37 @@ def test_f_regression_corner_case(
     np.testing.assert_array_almost_equal(p_values, expected_p_values)
 
 
+def test_f_regression_constant_feature_no_warning():
+    """Check that f_regression does not raise RuntimeWarning for constant features.
+
+    The variance computation can produce tiny negative values due to
+    floating-point error when a feature is constant. This should not
+    trigger a RuntimeWarning from np.sqrt.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/11395
+    """
+    # Reproducer from the original issue: constant column at 0.92 with
+    # specific n_samples triggers a negative intermediate value in the
+    # variance formula (sum(x^2) - n * mean^2 ≈ -1e-16).
+    rng = np.random.RandomState(42)
+    n_samples = 6
+    X = np.column_stack(
+        [0.92 * np.ones(n_samples), rng.randn(n_samples)]
+    )
+    y = rng.randn(n_samples)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        f_stat, p_values = f_regression(X, y)
+
+    # The constant feature should yield F=0 and p=1 (no predictive power)
+    assert f_stat[0] == 0.0
+    assert p_values[0] == 1.0
+    # The non-constant feature should have a valid F-statistic
+    assert np.isfinite(f_stat[1])
+    assert np.isfinite(p_values[1])
+
+
 def test_f_classif_multi_class():
     # Test whether the F test yields meaningful results
     # on a simple simulated classification problem
