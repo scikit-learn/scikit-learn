@@ -29,9 +29,7 @@ setting up and shutting down the callback. The
 beginning and end of each task in ``fit`` and are responsible for the actual callback
 work. In scikit-learn estimators, a task in ``fit`` is usually one step of a loop, with
 nested loops corresponding to netsed tasks. In general a task can be whatever unit of
-work the estimator's developer wants it to be, however if the defined tasks are too
-unusual it might comprommise the compatibility of the estimator with scikit-learn's
-builtin callbacks.
+work the estimator's developer wants it to be.
 
 In order to support the callbacks, estimators need to initialize and manage
 :class:`~callback.CallbackContext` objects. As the name implies, these objects hold the
@@ -69,10 +67,10 @@ X = rng.rand(n_samples, n_features)
 # ----------------
 # Here we demonstrate how to implement a custom estimator that supports callbacks. For
 # the example, a simplified version of KMeans is presented. First, let's implement our
-# `SimpleKmeans` estimator without the callback support.
+# `SimpleKMeans` estimator without the callback support.
 
 
-class SimpleKmeans(BaseEstimator):
+class SimpleKMeans(BaseEstimator):
     def __init__(self, n_clusters=6, n_iter=100, random_state=None):
         self.n_clusters = n_clusters
         self.n_iter = n_iter
@@ -122,7 +120,7 @@ class SimpleKmeans(BaseEstimator):
 
 
 # First things first, the estimator must inherit from the `CallbackSupportMixin` class.
-class SimpleKMeans(CallbackSupportMixin, BaseEstimator):
+class SimpleKMeans(CallbackSupportMixin, BaseEstimator):  # noqa: F811
     def __init__(self, n_clusters=6, n_iter=100, random_state=None):
         self.n_clusters = n_clusters
         self.n_iter = n_iter
@@ -139,7 +137,8 @@ class SimpleKMeans(CallbackSupportMixin, BaseEstimator):
         random_state = check_random_state(self.random_state)
         # The `CallbackContext` object must be instantiated with the
         # `_init_callback_context` method provided by the mixin, which will call the
-        # `setup` hooks of the callbacks.
+        # `setup` hooks of the callbacks. This context corresponds to the root task of
+        # the fit function.
         callback_ctx = self._init_callback_context(
             task_name="fit", max_subtasks=self.n_iter
         )
@@ -153,10 +152,10 @@ class SimpleKMeans(CallbackSupportMixin, BaseEstimator):
         self.cluster_centers_ = random_state.rand(self.n_clusters, X.shape[1])
 
         for i in range(self.n_iter):
-            # For each of the fit task (here each iteration of the loop), a sub-context
+            # For each sub-task of fit (here each iteration of the loop), a sub-context
             # must be created with the callback context's `subcontext` method.
             subcontext = callback_ctx.subcontext(task_id=i, task_name="fit iteration")
-            # The sub-context's correspond to a new task, so its
+            # The sub-context corresponds to a new sub-task, so its
             # `call_on_fit_task_begin` method must also be called.
             subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
@@ -169,7 +168,7 @@ class SimpleKMeans(CallbackSupportMixin, BaseEstimator):
             # After each sub-task, the `call_on_fit_task_end` method of its sub-context
             # must be called, also with `estimator` as a mandatory argument and optional
             # `kwargs`. It will call all the callbacks' `on_fit_task_end` hooks. Here
-            # the extra `kwargs` contain the `reconstruction_attributes` function,
+            # the extra `kwargs` contain a `reconstruction_attributes` callable,
             # which returns the necessary attributes to generate an estimator instance
             # ready to predict, as if the fit process just stopped at this step.
             if subcontext.call_on_fit_task_end(
@@ -215,7 +214,7 @@ class SimpleKMeans(CallbackSupportMixin, BaseEstimator):
 # %%
 # .. note::
 #
-#     See :ref:`the callback API documentation <contextual_info_section>` for a list of
+#     See :ref:`the callback API documentation <callback_extra_kwargs>` for a list of
 #     the possible keys of the ``kwargs`` to provide to ``call_on_fit_task_begin`` and
 #     ``call_on_fit_task_end``. These ``kwargs`` are optional, but an estimator should
 #     provide all the ones it is capable of producing to be compatible with a maximum
@@ -224,7 +223,7 @@ class SimpleKMeans(CallbackSupportMixin, BaseEstimator):
 # %%
 # Registering callbacks to the custom estimator
 # -------------------
-# Now the ``SimpleKmeans`` estimator can be used with callbacks, for example with the
+# Now the ``SimpleKMeans`` estimator can be used with callbacks, for example with the
 # :class:`~callback.ProgressBar` callback to monitor progress.
 
 estimator = SimpleKMeans(random_state=rng)
@@ -309,22 +308,22 @@ class SimpleGridSearch(CallbackSupportMixin, BaseEstimator):  # noqa: F811
 
         # The tasks of the `fit` function are here the iterations on two levels of
         # nested loops. Therefore, two levels of sub-contexts must be used. Each level
-        # will need its sub-context to call its `call_on_fit_task_end` method. These
-        # methods can be used at any level to enable interruptions through a `break`.
-        # Here it does not make much sense to allow stopping between folds inside the
-        # inner loop, so it is only implemented on the outer loop, but this is only a
-        # design choice.
+        # will need its sub-context to call its `call_on_fit_task_begin` and
+        # `call_on_fit_task_end` hooks. The `call_on_fit_task_end` hooks can be used at
+        # any level to enable interruptions through a `break`. Here it does not make
+        # much sense to allow stopping between folds inside the inner loop, so it is
+        # only implemented on the outer loop, but this is only a design choice.
 
         for i, params in enumerate(self.param_list):
-            # A sub-context for the first level of `fit` iterations must be created.
+            # A sub-context for the first level of iterations must be created.
             outer_subcontext = callback_ctx.subcontext(
                 task_name="param iteration", task_id=i, max_subtasks=cv.get_n_splits()
             )
-            # The `call_on_fit_task_begin` method of this sub-context must e called
+            # The `call_on_fit_task_begin` method of this sub-context must be called
             outer_subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
             for j, (train_idx, test_idx) in enumerate(cv.split(X)):
-                # This time a second level of `fit` iterations is also used, a second
-                # level of sub-context must then be used.
+                # This time a second level of iterations is also used, a second
+                # level of sub-contexts must then be used.
                 inner_subcontext = outer_subcontext.subcontext(
                     task_name=f"split {j}", task_id=j
                 )
@@ -335,7 +334,8 @@ class SimpleGridSearch(CallbackSupportMixin, BaseEstimator):  # noqa: F811
                 # only the callbacks following the `AutoPropagatedCallback` protocol
                 # will be propagated.
                 inner_subcontext.propagate_callback_context(sub_estimator=estimator)
-                # As for other contexts, its `call_on_fit_task_begin` must be called.
+                # After the propagation, the sub-context's `call_on_fit_task_begin`
+                # method must be called.
                 inner_subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
                 X_train, X_test = X[train_idx], X[test_idx]
@@ -346,7 +346,7 @@ class SimpleGridSearch(CallbackSupportMixin, BaseEstimator):  # noqa: F811
                 score = self.score_func(estimator, X_test, y_test)
                 self.cv_results_.append((params, f"split_{j}", score))
 
-                # The inner sub-context's `call_on_fit_task_end` must be called.
+                # The inner sub-context's `call_on_fit_task_end` method must be called.
                 inner_subcontext.call_on_fit_task_end(estimator=self, X=X, y=y)
 
             # The outer sub-context's `call_on_fit_task_end` must be called as well and

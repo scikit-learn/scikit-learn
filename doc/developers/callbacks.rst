@@ -13,7 +13,7 @@ support in estimators, or develop custom callbacks.
 Task tree
 ---------
 
-During its ``fit`` process, an estimator dynamically builds a tree of tasks. The root
+During its :term:`fit` process, an estimator dynamically builds a tree of tasks. The root
 task node represents the whole ``fit`` function itself, and each child node represents a
 sub-task, i.e. an arbitrary unit of work. Such child task is tipycally one step of a
 loop, with nested loops corresponding to nested sub-tasks. The callbacks attached to an
@@ -57,56 +57,53 @@ For instance, a `Pipeline` would have a task tree that looks like this::
         └── <insert LogisticRegression task tree here>
 
 In that case, a callback attached to the meta-estimator will have its hooks called
-either only on the task nodes of the met-estimator (here ``fit``, ``setp 1`` and ``step
-2``) if the callback is not proagated; or on both the task of the meta-estimator and
+either only in the task nodes of the met-estimator (here ``fit``, ``setp 1`` and ``step
+2``) if the callback is not proagated; or in both the tasks of the meta-estimator and
 those of its sub-estimators (here the tasks of the ``StandardScaler`` and
-``LogisticRegression``) if the callback is propagated.
+``LogisticRegression`` task trees) if the callback is propagated.
 
-The callback hooks :meth:`~FitCallback.on_fit_task_begin` :meth:`~FitCallback.on_fit_task_end`
-are called respectively at the start and end of each task node of the tree. To allow
-callbacks to be generic and reusable across estimators, the innermost tasks, i.e. the
-leaves of the task tree, must correspond to operations on the full input data (or
-batches for incremental estimators).
+The callback hooks :meth:`~FitCallback.on_fit_task_begin`
+:meth:`~FitCallback.on_fit_task_end` are called respectively at the start and end of
+each task node of the tree. To allow callbacks to be generic and reusable across
+estimators, the innermost tasks, i.e. the leaves of the task tree, must correspond to
+operations on the full input data (or batches for incremental estimators).
 
 Concretely, the tree structure is created dynamically and abstracted in an object named
 :class:`~CallbackContext`. There is one context for each task, and the context is
 responsible for calling the callback hooks for its task and creating contexts for the
 child tasks.
 
-Callbacks protocol
-------------------
+Callback protocol
+-----------------
 
 In scikit-learn, callbacks are classes following the :class:`~FitCallback` protocol.
 This protocol defines four hook methods which are invoked at different steps of the
 estimator's fit process. The four hooks of a callback are :
 
-.. method:: FitCallback.setup(context) -> None
+.. method:: FitCallback.setup(estimator, context) -> None
     :noindex:
 
     Called only once at the start of the ``fit`` method and responsible for the
     callback's setup.
 
-.. method:: FitCallback.on_fit_task_begin(context, **kwargs) -> None
+.. method:: FitCallback.on_fit_task_begin(estimator, context, **kwargs) -> None
     :noindex:
 
-    Called at the beginning of each task in ``fit``. It takes a ``context`` argument,
-    a :class:`~sklearn.callback.CallbackContext` object holding contextual information
-    and described in more detailed in the :ref:`callback_context_section` section below.
+    Called at the beginning of each task in ``fit``. In addition to the estimator instance the
+    callback is attached to, it takes a ``context`` argument, a
+    :class:`~sklearn.callback.CallbackContext` object holding contextual information and
+    described in more detailed in the :ref:`callback_context_section` section below.
     Optional keyword arguments can be provided depending on the estimator, with the list
-    of possible keys and values described in the
-    :ref:`related section <contextual_info_section>` below.
+    of possible keys and values described in the :ref:`related section
+    <callback_extra_kwargs>` below.
 
-.. method:: FitCallback.on_fit_task_end(context, **kwargs) -> bool
+.. method:: FitCallback.on_fit_task_end(estimator, context, **kwargs) -> bool
     :noindex:
 
     Called at the end of each task in ``fit``. It returns a boolean which can be used by
-    the estimator to stop its fit process. In addition to the estimator the callback is
-    attached to, it takes a ``context`` argument, a
-    :class:`~sklearn.callback.CallbackContext` object holding contextual information and
-    described in more detailed in the :ref:`callback_context_section` below. Optional
-    keyword arguments can be provided depending on the estimator, with the list of
-    possible keys and values described in the
-    :ref:`related section <contextual_info_section>` below.
+    the estimator to stop its fit process. It also takes as arguments an estimator
+    instance, a :class:`~sklearn.callback.CallbackContext` object and the same options
+    of extra keyword arguments as :meth:`~FitCallback.on_fit_task_begin`.
 
 .. method:: FitCallback.teardown(context) -> None
     :noindex:
@@ -120,8 +117,8 @@ estimator's fit process. The four hooks of a callback are :
 Auto-propagated callbacks
 -------------------------
 
-In addition to :class:`~FitCallback`, a second protocol :class:`~AutoPropagatedCallback`
-inherits from the first one but adding a
+In addition to :class:`~FitCallback`, a second protocol,
+:class:`~AutoPropagatedCallback`, inherits from the first one but adding a
 :meth:`~AutoPropagatedCallback.max_estimator_depth` property. This protocol identifies
 callbacks that should be propagated through the task tree. A non-propagated callback can
 be attached to an estimator at any depth of the task tree, and it will have its hooks
@@ -129,7 +126,7 @@ called only in this estimator's task nodes (and its siblings if the estimator is
 in a loop, such as in a grid search). Whereas an auto-propagated callback requires to be
 registered to the root estimator of the task tree, and its
 :meth:`~FitCallback.on_fit_task_begin` and :meth:`~FitCallback.on_fit_task_end` hooks
-will be called in all task node of the tree, up to a depth of
+will be called in all task node of the tree, up to an estimator depth of
 :meth:`~AutoPropagatedCallback.max_estimator_depth`. The :meth:`~Callback.setup` and
 :meth:`~Callback.teardown` hooks of an auto-propagated callback will still be only
 called once, in the root task.
@@ -164,8 +161,8 @@ inherit from to support callbacks. The children context objects are then instant
 each sub-task through their parent context's :meth:`~CallbackContext.subcontext` method.
 
 The callback hooks are invoked by the context object through its
-:meth:`~CallbackContext.eval_on_fit_task_begin` and
-:meth:`~CallbackContext.eval_on_fit_task_end` methods, which are called during fit,
+:meth:`~CallbackContext.call_on_fit_task_begin` and
+:meth:`~CallbackContext.call_on_fit_task_end` methods, which are called during fit,
 at the beginning and at the end of each defined task.
 
 The `setup` and `teardown` hooks are called once, at the beginning and at the end of
@@ -183,18 +180,18 @@ Here is a minimal example of how a callback context should be handled in an esti
         @with_callbacks
         def fit(self, X, y):
             callback_ctx = self._init_callback_context(max_subtasks=self.max_iter)
-            callback_ctx.eval_on_fit_task_begin(X=X, y=y)
+            callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
             for i in range(self.max_iter):
-                subcontext = callback_ctx.subcontext(task_id=i).eval_on_fit_task_begin(
-                    X=X, y=y
+                subcontext = callback_ctx.subcontext(task_id=i).call_on_fit_task_begin(
+                    estimator=self, X=X, y=y
                 )
 
                 # Do something
 
-                subcontext.eval_on_fit_task_end(X=X, y=y)
+                subcontext.call_on_fit_task_end(estimator=self, X=X, y=y)
 
-            callback_ctx.eval_on_fit_task_end(X=X, y=y)
+            callback_ctx.call_on_fit_task_end(estimator=self, X=X, y=y)
 
             return self
 
@@ -203,7 +200,7 @@ For a more detailed example of how to make a custom estimator or meta-estimator
 compatible with scikit-learn's callback API, you can refer to this example :
 :ref:`sphx_glr_auto_examples_callbacks_plot_callback_support.py`.
 
-.. _contextual_info_section:
+.. _callback_extra_kwargs:
 
 Contextual information passed to callbacks
 ------------------------------------------
@@ -215,9 +212,9 @@ hooks always receive as arguments:
 
 - `context`: the callback context of the task for which the hooks are called.
 
-Additional information can also forwarded to these hooks from the
-:meth:`~CallbackContext.eval_on_fit_task_begin` and
-:meth:`~CallbackContext.eval_on_fit_task_end` methods, taking the form optional keyword
+Additional information can also be forwarded to these hooks from the
+:meth:`~CallbackContext.call_on_fit_task_begin` and
+:meth:`~CallbackContext.call_on_fit_task_end` methods, taking the form optional keyword
 arguments given to these methods. The content of these ``kwargs`` will depend on the
 estimator's implementation, as an estimator might not be able to produce all the
 possible values. The list of the possible keys and corresponding values for these
@@ -240,8 +237,8 @@ possible values. The list of the possible keys and corresponding values for thes
     .. warning::
 
         Contrary to the other kwargs, the `reconstruction_attributes` kwarg given to the
-        callback context's :meth:`~CallbackContext.eval_on_fit_task_begin` or
-        :meth:`~CallbackContext.eval_on_fit_task_end` method will not be directly
+        callback context's :meth:`~CallbackContext.call_on_fit_task_begin` or
+        :meth:`~CallbackContext.call_on_fit_task_end` method will not be directly
         forwarded to the :meth:`~FitCallback.on_fit_task_begin` or
         :meth:`~FitCallback.on_fit_task_end` hook, but instead the `fitted_estimator`
         instance will be generated by the callback context, and that instance will be
