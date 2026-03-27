@@ -317,9 +317,7 @@ def test_f_regression_constant_feature_no_warning():
     # variance formula (sum(x^2) - n * mean^2 ≈ -1e-16).
     rng = np.random.RandomState(42)
     n_samples = 6
-    X = np.column_stack(
-        [0.92 * np.ones(n_samples), rng.randn(n_samples)]
-    )
+    X = np.column_stack([0.92 * np.ones(n_samples), rng.randn(n_samples)])
     y = rng.randn(n_samples)
 
     with warnings.catch_warnings():
