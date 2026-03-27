@@ -265,9 +265,7 @@ df["PurePremium"] = df["ClaimAmount"] / df["Exposure"]
 # Frequency times the average claim amount per claim:
 df["Frequency"] = df["ClaimNb"] / df["Exposure"]
 df["AvgClaimAmount"] = df["ClaimAmount"] / np.fmax(df["ClaimNb"], 1)
-
-with pd.option_context("display.max_columns", 15):
-    print(df[df.ClaimAmount > 0].head())
+df[df.ClaimAmount > 0]
 
 # %%
 #
