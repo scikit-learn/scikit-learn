@@ -1,10 +1,11 @@
-from numpy.fft import * # noqa: F403
-from numpy.fft import __all__ as fft_all
-
-from ..common import _fft
-from .._internal import get_xp
-
 import numpy as np
+
+from .._internal import clone_module
+
+__all__ = clone_module("numpy.fft", globals())
+
+from .._internal import get_xp
+from ..common import _fft
 
 fft = get_xp(np)(_fft.fft)
 ifft = get_xp(np)(_fft.ifft)
@@ -21,9 +22,9 @@ rfftfreq = get_xp(np)(_fft.rfftfreq)
 fftshift = get_xp(np)(_fft.fftshift)
 ifftshift = get_xp(np)(_fft.ifftshift)
 
-__all__ = fft_all + _fft.__all__
 
-del get_xp
-del np
-del fft_all
-del _fft
+__all__ = sorted(set(__all__) | set(_fft.__all__))
+
+def __dir__() -> list[str]:
+    return __all__
+

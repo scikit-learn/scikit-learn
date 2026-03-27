@@ -1,0 +1,4 @@
+- Fixed a bug in :class:`linear_model.SGDClassifier` for multiclass settings where
+  large negative values of :method:`decision_function` could lead to NaN values. In
+  this case, this fix assigns equal probability for each class.
+  By :user:`Christian Lorentzen <lorentzenchr>`.

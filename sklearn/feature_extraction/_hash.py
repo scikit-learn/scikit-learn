@@ -7,11 +7,10 @@ from numbers import Integral
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils import metadata_routing
-
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils._param_validation import Interval, StrOptions
-from ._hashing_fast import transform as _hashing_transform
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.feature_extraction._hashing_fast import transform as _hashing_transform
+from sklearn.utils import _align_api_if_sparse, metadata_routing
+from sklearn.utils._param_validation import Interval, StrOptions
 
 
 def _iteritems(d):
@@ -189,14 +188,14 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         if n_samples == 0:
             raise ValueError("Cannot vectorize empty sequence.")
 
-        X = sp.csr_matrix(
+        X = sp.csr_array(
             (values, indices, indptr),
             dtype=self.dtype,
             shape=(n_samples, self.n_features),
         )
         X.sum_duplicates()  # also sorts the indices
 
-        return X
+        return _align_api_if_sparse(X)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -205,4 +204,5 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
             tags.input_tags.string = True
         elif self.input_type == "dict":
             tags.input_tags.dict = True
+        tags.requires_fit = False
         return tags

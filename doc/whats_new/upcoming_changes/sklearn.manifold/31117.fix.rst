@@ -1,5 +1,0 @@
-- :class:`manifold.MDS` now uses `eps=1e-6` by default and the convergence
-  criterion was adjusted to make sense for both metric and non-metric MDS
-  and to follow the reference R implementation. The formula for normalized
-  stress was adjusted to follow the original definition by Kruskal.
-  By :user:`Dmitry Kobak <dkobak>`

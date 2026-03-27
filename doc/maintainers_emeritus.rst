@@ -14,10 +14,11 @@
 - Jaques Grobler
 - Yaroslav Halchenko
 - Brian Holt
+- Nicolas Hug
 - Arnaud Joly
 - Thouis (Ray) Jones
 - Kyle Kastner
-- manoj kumar
+- Manoj Kumar
 - Robert Layton
 - Wei Li
 - Paolo Losi

@@ -9,19 +9,20 @@ from warnings import warn
 import numpy as np
 from scipy.sparse import issparse
 
-from ..base import OutlierMixin, _fit_context
-from ..tree import ExtraTreeRegressor
-from ..tree._tree import DTYPE as tree_dtype
-from ..utils import (
-    check_array,
-    check_random_state,
-    gen_batches,
+from sklearn.base import OutlierMixin, _fit_context
+from sklearn.ensemble._bagging import BaseBagging
+from sklearn.tree import ExtraTreeRegressor
+from sklearn.tree._tree import DTYPE as tree_dtype
+from sklearn.utils import check_array, check_random_state, gen_batches
+from sklearn.utils._chunking import get_chunk_n_rows
+from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    _num_samples,
+    check_is_fitted,
+    validate_data,
 )
-from ..utils._chunking import get_chunk_n_rows
-from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _num_samples, check_is_fitted, validate_data
-from ._bagging import BaseBagging
 
 __all__ = ["IsolationForest"]
 
@@ -200,15 +201,18 @@ class IsolationForest(OutlierMixin, BaseBagging):
     The implementation is based on an ensemble of ExtraTreeRegressor. The
     maximum depth of each tree is set to ``ceil(log_2(n))`` where
     :math:`n` is the number of samples used to build the tree
-    (see (Liu et al., 2008) for more details).
+    (see [1]_ for more details).
 
     References
     ----------
-    .. [1] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
-           Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
-    .. [2] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation-based
-           anomaly detection." ACM Transactions on Knowledge Discovery from
-           Data (TKDD) 6.1 (2012): 3.
+    .. [1] F. T. Liu, K. M. Ting and Z. -H. Zhou.
+           :doi:`"Isolation forest." <10.1109/ICDM.2008.17>`
+           2008 Eighth IEEE International Conference on Data Mining (ICDM),
+           2008, pp. 413-422.
+    .. [2] F. T. Liu, K. M. Ting and Z. -H. Zhou.
+           :doi:`"Isolation-based anomaly detection."
+           <10.1145/2133360.2133363>` ACM Transactions on
+           Knowledge Discovery from Data (TKDD) 6.1 (2012): 1-39.
 
     Examples
     --------
@@ -317,6 +321,10 @@ class IsolationForest(OutlierMixin, BaseBagging):
         X = validate_data(
             self, X, accept_sparse=["csc"], dtype=tree_dtype, ensure_all_finite=False
         )
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
+
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
@@ -350,7 +358,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         super()._fit(
             X,
             y,
-            max_samples,
+            max_samples=max_samples,
             max_depth=max_depth,
             sample_weight=sample_weight,
             check_input=False,
@@ -433,7 +441,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         of the leaf containing this observation, which is equivalent to
         the number of splittings required to isolate this point. In case of
         several observations n_left in the leaf, the average path length of
-        a n_left samples isolation tree is added.
+        an n_left samples isolation tree is added.
 
         Parameters
         ----------
@@ -484,7 +492,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         of the leaf containing this observation, which is equivalent to
         the number of splittings required to isolate this point. In case of
         several observations n_left in the leaf, the average path length of
-        a n_left samples isolation tree is added.
+        an n_left samples isolation tree is added.
 
         Parameters
         ----------
@@ -639,7 +647,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
 def _average_path_length(n_samples_leaf):
     """
-    The average path length in a n_samples iTree, which is equal to
+    The average path length in an n_samples iTree, which is equal to
     the average path length of an unsuccessful BST search since the
     latter has the same structure as an isolation tree.
     Parameters

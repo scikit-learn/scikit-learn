@@ -163,7 +163,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         data_file_name = _file_name(url, ".json")
         data_file_path = resources.files(data_module) / data_file_name
 
-        # load the file itself, to simulate a http error
+        # load the file itself, to simulate an http error
         with data_file_path.open("rb") as f:
             decompressed_f = read_fn(f, "rb")
             decoded_s = decompressed_f.read().decode("utf-8")
@@ -1540,9 +1540,11 @@ def test_open_openml_url_retry_on_network_error(monkeypatch):
             f" {invalid_openml_url}. Retrying..."
         ),
     ) as record:
-        with pytest.raises(HTTPError, match="Simulated network error"):
+        with pytest.raises(HTTPError, match="Simulated network error") as exc_info:
             _open_openml_url(invalid_openml_url, None, delay=0)
         assert len(record) == 3
+        # Avoid a ResourceWarning on Python 3.14 and later.
+        exc_info.value.close()
 
 
 ###############################################################################

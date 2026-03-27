@@ -296,7 +296,7 @@ plt.show()
 # predictions away from the boundaries of the simplex while simultaneously
 # moving uncertain predictions towards one of three modes, one for each class.
 # We can also observe that the mapping is not symmetric. Furthermore some
-# arrows seems to cross class assignment boundaries which is not necessarily
+# arrows seem to cross class assignment boundaries which is not necessarily
 # what one would expect from a calibration map as it means that some predicted
 # classes will change after calibration.
 #
