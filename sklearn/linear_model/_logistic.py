@@ -42,8 +42,10 @@ from sklearn.utils import (
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
     _matching_numpy_dtype,
+    check_same_namespace,
     get_namespace,
     get_namespace_and_device,
+    move_to,
     size,
 )
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
@@ -1326,10 +1328,13 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             warm_start_coef = getattr(self, "coef_", None)
         else:
             warm_start_coef = None
-        if warm_start_coef is not None and self.fit_intercept:
-            warm_start_coef = xp.concat(
-                [warm_start_coef, self.intercept_[:, None]], axis=1
-            )
+        if warm_start_coef is not None:
+            warm_start_coef = move_to(warm_start_coef, xp=np, device="cpu")
+            if self.fit_intercept:
+                intercept_np = move_to(self.intercept_, xp=np, device="cpu")
+                warm_start_coef = np.concatenate(
+                    [warm_start_coef, intercept_np[:, None]], axis=1
+                )
 
         # TODO: enable multi-threading if benchmarks show a positive effect,
         # see https://github.com/scikit-learn/scikit-learn/issues/32162
@@ -1398,6 +1403,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             where classes are ordered as they are in ``self.classes_``.
         """
         check_is_fitted(self)
+        check_same_namespace(X, self, attribute="coef_", method="predict_proba")
 
         is_binary = size(self.classes_) <= 2
         if is_binary:
@@ -1425,6 +1431,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             Returns the log-probability of the sample for each class in the
             model, where classes are ordered as they are in ``self.classes_``.
         """
+        check_same_namespace(X, self, attribute="coef_", method="predict_log_proba")
         xp, _ = get_namespace(X)
         return xp.log(self.predict_proba(X))
 

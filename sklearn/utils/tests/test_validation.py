@@ -34,9 +34,8 @@ from sklearn.utils import (
     deprecated,
 )
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     _is_numpy_namespace,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._mocking import (
@@ -1037,13 +1036,12 @@ def test_check_consistent_length():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, _",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
-def test_check_consistent_length_array_api(array_namespace, device, _):
+def test_check_consistent_length_array_api(array_namespace, device_name, dtype_name):
     """Test that check_consistent_length works with different array types."""
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     with config_context(array_api_dispatch=True):
         check_consistent_length(
@@ -1057,7 +1055,8 @@ def test_check_consistent_length_array_api(array_namespace, device, _):
 
         with pytest.raises(ValueError, match="inconsistent numbers of samples"):
             check_consistent_length(
-                xp.asarray([1, 2], device=device), xp.asarray([1], device=device)
+                xp.asarray([1, 2], device=device),
+                xp.asarray([1], device=device),
             )
 
 
@@ -1609,11 +1608,11 @@ def _check_sample_weight_common(xp):
     # for check_sample_weight
     # check None input
     sample_weight = _check_sample_weight(None, X=xp.ones((5, 2)))
-    assert_allclose(_convert_to_numpy(sample_weight, xp), np.ones(5))
+    assert_allclose(move_to(sample_weight, xp=np, device="cpu"), np.ones(5))
 
     # check numbers input
     sample_weight = _check_sample_weight(2.0, X=xp.ones((5, 2)))
-    assert_allclose(_convert_to_numpy(sample_weight, xp), 2 * np.ones(5))
+    assert_allclose(move_to(sample_weight, xp=np, device="cpu"), 2 * np.ones(5))
 
     # check wrong number of dimensions
     with pytest.raises(ValueError, match=r"Sample weights must be 1D array or scalar"):
@@ -1662,10 +1661,11 @@ def test_check_sample_weight():
 
 
 @pytest.mark.parametrize(
-    "array_namespace,device,dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
 )
-def test_check_sample_weight_array_api(array_namespace, device, dtype):
-    xp = _array_api_for_tests(array_namespace, device)
+def test_check_sample_weight_array_api(array_namespace, device_name, dtype_name):
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     with config_context(array_api_dispatch=True):
         # check array order
         sample_weight = xp.ones(10)[::2]
@@ -1684,13 +1684,14 @@ def test_check_pos_label_consistency(y_true):
 
 
 @pytest.mark.parametrize(
-    "array_namespace,device,dtype",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("y_true", [[0], [0, 1], [-1, 1], [1, 1, 1], [-1, -1, -1]])
-def test_check_pos_label_consistency_array_api(array_namespace, device, dtype, y_true):
-    xp = _array_api_for_tests(array_namespace, device)
+def test_check_pos_label_consistency_array_api(
+    array_namespace, device_name, dtype_name, y_true
+):
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     with config_context(array_api_dispatch=True):
         arr = xp.asarray(y_true, device=device)
         assert _check_pos_label_consistency(None, arr) == 1
@@ -1705,15 +1706,14 @@ def test_check_pos_label_consistency_invalid(y_true):
 
 
 @pytest.mark.parametrize(
-    "array_namespace,device,dtype",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("y_true", [[2, 3, 4], [-10], [0, -1]])
 def test_check_pos_label_consistency_invalid_array_api(
-    array_namespace, device, dtype, y_true
+    array_namespace, device_name, dtype_name, y_true
 ):
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     with config_context(array_api_dispatch=True):
         arr = xp.asarray(y_true, device=device)
         with pytest.raises(ValueError, match="y_true takes value in"):
