@@ -2342,6 +2342,7 @@ def test_sgd_one_class_svm_formulation_with_scipy_minimize():
 
 # ---- Non-regression tests for issue #33436 ----
 
+
 @pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
 def test_partial_fit_zero_sample_weight_classifier(klass):
     """SGDClassifier.partial_fit must not mutate the model when all
