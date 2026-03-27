@@ -4,7 +4,11 @@ import numpy as np
 import pytest
 
 from sklearn import config_context
-from sklearn.utils._repr_html.fitted_attributes import AttrsDict, _fitted_attr_html_repr
+from sklearn.utils._repr_html.fitted_attributes import (
+    AttrsDict,
+    _fitted_attr_html_repr,
+    _read_fitted_attr,
+)
 
 fitted_attrs = AttrsDict(
     fitted_attrs={
@@ -167,3 +171,15 @@ def test_pandas_series_fitted_attr():
         r"\s*</div>"
     )
     assert re.search(expected_html_fitted_attr, html_fitted_attr_out, flags=re.DOTALL)
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        (123.456, "123.5"),
+        (0.00123456, "0.001235"),
+        (1234567.0, "1.235e+06"),
+    ],
+)
+def test_read_fitted_attr_float_formatting(value, expected):
+    assert _read_fitted_attr(value) == expected

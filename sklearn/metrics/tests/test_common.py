@@ -85,13 +85,14 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
-    _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     _max_precision_float_dtype,
-    device,
     get_namespace,
+    move_to,
     yield_mixed_namespace_input_permutations,
     yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._array_api import (
+    device as array_api_device,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
@@ -155,6 +156,7 @@ REGRESSION_METRICS = {
     "mean_poisson_deviance": mean_poisson_deviance,
     "mean_gamma_deviance": mean_gamma_deviance,
     "mean_compound_poisson_deviance": partial(mean_tweedie_deviance, power=1.4),
+    "mean_tweedie_deviance": mean_tweedie_deviance,
     "d2_tweedie_score": partial(d2_tweedie_score, power=1.4),
     "d2_pinball_score": d2_pinball_score,
     # The default `alpha=0.5` (median) masks differences between quantile methods,
@@ -525,6 +527,7 @@ SYMMETRIC_METRICS = {
     "macro_f1_score",
     "weighted_recall_score",
     "mean_squared_log_error",
+    "mean_tweedie_deviance",
     "root_mean_squared_error",
     "root_mean_squared_log_error",
     # P = R = F = accuracy in multiclass case
@@ -624,17 +627,27 @@ METRICS_SUPPORTING_MIXED_NAMESPACE = [
     "average_precision_score",
     "brier_score_loss",
     "confusion_matrix_at_thresholds",
+    "d2_absolute_error_score",
     "d2_brier_score",
     "d2_log_loss_score",
+    "d2_pinball_score",
+    "d2_pinball_score_01",
+    "d2_pinball_score_09",
+    "d2_tweedie_score",
     "explained_variance_score",
     "f1_score",
     "log_loss",
     "max_error",
     "mean_absolute_error",
     "mean_absolute_percentage_error",
+    "mean_compound_poisson_deviance",
+    "mean_gamma_deviance",
+    "mean_normal_deviance",
     "mean_pinball_loss",
+    "mean_poisson_deviance",
     "mean_squared_error",
     "mean_squared_log_error",
+    "mean_tweedie_deviance",
     "median_absolute_error",
     "multilabel_confusion_matrix",
     "precision_score",
@@ -2013,9 +2026,9 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
 
 
 def check_array_api_metric(
-    metric, array_namespace, device, dtype_name, a_np, b_np, **metric_kwargs
+    metric, array_namespace, device_name, dtype_name, a_np, b_np, **metric_kwargs
 ):
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     a_xp = xp.asarray(a_np, device=device)
     b_xp = xp.asarray(b_np, device=device)
@@ -2048,7 +2061,7 @@ def check_array_api_metric(
 
     def _check_metric_matches(metric_a, metric_b, convert_a=False):
         if convert_a:
-            metric_a = _convert_to_numpy(xp.asarray(metric_a), xp)
+            metric_a = move_to(xp.asarray(metric_a), xp=np, device="cpu")
         assert_allclose(metric_a, metric_b, atol=_atol_for_type(dtype_name))
 
     def _check_each_metric_matches(metric_a, metric_b, convert_a=False):
@@ -2092,7 +2105,7 @@ def check_array_api_metric(
 
 
 def check_array_api_binary_classification_metric(
-    metric, array_namespace, device, dtype_name
+    metric, array_namespace, device_name, dtype_name
 ):
     y_true_np = np.array([0, 0, 1, 1])
     y_pred_np = np.array([0, 1, 0, 1])
@@ -2104,7 +2117,7 @@ def check_array_api_binary_classification_metric(
     check_array_api_metric(
         metric,
         array_namespace,
-        device,
+        device_name,
         dtype_name,
         a_np=y_true_np,
         b_np=y_pred_np,
@@ -2117,7 +2130,7 @@ def check_array_api_binary_classification_metric(
     check_array_api_metric(
         metric,
         array_namespace,
-        device,
+        device_name,
         dtype_name,
         a_np=y_true_np,
         b_np=y_pred_np,
@@ -2127,7 +2140,7 @@ def check_array_api_binary_classification_metric(
 
 
 def check_array_api_multiclass_classification_metric(
-    metric, array_namespace, device, dtype_name
+    metric, array_namespace, device_name, dtype_name
 ):
     y_true_np = np.array([0, 1, 2, 3])
     y_pred_np = np.array([0, 1, 0, 2])
@@ -2157,7 +2170,7 @@ def check_array_api_multiclass_classification_metric(
         check_array_api_metric(
             metric,
             array_namespace,
-            device,
+            device_name,
             dtype_name,
             a_np=y_true_np,
             b_np=y_pred_np,
@@ -2170,7 +2183,7 @@ def check_array_api_multiclass_classification_metric(
         check_array_api_metric(
             metric,
             array_namespace,
-            device,
+            device_name,
             dtype_name,
             a_np=y_true_np,
             b_np=y_pred_np,
@@ -2180,7 +2193,7 @@ def check_array_api_multiclass_classification_metric(
 
 
 def check_array_api_multilabel_classification_metric(
-    metric, array_namespace, device, dtype_name
+    metric, array_namespace, device_name, dtype_name
 ):
     y_true_np = np.array([[1, 1], [0, 1], [0, 0]], dtype=dtype_name)
     y_pred_np = np.array([[1, 1], [1, 1], [1, 1]], dtype=dtype_name)
@@ -2197,7 +2210,7 @@ def check_array_api_multilabel_classification_metric(
         check_array_api_metric(
             metric,
             array_namespace,
-            device,
+            device_name,
             dtype_name,
             a_np=y_true_np,
             b_np=y_pred_np,
@@ -2210,7 +2223,7 @@ def check_array_api_multilabel_classification_metric(
         check_array_api_metric(
             metric,
             array_namespace,
-            device,
+            device_name,
             dtype_name,
             a_np=y_true_np,
             b_np=y_pred_np,
@@ -2219,7 +2232,7 @@ def check_array_api_multilabel_classification_metric(
         )
 
 
-def check_array_api_regression_metric(metric, array_namespace, device, dtype_name):
+def check_array_api_regression_metric(metric, array_namespace, device_name, dtype_name):
     func_name = metric.func.__name__ if isinstance(metric, partial) else metric.__name__
     if func_name == "mean_poisson_deviance" and sp_version < parse_version("1.14.0"):
         pytest.skip(
@@ -2238,7 +2251,7 @@ def check_array_api_regression_metric(metric, array_namespace, device, dtype_nam
     check_array_api_metric(
         metric,
         array_namespace,
-        device,
+        device_name,
         dtype_name,
         a_np=y_true_np,
         b_np=y_pred_np,
@@ -2253,7 +2266,7 @@ def check_array_api_regression_metric(metric, array_namespace, device, dtype_nam
         check_array_api_metric(
             metric,
             array_namespace,
-            device,
+            device_name,
             dtype_name,
             a_np=y_true_np,
             b_np=y_pred_np,
@@ -2262,7 +2275,7 @@ def check_array_api_regression_metric(metric, array_namespace, device, dtype_nam
 
 
 def check_array_api_regression_metric_multioutput(
-    metric, array_namespace, device, dtype_name
+    metric, array_namespace, device_name, dtype_name
 ):
     y_true_np = np.array([[1, 3, 2], [1, 2, 2]], dtype=dtype_name)
     y_pred_np = np.array([[1, 4, 4], [1, 1, 1]], dtype=dtype_name)
@@ -2270,7 +2283,7 @@ def check_array_api_regression_metric_multioutput(
     check_array_api_metric(
         metric,
         array_namespace,
-        device,
+        device_name,
         dtype_name,
         a_np=y_true_np,
         b_np=y_pred_np,
@@ -2282,7 +2295,7 @@ def check_array_api_regression_metric_multioutput(
     check_array_api_metric(
         metric,
         array_namespace,
-        device,
+        device_name,
         dtype_name,
         a_np=y_true_np,
         b_np=y_pred_np,
@@ -2292,7 +2305,7 @@ def check_array_api_regression_metric_multioutput(
     check_array_api_metric(
         metric,
         array_namespace,
-        device,
+        device_name,
         dtype_name,
         a_np=y_true_np,
         b_np=y_pred_np,
@@ -2302,7 +2315,7 @@ def check_array_api_regression_metric_multioutput(
     check_array_api_metric(
         metric,
         array_namespace,
-        device,
+        device_name,
         dtype_name,
         a_np=y_true_np,
         b_np=y_pred_np,
@@ -2310,7 +2323,7 @@ def check_array_api_regression_metric_multioutput(
     )
 
 
-def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name):
+def check_array_api_metric_pairwise(metric, array_namespace, device_name, dtype_name):
     X_np = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=dtype_name)
     Y_np = np.array([[0.2, 0.3, 0.4], [0.5, 0.6, 0.7]], dtype=dtype_name)
 
@@ -2320,7 +2333,7 @@ def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name)
         check_array_api_metric(
             metric,
             array_namespace,
-            device,
+            device_name,
             dtype_name,
             a_np=X_np,
             b_np=Y_np,
@@ -2331,7 +2344,7 @@ def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name)
     check_array_api_metric(
         metric,
         array_namespace,
-        device,
+        device_name,
         dtype_name,
         a_np=X_np,
         b_np=Y_np,
@@ -2499,13 +2512,14 @@ def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers)
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
-def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):
-    check_func(metric, array_namespace, device, dtype_name)
+def test_array_api_compliance(
+    metric, array_namespace, device_name, dtype_name, check_func
+):
+    check_func(metric, array_namespace, device_name, dtype_name)
 
 
 def _check_output(out_np, out_xp, xp_to, y2_xp):
@@ -2514,7 +2528,7 @@ def _check_output(out_np, out_xp, xp_to, y2_xp):
     elif hasattr(out_np, "shape"):
         assert hasattr(out_xp, "shape")
         assert get_namespace(out_xp)[0] == xp_to
-        assert device(out_xp) == device(y2_xp)
+        assert array_api_device(out_xp) == array_api_device(y2_xp)
     # `classification_report` returns str (with default `output_dict=False`)
     elif isinstance(out_np, str):
         assert isinstance(out_xp, str)
@@ -2541,8 +2555,12 @@ def test_mixed_array_api_namespace_input_compliance(
     If the output is a tuple, checks that each element, whether float or array,
     is correct, as detailed above.
     """
-    xp_to = _array_api_for_tests(to_ns_and_device.xp, to_ns_and_device.device)
-    xp_from = _array_api_for_tests(from_ns_and_device.xp, from_ns_and_device.device)
+    xp_to, device_to = _array_api_for_tests(
+        to_ns_and_device.xp, device_name=to_ns_and_device.device
+    )
+    xp_from, device_from = _array_api_for_tests(
+        from_ns_and_device.xp, device_name=from_ns_and_device.device
+    )
 
     metric = ALL_METRICS[metric_name]
 
@@ -2581,21 +2599,19 @@ def test_mixed_array_api_namespace_input_compliance(
         for data_case in data_cases:
             y1, y2 = data_all[data_case]
 
-            dtype = _get_dtype(y1, xp_from, from_ns_and_device.device)
-            y1_xp = xp_from.asarray(y1, device=from_ns_and_device.device, dtype=dtype)
+            dtype = _get_dtype(y1, xp_from, device_from)
+            y1_xp = xp_from.asarray(y1, device=device_from, dtype=dtype)
 
             metric_kwargs_xp = metric_kwargs_np = {}
             if metric_name not in METRICS_WITHOUT_SAMPLE_WEIGHT:
                 # use `from_ns_and_device` for `sample_weight` as well
                 sample_weight_np = np.array(sample_weight)
                 metric_kwargs_np = {"sample_weight": sample_weight_np}
-                sample_weight_xp = xp_from.asarray(
-                    sample_weight_np, device=from_ns_and_device.device
-                )
+                sample_weight_xp = xp_from.asarray(sample_weight_np, device=device_from)
                 metric_kwargs_xp = {"sample_weight": sample_weight_xp}
 
-            dtype = _get_dtype(y2, xp_to, to_ns_and_device.device)
-            y2_xp = xp_to.asarray(y2, device=to_ns_and_device.device, dtype=dtype)
+            dtype = _get_dtype(y2, xp_to, device_to)
+            y2_xp = xp_to.asarray(y2, device=device_to, dtype=dtype)
 
             metric_xp = metric(y1_xp, y2_xp, **metric_kwargs_xp)
             metric_np = metric(y1, y2, **metric_kwargs_np)
@@ -2645,9 +2661,8 @@ def test_array_api_classification_string_input(metric_name):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 # All continuous classification metrics, minus multilabel ranking metrics
 # (`METRIC_UNDEFINED_BINARY`), which take label indicator input (and thus never
@@ -2663,7 +2678,7 @@ def test_array_api_classification_string_input(metric_name):
     ),
 )
 def test_array_api_classification_mixed_string_numeric_input(
-    metric_name, array_namespace, device, dtype_name
+    metric_name, array_namespace, device_name, dtype_name
 ):
     """Check string inputs and numeric inputs from mixed namespace and devices accepted.
 
@@ -2671,7 +2686,7 @@ def test_array_api_classification_mixed_string_numeric_input(
     a mix of string and numeric inputs (numeric input should be able to be of
     any supported namespace/device), with array API dispatch enabled.
     """
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     metric = ALL_METRICS[metric_name]
 
     # Binary
