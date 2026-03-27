@@ -50,7 +50,7 @@ task of the sub-estimator are merged into a single task.
 
 For instance, a `Pipeline` would have a task tree that looks like this::
 
-    Pipeline fit
+    Pipeline fit (root)
     ├── step 0 | StandardScaler fit
     │   └── <insert StandardScaler task tree here>
     └── step 1 | LogisticRegression fit
