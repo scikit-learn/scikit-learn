@@ -105,10 +105,9 @@ class SequenceKernel(GenericKernelMixin, Kernel):
 # %%
 # .. note::
 #    Here, we freeze the value of ``baseline_similarity`` by setting
-#    `baseline_similarity_bounds="fixed"` as LBFGS would otherwise fail
-#    to optimize the value of this kernel parameter for some unknown reason.
-#    values.
-#
+#    `baseline_similarity_bounds="fixed"` as LBFGS would otherwise fail to
+#    optimize the value of this kernel parameter for some unknown reason.
+
 kernel = SequenceKernel()
 
 # %%
