@@ -238,7 +238,9 @@ def test_huber_convergence_warning_instead_of_error():
         return result
 
     huber = HuberRegressor()
-    with patch("sklearn.linear_model._huber.optimize.minimize", side_effect=mock_minimize):
+    with patch(
+        "sklearn.linear_model._huber.optimize.minimize", side_effect=mock_minimize
+    ):
         with pytest.warns(ConvergenceWarning, match="lbfgs failed to converge"):
             huber.fit(X, y)
 
