@@ -23,7 +23,7 @@ estimator.
 As an example, KMeans has two nested loops: the outer loop is controlled by `n_init` and
 the inner loop is controlled by `max_iter`. Its task tree looks like this::
 
-    KMeans fit
+    KMeans fit (root)
     ├── init 0
     │   ├── iter 0
     │   ├── iter 1
