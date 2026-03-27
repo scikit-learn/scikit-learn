@@ -104,13 +104,12 @@ class SequenceKernel(GenericKernelMixin, Kernel):
 
 # %%
 # .. note::
-#    Here, we freeze ``baseline_similarity_bounds`` by setting it to `"fixed"` in order
-#    to show this example without ``ConvergenceWarning``s that would otherwise raise.
-#    In another use case, you probably want to optimise on
-#    ``baseline_similarity_bounds``  and should set bounds by passing a tuple of
+#    Here, we freeze the value of ``baseline_similarity`` by setting
+#    `baseline_similarity_bounds="fixed"` as LBFGS would otherwise fail
+#    to optimize the value of this kernel parameter for some unknown reason.
 #    values.
 #
-kernel = SequenceKernel(baseline_similarity_bounds="fixed")
+kernel = SequenceKernel()
 
 # %%
 # Sequence similarity matrix under the kernel
