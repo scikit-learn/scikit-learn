@@ -1,0 +1,5 @@
+- :class:`neighbors.RadiusNeighborsRegressor` now correctly predicts ``NaN``
+  when no neighbors are found within the specified radius and the target ``y``
+  has an integer dtype. Previously, ``np.full_like`` silently cast ``NaN`` to
+  an integer, producing incorrect predictions instead of the expected ``NaN``.
+  By :user:`Eden Rochman <EdenRochmanSharabi>`.
