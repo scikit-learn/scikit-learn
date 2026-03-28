@@ -1870,6 +1870,7 @@ def test_bool_array_constant_imputation_false():
     expected = np.array([[True], [False], [True], [False]])
     assert_array_equal(result, expected)
 
+
 @pytest.mark.parametrize(
     "constructor_name",
     ["pandas", "polars"],
@@ -1896,13 +1897,18 @@ def test_dataframe_bool_most_frequent_with_nan_float(constructor_name):
     ],
 )
 def test_dataframe_bool_most_frequent_without_nan(constructor_name, minversion):
-    df = _convert_container({"flag": [True, False, True]}, constructor_name,
-                             minversion=minversion, dtype=bool)
+    df = _convert_container(
+        {"flag": [True, False, True]},
+        constructor_name,
+        minversion=minversion,
+        dtype=bool,
+    )
     imputer = SimpleImputer(strategy="most_frequent")
     result = imputer.fit_transform(df)
     assert result.dtype == "bool"
     expected = np.array([[True], [False], [True]])
     assert_array_equal(result, expected)
+
 
 def test_numpy_boolean_mean_without_nan():
     X = np.array([[True], [False], [True]], dtype=bool)
@@ -1912,6 +1918,7 @@ def test_numpy_boolean_mean_without_nan():
     expected = np.array([[True], [False], [True]])
     assert_array_equal(result, expected)
 
+
 @pytest.mark.parametrize(
     "constructor_name, minversion",
     [
@@ -1920,13 +1927,15 @@ def test_numpy_boolean_mean_without_nan():
     ],
 )
 def test_dataframe_boolean_mean_without_nan(constructor_name, minversion):
-    df = _convert_container({"flag": [True, False, True]}, constructor_name,
-                             minversion=minversion)
+    df = _convert_container(
+        {"flag": [True, False, True]}, constructor_name, minversion=minversion
+    )
     imputer = SimpleImputer(strategy="mean")
     result = imputer.fit_transform(df)
     assert result.dtype == bool
     expected = np.array([[True], [False], [True]])
     assert_array_equal(result, expected)
+
 
 @pytest.mark.parametrize(
     "constructor_name",
@@ -1944,6 +1953,7 @@ def test_dataframe_boolean_median_with_nan(constructor_name):
     assert result.dtype == float
     expected = np.array([[True], [False], [False], [False]])
     assert_array_equal(result, expected)
+
 
 def test_simple_imputer_constant_fill_value_casting():
     """Check that we raise a proper error message when we cannot cast the fill value

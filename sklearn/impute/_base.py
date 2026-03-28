@@ -49,6 +49,7 @@ def _is_boolean_dtype(dtype):
 
     return str(dtype).lower() in {"bool", "boolean"}
 
+
 def _is_bool_data(X):
     """Return True when X has a boolean dtype or all-boolean dataframe dtypes."""
     return (hasattr(X, "dtype") and _is_boolean_dtype(X.dtype)) or (
