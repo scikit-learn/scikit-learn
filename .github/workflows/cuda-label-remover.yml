@@ -2,7 +2,7 @@ name: Remove "CUDA CI" Label
 
 # This workflow removes the "CUDA CI" label that triggers the actual
 # CUDA CI. It is separate so that we can use the `pull_request_target`
-# trigger which has a API token with write access.
+# trigger which has an API token with write access.
 on:
   pull_request_target:
     types:

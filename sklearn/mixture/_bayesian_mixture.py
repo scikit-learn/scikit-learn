@@ -9,10 +9,8 @@ from numbers import Real
 import numpy as np
 from scipy.special import betaln, digamma, gammaln
 
-from ..utils import check_array
-from ..utils._param_validation import Interval, StrOptions
-from ._base import BaseMixture, _check_shape
-from ._gaussian_mixture import (
+from sklearn.mixture._base import BaseMixture, _check_shape
+from sklearn.mixture._gaussian_mixture import (
     _check_precision_matrix,
     _check_precision_positivity,
     _compute_log_det_cholesky,
@@ -20,6 +18,8 @@ from ._gaussian_mixture import (
     _estimate_gaussian_parameters,
     _estimate_log_gaussian_prob,
 )
+from sklearn.utils import check_array
+from sklearn.utils._param_validation import Interval, StrOptions
 
 
 def _log_dirichlet_norm(dirichlet_concentration):
@@ -230,7 +230,7 @@ class BayesianGaussianMixture(BaseMixture):
             (n_components, n_features, n_features) if 'full'
 
     precisions_cholesky_ : array-like
-        The cholesky decomposition of the precision matrices of each mixture
+        The Cholesky decomposition of the precision matrices of each mixture
         component. A precision matrix is the inverse of a covariance matrix.
         A covariance matrix is symmetric positive definite so the mixture of
         Gaussian can be equivalently parameterized by the precision matrices.
@@ -329,7 +329,7 @@ class BayesianGaussianMixture(BaseMixture):
     .. [2] `Hagai Attias. (2000). "A Variational Bayesian Framework for
        Graphical Models". In Advances in Neural Information Processing
        Systems 12.
-       <https://citeseerx.ist.psu.edu/doc_view/pid/ee844fd96db7041a9681b5a18bff008912052c7e>`_
+       <https://proceedings.neurips.cc/paper_files/paper/1999/file/74563ba21a90da13dacf2a73e3ddefa7-Paper.pdf>`_
 
     .. [3] `Blei, David M. and Michael I. Jordan. (2006). "Variational
        inference for Dirichlet process mixtures". Bayesian analysis 1.1

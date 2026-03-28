@@ -468,7 +468,7 @@ def test_set_output_func():
     assert isinstance(X_trans, pd.DataFrame)
     assert_array_equal(X_trans.columns, ["a", "b"])
 
-    # Warning is raised when func returns a ndarray
+    # Warning is raised when func returns an ndarray
     ft_np = FunctionTransformer(lambda x: np.asarray(x))
 
     for transform in ("pandas", "polars"):

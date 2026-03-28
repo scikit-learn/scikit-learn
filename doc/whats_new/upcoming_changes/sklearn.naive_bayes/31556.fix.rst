@@ -1,3 +1,0 @@
-- :class:`naive_bayes.CategoricalNB` now correctly declares that it accepts
-  categorical features in the tags returned by its `__sklearn_tags__` method.
-  By :user:`Olivier Grisel <ogrisel>`

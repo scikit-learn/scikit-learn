@@ -120,10 +120,9 @@ Reference Steps
         {% if key == "rc" -%}
         * [ ] Update the sklearn dev0 version in main branch
         {%- endif %}
+        * [ ] Cleanup the doc repo to free up space
         * [ ] Set the version number in the release branch
-        {% if key == "rc" -%}
         * [ ] Set an upper bound on build dependencies in the release branch
-        {%- endif %}
         * [ ] Generate the changelog in the release branch
         * [ ] Check that the wheels for the release can be built successfully
         * [ ] Merge the PR with `[cd build]` commit message to upload wheels to the staging repo
@@ -162,10 +161,30 @@ Reference Steps
         the `tool.towncrier` section in `pyproject.toml`.
     {% endif %}
 
+    - The `scikit-learn/scikit-learn.github.io` needs to be cleaned up so that ideally
+      it stays <5GB in size. Before doing this, create a new fresh fork of the existing
+      repo in your own user, to have a place with the history of the repo in case it's
+      needed. These commands will purge the history from the repo.
+
+      .. prompt:: bash
+
+        # need a non-shallow copy, and using https is much faster than ssh here
+        # note that this will be a large download size, up to 100GB (repo size limit)
+        git clone https://github.com/scikit-learn/scikit-learn.github.io.git
+        cd scikit-learn.github.io
+        git remote add write git@github.com:scikit-learn/scikit-learn.github.io.git
+        # checkout an orphan branch w/o history
+        git checkout --orphan temp_branch
+        git add -A
+        git commit -m "Initial commit after purging history"
+        git branch -D main
+        # rename current branch to main to replace it
+        git branch -m main
+        git push --force write main
+
     - In the release branch, change the version number `__version__` in
       `sklearn/__init__.py` to `{{ version_full }}`.
 
-    {% if key == "rc" %}
     - Still in the release branch, set or update the upper bound on the build
       dependencies in the `[build-system]` section of `pyproject.toml`. The goal is to
       prevent future backward incompatible releases of the dependencies to break the
@@ -174,7 +193,6 @@ Reference Steps
       The upper bounds should match the latest already-released minor versions of the
       dependencies and should allow future micro (bug-fix) versions. For instance, if
       numpy 2.2.5 is the most recent version, its upper bound should be set to <2.3.0.
-    {% endif %}
 
     - In the release branch, generate the changelog for the incoming version, i.e.,
       `doc/whats_new/{{ version_short }}.rst`.
@@ -260,7 +278,7 @@ Reference Steps
       .. prompt:: bash
 
         git tag -a {{ version_full }}  # in the {{ version_short }}.X branch
-        git push git@github.com:scikit-learn/scikit-learn.git {{ version_full }}
+        git push https://github.com/scikit-learn/scikit-learn.git {{ version_full }}
 
       .. warning::
 
@@ -334,7 +352,7 @@ Reference Steps
       .. prompt:: bash
 
         cd /tmp
-        git clone --depth 1 --no-checkout git@github.com:scikit-learn/scikit-learn.github.io.git
+        git clone --depth 1 --no-checkout https://github.com/scikit-learn/scikit-learn.github.io.git
         cd scikit-learn.github.io
         echo stable > .git/info/sparse-checkout
         git checkout main

@@ -12,15 +12,13 @@ import warnings
 import numpy as np
 from scipy import linalg
 
-from sklearn.utils import metadata_routing
-
-from .. import config_context
-from ..base import BaseEstimator, _fit_context
-from ..metrics.pairwise import pairwise_distances
-from ..utils import check_array
-from ..utils._param_validation import validate_params
-from ..utils.extmath import fast_logdet
-from ..utils.validation import validate_data
+from sklearn import config_context
+from sklearn.base import BaseEstimator, _fit_context
+from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.utils import check_array, metadata_routing
+from sklearn.utils._param_validation import validate_params
+from sklearn.utils.extmath import fast_logdet
+from sklearn.utils.validation import validate_data
 
 
 @validate_params(

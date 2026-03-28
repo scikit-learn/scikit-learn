@@ -3,14 +3,14 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ._classes import (
+from sklearn.tree._classes import (
     BaseDecisionTree,
     DecisionTreeClassifier,
     DecisionTreeRegressor,
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
-from ._export import export_graphviz, export_text, plot_tree
+from sklearn.tree._export import export_graphviz, export_text, plot_tree
 
 __all__ = [
     "BaseDecisionTree",

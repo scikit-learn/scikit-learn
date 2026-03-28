@@ -19,11 +19,9 @@ coverage:
 
 codecov:
   notify:
-    # Prevent coverage status to upload multiple times for parallel and long
-    # running CI pipelines. This configuration is particularly useful on PRs
-    # to avoid confusion. Note that this value is set to the number of Azure
-    # Pipeline jobs uploading coverage reports.
-    after_n_builds: 6
+    # Prevent codecov from calculating the coverage results before all expected uploads
+    # are in. This value is set to the total number of jobs uploading coverage reports.
+    after_n_builds: 7
 
 ignore:
 - "sklearn/externals"

@@ -12,7 +12,7 @@ from numbers import Integral, Real
 import numpy as np
 from scipy.linalg import pinv, svd
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     MultiOutputMixin,
@@ -20,11 +20,11 @@ from ..base import (
     TransformerMixin,
     _fit_context,
 )
-from ..exceptions import ConvergenceWarning
-from ..utils import check_array, check_consistent_length
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import svd_flip
-from ..utils.validation import FLOAT_DTYPES, check_is_fitted, validate_data
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils import check_array, check_consistent_length
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.extmath import svd_flip
+from sklearn.utils.validation import FLOAT_DTYPES, check_is_fitted, validate_data
 
 __all__ = ["PLSSVD", "PLSCanonical", "PLSRegression"]
 
@@ -903,7 +903,7 @@ class CCA(_PLS):
 class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Partial Least Square SVD.
 
-    This transformer simply performs a SVD on the cross-covariance matrix
+    This transformer simply performs an SVD on the cross-covariance matrix
     `X'y`. It is able to project both the training data `X` and the targets
     `y`. The training data `X` is projected on the left singular vectors, while
     the targets are projected on the right singular vectors.

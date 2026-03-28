@@ -337,7 +337,7 @@ of a :class:`Sum` kernel, where it modifies the mean of the Gaussian process.
 It depends on a parameter :math:`constant\_value`. It is defined as:
 
 .. math::
-   k(x_i, x_j) = constant\_value \;\forall\; x_1, x_2
+   k(x_i, x_j) = constant\_value \;\forall\; x_i, x_j
 
 The main use-case of the :class:`WhiteKernel` kernel is as part of a
 sum-kernel where it explains the noise-component of the signal. Tuning its

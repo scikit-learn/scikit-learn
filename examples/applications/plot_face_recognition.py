@@ -83,7 +83,7 @@ print("done in %0.3fs" % (time() - t0))
 
 
 # %%
-# Train a SVM classification model
+# Train an SVM classification model
 
 print("Fitting the classifier to the training set")
 t0 = time()

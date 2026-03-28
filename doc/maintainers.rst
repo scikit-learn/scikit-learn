@@ -30,10 +30,6 @@
     <p>Tim Head</p>
     </div>
     <div>
-    <a href='https://github.com/NicolasHug'><img src='https://avatars.githubusercontent.com/u/1190450?v=4' class='avatar' /></a> <br />
-    <p>Nicolas Hug</p>
-    </div>
-    <div>
     <a href='https://github.com/adrinjalali'><img src='https://avatars.githubusercontent.com/u/1663864?v=4' class='avatar' /></a> <br />
     <p>Adrin Jalali</p>
     </div>
@@ -68,6 +64,10 @@
     <div>
     <a href='https://github.com/OmarManzoor'><img src='https://avatars.githubusercontent.com/u/17495884?v=4' class='avatar' /></a> <br />
     <p>Omar Salman</p>
+    </div>
+    <div>
+    <a href='https://github.com/StefanieSenger'><img src='https://avatars.githubusercontent.com/u/91849487?v=4' class='avatar' /></a> <br />
+    <p>Stefanie Senger</p>
     </div>
     <div>
     <a href='https://github.com/GaelVaroquaux'><img src='https://avatars.githubusercontent.com/u/208217?v=4' class='avatar' /></a> <br />

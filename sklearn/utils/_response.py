@@ -8,9 +8,9 @@ It allows to make uniform checks and validation.
 
 import numpy as np
 
-from ..base import is_classifier
-from .multiclass import type_of_target
-from .validation import _check_response_method, check_is_fitted
+from sklearn.base import is_classifier
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import _check_response_method, check_is_fitted
 
 
 def _process_predict_proba(*, y_pred, target_type, classes, pos_label):
@@ -41,7 +41,7 @@ def _process_predict_proba(*, y_pred, target_type, classes, pos_label):
         Class labels as reported by `estimator.classes_`.
 
     pos_label : int, float, bool or str
-        Only used with binary and multiclass targets.
+        Only used with binary targets.
 
     Returns
     -------
@@ -79,7 +79,8 @@ def _process_decision_function(*, y_pred, target_type, classes, pos_label):
     This function process the `y_pred` array in the binary and multi-label cases.
     In the binary case, it inverts the sign of the score if the positive label
     is not `classes[1]`. In the multi-label case, it stacks the predictions if
-    they are not in the "compressed" format `(n_samples, n_outputs)`.
+    the positive label is not `classes[1]`. `y_pred` is returned unchanged if
+    `target_type` is "multiclass" or "multilabel-indicator".
 
     Parameters
     ----------
@@ -100,7 +101,7 @@ def _process_decision_function(*, y_pred, target_type, classes, pos_label):
         Class labels as reported by `estimator.classes_`.
 
     pos_label : int, float, bool or str
-        Only used with binary and multiclass targets.
+        Only used with binary targets.
 
     Returns
     -------
@@ -120,15 +121,18 @@ def _get_response_values(
     pos_label=None,
     return_response_method_used=False,
 ):
-    """Compute the response values of a classifier, an outlier detector, or a regressor.
+    """Compute the response values of a classifier, an outlier detector, a regressor
+    or a clusterer.
 
     The response values are predictions such that it follows the following shape:
 
     - for binary classification, it is a 1d array of shape `(n_samples,)`;
-    - for multiclass classification, it is a 2d array of shape `(n_samples, n_classes)`;
+    - for multiclass classification
+        - with response_method="predict", it is a 1d array of shape `(n_samples,)`;
+        - otherwise, it is a 2d array of shape `(n_samples, n_classes)`;
     - for multilabel classification, it is a 2d array of shape `(n_samples, n_outputs)`;
-    - for outlier detection, it is a 1d array of shape `(n_samples,)`;
-    - for regression, it is a 1d array of shape `(n_samples,)`.
+    - for outlier detection, a regressor or a clusterer, it is a 1d array of shape
+      `(n_samples,)`.
 
     If `estimator` is a binary classifier, also return the label for the
     effective positive class.
@@ -140,9 +144,9 @@ def _get_response_values(
     Parameters
     ----------
     estimator : estimator instance
-        Fitted classifier, outlier detector, or regressor or a
+        Fitted classifier, outlier detector, regressor, clusterer or a
         fitted :class:`~sklearn.pipeline.Pipeline` in which the last estimator is a
-        classifier, an outlier detector, or a regressor.
+        classifier, an outlier detector, a regressor or a clusterer.
 
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
@@ -160,8 +164,8 @@ def _get_response_values(
 
     pos_label : int, float, bool or str, default=None
         The class considered as the positive class when computing
-        the metrics. If `None` and target is 'binary', `estimators.classes_[1]` is
-        considered as the positive class.
+        the response values. If `None` and target is 'binary',
+        `estimators.classes_[1]` is considered as the positive class.
 
     return_response_method_used : bool, default=False
         Whether to return the response method used to compute the response
@@ -178,8 +182,8 @@ def _get_response_values(
 
     pos_label : int, float, bool, str or None
         The class considered as the positive class when computing
-        the metrics. Returns `None` if `estimator` is a regressor or an outlier
-        detector.
+        binary response values. Returns `None` if `estimator` is a regressor, an outlier
+        detector or a clusterer.
 
     response_method_used : str
         The response method used to compute the response values. Only returned
@@ -192,23 +196,20 @@ def _get_response_values(
     ValueError
         If `pos_label` is not a valid label.
         If the shape of `y_pred` is not consistent for binary classifier.
-        If the response method can be applied to a classifier only and
-        `estimator` is a regressor.
     """
-    from sklearn.base import is_classifier, is_outlier_detector
+    prediction_method = _check_response_method(estimator, response_method)
 
     if is_classifier(estimator):
-        prediction_method = _check_response_method(estimator, response_method)
         classes = estimator.classes_
         target_type = type_of_target(classes)
 
-        if target_type in ("binary", "multiclass"):
+        if target_type == "binary":
             if pos_label is not None and pos_label not in classes.tolist():
                 raise ValueError(
                     f"pos_label={pos_label} is not a valid label: It should be "
                     f"one of {classes}"
                 )
-            elif pos_label is None and target_type == "binary":
+            elif pos_label is None:
                 pos_label = classes[-1]
 
         y_pred = prediction_method(X)
@@ -227,18 +228,7 @@ def _get_response_values(
                 classes=classes,
                 pos_label=pos_label,
             )
-    elif is_outlier_detector(estimator):
-        prediction_method = _check_response_method(estimator, response_method)
-        y_pred, pos_label = prediction_method(X), None
-    else:  # estimator is a regressor
-        if response_method != "predict":
-            raise ValueError(
-                f"{estimator.__class__.__name__} should either be a classifier to be "
-                f"used with response_method={response_method} or the response_method "
-                "should be 'predict'. Got a regressor with response_method="
-                f"{response_method} instead."
-            )
-        prediction_method = estimator.predict
+    else:
         y_pred, pos_label = prediction_method(X), None
 
     if return_response_method_used:

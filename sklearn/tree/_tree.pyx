@@ -21,10 +21,12 @@ cimport numpy as cnp
 cnp.import_array()
 
 from scipy.sparse import issparse
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_array
 
-from ._utils cimport safe_realloc
-from ._utils cimport sizet_ptr_to_ndarray
+from sklearn.utils import _align_api_if_sparse
+
+from sklearn.tree._utils cimport safe_realloc
+from sklearn.tree._utils cimport sizet_ptr_to_ndarray
 
 cdef extern from "numpy/arrayobject.h":
     object PyArray_NewFromDescr(PyTypeObject* subtype, cnp.dtype descr,
@@ -1002,7 +1004,7 @@ cdef class Tree:
         """
         # Check input
         if not (issparse(X) and X.format == 'csr'):
-            raise ValueError("X should be in csr_matrix format, got %s"
+            raise ValueError("X should be in CSR sparse format, got %s"
                              % type(X))
 
         if X.dtype != DTYPE:
@@ -1087,6 +1089,7 @@ cdef class Tree:
         # Extract input
         cdef const float32_t[:, :] X_ndarray = X
         cdef intp_t n_samples = X.shape[0]
+        cdef float32_t X_i_node_feature
 
         # Initialize output
         cdef intp_t[:] indptr = np.zeros(n_samples + 1, dtype=np.intp)
@@ -1109,7 +1112,13 @@ cdef class Tree:
                     indices[indptr[i + 1]] = <intp_t>(node - self.nodes)
                     indptr[i + 1] += 1
 
-                    if X_ndarray[i, node.feature] <= node.threshold:
+                    X_i_node_feature = X_ndarray[i, node.feature]
+                    if isnan(X_i_node_feature):
+                        if node.missing_go_to_left:
+                            node = &self.nodes[node.left_child]
+                        else:
+                            node = &self.nodes[node.right_child]
+                    elif X_i_node_feature <= node.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
@@ -1120,17 +1129,17 @@ cdef class Tree:
 
         indices = indices[:indptr[n_samples]]
         cdef intp_t[:] data = np.ones(shape=len(indices), dtype=np.intp)
-        out = csr_matrix((data, indices, indptr),
-                         shape=(n_samples, self.node_count))
+        out = csr_array((data, indices, indptr),
+                        shape=(n_samples, self.node_count))
 
-        return out
+        return _align_api_if_sparse(out)
 
     cdef inline object _decision_path_sparse_csr(self, object X):
         """Finds the decision path (=node) for each sample in X."""
 
         # Check input
         if not (issparse(X) and X.format == "csr"):
-            raise ValueError("X should be in csr_matrix format, got %s"
+            raise ValueError("X should be in CSR sparse format, got %s"
                              % type(X))
 
         if X.dtype != DTYPE:
@@ -1204,10 +1213,10 @@ cdef class Tree:
 
         indices = indices[:indptr[n_samples]]
         cdef intp_t[:] data = np.ones(shape=len(indices), dtype=np.intp)
-        out = csr_matrix((data, indices, indptr),
-                         shape=(n_samples, self.node_count))
+        out = csr_array((data, indices, indptr),
+                        shape=(n_samples, self.node_count))
 
-        return out
+        return _align_api_if_sparse(out)
 
     cpdef compute_node_depths(self):
         """Compute the depth of each node in a tree.

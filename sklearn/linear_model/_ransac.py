@@ -6,7 +6,7 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     MetaEstimatorMixin,
     MultiOutputMixin,
@@ -14,32 +14,32 @@ from ..base import (
     _fit_context,
     clone,
 )
-from ..exceptions import ConvergenceWarning
-from ..utils import check_consistent_length, check_random_state, get_tags
-from ..utils._bunch import Bunch
-from ..utils._param_validation import (
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import LinearRegression
+from sklearn.utils import check_consistent_length, check_random_state, get_tags
+from sklearn.utils._bunch import Bunch
+from sklearn.utils._param_validation import (
     HasMethods,
     Interval,
     Options,
     RealNotInt,
     StrOptions,
 )
-from ..utils.metadata_routing import (
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils.random import sample_without_replacement
-from ..utils.validation import (
+from sklearn.utils.random import sample_without_replacement
+from sklearn.utils.validation import (
     _check_method_params,
     _check_sample_weight,
     check_is_fitted,
     has_fit_parameter,
     validate_data,
 )
-from ._base import LinearRegression
 
 _EPSILON = np.spacing(1)
 
@@ -707,7 +707,7 @@ class RANSACRegressor(
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             estimator=self.estimator,
             method_mapping=MethodMapping()
             .add(caller="fit", callee="fit")

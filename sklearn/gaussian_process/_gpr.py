@@ -11,14 +11,20 @@ import numpy as np
 import scipy.optimize
 from scipy.linalg import cho_solve, cholesky, solve_triangular
 
-from ..base import BaseEstimator, MultiOutputMixin, RegressorMixin, _fit_context, clone
-from ..preprocessing._data import _handle_zeros_in_scale
-from ..utils import check_random_state
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.optimize import _check_optimize_result
-from ..utils.validation import validate_data
-from .kernels import RBF, Kernel
-from .kernels import ConstantKernel as C
+from sklearn.base import (
+    BaseEstimator,
+    MultiOutputMixin,
+    RegressorMixin,
+    _fit_context,
+    clone,
+)
+from sklearn.gaussian_process.kernels import RBF, Kernel
+from sklearn.gaussian_process.kernels import ConstantKernel as C
+from sklearn.preprocessing._data import _handle_zeros_in_scale
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.optimize import _check_optimize_result
+from sklearn.utils.validation import validate_data
 
 GPR_CHOLESKY_LOWER = True
 
@@ -49,11 +55,13 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     Parameters
     ----------
     kernel : kernel instance, default=None
-        The kernel specifying the covariance function of the GP. If None is
-        passed, the kernel ``ConstantKernel(1.0, constant_value_bounds="fixed")
-        * RBF(1.0, length_scale_bounds="fixed")`` is used as default. Note that
-        the kernel hyperparameters are optimized during fitting unless the
-        bounds are marked as "fixed".
+        The kernel specifying the covariance function of the GP.
+        If `None` is passed,
+        the kernel `ConstantKernel() * RBF()` is used as default.
+        Note that
+        the kernel hyperparameters are optimized during fitting
+        unless the bounds are marked as `"fixed"`
+        or the argument `optimizer` is set to `None`.
 
     alpha : float or ndarray of shape (n_samples,), default=1e-10
         Value added to the diagonal of the kernel matrix during fitting.
@@ -238,12 +246,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             GaussianProcessRegressor class instance.
         """
-        if self.kernel is None:  # Use an RBF kernel as default
-            self.kernel_ = C(1.0, constant_value_bounds="fixed") * RBF(
-                1.0, length_scale_bounds="fixed"
-            )
-        else:
-            self.kernel_ = clone(self.kernel)
+        self.kernel_ = C() * RBF() if self.kernel is None else clone(self.kernel)
 
         self._rng = check_random_state(self.random_state)
 

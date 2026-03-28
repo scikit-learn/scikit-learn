@@ -1,3 +1,0 @@
-- Fix regression in HTML representation when detecting the non-default parameters
-  that where of array-like types.
-  By :user:`Dea María Léon <deamarialeon>`

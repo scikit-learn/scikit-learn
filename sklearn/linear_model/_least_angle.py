@@ -15,28 +15,28 @@ import numpy as np
 from scipy import interpolate, linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
-from ..base import MultiOutputMixin, RegressorMixin, _fit_context
-from ..exceptions import ConvergenceWarning
-from ..model_selection import check_cv
+from sklearn.base import MultiOutputMixin, RegressorMixin, _fit_context
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import LinearModel, LinearRegression, _preprocess_data
+from sklearn.model_selection import check_cv
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
-from ..utils import (
-    Bunch,
-    arrayfuncs,
-    as_float_array,
-    check_random_state,
-)
-from ..utils._metadata_requests import (
+from sklearn.utils import Bunch, arrayfuncs, as_float_array, check_random_state
+from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import validate_data
-from ._base import LinearModel, LinearRegression, _preprocess_data
+from sklearn.utils._param_validation import (
+    Hidden,
+    Interval,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import validate_data
 
 SOLVE_TRIANGULAR_ARGS = {"check_finite": False}
 
@@ -918,7 +918,7 @@ def _lars_path_solver(
 
 
 class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
-    """Least Angle Regression model a.k.a. LAR.
+    """Least Angle Regression model aka LAR.
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
@@ -1080,7 +1080,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         """Auxiliary method to fit the model using X, y as training data"""
         n_features = X.shape[1]
 
-        X, y, X_offset, y_offset, X_scale = _preprocess_data(
+        X, y, X_offset, y_offset, X_scale, _ = _preprocess_data(
             X, y, fit_intercept=self.fit_intercept, copy=self.copy_X
         )
 
@@ -1208,7 +1208,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
 
 
 class LassoLars(Lars):
-    """Lasso model fit with Least Angle Regression a.k.a. Lars.
+    """Lasso model fit with Least Angle Regression aka Lars.
 
     It is a Linear Model trained with an L1 prior as regularizer.
 
@@ -1542,9 +1542,9 @@ class LarsCV(Lars):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
@@ -1821,7 +1821,7 @@ class LarsCV(Lars):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             splitter=check_cv(self.cv),
             method_mapping=MethodMapping().add(caller="fit", callee="split"),
         )
@@ -1862,9 +1862,9 @@ class LassoLarsCV(LarsCV):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
@@ -2178,6 +2178,9 @@ class LassoLarsIC(LassoLars):
     LassoLarsIC(criterion='bic')
     >>> print(reg.coef_)
     [ 0.  -1.11]
+
+    For a detailed example of using this class, see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lars_ic.py`.
     """
 
     _parameter_constraints: dict = {
@@ -2244,7 +2247,7 @@ class LassoLarsIC(LassoLars):
             copy_X = self.copy_X
         X, y = validate_data(self, X, y, force_writeable=True, y_numeric=True)
 
-        X, y, Xmean, ymean, Xstd = _preprocess_data(
+        X, y, Xmean, ymean, _, _ = _preprocess_data(
             X, y, fit_intercept=self.fit_intercept, copy=copy_X
         )
 
@@ -2306,7 +2309,7 @@ class LassoLarsIC(LassoLars):
 
         self.alpha_ = alphas_[n_best]
         self.coef_ = coef_path_[:, n_best]
-        self._set_intercept(Xmean, ymean, Xstd)
+        self._set_intercept(Xmean, ymean)
         return self
 
     def _estimate_noise_variance(self, X, y, positive):

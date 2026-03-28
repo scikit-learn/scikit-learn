@@ -17,15 +17,20 @@ from os.path import exists, isdir, join
 import numpy as np
 from joblib import Memory
 
-from ..utils import Bunch
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
-from ..utils.fixes import tarfile_extractall
-from ._base import (
+from sklearn.datasets._base import (
     RemoteFileMetadata,
     _fetch_remote,
     get_data_home,
     load_descr,
 )
+from sklearn.utils import Bunch
+from sklearn.utils._param_validation import (
+    Hidden,
+    Interval,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.fixes import tarfile_extractall
 
 logger = logging.getLogger(__name__)
 
@@ -169,13 +174,14 @@ def _load_imgs(file_paths, slice_, color, resize):
 
         # Checks if jpeg reading worked. Refer to issue #3594 for more
         # details.
-        pil_img = Image.open(file_path)
-        pil_img = pil_img.crop(
-            (w_slice.start, h_slice.start, w_slice.stop, h_slice.stop)
-        )
-        if resize is not None:
-            pil_img = pil_img.resize((w, h))
-        face = np.asarray(pil_img, dtype=np.float32)
+
+        with Image.open(file_path) as pil_img:
+            pil_img = pil_img.crop(
+                (w_slice.start, h_slice.start, w_slice.stop, h_slice.stop)
+            )
+            if resize is not None:
+                pil_img = pil_img.resize((w, h))
+            face = np.asarray(pil_img, dtype=np.float32)
 
         if face.ndim == 0:
             raise RuntimeError(

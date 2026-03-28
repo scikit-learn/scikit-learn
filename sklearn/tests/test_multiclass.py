@@ -82,6 +82,25 @@ def test_check_classification_targets():
         check_classification_targets(y)
 
 
+def test_ovr_ties():
+    """Check that ties-breaking matches np.argmax behavior
+
+    Non-regression test for issue #14124
+    """
+
+    class Dummy(BaseEstimator):
+        def fit(self, X, y):
+            return self
+
+        def decision_function(self, X):
+            return np.zeros(len(X))
+
+    X = np.array([[0], [0], [0], [0]])
+    y = np.array([0, 1, 2, 3])
+    clf = OneVsRestClassifier(Dummy()).fit(X, y)
+    assert_array_equal(clf.predict(X), np.argmax(clf.decision_function(X), axis=1))
+
+
 def test_ovr_fit_predict():
     # A classifier which implements decision_function.
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
@@ -308,7 +327,10 @@ def test_ovr_binary():
     ):
         conduct_test(base_clf)
 
-    for base_clf in (MultinomialNB(), SVC(probability=True), LogisticRegression()):
+    for base_clf in (
+        MultinomialNB(),
+        LogisticRegression(),
+    ):
         conduct_test(base_clf, test_predict_proba=True)
 
 
@@ -385,20 +407,11 @@ def test_ovr_multilabel_predict_proba():
         assert not hasattr(decision_only, "predict_proba")
 
         # Estimator with predict_proba disabled, depending on parameters.
-        decision_only = OneVsRestClassifier(svm.SVC(probability=False))
+        decision_only = OneVsRestClassifier(svm.SVC())
         assert not hasattr(decision_only, "predict_proba")
         decision_only.fit(X_train, Y_train)
         assert not hasattr(decision_only, "predict_proba")
         assert hasattr(decision_only, "decision_function")
-
-        # Estimator which can get predict_proba enabled after fitting
-        gs = GridSearchCV(
-            svm.SVC(probability=False), param_grid={"probability": [True]}
-        )
-        proba_after_fit = OneVsRestClassifier(gs)
-        assert not hasattr(proba_after_fit, "predict_proba")
-        proba_after_fit.fit(X_train, Y_train)
-        assert hasattr(proba_after_fit, "predict_proba")
 
         Y_pred = clf.predict(X_test)
         Y_proba = clf.predict_proba(X_test)

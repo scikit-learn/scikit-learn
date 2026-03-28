@@ -37,7 +37,7 @@ from numpy.testing import (
     assert_array_less,
 )
 
-import sklearn
+from sklearn import __file__ as sklearn_path
 from sklearn.utils import (
     ClassifierTags,
     RegressorTags,
@@ -52,11 +52,7 @@ from sklearn.utils.fixes import (
     _in_unstable_openblas_configuration,
 )
 from sklearn.utils.multiclass import check_classification_targets
-from sklearn.utils.validation import (
-    check_array,
-    check_is_fitted,
-    check_X_y,
-)
+from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 
 __all__ = [
     "SkipTest",
@@ -927,7 +923,7 @@ def assert_run_python_script_without_output(source_code, pattern=".+", timeout=6
         with open(source_file, "wb") as f:
             f.write(source_code.encode("utf-8"))
         cmd = [sys.executable, source_file]
-        cwd = op.normpath(op.join(op.dirname(sklearn.__file__), ".."))
+        cwd = op.normpath(op.join(op.dirname(sklearn_path), ".."))
         env = os.environ.copy()
         try:
             env["PYTHONPATH"] = os.pathsep.join([cwd, env["PYTHONPATH"]])
@@ -980,12 +976,12 @@ def _convert_container(
     container : array-like
         The container to convert.
     constructor_name : {"list", "tuple", "array", "sparse", "dataframe", \
-            "series", "index", "slice", "sparse_csr", "sparse_csc", \
+            "pandas", "series", "index", "slice", "sparse_csr", "sparse_csc", \
             "sparse_csr_array", "sparse_csc_array", "pyarrow", "polars", \
             "polars_series"}
         The type of the returned container.
     columns_name : index or array-like, default=None
-        For pandas container supporting `columns_names`, it will affect
+        For pandas/polars container supporting `columns_names`, it will affect
         specific names.
     dtype : dtype, default=None
         Force the dtype of the container. Does not apply to `"slice"`
@@ -1306,7 +1302,25 @@ class MinimalTransformer:
         )
 
 
-def _array_api_for_tests(array_namespace, device):
+def _array_api_for_tests(array_namespace, device_name=None):
+    """Return (xp, device) for array API testing.
+
+    Parameters
+    ----------
+    array_namespace : str
+        The importable name of the array namespace module.
+    device_name : str or None, default=None
+        The device name for array allocation. Can be None for default device.
+
+    Returns
+    -------
+    xp : module
+        The module object for the requested array namespace.
+    device : object or None
+        The library specific device object that can be passed to
+        xp.asarray(..., device=device). This might be a string and not
+        a library specific device object.
+    """
     try:
         array_mod = importlib.import_module(array_namespace)
     except (ModuleNotFoundError, ImportError):
@@ -1323,14 +1337,15 @@ def _array_api_for_tests(array_namespace, device):
     # corresponding (compatibility wrapped) array namespace based on it.
     # This is because `cupy` is not the same as the compatibility wrapped
     # namespace of a CuPy array.
+    device = None
     xp = get_namespace(array_mod.asarray(1))
     if (
         array_namespace == "torch"
-        and device == "cuda"
+        and device_name == "cuda"
         and not xp.backends.cuda.is_built()
     ):
         raise SkipTest("PyTorch test requires cuda, which is not available")
-    elif array_namespace == "torch" and device == "mps":
+    elif array_namespace == "torch" and device_name == "mps":
         if os.getenv("PYTORCH_ENABLE_MPS_FALLBACK") != "1":
             # For now we need PYTORCH_ENABLE_MPS_FALLBACK=1 for all estimators to work
             # when using the MPS device.
@@ -1343,7 +1358,7 @@ def _array_api_for_tests(array_namespace, device):
                 "MPS is not available because the current PyTorch install was not "
                 "built with MPS enabled."
             )
-    elif array_namespace == "torch" and device == "xpu":  # pragma: nocover
+    elif array_namespace == "torch" and device_name == "xpu":  # pragma: nocover
         if not hasattr(xp, "xpu"):
             # skip xpu testing for PyTorch <2.4
             raise SkipTest(
@@ -1359,7 +1374,17 @@ def _array_api_for_tests(array_namespace, device):
 
         if cupy.cuda.runtime.getDeviceCount() == 0:
             raise SkipTest("CuPy test requires cuda, which is not available")
-    return xp
+    elif array_namespace == "array_api_strict":
+        # device_name can be a string ("CPU_DEVICE", "device1") or a Device object
+        # from yield_mixed_namespace_input_permutations
+        if device_name is not None:
+            device = xp.Device(device_name)
+
+    # Right now only array_api_strict uses a library specific device
+    # object. For all other libraries we return a string or `None`.
+    # This works because strings are accepted as arguments to
+    # xp.asarray(..., device=) in those libraries.
+    return xp, device_name if device is None else device
 
 
 def _get_warnings_filters_info_list():
@@ -1427,6 +1452,16 @@ def _get_warnings_filters_info_list():
         WarningInfo(
             "ignore", message="Attribute n is deprecated", category=DeprecationWarning
         ),
+        # numpy 2.5 DeprecationWarning in joblib, see
+        # https://github.com/joblib/joblib/issues/1772
+        WarningInfo(
+            "ignore",
+            message=(
+                "Setting the shape on a NumPy array has been deprecated"
+                r" in NumPy 2.5"
+            ),
+            category=DeprecationWarning,
+        ),
         # Python 3.12 warnings from sphinx-gallery fixed in master but not
         # released yet, see
         # https://github.com/sphinx-gallery/sphinx-gallery/pull/1242
@@ -1443,6 +1478,12 @@ def _get_warnings_filters_info_list():
             "ignore",
             message=".+scattermapbox.+deprecated.+scattermap.+instead",
             category=DeprecationWarning,
+        ),
+        # TODO(1.10): remove PassiveAgressive
+        WarningInfo(
+            "ignore",
+            message="Class PassiveAggressive.+is deprecated",
+            category=FutureWarning,
         ),
     ]
 

@@ -98,7 +98,7 @@ cdef int init_node{{name_suffix}}(
     cdef float64_t radius
     cdef const {{INPUT_DTYPE_t}} *this_pt
 
-    cdef intp_t* idx_array = &tree.idx_array[0]
+    cdef const intp_t* idx_array = &tree.idx_array[0]
     cdef const {{INPUT_DTYPE_t}}* data = &tree.data[0, 0]
     cdef {{INPUT_DTYPE_t}}* centroid = &tree.node_bounds[0, i_node, 0]
 

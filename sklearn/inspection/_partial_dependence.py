@@ -10,27 +10,31 @@ import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
 
-from ..base import is_classifier, is_regressor
-from ..ensemble import RandomForestRegressor
-from ..ensemble._gb import BaseGradientBoosting
-from ..ensemble._hist_gradient_boosting.gradient_boosting import (
+from sklearn.base import is_classifier, is_regressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble._gb import BaseGradientBoosting
+from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
     BaseHistGradientBoosting,
 )
-from ..tree import DecisionTreeRegressor
-from ..utils import Bunch, _safe_indexing, check_array
-from ..utils._indexing import _determine_key_type, _get_column_indices, _safe_assign
-from ..utils._optional_dependencies import check_matplotlib_support  # noqa: F401
-from ..utils._param_validation import (
+from sklearn.inspection._pd_utils import _check_feature_names, _get_feature_index
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.utils import Bunch, _safe_indexing, check_array
+from sklearn.utils._indexing import (
+    _determine_key_type,
+    _get_column_indices,
+    _safe_assign,
+)
+from sklearn.utils._optional_dependencies import check_matplotlib_support  # noqa: F401
+from sklearn.utils._param_validation import (
     HasMethods,
     Integral,
     Interval,
     StrOptions,
     validate_params,
 )
-from ..utils._response import _get_response_values
-from ..utils.extmath import cartesian
-from ..utils.validation import _check_sample_weight, check_is_fitted
-from ._pd_utils import _check_feature_names, _get_feature_index
+from sklearn.utils._response import _get_response_values
+from sklearn.utils.extmath import cartesian
+from sklearn.utils.validation import _check_sample_weight, check_is_fitted
 
 __all__ = [
     "partial_dependence",

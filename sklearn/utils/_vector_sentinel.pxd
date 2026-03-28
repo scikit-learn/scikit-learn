@@ -1,7 +1,7 @@
 cimport numpy as cnp
 
 from libcpp.vector cimport vector
-from ..utils._typedefs cimport intp_t, float64_t, int32_t, int64_t
+from sklearn.utils._typedefs cimport intp_t, float64_t, int32_t, int64_t
 
 ctypedef fused vector_typed:
     vector[float64_t]

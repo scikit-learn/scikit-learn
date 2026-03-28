@@ -5,12 +5,12 @@ from collections.abc import Mapping
 
 import numpy as np
 
-from . import check_consistent_length
-from ._optional_dependencies import check_matplotlib_support
-from ._response import _get_response_values_binary
-from .fixes import parse_version
-from .multiclass import type_of_target
-from .validation import _check_pos_label_consistency, _num_samples
+from sklearn.utils import check_consistent_length
+from sklearn.utils._optional_dependencies import check_matplotlib_support
+from sklearn.utils._response import _get_response_values_binary
+from sklearn.utils.fixes import parse_version
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import _check_pos_label_consistency, _num_samples
 
 
 class _BinaryClassifierCurveDisplayMixin:
@@ -77,7 +77,6 @@ class _BinaryClassifierCurveDisplayMixin:
         y,
         *,
         sample_weight,
-        pos_label,
     ):
         check_matplotlib_support(f"{cls.__name__}.from_cv_results")
 
@@ -107,13 +106,18 @@ class _BinaryClassifierCurveDisplayMixin:
             )
         check_consistent_length(X, y, sample_weight)
 
-        try:
-            pos_label = _check_pos_label_consistency(pos_label, y)
-        except ValueError as e:
-            # Adapt error message
-            raise ValueError(str(e).replace("y_true", "y"))
-
-        return pos_label
+    @staticmethod
+    def _get_legend_metric(curve_kwargs, n_curves, metric):
+        """Generate legend information dictionary and expand `metric` if required."""
+        if not isinstance(curve_kwargs, list) and n_curves > 1:
+            if metric:
+                legend_metric = {"mean": np.mean(metric), "std": np.std(metric)}
+            else:
+                legend_metric = {"mean": None, "std": None}
+        else:
+            metric = metric if metric is not None else [None] * n_curves
+            legend_metric = {"metric": metric}
+        return metric, legend_metric
 
     @staticmethod
     def _get_legend_label(curve_legend_metric, curve_name, legend_metric_name):
@@ -135,6 +139,9 @@ class _BinaryClassifierCurveDisplayMixin:
         legend_metric,
         legend_metric_name,
         curve_kwargs,
+        default_curve_kwargs=None,
+        default_multi_curve_kwargs=None,
+        removed_version="1.9",
         **kwargs,
     ):
         """Get validated line kwargs for each curve.
@@ -161,20 +168,32 @@ class _BinaryClassifierCurveDisplayMixin:
             dictionary is provided, the same parameters are applied to all
             curves.
 
+        default_curve_kwargs : dict, default=None
+            Default curve kwargs, to be added to all curves. Individual kwargs
+            are over-ridden by `curve_kwargs`, if kwarg also set in `curve_kwargs`.
+
+        default_multi_curve_kwargs : dict, default=None
+            Default curve kwargs for multi-curve plots. Individual kwargs
+            are over-ridden by `curve_kwargs`, if kwarg also set in `curve_kwargs`.
+
+        removed_version : str, default="1.9"
+            Version in which `kwargs` will be removed.
+
         **kwargs : dict
             Deprecated. Keyword arguments to be passed to matplotlib's `plot`.
         """
-        # TODO(1.9): Remove deprecated **kwargs
+        # TODO: Remove once kwargs deprecated on all displays
         if curve_kwargs and kwargs:
             raise ValueError(
                 "Cannot provide both `curve_kwargs` and `kwargs`. `**kwargs` is "
-                "deprecated in 1.7 and will be removed in 1.9. Pass all matplotlib "
-                "arguments to `curve_kwargs` as a dictionary."
+                f"deprecated and will be removed in {removed_version}. Pass all "
+                "matplotlib arguments to `curve_kwargs` as a dictionary."
             )
         if kwargs:
             warnings.warn(
-                "`**kwargs` is deprecated and will be removed in 1.9. Pass all "
-                "matplotlib arguments to `curve_kwargs` as a dictionary instead.",
+                f"`**kwargs` is deprecated and will be removed in {removed_version}. "
+                "Pass all matplotlib arguments to `curve_kwargs` as a dictionary "
+                "instead.",
                 FutureWarning,
             )
             curve_kwargs = kwargs
@@ -195,7 +214,7 @@ class _BinaryClassifierCurveDisplayMixin:
                 "To avoid labeling individual curves that have the same appearance, "
                 f"`curve_kwargs` should be a list of {n_curves} dictionaries. "
                 "Alternatively, set `name` to `None` or a single string to label "
-                "a single legend entry with mean ROC AUC score of all curves."
+                "a single legend entry for all curves."
             )
 
         # Ensure `name` is of the correct length
@@ -208,13 +227,16 @@ class _BinaryClassifierCurveDisplayMixin:
         # Ensure `curve_kwargs` is of correct length
         if isinstance(curve_kwargs, Mapping):
             curve_kwargs = [curve_kwargs] * n_curves
+        elif curve_kwargs is None:
+            curve_kwargs = [{}] * n_curves
 
-        default_multi_curve_kwargs = {"alpha": 0.5, "linestyle": "--", "color": "blue"}
-        if curve_kwargs is None:
-            if n_curves > 1:
-                curve_kwargs = [default_multi_curve_kwargs] * n_curves
-            else:
-                curve_kwargs = [{}]
+        if default_curve_kwargs is None:
+            default_curve_kwargs = {}
+        if default_multi_curve_kwargs is None:
+            default_multi_curve_kwargs = {}
+
+        if n_curves > 1:
+            default_curve_kwargs.update(default_multi_curve_kwargs)
 
         labels = []
         if "mean" in legend_metric:
@@ -244,7 +266,9 @@ class _BinaryClassifierCurveDisplayMixin:
                 )
 
         curve_kwargs_ = [
-            _validate_style_kwargs({"label": label}, curve_kwargs[fold_idx])
+            _validate_style_kwargs(
+                {"label": label, **default_curve_kwargs}, curve_kwargs[fold_idx]
+            )
             for fold_idx, label in enumerate(labels)
         ]
         return curve_kwargs_
@@ -417,3 +441,27 @@ def _check_param_lengths(required, optional, class_name):
             f"{params_formatted} from `{class_name}` initialization{or_plot}, "
             f"should all be lists of the same length. Got: {lengths_formatted}"
         )
+
+
+# TODO(1.10): remove after the end of the deprecation period of `y_pred`
+def _deprecate_y_pred_parameter(y_score, y_pred, version):
+    """Deprecate `y_pred` in favour of `y_score`."""
+    version = parse_version(version)
+    version_remove = f"{version.major}.{version.minor + 2}"
+    if y_score is not None and not (isinstance(y_pred, str) and y_pred == "deprecated"):
+        raise ValueError(
+            "`y_pred` and `y_score` cannot be both specified. Please use `y_score`"
+            f" only as `y_pred` was deprecated in {version} and will be "
+            f"removed in {version_remove}."
+        )
+    if not (isinstance(y_pred, str) and y_pred == "deprecated"):
+        warnings.warn(
+            (
+                f"y_pred was deprecated in {version} and will be removed in"
+                f" {version_remove}. Please use `y_score` instead."
+            ),
+            FutureWarning,
+        )
+        return y_pred
+
+    return y_score

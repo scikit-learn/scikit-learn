@@ -4,7 +4,7 @@ from cython cimport floating
 from libc.math cimport fabs
 from libc.float cimport DBL_MAX, FLT_MAX
 
-from ._cython_blas cimport _copy, _rotg, _rot
+from sklearn.utils._cython_blas cimport _copy, _rotg, _rot
 
 
 ctypedef fused real_numeric:

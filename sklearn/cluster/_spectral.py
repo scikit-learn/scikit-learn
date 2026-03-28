@@ -8,16 +8,16 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy.linalg import LinAlgError, qr, svd
-from scipy.sparse import csc_matrix
+from scipy.sparse import csc_array
 
-from ..base import BaseEstimator, ClusterMixin, _fit_context
-from ..manifold._spectral_embedding import _spectral_embedding
-from ..metrics.pairwise import KERNEL_PARAMS, pairwise_kernels
-from ..neighbors import NearestNeighbors, kneighbors_graph
-from ..utils import as_float_array, check_random_state
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.validation import validate_data
-from ._kmeans import k_means
+from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
+from sklearn.cluster._kmeans import k_means
+from sklearn.manifold._spectral_embedding import _spectral_embedding
+from sklearn.metrics.pairwise import KERNEL_PARAMS, pairwise_kernels
+from sklearn.neighbors import NearestNeighbors, kneighbors_graph
+from sklearn.utils import as_float_array, check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.validation import validate_data
 
 
 def cluster_qr(vectors):
@@ -160,7 +160,7 @@ def discretize(
             t_discrete = np.dot(vectors, rotation)
 
             labels = t_discrete.argmax(axis=1)
-            vectors_discrete = csc_matrix(
+            vectors_discrete = csc_array(
                 (np.ones(len(labels)), (np.arange(0, n_samples), labels)),
                 shape=(n_samples, n_components),
             )

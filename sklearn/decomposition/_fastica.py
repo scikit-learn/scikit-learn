@@ -14,16 +14,21 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..exceptions import ConvergenceWarning
-from ..utils import as_float_array, check_array, check_random_state
-from ..utils._param_validation import Interval, Options, StrOptions, validate_params
-from ..utils.validation import check_is_fitted, validate_data
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils import as_float_array, check_array, check_random_state
+from sklearn.utils._param_validation import (
+    Interval,
+    Options,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 __all__ = ["FastICA", "fastica"]
 

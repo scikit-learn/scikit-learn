@@ -7,11 +7,11 @@ import numbers
 
 import numpy as np
 
-from ..ensemble._bagging import _generate_indices
-from ..metrics import check_scoring, get_scorer_names
-from ..model_selection._validation import _aggregate_score_dicts
-from ..utils import Bunch, _safe_indexing, check_array, check_random_state
-from ..utils._param_validation import (
+from sklearn.ensemble._bagging import _generate_indices
+from sklearn.metrics import check_scoring, get_scorer_names
+from sklearn.model_selection._validation import _aggregate_score_dicts
+from sklearn.utils import Bunch, _safe_indexing, check_array, check_random_state
+from sklearn.utils._param_validation import (
     HasMethods,
     Integral,
     Interval,
@@ -19,7 +19,7 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
-from ..utils.parallel import Parallel, delayed
+from sklearn.utils.parallel import Parallel, delayed
 
 
 def _weights_scorer(scorer, estimator, X, y, sample_weight):
