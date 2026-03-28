@@ -52,8 +52,8 @@ scaled_X_train = scaler.fit_transform(X_train)
 # %%
 # .. _neighbors_scaling:
 #
-# Effect of rescaling on a k-neighbors models
-# ===========================================
+# Effect of rescaling on a k-neighbors model
+# ==========================================
 #
 # For the sake of visualizing the decision boundary of a
 # :class:`~sklearn.neighbors.KNeighborsClassifier`, in this section we select a
@@ -64,6 +64,7 @@ scaled_X_train = scaler.fit_transform(X_train)
 # boundary that is much worse in comparison to a model trained on the full set
 # of features.
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 from sklearn.inspection import DecisionBoundaryDisplay
@@ -72,6 +73,7 @@ from sklearn.neighbors import KNeighborsClassifier
 X_plot = X[["proline", "hue"]]
 X_plot_scaled = scaler.fit_transform(X_plot)
 clf = KNeighborsClassifier(n_neighbors=20)
+multiclass_cmap = "viridis"
 
 
 def fit_and_plot_model(X_plot, y, clf, ax):
@@ -81,9 +83,18 @@ def fit_and_plot_model(X_plot, y, clf, ax):
         X_plot,
         response_method="predict",
         alpha=0.5,
+        multiclass_colors=multiclass_cmap,
         ax=ax,
     )
-    disp.ax_.scatter(X_plot["proline"], X_plot["hue"], c=y, s=20, edgecolor="k")
+    cmap = mpl.colors.ListedColormap(disp.multiclass_colors_)
+    disp.ax_.scatter(
+        X_plot["proline"],
+        X_plot["hue"],
+        c=y,
+        cmap=cmap,
+        s=20,
+        edgecolor="k",
+    )
     disp.ax_.set_xlim((X_plot["proline"].min(), X_plot["proline"].max()))
     disp.ax_.set_ylim((X_plot["hue"].min(), X_plot["hue"].max()))
     return disp.ax_
@@ -100,15 +111,15 @@ ax2.set_ylabel("scaled hue")
 _ = ax2.set_title("KNN with scaling")
 
 # %%
-# Here the decision boundary shows that fitting scaled or non-scaled data lead
+# Here the decision boundary shows that fitting scaled or non-scaled data leads
 # to completely different models. The reason is that the variable "proline" has
 # values which vary between 0 and 1,000; whereas the variable "hue" varies
 # between 1 and 10. Because of this, distances between samples are mostly
 # impacted by differences in values of "proline", while values of the "hue" will
 # be comparatively ignored. If one uses
-# :class:`~sklearn.preprocessing.StandardScaler` to normalize this database,
-# both scaled values lay approximately between -3 and 3 and the neighbors
-# structure will be impacted more or less equivalently by both variables.
+# :class:`~sklearn.preprocessing.StandardScaler` to normalize this dataset,
+# both scaled features range approximately between -3 and 3 and the neighbors
+# structure is impacted more equivalently by both variables.
 #
 # Effect of rescaling on a PCA dimensional reduction
 # ==================================================
