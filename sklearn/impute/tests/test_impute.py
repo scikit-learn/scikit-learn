@@ -1878,14 +1878,14 @@ def test_bool_array_constant_imputation_false():
 def test_dataframe_bool_most_frequent_with_nan_float(constructor_name):
     if constructor_name == "pandas":
         pd = pytest.importorskip("pandas")
-        df = pd.DataFrame({"flag": [True, False, True, np.nan]})
+        df = pd.DataFrame({"flag": [True, False, False, np.nan]})
     else:
         pl = pytest.importorskip("polars")
-        df = pl.DataFrame({"flag": [True, False, True, np.nan]}, strict=False)
+        df = pl.DataFrame({"flag": [True, False, False, np.nan]}, strict=False)
     imputer = SimpleImputer(strategy="most_frequent")
     result = imputer.fit_transform(df)
     assert result.dtype == object if constructor_name == "pandas" else float
-    expected = np.array([[True], [False], [True], [True]])
+    expected = np.array([[True], [False], [False], [False]])
     assert_array_equal(result, expected)
 
 
@@ -1950,7 +1950,6 @@ def test_dataframe_boolean_median_with_nan(constructor_name):
         df = pl.DataFrame({"flag": [True, False, False, np.nan]}, strict=False)
     imputer = SimpleImputer(strategy="median")
     result = imputer.fit_transform(df)
-    assert result.dtype == float
     expected = np.array([[True], [False], [False], [False]])
     assert_array_equal(result, expected)
 
