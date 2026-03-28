@@ -39,6 +39,23 @@ def _check_inputs_dtype(X, missing_values):
         )
 
 
+def _is_boolean_dtype(dtype):
+    """Return True when dtype is boolean"""
+    if getattr(dtype, "kind", None) == "b":
+        return True
+
+    if dtype in (bool, np.bool_):
+        return True
+
+    return str(dtype).lower() in {"bool", "boolean"}
+
+def _is_bool_data(X):
+    """Return True when X has a boolean dtype or all-boolean dataframe dtypes."""
+    return (hasattr(X, "dtype") and _is_boolean_dtype(X.dtype)) or (
+        hasattr(X, "dtypes") and all(_is_boolean_dtype(dtype) for dtype in X.dtypes)
+    )
+
+
 def _safe_min(items):
     """Compute the minimum of a list of potentially non-comparable values.
 
@@ -342,16 +359,12 @@ class SimpleImputer(_BaseImputer):
                 isinstance(elem, str) for row in X for elem in row
             ):
                 dtype = object
-            elif (hasattr(X, "dtype") and X.dtype.kind == "b") or (
-                hasattr(X, "dtypes") and all(type == bool for type in X.dtypes)
-            ):
+            elif _is_bool_data(X):
                 dtype = bool
             else:
                 dtype = None
         else:
-            if (hasattr(X, "dtype") and X.dtype.kind == "b") or (
-                hasattr(X, "dtypes") and all(type == bool for type in X.dtypes)
-            ):
+            if _is_bool_data(X):
                 dtype = bool
             else:
                 dtype = FLOAT_DTYPES

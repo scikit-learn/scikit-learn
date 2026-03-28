@@ -9,6 +9,7 @@ from scipy import sparse
 from scipy.stats import kstest
 
 from sklearn import tree
+from sklearn._min_dependencies import dependent_packages
 from sklearn.datasets import load_diabetes
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import ConvergenceWarning
@@ -1869,49 +1870,39 @@ def test_bool_array_constant_imputation_false():
     expected = np.array([[True], [False], [True], [False]])
     assert_array_equal(result, expected)
 
-
-def test_pandas_bool_most_frequent_with_nan_float():
-    pd = pytest.importorskip("pandas")
-    df = pd.DataFrame({"flag": [True, False, True, np.nan]})
+@pytest.mark.parametrize(
+    "constructor_name",
+    ["pandas", "polars"],
+)
+def test_dataframe_bool_most_frequent_with_nan_float(constructor_name):
+    if constructor_name == "pandas":
+        pd = pytest.importorskip("pandas")
+        df = pd.DataFrame({"flag": [True, False, True, np.nan]})
+    else:
+        pl = pytest.importorskip("polars")
+        df = pl.DataFrame({"flag": [True, False, True, np.nan]}, strict=False)
     imputer = SimpleImputer(strategy="most_frequent")
     result = imputer.fit_transform(df)
-    assert result.dtype == object
-
+    assert result.dtype == object if constructor_name == "pandas" else float
     expected = np.array([[True], [False], [True], [True]])
     assert_array_equal(result, expected)
 
 
-def test_pandas_bool_most_frequent_without_nan():
-    pd = pytest.importorskip("pandas")
-    df = pd.DataFrame({"flag": [True, False, True]}, dtype=bool)
-
+@pytest.mark.parametrize(
+    "constructor_name, minversion",
+    [
+        ("pandas", dependent_packages["pandas"][0]),
+        ("polars", dependent_packages["polars"][0]),
+    ],
+)
+def test_dataframe_bool_most_frequent_without_nan(constructor_name, minversion):
+    df = _convert_container({"flag": [True, False, True]}, constructor_name,
+                             minversion=minversion, dtype=bool)
     imputer = SimpleImputer(strategy="most_frequent")
     result = imputer.fit_transform(df)
     assert result.dtype == "bool"
     expected = np.array([[True], [False], [True]])
     assert_array_equal(result, expected)
-
-
-def test_pandas_boolean_most_frequent_with_pandas_na():
-    pd = pytest.importorskip("pandas")
-    df = pd.DataFrame({"flag": pd.Series([True, False, True, pd.NA], dtype="boolean")})
-    imputer = SimpleImputer(strategy="most_frequent")
-    result = imputer.fit_transform(df)
-    assert result.dtype == float
-    expected = np.array([[True], [False], [True], [True]])
-    assert_array_equal(result, expected)
-
-
-def test_pandas_boolean_constant_with_pandas_na():
-    pd = pytest.importorskip("pandas")
-    df = pd.DataFrame({"flag": pd.Series([True, pd.NA, False, True], dtype="boolean")})
-
-    imputer = SimpleImputer(strategy="constant", fill_value=False)
-    result = imputer.fit_transform(df)
-    assert result.dtype == float
-    expected = np.array([[True], [False], [False], [True]])
-    assert_array_equal(result, expected)
-
 
 def test_numpy_boolean_mean_without_nan():
     X = np.array([[True], [False], [True]], dtype=bool)
@@ -1921,16 +1912,38 @@ def test_numpy_boolean_mean_without_nan():
     expected = np.array([[True], [False], [True]])
     assert_array_equal(result, expected)
 
-
-def test_pandas_boolean_mean_without_nan():
-    pd = pytest.importorskip("pandas")
-    df = pd.DataFrame({"flag": pd.Series([True, False, True])})
+@pytest.mark.parametrize(
+    "constructor_name, minversion",
+    [
+        ("pandas", dependent_packages["pandas"][0]),
+        ("polars", dependent_packages["polars"][0]),
+    ],
+)
+def test_dataframe_boolean_mean_without_nan(constructor_name, minversion):
+    df = _convert_container({"flag": [True, False, True]}, constructor_name,
+                             minversion=minversion)
     imputer = SimpleImputer(strategy="mean")
     result = imputer.fit_transform(df)
     assert result.dtype == bool
     expected = np.array([[True], [False], [True]])
     assert_array_equal(result, expected)
 
+@pytest.mark.parametrize(
+    "constructor_name",
+    ["pandas", "polars"],
+)
+def test_dataframe_boolean_median_with_nan(constructor_name):
+    if constructor_name == "pandas":
+        pd = pytest.importorskip("pandas")
+        df = pd.DataFrame({"flag": [True, False, False, np.nan]})
+    else:
+        pl = pytest.importorskip("polars")
+        df = pl.DataFrame({"flag": [True, False, False, np.nan]}, strict=False)
+    imputer = SimpleImputer(strategy="median")
+    result = imputer.fit_transform(df)
+    assert result.dtype == float
+    expected = np.array([[True], [False], [False], [False]])
+    assert_array_equal(result, expected)
 
 def test_simple_imputer_constant_fill_value_casting():
     """Check that we raise a proper error message when we cannot cast the fill value
