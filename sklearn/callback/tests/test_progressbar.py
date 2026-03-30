@@ -6,8 +6,8 @@ import sys
 
 import pytest
 
-from sklearn.base import clone
-from sklearn.callback import ProgressBar
+from sklearn.base import BaseEstimator, _fit_context, clone
+from sklearn.callback import CallbackSupportMixin, ProgressBar
 from sklearn.callback.tests._utils import (
     MaxIterEstimator,
     MetaEstimator,
@@ -126,3 +126,30 @@ def test_progressbar_no_callback_support(backend):
         assert not any(mon.is_alive() for mon in progressbar._run_monitors.values())
         # All queues are empty.
         assert all(queue.empty() for queue in progressbar._run_queues.values())
+
+
+def test_locally_defined_estimator():
+    """Test with a locally defined estimator class, which can't be pickled."""
+    n_subtasks = 2
+
+    class LocallyDefinedEstimator(CallbackSupportMixin, BaseEstimator):
+        _parameter_constraints: dict = {}
+
+        @_fit_context(prefer_skip_nested_validation=False)
+        def fit(self, X=None, y=None):
+            callback_ctx = self._init_callback_context(max_subtasks=n_subtasks)
+            callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
+
+            for i in range(n_subtasks):
+                subcontext = callback_ctx.subcontext(task_id=i).call_on_fit_task_begin(
+                    estimator=self, X=X, y=y
+                )
+                if subcontext.call_on_fit_task_end(estimator=self, X=X, y=y):
+                    break
+
+            callback_ctx.call_on_fit_task_end(estimator=self, X=X, y=y)
+            return self
+
+    estimator = LocallyDefinedEstimator()
+    estimator.set_callbacks(ProgressBar())
+    estimator.fit()
