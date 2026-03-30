@@ -2887,5 +2887,58 @@ def test_unused_transformer_request_present():
     assert router.consumes("fit", ["metadata"]) == set(["metadata"])
 
 
+
+
+@config_context(enable_metadata_routing=True)
+def test_metadata_routing_remainder_passthrough_no_keyerror():
+    """Regression test for gh-33614.
+
+    ColumnTransformer.fit_transform should not raise KeyError('remainder')
+    when metadata routing is enabled, remainder='passthrough', and at least
+    one named transformer requests metadata (e.g. sample_weight).
+    """
+    import pandas as pd
+
+    X = pd.DataFrame(
+        {
+            "x1": [1.0, 2.0, 3.0],
+            "x2": [22.0, 38.0, 26.0],
+            "x3": [7.25, 71.28, 7.93],
+        }
+    )
+    y = np.array([0, 1, 1])
+    sample_weight = np.ones(3)
+
+    ct = ColumnTransformer(
+        [
+            (
+                "trans",
+                ConsumingTransformer().set_fit_request(sample_weight=True),
+                ["x1", "x2"],
+            )
+        ],
+        remainder="passthrough",
+    )
+    # Should not raise KeyError('remainder')
+    result = ct.fit_transform(X, y, sample_weight=sample_weight)
+    assert result.shape == (3, 3)  # 2 transformed + 1 passthrough column
+
+    # Also check the fit + transform path
+    ct2 = ColumnTransformer(
+        [
+            (
+                "trans",
+                ConsumingTransformer()
+                .set_fit_request(sample_weight=True)
+                .set_transform_request(sample_weight=True),
+                ["x1", "x2"],
+            )
+        ],
+        remainder="passthrough",
+    )
+    ct2.fit(X, y, sample_weight=sample_weight)
+    result2 = ct2.transform(X, sample_weight=sample_weight)
+    assert result2.shape == (3, 3)
+
 # End of Metadata Routing Tests
 # =============================
