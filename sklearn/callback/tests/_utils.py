@@ -22,7 +22,7 @@ class TestingCallback:
         self.record = get_callback_manager().list()
 
     def setup(self, estimator, context):
-        self.record.append({"name": "setup", "context": context})
+self.record.append({"name": "setup", "estimator": estimator, "context": context})
 
     def on_fit_task_begin(
         self,
@@ -71,7 +71,7 @@ class TestingCallback:
         )
 
     def teardown(self, estimator, context):
-        self.record.append({"name": "teardown", "context": context})
+self.record.append({"name": "teardown", "estimator": estimator, "context": context})
 
     def count_hooks(self, hook_name):
         return len([rec for rec in self.record if rec["name"] == hook_name])
