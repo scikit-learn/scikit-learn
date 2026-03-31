@@ -1280,7 +1280,7 @@ def check_array_api_input(
     name,
     estimator_orig,
     array_namespace,
-    device=None,
+    device_name=None,
     dtype_name=None,
     check_values=False,
     check_sample_weight=False,
@@ -1303,7 +1303,7 @@ def check_array_api_input(
     array_namespace : str
         The name of the Array API namespace of all estimator inputs.
 
-    device : str, default=None
+    device_name : str, default=None
         The name of the device on which to allocate the estimator input arrays.
 
     dtype_name : str, default=None
@@ -1325,7 +1325,7 @@ def check_array_api_input(
         If `False` the checks are looser; device, shape and dtype checks for method
         outputs are skipped and only a smoke test is performed for `inverse_transform`.
     """
-    to_ns_and_device = NamespaceAndDevice(array_namespace, device)
+    to_ns_and_device = NamespaceAndDevice(array_namespace, device_name)
     _check_array_api_core(
         estimator_orig,
         to_ns_and_device=to_ns_and_device,
