@@ -11,6 +11,7 @@ from sklearn._loss.link import (
     _inclusive_low_high,
 )
 from sklearn.utils._array_api import (
+    _atol_for_type,
     move_to,
     yield_namespace_device_dtype_combinations,
 )
@@ -118,6 +119,7 @@ def test_link_inverse_array_api(
         rtol = 1e-3 if n_classes else 1e-4
     else:
         rtol = 1e-8
+    atol = _atol_for_type(dtype_name)
 
     with config_context(array_api_dispatch=True):
         raw_prediction_xp = xp.asarray(raw_prediction.astype(dtype_name), device=device)
@@ -133,4 +135,5 @@ def test_link_inverse_array_api(
             move_to(link.link(y_pred_xp), xp=np, device="cpu"),
             link.link(y_pred),
             rtol=rtol,
+            atol=atol,
         )
