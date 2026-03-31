@@ -138,8 +138,6 @@ def callback_management_context(estimator):
                         estimator=estimator, context=estimator._callback_fit_ctx
                     )
 
-            # Remove the context and parent context to avoid keeping circular references
-            # when they're notneeded anymore.
             del estimator._callback_fit_ctx
             if hasattr(estimator, "_parent_callback_ctx"):
                 del estimator._parent_callback_ctx

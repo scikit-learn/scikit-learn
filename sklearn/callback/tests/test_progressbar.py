@@ -130,24 +130,15 @@ def test_progressbar_no_callback_support(backend):
 
 def test_locally_defined_estimator():
     """Test with a locally defined estimator class, which can't be pickled."""
-    n_subtasks = 2
 
     class LocallyDefinedEstimator(CallbackSupportMixin, BaseEstimator):
-        _parameter_constraints: dict = {}
 
-        @_fit_context(prefer_skip_nested_validation=False)
+        @with_callbacks
         def fit(self, X=None, y=None):
-            callback_ctx = self._init_callback_context(max_subtasks=n_subtasks)
-            callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
+            callback_ctx = self._init_callback_context()
+            callback_ctx.call_on_fit_task_begin(estimator=self)
 
-            for i in range(n_subtasks):
-                subcontext = callback_ctx.subcontext(task_id=i).call_on_fit_task_begin(
-                    estimator=self, X=X, y=y
-                )
-                if subcontext.call_on_fit_task_end(estimator=self, X=X, y=y):
-                    break
-
-            callback_ctx.call_on_fit_task_end(estimator=self, X=X, y=y)
+            callback_ctx.call_on_fit_task_end(estimator=self)
             return self
 
     estimator = LocallyDefinedEstimator()
