@@ -666,6 +666,9 @@ def test_multiclass_colors_cmap(
         multiclass_colors=multiclass_colors,
     )
 
+    # Non-regression test for PR #33651
+    assert isinstance(disp.multiclass_colors_, np.ndarray)
+
     if multiclass_colors is None:
         if len(clf.classes_) <= 10:
             multiclass_colors = "tab10"
@@ -679,7 +682,7 @@ def test_multiclass_colors_cmap(
         cmap = mpl.pyplot.get_cmap(multiclass_colors)
         colors = cmap(np.linspace(0, 1, len(clf.classes_)))
     else:
-        colors = [mpl.colors.to_rgba(color) for color in multiclass_colors]
+        colors = mpl.colors.to_rgba_array(multiclass_colors)
 
     # Make sure the colormap has enough distinct colors.
     assert disp.n_classes == len(np.unique(colors, axis=0))

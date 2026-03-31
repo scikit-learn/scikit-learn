@@ -13,7 +13,7 @@ from sklearn.decomposition import PCA
 from sklearn.decomposition._pca import _assess_dimension, _infer_dimension
 from sklearn.utils._array_api import (
     _atol_for_type,
-    _convert_to_numpy,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._array_api import device as array_device
@@ -954,7 +954,7 @@ def check_array_api_get_precision(
         assert precision_xp.dtype == iris_xp.dtype
 
         assert_allclose(
-            _convert_to_numpy(precision_xp, xp=xp),
+            move_to(precision_xp, xp=np, device="cpu"),
             precision_np,
             rtol=rtol,
             atol=_atol_for_type(dtype_name),
@@ -964,7 +964,7 @@ def check_array_api_get_precision(
         assert covariance_xp.dtype == iris_xp.dtype
 
         assert_allclose(
-            _convert_to_numpy(covariance_xp, xp=xp),
+            move_to(covariance_xp, xp=np, device="cpu"),
             covariance_np,
             rtol=rtol,
             atol=_atol_for_type(dtype_name),
@@ -1067,11 +1067,11 @@ def test_pca_mle_array_api_compliance(
         est_xp.fit(X_xp, y_xp)
         components_xp = est_xp.components_
         assert array_device(components_xp) == array_device(X_xp)
-        components_xp_np = _convert_to_numpy(components_xp, xp=xp)
+        components_xp_np = move_to(components_xp, xp=np, device="cpu")
 
         explained_variance_xp = est_xp.explained_variance_
         assert array_device(explained_variance_xp) == array_device(X_xp)
-        explained_variance_xp_np = _convert_to_numpy(explained_variance_xp, xp=xp)
+        explained_variance_xp_np = move_to(explained_variance_xp, xp=np, device="cpu")
 
     assert components_xp_np.dtype == components_np.dtype
     assert components_xp_np.shape[1] == components_np.shape[1]

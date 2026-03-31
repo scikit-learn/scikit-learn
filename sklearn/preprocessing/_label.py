@@ -13,7 +13,6 @@ import scipy.sparse as sp
 from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
 from sklearn.utils import _align_api_if_sparse, column_or_1d
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
     _isin,
@@ -21,6 +20,7 @@ from sklearn.utils._array_api import (
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
+    move_to,
     xpx,
 )
 from sklearn.utils._encode import _encode, _unique
@@ -636,9 +636,9 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         # Use NumPy to construct the sparse matrix of one-hot labels
         Y = sp.csr_array(
             (
-                _convert_to_numpy(data, xp=xp),
-                _convert_to_numpy(indices, xp=xp),
-                _convert_to_numpy(indptr, xp=xp),
+                move_to(data, xp=np, device="cpu"),
+                move_to(indices, xp=np, device="cpu"),
+                move_to(indptr, xp=np, device="cpu"),
             ),
             shape=(n_samples, n_classes),
         )
