@@ -354,8 +354,9 @@ def _yield_array_api_checks(estimator, only_numpy=False):
             expect_only_array_outputs=False,
         )
     else:
-        # These extended checks should pass for all estimators that declare
-        # array API support in their tags.
+        # Extended checks (with default
+        # `check_array_api_input(expect_only_array_outputs=True)` should pass for all
+        # estimators that declare array API support in their tags.
         for (
             array_namespace,
             device_name,
@@ -369,7 +370,7 @@ def _yield_array_api_checks(estimator, only_numpy=False):
             )
         # We intend for all estimators that support array API to also support
         # mixed namespace/device inputs. Some are in the process of adding mixed
-        # input support and are listed in XFAIL for this check.
+        # input support and are listed in PER_ESTIMATOR_XFAIL_CHECKS for this check.
         for (
             from_ns_and_device,
             to_ns_and_device,
