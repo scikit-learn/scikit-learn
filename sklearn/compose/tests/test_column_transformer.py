@@ -1647,6 +1647,32 @@ def test_sk_visual_block_remainder_col_names_pandas():
     assert visual_block.name_details == (["col1"], ["col2"])
 
 
+def test_sk_visual_block_full_transform():
+    """Check that visual_block doesn't return remainder when it has no columns
+    Non-regression test - https://github.com/scikit-learn/scikit-learn/issues/33513
+    """
+    ct = ColumnTransformer([("norm1", Normalizer(), [0, 1])], remainder="passthrough")
+    X = np.array([[0, 4], [3, 3]])
+    ct.fit(X)
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.names == ("norm1",)
+    assert visual_block.name_details == ([0, 1],)
+    assert isinstance(visual_block.estimators[0], Normalizer)
+    assert len(visual_block.estimators) == 1
+
+
+def test_sk_visual_block_int_remainder_cols_pandas():
+    """Check that remainder still uses available string column names in visual block
+    even when transformer columns are specified by integer index.
+    """
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"a": [1, 2], "b": [3, 4], "c": [5, 6]})
+    ct = ColumnTransformer([("scaler", StandardScaler(), [0])], remainder="passthrough")
+    ct.fit(X)
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.name_details == ([0], ["b", "c"])
+
+
 @pytest.mark.parametrize("explicit_colname", ["first", "second", 0, 1])
 @pytest.mark.parametrize("remainder", [Trans(), "passthrough", "drop"])
 def test_column_transformer_reordered_column_names_remainder(

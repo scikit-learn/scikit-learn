@@ -31,7 +31,6 @@ from sklearn.utils import (
 from sklearn.utils._array_api import (
     _average,
     _bincount,
-    _convert_to_numpy,
     _count_nonzero,
     _fill_diagonal,
     _find_matching_floating_dtype,
@@ -538,12 +537,12 @@ def confusion_matrix(
     # counting operations implemented by SciPy in the coo_matrix constructor.
     # The final results will be converted back to the input namespace and device
     # for the sake of consistency with other metric functions with array API support.
-    y_true = _convert_to_numpy(y_true, xp)
-    y_pred = _convert_to_numpy(y_pred, xp)
+    y_true = move_to(y_true, xp=np, device="cpu")
+    y_pred = move_to(y_pred, xp=np, device="cpu")
     if sample_weight is None:
         sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
     else:
-        sample_weight = _convert_to_numpy(sample_weight, xp)
+        sample_weight = move_to(sample_weight, xp=np, device="cpu")
 
     if len(sample_weight) > 0:
         y_type, y_true, y_pred, sample_weight = _check_targets(
@@ -564,7 +563,7 @@ def confusion_matrix(
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
-        labels = _convert_to_numpy(labels, xp)
+        labels = move_to(labels, xp=np, device="cpu")
         n_labels = labels.size
         if n_labels == 0:
             raise ValueError("'labels' should contain at least one label.")

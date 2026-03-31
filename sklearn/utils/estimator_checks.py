@@ -358,14 +358,14 @@ def _yield_array_api_checks(estimator, only_numpy=False):
         # array API support in their tags.
         for (
             array_namespace,
-            device,
+            device_name,
             dtype_name,
         ) in yield_namespace_device_dtype_combinations():
             yield partial(
                 check_array_api_input,
                 array_namespace=array_namespace,
+                device_name=device_name,
                 dtype_name=dtype_name,
-                device=device,
             )
         # We intend for all estimators that support array API to also support
         # mixed namespace/device inputs. Some are in the process of adding mixed
@@ -380,6 +380,13 @@ def _yield_array_api_checks(estimator, only_numpy=False):
                 from_ns_and_device=from_ns_and_device,
                 to_ns_and_device=to_ns_and_device,
             )
+        # Only test with one namespace to keep costs down
+        # There should be no dependency on the exact
+        # namespace used.
+        yield partial(
+            check_array_api_same_namespace,
+            array_namespace="array_api_strict",
+        )
 
 
 def _yield_all_checks(estimator, legacy: bool):
@@ -1334,7 +1341,7 @@ def check_array_api_input_and_values(
     name,
     estimator_orig,
     array_namespace,
-    device=None,
+    device_name=None,
     dtype_name="float64",
     check_sample_weight=False,
 ):
@@ -1342,7 +1349,7 @@ def check_array_api_input_and_values(
         name,
         estimator_orig,
         array_namespace=array_namespace,
-        device=device,
+        device_name=device_name,
         dtype_name=dtype_name,
         check_values=True,
         check_sample_weight=check_sample_weight,
@@ -1411,6 +1418,63 @@ def check_array_api_mixed_inputs(
         check_sample_weight=check_sample_weight,
         expect_only_array_outputs=expect_only_array_outputs,
     )
+
+
+def check_array_api_same_namespace(
+    name, estimator_orig, array_namespace, device_name=None
+):
+    """Check that estimator raises when predict/transform namespace differs from fit.
+
+    Array API compatible estimators should call ``check_same_namespace`` in
+    their ``predict``, ``transform``, and similar methods to verify that the
+    input arrays are from the same namespace and device as the fitted
+    attributes.
+    """
+    xp, device = _array_api_for_tests(array_namespace, device_name)
+
+    X, y = make_classification(n_samples=30, n_features=10, random_state=42)
+    X = X.astype("float64", copy=False)
+
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+    y = _enforce_estimator_tags_y(estimator_orig, y)
+
+    est = clone(estimator_orig)
+    set_random_state(est)
+
+    X_xp = xp.asarray(X, device=device)
+    y_xp = xp.asarray(y, device=device)
+
+    with config_context(array_api_dispatch=True):
+        est.fit(X_xp, y_xp)
+
+    methods = (
+        "decision_function",
+        "predict",
+        "predict_log_proba",
+        "predict_proba",
+        "transform",
+    )
+
+    for method_name in methods:
+        method = getattr(est, method_name, None)
+        if method is None:
+            continue
+
+        with config_context(array_api_dispatch=True):
+            try:
+                method(X)
+            except ValueError as e:
+                if "must use the same namespace" in str(
+                    e
+                ) and f"{name}.{method_name}()" in str(e):
+                    continue
+                raise
+            raise AssertionError(
+                f"{name}.{method_name}() did not raise when called with a "
+                f"different array namespace than the one used during fit. "
+                f"Add a call to check_same_namespace() at the start of "
+                f"{method_name} to fix this."
+            )
 
 
 def check_estimator_sparse_tag(name, estimator_orig):

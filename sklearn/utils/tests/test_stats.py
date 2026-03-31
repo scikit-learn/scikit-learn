@@ -4,12 +4,12 @@ from numpy.testing import assert_allclose, assert_array_equal
 from pytest import approx
 
 from sklearn._config import config_context
+from sklearn.utils._array_api import device as array_device
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     get_namespace,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._array_api import device as array_device
 from sklearn.utils.estimator_checks import _array_api_for_tests
 from sklearn.utils.fixes import np_version, parse_version
 from sklearn.utils.stats import _weighted_percentile
@@ -259,7 +259,8 @@ def test_weighted_percentile_2d(global_random_seed, percentile_rank, average):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
 )
 @pytest.mark.parametrize(
     "data, weights, percentile",
@@ -289,10 +290,16 @@ def test_weighted_percentile_2d(global_random_seed, percentile_rank, average):
     ],
 )
 def test_weighted_percentile_array_api_consistency(
-    global_random_seed, array_namespace, device, dtype_name, data, weights, percentile
+    global_random_seed,
+    array_namespace,
+    device_name,
+    dtype_name,
+    data,
+    weights,
+    percentile,
 ):
     """Check `_weighted_percentile` gives consistent results with array API."""
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     # Skip test for percentile=0 edge case (#20528) on namespace/device where
     # xp.nextafter is broken. This is the case for torch with MPS device:
@@ -317,7 +324,7 @@ def test_weighted_percentile_array_api_consistency(
         result_xp = _weighted_percentile(X_xp, weights_xp, percentile)
         assert array_device(result_xp) == array_device(X_xp)
         assert get_namespace(result_xp)[0] == get_namespace(X_xp)[0]
-        result_xp_np = _convert_to_numpy(result_xp, xp=xp)
+        result_xp_np = move_to(result_xp, xp=np, device="cpu")
 
     assert result_xp_np.dtype == result_np.dtype
     assert result_xp_np.shape == result_np.shape
