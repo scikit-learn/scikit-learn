@@ -1090,12 +1090,16 @@ def _check_array_api_core(
     expect_only_array_outputs=True,
 ):
     """Helper to check estimator attributes and method outputs."""
-    xp_to = _array_api_for_tests(to_ns_and_device.xp, to_ns_and_device.device)
-    xp_from = _array_api_for_tests(from_ns_and_device.xp, from_ns_and_device.device)
+    xp_to, device_to = _array_api_for_tests(
+        to_ns_and_device.xp, to_ns_and_device.device
+    )
+    xp_from, device_from = _array_api_for_tests(
+        from_ns_and_device.xp, from_ns_and_device.device
+    )
 
     X, y = make_classification(n_samples=30, n_features=10, random_state=42)
     if dtype_name is None:
-        dtype_name = _max_precision_float_dtype(xp_to, to_ns_and_device.device)
+        dtype_name = _max_precision_float_dtype(xp_to, device_to)
 
     X = X.astype(dtype_name, copy=False)
 
@@ -1105,15 +1109,15 @@ def _check_array_api_core(
     est = clone(estimator_orig)
     set_random_state(est)
 
-    X_xp = xp_to.asarray(X, device=to_ns_and_device.device)
-    y_xp = xp_from.asarray(y, device=from_ns_and_device.device)
+    X_xp = xp_to.asarray(X, device=device_to)
+    y_xp = xp_from.asarray(y, device=device_from)
 
     fit_kwargs = {}
     fit_kwargs_xp = {}
     if check_sample_weight and has_fit_parameter(estimator_orig, "sample_weight"):
         fit_kwargs["sample_weight"] = np.ones(X.shape[0], dtype=X.dtype)
         fit_kwargs_xp["sample_weight"] = xp_from.asarray(
-            fit_kwargs["sample_weight"], device=from_ns_and_device.device
+            fit_kwargs["sample_weight"], device=device_from
         )
 
     est.fit(X, y, **fit_kwargs)
