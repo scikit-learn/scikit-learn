@@ -26,7 +26,6 @@ class TestingCallback:
 
     def on_fit_task_begin(
         self,
-        estimator,
         context,
         *,
         X=None,
@@ -49,7 +48,6 @@ class TestingCallback:
 
     def on_fit_task_end(
         self,
-        estimator,
         context,
         *,
         X=None,
@@ -103,7 +101,7 @@ class NotValidCallback:
 class NotValidHookCallback(TestingCallback):
     """Invalid callback since it has invalid parameters in the hooks signatures."""
 
-    def on_fit_task_begin(self, estimator, context, *, not_valid_kwarg=None):
+    def on_fit_task_begin(self, context, *, not_valid_kwarg=None):
         pass  # pragma: no cover
 
 
@@ -119,13 +117,13 @@ class FailingCallback(TestingCallback):
         if self.fail_at == "setup":
             raise ValueError("Failing callback failed at setup")
 
-    def on_fit_task_begin(self, estimator, context):
-        super().on_fit_task_begin(estimator, context)
+    def on_fit_task_begin(self, context):
+        super().on_fit_task_begin(context)
         if self.fail_at == "on_fit_task_begin":
             raise ValueError("Failing callback failed at on_fit_task_begin")
 
-    def on_fit_task_end(self, estimator, context):
-        super().on_fit_task_end(estimator, context)
+    def on_fit_task_end(self, context):
+        super().on_fit_task_end(context)
         if self.fail_at == "on_fit_task_end":
             raise ValueError("Failing callback failed at on_fit_task_end")
 
@@ -138,16 +136,16 @@ class FailingCallback(TestingCallback):
 class StopFitCallback(TestingCallback):
     """A callback with a `on_fit_task_end` hook returning True."""
 
-    def on_fit_task_end(self, estimator, context):
-        super().on_fit_task_end(estimator, context)
+    def on_fit_task_end(self, context):
+        super().on_fit_task_end(context)
         return True
 
 
 class NotRequiredKwargsCallback(TestingCallback):
     """A callback with a `on_fit_task_end` not requiring all possible kwargs."""
 
-    def on_fit_task_end(self, estimator, context, *, X=None, y=None):
-        super().on_fit_task_end(estimator, context, X=X, y=y)
+    def on_fit_task_end(self, context, *, X=None, y=None):
+        super().on_fit_task_end(context, X=X, y=y)
 
 
 class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):

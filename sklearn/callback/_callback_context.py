@@ -89,8 +89,8 @@ from sklearn.callback._base import AutoPropagatedCallback
 
 # List of the parameters expected to be passed to call_on_fit_task_* (IN) and to be in
 # the hooks signatures (OUT).
-VALID_HOOK_PARAMS_IN = ["X", "y", "metadata", "reconstruction_attributes"]
-VALID_HOOK_PARAMS_OUT = ["X", "y", "metadata", "fitted_estimator"]
+VALID_HOOK_PARAMS_IN = ["estimator", "X", "y", "metadata", "reconstruction_attributes"]
+VALID_HOOK_PARAMS_OUT = ["estimator", "X", "y", "metadata", "fitted_estimator"]
 
 
 class CallbackContext:
@@ -377,15 +377,17 @@ class CallbackContext:
                         )
                         evaluated_args["fitted_estimator"] = new_est
                     else:
-                        val = kwargs.get(param_name, None)
+                        val = (
+                            kwargs.get(param_name, None)
+                            if param_name != "estimator"
+                            else estimator
+                        )
                         val = val() if callable(val) else val
                         evaluated_args[param_name] = val
 
                 args_to_pass[param_name] = evaluated_args[param_name]
 
-            result |= bool(
-                getattr(callback, hook_name)(estimator, self, **args_to_pass)
-            )
+            result |= bool(getattr(callback, hook_name)(self, **args_to_pass))
 
         return result
 
@@ -401,7 +403,7 @@ class CallbackContext:
             Additional optional arguments passed to the callback. The list of possible
             keys and corresponding values are described in detail at <TODO: add link>.
         """
-        self._call_hooks(estimator, hook_name="on_fit_task_begin", **kwargs)
+        self._call_hooks(hook_name="on_fit_task_begin", estimator=estimator, **kwargs)
         return self
 
     def call_on_fit_task_end(self, *, estimator, **kwargs):
@@ -422,7 +424,9 @@ class CallbackContext:
             Whether or not to stop the current level of iterations at this end of this
             task.
         """
-        return self._call_hooks(estimator, hook_name="on_fit_task_end", **kwargs)
+        return self._call_hooks(
+            hook_name="on_fit_task_end", estimator=estimator, **kwargs
+        )
 
     def propagate_callback_context(self, sub_estimator):
         """Propagate the context and callbacks to a sub-estimator.
