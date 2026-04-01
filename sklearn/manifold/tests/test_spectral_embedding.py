@@ -111,9 +111,14 @@ def test_fallback_amg():
     random_state = np.random.RandomState(36)
     data = random_state.randn(10, 30)
     sims = rbf_kernel(data)
+
+    # eigen_solver='amg' should raise a warning and fallback to 'arpack'
+    # when the Laplacian is dense.
     with pytest.warns(RuntimeWarning, match="dense matrices"):
         _ = spectral_embedding(sims, eigen_solver="amg", n_components=1)
 
+    # eigen_solver='amg' should raise a warning and fallback to 'arpack'
+    # when the graph is very small (n_nodes < 5 * n_components + 1).
     with pytest.warns(RuntimeWarning, match="small graphs"):
         _ = spectral_embedding(sims, eigen_solver="amg", n_components=5)
 
@@ -374,7 +379,7 @@ def test_pipeline_spectral_clustering(seed=36):
     # Test using pipeline to do spectral clustering
     # Note that SpectralEmbedding drops the first eigenvector,
     # contrary to SpectralClustering.  So here for n_clusters
-    # we will use n_components = n_clusters -1
+    # we will use n_components = n_clusters - 1
     # eigenvectors (since the first one is dropped).
     random_state = np.random.RandomState(seed)
     se_rbf = SpectralEmbedding(
