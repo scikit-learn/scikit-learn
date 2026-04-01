@@ -79,6 +79,8 @@ div.sk-item {
   background-size: 2px 100%;
   background-repeat: no-repeat;
   background-position: center center; */
+  border: 2px solid blue;
+
 }
 
 /* Parallel-specific style estimator block */
@@ -89,6 +91,7 @@ div.sk-item {
   border-bottom: 2px solid var(--sklearn-color-text-on-default-background);
   flex-grow: 1;
   display: none;
+  /* border: 2px solid red; no effect */
 }
 
 .sk-global div.sk-parallel {
@@ -98,11 +101,13 @@ div.sk-item {
   justify-content: center;
   background-color: var(--sklearn-color-background);
   position: relative;
+  border: 2px solid red;
 }
 
 .sk-global div.sk-parallel-item {
   display: flex;
   flex-direction: column;
+  border: 2px solid green;
 }
 
 .sk-global div.sk-parallel-item:first-child::after {
@@ -129,8 +134,13 @@ div.sk-item {
   padding-right: 1em;
   padding-left: 1em;
 }
-
-
+.sk-global div.sk-item  div.sk-parallel {
+  display: none;
+}
+.sk-global div.sk-item:has(> .sk-label-container input.sk-toggleable__control:checked) > div.sk-serial,
+.sk-global div.sk-item:has(> .sk-label-container input.sk-toggleable__control:checked) > div.sk-parallel {
+  display: flex;
+}
 /* Toggleable style: style used for estimator/Pipeline/ColumnTransformer box that is
 clickable and can be expanded/collapsed.
 - Pipeline and ColumnTransformer use this feature and define the default style
