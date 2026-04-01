@@ -410,6 +410,27 @@ parameters of the estimator using this dict. It returns the estimator itself.
 The :func:`~base.BaseEstimator.set_params` function is used to set parameters during
 grid search for instance.
 
+.. note::
+
+   Calling ``set_params`` only updates the estimator configuration.
+   Changing parameters using ``set_params`` does not affect the estimator's
+   fitted attributes. Methods such as ``predict`` or ``transform`` will continue
+   to use the state learned during the last call to ``fit``.
+   To apply updated parameters, ``fit`` must be called again.
+
+   For example::
+
+       from sklearn.neighbors import LocalOutlierFactor
+
+       est = LocalOutlierFactor().fit(X)
+       pred1 = est.predict(X)
+
+       est.set_params(novelty=True)
+       pred2 = est.predict(X)  # same behavior as before
+
+       est.fit(X)
+       pred3 = est.predict(X)  # now behavior reflects updated parameters
+
 .. _cloning:
 
 Cloning
