@@ -7,9 +7,9 @@ at which the fix is no longer needed.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import os
 import platform
 import struct
-import os
 
 import numpy as np
 import scipy
@@ -361,14 +361,10 @@ def _validate_tar_members(tar, dest_path):
                 f"Tar member {member.name!r} would extract outside destination"
             )
         if not (member.isreg() or member.isdir() or member.issym() or member.islnk()):
-            raise ValueError(
-                f"Tar member {member.name!r} is a special file type"
-            )
+            raise ValueError(f"Tar member {member.name!r} is a special file type")
         if member.islnk() or member.issym():
             if os.path.isabs(member.linkname):
-                raise ValueError(
-                    f"Tar member {member.name!r} has absolute link target"
-                )
+                raise ValueError(f"Tar member {member.name!r} has absolute link target")
             if member.issym():
                 link_target = os.path.join(
                     dest_path, os.path.dirname(name), member.linkname

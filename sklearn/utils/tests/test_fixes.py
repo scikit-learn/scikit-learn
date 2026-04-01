@@ -3,7 +3,6 @@
 
 import io
 import tarfile
-import tempfile
 
 import numpy as np
 import pytest
