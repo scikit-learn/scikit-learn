@@ -16,11 +16,12 @@ from math import sqrt
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import coo_matrix, csr_matrix, issparse
+from scipy.sparse import coo_array, csr_array, issparse
 
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder
 from sklearn.utils import (
+    _align_api_if_sparse,
     assert_all_finite,
     check_array,
     check_consistent_length,
@@ -30,7 +31,6 @@ from sklearn.utils import (
 from sklearn.utils._array_api import (
     _average,
     _bincount,
-    _convert_to_numpy,
     _count_nonzero,
     _fill_diagonal,
     _find_matching_floating_dtype,
@@ -173,8 +173,8 @@ def _check_targets(y_true, y_pred, sample_weight=None):
             # they are passed as a dense arrays? This is not possible for array
             # API inputs in general hence we only do it for NumPy inputs. But even
             # for NumPy the usefulness is questionable.
-            y_true = csr_matrix(y_true)
-            y_pred = csr_matrix(y_pred)
+            y_true = _align_api_if_sparse(csr_array(y_true))
+            y_pred = _align_api_if_sparse(csr_array(y_pred))
         y_type = "multilabel-indicator"
 
     return y_type, y_true, y_pred, sample_weight
@@ -225,7 +225,7 @@ def _one_hot_encoding_multiclass_target(y_true, labels, target_xp, target_device
             )
 
     transformed_labels = lb.transform(y_true)
-    transformed_labels = target_xp.asarray(transformed_labels, device=target_device)
+    transformed_labels = move_to(transformed_labels, xp=target_xp, device=target_device)
     if transformed_labels.shape[1] == 1:
         transformed_labels = target_xp.concat(
             (1 - transformed_labels, transformed_labels), axis=1
@@ -537,12 +537,12 @@ def confusion_matrix(
     # counting operations implemented by SciPy in the coo_matrix constructor.
     # The final results will be converted back to the input namespace and device
     # for the sake of consistency with other metric functions with array API support.
-    y_true = _convert_to_numpy(y_true, xp)
-    y_pred = _convert_to_numpy(y_pred, xp)
+    y_true = move_to(y_true, xp=np, device="cpu")
+    y_pred = move_to(y_pred, xp=np, device="cpu")
     if sample_weight is None:
         sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
     else:
-        sample_weight = _convert_to_numpy(sample_weight, xp)
+        sample_weight = move_to(sample_weight, xp=np, device="cpu")
 
     if len(sample_weight) > 0:
         y_type, y_true, y_pred, sample_weight = _check_targets(
@@ -563,7 +563,7 @@ def confusion_matrix(
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
-        labels = _convert_to_numpy(labels, xp)
+        labels = move_to(labels, xp=np, device="cpu")
         n_labels = labels.size
         if n_labels == 0:
             raise ValueError("'labels' should contain at least one label.")
@@ -600,7 +600,7 @@ def confusion_matrix(
     else:
         dtype = np.float32 if str(device_).startswith("mps") else np.float64
 
-    cm = coo_matrix(
+    cm = coo_array(
         (sample_weight, (y_true, y_pred)),
         shape=(n_labels, n_labels),
         dtype=dtype,
@@ -741,7 +741,8 @@ def multilabel_confusion_matrix(
             [1, 2]]])
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    xp, _, device_ = get_namespace_and_device(y_true, y_pred, sample_weight)
+    xp, _, device_ = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device_)
     y_type, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
@@ -2145,6 +2146,8 @@ def precision_recall_fscore_support(
      array([2, 2, 2]))
     """
     _check_zero_division(zero_division)
+    xp, _, device_ = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device_)
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
 
     # Calculate tp_sum, pred_sum, true_sum ###
@@ -2160,7 +2163,6 @@ def precision_recall_fscore_support(
     pred_sum = tp_sum + MCM[:, 0, 1]
     true_sum = tp_sum + MCM[:, 1, 0]
 
-    xp, _, device_ = get_namespace_and_device(y_true, y_pred)
     if average == "micro":
         tp_sum = xp.reshape(xp.sum(tp_sum), (1,))
         pred_sum = xp.reshape(xp.sum(pred_sum), (1,))
@@ -3607,7 +3609,7 @@ def _one_hot_encoding_binary_target(y_true, pos_label, target_xp, target_device)
     """
     xp_y_true, _ = get_namespace(y_true)
     y_true_pos = xp_y_true.asarray(y_true == pos_label, dtype=xp_y_true.int64)
-    y_true_pos = target_xp.asarray(y_true_pos, device=target_device)
+    y_true_pos = move_to(y_true_pos, xp=target_xp, device=target_device)
     return target_xp.stack((1 - y_true_pos, y_true_pos), axis=1)
 
 

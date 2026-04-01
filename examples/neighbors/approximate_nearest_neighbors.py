@@ -39,7 +39,7 @@ except ImportError:
 # `nmslib`, as well as a loading function.
 import joblib
 import numpy as np
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_array
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.datasets import fetch_openml
@@ -93,7 +93,7 @@ class NMSlibTransformer(TransformerMixin, BaseEstimator):
         indices, distances = np.vstack(indices), np.vstack(distances)
 
         indptr = np.arange(0, n_samples_transform * n_neighbors + 1, n_neighbors)
-        kneighbors_graph = csr_matrix(
+        kneighbors_graph = csr_array(
             (distances.ravel(), indices.ravel(), indptr),
             shape=(n_samples_transform, self.n_samples_fit_),
         )

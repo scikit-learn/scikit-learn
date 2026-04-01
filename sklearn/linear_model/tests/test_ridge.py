@@ -44,8 +44,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils._array_api import (
     _NUMPY_NAMESPACE_NAMES,
     _atol_for_type,
-    _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
+    move_to,
     yield_namespace_device_dtype_combinations,
     yield_namespaces,
 )
@@ -1409,9 +1408,9 @@ def _test_tolerance(sparse_container):
 
 
 def check_array_api_attributes(
-    name, estimator, array_namespace, device, dtype_name, rtol=None
+    name, estimator, array_namespace, device_name, dtype_name, rtol=None
 ):
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     X_iris_np = X_iris.astype(dtype_name)
     y_iris_np = y_iris.astype(dtype_name)
@@ -1430,7 +1429,7 @@ def check_array_api_attributes(
         assert coef_xp.dtype == X_iris_xp.dtype
 
         assert_allclose(
-            _convert_to_numpy(coef_xp, xp=xp),
+            move_to(coef_xp, xp=np, device="cpu"),
             coef_np,
             rtol=rtol,
             atol=_atol_for_type(dtype_name),
@@ -1440,7 +1439,7 @@ def check_array_api_attributes(
         assert intercept_xp.dtype == X_iris_xp.dtype
 
         assert_allclose(
-            _convert_to_numpy(intercept_xp, xp=xp),
+            move_to(intercept_xp, xp=np, device="cpu"),
             intercept_np,
             rtol=rtol,
             atol=_atol_for_type(dtype_name),
@@ -1448,9 +1447,8 @@ def check_array_api_attributes(
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "check",
@@ -1469,43 +1467,47 @@ def check_array_api_attributes(
     ids=_get_check_estimator_ids,
 )
 def test_ridge_array_api_compliance(
-    estimator, check, array_namespace, device, dtype_name
+    estimator, check, array_namespace, device_name, dtype_name
 ):
     name = estimator.__class__.__name__
-    xp = _array_api_for_tests(array_namespace, device)
-    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
+    check(
+        name,
+        estimator,
+        array_namespace,
+        device_name=device_name,
+        dtype_name=dtype_name,
+    )
 
 
 @pytest.mark.parametrize(
     "estimator", [RidgeClassifier(solver="svd"), RidgeClassifierCV()]
 )
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 def test_ridge_classifier_multilabel_array_api(
-    estimator, array_namespace, device_, dtype_name
+    estimator, array_namespace, device_name, dtype_name
 ):
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     X, y = make_multilabel_classification(random_state=0)
     X_np = X.astype(dtype_name)
     y_np = y.astype(dtype_name)
     ridge_np = estimator.fit(X_np, y_np)
     pred_np = ridge_np.predict(X_np)
     with config_context(array_api_dispatch=True):
-        X_xp, y_xp = xp.asarray(X_np, device=device_), xp.asarray(y_np, device=device_)
+        X_xp, y_xp = xp.asarray(X_np, device=device), xp.asarray(y_np, device=device)
         ridge_xp = estimator.fit(X_xp, y_xp)
         pred_xp = ridge_xp.predict(X_xp)
         assert pred_xp.shape == pred_np.shape == y.shape
-        assert_allclose(_convert_to_numpy(pred_xp, xp=xp), pred_np)
+        assert_allclose(move_to(pred_xp, xp=np, device="cpu"), pred_np)
 
 
 @pytest.mark.parametrize(
     "array_namespace", yield_namespaces(include_numpy_namespaces=False)
 )
 def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
-    xp = _array_api_for_tests(array_namespace, device=None)
+    xp, _ = _array_api_for_tests(array_namespace, device_name=None)
 
     X_iris_xp = xp.asarray(X_iris[:5])
     y_iris_xp = xp.asarray(y_iris[:5])
@@ -1548,7 +1550,7 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
 
 @pytest.mark.parametrize("array_namespace", sorted(_NUMPY_NAMESPACE_NAMES))
 def test_array_api_numpy_namespace_no_warning(array_namespace):
-    xp = _array_api_for_tests(array_namespace, device=None)
+    xp, _ = _array_api_for_tests(array_namespace, device_name=None)
 
     X_iris_xp = xp.asarray(X_iris[:5])
     y_iris_xp = xp.asarray(y_iris[:5])
