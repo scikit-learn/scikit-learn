@@ -90,7 +90,7 @@ div.sk-item {
   /*width: 100%;*/
   border-bottom: 2px solid var(--sklearn-color-text-on-default-background);
   flex-grow: 1;
-  display: none;
+  /* display: none; */
   /* border: 2px solid red; no effect */
 }
 
@@ -134,9 +134,37 @@ div.sk-item {
   padding-right: 1em;
   padding-left: 1em;
 }
-.sk-global div.sk-item  div.sk-parallel {
-  display: none;
+/* Vertical line running down the left side of serial children */
+.sk-global div.sk-serial::before {
+  content: "";
+  position: absolute;
+  left: 1.5em;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: var(--sklearn-color-line);
 }
+
+/* Horizontal line from vertical rail to each child */
+.sk-global div.sk-serial > .sk-item,
+.sk-global div.sk-serial > .sk-estimator {
+  position: relative;
+  margin-left: 1.5em; /* indent children to make room for rail */
+}
+
+.sk-global div.sk-serial > .sk-item::before,
+.sk-global div.sk-serial > .sk-estimator::before {
+  content: "";
+  position: absolute;
+  left: -1.5em;
+  top: 50%;
+  width: 1.5em;
+  height: 2px;
+  background-color: var(--sklearn-color-line);
+}
+/* .sk-global div.sk-item  div.sk-parallel {
+  display: none;
+} */
 .sk-global div.sk-item:has(> .sk-label-container input.sk-toggleable__control:checked) > div.sk-serial,
 .sk-global div.sk-item:has(> .sk-label-container input.sk-toggleable__control:checked) > div.sk-parallel {
   display: flex;
