@@ -344,18 +344,19 @@ def _yield_outliers_checks(estimator):
 
 
 def _yield_array_api_checks(estimator, only_numpy=False):
+    # Note all tests run with array API dispatch enabled
     if only_numpy:
-        # Enabling array API dispatch and using NumPy inputs should not
-        # change results, even if the estimator does not explicitly support
-        # array API.
+        # For estimators without explicit array API support; check that enabling
+        # array API dispatch and using NumPy inputs does not change results.
+        # Output checks are looser (expect_only_array_outputs=False).
         yield partial(
             check_array_api_input,
             array_namespace="numpy",
             expect_only_array_outputs=False,
         )
     else:
-        # Extended checks (with default
-        # `check_array_api_input(expect_only_array_outputs=True)` should pass for all
+        # 1. All inputs from the same namespace and device.
+        # Extended output checks should pass for all
         # estimators that declare array API support in their tags.
         for (
             array_namespace,
@@ -368,9 +369,11 @@ def _yield_array_api_checks(estimator, only_numpy=False):
                 device_name=device_name,
                 dtype_name=dtype_name,
             )
+        # 2. Mixed namespace/device inputs: X uses one namespace/device
+        # y and sample_weight use another.
         # We intend for all estimators that support array API to also support
         # mixed namespace/device inputs. Some are in the process of adding mixed
-        # input support and are listed in PER_ESTIMATOR_XFAIL_CHECKS for this check.
+        # input support and are listed in PER_ESTIMATOR_XFAIL_CHECKS.
         for (
             from_ns_and_device,
             to_ns_and_device,
@@ -381,9 +384,9 @@ def _yield_array_api_checks(estimator, only_numpy=False):
                 from_ns_and_device=from_ns_and_device,
                 to_ns_and_device=to_ns_and_device,
             )
+        # 3. Namespace/device consistency between fit and predict/transform
         # Only test with one namespace to keep costs down
-        # There should be no dependency on the exact
-        # namespace used.
+        # There should be no dependency on the exact namespace used.
         yield partial(
             check_array_api_same_namespace,
             array_namespace="array_api_strict",
