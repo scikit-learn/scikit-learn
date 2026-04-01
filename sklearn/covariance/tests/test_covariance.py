@@ -424,7 +424,7 @@ def test_ledoit_wolf_shrinkage_array_api(
         shrinkage_xp = ledoit_wolf_shrinkage(X_xp)
 
     assert isinstance(shrinkage_xp, float)
-    assert abs(shrinkage_np - shrinkage_xp) < _atol_for_type(dtype_name)
+    assert_allclose(shrinkage_np, shrinkage_xp, atol=_atol_for_type(dtype_name))
 
 
 @pytest.mark.parametrize(
@@ -450,7 +450,7 @@ def test_log_likelihood_array_api(array_namespace, device_name, dtype_name):
         result_xp = log_likelihood(emp_cov_xp, precision_xp)
 
     assert isinstance(result_xp, float)
-    assert abs(result_np - result_xp) < _atol_for_type(dtype_name)
+    assert_allclose(result_np, result_xp, atol=_atol_for_type(dtype_name))
 
 
 @pytest.mark.parametrize(
@@ -473,7 +473,7 @@ def test_score_array_api(array_namespace, device_name, dtype_name, store_precisi
     score_np = lw_np.score(X_np)
 
     assert isinstance(score_xp, float)
-    assert abs(score_np - score_xp) < _atol_for_type(dtype_name)
+    assert_allclose(score_np, score_xp, atol=_atol_for_type(dtype_name))
 
 
 @pytest.mark.parametrize(
@@ -499,7 +499,7 @@ def test_error_norm_array_api(array_namespace, device_name, dtype_name, norm):
         result_xp = lw_xp.error_norm(comp_cov_xp, norm=norm)
 
     result_np = lw_np.error_norm(comp_cov_np, norm=norm)
-    assert abs(result_np - float(result_xp)) < _atol_for_type(dtype_name)
+    assert_allclose(result_np, float(result_xp), atol=_atol_for_type(dtype_name))
 
 
 @pytest.mark.parametrize(

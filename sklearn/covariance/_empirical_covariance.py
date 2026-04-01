@@ -13,7 +13,9 @@ import warnings
 import numpy as np
 from scipy import linalg
 
+from sklearn import config_context
 from sklearn.base import BaseEstimator, _fit_context
+from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.utils import check_array, metadata_routing
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
@@ -399,6 +401,15 @@ class EmpiricalCovariance(BaseEstimator):
         )
 
         precision = self.get_precision()
-        X_centered = X - self.location_
-        dist = xp.sum((X_centered @ precision) * X_centered, axis=1)
-        return dist
+        if _is_numpy_namespace(xp):
+            with config_context(assume_finite=True):
+                # compute mahalanobis distances
+                dist = pairwise_distances(
+                    X, self.location_[np.newaxis, :], metric="mahalanobis", VI=precision
+                )
+
+            return np.reshape(dist, (len(X),)) ** 2
+        else:
+            X_centered = X - self.location_
+            dist = xp.sum((X_centered @ precision) * X_centered, axis=1)
+            return dist
