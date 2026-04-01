@@ -74,25 +74,20 @@
 div.sk-parallel-item,
 div.sk-serial,
 div.sk-item {
-  /* draw centered vertical line to link estimators
-  background-image: linear-gradient(var(--sklearn-color-text-on-default-background), var(--sklearn-color-text-on-default-background));
-  background-size: 2px 100%;
-  background-repeat: no-repeat;
-  background-position: center center; */
-  border: 2px solid blue;
+  /* border: 2px solid blue; */
 
 }
 
 /* Parallel-specific style estimator block */
 
-.sk-global div.sk-parallel-item::after {
+/* SEEMS USELESS .sk-global div.sk-parallel-item::after {
   content: "";
-  /*width: 100%;*/
+  width: 100%;
   border-bottom: 2px solid var(--sklearn-color-text-on-default-background);
   flex-grow: 1;
-  /* display: none; */
-  /* border: 2px solid red; no effect */
-}
+  display: none;
+
+} */
 
 .sk-global div.sk-parallel {
   display: flex;
@@ -101,13 +96,13 @@ div.sk-item {
   justify-content: center;
   background-color: var(--sklearn-color-background);
   position: relative;
-  border: 2px solid red;
+  /* border: 2px solid red; */
 }
 
 .sk-global div.sk-parallel-item {
   display: flex;
   flex-direction: column;
-  border: 2px solid green;
+  /* border: 2px solid green; */
 }
 
 .sk-global div.sk-parallel-item:first-child::after {
