@@ -1099,7 +1099,9 @@ def _check_array_api_core(
 
     X, y = make_classification(n_samples=30, n_features=10, random_state=42)
     if dtype_name is None:
-        dtype_name = _max_precision_float_dtype(xp_to, device_to)
+        max_float_dtype = _max_precision_float_dtype(xp_to, device_to)
+        # Convert to string, so it is accepted by NumPy (`X` is NumPy array)
+        dtype_name = "float32" if max_float_dtype == xp_to.float32 else "float64"
 
     X = X.astype(dtype_name, copy=False)
 
