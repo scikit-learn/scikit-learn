@@ -74,7 +74,7 @@
 div.sk-parallel-item,
 div.sk-serial,
 div.sk-item {
-  border: 2px solid blue;
+   /* border: 1px solid blue;  */
 
 }
 
@@ -96,13 +96,13 @@ div.sk-item {
   justify-content: left;
   background-color: var(--sklearn-color-background);
   position: relative;
-  border: 2px solid red;
+  /* border: 2px solid red; */
 }
 
 .sk-global div.sk-parallel-item {
   display: flex;
   flex-direction: column;
-  border: 2px solid green;
+  /* border: 2px solid green; */
 }
 
 /* .sk-global div.sk-parallel-item:first-child::after {
@@ -130,30 +130,35 @@ div.sk-item {
   padding-left: 1em;
 }
 /* Vertical line running down the left side of serial children */
-.sk-global div.sk-serial::before {
+.sk-global div.sk-serial::before,
+.sk-global div.sk-parallel::before {
   content: "";
   position: absolute;
   left: 1.5em;
-  top: 0;
-  bottom: 0;
+  top: 8%;
+  bottom: 8%;
   width: 2px;
   background-color: var(--sklearn-color-line);
 }
 
 /* Horizontal line from vertical rail to each child */
 .sk-global div.sk-serial > .sk-item,
-.sk-global div.sk-serial > .sk-estimator {
+.sk-global div.sk-serial > .sk-estimator,
+.sk-global div.sk-parallel > .sk-item,
+.sk-global div.sk-parallel > .sk-estimator {
   position: relative;
   margin-left: 1.5em;
 }
 
 .sk-global div.sk-serial > .sk-item::before,
-.sk-global div.sk-serial > .sk-estimator::before {
+.sk-global div.sk-serial > .sk-estimator::before,
+.sk-global div.sk-parallel > .sk-item::before,
+.sk-global div.sk-parallel > .sk-estimator::before {
   content: "";
   position: absolute;
   left: -1.5em;
-  top: 50%;
-  width: 1.5em;
+  top: 0;
+  width: 3em;
   height: 2px;
   background-color: var(--sklearn-color-line);
 }
@@ -300,7 +305,7 @@ clickable and can be expanded/collapsed.
 
 .sk-global div.sk-label-container {
   text-align: left;
-  padding-left: 1.5em;
+  /* padding-left: 1.5em; */
 }
 
 /* Estimator-specific */
