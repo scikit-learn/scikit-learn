@@ -1,6 +1,10 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import io
+import tarfile
+import tempfile
+
 import numpy as np
 import pytest
 import scipy as sp
@@ -10,7 +14,73 @@ from sklearn.utils.fixes import (
     _ensure_sparse_index_int32,
     _object_dtype_isnan,
     _smallest_admissible_index_dtype,
+    _validate_tar_members,
 )
+
+
+def _make_tar(members):
+    """Create an in-memory tar archive with the given members.
+
+    Each member is a (name, content) or (name, content, kind) tuple.
+    kind is one of "file" (default), "symlink", or "hardlink".
+    """
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w:gz") as tf:
+        for item in members:
+            name, content = item[0], item[1]
+            kind = item[2] if len(item) > 2 else "file"
+            info = tarfile.TarInfo(name=name)
+            if kind == "symlink":
+                info.type = tarfile.SYMTYPE
+                info.linkname = content
+                tf.addfile(info)
+            elif kind == "hardlink":
+                info.type = tarfile.LNKTYPE
+                info.linkname = content
+                tf.addfile(info)
+            else:
+                data = content if isinstance(content, bytes) else content.encode()
+                info.size = len(data)
+                tf.addfile(info, io.BytesIO(data))
+    buf.seek(0)
+    return buf
+
+
+def test_validate_tar_members_safe(tmp_path):
+    """A well-formed archive passes validation without error."""
+    buf = _make_tar([("subdir/file.txt", b"hello")])
+    with tarfile.open(fileobj=buf) as tf:
+        _validate_tar_members(tf, str(tmp_path))  # should not raise
+
+
+@pytest.mark.parametrize(
+    "members, match",
+    [
+        ([("../../evil.txt", b"pwned")], "outside destination"),
+        ([("link", "../../outside", "symlink")], "links outside destination"),
+        ([("link", "/etc/passwd", "symlink")], "absolute link target"),
+        ([("link", "../../outside", "hardlink")], "links outside destination"),
+    ],
+)
+def test_validate_tar_members_rejects_unsafe(members, match, tmp_path):
+    """Path traversal, absolute paths, and unsafe links are rejected."""
+    buf = _make_tar(members)
+    with tarfile.open(fileobj=buf) as tf:
+        with pytest.raises(ValueError, match=match):
+            _validate_tar_members(tf, str(tmp_path))
+
+
+def test_validate_tar_members_special_file(tmp_path):
+    """Special file types (e.g. FIFO) are rejected."""
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w:gz") as tf:
+        info = tarfile.TarInfo(name="fifo")
+        info.type = tarfile.FIFOTYPE
+        tf.addfile(info)
+    buf.seek(0)
+    with tarfile.open(fileobj=buf) as tf:
+        with pytest.raises(ValueError, match="special file type"):
+            _validate_tar_members(tf, str(tmp_path))
 
 
 @pytest.mark.parametrize("dtype, val", ([object, 1], [object, "a"], [float, 1]))
