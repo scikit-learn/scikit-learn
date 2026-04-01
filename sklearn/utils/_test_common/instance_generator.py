@@ -118,8 +118,6 @@ from sklearn.linear_model import (
     RANSACRegressor,
     Ridge,
     RidgeClassifier,
-    RidgeClassifierCV,
-    RidgeCV,
     SGDClassifier,
     SGDOneClassSVM,
     SGDRegressor,
@@ -983,7 +981,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_methods_sample_order_invariance": "fails for the predict method",
     },
     FeatureUnion: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         # Fails because StandardScaler, which gets wrapped by FeatureUnion, supports
         # array API but FeatureUnion itself does not
         "check_array_api_same_namespace": "check_same_namespace not yet added",
@@ -1028,7 +1025,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     GridSearchCV: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_supervised_y_2d": "DataConversionWarning not caught",
         "check_requires_y_none": "Doesn't fail gracefully",
     },
@@ -1178,7 +1174,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     Nystroem: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_array_api_same_namespace": "check_same_namespace not yet added",
         "check_transformer_preserves_dtypes": (
             "dtypes are preserved but not at a close enough precision"
@@ -1251,7 +1246,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     RandomizedSearchCV: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_supervised_y_2d": "DataConversionWarning not caught",
         "check_requires_y_none": "Doesn't fail gracefully",
     },
@@ -1286,12 +1280,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_non_transformer_estimators_n_iter": (
             "n_iter_ cannot be easily accessed."
         ),
-    },
-    RidgeClassifierCV: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
-    },
-    RidgeCV: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
     },
     SelfTrainingClassifier: {
         "check_non_transformer_estimators_n_iter": "n_iter_ can be 0."
@@ -1347,7 +1335,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_fit2d_predict1d": "empty array passed inside",
     },
     StandardScaler: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     SVC: {
