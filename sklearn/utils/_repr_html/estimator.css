@@ -74,46 +74,46 @@
 div.sk-parallel-item,
 div.sk-serial,
 div.sk-item {
-  /* border: 2px solid blue; */
+  border: 2px solid blue;
 
 }
 
 /* Parallel-specific style estimator block */
 
-/* SEEMS USELESS .sk-global div.sk-parallel-item::after {
+ .sk-global div.sk-parallel-item::after {
   content: "";
   width: 100%;
   border-bottom: 2px solid var(--sklearn-color-text-on-default-background);
   flex-grow: 1;
   display: none;
 
-} */
+}
 
 .sk-global div.sk-parallel {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: center;
+  justify-content: left;
   background-color: var(--sklearn-color-background);
   position: relative;
-  /* border: 2px solid red; */
+  border: 2px solid red;
 }
 
 .sk-global div.sk-parallel-item {
   display: flex;
   flex-direction: column;
-  /* border: 2px solid green; */
+  border: 2px solid green;
 }
 
-.sk-global div.sk-parallel-item:first-child::after {
+/* .sk-global div.sk-parallel-item:first-child::after {
   align-self: flex-end;
   width: 50%;
-}
+} */
 
-.sk-global div.sk-parallel-item:last-child::after {
+/* .sk-global div.sk-parallel-item:last-child::after {
   align-self: flex-start;
   width: 50%;
-}
+} */
 
 .sk-global div.sk-parallel-item:only-child::after {
   width: 0;
@@ -144,7 +144,7 @@ div.sk-item {
 .sk-global div.sk-serial > .sk-item,
 .sk-global div.sk-serial > .sk-estimator {
   position: relative;
-  margin-left: 1.5em; /* indent children to make room for rail */
+  margin-left: 1.5em;
 }
 
 .sk-global div.sk-serial > .sk-item::before,
@@ -299,7 +299,8 @@ clickable and can be expanded/collapsed.
 }
 
 .sk-global div.sk-label-container {
-  text-align: center;
+  text-align: left;
+  padding-left: 1.5em;
 }
 
 /* Estimator-specific */
