@@ -386,7 +386,7 @@ def _spectral_embedding(
             # There is no unit test for this (hence `pragma: no cover`)
             # because it is unclear how to trigger this RuntimeError.
             # (https://github.com/scikit-learn/scikit-learn/pull/33262)
-            warnings.warn("ARPACK has failed, falling back to LOBPCG.",  RuntimeWarning)
+            warnings.warn("ARPACK has failed, falling back to LOBPCG.", RuntimeWarning)
             eigen_solver = "lobpcg"
 
     elif eigen_solver == "amg":
