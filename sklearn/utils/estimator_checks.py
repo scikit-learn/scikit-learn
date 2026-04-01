@@ -1120,7 +1120,9 @@ def _check_array_api_core(
     fit_kwargs = {}
     fit_kwargs_xp = {}
     if check_sample_weight and has_fit_parameter(estimator_orig, "sample_weight"):
-        fit_kwargs["sample_weight"] = np.ones(X.shape[0], dtype=X.dtype)
+        max_dtype_from = _max_precision_float_dtype(xp_from, device_from)
+        dtype_from = "float32" if max_dtype_from == xp_from.float32 else "float64"
+        fit_kwargs["sample_weight"] = np.ones(X.shape[0], dtype=dtype_from)
         fit_kwargs_xp["sample_weight"] = xp_from.asarray(
             fit_kwargs["sample_weight"], device=device_from
         )
