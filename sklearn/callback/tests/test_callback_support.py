@@ -101,8 +101,8 @@ def test_function_no_callback_support(n_jobs, prefer, Callback):
 def test_instantiate_manager_outside_main_module():
     """Test instantiating the callbacks manager outside the __main__ module."""
     code = """
-    from sklearn.callback.tests._utils import TestingCallback
+    from sklearn.callback._callback_support import get_callback_manager
 
-    callback = TestingCallback()
+    get_callback_manager()
     """
     assert_run_python_script_without_output(textwrap.dedent(code))
