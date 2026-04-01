@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from scipy import linalg, sparse
 
+from sklearn import config_context
 from sklearn.base import BaseEstimator
 from sklearn.datasets import load_iris, make_regression, make_sparse_uncorrelated
 from sklearn.linear_model import LinearRegression
@@ -17,16 +18,19 @@ from sklearn.linear_model._base import (
     make_dataset,
 )
 from sklearn.preprocessing import add_dummy_feature
+from sklearn.utils._array_api import get_namespace_and_device, move_estimator_to
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
+    skip_if_array_api_compat_not_configured,
 )
 from sklearn.utils.fixes import (
     COO_CONTAINERS,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
     LIL_CONTAINERS,
+    _sparse_eye_array,
 )
 
 rtol = 1e-6
@@ -100,7 +104,7 @@ def test_linear_regression_sample_weights(
 def test_raises_value_error_if_positive_and_sparse():
     error_msg = "Sparse data was passed for X, but dense data is required."
     # X must not be sparse if positive == True
-    X = sparse.eye(10)
+    X = _sparse_eye_array(10)
     y = np.ones(10)
 
     reg = LinearRegression(positive=True)
@@ -150,7 +154,7 @@ def test_linear_regression_sparse(global_random_seed):
     # Test that linear regression also works with sparse data
     rng = np.random.RandomState(global_random_seed)
     n = 100
-    X = sparse.eye(n, n)
+    X = _sparse_eye_array(n, n)
     beta = rng.rand(n)
     y = X @ beta
 
@@ -854,6 +858,25 @@ def test_linear_regression_sample_weight_consistency(
     assert_allclose(reg1.coef_, reg2.coef_, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg1.intercept_, reg2.intercept_)
+
+
+@skip_if_array_api_compat_not_configured
+def test_array_api_move_estimator_to():
+    xp = pytest.importorskip("array_api_strict")
+    rng = np.random.default_rng(0)
+    X = rng.normal(size=(10, 5))
+    y = rng.normal(size=10)
+
+    reg = LinearRegression().fit(X, y)
+    X_xp = xp.asarray(X)
+    reg.predict(X_xp)
+
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(ValueError, match=".*must use the same namespace"):
+            reg.predict(X_xp)
+        xp_target, _, device = get_namespace_and_device(X_xp)
+        reg = move_estimator_to(reg, xp_target, device)
+        reg.predict(X_xp)
 
 
 def test_predict_proba_lr_large_values():
