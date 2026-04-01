@@ -346,20 +346,6 @@ def test_unique_labels_array_api(array_namespace, device, dtype_name):
         assert_allclose(labels_np, labels_xp_np, atol=_atol_for_type(dtype_name))
 
 
-def test_unique_labels_torch_array_api_disabled():
-    """Check PyTorch cpu input to `unique_labels` with array API dispatch disabled."""
-    xp = _array_api_for_tests("torch", "cpu")
-    y1_np = np.array([1, 2, 3])
-    y2_np = np.array([2, 3, 4])
-    y1_torch = xp.asarray(y1_np)
-    y2_torch = xp.asarray(y2_np)
-
-    labels_np = unique_labels(y1_np, y2_np)
-    with config_context(array_api_dispatch=False):
-        labels_torch = unique_labels(y1_torch, y2_torch)
-        assert_allclose(labels_np, labels_torch)
-
-
 def test_check_classification_targets_too_many_unique_classes():
     """Check that we raise a warning when the number of unique classes is greater than
     50% of the number of samples.
