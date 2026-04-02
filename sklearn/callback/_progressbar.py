@@ -64,10 +64,10 @@ class ProgressBar:
         self._run_queues[context.root_uuid] = queue
         self._run_monitors[context.root_uuid] = progress_monitor
 
-    def on_fit_task_begin(self, context):
+    def on_fit_task_begin(self, estimator, context):
         pass
 
-    def on_fit_task_end(self, context):
+    def on_fit_task_end(self, estimator, context):
         self._run_queues[context.root_uuid].put(context)
 
     def teardown(self, estimator, context):

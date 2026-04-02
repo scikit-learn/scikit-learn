@@ -47,11 +47,14 @@ class _BaseCallback(Protocol):
 class FitCallback(_BaseCallback, Protocol):
     """Protocol for the callbacks evaluated on tasks during the fit of an estimator."""
 
-    def on_fit_task_begin(self, context, **kwargs):
+    def on_fit_task_begin(self, estimator, context, **kwargs):
         """Method called at the beginning of each fit task of the estimator.
 
         Parameters
         ----------
+        estimator : estimator instance
+            The estimator calling this callback hook.
+
         context : `sklearn.callback.CallbackContext` instance
             Context of the corresponding task.
 
@@ -61,11 +64,14 @@ class FitCallback(_BaseCallback, Protocol):
             values are described in detail at <TODO: add link>.
         """
 
-    def on_fit_task_end(self, context, **kwargs):
+    def on_fit_task_end(self, estimator, context, **kwargs):
         """Method called at the end of each fit task of the estimator.
 
         Parameters
         ----------
+        estimator : estimator instance
+            The estimator calling this callback hook.
+
         context : `sklearn.callback.CallbackContext` instance
             Context of the corresponding task.
 
