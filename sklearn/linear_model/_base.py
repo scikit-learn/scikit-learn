@@ -392,7 +392,7 @@ class LinearClassifierMixin(ClassifierMixin):
         if len(scores.shape) == 1:
             indices = xp.astype(scores > 0, indexing_dtype(xp))
         else:
-            indices = xp.astype(xp.argmax(scores, axis=1), indexing_dtype(xp))
+            indices = xp.argmax(scores, axis=1)
 
         indices = move_to(indices, xp=np, device="cpu")
 
