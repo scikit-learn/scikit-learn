@@ -19,9 +19,7 @@ from sklearn.utils.validation import _assert_all_finite, _num_samples, check_arr
 def _unique_multiclass(y, xp=None):
     xp, is_array_api_compliant = get_namespace(y, xp=xp)
     if hasattr(y, "__array__") or is_array_api_compliant:
-        a = cached_unique(xp.asarray(y), xp=xp)
-        return a
-        # return cached_unique(xp.asarray(y), xp=xp)
+        return cached_unique(xp.asarray(y), xp=xp)
     else:
         return set(y)
 
@@ -45,7 +43,7 @@ def unique_labels(*ys, ys_types=None):
 
     We don't allow:
         - mix of multilabel and multiclass (single label) targets
-        - mix of label indicator matrix and anything else,
+        - mix of label indicator matrix and anything else
           (because there are no explicit labels)
         - mix of label indicator matrices of different sizes
         - mix of string and integer labels

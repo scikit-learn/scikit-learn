@@ -10,7 +10,7 @@ from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVC
 from sklearn.utils._array_api import (
     _atol_for_type,
-    _convert_to_numpy,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -342,7 +342,7 @@ def test_unique_labels_array_api(array_namespace, device, dtype_name):
     labels_np = unique_labels(y1_np, y2_np)
     with config_context(array_api_dispatch=True):
         labels_xp = unique_labels(y1_xp, y2_xp)
-        labels_xp_np = _convert_to_numpy(labels_xp, xp)
+        labels_xp_np = move_to(labels_xp, xp=np, device="cpu")
         assert_allclose(labels_np, labels_xp_np, atol=_atol_for_type(dtype_name))
 
 
