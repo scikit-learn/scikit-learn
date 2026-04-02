@@ -1246,6 +1246,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
 
         xp, _, device_ = get_namespace_and_device(X)
+        sample_weight = move_to(sample_weight, xp=xp, device=device_)
         xp_y, _ = get_namespace(y)
 
         if self.penalty is None:

@@ -1125,7 +1125,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     LogisticRegression: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         "check_sample_weight_equivalence_on_dense_data": (
             "sample_weight is not equivalent to removing/repeating samples."
