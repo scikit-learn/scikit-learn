@@ -26,7 +26,6 @@ from sklearn.utils._array_api import (
     _asarray_with_order,
     _average,
     _expit,
-    _is_numpy_namespace,
     check_same_namespace,
     get_namespace,
     get_namespace_and_device,
@@ -395,13 +394,9 @@ class LinearClassifierMixin(ClassifierMixin):
         else:
             indices = xp.astype(xp.argmax(scores, axis=1), indexing_dtype(xp))
 
-        # If `y` consists of strings during fitting then `self.classes_` will
-        # also contain strings and we handle such a scenario by returning the
-        # predictions according to the namespace of `self.classes_` i.e. numpy.
-        xp_classes, _ = get_namespace(self.classes_)
-        if _is_numpy_namespace(xp_classes):
-            indices = move_to(indices, xp=np, device="cpu")
+        indices = move_to(indices, xp=np, device="cpu")
 
+        xp_classes, _ = get_namespace(self.classes_)
         return xp_classes.take(self.classes_, indices, axis=0)
 
     def _predict_proba_lr(self, X):
