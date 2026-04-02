@@ -1144,10 +1144,13 @@ def _check_array_api_core(
         est_xp_param = getattr(est_xp, key)
         with config_context(array_api_dispatch=True):
             attribute_ns = get_namespace(est_xp_param)[0].__name__
-        assert attribute_ns == X_ns, (
-            f"'{key}' attribute is in wrong namespace, expected {X_ns} "
-            f"got {attribute_ns}"
-        )
+        # `classes_` attribute may be of different namespace, in case when `y` is
+        # string and NumPy and `X` is not NumPy.
+        if key != "classes_":
+            assert attribute_ns == X_ns, (
+                f"'{key}' attribute is in wrong namespace, expected {X_ns} "
+                f"got {attribute_ns}"
+            )
 
         with config_context(array_api_dispatch=True):
             assert array_device(est_xp_param) == array_device(X_xp)

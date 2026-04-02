@@ -393,7 +393,7 @@ class LinearClassifierMixin(ClassifierMixin):
         if len(scores.shape) == 1:
             indices = xp.astype(scores > 0, indexing_dtype(xp))
         else:
-            indices = xp.argmax(scores, axis=1)
+            indices = xp.astype(xp.argmax(scores, axis=1), indexing_dtype(xp))
 
         # If `y` consists of strings during fitting then `self.classes_` will
         # also contain strings and we handle such a scenario by returning the
