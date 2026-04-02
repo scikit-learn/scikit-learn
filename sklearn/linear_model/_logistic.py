@@ -312,7 +312,7 @@ def _logistic_regression_path(
             n_features + int(fit_intercept), dtype=_matching_numpy_dtype(X, xp=xp)
         )
         # classes[1] is the "positive label"
-        mask = xp.asarray(y == classes[1], device=device_)
+        mask = move_to(y == classes[1], xp=xp, device=device_)
         y_bin = xp.ones(y.shape, dtype=X.dtype, device=device_)
         if solver == "liblinear":
             y_bin[~mask] = -1.0
