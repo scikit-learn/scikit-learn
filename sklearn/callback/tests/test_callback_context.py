@@ -454,7 +454,12 @@ def test_from_reconstruction_attributes():
 
 
 def test_locally_defined_estimator():
-    """Test a callback with a locally defined estimator class."""
+    """Test a callback with a locally defined estimator class.
+
+    A locally defined estimator is not picklable, putting it in a container managed by
+    the callback manager would break. As a future improvement, the loky manager used as
+    the callback manager could use the loky pickler.
+    """
 
     class LocallyDefinedEstimator(CallbackSupportMixin):
         @with_callbacks
