@@ -1316,7 +1316,7 @@ def _array_api_for_tests(array_namespace, device_name=None):
     -------
     xp : module
         The module object for the requested array namespace.
-    device : object or None
+    device : object, str or None
         The library specific device object that can be passed to
         xp.asarray(..., device=device). This might be a string and not
         a library specific device object.
