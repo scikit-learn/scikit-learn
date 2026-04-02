@@ -394,9 +394,9 @@ class LinearClassifierMixin(ClassifierMixin):
         else:
             indices = xp.argmax(scores, axis=1)
 
-        indices = move_to(indices, xp=np, device="cpu")
+        xp_classes, _, device_classes = get_namespace_and_device(self.classes_)
+        indices = move_to(indices, xp=xp_classes, device=device_classes)
 
-        xp_classes, _ = get_namespace(self.classes_)
         return xp_classes.take(self.classes_, indices, axis=0)
 
     def _predict_proba_lr(self, X):
