@@ -4,15 +4,19 @@
 Support Vector Machines
 =======================
 
-.. TODO: Describe tol parameter
-.. TODO: Describe max_iter parameter
-
 .. currentmodule:: sklearn.svm
 
 **Support vector machines (SVMs)** are a set of supervised learning
 methods used for :ref:`classification <svm_classification>`,
 :ref:`regression <svm_regression>` and :ref:`outliers detection
 <svm_outlier_detection>`.
+
+The ``tol`` parameter controls the stopping criterion of the optimization:
+smaller values typically lead to a more accurate solution at the cost of longer
+fit times. The ``max_iter`` parameter controls how long the solver is allowed
+to run. If the solver reaches this limit before convergence, fitting stops
+early. In practice, reducing ``tol``, increasing ``max_iter``, and scaling the
+data can help when the solver struggles to converge.
 
 The advantages of support vector machines are:
 
