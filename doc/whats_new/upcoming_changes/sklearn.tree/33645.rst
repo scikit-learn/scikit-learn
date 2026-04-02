@@ -1,4 +1,0 @@
-Fix escaping of ``feature_names`` and ``class_names`` in
-``tree.export_graphviz`` when ``special_characters=True`` so that ``&``,
-``<``, and ``>`` produce valid Graphviz HTML-like labels.
-By :user:`tiagocpaz`.
