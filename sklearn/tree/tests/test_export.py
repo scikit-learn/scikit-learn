@@ -312,7 +312,7 @@ def test_graphviz_special_character_escaping():
         special_characters=True,
     )
 
-    assert 'feature &gt; &quot;1&quot;' in contents
+    assert "feature &gt; &quot;1&quot;" in contents
     assert "class = &quot;yes&quot; &amp; maybe" in contents
     assert "class = no &lt; &quot;never&quot;" in contents
 
