@@ -7,7 +7,6 @@ from functools import partial
 import numpy as np
 import pytest
 
-from sklearn.base import BaseEstimator
 from sklearn.callback import CallbackSupportMixin, with_callbacks
 from sklearn.callback._callback_context import (
     CallbackContext,
@@ -457,7 +456,7 @@ def test_from_reconstruction_attributes():
 def test_locally_defined_estimator():
     """Test a callback with a locally defined estimator class."""
 
-    class LocallyDefinedEstimator(CallbackSupportMixin, BaseEstimator):
+    class LocallyDefinedEstimator(CallbackSupportMixin):
         @with_callbacks
         def fit(self, X=None, y=None):
             callback_ctx = self._init_callback_context()
