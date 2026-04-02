@@ -222,7 +222,7 @@ class WhileEstimator(CallbackSupportMixin, BaseEstimator):
         return self
 
 
-class ThirdPartyEstimator(CallbackSupportMixin, BaseEstimator):
+class ThirdPartyEstimator(CallbackSupportMixin):
     """A class that mimics a third-party estimator with callback support only using
     public API.
     """

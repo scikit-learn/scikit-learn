@@ -194,6 +194,7 @@ build_metadata_list = [
             "polars": "min",
             "pyamg": "min",
             "pyarrow": "min",
+            "rich": "min",
         },
     },
     {
@@ -370,6 +371,7 @@ build_metadata_list = [
             "sphinx-remove-toctrees": "min",
             "pydata-sphinx-theme": "min",
             "towncrier": "min",
+            "rich": "min",
         },
     },
     {

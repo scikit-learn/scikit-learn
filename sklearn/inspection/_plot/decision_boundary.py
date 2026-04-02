@@ -117,7 +117,7 @@ def _select_colors(mpl, multiclass_colors, n_classes):
                 "When 'multiclass_colors' is a list, it can only contain valid"
                 f" Matplotlib color names. Got: {multiclass_colors}"
             )
-        return [mpl.colors.to_rgba(color) for color in multiclass_colors]
+        return mpl.colors.to_rgba_array(multiclass_colors)
 
     else:
         raise TypeError("'multiclass_colors' must be a list or a str.")
