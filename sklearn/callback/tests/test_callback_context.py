@@ -471,5 +471,10 @@ def test_locally_defined_estimator():
             return self
 
     estimator = LocallyDefinedEstimator()
-    estimator.set_callbacks(TestingCallback())
+    callback = TestingCallback()
+    estimator.set_callbacks(callback)
     estimator.fit()
+    assert callback.count_hooks("setup") == 1
+    assert callback.count_hooks("on_fit_task_begin") == 1
+    assert callback.count_hooks("on_fit_task_end") == 1
+    assert callback.count_hooks("teardown") == 1
