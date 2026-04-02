@@ -214,6 +214,7 @@ ban-relative-imports = "all"
 ignore_missing_imports = true
 allow_redefinition = true
 exclude = "^sklearn/externals"
+disable_error_code = ["prop-decorator"]
 
 [[tool.mypy.overrides]]
 module = ["joblib.*", "sklearn.externals.*"]
