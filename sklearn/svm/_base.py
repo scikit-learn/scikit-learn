@@ -1022,8 +1022,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         "Attribute `probA_` was deprecated in version 1.9 and will be removed in "
         "1.11 as the `probability=True` option for SVC and NuSVC was deprecated "
         "and will be removed in 1.11."
-    )
-    # type: ignore[prop-decorator]
+    )  # type: ignore[prop-decorator]
     @property
     def probA_(self):
         """Parameter learned in Platt scaling when `probability=True`.
