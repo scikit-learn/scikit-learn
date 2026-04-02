@@ -74,7 +74,7 @@
 div.sk-parallel-item,
 div.sk-serial,
 div.sk-item {
-   /* border: 1px solid blue;  */
+   border: 1px solid blue;
 
 }
 
@@ -96,13 +96,13 @@ div.sk-item {
   justify-content: left;
   background-color: var(--sklearn-color-background);
   position: relative;
-  /* border: 2px solid red; */
+  border: 2px solid red;
 }
 
 .sk-global div.sk-parallel-item {
   display: flex;
   flex-direction: column;
-  /* border: 2px solid green; */
+  border: 2px solid green;
 }
 
 /* .sk-global div.sk-parallel-item:first-child::after {
@@ -135,10 +135,10 @@ div.sk-item {
   content: "";
   position: absolute;
   left: 1.5em;
-  top: 8%;
-  bottom: 8%;
+  top: 5%;
+  bottom: 10%;
   width: 2px;
-  background-color: var(--sklearn-color-line);
+  background-color: var(--sklearn-color-text-on-default-background);
 }
 
 /* Horizontal line from vertical rail to each child */
@@ -160,7 +160,7 @@ div.sk-item {
   top: 0;
   width: 3em;
   height: 2px;
-  background-color: var(--sklearn-color-line);
+  background-color: var(--sklearn-color-text-on-default-background);
 }
 /* .sk-global div.sk-item  div.sk-parallel {
   display: none;
