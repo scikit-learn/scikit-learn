@@ -133,6 +133,7 @@ def test_progressbar_no_callback_support(backend):
 @pytest.mark.parametrize("prefer", ["threads", "processes"])
 def test_outside_main_module(prefer):
     """Test instantiating the progressbar outside the __main__ module."""
+    pytest.importorskip("rich")
     code = f"""
     from sklearn.callback import ProgressBar
     from sklearn.callback.tests._utils import MaxIterEstimator, MetaEstimator
