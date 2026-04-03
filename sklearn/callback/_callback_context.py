@@ -39,9 +39,6 @@ class CallbackContext:
         The maximum number of children tasks for this task. 0 means it's a leaf.
         None means the maximum number of subtasks is not known in advance.
 
-    estimator : estimator instance
-        The estimator that holds this context.
-
     estimator_name : str
         The name of the estimator that holds this context.
 

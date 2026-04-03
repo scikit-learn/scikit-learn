@@ -214,7 +214,7 @@ class SimpleKMeans(CallbackSupportMixin, BaseEstimator):  # noqa: F811
 # %%
 # .. note::
 #
-#     See :ref:`the callback API documentation <callback_extra_kwargs>` for a list of
+#     See :ref:`the callback API documentation <callback_context_kwargs>` for a list of
 #     the possible keys of the ``kwargs`` to provide to ``call_on_fit_task_begin`` and
 #     ``call_on_fit_task_end``. These ``kwargs`` are optional, but an estimator should
 #     provide all the ones it is capable of producing to be compatible with a maximum

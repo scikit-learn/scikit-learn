@@ -18,4 +18,5 @@ Developer's Guide
    bug_triaging
    maintainer
    plotting
-   callbacks
+   callback_support
+   custom_callbacks
