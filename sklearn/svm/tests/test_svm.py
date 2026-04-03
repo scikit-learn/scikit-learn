@@ -1531,7 +1531,7 @@ def test_svc_nusvc_probA_probB_deprecated(est):
     """Test that accessing probA_ and probB_ raises FutureWarning for SVC and NuSVC."""
     X, y = make_classification(n_samples=50, n_informative=5, random_state=0)
     est = est().fit(X, y)
-    with pytest.warns(DeprecationWarning, match="Attribute `probA_` was deprecated"):
+    with pytest.warns(FutureWarning, match="Attribute `probA_` was deprecated"):
         _ = est.probA_
-    with pytest.warns(DeprecationWarning, match="Attribute `probB_` was deprecated"):
+    with pytest.warns(FutureWarning, match="Attribute `probB_` was deprecated"):
         _ = est.probB_
