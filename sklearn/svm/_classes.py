@@ -816,7 +816,6 @@ class SVC(BaseSVC):
         If `probability=False`, it's an empty array. Platt scaling uses the
         logistic function
 
-
     probB_ : ndarray of shape (n_classes * (n_classes - 1) / 2)
         If `probability=True`, it corresponds to the parameters learned in
         Platt scaling. Platt scaling uses the logistic function
@@ -828,7 +827,6 @@ class SVC(BaseSVC):
         .. deprecated:: 1.9
             The attributes `probA_` and `probB_` are deprecated in version 1.9 and will
             be removed in 1.11.
-
 
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
@@ -1088,7 +1086,6 @@ class NuSVC(BaseSVC):
 
     probA_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
         If `probability=True`, parameters learned in Platt scaling.
-
 
     probB_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
         If `probability=True`, it corresponds to the parameters learned in
