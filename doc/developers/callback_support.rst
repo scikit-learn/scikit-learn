@@ -125,16 +125,22 @@ The :class:`~CallbackContext` objects are to be used through four methods :
     additional keyword arguments as :meth:`~FitCallback.on_fit_task_begin`, listed in
     the :ref:`related section <callback_context_kwargs>` below.
 
-.. method:: CallbackContext.subcontext(task_name="", task_id=0, max_subtasks=0) -> CallbackContext instance
+.. method:: CallbackContext.subcontext(task_name="", task_id=None, max_subtasks=0, sequential_subtasks=True) -> CallbackContext instance
     :noindex:
 
     This method is used to generate a sub-context for a sub-task of the task the current
     context is responsible for.
 
     A string can be given to name the sub-task through the ``task_name`` argument, a
-    unique id can be passed as the ``task_id`` argument, and if the sub-task will also
-    have sub-tasks, the maximum number of children task this sub-task can have must be
-    indicated as an int with the ``max_subtasks`` argument.
+    unique id can be passed as the ``task_id`` argument.
+
+    If the sub-task will also have sub-tasks, and if the maximum number of children
+    tasks this sub-task can have is known, it must be indicated as an int with the
+    ``max_subtasks`` argument. If it cannot be known in advance, ``max_subtasks`` must
+    be set to ``None``. The ``sequential_subtasks`` argument is a boolean indicating if
+    the sub-task's children tasks are sequential, and if so, the id of the children will
+    be automatically generated, thus the ``task_id`` argument will need to be left to
+    ``None`` for these children tasks.
 
     The generated sub-context is returned.
 
@@ -158,16 +164,20 @@ callbacks to the estimator.
 It also provides the following method to initialize the root callback
 context in ``fit`` :
 
-.. method:: CallbackSupportMixin._init_callback_context(task_name="fit", task_id=0, max_subtasks=0) -> CallbackContext instance
+.. method:: CallbackSupportMixin._init_callback_context(task_name="fit", task_id=0, max_subtasks=0, sequential_subtasks=True) -> CallbackContext instance
     :noindex:
 
     This method must be used at the beginning of the estimator's ``fit`` to generate the
     callback context corresponding to the root task of the estimator's ``fit``.
 
-    A string can be given to name the sub-task through the ``task_name`` argument, a
-    unique id can be passed as the ``task_id`` argument, and the maximum number of
-    children task this root task can have must be indicated as an int with the
-    ``max_subtasks`` argument.
+    A string can be given to name the root task through the ``task_name`` argument and a
+    unique id can be passed as the ``task_id`` argument. The maximum number of children
+    tasks this root task can have must be indicated as an int with the ``max_subtasks``
+    argument if it is known. If unknown, ``max_subtasks`` must be set to ``None``. The
+    ``sequential_subtasks`` argument is a boolean indicating if this root task's
+    children tasks are sequential, and if so, the id of the children will be
+    automatically generated. Thus the ``task_id`` argument in the ``subcontext`` method
+    used to generate the contexts for these tasks will need to be left to ``None``.
 
     The generated :class:`~CallbackContext` instance is returned.
 
@@ -200,9 +210,8 @@ Here is a minimal example of a custom estimator supporting callbacks::
             callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
             for i in range(self.max_iter):
-                subcontext = callback_ctx.subcontext(task_id=i).call_on_fit_task_begin(
-                    estimator=self, X=X, y=y
-                )
+                subcontext = callback_ctx.subcontext(task_name="iteration")
+                subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
                 # Do something
 

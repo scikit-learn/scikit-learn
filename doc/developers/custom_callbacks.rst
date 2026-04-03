@@ -153,6 +153,9 @@ called. This contextual information takes the form of public attributes of the
     The UUID of the root context. All contexts in the same task tree have the same
     root UUID that is used to identify the task tree itself.
 
+- ``sequential_subtasks`` : bool
+    Whether this context's subtasks are sequential.
+
 - ``source_estimator_name`` : str or None
     If the estimator of the current task is a sub-estimator inside a meta-estimator, and
     the current task is the root task of that sub-estimator's ``fit``, this attribute

@@ -154,7 +154,7 @@ class SimpleKMeans(CallbackSupportMixin, BaseEstimator):  # noqa: F811
         for i in range(self.n_iter):
             # For each sub-task of fit (here each iteration of the loop), a sub-context
             # must be created with the callback context's `subcontext` method.
-            subcontext = callback_ctx.subcontext(task_id=i, task_name="fit iteration")
+            subcontext = callback_ctx.subcontext(task_name="fit iteration")
             # The sub-context corresponds to a new sub-task, so its
             # `call_on_fit_task_begin` method must also be called.
             subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
@@ -317,16 +317,14 @@ class SimpleGridSearch(CallbackSupportMixin, BaseEstimator):  # noqa: F811
         for i, params in enumerate(self.param_list):
             # A sub-context for the first level of iterations must be created.
             outer_subcontext = callback_ctx.subcontext(
-                task_name="param iteration", task_id=i, max_subtasks=cv.get_n_splits()
+                task_name="param iteration", max_subtasks=cv.get_n_splits()
             )
             # The `call_on_fit_task_begin` method of this sub-context must be called
             outer_subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
             for j, (train_idx, test_idx) in enumerate(cv.split(X)):
                 # This time a second level of iterations is also used, a second
                 # level of sub-contexts must then be used.
-                inner_subcontext = outer_subcontext.subcontext(
-                    task_name=f"split {j}", task_id=j
-                )
+                inner_subcontext = outer_subcontext.subcontext(task_name=f"split {j}")
 
                 estimator = clone(self.estimator).set_params(**params)
                 # Since a sub-estimator is used, the callbacks must be propagated to
