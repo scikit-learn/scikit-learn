@@ -1,0 +1,1 @@
+- Fix `sklearn.metrics.pairwise.manhattan_distances` dtype preservation for float32 input in sparse and dense paths. By :user:`machinelearningprodigy <machinelearningprodigy>`.
