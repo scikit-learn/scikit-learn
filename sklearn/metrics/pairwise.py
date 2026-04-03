@@ -1099,14 +1099,16 @@ def manhattan_distances(X, Y=None):
         Y = csr_array(Y, copy=False)
         X.sum_duplicates()  # this also sorts indices in-place
         Y.sum_duplicates()
-        D = np.zeros((n_x, n_y))
+        float_dtype = _find_matching_floating_dtype(X, Y, xp=np)
+        D = np.zeros((n_x, n_y), dtype=float_dtype)
         _sparse_manhattan(X.data, X.indices, X.indptr, Y.data, Y.indices, Y.indptr, D)
         return D
 
     xp, _, device_ = get_namespace_and_device(X, Y)
 
     if _is_numpy_namespace(xp):
-        return distance.cdist(X, Y, "cityblock")
+        float_dtype = _find_matching_floating_dtype(X, Y, xp=xp)
+        return distance.cdist(X, Y, "cityblock").astype(float_dtype, copy=False)
 
     # array API support
     float_dtype = _find_matching_floating_dtype(X, Y, xp=xp)

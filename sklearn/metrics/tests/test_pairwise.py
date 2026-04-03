@@ -218,25 +218,11 @@ def test_pairwise_distances_for_sparse_data(
     S = pairwise_distances(X_sparse, csc_container(Y), metric="manhattan")
     S2 = manhattan_distances(bsr_container(X), coo_container(Y))
     assert_allclose(S, S2)
-    if global_dtype == np.float64:
-        assert S.dtype == S2.dtype == global_dtype
-    else:
-        # TODO Fix manhattan_distances to preserve dtype.
-        # currently pairwise_distances uses manhattan_distances but converts the result
-        # back to the input dtype
-        with pytest.raises(AssertionError):
-            assert S.dtype == S2.dtype == global_dtype
+    assert S.dtype == S2.dtype == global_dtype
 
     S2 = manhattan_distances(X, Y)
     assert_allclose(S, S2)
-    if global_dtype == np.float64:
-        assert S.dtype == S2.dtype == global_dtype
-    else:
-        # TODO Fix manhattan_distances to preserve dtype.
-        # currently pairwise_distances uses manhattan_distances but converts the result
-        # back to the input dtype
-        with pytest.raises(AssertionError):
-            assert S.dtype == S2.dtype == global_dtype
+    assert S.dtype == S2.dtype == global_dtype
 
     # Test with scipy.spatial.distance metric, with a kwd
     kwds = {"p": 2.0}
