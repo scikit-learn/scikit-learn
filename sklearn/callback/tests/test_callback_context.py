@@ -28,6 +28,19 @@ from sklearn.callback.tests._utils import (
 )
 
 
+def _make_callback_ctx(
+    estimator, task_name="fit", task_id=0, max_subtasks=0, sequential_subtasks=True
+):
+    """Helper function to create a callback context with default values.
+
+    To be used instead of estimator._init_callback_context in tests that only check
+    the context tree (without callbacks).
+    """
+    return CallbackContext._from_estimator(
+        estimator, task_name, task_id, max_subtasks, sequential_subtasks
+    )
+
+
 def test_propagate_callback_context():
     """Sanity check for the `propagate_callback_context` method."""
     not_propagated_callback = TestingCallback()
@@ -37,7 +50,7 @@ def test_propagate_callback_context():
     metaestimator = MetaEstimator(estimator)
     metaestimator.set_callbacks([not_propagated_callback, propagated_callback])
 
-    callback_ctx = CallbackContext._from_estimator(metaestimator, "fit", 0, 0)
+    callback_ctx = _make_callback_ctx(metaestimator)
     callback_ctx.propagate_callback_context(estimator)
 
     assert hasattr(estimator, "_parent_callback_ctx")
@@ -50,7 +63,7 @@ def test_propagate_callback_context_no_callback():
     estimator = MaxIterEstimator()
     metaestimator = MetaEstimator(estimator)
 
-    callback_ctx = CallbackContext._from_estimator(metaestimator, "fit", 0, 0)
+    callback_ctx = _make_callback_ctx(metaestimator)
     assert len(callback_ctx._callbacks) == 0
 
     callback_ctx.propagate_callback_context(estimator)
@@ -77,7 +90,9 @@ def test_auto_propagated_callbacks():
 def _make_task_tree(n_children, n_grandchildren):
     """Helper function to create a tree of tasks with a context for each task."""
     estimator = MaxIterEstimator()
-    root = CallbackContext._from_estimator(estimator, "root task", 0, n_children)
+    root = _make_callback_ctx(
+        estimator, max_subtasks=n_children, sequential_subtasks=False
+    )
 
     for i in range(n_children):
         child = root.subcontext(
@@ -87,11 +102,7 @@ def _make_task_tree(n_children, n_grandchildren):
         )
 
         for j in range(n_grandchildren):
-            grandchild = child.subcontext(
-                task_name="grandchild task",
-                task_id=j,
-                max_subtasks=0,
-            )
+            grandchild = child.subcontext(task_name="grandchild task")
 
     return root
 
@@ -131,11 +142,8 @@ def test_task_tree():
 def test_add_child():
     """Sanity check for the `_add_child` method."""
     estimator = MaxIterEstimator()
-    root = CallbackContext._from_estimator(estimator, "root task", 0, max_subtasks=2)
-
-    first_child = CallbackContext._from_estimator(
-        estimator, "child task", task_id=0, max_subtasks=0
-    )
+    root = _make_callback_ctx(estimator, max_subtasks=2, sequential_subtasks=False)
+    first_child = _make_callback_ctx(estimator, task_name="child task", task_id=0)
 
     root._add_child(first_child)
     assert root.max_subtasks == 2
@@ -143,9 +151,7 @@ def test_add_child():
     assert first_child.task_id == 0
 
     # root already has a child with id 0
-    second_child = CallbackContext._from_estimator(
-        estimator, "child task", task_id=0, max_subtasks=0
-    )
+    second_child = _make_callback_ctx(estimator, task_name="child task", task_id=0)
     with pytest.raises(
         ValueError, match=r"Callback context .* already has a child with task_id=0"
     ):
@@ -156,9 +162,7 @@ def test_add_child():
     assert len(root._children_map) == 2
 
     # root can have at most 2 children
-    third_child = CallbackContext._from_estimator(
-        estimator, "child task", task_id=2, max_subtasks=0
-    )
+    third_child = _make_callback_ctx(estimator, task_name="child task", task_id=2)
 
     with pytest.raises(ValueError, match=r"Cannot add child to callback context"):
         root._add_child(third_child)
@@ -168,22 +172,28 @@ def test_merge_with():
     """Sanity check for the `_merge_with` method."""
     estimator = MaxIterEstimator()
     meta_estimator = MetaEstimator(estimator)
-    outer_root = CallbackContext._from_estimator(
-        meta_estimator, "root", 0, max_subtasks=None
-    )
+    outer_root = _make_callback_ctx(meta_estimator, max_subtasks=None)
 
     # Add a child task within the same estimator
-    outer_child = outer_root.subcontext(task_name="child", task_id=0, max_subtasks=0)
+    outer_child = outer_root.subcontext(
+        task_name="child", max_subtasks=0, sequential_subtasks=True
+    )
 
     # The root task of the inner estimator is merged with (and effectively replaces)
     # a leaf of the outer estimator because they correspond to the same formal task.
-    inner_root = CallbackContext._from_estimator(estimator, "root", 0, None)
+    inner_root = _make_callback_ctx(
+        estimator, max_subtasks=2, sequential_subtasks=False
+    )
     inner_root._merge_with(outer_child)
 
     assert inner_root.parent is outer_root
     assert inner_root.task_id == outer_child.task_id
     assert outer_child not in outer_root._children_map.values()
     assert inner_root in outer_root._children_map.values()
+
+    # info concerning subtasks of the context are not inherited from other context
+    assert inner_root.max_subtasks == 2
+    assert not inner_root.sequential_subtasks
 
     # The name and estimator name of the tasks it was merged with are stored
     assert inner_root.source_task_name == outer_child.task_name
@@ -193,13 +203,13 @@ def test_merge_with():
 def test_merge_with_error_not_leaf():
     """Check that merging with a non-leaf node raises an error."""
     estimator = MaxIterEstimator()
-    inner_root = CallbackContext._from_estimator(estimator, "root", 0, None)
+    inner_root = _make_callback_ctx(estimator)
 
     meta_estimator = MetaEstimator(estimator)
-    outer_root = CallbackContext._from_estimator(meta_estimator, "root", 0, None)
+    outer_root = _make_callback_ctx(meta_estimator, max_subtasks=None)
 
     # Add a child task within the same estimator
-    outer_root.subcontext(task_name="child", task_id=0, max_subtasks=1)
+    outer_root.subcontext(task_name="child")
 
     with pytest.raises(ValueError, match=r"Cannot merge callback context"):
         inner_root._merge_with(outer_root)
@@ -451,6 +461,44 @@ def test_from_reconstruction_attributes():
     assert reconstructed_est is not estimator
     assert reconstructed_est.get_params() == estimator.get_params()
     assert reconstructed_est.n_iter_ == 2
+
+
+def test_subcontext_task_id_ordering():
+    """Check that the task_id is automatically assigned in the correct order."""
+    estimator = MaxIterEstimator()
+    context = _make_callback_ctx(estimator, max_subtasks=5, sequential_subtasks=True)
+
+    for i in range(5):
+        subcontext = context.subcontext()
+        assert subcontext.task_id == i
+
+
+def test_subcontext_task_id_ordering_error():
+    """Check errors raised when task_id and sequential_subtasks are inconsistent.
+
+    - if sequential_subtasks is True, children task_ids must be left to None
+    - if sequential_subtasks is False, children task_ids must be provided
+    """
+    estimator = MaxIterEstimator()
+    context = _make_callback_ctx(estimator, max_subtasks=1, sequential_subtasks=True)
+    with pytest.raises(
+        ValueError,
+        match=(
+            "task_id for MaxIterEstimator child_task must be None if "
+            "sequential_subtasks is True for fit."
+        ),
+    ):
+        context.subcontext(task_name="child_task", task_id=0)
+
+    context = _make_callback_ctx(estimator, max_subtasks=1, sequential_subtasks=False)
+    with pytest.raises(
+        ValueError,
+        match=(
+            "task_id for MaxIterEstimator child_task must be provided if "
+            "sequential_subtasks is False for fit."
+        ),
+    ):
+        context.subcontext(task_name="child_task")
 
 
 def test_locally_defined_estimator():
