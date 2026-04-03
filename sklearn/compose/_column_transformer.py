@@ -20,6 +20,7 @@ from sklearn.base import TransformerMixin, _fit_context, clone
 from sklearn.pipeline import _fit_transform_one, _name_estimators, _transform_one
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import Bunch
+from sklearn.utils._dataframe import is_pandas_df
 from sklearn.utils._indexing import (
     _determine_key_type,
     _get_column_indices,
@@ -47,7 +48,6 @@ from sklearn.utils.validation import (
     _check_feature_names_in,
     _check_n_features,
     _get_feature_names,
-    _is_pandas_df,
     _num_samples,
     check_array,
     check_is_fitted,
@@ -513,6 +513,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._validate_names(names)
 
         # validate estimators
+        self._check_estimators_are_instances(transformers)
         for t in transformers:
             if t in ("drop", "passthrough"):
                 continue
@@ -773,7 +774,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         except ImportError:
             return
         for Xs, name in zip(result, names):
-            if not _is_pandas_df(Xs):
+            if not is_pandas_df(Xs):
                 continue
             for col_name, dtype in Xs.dtypes.to_dict().items():
                 if getattr(dtype, "na_value", None) is not pd.NA:
@@ -1064,7 +1065,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # were not present in fit time, and the order of the columns doesn't
         # matter.
         fit_dataframe_and_transform_dataframe = hasattr(self, "feature_names_in_") and (
-            _is_pandas_df(X) or hasattr(X, "__dataframe__")
+            is_pandas_df(X) or hasattr(X, "__dataframe__")
         )
 
         n_samples = _num_samples(X)
@@ -1223,23 +1224,39 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return np.hstack(Xs)
 
     def _sk_visual_block_(self):
-        if isinstance(self.remainder, str) and self.remainder == "drop":
-            transformers = self.transformers
-        elif hasattr(self, "_remainder"):
-            remainder_columns = self._remainder[2]
-            if (
-                hasattr(self, "feature_names_in_")
-                and remainder_columns
-                and not all(isinstance(col, str) for col in remainder_columns)
-            ):
-                remainder_columns = self.feature_names_in_[remainder_columns].tolist()
-            transformers = chain(
-                self.transformers, [("remainder", self.remainder, remainder_columns)]
+        # We can find remainder and its column only when it's fitted
+        if hasattr(self, "transformers_"):
+            transformers = (
+                self.transformers_[:-1]
+                if self.transformers_ and self.transformers_[-1][0] == "remainder"
+                else self.transformers_
             )
-        else:
-            transformers = chain(self.transformers, [("remainder", self.remainder, "")])
 
+            # Add remainder back to fitted transformers if remainder is not drop
+            # and if there are remainder columns to display
+            remainder_columns = self._remainder[2]
+            if self.remainder != "drop" and remainder_columns:
+                has_numeric_columns = not all(
+                    isinstance(col, str) for col in remainder_columns
+                )
+                # Convert indices to column names when feature names are available
+                if hasattr(self, "feature_names_in_") and has_numeric_columns:
+                    remainder_columns = self.feature_names_in_[
+                        remainder_columns
+                    ].tolist()
+
+                transformers = chain(
+                    transformers, [("remainder", self.remainder, remainder_columns)]
+                )
+        else:  # not fitted
+            if self.remainder != "drop":
+                transformers = chain(
+                    self.transformers, [("remainder", self.remainder, [])]
+                )
+            else:
+                transformers = self.transformers
         names, transformers, name_details = zip(*transformers)
+
         return _VisualBlock(
             "parallel", transformers, names=names, name_details=name_details
         )

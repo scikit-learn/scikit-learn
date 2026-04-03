@@ -1,9 +1,10 @@
 .. -*- mode: rst -*-
 
-|Azure| |Codecov| |CircleCI| |Nightly wheels| |Ruff| |PythonVersion| |PyPI| |DOI| |Benchmark|
+|GitHubActions| |Codecov| |CircleCI| |Nightly wheels| |Ruff| |PythonVersion| |PyPI| |DOI| |Benchmark|
 
-.. |Azure| image:: https://dev.azure.com/scikit-learn/scikit-learn/_apis/build/status/scikit-learn.scikit-learn?branchName=main
-   :target: https://dev.azure.com/scikit-learn/scikit-learn/_build/latest?definitionId=1&branchName=main
+
+.. |GitHubActions| image:: https://github.com/scikit-learn/scikit-learn/actions/workflows/unit-tests.yml/badge.svg
+   :target: https://github.com/scikit-learn/scikit-learn/actions/workflows/unit-tests.yml?query=branch%3Amain
 
 .. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/main.svg?style=shield
    :target: https://circleci.com/gh/scikit-learn/scikit-learn
@@ -29,17 +30,17 @@
 .. |Benchmark| image:: https://img.shields.io/badge/Benchmarked%20by-asv-blue
    :target: https://scikit-learn.org/scikit-learn-benchmarks
 
-.. |PythonMinVersion| replace:: 3.10
+.. |PythonMinVersion| replace:: 3.11
 .. |NumPyMinVersion| replace:: 1.24.1
 .. |SciPyMinVersion| replace:: 1.10.0
 .. |JoblibMinVersion| replace:: 1.3.0
 .. |ThreadpoolctlMinVersion| replace:: 3.2.0
 .. |MatplotlibMinVersion| replace:: 3.6.1
-.. |Scikit-ImageMinVersion| replace:: 0.19.0
+.. |Scikit-ImageMinVersion| replace:: 0.22.0
 .. |PandasMinVersion| replace:: 1.5.0
-.. |SeabornMinVersion| replace:: 0.9.1
+.. |SeabornMinVersion| replace:: 0.13.0
 .. |PytestMinVersion| replace:: 7.1.2
-.. |PlotlyMinVersion| replace:: 5.14.0
+.. |PlotlyMinVersion| replace:: 5.18.0
 
 .. image:: https://raw.githubusercontent.com/scikit-learn/scikit-learn/main/doc/logos/scikit-learn-logo.png
   :target: https://scikit-learn.org/

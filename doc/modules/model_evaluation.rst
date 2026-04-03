@@ -63,7 +63,7 @@ The most common decisions are done on binary classification tasks, where the res
 probability of rain a decision is made on how to act (whether to take mitigating
 measures like an umbrella or not).
 For classifiers, this is what :term:`predict` returns.
-See also :ref:`TunedThresholdClassifierCV`.
+See also :ref:`threshold_tunning`.
 There are many scoring functions which measure different aspects of such a
 decision, most of them are covered with or derived from the
 :func:`metrics.confusion_matrix`.
@@ -466,12 +466,12 @@ Classification metrics
 
 .. currentmodule:: sklearn.metrics
 
-The :mod:`sklearn.metrics` module implements several loss, score, and utility
-functions to measure classification performance.
-Some metrics might require probability estimates of the positive class,
-confidence values, or binary decisions values.
-Most implementations allow each sample to provide a weighted contribution
-to the overall score, through the ``sample_weight`` parameter.
+The :mod:`sklearn.metrics` module implements several loss, score, and utility functions
+to measure classification performance. Some metrics might require probability estimates
+of the positive class or non-thresholded decision values (as returned by
+:term:`decision_function` on some classifiers). Most implementations allow each sample
+to provide a weighted contribution to the overall score, through the ``sample_weight``
+parameter.
 
 Some of these are restricted to the binary classification case:
 
@@ -481,6 +481,7 @@ Some of these are restricted to the binary classification case:
    roc_curve
    class_likelihood_ratios
    det_curve
+   confusion_matrix_at_thresholds
 
 
 Others also work in the multiclass case:
@@ -816,6 +817,26 @@ false negatives and true positives as follows::
   >>> tn, fp, fn, tp
   (2, 1, 2, 3)
 
+With :func:`confusion_matrix_at_thresholds` we can get true negatives, false positives,
+false negatives and true positives for different thresholds::
+
+  >>> from sklearn.metrics import confusion_matrix_at_thresholds
+  >>> y_true = np.array([0., 0., 1., 1.])
+  >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
+  >>> tns, fps, fns, tps, thresholds = confusion_matrix_at_thresholds(y_true, y_score)
+  >>> tns
+  array([2., 1., 1., 0.])
+  >>> fps
+  array([0., 1., 1., 2.])
+  >>> fns
+  array([1., 1., 0., 0.])
+  >>> tps
+  array([1., 1., 2., 2.])
+  >>> thresholds
+  array([0.8, 0.4, 0.35, 0.1])
+
+Note that the thresholds consist of distinct `y_score` values, in decreasing order.
+
 .. rubric:: Examples
 
 * See :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
@@ -1113,7 +1134,7 @@ Note the following behaviors when averaging:
 
 * If all labels are included, "micro"-averaging in a multiclass setting will produce
   precision, recall and :math:`F` that are all identical to accuracy.
-* "weighted" averaging may produce a F-score that is not between precision and recall.
+* "weighted" averaging may produce an F-score that is not between precision and recall.
 * "macro" averaging for F-measures is calculated as the arithmetic mean over
   per-label/class F-measures, not the harmonic mean over the arithmetic precision and
   recall means. Both calculations can be seen in the literature but are not equivalent,
@@ -1281,7 +1302,7 @@ is defined by:
   - w_{i, y_i}, 0\right\}
 
 Here is a small example demonstrating the use of the :func:`hinge_loss` function
-with a svm classifier in a binary class problem::
+with an svm classifier in a binary class problem::
 
   >>> from sklearn import svm
   >>> from sklearn.metrics import hinge_loss
@@ -1297,7 +1318,7 @@ with a svm classifier in a binary class problem::
   0.3
 
 Here is an example demonstrating the use of the :func:`hinge_loss` function
-with a svm classifier in a multiclass problem::
+with an svm classifier in a multiclass problem::
 
   >>> X = np.array([[0], [1], [2], [3]])
   >>> Y = np.array([0, 1, 2, 3])
@@ -1557,9 +1578,9 @@ Quoting Wikipedia :
   sensitivity, and FPR is one minus the specificity or true negative rate."
 
 This function requires the true binary value and the target scores, which can
-either be probability estimates of the positive class, confidence values, or
-binary decisions. Here is a small example of how to use the :func:`roc_curve`
-function::
+either be probability estimates of the positive class or non-thresholded decision values
+(as returned by :term:`decision_function` on some classifiers). Here is a small example
+of how to use the :func:`roc_curve` function::
 
     >>> import numpy as np
     >>> from sklearn.metrics import roc_curve
@@ -1961,18 +1982,16 @@ two above definitions to follow.
     ... )
     0.146
 
-The Brier score can be used to assess how well a classifier is calibrated.
-However, a lower Brier score loss does not always mean a better calibration.
-This is because, by analogy with the bias-variance decomposition of the mean
-squared error, the Brier score loss can be decomposed as the sum of calibration
-loss and refinement loss [Bella2012]_. Calibration loss is defined as the mean
-squared deviation from empirical probabilities derived from the slope of ROC
-segments. Refinement loss can be defined as the expected optimal loss as
-measured by the area under the optimal cost curve. Refinement loss can change
-independently from calibration loss, thus a lower Brier score loss does not
-necessarily mean a better calibrated model. "Only when refinement loss remains
-the same does a lower Brier score loss always mean better calibration"
-[Bella2012]_, [Flach2008]_.
+.. note::
+    As a strictly proper scoring rules for probabilistic predictions,
+    the Brier score assesses calibration (reliability) and
+    discriminative power (resolution) of a model, as well as the randomness of the data
+    (uncertainty) at the same time. This follows from the well-known Brier score
+    decomposition of Murphy [Murphy1973]_. As it is not clear which term dominates,
+    the score is of limited use for assessing calibration alone (unless one computes
+    each term of the decomposition). A lower Brier loss, for instance, does not
+    necessarily mean a better calibrated model, it could also mean a worse calibrated
+    model with much more discriminatory power, e.g. using many more features.
 
 .. rubric:: Examples
 
@@ -1982,19 +2001,15 @@ the same does a lower Brier score loss always mean better calibration"
 
 .. rubric:: References
 
-.. [Brier1950] G. Brier, `Verification of forecasts expressed in terms of probability
-  <ftp://ftp.library.noaa.gov/docs.lib/htdocs/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
-  Monthly weather review 78.1 (1950)
+.. [Brier1950] G. Brier (1950).
+  :doi:`"Verification of forecasts expressed in terms of probability"
+  <10.1175/1520-0493(1950)078%3C0001:VOFEIT%3E2.0.CO;2>`.
+  Monthly Weather Review 78(1), 1-3
 
-.. [Bella2012] Bella, Ferri, Hernández-Orallo, and Ramírez-Quintana
-  `"Calibration of Machine Learning Models"
-  <http://dmip.webs.upv.es/papers/BFHRHandbook2010.pdf>`_
-  in Khosrow-Pour, M. "Machine learning: concepts, methodologies, tools
-  and applications." Hershey, PA: Information Science Reference (2012).
-
-.. [Flach2008] Flach, Peter, and Edson Matsubara. `"On classification, ranking,
-  and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
-  Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum für Informatik (2008).
+.. [Murphy1973] Allan H. Murphy (1973).
+  :doi:`"A New Vector Partition of the Probability Score"
+  <10.1175/1520-0450(1973)012%3C0595:ANVPOT%3E2.0.CO;2>`
+  Journal of Applied Meteorology and Climatology, 12(4), 595-600
 
 .. _class_likelihood_ratios:
 
@@ -2198,7 +2213,7 @@ of 0.0.
 
     \text{dev}(y, \hat{y}) = \text{brier_score_loss}(y, \hat{y}).
 
-  This is also referred to as the Brier Skill Score (BSS).
+  This is also referred to as the Brier Skill Score (BSS) and scaled Brier score.
 
   Here are some usage examples of the :func:`d2_brier_score` function::
 
@@ -2966,7 +2981,7 @@ quantile regressor via cross-validation:
   ...     random_state=0,
   ... )
   >>> cross_val_score(estimator, X, y, cv=5, scoring=mean_pinball_loss_95p)
-  array([13.6, 9.7, 23.3, 9.5, 10.4])
+  array([14.3,  9.8, 23.9,  9.4, 10.8])
 
 It is also possible to build scorer objects for hyper-parameter tuning. The
 sign of the loss must be switched to ensure that greater means better as

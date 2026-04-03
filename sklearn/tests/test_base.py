@@ -189,6 +189,10 @@ def test_clone_empty_array():
     clf2 = clone(clf)
     assert_array_equal(clf.empty.data, clf2.empty.data)
 
+    clf = MyEstimator(empty=sp.csr_array(np.array([[0]])))
+    clf2 = clone(clf)
+    assert_array_equal(clf.empty.data, clf2.empty.data)
+
 
 def test_clone_nan():
     # Regression test for cloning estimators with default parameter as np.nan
@@ -209,7 +213,8 @@ def test_clone_sparse_matrices():
     sparse_matrix_classes = [
         cls
         for name in dir(sp)
-        if name.endswith("_matrix") and type(cls := getattr(sp, name)) is type
+        if name.endswith("_matrix") or name.endswith("_array")
+        if type(cls := getattr(sp, name)) is type
     ]
 
     for cls in sparse_matrix_classes:
@@ -237,6 +242,7 @@ def test_clone_class_rather_than_instance():
         clone(MyEstimator)
 
 
+# TODO (1.11): remove svc test for predict_proba after it is deprecated
 def test_conditional_attrs_not_in_dir():
     # Test that __dir__ includes only relevant attributes. #28558
 
@@ -560,7 +566,7 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
         pickle.loads(tree_pickle_noversion)
 
 
-# The test modifies global state by changing the the TreeNoVersion class
+# The test modifies global state by changing the TreeNoVersion class
 @pytest.mark.thread_unsafe
 def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
     iris = datasets.load_iris()
@@ -760,7 +766,7 @@ def test_feature_names_in():
     with pytest.raises(ValueError, match=msg):
         trans.transform(df_bad)
 
-    # warns when fitted on dataframe and transforming a ndarray
+    # warns when fitted on dataframe and transforming an ndarray
     msg = (
         "X does not have valid feature names, but NoOpTransformer was "
         "fitted with feature names"
@@ -768,7 +774,7 @@ def test_feature_names_in():
     with pytest.warns(UserWarning, match=msg):
         trans.transform(X_np)
 
-    # warns when fitted on a ndarray and transforming dataframe
+    # warns when fitted on an ndarray and transforming dataframe
     msg = "X has feature names, but NoOpTransformer was fitted without feature names"
     trans = NoOpTransformer().fit(X_np)
     with pytest.warns(UserWarning, match=msg):
@@ -1003,6 +1009,21 @@ def test_get_params_html():
 
     assert est._get_params_html() == {"l1": 0, "empty": "test"}
     assert est._get_params_html().non_default == ("empty",)
+
+
+def test_get_fitted_attr_html():
+    """Check the behaviour of the `_get_fitted_attr_html` method."""
+    X = np.array([[-1, -1], [-2, -1], [-3, -2]])
+    pca = PCA().fit(X)
+    pca._not_a_fitted_attr = "x"
+
+    fitted_attr_html = pca._get_fitted_attr_html()
+    assert fitted_attr_html["n_features_in_"] == {"type_name": "int", "value": 2}
+    assert pca._not_a_fitted_attr not in fitted_attr_html
+    assert len(fitted_attr_html) == 9
+    assert fitted_attr_html["components_"]["type_name"] == ("ndarray")
+    assert fitted_attr_html["components_"]["shape"] == (2, 2)
+    assert_allclose(fitted_attr_html["components_"]["value"], pca.components_)
 
 
 def make_estimator_with_param(default_value):

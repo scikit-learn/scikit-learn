@@ -9,7 +9,6 @@ from sklearn import config_context, datasets
 from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVC
 from sklearn.utils._array_api import (
-    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -295,35 +294,24 @@ def test_unique_labels():
     assert_array_equal(unique_labels(np.ones((4, 5)), np.ones((5, 5))), np.arange(5))
 
 
-def test_type_of_target_too_many_unique_classes():
+def test_check_classification_targets_too_many_unique_classes():
     """Check that we raise a warning when the number of unique classes is greater than
     50% of the number of samples.
 
     We need to check that we don't raise if we have less than 20 samples.
     """
 
-    # Create array of unique labels, except '0', which appears twice.
-    # This does raise a warning.
-    # Note warning would not be raised if we passed only unique
-    # labels, which happens when `type_of_target` is passed `classes_`.
-    y = np.hstack((np.arange(20), [0]))
+    # Create array of unique labels. This does raise a warning.
+    y = np.arange(25)
     msg = r"The number of unique classes is greater than 50% of the number of samples."
     with pytest.warns(UserWarning, match=msg):
-        type_of_target(y)
+        check_classification_targets(y)
 
     # less than 20 samples, no warning should be raised
     y = np.arange(10)
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        type_of_target(y)
-
-    # More than 20 samples but only unique classes, simulating passing
-    # `classes_` to `type_of_target` (when number of classes is large).
-    # No warning should be raised
-    y = np.arange(25)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)
-        type_of_target(y)
+        check_classification_targets(y)
 
 
 def test_unique_labels_non_specific():
@@ -415,12 +403,11 @@ def test_is_multilabel():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
-def test_is_multilabel_array_api_compliance(array_namespace, device, dtype_name):
-    xp = _array_api_for_tests(array_namespace, device)
+def test_is_multilabel_array_api_compliance(array_namespace, device_name, dtype_name):
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     for group, group_examples in ARRAY_API_EXAMPLES.items():
         dense_exp = group == "multilabel-indicator"

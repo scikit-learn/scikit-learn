@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
-from functools import partial
 from inspect import signature
 from math import log
 from numbers import Integral, Real
@@ -13,7 +12,11 @@ import numpy as np
 from scipy.optimize import minimize, minimize_scalar
 from scipy.special import expit
 
-from sklearn._loss import HalfBinomialLoss, HalfMultinomialLoss
+from sklearn._loss import (
+    HalfBinomialLoss,
+    HalfMultinomialLoss,
+    HalfMultinomialLossArrayAPI,
+)
 from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
@@ -30,12 +33,10 @@ from sklearn.preprocessing import LabelEncoder, label_binarize
 from sklearn.svm import LinearSVC
 from sklearn.utils import Bunch, _safe_indexing, column_or_1d, get_tags, indexable
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
-    _half_multinomial_loss,
     _is_numpy_namespace,
-    ensure_common_namespace_device,
     get_namespace,
     get_namespace_and_device,
+    move_to,
 )
 from sklearn.utils._param_validation import (
     HasMethods,
@@ -142,9 +143,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`~sklearn.model_selection.StratifiedKFold` is used. If ``y`` is
@@ -228,22 +229,31 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
     References
     ----------
-    .. [1] Obtaining calibrated probability estimates from decision trees
-           and naive Bayesian classifiers, B. Zadrozny & C. Elkan, ICML 2001
+    .. [1] B. Zadrozny & C. Elkan.
+       `Obtaining calibrated probability estimates from decision trees
+       and naive Bayesian classifiers
+       <https://cseweb.ucsd.edu/~elkan/calibrated.pdf>`_, ICML 2001.
 
-    .. [2] Transforming Classifier Scores into Accurate Multiclass
-           Probability Estimates, B. Zadrozny & C. Elkan, (KDD 2002)
+    .. [2] B. Zadrozny & C. Elkan.
+       `Transforming Classifier Scores into Accurate Multiclass
+       Probability Estimates
+       <https://web.archive.org/web/20060720141520id_/http://www.research.ibm.com:80/people/z/zadrozny/kdd2002-Transf.pdf>`_,
+       KDD 2002.
 
-    .. [3] Probabilistic Outputs for Support Vector Machines and Comparisons to
-           Regularized Likelihood Methods, J. Platt, (1999)
+    .. [3] J. Platt. `Probabilistic Outputs for Support Vector Machines
+       and Comparisons to Regularized Likelihood Methods
+       <https://www.researchgate.net/profile/John-Platt-2/publication/2594015_Probabilistic_Outputs_for_Support_Vector_Machines_and_Comparisons_to_Regularized_Likelihood_Methods/links/004635154cff5262d6000000/Probabilistic-Outputs-for-Support-Vector-Machines-and-Comparisons-to-Regularized-Likelihood-Methods.pdf>`_,
+       1999.
 
-    .. [4] Predicting Good Probabilities with Supervised Learning,
-           A. Niculescu-Mizil & R. Caruana, ICML 2005
+    .. [4] A. Niculescu-Mizil & R. Caruana.
+       `Predicting Good Probabilities with Supervised Learning
+       <https://www.cs.cornell.edu/~alexn/papers/calibration.icml05.crc.rev3.pdf>`_,
+       ICML 2005.
 
-    .. [5] Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger. 2017.
+    .. [5] Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger.
        :doi:`On Calibration of Modern Neural Networks<10.48550/arXiv.1706.04599>`.
        Proceedings of the 34th International Conference on Machine Learning,
-       PMLR 70:1321-1330, 2017
+       PMLR 70:1321-1330, 2017.
 
     Examples
     --------
@@ -398,9 +408,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             if sample_weight is not None and supports_sw:
                 routed_params.estimator.fit["sample_weight"] = sample_weight
 
-        xp, is_array_api = get_namespace(X)
+        xp, is_array_api, device_ = get_namespace_and_device(X)
         if is_array_api:
-            y, sample_weight = ensure_common_namespace_device(X, y, sample_weight)
+            y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
         # Check that each cross-validation fold can have at least one
         # example per class
         if isinstance(self.cv, int):
@@ -545,7 +555,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         check_is_fitted(self)
         class_indices = xp.argmax(self.predict_proba(X), axis=1)
         if isinstance(self.classes_[0], str):
-            class_indices = _convert_to_numpy(class_indices, xp=xp)
+            class_indices = move_to(class_indices, xp=np, device="cpu")
 
         return self.classes_[class_indices]
 
@@ -626,6 +636,9 @@ def _fit_classifier_calibrator_pair(
     classes : ndarray, shape (n_classes,)
         The target classes.
 
+    xp : namespace
+        Array API namespace.
+
     sample_weight : array-like, default=None
         Sample weights for `X`.
 
@@ -696,6 +709,9 @@ def _fit_calibrator(clf, predictions, y, classes, method, xp, sample_weight=None
 
     method : {'sigmoid', 'isotonic', 'temperature'}
         The method to use for calibration.
+
+    xp : namespace
+        Array API namespace.
 
     sample_weight : ndarray, shape (n_samples,), default=None
         Sample weights. If None, then samples are equally weighted.
@@ -1097,10 +1113,14 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, labels, dtype=dtype_)
 
-        if _is_numpy_namespace(xp):
-            multinomial_loss = HalfMultinomialLoss(n_classes=logits.shape[1])
-        else:
-            multinomial_loss = partial(_half_multinomial_loss, xp=xp)
+        is_numpy_namespace = _is_numpy_namespace(xp)
+        multinomial_loss = (
+            HalfMultinomialLoss(n_classes=logits.shape[1])
+            if is_numpy_namespace
+            else HalfMultinomialLossArrayAPI(
+                n_classes=logits.shape[1], xp=xp, device=xp_device
+            )
+        )
 
         def log_loss(log_beta=0.0):
             """Compute the log loss as a parameter of the inverse temperature
@@ -1132,7 +1152,11 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
             #  This can cause dtype mismatch errors downstream (e.g., buffer dtype).
             log_beta = xp.asarray(log_beta, dtype=dtype_, device=xp_device)
             raw_prediction = xp.exp(log_beta) * logits
-            return multinomial_loss(labels, raw_prediction, sample_weight)
+            return multinomial_loss(
+                labels,
+                raw_prediction,
+                sample_weight,
+            )
 
         xatol = 64 * xp.finfo(dtype_).eps
         log_beta_minimizer = minimize_scalar(
