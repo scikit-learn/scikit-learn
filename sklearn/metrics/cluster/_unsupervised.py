@@ -18,10 +18,11 @@ from sklearn.metrics.pairwise import (
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import _safe_indexing, check_random_state, check_X_y
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
+    _average,
     _is_numpy_namespace,
     _max_precision_float_dtype,
     get_namespace_and_device,
+    move_to,
     xpx,
 )
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
@@ -375,7 +376,7 @@ def calinski_harabasz_score(X, labels):
     if _is_numpy_namespace(xp) and not is_numpy_array(X):
         # This is required to handle the case where `array_api_dispatch` is False but
         # we are still dealing with `X` as a non-NumPy array e.g. a PyTorch tensor.
-        X = _convert_to_numpy(X, xp=xp)
+        X = move_to(X, xp=np, device="cpu")
     else:
         X = xp.astype(X, _max_precision_float_dtype(xp, device_), copy=False)
     X, labels = check_X_y(X, labels)
@@ -453,27 +454,34 @@ def davies_bouldin_score(X, labels):
     >>> davies_bouldin_score(X, labels)
     0.12...
     """
+    xp, _, device_ = get_namespace_and_device(X, labels)
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()
     labels = le.fit_transform(labels)
     n_samples, _ = X.shape
-    n_labels = len(le.classes_)
+    n_labels = le.classes_.shape[0]
     check_number_of_labels(n_labels, n_samples)
 
-    intra_dists = np.zeros(n_labels)
-    centroids = np.zeros((n_labels, len(X[0])), dtype=float)
+    dtype = _max_precision_float_dtype(xp, device_)
+    intra_dists = xp.zeros(n_labels, dtype=dtype, device=device_)
+    centroids = xp.zeros((n_labels, X.shape[1]), dtype=dtype, device=device_)
     for k in range(n_labels):
-        cluster_k = _safe_indexing(X, labels == k)
-        centroid = cluster_k.mean(axis=0)
-        centroids[k] = centroid
-        intra_dists[k] = np.average(pairwise_distances(cluster_k, [centroid]))
+        cluster_k = _safe_indexing(X, xp.nonzero(labels == k)[0])
+        centroid = _average(cluster_k, axis=0, xp=xp)
+        centroids[k, ...] = centroid
+        intra_dists[k] = _average(
+            pairwise_distances(cluster_k, xp.stack([centroid])), xp=xp
+        )
 
     centroid_distances = pairwise_distances(centroids)
 
-    if np.allclose(intra_dists, 0) or np.allclose(centroid_distances, 0):
+    zero = xp.asarray(0.0, device=device_, dtype=dtype)
+    if xp.all(xpx.isclose(intra_dists, zero)) or xp.all(
+        xpx.isclose(centroid_distances, zero)
+    ):
         return 0.0
 
-    centroid_distances[centroid_distances == 0] = np.inf
+    centroid_distances[centroid_distances == 0] = xp.inf
     combined_intra_dists = intra_dists[:, None] + intra_dists
-    scores = np.max(combined_intra_dists / centroid_distances, axis=1)
-    return float(np.mean(scores))
+    scores = xp.max(combined_intra_dists / centroid_distances, axis=1)
+    return float(_average(scores, xp=xp))

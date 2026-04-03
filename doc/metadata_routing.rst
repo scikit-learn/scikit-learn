@@ -317,6 +317,7 @@ Meta-estimators and functions supporting metadata routing:
 - :class:`sklearn.multioutput.MultiOutputClassifier`
 - :class:`sklearn.multioutput.MultiOutputRegressor`
 - :class:`sklearn.multioutput.RegressorChain`
+- :class:`sklearn.preprocessing.TargetEncoder`
 - :class:`sklearn.pipeline.FeatureUnion`
 - :class:`sklearn.pipeline.Pipeline`
 - :class:`sklearn.semi_supervised.SelfTrainingClassifier`

@@ -4,10 +4,8 @@
 from libc.stdlib cimport free
 from libc.stdlib cimport realloc
 from libc.math cimport log as ln
-from libc.math cimport isnan
 from libc.string cimport memset
 
-import numpy as np
 cimport numpy as cnp
 cnp.import_array()
 
@@ -65,25 +63,6 @@ cdef inline float64_t rand_uniform(float64_t low, float64_t high,
 
 cdef inline float64_t log(float64_t x) noexcept nogil:
     return ln(x) / ln(2.0)
-
-
-def _any_isnan_axis0(const float32_t[:, :] X):
-    """Same as np.any(np.isnan(X), axis=0)"""
-    cdef:
-        intp_t i, j
-        intp_t n_samples = X.shape[0]
-        intp_t n_features = X.shape[1]
-        uint8_t[::1] isnan_out = np.zeros(X.shape[1], dtype=np.bool_)
-
-    with nogil:
-        for i in range(n_samples):
-            for j in range(n_features):
-                if isnan_out[j]:
-                    continue
-                if isnan(X[i, j]):
-                    isnan_out[j] = True
-                    break
-    return np.asarray(isnan_out)
 
 
 cdef class WeightedFenwickTree:

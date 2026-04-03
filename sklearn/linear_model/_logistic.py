@@ -5,6 +5,7 @@ Logistic Regression
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import inspect
 import numbers
 import warnings
 from numbers import Integral, Real
@@ -12,7 +13,12 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import optimize
 
-from sklearn._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
+from sklearn._loss.loss import (
+    HalfBinomialLoss,
+    HalfBinomialLossArrayAPI,
+    HalfMultinomialLoss,
+    HalfMultinomialLossArrayAPI,
+)
 from sklearn.base import _fit_context
 from sklearn.linear_model._base import (
     BaseEstimator,
@@ -22,7 +28,7 @@ from sklearn.linear_model._base import (
 from sklearn.linear_model._glm.glm import NewtonCholeskySolver
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.linear_model._sag import sag_solver
-from sklearn.metrics import get_scorer, get_scorer_names
+from sklearn.metrics import get_scorer, get_scorer_names, make_scorer
 from sklearn.model_selection import check_cv
 from sklearn.preprocessing import LabelEncoder
 from sklearn.svm._base import _fit_liblinear
@@ -32,6 +38,15 @@ from sklearn.utils import (
     check_consistent_length,
     check_random_state,
     compute_class_weight,
+)
+from sklearn.utils._array_api import (
+    _is_numpy_namespace,
+    _matching_numpy_dtype,
+    check_same_namespace,
+    get_namespace,
+    get_namespace_and_device,
+    move_to,
+    size,
 )
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.extmath import row_norms, softmax
@@ -75,7 +90,10 @@ def _check_solver(solver, penalty, dual):
         )
 
     if solver == "liblinear" and penalty is None:
-        raise ValueError("penalty=None is not supported for the liblinear solver")
+        # TODO(1.10): update message to remove "as well as penalty=None".
+        raise ValueError(
+            "C=np.inf as well as penalty=None is not supported for the liblinear solver"
+        )
 
     return solver
 
@@ -247,23 +265,26 @@ def _logistic_regression_path(
         Cs = np.logspace(-4, 4, Cs)
 
     solver = _check_solver(solver, penalty, dual)
+    xp, _, device_ = get_namespace_and_device(X)
 
     # Preprocessing.
     if check_input:
         X = check_array(
             X,
             accept_sparse="csr",
-            dtype=np.float64,
+            dtype=[xp.float64, xp.float32],
             accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
         )
         y = check_array(y, ensure_2d=False, dtype=None)
         check_consistent_length(X, y)
 
     if sample_weight is not None or class_weight is not None:
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype, copy=True)
+        sample_weight = _check_sample_weight(
+            sample_weight, X, dtype=X.dtype, copy=True, ensure_same_device=True
+        )
 
     n_samples, n_features = X.shape
-    n_classes = len(classes)
+    n_classes = classes.shape[0] if hasattr(classes, "shape") else len(classes)
     is_binary = n_classes == 2
 
     if solver == "liblinear" and not is_binary:
@@ -281,12 +302,18 @@ def _logistic_regression_path(
         class_weight_ = compute_class_weight(
             class_weight, classes=classes, y=y, sample_weight=sample_weight
         )
-        sample_weight *= class_weight_[le.transform(y)]
+        class_weight_ = xp.asarray(
+            class_weight_[le.transform(y)], dtype=X.dtype, device=device_
+        )
+        sample_weight *= class_weight_
 
     if is_binary:
-        w0 = np.zeros(n_features + int(fit_intercept), dtype=X.dtype)
-        mask = y == classes[1]
-        y_bin = np.ones(y.shape, dtype=X.dtype)
+        w0 = np.zeros(
+            n_features + int(fit_intercept), dtype=_matching_numpy_dtype(X, xp=xp)
+        )
+        # classes[1] is the "positive label"
+        mask = xp.asarray(y == classes[1], device=device_)
+        y_bin = xp.ones(y.shape, dtype=X.dtype, device=device_)
         if solver == "liblinear":
             y_bin[~mask] = -1.0
         else:
@@ -297,10 +324,12 @@ def _logistic_regression_path(
         # All solvers capable of a multinomial need LabelEncoder, not LabelBinarizer,
         # i.e. y as a 1d-array of integers. LabelEncoder also saves memory
         # compared to LabelBinarizer, especially when n_classes is large.
-        Y_multi = le.transform(y).astype(X.dtype, copy=False)
+        Y_multi = xp.asarray(le.transform(y), dtype=X.dtype, device=device_)
         # It is important that w0 is F-contiguous.
         w0 = np.zeros(
-            (classes.size, n_features + int(fit_intercept)), order="F", dtype=X.dtype
+            (size(classes), n_features + int(fit_intercept)),
+            order="F",
+            dtype=_matching_numpy_dtype(X, xp=xp),
         )
 
     # IMPORTANT NOTE:
@@ -314,7 +343,7 @@ def _logistic_regression_path(
         # This needs to be calculated after sample_weight is multiplied by
         # class_weight. It is even tested that passing class_weight is equivalent to
         # passing sample_weights according to class_weight.
-        sw_sum = n_samples if sample_weight is None else np.sum(sample_weight)
+        sw_sum = n_samples if sample_weight is None else float(xp.sum(sample_weight))
 
     if coef is not None:
         if is_binary:
@@ -349,7 +378,12 @@ def _logistic_regression_path(
     if is_binary:
         target = y_bin
         loss = LinearModelLoss(
-            base_loss=HalfBinomialLoss(), fit_intercept=fit_intercept
+            base_loss=(
+                HalfBinomialLoss()
+                if _is_numpy_namespace(xp)
+                else HalfBinomialLossArrayAPI(xp=xp, device=device_)
+            ),
+            fit_intercept=fit_intercept,
         )
         if solver == "lbfgs":
             func = loss.loss_gradient
@@ -360,7 +394,13 @@ def _logistic_regression_path(
         warm_start_sag = {"coef": np.expand_dims(w0, axis=1)}
     else:  # multinomial
         loss = LinearModelLoss(
-            base_loss=HalfMultinomialLoss(n_classes=classes.size),
+            base_loss=(
+                HalfMultinomialLoss(n_classes=size(classes))
+                if _is_numpy_namespace(xp)
+                else HalfMultinomialLossArrayAPI(
+                    n_classes=size(classes), xp=xp, device=device_
+                )
+            ),
             fit_intercept=fit_intercept,
         )
         target = Y_multi
@@ -379,7 +419,8 @@ def _logistic_regression_path(
         warm_start_sag = {"coef": w0.T}
 
     coefs = list()
-    n_iter = np.zeros(len(Cs), dtype=np.int32)
+    n_iter = xp.zeros(len(Cs), dtype=xp.int32, device=device_)
+    coefs_order = "C" if not _is_numpy_namespace(xp) else "K"
     for i, C in enumerate(Cs):
         if solver == "lbfgs":
             l2_reg_strength = 1.0 / (C * sw_sum)
@@ -500,17 +541,23 @@ def _logistic_regression_path(
             raise ValueError(msg)
 
         if is_binary:
-            coefs.append(w0.copy())
+            coefs.append(
+                xp.asarray(w0.copy(order=coefs_order), dtype=X.dtype, device=device_)
+            )
         else:
             if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
                 multi_w0 = np.reshape(w0, (n_classes, -1), order="F")
             else:
                 multi_w0 = w0
-            coefs.append(multi_w0.copy())
+            coefs.append(
+                xp.asarray(
+                    multi_w0.copy(order=coefs_order), dtype=X.dtype, device=device_
+                )
+            )
 
         n_iter[i] = n_iter_i
 
-    return np.array(coefs), np.array(Cs), n_iter
+    return xp.stack(coefs), xp.asarray(Cs, device=device_), n_iter
 
 
 # helper function for LogisticCV
@@ -708,8 +755,51 @@ def _log_reg_scoring_path(
 
     scores = list()
 
+    # Prepare the call to get the score per fold: calc_score
     scoring = get_scorer(scoring)
-    for w in coefs:
+    if scoring is None:
+
+        def calc_score(log_reg):
+            return log_reg.score(X_test, y_test, sample_weight=sw_test)
+
+    else:
+        is_binary = len(classes) <= 2
+        score_params = score_params or {}
+        score_params = _check_method_params(X=X, params=score_params, indices=test)
+        # We need to pass the classes as "labels" argument to scorers that support
+        # it, e.g. scoring = "neg_brier_score", because y_test may not contain all
+        # class labels.
+        # There are at least 2 possibilities:
+        # 1. Metadata routing is enabled: A try except clause is possible with
+        #   adding labels to score_params. We could then pass the already instantiated
+        #   log_reg instance to scoring.
+        # 2. We reconstruct the scorer and pass labels as kwargs explicitly.
+        # We implement the 2nd option even if it seems a bit hacky because it works
+        # with and without metadata routing.
+        if hasattr(scoring, "_score_func"):
+            sig = inspect.signature(scoring._score_func).parameters
+        else:
+            sig = []
+
+        if "labels" in sig:
+            pos_label_kwarg = {}
+            if is_binary and "pos_label" in sig:
+                # see _logistic_regression_path
+                pos_label_kwarg["pos_label"] = classes[-1]
+            scoring = make_scorer(
+                scoring._score_func,
+                greater_is_better=True if scoring._sign == 1 else False,
+                response_method=scoring._response_method,
+                labels=classes,
+                **pos_label_kwarg,
+                **getattr(scoring, "_kwargs", {}),
+            )
+
+        def calc_score(log_reg):
+            return scoring(log_reg, X_test, y_test, **score_params)
+
+    for w, C in zip(coefs, Cs):
+        log_reg.C = C
         if fit_intercept:
             log_reg.coef_ = w[..., :-1]
             log_reg.intercept_ = w[..., -1]
@@ -717,15 +807,8 @@ def _log_reg_scoring_path(
             log_reg.coef_ = w
             log_reg.intercept_ = 0.0
 
-        if scoring is None:
-            scores.append(log_reg.score(X_test, y_test, sample_weight=sw_test))
-        else:
-            score_params = score_params or {}
-            score_params = _check_method_params(X=X, params=score_params, indices=test)
-            # FIXME: If scoring = "neg_brier_score" and if not all class labels
-            # are present in y_test, the following fails. Maybe we can pass
-            # "labels=classes" to the call of scoring.
-            scores.append(scoring(log_reg, X_test, y_test, **score_params))
+        scores.append(calc_score(log_reg))
+
     return coefs, Cs, np.array(scores), n_iter
 
 
@@ -758,8 +841,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         Specify the norm of the penalty:
 
         - `None`: no penalty is added;
-        - `'l2'`: add a L2 penalty term and it is the default choice;
-        - `'l1'`: add a L1 penalty term;
+        - `'l2'`: add an L2 penalty term and it is the default choice;
+        - `'l1'`: add an L1 penalty term;
         - `'elasticnet'`: both L1 and L2 penalty terms are added.
 
         .. warning::
@@ -770,21 +853,46 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         .. versionadded:: 0.19
            l1 penalty with SAGA solver (allowing 'multinomial' + L1)
 
-    dual : bool, default=False
-        Dual (constrained) or primal (regularized, see also
-        :ref:`this equation <regularized-logistic-loss>`) formulation. Dual formulation
-        is only implemented for l2 penalty with liblinear solver. Prefer dual=False when
-        n_samples > n_features.
-
-    tol : float, default=1e-4
-        Tolerance for stopping criteria.
+        .. deprecated:: 1.8
+           `penalty` was deprecated in version 1.8 and will be removed in 1.10.
+           Use `l1_ratio` instead. `l1_ratio=0` for `penalty='l2'`, `l1_ratio=1` for
+           `penalty='l1'` and `l1_ratio` set to any float between 0 and 1 for
+           `'penalty='elasticnet'`.
 
     C : float, default=1.0
         Inverse of regularization strength; must be a positive float.
         Like in support vector machines, smaller values specify stronger
-        regularization. For a visual example on the effect of tuning the `C` parameter
+        regularization. `C=np.inf` results in unpenalized logistic regression.
+        For a visual example on the effect of tuning the `C` parameter
         with an L1 penalty, see:
         :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`.
+
+    l1_ratio : float, default=0.0
+        The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Setting
+        `l1_ratio=1` gives a pure L1-penalty, setting `l1_ratio=0` a pure L2-penalty.
+        Any value between 0 and 1 gives an Elastic-Net penalty of the form
+        `l1_ratio * L1 + (1 - l1_ratio) * L2`.
+
+        .. warning::
+           Certain values of `l1_ratio`, i.e. some penalties, may not work with some
+           solvers. See the parameter `solver` below, to know the compatibility between
+           the penalty and solver.
+
+        .. versionchanged:: 1.8
+            Default value changed from None to 0.0.
+
+        .. deprecated:: 1.8
+            `None` is deprecated and will be removed in version 1.10. Always use
+            `l1_ratio` to specify the penalty type.
+
+    dual : bool, default=False
+        Dual (constrained) or primal (regularized, see also
+        :ref:`this equation <regularized-logistic-loss>`) formulation. Dual formulation
+        is only implemented for l2 penalty with liblinear solver. Prefer `dual=False`
+        when n_samples > n_features.
+
+    tol : float, default=1e-4
+        Tolerance for stopping criteria.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -833,7 +941,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
           class of problems.
         - For :term:`multiclass` problems (`n_classes >= 3`), all solvers except
           'liblinear' minimize the full multinomial loss, 'liblinear' will raise an
-           error.
+          error.
         - 'newton-cholesky' is a good choice for
           `n_samples` >> `n_features * n_classes`, especially with one-hot encoded
           categorical features with rare categories. Be aware that the memory usage
@@ -846,19 +954,20 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
           :class:`~sklearn.multiclass.OneVsRestClassifier`.
 
         .. warning::
-           The choice of the algorithm depends on the penalty chosen and on
-           (multinomial) multiclass support:
+           The choice of the algorithm depends on the penalty chosen (`l1_ratio=0`
+           for L2-penalty, `l1_ratio=1` for L1-penalty and `0 < l1_ratio < 1` for
+           Elastic-Net) and on (multinomial) multiclass support:
 
-           ================= ============================== ======================
-           solver            penalty                        multinomial multiclass
-           ================= ============================== ======================
-           'lbfgs'           'l2', None                     yes
-           'liblinear'       'l1', 'l2'                     no
-           'newton-cg'       'l2', None                     yes
-           'newton-cholesky' 'l2', None                     yes
-           'sag'             'l2', None                     yes
-           'saga'            'elasticnet', 'l1', 'l2', None yes
-           ================= ============================== ======================
+           ================= ======================== ======================
+           solver            l1_ratio                 multinomial multiclass
+           ================= ======================== ======================
+           'lbfgs'           l1_ratio=0               yes
+           'liblinear'       l1_ratio=1 or l1_ratio=0 no
+           'newton-cg'       l1_ratio=0               yes
+           'newton-cholesky' l1_ratio=0               yes
+           'sag'             l1_ratio=0               yes
+           'saga'            0<=l1_ratio<=1           yes
+           ================= ======================== ======================
 
         .. note::
            'sag' and 'saga' fast convergence is only guaranteed on features
@@ -901,13 +1010,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         .. deprecated:: 1.8
            `n_jobs` is deprecated in version 1.8 and will be removed in 1.10.
-
-    l1_ratio : float, default=None
-        The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
-        used if ``penalty='elasticnet'``. Setting ``l1_ratio=0`` is equivalent
-        to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
-        to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
-        combination of L1 and L2.
 
     Attributes
     ----------
@@ -1004,10 +1106,15 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     """
 
     _parameter_constraints: dict = {
-        "penalty": [StrOptions({"l1", "l2", "elasticnet"}), None],
+        "penalty": [
+            StrOptions({"l1", "l2", "elasticnet"}),
+            None,
+            Hidden(StrOptions({"deprecated"})),
+        ],
+        "C": [Interval(Real, 0, None, closed="right")],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
         "dual": ["boolean"],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "C": [Interval(Real, 0, None, closed="right")],
         "fit_intercept": ["boolean"],
         "intercept_scaling": [Interval(Real, 0, None, closed="neither")],
         "class_weight": [dict, StrOptions({"balanced"}), None],
@@ -1021,16 +1128,16 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         "verbose": ["verbose"],
         "warm_start": ["boolean"],
         "n_jobs": [None, Integral],
-        "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
     }
 
     def __init__(
         self,
-        penalty="l2",
+        penalty="deprecated",
         *,
+        C=1.0,
+        l1_ratio=0.0,
         dual=False,
         tol=1e-4,
-        C=1.0,
         fit_intercept=True,
         intercept_scaling=1,
         class_weight=None,
@@ -1040,12 +1147,12 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         verbose=0,
         warm_start=False,
         n_jobs=None,
-        l1_ratio=None,
     ):
         self.penalty = penalty
+        self.C = C
+        self.l1_ratio = l1_ratio
         self.dual = dual
         self.tol = tol
-        self.C = C
         self.fit_intercept = fit_intercept
         self.intercept_scaling = intercept_scaling
         self.class_weight = class_weight
@@ -1055,7 +1162,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.verbose = verbose
         self.warm_start = warm_start
         self.n_jobs = n_jobs
-        self.l1_ratio = l1_ratio
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
@@ -1087,14 +1193,71 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         -----
         The SAGA solver supports both float64 and float32 bit arrays.
         """
-        solver = _check_solver(self.solver, self.penalty, self.dual)
+        if self.penalty == "deprecated":
+            if self.l1_ratio == 0 or self.l1_ratio is None:
+                penalty = "l2"
+                if self.l1_ratio is None:
+                    warnings.warn(
+                        (
+                            "'l1_ratio=None' was deprecated in version 1.8 and will "
+                            "trigger an error in 1.10. Use 0<=l1_ratio<=1 instead."
+                        ),
+                        FutureWarning,
+                    )
+            elif self.l1_ratio == 1:
+                penalty = "l1"
+            else:
+                penalty = "elasticnet"
+            if self.C == np.inf:
+                penalty = None
+        else:
+            penalty = self.penalty
+            warnings.warn(
+                (
+                    "'penalty' was deprecated in version 1.8 and will be removed in"
+                    " 1.10. To avoid this warning, leave 'penalty' set to its default"
+                    " value and use 'l1_ratio' or 'C' instead."
+                    " Use l1_ratio=0 instead of penalty='l2',"
+                    " l1_ratio=1 instead of penalty='l1', and "
+                    "C=np.inf instead of penalty=None."
+                ),
+                FutureWarning,
+            )
 
-        if self.penalty != "elasticnet" and self.l1_ratio is not None:
+        solver = _check_solver(self.solver, penalty, self.dual)
+
+        if penalty != "elasticnet" and (
+            self.l1_ratio is not None and 0 < self.l1_ratio < 1
+        ):
             warnings.warn(
                 "l1_ratio parameter is only used when penalty is "
                 "'elasticnet'. Got "
-                "(penalty={})".format(self.penalty)
+                "(penalty={})".format(penalty)
             )
+        if (self.penalty == "l2" and self.l1_ratio != 0) or (
+            self.penalty == "l1" and self.l1_ratio != 1
+        ):
+            warnings.warn(
+                f"Inconsistent values: penalty={self.penalty} with "
+                f"l1_ratio={self.l1_ratio}. penalty is deprecated. Please use "
+                f"l1_ratio only."
+            )
+        if penalty == "elasticnet" and self.l1_ratio is None:
+            raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
+
+        xp, _, device_ = get_namespace_and_device(X)
+        xp_y, _ = get_namespace(y)
+
+        if self.penalty is None:
+            if self.C != 1.0:  # default value
+                warnings.warn(
+                    "Setting penalty=None will ignore the C and l1_ratio parameters"
+                )
+                # Note that check for l1_ratio is done right above
+            C_ = xp.inf
+            penalty = "l2"
+        else:
+            C_ = self.C
 
         msg = (
             "'n_jobs' has no effect since 1.8 and will be removed in 1.10. "
@@ -1103,39 +1266,19 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         if self.n_jobs is not None:
             warnings.warn(msg, category=FutureWarning)
 
-        if self.penalty == "elasticnet" and self.l1_ratio is None:
-            raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
-
-        if self.penalty is None:
-            if self.C != 1.0:  # default values
-                warnings.warn(
-                    "Setting penalty=None will ignore the C and l1_ratio parameters"
-                )
-                # Note that check for l1_ratio is done right above
-            C_ = np.inf
-            penalty = "l2"
-        else:
-            C_ = self.C
-            penalty = self.penalty
-
-        if solver == "lbfgs":
-            _dtype = np.float64
-        else:
-            _dtype = [np.float64, np.float32]
-
         X, y = validate_data(
             self,
             X,
             y,
             accept_sparse="csr",
-            dtype=_dtype,
+            dtype=[xp.float64, xp.float32],
             order="C",
             accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
         )
         n_features = X.shape[1]
         check_classification_targets(y)
-        self.classes_ = np.unique(y)
-        n_classes = len(self.classes_)
+        self.classes_ = xp_y.unique_values(y)
+        n_classes = size(self.classes_)
         is_binary = n_classes == 2
 
         if solver == "liblinear":
@@ -1159,7 +1302,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 self.fit_intercept,
                 self.intercept_scaling,
                 self.class_weight,
-                self.penalty,
+                penalty,
                 self.dual,
                 self.verbose,
                 self.max_iter,
@@ -1185,10 +1328,13 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             warm_start_coef = getattr(self, "coef_", None)
         else:
             warm_start_coef = None
-        if warm_start_coef is not None and self.fit_intercept:
-            warm_start_coef = np.append(
-                warm_start_coef, self.intercept_[:, np.newaxis], axis=1
-            )
+        if warm_start_coef is not None:
+            warm_start_coef = move_to(warm_start_coef, xp=np, device="cpu")
+            if self.fit_intercept:
+                intercept_np = move_to(self.intercept_, xp=np, device="cpu")
+                warm_start_coef = np.concatenate(
+                    [warm_start_coef, intercept_np[:, None]], axis=1
+                )
 
         # TODO: enable multi-threading if benchmarks show a positive effect,
         # see https://github.com/scikit-learn/scikit-learn/issues/32162
@@ -1215,9 +1361,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             n_threads=n_threads,
         )
 
-        self.n_iter_ = np.asarray(n_iter, dtype=np.int32)
+        self.n_iter_ = xp.asarray(n_iter, dtype=xp.int32)
 
-        self.coef_ = coefs[0]
+        self.coef_ = coefs[0, ...]
         if self.fit_intercept:
             if is_binary:
                 self.intercept_ = self.coef_[-1:]
@@ -1227,10 +1373,10 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 self.coef_ = self.coef_[:, :-1]
         else:
             if is_binary:
-                self.intercept_ = np.zeros(1, dtype=X.dtype)
+                self.intercept_ = xp.zeros(1, dtype=X.dtype, device=device_)
                 self.coef_ = self.coef_[None, :]
             else:
-                self.intercept_ = np.zeros(n_classes, dtype=X.dtype)
+                self.intercept_ = xp.zeros(n_classes, dtype=X.dtype, device=device_)
 
         return self
 
@@ -1257,8 +1403,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             where classes are ordered as they are in ``self.classes_``.
         """
         check_is_fitted(self)
+        check_same_namespace(X, self, attribute="coef_", method="predict_proba")
 
-        is_binary = self.classes_.size <= 2
+        is_binary = size(self.classes_) <= 2
         if is_binary:
             return super()._predict_proba_lr(X)
         else:
@@ -1284,11 +1431,14 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             Returns the log-probability of the sample for each class in the
             model, where classes are ordered as they are in ``self.classes_``.
         """
-        return np.log(self.predict_proba(X))
+        check_same_namespace(X, self, attribute="coef_", method="predict_log_proba")
+        xp, _ = get_namespace(X)
+        return xp.log(self.predict_proba(X))
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.sparse = True
+        tags.array_api_support = self.solver == "lbfgs"
         if self.solver == "liblinear":
             tags.classifier_tags.multi_class = False
 
@@ -1327,6 +1477,24 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Like in support vector machines, smaller values specify stronger
         regularization.
 
+    l1_ratios : array-like of shape (n_l1_ratios), default=None
+        Floats between 0 and 1 passed as Elastic-Net mixing parameter (scaling between
+        L1 and L2 penalties). For `l1_ratio = 0` the penalty is an L2 penalty. For
+        `l1_ratio = 1` it is an L1 penalty. For `0 < l1_ratio < 1`, the penalty is a
+        combination of L1 and L2.
+        All the values of the given array-like are tested by cross-validation and the
+        one giving the best prediction score is used.
+
+        .. warning::
+           Certain values of `l1_ratios`, i.e. some penalties, may not work with some
+           solvers. See the parameter `solver` below, to know the compatibility between
+           the penalty and solver.
+
+        .. deprecated:: 1.8
+            `l1_ratios=None` is deprecated in 1.8 and will raise an error
+            in version 1.10. Default value will change from `None` to `(0.0,)`
+            in version 1.10.
+
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the decision function.
@@ -1349,14 +1517,20 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     penalty : {'l1', 'l2', 'elasticnet'}, default='l2'
         Specify the norm of the penalty:
 
-        - `'l2'`: add a L2 penalty term (used by default);
-        - `'l1'`: add a L1 penalty term;
+        - `'l2'`: add an L2 penalty term (used by default);
+        - `'l1'`: add an L1 penalty term;
         - `'elasticnet'`: both L1 and L2 penalty terms are added.
 
         .. warning::
            Some penalties may not work with some solvers. See the parameter
            `solver` below, to know the compatibility between the penalty and
            solver.
+
+        .. deprecated:: 1.8
+           `penalty` was deprecated in version 1.8 and will be removed in 1.10.
+           Use `l1_ratio` instead. `l1_ratio=0` for `penalty='l2'`, `l1_ratio=1` for
+           `penalty='l1'` and `l1_ratio` set to any float between 0 and 1 for
+           `'penalty='elasticnet'`.
 
     scoring : str or callable, default=None
         The scoring method to use for cross-validation. Options:
@@ -1365,6 +1539,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         - callable: a scorer callable object (e.g., function) with signature
           ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
         - `None`: :ref:`accuracy <accuracy_score>` is used.
+
+        .. versionchanged:: 1.11
+           The default will change from None, i.e. accuracy, to 'neg_log_loss' in
+           version 1.11.
 
     solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'}, \
             default='lbfgs'
@@ -1376,7 +1554,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
           class of problems.
         - For :term:`multiclass` problems (`n_classes >= 3`), all solvers except
           'liblinear' minimize the full multinomial loss, 'liblinear' will raise an
-           error.
+          error.
         - 'newton-cholesky' is a good choice for
           `n_samples` >> `n_features * n_classes`, especially with one-hot encoded
           categorical features with rare categories. Be aware that the memory usage
@@ -1391,19 +1569,20 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
           :class:`~sklearn.multiclass.OneVsRestClassifier`.
 
         .. warning::
-           The choice of the algorithm depends on the penalty chosen and on
-           (multinomial) multiclass support:
+           The choice of the algorithm depends on the penalty (`l1_ratio=0` for
+           L2-penalty, `l1_ratio=1` for L1-penalty and `0 < l1_ratio < 1` for
+           Elastic-Net) chosen and on (multinomial) multiclass support:
 
-           ================= ============================== ======================
-           solver            penalty                        multinomial multiclass
-           ================= ============================== ======================
-           'lbfgs'           'l2'                           yes
-           'liblinear'       'l1', 'l2'                     no
-           'newton-cg'       'l2'                           yes
-           'newton-cholesky' 'l2',                          yes
-           'sag'             'l2',                          yes
-           'saga'            'elasticnet', 'l1', 'l2'       yes
-           ================= ============================== ======================
+           ================= ======================== ======================
+           solver            l1_ratio                 multinomial multiclass
+           ================= ======================== ======================
+           'lbfgs'           l1_ratio=0               yes
+           'liblinear'       l1_ratio=1 or l1_ratio=0 no
+           'newton-cg'       l1_ratio=0               yes
+           'newton-cholesky' l1_ratio=0               yes
+           'sag'             l1_ratio=0               yes
+           'saga'            0<=l1_ratio<=1           yes
+           ================= ======================== ======================
 
         .. note::
            'sag' and 'saga' fast convergence is only guaranteed on features
@@ -1475,13 +1654,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Note that this only applies to the solver and not the cross-validation
         generator. See :term:`Glossary <random_state>` for details.
 
-    l1_ratios : list of float, default=None
-        The list of Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``.
-        Only used if ``penalty='elasticnet'``. A value of 0 is equivalent to
-        using ``penalty='l2'``, while 1 is equivalent to using
-        ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a combination
-        of L1 and L2.
-
     use_legacy_attributes : bool, default=True
         If True, use legacy values for attributes:
 
@@ -1529,7 +1701,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         for cross-validation.
 
     l1_ratios_ : ndarray of shape (n_l1_ratios)
-        Array of l1_ratios used for cross-validation. If no l1_ratio is used
+        Array of l1_ratios used for cross-validation. If l1_ratios=None is used
         (i.e. penalty is not 'elasticnet'), this is set to ``[None]``
 
     coefs_paths_ : dict of ndarray of shape (n_folds, n_cs, n_dof) or \
@@ -1594,14 +1766,17 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     >>> from sklearn.linear_model import LogisticRegressionCV
     >>> X, y = load_iris(return_X_y=True)
     >>> clf = LogisticRegressionCV(
-    ...     cv=5, random_state=0, use_legacy_attributes=False
+    ...     cv=5, random_state=0,
+    ...     use_legacy_attributes=False,
+    ...     l1_ratios=(0,),
+    ...     scoring="neg_log_loss",
     ... ).fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])
     >>> clf.predict_proba(X[:2, :]).shape
     (2, 3)
     >>> clf.score(X, y)
-    0.98...
+    -0.041...
     """
 
     _parameter_constraints: dict = {**LogisticRegression._parameter_constraints}
@@ -1612,11 +1787,19 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     _parameter_constraints.update(
         {
             "Cs": [Interval(Integral, 1, None, closed="left"), "array-like"],
+            "l1_ratios": ["array-like", None, Hidden(StrOptions({"warn"}))],
             "cv": ["cv_object"],
-            "scoring": [StrOptions(set(get_scorer_names())), callable, None],
-            "l1_ratios": ["array-like", None],
+            "scoring": [
+                StrOptions(set(get_scorer_names())),
+                callable,
+                None,
+                Hidden(StrOptions({"warn"})),
+            ],
             "refit": ["boolean"],
-            "penalty": [StrOptions({"l1", "l2", "elasticnet"})],
+            "penalty": [
+                StrOptions({"l1", "l2", "elasticnet"}),
+                Hidden(StrOptions({"deprecated"})),
+            ],
             "use_legacy_attributes": ["boolean", Hidden(StrOptions({"warn"}))],
         }
     )
@@ -1625,11 +1808,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         self,
         *,
         Cs=10,
+        l1_ratios="warn",
         fit_intercept=True,
         cv=None,
         dual=False,
-        penalty="l2",
-        scoring=None,
+        penalty="deprecated",
+        scoring="warn",
         solver="lbfgs",
         tol=1e-4,
         max_iter=100,
@@ -1639,10 +1823,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         refit=True,
         intercept_scaling=1.0,
         random_state=None,
-        l1_ratios=None,
         use_legacy_attributes="warn",
     ):
         self.Cs = Cs
+        self.l1_ratios = l1_ratios
         self.fit_intercept = fit_intercept
         self.cv = cv
         self.dual = dual
@@ -1657,7 +1841,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         self.refit = refit
         self.intercept_scaling = intercept_scaling
         self.random_state = random_state
-        self.l1_ratios = l1_ratios
         self.use_legacy_attributes = use_legacy_attributes
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -1689,46 +1872,110 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         """
         _raise_for_params(params, self, "fit")
 
+        if isinstance(self.l1_ratios, str) and self.l1_ratios == "warn":
+            l1_ratios = None
+            warnings.warn(
+                (
+                    "The default value for l1_ratios will change from None to (0.0,) "
+                    "in version 1.10. From version 1.10 onwards, only array-like "
+                    "with values in [0, 1] will be allowed, None will be forbidden. "
+                    "To avoid this warning, explicitly set a value, "
+                    "e.g. l1_ratios=(0,)."
+                ),
+                FutureWarning,
+            )
+        else:
+            l1_ratios = self.l1_ratios
+
+        if self.penalty == "deprecated":
+            if self.l1_ratios is None:
+                warnings.warn(
+                    (
+                        "'l1_ratios=None' was deprecated in version 1.8 and will "
+                        "trigger an error in 1.10. Use an array-like with values"
+                        "in [0, 1] instead."
+                    ),
+                    FutureWarning,
+                )
+            if np.all(np.asarray(l1_ratios) == 0) or l1_ratios is None:
+                penalty = "l2"
+            elif np.all(np.asarray(l1_ratios) == 1):
+                penalty = "l1"
+            else:
+                penalty = "elasticnet"
+        else:
+            penalty = self.penalty
+            warnings.warn(
+                (
+                    "'penalty' was deprecated in version 1.8 and will be removed in"
+                    " 1.10. To avoid this warning, leave 'penalty' set to its default"
+                    " value and use 'l1_ratios' instead."
+                    " Use l1_ratios=(0,) instead of penalty='l2' "
+                    " and l1_ratios=(1,) instead of penalty='l1'."
+                ),
+                FutureWarning,
+            )
+
+        if self.scoring == "warn":
+            warnings.warn(
+                "The default value of the parameter 'scoring' will change from None, "
+                "i.e. accuracy, to 'neg_log_loss' in version 1.11. To silence this "
+                "warning, explicitly set the scoring parameter: "
+                "scoring='neg_log_loss' for the new, scoring='accuracy' or "
+                "scoring=None for the old default.",
+                FutureWarning,
+            )
+            scoring = None
+        else:
+            scoring = self.scoring
+
         if self.use_legacy_attributes == "warn":
             warnings.warn(
-                "The default value of use_legacy_attributes will change from True "
-                "to False in version 1.10. "
-                "To silence this warning, explicitly set use_legacy_attributes to "
-                "either True or False.",
+                f"The fitted attributes of {self.__class__.__name__} will be "
+                "simplified in scikit-learn 1.10 to remove redundancy. Set"
+                "`use_legacy_attributes=False` to enable the new behavior now, or "
+                "set it to `True` to silence this warning during the transition period "
+                "while keeping the deprecated behavior for the time being. The default "
+                "value of use_legacy_attributes will change from True to False in "
+                f"scikit-learn 1.10. See the docstring of {self.__class__.__name__} "
+                "for more details.",
                 FutureWarning,
             )
             use_legacy_attributes = True
         else:
             use_legacy_attributes = self.use_legacy_attributes
 
-        solver = _check_solver(self.solver, self.penalty, self.dual)
+        solver = _check_solver(self.solver, penalty, self.dual)
 
-        if self.penalty == "elasticnet":
+        if penalty == "elasticnet":
             if (
-                self.l1_ratios is None
-                or len(self.l1_ratios) == 0
+                l1_ratios is None
+                or len(l1_ratios) == 0
                 or any(
                     (
                         not isinstance(l1_ratio, numbers.Number)
                         or l1_ratio < 0
                         or l1_ratio > 1
                     )
-                    for l1_ratio in self.l1_ratios
+                    for l1_ratio in l1_ratios
                 )
             ):
                 raise ValueError(
-                    "l1_ratios must be a list of numbers between "
-                    "0 and 1; got (l1_ratios=%r)" % self.l1_ratios
+                    "l1_ratios must be an array-like of numbers between "
+                    "0 and 1; got (l1_ratios=%r)" % l1_ratios
                 )
-            l1_ratios_ = self.l1_ratios
+            l1_ratios_ = l1_ratios
         else:
-            if self.l1_ratios is not None:
+            if l1_ratios is not None and self.penalty != "deprecated":
                 warnings.warn(
                     "l1_ratios parameter is only used when penalty "
-                    "is 'elasticnet'. Got (penalty={})".format(self.penalty)
+                    "is 'elasticnet'. Got (penalty={})".format(penalty)
                 )
 
-            l1_ratios_ = [None]
+            if l1_ratios is None:
+                l1_ratios_ = [None]
+            else:
+                l1_ratios_ = l1_ratios
 
         X, y = validate_data(
             self,
@@ -1821,14 +2068,14 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 classes=self.classes_,
                 Cs=self.Cs,
                 fit_intercept=self.fit_intercept,
-                penalty=self.penalty,
+                penalty=penalty,
                 dual=self.dual,
                 solver=solver,
                 tol=self.tol,
                 max_iter=self.max_iter,
                 verbose=self.verbose,
                 class_weight=class_weight,
-                scoring=self.scoring,
+                scoring=scoring,
                 intercept_scaling=self.intercept_scaling,
                 random_state=self.random_state,
                 max_squared_sum=max_squared_sum,
@@ -1905,7 +2152,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 coef=coef_init,
                 max_iter=self.max_iter,
                 tol=self.tol,
-                penalty=self.penalty,
+                penalty=penalty,
                 class_weight=class_weight,
                 verbose=max(0, self.verbose - 1),
                 random_state=self.random_state,
@@ -1943,7 +2190,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             best_indices_C = best_indices[:, 0]
             self.C_.append(np.mean(self.Cs_[best_indices_C]))
 
-            if self.penalty == "elasticnet":
+            if penalty == "elasticnet":
                 best_indices_l1 = best_indices[:, 1]
                 self.l1_ratio_.append(np.mean(l1_ratios_[best_indices_l1]))
             else:
@@ -1963,7 +2210,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         self.C_ = np.asarray(self.C_)
         self.l1_ratio_ = np.asarray(self.l1_ratio_)
         self.l1_ratios_ = np.asarray(l1_ratios_)
-        if self.l1_ratios is None:
+        if l1_ratios is None:
             # if elasticnet was not used, remove the l1_ratios dimension of some
             # attributes
             for cls, coefs_path in self.coefs_paths_.items():
@@ -1982,7 +2229,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 classes_only_pos_if_binary[0]
             ]  # same for all classes
             newniter = self.n_iter_[0]
-            if self.l1_ratios is None:
+            if l1_ratios is None:
                 if n_classes <= 2:
                     newpaths = newpaths.reshape(1, n_folds, n_cs, 1, n_dof)
                 else:
@@ -2095,10 +2342,13 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         """Get the scorer based on the scoring method specified.
         The default scoring method is `accuracy`.
         """
+        if self.scoring == "warn":  # TODO(1.11): remove
+            return get_scorer("accuracy")
         scoring = self.scoring or "accuracy"
         return get_scorer(scoring)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.sparse = True
+        tags.array_api_support = False
         return tags

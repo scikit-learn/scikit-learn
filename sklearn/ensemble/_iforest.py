@@ -441,7 +441,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         of the leaf containing this observation, which is equivalent to
         the number of splittings required to isolate this point. In case of
         several observations n_left in the leaf, the average path length of
-        a n_left samples isolation tree is added.
+        an n_left samples isolation tree is added.
 
         Parameters
         ----------
@@ -492,7 +492,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         of the leaf containing this observation, which is equivalent to
         the number of splittings required to isolate this point. In case of
         several observations n_left in the leaf, the average path length of
-        a n_left samples isolation tree is added.
+        an n_left samples isolation tree is added.
 
         Parameters
         ----------
@@ -647,7 +647,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
 def _average_path_length(n_samples_leaf):
     """
-    The average path length in a n_samples iTree, which is equal to
+    The average path length in an n_samples iTree, which is equal to
     the average path length of an unsuccessful BST search since the
     latter has the same structure as an isolation tree.
     Parameters

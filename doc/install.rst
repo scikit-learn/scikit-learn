@@ -295,14 +295,14 @@ It can be installed using ``dnf``:
 NetBSD
 ------
 
-scikit-learn is available via `pkgsrc-wip <http://pkgsrc-wip.sourceforge.net/>`_:
+scikit-learn is available via `pkgsrc-wip <https://pkgsrc-wip.sourceforge.net/>`_:
 https://pkgsrc.se/math/py-scikit-learn
 
 
 MacPorts for Mac OSX
 --------------------
 
-The MacPorts package is named ``py<XY>-scikits-learn``,
+The MacPorts package is named ``py<XY>-scikit-learn``,
 where ``XY`` denotes the Python version.
 It can be installed by typing the following
 command:

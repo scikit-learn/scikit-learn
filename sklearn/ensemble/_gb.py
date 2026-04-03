@@ -26,7 +26,7 @@ from numbers import Integral, Real
 from time import time
 
 import numpy as np
-from scipy.sparse import csc_matrix, csr_matrix, issparse
+from scipy.sparse import csc_array, csr_array, issparse
 
 from sklearn._loss.loss import (
     _LOSSES,
@@ -52,7 +52,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree._tree import DOUBLE, DTYPE, TREE_LEAF
 from sklearn.utils import check_array, check_random_state, column_or_1d
-from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
+from sklearn.utils._param_validation import HasMethods, Hidden, Interval, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
@@ -274,7 +274,7 @@ def _update_terminal_regions(
 def set_huber_delta(loss, y_true, raw_prediction, sample_weight=None):
     """Calculate and set self.closs.delta based on self.quantile."""
     abserr = np.abs(y_true - raw_prediction.squeeze())
-    # sample_weight is always a ndarray, never None.
+    # sample_weight is always an ndarray, never None.
     delta = _weighted_percentile(abserr, sample_weight, 100 * loss.quantile)
     loss.closs.delta = float(delta)
 
@@ -365,7 +365,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         **DecisionTreeRegressor._parameter_constraints,
         "learning_rate": [Interval(Real, 0.0, None, closed="left")],
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
-        "criterion": [StrOptions({"friedman_mse", "squared_error"})],
+        "criterion": [
+            StrOptions({"squared_error"}),
+            Hidden(StrOptions({"deprecated", "friedman_mse"})),
+        ],
         "subsample": [Interval(Real, 0.0, 1.0, closed="right")],
         "verbose": ["verbose"],
         "warm_start": ["boolean"],
@@ -383,7 +386,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         loss,
         learning_rate,
         n_estimators,
-        criterion,
         min_samples_split,
         min_samples_leaf,
         min_weight_fraction_leaf,
@@ -401,6 +403,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         validation_fraction=0.1,
         n_iter_no_change=None,
         tol=1e-4,
+        criterion="deprecated",
     ):
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -476,7 +479,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
             # induce regression tree on the negative gradient
             tree = DecisionTreeRegressor(
-                criterion=self.criterion,
+                criterion="squared_error",
                 splitter="best",
                 max_depth=self.max_depth,
                 min_samples_split=self.min_samples_split,
@@ -628,7 +631,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         y : array-like of shape (n_samples,)
             Target values (strings or integers in classification, real numbers
@@ -658,6 +661,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """
         if not self.warm_start:
             self._clear_state()
+
+        if self.criterion != "deprecated":
+            warnings.warn(
+                "The parameter `criterion` is deprecated and will be "
+                "removed in 1.11. It has no effect. Leave it to its default value to "
+                "avoid this warning.",
+                FutureWarning,
+            )
 
         # Check input
         # Since check_array converts both X and y to the same dtype, but the
@@ -846,8 +857,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             verbose_reporter = VerboseReporter(verbose=self.verbose)
             verbose_reporter.init(self, begin_at_stage)
 
-        X_csc = csc_matrix(X) if issparse(X) else None
-        X_csr = csr_matrix(X) if issparse(X) else None
+        X_csc = csc_array(X) if issparse(X) else None
+        X_csr = csr_array(X) if issparse(X) else None
 
         if self.n_iter_no_change is not None:
             loss_history = np.full(self.n_iter_no_change, np.inf)
@@ -985,7 +996,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         check_input : bool, default=True
             If False, the input arrays X will not be checked.
@@ -1013,7 +1024,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         The higher, the more important the feature.
         The importance of a feature is computed as the (normalized)
-        total reduction of the criterion brought by that feature.  It is also
+        total reduction of the MSE brought by that feature.  It is also
         known as the Gini importance.
 
         Warning: impurity-based feature importances can be misleading for
@@ -1100,7 +1111,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will
-            be converted to a sparse ``csr_matrix``.
+            be converted to a sparse ``csr_array``.
 
         Returns
         -------
@@ -1179,13 +1190,12 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         Values must be in the range `(0.0, 1.0]`.
 
     criterion : {'friedman_mse', 'squared_error'}, default='friedman_mse'
-        The function to measure the quality of a split. Supported criteria are
-        'friedman_mse' for the mean squared error with improvement score by
-        Friedman, 'squared_error' for mean squared error. The default value of
-        'friedman_mse' is generally the best as it can provide a better
-        approximation in some cases.
+        This parameter has no effect.
 
         .. versionadded:: 0.18
+
+        .. deprecated:: 1.9
+           `criterion` is deprecated and will be removed in 1.11.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
@@ -1354,7 +1364,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         The impurity-based feature importances.
         The higher, the more important the feature.
         The importance of a feature is computed as the (normalized)
-        total reduction of the criterion brought by that feature.  It is also
+        total reduction of the MSE brought by that feature.  It is also
         known as the Gini importance.
 
         Warning: impurity-based feature importances can be misleading for
@@ -1432,7 +1442,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     -----
     The features are always randomly permuted at each split. Therefore,
     the best found split may vary, even with the same training data and
-    ``max_features=n_features``, if the improvement of the criterion is
+    ``max_features=n_features``, if the improvement of the MSE is
     identical for several splits enumerated during the search of the best
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
@@ -1478,7 +1488,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         learning_rate=0.1,
         n_estimators=100,
         subsample=1.0,
-        criterion="friedman_mse",
+        criterion="deprecated",
         min_samples_split=2,
         min_samples_leaf=1,
         min_weight_fraction_leaf=0.0,
@@ -1574,7 +1584,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         Returns
         -------
@@ -1604,7 +1614,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         Yields
         ------
@@ -1625,7 +1635,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         Returns
         -------
@@ -1650,7 +1660,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         Yields
         ------
@@ -1674,7 +1684,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         Returns
         -------
@@ -1698,7 +1708,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         Returns
         -------
@@ -1725,7 +1735,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         Yields
         ------
@@ -1791,13 +1801,12 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         Values must be in the range `(0.0, 1.0]`.
 
     criterion : {'friedman_mse', 'squared_error'}, default='friedman_mse'
-        The function to measure the quality of a split. Supported criteria are
-        "friedman_mse" for the mean squared error with improvement score by
-        Friedman, "squared_error" for mean squared error. The default value of
-        "friedman_mse" is generally the best as it can provide a better
-        approximation in some cases.
+        This parameter has no effect.
 
         .. versionadded:: 0.18
+
+        .. deprecated:: 1.9
+           `criterion` is deprecated and will be removed in 1.11.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
@@ -1970,7 +1979,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         The impurity-based feature importances.
         The higher, the more important the feature.
         The importance of a feature is computed as the (normalized)
-        total reduction of the criterion brought by that feature.  It is also
+        total reduction of the MSE brought by that feature.  It is also
         known as the Gini importance.
 
         Warning: impurity-based feature importances can be misleading for
@@ -2033,7 +2042,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     -----
     The features are always randomly permuted at each split. Therefore,
     the best found split may vary, even with the same training data and
-    ``max_features=n_features``, if the improvement of the criterion is
+    ``max_features=n_features``, if the improvement of the MSE is
     identical for several splits enumerated during the search of the best
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
@@ -2084,7 +2093,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         learning_rate=0.1,
         n_estimators=100,
         subsample=1.0,
-        criterion="friedman_mse",
+        criterion="deprecated",
         min_samples_split=2,
         min_samples_leaf=1,
         min_weight_fraction_leaf=0.0,
@@ -2146,7 +2155,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         Returns
         -------
@@ -2170,7 +2179,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            to a sparse ``csr_array``.
 
         Yields
         ------
@@ -2190,7 +2199,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will
-            be converted to a sparse ``csr_matrix``.
+            be converted to a sparse ``csr_array``.
 
         Returns
         -------
