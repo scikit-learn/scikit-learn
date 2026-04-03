@@ -4,7 +4,6 @@ import warnings
 
 import numpy as np
 import pytest
-import scipy as sp
 from numpy.testing import assert_array_equal
 
 from sklearn import config_context, datasets
@@ -14,8 +13,7 @@ from sklearn.decomposition import PCA
 from sklearn.decomposition._pca import _assess_dimension, _infer_dimension
 from sklearn.utils._array_api import (
     _atol_for_type,
-    _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._array_api import device as array_device
@@ -24,7 +22,7 @@ from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 from sklearn.utils.estimator_checks import (
     check_array_api_input_and_values,
 )
-from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS, _sparse_random_array
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "covariance_eigh", "arpack", "randomized", "auto"]
@@ -87,17 +85,12 @@ def test_pca_sparse(
     atol = 1e-12
     transform_atol = 1e-10
 
-    random_state = np.random.default_rng(global_random_seed)
+    rng = np.random.default_rng(global_random_seed)
     X = sparse_container(
-        sp.sparse.random(
-            SPARSE_M,
-            SPARSE_N,
-            random_state=random_state,
-            density=density,
-        )
+        _sparse_random_array((SPARSE_M, SPARSE_N), rng=rng, density=density)
     )
     # Scale the data + vary the column means
-    scale_vector = random_state.random(X.shape[1]) * scale
+    scale_vector = rng.random(X.shape[1]) * scale
     X = X.multiply(scale_vector)
 
     pca = PCA(
@@ -120,12 +113,7 @@ def test_pca_sparse(
 
     # Test transform
     X2 = sparse_container(
-        sp.sparse.random(
-            SPARSE_M,
-            SPARSE_N,
-            random_state=random_state,
-            density=density,
-        )
+        _sparse_random_array((SPARSE_M, SPARSE_N), rng=rng, density=density)
     )
     X2d = X2.toarray()
 
@@ -135,23 +123,10 @@ def test_pca_sparse(
 
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
 def test_pca_sparse_fit_transform(global_random_seed, sparse_container):
-    random_state = np.random.default_rng(global_random_seed)
-    X = sparse_container(
-        sp.sparse.random(
-            SPARSE_M,
-            SPARSE_N,
-            random_state=random_state,
-            density=0.01,
-        )
-    )
-    X2 = sparse_container(
-        sp.sparse.random(
-            SPARSE_M,
-            SPARSE_N,
-            random_state=random_state,
-            density=0.01,
-        )
-    )
+    rng = np.random.default_rng(global_random_seed)
+    shp = (SPARSE_M, SPARSE_N)
+    X = sparse_container(_sparse_random_array(shp, rng=rng, density=0.01))
+    X2 = sparse_container(_sparse_random_array(shp, rng=rng, density=0.01))
 
     pca_fit = PCA(n_components=10, svd_solver="arpack", random_state=global_random_seed)
     pca_fit_transform = PCA(
@@ -170,14 +145,8 @@ def test_pca_sparse_fit_transform(global_random_seed, sparse_container):
 @pytest.mark.parametrize("svd_solver", ["randomized", "full"])
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
 def test_sparse_pca_solver_error(global_random_seed, svd_solver, sparse_container):
-    random_state = np.random.RandomState(global_random_seed)
-    X = sparse_container(
-        sp.sparse.random(
-            SPARSE_M,
-            SPARSE_N,
-            random_state=random_state,
-        )
-    )
+    rng = np.random.RandomState(global_random_seed)
+    X = sparse_container(_sparse_random_array((SPARSE_M, SPARSE_N), rng=rng))
     pca = PCA(n_components=30, svd_solver=svd_solver)
     error_msg_pattern = (
         'PCA only support sparse inputs with the "arpack" and "covariance_eigh"'
@@ -192,14 +161,8 @@ def test_sparse_pca_auto_arpack_singluar_values_consistency(
     global_random_seed, sparse_container
 ):
     """Check that "auto" and "arpack" solvers are equivalent for sparse inputs."""
-    random_state = np.random.RandomState(global_random_seed)
-    X = sparse_container(
-        sp.sparse.random(
-            SPARSE_M,
-            SPARSE_N,
-            random_state=random_state,
-        )
-    )
+    rng = np.random.RandomState(global_random_seed)
+    X = sparse_container(_sparse_random_array((SPARSE_M, SPARSE_N), rng=rng))
     pca_arpack = PCA(n_components=10, svd_solver="arpack").fit(X)
     pca_auto = PCA(n_components=10, svd_solver="auto").fit(X)
     assert_allclose(pca_arpack.singular_values_, pca_auto.singular_values_, rtol=5e-3)
@@ -972,8 +935,10 @@ def test_variance_correctness(copy):
     np.testing.assert_allclose(pca_var, true_var)
 
 
-def check_array_api_get_precision(name, estimator, array_namespace, device, dtype_name):
-    xp = _array_api_for_tests(array_namespace, device)
+def check_array_api_get_precision(
+    name, estimator, array_namespace, device_name, dtype_name
+):
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     iris_np = iris.data.astype(dtype_name)
     iris_xp = xp.asarray(iris_np, device=device)
 
@@ -989,7 +954,7 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
         assert precision_xp.dtype == iris_xp.dtype
 
         assert_allclose(
-            _convert_to_numpy(precision_xp, xp=xp),
+            move_to(precision_xp, xp=np, device="cpu"),
             precision_np,
             rtol=rtol,
             atol=_atol_for_type(dtype_name),
@@ -999,7 +964,7 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
         assert covariance_xp.dtype == iris_xp.dtype
 
         assert_allclose(
-            _convert_to_numpy(covariance_xp, xp=xp),
+            move_to(covariance_xp, xp=np, device="cpu"),
             covariance_np,
             rtol=rtol,
             atol=_atol_for_type(dtype_name),
@@ -1007,9 +972,8 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "check",
@@ -1034,17 +998,22 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
     ids=_get_check_estimator_ids,
 )
 def test_pca_array_api_compliance(
-    estimator, check, array_namespace, device, dtype_name
+    estimator, check, array_namespace, device_name, dtype_name
 ):
     name = estimator.__class__.__name__
     estimator = clone(estimator)
-    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
+    check(
+        name,
+        estimator,
+        array_namespace,
+        device_name=device_name,
+        dtype_name=dtype_name,
+    )
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize(
     "check",
@@ -1064,14 +1033,20 @@ def test_pca_array_api_compliance(
     ids=_get_check_estimator_ids,
 )
 def test_pca_mle_array_api_compliance(
-    estimator, check, array_namespace, device, dtype_name
+    estimator, check, array_namespace, device_name, dtype_name
 ):
     name = estimator.__class__.__name__
-    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
+    check(
+        name,
+        estimator,
+        array_namespace,
+        device_name=device_name,
+        dtype_name=dtype_name,
+    )
 
     # Simpler variant of the generic check_array_api_input checker tailored for
     # the specific case of PCA with mle-trimmed components.
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     X, y = make_classification(random_state=42)
     X = X.astype(dtype_name, copy=False)
@@ -1092,11 +1067,11 @@ def test_pca_mle_array_api_compliance(
         est_xp.fit(X_xp, y_xp)
         components_xp = est_xp.components_
         assert array_device(components_xp) == array_device(X_xp)
-        components_xp_np = _convert_to_numpy(components_xp, xp=xp)
+        components_xp_np = move_to(components_xp, xp=np, device="cpu")
 
         explained_variance_xp = est_xp.explained_variance_
         assert array_device(explained_variance_xp) == array_device(X_xp)
-        explained_variance_xp_np = _convert_to_numpy(explained_variance_xp, xp=xp)
+        explained_variance_xp_np = move_to(explained_variance_xp, xp=np, device="cpu")
 
     assert components_xp_np.dtype == components_np.dtype
     assert components_xp_np.shape[1] == components_np.shape[1]

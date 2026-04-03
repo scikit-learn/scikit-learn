@@ -11,6 +11,7 @@ from scipy.stats import bernoulli
 
 from sklearn import datasets, svm
 from sklearn.base import config_context
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import make_multilabel_classification
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics import (
@@ -45,12 +46,11 @@ from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._array_api import (
-    _get_namespace_device_dtype_ids,
-    get_namespace,
-    yield_namespace_device_dtype_combinations,
+    device as array_api_device,
 )
 from sklearn.utils._array_api import (
-    device as array_api_device,
+    get_namespace,
+    yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
@@ -100,7 +100,9 @@ def make_prediction(dataset=None, binary=False):
     X = np.c_[X, rng.randn(n_samples, 200 * n_features)]
 
     # run classifier, get class probabilities and label predictions
-    clf = svm.SVC(kernel="linear", probability=True, random_state=0)
+    clf = CalibratedClassifierCV(
+        svm.SVC(kernel="linear", random_state=0), ensemble=False, cv=3
+    )
     y_pred_proba = clf.fit(X[:half], y[:half]).predict_proba(X[half:])
 
     if binary:
@@ -918,7 +920,7 @@ def test_cohen_kappa_undefined(test_case, replace_undefined_by):
     """Test that cohen_kappa_score handles divisions by 0 correctly by returning the
     `replace_undefined_by` param. (The first test case covers the first possible
     location in the function for an occurrence of a division by zero, the last three
-    test cases cover a zero division in the the second possible location in the
+    test cases cover a zero division in the second possible location in the
     function."""
 
     y1, y2, labels, weights = test_case
@@ -3680,12 +3682,13 @@ def test_d2_brier_score_warning_on_less_than_two_samples():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
 )
-def test_confusion_matrix_array_api(array_namespace, device, _):
+def test_confusion_matrix_array_api(array_namespace, device_name, dtype_name):
     """Test that `confusion_matrix` works for all array types when `labels` are passed
     such that the inner boolean `need_index_conversion` evaluates to `True`."""
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
 
     y_true = xp.asarray([1, 2, 3], device=device)
     y_pred = xp.asarray([4, 5, 6], device=device)
@@ -3703,16 +3706,22 @@ def test_confusion_matrix_array_api(array_namespace, device, _):
 @pytest.mark.parametrize("str_y_true", [False, True])
 @pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
 )
 def test_probabilistic_metrics_array_api(
-    prob_metric, str_y_true, use_sample_weight, array_namespace, device_, dtype_name
+    prob_metric,
+    str_y_true,
+    use_sample_weight,
+    array_namespace,
+    device_name,
+    dtype_name,
 ):
-    """Test that :func:`brier_score_loss`, :func:`log_loss`, func:`d2_brier_score`
+    """Test that :func:`brier_score_loss`, :func:`log_loss`, :func:`d2_brier_score`
     and :func:`d2_log_loss_score` work correctly with the array API for binary
-    and mutli-class inputs.
+    and multi-class inputs.
     """
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     sample_weight = np.array([1, 2, 3, 1]) if use_sample_weight else None
 
     # binary case
@@ -3726,10 +3735,10 @@ def test_probabilistic_metrics_array_api(
             extra_kwargs["pos_label"] = "yes"
     else:
         y_true_np = np.array([1, 0, 1, 0])
-        y_true_xp_or_np = xp.asarray(y_true_np, device=device_)
+        y_true_xp_or_np = xp.asarray(y_true_np, device=device)
 
     y_prob_np = np.array([0.5, 0.2, 0.7, 0.6], dtype=dtype_name)
-    y_prob_xp = xp.asarray(y_prob_np, device=device_)
+    y_prob_xp = xp.asarray(y_prob_np, device=device)
     metric_score_np = prob_metric(
         y_true_np, y_prob_np, sample_weight=sample_weight, **extra_kwargs
     )
@@ -3746,7 +3755,7 @@ def test_probabilistic_metrics_array_api(
         y_true_xp_or_np = np.asarray(y_true_np)
     else:
         y_true_np = np.array([0, 1, 2, 3])
-        y_true_xp_or_np = xp.asarray(y_true_np, device=device_)
+        y_true_xp_or_np = xp.asarray(y_true_np, device=device)
 
     y_prob_np = np.array(
         [
@@ -3757,7 +3766,7 @@ def test_probabilistic_metrics_array_api(
         ],
         dtype=dtype_name,
     )
-    y_prob_xp = xp.asarray(y_prob_np, device=device_)
+    y_prob_xp = xp.asarray(y_prob_np, device=device)
     metric_score_np = prob_metric(y_true_np, y_prob_np)
     with config_context(array_api_dispatch=True):
         metric_score_xp = prob_metric(y_true_xp_or_np, y_prob_xp)
@@ -3770,16 +3779,21 @@ def test_probabilistic_metrics_array_api(
 )
 @pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
 )
 def test_probabilistic_metrics_multilabel_array_api(
-    prob_metric, use_sample_weight, array_namespace, device_, dtype_name
+    prob_metric,
+    use_sample_weight,
+    array_namespace,
+    device_name,
+    dtype_name,
 ):
-    """Test that :func:`brier_score_loss`, :func:`log_loss`, func:`d2_brier_score`
+    """Test that :func:`brier_score_loss`, :func:`log_loss`, :func:`d2_brier_score`
     and :func:`d2_log_loss_score` work correctly with the array API for
     multi-label inputs.
     """
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     sample_weight = np.array([1, 2, 3, 1]) if use_sample_weight else None
     y_true_np = np.array(
         [
@@ -3790,7 +3804,7 @@ def test_probabilistic_metrics_multilabel_array_api(
         ],
         dtype=dtype_name,
     )
-    y_true_xp = xp.asarray(y_true_np, device=device_)
+    y_true_xp = xp.asarray(y_true_np, device=device)
     y_prob_np = np.array(
         [
             [0.15, 0.27, 0.46, 0.12],
@@ -3800,7 +3814,7 @@ def test_probabilistic_metrics_multilabel_array_api(
         ],
         dtype=dtype_name,
     )
-    y_prob_xp = xp.asarray(y_prob_np, device=device_)
+    y_prob_xp = xp.asarray(y_prob_np, device=device)
     metric_score_np = prob_metric(y_true_np, y_prob_np, sample_weight=sample_weight)
     with config_context(array_api_dispatch=True):
         metric_score_xp = prob_metric(y_true_xp, y_prob_xp, sample_weight=sample_weight)
@@ -3809,24 +3823,21 @@ def test_probabilistic_metrics_multilabel_array_api(
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("prob_metric", [brier_score_loss, d2_brier_score])
 def test_pos_label_in_brier_score_metrics_array_api(
-    prob_metric, array_namespace, device_, dtype_name
+    prob_metric, array_namespace, device_name, dtype_name
 ):
     """Check `pos_label` handled correctly when labels not in {-1, 1} or {0, 1}."""
     # For 'brier_score' metrics, when `pos_label=None` and labels are not strings,
     # `pos_label` defaults to the largest label.
-    xp = _array_api_for_tests(array_namespace, device_)
-    y_true_pos_1 = xp.asarray(np.array([1, 0, 1, 0]), device=device_)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
+    y_true_pos_1 = xp.asarray(np.array([1, 0, 1, 0]), device=device)
     # Result should be the same when we use 2's for the label instead of 1's
-    y_true_pos_2 = xp.asarray(np.array([2, 0, 2, 0]), device=device_)
-    y_prob = xp.asarray(
-        np.array([0.5, 0.2, 0.7, 0.6], dtype=dtype_name), device=device_
-    )
+    y_true_pos_2 = xp.asarray(np.array([2, 0, 2, 0]), device=device)
+    y_prob = xp.asarray(np.array([0.5, 0.2, 0.7, 0.6], dtype=dtype_name), device=device)
 
     with config_context(array_api_dispatch=True):
         metric_pos_1 = prob_metric(y_true_pos_1, y_prob)
