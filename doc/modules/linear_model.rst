@@ -213,11 +213,11 @@ Usage example::
     >>> import numpy as np
     >>> from sklearn import linear_model
     >>> reg = linear_model.RidgeCV(alphas=np.logspace(-6, 6, 13))
-    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
+    >>> reg.fit([[0, 0], [0, 0.1], [1, 1]], [0, -0.1, 1])
     RidgeCV(alphas=array([1.e-06, 1.e-05, 1.e-04, 1.e-03, 1.e-02, 1.e-01, 1.e+00, 1.e+01,
           1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]))
     >>> reg.alpha_
-    np.float64(0.01)
+    np.float64(0.1)
 
 Specifying the value of the :term:`cv` attribute will trigger the use of
 cross-validation with :class:`~sklearn.model_selection.GridSearchCV`, for
