@@ -1018,11 +1018,11 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         return coef
 
-    @deprecated(
+    @deprecated(  # type: ignore[prop-decorator]
         "Attribute `probA_` was deprecated in version 1.9 and will be removed in "
         "1.11 as the `probability=True` option for SVC and NuSVC was deprecated "
         "and will be removed in 1.11."
-    )  # type: ignore[prop-decorator]
+    )
     @property
     def probA_(self):
         """Parameter learned in Platt scaling when `probability=True`.
@@ -1033,11 +1033,11 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         """
         return self._probA
 
-    @deprecated(
+    @deprecated(  # type: ignore[prop-decorator]
         "Attribute `probB_` was deprecated in version 1.9 and will be removed in "
         "1.11 as the `probability=True` option for SVC and NuSVC was deprecated "
         "and will be removed in 1.11."
-    )  # type: ignore[prop-decorator]
+    )
     @property
     def probB_(self):
         """Parameter learned in Platt scaling when `probability=True`.
