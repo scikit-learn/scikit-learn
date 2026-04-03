@@ -3,27 +3,53 @@
 Institutional support
 =====================
 
-Scikit-learn is a community driven project, however institutional and private
-grants help to assure its sustainability.
-
-The project would like to thank the following funders.
-
-...................................
+Scikit-learn is a community driven project, however a number of public
+institutions and private entities have contributed and keep on contributing to
+its success and sustainability.
 
 .. div:: sk-text-image-grid-small
 
+  .. div:: image-box
+
+    .. image:: images/inria-logo.jpg
+      :target: https://www.inria.fr
+
   .. div:: text-box
 
-    `:probabl. <https://probabl.ai>`_ manages the whole sponsorship program
-    and employs the full-time core maintainers Adrin Jalali, Arturo Amor,
-    François Goupil, Guillaume Lemaitre, Jérémie du Boisberranger, Loïc Estève,
-    Olivier Grisel, and Stefanie Senger.
+    Since the inception of scikit-learn and for a good decade, `Inria
+    <https://www.inria.fr>`_ has been its main supporting pillar, as the stable
+    employer of many core-maintainers and as the host for the scikit-learn
+    consortium.
+
+
+.. div:: sk-text-image-grid-small
 
   .. div:: image-box
 
     .. image:: images/probabl.png
       :target: https://probabl.ai
-      :width: 40%
+
+  .. div:: text-box
+
+    In 2023, Inria spun off `Probabl <https://probabl.ai>`_ as a mission driven
+    company to take scikit-learn beyond the research lab. All of the
+    scikit-learn core-maintainers employed by Inria have joined the spinoff as
+    co-founders, most as full-time employees. Probabl has raised funding as
+    most traditional startups do, in this case with a mix of public and private
+    funding. Inria, the French government, and more recently Mozilla Ventures,
+    Apertu Capital, Capital Fund Management and Serena Capital have invested in
+    Probabl, giving it significant financial means to sustain scikit-learn as
+    part of its core mission, also expecting the development of new value
+    adding enterprise-grade solutions and services. For more information about
+    these solutions and services, please visit the `probabl.ai
+    <https://probabl.ai>`_ web site.
+
+    Today, Probabl employs the following either full-time or part-time
+    core-contributors: Adrin Jalali, Arturo Amor, François Goupil, Guillaume
+    Lemaitre, Jérémie du Boisberranger, Loïc Estève, Olivier Grisel, and
+    Stefanie Senger, as well as Gaël Varoquaux who has joined the company as
+    Chief Science Officer.
+
 
 ..........
 
@@ -332,13 +358,3 @@ scikit-learn project.
       </tr>
     </tbody>
   </table>
-
-Coding Sprints
---------------
-
-The scikit-learn project has a long history of `open source coding sprints
-<https://blog.scikit-learn.org/events/sprints-value/>`_ with over 50 sprint
-events from 2010 to present day. There are scores of sponsors who contributed
-to costs which include venue, food, travel, developer time and more. See
-`scikit-learn sprints <https://blog.scikit-learn.org/sprints/>`_ for a full
-list of events.

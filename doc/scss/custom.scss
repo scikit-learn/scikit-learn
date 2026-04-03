@@ -216,13 +216,18 @@ div.sk-authors-container {
 
 @mixin sk-text-image-grid($img-max-height) {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   flex-wrap: wrap;
 
-  div.text-box,
-  div.image-box {
-    width: 50%;
+  div.text-box {
+    width: 65%;
+    @media screen and (max-width: 500px) {
+      width: 100%;
+    }
+  }
 
+  div.image-box {
+    width: 35%;
     @media screen and (max-width: 500px) {
       width: 100%;
     }
