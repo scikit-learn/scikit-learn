@@ -21,7 +21,6 @@ its success and sustainability.
     employer of many core-maintainers and as the host for the scikit-learn
     consortium.
 
-
 .. div:: sk-text-image-grid-small
 
   .. div:: image-box
@@ -44,108 +43,46 @@ its success and sustainability.
     these solutions and services, please visit the `probabl.ai
     <https://probabl.ai>`_ web site.
 
-    Today, Probabl employs the following either full-time or part-time
-    core-contributors: Adrin Jalali, Arturo Amor, François Goupil, Guillaume
-    Lemaitre, Jérémie du Boisberranger, Loïc Estève, Olivier Grisel, and
+    Today, Probabl employs the following core and non-core contributors: Adrin
+    Jalali, Antoine Baker, Arturo Amor, François Goupil, Guillaume Lemaitre,
+    Jérémie du Boisberranger, Loïc Estève, Olivier Grisel, Shruti Nath and
     Stefanie Senger, as well as Gaël Varoquaux who has joined the company as
     Chief Science Officer.
 
+The above financial commitments mean that Inria initially and now Probabl have
+been and are the main source of financial support for scikit-learn, completed
+by additional commitments detailed below. Cumulatively over a decade, these
+represent several millions of euros or dollars worth of financial
+participation.
 
-..........
 
-Active Sponsors
-===============
+Active financial participation (2026)
+-------------------------------------
 
-Founding sponsors
------------------
+In addition to the above financial commitments, the following organizations
+have committed to support scikit-learn as follows:
 
-.. div:: sk-text-image-grid-small
+.. |wellcome| image:: images/wellcome.png
+  :target: https://wellcome.org
 
-  .. div:: text-box
-
-    `Inria <https://www.inria.fr>`_ supports scikit-learn through their
-    sponsorship.
-
-  .. div:: image-box
-
-    .. image:: images/inria-logo.jpg
-      :target: https://www.inria.fr
-
-..........
-
-Gold sponsors
--------------
-
-.. div:: sk-text-image-grid-small
-
-  .. div:: text-box
-
-    `Chanel <https://www.chanel.com>`_ supports scikit-learn through their
-    sponsorship.
-
-  .. div:: image-box
-
-    .. image:: images/chanel.png
-      :target: https://www.chanel.com
-
-..........
-
-Silver sponsors
----------------
-
-.. div:: sk-text-image-grid-small
-
-  .. div:: text-box
-
-    `BNP Paribas Group <https://group.bnpparibas/>`_ supports scikit-learn
-    through their sponsorship.
-
-  .. div:: image-box
-
-    .. image:: images/bnp-paribas.jpg
-      :target: https://group.bnpparibas/
-
-..........
-
-Bronze sponsors
----------------
-
-.. div:: sk-text-image-grid-small
-
-  .. div:: text-box
-
-    `NVIDIA <https://nvidia.com>`_ supports scikit-learn through their sponsorship and employs full-time core maintainer Tim Head.
-
-  .. div:: image-box
-
-    .. image:: images/nvidia.png
-      :target: https://nvidia.com
-
-..........
-
-Other contributions
--------------------
-
-.. |chanel| image:: images/chanel.png
-  :target: https://www.chanel.com
-
-.. |axa| image:: images/axa.png
-  :target: https://www.axa.fr/
-
-.. |bnp| image:: images/bnp.png
-  :target: https://www.bnpparibascardif.com/
-
-.. |bnpparibasgroup| image:: images/bnp-paribas.jpg
-  :target: https://group.bnpparibas/
-
-.. |dataiku| image:: images/dataiku.png
-  :target: https://www.dataiku.com/
+.. |czi| image:: images/czi.png
+  :target: https://chanzuckerberg.com
 
 .. |nvidia| image:: images/nvidia.png
   :target: https://www.nvidia.com
 
-.. |inria| image:: images/inria-logo.jpg
-  :target: https://www.inria.fr
+.. |nasa| image:: images/nasa.png
+  :target: https://www.nasa.gov
+
+.. |chanel| image:: images/chanel.png
+  :target: https://www.chanel.com
+
+.. |bnpparibasgroup| image:: images/bnp-paribas.jpg
+  :target: https://group.bnpparibas/
+
+.. |quansightlabs| image:: images/quansight-labs.png
+  :target: https://labs.quansight.org* `BNP Paribas Group <https://group.bnpparibas/>`_ supports scikit-learn
+  through their Silver sponsorship (2025-2026).
 
 .. raw:: html
 
@@ -167,27 +104,50 @@ Other contributions
   </style>
 
 
-* `Microsoft <https://microsoft.com/>`_ funds Andreas Müller since 2020.
-
-
-* `Quansight Labs <https://labs.quansight.org>`_ funds Lucy Liu since 2022.
-
 * `The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ and
   `Wellcome Trust <https://wellcome.org/>`_ fund scikit-learn through the
   `Essential Open Source Software for Science (EOSS) <https://chanzuckerberg.com/eoss/>`_
   cycle 6.
 
-  It supports Lucy Liu and diversity & inclusion initiatives that will
-  be announced in the future.
+  It funds the work of Lucy Liu, Dea Maria Leon and Anne Beyer.
+
+* `NVIDIA <https://nvidia.com>`_ supports scikit-learn through their
+  sponsorship and employs full-time core maintainer Tim Head.
+
+* `NASA <https://www.nasa.gov>`_ supports work done by Quansight Labs and
+  Probabl team members via the NASA ROSES grant 80NSSC25K7215: "Ensuring a fast
+  and secure core for scientific Python".
+
+* `BNP Paribas Group <https://group.bnpparibas/>`_ supports scikit-learn
+  through their Silver sponsorship (2025-2026).
+
+* `Chanel <https://www.chanel.com>`_ supports scikit-learn through a
+  multi-year sponsorship, initially through the Inria foundation (2023-2024),
+  now as a Gold Sponsor via Probabl (2024-2026).
+
+* `Quansight Labs <https://labs.quansight.org>`_ funds Lucy Liu since 2022.
 
 * `Tidelift <https://tidelift.com/>`_ supports the project via their service
   agreement.
 
 Past Sponsors
-=============
+-------------
 
-`Quansight Labs <https://labs.quansight.org>`_ funded Meekail Zain in 2022 and 2023,
-and funded Thomas J. Fan from 2021 to 2023.
+`Microsoft <https://microsoft.com/>`_ funded Andreas Müller from 2020 to 2026.
+
+`APHP <https://aphp.fr/>`_, `AXA <https://www.axa.fr/>`_, `BCG
+<https://www.bcg.com/>`_, `BNP-Paribas-Cardiff
+<https://www.bnpparibascardif.com/>`_, `Dataiku <https://www.dataiku.com/>`_,
+`Fujitsu <https://www.fujitsu.com/>`_, `Hugging Face
+<https://huggingface.co/>`_, `Intel <https://www.intel.com/>`_, `Microsoft
+<https://microsoft.com/>`_, `NVIDIA <https://nvidia.com>`_ supported the
+project through their sponsorship via the Inria foundation between 2020 and
+2024.
+
+`Quansight Labs <https://labs.quansight.org>`_ and `NASA
+<https://www.nasa.gov>`_ funded Meekail Zain in 2022 and 2023, and funded
+Thomas J. Fan from 2021 to 2023 via the NASA ROSES grant 80NSSC22K0405:
+"Reinforcing the Foundations of Scientific Python".
 
 `Columbia University <https://columbia.edu/>`_ funded Andreas Müller
 (2016-2020).
@@ -247,90 +207,56 @@ The `NeuroDebian <https://neuro.debian.net>`_ project providing `Debian
 `Dr. James V. Haxby <http://haxbylab.dartmouth.edu/>`_ (`Dartmouth
 College <https://pbs.dartmouth.edu/>`_).
 
-...................
 
-The following organizations funded the scikit-learn consortium at Inria in
-the past:
+Donating to the project
+-----------------------
 
-.. |msn| image:: images/microsoft.png
-  :target: https://www.microsoft.com/
-
-.. |bcg| image:: images/bcg.png
-  :target: https://www.bcg.com/beyond-consulting/bcg-gamma/default.aspx
-
-.. |fujitsu| image:: images/fujitsu.png
-  :target: https://www.fujitsu.com/global/
-
-.. |aphp| image:: images/logo_APHP_text.png
-  :target: https://aphp.fr/
-
-.. |hf| image:: images/huggingface_logo-noborder.png
-  :target: https://huggingface.co
+If you have found scikit-learn to be useful in your work, research, or company,
+please consider making a donation to the project commensurate with your resources.
+There are several options for making donations:
 
 .. raw:: html
 
-  <style>
-    div.image-subgrid img {
-      max-height: 50px;
-      max-width: 90%;
-    }
-  </style>
+  <p class="text-center">
+    <a class="btn sk-btn-orange mb-1" href="https://numfocus.org/donate-to-scikit-learn">
+      Donate via NumFOCUS
+    </a>
+    <a class="btn sk-btn-orange mb-1" href="https://github.com/sponsors/scikit-learn">
+      Donate via GitHub Sponsors
+    </a>
+    <a class="btn sk-btn-orange mb-1" href="https://causes.benevity.org/projects/433725">
+      Donate via Benevity
+    </a>
+  </p>
 
-.. grid:: 2 2 4 4
-  :class-row: image-subgrid
-  :gutter: 1
+**Donation Options:**
 
-  .. grid-item::
-    :class: sd-text-center
-    :child-align: center
+* **NumFOCUS**: Donate via the `NumFOCUS Donations Page
+  <https://numfocus.org/donate-to-scikit-learn>`_, scikit-learn's fiscal sponsor.
 
-    |msn|
+* **GitHub Sponsors**: Support the project directly through `GitHub Sponsors
+  <https://github.com/sponsors/scikit-learn>`_.
 
-  .. grid-item::
-    :class: sd-text-center
-    :child-align: center
+* **Benevity**: If your company uses scikit-learn, you can also support the
+  project through Benevity, a platform to manage employee donations. It is
+  widely used by hundreds of Fortune 1000 companies to streamline and scale
+  their social impact initiatives. If your company uses Benevity, you are
+  able to make a donation with a company match as high as 100%. Our project
+  ID is `433725 <https://causes.benevity.org/projects/433725>`_.
 
-    |bcg|
+All above donation options are managed by `NumFOCUS <https://numfocus.org/>`_,
+a 501(c)(3) non-profit organization based in Austin, Texas, USA. The NumFOCUS
+board consists of `SciPy community members <https://numfocus.org/board.html>`_.
+Contributions are tax-deductible to the extent allowed by law.
 
-  .. grid-item::
-    :class: sd-text-center
-    :child-align: center
+.. rubric:: Notes
 
-    |fujitsu|
-
-  .. grid-item::
-    :class: sd-text-center
-    :child-align: center
-
-    |aphp|
-
-  .. grid-item::
-    :class: sd-text-center
-    :child-align: center
-
-    |hf|
-
-  .. grid-item::
-    :class: sd-text-center
-    :child-align: center
-
-    |dataiku|
-
-  .. grid-item::
-    :class: sd-text-center
-    :child-align: center
-
-    |bnp|
-
-  .. grid-item::
-    :class: sd-text-center
-    :child-align: center
-
-    |axa|
+Contributions support the maintenance of the project, including development,
+documentation, infrastructure and coding sprints.
 
 
-Donations in Kind
------------------
+Donations in kind
+=================
 The following organizations provide non-financial contributions to the
 scikit-learn project.
 

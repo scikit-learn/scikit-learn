@@ -195,52 +195,6 @@ to costs which include venue, food, travel, developer time and more. See
 `scikit-learn sprints <https://blog.scikit-learn.org/sprints/>`_ for a full
 list of events.
 
-Donating to the project
-=======================
-
-If you have found scikit-learn to be useful in your work, research, or company,
-please consider making a donation to the project commensurate with your resources.
-There are several options for making donations:
-
-.. raw:: html
-
-  <p class="text-center">
-    <a class="btn sk-btn-orange mb-1" href="https://numfocus.org/donate-to-scikit-learn">
-      Donate via NumFOCUS
-    </a>
-    <a class="btn sk-btn-orange mb-1" href="https://github.com/sponsors/scikit-learn">
-      Donate via GitHub Sponsors
-    </a>
-    <a class="btn sk-btn-orange mb-1" href="https://causes.benevity.org/projects/433725">
-      Donate via Benevity
-    </a>
-  </p>
-
-**Donation Options:**
-
-* **NumFOCUS**: Donate via the `NumFOCUS Donations Page
-  <https://numfocus.org/donate-to-scikit-learn>`_, scikit-learn's fiscal sponsor.
-
-* **GitHub Sponsors**: Support the project directly through `GitHub Sponsors
-  <https://github.com/sponsors/scikit-learn>`_.
-
-* **Benevity**: If your company uses scikit-learn, you can also support the
-  project through Benevity, a platform to manage employee donations. It is
-  widely used by hundreds of Fortune 1000 companies to streamline and scale
-  their social impact initiatives. If your company uses Benevity, you are
-  able to make a donation with a company match as high as 100%. Our project
-  ID is `433725 <https://causes.benevity.org/projects/433725>`_.
-
-All donations are managed by `NumFOCUS <https://numfocus.org/>`_, a 501(c)(3)
-non-profit organization based in Austin, Texas, USA. The NumFOCUS board
-consists of `SciPy community members <https://numfocus.org/board.html>`_.
-Contributions are tax-deductible to the extent allowed by law.
-
-.. rubric:: Notes
-
-Contributions support the maintenance of the project, including development,
-documentation, infrastructure and coding sprints.
-
 
 scikit-learn Swag
 -----------------

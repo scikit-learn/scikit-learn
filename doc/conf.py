@@ -289,7 +289,6 @@ html_theme_options = {
     "secondary_sidebar_items": {
         "**": [
             "page-toc",
-            "sourcelink",
             # Sphinx-Gallery-specific sidebar components
             # https://sphinx-gallery.github.io/stable/advanced.html#using-sphinx-gallery-sidebar-components
             "sg_download_links",
