@@ -578,9 +578,7 @@ def test_class_of_interest_multiclass(pyplot, response_method):
     response = getattr(estimator, response_method)(grid)[:, class_of_interest_idx]
     assert_allclose(response.reshape(*disp.response.shape), disp.response)
 
-    # check that we raise an error for unknown labels
-    # this test should already be handled in `_get_response_values` but we can have this
-    # test here as well
+    # Check that we raise an error for unknown labels.
     err_msg = "class_of_interest=2 is not a valid label: It should be one of"
     with pytest.raises(ValueError, match=err_msg):
         DecisionBoundaryDisplay.from_estimator(
@@ -668,6 +666,9 @@ def test_multiclass_colors_cmap(
         multiclass_colors=multiclass_colors,
     )
 
+    # Non-regression test for PR #33651
+    assert isinstance(disp.multiclass_colors_, np.ndarray)
+
     if multiclass_colors is None:
         if len(clf.classes_) <= 10:
             multiclass_colors = "tab10"
@@ -681,7 +682,7 @@ def test_multiclass_colors_cmap(
         cmap = mpl.pyplot.get_cmap(multiclass_colors)
         colors = cmap(np.linspace(0, 1, len(clf.classes_)))
     else:
-        colors = [mpl.colors.to_rgba(color) for color in multiclass_colors]
+        colors = mpl.colors.to_rgba_array(multiclass_colors)
 
     # Make sure the colormap has enough distinct colors.
     assert disp.n_classes == len(np.unique(colors, axis=0))

@@ -113,6 +113,7 @@ build_metadata_list = [
             # cuvs is needed for cupyx.scipy.spatial.distance.cdist and friends
             "cuvs",
             "array-api-strict",
+            "scipy-doctest",
         ],
         "virtual_package_spec": True,
     },
@@ -193,6 +194,7 @@ build_metadata_list = [
             "polars": "min",
             "pyamg": "min",
             "pyarrow": "min",
+            "rich": "min",
         },
     },
     {
@@ -369,6 +371,7 @@ build_metadata_list = [
             "sphinx-remove-toctrees": "min",
             "pydata-sphinx-theme": "min",
             "towncrier": "min",
+            "rich": "min",
         },
     },
     {

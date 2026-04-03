@@ -911,7 +911,7 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
 def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     """Load and return the digits dataset (classification).
 
-    Each datapoint is a 8x8 image of a digit.
+    Each datapoint is an 8x8 image of a digit.
 
     =================   ==============
     Classes                         10

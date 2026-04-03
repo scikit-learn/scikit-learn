@@ -310,13 +310,13 @@ class CallbackContext:
 
         return result
 
-    def call_on_fit_task_begin(self, estimator, **kwargs):
+    def call_on_fit_task_begin(self, *, estimator, **kwargs):
         """Call the `on_fit_task_begin` hook of the callbacks.
 
         Parameters
         ----------
         estimator : estimator instance
-            The estimator calling this callback hook.
+            The estimator calling the callback hook.
 
         **kwargs : dict
             Additional optional arguments passed to the callback. The list of possible
@@ -325,13 +325,13 @@ class CallbackContext:
         self._call_hooks(estimator, hook_name="on_fit_task_begin", **kwargs)
         return self
 
-    def call_on_fit_task_end(self, estimator, **kwargs):
+    def call_on_fit_task_end(self, *, estimator, **kwargs):
         """Call the `on_fit_task_end` hook of the callbacks.
 
         Parameters
         ----------
         estimator : estimator instance
-            The estimator calling this callback hook.
+            The estimator calling the callback hook.
 
         **kwargs : dict
             Additional optional arguments passed to the callback. The list of possible

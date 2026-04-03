@@ -117,7 +117,7 @@ def _select_colors(mpl, multiclass_colors, n_classes):
                 "When 'multiclass_colors' is a list, it can only contain valid"
                 f" Matplotlib color names. Got: {multiclass_colors}"
             )
-        return [mpl.colors.to_rgba(color) for color in multiclass_colors]
+        return mpl.colors.to_rgba_array(multiclass_colors)
 
     else:
         raise TypeError("'multiclass_colors' must be a list or a str.")
@@ -574,26 +574,21 @@ class DecisionBoundaryDisplay:
             )
 
         prediction_method = _check_boundary_response_method(estimator, response_method)
-        try:
-            response, _, response_method_used = _get_response_values(
-                estimator,
-                X_grid,
-                response_method=prediction_method,
-                pos_label=class_of_interest,
-                return_response_method_used=True,
+        if (class_of_interest is not None and hasattr(estimator, "classes_")) and (
+            class_of_interest not in estimator.classes_
+        ):
+            raise ValueError(
+                f"class_of_interest={class_of_interest} is not a valid label: It "
+                f"should be one of {estimator.classes_}"
             )
-        except ValueError as exc:
-            if "is not a valid label" in str(exc):
-                # re-raise a more informative error message since `pos_label` is unknown
-                # to our user when interacting with
-                # `DecisionBoundaryDisplay.from_estimator`
-                raise ValueError(
-                    # Note: it is ok to use estimator.classes_ here, as this error will
-                    # only be thrown if estimator is a classifier
-                    f"class_of_interest={class_of_interest} is not a valid label: It "
-                    f"should be one of {estimator.classes_}"
-                ) from exc
-            raise
+
+        response, _, response_method_used = _get_response_values(
+            estimator,
+            X_grid,
+            response_method=prediction_method,
+            pos_label=class_of_interest,
+            return_response_method_used=True,
+        )
 
         # convert classes predictions into integers
         if response_method_used == "predict" and hasattr(estimator, "classes_"):

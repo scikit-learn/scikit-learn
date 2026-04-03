@@ -7,6 +7,7 @@ from functools import partial
 import numpy as np
 import pytest
 
+from sklearn.callback import CallbackSupportMixin, with_callbacks
 from sklearn.callback._callback_context import (
     CallbackContext,
     _from_reconstruction_attributes,
@@ -450,3 +451,30 @@ def test_from_reconstruction_attributes():
     assert reconstructed_est is not estimator
     assert reconstructed_est.get_params() == estimator.get_params()
     assert reconstructed_est.n_iter_ == 2
+
+
+def test_locally_defined_estimator():
+    """Test a callback with a locally defined estimator class.
+
+    A locally defined estimator is not picklable, putting it in a container managed by
+    the callback manager would break. As a future improvement, the loky manager used as
+    the callback manager could use the loky pickler.
+    """
+
+    class LocallyDefinedEstimator(CallbackSupportMixin):
+        @with_callbacks
+        def fit(self, X=None, y=None):
+            callback_ctx = self._init_callback_context()
+            callback_ctx.call_on_fit_task_begin(estimator=self)
+
+            callback_ctx.call_on_fit_task_end(estimator=self)
+            return self
+
+    estimator = LocallyDefinedEstimator()
+    callback = TestingCallback()
+    estimator.set_callbacks(callback)
+    estimator.fit()
+    assert callback.count_hooks("setup") == 1
+    assert callback.count_hooks("on_fit_task_begin") == 1
+    assert callback.count_hooks("on_fit_task_end") == 1
+    assert callback.count_hooks("teardown") == 1

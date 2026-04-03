@@ -101,7 +101,7 @@ class CallbackSupportMixin:
                 isinstance(callback, AutoPropagatedCallback)
                 and hasattr(self, "_parent_callback_ctx")
             ):
-                callback.setup(self, self._callback_fit_ctx)
+                callback.setup(estimator=self, context=self._callback_fit_ctx)
 
         return self._callback_fit_ctx
 
@@ -134,10 +134,10 @@ def callback_management_context(estimator):
                     isinstance(callback, AutoPropagatedCallback)
                     and hasattr(estimator, "_parent_callback_ctx")
                 ):
-                    callback.teardown(estimator, estimator._callback_fit_ctx)
+                    callback.teardown(
+                        estimator=estimator, context=estimator._callback_fit_ctx
+                    )
 
-            # Remove the context and parent context to avoid keeping circular references
-            # when they're notneeded anymore.
             del estimator._callback_fit_ctx
             if hasattr(estimator, "_parent_callback_ctx"):
                 del estimator._parent_callback_ctx
