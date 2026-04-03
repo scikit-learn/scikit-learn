@@ -3,6 +3,7 @@
 
 import re
 import sys
+import textwrap
 
 import pytest
 
@@ -14,6 +15,7 @@ from sklearn.callback.tests._utils import (
     WhileEstimator,
 )
 from sklearn.utils._optional_dependencies import check_rich_support
+from sklearn.utils._testing import assert_run_python_script_without_output
 from sklearn.utils.parallel import Parallel, delayed
 
 
@@ -126,3 +128,23 @@ def test_progressbar_no_callback_support(backend):
         assert not any(mon.is_alive() for mon in progressbar._run_monitors.values())
         # All queues are empty.
         assert all(queue.empty() for queue in progressbar._run_queues.values())
+
+
+@pytest.mark.parametrize("prefer", ["threads", "processes"])
+def test_outside_main_module(prefer):
+    """Test instantiating the progressbar outside the __main__ module."""
+    code = f"""
+    from sklearn.callback import ProgressBar
+    from sklearn.callback.tests._utils import MaxIterEstimator, MetaEstimator
+
+    est = MaxIterEstimator()
+    meta_est = MetaEstimator(
+        est, n_outer=2, n_inner=3, n_jobs=2, prefer='{prefer}'
+    )
+    meta_est.set_callbacks(ProgressBar())
+    meta_est.fit()
+    """
+    # Running the script is expected to output the progressbars to stdout, so here the
+    # pattern arg should not be left to the default, but we are not trying to avoid any
+    # specific pattern, so here the pattern value has no concrete meaning.
+    assert_run_python_script_without_output(textwrap.dedent(code), pattern="xxx")
