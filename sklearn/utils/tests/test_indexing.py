@@ -477,7 +477,7 @@ def test_safe_assign(array_type):
     "key, err_msg",
     [
         (10, r"all features must be in \[0, 2\]"),
-        ("whatever", "A given column is not a column of the dataframe"),
+        ("whatever", r"A given column is not a column of the dataframe:.*whatever"),
         (object(), "No valid specification of the columns"),
     ],
 )
@@ -487,6 +487,15 @@ def test_get_column_indices_error(key, err_msg):
 
     with pytest.raises(ValueError, match=err_msg):
         _get_column_indices(X_df, key)
+
+
+def test_get_column_indices_error_reports_all_missing_columns():
+    """Check that all missing column names appear in the error message."""
+    pd = pytest.importorskip("pandas")
+    X_df = pd.DataFrame(X_toy, columns=["col_0", "col_1", "col_2"])
+    with pytest.raises(ValueError, match=r"Missing Column 1") as exc_info:
+        _get_column_indices(X_df, ["col_0", "Missing Column 1", "Missing Column 2"])
+    assert "Missing Column 2" in str(exc_info.value)
 
 
 @pytest.mark.parametrize(
@@ -525,7 +534,7 @@ def test_get_column_indices_interchange():
     for key, result in key_results:
         assert _get_column_indices(df, key) == result
 
-    msg = "A given column is not a column of the dataframe"
+    msg = r"A given column is not a column of the dataframe:.*not_a_column"
     with pytest.raises(ValueError, match=msg):
         _get_column_indices(df, ["not_a_column"])
 
