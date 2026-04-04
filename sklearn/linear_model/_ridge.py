@@ -1033,9 +1033,11 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     """Linear least squares with l2 regularization.
 
-    Minimizes the objective function::
+    Minimizes the objective function:
 
-    ||y - Xw||^2_2 + alpha * ||w||^2_2
+    .. math::
+
+        \|y - Xw\|_2^2 + \alpha \|w\|_2^2
 
     This model solves a regression model where the loss function is
     the linear least squares function and regularization is given by
