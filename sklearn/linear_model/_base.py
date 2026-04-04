@@ -492,8 +492,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     Ordinary least squares Linear Regression.
 
     LinearRegression fits a linear model with coefficients w = (w1, ..., wp)
-    to minimize the residual sum of squares between the observed targets in
-    the dataset, and the targets predicted by the linear approximation.
+    and an intercept term w0 (by default) to minimize the residual sum of
+    squares between the observed targets in the dataset, and the targets
+    predicted by the linear approximation. The coefficients are stored in
+    ``coef_`` and the intercept in ``intercept_``.
 
     Parameters
     ----------
