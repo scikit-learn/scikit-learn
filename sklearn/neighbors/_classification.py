@@ -115,6 +115,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
     n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
+        Each of the k-neighbors queries is computed in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -540,6 +541,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
 
     n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
+        Each of the radius-neighbors queries is computed in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.

@@ -759,7 +759,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     n_jobs : int, default=None
         The number of jobs to run in parallel for both :meth:`fit` and
-        :meth:`predict`. ``None`` means 1 unless in a
+        :meth:`predict`. Each base estimator is built and predictions are
+        computed in parallel. ``None`` means 1 unless in a
         :obj:`joblib.parallel_backend` context. ``-1`` means using all
         processors. See :term:`Glossary <n_jobs>` for more details.
 
@@ -1268,7 +1269,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     n_jobs : int, default=None
         The number of jobs to run in parallel for both :meth:`fit` and
-        :meth:`predict`. ``None`` means 1 unless in a
+        :meth:`predict`. Each base estimator is built and predictions are
+        computed in parallel. ``None`` means 1 unless in a
         :obj:`joblib.parallel_backend` context. ``-1`` means using all
         processors. See :term:`Glossary <n_jobs>` for more details.
 
