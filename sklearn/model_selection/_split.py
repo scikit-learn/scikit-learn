@@ -997,6 +997,37 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     def __init__(self, n_splits=5, shuffle=False, random_state=None):
         super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
 
+    def split(self, X, y, groups):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        y : array-like of shape (n_samples,)
+            The target variable for supervised learning problems.
+            Stratification is done based on the y labels.
+
+        groups : array-like of shape (n_samples,)
+            Group labels for the samples used while splitting the dataset
+            into train/test set.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
+        groups = check_array(
+            groups, input_name="groups", ensure_2d=False, dtype=None
+        )
+        return super().split(X, y, groups)
+
     def _iter_test_indices(self, X, y, groups):
         # Implementation is based on this kaggle kernel:
         # https://www.kaggle.com/jakubwasikowski/stratified-group-k-fold-cross-validation
