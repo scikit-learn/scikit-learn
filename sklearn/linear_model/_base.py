@@ -21,16 +21,17 @@ from sklearn.base import (
     RegressorMixin,
     _fit_context,
 )
-from sklearn.utils import check_array, check_random_state
+from sklearn.utils import _align_api_if_sparse, check_array, check_random_state
 from sklearn.utils._array_api import (
     _asarray_with_order,
     _average,
-    _convert_to_numpy,
     _expit,
     _is_numpy_namespace,
+    check_same_namespace,
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
+    move_to,
     supported_float_dtypes,
 )
 from sklearn.utils._param_validation import Interval
@@ -250,7 +251,7 @@ def _rescale_data(X, y, sample_weight, inplace=False):
     sample_weight_sqrt = xp.sqrt(sample_weight)
 
     if sp.issparse(X) or sp.issparse(y):
-        sw_matrix = sparse.dia_matrix(
+        sw_matrix = sparse.dia_array(
             (sample_weight_sqrt, 0), shape=(n_samples, n_samples)
         )
 
@@ -275,7 +276,7 @@ def _rescale_data(X, y, sample_weight, inplace=False):
                 y = y * sample_weight_sqrt
             else:
                 y = y * sample_weight_sqrt[:, None]
-    return X, y, sample_weight_sqrt
+    return _align_api_if_sparse(X), _align_api_if_sparse(y), sample_weight_sqrt
 
 
 class LinearModel(BaseEstimator, metaclass=ABCMeta):
@@ -309,6 +310,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         C : array, shape (n_samples,)
             Returns predicted values.
         """
+        check_same_namespace(X, self, attribute="coef_", method="predict")
         return self._decision_function(X)
 
     def _set_intercept(self, X_offset, y_offset, X_scale=None):
@@ -360,6 +362,7 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         check_is_fitted(self)
         xp, _ = get_namespace(X)
+        check_same_namespace(X, self, attribute="coef_", method="decision_function")
 
         X = validate_data(self, X, accept_sparse="csr", reset=False)
         coef_T = self.coef_.T if self.coef_.ndim == 2 else self.coef_
@@ -384,6 +387,7 @@ class LinearClassifierMixin(ClassifierMixin):
         y_pred : ndarray of shape (n_samples,)
             Vector containing the class labels for each sample.
         """
+        check_same_namespace(X, self, attribute="coef_", method="predict")
         xp, _ = get_namespace(X)
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
@@ -396,7 +400,7 @@ class LinearClassifierMixin(ClassifierMixin):
         # predictions according to the namespace of `self.classes_` i.e. numpy.
         xp_classes, _ = get_namespace(self.classes_)
         if _is_numpy_namespace(xp_classes):
-            indices = _convert_to_numpy(indices, xp=xp)
+            indices = move_to(indices, xp=np, device="cpu")
 
         return xp_classes.take(self.classes_, indices, axis=0)
 
@@ -479,7 +483,7 @@ class SparseCoefMixin:
         """
         msg = "Estimator, %(name)s, must be fitted before sparsifying."
         check_is_fitted(self, msg=msg)
-        self.coef_ = sp.csr_matrix(self.coef_)
+        self.coef_ = _align_api_if_sparse(sp.csr_array(self.coef_))
         return self
 
 
