@@ -549,7 +549,7 @@ def partial_dependence(
 
         .. versionadded:: 1.7
 
-    method : {'auto', 'recursion', 'brute'}, default='auto'
+    method : {'auto', 'recursion', 'brute', 'tree_accurate'}, default='auto'
         The method used to calculate the averaged predictions:
 
         - `'recursion'` is only supported for some tree-based estimators
@@ -571,6 +571,16 @@ def partial_dependence(
 
         - `'brute'` is supported for any estimator, but is more
           computationally intensive.
+
+        - `'tree_accurate'` is supported for
+          :class:`~sklearn.tree.DecisionTreeRegressor`,
+          :class:`~sklearn.ensemble.RandomForestRegressor`,
+          :class:`~sklearn.tree.DecisionTreeClassifier`, and
+          :class:`~sklearn.ensemble.RandomForestClassifier`
+          when `kind='average'` and `response_method='decision_function'`.
+          Joint PDP (tuples in `features`) is not supported.
+          This method is equivalent to the `'brute'` method,
+          but significantly faster for tree-based estimators.
 
         - `'auto'`: the `'recursion'` is used for estimators that support it,
           and `'brute'` is used otherwise. If `sample_weight` is not `None`,
@@ -673,6 +683,11 @@ def partial_dependence(
         )
 
     if method == "tree_accurate":
+        if any(isinstance(f, (list, tuple)) for f in features):
+            raise ValueError(
+                "The 'tree_accurate' method does not support joint PDP "
+                "(tuples in features). Use method='brute' instead."
+            )
         if sample_weight is not None:
             raise ValueError(
                 "The 'tree_accurate' method can only be applied when "
