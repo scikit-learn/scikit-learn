@@ -38,7 +38,7 @@ from sklearn.preprocessing import (
     StandardScaler,
     scale,
 )
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.tree.tests.test_tree import assert_is_subtree
 from sklearn.utils._testing import assert_allclose, assert_array_equal
 from sklearn.utils.fixes import _IS_32BIT
@@ -1253,3 +1253,195 @@ def test_partial_dependence_empty_categorical_features():
         partial_dependence(
             estimator=clf, X=iris.data, features=[0], categorical_features=[]
         )
+
+
+# =============================================================================
+# tree_accurate method tests
+# =============================================================================
+
+
+@pytest.mark.parametrize("seed", range(3))
+@pytest.mark.parametrize(
+    "Estimator",
+    [
+        DecisionTreeRegressor,
+        RandomForestRegressor,
+    ],
+)
+def test_tree_accurate_matches_brute(Estimator, seed):
+    """tree_accurate must give the same averaged predictions as brute."""
+    rng = np.random.RandomState(seed)
+    n_samples, n_features = 200, 5
+    X = rng.randn(n_samples, n_features).astype(np.float64)
+    y = rng.randn(n_samples)
+
+    kwargs = dict(max_depth=4, random_state=seed)
+    if Estimator is RandomForestRegressor:
+        kwargs["n_estimators"] = 3
+        kwargs["max_features"] = "sqrt"
+    est = Estimator(**kwargs).fit(X, y)
+
+    for feature in range(n_features):
+        pdp_brute = partial_dependence(
+            est, X, features=[feature], method="brute", grid_resolution=20
+        )
+        pdp_fast = partial_dependence(
+            est, X, features=[feature], method="tree_accurate", grid_resolution=20
+        )
+        np.testing.assert_allclose(
+            pdp_fast["average"],
+            pdp_brute["average"],
+            rtol=1e-4,
+            atol=1e-6,
+            err_msg=f"Mismatch on feature {feature} with seed {seed}",
+        )
+
+
+@pytest.mark.parametrize(
+    "Estimator",
+    [DecisionTreeRegressor, RandomForestRegressor],
+)
+def test_tree_accurate_output_shape(Estimator):
+    """Output shape should be (1, grid_resolution) for each feature."""
+    rng = np.random.RandomState(0)
+    X = rng.randn(100, 4).astype(np.float64)
+    y = rng.randn(100)
+
+    kwargs = dict(max_depth=3, random_state=0)
+    if Estimator is RandomForestRegressor:
+        kwargs["n_estimators"] = 2
+    est = Estimator(**kwargs).fit(X, y)
+
+    grid_resolution = 15
+    for feature in range(4):
+        result = partial_dependence(
+            est,
+            X,
+            features=[feature],
+            method="tree_accurate",
+            grid_resolution=grid_resolution,
+        )
+        assert result["average"].shape == (1, grid_resolution), (
+            f"Expected (1, {grid_resolution}), got {result['average'].shape}"
+        )
+        assert result["grid_values"][0].shape == (grid_resolution,)
+
+
+def test_tree_accurate_repeated_feature_in_path():
+    """tree_accurate must give correct values when a feature splits multiple
+    times on the same root-to-leaf path."""
+    # Build a tree that is guaranteed to reuse feature 0 at multiple depths
+    # by restricting max_features so it can only choose feature 0.
+    rng = np.random.RandomState(42)
+    n_samples = 500
+    # Single informative feature so the tree will reuse it
+    X = rng.randn(n_samples, 3).astype(np.float64)
+    y = X[:, 0] ** 2  # target depends on feature 0 only
+
+    est = DecisionTreeRegressor(max_depth=6, random_state=0).fit(X, y)
+
+    pdp_brute = partial_dependence(
+        est, X, features=[0], method="brute", grid_resolution=30
+    )
+    pdp_fast = partial_dependence(
+        est, X, features=[0], method="tree_accurate", grid_resolution=30
+    )
+    np.testing.assert_allclose(
+        pdp_fast["average"],
+        pdp_brute["average"],
+        rtol=1e-4,
+        atol=1e-6,
+    )
+
+
+def test_tree_accurate_kind_not_average_raises():
+    """kind != 'average' must raise ValueError."""
+    rng = np.random.RandomState(0)
+    X = rng.randn(50, 3).astype(np.float64)
+    y = rng.randn(50)
+    est = DecisionTreeRegressor(max_depth=3, random_state=0).fit(X, y)
+
+    for kind in ("individual", "both"):
+        with pytest.raises(ValueError, match="'tree_accurate' method only supports"):
+            partial_dependence(est, X, features=[0], method="tree_accurate", kind=kind)
+
+
+def test_tree_accurate_unsupported_estimator_raises():
+    """Non-tree estimators must raise ValueError."""
+    X, y = make_regression(n_samples=50, random_state=0)
+    est = LinearRegression().fit(X, y)
+
+    with pytest.raises(ValueError, match="'tree_accurate' method only supports"):
+        partial_dependence(est, X, features=[0], method="tree_accurate")
+
+
+def test_tree_accurate_sample_weight_raises():
+    """sample_weight != None must raise ValueError."""
+    rng = np.random.RandomState(0)
+    X = rng.randn(50, 3).astype(np.float64)
+    y = rng.randn(50)
+    est = DecisionTreeRegressor(max_depth=3, random_state=0).fit(X, y)
+
+    with pytest.raises(ValueError, match="'tree_accurate' method can only be applied"):
+        partial_dependence(
+            est, X, features=[0], method="tree_accurate", sample_weight=np.ones(50)
+        )
+
+
+def test_tree_accurate_binary_classifier_matches_brute():
+    """Binary DecisionTreeClassifier: tree_accurate PDP must match brute."""
+    X, y = make_classification(n_samples=100, n_features=4, random_state=0)
+    est = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X, y)
+
+    result_ta = partial_dependence(
+        est, X, features=[0], method="tree_accurate", grid_resolution=10
+    )
+    result_br = partial_dependence(
+        est, X, features=[0], method="brute", grid_resolution=10
+    )
+    np.testing.assert_allclose(result_ta["average"], result_br["average"], atol=1e-6)
+
+
+def test_tree_accurate_multiclass_classifier_matches_brute():
+    """Multiclass DecisionTreeClassifier: tree_accurate PDP must match brute."""
+    X, y = make_classification(
+        n_samples=100,
+        n_features=4,
+        n_classes=3,
+        n_informative=3,
+        n_redundant=0,
+        random_state=0,
+    )
+    est = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X, y)
+
+    result_ta = partial_dependence(
+        est, X, features=[0], method="tree_accurate", grid_resolution=10
+    )
+    result_br = partial_dependence(
+        est, X, features=[0], method="brute", grid_resolution=10
+    )
+    np.testing.assert_allclose(result_ta["average"], result_br["average"], atol=1e-6)
+
+
+def test_tree_accurate_multi_output_matches_brute():
+    """Multi-output DecisionTreeRegressor: tree_accurate must match brute per output."""
+    rng = np.random.RandomState(42)
+    X = rng.randn(120, 4).astype(np.float64)
+    # Two independent regression targets.
+    Y = np.column_stack([X[:, 0] + X[:, 1], X[:, 2] - X[:, 3]])
+
+    est = DecisionTreeRegressor(max_depth=4, random_state=0).fit(X, Y)
+    assert est.n_outputs_ == 2
+
+    result_accurate = partial_dependence(
+        est, X, features=[0], method="tree_accurate", grid_resolution=10
+    )
+    result_brute = partial_dependence(
+        est, X, features=[0], method="brute", grid_resolution=10
+    )
+
+    # Both methods should return shape (n_outputs, n_grid) = (2, 10).
+    assert result_accurate["average"].shape == (2, 10)
+    np.testing.assert_allclose(
+        result_accurate["average"], result_brute["average"], atol=1e-6
+    )

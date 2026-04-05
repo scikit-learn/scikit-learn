@@ -10,13 +10,13 @@ from scipy import sparse
 from scipy.stats.mstats import mquantiles
 
 from sklearn.base import is_classifier, is_regressor
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.ensemble._gb import BaseGradientBoosting
 from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
     BaseHistGradientBoosting,
 )
 from sklearn.inspection._pd_utils import _check_feature_names, _get_feature_index
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import Bunch, _safe_indexing, check_array
 from sklearn.utils._indexing import (
     _determine_key_type,
@@ -218,6 +218,68 @@ def _partial_dependence_recursion(est, grid, features):
     return averaged_predictions
 
 
+def _partial_dependence_tree_accurate(est, X, all_features, all_grids):
+    """Calculate partial dependence using the tree_accurate method.
+
+    Performs a single O(m * D²) background pass over ``X`` per tree to collect
+    per-leaf statistics, then combines them with a vectorised pass over each grid.
+    Only ``kind='average'`` is supported.
+    Returns one centred averaged-prediction array per feature,
+    shifted by the mean prediction so results are on the same scale as 'brute'.
+
+    Parameters
+    ----------
+    est : DecisionTreeRegressor or RandomForestRegressor
+        A fitted tree-based regressor (single- or multi-output).
+    X : ndarray of shape (n_samples, n_features), dtype=np.float32
+        Background dataset used for marginalisation.
+    all_features : list of int
+        Global column indices of the target features, one per requested feature.
+    all_grids : list of ndarray of shape (n_grid_j,)
+        1-D grid of values for each target feature.
+
+    Returns
+    -------
+    averaged_predictions : list of ndarray of shape (n_outputs, n_grid_j)
+        One array per feature in ``all_features``.
+    """
+    m = X.shape[0]
+
+    if is_classifier(est):
+        n_classes = est.n_classes_
+        n_effective_outputs = 1 if n_classes == 2 else n_classes
+    else:
+        n_effective_outputs = est.n_outputs_
+
+    grid_sizes = [len(g) for g in all_grids]
+    n_grid_max = max(grid_sizes)
+    n_required = len(all_features)
+
+    # Build padded grid: shape (n_grid_max, n_required).
+    grid_2d = np.zeros((n_grid_max, n_required), dtype=np.float32)
+    for i, grid_1d in enumerate(all_grids):
+        grid_2d[: grid_sizes[i], i] = grid_1d
+
+    required_features_arr = np.array(all_features, dtype=np.intp)
+    out = np.zeros((n_effective_outputs, n_required, n_grid_max), dtype=np.float64)
+
+    if isinstance(est, (DecisionTreeRegressor, DecisionTreeClassifier)):
+        est.tree_.compute_partial_dependence_tree_accurate(
+            X, grid_2d, required_features_arr, out
+        )
+        out /= m
+    elif isinstance(est, (RandomForestRegressor, RandomForestClassifier)):
+        n_trees = len(est.estimators_)
+        for tree_est in est.estimators_:
+            tree_est.tree_.compute_partial_dependence_tree_accurate(
+                X, grid_2d, required_features_arr, out
+            )
+        out /= m * n_trees
+
+    # Extract per-feature results, dropping any padded grid entries.
+    return [out[:, i, : grid_sizes[i]] for i in range(n_required)]
+
+
 def _partial_dependence_brute(
     est, grid, features, X, response_method, sample_weight=None
 ):
@@ -361,7 +423,7 @@ def _partial_dependence_brute(
         "response_method": [StrOptions({"auto", "predict_proba", "decision_function"})],
         "percentiles": [tuple],
         "grid_resolution": [Interval(Integral, 1, None, closed="left")],
-        "method": [StrOptions({"auto", "recursion", "brute"})],
+        "method": [StrOptions({"auto", "recursion", "brute", "tree_accurate"})],
         "kind": [StrOptions({"average", "individual", "both"})],
         "custom_values": [dict, None],
     },
@@ -601,12 +663,44 @@ def partial_dependence(
             raise ValueError(
                 "The 'recursion' method only applies when 'kind' is set to 'average'"
             )
+        if method == "tree_accurate":
+            raise ValueError("The 'tree_accurate' method only supports kind='average'.")
         method = "brute"
 
     if method == "recursion" and sample_weight is not None:
         raise ValueError(
             "The 'recursion' method can only be applied when sample_weight is None."
         )
+
+    if method == "tree_accurate":
+        if sample_weight is not None:
+            raise ValueError(
+                "The 'tree_accurate' method can only be applied when "
+                "sample_weight is None."
+            )
+        if not isinstance(
+            estimator,
+            (
+                DecisionTreeRegressor,
+                RandomForestRegressor,
+                DecisionTreeClassifier,
+                RandomForestClassifier,
+            ),
+        ):
+            raise ValueError(
+                "The 'tree_accurate' method only supports DecisionTreeRegressor, "
+                "RandomForestRegressor, DecisionTreeClassifier, and "
+                "RandomForestClassifier. Use method='brute' for other estimators."
+            )
+        if is_classifier(estimator):
+            if response_method == "auto":
+                response_method = "decision_function"
+            if response_method != "decision_function":
+                raise ValueError(
+                    "With the 'tree_accurate' method, the response_method for "
+                    "classifiers must be 'decision_function'. "
+                    "Got {}.".format(response_method)
+                )
 
     if method == "auto":
         if sample_weight is not None:
@@ -750,6 +844,12 @@ def partial_dependence(
         predictions = predictions.reshape(
             -1, X.shape[0], *[val.shape[0] for val in values]
         )
+    elif method == "tree_accurate":
+        X_bg = np.asarray(X, dtype=np.float32, order="C")
+        per_feature_preds = _partial_dependence_tree_accurate(
+            estimator, X_bg, list(features_indices), values
+        )
+        averaged_predictions = np.concatenate(per_feature_preds, axis=1)
     else:
         averaged_predictions = _partial_dependence_recursion(
             estimator, grid, features_indices
