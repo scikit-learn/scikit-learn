@@ -413,6 +413,8 @@ def _sparse_encode(
         regularization = n_nonzero_coefs
         if regularization is None:
             regularization = min(max(n_features / 10, 1), n_components)
+        else:
+            regularization = min(regularization, n_components)
     else:
         regularization = alpha
         if regularization is None:
