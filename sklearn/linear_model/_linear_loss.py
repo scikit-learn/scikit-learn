@@ -9,10 +9,11 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     get_namespace,
     get_namespace_and_device,
+    move_to,
 )
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import safe_sparse_dot, squared_norm
 
 
@@ -29,10 +30,12 @@ def sandwich_dot(X, W):
     # which (might) detect the symmetry and use BLAS SYRK under the hood.
     n_samples = X.shape[0]
     if sparse.issparse(X):
-        return safe_sparse_dot(
-            X.T,
-            sparse.dia_matrix((W, 0), shape=(n_samples, n_samples)) @ X,
-            dense_output=True,
+        return _align_api_if_sparse(
+            safe_sparse_dot(
+                X.T,
+                sparse.dia_array((W, 0), shape=(n_samples, n_samples)) @ X,
+                dense_output=True,
+            )
         )
     else:
         # np.einsum may use less memory but the following, using BLAS matrix
@@ -136,9 +139,9 @@ class LinearModelLoss:
         else:
             n_dof = n_features
         if self.base_loss.is_multiclass:
-            coef = np.zeros_like(X, shape=(n_classes, n_dof), dtype=dtype, order="F")
+            coef = np.zeros(shape=(n_classes, n_dof), dtype=dtype, order="F")
         else:
-            coef = np.zeros_like(X, shape=n_dof, dtype=dtype)
+            coef = np.zeros(shape=n_dof, dtype=dtype)
         return coef
 
     def weight_intercept(self, coef):
@@ -223,7 +226,7 @@ class LinearModelLoss:
     def l2_penalty(self, weights, l2_reg_strength):
         """Compute L2 penalty term l2_reg_strength/2 *||w||_2^2."""
         norm2_w = weights @ weights if weights.ndim == 1 else squared_norm(weights)
-        return 0.5 * l2_reg_strength * norm2_w
+        return float(0.5 * l2_reg_strength * norm2_w)
 
     def loss(
         self,
@@ -264,6 +267,7 @@ class LinearModelLoss:
         loss : float
             Weighted average of losses per sample, plus penalty.
         """
+        n_samples = X.shape[0]
         if raw_prediction is None:
             weights, intercept, raw_prediction = self.weight_intercept_raw(coef, X)
         else:
@@ -272,12 +276,17 @@ class LinearModelLoss:
         loss = self.base_loss.loss(
             y_true=y,
             raw_prediction=raw_prediction,
-            sample_weight=None,
+            sample_weight=sample_weight,
             n_threads=n_threads,
         )
-        loss = np.average(loss, weights=sample_weight)
+        xp, _ = get_namespace(X, y, sample_weight)
+        sw_sum = n_samples if sample_weight is None else xp.sum(sample_weight)
+        loss = float(xp.sum(loss) / sw_sum)
 
-        return loss + self.l2_penalty(weights, l2_reg_strength)
+        if l2_reg_strength > 0:
+            loss += self.l2_penalty(weights, l2_reg_strength)
+
+        return loss
 
     def loss_gradient(
         self,
@@ -346,7 +355,7 @@ class LinearModelLoss:
             grad = np.empty_like(coef, dtype=weights.dtype)
             X_grad = X.T @ grad_pointwise
             grad[:n_features] = (
-                _convert_to_numpy(X_grad, xp=xp) + l2_reg_strength * weights
+                move_to(X_grad, xp=np, device="cpu") + l2_reg_strength * weights
             )
             if self.fit_intercept:
                 grad[-1] = xp.sum(grad_pointwise)
@@ -358,10 +367,12 @@ class LinearModelLoss:
             # grad_pointwise.shape = (n_samples, n_classes)
             grad_X = grad_pointwise.T @ X
             grad[:, :n_features] = (
-                _convert_to_numpy(grad_X, xp) + l2_reg_strength * weights
+                move_to(grad_X, xp=np, device="cpu") + l2_reg_strength * weights
             )
             if self.fit_intercept:
-                grad[:, -1] = _convert_to_numpy(xp.sum(grad_pointwise, axis=0), xp=xp)
+                grad[:, -1] = move_to(
+                    xp.sum(grad_pointwise, axis=0), xp=np, device="cpu"
+                )
             if coef.ndim == 1:
                 grad = grad.ravel(order="F")
 
@@ -752,7 +763,7 @@ class LinearModelLoss:
             hessian_sum = hess_pointwise.sum()
             if sparse.issparse(X):
                 hX = (
-                    sparse.dia_matrix((hess_pointwise, 0), shape=(n_samples, n_samples))
+                    sparse.dia_array((hess_pointwise, 0), shape=(n_samples, n_samples))
                     @ X
                 )
             else:

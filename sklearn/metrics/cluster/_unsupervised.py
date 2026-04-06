@@ -19,10 +19,10 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import _safe_indexing, check_random_state, check_X_y
 from sklearn.utils._array_api import (
     _average,
-    _convert_to_numpy,
     _is_numpy_namespace,
     _max_precision_float_dtype,
     get_namespace_and_device,
+    move_to,
     xpx,
 )
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
@@ -376,7 +376,7 @@ def calinski_harabasz_score(X, labels):
     if _is_numpy_namespace(xp) and not is_numpy_array(X):
         # This is required to handle the case where `array_api_dispatch` is False but
         # we are still dealing with `X` as a non-NumPy array e.g. a PyTorch tensor.
-        X = _convert_to_numpy(X, xp=xp)
+        X = move_to(X, xp=np, device="cpu")
     else:
         X = xp.astype(X, _max_precision_float_dtype(xp, device_), copy=False)
     X, labels = check_X_y(X, labels)

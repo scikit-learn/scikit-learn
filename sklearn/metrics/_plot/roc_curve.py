@@ -2,8 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-import numpy as np
-
 from sklearn.metrics._ranking import auc, roc_curve
 from sklearn.utils import _safe_indexing
 from sklearn.utils._plotting import (
@@ -247,14 +245,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         """
         fpr, tpr, roc_auc, name = self._validate_plot_params(ax=ax, name=name)
         n_curves = len(fpr)
-        if not isinstance(curve_kwargs, list) and n_curves > 1:
-            if roc_auc:
-                legend_metric = {"mean": np.mean(roc_auc), "std": np.std(roc_auc)}
-            else:
-                legend_metric = {"mean": None, "std": None}
-        else:
-            roc_auc = roc_auc if roc_auc is not None else [None] * n_curves
-            legend_metric = {"metric": roc_auc}
+        roc_auc, legend_metric = self._get_legend_metric(
+            curve_kwargs, n_curves, roc_auc
+        )
 
         curve_kwargs = self._validate_curve_kwargs(
             n_curves,
@@ -501,8 +494,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         y_score : array-like of shape (n_samples,)
             Target scores, can either be probability estimates of the positive
-            class, confidence values, or non-thresholded measure of decisions
-            (as returned by “decision_function” on some classifiers).
+            class or non-thresholded decision values (as returned by
+            :term:`decision_function` on some classifiers).
 
             .. versionadded:: 1.7
                 `y_pred` has been renamed to `y_score`.
@@ -552,8 +545,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         y_pred : array-like of shape (n_samples,)
             Target scores, can either be probability estimates of the positive
-            class, confidence values, or non-thresholded measure of decisions
-            (as returned by “decision_function” on some classifiers).
+            class or non-thresholded decision values (as returned by
+            :term:`decision_function` on some classifiers).
 
             .. deprecated:: 1.7
                 `y_pred` is deprecated and will be removed in 1.9. Use
