@@ -2267,7 +2267,7 @@ def binarize(X, *, threshold=0.0, copy=True):
         X.data[not_cond] = 0
         X.eliminate_zeros()
     else:
-        xp, _, _ = get_namespace_and_device(X)
+        xp, _, device = get_namespace_and_device(X)
         float_dtype = _find_matching_floating_dtype(X, threshold, xp=xp)
         cond = xp.astype(X, float_dtype, copy=False) > threshold
         not_cond = xp.logical_not(cond)
@@ -2802,7 +2802,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 " sparse matrix. This parameter has no effect."
             )
 
-        n_samples, _ = X.shape
+        n_samples, n_features = X.shape
         references = self.references_ * 100
 
         if self.subsample is not None and self.subsample < n_samples:
