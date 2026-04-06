@@ -130,9 +130,15 @@ def test_progressbar_no_callback_support(backend):
         assert all(queue.empty() for queue in progressbar._run_queues.values())
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 12, 8),
+    reason="Race conditions can appear because of multiprocessing issues for python"
+    " < 3.12.8.",
+)
 @pytest.mark.parametrize("prefer", ["threads", "processes"])
-def test_outside_main_module(prefer):
-    """Test instantiating the progressbar outside the __main__ module."""
+@pytest.mark.parametrize("repeat", range(100))
+def test_progressbar_outside_main_module(prefer, repeat):
+    """Check that ProgressBar does not trigger spawn errors outside `__main__`."""
     pytest.importorskip("rich")
     code = f"""
     from sklearn.callback import ProgressBar
@@ -140,12 +146,11 @@ def test_outside_main_module(prefer):
 
     est = MaxIterEstimator()
     meta_est = MetaEstimator(
-        est, n_outer=2, n_inner=3, n_jobs=2, prefer='{prefer}'
+        est, n_outer=2, n_inner=1, n_jobs=2, prefer='{prefer}'
     )
     meta_est.set_callbacks(ProgressBar())
     meta_est.fit()
     """
-    # Running the script is expected to output the progressbars to stdout, so here the
-    # pattern arg should not be left to the default, but we are not trying to avoid any
-    # specific pattern, so here the pattern value has no concrete meaning.
-    assert_run_python_script_without_output(textwrap.dedent(code), pattern="xxx")
+
+    pattern = "An attempt has been made to start a new process"
+    assert_run_python_script_without_output(textwrap.dedent(code), pattern=pattern)
