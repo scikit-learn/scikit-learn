@@ -25,7 +25,6 @@ from sklearn.utils import (
     metadata_routing,
 )
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     get_namespace,
     get_namespace_and_device,
     move_to,
@@ -638,7 +637,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
             n_samples_per_group = np.bincount(group_idx)
 
             # Distribute the most frequent groups first
-            indices = np.argsort(n_samples_per_group)[::-1]
+            indices = np.argsort(n_samples_per_group, kind="stable")[::-1]
             n_samples_per_group = n_samples_per_group[indices]
 
             # Total weight of each fold
@@ -780,7 +779,7 @@ class StratifiedKFold(_BaseKFold):
         # we need the following explicit conversion:
         xp, is_array_api = get_namespace(y)
         if is_array_api:
-            y = _convert_to_numpy(y, xp)
+            y = move_to(y, xp=np, device="cpu")
         else:
             y = np.asarray(y)
         type_of_target_y = type_of_target(y)
@@ -1063,7 +1062,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
         # Stable sort to keep shuffled order for groups with the same
         # class distribution variance
         sorted_groups_idx = np.argsort(
-            -np.std(y_counts_per_group, axis=1), kind="mergesort"
+            -np.std(y_counts_per_group, axis=1), kind="stable"
         )
 
         for group_idx in sorted_groups_idx:
@@ -2329,7 +2328,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         # `y` is probably never a very large array, which means that converting it
         # should be cheap
         xp, _ = get_namespace(y)
-        y = _convert_to_numpy(y, xp=xp)
+        y = move_to(y, xp=np, device="cpu")
 
         if y.ndim == 2:
             # for multi-label y, map each distinct row to a string repr
@@ -2365,7 +2364,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         # Find the sorted list of instances for each class:
         # (np.unique above performs a sort, so code is O(n logn) already)
         class_indices = np.split(
-            np.argsort(y_indices, kind="mergesort"), np.cumsum(class_counts)[:-1]
+            np.argsort(y_indices, kind="stable"), np.cumsum(class_counts)[:-1]
         )
 
         rng = check_random_state(self.random_state)
@@ -3026,9 +3025,7 @@ def _pprint(params, offset=0, printer=repr):
 
 
 def _build_repr(self):
-    # XXX This is copied from BaseEstimator's get_params
-    cls = self.__class__
-    init = getattr(cls.__init__, "deprecated_original", cls.__init__)
+    init = self.__class__.__init__
     # Ignore varargs, kw and default values and pop self
     init_signature = signature(init)
     # Consider the constructor parameters excluding 'self'

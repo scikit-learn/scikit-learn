@@ -48,10 +48,11 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
-    device,
+    device as array_api_device,
+)
+from sklearn.utils._array_api import (
     get_namespace,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._mocking import CheckingClassifier
@@ -1086,12 +1087,12 @@ def test_calibration_with_non_sample_aligned_fit_param(data):
     )
 
 
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_calibrated_classifier_cv_works_with_large_confidence_scores(
     global_random_seed,
 ):
-    """Test that :class:`CalibratedClassifierCV` works with large confidence
-    scores when using the `sigmoid` method, particularly with the
-    :class:`SGDClassifier`.
+    """Test that CalibratedClassifierCV works with large confidence scores when using
+    the sigmoid method, particularly with the SGDClassifier.
 
     Non-regression test for issue #26766.
     """
@@ -1104,12 +1105,13 @@ def test_calibrated_classifier_cv_works_with_large_confidence_scores(
 
     # Check that the decision function of SGDClassifier produces predicted
     # values that are quite large, for the data under consideration.
-    cv = check_cv(cv=None, y=y, classifier=True)
+    clf = SGDClassifier(loss="squared_hinge", tol=1e-2, random_state=global_random_seed)
+    cv = check_cv(cv=3, y=y, classifier=True)
     indices = cv.split(X, y)
     for train, test in indices:
         X_train, y_train = X[train], y[train]
         X_test = X[test]
-        sgd_clf = SGDClassifier(loss="squared_hinge", random_state=global_random_seed)
+        sgd_clf = clone(clf)
         sgd_clf.fit(X_train, y_train)
         predictions = sgd_clf.decision_function(X_test)
         assert (predictions > 1e4).any()
@@ -1117,22 +1119,15 @@ def test_calibrated_classifier_cv_works_with_large_confidence_scores(
     # Compare the CalibratedClassifierCV using the sigmoid method with the
     # CalibratedClassifierCV using the isotonic method. The isotonic method
     # is used for comparison because it is numerically stable.
-    clf_sigmoid = CalibratedClassifierCV(
-        SGDClassifier(loss="squared_hinge", random_state=global_random_seed),
-        method="sigmoid",
-    )
+    clf_sigmoid = CalibratedClassifierCV(clone(clf), method="sigmoid")
     score_sigmoid = cross_val_score(clf_sigmoid, X, y, scoring="roc_auc")
 
-    # The isotonic method is used for comparison because it is numerically
-    # stable.
-    clf_isotonic = CalibratedClassifierCV(
-        SGDClassifier(loss="squared_hinge", random_state=global_random_seed),
-        method="isotonic",
-    )
+    # The isotonic method is used for comparison because it is numerically stable.
+    clf_isotonic = CalibratedClassifierCV(clone(clf), method="isotonic")
     score_isotonic = cross_val_score(clf_isotonic, X, y, scoring="roc_auc")
 
-    # The AUC score should be the same because it is invariant under
-    # strictly monotonic conditions
+    # The AUC score should be the same because it is invariant under strictly monotonic
+    # conditions
     assert_allclose(score_sigmoid, score_isotonic)
 
 
@@ -1227,17 +1222,16 @@ def test_error_less_class_samples_than_folds():
 @pytest.mark.parametrize("ensemble", [False, True])
 @pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 def test_temperature_scaling_array_api_compliance(
-    ensemble, use_sample_weight, array_namespace, device_, dtype_name
+    ensemble, use_sample_weight, array_namespace, device_name, dtype_name
 ):
     """Check that `CalibratedClassifierCV` with temperature scaling is compatible
     with the array API"""
 
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     X, y = make_classification(
         n_samples=1000,
         n_features=10,
@@ -1252,13 +1246,13 @@ def test_temperature_scaling_array_api_compliance(
 
     X_train = X_train.astype(dtype_name)
     y_train = y_train.astype(dtype_name)
-    X_train_xp = xp.asarray(X_train, device=device_)
-    y_train_xp = xp.asarray(y_train, device=device_)
+    X_train_xp = xp.asarray(X_train, device=device)
+    y_train_xp = xp.asarray(y_train, device=device)
 
     X_cal = X_cal.astype(dtype_name)
     y_cal = y_cal.astype(dtype_name)
-    X_cal_xp = xp.asarray(X_cal, device=device_)
-    y_cal_xp = xp.asarray(y_cal, device=device_)
+    X_cal_xp = xp.asarray(X_cal, device=device)
+    y_cal_xp = xp.asarray(y_cal, device=device)
 
     if use_sample_weight:
         sample_weight = np.ones_like(y_cal)
@@ -1285,25 +1279,24 @@ def test_temperature_scaling_array_api_compliance(
         rtol = 1e-3 if dtype_name == "float32" else 1e-7
         assert get_namespace(calibrator_xp.beta_)[0].__name__ == xp.__name__
         assert calibrator_xp.beta_.dtype == X_cal_xp.dtype
-        assert device(calibrator_xp.beta_) == device(X_cal_xp)
+        assert array_api_device(calibrator_xp.beta_) == array_api_device(X_cal_xp)
         assert_allclose(
-            _convert_to_numpy(calibrator_xp.beta_, xp=xp),
+            move_to(calibrator_xp.beta_, xp=np, device="cpu"),
             calibrator_np.beta_,
             rtol=rtol,
         )
         pred_xp = cal_clf_xp.predict(X_train_xp)
-        assert_allclose(_convert_to_numpy(pred_xp, xp=xp), pred_np)
+        assert_allclose(move_to(pred_xp, xp=np, device="cpu"), pred_np)
 
 
 @pytest.mark.parametrize("ensemble", [False, True])
 @pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
-    ensemble, use_sample_weight, array_namespace, device_, dtype_name
+    ensemble, use_sample_weight, array_namespace, device_name, dtype_name
 ):
     """Check that `CalibratedClassifierCV` with temperature scaling is compatible
     with the array API when `y` is an ndarray of strings and the estimator is not
@@ -1314,7 +1307,7 @@ def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
     #  the array API when `y` is an ndarray of strings and we fit
     #  `LinearDiscriminantAnalysis` beforehand. In this regard
     #  `LinearDiscriminantAnalysis` will also need modifications.
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     X, y = make_classification(
         n_samples=500,
         n_features=10,
@@ -1328,7 +1321,7 @@ def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
     str_mapping = np.asarray(["a", "b", "c", "d", "e"])
     X = X.astype(dtype_name)
     y_str = str_mapping[y]
-    X_xp = xp.asarray(X, device=device_)
+    X_xp = xp.asarray(X, device=device)
 
     if use_sample_weight:
         sample_weight = np.ones_like(y)
@@ -1357,9 +1350,9 @@ def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
         rtol = 1e-3 if dtype_name == "float32" else 1e-7
         assert get_namespace(calibrator_xp.beta_)[0].__name__ == xp.__name__
         assert calibrator_xp.beta_.dtype == X_xp.dtype
-        assert device(calibrator_xp.beta_) == device(X_xp)
+        assert array_api_device(calibrator_xp.beta_) == array_api_device(X_xp)
         assert_allclose(
-            _convert_to_numpy(calibrator_xp.beta_, xp=xp),
+            move_to(calibrator_xp.beta_, xp=np, device="cpu"),
             calibrator_np.beta_,
             rtol=rtol,
         )

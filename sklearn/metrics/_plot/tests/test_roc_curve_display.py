@@ -1,5 +1,3 @@
-from collections.abc import Mapping
-
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
@@ -200,43 +198,6 @@ def test_roc_curve_plot_parameter_length_validation(pyplot, params, err_msg):
         display.plot()
 
 
-# TODO(1.9): Remove in 1.9
-@pytest.mark.parametrize(
-    "constructor_name", ["from_estimator", "from_predictions", "plot"]
-)
-def test_roc_curve_display_kwargs_deprecation(pyplot, data_binary, constructor_name):
-    """Check **kwargs deprecated correctly in favour of `curve_kwargs`."""
-    X, y = data_binary
-    lr = LogisticRegression()
-    lr.fit(X, y)
-    fpr = np.array([0, 0.5, 1])
-    tpr = np.array([0, 0.5, 1])
-
-    # Error when both `curve_kwargs` and `**kwargs` provided
-    with pytest.raises(ValueError, match="Cannot provide both `curve_kwargs`"):
-        if constructor_name == "from_estimator":
-            RocCurveDisplay.from_estimator(
-                lr, X, y, curve_kwargs={"alpha": 1}, label="test"
-            )
-        elif constructor_name == "from_predictions":
-            RocCurveDisplay.from_predictions(
-                y, y, curve_kwargs={"alpha": 1}, label="test"
-            )
-        else:
-            RocCurveDisplay(fpr=fpr, tpr=tpr).plot(
-                curve_kwargs={"alpha": 1}, label="test"
-            )
-
-    # Warning when `**kwargs`` provided
-    with pytest.warns(FutureWarning, match=r"`\*\*kwargs` is deprecated and will be"):
-        if constructor_name == "from_estimator":
-            RocCurveDisplay.from_estimator(lr, X, y, label="test")
-        elif constructor_name == "from_predictions":
-            RocCurveDisplay.from_predictions(y, y, label="test")
-        else:
-            RocCurveDisplay(fpr=fpr, tpr=tpr).plot(label="test")
-
-
 @pytest.mark.parametrize(
     "curve_kwargs",
     [
@@ -331,33 +292,6 @@ def test_roc_curve_display_plotting_from_cv_results(
         else:
             # Single aggregate label
             assert line.get_label() == aggregate_expected_labels[idx]
-
-
-@pytest.mark.parametrize(
-    "curve_kwargs",
-    [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
-)
-def test_roc_curve_from_cv_results_curve_kwargs(pyplot, data_binary, curve_kwargs):
-    """Check line kwargs passed correctly in `from_cv_results`."""
-
-    X, y = data_binary
-    cv_results = cross_validate(
-        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
-    )
-    display = RocCurveDisplay.from_cv_results(
-        cv_results, X, y, curve_kwargs=curve_kwargs
-    )
-
-    for idx, line in enumerate(display.line_):
-        color = line.get_color()
-        if curve_kwargs is None:
-            # Default color
-            assert color == "blue"
-        elif isinstance(curve_kwargs, Mapping):
-            # All curves "red"
-            assert color == "red"
-        else:
-            assert color == curve_kwargs[idx]["c"]
 
 
 def _check_chance_level(plot_chance_level, chance_level_kw, display):
