@@ -163,7 +163,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         data_file_name = _file_name(url, ".json")
         data_file_path = resources.files(data_module) / data_file_name
 
-        # load the file itself, to simulate a http error
+        # load the file itself, to simulate an http error
         with data_file_path.open("rb") as f:
             decompressed_f = read_fn(f, "rb")
             decoded_s = decompressed_f.read().decode("utf-8")

@@ -55,7 +55,7 @@ Histogram-Based Gradient Boosting
 Scikit-learn 0.21 introduced two new implementations of
 gradient boosted trees, namely :class:`HistGradientBoostingClassifier`
 and :class:`HistGradientBoostingRegressor`, inspired by
-`LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
+`LightGBM <https://github.com/lightgbm-org/LightGBM>`__ (See [LightGBM]_).
 
 These histogram-based estimators can be **orders of magnitude faster**
 than :class:`GradientBoostingClassifier` and
@@ -460,7 +460,8 @@ is the number of samples at the node.
 
 :class:`HistGradientBoostingClassifier` and
 :class:`HistGradientBoostingRegressor`, in contrast, do not require sorting the
-feature values and instead use a data-structure called a histogram, where the
+feature values and instead use a data-structure called
+`histogram <https://en.wikipedia.org/wiki/Histogram>`_ , where the
 samples are implicitly ordered. Building a histogram has a
 :math:`\mathcal{O}(n)` complexity, so the node splitting procedure has a
 :math:`\mathcal{O}(n_\text{features} \times n)` complexity, much smaller
@@ -473,6 +474,11 @@ integer-valued bins. This binning procedure does require sorting the feature
 values, but it only happens once at the very beginning of the boosting process
 (not at each node, like in :class:`GradientBoostingClassifier` and
 :class:`GradientBoostingRegressor`).
+
+A second major reason for being faster is the fact that
+:class:`HistGradientBoostingClassifier` and :class:`HistGradientBoostingRegressor` both
+use second order information about the loss, i.e. the Hessian. This is called Newton
+boosting and avoids the line-search step of the ordinary gradient boosting.
 
 Finally, many parts of the implementation of
 :class:`HistGradientBoostingClassifier` and
@@ -964,19 +970,26 @@ In random forests (see :class:`RandomForestClassifier` and
 from a sample drawn with replacement (i.e., a bootstrap sample) from the
 training set.
 
-Furthermore, when splitting each node during the construction of a tree, the
-best split is found through an exhaustive search of the feature values of
-either all input features or a random subset of size ``max_features``.
-(See the :ref:`parameter tuning guidelines <random_forest_parameters>` for more details.)
+During the construction of each tree in the forest, a random subset of the
+features is considered. The size of this subset is controlled by the
+`max_features` parameter; it may include either all input features or a random
+subset of them (see the :ref:`parameter tuning guidelines
+<random_forest_parameters>` for more details).
 
-The purpose of these two sources of randomness is to decrease the variance of
-the forest estimator. Indeed, individual decision trees typically exhibit high
+The purpose of these two sources of randomness (bootstrapping the samples and
+randomly selecting features at each split) is to decrease the variance of the
+forest estimator. Indeed, individual decision trees typically exhibit high
 variance and tend to overfit. The injected randomness in forests yield decision
 trees with somewhat decoupled prediction errors. By taking an average of those
 predictions, some errors can cancel out. Random forests achieve a reduced
 variance by combining diverse trees, sometimes at the cost of a slight increase
 in bias. In practice the variance reduction is often significant hence yielding
 an overall better model.
+
+When growing each tree in the forest, the "best" split (i.e. equivalent to
+passing `splitter="best"` to the underlying decision trees) is chosen according
+to the impurity criterion. See the :ref:`CART mathematical formulation
+<tree_mathematical_formulation>` for more details.
 
 In contrast to the original publication [B2001]_, the scikit-learn
 implementation combines classifiers by averaging their probabilistic

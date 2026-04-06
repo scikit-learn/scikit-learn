@@ -8,6 +8,7 @@ parameters of an estimator.
 
 import numbers
 import operator
+import re
 import time
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -554,6 +555,27 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             score = score[self.refit]
         return score
 
+    def _wrap_namespace_error(self, method_name, call, *args, **kwargs):
+        """Call ``call`` and rewrite namespace mismatch errors from inner estimator."""
+        try:
+            return call(*args, **kwargs)
+        except ValueError as e:
+            if "must use the same namespace" not in str(e):
+                raise
+            inner_class = self.best_estimator_.__class__.__name__
+            outer_class = self.__class__.__name__
+            msg = str(e)
+            # The inner estimator may raise from a different method than the
+            # one the user called on the meta-estimator (e.g. predict ->
+            # decision_function). Replace the inner "Class.method()" with the
+            # outer one so the message is actionable.
+            msg = re.sub(
+                rf"{re.escape(inner_class)}\.\w+\(\)",
+                f"{outer_class}.{method_name}()",
+                msg,
+            )
+            raise ValueError(msg) from None
+
     @available_if(_search_estimator_has("score_samples"))
     def score_samples(self, X):
         """Call score_samples on the estimator with the best found parameters.
@@ -575,7 +597,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             The ``best_estimator_.score_samples`` method.
         """
         check_is_fitted(self)
-        return self.best_estimator_.score_samples(X)
+        return self._wrap_namespace_error(
+            "score_samples", self.best_estimator_.score_samples, X
+        )
 
     @available_if(_search_estimator_has("predict"))
     def predict(self, X):
@@ -597,7 +621,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             the best found parameters.
         """
         check_is_fitted(self)
-        return self.best_estimator_.predict(X)
+        return self._wrap_namespace_error("predict", self.best_estimator_.predict, X)
 
     @available_if(_search_estimator_has("predict_proba"))
     def predict_proba(self, X):
@@ -620,7 +644,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             to that in the fitted attribute :term:`classes_`.
         """
         check_is_fitted(self)
-        return self.best_estimator_.predict_proba(X)
+        return self._wrap_namespace_error(
+            "predict_proba", self.best_estimator_.predict_proba, X
+        )
 
     @available_if(_search_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X):
@@ -643,7 +669,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             corresponds to that in the fitted attribute :term:`classes_`.
         """
         check_is_fitted(self)
-        return self.best_estimator_.predict_log_proba(X)
+        return self._wrap_namespace_error(
+            "predict_log_proba", self.best_estimator_.predict_log_proba, X
+        )
 
     @available_if(_search_estimator_has("decision_function"))
     def decision_function(self, X):
@@ -666,7 +694,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             the best found parameters.
         """
         check_is_fitted(self)
-        return self.best_estimator_.decision_function(X)
+        return self._wrap_namespace_error(
+            "decision_function", self.best_estimator_.decision_function, X
+        )
 
     @available_if(_search_estimator_has("transform"))
     def transform(self, X):
@@ -688,7 +718,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             the best found parameters.
         """
         check_is_fitted(self)
-        return self.best_estimator_.transform(X)
+        return self._wrap_namespace_error(
+            "transform", self.best_estimator_.transform, X
+        )
 
     @available_if(_search_estimator_has("inverse_transform"))
     def inverse_transform(self, X):
@@ -718,7 +750,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Only available when `refit=True`.
         """
-        # For consistency with other estimators we raise a AttributeError so
+        # For consistency with other estimators we raise an AttributeError so
         # that hasattr() fails if the search estimator isn't fitted.
         try:
             check_is_fitted(self)
@@ -1347,7 +1379,7 @@ class GridSearchCV(BaseSearchCV):
         - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -1360,14 +1392,15 @@ class GridSearchCV(BaseSearchCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    verbose : int
-        Controls the verbosity: the higher, the more messages.
+    verbose : int, default=0
+        Controls the verbosity of information printed during fitting, with higher
+        values yielding more detailed logging.
 
-        - >1 : the computation time for each fold and parameter candidate is
-          displayed;
-        - >2 : the score is also displayed;
-        - >3 : the fold and candidate parameter indexes are also displayed
-          together with the starting time of the computation.
+        - 0 : no messages are printed;
+        - >=1 : summary of the total number of fits;
+        - >=2 : computation time for each fold and parameter candidate;
+        - >=3 : fold indices and scores;
+        - >=10 : parameter candidate indices and START messages before each fit.
 
     pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
@@ -1731,7 +1764,7 @@ class RandomizedSearchCV(BaseSearchCV):
         - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -1744,14 +1777,15 @@ class RandomizedSearchCV(BaseSearchCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    verbose : int
-        Controls the verbosity: the higher, the more messages.
+    verbose : int, default = 0
+        Controls the verbosity of information printed during fitting, with higher
+        values yielding more detailed logging.
 
-        - >1 : the computation time for each fold and parameter candidate is
-          displayed;
-        - >2 : the score is also displayed;
-        - >3 : the fold and candidate parameter indexes are also displayed
-          together with the starting time of the computation.
+        - 0 : no messages are printed;
+        - >=1 : summary of the total number of fits;
+        - >=2 : computation time for each fold and parameter candidate;
+        - >=3 : fold indices and scores;
+        - >=10 : parameter candidate indices and START messages before each fit.
 
     pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
@@ -1952,11 +1986,11 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> logistic = LogisticRegression(solver='saga', tol=1e-2, max_iter=200,
     ...                               random_state=0)
     >>> distributions = dict(C=uniform(loc=0, scale=4),
-    ...                      penalty=['l2', 'l1'])
+    ...                      l1_ratio=[0, 1])
     >>> clf = RandomizedSearchCV(logistic, distributions, random_state=0)
     >>> search = clf.fit(iris.data, iris.target)
     >>> search.best_params_
-    {'C': np.float64(2.195...), 'penalty': 'l1'}
+    {'C': np.float64(2.195...), 'l1_ratio': 1}
     """
 
     _parameter_constraints: dict = {

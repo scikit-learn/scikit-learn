@@ -6,6 +6,7 @@
 import copy
 import functools
 import inspect
+import numbers
 import platform
 import re
 import warnings
@@ -17,10 +18,11 @@ from sklearn import __version__
 from sklearn._config import config_context, get_config
 from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.utils._metadata_requests import _MetadataRequester, _routing_enabled
-from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import validate_parameter_constraints
 from sklearn.utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
 from sklearn.utils._repr_html.estimator import estimator_html_repr
+from sklearn.utils._repr_html.fitted_attributes import AttrsDict
 from sklearn.utils._repr_html.params import ParamsDict
 from sklearn.utils._set_output import _SetOutputMixin
 from sklearn.utils._tags import (
@@ -209,9 +211,8 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
     @classmethod
     def _get_param_names(cls):
         """Get parameter names for the estimator"""
-        # fetch the constructor or the original constructor before
-        # deprecation wrapping if any
-        init = getattr(cls.__init__, "deprecated_original", cls.__init__)
+        # fetch the constructor
+        init = cls.__init__
         if init is object.__init__:
             # No explicit constructor to introspect
             return []
@@ -285,8 +286,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         """
         out = self.get_params(deep=deep)
 
-        init_func = getattr(self.__init__, "deprecated_original", self.__init__)
-        init_default_params = inspect.signature(init_func).parameters
+        init_default_params = inspect.signature(self.__init__).parameters
         init_default_params = {
             name: param.default for name, param in init_default_params.items()
         }
@@ -304,6 +304,10 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
                 init_default_params[param_name]
             ):
                 return True
+            if is_pandas_na(param_value) and not is_pandas_na(
+                init_default_params[param_name]
+            ):
+                return True
             if not np.array_equal(
                 param_value, init_default_params[param_name]
             ) and not (
@@ -314,19 +318,68 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
 
             return False
 
-        # reorder the parameters from `self.get_params` using the `__init__`
-        # signature
-        remaining_params = [name for name in out if name not in init_default_params]
-        ordered_out = {name: out[name] for name in init_default_params if name in out}
-        ordered_out.update({name: out[name] for name in remaining_params})
-
-        non_default_ls = tuple(
-            [name for name, value in ordered_out.items() if is_non_default(name, value)]
+        # Sort parameters so non-default parameters are shown first
+        unordered_params = {
+            name: out[name] for name in init_default_params if name in out
+        }
+        unordered_params.update(
+            {
+                name: value
+                for name, value in out.items()
+                if name not in init_default_params
+            }
         )
 
+        non_default_params, default_params = [], []
+        for name, value in unordered_params.items():
+            if is_non_default(name, value):
+                non_default_params.append(name)
+            else:
+                default_params.append(name)
+
+        params = {name: out[name] for name in non_default_params + default_params}
+
         return ParamsDict(
-            params=ordered_out,
-            non_default=non_default_ls,
+            params=params,
+            non_default=tuple(non_default_params),
+            estimator_class=self.__class__,
+            doc_link=doc_link,
+        )
+
+    def _get_fitted_attr_html(self, doc_link=""):
+        """Get fitted attributes of the estimator."""
+
+        fitted_attr = {}
+        for name, value in inspect.getmembers(self):
+            # We display up to 100 fitted attributes
+            if len(fitted_attr) > 100:
+                fitted_attr["..."] = {
+                    "type_name": "...",
+                    "value": "",
+                }
+                break
+            if name.startswith("_") or not name.endswith("_"):
+                continue
+            if (
+                hasattr(value, "shape")
+                and hasattr(value, "dtype")
+                and not isinstance(value, numbers.Number)
+            ):
+                # array-like attribute with shape and dtype
+                fitted_attr[name] = {
+                    "type_name": type(value).__name__,
+                    "shape": value.shape,
+                    "dtype": value.dtype,
+                    "value": value,
+                }
+            else:
+                fitted_attr[name] = {
+                    "type_name": type(value).__name__,
+                    "value": value,
+                }
+
+        return AttrsDict(
+            fitted_attrs=fitted_attr,
             estimator_class=self.__class__,
             doc_link=doc_link,
         )
@@ -1181,7 +1234,7 @@ def is_classifier(estimator):
 
     Parameters
     ----------
-    estimator : object
+    estimator : estimator instance
         Estimator object to test.
 
     Returns
@@ -1245,7 +1298,7 @@ def is_clusterer(estimator):
 
     Parameters
     ----------
-    estimator : object
+    estimator : estimator instance
         Estimator object to test.
 
     Returns

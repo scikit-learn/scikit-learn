@@ -41,7 +41,6 @@ from ...common._typing import (
     NestedSequence,
     SupportsBufferProtocol,
 )
-from ._info import __array_namespace_info__
 
 isdtype = get_xp(np)(_aliases.isdtype)
 unstack = get_xp(da)(_aliases.unstack)
@@ -134,9 +133,6 @@ reshape = get_xp(da)(_aliases.reshape)
 matrix_transpose = get_xp(da)(_aliases.matrix_transpose)
 vecdot = get_xp(da)(_aliases.vecdot)
 nonzero = get_xp(da)(_aliases.nonzero)
-ceil = get_xp(np)(_aliases.ceil)
-floor = get_xp(np)(_aliases.floor)
-trunc = get_xp(np)(_aliases.trunc)
 matmul = get_xp(np)(_aliases.matmul)
 tensordot = get_xp(np)(_aliases.tensordot)
 sign = get_xp(np)(_aliases.sign)
@@ -146,7 +142,7 @@ iinfo = get_xp(np)(_aliases.iinfo)
 
 # asarray also adds the copy keyword, which is not present in numpy 1.0.
 def asarray(
-    obj: complex | NestedSequence[complex] | Array | SupportsBufferProtocol,
+    obj: Array | complex | NestedSequence[complex] | SupportsBufferProtocol,
     /,
     *,
     dtype: DType | None = None,
@@ -355,7 +351,6 @@ def count_nonzero(
 
 
 __all__ = [
-    "__array_namespace_info__",
     "count_nonzero",
     "bool",
     "int8", "int16", "int32", "int64",
@@ -369,8 +364,6 @@ __all__ = [
     "bitwise_left_shift", "bitwise_right_shift", "bitwise_invert",
 ]  # fmt: skip
 __all__ += _aliases.__all__
-_all_ignore = ["array_namespace", "get_xp", "da", "np"]
-
 
 def __dir__() -> list[str]:
     return __all__

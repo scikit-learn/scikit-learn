@@ -63,20 +63,20 @@ X = np.concatenate([X, random_state.randn(n_samples, 200 * n_features)], axis=1)
 # -------------------------------
 #
 # Here we run :func:`~sklearn.model_selection.cross_validate` on a
-# :class:`~sklearn.svm.SVC` classifier, then use the computed cross-validation results
-# to plot the ROC curves fold-wise. Notice that the baseline to define the chance
-# level (dashed ROC curve) is a classifier that would always predict the most
-# frequent class.
+# :class:`~sklearn.linear_model.LogisticRegression` classifier, then use the computed
+# cross-validation results to plot the ROC curves fold-wise. Notice that the baseline
+# to define the chance level (dashed ROC curve) is a classifier that would always
+# predict the most frequent class.
 
 import matplotlib.pyplot as plt
 
-from sklearn import svm
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import RocCurveDisplay, auc
 from sklearn.model_selection import StratifiedKFold, cross_validate
 
 n_splits = 6
 cv = StratifiedKFold(n_splits=n_splits)
-classifier = svm.SVC(kernel="linear", probability=True, random_state=random_state)
+classifier = LogisticRegression(random_state=random_state).fit(X, y)
 cv_results = cross_validate(
     classifier, X, y, cv=cv, return_estimator=True, return_indices=True
 )

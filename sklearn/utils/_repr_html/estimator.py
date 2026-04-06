@@ -6,7 +6,6 @@ from contextlib import closing
 from inspect import isclass
 from io import StringIO
 from pathlib import Path
-from string import Template
 
 from sklearn import config_context
 
@@ -108,6 +107,7 @@ class _VisualBlock:
 def _write_label_html(
     out,
     params,
+    attrs,
     name,
     name_details,
     name_caption=None,
@@ -130,6 +130,9 @@ def _write_label_html(
         If estimator has `get_params` method, this is the HTML representation
         of the estimator's parameters and their values. When the estimator
         does not have `get_params`, it is an empty string.
+    attrs: str
+        If estimator is fitted, this is the HTML representation of its
+        fitted attributes.
     name : str
         The label for the estimator. It corresponds either to the estimator class name
         for a simple estimator or in the case of a `Pipeline` and `ColumnTransformer`,
@@ -184,10 +187,11 @@ def _write_label_html(
                 f'<a class="sk-estimator-doc-link {is_fitted_css_class}"'
                 f' rel="noreferrer" target="_blank" href="{doc_link}">?{doc_label}</a>'
             )
-
+        if name == "passthrough" or name_details == "[]":
+            name_caption = ""
         name_caption_div = (
             ""
-            if name_caption is None
+            if name_caption is None or name_caption == ""
             else f'<div class="caption">{html.escape(name_caption)}</div>'
         )
         name_caption_div = f"<div><div>{name}</div>{name_caption_div}</div>"
@@ -196,25 +200,31 @@ def _write_label_html(
             if doc_link or is_fitted_icon
             else ""
         )
+        label_arrow_class = (
+            "" if name == "passthrough" else "sk-toggleable__label-arrow"
+        )
 
         label_html = (
             f'<label for="{est_id}" class="sk-toggleable__label {is_fitted_css_class} '
-            f'sk-toggleable__label-arrow">{name_caption_div}{links_div}</label>'
+            f'{label_arrow_class}">{name_caption_div}{links_div}</label>'
         )
 
-        fmt_str = (
-            f'<input class="sk-toggleable__control sk-hidden--visually" id="{est_id}" '
+        out.write(
+            f'<input class="sk-toggleable__control sk-hidden--visually '
+            f'sk-global" id="{est_id}" '
             f'type="checkbox" {checked_str}>{label_html}<div '
             f'class="sk-toggleable__content {is_fitted_css_class}" '
             f'data-param-prefix="{html.escape(param_prefix)}">'
         )
 
-        if params:
-            fmt_str = "".join([fmt_str, f"{params}</div>"])
-        elif name_details and ("Pipeline" not in name):
-            fmt_str = "".join([fmt_str, f"<pre>{name_details}</pre></div>"])
+        out.write(params)
+        out.write(attrs)
+        if name_details and ("Pipeline" not in name) and not params:
+            if name == "passthrough" or name_details == "[]":
+                name_details = ""
+            out.write(f"<pre>{name_details}</pre>")
 
-        out.write(fmt_str)
+        out.write("</div>")
     else:
         out.write(f"<label>{name}</label>")
     out.write("</div></div>")  # outer_class inner_class
@@ -306,6 +316,7 @@ def _write_estimator_html(
         The prefix to prepend to parameter names for nested estimators.
         For example, in a pipeline this might be "pipeline__stepname__".
     """
+
     if first_call:
         est_block = _get_visual_block(estimator)
     else:
@@ -321,18 +332,30 @@ def _write_estimator_html(
         dashed_wrapped = first_call or est_block.dash_wrapped
         dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
         out.write(f'<div class="sk-item{dash_cls}">')
-
         if estimator_label:
-            if hasattr(estimator, "get_params") and hasattr(
-                estimator, "_get_params_html"
+            if (
+                hasattr(estimator, "get_params")
+                and not est_block.names == "passthrough"
+                and hasattr(estimator, "_get_params_html")
             ):
                 params = estimator._get_params_html(False, doc_link)._repr_html_inner()
             else:
                 params = ""
+            if (
+                hasattr(estimator, "_get_fitted_attr_html")
+                and not est_block.names == "passthrough"
+                and is_fitted_css_class == "fitted"
+            ):
+                fitted_attrs = estimator._get_fitted_attr_html(doc_link)
+                attrs = fitted_attrs._repr_html_inner() if len(fitted_attrs) > 0 else ""
+
+            else:
+                attrs = ""
 
             _write_label_html(
                 out,
                 params,
+                attrs,
                 estimator_label,
                 estimator_label_details,
                 doc_link=doc_link,
@@ -382,14 +405,28 @@ def _write_estimator_html(
 
         out.write("</div></div>")
     elif est_block.kind == "single":
-        if hasattr(estimator, "_get_params_html"):
+        if (
+            hasattr(estimator, "_get_params_html")
+            and not est_block.names == "passthrough"
+        ):
             params = estimator._get_params_html(doc_link=doc_link)._repr_html_inner()
         else:
             params = ""
+        if (
+            hasattr(estimator, "_get_fitted_attr_html")
+            and not est_block.names == "passthrough"
+            and is_fitted_css_class == "fitted"
+        ):
+            fitted_attrs = estimator._get_fitted_attr_html(doc_link)
+            attrs = fitted_attrs._repr_html_inner() if len(fitted_attrs) > 0 else ""
+
+        else:
+            attrs = ""
 
         _write_label_html(
             out,
             params,
+            attrs,
             est_block.names,
             est_block.name_details,
             est_block.name_caption,
@@ -405,7 +442,7 @@ def _write_estimator_html(
 
 
 def estimator_html_repr(estimator):
-    """Build a HTML representation of an estimator.
+    """Build an HTML representation of an estimator.
 
     Read more in the :ref:`User Guide <visualizing_composite_estimators>`.
 
@@ -424,7 +461,7 @@ def estimator_html_repr(estimator):
     >>> from sklearn.utils._repr_html.estimator import estimator_html_repr
     >>> from sklearn.linear_model import LogisticRegression
     >>> estimator_html_repr(LogisticRegression())
-    '<style>#sk-container-id...'
+    '<style>.sk-global...'
     """
     from sklearn.exceptions import NotFittedError
     from sklearn.utils.validation import check_is_fitted
@@ -447,8 +484,6 @@ def estimator_html_repr(estimator):
     )
     with closing(StringIO()) as out:
         container_id = _CONTAINER_ID_COUNTER.get_id()
-        style_template = Template(_CSS_STYLE)
-        style_with_id = style_template.substitute(id=container_id)
         estimator_str = str(estimator)
 
         # The fallback message is shown by default and loading the CSS sets
@@ -467,9 +502,9 @@ def estimator_html_repr(estimator):
             " with nbviewer.org."
         )
         html_template = (
-            f"<style>{style_with_id}</style>"
+            f"<style>{_CSS_STYLE}</style>"
             f"<body>"
-            f'<div id="{container_id}" class="sk-top-container">'
+            f'<div id="{container_id}" class="sk-top-container sk-global">'
             '<div class="sk-text-repr-fallback">'
             f"<pre>{html.escape(estimator_str)}</pre><b>{fallback_msg}</b>"
             "</div>"
@@ -489,7 +524,10 @@ def estimator_html_repr(estimator):
         with open(str(Path(__file__).parent / "estimator.js"), "r") as f:
             script = f.read()
 
-        html_end = f"</div></div><script>{script}</script></body>"
+        html_end = (
+            f"</div></div><script>{script}"
+            f"\nforceTheme('{container_id}');</script></body>"
+        )
 
         out.write(html_end)
 

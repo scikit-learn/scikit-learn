@@ -20,12 +20,13 @@ from sklearn.preprocessing._csr_polynomial_expansion import (
     _get_sizeof_LARGEST_INT_t,
 )
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
-    _get_namespace_device_dtype_ids,
     _is_numpy_namespace,
-    device,
     get_namespace,
+    move_to,
     yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._array_api import (
+    device as array_api_device,
 )
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._testing import (
@@ -36,8 +37,6 @@ from sklearn.utils._testing import (
 from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
-    parse_version,
-    sp_version,
 )
 
 
@@ -1196,21 +1195,6 @@ def test_csr_polynomial_expansion_index_overflow(
             pf.fit(X)
         return
 
-    # When `n_features>=65535`, `scipy.sparse.hstack` may not use the right
-    # dtype for representing indices and indptr if `n_features` is still
-    # small enough so that each block matrix's indices and indptr arrays
-    # can be represented with `np.int32`. We test `n_features==65535`
-    # since it is guaranteed to run into this bug.
-    if (
-        sp_version < parse_version("1.9.2")
-        and n_features == 65535
-        and degree == 2
-        and not interaction_only
-    ):  # pragma: no cover
-        msg = r"In scipy versions `<1.9.2`, the function `scipy.sparse.hstack`"
-        with pytest.raises(ValueError, match=msg):
-            X_trans = pf.fit_transform(X)
-        return
     X_trans = pf.fit_transform(X)
 
     expected_dtype = np.int64 if num_combinations > np.iinfo(np.int32).max else np.int32
@@ -1349,9 +1333,8 @@ def test_csr_polynomial_expansion_windows_fail(csr_container):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("interaction_only", [True, False])
 @pytest.mark.parametrize("include_bias", [True, False])
@@ -1362,14 +1345,14 @@ def test_polynomial_features_array_api_compliance(
     include_bias,
     interaction_only,
     array_namespace,
-    device_,
+    device_name,
     dtype_name,
 ):
     """Test array API compliance for PolynomialFeatures on 2 features up to degree 3."""
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     X, _ = two_features_degree3
     X_np = X.astype(dtype_name)
-    X_xp = xp.asarray(X_np, device=device_)
+    X_xp = xp.asarray(X_np, device=device)
     with config_context(array_api_dispatch=True):
         tf_np = PolynomialFeatures(
             degree=degree, include_bias=include_bias, interaction_only=interaction_only
@@ -1380,25 +1363,24 @@ def test_polynomial_features_array_api_compliance(
         ).fit(X_xp)
         out_np = tf_np.transform(X_np)
         out_xp = tf_xp.transform(X_xp)
-        assert_allclose(_convert_to_numpy(out_xp, xp=xp), out_np)
+        assert_allclose(move_to(out_xp, xp=np, device="cpu"), out_np)
         assert get_namespace(out_xp)[0].__name__ == xp.__name__
-        assert device(out_xp) == device(X_xp)
+        assert array_api_device(out_xp) == array_api_device(X_xp)
         assert out_xp.dtype == X_xp.dtype
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device_, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 def test_polynomial_features_array_api_raises_on_order_F(
-    array_namespace, device_, dtype_name
+    array_namespace, device_name, dtype_name
 ):
     """Test that PolynomialFeatures with order='F' raises ValueError on
     array API namespaces other than numpy."""
-    xp = _array_api_for_tests(array_namespace, device_)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     X = np.arange(6).reshape((3, 2)).astype(dtype_name)
-    X_xp = xp.asarray(X, device=device_)
+    X_xp = xp.asarray(X, device=device)
     msg = "PolynomialFeatures does not support order='F' for non-numpy arrays"
     with config_context(array_api_dispatch=True):
         pf = PolynomialFeatures(order="F").fit(X_xp)

@@ -352,6 +352,7 @@ html_js_files = [
     "scripts/dropdown.js",
     "scripts/version-switcher.js",
     "scripts/sg_plotly_resize.js",
+    "scripts/theme-observer.js",
 ]
 
 # Compile scss files into css files using sphinxcontrib-sass
@@ -909,7 +910,7 @@ linkcheck_ignore = [
     r"^..?/",
     # ignore links to specific pdf pages because linkcheck does not handle them
     # ('utf-8' codec can't decode byte error)
-    r"http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=.*",
+    r"https://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=.*",
     (
         "https://www.fordfoundation.org/media/2976/roads-and-bridges"
         "-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=.*"

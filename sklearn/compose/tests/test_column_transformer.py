@@ -40,7 +40,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_equal,
 )
-from sklearn.utils.fixes import CSR_CONTAINERS, parse_version
+from sklearn.utils.fixes import CSR_CONTAINERS, _sparse_eye_array, parse_version
 
 
 class Trans(TransformerMixin, BaseEstimator):
@@ -74,7 +74,7 @@ class SparseMatrixTrans(BaseEstimator):
 
     def transform(self, X, y=None):
         n_samples = len(X)
-        return self.csr_container(sparse.eye(n_samples, n_samples))
+        return self.csr_container(_sparse_eye_array(n_samples))
 
 
 class TransNo2D(BaseEstimator):
@@ -91,6 +91,26 @@ class TransRaise(BaseEstimator):
 
     def transform(self, X, y=None):
         raise ValueError("specific message")
+
+
+@pytest.mark.parametrize(
+    "transformers, class_name",
+    [
+        ([("trans1", Trans, [0]), ("trans2", Trans(), [1])], "Trans"),
+        ([("trans1", Trans(), [0]), ("trans2", Trans, [1])], "Trans"),
+        ([("drop", "drop", [0]), ("trans2", Trans, [1])], "Trans"),
+        ([("trans1", Trans, [0]), ("passthrough", "passthrough", [1])], "Trans"),
+    ],
+)
+def test_column_transformer_raises_class_not_instance_error(transformers, class_name):
+    # non-regression tests for https://github.com/scikit-learn/scikit-learn/issues/32719
+    ct = ColumnTransformer(transformers)
+    msg = re.escape(
+        f"Expected an estimator instance ({class_name}()), "
+        f"got estimator class instead ({class_name})."
+    )
+    with pytest.raises(TypeError, match=msg):
+        ct.fit([[1]])
 
 
 def test_column_transformer():
@@ -470,7 +490,7 @@ def test_column_transformer_output_indices_df():
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_column_transformer_sparse_array(csr_container):
-    X_sparse = csr_container(sparse.eye(3, 2))
+    X_sparse = csr_container(_sparse_eye_array(3, 2))
 
     # no distinction between 1D and 2D
     X_res_first = X_sparse[:, [0]]
@@ -513,14 +533,17 @@ def test_column_transformer_list():
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_column_transformer_sparse_stacking(csr_container):
-    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+@pytest.mark.parametrize("constructor_name", ["array", "pandas", "polars"])
+def test_column_transformer_sparse_stacking(csr_container, constructor_name):
+    X = np.array([[0, 1, 2], [2, 4, 6]]).T
+    X = _convert_container(X, constructor_name, columns_name=["first", "second"])
+
     col_trans = ColumnTransformer(
         [("trans1", Trans(), [0]), ("trans2", SparseMatrixTrans(csr_container), 1)],
         sparse_threshold=0.8,
     )
-    col_trans.fit(X_array)
-    X_trans = col_trans.transform(X_array)
+    col_trans.fit(X)
+    X_trans = col_trans.transform(X)
     assert sparse.issparse(X_trans)
     assert X_trans.shape == (X_trans.shape[0], X_trans.shape[0] + 1)
     assert_array_equal(X_trans.toarray()[:, 1:], np.eye(X_trans.shape[0]))
@@ -531,8 +554,8 @@ def test_column_transformer_sparse_stacking(csr_container):
         [("trans1", Trans(), [0]), ("trans2", SparseMatrixTrans(csr_container), 1)],
         sparse_threshold=0.1,
     )
-    col_trans.fit(X_array)
-    X_trans = col_trans.transform(X_array)
+    col_trans.fit(X)
+    X_trans = col_trans.transform(X)
     assert not sparse.issparse(X_trans)
     assert X_trans.shape == (X_trans.shape[0], X_trans.shape[0] + 1)
     assert_array_equal(X_trans[:, 1:], np.eye(X_trans.shape[0]))
@@ -1464,8 +1487,7 @@ def test_make_column_selector_pickle():
         },
         columns=["col_int", "col_float", "col_str"],
     )
-
-    selector = make_column_selector(dtype_include=[object])
+    selector = make_column_selector(dtype_include=[object, "string"])
     selector_picked = pickle.loads(pickle.dumps(selector))
 
     assert_array_equal(selector(X_df), selector_picked(X_df))
@@ -1536,7 +1558,7 @@ def test_sk_visual_block_remainder(remainder):
     )
     visual_block = ct._sk_visual_block_()
     assert visual_block.names == ("ohe", "remainder")
-    assert visual_block.name_details == (["col1", "col2"], "")
+    assert visual_block.name_details == (["col1", "col2"], [])
     assert visual_block.estimators == (ohe, remainder)
 
 
@@ -1571,7 +1593,11 @@ def test_sk_visual_block_remainder_fitted_pandas(remainder):
     visual_block = ct._sk_visual_block_()
     assert visual_block.names == ("ohe", "remainder")
     assert visual_block.name_details == (["col1", "col2"], ["col3", "col4"])
-    assert visual_block.estimators == (ohe, remainder)
+    assert isinstance(visual_block.estimators[0], OneHotEncoder)
+    if remainder == "passthrough":
+        assert visual_block.estimators[1] == "passthrough"
+    else:
+        assert isinstance(visual_block.estimators[1], StandardScaler)
 
 
 @pytest.mark.parametrize("remainder", ["passthrough", StandardScaler()])
@@ -1586,7 +1612,65 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
     visual_block = ct._sk_visual_block_()
     assert visual_block.names == ("scale", "remainder")
     assert visual_block.name_details == ([0, 2], [1])
-    assert visual_block.estimators == (scaler, remainder)
+    assert isinstance(visual_block.estimators[0], StandardScaler)
+    if remainder == "passthrough":
+        assert visual_block.estimators[1] == "passthrough"
+    else:
+        assert isinstance(visual_block.estimators[1], StandardScaler)
+
+
+def test_sk_visual_block_remainder_col_names_pandas():
+    """Check that the visual block `name_details` matches the `feature_names_in_`
+    Non-regression test - when remainder_columns logic is removed it should fail
+    https://github.com/scikit-learn/scikit-learn/pull/31442#discussion_r2841235711
+    """
+    pd = pytest.importorskip("pandas")
+    ohe = OneHotEncoder()
+    ct = ColumnTransformer(
+        transformers=[("ohe", ohe, ["col1"])],
+        remainder="passthrough",
+    )
+    df = pd.DataFrame(
+        {
+            "col1": ["a", "b", "c"],
+            "col2": ["z", "z", "z"],
+        }
+    )
+    # It is not possible to guess the remainder columns when not fitted.
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.name_details == (["col1"], [])
+
+    ct.fit(df)
+    # Once fitted, the remainder columns are the columns seen during fit not
+    # specified for specific transformers.
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.name_details == (["col1"], ["col2"])
+
+
+def test_sk_visual_block_full_transform():
+    """Check that visual_block doesn't return remainder when it has no columns
+    Non-regression test - https://github.com/scikit-learn/scikit-learn/issues/33513
+    """
+    ct = ColumnTransformer([("norm1", Normalizer(), [0, 1])], remainder="passthrough")
+    X = np.array([[0, 4], [3, 3]])
+    ct.fit(X)
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.names == ("norm1",)
+    assert visual_block.name_details == ([0, 1],)
+    assert isinstance(visual_block.estimators[0], Normalizer)
+    assert len(visual_block.estimators) == 1
+
+
+def test_sk_visual_block_int_remainder_cols_pandas():
+    """Check that remainder still uses available string column names in visual block
+    even when transformer columns are specified by integer index.
+    """
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"a": [1, 2], "b": [3, 4], "c": [5, 6]})
+    ct = ColumnTransformer([("scaler", StandardScaler(), [0])], remainder="passthrough")
+    ct.fit(X)
+    visual_block = ct._sk_visual_block_()
+    assert visual_block.name_details == ([0], ["b", "c"])
 
 
 @pytest.mark.parametrize("explicit_colname", ["first", "second", 0, 1])

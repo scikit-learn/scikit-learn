@@ -15,7 +15,8 @@ from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import MissingValues, StrOptions
-from sklearn.utils.fixes import _mode
+from sklearn.utils._sparse import _align_api_if_sparse
+from sklearn.utils.fixes import SCIPY_VERSION_BELOW_1_12, _mode
 from sklearn.utils.sparsefuncs import _get_median
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
@@ -152,7 +153,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
                 "implementation."
             )
 
-        return hstack((X_imputed, X_indicator))
+        return _align_api_if_sparse(hstack((X_imputed, X_indicator)))
 
     def _concatenate_indicator_feature_names_out(self, names, input_features):
         if not self.add_indicator:
@@ -240,11 +241,6 @@ class SimpleImputer(_BaseImputer):
         in which case `fill_value` will be used instead.
 
         .. versionadded:: 1.2
-
-        .. versionchanged:: 1.6
-            Currently, when `keep_empty_feature=False` and `strategy="constant"`,
-            empty features are not dropped. This behaviour will change in version
-            1.8. Set `keep_empty_feature=True` to preserve this behaviour.
 
     Attributes
     ----------
@@ -413,7 +409,7 @@ class SimpleImputer(_BaseImputer):
                     "Make sure that both dtypes are of the same kind."
                 )
             elif not in_fit:
-                fill_value_dtype = self.statistics_.dtype
+                fill_value_dtype = self._fill_dtype
                 err_msg = (
                     f"The dtype of the filling value (i.e. {fill_value_dtype!r}) "
                     f"cannot be cast to the input data that is {X.dtype!r}. "
@@ -461,6 +457,8 @@ class SimpleImputer(_BaseImputer):
         else:
             fill_value = self.fill_value
 
+        self._fill_dtype = X.dtype
+
         if sp.issparse(X):
             self.statistics_ = self._sparse_fit(
                 X, self.strategy, self.missing_values, fill_value
@@ -481,22 +479,20 @@ class SimpleImputer(_BaseImputer):
         statistics = np.empty(X.shape[1])
 
         if strategy == "constant":
-            # TODO(1.8): Remove FutureWarning and add `np.nan` as a statistic
-            # for empty features to drop them later.
-            if not self.keep_empty_features and any(
-                [all(missing_mask[:, i].data) for i in range(missing_mask.shape[1])]
-            ):
-                warnings.warn(
-                    "Currently, when `keep_empty_feature=False` and "
-                    '`strategy="constant"`, empty features are not dropped. '
-                    "This behaviour will change in version 1.8. Set "
-                    "`keep_empty_feature=True` to preserve this behaviour.",
-                    FutureWarning,
-                )
-
             # for constant strategy, self.statistics_ is used to store
-            # fill_value in each column
+            # fill_value in each column, or np.nan for columns to drop
             statistics.fill(fill_value)
+
+            if not self.keep_empty_features:
+                if SCIPY_VERSION_BELOW_1_12:
+                    for i in range(missing_mask.shape[1]):
+                        if all(missing_mask[:, [i]].data):
+                            statistics[i] = np.nan
+                else:
+                    for i in range(missing_mask.shape[1]):
+                        if all(missing_mask[:, i].data):
+                            statistics[i] = np.nan
+
         else:
             for i in range(X.shape[1]):
                 column = X.data[X.indptr[i] : X.indptr[i + 1]]
@@ -584,20 +580,16 @@ class SimpleImputer(_BaseImputer):
 
         # Constant
         elif strategy == "constant":
-            # TODO(1.8): Remove FutureWarning and add `np.nan` as a statistic
-            # for empty features to drop them later.
-            if not self.keep_empty_features and ma.getmask(masked_X).all(axis=0).any():
-                warnings.warn(
-                    "Currently, when `keep_empty_feature=False` and "
-                    '`strategy="constant"`, empty features are not dropped. '
-                    "This behaviour will change in version 1.8. Set "
-                    "`keep_empty_feature=True` to preserve this behaviour.",
-                    FutureWarning,
-                )
-
             # for constant strategy, self.statistcs_ is used to store
-            # fill_value in each column
-            return np.full(X.shape[1], fill_value, dtype=X.dtype)
+            # fill_value in each column, or np.nan for columns to drop
+            statistics = np.full(X.shape[1], fill_value, dtype=np.object_)
+
+            if not self.keep_empty_features:
+                for i in range(missing_mask.shape[1]):
+                    if missing_mask[:, i].all():
+                        statistics[i] = np.nan
+
+            return statistics
 
         # Custom
         elif isinstance(strategy, Callable):
@@ -635,14 +627,16 @@ class SimpleImputer(_BaseImputer):
         missing_mask = _get_mask(X, self.missing_values)
 
         # Decide whether to keep missing features
-        if self.strategy == "constant" or self.keep_empty_features:
-            valid_statistics = statistics
+        if self.keep_empty_features:
+            valid_statistics = statistics.astype(self._fill_dtype, copy=False)
             valid_statistics_indexes = None
         else:
             # same as np.isnan but also works for object dtypes
             invalid_mask = _get_mask(statistics, np.nan)
             valid_mask = np.logical_not(invalid_mask)
-            valid_statistics = statistics[valid_mask]
+            valid_statistics = statistics[valid_mask].astype(
+                self._fill_dtype, copy=False
+            )
             valid_statistics_indexes = np.flatnonzero(valid_mask)
 
             if invalid_mask.any():
@@ -676,7 +670,7 @@ class SimpleImputer(_BaseImputer):
                     np.arange(len(X.indptr) - 1, dtype=int), np.diff(X.indptr)
                 )[mask]
 
-                X.data[mask] = valid_statistics[indexes].astype(X.dtype, copy=False)
+                X.data[mask] = valid_statistics[indexes]
         else:
             # use mask computed before eliminating invalid mask
             if valid_statistics_indexes is None:
@@ -941,7 +935,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
                 n_missing = imputer_mask.sum(axis=0)
 
             if self.sparse is True:
-                imputer_mask = sp.csc_matrix(imputer_mask)
+                imputer_mask = _align_api_if_sparse(sp.csc_array(imputer_mask))
 
         if self.features == "all":
             features_indices = np.arange(X.shape[1])

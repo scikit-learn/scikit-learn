@@ -40,6 +40,7 @@ from sklearn.metrics._scorer import _SCORERS
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
 from sklearn.utils import check_random_state, compute_sample_weight, resample
+from sklearn.utils._dataframe import is_pandas_df
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
@@ -48,7 +49,6 @@ from sklearn.utils.validation import (
     _check_monotonic_cst,
     _check_sample_weight,
     _check_y,
-    _is_pandas_df,
     check_array,
     check_consistent_length,
     check_is_fitted,
@@ -371,7 +371,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # fixed in main and maybe included in 2.2.1, see
         # https://github.com/pandas-dev/pandas/pull/57173.
         # Also pandas versions < 1.5.1 do not support the dataframe interchange
-        if _is_pandas_df(X):
+        if is_pandas_df(X):
             X_is_dataframe = True
             categorical_columns_mask = np.asarray(X.dtypes == "category")
         elif hasattr(X, "__dataframe__"):
@@ -443,7 +443,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     is_categorical[feature_names.index(feature_name)] = True
                 except ValueError as e:
                     raise ValueError(
-                        f"categorical_features has a item value '{feature_name}' "
+                        f"categorical_features has an item value '{feature_name}' "
                         "which is not a valid feature name of the training "
                         f"data. Observed feature names: {feature_names}"
                     ) from e
@@ -719,9 +719,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             random_state=self._random_seed,
             n_threads=n_threads,
         )
-        X_binned_train = self._bin_data(X_train, is_training_data=True)
+        X_binned_train = self._bin_data(
+            X_train, sample_weight_train, is_training_data=True
+        )
         if X_val is not None:
-            X_binned_val = self._bin_data(X_val, is_training_data=False)
+            X_binned_val = self._bin_data(
+                X_val, sample_weight_val, is_training_data=False
+            )
         else:
             X_binned_val = None
 
@@ -1218,7 +1222,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         recent_improvements = [score > reference_score for score in recent_scores]
         return not any(recent_improvements)
 
-    def _bin_data(self, X, is_training_data):
+    def _bin_data(self, X, sample_weight, is_training_data):
         """Bin data X.
 
         If is_training_data, then fit the _bin_mapper attribute.
@@ -1234,7 +1238,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             )
         tic = time()
         if is_training_data:
-            X_binned = self._bin_mapper.fit_transform(X)  # F-aligned array
+            X_binned = self._bin_mapper.fit_transform(
+                X, sample_weight=sample_weight
+            )  # F-aligned array
         else:
             X_binned = self._bin_mapper.transform(X)  # F-aligned array
             # We convert the array to C-contiguous since predicting is faster
@@ -1487,7 +1493,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     usecase example of this feature.
 
     This implementation is inspired by
-    `LightGBM <https://github.com/Microsoft/LightGBM>`_.
+    `LightGBM <https://github.com/lightgbm-org/LightGBM>`_.
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
@@ -1736,7 +1742,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     >>> X, y = load_diabetes(return_X_y=True)
     >>> est = HistGradientBoostingRegressor().fit(X, y)
     >>> est.score(X, y)
-    0.92...
+    0.93...
     """
 
     _parameter_constraints: dict = {
@@ -1888,7 +1894,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
     missing values are mapped to whichever child has the most samples.
 
     This implementation is inspired by
-    `LightGBM <https://github.com/Microsoft/LightGBM>`_.
+    `LightGBM <https://github.com/lightgbm-org/LightGBM>`_.
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
