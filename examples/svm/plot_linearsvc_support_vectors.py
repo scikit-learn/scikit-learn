@@ -43,7 +43,7 @@ for i, C in enumerate([1, 100]):
         ax=ax,
         grid_resolution=50,
         plot_method="contour",
-        colors="k",
+        multiclass_colors="viridis",
         levels=[-1, 0, 1],
         alpha=0.5,
         linestyles=["--", "-", "--"],
