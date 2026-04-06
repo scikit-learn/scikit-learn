@@ -145,17 +145,13 @@ def _logcosh(x, fun_args=None):
 
     x *= alpha
     gx = np.tanh(x, x)  # apply the tanh inplace
-    g_x = np.empty(x.shape[0], dtype=x.dtype)
 
-    # --- OPTIMIZATION START ---
     if x.ndim == 1:
-        # If alpha is 1.0, we can skip the multiplication
-        if alpha == 1.0:
-            return gx, 1 - gx**2
         return gx, alpha * (1 - gx**2)
-    # --- OPTIMIZATION END ---
 
-    # XXX compute in chunks to avoid extra allocation
+    # When the input is 2D, compute in a loop to avoid extra allocation
+    # of array of shape x.shape
+    g_x = np.empty(x.shape[0], dtype=x.dtype)
     for i, gx_i in enumerate(gx):
         g_x[i] = (alpha * (1 - gx_i**2)).mean()
     return gx, g_x
