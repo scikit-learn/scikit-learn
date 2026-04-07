@@ -90,6 +90,10 @@ class _VisualBlock:
         self.dash_wrapped = dash_wrapped
         self.name_caption = name_caption
         self.doc_link_label = doc_link_label
+        # Temporal fix to test rendering vertical
+        if kind == "parallel":
+            kind = "serial"
+        self.kind = kind
 
         if self.kind in ("parallel", "serial"):
             if names is None:

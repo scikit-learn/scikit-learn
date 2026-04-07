@@ -109,7 +109,8 @@ div.sk-serial,
   /* padding-left: 1em; */
 }
 /* tree lines */
-.sk-global div.sk-serial div.sk-item::before{
+.sk-global div.sk-serial div.sk-item::before,
+.sk-global div.sk-parallel div.sk-parallel::before{
   position:absolute;
    left:-10px;
     /* top:0px; */
@@ -122,6 +123,7 @@ div.sk-serial,
     height: 1em;
 }
 
+
 .sk-global div.sk-serial div.sk-item::after,
 .sk-global div.sk-parallel div.sk-item::after{
   position:absolute;
@@ -133,22 +135,12 @@ div.sk-serial,
     height: 100%;
     padding-left: 10px;
 }
+
 /* So the vertical line doesn't go too low */
 .sk-global div.sk-serial div.sk-item:last-child::after,
 .sk-global div.sk-parallel div.sk-item:last-child::after{
   display: none;
 }
-
-/* Extend vertical line from first parallel item up to the top of the parallel container */
-.sk-global div.sk-parallel div.sk-item::before{
-  height: 100%;
-  top: -3em;
-  border-bottom: .2em solid red;
-  border-left: .2em solid green;
-
-
-}
-
 /* Hide all the items
 .sk-global div.sk-item  div.sk-parallel,
 .sk-global div.sk-item  div.sk-serial {
