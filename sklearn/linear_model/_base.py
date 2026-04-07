@@ -397,9 +397,11 @@ class LinearClassifierMixin(ClassifierMixin):
         xp_classes, _, device_classes = get_namespace_and_device(self.classes_)
         indices = move_to(indices, xp=xp_classes, device=device_classes)
 
-        return move_to(
-            xp_classes.take(self.classes_, indices, axis=0), xp=xp, device=device_
-        )
+        y_pred = xp_classes.take(self.classes_, indices, axis=0)
+        if isinstance(y_pred[0], str):
+            return y_pred
+        else:
+            return move_to(y_pred, xp=xp, device=device_)
 
     def _predict_proba_lr(self, X):
         """Probability estimation for OvR logistic regression.
