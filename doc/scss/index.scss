@@ -156,14 +156,6 @@ div.sk-landing-funding {
   a.sk-funding-link {
     text-decoration: none;
 
-    p.sk-funding-text {
-      color: var(--pst-color-link);
-
-      &:hover {
-        color: var(--pst-color-secondary);
-      }
-    }
-
     div.sk-funding-logos > img {
       height: 40px;
       margin: 0 8px 8px 8px;

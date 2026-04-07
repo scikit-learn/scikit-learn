@@ -291,6 +291,19 @@ div.sk-text-image-grid-large {
   }
 }
 
+/* Funding sidebar secondary panel (doc/templates/funding_links.html) */
+
+.sk-funding-sidepanel {
+  margin-top: 1.25rem;
+
+  .sk-funding-logos img {
+    max-width: 80%;
+    height: auto !important;
+    width: auto;
+    display: inline-block;
+  }
+}
+
 /* Responsive three-column grid list */
 .grid-list-three-columns {
   display: grid;

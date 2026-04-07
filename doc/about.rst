@@ -182,8 +182,8 @@ Institutional support
 scikit-learn is a community driven project, however institutional and private
 grants help to assure its sustainability.
 
-More details about institutional support are available in the
-:ref:`institutional_support` section.
+More details about institutional support are available in the :ref:`funding`
+section.
 
 Coding Sprints
 ==============
