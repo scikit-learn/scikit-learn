@@ -293,6 +293,7 @@ html_theme_options = {
             # https://sphinx-gallery.github.io/stable/advanced.html#using-sphinx-gallery-sidebar-components
             "sg_download_links",
             "sg_launcher_links",
+            "funding_links",
         ],
     },
     "show_version_warning_banner": True,

@@ -127,8 +127,6 @@ have committed to support scikit-learn as follows:
 
 * `Quansight Labs <https://labs.quansight.org>`_ funds Lucy Liu since 2022.
 
-* `Tidelift <https://tidelift.com/>`_ supports the project via their service
-  agreement.
 
 Past Sponsors
 -------------
@@ -143,6 +141,9 @@ Past Sponsors
 <https://microsoft.com/>`_, `NVIDIA <https://nvidia.com>`_ supported the
 project through their sponsorship via the Inria foundation between 2020 and
 2024.
+
+`Tidelift <https://tidelift.com/>`_ financially supported the project via their
+service agreement from 2023 to 2025.
 
 `Quansight Labs <https://labs.quansight.org>`_ and `NASA
 <https://www.nasa.gov>`_ funded Meekail Zain in 2022 and 2023, and funded
@@ -270,17 +271,17 @@ scikit-learn project.
       </tr>
     </thead>
     <tbody>
-          <tr>
-        <td><a href="https://www.anaconda.com">Anaconda Inc</a></td>
-        <td>Storage for our staging and nightly builds</td>
+      <tr>
+        <td><a href="https://www.github.com">GitHub</a></td>
+        <td>CPU time on their Continuous Integration servers + Teams account and web hosting.</td>
       </tr>
       <tr>
         <td><a href="https://circleci.com/">CircleCI</a></td>
         <td>CPU time on their Continuous Integration servers</td>
       </tr>
       <tr>
-        <td><a href="https://www.github.com">GitHub</a></td>
-        <td>CPU time on their Continuous Integration servers + Teams account</td>
+        <td><a href="https://www.anaconda.com">Anaconda Inc</a></td>
+        <td>Storage for our staging and nightly builds</td>
       </tr>
     </tbody>
   </table>
