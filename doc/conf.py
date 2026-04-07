@@ -338,6 +338,7 @@ html_sidebars = {
     "roadmap": [],
     "governance": [],
     "about": [],
+    "institutional_support": [],
 }
 
 # Additional templates that should be rendered to pages, maps page names to
