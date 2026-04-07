@@ -387,7 +387,7 @@ class LinearClassifierMixin(ClassifierMixin):
             Vector containing the class labels for each sample.
         """
         check_same_namespace(X, self, attribute="coef_", method="predict")
-        xp, _ = get_namespace(X)
+        xp, _, device_ = get_namespace_and_device(X)
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
             indices = xp.astype(scores > 0, indexing_dtype(xp))
@@ -397,7 +397,9 @@ class LinearClassifierMixin(ClassifierMixin):
         xp_classes, _, device_classes = get_namespace_and_device(self.classes_)
         indices = move_to(indices, xp=xp_classes, device=device_classes)
 
-        return xp_classes.take(self.classes_, indices, axis=0)
+        return move_to(
+            xp_classes.take(self.classes_, indices, axis=0), xp=xp, device=device_
+        )
 
     def _predict_proba_lr(self, X):
         """Probability estimation for OvR logistic regression.
