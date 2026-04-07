@@ -401,6 +401,18 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         -------
         self : estimator instance
             Estimator instance.
+
+        Notes
+        -----
+        Parameters may be modified between construction and fitting using
+        this method.
+
+        Changing parameters after an estimator has been fitted is allowed,
+        but its effect is estimator-dependent and should generally be
+        considered undefined behavior. Calling this method after ``fit``
+        does not recompute learned attributes (those ending with '_').
+        To obtain fitted attributes that reflect new parameter values,
+        call ``fit`` again.
         """
         if not params:
             # Simple optimization to gain speed (inspect is slow)
@@ -1093,7 +1105,6 @@ class DensityMixin:
         -------
         score : float
         """
-        pass
 
 
 class OutlierMixin:

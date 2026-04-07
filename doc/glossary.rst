@@ -1513,6 +1513,18 @@ Methods
         The method is overridden in :class:`pipeline.Pipeline` and related
         estimators.
 
+        Note
+        ----
+        Parameters may be modified between construction and fitting using
+        :meth:`set_params`.
+
+        Changing parameters after an estimator has been fitted is allowed,
+        but its effect is estimator-dependent and should generally be
+        considered undefined behavior. Calling :meth:`set_params` after
+        ``fit`` does not recompute learned attributes (those ending with '_').
+        To obtain fitted attributes that reflect new parameter values, call
+        :meth:`fit` again.
+
     ``split``
         On a :term:`CV splitter` (not an estimator), this method accepts
         parameters (:term:`X`, :term:`y`, :term:`groups`), where all may be
