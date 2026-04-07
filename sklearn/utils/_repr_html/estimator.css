@@ -109,8 +109,7 @@ div.sk-serial,
   /* padding-left: 1em; */
 }
 /* tree lines */
-.sk-global div.sk-serial div.sk-item::before,
-.sk-global div.sk-parallel div.sk-item::before{
+.sk-global div.sk-serial div.sk-item::before{
   position:absolute;
    left:-10px;
     /* top:0px; */
@@ -138,6 +137,16 @@ div.sk-serial,
 .sk-global div.sk-serial div.sk-item:last-child::after,
 .sk-global div.sk-parallel div.sk-item:last-child::after{
   display: none;
+}
+
+/* Extend vertical line from first parallel item up to the top of the parallel container */
+.sk-global div.sk-parallel div.sk-item::before{
+  height: 100%;
+  top: -3em;
+  border-bottom: .2em solid red;
+  border-left: .2em solid green;
+
+
 }
 
 /* Hide all the items
