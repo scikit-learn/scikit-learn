@@ -1443,9 +1443,6 @@ class LeavePGroupsOut(GroupsConsumerMixin, BaseCrossValidator):
     Provides train/test indices to split data according to a third-party
     provided group. This group information can be used to encode arbitrary
     domain-specific groupings of the samples as integers.
-    Note that this is different from class-label stratification
-    (e.g. StratifiedKFold), which preserves class proportions in ``y``:
-    here, the split is defined by ``groups``, and ``y`` is ignored.
 
     For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
@@ -2086,9 +2083,6 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
     Provides randomized train/test indices to split data according to a
     third-party provided group. This group information can be used to encode
     arbitrary domain-specific groupings of the samples as integers.
-    Note that this is different from class-label stratification
-    (e.g. StratifiedKFold), which preserves class proportions in ``y``:
-    here, the split is defined by ``groups``, and ``y`` is ignored.
 
     For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
