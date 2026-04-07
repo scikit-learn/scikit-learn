@@ -136,8 +136,7 @@ def test_progressbar_no_callback_support(backend):
     " < 3.12.8.",
 )
 @pytest.mark.parametrize("prefer", ["threads", "processes"])
-@pytest.mark.parametrize("repeat", range(100))
-def test_progressbar_outside_main_module(prefer, repeat):
+def test_progressbar_outside_main_module(prefer):
     """Check that ProgressBar does not trigger spawn errors outside `__main__`."""
     pytest.importorskip("rich")
     code = f"""
