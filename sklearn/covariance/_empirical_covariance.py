@@ -411,5 +411,4 @@ class EmpiricalCovariance(BaseEstimator):
             return np.reshape(dist, (len(X),)) ** 2
         else:
             X_centered = X - self.location_
-            dist = xp.sum((X_centered @ precision) * X_centered, axis=1)
-            return dist
+            return xp.sum((X_centered @ precision) * X_centered, axis=1)
