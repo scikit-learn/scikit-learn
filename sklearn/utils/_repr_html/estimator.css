@@ -140,16 +140,17 @@ div.sk-serial,
   display: none;
 }
 
-/* Hide all the items */
+/* Hide all the items
 .sk-global div.sk-item  div.sk-parallel,
 .sk-global div.sk-item  div.sk-serial {
   display: none;
 }
-/* Show all items when */
+
 .sk-global div.sk-item:has(> .sk-label-container input.sk-toggleable__control:checked) > div.sk-serial,
 .sk-global div.sk-item:has(> .sk-label-container input.sk-toggleable__control:checked) > div.sk-parallel {
  display: flex;
 }
+*/
 
 /* Toggleable style: style used for estimator/Pipeline/ColumnTransformer box that is
 clickable and can be expanded/collapsed.
