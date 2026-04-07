@@ -104,8 +104,8 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         for estimator in estimators:
             if isinstance(estimator, type):
                 raise TypeError(
-                    "Expected an estimator instance ({estimator.__name__}()), got "
-                    "estimator class instead ({estimator.__name__})."
+                    f"Expected an estimator instance ({estimator.__name__}()), got "
+                    f"estimator class instead ({estimator.__name__})."
                 )
 
 

@@ -385,13 +385,13 @@ program.
 - 2013 - Kemal Eren, Nicolas Trésegnie
 - 2014 - Hamzeh Alsalhi, Issam Laradji, Maheshakya Wijewardena, Manoj Kumar
 - 2015 - `Raghav RV <https://github.com/raghavrv>`_, Wei Xue
-- 2016 - `Nelson Liu <http://nelsonliu.me>`_, `YenChen Lin <https://yenchenlin.me/>`_
+- 2016 - `Nelson Liu <https://nelsonliu.me>`_, `YenChen Lin <https://yenchenlin.me/>`_
 
 .. _Vlad Niculae: https://vene.ro/
 
 ...................
 
-The `NeuroDebian <http://neuro.debian.net>`_ project providing `Debian
+The `NeuroDebian <https://neuro.debian.net>`_ project providing `Debian
 <https://www.debian.org/>`_ packaging and contributions is supported by
 `Dr. James V. Haxby <http://haxbylab.dartmouth.edu/>`_ (`Dartmouth
 College <https://pbs.dartmouth.edu/>`_).
@@ -503,11 +503,7 @@ scikit-learn project.
       </tr>
       <tr>
         <td><a href="https://www.github.com">GitHub</a></td>
-        <td>Teams account</td>
-      </tr>
-      <tr>
-        <td><a href="https://azure.microsoft.com/en-us/">Microsoft Azure</a></td>
-        <td>CPU time on their Continuous Integration servers</td>
+        <td>CPU time on their Continuous Integration servers + Teams account</td>
       </tr>
     </tbody>
   </table>

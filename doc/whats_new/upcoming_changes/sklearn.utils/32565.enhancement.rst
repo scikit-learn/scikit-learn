@@ -1,0 +1,3 @@
+- ``sklearn.utils._tags.get_tags`` now provides a clearer error message when a class
+  is passed instead of an estimator instance.
+  By :user:`Achyuthan S <Achyuthan-S>` and :user:`Anne Beyer <AnneBeyer>`.

@@ -16,12 +16,12 @@ from math import sqrt
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import coo_matrix, csr_matrix, issparse
-from scipy.special import xlogy
+from scipy.sparse import coo_array, csr_array, issparse
 
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder
 from sklearn.utils import (
+    _align_api_if_sparse,
     assert_all_finite,
     check_array,
     check_consistent_length,
@@ -31,7 +31,6 @@ from sklearn.utils import (
 from sklearn.utils._array_api import (
     _average,
     _bincount,
-    _convert_to_numpy,
     _count_nonzero,
     _fill_diagonal,
     _find_matching_floating_dtype,
@@ -40,6 +39,7 @@ from sklearn.utils._array_api import (
     _isin,
     _max_precision_float_dtype,
     _union1d,
+    _xlogy,
     get_namespace,
     get_namespace_and_device,
     move_to,
@@ -173,8 +173,8 @@ def _check_targets(y_true, y_pred, sample_weight=None):
             # they are passed as a dense arrays? This is not possible for array
             # API inputs in general hence we only do it for NumPy inputs. But even
             # for NumPy the usefulness is questionable.
-            y_true = csr_matrix(y_true)
-            y_pred = csr_matrix(y_pred)
+            y_true = _align_api_if_sparse(csr_array(y_true))
+            y_pred = _align_api_if_sparse(csr_array(y_pred))
         y_type = "multilabel-indicator"
 
     return y_type, y_true, y_pred, sample_weight
@@ -225,7 +225,7 @@ def _one_hot_encoding_multiclass_target(y_true, labels, target_xp, target_device
             )
 
     transformed_labels = lb.transform(y_true)
-    transformed_labels = target_xp.asarray(transformed_labels, device=target_device)
+    transformed_labels = move_to(transformed_labels, xp=target_xp, device=target_device)
     if transformed_labels.shape[1] == 1:
         transformed_labels = target_xp.concat(
             (1 - transformed_labels, transformed_labels), axis=1
@@ -533,16 +533,16 @@ def confusion_matrix(
         ensure_min_samples=0,
     )
     # Convert the input arrays to NumPy (on CPU) irrespective of the original
-    # namespace and device so as to be able to leverage the the efficient
+    # namespace and device so as to be able to leverage the efficient
     # counting operations implemented by SciPy in the coo_matrix constructor.
     # The final results will be converted back to the input namespace and device
     # for the sake of consistency with other metric functions with array API support.
-    y_true = _convert_to_numpy(y_true, xp)
-    y_pred = _convert_to_numpy(y_pred, xp)
+    y_true = move_to(y_true, xp=np, device="cpu")
+    y_pred = move_to(y_pred, xp=np, device="cpu")
     if sample_weight is None:
         sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
     else:
-        sample_weight = _convert_to_numpy(sample_weight, xp)
+        sample_weight = move_to(sample_weight, xp=np, device="cpu")
 
     if len(sample_weight) > 0:
         y_type, y_true, y_pred, sample_weight = _check_targets(
@@ -563,7 +563,7 @@ def confusion_matrix(
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
-        labels = _convert_to_numpy(labels, xp)
+        labels = move_to(labels, xp=np, device="cpu")
         n_labels = labels.size
         if n_labels == 0:
             raise ValueError("'labels' should contain at least one label.")
@@ -600,7 +600,7 @@ def confusion_matrix(
     else:
         dtype = np.float32 if str(device_).startswith("mps") else np.float64
 
-    cm = coo_matrix(
+    cm = coo_array(
         (sample_weight, (y_true, y_pred)),
         shape=(n_labels, n_labels),
         dtype=dtype,
@@ -741,7 +741,8 @@ def multilabel_confusion_matrix(
             [1, 2]]])
     """
     y_true, y_pred = attach_unique(y_true, y_pred)
-    xp, _, device_ = get_namespace_and_device(y_true, y_pred, sample_weight)
+    xp, _, device_ = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device_)
     y_type, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
@@ -883,10 +884,22 @@ def multilabel_confusion_matrix(
         "labels": ["array-like", None],
         "weights": [StrOptions({"linear", "quadratic"}), None],
         "sample_weight": ["array-like", None],
+        "replace_undefined_by": [
+            Interval(Real, -1.0, 1.0, closed="both"),
+            np.nan,
+        ],
     },
     prefer_skip_nested_validation=True,
 )
-def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
+def cohen_kappa_score(
+    y1,
+    y2,
+    *,
+    labels=None,
+    weights=None,
+    sample_weight=None,
+    replace_undefined_by=np.nan,
+):
     r"""Compute Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
@@ -927,11 +940,25 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+    replace_undefined_by : np.nan, float in [-1.0, 1.0], default=np.nan
+        Sets the return value when the metric is undefined. This can happen when no
+        label of interest (as defined in the `labels` param) is assigned by the second
+        annotator, or when both `y1` and `y2`only have one label in common that is also
+        in `labels`. In these cases, an
+        :class:`~sklearn.exceptions.UndefinedMetricWarning` is raised. Can take the
+        following values:
+
+        - `np.nan` to return `np.nan`
+        - a floating point value in the range of [-1.0, 1.0] to return a specific value
+
+        .. versionadded:: 1.9
+
     Returns
     -------
     kappa : float
-        The kappa statistic, which is a number between -1 and 1. The maximum
-        value means complete agreement; zero or lower means chance agreement.
+        The kappa statistic, which is a number between -1.0 and 1.0. The maximum value
+        means complete agreement; the minimum value means complete disagreement; 0.0
+        indicates no agreement beyond what would be expected by chance.
 
     References
     ----------
@@ -974,7 +1001,20 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     confusion = xp.astype(confusion, max_float_dtype, copy=False)
     sum0 = xp.sum(confusion, axis=0)
     sum1 = xp.sum(confusion, axis=1)
-    expected = xp.linalg.outer(sum0, sum1) / xp.sum(sum0)
+
+    numerator = xp.linalg.outer(sum0, sum1)
+    denominator = xp.sum(sum0)
+    msg_zero_division = (
+        "`y2` contains no labels that are present in both `y1` and `labels`."
+        "`cohen_kappa_score` is undefined and set to the value defined by "
+        f"the `replace_undefined_by` param, which is set to {replace_undefined_by}."
+    )
+    # exact equality is safe here, since denominator is a sum of positive terms:
+    if denominator == 0:
+        warnings.warn(msg_zero_division, UndefinedMetricWarning, stacklevel=2)
+        return replace_undefined_by
+
+    expected = numerator / denominator
 
     if weights is None:
         w_mat = xp.ones([n_classes, n_classes], dtype=max_float_dtype, device=device_)
@@ -987,7 +1027,19 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
         else:
             w_mat = (w_mat - w_mat.T) ** 2
 
-    k = xp.sum(w_mat * confusion) / xp.sum(w_mat * expected)
+    numerator = xp.sum(w_mat * confusion)
+    denominator = xp.sum(w_mat * expected)
+    msg_zero_division = (
+        "`y1`, `y2` and `labels` have only one label in common. "
+        "`cohen_kappa_score` is undefined and set to the value defined by the "
+        f"the `replace_undefined_by` param, which is set to {replace_undefined_by}."
+    )
+    # exact equality is safe here, since denominator is a sum of positive terms:
+    if denominator == 0:
+        warnings.warn(msg_zero_division, UndefinedMetricWarning, stacklevel=2)
+        return replace_undefined_by
+
+    k = numerator / denominator
     return float(1 - k)
 
 
@@ -2094,6 +2146,8 @@ def precision_recall_fscore_support(
      array([2, 2, 2]))
     """
     _check_zero_division(zero_division)
+    xp, _, device_ = get_namespace_and_device(y_pred)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device_)
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
 
     # Calculate tp_sum, pred_sum, true_sum ###
@@ -2109,7 +2163,6 @@ def precision_recall_fscore_support(
     pred_sum = tp_sum + MCM[:, 0, 1]
     true_sum = tp_sum + MCM[:, 1, 0]
 
-    xp, _, device_ = get_namespace_and_device(y_true, y_pred)
     if average == "micro":
         tp_sum = xp.reshape(xp.sum(tp_sum), (1,))
         pred_sum = xp.reshape(xp.sum(pred_sum), (1,))
@@ -3390,7 +3443,8 @@ def _log_loss(transformed_labels, y_pred, *, normalize=True, sample_weight=None)
         sample_weight = move_to(sample_weight, xp=xp, device=device_)
     eps = xp.finfo(y_pred.dtype).eps
     y_pred = xp.clip(y_pred, eps, 1 - eps)
-    loss = -xp.sum(xlogy(transformed_labels, y_pred), axis=1)
+    transformed_labels = xp.astype(transformed_labels, y_pred.dtype, copy=False)
+    loss = -xp.sum(_xlogy(transformed_labels, y_pred, xp=xp), axis=1)
     return float(_average(loss, weights=sample_weight, normalize=normalize))
 
 
@@ -3406,15 +3460,15 @@ def _log_loss(transformed_labels, y_pred, *, normalize=True, sample_weight=None)
 def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     """Average hinge loss (non-regularized).
 
-    In binary class case, assuming labels in y_true are encoded with +1 and -1,
-    when a prediction mistake is made, ``margin = y_true * pred_decision`` is
-    always negative (since the signs disagree), implying ``1 - margin`` is
+    In :term:`binary` class case, assuming labels in `y_true` are encoded with +1
+    and -1, when a prediction mistake is made, `margin = y_true * pred_decision` is
+    always negative (since the signs are opposite), implying `1 - margin` is
     always greater than 1.  The cumulated hinge loss is therefore an upper
     bound of the number of mistakes made by the classifier.
 
-    In multiclass case, the function expects that either all the labels are
-    included in y_true or an optional labels argument is provided which
-    contains all the labels. The multilabel margin is calculated according
+    In :term:`multiclass` case, the function expects that either all the labels are
+    present in `y_true` or an optional `labels` argument is provided which
+    contains all the labels. The multiclass margin is calculated according
     to Crammer-Singer's method. As in the binary case, the cumulated hinge loss
     is an upper bound of the number of mistakes made by the classifier.
 
@@ -3423,11 +3477,13 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     Parameters
     ----------
     y_true : array-like of shape (n_samples,)
-        True target, consisting of integers of two values. The positive label
-        must be greater than the negative label.
+        True target. For :term:`binary` data, it should only contain two unique
+        values, with the positive label being greater than the negative label.
+        For :term:`multiclass` data, all labels should be present, or provided
+        via `labels`.
 
     pred_decision : array-like of shape (n_samples,) or (n_samples, n_classes)
-        Predicted decisions, as output by decision_function (floats).
+        Predicted decisions, as output by :term:`decision_function` (floats).
 
     labels : array-like, default=None
         Contains all the labels for the problem. Used in multiclass hinge loss.
@@ -3445,14 +3501,15 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     .. [1] `Wikipedia entry on the Hinge loss
            <https://en.wikipedia.org/wiki/Hinge_loss>`_.
 
-    .. [2] Koby Crammer, Yoram Singer. On the Algorithmic
+    .. [2] `Koby Crammer, Yoram Singer. On the Algorithmic
            Implementation of Multiclass Kernel-based Vector
            Machines. Journal of Machine Learning Research 2,
-           (2001), 265-292.
+           (2001), 265-292
+           <https://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_.
 
-    .. [3] `L1 AND L2 Regularization for Multiclass Hinge Loss Models
+    .. [3] `L1 and L2 Regularization for Multiclass Hinge Loss Models
            by Robert C. Moore, John DeNero
-           <https://storage.googleapis.com/pub-tools-public-publication-data/pdf/37362.pdf>`_.
+           <https://www.isca-archive.org/mlslp_2011/moore11_mlslp.pdf>`_.
 
     Examples
     --------
@@ -3552,7 +3609,7 @@ def _one_hot_encoding_binary_target(y_true, pos_label, target_xp, target_device)
     """
     xp_y_true, _ = get_namespace(y_true)
     y_true_pos = xp_y_true.asarray(y_true == pos_label, dtype=xp_y_true.int64)
-    y_true_pos = target_xp.asarray(y_true_pos, device=target_device)
+    y_true_pos = move_to(y_true_pos, xp=target_xp, device=target_device)
     return target_xp.stack((1 - y_true_pos, y_true_pos), axis=1)
 
 
@@ -3900,6 +3957,8 @@ def d2_brier_score(
     labels=None,
 ):
     """:math:`D^2` score function, fraction of Brier score explained.
+
+    This is also known as Brier Skill Score (BSS) and scaled Brier score.
 
     Best possible score is 1.0 and it can be negative because the model can
     be arbitrarily worse than the null model. The null model, also known as the
