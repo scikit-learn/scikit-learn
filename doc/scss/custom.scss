@@ -257,6 +257,40 @@ div.sk-text-image-grid-large {
   @include sk-text-image-grid(100px);
 }
 
+/* Institutional support: active funding participation table (institutional_support.rst) */
+
+.bd-article table.sk-funding-participation-table {
+  width: 100%;
+  border-collapse: collapse;
+  --bs-table-bg: #fff;
+  --bs-table-striped-bg: #fff;
+  --bs-table-hover-bg: #fff;
+  --bs-table-active-bg: #fff;
+  tbody,
+  tr,
+  td {
+    background-color: #fff !important;
+  }
+
+  th,
+  td {
+    padding: 0.75rem 0.5rem;
+    border: 1px solid var(--pst-color-border);
+    text-align: center;
+  }
+
+  li {
+    list-style: none !important;
+    list-style-type: none !important;
+    margin: 0.5rem !important;
+  }
+
+  img {
+    height: 40px !important;
+    padding: 5px;
+  }
+}
+
 /* Responsive three-column grid list */
 .grid-list-three-columns {
   display: grid;

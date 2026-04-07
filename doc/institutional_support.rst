@@ -33,15 +33,7 @@ its success and sustainability.
     In 2023, Inria spun off `Probabl <https://probabl.ai>`_ as a mission driven
     company to take scikit-learn beyond the research lab. All of the
     scikit-learn core-maintainers employed by Inria have joined the spinoff as
-    co-founders, most as full-time employees. Probabl has raised funding as
-    most traditional startups do, in this case with a mix of public and private
-    funding. Inria, the French government, and more recently Mozilla Ventures,
-    Apertu Capital, Capital Fund Management and Serena Capital have invested in
-    Probabl, giving it significant financial means to sustain scikit-learn as
-    part of its core mission, also expecting the development of new value
-    adding enterprise-grade solutions and services. For more information about
-    these solutions and services, please visit the `probabl.ai
-    <https://probabl.ai>`_ web site.
+    co-founders, most as full-time employees.
 
     Today, Probabl employs the following core and non-core contributors: Adrin
     Jalali, Antoine Baker, Arturo Amor, François Goupil, Guillaume Lemaitre,
@@ -60,56 +52,55 @@ Active financial participation (2026)
 -------------------------------------
 
 In addition to the above financial commitments, the following organizations
-have committed to support scikit-learn as follows:
+financially support scikit-learn as follows:
 
-.. |wellcome| image:: images/wellcome.png
+.. |probabl| image:: images/probabl.png
+  :target: https://probabl.ai
+
+.. |wellcome| image:: images/wellcome-trust-small.png
   :target: https://wellcome.org
 
-.. |czi| image:: images/czi.png
+.. |czi| image:: images/czi-small.png
   :target: https://chanzuckerberg.com
 
-.. |nvidia| image:: images/nvidia.png
+.. |nvidia| image:: images/nvidia-small.png
   :target: https://www.nvidia.com
 
-.. |nasa| image:: images/nasa.png
+.. |nasa| image:: images/nasa-small.png
   :target: https://www.nasa.gov
 
-.. |chanel| image:: images/chanel.png
+.. |chanel| image:: images/chanel-small.png
   :target: https://www.chanel.com
 
-.. |bnpparibasgroup| image:: images/bnp-paribas.jpg
+.. |bnpparibasgroup| image:: images/bnp-small.png
   :target: https://group.bnpparibas/
 
-.. |quansightlabs| image:: images/quansight-labs.png
-  :target: https://labs.quansight.org* `BNP Paribas Group <https://group.bnpparibas/>`_ supports scikit-learn
-  through their Silver sponsorship (2025-2026).
+.. |quansightlabs| image:: images/quansight-labs-small.png
+  :target: https://labs.quansight.org
 
-.. raw:: html
+.. |michelin| image:: images/michelin-small.png
+  :target: https://www.michelin.com
 
-  <style>
-    table.image-subtable tr {
-      border-color: transparent;
-    }
+.. list-table::
+   :widths: 33 33 34
+   :header-rows: 1
+   :class: sk-funding-participation-table
 
-    table.image-subtable td {
-      width: 50%;
-      vertical-align: middle;
-      text-align: center;
-    }
+   * - 5 FTEs more
+     - 0.5 FTE or more
+     - less than 0.5 FTE
+   * - |probabl|
+     - * |czi| |wellcome|
+       * |nvidia|
+       * |nasa| |quansightlabs|
+       * |chanel|
+     - * |bnpparibasgroup|
+       * |michelin|
 
-    table.image-subtable td img {
-      max-height: 40px !important;
-      max-width: 90% !important;
-    }
-  </style>
-
-
-* `The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ and
-  `Wellcome Trust <https://wellcome.org/>`_ fund scikit-learn through the
-  `Essential Open Source Software for Science (EOSS) <https://chanzuckerberg.com/eoss/>`_
-  cycle 6.
-
-  It funds the work of Lucy Liu, Dea Maria Leon and Anne Beyer.
+* `The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ and `Wellcome
+  Trust <https://wellcome.org/>`_ support the work of Lucy Liu, Dea Maria Leon
+  and Anne Beyer through the `Essential Open Source Software for Science (EOSS)
+  <https://chanzuckerberg.com/eoss/>`_ cycle 6.
 
 * `NVIDIA <https://nvidia.com>`_ supports scikit-learn through their
   sponsorship and employs full-time core maintainer Tim Head.
@@ -118,15 +109,17 @@ have committed to support scikit-learn as follows:
   Probabl team members via the NASA ROSES grant 80NSSC25K7215: "Ensuring a fast
   and secure core for scientific Python".
 
-* `BNP Paribas Group <https://group.bnpparibas/>`_ supports scikit-learn
-  through their Silver sponsorship (2025-2026).
+* `Quansight Labs <https://labs.quansight.org>`_ funds Lucy Liu since 2022.
 
 * `Chanel <https://www.chanel.com>`_ supports scikit-learn through a
   multi-year sponsorship, initially through the Inria foundation (2023-2024),
   now as a Gold Sponsor via Probabl (2024-2026).
 
-* `Quansight Labs <https://labs.quansight.org>`_ funds Lucy Liu since 2022.
+* `BNP Paribas Group <https://group.bnpparibas/>`_ supports scikit-learn
+  as a Silver Sponsor via Probabl (2025-2026).
 
+* `Michelin <https://www.michelin.com>`_ supports scikit-learn as a Bronze
+  Sponsor via Probabl (2025-2026).
 
 Past Sponsors
 -------------
