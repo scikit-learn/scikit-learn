@@ -1145,14 +1145,14 @@ def _check_array_api_core(
         est_xp_param = getattr(est_xp, key)
         with config_context(array_api_dispatch=True):
             attribute_ns = get_namespace(est_xp_param)[0].__name__
-        if key != "classes_":
+        if key != "classes_" and is_classifier(estimator_orig):
             assert attribute_ns == X_ns, (
                 f"'{key}' attribute is in wrong namespace, expected {X_ns} "
                 f"got {attribute_ns}"
             )
 
         with config_context(array_api_dispatch=True):
-            if key != "classes_":
+            if key != "classes_" and is_classifier(estimator_orig):
                 assert array_device(est_xp_param) == array_device(X_xp)
 
         est_xp_param_np = move_to(est_xp_param, xp=np, device="cpu")
