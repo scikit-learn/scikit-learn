@@ -1,1 +1,3 @@
-Fix ``StratifiedGroupKFold`` to raise a clear ``ValueError`` when ``n_splits`` is greater than the number of unique groups, preventing degenerate folds.
+- :class:`model_selection.StratifiedGroupKFold` now raises a `ValueError` when
+  `n_splits` is greater than the number of unique groups, preventing degenerate folds.
+  By :user:`Chani Fainendler <gitCHANI2005>`.

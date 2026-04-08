@@ -209,7 +209,7 @@ def test_2d_y():
     y = rng.randint(0, 3, size=(n_samples,))
     y_2d = y.reshape(-1, 1)
     y_multilabel = rng.randint(0, 2, size=(n_samples, 3))
-    groups = rng.randint(0, 10, size=(n_samples,))
+    groups = rng.randint(0, 3, size=(n_samples,))
     splitters = [
         LeaveOneOut(),
         LeavePOut(p=2),
@@ -217,7 +217,7 @@ def test_2d_y():
         StratifiedKFold(),
         RepeatedKFold(),
         RepeatedStratifiedKFold(),
-        StratifiedGroupKFold(),
+        StratifiedGroupKFold(n_splits=3),
         ShuffleSplit(),
         StratifiedShuffleSplit(test_size=0.5),
         GroupShuffleSplit(),

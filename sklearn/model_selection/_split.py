@@ -1048,8 +1048,8 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
 
         if self.n_splits > n_groups:
             raise ValueError(
-                "Cannot have number of splits n_splits=%d greater"
-                " than the number of groups: %d." % (self.n_splits, n_groups)
+                f"Cannot have number of splits n_splits={self.n_splits} greater"
+                f" than the number of groups: {n_groups}."
             )
 
         y_counts_per_group = np.zeros((len(groups_cnt), n_classes))
