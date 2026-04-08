@@ -4,7 +4,7 @@ matplotlib
 scikit-image
 pandas
 seaborn
-Pillow
+Pillow==12.1.1
 sphinx-gallery
 scikit-learn
 polars
