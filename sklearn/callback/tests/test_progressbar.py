@@ -3,6 +3,7 @@
 
 import re
 import sys
+import textwrap
 
 import pytest
 
@@ -14,6 +15,7 @@ from sklearn.callback.tests._utils import (
     WhileEstimator,
 )
 from sklearn.utils._optional_dependencies import check_rich_support
+from sklearn.utils._testing import assert_run_python_script_without_output
 from sklearn.utils.parallel import Parallel, delayed
 
 
@@ -126,3 +128,30 @@ def test_progressbar_no_callback_support(backend):
         assert not any(mon.is_alive() for mon in progressbar._run_monitors.values())
         # All queues are empty.
         assert all(queue.empty() for queue in progressbar._run_queues.values())
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 12, 8),
+    reason="Race conditions can appear because of multiprocessing issues for python"
+    " < 3.12.8.",
+)
+@pytest.mark.parametrize("prefer", ["threads", "processes"])
+def test_progressbar_outside_main_module(prefer):
+    """Check that ProgressBar does not trigger spawn errors outside `__main__`."""
+    pytest.importorskip("rich")
+    code = f"""
+    from sklearn.callback import ProgressBar
+    from sklearn.callback.tests._utils import MaxIterEstimator, MetaEstimator
+
+    est = MaxIterEstimator()
+    meta_est = MetaEstimator(
+        est, n_outer=2, n_inner=1, n_jobs=2, prefer='{prefer}'
+    )
+    meta_est.set_callbacks(ProgressBar())
+    meta_est.fit()
+    """
+
+    pattern = "An attempt has been made to start a new process"
+    assert_run_python_script_without_output(
+        textwrap.dedent(code), pattern=pattern, timeout=120
+    )

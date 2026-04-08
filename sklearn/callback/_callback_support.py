@@ -3,8 +3,9 @@
 
 import functools
 from contextlib import contextmanager
-from multiprocessing import Manager
 from threading import Lock
+
+from joblib.externals.loky.backend import get_context
 
 from sklearn.callback._base import AutoPropagatedCallback, FitCallback
 from sklearn.callback._callback_context import CallbackContext
@@ -23,7 +24,7 @@ def get_callback_manager():
     if _CallbackManagerState.manager is None:
         with _CallbackManagerState.lock:
             if _CallbackManagerState.manager is None:
-                _CallbackManagerState.manager = Manager()
+                _CallbackManagerState.manager = get_context().Manager()
 
     return _CallbackManagerState.manager
 
@@ -61,7 +62,9 @@ class CallbackSupportMixin:
 
         return self
 
-    def _init_callback_context(self, task_name="fit", task_id=0, max_subtasks=0):
+    def _init_callback_context(
+        self, task_name="fit", task_id=0, max_subtasks=0, sequential_subtasks=True
+    ):
         """Initialize the callback context for the estimator and setup its callbacks.
 
         This method should be called once, at the beginning of the fit method.
@@ -73,13 +76,18 @@ class CallbackSupportMixin:
         task_name : str, default="fit"
             The name of the root task.
 
-        task_id : int or str, default=0
+        task_id : int, default=0
             Identifier for the root task.
 
         max_subtasks : int or None, default=0
             The maximum number of subtasks that can be children of the root task. None
             means the maximum number of subtasks is not known in advance. 0 means it's a
             leaf.
+
+        sequential_subtasks : bool, default=True
+            Whether the root context has sequential subtasks. If True, children contexts
+            of the root context, created via `subcontext`, will have automatically
+            assigned consecutive integer task_ids starting from 0.
 
         Returns
         -------
@@ -91,6 +99,7 @@ class CallbackSupportMixin:
             task_name=task_name,
             task_id=task_id,
             max_subtasks=max_subtasks,
+            sequential_subtasks=sequential_subtasks,
         )
 
         # setup callbacks
@@ -101,7 +110,7 @@ class CallbackSupportMixin:
                 isinstance(callback, AutoPropagatedCallback)
                 and hasattr(self, "_parent_callback_ctx")
             ):
-                callback.setup(self._callback_fit_ctx)
+                callback.setup(estimator=self, context=self._callback_fit_ctx)
 
         return self._callback_fit_ctx
 
@@ -134,10 +143,10 @@ def callback_management_context(estimator):
                     isinstance(callback, AutoPropagatedCallback)
                     and hasattr(estimator, "_parent_callback_ctx")
                 ):
-                    callback.teardown(estimator._callback_fit_ctx)
+                    callback.teardown(
+                        estimator=estimator, context=estimator._callback_fit_ctx
+                    )
 
-            # Remove the context and parent context to avoid keeping circular references
-            # when they're notneeded anymore.
             del estimator._callback_fit_ctx
             if hasattr(estimator, "_parent_callback_ctx"):
                 del estimator._parent_callback_ctx

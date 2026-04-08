@@ -112,14 +112,16 @@ class CallbackContext:
         The name of the task this context is responsible for.
 
     task_id : int
-        The identifier of the task this context is responsible for.
+        The identifier of the task this context is responsible for. It uniquely
+        identifies the task among its siblings.
 
     max_subtasks : int or None
         The maximum number of children tasks for this task. 0 means it's a leaf.
         None means the maximum number of subtasks is not known in advance.
 
-    estimator : estimator instance
-        The estimator that holds this context.
+    sequential_subtasks : bool
+        Whether this context's subtasks are sequential. When True, children contexts'
+        have consecutive integer task_ids starting from 0.
 
     estimator_name : str
         The name of the estimator that holds this context.
@@ -141,7 +143,9 @@ class CallbackContext:
     """
 
     @classmethod
-    def _from_estimator(cls, estimator, task_name, task_id, max_subtasks):
+    def _from_estimator(
+        cls, estimator, task_name, task_id, max_subtasks, sequential_subtasks
+    ):
         """Private constructor to create a root context.
 
         Parameters
@@ -152,24 +156,29 @@ class CallbackContext:
         task_name : str
             The name of the root task.
 
-        task_id : int or str
+        task_id : int
             Identifier for the root task.
 
         max_subtasks : int or None
             The maximum number of subtasks that can be children of the root task. None
             means the maximum number of subtasks is not known in advance. 0 means it's a
             leaf.
+
+        sequential_subtasks : bool
+            Whether the root context has sequential subtasks. If True, children contexts
+            created via `subcontext` will have automatically assigned consecutive
+            integer task_ids starting from 0.
         """
         new_ctx = cls.__new__(cls)
 
         # We don't store the estimator in the context to avoid circular references
         # because the estimator already holds a reference to the context.
         new_ctx._callbacks = getattr(estimator, "_skl_callbacks", [])
-        new_ctx.estimator = estimator
         new_ctx.estimator_name = estimator.__class__.__name__
         new_ctx.task_name = task_name
         new_ctx.task_id = task_id
         new_ctx.max_subtasks = max_subtasks
+        new_ctx.sequential_subtasks = sequential_subtasks
         new_ctx.parent = None
         new_ctx.root_uuid = uuid.uuid4()
         new_ctx._children_map = {}
@@ -191,7 +200,9 @@ class CallbackContext:
         return new_ctx
 
     @classmethod
-    def _from_parent(cls, parent_context, *, task_name, task_id, max_subtasks):
+    def _from_parent(
+        cls, parent_context, *, task_name, task_id, max_subtasks, sequential_subtasks
+    ):
         """Private constructor to create a sub-context.
 
         Parameters
@@ -209,16 +220,21 @@ class CallbackContext:
             The maximum number of tasks that can be children of the task this context is
             responsible for. 0 means it's a leaf. None means the maximum number of
             subtasks is not known in advance.
+
+        sequential_subtasks : bool
+            Whether this context's subtasks are sequential. If True, children contexts
+            created via `subcontext` will have automatically assigned consecutive
+            integer task_ids starting from 0.
         """
         new_ctx = cls.__new__(cls)
 
         new_ctx._callbacks = parent_context._callbacks
-        new_ctx.estimator = parent_context.estimator
         new_ctx.estimator_name = parent_context.estimator_name
         new_ctx._propagation_depth = parent_context._propagation_depth
         new_ctx.task_name = task_name
         new_ctx.task_id = task_id
         new_ctx.max_subtasks = max_subtasks
+        new_ctx.sequential_subtasks = sequential_subtasks
         new_ctx.root_uuid = parent_context.root_uuid
         new_ctx.parent = None
         new_ctx._children_map = {}
@@ -286,7 +302,9 @@ class CallbackContext:
         self.source_task_name = other_context.task_name
         self.source_estimator_name = other_context.estimator_name
 
-    def subcontext(self, task_name="", task_id=0, max_subtasks=0):
+    def subcontext(
+        self, task_name="", task_id=None, max_subtasks=0, sequential_subtasks=True
+    ):
         """Create a context for a subtask of the current task.
 
         Parameters
@@ -294,24 +312,43 @@ class CallbackContext:
         task_name : str, default=""
             The name of the subtask.
 
-        task_id : int, default=0
-            An identifier of the subtask. Usually a number between 0 and the maximum
-            number of sibling contexts, but can be any identifier as long as it's unique
-            among the siblings.
+        task_id : int or None, default=None
+            An identifier of the subtask. It must be distinct from the task_ids of its
+            siblings. If None, task_id is automatically set to the next available
+            integer task_id.
 
         max_subtasks : int or None, default=0
             The maximum number of tasks that can be children of the subtask. 0 means
             it's a leaf. None means the maximum number of subtasks is not known in
             advance.
+
+        sequential_subtasks : bool, default=True
+            Whether the new context's subtasks are sequential. If True, children
+            contexts of the new context, created via `subcontext`, will have
+            automatically assigned consecutive integer task_ids starting from 0.
         """
+        if self.sequential_subtasks and task_id is not None:
+            raise ValueError(
+                f"task_id for {self.estimator_name} {task_name} must be None if "
+                f"sequential_subtasks is True for {self.task_name}."
+            )
+        if not self.sequential_subtasks and task_id is None:
+            raise ValueError(
+                f"task_id for {self.estimator_name} {task_name} must be provided "
+                f"if sequential_subtasks is False for {self.task_name}."
+            )
+        if task_id is None:
+            task_id = len(self._children_map)
+
         return CallbackContext._from_parent(
             parent_context=self,
             task_name=task_name,
             task_id=task_id,
             max_subtasks=max_subtasks,
+            sequential_subtasks=sequential_subtasks,
         )
 
-    def _call_hooks(self, hook_name, **kwargs):
+    def _call_hooks(self, estimator, hook_name, **kwargs):
         """Helper to call the hook of all callbacks with their respective arguments.
 
         Provide the right arguments to each hook by inspecting their signatures. Any
@@ -320,6 +357,9 @@ class CallbackContext:
 
         Parameters
         ----------
+        estimator : estimator instance
+            The estimator calling the callback hook.
+
         hook_name : str
             Name of the callback hook to call.
 
@@ -373,7 +413,7 @@ class CallbackContext:
                         attrs = kwargs.get("reconstruction_attributes", None)
                         attrs = attrs() if callable(attrs) else attrs
                         new_est = (
-                            _from_reconstruction_attributes(self.estimator, attrs)
+                            _from_reconstruction_attributes(estimator, attrs)
                             if attrs is not None
                             else None
                         )
@@ -385,27 +425,35 @@ class CallbackContext:
 
                 args_to_pass[param_name] = evaluated_args[param_name]
 
-            result |= bool(getattr(callback, hook_name)(self, **args_to_pass))
+            result |= bool(
+                getattr(callback, hook_name)(estimator, self, **args_to_pass)
+            )
 
         return result
 
-    def call_on_fit_task_begin(self, **kwargs):
+    def call_on_fit_task_begin(self, *, estimator, **kwargs):
         """Call the `on_fit_task_begin` hook of the callbacks.
 
         Parameters
         ----------
+        estimator : estimator instance
+            The estimator calling the callback hook.
+
         **kwargs : dict
             Additional optional arguments passed to the callback. The list of possible
             keys and corresponding values are described in detail at <TODO: add link>.
         """
-        self._call_hooks(hook_name="on_fit_task_begin", **kwargs)
+        self._call_hooks(estimator, hook_name="on_fit_task_begin", **kwargs)
         return self
 
-    def call_on_fit_task_end(self, **kwargs):
+    def call_on_fit_task_end(self, *, estimator, **kwargs):
         """Call the `on_fit_task_end` hook of the callbacks.
 
         Parameters
         ----------
+        estimator : estimator instance
+            The estimator calling the callback hook.
+
         **kwargs : dict
             Additional optional arguments passed to the callback. The list of possible
             keys and corresponding values are described in detail at <TODO: add link>.
@@ -416,7 +464,7 @@ class CallbackContext:
             Whether or not to stop the current level of iterations at this end of this
             task.
         """
-        return self._call_hooks(hook_name="on_fit_task_end", **kwargs)
+        return self._call_hooks(estimator, hook_name="on_fit_task_end", **kwargs)
 
     def propagate_callback_context(self, sub_estimator):
         """Propagate the context and callbacks to a sub-estimator.

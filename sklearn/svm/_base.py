@@ -22,6 +22,7 @@ from sklearn.utils import (
     check_random_state,
     column_or_1d,
     compute_class_weight,
+    deprecated,
 )
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils._sparse import _align_api_if_sparse
@@ -900,7 +901,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         datasets.
         """
         X = self._validate_for_predict(X)
-        if self.probA_.size == 0 or self.probB_.size == 0:
+        if self._probA.size == 0 or self._probB.size == 0:
             raise NotFittedError(
                 "predict_proba is not available when fitted with probability=False"
             )
@@ -1017,6 +1018,11 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         return coef
 
+    @deprecated(  # type: ignore[prop-decorator]
+        "Attribute `probA_` was deprecated in version 1.9 and will be removed in "
+        "1.11 as the `probability=True` option for SVC and NuSVC was deprecated "
+        "and will be removed in 1.11."
+    )
     @property
     def probA_(self):
         """Parameter learned in Platt scaling when `probability=True`.
@@ -1027,6 +1033,11 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         """
         return self._probA
 
+    @deprecated(  # type: ignore[prop-decorator]
+        "Attribute `probB_` was deprecated in version 1.9 and will be removed in "
+        "1.11 as the `probability=True` option for SVC and NuSVC was deprecated "
+        "and will be removed in 1.11."
+    )
     @property
     def probB_(self):
         """Parameter learned in Platt scaling when `probability=True`.

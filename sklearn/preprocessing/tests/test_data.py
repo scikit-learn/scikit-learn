@@ -2413,8 +2413,8 @@ def test_power_transformer_shape_exception(method):
 
 
 def test_power_transformer_lambda_zero():
-    pt = PowerTransformer(method="box-cox", standardize=False)
     X = np.abs(X_2d)[:, 0:1]
+    pt = PowerTransformer(method="box-cox", standardize=False).fit(X)
 
     # Test the lambda = 0 case
     pt.lambdas_ = np.array([0])
@@ -2458,7 +2458,7 @@ def test_optimization_power_transformer(method, lmbda):
         # Clip the data here to make sure the inequality is valid.
         X = np.clip(X, -1 / lmbda + 1e-5, None)
 
-    pt = PowerTransformer(method=method, standardize=False)
+    pt = PowerTransformer(method=method, standardize=False).fit(np.abs(X))
     pt.lambdas_ = [lmbda]
     X_inv = pt.inverse_transform(X)
 
@@ -2472,7 +2472,7 @@ def test_optimization_power_transformer(method, lmbda):
 
 def test_invserse_box_cox():
     # output nan if the input is invalid
-    pt = PowerTransformer(method="box-cox", standardize=False)
+    pt = PowerTransformer(method="box-cox", standardize=False).fit([[1.0], [2.0]])
     pt.lambdas_ = [0.5]
     X_inv = pt.inverse_transform([[-2.1]])
     assert np.isnan(X_inv)
@@ -2837,3 +2837,33 @@ def test_yeojohnson_for_different_scipy_version():
     """Check that the results are consistent across different SciPy versions."""
     pt = PowerTransformer(method="yeo-johnson").fit(X_1col)
     pt.lambdas_[0] == pytest.approx(0.99546157, rel=1e-7)
+
+
+@pytest.mark.parametrize("TransformerClass", [PowerTransformer, QuantileTransformer])
+def test_transformer_inverse_transform_feature_names_warning(TransformerClass):
+    """Check that inverse_transform does not raise a warning about feature
+    names when fitted on a DataFrame and transforming a NumPy array.
+
+    Non-regression test for issue #31947.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X_df = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [4.0, 5.0, 6.0]})
+    transformer = TransformerClass()
+    transformer.fit(X_df)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        transformer.inverse_transform(X_df.to_numpy())
+
+
+@pytest.mark.parametrize("TransformerClass", [PowerTransformer, QuantileTransformer])
+def test_transformer_inverse_transform_shape_error(TransformerClass):
+    """Check that an informative error is raised when the input shape is incorrect."""
+    X = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
+    transformer = TransformerClass().fit(X)
+
+    X_wrong = np.array([[1.0], [2.0], [3.0]])
+    msg = f"X has 1 features, but {TransformerClass.__name__} is expecting 2 features"
+    with pytest.raises(ValueError, match=msg):
+        transformer.inverse_transform(X_wrong)
