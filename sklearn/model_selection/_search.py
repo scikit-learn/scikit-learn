@@ -999,7 +999,7 @@ class BaseSearchCV(
 
         callback_ctx = self._init_callback_context(
             max_subtasks=1 + (self.refit is not False),
-        ).call_on_fit_task_begin()
+        ).call_on_fit_task_begin(estimator=self)
 
         base_estimator = clone(self.estimator)
 
@@ -1043,10 +1043,13 @@ class BaseSearchCV(
                 elif hasattr(self, "n_iter"):  # RandomizedSearchCV
                     max_callback_subtasks = self.n_iter * n_splits
                 else:  # custom and test classes, TODO: check extra condition for
+                    # HalvingGridSearchCV (which may be calculable beforehand)
                     max_callback_subtasks = None
                 search_subctx = callback_ctx.subcontext(
-                    task_name="search", task_id=0, max_subtasks=max_callback_subtasks
-                ).call_on_fit_task_begin()
+                    task_name="search",
+                    max_subtasks=max_callback_subtasks,
+                    sequential_subtasks=False,
+                ).call_on_fit_task_begin(estimator=self)
 
                 out = parallel(
                     delayed(_fit_and_score)(
@@ -1069,7 +1072,7 @@ class BaseSearchCV(
                         enumerate(cv.split(X, y, **routed_params.splitter.split)),
                     )
                 )
-                search_subctx.call_on_fit_task_end()
+                search_subctx.call_on_fit_task_end(estimator=self)
 
                 if len(out) < 1:
                     raise ValueError(
@@ -1143,9 +1146,7 @@ class BaseSearchCV(
                 **clone(self.best_params_, safe=False)
             )
 
-            refit_subctx = callback_ctx.subcontext(
-                task_name="refit with best params", task_id=1
-            )
+            refit_subctx = callback_ctx.subcontext(task_name="refit with best params")
 
             refit_subctx.propagate_callback_context(self.best_estimator_)
             sw = params.get("sample_weight", {})
@@ -1157,7 +1158,9 @@ class BaseSearchCV(
                     "sample_weight": params.get("sample_weight_val", {}),
                 },
             }
-            refit_subctx.call_on_fit_task_begin(X=X, y=y, metadata=metadata)
+            refit_subctx.call_on_fit_task_begin(
+                estimator=self, X=X, y=y, metadata=metadata
+            )
 
             refit_start_time = time.time()
             if y is not None:
@@ -1171,7 +1174,11 @@ class BaseSearchCV(
                 self.feature_names_in_ = self.best_estimator_.feature_names_in_
 
             refit_subctx.call_on_fit_task_end(
-                X=X, y=y, metadata=metadata, reconstruction_attributes={}
+                estimator=self,
+                X=X,
+                y=y,
+                metadata=metadata,
+                reconstruction_attributes={},
             )
 
         # Store the only scorer not as a dict for single metric evaluation
@@ -1183,7 +1190,7 @@ class BaseSearchCV(
         self.cv_results_ = results
         self.n_splits_ = n_splits
 
-        callback_ctx.call_on_fit_task_end()
+        callback_ctx.call_on_fit_task_end(estimator=self)
 
         return self
 

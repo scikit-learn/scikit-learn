@@ -789,7 +789,9 @@ def _fit_and_score(
                 "sample_weight": fit_params.get("sample_weight_val", {}),
             },
         }
-        callback_ctx.call_on_fit_task_begin(X=X, y=y, metadata=metadata)
+        callback_ctx.call_on_fit_task_begin(
+            estimator=estimator, X=X, y=y, metadata=metadata
+        )
 
     # Make sure that we can fancy index X even if train and test are provided
     # as NumPy arrays by NumPy only cross-validation splitters.
@@ -915,6 +917,7 @@ def _fit_and_score(
     if callback_ctx is not None:
         # passing current estimator as if it was best_estimator_ to influence the refit
         callback_ctx.call_on_fit_task_end(
+            estimator=estimator,
             X=X,
             y=y,
             metadata=metadata,
