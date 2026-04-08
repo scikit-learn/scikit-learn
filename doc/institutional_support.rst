@@ -72,7 +72,7 @@ financially support scikit-learn as follows:
 .. |chanel| image:: images/chanel-small.png
   :target: https://www.chanel.com
 
-.. |bnpparibasgroup| image:: images/bnp-small.png
+.. |bnpparibasgroup| image:: images/bnp-paribas-small.png
   :target: https://group.bnpparibas/
 
 .. |quansightlabs| image:: images/quansight-labs-small.png
