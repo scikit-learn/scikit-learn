@@ -175,9 +175,7 @@ def test_merge_with():
     outer_root = _make_callback_ctx(meta_estimator, max_subtasks=None)
 
     # Add a child task within the same estimator
-    outer_child = outer_root.subcontext(
-        task_name="child", max_subtasks=0, sequential_subtasks=True
-    )
+    outer_child = outer_root.subcontext(task_name="child", sequential_subtasks=True)
 
     # The root task of the inner estimator is merged with (and effectively replaces)
     # a leaf of the outer estimator because they correspond to the same formal task.

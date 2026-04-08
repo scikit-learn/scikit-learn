@@ -754,6 +754,9 @@ def _fit_and_score(
     return_estimator : bool, default=False
         Whether to return the fitted estimator.
 
+    callback_ctx : `CallbackContext` object
+        CallbackContext object for callback propagation.
+
     Returns
     -------
     result : dict with the following attributes

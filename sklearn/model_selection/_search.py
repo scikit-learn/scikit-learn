@@ -775,7 +775,7 @@ class BaseSearchCV(
         _search_estimator_has("classes_")(self)
         return self.best_estimator_.classes_
 
-    def _run_search(self, evaluate_candidates):
+    def _run_search(self, evaluate_candidates, callback_ctx=None):
         """Repeatedly calls `evaluate_candidates` to conduct a search.
 
         This method, implemented in sub-classes, makes it possible to
@@ -808,6 +808,10 @@ class BaseSearchCV(
                   the `cv_results_` attribute. Values should be lists of
                   length `n_candidates`
 
+            callback_ctx : `CallbackContext` object
+                CallbackContext object for callback propagation. Only needed for
+                `Halving*SearchCV`, ignored otherwise.
+
             It returns a dict of all results so far, formatted like
             ``cv_results_``.
 
@@ -826,7 +830,7 @@ class BaseSearchCV(
 
         ::
 
-            def _run_search(self, evaluate_candidates):
+            def _run_search(self, evaluate_candidates, callback_ctx=None):
                 'Try C=0.1 only if C=1 is better than C=10'
                 all_results = evaluate_candidates([{'C': 1}, {'C': 10}])
                 score = all_results['mean_test_score']
@@ -1025,7 +1029,9 @@ class BaseSearchCV(
             # TODO: evaluate_candidates is also used by HalvingGridSearchCV, but in a
             # loop; should this be another subtask-layer or should we add the next round
             # of indices? Also fails for CustomSearchCV in the tests for similar reason.
-            def evaluate_candidates(candidate_params, cv=None, more_results=None):
+            def evaluate_candidates(
+                candidate_params, cv=None, more_results=None, callback_ctx=None
+            ):
                 cv = cv or cv_orig
                 candidate_params = list(candidate_params)
                 n_candidates = len(candidate_params)
@@ -1038,12 +1044,18 @@ class BaseSearchCV(
                         )
                     )
 
-                if hasattr(self, "param_grid"):  # GridSearchCV, HalvingGridSearchCV
+                # protect with: if callback_ctx is not None (?)
+                if hasattr(self, "param_grid") and not hasattr(self, "factor"):
+                    # GridSearchCV
                     max_callback_subtasks = n_candidates * n_splits
-                elif hasattr(self, "n_iter"):  # RandomizedSearchCV
+                elif hasattr(self, "n_iter") and not hasattr(self, "factor"):
+                    # RandomizedSearchCV
                     max_callback_subtasks = self.n_iter * n_splits
-                else:  # custom and test classes, TODO: check extra condition for
-                    # HalvingGridSearchCV (which may be calculable beforehand)
+                else:  # HalvingGridSearchCV, HalvingRandomSearchCV, custom classes
+                    # TODO: add extra condition for Halving*Search, based on
+                    # n_iterations, which were computed in
+                    # BaseSuccessiveHalving._run_search but are not yet attributes of
+                    # self at this point
                     max_callback_subtasks = None
                 search_subctx = callback_ctx.subcontext(
                     task_name="search",
@@ -1063,7 +1075,7 @@ class BaseSearchCV(
                         candidate_progress=(cand_idx, n_candidates),
                         **fit_and_score_kwargs,
                         callback_ctx=search_subctx.subcontext(
-                            task_name="candidate-split iteration",
+                            task_name="candidate-split-iteration",
                             task_id=split_idx * n_candidates + cand_idx,
                         ),
                     )
@@ -1110,7 +1122,7 @@ class BaseSearchCV(
 
                 return results
 
-            self._run_search(evaluate_candidates)
+            self._run_search(evaluate_candidates, callback_ctx=callback_ctx)
 
             # multimetric is determined here because in the case of a callable
             # self.scoring the return type is only known after calling
@@ -1694,9 +1706,9 @@ class GridSearchCV(BaseSearchCV):
         )
         self.param_grid = param_grid
 
-    def _run_search(self, evaluate_candidates):
+    def _run_search(self, evaluate_candidates, callback_ctx=None):
         """Search all candidates in param_grid"""
-        evaluate_candidates(ParameterGrid(self.param_grid))
+        evaluate_candidates(ParameterGrid(self.param_grid), callback_ctx=callback_ctx)
 
 
 class RandomizedSearchCV(BaseSearchCV):
@@ -2085,10 +2097,11 @@ class RandomizedSearchCV(BaseSearchCV):
             return_train_score=return_train_score,
         )
 
-    def _run_search(self, evaluate_candidates):
+    def _run_search(self, evaluate_candidates, callback_ctx=None):
         """Search n_iter candidates from param_distributions"""
         evaluate_candidates(
             ParameterSampler(
                 self.param_distributions, self.n_iter, random_state=self.random_state
-            )
+            ),
+            callback_ctx=callback_ctx,
         )

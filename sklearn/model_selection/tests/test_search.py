@@ -2045,7 +2045,7 @@ def test_custom_run_search():
         def __init__(self, estimator, **kwargs):
             super().__init__(estimator, **kwargs)
 
-        def _run_search(self, evaluate):
+        def _run_search(self, evaluate, callback_ctx=None):
             results = evaluate([{"max_depth": 1}, {"max_depth": 2}])
             check_results(results, fit_grid({"max_depth": [1, 2]}))
             results = evaluate([{"min_samples_split": 5}, {"min_samples_split": 10}])
@@ -2978,7 +2978,7 @@ def test_yield_masked_array_no_runtime_warning():
         list(_yield_masked_array_for_each_param(candidate_params))
 
 
-# TODO: test with refit=False
+# TODO: split test into one for NoCallbackEstimator and one for MaxIterEstimator
 @pytest.mark.parametrize("est", [NoCallbackEstimator(), MaxIterEstimator()])
 @pytest.mark.parametrize(
     "search",
@@ -3013,11 +3013,12 @@ def test_search_callbacks(search, est):
 
     search.fit(X, y)
 
-    outer = 1
+    root = 1
+    outer_search = 1
     iterations = 1  # calls to self._run_search()
     if search.__class__.__name__ == "HalvingGridSearchCV":
         iterations = iterations * 2  # aggressive_elimination=True forces n_iterations=2
-    searches = 3 * 2  # n_candidates * n_splits
+    n_searches = 3 * 2  # n_candidates * n_splits
     refit = 1  # refit step
 
     # for `NoCallbackEstimator` we expect only the hooks from `search` called:
@@ -3027,7 +3028,8 @@ def test_search_callbacks(search, est):
             assert (
                 callback.count_hooks("on_fit_task_begin")
                 == callback.count_hooks("on_fit_task_end")
-                == outer + iterations + searches + refit
+                # == outer + iterations + searches + refit
+                == root + iterations * (outer_search + n_searches) + refit
             )
             assert callback.count_hooks("teardown") == 1
     if est.__class__.__name__ == "MaxIterEstimator":
@@ -3039,18 +3041,20 @@ def test_search_callbacks(search, est):
                 assert (
                     callback.count_hooks("on_fit_task_begin")
                     == callback.count_hooks("on_fit_task_end")
-                    == outer + iterations + searches + refit
+                    # == outer + iterations + searches + refit
+                    == root + iterations * (outer_search + n_searches) + refit
                 )
-            # for `MaxIterEstimator` with callbacks propagated we expect the outer hooks
-            # from `search` called (but not the inner hooks because they will be merged
-            # with the sub-estimator's hooks) and additionally `MaxIterEstimator`'s own
-            # hooks, and a few more of each for the refit:
+            # for `MaxIterEstimator` with callbacks propagated we expect the
+            # outer_search hooks from `search` called (but not the inner hooks
+            # (n_searches) because they will be merged with the sub-estimator's hooks)
+            # and additionally `MaxIterEstimator`'s own hooks, and a few more of each
+            # for the refit:
             else:  # TestingAutoPropagatedCallback
                 if search.__class__.__name__ in ["GridSearchCV", "HalvingGridSearchCV"]:
                     assert (
                         callback.count_hooks("on_fit_task_begin")
                         == callback.count_hooks("on_fit_task_end")
-                        == outer
+                        == outer_search
                         + iterations
                         + 2  # 2 splits
                         * (
@@ -3074,7 +3078,7 @@ def test_search_callbacks(search, est):
                     assert (
                         callback.count_hooks("on_fit_task_begin")
                         == callback.count_hooks("on_fit_task_end")
-                        == outer
+                        == outer_search
                         + iterations
                         + 2  # 2 splits
                         * (
@@ -3087,5 +3091,6 @@ def test_search_callbacks(search, est):
             assert callback.count_hooks("teardown") == 1
 
 
+# TODO: test with refit=False
 # TODO add a test to check if X, y and metadata are correctly passed to the callback
 # TODO: add test to check if reconstruction_attributes are passed correctly to callback
