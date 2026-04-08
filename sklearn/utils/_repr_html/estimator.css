@@ -121,6 +121,7 @@ div.sk-serial,
     content: "";
     width: 20px;
     height: 1em;
+    margin-left: -10px;
 }
 
 
@@ -134,6 +135,7 @@ div.sk-serial,
     width: 20px;
     height: 100%;
     padding-left: 10px;
+    margin-left: -10px;
 }
 
 /* So the vertical line doesn't go too low */
