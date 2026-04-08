@@ -661,25 +661,19 @@ class LinearDiscriminantAnalysis(
 
         self.xbar_ = self.priors_ @ self.means_
 
+        # 1) Centering and scaling
         Xc = xp.concat(Xc, axis=0)
-
-        # 1) within (univariate) scaling by with classes std-dev
-        std = xp.std(Xc, axis=0)
-        # avoid division by zero in normalization
-        std[std == 0] = 1.0
         fac = xp.asarray(1.0 / n_samples, dtype=X.dtype, device=device(X))
-
-        # 2) Within variance scaling
-        X = xp.sqrt(fac) * (Xc / std)
-        # SVD of centered (within)scaled data
+        X = xp.sqrt(fac) * Xc
+        # SVD of centered data
         _, S, Vt = _svd_shrinkage(X, shrinkage=shrinkage)
 
         rank = xp.sum(xp.astype(S > self.tol, xp.int32))
         # Scaling of within covariance is: V' 1/S
-        scalings = (Vt[:rank, :] / std).T / S[:rank]
+        scalings = Vt[:rank, :].T / S[:rank]
         fac = 1.0 if n_classes == 1 else 1.0 / (n_classes - 1)
 
-        # 3) Between variance scaling
+        # 2) Between variance scaling
         # Scale weighted centers
         X = (
             (xp.sqrt((n_samples * self.priors_) * fac)) * (self.means_ - self.xbar_).T
