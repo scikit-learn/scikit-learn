@@ -143,6 +143,10 @@ div.sk-serial,
   display: none;
 }
 
+.sk-global div.sk-serial div.sk-item:has(> .sk-estimator)::before,
+.sk-global div.sk-serial div.sk-item:has(> .sk-estimator)::after{
+  display: none;
+}
 /* Hide all the items
 .sk-global div.sk-item  div.sk-parallel,
 .sk-global div.sk-item  div.sk-serial {

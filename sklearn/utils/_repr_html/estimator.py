@@ -385,6 +385,30 @@ def _write_estimator_html(
                 new_prefix = param_prefix
 
             if kind == "serial":
+                child_block = (
+                    _get_visual_block(est)
+                    if not isinstance(est, _VisualBlock)
+                    else est._sk_visual_block_()
+                )
+                has_name = child_block.kind == "single" and name is not None
+                if has_name:
+                    # write a label for the step name, then the
+                    # estimator itself
+                    out.write('<div class="sk-item">')
+                    _write_label_html(
+                        out,
+                        "",  # params
+                        "",  # attrs
+                        name,
+                        name_details,
+                        outer_class="sk-label-container",
+                        inner_class="sk-label",
+                        checked=False,
+                        doc_link="",
+                        is_fitted_css_class=is_fitted_css_class,
+                        is_fitted_icon="",
+                        param_prefix=new_prefix,
+                    )
                 _write_estimator_html(
                     out,
                     est,
@@ -393,20 +417,8 @@ def _write_estimator_html(
                     is_fitted_css_class=is_fitted_css_class,
                     param_prefix=new_prefix,
                 )
-            else:  # parallel
-                out.write('<div class="sk-parallel-item">')
-                # wrap element in a serial visualblock
-                serial_block = _VisualBlock("serial", [est], dash_wrapped=False)
-                _write_estimator_html(
-                    out,
-                    serial_block,
-                    name,
-                    name_details,
-                    is_fitted_css_class=is_fitted_css_class,
-                    param_prefix=new_prefix,
-                )
-                out.write("</div>")  # sk-parallel-item
-
+                if has_name:
+                    out.write("</div>")
         out.write("</div></div>")
     elif est_block.kind == "single":
         if (
