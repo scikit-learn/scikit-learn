@@ -1,0 +1,3 @@
+- :class:`~sklearn.decomposition.FastICA` with `algorithm='deflation'` and
+  `fun='logcosh'` is now an order of magnitude faster.
+  By :user:`Mohammad Ahmadullah Khan <MAUK9086>`.

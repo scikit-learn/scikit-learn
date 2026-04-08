@@ -44,7 +44,7 @@ https://conda.anaconda.org/conda-forge/linux-64/libpciaccess-0.18-hb9d3cd8_0.con
 https://conda.anaconda.org/conda-forge/linux-64/libpng-1.6.56-h421ea60_0.conda#97169784f0775c85683c3d8badcea2c3
 https://conda.anaconda.org/conda-forge/linux-64/libstdcxx-15.2.0-h934c35e_18.conda#1b08cd684f34175e4514474793d44bcb
 https://conda.anaconda.org/conda-forge/linux-64/libutf8proc-2.8.0-hf23e847_1.conda#b1aa0faa95017bca11369bd080487ec4
-https://conda.anaconda.org/conda-forge/linux-64/libuuid-2.41.3-h5347b49_0.conda#db409b7c1720428638e7c0d509d3e1b5
+https://conda.anaconda.org/conda-forge/linux-64/libuuid-2.42-h5347b49_0.conda#38ffe67b78c9d4de527be8315e5ada2c
 https://conda.anaconda.org/conda-forge/linux-64/libwebp-base-1.6.0-hd42ef1d_0.conda#aea31d2e5b1091feca96fcfe945c3cf9
 https://conda.anaconda.org/conda-forge/linux-64/ncurses-6.5-h2d0b736_3.conda#47e340acb35de30501a76c7c799c41d7
 https://conda.anaconda.org/conda-forge/linux-64/openssl-3.6.1-h35e630c_1.conda#f61eb8cd60ff9057122a3d338b99c00f
@@ -145,7 +145,7 @@ https://conda.anaconda.org/conda-forge/linux-64/brotli-1.0.9-h166bdaf_9.conda#46
 https://conda.anaconda.org/conda-forge/linux-64/brotli-python-1.0.9-py311ha362b79_9.conda#ced5340f5dc6cff43a80deac8d0e398f
 https://conda.anaconda.org/conda-forge/linux-64/cairo-1.18.4-he90730b_1.conda#bb6c4808bfa69d6f7f6b07e5846ced37
 https://conda.anaconda.org/conda-forge/noarch/certifi-2026.2.25-pyhd8ed1ab_0.conda#765c4d97e877cdbbb88ff33152b86125
-https://conda.anaconda.org/conda-forge/noarch/charset-normalizer-3.4.6-pyhd8ed1ab_0.conda#49ee13eb9b8f44d63879c69b8a40a74b
+https://conda.anaconda.org/conda-forge/noarch/charset-normalizer-3.4.7-pyhd8ed1ab_0.conda#a9167b9571f3baa9d448faa2139d1089
 https://conda.anaconda.org/conda-forge/noarch/colorama-0.4.6-pyhd8ed1ab_1.conda#962b9857ee8e7018c22f2776ffa0b2d7
 https://conda.anaconda.org/conda-forge/noarch/cycler-0.12.1-pyhcf101f3_2.conda#4c2a8fef270f6c69591889b93f9f55c1
 https://conda.anaconda.org/conda-forge/linux-64/cython-3.1.2-py311ha3e34f5_2.conda#f56da6e1e1f310f27cca558e58882f40
@@ -165,7 +165,7 @@ https://conda.anaconda.org/conda-forge/noarch/munkres-1.1.4-pyhd8ed1ab_1.conda#3
 https://conda.anaconda.org/conda-forge/linux-64/openblas-0.3.25-pthreads_h7a3da1a_0.conda#87661673941b5e702275fdf0fc095ad0
 https://conda.anaconda.org/conda-forge/linux-64/openldap-2.6.10-hbde042b_1.conda#3c40a106eadf7c14c6236ceddb267893
 https://conda.anaconda.org/conda-forge/noarch/packaging-26.0-pyhcf101f3_0.conda#b76541e68fea4d511b1ac46a28dcd2c6
-https://conda.anaconda.org/conda-forge/linux-64/pillow-12.1.1-py311hf88fc01_0.conda#0415141f4e3d4dad3c39ad4718936352
+https://conda.anaconda.org/conda-forge/linux-64/pillow-12.2.0-py311hf88fc01_0.conda#b4e4b0fc807b68aa1706457f2e31279d
 https://conda.anaconda.org/conda-forge/noarch/platformdirs-4.9.4-pyhcf101f3_0.conda#82c1787f2a65c0155ef9652466ee98d6
 https://conda.anaconda.org/conda-forge/noarch/pluggy-1.6.0-pyhf9edf01_1.conda#d7585b6550ad04c8c5e21097ada2888e
 https://conda.anaconda.org/conda-forge/noarch/ply-3.11-pyhd8ed1ab_3.conda#fd5062942bfa1b0bd5e0d2a4397b099e
@@ -226,7 +226,7 @@ https://conda.anaconda.org/conda-forge/linux-64/aws-sdk-cpp-1.10.57-h7b9373a_16.
 https://conda.anaconda.org/conda-forge/linux-64/blas-2.120-openblas.conda#c8f6916a81a340650078171b1d852574
 https://conda.anaconda.org/conda-forge/linux-64/matplotlib-base-3.6.1-py311he728205_1.tar.bz2#88af4d7dc89608bfb7665a9685578800
 https://conda.anaconda.org/conda-forge/linux-64/qt-main-5.15.15-h0c412b5_8.conda#80e27e7982af989ebc2e0f0d57c75ea7
-https://conda.anaconda.org/conda-forge/noarch/requests-2.33.0-pyhcf101f3_0.conda#bee5ed456361bfe8af502beaf5db82e2
+https://conda.anaconda.org/conda-forge/noarch/requests-2.33.1-pyhcf101f3_0.conda#10afbb4dbf06ff959ad25a92ccee6e59
 https://conda.anaconda.org/conda-forge/linux-64/libarrow-12.0.0-hc410076_9_cpu.conda#3dcb50139596ef80908e2dd9a931d84c
 https://conda.anaconda.org/conda-forge/noarch/pooch-1.9.0-pyhd8ed1ab_0.conda#dd4b6337bf8886855db6905b336db3c8
 https://conda.anaconda.org/conda-forge/linux-64/pyqt-5.15.11-py311h0580839_2.conda#59ae5d8d4bcb1371d61ec49dfb985c70
