@@ -2,22 +2,31 @@
 Testing for Theil-Sen module (sklearn.linear_model.theil_sen)
 """
 
-# Author: Florian Wilhelm <florian.wilhelm@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import os
 import re
 import sys
 from contextlib import contextmanager
+
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal, assert_array_less
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import (
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_array_less,
+)
 from scipy.linalg import norm
 from scipy.optimize import fmin_bfgs
+
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LinearRegression, TheilSenRegressor
-from sklearn.linear_model._theil_sen import _spatial_median, _breakdown_point
-from sklearn.linear_model._theil_sen import _modified_weiszfeld_step
+from sklearn.linear_model._theil_sen import (
+    _breakdown_point,
+    _modified_weiszfeld_step,
+    _spatial_median,
+)
 from sklearn.utils._testing import assert_almost_equal
 
 
@@ -249,6 +258,7 @@ def test_subsamples():
     assert_array_almost_equal(theil_sen.coef_, lstq.coef_, 9)
 
 
+@pytest.mark.thread_unsafe  # manually captured stdout
 def test_verbosity():
     X, y, w, c = gen_toy_problem_1d()
     # Check that Theil-Sen can be verbose

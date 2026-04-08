@@ -1,110 +1,70 @@
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Arnaud Joly <arnaud.v.joly@gmail.com>
-#          Jacob Schreiber <jmschreiber91@gmail.com>
-#          Nelson Liu <nelson@nelsonliu.me>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # See _utils.pyx for details.
 
 cimport numpy as cnp
-from ._tree cimport Node
-from ..neighbors._quad_tree cimport Cell
-
-ctypedef cnp.npy_float32 DTYPE_t          # Type of X
-ctypedef cnp.npy_float64 DOUBLE_t         # Type of y, sample_weight
-ctypedef cnp.npy_intp SIZE_t              # Type for indices and counters
-ctypedef cnp.npy_int32 INT32_t            # Signed 32 bit integer
-ctypedef cnp.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+from sklearn.tree._tree cimport Node
+from sklearn.neighbors._quad_tree cimport Cell
+from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, int32_t, uint32_t
 
 
 cdef enum:
     # Max value for our rand_r replacement (near the bottom).
     # We don't use RAND_MAX because it's different across platforms and
     # particularly tiny on Windows/MSVC.
-    RAND_R_MAX = 0x7FFFFFFF
+    # It corresponds to the maximum representable value for
+    # 32-bit signed integers (i.e. 2^31 - 1).
+    RAND_R_MAX = 2147483647
 
 
 # safe_realloc(&p, n) resizes the allocation of p to n * sizeof(*p) bytes or
 # raises a MemoryError. It never calls free, since that's __dealloc__'s job.
-#   cdef DTYPE_t *p = NULL
+#   cdef float32_t *p = NULL
 #   safe_realloc(&p, n)
 # is equivalent to p = malloc(n * sizeof(*p)) with error checking.
 ctypedef fused realloc_ptr:
     # Add pointer types here as needed.
-    (DTYPE_t*)
-    (SIZE_t*)
-    (unsigned char*)
-    (WeightedPQueueRecord*)
-    (DOUBLE_t*)
-    (DOUBLE_t**)
+    (float32_t*)
+    (intp_t*)
+    (uint8_t*)
+    (float64_t*)
+    (float64_t**)
     (Node*)
     (Cell*)
     (Node**)
 
-cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) nogil except *
+cdef int safe_realloc(realloc_ptr* p, size_t nelems) except -1 nogil
 
 
-cdef cnp.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size)
+cdef cnp.ndarray sizet_ptr_to_ndarray(intp_t* data, intp_t size)
 
 
-cdef SIZE_t rand_int(SIZE_t low, SIZE_t high,
-                     UINT32_t* random_state) nogil
+cdef intp_t rand_int(intp_t low, intp_t high,
+                     uint32_t* random_state) noexcept nogil
 
 
-cdef double rand_uniform(double low, double high,
-                         UINT32_t* random_state) nogil
+cdef float64_t rand_uniform(float64_t low, float64_t high,
+                            uint32_t* random_state) noexcept nogil
 
 
-cdef double log(double x) nogil
-
-# =============================================================================
-# WeightedPQueue data structure
-# =============================================================================
-
-# A record stored in the WeightedPQueue
-cdef struct WeightedPQueueRecord:
-    DOUBLE_t data
-    DOUBLE_t weight
-
-cdef class WeightedPQueue:
-    cdef SIZE_t capacity
-    cdef SIZE_t array_ptr
-    cdef WeightedPQueueRecord* array_
-
-    cdef bint is_empty(self) nogil
-    cdef int reset(self) nogil except -1
-    cdef SIZE_t size(self) nogil
-    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except -1
-    cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil
-    cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil
-    cdef int peek(self, DOUBLE_t* data, DOUBLE_t* weight) nogil
-    cdef DOUBLE_t get_weight_from_index(self, SIZE_t index) nogil
-    cdef DOUBLE_t get_value_from_index(self, SIZE_t index) nogil
+cdef float64_t log(float64_t x) noexcept nogil
 
 
-# =============================================================================
-# WeightedMedianCalculator data structure
-# =============================================================================
+cdef class WeightedFenwickTree:
+    cdef intp_t size         # number of leaves (ranks)
+    cdef float64_t* tree_w   # BIT for weights
+    cdef float64_t* tree_wy  # BIT for weighted targets
+    cdef intp_t max_pow2     # highest power of two <= n
+    cdef float64_t total_w   # running total weight
+    cdef float64_t total_wy  # running total weighted target
 
-cdef class WeightedMedianCalculator:
-    cdef SIZE_t initial_capacity
-    cdef WeightedPQueue samples
-    cdef DOUBLE_t total_weight
-    cdef SIZE_t k
-    cdef DOUBLE_t sum_w_0_k            # represents sum(weights[0:k])
-                                       # = w[0] + w[1] + ... + w[k-1]
-
-    cdef SIZE_t size(self) nogil
-    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except -1
-    cdef int reset(self) nogil except -1
-    cdef int update_median_parameters_post_push(
-        self, DOUBLE_t data, DOUBLE_t weight,
-        DOUBLE_t original_median) nogil
-    cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil
-    cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil
-    cdef int update_median_parameters_post_remove(
-        self, DOUBLE_t data, DOUBLE_t weight,
-        DOUBLE_t original_median) nogil
-    cdef DOUBLE_t get_median(self) nogil
+    cdef void reset(self, intp_t size) noexcept nogil
+    cdef void add(self, intp_t idx, float64_t y, float64_t w) noexcept nogil
+    cdef intp_t search(
+        self,
+        float64_t t,
+        float64_t* cw_out,
+        float64_t* cwy_out,
+        intp_t* prev_idx_out,
+    ) noexcept nogil

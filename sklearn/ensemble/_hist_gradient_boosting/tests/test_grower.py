@@ -1,17 +1,18 @@
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose, assert_array_equal
 from pytest import approx
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_allclose
 
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
-from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import X_BITSET_INNER_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import (
+    G_H_DTYPE,
+    X_BINNED_DTYPE,
+    X_BITSET_INNER_DTYPE,
+    X_DTYPE,
+    Y_DTYPE,
+)
+from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
 n_threads = _openmp_effective_n_threads()
@@ -323,7 +324,6 @@ def test_max_depth(max_depth):
 
 
 def test_input_validation():
-
     X_binned, all_gradients, all_hessians = _make_training_data()
 
     X_binned_float = X_binned.astype(np.float32)
@@ -340,7 +340,6 @@ def test_input_validation():
 def test_init_parameters_validation():
     X_binned, all_gradients, all_hessians = _make_training_data()
     with pytest.raises(ValueError, match="min_gain_to_split=-1 must be positive"):
-
         TreeGrower(X_binned, all_gradients, all_hessians, min_gain_to_split=-1)
 
     with pytest.raises(ValueError, match="min_hessian_to_split=-1 must be positive"):

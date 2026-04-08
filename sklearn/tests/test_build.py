@@ -1,6 +1,7 @@
 import os
-import pytest
 import textwrap
+
+import pytest
 
 from sklearn import __version__
 from sklearn.utils._openmp_helpers import _openmp_parallelism_enabled

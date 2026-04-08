@@ -1,21 +1,22 @@
-import numpy as np
-import scipy.sparse as sp
-from joblib import Memory
 from pathlib import Path
 
-from sklearn.decomposition import TruncatedSVD
+import numpy as np
+from joblib import Memory
+
 from sklearn.datasets import (
-    make_blobs,
     fetch_20newsgroups,
+    fetch_olivetti_faces,
     fetch_openml,
     load_digits,
-    make_regression,
+    make_blobs,
     make_classification,
-    fetch_olivetti_faces,
+    make_regression,
 )
-from sklearn.preprocessing import MaxAbsScaler, StandardScaler
+from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MaxAbsScaler, StandardScaler
+from sklearn.utils.fixes import _sparse_random_array
 
 # memory location for caching datasets
 M = Memory(location=str(Path(__file__).resolve().parent / "cache"))
@@ -59,9 +60,7 @@ def _20newsgroups_lowdim_dataset(n_components=100, ngrams=(1, 1), dtype=np.float
 
 @M.cache
 def _mnist_dataset(dtype=np.float32):
-    X, y = fetch_openml(
-        "mnist_784", version=1, return_X_y=True, as_frame=False, parser="pandas"
-    )
+    X, y = fetch_openml("mnist_784", version=1, return_X_y=True, as_frame=False)
     X = X.astype(dtype, copy=False)
     X = MaxAbsScaler().fit_transform(X)
 
@@ -101,12 +100,12 @@ def _synth_regression_dataset(n_samples=100000, n_features=100, dtype=np.float32
 def _synth_regression_sparse_dataset(
     n_samples=10000, n_features=10000, density=0.01, dtype=np.float32
 ):
-    X = sp.random(
-        m=n_samples, n=n_features, density=density, format="csr", random_state=0
+    X = _sparse_random_array(
+        (n_samples, n_features), density=density, format="csr", random_state=0
     )
     X.data = np.random.RandomState(0).randn(X.getnnz())
     X = X.astype(dtype, copy=False)
-    coefs = sp.random(m=n_features, n=1, density=0.5, random_state=0)
+    coefs = _sparse_random_array((n_features, 1), density=0.5, random_state=0)
     coefs.data = np.random.RandomState(0).randn(coefs.getnnz())
     y = X.dot(coefs.toarray()).reshape(-1)
     y += 0.2 * y.std() * np.random.randn(n_samples)
@@ -156,9 +155,8 @@ def _random_dataset(
         X = np.random.RandomState(0).random_sample((n_samples, n_features))
         X = X.astype(dtype, copy=False)
     else:
-        X = sp.random(
-            n_samples,
-            n_features,
+        X = _sparse_random_array(
+            (n_samples, n_features),
             density=0.05,
             format="csr",
             dtype=dtype,

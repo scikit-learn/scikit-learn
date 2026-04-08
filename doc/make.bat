@@ -18,7 +18,7 @@ if "%1" == "help" (
 	echo.  dirhtml   to make HTML files named index.html in directories
 	echo.  pickle    to make pickle files
 	echo.  json      to make JSON files
-	echo.  htmlhelp  to make HTML files and a HTML help project
+	echo.  htmlhelp  to make HTML files and an HTML help project
 	echo.  qthelp    to make HTML files and a qthelp project
 	echo.  latex     to make LaTeX files, you can set PAPER=a4 or PAPER=letter
 	echo.  changes   to make an overview over all changed/added/deprecated items
@@ -29,8 +29,30 @@ if "%1" == "help" (
 )
 
 if "%1" == "clean" (
-	for /d %%i in (%BUILDDIR%\*) do rmdir /q /s %%i
-	del /q /s %BUILDDIR%\*
+	if exist %BUILDDIR%\ (
+		for /d %%i in (%BUILDDIR%\*) do rmdir /q /s "%%i"
+		del /q /s %BUILDDIR%\*
+		echo. Removed %BUILDDIR%\*
+	)
+	if exist auto_examples\ (
+		rmdir /q /s auto_examples
+		echo. Removed auto_examples\
+	)
+	if exist generated\ (
+		for /d %%i in (generated\*) do rmdir /q /s "%%i"
+		del /q /s generated\*
+		echo. Removed generated\*
+	)
+	if exist modules\generated\ (
+		rmdir /q /s modules\generated
+		echo. Removed modules\generated\
+	)
+	if exist css\styles\ (
+		rmdir /q /s css\styles
+		echo. Removed css\styles\
+	)
+	for %%i in (api\*.rst) do del /q "%%i"
+	echo. Removed api\*.rst
 	goto end
 )
 
@@ -46,6 +68,7 @@ if "%1" == "html-noplot" (
 	%SPHINXBUILD% -D plot_gallery=0 -b html %ALLSPHINXOPTS% %BUILDDIR%/html
 	echo.
 	echo.Build finished. The HTML pages are in %BUILDDIR%/html
+	goto end
 )
 
 if "%1" == "dirhtml" (

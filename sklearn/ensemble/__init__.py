@@ -1,47 +1,45 @@
-"""
-The :mod:`sklearn.ensemble` module includes ensemble-based methods for
-classification, regression and anomaly detection.
-"""
-from ._base import BaseEnsemble
-from ._forest import RandomForestClassifier
-from ._forest import RandomForestRegressor
-from ._forest import RandomTreesEmbedding
-from ._forest import ExtraTreesClassifier
-from ._forest import ExtraTreesRegressor
-from ._bagging import BaggingClassifier
-from ._bagging import BaggingRegressor
-from ._iforest import IsolationForest
-from ._weight_boosting import AdaBoostClassifier
-from ._weight_boosting import AdaBoostRegressor
-from ._gb import GradientBoostingClassifier
-from ._gb import GradientBoostingRegressor
-from ._voting import VotingClassifier
-from ._voting import VotingRegressor
-from ._stacking import StackingClassifier
-from ._stacking import StackingRegressor
-from ._hist_gradient_boosting.gradient_boosting import (
-    HistGradientBoostingRegressor,
-    HistGradientBoostingClassifier,
+"""Ensemble-based methods for classification, regression and anomaly detection."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from sklearn.ensemble._bagging import BaggingClassifier, BaggingRegressor
+from sklearn.ensemble._base import BaseEnsemble
+from sklearn.ensemble._forest import (
+    ExtraTreesClassifier,
+    ExtraTreesRegressor,
+    RandomForestClassifier,
+    RandomForestRegressor,
+    RandomTreesEmbedding,
 )
+from sklearn.ensemble._gb import GradientBoostingClassifier, GradientBoostingRegressor
+from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
+    HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
+)
+from sklearn.ensemble._iforest import IsolationForest
+from sklearn.ensemble._stacking import StackingClassifier, StackingRegressor
+from sklearn.ensemble._voting import VotingClassifier, VotingRegressor
+from sklearn.ensemble._weight_boosting import AdaBoostClassifier, AdaBoostRegressor
 
 __all__ = [
+    "AdaBoostClassifier",
+    "AdaBoostRegressor",
+    "BaggingClassifier",
+    "BaggingRegressor",
     "BaseEnsemble",
+    "ExtraTreesClassifier",
+    "ExtraTreesRegressor",
+    "GradientBoostingClassifier",
+    "GradientBoostingRegressor",
+    "HistGradientBoostingClassifier",
+    "HistGradientBoostingRegressor",
+    "IsolationForest",
     "RandomForestClassifier",
     "RandomForestRegressor",
     "RandomTreesEmbedding",
-    "ExtraTreesClassifier",
-    "ExtraTreesRegressor",
-    "BaggingClassifier",
-    "BaggingRegressor",
-    "IsolationForest",
-    "GradientBoostingClassifier",
-    "GradientBoostingRegressor",
-    "AdaBoostClassifier",
-    "AdaBoostRegressor",
-    "VotingClassifier",
-    "VotingRegressor",
     "StackingClassifier",
     "StackingRegressor",
-    "HistGradientBoostingClassifier",
-    "HistGradientBoostingRegressor",
+    "VotingClassifier",
+    "VotingRegressor",
 ]

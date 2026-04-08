@@ -29,13 +29,13 @@ tends to divide natural clusters into unnecessary sub-components.
 
 """
 
-# Author: Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib as mpl
-import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.mixture import BayesianGaussianMixture
 
@@ -50,7 +50,7 @@ def plot_ellipses(ax, weights, means, covars):
         # eigenvector normalization
         eig_vals = 2 * np.sqrt(2) * np.sqrt(eig_vals)
         ell = mpl.patches.Ellipse(
-            means[n], eig_vals[0], eig_vals[1], 180 + angle, edgecolor="black"
+            means[n], eig_vals[0], eig_vals[1], angle=180 + angle, edgecolor="black"
         )
         ell.set_clip_box(ax.bbox)
         ell.set_alpha(weights[n])
@@ -103,7 +103,7 @@ means = np.array([[0.0, -0.70], [0.0, 0.0], [0.0, 0.70]])
 # mean_precision_prior= 0.8 to minimize the influence of the prior
 estimators = [
     (
-        "Finite mixture with a Dirichlet distribution\nprior and " r"$\gamma_0=$",
+        "Finite mixture with a Dirichlet distribution\n" r"prior and $\gamma_0=$",
         BayesianGaussianMixture(
             weight_concentration_prior_type="dirichlet_distribution",
             n_components=2 * n_components,
@@ -116,7 +116,7 @@ estimators = [
         [0.001, 1, 1000],
     ),
     (
-        "Infinite mixture with a Dirichlet process\n prior and" r"$\gamma_0=$",
+        "Infinite mixture with a Dirichlet process\n" r"prior and $\gamma_0=$",
         BayesianGaussianMixture(
             weight_concentration_prior_type="dirichlet_process",
             n_components=2 * n_components,

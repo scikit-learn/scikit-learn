@@ -17,38 +17,36 @@ to plot the coast lines and national boundaries of South America.
 
 The two species are:
 
- - `"Bradypus variegatus"
-   <http://www.iucnredlist.org/details/3038/0>`_ ,
-   the Brown-throated Sloth.
+- `Bradypus variegatus
+  <http://www.iucnredlist.org/details/3038/0>`_,
+  the brown-throated sloth.
 
- - `"Microryzomys minutus"
-   <http://www.iucnredlist.org/details/13408/0>`_ ,
-   also known as the Forest Small Rice Rat, a rodent that lives in Peru,
-   Colombia, Ecuador, Peru, and Venezuela.
+- `Microryzomys minutus
+  <http://www.iucnredlist.org/details/13408/0>`_,
+  also known as the forest small rice rat, a rodent that lives in Peru,
+  Colombia, Ecuador, Peru, and Venezuela.
 
 References
 ----------
 
- * `"Maximum entropy modeling of species geographic distributions"
-   <http://rob.schapire.net/papers/ecolmod.pdf>`_
-   S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
-   190:231-259, 2006.
+- `"Maximum entropy modeling of species geographic distributions"
+  <http://rob.schapire.net/papers/ecolmod.pdf>`_
+  S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
+  190:231-259, 2006.
 
 """
 
-# Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Jake Vanderplas <vanderplas@astro.washington.edu>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from time import time
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.utils import Bunch
+from sklearn import metrics, svm
 from sklearn.datasets import fetch_species_distributions
-from sklearn import svm, metrics
+from sklearn.utils import Bunch
 
 # if basemap is available, we'll use it.
 # otherwise, we'll improvise later...
@@ -111,7 +109,7 @@ def create_species_bunch(species_name, train, test, coverages, xgrid, ygrid):
 
 
 def plot_species_distribution(
-    species=("bradypus_variegatus_0", "microryzomys_minutus_0")
+    species=("bradypus_variegatus_0", "microryzomys_minutus_0"),
 ):
     """
     Plot the species distribution.
@@ -196,7 +194,7 @@ def plot_species_distribution(
         Z = np.ones((data.Ny, data.Nx), dtype=np.float64)
 
         # We'll predict only for the land points.
-        idx = np.where(land_reference > -9999)
+        idx = (land_reference > -9999).nonzero()
         coverages_land = data.coverages[:, idx[0], idx[1]].T
 
         pred = clf.decision_function((coverages_land - mean) / std)

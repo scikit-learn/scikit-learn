@@ -1,28 +1,55 @@
-# Authors: Nicolas Goix <nicolas.goix@telecom-paristech.fr>
-#          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
+import threading
+from numbers import Integral, Real
+from warnings import warn
+
 import numpy as np
 from scipy.sparse import issparse
-from warnings import warn
-from numbers import Integral, Real
 
-from ..tree import ExtraTreeRegressor
-from ..tree._tree import DTYPE as tree_dtype
-from ..utils import (
-    check_random_state,
-    check_array,
-    gen_batches,
-    get_chunk_n_rows,
+from sklearn.base import OutlierMixin, _fit_context
+from sklearn.ensemble._bagging import BaseBagging
+from sklearn.tree import ExtraTreeRegressor
+from sklearn.tree._tree import DTYPE as tree_dtype
+from sklearn.utils import check_array, check_random_state, gen_batches
+from sklearn.utils._chunking import get_chunk_n_rows
+from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    _num_samples,
+    check_is_fitted,
+    validate_data,
 )
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.validation import check_is_fitted, _num_samples
-from ..base import OutlierMixin
-
-from ._bagging import BaseBagging
 
 __all__ = ["IsolationForest"]
+
+
+def _parallel_compute_tree_depths(
+    tree,
+    X,
+    features,
+    tree_decision_path_lengths,
+    tree_avg_path_lengths,
+    depths,
+    lock,
+):
+    """Parallel computation of isolation tree depth."""
+    if features is None:
+        X_subset = X
+    else:
+        X_subset = X[:, features]
+
+    leaves_index = tree.apply(X_subset, check_input=False)
+
+    with lock:
+        depths += (
+            tree_decision_path_lengths[leaves_index]
+            + tree_avg_path_lengths[leaves_index]
+            - 1.0
+        )
 
 
 class IsolationForest(OutlierMixin, BaseBagging):
@@ -57,9 +84,10 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
     max_samples : "auto", int or float, default="auto"
         The number of samples to draw from X to train each base estimator.
-            - If int, then draw `max_samples` samples.
-            - If float, then draw `max_samples * X.shape[0]` samples.
-            - If "auto", then `max_samples=min(256, n_samples)`.
+
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * X.shape[0]` samples.
+        - If "auto", then `max_samples=min(256, n_samples)`.
 
         If max_samples is larger than the number of samples provided,
         all samples will be used for all trees (no sampling).
@@ -69,9 +97,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
         of outliers in the data set. Used when fitting to define the threshold
         on the scores of the samples.
 
-            - If 'auto', the threshold is determined as in the
-              original paper.
-            - If float, the contamination should be in the range (0, 0.5].
+        - If 'auto', the threshold is determined as in the
+          original paper.
+        - If float, the contamination should be in the range (0, 0.5].
 
         .. versionchanged:: 0.22
            The default value of ``contamination`` changed from 0.1
@@ -80,11 +108,11 @@ class IsolationForest(OutlierMixin, BaseBagging):
     max_features : int or float, default=1.0
         The number of features to draw from X to train each base estimator.
 
-            - If int, then draw `max_features` features.
-            - If float, then draw `max(1, int(max_features * n_features_in_))` features.
+        - If int, then draw `max_features` features.
+        - If float, then draw `max(1, int(max_features * n_features_in_))` features.
 
         Note: using a float number less than 1.0 or integer less than number of
-        features will enable feature subsampling and leads to a longerr runtime.
+        features will enable feature subsampling and leads to a longer runtime.
 
     bootstrap : bool, default=False
         If True, individual trees are fit on random subsets of the training
@@ -92,10 +120,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
         is performed.
 
     n_jobs : int, default=None
-        The number of jobs to run in parallel for both :meth:`fit` and
-        :meth:`predict`. ``None`` means 1 unless in a
-        :obj:`joblib.parallel_backend` context. ``-1`` means using all
-        processors. See :term:`Glossary <n_jobs>` for more details.
+        The number of jobs to run in parallel for :meth:`fit`. ``None`` means 1
+        unless in a :obj:`joblib.parallel_backend` context. ``-1`` means using
+        all processors. See :term:`Glossary <n_jobs>` for more details.
 
     random_state : int, RandomState instance or None, default=None
         Controls the pseudo-randomness of the selection of the feature
@@ -122,14 +149,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         .. versionadded:: 1.2
            `base_estimator_` was renamed to `estimator_`.
-
-    base_estimator_ : ExtraTreeRegressor instance
-        The child estimator template used to create the collection of
-        fitted sub-estimators.
-
-        .. deprecated:: 1.2
-            `base_estimator_` is deprecated and will be removed in 1.4.
-            Use `estimator_` instead.
 
     estimators_ : list of ExtraTreeRegressor instances
         The collection of fitted sub-estimators.
@@ -182,15 +201,18 @@ class IsolationForest(OutlierMixin, BaseBagging):
     The implementation is based on an ensemble of ExtraTreeRegressor. The
     maximum depth of each tree is set to ``ceil(log_2(n))`` where
     :math:`n` is the number of samples used to build the tree
-    (see (Liu et al., 2008) for more details).
+    (see [1]_ for more details).
 
     References
     ----------
-    .. [1] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
-           Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
-    .. [2] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation-based
-           anomaly detection." ACM Transactions on Knowledge Discovery from
-           Data (TKDD) 6.1 (2012): 3.
+    .. [1] F. T. Liu, K. M. Ting and Z. -H. Zhou.
+           :doi:`"Isolation forest." <10.1109/ICDM.2008.17>`
+           2008 Eighth IEEE International Conference on Data Mining (ICDM),
+           2008, pp. 413-422.
+    .. [2] F. T. Liu, K. M. Ting and Z. -H. Zhou.
+           :doi:`"Isolation-based anomaly detection."
+           <10.1145/2133360.2133363>` ACM Transactions on
+           Knowledge Discovery from Data (TKDD) 6.1 (2012): 1-39.
 
     Examples
     --------
@@ -199,6 +221,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
     >>> clf = IsolationForest(random_state=0).fit(X)
     >>> clf.predict([[0.1], [0], [90]])
     array([ 1,  1, -1])
+
+    For an example of using isolation forest for anomaly detection see
+    :ref:`sphx_glr_auto_examples_ensemble_plot_isolation_forest.py`.
     """
 
     _parameter_constraints: dict = {
@@ -206,7 +231,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         "max_samples": [
             StrOptions({"auto"}),
             Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0, 1, closed="right"),
+            Interval(RealNotInt, 0, 1, closed="right"),
         ],
         "contamination": [
             StrOptions({"auto"}),
@@ -237,9 +262,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         warm_start=False,
     ):
         super().__init__(
-            estimator=ExtraTreeRegressor(
-                max_features=1, splitter="random", random_state=random_state
-            ),
+            estimator=None,
             # here above max_features has no links with self.max_features
             bootstrap=bootstrap,
             bootstrap_features=False,
@@ -254,6 +277,14 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         self.contamination = contamination
 
+    def _get_estimator(self):
+        return ExtraTreeRegressor(
+            # here max_features has no links with self.max_features
+            max_features=1,
+            splitter="random",
+            random_state=self.random_state,
+        )
+
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by iforest")
 
@@ -261,9 +292,10 @@ class IsolationForest(OutlierMixin, BaseBagging):
         # ExtraTreeRegressor releases the GIL, so it's more efficient to use
         # a thread-based backend rather than a process-based backend so as
         # to avoid suffering from communication overhead and extra memory
-        # copies.
+        # copies. This is only used in the fit method.
         return {"prefer": "threads"}
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None, sample_weight=None):
         """
         Fit estimator.
@@ -286,8 +318,13 @@ class IsolationForest(OutlierMixin, BaseBagging):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-        X = self._validate_data(X, accept_sparse=["csc"], dtype=tree_dtype)
+        X = validate_data(
+            self, X, accept_sparse=["csc"], dtype=tree_dtype, ensure_all_finite=False
+        )
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
+
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
@@ -321,10 +358,20 @@ class IsolationForest(OutlierMixin, BaseBagging):
         super()._fit(
             X,
             y,
-            max_samples,
+            max_samples=max_samples,
             max_depth=max_depth,
             sample_weight=sample_weight,
             check_input=False,
+        )
+
+        self._average_path_length_per_tree, self._decision_path_lengths = zip(
+            *[
+                (
+                    _average_path_length(tree.tree_.n_node_samples),
+                    tree.tree_.compute_node_depths(),
+                )
+                for tree in self.estimators_
+            ]
         )
 
         if self.contamination == "auto":
@@ -333,8 +380,13 @@ class IsolationForest(OutlierMixin, BaseBagging):
             self.offset_ = -0.5
             return self
 
-        # else, define offset_ wrt contamination parameter
-        self.offset_ = np.percentile(self.score_samples(X), 100.0 * self.contamination)
+        # Else, define offset_ wrt contamination parameter
+        # To avoid performing input validation a second time we call
+        # _score_samples rather than score_samples.
+        # _score_samples expects a CSR matrix, so we convert if necessary.
+        if issparse(X):
+            X = X.tocsr()
+        self.offset_ = np.percentile(self._score_samples(X), 100.0 * self.contamination)
 
         return self
 
@@ -354,6 +406,23 @@ class IsolationForest(OutlierMixin, BaseBagging):
         is_inlier : ndarray of shape (n_samples,)
             For each observation, tells whether or not (+1 or -1) it should
             be considered as an inlier according to the fitted model.
+
+        Notes
+        -----
+        The predict method can be parallelized by setting a joblib context. This
+        inherently does NOT use the ``n_jobs`` parameter initialized in the class,
+        which is used during ``fit``. This is because, predict may actually be faster
+        without parallelization for a small number of samples,
+        such as for 1000 samples or less. The user can set the
+        number of jobs in the joblib context to control the number of parallel jobs.
+
+        .. code-block:: python
+
+            from joblib import parallel_backend
+
+            # Note, we use threading here as the predict method is not CPU bound.
+            with parallel_backend("threading", n_jobs=4):
+                model.predict(X)
         """
         check_is_fitted(self)
         decision_func = self.decision_function(X)
@@ -372,7 +441,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         of the leaf containing this observation, which is equivalent to
         the number of splittings required to isolate this point. In case of
         several observations n_left in the leaf, the average path length of
-        a n_left samples isolation tree is added.
+        an n_left samples isolation tree is added.
 
         Parameters
         ----------
@@ -387,6 +456,25 @@ class IsolationForest(OutlierMixin, BaseBagging):
             The anomaly score of the input samples.
             The lower, the more abnormal. Negative scores represent outliers,
             positive scores represent inliers.
+
+        Notes
+        -----
+        The decision_function method can be parallelized by setting a joblib context.
+        This inherently does NOT use the ``n_jobs`` parameter initialized in the class,
+        which is used during ``fit``. This is because, calculating the score may
+        actually be faster without parallelization for a small number of samples,
+        such as for 1000 samples or less.
+        The user can set the number of jobs in the joblib context to control the
+        number of parallel jobs.
+
+        .. code-block:: python
+
+            from joblib import parallel_backend
+
+            # Note, we use threading here as the decision_function method is
+            # not CPU bound.
+            with parallel_backend("threading", n_jobs=4):
+                model.decision_function(X)
         """
         # We subtract self.offset_ to make 0 be the threshold value for being
         # an outlier:
@@ -404,7 +492,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         of the leaf containing this observation, which is equivalent to
         the number of splittings required to isolate this point. In case of
         several observations n_left in the leaf, the average path length of
-        a n_left samples isolation tree is added.
+        an n_left samples isolation tree is added.
 
         Parameters
         ----------
@@ -416,20 +504,50 @@ class IsolationForest(OutlierMixin, BaseBagging):
         scores : ndarray of shape (n_samples,)
             The anomaly score of the input samples.
             The lower, the more abnormal.
+
+        Notes
+        -----
+        The score function method can be parallelized by setting a joblib context. This
+        inherently does NOT use the ``n_jobs`` parameter initialized in the class,
+        which is used during ``fit``. This is because, calculating the score may
+        actually be faster without parallelization for a small number of samples,
+        such as for 1000 samples or less.
+        The user can set the number of jobs in the joblib context to control the
+        number of parallel jobs.
+
+        .. code-block:: python
+
+            from joblib import parallel_backend
+
+            # Note, we use threading here as the score_samples method is not CPU bound.
+            with parallel_backend("threading", n_jobs=4):
+                model.score(X)
         """
-        # code structure from ForestClassifier/predict_proba
+        # Check data
+        X = validate_data(
+            self,
+            X,
+            accept_sparse="csr",
+            dtype=tree_dtype,
+            reset=False,
+            ensure_all_finite=False,
+        )
+
+        return self._score_samples(X)
+
+    def _score_samples(self, X):
+        """Private version of score_samples without input validation.
+
+        Input validation would remove feature names, so we disable it.
+        """
+        # Code structure from ForestClassifier/predict_proba
 
         check_is_fitted(self)
 
-        # Check data
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
-
-        # Take the opposite of the scores as bigger is better (here less
-        # abnormal)
+        # Take the opposite of the scores as bigger is better (here less abnormal)
         return -self._compute_chunked_score_samples(X)
 
     def _compute_chunked_score_samples(self, X):
-
         n_samples = _num_samples(X)
 
         if self._max_features == X.shape[1]:
@@ -472,24 +590,46 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         subsample_features : bool
             Whether features should be subsampled.
+
+        Returns
+        -------
+        scores : ndarray of shape (n_samples,)
+            The score of each sample in X.
         """
         n_samples = X.shape[0]
 
         depths = np.zeros(n_samples, order="f")
 
-        for tree, features in zip(self.estimators_, self.estimators_features_):
-            X_subset = X[:, features] if subsample_features else X
+        average_path_length_max_samples = _average_path_length([self._max_samples])
 
-            leaves_index = tree.apply(X_subset)
-            node_indicator = tree.decision_path(X_subset)
-            n_samples_leaf = tree.tree_.n_node_samples[leaves_index]
-
-            depths += (
-                np.ravel(node_indicator.sum(axis=1))
-                + _average_path_length(n_samples_leaf)
-                - 1.0
+        # Note: we use default n_jobs value, i.e. sequential computation, which
+        # we expect to be more performant that parallelizing for small number
+        # of samples, e.g. < 1k samples. Default n_jobs value can be overridden
+        # by using joblib.parallel_backend context manager around
+        # ._compute_score_samples. Using a higher n_jobs may speed up the
+        # computation of the scores, e.g. for > 1k samples. See
+        # https://github.com/scikit-learn/scikit-learn/pull/28622 for more
+        # details.
+        lock = threading.Lock()
+        Parallel(
+            verbose=self.verbose,
+            require="sharedmem",
+        )(
+            delayed(_parallel_compute_tree_depths)(
+                tree,
+                X,
+                features if subsample_features else None,
+                self._decision_path_lengths[tree_idx],
+                self._average_path_length_per_tree[tree_idx],
+                depths,
+                lock,
             )
-        denominator = len(self.estimators_) * _average_path_length([self.max_samples_])
+            for tree_idx, (tree, features) in enumerate(
+                zip(self.estimators_, self.estimators_features_)
+            )
+        )
+
+        denominator = len(self.estimators_) * average_path_length_max_samples
         scores = 2 ** (
             # For a single training sample, denominator and depth are 0.
             # Therefore, we set the score manually to 1.
@@ -499,19 +639,15 @@ class IsolationForest(OutlierMixin, BaseBagging):
         )
         return scores
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 def _average_path_length(n_samples_leaf):
     """
-    The average path length in a n_samples iTree, which is equal to
+    The average path length in an n_samples iTree, which is equal to
     the average path length of an unsuccessful BST search since the
     latter has the same structure as an isolation tree.
     Parameters

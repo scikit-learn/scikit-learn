@@ -4,10 +4,12 @@ from typing import Optional
 
 import pytest
 
-from sklearn.utils.discovery import all_estimators
-from sklearn.utils.discovery import all_displays
-from sklearn.utils.discovery import all_functions
-
+# make it possible to discover experimental estimators when calling `all_estimators`
+from sklearn.experimental import (
+    enable_halving_search_cv,  # noqa: F401
+    enable_iterative_imputer,  # noqa: F401
+)
+from sklearn.utils.discovery import all_displays, all_estimators, all_functions
 
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
@@ -49,7 +51,7 @@ def filter_errors(errors, method, Klass=None):
         # We ignore following error code,
         #  - RT02: The first line of the Returns section
         #    should contain only the type, ..
-        #   (as we may need refer to the name of the returned
+        #   (as we may need to refer to the name of the returned
         #    object)
         #  - GL01: Docstring text (summary) should start in the line
         #    immediately after the opening quotes (not in the same line,
@@ -153,6 +155,7 @@ def test_function_docstring(function_name, request):
         raise ValueError(msg)
 
 
+@pytest.mark.no_check_spmatrix  # no __module__ for check_spmatrix classes
 @pytest.mark.parametrize("Klass, method", get_all_methods())
 def test_docstring(Klass, method, request):
     base_import_path = Klass.__module__
@@ -173,8 +176,8 @@ def test_docstring(Klass, method, request):
 
 
 if __name__ == "__main__":
-    import sys
     import argparse
+    import sys
 
     parser = argparse.ArgumentParser(description="Validate docstring with numpydoc.")
     parser.add_argument("import_path", help="Import path to validate")

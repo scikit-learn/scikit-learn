@@ -1,60 +1,245 @@
-from functools import wraps
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
+import importlib
+from functools import wraps
+from typing import Protocol, runtime_checkable
+
+import numpy as np
 from scipy.sparse import issparse
 
-from . import check_pandas_support
-from .._config import get_config
-from ._available_if import available_if
+from sklearn._config import get_config
+from sklearn.utils._available_if import available_if
 
 
-def _wrap_in_pandas_container(
-    data_to_wrap,
-    *,
-    columns,
-    index=None,
-):
-    """Create a Pandas DataFrame.
+def check_library_installed(library):
+    """Check library is installed."""
+    try:
+        return importlib.import_module(library)
+    except ImportError as exc:
+        raise ImportError(
+            f"Setting output container to '{library}' requires {library} to be"
+            " installed"
+        ) from exc
 
-    If `data_to_wrap` is a DataFrame, then the `columns` and `index` will be changed
-    inplace. If `data_to_wrap` is a ndarray, then a new DataFrame is created with
-    `columns` and `index`.
 
-    Parameters
-    ----------
-    data_to_wrap : {ndarray, dataframe}
-        Data to be wrapped as pandas dataframe.
-
-    columns : callable, ndarray, or None
-        The column names or a callable that returns the column names. The
-        callable is useful if the column names require some computation.
-        If `None` and `data_to_wrap` is already a dataframe, then the column
-        names are not changed. If `None` and `data_to_wrap` is **not** a
-        dataframe, then columns are `range(n_features)`.
-
-    index : array-like, default=None
-        Index for data.
-
-    Returns
-    -------
-    dataframe : DataFrame
-        Container with column names or unchanged `output`.
-    """
-    if issparse(data_to_wrap):
-        raise ValueError("Pandas output does not support sparse data.")
-
+def get_columns(columns):
     if callable(columns):
-        columns = columns()
+        try:
+            return columns()
+        except Exception:
+            return None
+    return columns
 
-    pd = check_pandas_support("Setting output container to 'pandas'")
 
-    if isinstance(data_to_wrap, pd.DataFrame):
+@runtime_checkable
+class ContainerAdapterProtocol(Protocol):
+    container_lib: str
+
+    def create_container(self, X_output, X_original, columns, inplace=False):
+        """Create container from `X_output` with additional metadata.
+
+        Parameters
+        ----------
+        X_output : {ndarray, dataframe}
+            Data to wrap.
+
+        X_original : {ndarray, dataframe}
+            Original input dataframe. This is used to extract the metadata that should
+            be passed to `X_output`, e.g. pandas row index.
+
+        columns : callable, ndarray, or None
+            The column names or a callable that returns the column names. The
+            callable is useful if the column names require some computation. If `None`,
+            then no columns are passed to the container's constructor.
+
+        inplace : bool, default=False
+            Whether or not we intend to modify `X_output` in-place. However, it does
+            not guarantee that we return the same object if the in-place operation
+            is not possible.
+
+        Returns
+        -------
+        wrapped_output : container_type
+            `X_output` wrapped into the container type.
+        """
+
+    def is_supported_container(self, X):
+        """Return True if X is a supported container.
+
+        Parameters
+        ----------
+        Xs: container
+            Containers to be checked.
+
+        Returns
+        -------
+        is_supported_container : bool
+            True if X is a supported container.
+        """
+
+    def rename_columns(self, X, columns):
+        """Rename columns in `X`.
+
+        Parameters
+        ----------
+        X : container
+            Container which columns is updated.
+
+        columns : ndarray of str
+            Columns to update the `X`'s columns with.
+
+        Returns
+        -------
+        updated_container : container
+            Container with new names.
+        """
+
+    def hstack(self, Xs, feature_names=None):
+        """Stack containers horizontally (column-wise).
+
+        Parameters
+        ----------
+        Xs : list of containers
+            List of containers to stack.
+
+        feature_names : array-like of str, default=None
+            The feature names for the stacked container. If provided, the
+            columns of the result will be renamed to these names.
+
+        Returns
+        -------
+        stacked_Xs : container
+            Stacked containers.
+        """
+
+
+class PandasAdapter:
+    container_lib = "pandas"
+
+    def create_container(self, X_output, X_original, columns, inplace=True):
+        pd = check_library_installed("pandas")
+        columns = get_columns(columns)
+
+        if not inplace or not isinstance(X_output, pd.DataFrame):
+            # In all these cases, we need to create a new DataFrame
+
+            # Unfortunately, we cannot use `getattr(container, "index")`
+            # because `list` exposes an `index` attribute.
+            if isinstance(X_output, pd.DataFrame):
+                index = X_output.index
+            elif isinstance(X_original, (pd.DataFrame, pd.Series)):
+                index = X_original.index
+            else:
+                index = None
+
+            # We don't pass columns here because it would intend columns selection
+            # instead of renaming.
+            X_output = pd.DataFrame(X_output, index=index, copy=not inplace)
+
         if columns is not None:
-            data_to_wrap.columns = columns
-        if index is not None:
-            data_to_wrap.index = index
-        return data_to_wrap
+            return self.rename_columns(X_output, columns)
+        return X_output
 
-    return pd.DataFrame(data_to_wrap, index=index, columns=columns)
+    def is_supported_container(self, X):
+        pd = check_library_installed("pandas")
+        return isinstance(X, pd.DataFrame)
+
+    def rename_columns(self, X, columns):
+        # we cannot use `rename` since it takes a dictionary and at this stage we have
+        # potentially duplicate column names in `X`
+        X.columns = columns
+        return X
+
+    def hstack(self, Xs, feature_names=None):
+        pd = check_library_installed("pandas")
+        result = pd.concat(Xs, axis=1)
+        if feature_names is not None:
+            self.rename_columns(result, feature_names)
+        return result
+
+
+class PolarsAdapter:
+    container_lib = "polars"
+
+    def create_container(self, X_output, X_original, columns, inplace=True):
+        pl = check_library_installed("polars")
+        columns = get_columns(columns)
+        columns = columns.tolist() if isinstance(columns, np.ndarray) else columns
+
+        if not inplace or not isinstance(X_output, pl.DataFrame):
+            # In all these cases, we need to create a new DataFrame
+            return pl.DataFrame(X_output, schema=columns, orient="row")
+
+        if columns is not None:
+            return self.rename_columns(X_output, columns)
+        return X_output
+
+    def is_supported_container(self, X):
+        pl = check_library_installed("polars")
+        return isinstance(X, pl.DataFrame)
+
+    def rename_columns(self, X, columns):
+        # we cannot use `rename` since it takes a dictionary and at this stage we have
+        # potentially duplicate column names in `X`
+        X.columns = columns
+        return X
+
+    def hstack(self, Xs, feature_names=None):
+        pl = check_library_installed("polars")
+        if feature_names is not None:
+            # Rename columns in each X before concat to avoid duplicates
+            start = 0
+            for X in Xs:
+                n_features = X.shape[1]
+                names = feature_names[start : start + n_features]
+                self.rename_columns(X, names)
+                start += n_features
+        return pl.concat(Xs, how="horizontal")
+
+
+class ContainerAdaptersManager:
+    def __init__(self):
+        self.adapters = {}
+
+    @property
+    def supported_outputs(self):
+        return {"default"} | set(self.adapters)
+
+    def register(self, adapter):
+        self.adapters[adapter.container_lib] = adapter
+
+
+ADAPTERS_MANAGER = ContainerAdaptersManager()
+ADAPTERS_MANAGER.register(PandasAdapter())
+ADAPTERS_MANAGER.register(PolarsAdapter())
+
+
+def _get_adapter_from_container(container):
+    """Get the adapter that knows how to handle such container.
+
+    See :class:`sklearn.utils._set_output.ContainerAdapterProtocol` for more
+    details.
+    """
+    module_name = container.__class__.__module__.split(".")[0]
+    try:
+        return ADAPTERS_MANAGER.adapters[module_name]
+    except KeyError as exc:
+        available_adapters = list(ADAPTERS_MANAGER.adapters.keys())
+        raise ValueError(
+            "The container does not have a registered adapter in scikit-learn. "
+            f"Available adapters are: {available_adapters} while the container "
+            f"provided is: {container!r}."
+        ) from exc
+
+
+def _get_container_adapter(method, estimator=None):
+    """Get container adapter."""
+    dense_config = _get_output_config(method, estimator)["dense"]
+    try:
+        return ADAPTERS_MANAGER.adapters[dense_config]
+    except KeyError:
+        return None
 
 
 def _get_output_config(method, estimator=None):
@@ -83,9 +268,10 @@ def _get_output_config(method, estimator=None):
     else:
         dense_config = get_config()[f"{method}_output"]
 
-    if dense_config not in {"default", "pandas"}:
+    supported_outputs = ADAPTERS_MANAGER.supported_outputs
+    if dense_config not in supported_outputs:
         raise ValueError(
-            f"output config must be 'default' or 'pandas' got {dense_config}"
+            f"output config must be in {sorted(supported_outputs)}, got {dense_config}"
         )
 
     return {"dense": dense_config}
@@ -121,10 +307,18 @@ def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
     if output_config["dense"] == "default" or not _auto_wrap_is_configured(estimator):
         return data_to_wrap
 
-    # dense_config == "pandas"
-    return _wrap_in_pandas_container(
-        data_to_wrap=data_to_wrap,
-        index=getattr(original_input, "index", None),
+    dense_config = output_config["dense"]
+    if issparse(data_to_wrap):
+        raise ValueError(
+            "The transformer outputs a scipy sparse matrix. "
+            "Try to set the transformer output to a dense array or disable "
+            f"{dense_config.capitalize()} output with set_output(transform='default')."
+        )
+
+    adapter = ADAPTERS_MANAGER.adapters[dense_config]
+    return adapter.create_container(
+        data_to_wrap,
+        original_input,
         columns=estimator.get_feature_names_out,
     )
 
@@ -137,10 +331,15 @@ def _wrap_method_output(f, method):
         data_to_wrap = f(self, X, *args, **kwargs)
         if isinstance(data_to_wrap, tuple):
             # only wrap the first output for cross decomposition
-            return (
+            return_tuple = (
                 _wrap_data_with_container(method, data_to_wrap[0], X, self),
                 *data_to_wrap[1:],
             )
+            # Support for namedtuples `_make` is a documented API for namedtuples:
+            # https://docs.python.org/3/library/collections.html#collections.somenamedtuple._make
+            if hasattr(type(data_to_wrap), "_make"):
+                return type(data_to_wrap)._make(return_tuple)
+            return return_tuple
 
         return _wrap_data_with_container(method, data_to_wrap, X, self)
 
@@ -167,10 +366,12 @@ class _SetOutputMixin:
     it based on `set_output` of the global configuration.
 
     `set_output` is only defined if `get_feature_names_out` is defined and
-    `auto_wrap_output` is True.
+    `auto_wrap_output_keys` is the default value.
     """
 
     def __init_subclass__(cls, auto_wrap_output_keys=("transform",), **kwargs):
+        super().__init_subclass__(**kwargs)
+
         # Dynamically wraps `transform` and `fit_transform` and configure it's
         # output based on `set_output`.
         if not (
@@ -193,6 +394,10 @@ class _SetOutputMixin:
             if not hasattr(cls, method) or key not in auto_wrap_output_keys:
                 continue
             cls._sklearn_auto_wrap_output_keys.add(key)
+
+            # Only wrap methods defined by cls itself
+            if method not in cls.__dict__:
+                continue
             wrapped_method = _wrap_method_output(getattr(cls, method), key)
             setattr(cls, method, wrapped_method)
 
@@ -205,13 +410,16 @@ class _SetOutputMixin:
 
         Parameters
         ----------
-        transform : {"default", "pandas"}, default=None
-            Configure output of the following estimator's methods:
+        transform : {"default", "pandas", "polars"}, default=None
+            Configure output of `transform` and `fit_transform`.
 
-            - `"transform"`
-            - `"fit_transform"`
+            - `"default"`: Default output format of a transformer
+            - `"pandas"`: DataFrame output
+            - `"polars"`: Polars output
+            - `None`: Transform configuration is unchanged
 
-            If `None`, this operation is a no-op.
+            .. versionadded:: 1.4
+                `"polars"` option was added.
 
         Returns
         -------
@@ -238,7 +446,7 @@ def _safe_set_output(estimator, *, transform=None):
     estimator : estimator instance
         Estimator instance.
 
-    transform : {"default", "pandas"}, default=None
+    transform : {"default", "pandas", "polars"}, default=None
         Configure output of the following estimator's methods:
 
         - `"transform"`
@@ -251,10 +459,8 @@ def _safe_set_output(estimator, *, transform=None):
     estimator : estimator instance
         Estimator instance.
     """
-    set_output_for_transform = (
-        hasattr(estimator, "transform")
-        or hasattr(estimator, "fit_transform")
-        and transform is not None
+    set_output_for_transform = hasattr(estimator, "transform") or (
+        hasattr(estimator, "fit_transform") and transform is not None
     )
     if not set_output_for_transform:
         # If estimator can not transform, then `set_output` does not need to be

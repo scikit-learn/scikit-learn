@@ -1,0 +1,7 @@
+- Fixed incorrect :class:`ValueError` when using
+  ``scoring="average_precision"`` or similar in model selection utilities such
+  as `model_selection.GridSearchCV` or `model_selection.cross_validate` with
+  multiclass classifiers. The ``pos_label`` parameter is only relevant for
+  binary classification and was incorrectly being validated for scorers used on
+  multiclass problems.
+  By :user:`Olivier Grisel <ogrisel>`.

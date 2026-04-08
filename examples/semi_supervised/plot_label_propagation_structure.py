@@ -1,7 +1,7 @@
 """
-==============================================
-Label Propagation learning a complex structure
-==============================================
+=======================================================
+Label Propagation circles: Learning a complex structure
+=======================================================
 
 Example of LabelPropagation learning a complex internal structure
 to demonstrate "manifold learning". The outer circle should be
@@ -11,9 +11,8 @@ propagate correctly around the circle.
 
 """
 
-# Authors: Clay Woolam <clay@woolam.org>
-#          Andreas Mueller <amueller@ais.uni-bonn.de>
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # We generate a dataset with two concentric circles. In addition, a label
@@ -22,6 +21,7 @@ propagate correctly around the circle.
 # Here, all labels but two are tagged as unknown.
 
 import numpy as np
+
 from sklearn.datasets import make_circles
 
 n_samples = 200
@@ -78,8 +78,8 @@ label_spread.fit(X, labels)
 # when the label was unknown.
 output_labels = label_spread.transduction_
 output_label_array = np.asarray(output_labels)
-outer_numbers = np.where(output_label_array == outer)[0]
-inner_numbers = np.where(output_label_array == inner)[0]
+outer_numbers = (output_label_array == outer).nonzero()[0]
+inner_numbers = (output_label_array == inner).nonzero()[0]
 
 plt.figure(figsize=(4, 4))
 plt.scatter(

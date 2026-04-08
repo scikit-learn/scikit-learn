@@ -3,22 +3,15 @@ Testing for mean shift clustering methods
 
 """
 
-import numpy as np
 import warnings
+
+import numpy as np
 import pytest
 
-from scipy import sparse
-
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose
-
-from sklearn.cluster import MeanShift
-from sklearn.cluster import mean_shift
-from sklearn.cluster import estimate_bandwidth
-from sklearn.cluster import get_bin_seeds
+from sklearn.cluster import MeanShift, estimate_bandwidth, get_bin_seeds, mean_shift
 from sklearn.datasets import make_blobs
 from sklearn.metrics import v_measure_score
-
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 
 n_clusters = 3
 centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
@@ -30,6 +23,15 @@ X, _ = make_blobs(
     shuffle=True,
     random_state=11,
 )
+
+
+def test_convergence_of_1d_constant_data():
+    # Test convergence using 1D constant data
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/28926
+    model = MeanShift()
+    n_iter = model.fit(np.ones(10).reshape(-1, 1)).n_iter_
+    assert n_iter < model.max_iter
 
 
 def test_estimate_bandwidth():
@@ -76,15 +78,10 @@ def test_mean_shift(
     assert cluster_centers.dtype == global_dtype
 
 
-def test_estimate_bandwidth_with_sparse_matrix():
-    # Test estimate_bandwidth with sparse matrix
-    X = sparse.lil_matrix((1000, 1000))
-    msg = "A sparse matrix was passed, but dense data is required."
-    with pytest.raises(TypeError, match=msg):
-        estimate_bandwidth(X)
-
-
-def test_parallel(global_dtype):
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
+def test_parallel(global_dtype, global_random_seed):
     centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
     X, _ = make_blobs(
         n_samples=50,
@@ -92,7 +89,7 @@ def test_parallel(global_dtype):
         centers=centers,
         cluster_std=0.4,
         shuffle=True,
-        random_state=11,
+        random_state=global_random_seed,
     )
 
     X = X.astype(global_dtype, copy=False)

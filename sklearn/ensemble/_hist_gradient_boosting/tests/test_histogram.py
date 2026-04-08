@@ -1,20 +1,20 @@
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose, assert_array_equal
 
-from numpy.testing import assert_allclose
-from numpy.testing import assert_array_equal
-
+from sklearn.ensemble._hist_gradient_boosting.common import (
+    G_H_DTYPE,
+    HISTOGRAM_DTYPE,
+    X_BINNED_DTYPE,
+)
 from sklearn.ensemble._hist_gradient_boosting.histogram import (
-    _build_histogram_naive,
     _build_histogram,
+    _build_histogram_naive,
     _build_histogram_no_hessian,
-    _build_histogram_root_no_hessian,
     _build_histogram_root,
+    _build_histogram_root_no_hessian,
     _subtract_histograms,
 )
-from sklearn.ensemble._hist_gradient_boosting.common import HISTOGRAM_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
 
 
 @pytest.mark.parametrize("build_func", [_build_histogram_naive, _build_histogram])
@@ -229,10 +229,10 @@ def test_hist_subtraction(constant_hessian):
             hist_right,
         )
 
-    hist_left_sub = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
-    hist_right_sub = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
-    _subtract_histograms(0, n_bins, hist_parent, hist_right, hist_left_sub)
-    _subtract_histograms(0, n_bins, hist_parent, hist_left, hist_right_sub)
+    hist_left_sub = np.copy(hist_parent)
+    hist_right_sub = np.copy(hist_parent)
+    _subtract_histograms(0, n_bins, hist_left_sub, hist_right)
+    _subtract_histograms(0, n_bins, hist_right_sub, hist_left)
 
     for key in ("count", "sum_hessians", "sum_gradients"):
         assert_allclose(hist_left[key], hist_left_sub[key], rtol=1e-6)

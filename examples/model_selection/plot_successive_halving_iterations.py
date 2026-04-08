@@ -10,16 +10,18 @@ multiple candidates.
 
 """
 
-import pandas as pd
-from sklearn import datasets
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
-from scipy.stats import randint
 import numpy as np
+import pandas as pd
+from scipy.stats import randint
 
-from sklearn.experimental import enable_halving_search_cv  # noqa
-from sklearn.model_selection import HalvingRandomSearchCV
+from sklearn import datasets
 from sklearn.ensemble import RandomForestClassifier
-
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
+from sklearn.model_selection import HalvingRandomSearchCV
 
 # %%
 # We first define the parameter space and train a

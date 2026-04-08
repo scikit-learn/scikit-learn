@@ -1,21 +1,31 @@
 """Unsupervised evaluation metrics."""
 
-# Authors: Robert Layton <robertlayton@gmail.com>
-#          Arnaud Fouchet <foucheta@gmail.com>
-#          Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clause
-
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import functools
+from numbers import Integral
 
 import numpy as np
+from scipy.sparse import issparse
 
-from ...utils import check_random_state
-from ...utils import check_X_y
-from ...utils import _safe_indexing
-from ..pairwise import pairwise_distances_chunked
-from ..pairwise import pairwise_distances
-from ...preprocessing import LabelEncoder
+from sklearn.externals.array_api_compat import is_numpy_array
+from sklearn.metrics.pairwise import (
+    _VALID_METRICS,
+    pairwise_distances,
+    pairwise_distances_chunked,
+)
+from sklearn.preprocessing import LabelEncoder
+from sklearn.utils import _safe_indexing, check_random_state, check_X_y
+from sklearn.utils._array_api import (
+    _average,
+    _is_numpy_namespace,
+    _max_precision_float_dtype,
+    get_namespace_and_device,
+    move_to,
+    xpx,
+)
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 
 
 def check_number_of_labels(n_labels, n_samples):
@@ -36,6 +46,16 @@ def check_number_of_labels(n_labels, n_samples):
         )
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "labels": ["array-like"],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "sample_size": [Interval(Integral, 1, None, closed="left"), None],
+        "random_state": ["random_state"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def silhouette_score(
     X, labels, *, metric="euclidean", sample_size=None, random_state=None, **kwds
 ):
@@ -60,7 +80,7 @@ def silhouette_score(
 
     Parameters
     ----------
-    X : array-like of shape (n_samples_a, n_samples_a) if metric == \
+    X : {array-like, sparse matrix} of shape (n_samples_a, n_samples_a) if metric == \
             "precomputed" or (n_samples_a, n_features) otherwise
         An array of pairwise distances between samples, or a feature array.
 
@@ -70,8 +90,7 @@ def silhouette_score(
     metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
-        allowed by :func:`metrics.pairwise.pairwise_distances
-        <sklearn.metrics.pairwise.pairwise_distances>`. If ``X`` is
+        allowed by :func:`~sklearn.metrics.pairwise_distances`. If ``X`` is
         the distance array itself, use ``metric="precomputed"``.
 
     sample_size : int, default=None
@@ -105,6 +124,16 @@ def silhouette_score(
 
     .. [2] `Wikipedia entry on the Silhouette Coefficient
            <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_blobs
+    >>> from sklearn.cluster import KMeans
+    >>> from sklearn.metrics import silhouette_score
+    >>> X, y = make_blobs(random_state=42)
+    >>> kmeans = KMeans(n_clusters=2, random_state=42)
+    >>> silhouette_score(X, kmeans.fit_predict(X))
+    0.49...
     """
     if sample_size is not None:
         X, labels = check_X_y(X, labels, accept_sparse=["csc", "csr"])
@@ -114,7 +143,7 @@ def silhouette_score(
             X, labels = X[indices].T[indices].T, labels[indices]
         else:
             X, labels = X[indices], labels[indices]
-    return np.mean(silhouette_samples(X, labels, metric=metric, **kwds))
+    return float(np.mean(silhouette_samples(X, labels, metric=metric, **kwds)))
 
 
 def _silhouette_reduce(D_chunk, start, labels, label_freqs):
@@ -122,8 +151,9 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
 
     Parameters
     ----------
-    D_chunk : array-like of shape (n_chunk_samples, n_samples)
-        Precomputed distances for a chunk.
+    D_chunk : {array-like, sparse matrix} of shape (n_chunk_samples, n_samples)
+        Precomputed distances for a chunk. If a sparse matrix is provided,
+        only CSR format is accepted.
     start : int
         First index in the chunk.
     labels : array-like of shape (n_samples,)
@@ -131,24 +161,53 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
     label_freqs : array-like
         Distribution of cluster labels in ``labels``.
     """
+    n_chunk_samples = D_chunk.shape[0]
     # accumulate distances from each sample to each cluster
-    clust_dists = np.zeros((len(D_chunk), len(label_freqs)), dtype=D_chunk.dtype)
-    for i in range(len(D_chunk)):
-        clust_dists[i] += np.bincount(
-            labels, weights=D_chunk[i], minlength=len(label_freqs)
-        )
+    cluster_distances = np.zeros(
+        (n_chunk_samples, len(label_freqs)), dtype=D_chunk.dtype
+    )
 
-    # intra_index selects intra-cluster distances within clust_dists
-    intra_index = (np.arange(len(D_chunk)), labels[start : start + len(D_chunk)])
-    # intra_clust_dists are averaged over cluster size outside this function
-    intra_clust_dists = clust_dists[intra_index]
+    if issparse(D_chunk):
+        if D_chunk.format != "csr":
+            raise TypeError(
+                "Expected CSR matrix. Please pass sparse matrix in CSR format."
+            )
+        for i in range(n_chunk_samples):
+            indptr = D_chunk.indptr
+            indices = D_chunk.indices[indptr[i] : indptr[i + 1]]
+            sample_weights = D_chunk.data[indptr[i] : indptr[i + 1]]
+            sample_labels = np.take(labels, indices)
+            cluster_distances[i] += np.bincount(
+                sample_labels, weights=sample_weights, minlength=len(label_freqs)
+            )
+    else:
+        for i in range(n_chunk_samples):
+            sample_weights = D_chunk[i]
+            sample_labels = labels
+            cluster_distances[i] += np.bincount(
+                sample_labels, weights=sample_weights, minlength=len(label_freqs)
+            )
+
+    # intra_index selects intra-cluster distances within cluster_distances
+    end = start + n_chunk_samples
+    intra_index = (np.arange(n_chunk_samples), labels[start:end])
+    # intra_cluster_distances are averaged over cluster size outside this function
+    intra_cluster_distances = cluster_distances[intra_index]
     # of the remaining distances we normalise and extract the minimum
-    clust_dists[intra_index] = np.inf
-    clust_dists /= label_freqs
-    inter_clust_dists = clust_dists.min(axis=1)
-    return intra_clust_dists, inter_clust_dists
+    cluster_distances[intra_index] = np.inf
+    cluster_distances /= label_freqs
+    inter_cluster_distances = cluster_distances.min(axis=1)
+    return intra_cluster_distances, inter_cluster_distances
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "labels": ["array-like"],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+    },
+    prefer_skip_nested_validation=True,
+)
 def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
     """Compute the Silhouette Coefficient for each sample.
 
@@ -174,9 +233,11 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
 
     Parameters
     ----------
-    X : array-like of shape (n_samples_a, n_samples_a) if metric == \
+    X : {array-like, sparse matrix} of shape (n_samples_a, n_samples_a) if metric == \
             "precomputed" or (n_samples_a, n_features) otherwise
-        An array of pairwise distances between samples, or a feature array.
+        An array of pairwise distances between samples, or a feature array. If
+        a sparse matrix is provided, CSR format should be favoured avoiding
+        an additional copy.
 
     labels : array-like of shape (n_samples,)
         Label values for each sample.
@@ -184,7 +245,7 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
     metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
-        allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`.
+        allowed by :func:`~sklearn.metrics.pairwise_distances`.
         If ``X`` is the distance array itself, use "precomputed" as the metric.
         Precomputed distance matrices must have 0 along the diagonal.
 
@@ -208,8 +269,19 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
 
     .. [2] `Wikipedia entry on the Silhouette Coefficient
        <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
+
+    Examples
+    --------
+    >>> from sklearn.metrics import silhouette_samples
+    >>> from sklearn.datasets import make_blobs
+    >>> from sklearn.cluster import KMeans
+    >>> X, y = make_blobs(n_samples=50, random_state=42)
+    >>> kmeans = KMeans(n_clusters=3, random_state=42)
+    >>> labels = kmeans.fit_predict(X)
+    >>> silhouette_samples(X, labels)
+    array([...])
     """
-    X, labels = check_X_y(X, labels, accept_sparse=["csc", "csr"])
+    X, labels = check_X_y(X, labels, accept_sparse=["csr"])
 
     # Check for non-zero diagonal entries in precomputed distance matrix
     if metric == "precomputed":
@@ -219,10 +291,11 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
         )
         if X.dtype.kind == "f":
             atol = np.finfo(X.dtype).eps * 100
-            if np.any(np.abs(np.diagonal(X)) > atol):
-                raise ValueError(error_msg)
-        elif np.any(np.diagonal(X) != 0):  # integral dtype
-            raise ValueError(error_msg)
+
+            if np.any(np.abs(X.diagonal()) > atol):
+                raise error_msg
+        elif np.any(X.diagonal() != 0):  # integral dtype
+            raise error_msg
 
     le = LabelEncoder()
     labels = le.fit_transform(labels)
@@ -247,9 +320,16 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
     with np.errstate(divide="ignore", invalid="ignore"):
         sil_samples /= np.maximum(intra_clust_dists, inter_clust_dists)
     # nan values are for clusters of size 1, and should be 0
-    return np.nan_to_num(sil_samples)
+    return xpx.nan_to_num(sil_samples)
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "labels": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def calinski_harabasz_score(X, labels):
     """Compute the Calinski and Harabasz score.
 
@@ -279,31 +359,57 @@ def calinski_harabasz_score(X, labels):
     .. [1] `T. Calinski and J. Harabasz, 1974. "A dendrite method for cluster
        analysis". Communications in Statistics
        <https://www.tandfonline.com/doi/abs/10.1080/03610927408827101>`_
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_blobs
+    >>> from sklearn.cluster import KMeans
+    >>> from sklearn.metrics import calinski_harabasz_score
+    >>> X, _ = make_blobs(random_state=0)
+    >>> kmeans = KMeans(n_clusters=3, random_state=0,).fit(X)
+    >>> calinski_harabasz_score(X, kmeans.labels_)
+    114.8...
     """
+
+    xp, _, device_ = get_namespace_and_device(X, labels)
+
+    if _is_numpy_namespace(xp) and not is_numpy_array(X):
+        # This is required to handle the case where `array_api_dispatch` is False but
+        # we are still dealing with `X` as a non-NumPy array e.g. a PyTorch tensor.
+        X = move_to(X, xp=np, device="cpu")
+    else:
+        X = xp.astype(X, _max_precision_float_dtype(xp, device_), copy=False)
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()
     labels = le.fit_transform(labels)
 
     n_samples, _ = X.shape
-    n_labels = len(le.classes_)
+    n_labels = le.classes_.shape[0]
 
     check_number_of_labels(n_labels, n_samples)
 
     extra_disp, intra_disp = 0.0, 0.0
-    mean = np.mean(X, axis=0)
+    mean = xp.mean(X, axis=0)
     for k in range(n_labels):
         cluster_k = X[labels == k]
-        mean_k = np.mean(cluster_k, axis=0)
-        extra_disp += len(cluster_k) * np.sum((mean_k - mean) ** 2)
-        intra_disp += np.sum((cluster_k - mean_k) ** 2)
+        mean_k = xp.mean(cluster_k, axis=0)
+        extra_disp += cluster_k.shape[0] * xp.sum((mean_k - mean) ** 2)
+        intra_disp += xp.sum((cluster_k - mean_k) ** 2)
 
-    return (
+    return float(
         1.0
         if intra_disp == 0.0
         else extra_disp * (n_samples - n_labels) / (intra_disp * (n_labels - 1.0))
     )
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "labels": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def davies_bouldin_score(X, labels):
     """Compute the Davies-Bouldin score.
 
@@ -339,28 +445,43 @@ def davies_bouldin_score(X, labels):
        <https://ieeexplore.ieee.org/document/4766909>`__.
        IEEE Transactions on Pattern Analysis and Machine Intelligence.
        PAMI-1 (2): 224-227
+
+    Examples
+    --------
+    >>> from sklearn.metrics import davies_bouldin_score
+    >>> X = [[0, 1], [1, 1], [3, 4]]
+    >>> labels = [0, 0, 1]
+    >>> davies_bouldin_score(X, labels)
+    0.12...
     """
+    xp, _, device_ = get_namespace_and_device(X, labels)
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()
     labels = le.fit_transform(labels)
     n_samples, _ = X.shape
-    n_labels = len(le.classes_)
+    n_labels = le.classes_.shape[0]
     check_number_of_labels(n_labels, n_samples)
 
-    intra_dists = np.zeros(n_labels)
-    centroids = np.zeros((n_labels, len(X[0])), dtype=float)
+    dtype = _max_precision_float_dtype(xp, device_)
+    intra_dists = xp.zeros(n_labels, dtype=dtype, device=device_)
+    centroids = xp.zeros((n_labels, X.shape[1]), dtype=dtype, device=device_)
     for k in range(n_labels):
-        cluster_k = _safe_indexing(X, labels == k)
-        centroid = cluster_k.mean(axis=0)
-        centroids[k] = centroid
-        intra_dists[k] = np.average(pairwise_distances(cluster_k, [centroid]))
+        cluster_k = _safe_indexing(X, xp.nonzero(labels == k)[0])
+        centroid = _average(cluster_k, axis=0, xp=xp)
+        centroids[k, ...] = centroid
+        intra_dists[k] = _average(
+            pairwise_distances(cluster_k, xp.stack([centroid])), xp=xp
+        )
 
     centroid_distances = pairwise_distances(centroids)
 
-    if np.allclose(intra_dists, 0) or np.allclose(centroid_distances, 0):
+    zero = xp.asarray(0.0, device=device_, dtype=dtype)
+    if xp.all(xpx.isclose(intra_dists, zero)) or xp.all(
+        xpx.isclose(centroid_distances, zero)
+    ):
         return 0.0
 
-    centroid_distances[centroid_distances == 0] = np.inf
+    centroid_distances[centroid_distances == 0] = xp.inf
     combined_intra_dists = intra_dists[:, None] + intra_dists
-    scores = np.max(combined_intra_dists / centroid_distances, axis=1)
-    return np.mean(scores)
+    scores = xp.max(combined_intra_dists / centroid_distances, axis=1)
+    return float(_average(scores, xp=xp))

@@ -8,6 +8,7 @@ Demo of OPTICS clustering algorithm
 Finds core samples of high density and expands clusters from them.
 This example uses data that is generated so that the clusters have
 different densities.
+
 The :class:`~cluster.OPTICS` is first used with its Xi cluster detection
 method, and then setting specific thresholds on the reachability, which
 corresponds to :class:`~cluster.DBSCAN`. We can see that the different
@@ -16,14 +17,14 @@ thresholds in DBSCAN.
 
 """
 
-# Authors: Shane Grigsby <refuge@rocktalus.com>
-#          Adrin Jalali <adrin.jalali@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-from sklearn.cluster import OPTICS, cluster_optics_dbscan
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
+
+from sklearn.cluster import OPTICS, cluster_optics_dbscan
 
 # Generate sample data
 
@@ -69,7 +70,7 @@ ax4 = plt.subplot(G[1, 2])
 
 # Reachability plot
 colors = ["g.", "r.", "b.", "y.", "c."]
-for klass, color in zip(range(0, 5), colors):
+for klass, color in enumerate(colors):
     Xk = space[labels == klass]
     Rk = reachability[labels == klass]
     ax1.plot(Xk, Rk, color, alpha=0.3)
@@ -81,23 +82,23 @@ ax1.set_title("Reachability Plot")
 
 # OPTICS
 colors = ["g.", "r.", "b.", "y.", "c."]
-for klass, color in zip(range(0, 5), colors):
+for klass, color in enumerate(colors):
     Xk = X[clust.labels_ == klass]
     ax2.plot(Xk[:, 0], Xk[:, 1], color, alpha=0.3)
 ax2.plot(X[clust.labels_ == -1, 0], X[clust.labels_ == -1, 1], "k+", alpha=0.1)
 ax2.set_title("Automatic Clustering\nOPTICS")
 
 # DBSCAN at 0.5
-colors = ["g", "greenyellow", "olive", "r", "b", "c"]
-for klass, color in zip(range(0, 6), colors):
+colors = ["g.", "r.", "b.", "c."]
+for klass, color in enumerate(colors):
     Xk = X[labels_050 == klass]
-    ax3.plot(Xk[:, 0], Xk[:, 1], color, alpha=0.3, marker=".")
+    ax3.plot(Xk[:, 0], Xk[:, 1], color, alpha=0.3)
 ax3.plot(X[labels_050 == -1, 0], X[labels_050 == -1, 1], "k+", alpha=0.1)
 ax3.set_title("Clustering at 0.5 epsilon cut\nDBSCAN")
 
 # DBSCAN at 2.
 colors = ["g.", "m.", "y.", "c."]
-for klass, color in zip(range(0, 4), colors):
+for klass, color in enumerate(colors):
     Xk = X[labels_200 == klass]
     ax4.plot(Xk[:, 0], Xk[:, 1], color, alpha=0.3)
 ax4.plot(X[labels_200 == -1, 0], X[labels_200 == -1, 1], "k+", alpha=0.1)
