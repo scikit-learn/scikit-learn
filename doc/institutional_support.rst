@@ -99,8 +99,8 @@ financially support scikit-learn as follows:
 
 * `The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ and `Wellcome
   Trust <https://wellcome.org/>`_ support the work of Lucy Liu, Dea Maria Leon
-  and Anne Beyer through the `Essential Open Source Software for Science (EOSS)
-  <https://chanzuckerberg.com/eoss/>`_ cycle 6.
+  Anne Beyer and Francois Paugam through the `Essential Open Source Software
+  for Science (EOSS) <https://chanzuckerberg.com/eoss/>`_ cycle 6.
 
 * `NVIDIA <https://nvidia.com>`_ supports scikit-learn through their
   sponsorship and employs full-time core maintainer Tim Head.
