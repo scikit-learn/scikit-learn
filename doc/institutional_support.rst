@@ -86,7 +86,7 @@ financially support scikit-learn as follows:
    :header-rows: 1
    :class: sk-funding-participation-table
 
-   * - 5 :abbr:`FTEs (Full-Time Equivalent)` more
+   * - 5 :abbr:`FTEs (Full-Time Equivalent)` or more
      - 0.5 :abbr:`FTE (Full-Time Equivalent)` or more
      - less than 0.5 :abbr:`FTE (Full-Time Equivalent)`
    * - |probabl|
