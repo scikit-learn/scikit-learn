@@ -915,9 +915,9 @@ def test_stratified_shuffle_split_even():
         bf = stats.binom(n_splits, p)
         for count in idx_counts:
             prob = bf.pmf(count)
-            assert (
-                prob > threshold
-            ), "An index is not drawn with chance corresponding to even draws"
+            assert prob > threshold, (
+                "An index is not drawn with chance corresponding to even draws"
+            )
 
     for n_samples in (6, 22):
         groups = np.array((n_samples // 2) * [0, 1])
@@ -1218,7 +1218,9 @@ def test_repeated_cv_value_errors():
 def test_repeated_cv_repr(RepeatedCV):
     n_splits, n_repeats = 2, 6
     repeated_cv = RepeatedCV(n_splits=n_splits, n_repeats=n_repeats)
-    repeated_cv_repr = f"{repeated_cv.__class__.__name__}(n_repeats=6, n_splits=2, random_state=None)"
+    repeated_cv_repr = (
+        f"{repeated_cv.__class__.__name__}(n_repeats=6, n_splits=2, random_state=None)"
+    )
     assert repeated_cv_repr == repr(repeated_cv)
 
 
