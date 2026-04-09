@@ -1374,18 +1374,12 @@ class RollingTimeSeriesSplit(BaseCrossValidator):
     def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator."""
         if X is None:
-            raise ValueError(
-                "The 'X' parameter is required to calculate n_splits."
-            )
+            raise ValueError("The 'X' parameter is required to calculate n_splits.")
 
         n_samples = _num_samples(X)
 
         # Default step to train_size for disjoint behavior if not specified
-        step = (
-            self.step_size
-            if self.step_size is not None
-            else self.train_size
-        )
+        step = self.step_size if self.step_size is not None else self.train_size
 
         # Minimal size required for one split
         min_len = self.train_size + self.gap + self.test_size
@@ -1403,19 +1397,14 @@ class RollingTimeSeriesSplit(BaseCrossValidator):
         n_samples = _num_samples(X)
         indices = np.arange(n_samples)
 
-        step = (
-            self.step_size
-            if self.step_size is not None
-            else self.train_size
-        )
+        step = self.step_size if self.step_size is not None else self.train_size
         gap = self.gap
 
         n_splits = self.get_n_splits(X, y, groups)
 
         if n_splits <= 0:
             raise ValueError(
-                f"n_samples={n_samples} is too small for the "
-                "given parameters."
+                f"n_samples={n_samples} is too small for the given parameters."
             )
 
         # --- Right-Alignment Logic ---
@@ -1448,6 +1437,7 @@ class RollingTimeSeriesSplit(BaseCrossValidator):
             test_end = test_start + self.test_size
 
             yield indices[train_start:train_end], indices[test_start:test_end]
+
 
 class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
     """Leave One Group Out cross-validator.
