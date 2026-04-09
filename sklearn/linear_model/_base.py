@@ -302,13 +302,13 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
+        X : array-like or sparse matrix of shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        C : array, shape (n_samples,)
-            Returns predicted values.
+        C : ndarray of shape (n_samples,)
+            Predicted values.
         """
         check_same_namespace(X, self, attribute="coef_", method="predict")
         return self._decision_function(X)
@@ -334,21 +334,21 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
 
 class MultiOutputLinearModel(MultiOutputMixin, LinearModel):
-    # Modify docstring of LinearModel.predict to include the possibility
-    # of having a return value with shape (n_samples, n_targets)
+    # Provides consistent docstring to `predict` for linear models that support
+    # multi-output.
     def predict(self, X):
         """
         Predict using the linear model.
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
+        X : array-like or sparse matrix of shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        C : array, shape (n_samples,) or (n_samples, n_targets)
-            Returns predicted values.
+        C : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+            Predicted values.
         """
         return super().predict(X)
 

@@ -17,6 +17,7 @@ from scipy.sparse import linalg as sp_linalg
 
 from sklearn.base import (
     BaseEstimator,
+    MultiOutputMixin,
     RegressorMixin,
     _fit_context,
     is_classifier,
@@ -25,7 +26,6 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model._base import (
     LinearClassifierMixin,
     LinearModel,
-    MultiOutputLinearModel,
     _preprocess_data,
     _rescale_data,
 )
@@ -889,7 +889,7 @@ def resolve_solver_for_numpy(positive, return_intercept, is_sparse):
     return "sparse_cg"
 
 
-class _BaseRidge(MultiOutputLinearModel, metaclass=ABCMeta):
+class _BaseRidge(LinearModel, metaclass=ABCMeta):
     _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
         "fit_intercept": ["boolean"],
@@ -1030,7 +1030,7 @@ class _BaseRidge(MultiOutputLinearModel, metaclass=ABCMeta):
         return self
 
 
-class Ridge(RegressorMixin, _BaseRidge):
+class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     """Linear least squares with l2 regularization.
 
     Minimizes the objective function::
@@ -1270,6 +1270,22 @@ class Ridge(RegressorMixin, _BaseRidge):
             y_numeric=True,
         )
         return super().fit(X, y, sample_weight=sample_weight)
+
+    def predict(self, X):
+        """
+        Predict using the linear model.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape (n_samples, n_features)
+            Samples.
+
+        Returns
+        -------
+        C : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+            Predicted values.
+        """
+        return super().predict(X)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -2428,7 +2444,7 @@ class _RidgeGCV(LinearModel):
         return tags
 
 
-class _BaseRidgeCV(MultiOutputLinearModel):
+class _BaseRidgeCV(LinearModel):
     _parameter_constraints: dict = {
         "alphas": ["array-like", Interval(Real, 0, None, closed="neither")],
         "fit_intercept": ["boolean"],
@@ -2651,7 +2667,7 @@ class _BaseRidgeCV(MultiOutputLinearModel):
         return tags
 
 
-class RidgeCV(RegressorMixin, _BaseRidgeCV):
+class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     """Ridge regression with built-in cross-validation.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -2836,6 +2852,22 @@ class RidgeCV(RegressorMixin, _BaseRidgeCV):
         """
         super().fit(X, y, sample_weight=sample_weight, **params)
         return self
+
+    def predict(self, X):
+        """
+        Predict using the linear model.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape (n_samples, n_features)
+            Samples.
+
+        Returns
+        -------
+        C : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+            Predicted values.
+        """
+        return super().predict(X)
 
     def _get_scorer_instance(self):
         """Return a scorer which corresponds to what's defined in RegressorMixin
