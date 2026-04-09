@@ -400,9 +400,8 @@ def _write_estimator_html(
                 if has_name:
                     # write a label for the step name, then the
                     # estimator itself
-
+                    out.write('<div class="sk-item">')
                     if not repeated_name:
-                        out.write('<div class="sk-item">')
                         _write_label_html(
                             out,
                             "",  # params
@@ -417,8 +416,6 @@ def _write_estimator_html(
                             is_fitted_icon="",
                             param_prefix=new_prefix,
                         )
-                    else:
-                        out.write('<div class="sk-item">')
 
                 _write_estimator_html(
                     out,
