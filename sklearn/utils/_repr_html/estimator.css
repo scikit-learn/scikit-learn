@@ -142,7 +142,7 @@ div.sk-serial,
 .sk-global div.sk-parallel div.sk-item:last-child::after{
   display: none;
 }
-
+/* Hide tree lines on estimator under its name in a column transformer*/
 .sk-global div.sk-serial div.sk-item:has(> .sk-estimator)::before,
 .sk-global div.sk-serial div.sk-item:has(> .sk-estimator)::after{
   display: none;

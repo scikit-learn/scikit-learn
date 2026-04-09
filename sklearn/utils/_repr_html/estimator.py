@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import html
+import re
 from contextlib import closing
 from inspect import isclass
 from io import StringIO
@@ -390,25 +391,35 @@ def _write_estimator_html(
                     if not isinstance(est, _VisualBlock)
                     else est._sk_visual_block_()
                 )
+
+                if isinstance(name_details, str):
+                    repeated_name = re.search(name_details.split("(", 1)[0], name)
+                else:
+                    repeated_name = ""
                 has_name = child_block.kind == "single" and name is not None
                 if has_name:
                     # write a label for the step name, then the
                     # estimator itself
-                    out.write('<div class="sk-item">')
-                    _write_label_html(
-                        out,
-                        "",  # params
-                        "",  # attrs
-                        name,
-                        name_details,
-                        outer_class="sk-label-container",
-                        inner_class="sk-label",
-                        checked=False,
-                        doc_link="",
-                        is_fitted_css_class=is_fitted_css_class,
-                        is_fitted_icon="",
-                        param_prefix=new_prefix,
-                    )
+
+                    if not repeated_name:
+                        out.write('<div class="sk-item">')
+                        _write_label_html(
+                            out,
+                            "",  # params
+                            "",  # attrs
+                            name,
+                            name_details,
+                            outer_class="sk-label-container",
+                            inner_class="sk-label",
+                            checked=False,
+                            doc_link="",
+                            is_fitted_css_class=is_fitted_css_class,
+                            is_fitted_icon="",
+                            param_prefix=new_prefix,
+                        )
+                    else:
+                        out.write('<div class="sk-item">')
+
                 _write_estimator_html(
                     out,
                     est,
