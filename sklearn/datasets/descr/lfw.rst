@@ -4,9 +4,9 @@ The Labeled Faces in the Wild face recognition dataset
 ------------------------------------------------------
 
 This dataset is a collection of JPEG pictures of famous people collected
-over the internet, all details are available on the official website:
+over the internet, and the details are available on the Kaggle website:
 
-http://vis-www.cs.umass.edu/lfw/
+https://www.kaggle.com/datasets/jessicali9530/lfw-dataset
 
 Each picture is centered on a single face. The typical task is called
 Face Verification: given a pair of two pictures, a binary classifier
@@ -114,7 +114,7 @@ Features            real, between 0 and 255
 
 * `Labeled Faces in the Wild: A Database for Studying Face Recognition
   in Unconstrained Environments.
-  <http://vis-www.cs.umass.edu/lfw/lfw.pdf>`_
+  <https://people.cs.umass.edu/~elm/papers/lfw.pdf>`_
   Gary B. Huang, Manu Ramesh, Tamara Berg, and Erik Learned-Miller.
   University of Massachusetts, Amherst, Technical Report 07-49, October, 2007.
 

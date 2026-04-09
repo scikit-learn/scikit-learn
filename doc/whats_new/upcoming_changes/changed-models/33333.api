@@ -1,0 +1,8 @@
+- The default value of the `scoring` parameter in
+  :class:`linear_model.LogisticRegressionCV` will change in version 1.11 from `None`,
+  i.e. accuracy, to `"neg_log_loss"`. This is a much better default scoring function
+  as it aligns with the log loss that logistic regression is minimizing
+  (with regularization).
+  For the meantime, you can silence the warning for this change by explicitly passing
+  a value to `scoring`.
+  By :user:`Christian Lorentzen <lorentzenchr>`.

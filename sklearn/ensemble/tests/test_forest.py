@@ -21,7 +21,7 @@ from scipy.special import comb
 
 import sklearn
 from sklearn import clone, datasets
-from sklearn.datasets import make_classification, make_hastie_10_2
+from sklearn.datasets import make_classification, make_hastie_10_2, make_regression
 from sklearn.decomposition import TruncatedSVD
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import (
@@ -31,10 +31,8 @@ from sklearn.ensemble import (
     RandomForestRegressor,
     RandomTreesEmbedding,
 )
-from sklearn.ensemble._forest import (
-    _generate_unsampled_indices,
-    _get_n_samples_bootstrap,
-)
+from sklearn.ensemble._bootstrap import _get_n_samples_bootstrap
+from sklearn.ensemble._forest import _generate_unsampled_indices
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics import (
     explained_variance_score,
@@ -117,6 +115,9 @@ FOREST_ESTIMATORS.update(FOREST_TRANSFORMERS)
 FOREST_CLASSIFIERS_REGRESSORS: Dict[str, Any] = FOREST_CLASSIFIERS.copy()
 FOREST_CLASSIFIERS_REGRESSORS.update(FOREST_REGRESSORS)
 
+CLF_CRITERIONS = ("gini", "log_loss")
+REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
+
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
 def test_classification_toy(name):
@@ -157,9 +158,11 @@ def test_iris_criterion(name, criterion):
     assert score > 0.5, "Failed with criterion %s and score = %f" % (criterion, score)
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize("name", FOREST_REGRESSORS)
 @pytest.mark.parametrize(
-    "criterion", ("squared_error", "absolute_error", "friedman_mse")
+    "criterion", ("squared_error", "friedman_mse", "absolute_error")
 )
 def test_regression_criterion(name, criterion):
     # Check consistency on regression dataset.
@@ -168,11 +171,12 @@ def test_regression_criterion(name, criterion):
     reg = ForestRegressor(n_estimators=5, criterion=criterion, random_state=1)
     reg.fit(X_reg, y_reg)
     score = reg.score(X_reg, y_reg)
-    assert (
-        score > 0.93
-    ), "Failed with max_features=None, criterion %s and score = %f" % (
-        criterion,
-        score,
+    assert score > 0.93, (
+        "Failed with max_features=None, criterion %s and score = %f"
+        % (
+            criterion,
+            score,
+        )
     )
 
     reg = ForestRegressor(
@@ -293,7 +297,7 @@ def test_probability(name):
     "name, criterion",
     itertools.chain(
         product(FOREST_CLASSIFIERS, ["gini", "log_loss"]),
-        product(FOREST_REGRESSORS, ["squared_error", "friedman_mse", "absolute_error"]),
+        product(FOREST_REGRESSORS, ["squared_error", "absolute_error"]),
     ),
 )
 def test_importances(dtype, name, criterion):
@@ -642,7 +646,7 @@ def test_forest_multioutput_integral_regression_target(ForestRegressor):
     )
     estimator.fit(X, y)
 
-    n_samples_bootstrap = _get_n_samples_bootstrap(len(X), estimator.max_samples)
+    n_samples_bootstrap = _get_n_samples_bootstrap(len(X), estimator.max_samples, None)
     n_samples_test = X.shape[0] // 4
     oob_pred = np.zeros([n_samples_test, 2])
     for sample_idx, sample in enumerate(X[:n_samples_test]):
@@ -650,7 +654,7 @@ def test_forest_multioutput_integral_regression_target(ForestRegressor):
         oob_pred_sample = np.zeros(2)
         for tree in estimator.estimators_:
             oob_unsampled_indices = _generate_unsampled_indices(
-                tree.random_state, len(X), n_samples_bootstrap
+                tree.random_state, len(X), n_samples_bootstrap, None
             )
             if sample_idx in oob_unsampled_indices:
                 n_samples_oob += 1
@@ -926,7 +930,7 @@ def test_parallel_train():
 
     X_test = rng.randn(n_samples, n_features)
     probas = [clf.predict_proba(X_test) for clf in clfs]
-    for proba1, proba2 in zip(probas, probas[1:]):
+    for proba1, proba2 in itertools.pairwise(probas):
         assert_array_almost_equal(proba1, proba2)
 
 
@@ -1068,10 +1072,10 @@ def test_min_weight_fraction_leaf(name):
         node_weights = np.bincount(out, weights=weights)
         # drop inner nodes
         leaf_weights = node_weights[node_weights != 0]
-        assert (
-            np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf
-        ), "Failed with {0} min_weight_fraction_leaf={1}".format(
-            name, est.min_weight_fraction_leaf
+        assert np.min(leaf_weights) >= total_weight * est.min_weight_fraction_leaf, (
+            "Failed with {0} min_weight_fraction_leaf={1}".format(
+                name, est.min_weight_fraction_leaf
+            )
         )
 
 
@@ -1160,50 +1164,104 @@ def test_1d_input(name):
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
-def test_class_weights(name):
+@pytest.mark.parametrize("n_classes", [2, 3, 4])
+def test_validate_y_class_weight(name, n_classes, global_random_seed):
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+    clf = ForestClassifier(random_state=0)
+    # toy dataset with n_classes
+    y = np.repeat(np.arange(n_classes), 3)
+    rng = np.random.RandomState(global_random_seed)
+    sw = rng.randint(1, 5, size=len(y))
+    weighted_frequency = np.bincount(y, weights=sw) / sw.sum()
+    balanced_class_weight = 1 / (n_classes * weighted_frequency)
+    # validation in fit reshapes y as (n_samples, 1)
+    y_reshaped = np.reshape(y, (-1, 1))
+    # Manually set these attributes, as we are not calling `fit`
+    clf._n_samples, clf.n_outputs_ = y_reshaped.shape
+
+    # checking dict class_weight
+    class_weight = rng.randint(1, 7, size=n_classes)
+    class_weight_dict = dict(enumerate(class_weight))
+    clf.set_params(class_weight=class_weight_dict)
+    _, expanded_class_weight = clf._validate_y_class_weight(y_reshaped, sw)
+    assert_allclose(expanded_class_weight, class_weight[y])
+
+    # checking class_weight="balanced"
+    clf.set_params(class_weight="balanced")
+    _, expanded_class_weight = clf._validate_y_class_weight(y_reshaped, sw)
+    assert_allclose(expanded_class_weight, balanced_class_weight[y])
+
+    # checking class_weight="balanced_subsample" with bootstrap=False
+    # (should be equivalent to "balanced")
+    clf.set_params(class_weight="balanced_subsample", bootstrap=False)
+    _, expanded_class_weight = clf._validate_y_class_weight(y_reshaped, sw)
+    assert_allclose(expanded_class_weight, balanced_class_weight[y])
+
+    # checking class_weight="balanced_subsample" with bootstrap=True
+    # (should be None)
+    clf.set_params(class_weight="balanced_subsample", bootstrap=True)
+    _, expanded_class_weight = clf._validate_y_class_weight(y_reshaped, sw)
+    assert expanded_class_weight is None
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
+@pytest.mark.parametrize("bootstrap", [True, False])
+def test_class_weights_forest(name, bootstrap, global_random_seed):
     # Check class_weights resemble sample_weights behavior.
     ForestClassifier = FOREST_CLASSIFIERS[name]
+    clf = ForestClassifier(random_state=global_random_seed, bootstrap=bootstrap)
 
-    # Iris is balanced, so no effect expected for using 'balanced' weights
-    clf1 = ForestClassifier(random_state=0)
-    clf1.fit(iris.data, iris.target)
-    clf2 = ForestClassifier(class_weight="balanced", random_state=0)
+    # Iris is balanced, so no effect expected for using 'balanced' weights.
+    # Using the class_weight="balanced" option is then equivalent to fit with
+    # all ones sample_weight. However we cannot guarantee the same fit for
+    # sample_weight = None vs all ones, because the indices are drawn by
+    # different rng functions (choice vs randint). Thus we explicitly pass
+    # the sample_weight as all ones in clf1 fit.
+    clf1 = clone(clf)
+    clf1.fit(iris.data, iris.target, sample_weight=np.ones_like(iris.target))
+    clf2 = clone(clf).set_params(class_weight="balanced")
     clf2.fit(iris.data, iris.target)
+    assert_almost_equal(clf2._sample_weight, 1)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
     # Make a multi-output problem with three copies of Iris
     iris_multi = np.vstack((iris.target, iris.target, iris.target)).T
     # Create user-defined weights that should balance over the outputs
-    clf3 = ForestClassifier(
+    clf3 = clone(clf).set_params(
         class_weight=[
             {0: 2.0, 1: 2.0, 2: 1.0},
             {0: 2.0, 1: 1.0, 2: 2.0},
             {0: 1.0, 1: 2.0, 2: 2.0},
-        ],
-        random_state=0,
+        ]
     )
     clf3.fit(iris.data, iris_multi)
-    assert_almost_equal(clf2.feature_importances_, clf3.feature_importances_)
+    # for multi-output, weights are multiplied
+    assert_almost_equal(clf3._sample_weight, 2 * 2 * 1)
+    # FIXME why is this test brittle ?
+    assert_allclose(clf2.feature_importances_, clf3.feature_importances_, atol=0.002)
     # Check against multi-output "balanced" which should also have no effect
-    clf4 = ForestClassifier(class_weight="balanced", random_state=0)
+    clf4 = clone(clf).set_params(class_weight="balanced")
     clf4.fit(iris.data, iris_multi)
+    assert_almost_equal(clf4._sample_weight, 1)
     assert_almost_equal(clf3.feature_importances_, clf4.feature_importances_)
 
     # Inflate importance of class 1, check against user-defined weights
     sample_weight = np.ones(iris.target.shape)
     sample_weight[iris.target == 1] *= 100
     class_weight = {0: 1.0, 1: 100.0, 2: 1.0}
-    clf1 = ForestClassifier(random_state=0)
+    clf1 = clone(clf)
     clf1.fit(iris.data, iris.target, sample_weight)
-    clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
+    clf2 = clone(clf).set_params(class_weight=class_weight)
     clf2.fit(iris.data, iris.target)
+    assert_almost_equal(clf1._sample_weight, clf2._sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
     # Check that sample_weight and class_weight are multiplicative
-    clf1 = ForestClassifier(random_state=0)
+    clf1 = clone(clf)
     clf1.fit(iris.data, iris.target, sample_weight**2)
-    clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
+    clf2 = clone(clf).set_params(class_weight=class_weight)
     clf2.fit(iris.data, iris.target, sample_weight)
+    assert_almost_equal(clf1._sample_weight, clf2._sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
 
@@ -1478,7 +1536,7 @@ def test_poisson_y_positive_check():
 
 
 # mypy error: Variable "DEFAULT_JOBLIB_BACKEND" is not valid type
-class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore
+class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore[valid-type,misc]
     def __init__(self, *args, **kwargs):
         self.count = 0
         super().__init__(*args, **kwargs)
@@ -1491,6 +1549,9 @@ class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore
 joblib.register_parallel_backend("testing", MyBackend)
 
 
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 @skip_if_no_parallel
 def test_backend_respected():
     clf = RandomForestClassifier(n_estimators=10, n_jobs=2)
@@ -1526,6 +1587,25 @@ def test_forest_degenerate_feature_importances():
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_max_samples_geq_one(name):
+    # Check that `max_samples >= 1.0` and `max_samples >= n_samples `
+    # is allowed, issue #28507
+    X, y = hastie_X, hastie_y
+    max_samples_float = 1.5
+    max_sample_int = int(max_samples_float * X.shape[0])
+    est1 = FOREST_CLASSIFIERS_REGRESSORS[name](
+        bootstrap=True, max_samples=max_samples_float, random_state=11
+    )
+    est1.fit(X, y)
+    est2 = FOREST_CLASSIFIERS_REGRESSORS[name](
+        bootstrap=True, max_samples=max_sample_int, random_state=11
+    )
+    est2.fit(X, y)
+    assert est1._n_samples_bootstrap == est2._n_samples_bootstrap
+    assert_allclose(est1.score(X, y), est2.score(X, y))
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
 def test_max_samples_bootstrap(name):
     # Check invalid `max_samples` values
     est = FOREST_CLASSIFIERS_REGRESSORS[name](bootstrap=False, max_samples=0.5)
@@ -1535,15 +1615,6 @@ def test_max_samples_bootstrap(name):
         r"`max_sample=None`."
     )
     with pytest.raises(ValueError, match=err_msg):
-        est.fit(X, y)
-
-
-@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
-def test_large_max_samples_exception(name):
-    # Check invalid `max_samples`
-    est = FOREST_CLASSIFIERS_REGRESSORS[name](bootstrap=True, max_samples=int(1e9))
-    match = "`max_samples` must be <= n_samples=6 but got value 1000000000"
-    with pytest.raises(ValueError, match=match):
         est.fit(X, y)
 
 
@@ -1761,21 +1832,25 @@ def test_estimators_samples(ForestClass, bootstrap, seed):
     assert_allclose(orig_tree_values, new_tree_values)
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize(
-    "make_data, Forest",
+    "Forest, criterion",
     [
-        (datasets.make_regression, RandomForestRegressor),
-        (datasets.make_classification, RandomForestClassifier),
-        (datasets.make_regression, ExtraTreesRegressor),
-        (datasets.make_classification, ExtraTreesClassifier),
+        *product(FOREST_REGRESSORS.values(), REG_CRITERIONS),
+        *product(FOREST_CLASSIFIERS.values(), CLF_CRITERIONS),
     ],
 )
-def test_missing_values_is_resilient(make_data, Forest):
+def test_missing_values_is_resilient(Forest, criterion):
     """Check that forest can deal with missing values and has decent performance."""
-
     rng = np.random.RandomState(0)
-    n_samples, n_features = 1000, 10
+    n_samples, n_features = 500, 5
+    make_data = make_regression if criterion in REG_CRITERIONS else make_classification
     X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
+
+    # Make y non-negative for Poisson criterion
+    if criterion == "poisson":
+        y -= np.min(y)
 
     # Create dataset with missing values
     X_missing = X.copy()
@@ -1787,13 +1862,13 @@ def test_missing_values_is_resilient(make_data, Forest):
     )
 
     # Train forest with missing values
-    forest_with_missing = Forest(random_state=rng, n_estimators=50)
+    forest_with_missing = Forest(random_state=rng, criterion=criterion, n_estimators=50)
     forest_with_missing.fit(X_missing_train, y_train)
     score_with_missing = forest_with_missing.score(X_missing_test, y_test)
 
     # Train forest without missing values
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    forest = Forest(random_state=rng, n_estimators=50)
+    forest = Forest(random_state=rng, criterion=criterion, n_estimators=50)
     forest.fit(X_train, y_train)
     score_without_missing = forest.score(X_test, y_test)
 
@@ -1801,36 +1876,36 @@ def test_missing_values_is_resilient(make_data, Forest):
     assert score_with_missing >= 0.80 * score_without_missing
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize(
-    "Forest",
+    "Forest, criterion",
     [
-        RandomForestClassifier,
-        RandomForestRegressor,
-        ExtraTreesRegressor,
-        ExtraTreesClassifier,
+        *product(FOREST_REGRESSORS.values(), REG_CRITERIONS),
+        *product(FOREST_CLASSIFIERS.values(), CLF_CRITERIONS),
     ],
 )
-def test_missing_value_is_predictive(Forest):
+def test_missing_value_is_predictive(Forest, criterion, global_random_seed):
     """Check that the forest learns when missing values are only present for
     a predictive feature."""
-    rng = np.random.RandomState(0)
-    n_samples = 300
-    expected_score = 0.75
+    rng = np.random.RandomState(global_random_seed)
+    n_samples = 1000
+    expected_score_gap = 0.3
+    # Require a minimum 0.3 gap between `forest_predictive` and
+    # `forest_non_predictive`: meaningful for R2/accuracy, but robust in tests.
 
-    X_non_predictive = rng.standard_normal(size=(n_samples, 10))
-    y = rng.randint(0, high=2, size=n_samples)
+    X_non_predictive = rng.randn(n_samples, 2)
+    y = rng.rand(n_samples) < 0.5
 
     # Create a predictive feature using `y` and with some noise
-    X_random_mask = rng.choice([False, True], size=n_samples, p=[0.95, 0.05])
-    y_mask = y.astype(bool)
-    y_mask[X_random_mask] = ~y_mask[X_random_mask]
-
-    predictive_feature = rng.standard_normal(size=n_samples)
-    predictive_feature[y_mask] = np.nan
+    predictive_feature = rng.randn(n_samples)
+    noise_mask = rng.rand(n_samples) < 0.05
+    # nan/non-nan indicates y is 1/0, except if noise_mask is true:
+    predictive_feature[y ^ noise_mask] = np.nan
     assert np.isnan(predictive_feature).any()
 
     X_predictive = X_non_predictive.copy()
-    X_predictive[:, 5] = predictive_feature
+    X_predictive[:, 1] = predictive_feature
 
     (
         X_predictive_train,
@@ -1840,25 +1915,21 @@ def test_missing_value_is_predictive(Forest):
         y_train,
         y_test,
     ) = train_test_split(X_predictive, X_non_predictive, y, random_state=0)
-    forest_predictive = Forest(random_state=0).fit(X_predictive_train, y_train)
-    forest_non_predictive = Forest(random_state=0).fit(X_non_predictive_train, y_train)
+    forest_predictive = Forest(random_state=0, criterion=criterion)
+    forest_predictive.fit(X_predictive_train, y_train)
+    forest_non_predictive = Forest(random_state=0, criterion=criterion)
+    forest_non_predictive.fit(X_non_predictive_train, y_train)
 
     predictive_test_score = forest_predictive.score(X_predictive_test, y_test)
-
-    assert predictive_test_score >= expected_score
-    assert predictive_test_score >= forest_non_predictive.score(
+    non_predictive_test_score = forest_non_predictive.score(
         X_non_predictive_test, y_test
     )
 
+    assert predictive_test_score >= non_predictive_test_score + expected_score_gap
 
+
+# TODO(1.11): remove test with the deprecation of friedman_mse criterion
 @pytest.mark.parametrize("Forest", FOREST_REGRESSORS.values())
-def test_non_supported_criterion_raises_error_with_missing_values(Forest):
-    """Raise error for unsupported criterion when there are missing values."""
-    X = np.array([[0, 1, 2], [np.nan, 0, 2.0]])
-    y = [0.5, 1.0]
-
-    forest = Forest(criterion="absolute_error")
-
-    msg = ".*does not accept missing values"
-    with pytest.raises(ValueError, match=msg):
-        forest.fit(X, y)
+def test_friedman_mse_deprecation(Forest):
+    with pytest.warns(FutureWarning, match="friedman_mse"):
+        _ = Forest(criterion="friedman_mse")

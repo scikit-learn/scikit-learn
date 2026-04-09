@@ -51,8 +51,8 @@ Changelog
 ......................
 
 - |Fix| Fixed an issue in :class:`compose.ColumnTransformer` where using
-  DataFrames whose column order differs between :func:``fit`` and
-  :func:``transform`` could lead to silently passing incorrect columns to the
+  DataFrames whose column order differs between :func:`fit` and
+  :func:`transform` could lead to silently passing incorrect columns to the
   ``remainder`` transformer.
   :pr:`14237` by `Andreas Schuderer <schuderer>`.
 
@@ -440,7 +440,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Efficiency| Make :class:`ensemble.IsolationForest` prefer threads over
   processes when running with ``n_jobs > 1`` as the underlying decision tree
-  fit calls do release the GIL. This changes reduces memory usage and
+  fit calls do release the GIL. This change reduces memory usage and
   communication overhead. :pr:`12543` by :user:`Isaac Storch <istorch>`
   and `Olivier Grisel`_.
 
@@ -587,7 +587,7 @@ Support for Python 3.4 and below has been officially dropped.
   <DanilBaibak>`.
 
 - |Fix| In :class:`impute.MissingIndicator` avoid implicit densification by
-  raising an exception if input is sparse add `missing_values` property
+  raising an exception if input is sparse and `missing_values` property
   is set to 0. :pr:`13240` by :user:`Bartosz Telenczuk <btel>`.
 
 - |Fix| Fixed two bugs in :class:`impute.MissingIndicator`. First, when
@@ -650,7 +650,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Enhancement| The coordinate descent solver used in `Lasso`, `ElasticNet`,
   etc. now issues a `ConvergenceWarning` when it completes without meeting the
-  desired toleranbce.
+  desired tolerance.
   :pr:`11754` and :pr:`13397` by :user:`Brent Fagan <brentfagan>` and
   :user:`Adrin Jalali <adrinjalali>`.
 
@@ -674,7 +674,7 @@ Support for Python 3.4 and below has been officially dropped.
   :pr:`12972` by :user:`Lucio Fernandez-Arjona <luk-f-a>`
 
 - |Fix| Fixed a bug in :class:`linear_model.LinearRegression` that
-  was not returning the same coeffecients and intercepts with
+  was not returning the same coefficients and intercepts with
   ``fit_intercept=True`` in sparse and dense case.
   :pr:`13279` by `Alexandre Gramfort`_
 

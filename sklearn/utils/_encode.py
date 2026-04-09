@@ -1,17 +1,14 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from collections import Counter
 from contextlib import suppress
 from typing import NamedTuple
 
 import numpy as np
 
-from ._array_api import (
-    _isin,
-    _searchsorted,
-    _setdiff1d,
-    device,
-    get_namespace,
-)
-from ._missing import is_scalar_nan
+from sklearn.utils._array_api import _isin, device, get_namespace, xpx
+from sklearn.utils._missing import is_scalar_nan
 
 
 def _unique(values, *, return_inverse=False, return_counts=False):
@@ -74,7 +71,7 @@ def _unique_np(values, return_inverse=False, return_counts=False):
     # np.unique will have duplicate missing values at the end of `uniques`
     # here we clip the nans and remove it from uniques
     if uniques.size and is_scalar_nan(uniques[-1]):
-        nan_idx = _searchsorted(xp, uniques, xp.nan)
+        nan_idx = xp.searchsorted(uniques, xp.nan)
         uniques = uniques[: nan_idx + 1]
         if return_inverse:
             inverse[inverse > nan_idx] = nan_idx
@@ -231,13 +228,13 @@ def _encode(values, *, uniques, check_unknown=True):
         try:
             return _map_to_integer(values, uniques)
         except KeyError as e:
-            raise ValueError(f"y contains previously unseen labels: {str(e)}")
+            raise ValueError(f"y contains previously unseen labels: {e}")
     else:
         if check_unknown:
             diff = _check_unknown(values, uniques)
             if diff:
-                raise ValueError(f"y contains previously unseen labels: {str(diff)}")
-        return _searchsorted(xp, uniques, values)
+                raise ValueError(f"y contains previously unseen labels: {diff}")
+        return xp.searchsorted(uniques, values)
 
 
 def _check_unknown(values, known_values, return_mask=False):
@@ -282,10 +279,8 @@ def _check_unknown(values, known_values, return_mask=False):
         def is_valid(value):
             return (
                 value in uniques_set
-                or missing_in_uniques.none
-                and value is None
-                or missing_in_uniques.nan
-                and is_scalar_nan(value)
+                or (missing_in_uniques.none and value is None)
+                or (missing_in_uniques.nan and is_scalar_nan(value))
             )
 
         if return_mask:
@@ -301,7 +296,7 @@ def _check_unknown(values, known_values, return_mask=False):
             diff.append(np.nan)
     else:
         unique_values = xp.unique_values(values)
-        diff = _setdiff1d(unique_values, known_values, xp, assume_unique=True)
+        diff = xpx.setdiff1d(unique_values, known_values, assume_unique=True, xp=xp)
         if return_mask:
             if diff.size:
                 valid_mask = _isin(values, known_values, xp)

@@ -11,6 +11,7 @@ from sklearn.linear_model import ARDRegression, BayesianRidge, Ridge
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import (
     _convert_container,
+    assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_less,
@@ -94,6 +95,22 @@ def test_bayesian_ridge_parameter():
     assert_almost_equal(rr_model.intercept_, br_model.intercept_)
 
 
+@pytest.mark.parametrize("n_samples, n_features", [(10, 20), (20, 10)])
+def test_bayesian_covariance_matrix(n_samples, n_features, global_random_seed):
+    """Check the posterior covariance matrix sigma_
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/31093
+    """
+    X, y = datasets.make_regression(
+        n_samples, n_features, random_state=global_random_seed
+    )
+    reg = BayesianRidge(fit_intercept=False).fit(X, y)
+    covariance_matrix = np.linalg.inv(
+        reg.lambda_ * np.identity(n_features) + reg.alpha_ * np.dot(X.T, X)
+    )
+    assert_allclose(reg.sigma_, covariance_matrix, rtol=1e-6)
+
+
 def test_bayesian_sample_weights():
     # Test correctness of the sample_weights method
     X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]])
@@ -135,12 +152,12 @@ def test_bayesian_initial_params():
     assert_almost_equal(r2, 1.0)
 
 
-def test_prediction_bayesian_ridge_ard_with_constant_input():
+def test_prediction_bayesian_ridge_ard_with_constant_input(global_random_seed):
     # Test BayesianRidge and ARDRegression predictions for edge case of
     # constant target vectors
     n_samples = 4
     n_features = 5
-    random_state = check_random_state(42)
+    random_state = check_random_state(global_random_seed)
     constant_value = random_state.rand()
     X = random_state.random_sample((n_samples, n_features))
     y = np.full(n_samples, constant_value, dtype=np.array(constant_value).dtype)
@@ -151,13 +168,13 @@ def test_prediction_bayesian_ridge_ard_with_constant_input():
         assert_array_almost_equal(y_pred, expected)
 
 
-def test_std_bayesian_ridge_ard_with_constant_input():
+def test_std_bayesian_ridge_ard_with_constant_input(global_random_seed):
     # Test BayesianRidge and ARDRegression standard dev. for edge case of
     # constant target vector
     # The standard dev. should be relatively small (< 0.01 is tested here)
     n_samples = 10
     n_features = 5
-    random_state = check_random_state(42)
+    random_state = check_random_state(global_random_seed)
     constant_value = random_state.rand()
     X = random_state.random_sample((n_samples, n_features))
     y = np.full(n_samples, constant_value, dtype=np.array(constant_value).dtype)
@@ -209,13 +226,15 @@ def test_ard_accuracy_on_easy_problem(global_random_seed, n_samples, n_features)
 
 
 @pytest.mark.parametrize("constructor_name", ["array", "dataframe"])
-def test_return_std(constructor_name):
+def test_return_std(constructor_name, global_random_seed):
     # Test return_std option for both Bayesian regressors
+    rng = np.random.RandomState(global_random_seed)
+
     def f(X):
         return np.dot(X, w) + b
 
     def f_noise(X, noise_mult):
-        return f(X) + np.random.randn(X.shape[0]) * noise_mult
+        return f(X) + rng.randn(X.shape[0]) * noise_mult
 
     d = 5
     n_train = 50
@@ -224,10 +243,10 @@ def test_return_std(constructor_name):
     w = np.array([1.0, 0.0, 1.0, -1.0, 0.0])
     b = 1.0
 
-    X = np.random.random((n_train, d))
+    X = rng.random_sample((n_train, d))
     X = _convert_container(X, constructor_name)
 
-    X_test = np.random.random((n_test, d))
+    X_test = rng.random_sample((n_test, d))
     X_test = _convert_container(X_test, constructor_name)
 
     for decimal, noise_mult in enumerate([1, 0.1, 0.01]):

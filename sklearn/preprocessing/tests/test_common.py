@@ -42,7 +42,7 @@ def _get_valid_samples_by_column(X, col):
 @pytest.mark.parametrize(
     "est, func, support_sparse, strictly_positive, omit_kwargs",
     [
-        (MaxAbsScaler(), maxabs_scale, True, False, []),
+        (MaxAbsScaler(), maxabs_scale, True, False, ["clip"]),
         (MinMaxScaler(), minmax_scale, False, False, ["clip"]),
         (StandardScaler(), scale, False, False, []),
         (StandardScaler(with_mean=False), scale, True, False, []),
@@ -72,6 +72,7 @@ def test_missing_value_handling(
     assert np.any(np.isnan(X_test), axis=0).all()
     X_test[:, 0] = np.nan  # make sure this boundary case is tested
 
+    est = clone(est)
     with warnings.catch_warnings():
         warnings.simplefilter("error", RuntimeWarning)
         Xt = est.fit(X_train).transform(X_test)

@@ -14,13 +14,13 @@ present for regular K-Means.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
 
 from sklearn.cluster import BisectingKMeans, KMeans
 from sklearn.datasets import make_blobs
-
-print(__doc__)
-
 
 # Generate sample data
 n_samples = 10000

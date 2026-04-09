@@ -7,12 +7,12 @@ import warnings
 
 import numpy as np
 
-from ..exceptions import ConvergenceWarning
-from ..utils import check_array
-from ..utils.extmath import row_norms
-from ..utils.validation import _check_sample_weight
-from ._base import make_dataset
-from ._sag_fast import sag32, sag64
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import make_dataset
+from sklearn.linear_model._sag_fast import sag32, sag64
+from sklearn.utils import check_array
+from sklearn.utils.extmath import row_norms
+from sklearn.utils.validation import _check_sample_weight
 
 
 def get_auto_step_size(
@@ -127,7 +127,7 @@ def sag_solver(
 
     y : ndarray of shape (n_samples,)
         Target values. With loss='multinomial', y must be label encoded
-        (see preprocessing.LabelEncoder).
+        (see preprocessing.LabelEncoder). For loss='log' it must be in [0, 1].
 
     sample_weight : array-like of shape (n_samples,), default=None
         Weights applied to individual samples (1. for unweighted).

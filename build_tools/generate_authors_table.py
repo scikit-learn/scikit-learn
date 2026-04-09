@@ -15,9 +15,9 @@ from pathlib import Path
 
 import requests
 
-print("user:", file=sys.stderr)
+print("Input user:", file=sys.stderr)
 user = input()
-token = getpass.getpass("access token:\n")
+token = getpass.getpass("Input access token:\n")
 auth = (user, token)
 
 LOGO_URL = "https://avatars2.githubusercontent.com/u/365630?v=4"
@@ -63,11 +63,13 @@ def get_contributors():
         ),
         (core_devs, contributor_experience_team, comm_team, documentation_team),
     ):
+        print(f"Retrieving {team_slug}\n")
         for page in [1, 2]:  # 30 per page
             reply = get(f"{entry_point}teams/{team_slug}/members?page={page}")
             lst.extend(reply.json())
 
     # get members of scikit-learn on GitHub
+    print("Retrieving members\n")
     members = []
     for page in [1, 2, 3]:  # 30 per page
         reply = get(f"{entry_point}members?page={page}")
@@ -102,12 +104,10 @@ def get_contributors():
     emeritus_contributor_experience_team = {
         "cmarmo",
     }
-    emeritus_comm_team = {"reshamas"}
+    emeritus_comm_team = {"reshamas", "laurburke"}
 
     # Up-to-now, we can subtract the team emeritus from the original emeritus
     emeritus -= emeritus_contributor_experience_team | emeritus_comm_team
-
-    comm_team -= {"reshamas"}  # in the comm team but not on the web page
 
     # get profiles from GitHub
     core_devs = [get_profile(login) for login in core_devs]
@@ -214,6 +214,7 @@ if __name__ == "__main__":
         documentation_team,
     ) = get_contributors()
 
+    print("Generating rst files")
     with open(
         REPO_FOLDER / "doc" / "maintainers.rst", "w+", encoding="utf-8"
     ) as rst_file:

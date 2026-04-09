@@ -6,10 +6,7 @@ Wikipedia principal eigenvector
 A classical way to assert the relative importance of vertices in a
 graph is to compute the principal eigenvector of the adjacency matrix
 so as to assign to each vertex the values of the components of the first
-eigenvector as a centrality score:
-
-    https://en.wikipedia.org/wiki/Eigenvector_centrality
-
+eigenvector as a centrality score: https://en.wikipedia.org/wiki/Eigenvector_centrality.
 On the graph of webpages and links those values are called the PageRank
 scores by Google.
 
@@ -18,10 +15,7 @@ wikipedia articles to rank articles by relative importance according to
 this eigenvector centrality.
 
 The traditional way to compute the principal eigenvector is to use the
-power iteration method:
-
-    https://en.wikipedia.org/wiki/Power_iteration
-
+`power iteration method <https://en.wikipedia.org/wiki/Power_iteration>`_.
 Here the computation is achieved thanks to Martinsson's Randomized SVD
 algorithm implemented in scikit-learn.
 
@@ -152,7 +146,7 @@ def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
             break
 
     print("Computing the adjacency matrix")
-    X = sparse.lil_matrix((len(index_map), len(index_map)), dtype=np.float32)
+    X = sparse.lil_array((len(index_map), len(index_map)), dtype=np.float32)
     for i, j in links:
         X[i, j] = 1.0
     del links

@@ -9,9 +9,9 @@ from operator import itemgetter
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils import check_array
-from ..utils.validation import check_is_fitted
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.utils import _align_api_if_sparse, check_array, metadata_routing
+from sklearn.utils.validation import check_is_fitted
 
 
 class DictVectorizer(TransformerMixin, BaseEstimator):
@@ -90,6 +90,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     >>> v.transform({'foo': 4, 'unseen_feature': 3})
     array([[0., 0., 4.]])
     """
+
+    # This isn't something that people should be routing / using in a pipeline.
+    __metadata_request__inverse_transform = {"dict_type": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "dtype": "no_validation",  # validation delegated to numpy,
@@ -264,7 +267,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         indices = np.frombuffer(indices, dtype=np.intc)
         shape = (len(indptr) - 1, len(vocab))
 
-        result_matrix = sp.csr_matrix(
+        result_matrix = sp.csr_array(
             (values, indices, indptr), shape=shape, dtype=dtype
         )
 
@@ -286,7 +289,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             self.feature_names_ = feature_names
             self.vocabulary_ = vocab
 
-        return result_matrix
+        return _align_api_if_sparse(result_matrix)
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
@@ -334,7 +337,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        D : list of dict_type objects of shape (n_samples,)
+        X_original : list of dict_type objects of shape (n_samples,)
             Feature mappings for the samples in X.
         """
         check_is_fitted(self, "feature_names_")
@@ -447,5 +450,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
         return self
 
-    def _more_tags(self):
-        return {"X_types": ["dict"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.dict = True
+        tags.input_tags.two_d_array = False
+        return tags

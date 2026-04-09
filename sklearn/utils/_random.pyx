@@ -1,5 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+
 """
 Random utility function
 =======================
@@ -10,12 +11,9 @@ The module contains:
     * Fast rand_r alternative based on xor shifts
 """
 import numpy as np
-from . import check_random_state
+from sklearn.utils.validation import check_random_state
 
-from ._typedefs cimport intp_t
-
-
-cdef uint32_t DEFAULT_SEED = 1
+from sklearn.utils._typedefs cimport intp_t
 
 
 # Compatibility type to always accept the default int type used by NumPy, both

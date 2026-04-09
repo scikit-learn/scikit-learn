@@ -6,7 +6,7 @@ Post pruning decision trees with cost complexity pruning
 .. currentmodule:: sklearn.tree
 
 The :class:`DecisionTreeClassifier` provides parameters such as
-``min_samples_leaf`` and ``max_depth`` to prevent a tree from overfiting. Cost
+``min_samples_leaf`` and ``max_depth`` to prevent a tree from overfitting. Cost
 complexity pruning provides another option to control the size of a tree. In
 :class:`DecisionTreeClassifier`, this pruning technique is parameterized by the
 cost complexity parameter, ``ccp_alpha``. Greater values of ``ccp_alpha``
@@ -16,6 +16,9 @@ based on validation scores.
 
 See also :ref:`minimal_cost_complexity_pruning` for details on pruning.
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 

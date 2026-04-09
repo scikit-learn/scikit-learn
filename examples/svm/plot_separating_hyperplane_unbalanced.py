@@ -17,13 +17,16 @@ unbalanced classes.
     This example will also work by replacing ``SVC(kernel="linear")``
     with ``SGDClassifier(loss="hinge")``. Setting the ``loss`` parameter
     of the :class:`SGDClassifier` equal to ``hinge`` will yield behaviour
-    such as that of a SVC with a linear kernel.
+    such as that of an SVC with a linear kernel.
 
     For example try instead of the ``SVC``::
 
         clf = SGDClassifier(n_iter=100, alpha=0.01)
 
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.lines as mlines
 import matplotlib.pyplot as plt

@@ -47,7 +47,7 @@ Working on PRs to help review
 -----------------------------
 
 Reviewing code is also encouraged. Contributors and users are welcome to
-participate to the review process following our :ref:`review guidelines
+participate in the review process following our :ref:`review guidelines
 <code_review>`.
 
 Triaging operations for members of the core and contributor experience teams
@@ -136,7 +136,7 @@ The following workflow [1]_ is a good way to approach issue triaging:
    <https://matthewrocklin.com/blog/work/2018/02/28/minimal-bug-reports>`_
    by Matthew Rocklin for a good explanation. If the example is not
    reproducible, or if it's clearly not minimal, feel free to ask the reporter
-   if they can provide and example or simplify the provided one.
+   if they can provide an example or simplify the provided one.
    Do acknowledge that writing minimal reproducible examples is hard work.
    If the reporter is struggling, you can try to write one yourself.
 

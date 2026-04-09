@@ -4,8 +4,8 @@ from docutils import nodes
 from docutils.parsers.rst import Directive
 
 from sklearn.utils import all_estimators
+from sklearn.utils._test_common.instance_generator import _construct_instances
 from sklearn.utils._testing import SkipTest
-from sklearn.utils.estimator_checks import _construct_instance
 
 
 class AllowNanEstimators(Directive):
@@ -19,20 +19,23 @@ class AllowNanEstimators(Directive):
         lst = nodes.bullet_list()
         for name, est_class in all_estimators(type_filter=estimator_type):
             with suppress(SkipTest):
-                est = _construct_instance(est_class)
+                # Here we generate the text only for one instance. This directive
+                # should not be used for meta-estimators where tags depend on the
+                # sub-estimator.
+                est = next(_construct_instances(est_class))
 
-            if est._get_tags().get("allow_nan"):
-                module_name = ".".join(est_class.__module__.split(".")[:2])
-                class_title = f"{est_class.__name__}"
-                class_url = f"./generated/{module_name}.{class_title}.html"
-                item = nodes.list_item()
-                para = nodes.paragraph()
-                para += nodes.reference(
-                    class_title, text=class_title, internal=False, refuri=class_url
-                )
-                exists = True
-                item += para
-                lst += item
+                if est.__sklearn_tags__().input_tags.allow_nan:
+                    module_name = ".".join(est_class.__module__.split(".")[:2])
+                    class_title = f"{est_class.__name__}"
+                    class_url = f"./generated/{module_name}.{class_title}.html"
+                    item = nodes.list_item()
+                    para = nodes.paragraph()
+                    para += nodes.reference(
+                        class_title, text=class_title, internal=False, refuri=class_url
+                    )
+                    exists = True
+                    item += para
+                    lst += item
         intro += lst
         return [intro] if exists else None
 

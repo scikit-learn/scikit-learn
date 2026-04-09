@@ -13,8 +13,12 @@ for exporting the chart are:
 - Transparent Background: False
 - Appearance: Light
 
-Each node in the chart that contains an estimator should have a link, where the root
-directory is at `../../`. Note that after updating or re-exporting the SVG, the links
-may be prefixed with e.g. `https://app.diagrams.net/`. Remember to check and remove
-them, for instance by replacing all occurrences of `https://app.diagrams.net/../../`
-with `../../`.
+Note that estimators nodes are clickable and should go to the estimator
+documentation. After updating or re-exporting the SVG with draw.io, the links
+may be prefixed with e.g. `https://app.diagrams.net/`. Remember to check and
+remove them, for instance by replacing all occurrences of
+`https://app.diagrams.net/./` with `./` with the following command:
+
+.. prompt:: bash
+
+  perl -pi -e 's@https://app.diagrams.net/\./@./@g' doc/images/ml_map.svg

@@ -137,7 +137,7 @@ API changes summary
   from ``sklearn`` instead, which was introduced in 0.9.
 
 - In :func:`metrics.roc_curve`, the ``thresholds`` array is now returned
-  with it's order reversed, in order to keep it consistent with the order
+  with its order reversed, in order to keep it consistent with the order
   of the returned ``fpr`` and ``tpr``.
 
 - In `hmm` objects, like `hmm.GaussianHMM`,
@@ -185,8 +185,8 @@ API changes summary
   :meth:`~ensemble.GradientBoostingClassifier.staged_predict`.
 
 - `svm.sparse.SVC` and other sparse SVM classes are now deprecated.
-  The all classes in the :ref:`svm` module now automatically select the
-  sparse or dense representation base on the input.
+  All classes in the :ref:`svm` module now automatically select the
+  sparse or dense representation based on the input.
 
 - All clustering algorithms now interpret the array ``X`` given to ``fit`` as
   input data, in particular :class:`~cluster.SpectralClustering` and
@@ -611,7 +611,7 @@ version 0.9:
   ``cross_val_score`` (i.e. uses the mean score across the folds.)
 
 - Cross Validation generators now use integer indices (``indices=True``)
-  by default instead of boolean masks. This make it more intuitive to
+  by default instead of boolean masks. This makes it more intuitive to
   use with sparse matrix data.
 
 - The functions used for sparse coding, ``sparse_encode`` and
@@ -930,7 +930,7 @@ enhancements and bug fixes.
 Changelog
 ---------
 
-Several new modules where introduced during this release:
+Several new modules were introduced during this release:
 
 - New :ref:`hierarchical_clustering` module by Vincent Michel,
   `Bertrand Thirion`_, `Alexandre Gramfort`_ and `Gael Varoquaux`_.
@@ -1026,7 +1026,7 @@ after the 0.6 release. This release is marked by the speed
 improvements in existing algorithms like k-Nearest Neighbors and
 K-Means algorithm and by the inclusion of an efficient algorithm for
 computing the Ridge Generalized Cross Validation solution. Unlike the
-preceding release, no new modules where added to this release.
+preceding release, no new modules were added to this release.
 
 Changelog
 ---------

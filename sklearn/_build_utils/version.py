@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Extract version number from __init__.py"""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import os
 
 sklearn_init = os.path.join(os.path.dirname(__file__), "../__init__.py")

@@ -13,6 +13,9 @@ the :class:`sklearn.preprocessing.SplineTransformer` class and its
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Data exploration on the Bike Sharing Demand dataset
 # ---------------------------------------------------
@@ -47,7 +50,7 @@ _ = ax.set(
 # %%
 #
 # The target of the prediction problem is the absolute count of bike rentals on
-# a hourly basis:
+# an hourly basis:
 df["count"].max()
 
 # %%
@@ -58,7 +61,7 @@ df["count"].max()
 #
 # .. note::
 #
-#     The fit method of the models used in this notebook all minimize the
+#     The fit method of the models used in this notebook all minimizes the
 #     mean squared error to estimate the conditional mean.
 #     The absolute error, however, would estimate the conditional median.
 #
@@ -195,7 +198,7 @@ print("Categorical features:", categorical_columns.tolist())
 
 # %%
 #
-# Lets evaluate our gradient boosting model with the mean absolute error of the
+# Let's evaluate our gradient boosting model with the mean absolute error of the
 # relative demand averaged across our 5 time-based cross-validation splits:
 import numpy as np
 
@@ -817,10 +820,10 @@ plt.show()
 # :class:`~sklearn.neural_network.MLPRegressor` with one or two hidden layers
 # and we would have obtained quite similar results.
 #
-# The dataset we used in this case study is sampled on a hourly basis. However
+# The dataset we used in this case study is sampled on an hourly basis. However
 # cyclic spline-based features could model time-within-day or time-within-week
 # very efficiently with finer-grained time resolutions (for instance with
-# measurements taken every minute instead of every hours) without introducing
+# measurements taken every minute instead of every hour) without introducing
 # more features. One-hot encoding time representations would not offer this
 # flexibility.
 #

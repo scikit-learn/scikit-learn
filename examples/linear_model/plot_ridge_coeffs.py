@@ -51,7 +51,8 @@ can fine-tune the degree of constraint imposed on the weights, training a model
 capable of generalizing well to unseen data while avoiding overfitting.
 """
 
-# Author: Kornel Kielczewski -- <kornel.k@plusnet.pl>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Purpose of this example

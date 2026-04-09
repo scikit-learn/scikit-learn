@@ -33,6 +33,9 @@ example, it does not suffer from the issue we just mentioned.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # The data
 # --------

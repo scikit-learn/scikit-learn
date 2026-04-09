@@ -6,12 +6,12 @@
       img.avatar {border-radius: 10px;}
     </style>
     <div>
-    <a href='https://github.com/alfaro96'><img src='https://avatars.githubusercontent.com/u/32649176?v=4' class='avatar' /></a> <br />
-    <p>Juan Carlos Alfaro Jiménez</p>
+    <a href='https://github.com/virchan'><img src='https://avatars.githubusercontent.com/u/25701849?v=4' class='avatar' /></a> <br />
+    <p>Virgil Chan</p>
     </div>
     <div>
-    <a href='https://github.com/lucyleeow'><img src='https://avatars.githubusercontent.com/u/23182829?v=4' class='avatar' /></a> <br />
-    <p>Lucy Liu</p>
+    <a href='https://github.com/alfaro96'><img src='https://avatars.githubusercontent.com/u/32649176?v=4' class='avatar' /></a> <br />
+    <p>Juan Carlos Alfaro Jiménez</p>
     </div>
     <div>
     <a href='https://github.com/MaxwellLZH'><img src='https://avatars.githubusercontent.com/u/16646940?v=4' class='avatar' /></a> <br />
@@ -20,6 +20,10 @@
     <div>
     <a href='https://github.com/jmloyola'><img src='https://avatars.githubusercontent.com/u/2133361?v=4' class='avatar' /></a> <br />
     <p>Juan Martin Loyola</p>
+    </div>
+    <div>
+    <a href='https://github.com/DeaMariaLeon'><img src='https://avatars.githubusercontent.com/u/11835246?v=4' class='avatar' /></a> <br />
+    <p>Dea María Léon</p>
     </div>
     <div>
     <a href='https://github.com/smarie'><img src='https://avatars.githubusercontent.com/u/3236794?v=4' class='avatar' /></a> <br />

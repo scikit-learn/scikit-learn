@@ -1,3 +1,4 @@
+import itertools
 from unittest.mock import Mock
 
 import numpy as np
@@ -22,13 +23,15 @@ from sklearn.utils.fixes import (
     COO_CONTAINERS,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
+    _sparse_diags_array,
+    _sparse_random_array,
     parse_version,
     sp_version,
 )
 from sklearn.utils.fixes import laplacian as csgraph_laplacian
 
 try:
-    from pyamg import smoothed_aggregation_solver  # noqa
+    from pyamg import smoothed_aggregation_solver  # noqa: F401
 
     pyamg_available = True
 except ImportError:
@@ -54,7 +57,7 @@ S, true_labels = make_blobs(
 
 def _assert_equal_with_sign_flipping(A, B, tol=0.0):
     """Check array A and B are equal with possible sign flipping on
-    each columns"""
+    each column"""
     tol_squared = tol**2
     for A_col, B_col in zip(A.T, B.T):
         assert (
@@ -71,7 +74,7 @@ def test_sparse_graph_connected_component(coo_container):
     p = rng.permutation(n_samples)
     connections = []
 
-    for start, stop in zip(boundaries[:-1], boundaries[1:]):
+    for start, stop in itertools.pairwise(boundaries):
         group = p[start:stop]
         # Connect all elements within the group at least once via an
         # arbitrary path that spans the group.
@@ -91,7 +94,7 @@ def test_sparse_graph_connected_component(coo_container):
     affinity = coo_container((data, (row_idx, column_idx)))
     affinity = 0.5 * (affinity + affinity.T)
 
-    for start, stop in zip(boundaries[:-1], boundaries[1:]):
+    for start, stop in itertools.pairwise(boundaries):
         component_1 = _graph_connected_component(affinity, p[start])
         component_size = stop - start
         assert component_1.sum() == component_size
@@ -310,9 +313,9 @@ def test_spectral_embedding_amg_solver(dtype, coo_container, seed=36):
 def test_spectral_embedding_amg_solver_failure(dtype, seed=36):
     # Non-regression test for amg solver failure (issue #13393 on github)
     num_nodes = 100
-    X = sparse.rand(num_nodes, num_nodes, density=0.1, random_state=seed)
+    X = _sparse_random_array((num_nodes, num_nodes), density=0.1, random_state=seed)
     X = X.astype(dtype)
-    upper = sparse.triu(X) - sparse.diags(X.diagonal())
+    upper = sparse.triu(X) - _sparse_diags_array(X.diagonal())
     sym_matrix = upper + upper.T
     embedding = spectral_embedding(
         sym_matrix, n_components=10, eigen_solver="amg", random_state=0

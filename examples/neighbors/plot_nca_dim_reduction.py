@@ -28,6 +28,7 @@ meaningful despite the large reduction in dimension.
 
 """
 
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt

@@ -291,7 +291,7 @@ def test_input_validation():
 def test_pickle():
     obj = DBSCAN()
     s = pickle.dumps(obj)
-    assert type(pickle.loads(s)) == obj.__class__
+    assert type(pickle.loads(s)) is obj.__class__
 
 
 def test_boundaries():

@@ -28,9 +28,7 @@ set.
 
 """
 
-# Code source: Tom Dupré la Tour
-# Adapted from plot_classifier_comparison by Gaël Varoquaux and Andreas Müller
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
@@ -74,7 +72,9 @@ classifiers = [
     (
         make_pipeline(
             StandardScaler(),
-            KBinsDiscretizer(encode="onehot", random_state=0),
+            KBinsDiscretizer(
+                encode="onehot", quantile_method="averaged_inverted_cdf", random_state=0
+            ),
             LogisticRegression(random_state=0),
         ),
         {
@@ -85,7 +85,9 @@ classifiers = [
     (
         make_pipeline(
             StandardScaler(),
-            KBinsDiscretizer(encode="onehot", random_state=0),
+            KBinsDiscretizer(
+                encode="onehot", quantile_method="averaged_inverted_cdf", random_state=0
+            ),
             LinearSVC(random_state=0),
         ),
         {

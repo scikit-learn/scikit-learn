@@ -23,13 +23,6 @@ References
 `"Maximum entropy modeling of species geographic distributions"
 <http://rob.schapire.net/papers/ecolmod.pdf>`_ S. J. Phillips,
 R. P. Anderson, R. E. Schapire - Ecological Modelling, 190:231-259, 2006.
-
-Notes
------
-
-For an example of using this dataset, see
-:ref:`examples/applications/plot_species_distribution_modeling.py
-<sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py>`.
 """
 
 # Authors: The scikit-learn developers
@@ -38,16 +31,16 @@ For an example of using this dataset, see
 import logging
 from io import BytesIO
 from numbers import Integral, Real
-from os import PathLike, makedirs, remove
+from os import PathLike, remove
 from os.path import exists
 
 import joblib
 import numpy as np
 
-from ..utils import Bunch
-from ..utils._param_validation import Interval, validate_params
-from . import get_data_home
-from ._base import RemoteFileMetadata, _fetch_remote, _pkl_filepath
+from sklearn.datasets import get_data_home
+from sklearn.datasets._base import RemoteFileMetadata, _fetch_remote, _pkl_filepath
+from sklearn.utils import Bunch
+from sklearn.utils._param_validation import Interval, validate_params
 
 # The original data can be found at:
 # https://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
@@ -216,10 +209,6 @@ def fetch_species_distributions(
       also known as the Forest Small Rice Rat, a rodent that lives in Peru,
       Colombia, Ecuador, Peru, and Venezuela.
 
-    - For an example of using this dataset with scikit-learn, see
-      :ref:`examples/applications/plot_species_distribution_modeling.py
-      <sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py>`.
-
     References
     ----------
 
@@ -239,10 +228,11 @@ def fetch_species_distributions(
            (b'microryzomys_minutus', -67.8   , -16.2667),
            (b'microryzomys_minutus', -67.9833, -15.9   )],
           dtype=[('species', 'S22'), ('dd long', '<f4'), ('dd lat', '<f4')])
+
+    For a more extended example,
+    see :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
     """
     data_home = get_data_home(data_home)
-    if not exists(data_home):
-        makedirs(data_home)
 
     # Define parameters for the data files.  These should not be changed
     # unless the data model changes.  They will be saved in the npz file

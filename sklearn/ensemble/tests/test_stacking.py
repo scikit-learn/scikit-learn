@@ -11,6 +11,7 @@ import pytest
 from numpy.testing import assert_array_equal
 from scipy import sparse
 
+from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
 from sklearn.datasets import (
     load_breast_cancer,
@@ -164,10 +165,10 @@ def test_stacking_regressor_drop_estimator():
     X_train, X_test, y_train, _ = train_test_split(
         scale(X_diabetes), y_diabetes, random_state=42
     )
-    estimators = [("lr", "drop"), ("svr", LinearSVR(random_state=0))]
+    estimators = [("lr", "drop"), ("ridge", Ridge(alpha=1.0))]
     rf = RandomForestRegressor(n_estimators=10, random_state=42)
     reg = StackingRegressor(
-        estimators=[("svr", LinearSVR(random_state=0))],
+        estimators=[("ridge", Ridge(alpha=1.0))],
         final_estimator=rf,
         cv=5,
     )
@@ -377,8 +378,8 @@ def test_stacking_regressor_error(y, params, type_err, msg_err):
         (
             StackingClassifier(
                 estimators=[
-                    ("lr", LogisticRegression(random_state=0)),
-                    ("svm", LinearSVC(random_state=0)),
+                    ("first", LogisticRegression(random_state=0)),
+                    ("second", LinearSVC(random_state=0)),
                 ]
             ),
             X_iris[:100],
@@ -387,8 +388,8 @@ def test_stacking_regressor_error(y, params, type_err, msg_err):
         (
             StackingRegressor(
                 estimators=[
-                    ("lr", LinearRegression()),
-                    ("svm", LinearSVR(random_state=0)),
+                    ("first", Ridge(alpha=1.0)),
+                    ("second", Ridge(alpha=1e-6)),
                 ]
             ),
             X_diabetes,
@@ -406,7 +407,7 @@ def test_stacking_randomness(estimator, X, y):
     )
 
     estimator_drop = clone(estimator)
-    estimator_drop.set_params(lr="drop")
+    estimator_drop.set_params(first="drop")
     estimator_drop.set_params(
         cv=KFold(shuffle=True, random_state=np.random.RandomState(0))
     )
@@ -447,8 +448,8 @@ def test_stacking_classifier_stratify_default():
         (
             StackingRegressor(
                 estimators=[
-                    ("lr", LinearRegression()),
-                    ("svm", LinearSVR(random_state=42)),
+                    ("first", Ridge(alpha=1.0)),
+                    ("second", Ridge(alpha=1e-6)),
                 ],
                 final_estimator=LinearRegression(),
                 cv=KFold(shuffle=True, random_state=42),
@@ -471,6 +472,7 @@ def test_stacking_with_sample_weight(stacker, X, y):
         X, y, total_sample_weight, random_state=42
     )
 
+    stacker = clone(stacker)
     with ignore_warnings(category=ConvergenceWarning):
         stacker.fit(X_train, y_train)
     y_pred_no_weight = stacker.predict(X_test)
@@ -514,8 +516,8 @@ def test_stacking_classifier_sample_weight_fit_param():
         (
             StackingRegressor(
                 estimators=[
-                    ("lr", LinearRegression()),
-                    ("svm", LinearSVR(random_state=42)),
+                    ("ridge1", Ridge(alpha=1.0)),
+                    ("ridge2", Ridge(alpha=1e-6)),
                 ],
                 final_estimator=LinearRegression(),
             ),
@@ -528,7 +530,7 @@ def test_stacking_classifier_sample_weight_fit_param():
 def test_stacking_cv_influence(stacker, X, y):
     # check that the stacking affects the fit of the final estimator but not
     # the fit of the base estimators
-    # note: ConvergenceWarning are catch since we are not worrying about the
+    # note: ConvergenceWarning are caught since we are not worrying about the
     # convergence here
     stacker_cv_3 = clone(stacker)
     stacker_cv_5 = clone(stacker)
@@ -845,7 +847,7 @@ def test_get_feature_names_out(
     stacker, feature_names, X, y, expected_names, passthrough
 ):
     """Check get_feature_names_out works for stacking."""
-
+    stacker = clone(stacker)
     stacker.set_params(passthrough=passthrough)
     stacker.fit(scale(X), y)
 
@@ -920,7 +922,6 @@ def test_routing_passed_metadata_not_supported(Estimator, Child):
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "Estimator, Child",
     [
@@ -928,13 +929,13 @@ def test_routing_passed_metadata_not_supported(Estimator, Child):
         (StackingRegressor, ConsumingRegressor),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_get_metadata_routing_without_fit(Estimator, Child):
     # Test that metadata_routing() doesn't raise when called before fit.
     est = Estimator([("sub_est", Child())])
     est.get_metadata_routing()
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "Estimator, Child",
     [
@@ -945,6 +946,7 @@ def test_get_metadata_routing_without_fit(Estimator, Child):
 @pytest.mark.parametrize(
     "prop, prop_value", [("sample_weight", np.ones(X_iris.shape[0])), ("metadata", "a")]
 )
+@config_context(enable_metadata_routing=True)
 def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_value):
     """Test that metadata is routed correctly for Stacking*."""
 
@@ -991,7 +993,6 @@ def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_v
     )
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "Estimator, Child",
     [
@@ -999,6 +1000,7 @@ def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_v
         (StackingRegressor, ConsumingRegressor),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_metadata_routing_error_for_stacking_estimators(Estimator, Child):
     """Test that the right error is raised when metadata is not requested."""
     sample_weight, metadata = np.ones(X_iris.shape[0]), "a"

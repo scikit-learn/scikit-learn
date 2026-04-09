@@ -1,7 +1,10 @@
 """This module contains utility routines."""
 
-from ...base import is_classifier
-from .binning import _BinMapper
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from sklearn.base import is_classifier
+from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 
 
 def get_equivalent_estimator(estimator, lib="lightgbm", n_classes=None):
@@ -69,7 +72,7 @@ def get_equivalent_estimator(estimator, lib="lightgbm", n_classes=None):
         # LightGBM 3.0 introduced a different scaling of the hessian for the multiclass
         # case.
         # It is equivalent of scaling the learning rate.
-        # See https://github.com/microsoft/LightGBM/pull/3256.
+        # See https://github.com/lightgbm-org/LightGBM/pull/3256.
         if n_classes is not None:
             lightgbm_params["learning_rate"] *= n_classes / (n_classes - 1)
 

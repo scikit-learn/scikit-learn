@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import argparse
 import os
 

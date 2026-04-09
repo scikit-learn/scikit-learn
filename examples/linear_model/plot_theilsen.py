@@ -85,7 +85,7 @@ for name, estimator in estimators:
     )
 
 plt.axis("tight")
-plt.legend(loc="upper left")
+plt.legend(loc="upper right")
 _ = plt.title("Corrupt y")
 
 # %%
