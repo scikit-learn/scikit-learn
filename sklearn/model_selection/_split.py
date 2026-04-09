@@ -1416,7 +1416,28 @@ class RollingTimeSeriesSplit(BaseCrossValidator):
         return (n_samples - min_len) // step + 1
 
     def split(self, X, y=None, groups=None):
-        """Generate indices to split data into training and test set."""
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for compatibility.
+
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for compatibility.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
         X, y, groups = indexable(X, y, groups)
         n_samples = _num_samples(X)
         indices = np.arange(n_samples)
@@ -1563,10 +1584,11 @@ class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
             and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,), default=None
-            Always ignored, exists for compatibility.
+            The target variable for supervised learning problems.
 
-        groups : array-like of shape (n_samples,), default=None
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,)
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
 
         Yields
         ------
@@ -1661,14 +1683,17 @@ class LeavePGroupsOut(GroupsConsumerMixin, BaseCrossValidator):
 
         Parameters
         ----------
-        X : object, default=None
-            Always ignored, exists for compatibility.
+        X : array-like of shape (n_samples, n_features), default=None
+            Always ignored, exists for API compatibility.
 
-        y : object, default=None
-            Always ignored, exists for compatibility.
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
 
-        groups : object, default=None
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,), default=None
+            Group labels for the samples used while splitting the dataset into
+            train/test set. This 'groups' parameter must always be specified to
+            calculate the number of splits, though the other parameters can be
+            omitted.
 
         Returns
         -------
@@ -1690,10 +1715,11 @@ class LeavePGroupsOut(GroupsConsumerMixin, BaseCrossValidator):
             and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,), default=None
-            Always ignored, exists for compatibility.
+            The target variable for supervised learning problems.
 
-        groups : array-like of shape (n_samples,), default=None
-            Always ignored, exists for compatibility.
+        groups : array-like of shape (n_samples,)
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
 
         Yields
         ------
