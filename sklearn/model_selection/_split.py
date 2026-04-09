@@ -1661,17 +1661,14 @@ class LeavePGroupsOut(GroupsConsumerMixin, BaseCrossValidator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features), default=None
-            Always ignored, exists for API compatibility.
+        X : object, default=None
+            Always ignored, exists for compatibility.
 
-        y : array-like of shape (n_samples,), default=None
-            Always ignored, exists for API compatibility.
+        y : object, default=None
+            Always ignored, exists for compatibility.
 
-        groups : array-like of shape (n_samples,), default=None
-            Group labels for the samples used while splitting the dataset into
-            train/test set. This 'groups' parameter must always be specified to
-            calculate the number of splits, though the other parameters can be
-            omitted.
+        groups : object, default=None
+            Always ignored, exists for compatibility.
 
         Returns
         -------
@@ -1693,11 +1690,10 @@ class LeavePGroupsOut(GroupsConsumerMixin, BaseCrossValidator):
             and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,), default=None
-            The target variable for supervised learning problems.
+            Always ignored, exists for compatibility.
 
-        groups : array-like of shape (n_samples,)
-            Group labels for the samples used while splitting the dataset into
-            train/test set.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for compatibility.
 
         Yields
         ------
