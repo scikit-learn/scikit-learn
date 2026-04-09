@@ -391,11 +391,11 @@ def _write_estimator_html(
                     if not isinstance(est, _VisualBlock)
                     else est._sk_visual_block_()
                 )
-
-                if isinstance(name_details, str):
-                    repeated_name = re.search(name_details.split("(", 1)[0], name)
-                else:
-                    repeated_name = ""
+                repeated_name = (
+                    re.search(name_details.split("(", 1)[0], name)
+                    if isinstance(name_details, str)
+                    else ""
+                )
                 has_name = child_block.kind == "single" and name is not None
                 if has_name:
                     # write a label for the step name, then the
