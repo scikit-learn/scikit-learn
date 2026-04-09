@@ -1026,9 +1026,6 @@ class BaseSearchCV(
             all_out = []
             all_more_results = defaultdict(list)
 
-            # TODO: evaluate_candidates is also used by HalvingGridSearchCV, but in a
-            # loop; should this be another subtask-layer or should we add the next round
-            # of indices? Also fails for CustomSearchCV in the tests for similar reason.
             def evaluate_candidates(
                 candidate_params, cv=None, more_results=None, callback_ctx=None
             ):
@@ -1044,19 +1041,24 @@ class BaseSearchCV(
                         )
                     )
 
-                # protect with: if callback_ctx is not None (?)
-                if hasattr(self, "param_grid") and not hasattr(self, "factor"):
-                    # GridSearchCV
+                if hasattr(self, "param_grid"):  # GridSearchCV, HalvingGridSearchCV
                     max_callback_subtasks = n_candidates * n_splits
-                elif hasattr(self, "n_iter") and not hasattr(self, "factor"):
-                    # RandomizedSearchCV
+                elif hasattr(
+                    self, "n_iter"
+                ):  # RandomizedSearchCV, HalvingRandomSearchCV
                     max_callback_subtasks = self.n_iter * n_splits
-                else:  # HalvingGridSearchCV, HalvingRandomSearchCV, custom classes
-                    # TODO: add extra condition for Halving*Search, based on
-                    # n_iterations, which were computed in
-                    # BaseSuccessiveHalving._run_search but are not yet attributes of
-                    # self at this point
+                else:  # custom classes
+                    # TODO: we could also exclude Halving*SearchCV from above using `and
+                    # not hasattr(self, "factor")` and add extra condition here, based
+                    # on self.n_iterations_, which were computed in
+                    # BaseSuccessiveHalving._run_search at this point in time, but which
+                    # are not yet attributes of self (we could move this assignment up a
+                    # bit)
                     max_callback_subtasks = None
+                # TODO: we could protect all of these calls with `if callback_ctx is not
+                # None` and the like or require custom classes that inherit from
+                # BaseSearchCV to implement callback support; I think we should do the
+                # first
                 search_subctx = callback_ctx.subcontext(
                     task_name="search",
                     max_subtasks=max_callback_subtasks,
