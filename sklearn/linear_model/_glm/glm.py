@@ -13,6 +13,7 @@ import scipy.optimize
 from sklearn._loss.loss import (
     HalfGammaLoss,
     HalfPoissonLoss,
+    HalfPoissonLossArrayAPI,
     HalfSquaredError,
     HalfTweedieLoss,
     HalfTweedieLossIdentity,
@@ -21,6 +22,14 @@ from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
 from sklearn.linear_model._glm._newton_solver import NewtonCholeskySolver, NewtonSolver
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.utils import check_array
+from sklearn.utils._array_api import (
+    _average,
+    _is_numpy_namespace,
+    _matching_numpy_dtype,
+    get_namespace,
+    get_namespace_and_device,
+    move_to,
+)
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
@@ -192,12 +201,13 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted model.
         """
+        xp, _, device_ = get_namespace_and_device(X)
         X, y = validate_data(
             self,
             X,
             y,
             accept_sparse=["csc", "csr"],
-            dtype=[np.float64, np.float32],
+            dtype=[xp.float64, xp.float32],
             y_numeric=True,
             multi_output=False,
         )
@@ -209,8 +219,10 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             # losses.
             sample_weight = _check_sample_weight(sample_weight, X, dtype=loss_dtype)
 
+        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
+
         n_samples, n_features = X.shape
-        self._base_loss = self._get_loss()
+        self._base_loss = self._get_loss(xp=xp, device=device_)
 
         linear_loss = LinearModelLoss(
             base_loss=self._base_loss,
@@ -240,18 +252,20 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         # Thus, without rescaling, we have
         #     obj = LinearModelLoss.loss(...)
 
+        loss_dtype_np = _matching_numpy_dtype(X, xp=xp)
         if self.warm_start and hasattr(self, "coef_"):
+            coef_xp, _ = get_namespace(self.coef_)
+            coef = move_to(self.coef_, xp=np, device="cpu")
             if self.fit_intercept:
                 # LinearModelLoss needs intercept at the end of coefficient array.
-                coef = np.concatenate((self.coef_, np.array([self.intercept_])))
-            else:
-                coef = self.coef_
-            coef = coef.astype(loss_dtype, copy=False)
+                intercept = move_to(self.intercept_, xp=np, device="cpu")
+                coef = np.concatenate((coef, np.array([intercept])))
+            coef = coef.astype(loss_dtype_np, copy=False)
         else:
-            coef = linear_loss.init_zero_coef(X, dtype=loss_dtype)
+            coef = linear_loss.init_zero_coef(X, dtype=loss_dtype_np)
             if self.fit_intercept:
                 coef[-1] = linear_loss.base_loss.link.link(
-                    np.average(y, weights=sample_weight)
+                    _average(y, weights=sample_weight)
                 )
 
         l2_reg_strength = self.alpha
@@ -283,6 +297,11 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 "lbfgs", opt_res, max_iter=self.max_iter
             )
             coef = opt_res.x
+            coef = xp.asarray(
+                coef.copy(order="C" if not _is_numpy_namespace(xp) else "K"),
+                dtype=X.dtype,
+                device=device_,
+            )
         elif self.solver == "newton-cholesky":
             sol = NewtonCholeskySolver(
                 coef=coef,
@@ -334,12 +353,13 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         y_pred : array of shape (n_samples,)
             Returns predicted values of linear predictor.
         """
+        xp, _ = get_namespace(X)
         check_is_fitted(self)
         X = validate_data(
             self,
             X,
             accept_sparse=["csr", "csc", "coo"],
-            dtype=[np.float64, np.float32],
+            dtype=[xp.float64, xp.float32],
             ensure_2d=True,
             allow_nd=False,
             reset=False,
@@ -410,6 +430,9 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             # losses.
             sample_weight = _check_sample_weight(sample_weight, X, dtype=y.dtype)
 
+        xp, _, device_ = get_namespace_and_device(X)
+        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
+
         base_loss = self._base_loss
 
         if not base_loss.in_y_true_range(y):
@@ -418,7 +441,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 f" {base_loss.__name__}."
             )
 
-        constant = np.average(
+        constant = _average(
             base_loss.constant_to_optimal_zero(y_true=y, sample_weight=None),
             weights=sample_weight,
         )
@@ -430,14 +453,14 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             sample_weight=sample_weight,
             n_threads=1,
         )
-        y_mean = base_loss.link.link(np.average(y, weights=sample_weight))
+        y_mean = base_loss.link.link(_average(y, weights=sample_weight))
         deviance_null = base_loss(
             y_true=y,
-            raw_prediction=np.tile(y_mean, y.shape[0]),
+            raw_prediction=xp.tile(y_mean, (y.shape[0],)),
             sample_weight=sample_weight,
             n_threads=1,
         )
-        return 1 - (deviance + constant) / (deviance_null + constant)
+        return float(1 - (deviance + constant) / (deviance_null + constant))
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -454,7 +477,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             pass  # pragma: no cover
         return tags
 
-    def _get_loss(self):
+    def _get_loss(self, xp=None, device=None):
         """This is only necessary because of the link and power arguments of the
         TweedieRegressor.
 
@@ -591,8 +614,16 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
             verbose=verbose,
         )
 
-    def _get_loss(self):
-        return HalfPoissonLoss()
+    def _get_loss(self, xp=None, device=None):
+        if xp is None or _is_numpy_namespace(xp):
+            return HalfPoissonLoss()
+        else:
+            return HalfPoissonLossArrayAPI(xp=xp, device=device)
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = self.solver == "lbfgs"
+        return tags
 
 
 class GammaRegressor(_GeneralizedLinearRegressor):
@@ -723,7 +754,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
             verbose=verbose,
         )
 
-    def _get_loss(self):
+    def _get_loss(self, xp=None, device=None):
         return HalfGammaLoss()
 
 
@@ -891,7 +922,7 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         self.link = link
         self.power = power
 
-    def _get_loss(self):
+    def _get_loss(self, xp=None, device=None):
         if self.link == "auto":
             if self.power <= 0:
                 # identity link

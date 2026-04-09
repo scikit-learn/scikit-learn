@@ -515,6 +515,9 @@ redirects = {
     "auto_examples/linear_model/plot_sgd_comparison": (
         "auto_examples/linear_model/plot_sgd_loss_functions"
     ),
+    "auto_examples/miscellaneous/plot_partial_dependence_visualization_api": (
+        "auto_examples/inspection/plot_partial_dependence_visualization_api"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:

@@ -27,6 +27,7 @@ from sklearn.feature_extraction.text import (
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
+from sklearn.utils import _align_api_if_sparse
 from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
     assert_almost_equal,
@@ -657,9 +658,9 @@ def test_hashing_vectorizer():
     assert np.max(X.data) > 0
     assert np.max(X.data) < 1
 
-    # Check that the rows are normalized
-    for i in range(X.shape[0]):
-        assert_almost_equal(np.linalg.norm(X[0].data, 2), 1.0)
+    # Check that the rows are normalized (l2 norm)
+    for row in X:
+        assert_almost_equal(np.linalg.norm(row.data, 2), 1.0)
 
     # Check vectorization with some non-default parameters
     v = HashingVectorizer(ngram_range=(1, 2), norm="l1")
@@ -676,9 +677,9 @@ def test_hashing_vectorizer():
     assert np.min(X.data) > -1
     assert np.max(X.data) < 1
 
-    # Check that the rows are normalized
-    for i in range(X.shape[0]):
-        assert_almost_equal(np.linalg.norm(X[0].data, 1), 1.0)
+    # Check that the rows are normalized (l1 norm)
+    for row in X:
+        assert_almost_equal(np.linalg.norm(row.data, 1), 1.0)
 
 
 def test_feature_names():
@@ -1612,7 +1613,16 @@ def test_tfidf_transformer_copy(csr_container):
     assert X_transform is not X_csr
 
     X_transform = transformer.transform(X_csr, copy=False)
-    assert X_transform is X_csr
+    # allow for config["sparse_interface"] to change output type
+    # there should be no data copied, but the `id` will change.
+    if _align_api_if_sparse(X_csr) is X_csr:
+        assert X_transform is X_csr
+    else:
+        assert X_transform is not X_csr
+        assert X_transform.indptr is X_csr.indptr
+        assert X_transform.indices.base is X_csr.indices.base
+        assert X_transform.data.base is X_csr.data.base
+
     with pytest.raises(AssertionError):
         assert_allclose_dense_sparse(X_csr, X_csr_original)
 

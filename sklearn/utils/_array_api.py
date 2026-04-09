@@ -3,9 +3,12 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import inspect
 import itertools
 import math
 import os
+from collections import namedtuple
+from functools import partial
 
 import numpy
 import scipy
@@ -62,11 +65,11 @@ def yield_namespaces(include_numpy_namespaces=True):
 
 
 def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
-    """Yield supported namespace, device, dtype tuples for testing.
+    """Yield supported namespace, device_name, dtype_name tuples for testing.
 
     Use this to test that an estimator works with all combinations.
-    Use in conjunction with `ids=_get_namespace_device_dtype_ids` to give
-    clearer pytest parametrization ID names.
+    Pass the yielded values to `_array_api_for_tests` which returns (xp, device)
+    for array allocation.
 
     Parameters
     ----------
@@ -78,7 +81,7 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     array_namespace : str
         The name of the Array API namespace.
 
-    device : str
+    device_name : str or None
         The name of the device on which to allocate the arrays. Can be None to
         indicate that the default value should be used.
 
@@ -90,43 +93,65 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
         include_numpy_namespaces=include_numpy_namespaces
     ):
         if array_namespace == "torch":
-            for device, dtype in itertools.product(
+            for device_name, dtype in itertools.product(
                 ("cpu", "cuda", "xpu"), ("float64", "float32")
             ):
-                yield array_namespace, device, dtype
+                yield array_namespace, device_name, dtype
             yield array_namespace, "mps", "float32"
 
         elif array_namespace == "array_api_strict":
-            try:
-                import array_api_strict
-
-                yield array_namespace, array_api_strict.Device("CPU_DEVICE"), "float64"
-                yield array_namespace, array_api_strict.Device("device1"), "float32"
-            except ImportError:
-                # Those combinations will typically be skipped by pytest if
-                # array_api_strict is not installed but we still need to see them in
-                # the test output.
-                yield array_namespace, "CPU_DEVICE", "float64"
-                yield array_namespace, "device1", "float32"
+            # Always yield strings for consistent parametrization; _array_api_for_tests
+            # creates Device objects when needed.
+            yield array_namespace, "CPU_DEVICE", "float64"
+            yield array_namespace, "device1", "float32"
         else:
             yield array_namespace, None, None
 
 
-def _get_namespace_device_dtype_ids(param):
-    """Get pytest parametrization IDs for `yield_namespace_device_dtype_combinations`"""
-    # Gives clearer IDs for array-api-strict devices, see #31042 for details
-    try:
-        import array_api_strict
-    except ImportError:
-        # `None` results in the default pytest representation
-        return None
-    else:
-        if param == array_api_strict.Device("CPU_DEVICE"):
-            return "CPU_DEVICE"
-        if param == array_api_strict.Device("device1"):
-            return "device1"
-        if param == array_api_strict.Device("device2"):
-            return "device2"
+def yield_mixed_namespace_input_permutations():
+    """Yield mixed namespace and device inputs for testing.
+
+    We do not test for all possible permutations of namespace/device from
+    `yield_namespace_device_dtype_combinations` (excluding dtype variations, this is
+    P(8,2)=56), to avoid slow testing and maintenance burden.
+
+    The included selection ensures that the following conversions are tested:
+
+    * non-NumPy to NumPy (including GPU to CPU)
+    * NumPy to non-NumPy (including CPU to GPU)
+    * non-NumPy to non-NumPy (GPU to GPU)
+    * array-api-strict to non-NumPy (this pair also has no special hardware
+      requirements to allow for local testing)
+    """
+
+    NamespaceAndDevice = namedtuple("NamespaceAndDevice", ["xp", "device"])
+
+    yield (
+        NamespaceAndDevice("cupy", None),
+        NamespaceAndDevice("torch", "cuda"),
+        "cupy to torch cuda",
+    )
+    yield (
+        NamespaceAndDevice("torch", "mps"),
+        NamespaceAndDevice("numpy", None),
+        "torch mps to numpy",
+    )
+    yield (
+        NamespaceAndDevice("numpy", None),
+        NamespaceAndDevice("torch", "cuda"),
+        "numpy to torch cuda",
+    )
+    yield (
+        NamespaceAndDevice("numpy", None),
+        NamespaceAndDevice("torch", "mps"),
+        "numpy to torch mps",
+    )
+
+    yield (
+        NamespaceAndDevice("array_api_strict", "device1"),
+        NamespaceAndDevice("torch", "cpu"),
+        "array_api_strict to torch cpu",
+    )
 
 
 def _check_array_api_dispatch(array_api_dispatch):
@@ -501,7 +526,7 @@ def move_to(*arrays, xp, device):
     Each array will be moved to the reference namespace and device if
     it is not already using it. Otherwise the array is left unchanged.
 
-    `array` may contain `None` entries, these are left unchanged.
+    `arrays` may contain `None` entries, these are left unchanged.
 
     Sparse arrays are accepted (as pass through) if the reference namespace is
     NumPy, in which case they are returned unchanged. Otherwise a `TypeError`
@@ -532,9 +557,19 @@ def move_to(*arrays, xp, device):
             "namespace is Numpy"
         )
 
-    converted_arrays = []
+    arrays_ = arrays
+    # Down cast float64 `arrays` when highest precision of `xp`/`device` is float32
+    if _max_precision_float_dtype(xp, device) == xp.float32:
+        arrays_ = []
+        for array in arrays:
+            xp_array, _ = get_namespace(array)
+            if getattr(array, "dtype", None) == xp_array.float64:
+                arrays_.append(xp_array.astype(array, xp_array.float32))
+            else:
+                arrays_.append(array)
 
-    for array, is_sparse, is_none in zip(arrays, sparse_mask, none_mask):
+    converted_arrays = []
+    for array, is_sparse, is_none in zip(arrays_, sparse_mask, none_mask):
         if is_none:
             converted_arrays.append(None)
         elif is_sparse:
@@ -562,7 +597,7 @@ def move_to(*arrays, xp, device):
                     # kwargs in the from_dlpack method and their expected
                     # meaning by namespaces implementing the array API spec.
                     # TODO: try removing this once DLPack v1 more widely supported
-                    # TODO: ValueError should not be needed but is in practice:
+                    # TODO: ValueError not needed once min NumPy >=2.4.0:
                     # https://github.com/numpy/numpy/issues/30341
                 except (
                     AttributeError,
@@ -591,18 +626,33 @@ def move_to(*arrays, xp, device):
     )
 
 
-def _expit(X, out=None, xp=None):
+def _expit(x, out=None, xp=None):
     # The out argument for exp and hence expit is only supported for numpy,
     # but not in the Array API specification.
-    xp, _ = get_namespace(X, xp=xp)
+    xp, _ = get_namespace(x, xp=xp)
     if _is_numpy_namespace(xp):
-        if out is not None:
-            special.expit(X, out=out)
-        else:
-            out = special.expit(X)
-        return out
+        return special.expit(x, out=out)
 
-    return 1.0 / (1.0 + xp.exp(-X))
+    return 1.0 / (1.0 + xp.exp(-x))
+
+
+def _logit(x, out=None, xp=None):
+    # The out argument for log and hence logit is only supported for numpy,
+    # but not in the Array API specification.
+    xp, _ = get_namespace(x, xp=xp)
+    if _is_numpy_namespace(xp):
+        return special.logit(x, out=out)
+
+    # See https://github.com/scipy/xsf/blob/e0c4d22d6ae768b39efc69586f1e8d5560a32fc5/include/xsf/log_exp.h#L30
+    def logit_v2(x):
+        s = 2 * (x - 0.5)
+        return xp.log1p(s) - xp.log1p(-s)
+
+    return xp.where(
+        xp.logical_or(x < 0.3, x > 0.65),
+        xp.log(x / (1 - x)),
+        logit_v2(x),
+    )
 
 
 def _validate_diagonal_args(array, value, xp):
@@ -809,9 +859,8 @@ def _median(x, axis=None, keepdims=False, xp=None):
     if hasattr(xp, "median"):
         return xp.median(x, axis=axis, keepdims=keepdims)
 
-    # Intended mostly for array-api-strict (which as no "median", as per the spec)
-    # as `_convert_to_numpy` does not necessarily work for all array types.
-    x_np = _convert_to_numpy(x, xp=xp)
+    # Intended mostly for array-api-strict (which has no "median", as per the spec).
+    x_np = move_to(x, xp=numpy, device="cpu")
     return xp.asarray(numpy.median(x_np, axis=axis, keepdims=keepdims), device=device)
 
 
@@ -937,7 +986,15 @@ def _ravel(array, xp=None):
 
 
 def _convert_to_numpy(array, xp):
-    """Convert X into a NumPy ndarray on the CPU."""
+    """Convert X into a NumPy ndarray on the CPU.
+
+    This function uses library-specific methods to convert the array to a NumPy
+    ndarray on the CPU. It is only meant as a fallback when move_to fails to use the
+    DLPACK protocol.
+
+    This function is not meant to be called directly and
+    `move_to(array, xp=np, device="cpu")` should be used instead.
+    """
     if _is_xp_namespace(xp, "torch"):
         return array.cpu().numpy()
     elif _is_xp_namespace(xp, "cupy"):  # pragma: nocover
@@ -949,10 +1006,9 @@ def _convert_to_numpy(array, xp):
 
 
 def _estimator_with_converted_arrays(estimator, converter):
-    """Create new estimator which converting all attributes that are arrays.
+    """Create a new estimator with converted array attributes.
 
-    The converter is called on all NumPy arrays and arrays that support the
-    `DLPack interface <https://dmlc.github.io/dlpack/latest/>`__.
+    All attributes that are arrays will be converted using the provided converter.
 
     Parameters
     ----------
@@ -965,16 +1021,124 @@ def _estimator_with_converted_arrays(estimator, converter):
     Returns
     -------
     new_estimator : Estimator
-        Convert estimator
+        A clone of the estimator with converted array attributes.
     """
+    # Inline import to avoid circular import
     from sklearn.base import clone
+
+    # Because we call this function recursively `estimator` might actually be an
+    # attribute of an estimator and not an actual estimator object.
+    estimator_type = type(estimator)
+
+    if hasattr(estimator, "__sklearn_array_api_convert__") and not inspect.isclass(
+        estimator
+    ):
+        return estimator.__sklearn_array_api_convert__(converter)
+
+    if estimator_type is dict:
+        return {
+            k: _estimator_with_converted_arrays(v, converter)
+            for k, v in estimator.items()
+        }
+
+    if estimator_type in (list, tuple, set, frozenset):
+        return estimator_type(
+            _estimator_with_converted_arrays(v, converter) for v in estimator
+        )
+
+    if hasattr(estimator, "__dlpack__") or isinstance(
+        estimator, (numpy.ndarray, numpy.generic)
+    ):
+        return converter(estimator)
+
+    if not hasattr(estimator, "get_params") or isinstance(estimator, type):
+        return estimator
 
     new_estimator = clone(estimator)
     for key, attribute in vars(estimator).items():
-        if hasattr(attribute, "__dlpack__") or isinstance(attribute, numpy.ndarray):
-            attribute = converter(attribute)
+        attribute = _estimator_with_converted_arrays(attribute, converter)
         setattr(new_estimator, key, attribute)
     return new_estimator
+
+
+def move_estimator_to(estimator, xp, device):
+    """Move estimator array attributes to the given namespace and device.
+
+    Attributes which are not arrays are left unchanged.
+
+    Parameters
+    ----------
+    estimator : estimator object
+        The estimator whose attributes should be converted.
+
+    xp : array namespace
+        The target array API namespace.
+
+    device : device or None
+        The target device.
+
+    Returns
+    -------
+    new_estimator : estimator object
+        A clone of the estimator with array attributes moved.
+    """
+    return _estimator_with_converted_arrays(
+        estimator, partial(move_to, xp=xp, device=device)
+    )
+
+
+def check_same_namespace(X, estimator, *, attribute, method):
+    """Check that estimator's fitted attribute is compatible with X.
+
+    Use this to check that an estimator was fitted using the same array
+    namespace and device as ``X``. This is done by comparing the namespace and
+    device of ``X`` and the provided ``attribute``.
+
+    Parameters
+    ----------
+    X : array-like
+        The data passed to the fitted estimator's method, e.g. to ``predict``.
+
+    estimator : estimator object
+        The fitted estimator.
+
+    attribute : str
+        The name of the fitted attribute to check; for example it could be
+        ``"coef_"`` for a linear model. This function will check that ``X`` is
+        in a namespace and device that are consistent with the attribute.
+
+    method : str
+        The name of the calling method (e.g. ``"predict"``). It is used to
+        write the error message if the check fails.
+    """
+    if not get_config()["array_api_dispatch"]:
+        return
+
+    attr = getattr(estimator, attribute)
+    a_xp, _, a_device = get_namespace_and_device(attr)
+
+    X_xp, _, X_device = get_namespace_and_device(X)
+
+    if X_xp == a_xp and X_device == a_device:
+        return
+
+    if X_xp != a_xp:
+        msg = (
+            f"Array namespaces used during fit ({a_xp.__name__}) "
+            f"and {method} ({X_xp.__name__}) differ."
+        )
+    else:  # pragma: no cover
+        msg = f"Devices used during fit ({a_device}) and {method} ({X_device}) differ."
+
+    raise ValueError(
+        f"Inputs passed to {estimator.__class__.__name__}.{method}() "
+        "must use the same namespace and the same device as those passed to fit(). "
+        f"{msg} "
+        "You can move the estimator to the same namespace and device as X with: "
+        "'from sklearn.utils._array_api import move_estimator_to; "
+        "xp, _, device = get_namespace_and_device(X); "
+        "estimator = move_estimator_to(estimator, xp, device)'"
+    )
 
 
 def _atol_for_type(dtype_or_dtype_name):
@@ -1133,9 +1297,9 @@ def _bincount(array, weights=None, minlength=0, xp=None):
     if hasattr(xp, "bincount"):
         return xp.bincount(array, weights=weights, minlength=minlength)
 
-    array_np = _convert_to_numpy(array, xp=xp)
+    array_np = move_to(array, xp=numpy, device="cpu")
     if weights is not None:
-        weights_np = _convert_to_numpy(weights, xp=xp)
+        weights_np = move_to(weights, xp=numpy, device="cpu")
     else:
         weights_np = None
     bin_out = numpy.bincount(array_np, weights=weights_np, minlength=minlength)

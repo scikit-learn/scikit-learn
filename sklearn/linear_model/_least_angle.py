@@ -15,9 +15,13 @@ import numpy as np
 from scipy import interpolate, linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
-from sklearn.base import MultiOutputMixin, RegressorMixin, _fit_context
+from sklearn.base import RegressorMixin, _fit_context
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.linear_model._base import LinearModel, LinearRegression, _preprocess_data
+from sklearn.linear_model._base import (
+    LinearRegression,
+    MultiOutputLinearModel,
+    _preprocess_data,
+)
 from sklearn.model_selection import check_cv
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
@@ -917,7 +921,7 @@ def _lars_path_solver(
 # Estimator classes
 
 
-class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
+class Lars(RegressorMixin, MultiOutputLinearModel):
     """Least Angle Regression model aka LAR.
 
     Read more in the :ref:`User Guide <least_angle_regression>`.

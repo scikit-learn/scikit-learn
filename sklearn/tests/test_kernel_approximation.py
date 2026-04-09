@@ -20,8 +20,8 @@ from sklearn.metrics.pairwise import (
 )
 from sklearn.utils._array_api import (
     _atol_for_type,
-    _convert_to_numpy,
     get_namespace_and_device,
+    move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._array_api import (
@@ -350,16 +350,17 @@ def test_nystroem_approximation():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
 )
 @pytest.mark.parametrize(
     "kernel", list(kernel_metrics()) + [_linear_kernel, "precomputed"]
 )
 @pytest.mark.parametrize("n_components", [2, 100])
 def test_nystroem_approximation_array_api(
-    array_namespace, device, dtype_name, kernel, n_components
+    array_namespace, device_name, dtype_name, kernel, n_components
 ):
-    xp = _array_api_for_tests(array_namespace, device)
+    xp, device = _array_api_for_tests(array_namespace, device_name)
     rnd = np.random.RandomState(0)
     n_samples = 10
     # Ensure full-rank linear kernel to limit the impact of device-specific
@@ -376,7 +377,7 @@ def test_nystroem_approximation_array_api(
 
     with config_context(array_api_dispatch=True):
         X_xp_transformed = nystroem.fit_transform(X_xp)
-        X_xp_transformed_np = _convert_to_numpy(X_xp_transformed, xp=xp)
+        X_xp_transformed_np = move_to(X_xp_transformed, xp=np, device="cpu")
 
         for attribute_name in ["components_", "normalization_"]:
             xp_attr, _, device_attr = get_namespace_and_device(
