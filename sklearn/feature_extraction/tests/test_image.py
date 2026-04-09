@@ -14,6 +14,7 @@ from sklearn.feature_extraction.image import (
     img_to_graph,
     reconstruct_from_patches_2d,
 )
+from sklearn.utils._testing import assert_allclose
 
 
 def test_img_to_graph():
@@ -242,7 +243,7 @@ def test_reconstruct_patches_edge_patch_size(image_size, patch_size):
     image = rng.rand(*image_size)
     patches = extract_patches_2d(image, patch_size)
     reconstructed = reconstruct_from_patches_2d(patches, image_size)
-    np.testing.assert_array_almost_equal(image, reconstructed)
+    assert_allclose(image, reconstructed)
 
 
 def test_patch_extractor_fit(downsampled_face_collection, global_random_seed):
