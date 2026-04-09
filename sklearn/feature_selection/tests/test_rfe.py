@@ -676,7 +676,7 @@ def test_rfe_n_features_to_select_warning(ClsRFE, param):
         clsrfe = ClsRFE(estimator=LogisticRegression(), **{param: 21})
         clsrfe.fit(X, y)
 
-    
+
 def test_rfe_with_sample_weight():
     """Test that `RFE` works correctly with sample weights."""
     X, y = make_classification(random_state=0)
