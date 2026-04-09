@@ -1369,7 +1369,7 @@ class RollingTimeSeriesSplit(BaseCrossValidator):
     ...     print(f"Split {i}: Train={train}, Test={test}")
     Split 0: Train=[0 1 2 3 4], Test=[5]
     Split 1: Train=[5 6 7 8], Test=[9]
-    Split 2: Train=[9 10 11 12], Test=[13]
+    Split 2: Train=[ 9 10 11 12], Test=[13]
     """
 
     def __init__(self, train_size, test_size, step_size=None, gap=0):
@@ -1379,7 +1379,24 @@ class RollingTimeSeriesSplit(BaseCrossValidator):
         self.gap = gap
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator."""
+        """Returns the number of splitting iterations in the cross-validator.
+
+        Parameters
+        ----------
+        X : object, default=None
+            Always ignored, exists for compatibility.
+
+        y : object, default=None
+            Always ignored, exists for compatibility.
+
+        groups : object, default=None
+            Always ignored, exists for compatibility.
+
+        Returns
+        -------
+        n_splits : int
+            Returns the number of splitting iterations in the cross-validator.
+        """
         if X is None:
             raise ValueError("The 'X' parameter is required to calculate n_splits.")
 
@@ -1546,11 +1563,10 @@ class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
             and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,), default=None
-            The target variable for supervised learning problems.
+            Always ignored, exists for compatibility.
 
-        groups : array-like of shape (n_samples,)
-            Group labels for the samples used while splitting the dataset into
-            train/test set.
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for compatibility.
 
         Yields
         ------
